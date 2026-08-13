@@ -31,7 +31,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
-  OFFSEASON_BUDGET_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
+  OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, resolveMidSeasonState,
   SEASON_START_BUDGET_LINES,
@@ -190,23 +190,37 @@ console.log('\nOff-season — Riverdale Ridge 14U');
   if (py) {
     // The budget half. A line with no category never matches an actual, so this is the assertion
     // that keeps the moment's landing screen from quietly becoming a page of "Uncategorized".
-    const { data: lines } = await db.from('rep_budget_lines')
-      .select('id, total_amount, category_id, budget_categories(name, scope)').eq('program_year_id', py.id);
-    check(lines?.length === OFFSEASON_BUDGET_LINES.length && lines.every(l => l.category_id),
-      `${lines?.length} budget lines, every one on a real category (budget-vs-actual matches by category NAME)`);
+    const { data: allLines } = await db.from('rep_budget_lines')
+      .select('id, total_amount, category_id, line_kind, budget_categories(name, scope)').eq('program_year_id', py.id);
+    // Costs and expected funding are separate kinds and separate assertions: a funding line
+    // carries no category ON PURPOSE, so lumping them together would either weaken the
+    // category rule below or fail on a line that is exactly right.
+    const lines = (allLines ?? []).filter(l => l.line_kind !== 'funding');
+    const fundingLines = (allLines ?? []).filter(l => l.line_kind === 'funding');
+    check(lines.length === OFFSEASON_BUDGET_LINES.length && lines.every(l => l.category_id),
+      `${lines.length} cost lines, every one on a real category (budget-vs-actual matches by category NAME)`);
     // Org-only categories are invisible to the coach's own budget planner and refused by its write
     // path — a line on one is a state no coach could have created, which the demo must never show.
-    check((lines ?? []).every(l => ['team', 'both'].includes(l.budget_categories?.scope)),
+    check(lines.every(l => ['team', 'both'].includes(l.budget_categories?.scope)),
       'every category is one a COACH could actually have picked (team-scoped, not an admin-only one)');
-    const budgetTotal = (lines ?? []).reduce((s, l) => s + Number(l.total_amount), 0);
+    const budgetTotal = lines.reduce((s, l) => s + Number(l.total_amount), 0);
     check(budgetTotal === OFFSEASON_BUDGET_LINES.reduce((s, l) => s + l.total, 0),
       `the plan totals $${budgetTotal.toLocaleString()}`);
+    // The shop window must show what the product gained: a budget that subtracts the money the
+    // team expects to raise, so a prospect sees dues set on what players actually fund.
+    const fundingTotal = fundingLines.reduce((s, l) => s + Number(l.total_amount), 0);
+    check(fundingLines.length === OFFSEASON_FUNDING_LINES.length
+      && fundingTotal === OFFSEASON_FUNDING_LINES.reduce((s, l) => s + l.total, 0)
+      && fundingLines.every(l => !l.category_id),
+      `expected funding of $${fundingTotal.toLocaleString()} is budgeted (stored positive, shown negative, no category)`);
 
+    // Every line, funding included — the phasing rule is the planner's and applies to both kinds,
+    // and the nightly re-anchor re-derives them all by sort_order without caring which is which.
     const { data: periods } = await db.from('rep_budget_periods')
-      .select('budget_line_id, amount, period_date').in('budget_line_id', (lines ?? []).map(l => l.id));
+      .select('budget_line_id, amount, period_date').in('budget_line_id', (allLines ?? []).map(l => l.id));
     const perLine = new Map();
     for (const p of periods ?? []) perLine.set(p.budget_line_id, (perLine.get(p.budget_line_id) ?? 0) + Number(p.amount));
-    check((lines ?? []).every(l => Math.abs((perLine.get(l.id) ?? 0) - Number(l.total_amount)) < 0.02),
+    check((allLines ?? []).every(l => Math.abs((perLine.get(l.id) ?? 0) - Number(l.total_amount)) < 0.02),
       'every line is phased across months and each phasing sums back to its line (the planner\'s own ±$0.02 rule)');
     check((periods ?? []).some(p => p.period_date?.slice(0, 7) === today.slice(0, 7)),
       'the phasing covers THIS month — the month grid opens on a column that means something');

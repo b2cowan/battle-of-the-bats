@@ -11,6 +11,8 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 
 interface Fundraiser {
   id: string;
@@ -159,21 +161,48 @@ export function FundraisersPanel({
       {!embedded && (
         <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
       )}
-      {/* Page-header ruling 2026-08-11: one shape; the primary keeps its words at every width. */}
+      {/* Page-level action ruling 2026-08-13: "New Fundraiser" creates a FUNDRAISER, and inside
+          the Money hub the header above the tabs names the container, not the fundraisers — so
+          the create drops into this tab's own toolbar below. This tab had no control row, so it
+          gains a thin one; five of the seven tabs already had one, which is why the pass removes
+          a band on net rather than adding seven. */}
       <CoachPageHeader
         embedded={embedded}
         icon={Gift}
         title="Fundraisers"
         season={page.season}
         teamBase={page.teamBase}
-        actions={canWriteMoney && (
-          <button className={styles.btnPrimary} onClick={openModal}>
-            <Plus size={16} /> New Fundraiser
-          </button>
-        )}
         helpLabel="Fundraisers"
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
+
+      {fundraisers.length > 0 && (
+        <div className={styles.panelToolbar}>
+          <div className={styles.panelToolbarActions}>
+            {/* ⚠ Per-fundraiser TOTALS only — the per-player breakdown names children beside the
+                money they raised and stays on the fundraiser's own page. Not write-gated:
+                reading is not writing. */}
+            <MoneyExportButton
+              label="Fundraisers"
+              formats={['xlsx', 'csv']}
+              build={() => ({
+                dataset: 'fundraisers',
+                title: 'Fundraisers',
+                columns: FUNDRAISER_COLUMNS,
+                rows: fundraiserRows(fundraisers),
+                scopeLabel: page.season.current?.programYearName ?? '',
+                teamName: '',
+                emptyMessage: 'This season has no fundraisers to export yet.',
+              })}
+            />
+            {canWriteMoney && (
+              <button className={styles.btnPrimary} onClick={openModal}>
+                <Plus size={16} aria-hidden /> New Fundraiser
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -192,54 +221,77 @@ export function FundraisersPanel({
           )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {fundraisers.map(f => (
-            <Link
-              key={f.id}
-              href={`${base}/accounting/fundraisers/${f.id}`}
-              className={styles.detailSection}
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flex: 1, minWidth: 0 }}>
-                  <TrendingUp size={18} style={{ color: 'var(--success-light)', flexShrink: 0, marginTop: '2px' }} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: '0 0 0.15rem', fontSize: '0.97rem' }}>
-                      {f.name}
-                    </p>
-                    {f.description && (
-                      <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem', padding: 0 }}>{f.description}</p>
-                    )}
-                    <p className={styles.muted} style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', padding: 0 }}>
-                      {f.playerRebatePercent}% rebate
-                      {f.startDate && ` · ${fmtDate(f.startDate)}`}
-                      {f.endDate   && ` → ${fmtDate(f.endDate)}`}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexShrink: 0 }}>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Raised</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--success-light)', fontSize: '1rem' }}>{fmt(f.totalRaised)}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Team Keeps</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.8))', fontSize: '1rem' }}>{fmt(f.teamNet)}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Credits</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--home-plum, #a855f7)', fontSize: '1rem' }}>{fmt(f.totalCredits)}</p>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+        /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency, approved
+           render `14181bd3`). Each card printed its OWN "Raised / Team keeps / Credits" headings,
+           so three fundraisers meant NINE labels and ten meant thirty — the same rule that sent
+           the Export menu's format tags off its rows the day before: anything drawn beside every
+           item in a list is drawn as many times as the list is long. Worse, each card sized
+           itself to its own name, so the three Raised figures landed in three different places
+           and "which one raised most" could not be read down a column.
+
+           Now the shared list table: three headings once, at the top, and the takings in one
+           column. At 640 it stacks back into cards — which is close to what this looked like all
+           along, so the change is a desktop one. */
+        <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>Fundraiser</th>
+                <th className={`${styles.th} ${styles.thNum}`}>Raised</th>
+                <th className={`${styles.th} ${styles.thNum}`}>Team keeps</th>
+                <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {fundraisers.map(f => (
+                <tr key={f.id} className={styles.tr}>
+                  {/* The NAME is the link, not the row. A row-level onClick is unreachable by
+                      keyboard and invisible to a screen reader; an anchor is both, and it also
+                      gives the fundraiser a real target to open in a new tab. */}
+                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Fundraiser">
+                    <span style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', minWidth: 0 }}>
+                      <TrendingUp size={16} aria-hidden style={{ color: 'var(--success-light)', flexShrink: 0, marginTop: '3px' }} />
+                      <span style={{ minWidth: 0 }}>
+                        <Link href={`${base}/accounting/fundraisers/${f.id}`} className={styles.playerNameLink}>
+                          {f.name}
+                        </Link>
+                        {f.description && (
+                          <span className={styles.muted} style={{ display: 'block', fontSize: '0.8rem', padding: 0 }}>{f.description}</span>
+                        )}
+                        <span className={styles.muted} style={{ display: 'block', fontSize: '0.76rem', padding: 0 }}>
+                          {f.playerRebatePercent}% rebate
+                          {f.startDate && ` · ${fmtDate(f.startDate)}`}
+                          {f.endDate   && ` → ${fmtDate(f.endDate)}`}
+                        </span>
+                      </span>
+                    </span>
+                  </td>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Raised" style={{ color: 'var(--success-light)', fontWeight: 700 }}>
+                    {fmt(f.totalRaised)}
+                  </td>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Team keeps" style={{ fontWeight: 700 }}>
+                    {fmt(f.teamNet)}
+                  </td>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: f.totalCredits > 0.005 ? 'var(--home-plum, #a855f7)' : 'var(--home-dim, rgba(255,255,255,0.35))', fontWeight: 700 }}>
+                    {fmt(f.totalCredits)}
+                  </td>
+                  <td className={styles.td} data-label="Status">
                     <span className={`${styles.badge} ${f.isActive ? styles.badgeActive : styles.badgeArchived}`}>
                       {f.isActive ? 'Active' : 'Closed'}
                     </span>
-                    <ChevronRight size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.2))' }} />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+                  </td>
+                  <td className={`${styles.td} ${styles.cardActionCell}`}>
+                    <Link href={`${base}/accounting/fundraisers/${f.id}`} className={styles.linkBtn} aria-label={`Open ${f.name}`}>
+                      <span className={styles.cardActionLabel}>Open fundraiser</span>
+                      <ChevronRight size={16} aria-hidden />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

@@ -1,0 +1,93 @@
+/* CoachToolbarMenu — the coach portal's action menu (page-level action ruling 2026-08-13).
+   The tournament admin's ToolbarMenu pattern in the coach portal's own skin and, critically, at
+   the coach portal's own tap floor: the admin module pins its trigger to 32px with !important at
+   ≤760px, which is why this cannot simply reuse that stylesheet. Surface tokens follow the
+   season-chip menu, the portal's existing popover idiom. */
+
+.root {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Matches .btnSecondary's geometry exactly — Import ▾ and Export ▾ are secondaries and must sit
+   in a header row beside one without a seam. Written as a class, never inline on the caller
+   (inline header sizing is the drift vector the ruling's inventory named). */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--home-card, rgba(255, 255, 255, 0.07));
+  color: var(--white-75);
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.trigger:hover:not(:disabled),
+.triggerOpen {
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.11));
+}
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 200;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.3rem;
+  background: var(--home-card, var(--bg-2));
+  border: 1px solid var(--home-line-strong, var(--white-15));
+  border-radius: var(--home-radius-sm, 9px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.45);
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  padding: 0.45rem 0.6rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  /* The portal's one tap floor, at every width — a menu is tapped too. */
+  min-height: var(--tap-min, 44px);
+  padding: 0.45rem 0.6rem;
+  background: none;
+  border: none;
+  border-radius: var(--home-radius-sm, 9px);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.item:hover:not(:disabled) { background: var(--home-olive-soft, var(--white-05)); }
+.item:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.itemIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--home-olive, var(--logic-lime));
+}
+
+.itemText { display: grid; gap: 0.1rem; min-width: 0; }
+.itemLabel { font-size: 0.86rem; font-weight: 650; line-height: 1.25; }
+.itemHint { font-size: 0.74rem; line-height: 1.35; color: var(--text-secondary); }
+
+.separator {
+  height: 1px;
+  margin: 0.3rem 0.2rem;
+  background: var(--home-line, var(--white-10));
+}

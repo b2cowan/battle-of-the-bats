@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 | 🖥📱 | LIVE |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -964,6 +964,95 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner
 - Notes: month grid deliberately scrolls sideways on phones. The cumulative chart changed on
   purpose (undated budget no longer smeared across months) — flag, don't file.
 
+### 11 🖥📱 The Money Overview on a season that hasn't started — ✅ **OWNER QA PASSED 2026-08-12** (two passes) · no migration
+> **Close-out note, 2026-08-12.** The owner walked both passes and passed them, then asked for `/review`.
+> The review then **changed behaviour they had already looked at** — the two-column fold threshold was
+> raised because the first value folded on tablets and flickered on resize. What the owner verified on a
+> wide desktop is unaffected (still two columns, same split, same order). But the **five checks marked
+> `[ ]` in the second-pass block below post-date their walk and no human has looked at them** — they were
+> proven by measurement across fourteen widths, not by eye. Left unchecked deliberately rather than
+> ticked on my own evidence; they are cheap to sweep on the next pass through this screen.
+>
+> Every box below is left exactly as the owner set it — which lines they exercised one by one isn't mine
+> to record, so nothing here is ticked on my evidence. The five that matter for a follow-up are the ones
+> about **resize behaviour, tablet portrait, the in-season rail at every width, the archived season's
+> column hairlines, and the columns' feet.**
+*Owner-reported: four numbered sections and six "nothing here yet" cards below the tab bar on a team
+with nothing set up. The 1·Plan → 4·Review stack is now gone at every stage; both Overview shapes
+end in one index. Mockup: Claude artifact `f28ebd03` (option A). Deployment state lives in the
+release-history record, not here.* **Fastest setup:** `node scripts/seed-qa-day-fixtures.mjs` — it
+prints the direct link to the deliberately-empty **QA Money U11** team, which is the first state
+below. Re-running resets it.
+- [ ] **Brand-new team, nothing entered.** Money → Overview is the guide card ("Start with your
+      season budget") and **one list underneath**. No 1·Plan / 2·Collect / 3·Spend / 4·Review
+      headings anywhere. No $0 tiles. No "What's coming up" panel.
+- [ ] The list is headed **"Everything in Money"** and shows **all seven screens** with a status
+      each — Not started · Not set · None yet · None logged · None assigned · None pending · Needs
+      a budget — grouped under quiet **Plan / Collect / Spend / Review** markers, in that order.
+- [ ] Every row goes somewhere: tap each one and land on that tab, with the tab bar following.
+- [ ] **On a 390px phone**, the whole thing fits without hunting: guide card, its lime button, and
+      the list. The card's second paragraph (dues → reminders → tryouts) is **absent on the phone
+      and present on desktop** — that is deliberate, not a truncation bug.
+- [ ] **Budget built, dues not generated.** The four tiles (Money In / Out / On Hand / Headroom)
+      **come back** as soon as any money has moved, with the cash-basis sentence above them. A
+      budget alone does NOT bring them back — a plan is not cash.
+- [ ] Same team: the rail's rows now carry **real figures** ("$12,400 set", "$1,200 raised"), and
+      "What's coming up" appears only once something can actually fall due.
+- [ ] **Running season** (dues out, payments in): the Overview is unchanged from what passed QA —
+      three story cards, the Next-30-days ledger, and **"More in Money"** below. Confirm the rail
+      still lists the same five rows in the same order and nothing gained a step marker.
+- [ ] Running season with an empty next-30-days: the ledger still shows its **all-clear line**.
+      That is correct — it is an answer, where on an empty team it was noise.
+- [ ] **A finished (archived) season**: the Overview still opens, the rail is there, and the
+      forward-looking panel/ledger is absent. Org Allocations and Payment Requests do not appear.
+- [ ] **A read-only assistant coach**: same Overview, no write affordances, no lime button.
+
+**Came out of `/review` — worth a look because they change screens that already passed QA:**
+- [ ] **A row never trades its money for a warning.** On a team with overdue dues, the Player Dues
+      row reads "$400.00 of $900.00 · 2 overdue" — both, not just the count. Same on Expenses
+      ("$640.00 paid · 2 due") and Org Allocations. This shows on the **in-season** dashboard too.
+- [ ] **Budget vs. Actual with no budget** reads "Needs a budget", not a dash — on both shapes.
+- [ ] **The Overview refreshes when you come back to it.** From a team with no dues: open Budget,
+      generate installments, then tap Overview. It must show the NEW state (the guide card moves on,
+      the Dues row fills in) without a page reload. Watch for a flicker or a lost form: switch to
+      Expenses, half-fill a form, go to Overview and back — the form must still be there.
+- [ ] **A team carrying an unpaid allocation from LAST season** (org-linked, nothing set up this
+      season): "What's coming up" must still appear and show that debt. This is the defect review
+      found — an earlier build hid the panel using this season's counts and buried the old debt.
+
+**Second pass, same day — the list folds into two columns on a wide screen.** Mockup: Claude artifact
+`b4f5898b`. *Approved after the owner asked whether the rows were the right size for the screen; the
+rail was 464px tall with ~800px of the width carrying nothing.* ⚠ **The fold threshold was RAISED
+during `/review` (720 → 940px of card width) because the first value folded on tablets and flickered
+on resize — measured widths below are post-fix and are what to check against.*
+- [ ] **On a wide desktop window (1280 and up)**, "Everything in Money" is **two columns**: **Plan**
+      and **Collect** down the left, **Spend** and **Review** down the right. The whole list fits
+      without scrolling, and the hairlines between the step groups are gone in this state.
+- [ ] **Read it as a coach would:** down the left column, then down the right, and the season is still
+      in order — Plan → Collect → Spend → Review. Keyboard-tab through it: same order.
+- [ ] **The step labels** (Plan / Collect / Spend / Review) are a touch darker here than the card's own
+      "EVERYTHING IN MONEY" label, so they read as headings for the rows rather than as another card
+      label. They stay lighter, and keep their hairlines, wherever the list is one column.
+- [ ] **Drag the window narrower and watch it the whole way down.** It should switch to one column
+      **once**, somewhere around 1250px, and then stay one column all the way to phone width. ⚠ **If
+      it flips back to two columns anywhere on the way down — around 850px is where to look — that is
+      a regression of the fix `/review` made.** It used to do exactly that, because the portal's
+      sidebar appears around 940px and takes width back, so the card is briefly *wider* at 900px than
+      at 1000px.
+- [ ] **A tablet in portrait (roughly 820–860 wide) is ONE column.** Two columns there would be ~350px
+      each, which squeezes the row names.
+- [ ] **On a phone, nothing changed at all.** One column, rows the same height as before.
+- [ ] **⚠ The in-season dashboard's "More in Money" must be UNCHANGED at EVERY width** — one column,
+      five rows, in the narrow slot beside the Next-30-days ledger. Check it wide, at a tablet size,
+      and on a phone. That rail never had the width problem and must never fold; this is the check
+      most likely to catch a mistake here.
+- [ ] **A finished (archived) season** does fold into two columns on a wide window — its list takes the
+      full width because the forward-looking ledger is absent. Five rows, no step labels, three left
+      and two right, and **both columns start with a hairline** (there is no step label to open them).
+- [ ] **Row heights are unchanged everywhere** — the mockup's tighter desktop rows were deliberately
+      not built (a touchscreen laptop reports a mouse, and would have been served small targets).
+- [ ] **Both columns end level-ish.** No stray gap under one column's last row that the other lacks.
+
 ### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION**
 Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 - [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
@@ -976,6 +1065,89 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 - [ ] Read-only assistant: same readable pages, zero write buttons, no blank card rows.
 - [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
 - [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
+
+### 12 🖥📱 Every button in Money moved — **ON DEV** (built 2026-08-13) · ⚠ carries migration **231** (dev only)
+*Page-level action ruling 2026-08-13 (Phase 1). The hub header gains constant `Import ▾ / Export ▾`;
+every tab's create drops into that tab's own control row; three exports that never existed were
+written; the tab bar becomes navigation only.* Plan:
+`active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §4.1. Binding mockup: artifact `44162825`.
+**Setup:** the same `qa-money-lab` team as §11, plus one team with real budget lines, expenses,
+payables and a fundraiser — the exports have nothing to say on an empty season and will tell you so
+rather than hand you an empty sheet (that message is itself worth seeing once).
+
+**The menus (desktop):**
+- [ ] `Import ▾` and `Export ▾` sit left of the "?" and are **identical on all seven tabs** — walk
+      every tab and confirm neither changes.
+- [ ] `Import ▾` lists Budget lines · Expenses & payables · a divider · **Recent imports**.
+- [ ] **There is NO Export in the Money header** — only `Import ▾` and the "?" (owner ruling
+      2026-08-13, final placement; the hub-wide Export menu was built, then removed when Budget
+      vs. Actual grew a second Export button).
+- [ ] **Every tab has its own Export in its control row**, right-hand end: Budget Plan · Player
+      Dues · Fundraisers · Expenses & Payables · Allocations · Payments · Budget vs. Actual.
+      **Overview has none** (a dashboard, not a dataset).
+- [ ] ⚠ **Budget vs. Actual has exactly ONE Export in BOTH views** — Categories and Months. This
+      is the defect that started the change; check it first.
+- [ ] **Each one exports what is on screen.** Switch Budget vs. Actual to Months and pick a
+      reading (Budget / Scheduled / Actual / Difference) — the file matches. On Expenses, switch
+      sub-tab and set a tag filter — the file follows both.
+- [ ] **Picking Export opens a "Choose a file type" dialog** titled e.g. "Export Player dues".
+      Each choice names the type, its extension, and what it is for. Escape, the X and a
+      backdrop click all close it without downloading.
+- [ ] Tab with nothing in it: the dialog says so **inside the dialog** rather than downloading
+      an empty sheet.
+- [ ] ⚠ **A read-only money assistant still sees Export on every tab** (reading is not writing)
+      and no create buttons. A layout move must not have changed who can do what.
+- [ ] Open each of the **three new** exports and read the file: budget lines carry a **Kind**
+      column (Cost vs Expected funding — a fundraising target must not read as spending) and their
+      payment months in one cell; expenses & payables come out as **one ledger with a Type column**;
+      fundraisers show totals only and **never a per-player breakdown**.
+- [ ] Player dues export: the **Status** word beside each player matches the word in the table.
+- [ ] On a plan **without** PDF: PDF is **absent from the dialog entirely, not greyed or
+      locked** — Player dues then offers Excel and CSV only. (Verified on the `tournament`-plan
+      test org 2026-08-13; worth re-checking on a Club-plan team, where PDF should appear.)
+
+**Phone (390px):**
+- [ ] Money's header is **title and "?" only** — Import is gone.
+- [ ] **Export is gone from the spreadsheet-only tabs** (Budget Plan, Fundraisers, Expenses,
+      Allocations, Payments) and **survives on Player Dues and Budget vs. Actual as PDF alone**
+      — on a plan that includes PDF. A phone gets things you can read, show or send.
+- [ ] The empty budget and the empty payables list **still offer an import** at this width.
+
+**The tabs:**
+- [ ] Budget Plan: **+ Add Line** now sits in the List / By period row, **lime-filled**, and the
+      header band that used to hold it is gone.
+- [ ] Expenses & Payables: **+ Add Expense · + Add Payable** (both lime now) and **Manage tags** in
+      the filter row; the button reads **"Import"**, never "Import payables".
+- [ ] Player Dues: **Set dues for all players · Send Due Reminders** are above the table, and the
+      "Sent N reminders" line still appears under them.
+- [ ] Fundraisers and Payments each gained one thin right-pinned row with their create in it.
+- [ ] **Payments with zero requests**: the create is still there (it is the only way to make a first
+      one).
+- [ ] Budget vs. Actual: no export in the header; switch to the **Months** view and the export
+      appears beside the lens picker — and exports **the grid you are looking at**, not the
+      category table.
+- [ ] Nothing hangs off the tab bar, and the tab labels are still full words at every width.
+
+**⚠ The phone (390px) — this is the half most likely to be wrong:**
+- [ ] Money's header is **title and "?" only** — both menus are gone.
+- [ ] **An empty budget still offers "Import a spreadsheet"** in its first-run card, and the paste
+      tab inside works with no file picker.
+- [ ] **An empty payables list offers "Import a schedule"** — this door is new; without it the
+      paste path would be unreachable on a phone.
+- [ ] Every button in a tab toolbar is comfortably tappable (nothing thin or short).
+
+**Access:**
+- [ ] **Read-only money assistant**: sees `Export ▾` and **no `Import ▾`**, no creates in any tab
+      toolbar, no import door in any empty state.
+- [ ] **Archived season** (past year): no `Import ▾` at all; exports still return that season's data.
+
+**Recent imports (new record — migration 231):**
+- [ ] Import a small budget, then open `Import ▾ → Recent imports`: it names the dataset, the sheet
+      shape, the counts, when, who, and whether it was pasted or a file.
+- [ ] Import **while sitting on a different tab** (e.g. start on Fundraisers): the Budget Plan tab
+      shows the new lines when you switch to it, and **any half-typed form you left on another tab
+      is still there**.
+- [ ] An import where every row fails does **not** appear in the history.
 
 ---
 

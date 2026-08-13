@@ -8,6 +8,52 @@
 
 ---
 
+### 2026-08-13 — PROPOSED: a coach's OWN money exports belong to the Premium Coaches Portal, not to Club — `club_exports` keeps meaning the ORG's books
+
+**Status:** **Proposed** — recommended, **awaiting ratification**. Raised by a `/review` finding during the Money-hub export placement build; **explicitly not built, not binding, and nothing has been gated or ungated.** The product's shipped behaviour already matches the recommendation, so accepting it changes documentation and makes an existing intent explicit; *declining* it is the option that changes what customers can do.
+
+**The contradiction found.** The feature key `club_exports` carries the customer-facing upsell line *"Data exports for rep teams and accounting are included with **Club**."* Three verified facts sit against it:
+1. **`club_exports` is checked NOWHERE in the product** — zero call sites outside its own definition in `lib/plan-features.ts`. It has never gated anything.
+2. A standalone **Premium Coaches Portal (`team`, $29/mo — currently $0 under the Founding Season) therefore gets every Money export**, including the three added 2026-08-13 (budget lines, expenses & payables, fundraisers).
+3. `PLAN_FEATURE_GRANTS.team` **already grants `pdf_exports` explicitly**, with a comment stating the paid Coaches Portal is meant to produce files.
+
+The export registry (`lib/export/catalog.ts`) additionally declares `minPlan: 'club'` + `moduleGate: 'club_exports'` on the coach entries. That registry has **no runtime consumers** — its stated purposes are help-doc availability, pricing accuracy audit, and coverage detection — so the divergence is a **documentation/packaging-claim problem, not a live billing hole**.
+
+**Decision proposed:** a team's OWN money data (budget lines, player dues, expenses & payables, fundraisers, budget vs. actual, allocations, payment requests) is an **inclusion of the Premium Coaches Portal**, in every format the plan otherwise allows. `club_exports` continues to mean the **org-side** accounting exports (club ledger, org budget plan, admin budget-vs-actual), which the string describes accurately.
+
+**Rationale:**
+- **The portal is SOLD on money.** Budget → dues → expenses is the `/for-coaches` pitch. A paid product that manages a team's money but withholds getting those numbers into a spreadsheet — the single thing a volunteer treasurer does most, reconciling against a bank statement — is incoherent.
+- **The intent is already on record** in the `team` grant of `pdf_exports`. A spreadsheet of the same figures is the same category of capability.
+- **It passes the Club Shared Book test in the negative.** That 2026-08-04 ruling was logged as notable *because it was the first* coaches-portal feature gated on the ORG's plan, and its value is explicitly cross-team. **A single team's own money is not cross-team**, so the reasoning that justified the Shared Book does not reach here.
+- **Gating it now would be a takeaway from live customers, mid-promo.** Every Founding Season coach has this today. Removing a shipped capability during a $0 goodwill window aimed at January 2027 conversion is the wrong bill to send.
+
+**The alternative, stated fairly:** if money exports are seen as a club-treasurer capability that should pull single-team coaches toward Club, the answer inverts. That is defensible — but it is a **feature removal from live customers**, needs an upsell path built, and should be a deliberate 2027 conversion lever rather than a quiet gate. Not recommended now.
+
+**No price, plan name, SKU, capacity band or module entitlement moves either way.**
+
+**Affects:** plan-feature documentation (`lib/plan-features.ts` upsell string scope), the export registry's coach entries, `PLAN_PRICING_FACTS.md` inclusions line. **No pricing copy change** — no customer-facing surface currently states this either way.
+
+**Handoff (on ratification):**
+```
+HANDOFF → /billing
+- Make the inclusion EXPLICIT rather than accidental: grant the Money-export capability to
+  `team` the way `pdf_exports` already is, so the behaviour rests on a written intent instead
+  of on the absence of a check.
+- Re-scope the `club_exports` upsell string to the ORG-side accounting exports it actually
+  describes; leave the `club` rank for those surfaces untouched.
+HANDOFF → /plan (small; may ride an existing pass)
+- Correct the export registry's coach entries so they stop asserting an unenforced Club gate,
+  and close the two PRE-EXISTING registry gaps found alongside this: the `coaches-player-dues`
+  entry still says "not yet implemented" (it shipped long ago), and there is NO coach-audience
+  Budget-vs-Actual entry at all.
+HANDOFF → /strategy (self, on ratification)
+- Add the inclusions line to PLAN_PRICING_FACTS.md and run the drift checklist.
+```
+
+**Supersedes:** nothing. Clarifies the boundary the 2026-08-04 Club Shared Book entry drew, without reopening it.
+
+---
+
 ### 2026-08-11 — The chooser's revisit trigger FIRED: `/demos` ships as a single shareable demo address for outbound industry contact — the funnel's own chooser is untouched
 
 **Status:** Decided (owner, 2026-08-11 — *"I want a page that has that so I can send to people in the industry for them to try all demos… we can put a simple link in the marketing pages footer for now"*). ✅ BUILT on `dev` 2026-08-11, verified rendering, **not committed and not on production**.

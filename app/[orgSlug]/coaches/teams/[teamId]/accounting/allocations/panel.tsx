@@ -9,6 +9,8 @@ import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import { ALLOCATION_COLUMNS, allocationRows } from '@/lib/coach-money-exports';
 
 interface SplitWithInstallments {
   id: string;
@@ -129,6 +131,30 @@ export function OrgAllocationsPanel({
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
+      {/* Allocations is READ-ONLY and had no control row at all — it gains one for this, and
+          only this. What the club has billed a team is exactly the sort of thing a treasurer
+          reconciles against a bank statement, so "read-only" was never a reason to withhold it. */}
+      {splits.length > 0 && (
+        <div className={styles.panelToolbar}>
+          <div className={styles.panelToolbarActions}>
+            <MoneyExportButton
+              label="Club allocations"
+              formats={['xlsx', 'csv']}
+              build={() => ({
+                dataset: 'club-allocations',
+                title: 'Club Allocations',
+                columns: ALLOCATION_COLUMNS,
+                // One row per INSTALLMENT, not per allocation — a payment is what gets matched.
+                rows: allocationRows(splits, today),
+                scopeLabel: assignment?.programYearName ?? '',
+                teamName: assignment?.teamName ?? '',
+                emptyMessage: 'Nothing has been allocated to this team yet.',
+              })}
+            />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p className={styles.muted}>Loading…</p>
       ) : error ? (
@@ -222,7 +248,7 @@ export function OrgAllocationsPanel({
                         <thead>
                           <tr>
                             <th className={styles.th}>#</th>
-                            <th className={styles.th}>Amount</th>
+                            <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                             <th className={styles.th}>Due Date</th>
                             <th className={styles.th}>Status</th>
                             <th className={styles.th}></th>
@@ -234,7 +260,7 @@ export function OrgAllocationsPanel({
                             return (
                               <tr key={inst.id} className={styles.tr}>
                                 <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                                <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
+                                <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
                                 <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                   {fmtDate(inst.dueDate)}
                                   {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}

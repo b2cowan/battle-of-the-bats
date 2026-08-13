@@ -1910,6 +1910,16 @@
     "indexdef": "CREATE UNIQUE INDEX rep_team_groups_pkey ON public.rep_team_groups USING btree (id)"
   },
   {
+    "tablename": "rep_team_import_events",
+    "indexname": "idx_rep_team_import_events_season",
+    "indexdef": "CREATE INDEX idx_rep_team_import_events_season ON public.rep_team_import_events USING btree (team_id, program_year_id, created_at DESC)"
+  },
+  {
+    "tablename": "rep_team_import_events",
+    "indexname": "rep_team_import_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_import_events_pkey ON public.rep_team_import_events USING btree (id)"
+  },
+  {
     "tablename": "rep_team_lineup_entries",
     "indexname": "rep_team_lineup_entries_batting_order_idx",
     "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_entries_batting_order_idx ON public.rep_team_lineup_entries USING btree (lineup_id, batting_order) WHERE (batting_order IS NOT NULL)"

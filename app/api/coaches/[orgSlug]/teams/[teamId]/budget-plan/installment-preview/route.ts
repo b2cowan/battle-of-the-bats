@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepInstallmentPreviewRow } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
+import { computeBudgetTotals } from '@/lib/coach-budget-totals';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -53,19 +54,38 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Number of dates must match installmentCount' }, { status: 400 });
   }
 
-  // Total budget for this program year
+  // What players actually FUND — not what the season costs.
+  //
+  // ⚠ This is the number a coach sees in the Generate Installments drawer and accepts, so it has
+  // to agree with the budget page's own summary. Before 2026-08-12 it summed every budget line
+  // and ignored the season estimate entirely, which meant a team that budgeted $4,000 of expected
+  // fundraising against an $8,000 season was still offered $8,000 ÷ roster — the exact overcharge
+  // that budgeting the funding exists to prevent.
   const { data: linesData } = await supabaseAdmin
     .from('rep_budget_lines')
-    .select('total_amount')
+    .select('total_amount, line_kind')
     .eq('program_year_id', programYear.id);
 
-  const totalBudget = (linesData ?? []).reduce(
-    (s: number, l: { total_amount: number }) => s + (l.total_amount ?? 0),
-    0,
-  );
+  const totals = computeBudgetTotals({
+    lines: (linesData ?? []).map((l: { total_amount: number; line_kind?: string | null }) => ({
+      totalAmount: l.total_amount ?? 0,
+      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+    })),
+    estimatedTotal: programYear.budgetAmount ?? null,
+  });
+  const totalBudget = totals.fundedByPlayers;
 
   if (totalBudget <= 0) {
-    return NextResponse.json({ error: 'Budget has no lines. Add at least one line before generating installments.' }, { status: 400 });
+    // Three ways to arrive here, and the message has to name the RIGHT one — a coach told
+    // "your funding covers the budget" when they have no funding lines at all will go looking
+    // for a fundraiser that doesn't exist.
+    const reason =
+      totals.expectedFunding > 0 && totals.expectedFunding >= totals.totalPlanned
+        ? 'Your expected funding covers the whole budget, so there is nothing for players to fund.'
+        : totals.estimatedTotal != null && totals.totalPlanned <= 0
+          ? 'Your estimated total is $0, so there is nothing for players to fund. Raise it or clear it to use your line items.'
+          : 'Budget has no lines. Add at least one line before generating installments.';
+    return NextResponse.json({ error: reason }, { status: 400 });
   }
 
   // Active roster players

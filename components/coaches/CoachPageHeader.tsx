@@ -34,6 +34,7 @@ export default function CoachPageHeader({
   teamBase,
   chipExtraQuery,
   actions,
+  actionsPhoneHidden,
   help,
   helpLabel,
   embedded,
@@ -52,6 +53,20 @@ export default function CoachPageHeader({
   chipExtraQuery?: string;
   /** The action group — primary + secondaries. Rendered right of the title, left of help. */
   actions?: ReactNode;
+  /**
+   * This page's actions do not exist at phone width — drop the whole row, don't collapse it.
+   *
+   * Rule 11 of the page-level action ruling (2026-08-13): "phones get outputs, not files". The
+   * Money hub's Import/Export menus produce spreadsheets and need a file picker, so at 390px the
+   * header is title and "?" alone. Hiding only the BUTTONS would leave an empty grid row behind
+   * and a ~12px dead band under the title, so the flag lives here, on the slot's owner, rather
+   * than in each caller's stylesheet.
+   *
+   * ⚠ Only legal where the actions are genuinely absent on a phone — not as a way to tidy away
+   * something a coach still needs there. Anything hidden this way must remain reachable at 390px
+   * by another route (for Money, every empty state keeps its import offer).
+   */
+  actionsPhoneHidden?: boolean;
   /** Help drawer request → the iconOnly "?" in its fixed corner slot. */
   help?: HelpRequest;
   /** The page name the help drawer opens under (falls back to the request's own label). */
@@ -87,7 +102,11 @@ export default function CoachPageHeader({
           {titleChips}
         </div>
       </div>
-      {actions && <div className={styles.pageHeaderActions}>{actions}</div>}
+      {actions && (
+        <div className={`${styles.pageHeaderActions}${actionsPhoneHidden ? ` ${styles.pageHeaderActionsWideOnly}` : ''}`}>
+          {actions}
+        </div>
+      )}
       {help && (
         <span className={styles.pageHeaderHelp}>
           <HelpButton iconOnly label={helpLabel} help={help} />

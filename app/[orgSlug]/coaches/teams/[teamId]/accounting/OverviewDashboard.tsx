@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import MoneyNextThirtyDays from './MoneyNextThirtyDays';
+import MoneyRail from './MoneyRail';
+import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import styles from './overview-dashboard.module.css';
 
 /* Operate-stage Money Overview: three story cards (Collections / Cash / Budget),
@@ -11,51 +13,6 @@ import styles from './overview-dashboard.module.css';
  * gap there would read as "no data". Deliberately no lime CTA and no write
  * action anywhere here (owner call 2026-08-11): the dashboard reports; acting
  * happens one click deeper. */
-
-export interface MoneySummary {
-  stage: 'plan' | 'collect' | 'operate';
-  orgLinked: boolean;
-  moneyIn: { duesCollected: number; fundraisingRaised: number; orgFunding: number; total: number };
-  moneyOut: { expensesPaid: number; allocationsPaid: number; orgPayments: number; total: number };
-  onHand: number;
-  headroom: number | null;
-  budget: {
-    seasonTotal: number | null;
-    itemizedTotal: number;
-    effectiveTotal: number;
-    buffer: number;
-    overItemized: boolean;
-    lineCount: number;
-    hasInstallments: boolean;
-    rosterCount: number;
-    perPlayer: number | null;
-  };
-  dues: {
-    expected: number;
-    collected: number;
-    outstanding: number;
-    overdueCount: number;
-    overdueAmount: number;
-    neverPaidCount: number;
-    schedulesCount: number;
-  };
-  fundraisers: { activeCount: number; totalRaised: number; creditsIssued: number };
-  expenses: { paidTotal: number; loggedCount: number; unpaidCount: number; upcomingDueCount: number };
-  allocations: { count: number; totalAllocated: number; outstanding: number; overdueCount: number };
-  paymentRequests: { pendingCount: number };
-}
-
-export interface DashboardHrefs {
-  dues: string;
-  budget: string;
-  budgetStarter: string;
-  budgetVsActual: string;
-  fundraisers: string;
-  expenses: string;
-  expensesSchedule: string;
-  allocations?: string;
-  paymentRequests?: string;
-}
 
 interface Props {
   summary: MoneySummary;
@@ -67,11 +24,6 @@ interface Props {
   /** Org-only rows (Allocations, Payment Requests) render iff their href is
    *  present — one signal, owned by the caller that owns the gating rule. */
   hrefs: DashboardHrefs;
-}
-
-export function fmt(n: number) {
-  const abs = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n < 0 ? `-$${abs}` : `$${abs}`;
 }
 
 /* A slice a coach should SEE stays visible even when it rounds to a sliver. */
@@ -233,73 +185,10 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
           />
         )}
 
-        {/* ── More in Money: one line + one live stat per surface the story
-            cards don't already own; navigation itself belongs to the tab bar. ── */}
-        <div className={styles.card}>
-          <div className={styles.eyeRow}>
-            <span className={styles.eye}>More in Money</span>
-          </div>
-          <div>
-            <Link href={hrefs.fundraisers} className={styles.railRow}>
-              <span className={`${styles.railDot} ${styles.railDotGood}`} />
-              <span className={styles.railName}>Fundraisers</span>
-              <span className={styles.railStat}>
-                {summary.fundraisers.totalRaised > 0
-                  ? <><b>{fmt(summary.fundraisers.totalRaised)}</b> raised</>
-                  : summary.fundraisers.activeCount > 0
-                    ? <>{summary.fundraisers.activeCount} active</>
-                    : <>None yet · <b>start one</b></>}
-              </span>
-              <span className={styles.railChev} aria-hidden>›</span>
-            </Link>
-            {hrefs.allocations && (
-              <Link href={hrefs.allocations} className={styles.railRow}>
-                <span className={`${styles.railDot} ${styles.railDotBlue}`} />
-                <span className={styles.railName}>Org Allocations</span>
-                <span className={styles.railStat}>
-                  {summary.allocations.count > 0 ? (
-                    summary.allocations.overdueCount > 0
-                      ? <span className={styles.railStatDanger}>{summary.allocations.overdueCount} overdue</span>
-                      : <><b>{fmt(summary.allocations.outstanding)}</b> outstanding</>
-                  ) : 'None assigned'}
-                </span>
-                <span className={styles.railChev} aria-hidden>›</span>
-              </Link>
-            )}
-            {hrefs.paymentRequests && (
-              <Link href={hrefs.paymentRequests} className={styles.railRow}>
-                <span className={`${styles.railDot} ${styles.railDotRust}`} />
-                <span className={styles.railName}>Payment Requests</span>
-                <span className={styles.railStat}>
-                  {summary.paymentRequests.pendingCount > 0
-                    ? <><b>{summary.paymentRequests.pendingCount}</b> pending</>
-                    : 'None pending'}
-                </span>
-                <span className={styles.railChev} aria-hidden>›</span>
-              </Link>
-            )}
-            <Link href={hrefs.budget} className={styles.railRow}>
-              <span className={`${styles.railDot} ${styles.railDotPlum}`} />
-              <span className={styles.railName}>Season Budget Plan</span>
-              <span className={styles.railStat}>
-                {budget.effectiveTotal > 0 ? <><b>{fmt(budget.effectiveTotal)}</b> set</> : 'Not started'}
-              </span>
-              <span className={styles.railChev} aria-hidden>›</span>
-            </Link>
-            <Link href={hrefs.budgetVsActual} className={styles.railRow}>
-              <span className={`${styles.railDot} ${styles.railDotOlive}`} />
-              <span className={styles.railName}>Budget vs. Actual</span>
-              <span className={styles.railStat}>
-                {summary.headroom == null
-                  ? '—'
-                  : overBudget
-                    ? <span className={styles.railStatDanger}>{fmt(Math.abs(summary.headroom))} over</span>
-                    : <><b>{fmt(summary.headroom)}</b> headroom</>}
-              </span>
-              <span className={styles.railChev} aria-hidden>›</span>
-            </Link>
-          </div>
-        </div>
+        {/* The remainder: every Money surface the three story cards above don't
+            already own, one line and one live stat each. Same component the setup
+            Overview uses — there it carries all seven and groups them by step. */}
+        <MoneyRail summary={summary} hrefs={hrefs} variant="more" />
       </div>
     </>
   );

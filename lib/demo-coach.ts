@@ -665,9 +665,26 @@ export const OFFSEASON_BUDGET_LINES = [
   { description: 'Raffle licence and printing',        category: 'Fundraising Costs', total: 600 },
 ] as const;
 
+/**
+ * The money the team expects to bring IN, so the demo shows the thing the product gained on
+ * 2026-08-12: a budget that says what players actually have to fund, not just what the season costs.
+ *
+ * It pairs with the "Raffle licence and printing" cost line — the raffle costs $600 to run and is
+ * expected to net the team $2,400 — which is the honest shape of a real fundraiser and the reason
+ * the two are separate kinds rather than one netted-off number.
+ *
+ * ⚠ NO CATEGORY, deliberately. A funding line is not an expense: it never enters budget-vs-actual's
+ * category matching, and filing it under a spending category would put money coming in beneath a
+ * heading that names something the team pays for. It renders in its own section, where the category
+ * is not shown at all.
+ */
+export const OFFSEASON_FUNDING_LINES = [
+  { description: 'Raffle proceeds — team share (estimated)', total: 2400 },
+] as const;
+
 /** Each line is phased across four months (this month ±). Quarters divide every total exactly —
  *  the planner enforces periods summing to their line within $0.02, and the demo must not sit on
- *  that tolerance. */
+ *  that tolerance. (The funding line's total divides exactly too, for the same reason.) */
 export const OFFSEASON_BUDGET_PERIOD_MONTHS = [-1, 0, 1, 2] as const;
 
 /**

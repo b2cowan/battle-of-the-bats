@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { computeBudgetTotals } from './coach-budget-totals';
 import type { TryoutAcceptDues } from './db';
 
 /**
@@ -82,11 +83,29 @@ export async function deriveStandardDuesSchedule(programYearId: string): Promise
   }
 
   // ── Tier 2: budget-plan per-player total (undated hint) ──────────────────────
-  const { data: lines } = await supabaseAdmin
-    .from('rep_budget_lines')
-    .select('total_amount')
-    .eq('program_year_id', programYearId);
-  const totalBudget = (lines ?? []).reduce((s: number, l: { total_amount: number | null }) => s + Number(l.total_amount ?? 0), 0);
+  // ⚠ What players FUND, not what the season costs. This suggestion prefills a real dues figure
+  // in the accept-to-roster drawer, so summing every line would over-bill a family the moment the
+  // team budgeted any expected fundraising — and it would disagree with the budget page's own
+  // per-player figure on the same screenful of product.
+  const [{ data: lines }, { data: py }] = await Promise.all([
+    supabaseAdmin
+      .from('rep_budget_lines')
+      .select('total_amount, line_kind')
+      .eq('program_year_id', programYearId),
+    supabaseAdmin
+      .from('rep_program_years')
+      .select('budget_amount')
+      .eq('id', programYearId)
+      .maybeSingle(),
+  ]);
+  const budgetTotals = computeBudgetTotals({
+    lines: (lines ?? []).map((l: { total_amount: number | null; line_kind?: string | null }) => ({
+      totalAmount: Number(l.total_amount ?? 0),
+      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+    })),
+    estimatedTotal: (py as { budget_amount?: number | null } | null)?.budget_amount ?? null,
+  });
+  const totalBudget = budgetTotals.fundedByPlayers;
 
   if (totalBudget > 0) {
     const { count } = await supabaseAdmin

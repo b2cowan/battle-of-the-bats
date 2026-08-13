@@ -366,6 +366,222 @@ if (!gAtt?.length) {
   ok('game attendance already present');
 }
 
+// ── 13. MONEY, so the Money hub renders tables instead of empty states ───────
+/**
+ * ⚠ WHY THIS BLOCK EXISTS, and it is the same reason section 11 seeds a live game.
+ *
+ * Found 2026-08-13, during the Money-hub table-consistency pass: **every Money screen in the
+ * layout sweep was measuring an EMPTY STATE.** Budget lines, dues schedules, expenses, payables,
+ * fundraisers and payment requests were all zero on this fixture, so `coach-budget`,
+ * `coach-budget-vs-actual`, `coach-dues` and `coach-expenses` had been sweeping four "nothing here
+ * yet" cards. The gate reported green on tables it had never drawn — the exact failure the game-day
+ * note above records, in a different part of the portal.
+ *
+ * So the shapes below are chosen to make each surface render its FULL structure in one pass, not
+ * to look like a realistic season:
+ *   · two cost categories AND an expected-funding line, so the plan's funding section appears;
+ *   · period splits on one line, so the outline has sub-rows to expand and the By-period grid has
+ *     columns to scroll;
+ *   · three dues schedules — paid, part-paid and nothing-paid-and-overdue — so the status column
+ *     and the balance colours all appear at once;
+ *   · a payable with BOTH a deposit and a balance, one paid and one not, which is the only row in
+ *     the hub with real nesting;
+ *   · one plain expense, one fundraiser, one payment request per status that changes the row.
+ *
+ * ⚠ IDEMPOTENT LIKE THE REST: each step checks for its own rows first and leaves whatever is
+ * already there alone, so re-running never doubles a season's budget.
+ */
+const money = { budget: 0, dues: 0, expenses: 0, fundraisers: 0, requests: 0 };
+
+// Categories come from the shared taxonomy — the same rows the coach's picker offers, so Budget
+// vs. Actual's name-match join behaves exactly as it does for a real team.
+// ⚠ `scope` is `org | team | both` — there is NO 'rep'. This filtered on 'rep' at first, which is
+// not a CHECK violation but simply matches nothing, so the query returned [] SILENTLY and every
+// seeded line landed in "Uncategorized". The category-grouping surfaces this fixture exists to
+// exercise were therefore never populated with named categories — and the probes said so
+// ("Uncategorized" everywhere) without anyone reading it. Mirrors the coach-side reader in
+// `app/api/coaches/[orgSlug]/budget-items/route.ts`, which uses the same `['team','both']` filter.
+const { data: cats, error: catErr } = await db.from('budget_categories')
+  .select('id, name').in('scope', ['team', 'both']).order('sort_order').limit(2);
+if (catErr) { console.error('✗ budget_categories read', catErr.message); process.exit(1); }
+if (!cats?.length) {
+  // Loud, not silent: a fixture that cannot name its categories is not the fixture anyone meant.
+  console.error('✗ No team-scoped budget categories found — the Money fixture would seed everything as "Uncategorized".');
+  process.exit(1);
+}
+
+const { data: existingLines } = await db.from('rep_budget_lines')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
+
+if (!existingLines?.length) {
+  const lineRows = [
+    { description: 'Winter dome block', total_amount: 5200, notes: '16 sessions, Jan–Mar', line_kind: 'cost',    category_id: cats?.[0]?.id ?? null, sort_order: 1 },
+    { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    category_id: cats?.[0]?.id ?? null, sort_order: 2 },
+    { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    category_id: cats?.[1]?.id ?? cats?.[0]?.id ?? null, sort_order: 3 },
+    { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', category_id: null, sort_order: 4 },
+  ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
+
+  const ins = await db.from('rep_budget_lines').insert(lineRows).select('id, description');
+  if (ins.error) { console.error('✗ budget lines insert', ins.error.message); process.exit(1); }
+  money.budget = ins.data.length;
+
+  // Periods on ONE line only: enough for the outline to have something to expand and for the
+  // By-period grid to have more than a single column, without every row being expandable.
+  const dome = ins.data.find((l) => l.description === 'Winter dome block');
+  if (dome) {
+    const per = await db.from('rep_budget_periods').insert([
+      { budget_line_id: dome.id, period_label: 'January',  period_date: `${py.year}-01-15`, amount: 1733, sort_order: 1 },
+      { budget_line_id: dome.id, period_label: 'February', period_date: `${py.year}-02-15`, amount: 1733, sort_order: 2 },
+      { budget_line_id: dome.id, period_label: 'March',    period_date: `${py.year}-03-15`, amount: 1734, sort_order: 3 },
+    ]);
+    if (per.error) { console.error('✗ budget periods insert', per.error.message); process.exit(1); }
+  }
+  ok(`budget plan seeded (${money.budget} lines, one split across three periods)`);
+} else {
+  /* ⚠ THE PERIODS GET THEIR OWN GUARD, not the lines'. Nested under the outer check they could
+     never be retried: one failed periods insert used to be logged-and-continued, the run reported
+     the fixture "whole", and every later run skipped the whole block because the LINES existed —
+     leaving the By-period grid permanently empty on the very fixture built to exercise it. Which
+     is the same silent-half-truth this fixture work exists to end (see the plan's §8). */
+  const { data: existingPeriods } = await db.from('rep_budget_periods')
+    .select('id, rep_budget_lines!inner(team_id, program_year_id)')
+    .eq('rep_budget_lines.team_id', team.id)
+    .eq('rep_budget_lines.program_year_id', py.id)
+    .limit(1);
+  if (!existingPeriods?.length) {
+    const { data: dome } = await db.from('rep_budget_lines')
+      .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+      .eq('description', 'Winter dome block').maybeSingle();
+    if (dome) {
+      const per = await db.from('rep_budget_periods').insert([
+        { budget_line_id: dome.id, period_label: 'January',  period_date: `${py.year}-01-15`, amount: 1733, sort_order: 1 },
+        { budget_line_id: dome.id, period_label: 'February', period_date: `${py.year}-02-15`, amount: 1733, sort_order: 2 },
+        { budget_line_id: dome.id, period_label: 'March',    period_date: `${py.year}-03-15`, amount: 1734, sort_order: 3 },
+      ]);
+      if (per.error) { console.error('✗ budget periods repair', per.error.message); process.exit(1); }
+      ok('budget plan already present — period split repaired');
+    } else {
+      ok('budget plan already present');
+    }
+  } else {
+    ok('budget plan already present');
+  }
+}
+
+// Dues — three players, three different states, so the status column and every balance colour
+// render together. The rest of the roster deliberately has no schedule: a partly-set-up team is
+// the normal case and the table must read correctly with "—" in it.
+const { data: existingDues } = await db.from('rep_player_dues_schedules')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
+
+/* ⚠ A ROSTER TOO SMALL IS NOT "ALREADY PRESENT". The two conditions used to share one `else`, so a
+   team with fewer than three players and NO dues was told "dues already present" — actively false,
+   with nothing explaining why the three states never appeared. */
+if (!existingDues?.length && ids.length < 3) {
+  console.error(`✗ Only ${ids.length} active player(s) — the Money fixture needs 3 to seed the paid / part-paid / overdue trio.`);
+  process.exit(1);
+}
+if (!existingDues?.length) {
+  const PLANS = [
+    { paid: 2, overdueDays: null },  // fully paid
+    { paid: 1, overdueDays: null },  // part paid
+    { paid: 0, overdueDays: 21 },    // nothing paid, and late
+  ];
+  for (let i = 0; i < PLANS.length; i++) {
+    const plan = PLANS[i];
+    const sched = await db.from('rep_player_dues_schedules').insert({
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      player_id: ids[i], total_amount: 1250,
+    }).select('id').single();
+    /* ⚠ FAIL, don't `break`. A break left 1 of 3 states seeded, and the outer guard only asks
+       "does ANY schedule exist" — so every later run reported dues complete while the overdue
+       player (the one the status column exists to show) was never created. */
+    if (sched.error) { console.error('✗ dues schedule insert', sched.error.message); process.exit(1); }
+
+    const dueDay = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() + (plan.overdueDays != null ? -plan.overdueDays : 30) + (n - 1) * 30);
+      return d.toISOString().slice(0, 10);
+    };
+    const insts = [1, 2].map((n) => ({
+      schedule_id: sched.data.id, player_id: ids[i], org_id: org.id, team_id: team.id,
+      installment_number: n, amount: 625, due_date: dueDay(n), source: 'manual',
+      paid_at: n <= plan.paid ? new Date().toISOString() : null,
+    }));
+    const ii = await db.from('rep_player_dues_installments').insert(insts);
+    if (ii.error) { console.error('✗ dues instalments insert', ii.error.message); process.exit(1); }
+    money.dues++;
+  }
+  ok(`dues seeded (${money.dues} players — paid, part paid, and overdue)`);
+} else {
+  ok('dues already present');
+}
+
+// Expenses AND payables live in the same table, told apart by `expense_type`. Both sub-tabs need
+// a row or half the Expenses screen is still an empty state.
+const { data: existingExp } = await db.from('rep_team_expenses')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
+
+if (!existingExp?.length) {
+  const soon = new Date(); soon.setDate(soon.getDate() + 20);
+  const past = new Date(); past.setDate(past.getDate() - 10);
+  const exp = await db.from('rep_team_expenses').insert([
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      expense_type: 'expense', description: 'Practice balls and tees',
+      category: cats?.[0]?.name ?? null, amount: 240, expense_paid_at: new Date().toISOString(),
+    },
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      expense_type: 'expense', description: 'Scorekeeping tablet',
+      category: cats?.[0]?.name ?? null, amount: 310, expense_paid_at: null,
+    },
+    // The one genuinely NESTED row in the hub: a deposit already paid and a balance still due.
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      expense_type: 'tournament_payable', description: 'Spring classic entry',
+      category: cats?.[1]?.name ?? cats?.[0]?.name ?? null, amount: 1600,
+      deposit_amount: 600, deposit_due_date: past.toISOString().slice(0, 10), deposit_paid_at: new Date().toISOString(),
+      balance_amount: 1000, balance_due_date: soon.toISOString().slice(0, 10), balance_paid_at: null,
+    },
+  ]);
+  if (exp.error) console.log(`  ! expenses skipped (${exp.error.message})`);
+  else { money.expenses = 3; ok('expenses + a two-part payable seeded'); }
+} else {
+  ok('expenses already present');
+}
+
+const { data: existingFr } = await db.from('rep_fundraisers')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
+
+if (!existingFr?.length) {
+  const fr = await db.from('rep_fundraisers').insert([
+    { org_id: org.id, team_id: team.id, program_year_id: py.id, name: 'Chocolate sale', description: 'Boxes of 30 bars', player_rebate_percent: 15, is_active: true },
+    { org_id: org.id, team_id: team.id, program_year_id: py.id, name: 'Bottle drive',   description: null,              player_rebate_percent: 20, is_active: false },
+  ]);
+  if (fr.error) console.log(`  ! fundraisers skipped (${fr.error.message})`);
+  else { money.fundraisers = 2; ok('fundraisers seeded (one active, one closed)'); }
+} else {
+  ok('fundraisers already present');
+}
+
+// One request per status that changes the row: pending keeps its Cancel button, denied carries a
+// reason and therefore an expandable detail row.
+const { data: existingPr } = await db.from('rep_team_payment_requests')
+  .select('id').eq('team_id', team.id).limit(1);
+
+if (!existingPr?.length) {
+  const pr = await db.from('rep_team_payment_requests').insert([
+    { org_id: org.id, team_id: team.id, request_type: 'charge_to_org', amount: 450, description: 'Diamond permit reimbursement', status: 'pending',  created_by: user.id, notes: 'Receipt attached in Documents.' },
+    { org_id: org.id, team_id: team.id, request_type: 'payment_to_org', amount: 200, description: 'Team share of league fee',     status: 'approved', created_by: user.id, reviewed_at: new Date().toISOString() },
+    { org_id: org.id, team_id: team.id, request_type: 'charge_to_org', amount: 90,  description: 'Extra practice jerseys',        status: 'denied',   created_by: user.id, reviewed_at: new Date().toISOString(), denial_reason: 'Outside the approved equipment budget.' },
+  ]);
+  if (pr.error) console.log(`  ! payment requests skipped (${pr.error.message})`);
+  else { money.requests = 3; ok('payment requests seeded (pending, approved, denied)'); }
+} else {
+  ok('payment requests already present');
+}
+
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);

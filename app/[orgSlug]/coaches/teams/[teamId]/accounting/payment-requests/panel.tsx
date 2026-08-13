@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -10,6 +10,8 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import { PAYMENT_REQUEST_COLUMNS, paymentRequestRows } from '@/lib/coach-money-exports';
 
 interface PaymentRequest {
   id: string;
@@ -219,18 +221,14 @@ export function PaymentRequestsPanel({
       {!embedded && (
         <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
-      {/* Page-header ruling 2026-08-11: one shape; the primary keeps its words at every width.
-          The write gate stands — a read-only assistant is never offered a form the server
-          would refuse. */}
+      {/* Page-level action ruling 2026-08-13: the create acts on THIS list of requests, so it
+          drops into the tab's own toolbar below rather than sitting in a hub header that names
+          "Money". This tab had no control row and gains a thin one. The write gate stands — a
+          read-only assistant is never offered a form the server would refuse. */}
       <CoachPageHeader
         embedded={embedded}
         icon={ArrowUpRight}
         title="Payment Requests"
-        actions={canWriteMoney && (
-          <button type="button" className={styles.btnPrimary} onClick={openForm}>
-            + New Request
-          </button>
-        )}
         helpLabel="Payment Requests"
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
@@ -242,6 +240,34 @@ export function PaymentRequestsPanel({
           Open Org Allocations <ArrowRight size={12} aria-hidden />
         </Link>
       </p>
+
+      {/* ⚠ RENDERS AT EVERY STATE, INCLUDING THE EMPTY ONE (rule 7 — "nothing hides"). This
+          screen's empty state names the two request types but offers no button of its own, so
+          gating the toolbar on `requests.length` would leave a coach with no way to make their
+          first request. */}
+      <div className={styles.panelToolbar}>
+        <div className={styles.panelToolbarActions}>
+          <MoneyExportButton
+            label="Payment requests"
+            formats={['xlsx', 'csv']}
+            build={() => ({
+              dataset: 'payment-requests',
+              title: 'Payment Requests',
+              columns: PAYMENT_REQUEST_COLUMNS,
+              rows: paymentRequestRows(requests),
+              scopeLabel: assignment?.programYearName ?? '',
+              teamName: assignment?.teamName ?? '',
+              emptyMessage: 'There are no payment requests to export yet.',
+            })}
+            disabled={requests.length === 0}
+          />
+          {canWriteMoney && (
+            <button type="button" className={styles.btnPrimary} onClick={openForm}>
+              + New Request
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Summary row */}
       {requests.length > 0 && (
@@ -273,74 +299,94 @@ export function PaymentRequestsPanel({
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {requests.map(r => (
-            <div key={r.id} className={styles.detailSection} style={{ padding: '1rem 1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                    <TypeBadge type={r.requestType} />
-                    <StatusBadge status={r.status} />
-                    <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', fontSize: '0.95rem' }}>
-                      {fmt(r.amount)}
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, color: 'var(--home-ink, rgba(255,255,255,0.8))', fontSize: '0.88rem' }}>{r.description}</p>
-                  <p className={styles.muted} style={{ margin: '0.2rem 0 0', fontSize: '0.78rem' }}>
-                    Submitted {fmtDate(r.createdAt)}
-                    {r.paymentMethod && ` · ${r.paymentMethod}`}
-                    {r.reviewedAt && ` · Reviewed ${fmtDate(r.reviewedAt)}`}
-                  </p>
-                </div>
+        /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency). It carried
+           no shared class and — unlike its two sibling card lists — printed NO column labels at
+           all: the amount, the type and the date simply sat in a row of text, so a figure had
+           nothing naming it. Now the shared list table, with one heading row and the amounts in
+           one column. Every control, badge and expanded detail is the same as before. */
+        <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>Request</th>
+                <th className={styles.th}>Type</th>
+                <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}>Submitted</th>
+                <th className={styles.th}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map(r => {
+                const hasDetail = !!r.notes || r.status === 'denied';
+                const open = expandedId === r.id;
+                return (
+                  <Fragment key={r.id}>
+                    <tr className={styles.tr}>
+                      <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Request">{r.description}</td>
+                      <td className={styles.td} data-label="Type"><TypeBadge type={r.requestType} /></td>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>{fmt(r.amount)}</td>
+                      <td className={styles.td} data-label="Status"><StatusBadge status={r.status} /></td>
+                      <td className={styles.td} data-label="Submitted" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem' }}>
+                        {fmtDate(r.createdAt)}
+                        {r.paymentMethod && <span style={{ display: 'block' }}>{r.paymentMethod}</span>}
+                        {r.reviewedAt && <span style={{ display: 'block' }}>Reviewed {fmtDate(r.reviewedAt)}</span>}
+                      </td>
+                      <td className={`${styles.td} ${styles.cardActionCell}`}>
+                        {hasDetail && (
+                          <button
+                            type="button"
+                            className={`${styles.btnGhost} ${styles.compactAction}`}
+                            aria-expanded={open}
+                            aria-label={open ? 'Hide details' : 'Show details'}
+                            onClick={() => setExpandedId(open ? null : r.id)}
+                          >
+                            {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+                            <span className={styles.cardActionLabel}>{open ? 'Hide details' : 'Details'}</span>
+                          </button>
+                        )}
+                        {r.status === 'pending' && (
+                          <button
+                            type="button"
+                            className={`${styles.btnGhost} ${styles.compactAction}`}
+                            style={{ color: 'var(--danger-light)' }}
+                            onClick={() => handleCancel(r.id)}
+                            disabled={cancelling === r.id}
+                          >
+                            {cancelling === r.id ? '…' : 'Cancel'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
 
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-                  {(r.notes || r.status === 'denied') && (
-                    <button
-                      type="button"
-                      className={styles.btnGhost}
-                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem' }}
-                      onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                    >
-                      {expandedId === r.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                  )}
-                  {r.status === 'pending' && (
-                    <button
-                      type="button"
-                      className={styles.btnGhost}
-                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem', color: 'var(--danger-light)' }}
-                      onClick={() => handleCancel(r.id)}
-                      disabled={cancelling === r.id}
-                    >
-                      {cancelling === r.id ? '…' : 'Cancel'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {expandedId === r.id && (
-                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))' }}>
-                  {r.status === 'denied' && r.denialReason && (
-                    <div style={{
-                      background:   'color-mix(in srgb, var(--danger-light) 8%, transparent)',
-                      border:       '1px solid color-mix(in srgb, var(--danger-light) 20%, transparent)',
-                      borderRadius: 6,
-                      padding:      '0.6rem 0.75rem',
-                      marginBottom: r.notes ? '0.5rem' : 0,
-                    }}>
-                      <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: 'var(--danger-light)' }}>Denial reason:</p>
-                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>{r.denialReason}</p>
-                    </div>
-                  )}
-                  {r.notes && (
-                    <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                      <strong style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>Notes:</strong> {r.notes}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                    {open && (
+                      <tr className={styles.tr}>
+                        <td className={`${styles.td} ${styles.cardStackCell}`} colSpan={6}>
+                          {r.status === 'denied' && r.denialReason && (
+                            <div style={{
+                              background:   'color-mix(in srgb, var(--danger-light) 8%, transparent)',
+                              border:       '1px solid color-mix(in srgb, var(--danger-light) 20%, transparent)',
+                              borderRadius: 6,
+                              padding:      '0.6rem 0.75rem',
+                              marginBottom: r.notes ? '0.5rem' : 0,
+                            }}>
+                              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: 'var(--danger-light)' }}>Denial reason:</p>
+                              <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>{r.denialReason}</p>
+                            </div>
+                          )}
+                          {r.notes && (
+                            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                              <strong style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>Notes:</strong> {r.notes}
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 

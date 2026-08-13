@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, createRepTeamExpense,
+  getOrgMemberDisplayName, recordRepTeamImport,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -104,6 +105,16 @@ export const POST = withObservability(async (req: Request,
   const shape = body?.shape === 'payables' ? 'payables' : 'budget';
   const incoming: unknown[] = Array.isArray(body?.rows) ? body.rows : [];
 
+  // Receipt fields (migration 231) — description of the ACT, never of the write. They are
+  // normalized to the values the CHECK constraints allow and are used nowhere else, so a client
+  // sending nonsense degrades the history line and cannot touch what lands in the budget.
+  const sheetShape: 'month-grid' | 'list' | 'payables' =
+    body?.sheetShape === 'list' ? 'list' : body?.sheetShape === 'payables' || shape === 'payables' ? 'payables' : 'month-grid';
+  const importSource: 'paste' | 'file' = body?.source === 'file' ? 'file' : 'paste';
+  const sourceFilename = typeof body?.sourceFilename === 'string' && body.sourceFilename.trim()
+    ? body.sourceFilename.trim().slice(0, 200)
+    : null;
+
   if (incoming.length === 0) {
     return NextResponse.json({ error: 'No rows were sent.' }, { status: 400 });
   }
@@ -187,21 +198,34 @@ export const POST = withObservability(async (req: Request,
     }
   } else {
     // ── budget lines ─────────────────────────────────────────────────────
+    // ⚠ COST lines only. An imported sheet row is a cost by definition (the sheet has no column
+    // for a kind), and matching is by DESCRIPTION — so without this filter a row called
+    // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
+    // and category, turning money coming in into money going out.
     const { data: lineRows } = await supabaseAdmin
       .from('rep_budget_lines')
-      .select('id, description, total_amount, sort_order, budget_categories(name)')
+      .select('id, description, total_amount, sort_order, line_kind, budget_categories(name)')
       .eq('program_year_id', programYear.id)
       .order('sort_order');
 
-    const existing: ExistingBudgetLine[] = (lineRows ?? []).map((l: Record<string, unknown>) => ({
-      id: l.id as string,
-      description: l.description as string,
-      categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
-      totalAmount: (l.total_amount as number) ?? 0,
-    }));
+    // ⚠ COST lines only for MATCHING. An imported sheet row is a cost by definition (the sheet has
+    // no column for a kind), and matching is by DESCRIPTION — so without this filter a row called
+    // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
+    // and category, turning money coming in into money going out.
+    const existing: ExistingBudgetLine[] = (lineRows ?? [])
+      .filter((l: Record<string, unknown>) => l.line_kind !== 'funding')
+      .map((l: Record<string, unknown>) => ({
+        id: l.id as string,
+        description: l.description as string,
+        categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+        totalAmount: (l.total_amount as number) ?? 0,
+      }));
 
     // Continue the plan's existing order rather than restarting at 0 — write order IS display
     // order, and an import must land after what the coach already has, in sheet order.
+    // ⚠ Measured over EVERY line, funding included: ordering is a property of the whole plan, and
+    // taking the maximum over the cost-only subset lets an imported line collide with the
+    // sort_order of a funding line that already holds it.
     let nextSortOrder = (lineRows ?? []).reduce(
       (max: number, l: Record<string, unknown>) => Math.max(max, (l.sort_order as number) ?? 0), -1,
     ) + 1;
@@ -236,7 +260,11 @@ export const POST = withObservability(async (req: Request,
             updated_at: new Date().toISOString(),
           })
           .eq('id', lineId)
-          .eq('program_year_id', programYear.id);
+          .eq('program_year_id', programYear.id)
+          // Belt and braces with the cost-only read above: the matched id came from a payload the
+          // client sends back, so the write refuses a funding line even if that payload is stale
+          // or crafted.
+          .neq('line_kind', 'funding');
         if (error) { failed.push({ rowNumber: row.rowNumber, name: label, error: error.message }); continue; }
         updated.push({ rowNumber: row.rowNumber, name: label });
       } else {
@@ -309,6 +337,32 @@ export const POST = withObservability(async (req: Request,
       { status: 400 },
     );
   }
+
+  // The receipt — written only once something actually landed, and only AFTER the early return
+  // above, so "Recent imports" can never list an import that imported nothing. Best-effort by
+  // contract: `recordRepTeamImport` never throws, because a lost history line must not cost a
+  // coach the rows they just successfully imported.
+  //
+  // ⚠ The attribution name comes from ONE indexed membership lookup, not from the season's staff
+  // list. Resolving it through `getRepTeamStaffForYear` would query every coach on the team and
+  // then call the Supabase Auth admin API once per coach — an N+1 on the request path of every
+  // import, to learn the display name of the one person who is already authenticated here.
+  const createdByName = await getOrgMemberDisplayName(ctx!.org.id, ctx!.user.id).catch(() => null);
+  await recordRepTeamImport({
+    teamId: team.id,
+    orgId: ctx!.org.id,
+    programYearId: programYear.id,
+    dataset: shape === 'payables' ? 'payables' : 'budget_lines',
+    shape: sheetShape,
+    source: importSource,
+    sourceFilename,
+    rowsCreated: created.length,
+    rowsUpdated: updated.length,
+    rowsSkipped: skipped.length,
+    rowsFailed: failed.length,
+    createdBy: ctx!.user.id,
+    createdByName,
+  });
 
   return NextResponse.json({ created, updated, failed, skipped });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/import' });

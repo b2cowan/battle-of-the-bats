@@ -46,6 +46,29 @@ export function isNeverPaidPlayer(p: PlayerDuesLike): boolean {
 }
 
 /**
+ * The word a coach reads for one player's dues position — "Unpaid", "Partial", "Fully paid",
+ * "In credit", or "Not set" when no schedule exists.
+ *
+ * Shared because it is now read in two places that must agree: the Player Dues table on screen,
+ * and the Player dues export offered from the Money hub's Export menu. A coach who exports a
+ * spreadsheet and finds a different status beside a name than the one the table showed has been
+ * told two things by one product. The colour each status is drawn in stays with the table — that
+ * is presentation, and a spreadsheet has no use for it.
+ */
+export function duesStatusLabel(p: {
+  schedule: unknown | null;
+  rollingBalance: number;
+  paidAmount: number;
+  totalCredits: number;
+}): 'Not set' | 'In credit' | 'Fully paid' | 'Partial' | 'Unpaid' {
+  if (!p.schedule) return 'Not set';
+  if (p.rollingBalance < -0.005) return 'In credit';
+  if (p.rollingBalance <= 0.005) return 'Fully paid';
+  if (p.paidAmount > 0 || p.totalCredits > 0) return 'Partial';
+  return 'Unpaid';
+}
+
+/**
  * ONE definition of what a player still owes: their schedule total minus the installments marked
  * paid. Credits are deliberately EXCLUDED — the dues table, the Insights dashboard and the weekly
  * digest have always quoted this figure, and `rollingBalance` (which does subtract credits) is a

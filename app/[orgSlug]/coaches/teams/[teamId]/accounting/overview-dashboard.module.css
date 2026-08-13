@@ -355,7 +355,123 @@
   color: var(--home-dim, var(--white-45));
 }
 
-/* ── "More in Money" rail ── */
+/* ── The rail: "More in Money" (operate) / "Everything in Money" (setup) ──
+   The setup variant groups its rows under the season's four steps. The rule that
+   separates one step from the next rides the GROUP, not the step label — a label
+   can't know whether it's the first one, and a stray hairline above the first row
+   reads as a dangling divider. */
+.railGroup { border-top: 1px solid var(--home-line, var(--border-2)); }
+.railGroup:first-child { border-top: none; }
+.railStep {
+  margin: 0;
+  padding: 0.5rem 0 0.1rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+}
+
+/* ── Two columns once the card is wide enough (owner ruling 2026-08-12, second
+   pass; mockup artifact b4f5898b) ──────────────────────────────────────────
+
+   ⚠ THE TRIGGER IS THE CARD'S WIDTH, NOT THE VIEWPORT — and that distinction is
+   the whole correctness of this rule, because the same component renders in two
+   very different holes on the same desktop:
+     · the setup Overview and an ARCHIVED operating season give it the full page
+       column — MEASURED 1120px inside at a 1440 viewport, 1164 at 1536 — where a
+       row's name and its number end up ~900px apart and seven rows run 464px tall;
+     · a LIVE operating season puts it in the 1fr slot of `.row2`, beside the
+       Next-30-days ledger — ~360px inside at the same viewport (DERIVED from
+       `.row2`'s 2fr/1fr tracks and this card's padding, not measured: the layout
+       fixture is a setup-stage season), where the row shape is already right and
+       two columns would mean two ~165px columns.
+   A viewport media query cannot tell those apart. A container query can, so the
+   live dashboard's rail is spared without needing to know it is being spared.
+
+   ⚠ THE 940px THRESHOLD IS LOAD-BEARING AND WAS RAISED FROM 720 BY REVIEW. Do not
+   lower it. Measured on dev, a full-width rail's `cardInner` against the viewport
+   is NOT monotonic — the desktop shell's sidebar appears around 940 and takes the
+   width back:
+       786→718 · 800→732 · 900→832 · 940→620 · 1024→704 · 1100→780 · 1280→960
+       · 1440→1120
+   At 720 that curve crossed the threshold THREE times, so the rail folded,
+   unfolded and folded again as a window widened — and worse, it folded in the
+   ~788–860 band where `.row2` has collapsed and the LIVE operate rail is full
+   width too, giving that rail two ~354px columns on an iPad Pro portrait (834px)
+   with `white-space: nowrap` stats squeezing the row names into wrapping. The
+   guarantee two paragraphs up was false in exactly that band.
+   940 fixes both at once: the no-sidebar band tops out at 832 so it can never
+   fire there, and the sidebar band only reaches 940 at ~1260px of viewport. The
+   result is monotonic — one column below ~1260, two above — and every folded
+   column is ≥454px, which is the width the rows actually needed. The floor is
+   therefore "two columns must each be worth having", not "the card is biggish". */
+.railCard {
+  container-type: inline-size;
+  /* ⚠ Inline-size containment also makes this card a containing block for any
+     absolutely-positioned descendant. There are none today; a tooltip, badge or
+     menu added inside the rail later will anchor HERE rather than to a farther
+     ancestor, which is usually what you want but never what you expected. */
+}
+
+@container (min-width: 940px) {
+  .railCols { columns: 2; column-gap: 2rem; }
+  /* A row is one fact; it never splits across the gutter. */
+  .railRow { break-inside: avoid; }
+  /* A group that NAMES ITSELF must not split either — its step marker would sit
+     at the foot of one column with its rows at the head of the next. Keyed on
+     the marker's presence rather than the variant, because the operate rail is
+     one UNLABELLED group: forbidding a break inside that one would pack all five
+     rows into column one and leave column two empty.
+     ⚠ Deliberately NO `:last-child` margin reset. `:last-child` is DOM order, and
+     multicol fragments by COLUMN — the DOM-last group ends one column while some
+     other group ends the other, so the reset would zero the gap under exactly one
+     of the two and leave the columns asymmetric at their feet. In a fragmented
+     layout, spacing that must look the same in every column cannot be keyed on a
+     position in the source. Both columns keep the margin, and it costs nothing:
+     measured 277px before and after, because fragmentation truncates a trailing
+     margin at the foot of a column rather than adding it to the height. */
+  .railGroup:has(.railStep) { break-inside: avoid; margin-bottom: 0.55rem; }
+  /* The hairline between groups is a single-column device: across two columns
+     "first group" stops meaning "top of the list", so a rule above a column reads
+     as a dangling line. The step marker plus the space around it carries the
+     grouping here — the hairline never was what communicated it. */
+  .railGroup { border-top: none; }
+  /* The unlabelled (operate) rail has no marker to open a column with, so its
+     rows keep a hairline on EVERY row including the first — otherwise column one
+     opens bare and column two opens with a rule, and the asymmetry is the same
+     dangling line by another route. With all of them present, both columns open
+     on the list's top edge. */
+  .railGroup:not(:has(.railStep)) .railRow:first-of-type {
+    border-top: 1px solid var(--home-line, var(--border-2));
+  }
+  .railStep {
+    padding-top: 0.1rem;
+    /* One step darker than --home-dim now the hairlines are gone. At --home-dim a
+       marker was the same face, casing, tracking and colour as the card's own
+       eyebrow one line above (0.58rem against 0.62rem), so the two read as
+       siblings instead of as label-and-contents; the hairlines were papering over
+       it. #4A4235 measures 9.90:1 on the white card, --white-70 on the dark one. */
+    color: var(--home-ink-soft, var(--white-70));
+    font-size: 0.6rem;
+  }
+}
+
+/* ⚠ THE ROW FLOOR STAYS AT 44px, and the approved mockup's mouse-only 34px is
+   deliberately NOT built. Two reasons, both found while implementing it:
+
+   1. `(pointer: fine)` does not mean "no finger". A Windows touchscreen laptop
+      reports a fine primary pointer and would have served 34px rows to a hand at
+      1440 — a real device class, silently regressed, which no media query can
+      separate out.
+   2. The height it buys is ~40px of the ~187px this change already saves. The
+      "mostly air" complaint was mostly a WIDTH problem; a 44px row inside a 567px
+      column is an ordinary list row, not the same object it was at 1166px.
+
+   It would also have put seven NEW sub-floor findings into the rendered layout
+   sweep's baseline on a screen about to be QA'd — payable in exemptions, for the
+   last 15% of the win. Cheap to revisit if the density is ever wanted. */
 .railRow {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr) auto 10px;
@@ -384,7 +500,13 @@
 }
 .railStat b { color: var(--white-80); font-weight: 650; }
 .railStatDanger { color: var(--home-live, var(--danger)); font-weight: 700; }
-.railChev { color: var(--white-30); font-size: 0.75rem; }
+/* ⚠ The chevron is a TEXT glyph, not an icon — `--white-30` (a hairline value) measured
+   1.44:1 on the white card and failed the rendered contrast sweep at all four widths. The
+   old journey cards got away with the same token because theirs was an SVG, which the
+   checker exempts. `--home-dim` is the muted ink that was AA-corrected in 2026-08-02
+   precisely so quiet things still read: 5.91:1 here, and still a clear step below the
+   row's name and stat. */
+.railChev { color: var(--home-dim, var(--white-45)); font-size: 0.75rem; }
 
 /* ── Loading / error (same idiom as the shared payables panel) ── */
 .skeleton {

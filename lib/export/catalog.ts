@@ -364,6 +364,79 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     plannedPhase: 'Phase D1',
   },
 
+  // ── Coaches Portal: the Money hub's Export ▾ menu ────────────────────────
+  // Five datasets behind one hub-wide menu (owner ruling 2026-08-13; the coach picks WHAT and
+  // WHICH FORMAT on one level). Player dues and budget vs. actual are the same column contracts
+  // their own screens ship — catalogued above and unchanged. The three below did not exist on
+  // any surface before that pass, which is what made the ruling's "in and out travel together"
+  // rule false on the very screen that triggered it.
+  //
+  // ⚠ ALL THREE ARE SPREADSHEET-ONLY BY DESIGN, and that is what removes them from a phone
+  // (rule 11 keys off what an export PRODUCES, never off which screen it sits on).
+  {
+    id: 'coaches-budget-lines',
+    label: 'Coaches Portal — Budget lines',
+    module: 'coaches',
+    page: 'Money → Export ▾',
+    file: 'lib/coach-money-exports.ts',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'club_exports',
+    audiences: ['coach'],
+    // Carries the coach's own planning note on each line ("3 × $1000"), unlike the expenses
+    // export below which drops its notes. The asymmetry is deliberate: a budget-line note is
+    // written ABOUT A PLANNED COST, whereas an expense note is free text against a real
+    // transaction and can end up holding anything.
+    includesSensitiveFields: false,
+    // Built from the plan the coach is looking at, in the view they are reading it.
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary:
+      'Export the season budget plan — category, line, whether it is a cost or expected funding, amount, its payment months, and notes.',
+  },
+  {
+    id: 'coaches-expenses-payables',
+    label: 'Coaches Portal — Expenses & payables',
+    module: 'coaches',
+    page: 'Money → Export ▾',
+    file: 'lib/coach-money-exports.ts',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'club_exports',
+    audiences: ['coach'],
+    // Expense NOTES are deliberately excluded from the column set — free text a coach may have
+    // used for anything, so keeping it out leaves this dataset with no sensitive-field policy.
+    includesSensitiveFields: false,
+    // ⚠ TRUE, and it is the whole reason Export sits on the tab rather than in the hub header
+    // (owner ruling 2026-08-13): this export follows the SUB-TAB the coach is on and the money-tag
+    // filter beside it.
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary:
+      'Export what is on screen in Expenses & Payables — the Expenses list, the Payables list, or the payment schedule — honouring the money-tag filter.',
+  },
+  {
+    id: 'coaches-fundraisers',
+    label: 'Coaches Portal — Fundraisers',
+    module: 'coaches',
+    page: 'Money → Export ▾',
+    file: 'lib/coach-money-exports.ts',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'club_exports',
+    audiences: ['coach'],
+    // ⚠ PER-FUNDRAISER TOTALS ONLY — never the per-player breakdown, which names children
+    // beside the money they raised and stays on the fundraiser's own page.
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'Export each fundraiser with its rebate, dates, total raised, player credits, the team’s net, and how many players took part.',
+  },
+
   // ── Planned: Phase D2 (P1 new table exports) ────────────────────────────
   {
     id: 'coaches-schedule',

@@ -1,0 +1,1214 @@
+<title>Header Actions Inventory</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     DOCUMENT CHROME — deliberately COOL graphite, so it never reads as product.
+     Every product render below paints the WARM portal palette as literals inside
+     its own .screen scope and is therefore theme-independent: a render is a
+     render in both themes, exactly as a screenshot would be.
+     ══════════════════════════════════════════════════════════════════════════ */
+  :root {
+    --ground:    #E7E9EC;
+    --panel:     #FCFCFD;
+    --panel-2:   #F1F3F5;
+    --ink:       #171B20;
+    --ink-2:     #5A626C;
+    --ink-3:     #858D97;
+    --hair:      #D2D6DB;
+    --hair-2:    #BFC5CC;
+    --accent:    #4E5C1B;
+    --accent-bg: rgba(78, 92, 27, 0.10);
+    --flag:      #A6431C;
+    --flag-bg:   rgba(166, 67, 28, 0.10);
+    --fix:       #2F6046;
+    --fix-bg:    rgba(47, 96, 70, 0.10);
+    --bezel:     #C9CED4;
+
+    --sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --grot: "Inter Tight", "Segoe UI Semibold", "Helvetica Neue", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #101418;
+      --panel:     #171C21;
+      --panel-2:   #1D242A;
+      --ink:       #E4E8EC;
+      --ink-2:     #98A2AC;
+      --ink-3:     #6E7883;
+      --hair:      #262D34;
+      --hair-2:    #333C44;
+      --accent:    #A9C24E;
+      --accent-bg: rgba(169, 194, 78, 0.13);
+      --flag:      #E08A5F;
+      --flag-bg:   rgba(224, 138, 95, 0.13);
+      --fix:       #78BF98;
+      --fix-bg:    rgba(120, 191, 152, 0.13);
+      --bezel:     #2B333A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #101418;
+    --panel:     #171C21;
+    --panel-2:   #1D242A;
+    --ink:       #E4E8EC;
+    --ink-2:     #98A2AC;
+    --ink-3:     #6E7883;
+    --hair:      #262D34;
+    --hair-2:    #333C44;
+    --accent:    #A9C24E;
+    --accent-bg: rgba(169, 194, 78, 0.13);
+    --flag:      #E08A5F;
+    --flag-bg:   rgba(224, 138, 95, 0.13);
+    --fix:       #78BF98;
+    --fix-bg:    rgba(120, 191, 152, 0.13);
+    --bezel:     #2B333A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 1.25rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .masthead { padding: 4rem 0 2.5rem; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--grot);
+    font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    text-wrap: balance;
+    margin: 0 0 1.1rem;
+  }
+  .standfirst {
+    font-size: 1.08rem;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+  }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Contents ─────────────────────────────────────────────────────── */
+  .contents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--hair);
+    margin-bottom: 3.5rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .contents a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid transparent; }
+  .contents a:hover, .contents a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Sections ─────────────────────────────────────────────────────── */
+  section { margin-bottom: 4.5rem; scroll-margin-top: 1.5rem; }
+  h2 {
+    font-family: var(--grot);
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 0.5rem;
+  }
+  h3 {
+    font-family: var(--grot);
+    font-size: 1.15rem;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+    margin: 2.75rem 0 0.5rem;
+  }
+  .lede { color: var(--ink-2); max-width: 66ch; margin: 0 0 2rem; }
+  p { max-width: 68ch; }
+  p + p { margin-top: 0.9rem; }
+
+  /* ── Render plate ─────────────────────────────────────────────────── */
+  .plate { margin: 1.75rem 0 0; }
+  .plate-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+  }
+  .stamp {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+  }
+  .stamp-today    { color: var(--flag);   background: var(--flag-bg); }
+  .stamp-decided  { color: var(--fix);    background: var(--fix-bg); }
+  .stamp-note     { color: var(--ink-2);  background: var(--panel-2); border: 1px solid var(--hair); }
+  .plate-name { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); letter-spacing: 0.04em; }
+  .frame {
+    border: 1px solid var(--bezel);
+    border-radius: 8px;
+    overflow-x: auto;
+    background: #F8F4ED;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px -18px rgba(0,0,0,0.35);
+  }
+  .caption {
+    margin: 0.7rem 0 0;
+    font-size: 0.88rem;
+    color: var(--ink-2);
+    max-width: 72ch;
+  }
+  .caption b { color: var(--ink); font-weight: 600; }
+
+  /* ══════════════════════════════════════════════════════════════════
+     PRODUCT RENDER SCOPE — warm coach-portal palette, painted as literals.
+     Faces approximate the shipped stack (Barlow Condensed / Inter /
+     IBM Plex Mono); webfonts can't load here, so the shapes are close
+     rather than exact. Geometry, weights and colours are the real values.
+     ══════════════════════════════════════════════════════════════════ */
+  .screen {
+    background: #F8F4ED;
+    color: #241E15;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    padding: 1.6rem 1.75rem 1.9rem;
+    min-width: 900px;
+  }
+  .screen.narrow { min-width: 0; width: 100%; padding: 1rem 1rem 1.2rem; }
+  .screen.mid { min-width: 620px; }
+
+  .cp-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+  .cp-header.tight { margin-bottom: 0.9rem; }
+  .cp-left { display: flex; align-items: center; gap: 1rem; margin-right: auto; min-width: 0; }
+  .cp-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(87, 101, 30, 0.12);
+    border: 1px solid rgba(87, 101, 30, 0.30);
+    color: #57651E;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.15rem; font-weight: 700;
+  }
+  .cp-title {
+    font-family: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    font-size: 1.75rem; font-weight: 900; line-height: 1.1;
+    letter-spacing: 0.004em;
+    color: #241E15; margin: 0;
+  }
+  .cp-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+  .cp-help {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid rgba(70, 55, 30, 0.20);
+    background: #FFFFFF; color: #6A635C;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.82rem; flex-shrink: 0;
+  }
+
+  /* Buttons — the shipped classes, rendered truthfully */
+  .b {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border-radius: 6px; cursor: default; white-space: nowrap;
+    font-family: inherit;
+  }
+  .b-sec {
+    background: #FFFFFF; color: #4A4235;
+    border: 1px solid rgba(70, 55, 30, 0.20);
+    padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600;
+  }
+  .b-ghost {
+    background: none; border: none; color: #6A635C;
+    padding: 0.3rem 0.5rem; font-size: 0.85rem; font-weight: 500;
+  }
+  .b-lime {
+    background: #D9F99D; color: #241E15; border: none;
+    padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 700;
+  }
+  .b-open { background: rgba(87,101,30,0.12); border-color: rgba(87,101,30,0.45); color: #3F4A16; }
+  .b .ic { font-size: 0.9em; opacity: 0.85; }
+
+  /* Dropdown panel */
+  .menuhost { position: relative; }
+  .menu {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 5;
+    background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20);
+    border-radius: 8px; min-width: 300px; padding: 0.4rem;
+    box-shadow: 0 12px 28px -14px rgba(36, 30, 21, 0.45);
+    text-align: left;
+  }
+  .menu.left { right: auto; left: 0; }
+  .menu-head {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #8A8377; padding: 0.4rem 0.6rem 0.35rem;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.5rem 0.6rem; border-radius: 5px;
+    font-size: 0.86rem; color: #241E15;
+  }
+  .menu-item.on { background: rgba(87, 101, 30, 0.09); }
+  .menu-item .lbl2 { margin-right: auto; }
+  .fmt {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.6rem; letter-spacing: 0.06em;
+    border: 1px solid rgba(70, 55, 30, 0.20); border-radius: 3px;
+    padding: 0.1rem 0.28rem; color: #6A635C;
+  }
+  .fmt.pdf { border-color: rgba(87,101,30,0.5); color: #4A5A19; }
+  .menu-sep { height: 1px; background: rgba(70, 55, 30, 0.12); margin: 0.35rem 0.3rem; }
+  .menu-foot { padding: 0.45rem 0.6rem; font-size: 0.82rem; color: #57651E; font-weight: 600; }
+
+  /* Tab bar */
+  .cp-tabs { display: flex; gap: 0.15rem; border-bottom: 1px solid rgba(87, 101, 30, 0.15); overflow: hidden; }
+  .cp-tabrow {
+    display: flex; align-items: flex-end; gap: 1rem;
+    border-bottom: 1px solid rgba(87, 101, 30, 0.15);
+  }
+  .cp-tabrow .cp-tabs { border-bottom: none; flex: 1; min-width: 0; }
+  .cp-tabrow .cp-actions { padding-bottom: 0.4rem; }
+  .cp-tab {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 0.55rem 0.85rem; white-space: nowrap;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.045em;
+    text-transform: uppercase; color: #6A635C;
+    border-bottom: 2px solid transparent;
+  }
+  .cp-tab.on { color: #57651E; border-bottom-color: #57651E; }
+
+  .cp-paneltoolbar {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding: 0.9rem 0 0;
+  }
+  .cp-paneltoolbar .spacer { flex: 1; }
+  .cp-body {
+    margin-top: 1.5rem;
+    border: 1px dashed rgba(70, 55, 30, 0.22);
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    color: #6A635C; font-size: 0.85rem;
+    background: rgba(255,255,255,0.55);
+  }
+  .cp-body.tall { padding: 2.4rem 1.2rem; }
+  .cp-gap { height: 1.9rem; }
+  .cp-filters {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding: 0.75rem 0; border-bottom: 1px solid rgba(70, 55, 30, 0.12);
+  }
+  .cp-input {
+    background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20);
+    border-radius: 6px; padding: 0.42rem 0.7rem; font-size: 0.85rem;
+    color: #6A635C; min-width: 200px; margin-right: auto;
+  }
+  .cp-viewsw { display: inline-flex; border: 1px solid rgba(70,55,30,0.20); border-radius: 6px; overflow: hidden; }
+  .cp-viewsw span { padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; color: #6A635C; background: #FFF; }
+  .cp-viewsw span.on { background: rgba(87,101,30,0.12); color: #3F4A16; }
+  .cp-count { font-size: 0.85rem; color: #6A635C; margin-right: auto; }
+  .cp-empty {
+    margin-top: 1.5rem; border: 1px solid rgba(70,55,30,0.12); border-radius: 10px;
+    background: #FFFFFF; padding: 1.6rem 1.4rem; text-align: center;
+  }
+  .cp-empty h4 { font-family: "Barlow Condensed","Arial Narrow",sans-serif; font-size: 1.15rem; font-weight: 800; margin: 0 0 0.35rem; color: #241E15; }
+  .cp-empty p { font-size: 0.85rem; color: #6A635C; margin: 0 auto 1rem; max-width: 42ch; }
+  .cp-empty .row { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+
+  /* Phone shape: help holds the corner, actions drop to row 2 */
+  .screen.narrow .cp-header { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 0.75rem; margin-bottom: 1.2rem; }
+  .screen.narrow .cp-left { grid-row: 1; grid-column: 1; gap: 0.7rem; }
+  .screen.narrow .cp-help { grid-row: 1; grid-column: 2; }
+  .screen.narrow .cp-actions { grid-row: 2; grid-column: 1 / -1; }
+  .screen.narrow .cp-icon { width: 40px; height: 40px; font-size: 1rem; }
+  .screen.narrow .cp-title { font-size: 1.45rem; }
+  .screen.narrow .lbl { display: none; }
+  .screen.narrow .b-sec, .screen.narrow .b-lime { min-height: 44px; }
+  .screen.narrow .cp-tabs { overflow-x: auto; }
+  .screen.narrow .cp-tab { padding: 0.5rem 0.55rem; font-size: 0.64rem; min-height: 40px; }
+  .screen.narrow .cp-body { margin-top: 1rem; }
+
+  /* ── Tables ───────────────────────────────────────────────────────── */
+  .tablewrap { overflow-x: auto; margin: 1.5rem 0 0; border: 1px solid var(--hair); border-radius: 8px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; min-width: 640px; }
+  th, td { text-align: left; padding: 0.62rem 0.9rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3);
+    background: var(--panel-2); border-bottom: 1px solid var(--hair-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.name { font-weight: 600; white-space: nowrap; }
+  .none { color: var(--flag); font-family: var(--mono); font-size: 0.78rem; }
+  .yes  { color: var(--fix); font-family: var(--mono); font-size: 0.78rem; font-weight: 700; }
+  .ok   { color: var(--ink-2); }
+  code {
+    font-family: var(--mono); font-size: 0.83em;
+    background: var(--panel-2); padding: 0.08em 0.34em; border-radius: 3px;
+    border: 1px solid var(--hair);
+  }
+
+  /* ── Callout ──────────────────────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--flag);
+    background: var(--flag-bg);
+    padding: 0.9rem 1.1rem;
+    margin: 1.75rem 0 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    max-width: 74ch;
+  }
+  .note.fix { border-left-color: var(--fix); background: var(--fix-bg); }
+  .note.quiet { border-left-color: var(--hair-2); background: var(--panel-2); }
+  .note b { font-weight: 650; }
+
+  /* ── Considered strip ─────────────────────────────────────────────── */
+  .considered { display: grid; gap: 1rem; margin-top: 1.5rem; }
+  @media (min-width: 800px) { .considered { grid-template-columns: repeat(3, 1fr); } }
+  .cons {
+    border: 1px solid var(--hair); border-radius: 8px;
+    background: var(--panel); padding: 0.9rem 1rem;
+  }
+  .cons h4 {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.6rem;
+  }
+  .dia { display: grid; gap: 3px; margin-bottom: 0.7rem; }
+  .dia .r { display: flex; gap: 3px; align-items: center; height: 15px; }
+  .dia .t { flex: 1; background: var(--hair); border-radius: 2px; height: 100%; }
+  .dia .a { width: 26%; background: var(--accent); border-radius: 2px; height: 100%; opacity: 0.75; }
+  .dia .q { width: 15px; background: var(--hair-2); border-radius: 50%; height: 15px; }
+  .dia .e { flex: 1; }
+  .cons p { font-size: 0.83rem; color: var(--ink-2); margin: 0; max-width: none; }
+
+  /* ── Rules list ───────────────────────────────────────────────────── */
+  .rules { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 0; }
+  .rules li {
+    display: grid; grid-template-columns: minmax(0, 13rem) 1fr; gap: 0 1.75rem;
+    padding: 1.15rem 0; border-top: 1px solid var(--hair);
+  }
+  .rules li:last-child { border-bottom: 1px solid var(--hair); }
+  .rule-name {
+    font-family: var(--grot); font-weight: 650; font-size: 1rem;
+    letter-spacing: -0.01em; color: var(--ink);
+  }
+  .rule-body { color: var(--ink-2); font-size: 0.94rem; }
+  .rule-body b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 640px) {
+    .rules li { grid-template-columns: 1fr; gap: 0.3rem; }
+  }
+
+  .pair { display: grid; gap: 2rem; margin-top: 1.75rem; }
+  @media (min-width: 900px) { .pair.two { grid-template-columns: 1fr 1fr; } .pair.two .plate { margin-top: 0; } }
+  .pair.phones { grid-template-columns: repeat(auto-fit, minmax(330px, 400px)); justify-content: start; }
+  .pair.phones .plate { margin-top: 0; }
+
+  footer.doc {
+    border-top: 1px solid var(--hair);
+    padding-top: 1.75rem; margin-top: 4rem;
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3);
+    letter-spacing: 0.03em; line-height: 1.8;
+  }
+  a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Coach portal · design spec · 12 Aug 2026</p>
+  <h1>Where the buttons live</h1>
+  <p class="standfirst">
+    Every page-level button across the coach portal's 40 team screens, counted — then the decided
+    shape for the Money hub, what disappears on a phone, and the rules that keep the next screen
+    from inventing a fourth pattern. Extends the
+    <strong>2026-08-11 page-header ruling</strong> rather than reopening it.
+  </p>
+</header>
+
+<nav class="contents">
+  <a href="#today">What's there today</a>
+  <a href="#decided">The decided shape</a>
+  <a href="#menus">Inside the menus</a>
+  <a href="#phone">On a phone</a>
+  <a href="#standard">Standard pages</a>
+  <a href="#rules">The rules</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="today">
+  <h2>What's there today</h2>
+  <p class="lede">
+    Forty screens sit under a team. Ten of them put an action in the page header. The rest either
+    have no page-level action at all, or have one that's living somewhere in the body.
+  </p>
+
+  <h3>The four Imports</h3>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Screen</th><th>Called</th><th>Drawn as</th><th>Lives</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="name">Schedule</td><td>Import</td><td class="ok">Outlined button</td><td class="ok">Page header</td></tr>
+        <tr><td class="name">Budget Plan</td><td>Import</td><td class="ok">Text link</td><td class="ok">Actions band, below the tabs</td></tr>
+        <tr><td class="name">Expenses &amp; Payables</td><td>Import payables</td><td class="ok">Text link</td><td class="ok">Actions band, below the tabs</td></tr>
+        <tr><td class="name">Roster</td><td>Paste your roster</td><td class="ok">Empty-state link, plus a door inside the Add Player form</td><td class="none">nowhere in the header</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <b>Roster is the one that costs a coach something.</b> Once a roster has a single player on it
+    the empty state is gone, and bulk-add survives only as a second door inside the Add Player
+    form. A coach adding fifteen players after tryouts has no way to find it.
+  </div>
+
+  <h3>Where Export is, and isn't</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Has an Export menu</th><th>Has none</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="ok">Roster · Schedule · Player Dues · Budget vs. Actual</td>
+          <td class="ok">Budget Plan · Expenses &amp; Payables · Fundraisers · Allocations · Payments · Playing time · Results · Attendance · Awards</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Several of the screens without one are more obviously "a table someone wants in Excel" than two
+    of the screens that have it. <b>Roster's export also disappears entirely in Depth-chart
+    view</b> — the button sits inside a block gated on the list view, though the export itself would
+    work fine either way.
+  </p>
+
+  <h3>The same slot, four tabs of one hub</h3>
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-today">Today</span>
+      <span class="plate-name">Money · actions band per tab</span>
+    </div>
+    <div class="frame">
+      <div class="screen mid" style="padding-top: 1.2rem;">
+        <div style="display:grid; gap:0.9rem;">
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <span style="font-family:ui-monospace,monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:#6A635C; width:11rem; flex-shrink:0;">Budget Plan</span>
+            <span class="cp-actions">
+              <span class="b b-ghost"><span class="ic">↑</span> Import</span>
+              <span class="b b-sec"><span class="ic">+</span> Add Line</span>
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <span style="font-family:ui-monospace,monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:#6A635C; width:11rem; flex-shrink:0;">Fundraisers</span>
+            <span class="cp-actions"><span class="b b-lime"><span class="ic">+</span> New Fundraiser</span></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <span style="font-family:ui-monospace,monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:#6A635C; width:11rem; flex-shrink:0;">Expenses &amp; Payables</span>
+            <span class="cp-actions">
+              <span class="b b-sec"><span class="ic">+</span> Add Expense</span>
+              <span class="b b-sec"><span class="ic">+</span> Add Payable</span>
+              <span class="b b-ghost"><span class="ic">↑</span> Import payables</span>
+              <span class="b b-ghost"><span class="ic">⚙</span> Manage tags</span>
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <span style="font-family:ui-monospace,monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:#6A635C; width:11rem; flex-shrink:0;">Player Dues</span>
+            <span class="cp-actions">
+              <span class="b b-sec">Export ▾</span>
+              <span class="b b-sec">Set dues for all players</span>
+              <span class="b b-sec">Send reminders</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>"Create the main thing on this page" is filled lime on Fundraisers and outlined white on
+      Budget Plan and Expenses</b> — same role, one tab apart. Import is a text link here and an
+      outlined button on Schedule. Expenses runs four buttons wide; Allocations runs none.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="decided">
+  <h2>The decided shape</h2>
+  <p class="lede">
+    Every button sits with the thing it names. The header names <em>Money</em>, so it holds the
+    hub's own doors — in and out. The tab bar names nothing a coach can act on, so it stays pure
+    navigation. The tab's <em>content</em> names the budget, so that's where "Add Line" lives.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-decided">Decided</span>
+      <span class="plate-name">Money → Budget Plan · 1156px</span>
+    </div>
+    <div class="frame">
+      <div class="screen">
+        <div class="cp-header tight">
+          <div class="cp-left">
+            <div class="cp-icon">$</div>
+            <h1 class="cp-title">Money</h1>
+          </div>
+          <div class="cp-actions">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec"><span class="ic">↓</span> Export ▾</span>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+        <div class="cp-tabs">
+          <span class="cp-tab">Overview</span>
+          <span class="cp-tab on">Budget Plan</span>
+          <span class="cp-tab">Player Dues</span>
+          <span class="cp-tab">Fundraisers</span>
+          <span class="cp-tab">Expenses &amp; Payables</span>
+          <span class="cp-tab">Allocations</span>
+          <span class="cp-tab">Payments</span>
+          <span class="cp-tab">Budget vs. Actual</span>
+        </div>
+        <div class="cp-paneltoolbar">
+          <span class="cp-viewsw"><span class="on">List</span><span>By period</span></span>
+          <span class="spacer"></span>
+          <span class="b b-lime"><span class="ic">+</span> Add Line</span>
+        </div>
+        <div class="cp-body">The budget table starts here.</div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Import and Export never change.</b> They're the hub's own doors, identical on all seven
+      tabs, so a coach learns them once and the header above the tab bar stops making a promise it
+      can't keep. <b>Add Line comes down into the budget itself</b>, joining the List / By period
+      control the tab already has — so it changes with the tab because it's <i>inside</i> the tab,
+      and the tab bar goes back to being purely a way to move around. Nothing was added to the page:
+      that row already existed.
+    </p>
+  </div>
+
+  <div class="note fix">
+    <b>Where a button goes: the nearest chrome that names what it acts on.</b> On Roster, the page
+    header says "Roster", so Add Player belongs there. In a hub the page header says "Money" — it
+    names the container, not the thing — so a create button sitting up there is orphaned. The
+    nearest chrome that names the budget is the budget's own toolbar. That's the whole rule, and it
+    explains why standard pages pull their actions <i>up</i> into the header while hub tabs push
+    their creates <i>down</i> into content: both are moving toward the label that describes them.
+  </div>
+
+  <h3>What it looks like on the other tabs</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Tab</th><th>Existing row it joins</th><th>What sits in it</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Budget Plan</td><td class="ok">List / By period</td><td class="ok">+ Add Line</td></tr>
+        <tr><td class="name">Expenses &amp; Payables</td><td class="ok">The category filter</td><td class="ok">+ Add Expense · + Add Payable · Manage tags</td></tr>
+        <tr><td class="name">Player Dues</td><td class="ok">The status filter</td><td class="ok">Set dues for all players · Send reminders</td></tr>
+        <tr><td class="name">Budget vs. Actual</td><td class="ok">The lens picker</td><td class="none">nothing to add</td></tr>
+        <tr><td class="name">Fundraisers</td><td class="none">has no row — gains a thin one</td><td class="ok">+ New Fundraiser</td></tr>
+        <tr><td class="name">Payments</td><td class="none">has no row — gains a thin one</td><td class="ok">+ New Request</td></tr>
+        <tr><td class="name">Allocations</td><td class="ok">—</td><td class="none">read-only, no row at all</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Five of seven tabs already have a control row for the create to join, so this mostly
+    <b>removes</b> a band rather than adding one. <b>Player Dues resolves itself:</b> its two bulk
+    actions act on the dues list, not on Money, so they come down with everything else — and the
+    header that was going to run four buttons wide now runs two.
+  </p>
+
+  <h3>How we got here</h3>
+  <div class="considered">
+    <div class="cons">
+      <h4>Considered — actions on the tab row</h4>
+      <div class="dia">
+        <div class="r"><span class="t" style="max-width:110px"></span><span class="e"></span><span class="q"></span></div>
+        <div class="r"><span class="t"></span><span class="a"></span></div>
+      </div>
+      <p>Buttons ride the tab row. Set aside twice over: eight tabs plus buttons don't fit without shortening labels, and a navigation control is the wrong place to hang a verb.</p>
+    </div>
+    <div class="cons">
+      <h4>Considered — a tightened band</h4>
+      <div class="dia">
+        <div class="r"><span class="t" style="max-width:110px"></span><span class="e"></span><span class="q"></span></div>
+        <div class="r"><span class="t"></span></div>
+        <div class="r"><span class="e"></span><span class="a"></span></div>
+      </div>
+      <p>Keeps full tab labels and closes the gaps, but costs a band of height and still floats the buttons closer to the content than to their tab.</p>
+    </div>
+    <div class="cons">
+      <h4>Considered — a Data Tools destination</h4>
+      <div class="dia">
+        <div class="r"><span class="t" style="max-width:80px"></span><span class="e"></span></div>
+        <div class="r"><span class="a" style="width:100%"></span></div>
+        <div class="r"><span class="t"></span></div>
+      </div>
+      <p>One page for all data in and out, as the tournament admin has. Set aside: it moves the button away from the moment of need and adds a destination to a nav we've been pruning.</p>
+    </div>
+  </div>
+  <p class="caption">
+    The decided shape borrows the honesty of the third without its destination, and adds the dataset
+    menus that let Import and Export sit above the tabs without lying — then sends the creates the
+    other way, down to the content they act on.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="menus">
+  <h2>Inside the menus</h2>
+  <p class="lede">
+    Each menu names the data, not the file type — the coach picks <em>what</em>, then <em>which
+    format</em>, on one level. A row only appears where the coach has access to that data.
+  </p>
+
+  <div class="pair two">
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Import ▾</span></div>
+      <div class="frame">
+        <div class="screen mid" style="min-width:0; padding-bottom:11rem;">
+          <div class="cp-header tight">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <div class="cp-actions menuhost">
+              <span class="b b-sec b-open"><span class="ic">↑</span> Import ▾</span>
+              <span class="b b-sec"><span class="ic">↓</span> Export ▾</span>
+              <div class="menu left">
+                <div class="menu-head">Bring into Money</div>
+                <div class="menu-item"><span class="lbl2">Budget lines</span></div>
+                <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span></div>
+                <div class="menu-sep"></div>
+                <div class="menu-foot">Recent imports</div>
+              </div>
+            </div>
+            <span class="cp-help">?</span>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Two datasets today. <b>"Recent imports"</b> is borrowed from the tournament admin's Data
+        Tools — what was brought in, when, and by whom — without needing a page of its own.
+      </p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Export ▾</span></div>
+      <div class="frame">
+        <div class="screen mid" style="min-width:0; padding-bottom:11rem;">
+          <div class="cp-header tight">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <div class="cp-actions menuhost">
+              <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+              <span class="b b-sec b-open"><span class="ic">↓</span> Export ▾</span>
+              <div class="menu">
+                <div class="menu-head">Take out of Money</div>
+                <div class="menu-item"><span class="lbl2">Budget lines</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+                <div class="menu-item"><span class="lbl2">Player dues</span><span class="fmt">XLSX</span><span class="fmt">CSV</span><span class="fmt pdf">PDF</span></div>
+                <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+                <div class="menu-item"><span class="lbl2">Fundraisers</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+                <div class="menu-item"><span class="lbl2">Budget vs. actual</span><span class="fmt">XLSX</span><span class="fmt">CSV</span><span class="fmt pdf">PDF</span></div>
+              </div>
+            </div>
+            <span class="cp-help">?</span>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Five datasets, three of them new. Format sits on the row so there's no second menu to open.
+        <b>PDF is plan-gated</b> — on a plan without it, that chip is absent rather than locked.
+      </p>
+    </div>
+  </div>
+
+  <div class="note fix">
+    <b>Why a menu fixes the lie.</b> The objection to putting these buttons above the tab bar was
+    that they'd look hub-wide while belonging to one tab. Making them dataset pickers makes them
+    genuinely hub-wide — and it answers a question the current design can't: a coach who wants the
+    season's money in a spreadsheet no longer has to guess which tab hides the export.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="phone">
+  <h2>On a phone</h2>
+  <p class="lede">
+    Spreadsheets aren't a phone job. A coach isn't importing a budget on a sideline, and an
+    exported <code>.xlsx</code> lands in a downloads folder they'll never open there. So the rule
+    is about what the export <em>produces</em>, not which screen it's on.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Output</th><th>Phone</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name">Import (any dataset)</td>
+          <td class="none">hidden</td>
+          <td class="ok">A once-a-season setup act done from a spreadsheet the club already has. Nobody does it standing at a field.</td>
+        </tr>
+        <tr>
+          <td class="name">Excel &amp; CSV</td>
+          <td class="none">hidden</td>
+          <td class="ok">Produces a file whose only use is on a computer.</td>
+        </tr>
+        <tr>
+          <td class="name">PDF</td>
+          <td class="yes">kept</td>
+          <td class="ok">Something a coach reads, shows a parent, or forwards — a lineup card, a dues statement, a certificate.</td>
+        </tr>
+        <tr>
+          <td class="name">Add to calendar</td>
+          <td class="yes">kept</td>
+          <td class="ok">The most phone-native thing in the portal: the schedule goes straight into the coach's own calendar.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>One thing this retires, so it isn't lost quietly.</b> The importers were built with a
+    paste-a-block mode <i>specifically because phones have no file picker</i>. Hiding Import in the
+    phone header makes that path unreachable. The fix costs nothing: <b>the empty state keeps its
+    import offer at every width.</b> A coach who opens an empty budget on a phone is still offered
+    a way in — it's only the persistent header button that goes.
+  </div>
+
+  <div class="pair phones">
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Money · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-tabs">
+            <span class="cp-tab on">Budget Plan</span>
+            <span class="cp-tab">Dues</span>
+            <span class="cp-tab">Fund…</span>
+          </div>
+          <div class="cp-paneltoolbar">
+            <span class="cp-viewsw"><span class="on">List</span><span>By period</span></span>
+            <span class="spacer"></span>
+            <span class="b b-lime"><span class="ic">+</span> Add Line</span>
+          </div>
+          <div class="cp-body tall">Budget table.</div>
+        </div>
+      </div>
+      <p class="caption">Both menus gone, and the create is down with the budget — so the phone header is title and help alone, and the tab row keeps its full width for tabs.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Roster · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">☰</div><h1 class="cp-title">Roster</h1></div>
+            <span class="cp-help">?</span>
+            <div class="cp-actions">
+              <span class="b b-sec"><span class="ic">↓</span> PDF</span>
+              <span class="b b-lime"><span class="ic">+</span> Add Player</span>
+            </div>
+          </div>
+          <div class="cp-body tall">Player list.</div>
+        </div>
+      </div>
+      <p class="caption">Export collapses to what it can actually offer here. With one format left there's no menu — the button just does it.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Schedule · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">▦</div><h1 class="cp-title">Schedule</h1></div>
+            <span class="cp-help">?</span>
+            <div class="cp-actions">
+              <span class="b b-sec"><span class="ic">📅</span> Add to calendar</span>
+              <span class="b b-lime"><span class="ic">+</span> Add Event</span>
+            </div>
+          </div>
+          <div class="cp-body tall">List · Week · Month, then the events.</div>
+        </div>
+      </div>
+      <p class="caption">Schedule's export is the exception that proves the rule — on a phone it becomes the single most useful button on the screen.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-note">Budget Plan · empty · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-tabs"><span class="cp-tab on">Budget Plan</span><span class="cp-tab">Dues</span></div>
+          <div class="cp-empty">
+            <h4>No budget yet</h4>
+            <p>Add lines one at a time, or bring one in from a spreadsheet your club already keeps.</p>
+            <div class="row">
+              <span class="b b-sec"><span class="ic">↑</span> Import a budget</span>
+              <span class="b b-lime"><span class="ic">+</span> Add Line</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">The survival route: import is offered where a coach feels the need, at every width, including the paste-a-block path that exists for phones.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="standard">
+  <h2>Standard pages</h2>
+  <p class="lede">
+    Roster and Schedule are already closest to right and set the pattern. Single-dataset screens
+    keep plain Import and Export buttons — a menu with one item in it is a worse button. Elsewhere
+    it is <em>not</em> simply "move the stray buttons up": each one has to earn the header, and on
+    the screen with the most of them, only one does.
+  </p>
+
+  <div class="pair">
+    <div class="plate">
+      <div class="plate-bar">
+        <span class="stamp stamp-today">Today</span>
+        <span class="plate-name">Roster · 900px</span>
+      </div>
+      <div class="frame">
+        <div class="screen">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">☰</div><h1 class="cp-title">Roster</h1></div>
+            <div class="cp-actions">
+              <span class="b b-sec">Attendance</span>
+              <span class="b b-sec">Export ▾</span>
+              <span class="b b-lime"><span class="ic">+</span> Add Player</span>
+            </div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-filters">
+            <span class="cp-count">12 active players</span>
+            <span class="cp-viewsw"><span class="on">List</span><span>Depth chart</span></span>
+          </div>
+          <div class="cp-body">Player list.</div>
+        </div>
+      </div>
+      <p class="caption">
+        Import is missing, "Attendance" is a link to another page wearing a button, and the whole
+        group disappears in Depth-chart view.
+      </p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar">
+        <span class="stamp stamp-decided">Decided</span>
+        <span class="plate-name">Roster · 900px</span>
+      </div>
+      <div class="frame">
+        <div class="screen">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">☰</div><h1 class="cp-title">Roster</h1></div>
+            <div class="cp-actions">
+              <span class="b b-sec"><span class="ic">↑</span> Import</span>
+              <span class="b b-sec"><span class="ic">↓</span> Export ▾</span>
+              <span class="b b-lime"><span class="ic">+</span> Add Player</span>
+            </div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-filters">
+            <span class="cp-count">12 active players · <span style="color:#57651E; font-weight:600;">Attendance →</span></span>
+            <span class="cp-viewsw"><span class="on">List</span><span>Depth chart</span></span>
+          </div>
+          <div class="cp-body">Player list.</div>
+        </div>
+      </div>
+      <p class="caption">
+        Import joins Export as a pair. Attendance becomes a link among the other roster facts. The
+        header survives the view switch.
+      </p>
+    </div>
+  </div>
+
+  <h3>Plan templates — and the case against just moving everything up</h3>
+  <p>
+    The first pass at this screen lifted all three buttons into the header. It looked wrong, and the
+    reason is worth keeping: <b>"move stray actions into the header" is not the rule — "put each
+    button with the thing it names" is.</b> Run the three past that test and they don't all pass.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Button</th><th>Acts on</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">New template</td><td class="ok">Templates — makes one</td><td class="yes">page action</td></tr>
+        <tr><td class="name">Add from a past season</td><td class="ok">Templates — makes some, from a different source</td><td class="yes">the same action, another door</td></tr>
+        <tr><td class="name">Your tags</td><td class="ok">The coach's tag library, which outlives this page</td><td class="none">not a page action</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Two of them are the same verb wearing different clothes, and the third belongs to the list, not
+    the page — the identical call already made for Expenses' "Manage tags".
+    <b>Two ways to create one thing is one button with a choice, not two buttons.</b>
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-today">Today</span>
+      <span class="plate-name">Plan templates · 900px</span>
+    </div>
+    <div class="frame">
+      <div class="screen">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">▤</div><h1 class="cp-title">Plan templates</h1></div>
+          <span class="cp-help">?</span>
+        </div>
+        <div class="cp-filters">
+          <span class="cp-input">Search templates…</span>
+          <span class="b b-sec">Your tags</span>
+          <span class="b b-sec">Add from a past season</span>
+          <span class="b b-lime"><span class="ic">+</span> New template</span>
+        </div>
+        <div class="cp-body">Template list.</div>
+      </div>
+    </div>
+    <p class="caption">An empty header, and three page-level actions sharing a row with a search box.</p>
+  </div>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-decided">Decided</span>
+      <span class="plate-name">Plan templates · 900px</span>
+    </div>
+    <div class="frame">
+      <div class="screen">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">▤</div><h1 class="cp-title">Plan templates</h1></div>
+          <div class="cp-actions menuhost">
+            <span class="b b-lime b-open"><span class="ic">+</span> New template ▾</span>
+            <div class="menu">
+              <div class="menu-item">Start from blank</div>
+              <div class="menu-item">Bring one forward from a past season</div>
+            </div>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+        <div class="cp-filters" style="margin-top:0.2rem;">
+          <span class="cp-input">Search templates…</span>
+          <span class="b b-sec"><span class="ic">🏷</span> Your tags</span>
+        </div>
+        <div class="cp-body" style="margin-top:5.5rem;">Template list.</div>
+      </div>
+    </div>
+    <p class="caption">
+      One button in the header, and it's the one a coach came for. The second route lives inside it,
+      where somebody looking to create will actually find it. Tags go down with the list they
+      filter. <b>Same fold for Drills</b>, which has the identical pair.
+    </p>
+  </div>
+
+  <h3>The same three screens on a phone</h3>
+  <p>
+    This is the check that should have come first. At 390px the header allows one full-width row of
+    actions, secondaries collapse to icons, and the one primary keeps its words.
+  </p>
+
+  <div class="pair phones">
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-today">Templates today · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">▤</div><h1 class="cp-title">Plan templates</h1></div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-filters" style="gap:0.4rem;">
+            <span class="cp-input" style="min-width:100%;">Search templates…</span>
+            <span class="b b-sec">Your tags</span>
+            <span class="b b-sec">Add from a past season</span>
+            <span class="b b-lime"><span class="ic">+</span> New template</span>
+          </div>
+          <div class="cp-body">Template list.</div>
+        </div>
+      </div>
+      <p class="caption">Four controls stacking under a search box, none of them where the eye goes first.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-note">If all three had moved up</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">▤</div><h1 class="cp-title">Plan templates</h1></div>
+            <span class="cp-help">?</span>
+            <div class="cp-actions">
+              <span class="b b-sec">🏷</span>
+              <span class="b b-sec">🕘</span>
+              <span class="b b-lime"><span class="ic">+</span> New template</span>
+            </div>
+          </div>
+          <div class="cp-filters"><span class="cp-input" style="min-width:100%;">Search templates…</span></div>
+          <div class="cp-body">Template list.</div>
+        </div>
+      </div>
+      <p class="caption">Legal under the ruling, and still bad: <b>two unlabelled icons a coach has to tap to identify.</b> An icon works for Import because a coach met the word on desktop first — nobody meets "Your tags" that way.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-decided">Templates decided · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">▤</div><h1 class="cp-title">Plan templates</h1></div>
+            <span class="cp-help">?</span>
+            <div class="cp-actions">
+              <span class="b b-lime"><span class="ic">+</span> New template ▾</span>
+            </div>
+          </div>
+          <div class="cp-filters" style="gap:0.5rem;">
+            <span class="cp-input" style="min-width:0; flex:1;">Search templates…</span>
+            <span class="b b-sec">🏷</span>
+          </div>
+          <div class="cp-body">Template list.</div>
+        </div>
+      </div>
+      <p class="caption">One labelled primary in the header, search and its own filter on one line beneath. Nothing to decode.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="rules">
+  <h2>The rules</h2>
+  <p class="lede">
+    Twelve rules, extending the 2026-08-11 header ruling rather than replacing it. Three of them
+    exist because a render looked jumbled and the phone check hadn't been run yet.
+  </p>
+
+  <ul class="rules">
+    <li>
+      <span class="rule-name">Verbs only</span>
+      <span class="rule-body">
+        A page header holds <b>things this page does</b>. Not navigation to another page, not view
+        switches, not status displays. Roster's "Attendance" moves out; Overview's setup ring is a
+        display and gets a slot of its own.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">One order</span>
+      <span class="rule-body">
+        Left to right: <b>data in, data out, then the single primary</b>. Help "?" stays outside
+        the group in its own corner, untouched.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">In and out travel together</span>
+      <span class="rule-body">
+        If a screen exports a table and the same rows can be created in bulk, <b>both live in the
+        header</b>. Roster gains Import; three money datasets gain Export.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">One name, one weight</span>
+      <span class="rule-body">
+        "Import payables" becomes "Import". Import and Export are always the same weight of button.
+        Every page's main create action is <b>the filled lime button</b>, so "Add Line" and "Add
+        Expense" stop being outlined while "New Fundraiser" is filled. "Add from a past season"
+        keeps its own name — it's a different verb.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Nothing hides</span>
+      <span class="rule-body">
+        Header actions survive the <b>empty state and every view mode</b>. A coach shouldn't have to
+        add one player, or switch back to List, to find the button.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Nearest label wins</span>
+      <span class="rule-body">
+        A button belongs to <b>the nearest chrome that names what it acts on</b>. A page header
+        naming the page holds that page's actions. A hub header names the hub, so it holds only
+        hub-wide things — everything a single tab does lives in <b>that tab's own toolbar</b>,
+        joining whatever filter or view control the tab already has.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Hubs get menus</span>
+      <span class="rule-body">
+        A hub holding several datasets puts them behind <b>Import ▾ / Export ▾ in the page
+        header</b>, constant across every tab. A single-dataset screen keeps a plain button — a
+        one-item menu is a worse button. <b>Tab bars stay pure navigation</b>; no verbs hang off
+        them.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">One verb, one button</span>
+      <span class="rule-body">
+        Two ways to create the same thing is <b>one button with a choice inside it</b>, not two
+        buttons competing. "New template" and "Add from a past season" both make a template;
+        they become <b>New template ▾</b>. Same for Drills.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Two, then a menu</span>
+      <span class="rule-body">
+        Two buttons plus help is the working cap for a page header — <b>three was too many the
+        moment it was drawn.</b> Anything beyond either folds into the primary as a choice, or
+        goes down to the toolbar of the list it acts on.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Icons only for words already met</span>
+      <span class="rule-body">
+        A secondary may collapse to an icon on a phone <b>only where a coach would have met its
+        label on a wider screen</b> — Import, Export, Attendance. A button that exists <i>only</i>
+        as an icon is a guessing game; it goes to the list toolbar with its words on instead.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Context keeps its export</span>
+      <span class="rule-body">
+        An export whose content depends on a selection lives <b>beside that selection</b>, not in
+        the header. Awards' "Print N certificates" prints the chosen award type, so it belongs with
+        the type filter — and as a PDF it survives on a phone.
+      </span>
+    </li>
+    <li>
+      <span class="rule-name">Phones get outputs, not files</span>
+      <span class="rule-body">
+        On a phone the header offers only exports a coach can <b>read, show or send</b> — PDF and
+        add-to-calendar. Spreadsheet exports and all imports drop out. <b>Empty states keep their
+        import offer at every width</b>, so the paste-a-block path built for phones survives.
+      </span>
+    </li>
+  </ul>
+
+  <div class="note fix">
+    <b>Not reopened.</b> Nothing here touches the four rules of 2026-08-11 — no subtitles, the
+    masthead owns season and role, actions right of the title, one shared header component. The
+    help "?" stays chrome, alone in its corner at every width. These rules say <i>which</i> buttons
+    go in that actions slot, <i>how they're drawn</i>, and <i>which survive a phone</i>.
+  </div>
+</section>
+
+<footer class="doc">
+  Coach portal · page-level action inventory and spec · 40 team screens counted 12 Aug 2026<br>
+  Renders use the shipped warm-portal values; typefaces are approximated (webfonts can't load here).<br>
+  Source: docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html
+</footer>
+
+</div>

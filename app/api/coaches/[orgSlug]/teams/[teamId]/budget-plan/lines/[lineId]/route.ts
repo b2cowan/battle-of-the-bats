@@ -73,6 +73,16 @@ export const PATCH = withObservability(async (req: Request,
     updates.notes = body.notes?.trim() || null;
   }
 
+  if ('lineKind' in body) {
+    if (body.lineKind !== 'cost' && body.lineKind !== 'funding') {
+      return NextResponse.json({ error: 'lineKind must be "cost" or "funding"' }, { status: 400 });
+    }
+    // Switching kind is deliberately allowed and needs no other change: the amount is positive
+    // either way and any period split still reconciles to it. A coach who filed sponsorship as a
+    // cost fixes it in the same form they made it in.
+    updates.line_kind = body.lineKind;
+  }
+
   // The FK payload must belong to this org's taxonomy (platform defaults are org_id NULL) — the
   // same ownership check the lines POST performs. Without it a crafted PATCH could relink a line
   // to, and echo back the name of, ANOTHER org's custom category or item. The POST was hardened

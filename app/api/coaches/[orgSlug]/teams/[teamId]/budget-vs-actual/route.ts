@@ -10,6 +10,7 @@ import {
   buildMonthGrid, monthKeyOf,
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
+import { computeBudgetTotals } from '@/lib/coach-budget-totals';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
@@ -38,7 +39,13 @@ export const GET = withObservability(async (req: Request,
     .eq('program_year_id', programYear.id)
     .order('sort_order');
 
-  const lines = (linesRaw ?? []) as Array<Record<string, unknown>>;
+  const allLines = (linesRaw ?? []) as Array<Record<string, unknown>>;
+  // ⚠ EXPECTED-FUNDING LINES ARE NOT COSTS and must never enter the cost machinery below: this
+  // report matches actual expenses to a line by category NAME, so a funding line filed under
+  // "Fundraising" would sit waiting to absorb a real expense that happened to carry that word —
+  // and would inflate the budget it is supposed to offset. They get their own block (§8b).
+  const lines = allLines.filter(l => l.line_kind !== 'funding');
+  const fundingLines = allLines.filter(l => l.line_kind === 'funding');
 
   // ── 2. Load expenses (paid and unpaid) ───────────────────────────────────
   const { data: expensesRaw } = await supabaseAdmin
@@ -386,13 +393,25 @@ export const GET = withObservability(async (req: Request,
     }));
   }
 
-  // The optional season total reconciled against the itemized sum: the larger wins, and anything
-  // above the lines is a non-itemized "buffer" (owner decision 2026-07-08). Computed HERE rather
-  // than with headroom below, because the month grid needs the buffer too — both views on this
-  // page must report the same budget total. `totalBudget` is the itemized sum, set above.
-  const seasonTotal = programYear.budgetAmount ?? null;
-  const effectiveBudget = Math.max(totalBudget, seasonTotal ?? 0);
-  const buffer = seasonTotal != null && seasonTotal > totalBudget ? seasonTotal - totalBudget : 0;
+  // The optional ESTIMATED total reconciled against the itemized sum. ⚠ Owner ruling 2026-08-12:
+  // the estimate wins whenever it is set, in BOTH directions — it used to be max(itemized,
+  // estimate), which kept a lower estimate in the database and then ignored it. One shared module
+  // decides this for the planner, the Money hub and this report, because when all three did it
+  // inline they were one edit away from disagreeing on the same screen. Computed HERE rather than
+  // with headroom below, because the month grid needs the un-itemized part too.
+  const budgetTotals = computeBudgetTotals({
+    lines: allLines.map(l => ({
+      totalAmount: (l.total_amount as number) ?? 0,
+      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+    })),
+    estimatedTotal: programYear.budgetAmount ?? null,
+  });
+  const seasonTotal = budgetTotals.estimatedTotal;
+  const effectiveBudget = budgetTotals.totalPlanned;
+  // The month grid's own "not itemized yet" row: only the POSITIVE case is money the grid can
+  // stand in for. When the lines have outgrown the estimate there is nothing unallocated to show,
+  // and a negative pseudo-row in a month grid would read as a refund.
+  const buffer = Math.max(0, budgetTotals.difference);
 
   const monthGrid = buildMonthGrid({
     lines: gridLines,
@@ -402,6 +421,34 @@ export const GET = withObservability(async (req: Request,
     todayMonth,
     bufferAmount: buffer,
   });
+
+  // ── 8b. Expected funding vs what the team actually kept ──────────────────
+  // Owner ruling 2026-08-12: the actual against an expected-funding line is the TEAM'S SHARE —
+  // everything raised, less whatever was rebated to the player who raised it. A rebate lowers
+  // that player's own dues, so counting it here would lower the same dues twice.
+  // ONE round trip, not two: the entries are read through their parent fundraiser rather than
+  // fetching the campaign ids first and then filtering by them. This route already runs a long
+  // serial chain of awaits; a second hop at the tail of it buys nothing.
+  let fundingActual = 0;
+  if (fundingLines.length > 0) {
+    const { data: entries } = await supabaseAdmin
+      .from('rep_fundraiser_entries')
+      .select('amount_raised, rebate_amount, rep_fundraisers!inner(program_year_id)')
+      .eq('rep_fundraisers.program_year_id', programYear.id);
+    for (const en of (entries ?? []) as Array<{ amount_raised: number; rebate_amount: number }>) {
+      fundingActual += (en.amount_raised ?? 0) - (en.rebate_amount ?? 0);
+    }
+  }
+  const funding = fundingLines.length === 0 ? null : {
+    budget: budgetTotals.expectedFunding,
+    actual: Math.round(fundingActual * 100) / 100,
+    lines: fundingLines.map(l => ({
+      id:          l.id as string,
+      description: l.description as string,
+      amount:      (l.total_amount as number) ?? 0,
+    })),
+    fundedByPlayers: budgetTotals.fundedByPlayers,
+  };
 
   // Money IN by month, both bases. The cash-flow strip pairs whichever of these matches the lens
   // the coach is reading with that lens's money-out — never a blend of plan and commitment.
@@ -428,9 +475,14 @@ export const GET = withObservability(async (req: Request,
   return NextResponse.json({
     headroom,
     totalBudget:     Math.round(totalBudget * 100) / 100,
-    seasonTotal:     seasonTotal == null ? null : Math.round(seasonTotal * 100) / 100,
-    effectiveBudget: Math.round(effectiveBudget * 100) / 100,
-    buffer:          Math.round(buffer * 100) / 100,
+    seasonTotal,
+    effectiveBudget,
+    buffer,
+    /** Signed, so a report can say "over your estimate" rather than showing nothing. */
+    estimateDifference: budgetTotals.difference,
+    overPlanned:        budgetTotals.overPlanned,
+    /** Null when the team budgets no funding — the row simply isn't there. */
+    funding,
     totalActual:   Math.round((totalActual + unbudgeted) * 100) / 100,
     categories:    categoryResults,
     unbudgetedActuals,

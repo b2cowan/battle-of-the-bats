@@ -1,0 +1,788 @@
+<title>Which Format, and When</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     Sibling document to COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html — same
+     chrome, same render scope, deliberately. That page decided WHERE the export
+     menu lives; this one is about what is INSIDE it, so it should read as the
+     next page of the same publication rather than a new pamphlet.
+
+     Document chrome: cool graphite, never product. Every product render below
+     paints the WARM portal palette as literals inside its own .screen scope and
+     is therefore theme-independent — a render is a render in both themes.
+     ══════════════════════════════════════════════════════════════════════════ */
+  :root {
+    --ground:    #E7E9EC;
+    --panel:     #FCFCFD;
+    --panel-2:   #F1F3F5;
+    --ink:       #171B20;
+    --ink-2:     #5A626C;
+    --ink-3:     #858D97;
+    --hair:      #D2D6DB;
+    --hair-2:    #BFC5CC;
+    --accent:    #4E5C1B;
+    --accent-bg: rgba(78, 92, 27, 0.10);
+    --flag:      #A6431C;
+    --flag-bg:   rgba(166, 67, 28, 0.10);
+    --fix:       #2F6046;
+    --fix-bg:    rgba(47, 96, 70, 0.10);
+    --bezel:     #C9CED4;
+
+    --sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --grot: "Inter Tight", "Segoe UI Semibold", "Helvetica Neue", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #101418;
+      --panel:     #171C21;
+      --panel-2:   #1D242A;
+      --ink:       #E4E8EC;
+      --ink-2:     #98A2AC;
+      --ink-3:     #6E7883;
+      --hair:      #262D34;
+      --hair-2:    #333C44;
+      --accent:    #A9C24E;
+      --accent-bg: rgba(169, 194, 78, 0.13);
+      --flag:      #E08A5F;
+      --flag-bg:   rgba(224, 138, 95, 0.13);
+      --fix:       #78BF98;
+      --fix-bg:    rgba(120, 191, 152, 0.13);
+      --bezel:     #2B333A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #101418;
+    --panel:     #171C21;
+    --panel-2:   #1D242A;
+    --ink:       #E4E8EC;
+    --ink-2:     #98A2AC;
+    --ink-3:     #6E7883;
+    --hair:      #262D34;
+    --hair-2:    #333C44;
+    --accent:    #A9C24E;
+    --accent-bg: rgba(169, 194, 78, 0.13);
+    --flag:      #E08A5F;
+    --flag-bg:   rgba(224, 138, 95, 0.13);
+    --fix:       #78BF98;
+    --fix-bg:    rgba(120, 191, 152, 0.13);
+    --bezel:     #2B333A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 1.25rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .masthead { padding: 4rem 0 2.5rem; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--grot);
+    font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    text-wrap: balance;
+    margin: 0 0 1.1rem;
+  }
+  .standfirst { font-size: 1.08rem; color: var(--ink-2); max-width: 62ch; margin: 0; }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+  .decided {
+    display: flex; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap;
+    margin: 1.75rem 0 0; padding: 0.9rem 1.1rem;
+    border-left: 3px solid var(--fix); background: var(--fix-bg);
+    border-radius: 0 6px 6px 0; max-width: 74ch; font-size: 0.94rem; color: var(--ink-2);
+  }
+  .decided span:last-child { flex: 1; min-width: 20ch; }
+  .decided b { color: var(--ink); font-weight: 650; }
+
+  .contents {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+    padding: 1rem 0; border-bottom: 1px solid var(--hair);
+    margin-bottom: 3.5rem;
+    font-family: var(--mono); font-size: 0.72rem;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .contents a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid transparent; }
+  .contents a:hover, .contents a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Sections ─────────────────────────────────────────────────────── */
+  section { margin-bottom: 4.5rem; scroll-margin-top: 1.5rem; }
+  h2 {
+    font-family: var(--grot); font-size: 1.85rem; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.15; text-wrap: balance; margin: 0 0 0.5rem;
+  }
+  h3 {
+    font-family: var(--grot); font-size: 1.15rem; font-weight: 650;
+    letter-spacing: -0.012em; margin: 2.75rem 0 0.5rem;
+  }
+  .lede { color: var(--ink-2); max-width: 66ch; margin: 0 0 2rem; }
+  p { max-width: 68ch; }
+  p + p { margin-top: 0.9rem; }
+
+  /* ── The count ────────────────────────────────────────────────────── */
+  .count {
+    display: grid; gap: 1px; margin: 2rem 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    background: var(--hair); border: 1px solid var(--hair); border-radius: 8px; overflow: hidden;
+  }
+  .count div { background: var(--panel); padding: 1rem 1.1rem; }
+  .count .n {
+    font-family: var(--grot); font-size: 2.4rem; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1; display: block;
+    font-variant-numeric: tabular-nums;
+  }
+  .count .n.bad { color: var(--flag); }
+  .count .n.good { color: var(--fix); }
+  .count .k {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); margin-top: 0.5rem; display: block;
+  }
+
+  /* ── Render plate ─────────────────────────────────────────────────── */
+  .plate { margin: 1.75rem 0 0; }
+  .plate-bar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 0.55rem;
+  }
+  .stamp {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.13em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem; border-radius: 3px;
+  }
+  .stamp-today   { color: var(--flag); background: var(--flag-bg); }
+  .stamp-rec     { color: var(--fix);  background: var(--fix-bg); }
+  .stamp-note    { color: var(--ink-2); background: var(--panel-2); border: 1px solid var(--hair); }
+  .plate-name { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); letter-spacing: 0.04em; }
+  .frame {
+    border: 1px solid var(--bezel); border-radius: 8px; overflow-x: auto;
+    background: #F8F4ED;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px -18px rgba(0,0,0,0.35);
+  }
+  .caption { margin: 0.7rem 0 0; font-size: 0.88rem; color: var(--ink-2); max-width: 72ch; }
+  .caption b { color: var(--ink); font-weight: 600; }
+
+  /* ══════════════════════════════════════════════════════════════════
+     PRODUCT RENDER SCOPE — warm coach-portal palette, painted as literals.
+     Faces approximate the shipped stack; geometry, weights and colours are
+     the real values.
+     ══════════════════════════════════════════════════════════════════ */
+  .screen {
+    background: #F8F4ED; color: #241E15;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    padding: 1.6rem 1.75rem 1.9rem;
+    min-width: 620px;
+  }
+  .cp-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+  .cp-left { display: flex; align-items: center; gap: 1rem; margin-right: auto; min-width: 0; }
+  .cp-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(87, 101, 30, 0.12); border: 1px solid rgba(87, 101, 30, 0.30);
+    color: #57651E; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 1.15rem; font-weight: 700;
+  }
+  .cp-title {
+    font-family: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    font-size: 1.75rem; font-weight: 900; line-height: 1.1;
+    letter-spacing: 0.004em; color: #241E15; margin: 0;
+  }
+  .cp-actions { display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end; margin-left: auto; }
+  .cp-help {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid rgba(70, 55, 30, 0.20); background: #FFFFFF; color: #6A635C;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.82rem; flex-shrink: 0;
+  }
+  .b {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border-radius: 6px; cursor: default; white-space: nowrap; font-family: inherit;
+  }
+  .b-sec {
+    background: #FFFFFF; color: #4A4235; border: 1px solid rgba(70, 55, 30, 0.20);
+    padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600;
+  }
+  .b-open { background: rgba(87,101,30,0.12); border-color: rgba(87,101,30,0.45); color: #3F4A16; }
+  .b .ic { font-size: 0.9em; opacity: 0.85; }
+
+  .menuhost { position: relative; }
+  .menu {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 5;
+    background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20);
+    border-radius: 8px; min-width: 320px; padding: 0.4rem;
+    box-shadow: 0 12px 28px -14px rgba(36, 30, 21, 0.45); text-align: left;
+  }
+  .menu.wide { min-width: 360px; }
+  .menu-head {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #8A8377; padding: 0.4rem 0.6rem 0.35rem;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.5rem 0.6rem; border-radius: 5px; font-size: 0.86rem; color: #241E15;
+  }
+  .menu-item.hover { background: rgba(87, 101, 30, 0.09); }
+  .menu-item.dim { color: #A29A8C; }
+  .menu-item .lbl2 { margin-right: auto; }
+  .menu-item .why {
+    font-size: 0.7rem; color: #A29A8C; font-style: italic;
+  }
+  .fmt {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.6rem; letter-spacing: 0.06em;
+    border: 1px solid rgba(70, 55, 30, 0.20); border-radius: 3px;
+    padding: 0.1rem 0.28rem; color: #6A635C;
+  }
+  .fmt.pdf { border-color: rgba(87,101,30,0.5); color: #4A5A19; }
+  .menu-sep { height: 1px; background: rgba(70, 55, 30, 0.12); margin: 0.35rem 0.3rem; }
+  .menu-foot { padding: 0.45rem 0.6rem; font-size: 0.82rem; color: #57651E; font-weight: 600; }
+
+  /* The format switch — a segmented control at the head of the menu (option A) */
+  .fmtsw { display: flex; gap: 0.3rem; padding: 0.15rem 0.6rem 0.5rem; }
+  .fmtsw span {
+    flex: 1; text-align: center; padding: 0.34rem 0.5rem;
+    border: 1px solid rgba(70, 55, 30, 0.20); border-radius: 5px;
+    font-size: 0.74rem; font-weight: 700; color: #6A635C; background: #FFF;
+    letter-spacing: 0.02em;
+  }
+  .fmtsw span.on { background: rgba(87,101,30,0.13); border-color: rgba(87,101,30,0.45); color: #3F4A16; }
+
+  /* The quiet reveal (option B) */
+  .more {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.78rem; color: #A29A8C; letter-spacing: 0.08em;
+  }
+  .menu-item.hover .more { color: #57651E; }
+  .flyout {
+    position: absolute; right: calc(100% + 6px); top: 30%;
+    background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20);
+    border-radius: 8px; padding: 0.3rem; min-width: 130px;
+    box-shadow: 0 12px 28px -14px rgba(36, 30, 21, 0.45);
+  }
+  .flyout .menu-item { font-size: 0.82rem; }
+
+  /* Step markers for the two-step render */
+  .steps { display: flex; align-items: flex-start; gap: 1.25rem; flex-wrap: wrap; }
+  .stepmark {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #8A8377; margin: 0 0 0.4rem;
+  }
+  .panelstack { position: relative; min-width: 300px; }
+  .staticmenu {
+    background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20);
+    border-radius: 8px; padding: 0.4rem; min-width: 300px; text-align: left;
+    box-shadow: 0 12px 28px -14px rgba(36, 30, 21, 0.45);
+  }
+  .arrow { align-self: center; color: #A29A8C; font-size: 1.4rem; }
+
+  /* ── Tables ───────────────────────────────────────────────────────── */
+  .tablewrap { overflow-x: auto; margin: 1.5rem 0 0; border: 1px solid var(--hair); border-radius: 8px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; min-width: 680px; }
+  th, td { text-align: left; padding: 0.62rem 0.9rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3);
+    background: var(--panel-2); border-bottom: 1px solid var(--hair-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.name { font-weight: 600; white-space: nowrap; }
+  .none { color: var(--flag); font-family: var(--mono); font-size: 0.78rem; }
+  .yes  { color: var(--fix); font-family: var(--mono); font-size: 0.78rem; font-weight: 700; }
+  .ok   { color: var(--ink-2); }
+  .num  { font-variant-numeric: tabular-nums; }
+  code {
+    font-family: var(--mono); font-size: 0.83em;
+    background: var(--panel-2); padding: 0.08em 0.34em; border-radius: 3px;
+    border: 1px solid var(--hair);
+  }
+
+  /* ── Callout ──────────────────────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--flag); background: var(--flag-bg);
+    padding: 0.9rem 1.1rem; margin: 1.75rem 0 0;
+    border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 74ch;
+  }
+  .note.fix { border-left-color: var(--fix); background: var(--fix-bg); }
+  .note.quiet { border-left-color: var(--hair-2); background: var(--panel-2); }
+  .note b { font-weight: 650; }
+
+  .verdict { display: grid; gap: 0.35rem; margin-top: 1rem; max-width: 74ch; }
+  .verdict div { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.9rem; font-size: 0.9rem; }
+  .verdict .lab {
+    font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding-top: 0.28rem;
+  }
+  .verdict .for  { color: var(--fix); }
+  .verdict .agst { color: var(--flag); }
+  .verdict .txt { color: var(--ink-2); }
+
+  footer.doc {
+    border-top: 1px solid var(--hair); padding-top: 1.75rem; margin-top: 4rem;
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3);
+    letter-spacing: 0.03em; line-height: 1.8;
+  }
+  a { color: var(--accent); }
+  a:focus-visible, .contents a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Coach portal · Money hub · 13 Aug 2026</p>
+  <h1>Which format, and when</h1>
+  <p class="standfirst">
+    The Export menu shipped with the file type on every row. Rendered, that turns
+    <strong>three file types into twelve buttons</strong> — and the repeated part reads louder than
+    the part that varies. Three ways to fix it, drawn at full size, with what each one costs.
+  </p>
+  <p class="decided">
+    <span class="stamp stamp-rec">Decided</span>
+    <span><b>Option C, as a dialog.</b> B was built, seen, and rejected too — so the file type left
+    the menu entirely. The Export menu is now <b>five names and nothing else</b>; picking one opens
+    a <b>Save-As dialog</b> naming each file type and what it is for. <b>The lesson that took two
+    rejected builds to land: anything drawn beside every item in a list is drawn as many times as
+    the list is long.</b> A and B both varied <i>what</i> sat on the row; only removing it worked.
+    Built 13 Aug 2026.</span>
+  </p>
+</header>
+
+<nav class="contents">
+  <a href="#today">The count</a>
+  <a href="#a">A · Format first</a>
+  <a href="#b">B · One click</a>
+  <a href="#c">C · Two steps</a>
+  <a href="#compare">Side by side</a>
+  <a href="#unchanged">What none of them change</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="today">
+  <h2>The count</h2>
+  <p class="lede">
+    Five datasets. Three file types. Twelve buttons — because the file types are printed again on
+    every row that offers them.
+  </p>
+
+  <div class="count">
+    <div><span class="n">5</span><span class="k">datasets to pick from</span></div>
+    <div><span class="n">3</span><span class="k">file types in total</span></div>
+    <div><span class="n bad">12</span><span class="k">format buttons drawn</span></div>
+    <div><span class="n bad">5&times;</span><span class="k">"XLSX" appears</span></div>
+  </div>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-today">Today</span>
+      <span class="plate-name">Money → Export ▾ · as shipped</span>
+    </div>
+    <div class="frame">
+      <div class="screen" style="padding-bottom: 15rem;">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions menuhost">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec b-open"><span class="ic">↓</span> Export ▾</span>
+            <div class="menu">
+              <div class="menu-head">Take out of Money</div>
+              <div class="menu-item"><span class="lbl2">Budget lines</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+              <div class="menu-item"><span class="lbl2">Player dues</span><span class="fmt">XLSX</span><span class="fmt">CSV</span><span class="fmt pdf">PDF</span></div>
+              <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+              <div class="menu-item"><span class="lbl2">Fundraisers</span><span class="fmt">XLSX</span><span class="fmt">CSV</span></div>
+              <div class="menu-item"><span class="lbl2">Budget vs. actual</span><span class="fmt">XLSX</span><span class="fmt">CSV</span><span class="fmt pdf">PDF</span></div>
+            </div>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>The dataset names are the signal; the chips are wallpaper.</b> Each row asks the same
+      question again — and a coach who works in Excel answers it the same way every time. The
+      original argument for chips-on-the-row was <i>no second menu to open</i>, which still stands:
+      none of the three options below reintroduces a nested menu for the common case.
+    </p>
+  </div>
+
+  <div class="note quiet">
+    <b>One thing that narrows the problem usefully:</b> this menu never appears on a phone — the
+    2026-08-13 phone rule takes the whole row out at 640px, because spreadsheets are not phone
+    work. So every option here is designed for a pointer, and hover is available as a tool.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="a">
+  <h2>A · Pick the format once</h2>
+  <p class="lede">
+    A format is a property of the <em>coach</em>, not of the dataset. The treasurer who lives in
+    Excel wants Excel every time. So it moves to the top, gets asked once, and is remembered.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-rec">Recommended</span>
+      <span class="plate-name">Format at the head, five plain rows</span>
+    </div>
+    <div class="frame">
+      <div class="screen" style="padding-bottom: 16rem;">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions menuhost">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec b-open"><span class="ic">↓</span> Export ▾</span>
+            <div class="menu">
+              <div class="menu-head">Take out of Money — as</div>
+              <div class="fmtsw">
+                <span class="on">Excel</span><span>CSV</span><span>PDF</span>
+              </div>
+              <div class="menu-sep"></div>
+              <div class="menu-item hover"><span class="lbl2">Budget lines</span></div>
+              <div class="menu-item"><span class="lbl2">Player dues</span></div>
+              <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span></div>
+              <div class="menu-item"><span class="lbl2">Fundraisers</span></div>
+              <div class="menu-item"><span class="lbl2">Budget vs. actual</span></div>
+            </div>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Twelve buttons become three.</b> Excel is preselected, so the common case is still
+      <i>one click</i> — same as today, with eleven fewer things on screen. The choice is
+      remembered per coach, per device, the way the Budget vs. Actual view already remembers
+      whether you read it by category or by month.
+    </p>
+  </div>
+
+  <h3>The wrinkle, and how it resolves</h3>
+  <p>
+    Only two of the five make a PDF. With <b>PDF</b> selected, the other three have nothing to give
+    — and a menu that silently does nothing when clicked is worse than a repeated chip.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-note">Same menu · PDF selected</span>
+      <span class="plate-name">The three that can't say it plainly</span>
+    </div>
+    <div class="frame">
+      <div class="screen" style="padding-bottom: 16rem;">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions menuhost">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec b-open"><span class="ic">↓</span> Export ▾</span>
+            <div class="menu wide">
+              <div class="menu-head">Take out of Money — as</div>
+              <div class="fmtsw">
+                <span>Excel</span><span>CSV</span><span class="on">PDF</span>
+              </div>
+              <div class="menu-sep"></div>
+              <div class="menu-item dim"><span class="lbl2">Budget lines</span><span class="why">spreadsheet only</span></div>
+              <div class="menu-item hover"><span class="lbl2">Player dues</span></div>
+              <div class="menu-item dim"><span class="lbl2">Expenses &amp; payables</span><span class="why">spreadsheet only</span></div>
+              <div class="menu-item dim"><span class="lbl2">Fundraisers</span><span class="why">spreadsheet only</span></div>
+              <div class="menu-item"><span class="lbl2">Budget vs. actual</span></div>
+            </div>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Three rows go quiet and <b>say why in two words</b>. This is arguably an improvement on
+      today, where a coach hunting for something printable has to scan five rows for the two that
+      happen to carry a PDF chip — here, picking PDF answers that question outright.
+    </p>
+  </div>
+
+  <div class="verdict">
+    <div><span class="lab for">For</span><span class="txt">Three controls instead of twelve. One click for the common case. Treats a standing preference as standing. Answers "what can I print?" in one move.</span></div>
+    <div><span class="lab agst">Against</span><span class="txt">Introduces a disabled state, which the portal otherwise avoids. A coach who wants one CSV and one Excel must switch back.</span></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="b">
+  <h2>B · One click gets Excel</h2>
+  <p class="lede">
+    Nothing repeats at rest, because nothing but the dataset name is drawn. Clicking a row
+    downloads the spreadsheet; the other formats live one small step in.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-today">Built, then rejected</span>
+      <span class="plate-name">Row = Excel · the ··· reveals the rest</span>
+    </div>
+    <div class="frame">
+      <div class="screen" style="padding-bottom: 16rem;">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions menuhost">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec b-open"><span class="ic">↓</span> Export ▾</span>
+            <div class="menu">
+              <div class="menu-head">Take out of Money — Excel</div>
+              <div class="menu-item"><span class="lbl2">Budget lines</span><span class="more">···</span></div>
+              <div class="menu-item hover" style="position: relative;">
+                <span class="lbl2">Player dues</span><span class="more">···</span>
+                <div class="flyout">
+                  <div class="menu-item">CSV</div>
+                  <div class="menu-item">PDF</div>
+                </div>
+              </div>
+              <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span><span class="more">···</span></div>
+              <div class="menu-item"><span class="lbl2">Fundraisers</span><span class="more">···</span></div>
+              <div class="menu-item"><span class="lbl2">Budget vs. actual</span><span class="more">···</span></div>
+            </div>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>This is the convention the tournament admin already uses</b> — Excel on the primary click,
+      everything else behind the overflow — and it is what the platform's own export standard
+      already says in writing. Adopting it here makes two halves of the product agree.
+    </p>
+  </div>
+
+  <div class="verdict">
+    <div><span class="lab for">For</span><span class="txt">The quietest menu of the three. Matches an existing, written convention. One click, always.</span></div>
+    <div><span class="lab agst">Against</span><span class="txt">CSV and PDF are hidden until you go looking — a coach may never learn a dues statement can be printed.</span></div>
+  </div>
+
+  <div class="note">
+    <b>This was built and then rejected on sight — the second time in one session.</b> On screen
+    the "···" and the muted <i>Excel</i> tag still printed something beside all five names, and the
+    owner's verdict was blunt: <i>"doesn't look good."</i> Two failures with the same shape are
+    worth a rule. <b>Anything you draw beside every item in a list is drawn as many times as the
+    list is long</b> — three tokens per row is twelve, one token per row is five, and it does not
+    matter how quiet each is: together they out-shout the names they decorate. Options A and B both
+    varied <i>what</i> went on the row. Only taking it off the row worked.
+  </div>
+
+  <div class="note quiet">
+    <b>One thing from this attempt survived into the final build.</b> Its flyout opened as a small
+    floating panel beside the row — and the formats were <b>invisible</b>, because the menu is a
+    measured, scrolling box and anything positioned outside it is clipped away. The rule that came
+    out of it holds for the dialog too: <b>anything this menu reveals has to live inside it, or
+    somewhere else entirely.</b>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="c">
+  <h2>C · Pick the data, then the format</h2>
+  <p class="lede">
+    The literal proposal: a clean list, and the format question asked after you have said what you
+    want. Nothing is hidden and nothing repeats — it just costs a second click, every time.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-rec">Built — as a dialog</span>
+      <span class="plate-name">Two steps, in sequence</span>
+    </div>
+    <div class="frame">
+      <div class="screen" style="padding: 1.6rem 1.75rem;">
+        <div class="steps">
+          <div class="panelstack">
+            <p class="stepmark">First — what</p>
+            <div class="staticmenu">
+              <div class="menu-head">Take out of Money</div>
+              <div class="menu-item"><span class="lbl2">Budget lines</span></div>
+              <div class="menu-item hover"><span class="lbl2">Player dues</span><span class="more">›</span></div>
+              <div class="menu-item"><span class="lbl2">Expenses &amp; payables</span></div>
+              <div class="menu-item"><span class="lbl2">Fundraisers</span></div>
+              <div class="menu-item"><span class="lbl2">Budget vs. actual</span></div>
+            </div>
+          </div>
+          <span class="arrow">→</span>
+          <div class="panelstack" style="min-width: 220px;">
+            <p class="stepmark">Then — which file</p>
+            <div class="staticmenu" style="min-width: 220px;">
+              <div class="menu-head">Player dues as</div>
+              <div class="menu-item"><span class="lbl2">Excel</span><span class="fmt">XLSX</span></div>
+              <div class="menu-item"><span class="lbl2">Comma-separated</span><span class="fmt">CSV</span></div>
+              <div class="menu-item"><span class="lbl2">Printable statement</span><span class="fmt pdf">PDF</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      The second panel earns something the others can't: room to <b>name the file types in
+      words</b> — "printable statement" rather than "PDF". That is a genuine gain for a volunteer
+      treasurer who does not think in file extensions.
+    </p>
+  </div>
+
+  <div class="verdict">
+    <div><span class="lab for">For</span><span class="txt">Simplest to explain. Nothing hidden, nothing repeated. Room to describe each format in plain words.</span></div>
+    <div><span class="lab agst">Against</span><span class="txt">Two clicks for the thing coaches do most. Which datasets can be printed stays invisible until you have already committed to one — the question "what can I print?" now takes five openings to answer.</span></div>
+  </div>
+
+  <div class="note fix">
+    <b>This is what shipped, built as a DIALOG rather than a second panel</b> — the Save As / Export
+    dialog every desktop application already has, which is the owner's own argument for it: nobody
+    needs teaching. The second render above understates it. As built, each choice carries the file
+    type, its extension, <i>and a line saying what it is for</i> — "Excel · best for working with
+    the numbers", "PDF · a printable document you can share" — which is the thing a menu row could
+    never have room for, and the reason a volunteer treasurer no longer has to know what an
+    extension is.
+    <br /><br />
+    <b>Both costs above were accepted knowingly.</b> The second click is real. And because the menu
+    no longer shows which datasets make a PDF, <b>the in-app Money guide now names them</b> — when
+    a screen stops answering a question, something else has to.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="compare">
+  <h2>Side by side</h2>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          <th>Today</th>
+          <th>A · Format first</th>
+          <th>B · One click</th>
+          <th>C · Two steps</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name">Buttons drawn</td>
+          <td class="none num">17</td>
+          <td class="yes num">8</td>
+          <td class="yes num">5</td>
+          <td class="ok num">5, then 3</td>
+        </tr>
+        <tr>
+          <td class="name">Clicks to a spreadsheet</td>
+          <td class="ok num">1</td>
+          <td class="yes num">1</td>
+          <td class="yes num">1</td>
+          <td class="none num">2</td>
+        </tr>
+        <tr>
+          <td class="name">Clicks to a PDF</td>
+          <td class="ok num">1</td>
+          <td class="ok num">2</td>
+          <td class="ok num">2</td>
+          <td class="ok num">2</td>
+        </tr>
+        <tr>
+          <td class="name">"What can I print?"</td>
+          <td class="ok">Scan five rows for a chip</td>
+          <td class="yes">Answered by picking PDF</td>
+          <td class="none">Hidden until you look</td>
+          <td class="none">Five openings</td>
+        </tr>
+        <tr>
+          <td class="name">Repeats itself</td>
+          <td class="none">Yes — 5&times; XLSX, 5&times; CSV</td>
+          <td class="yes">No</td>
+          <td class="yes">No</td>
+          <td class="yes">No</td>
+        </tr>
+        <tr>
+          <td class="name">Agrees with the admin side</td>
+          <td class="none">No</td>
+          <td class="ok">Partly</td>
+          <td class="yes">Yes</td>
+          <td class="none">No</td>
+        </tr>
+        <tr>
+          <td class="name">New state to design</td>
+          <td class="yes">None</td>
+          <td class="ok">A disabled row</td>
+          <td class="ok">A hover reveal + focus path</td>
+          <td class="ok">A second panel</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Seventeen counts the five dataset labels as targets too, since in every option the label is
+    itself clickable. <b>A and B are close.</b> A is better at answering questions; B is quieter and
+    matches an existing convention. C is the only one that costs a click on the common path.
+  </p>
+
+  <div class="note quiet">
+    <b>The recommendation was A</b>, narrowly — it answers "what can I print?" outright. It was
+    <b>overruled in favour of B</b>, and the deciding argument is a good one: A buys that answer
+    with a <b>disabled row</b>, a state this portal otherwise refuses to draw, and B brings the
+    coach and admin sides onto one convention as a bonus. The cost accepted with B is that a coach
+    may not discover a printable dues statement without opening a ··· — which the in-app Money
+    guide now names explicitly, since the menu no longer does.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="unchanged">
+  <h2>What none of them change</h2>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Holds</th><th>Why it is not in scope</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">The five datasets</td>
+          <td class="ok">What a coach can take out of Money is settled; this is only about how the file type is chosen.</td>
+        </tr>
+        <tr>
+          <td class="name">The menu's place in the header</td>
+          <td class="ok">Import ▾ / Export ▾ stay hub-wide and identical on all seven tabs — the 2026-08-13 ruling, not reopened.</td>
+        </tr>
+        <tr>
+          <td class="name">Nothing on a phone</td>
+          <td class="ok">The whole row leaves the header at 640px. Imports stay reachable through every empty state.</td>
+        </tr>
+        <tr>
+          <td class="name">PDF is absent, never locked</td>
+          <td class="ok">On a plan without PDF export the option does not render at all — in option A that means the format switch shows two choices, not three greyed to one.</td>
+        </tr>
+        <tr>
+          <td class="name">Import ▾</td>
+          <td class="ok">Two datasets and a history line. It has no repetition problem and is not touched.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note quiet">
+    <b>Scope, honestly stated.</b> This is one panel inside a hub that is otherwise finished and
+    ready for QA. Whichever option is chosen, it changes the contents of the Export menu and
+    nothing else — no data, no permissions, no other screen.
+  </div>
+</section>
+
+<footer class="doc">
+  Coach portal · Money hub · Export menu shape<br />
+  Companion to <em>Where the buttons live</em> (2026-08-12), which decided where this menu sits.<br />
+  Renders are the shipped palette and geometry; typefaces approximate the shipped stack.
+</footer>
+
+</div>

@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -17,9 +17,18 @@ import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import {
+  EXPENSE_COLUMNS, expenseRows,
+  // Aliased: this panel already has a local `scheduleRows` holding the filtered schedule ROWS,
+  // and the import is the function that turns them into export rows.
+  SCHEDULE_COLUMNS, scheduleRows as scheduleExportRows,
+} from '@/lib/coach-money-exports';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
+import { useMoneyRevision } from '@/lib/coach-money-refresh';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -29,6 +38,41 @@ function fmtDate(s: string | null) {
   if (!s) return '—';
   const d = new Date(s.length === 10 ? s + 'T00:00:00' : s);
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
+ * Where a payable stands, as one word — the summary its row shows now that the deposit/balance
+ * pair lives one click in (Money-hub table pass 2026-08-13).
+ *
+ * ⚠ IT REPORTS ONLY WHAT IS RECORDED. A payable with no deposit and no balance set has nothing
+ * scheduled, and says so rather than claiming to be unpaid: the coach recorded a commitment and
+ * has not yet said when it is due. "Overdue" is reserved for a due date that has actually passed
+ * with nothing marked against it — the same restraint the Dues never-paid banner learned, where
+ * flagging everyone before anything was due made the warning worth ignoring.
+ */
+function payableStatus(
+  e: { depositAmount: number | null; depositPaidAt: string | null; balanceAmount: number | null; balancePaidAt: string | null },
+  overdue: { deposit: boolean; balance: boolean },
+): { label: string; cls: string } {
+  const halves = [
+    e.depositAmount != null ? !!e.depositPaidAt : null,
+    e.balanceAmount != null ? !!e.balancePaidAt : null,
+  ].filter((v): v is boolean => v !== null);
+
+  /* ⚠ A HALF IS ONLY OVERDUE IF IT EXISTS. `isInstallmentOverdue` reads a due DATE and a paid-at,
+     and knows nothing about whether an amount was ever recorded — while the payable form saves a
+     due date independently of its amount. So a payable with a real, not-yet-due balance and a
+     leftover deposit DATE with the amount cleared was being labelled "Overdue" with nothing
+     actually owed. Caught in review 2026-08-13. Gating here rather than at the call site keeps the
+     rule with the function that owns the definition of a "half". */
+  const anyOverdue = (e.depositAmount != null && overdue.deposit)
+    || (e.balanceAmount != null && overdue.balance);
+
+  if (halves.length === 0) return { label: 'No schedule', cls: styles.badgeArchived };
+  if (halves.every(Boolean)) return { label: 'Paid', cls: styles.badgeActive };
+  if (anyOverdue) return { label: 'Overdue', cls: styles.badgeOverdue };
+  if (halves.some(Boolean)) return { label: 'Part paid', cls: styles.badgeCompleted };
+  return { label: 'Scheduled', cls: styles.badgeDraft };
 }
 
 type ExpenseTab = 'expenses' | 'payables' | 'schedule';
@@ -84,6 +128,10 @@ export function ExpensesPayablesPanel({
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [budgetedCategories, setBudgetedCategories] = useState<Set<string>>(new Set());
   const [hasBudgetPlan, setHasBudgetPlan] = useState(false);
+
+  /* Which payable has its deposit/balance detail open. One at a time — the pair is tall, and a
+     list with every row expanded is the card list this replaced. */
+  const [expandedPayable, setExpandedPayable] = useState<string | null>(null);
 
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddPayable, setShowAddPayable] = useState(false);
@@ -196,7 +244,10 @@ export function ExpensesPayablesPanel({
     }
   }, [orgSlug, teamId, seasonQuery]);
 
-  useEffect(() => { load(); }, [load]);
+  // Re-read (never remount) when the hub's Import menu commits payables while this panel is
+  // mounted but off-screen — an in-progress expense form on another tab must survive it.
+  const moneyRevision = useMoneyRevision();
+  useEffect(() => { load(); }, [load, moneyRevision]);
 
   // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
   // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
@@ -454,27 +505,43 @@ export function ExpensesPayablesPanel({
   const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
-  // Page-header ruling 2026-08-11. ⚠ Every affordance here stays write-gated (Chunk A probe):
-  // a read-only money assistant could otherwise open a sheet only the server would refuse.
-  const expenseHeaderActions = canWriteMoney ? (
+  // Page-level action ruling 2026-08-13. The creates and the tag library act on THIS LIST, and
+  // the nearest chrome that names the list is the list's own toolbar — not the Money hub header
+  // above the tabs, which names the container. So they all come down here.
+  //
+  // Rule 5, one name one weight: both creates are the FILLED LIME button now (they were
+  // outlined while New Fundraiser one tab away was filled), and "Import payables" is just
+  // "Import" — one idea, one name.
+  //
+  // ⚠ Every affordance here stays write-gated (Chunk A probe): a read-only money assistant could
+  // otherwise open a sheet only the server would refuse.
+  const expenseToolbarActions = canWriteMoney ? (
     <>
-      <button className={styles.btnSecondary} aria-label="Add expense" onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
-        <Plus size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Add Expense</span>
+      <button className={styles.btnPrimary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
+        <Plus size={14} aria-hidden /> Add Expense
       </button>
-      <button className={styles.btnSecondary} aria-label="Add payable" onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
-        <Plus size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Add Payable</span>
-      </button>
-      {/* Chunk H2 — a whole season's commitments usually arrive as a schedule, not one at
-          a time. Same importer as the budget, pointed at the payables shape. */}
-      <button className={styles.btnGhost} onClick={() => setImportOpen(true)} aria-label="Import payables">
-        <Upload size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Import payables</span>
+      <button className={styles.btnPrimary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
+        <Plus size={14} aria-hidden /> Add Payable
       </button>
       {ownMoneyTags.length > 0 && (
-        <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags" aria-label="Manage tags">
-          <Settings2 size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Manage tags</span>
+        <button className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
+          <Settings2 size={14} aria-hidden /> Manage tags
         </button>
       )}
     </>
+  ) : null;
+
+  // ⚠ IMPORT IS HEADER-LEVEL ONLY WHEN THIS PANEL IS ITS OWN PAGE. Inside the hub the constant
+  // `Import ▾` menu above the tabs owns it and lists this dataset by name; a second Import here
+  // would be the same door twice, one line apart. On the standalone route there is no such menu,
+  // so the button stays (rule 8: single-dataset screens keep plain buttons).
+  /** Is there a tag filter to draw on the left of the toolbar? */
+  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule';
+
+  const expenseHeaderActions = !embedded && canWriteMoney ? (
+    <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
+      <Upload size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Import</span>
+    </button>
   ) : null;
 
   return (
@@ -513,33 +580,76 @@ export function ExpensesPayablesPanel({
         </button>
       </div>
 
-      {/* Money-tag filter chip row (self-hides when the current tab has no tagged expenses).
-          The schedule tab is a due-date list across two sources, so a tag filter has nothing
-          to narrow there. */}
-      {usedTagIds.length > 0 && tab !== 'schedule' && (
-        <>
-          <div className={styles.moneyFilterBar}>
-            <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-            {usedTagIds.map(t => {
-              const isOrg = t.teamId === null;
-              const active = filterTagId === t.id;
-              const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
-              return (
-                <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
-                  {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
-                </button>
-              );
-            })}
+      {/* The tab's own toolbar (ruling 2026-08-13, decision 2): the money-tag filter it already
+          had on the left, its actions pinned right. The filter self-hides when the current tab
+          has no tagged expenses — and the row still renders, because the ACTIONS are what must
+          survive every empty state (rule 7), not the filter. The schedule tab is a due-date
+          list across two sources, so a tag filter has nothing to narrow there. */}
+      {/* Always rendered now: Export lives here on every sub-tab, so the row can no longer
+          disappear with the filter or the write gate. */}
+      {(
+        <div className={styles.panelToolbar}>
+          {showTagFilter && (
+            <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
+              <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+              {usedTagIds.map(t => {
+                const isOrg = t.teamId === null;
+                const active = filterTagId === t.id;
+                const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
+                return (
+                  <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
+                    {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className={styles.panelToolbarActions}>
+            {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
+                the whole argument for Export living down here. A hub-wide menu could only ever
+                have offered "expenses and payables" as one undifferentiated lump. */}
+            <MoneyExportButton
+              label={tab === 'schedule' ? 'Payment schedule' : tab === 'payables' ? 'Payables' : 'Expenses'}
+              formats={['xlsx', 'csv']}
+              build={() => (tab === 'schedule'
+                ? {
+                    dataset: 'payment-schedule',
+                    title: 'Payment Schedule',
+                    columns: SCHEDULE_COLUMNS,
+                    rows: scheduleExportRows(scheduleRows),
+                    scopeLabel: assignment?.programYearName ?? '',
+                    teamName: assignment?.teamName ?? '',
+                    emptyMessage: 'There is nothing on the payment schedule yet.',
+                  }
+                : {
+                    dataset: tab === 'payables' ? 'payables' : 'expenses',
+                    title: tab === 'payables' ? 'Payables' : 'Expenses',
+                    columns: EXPENSE_COLUMNS,
+                    rows: expenseRows(filteredActive),
+                    scopeLabel: assignment?.programYearName ?? '',
+                    teamName: assignment?.teamName ?? '',
+                    emptyMessage: tab === 'payables'
+                      ? 'No payables have been logged yet.'
+                      : 'No expenses have been logged yet.',
+                  })}
+              // Matches every sibling tab. Without it, an Export with nothing behind it reads as
+              // available right up until you press it — the dialog would still explain itself,
+              // but the button should not have invited the click.
+              disabled={tab === 'schedule' ? scheduleRows.length === 0 : filteredActive.length === 0}
+            />
+            {expenseToolbarActions}
           </div>
-          <div className={styles.tagComboLegend} style={{ margin: '-0.2rem 0 0.7rem' }}>
-            <span className={styles.tagComboLegendItem}>
-              <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
-            </span>
-            <span className={styles.tagComboLegendItem}>
-              <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
-            </span>
-          </div>
-        </>
+        </div>
+      )}
+      {showTagFilter && (
+        <div className={styles.tagComboLegend} style={{ margin: '-0.5rem 0 0.7rem' }}>
+          <span className={styles.tagComboLegendItem}>
+            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
+          </span>
+          <span className={styles.tagComboLegendItem}>
+            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
+          </span>
+        </div>
       )}
       {filterTag && (
         <div className={styles.moneyTagSummary}>
@@ -553,7 +663,16 @@ export function ExpensesPayablesPanel({
         <p className={styles.errorText}>{error}</p>
       ) : tab === 'expenses' ? (
         independentExpenses.length === 0 ? (
-          <div className={styles.emptyState}>No expenses logged yet. Use "Add Expense" to get started.</div>
+          <CoachEmptyState
+            icon={<Receipt size={22} aria-hidden />}
+            headline="No expenses yet"
+            description="Log what the team has actually spent, one at a time."
+            primaryAction={canWriteMoney ? {
+              label: 'Add Expense',
+              icon: <Plus size={15} aria-hidden />,
+              onClick: () => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); },
+            } : undefined}
+          />
         ) : (
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
@@ -561,7 +680,7 @@ export function ExpensesPayablesPanel({
                 <tr>
                   <th className={styles.th}>Description</th>
                   <th className={styles.th}>Category</th>
-                  <th className={styles.th}>Amount</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th}></th>
                 </tr>
@@ -594,7 +713,7 @@ export function ExpensesPayablesPanel({
                       )}
                     </td>
                     <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
-                    <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(e.amount)}</td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
                     <td className={styles.td} data-label="Status">
                       {e.expensePaidAt ? (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
@@ -626,21 +745,87 @@ export function ExpensesPayablesPanel({
         )
       ) : tab === 'payables' ? (
         tournamentPayables.length === 0 ? (
-          <div className={styles.emptyState}>No payables logged yet. Use &ldquo;Add Payable&rdquo; to record something you&apos;ve agreed to pay.</div>
+          /* ⚠ THE SECONDARY ACTION HERE IS THE MANDATORY PHONE MITIGATION (ruling 2026-08-13,
+             decision 4). Import left the page header on phones, and the importer's paste-a-block
+             mode exists precisely because phones have no file picker — so an empty state that can
+             accept an import must keep offering one AT EVERY WIDTH. This door had no equivalent
+             before this pass; without it, hiding the header menu would make a shipped feature
+             unreachable at 390px. Do not remove it without reopening the rule. */
+          <CoachEmptyState
+            icon={<Receipt size={22} aria-hidden />}
+            headline="No payables yet"
+            description="Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."
+            primaryAction={canWriteMoney ? {
+              label: 'Add Payable',
+              icon: <Plus size={15} aria-hidden />,
+              onClick: () => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); },
+            } : undefined}
+            secondaryAction={canWriteMoney ? {
+              label: 'Import a schedule',
+              icon: <Upload size={15} aria-hidden />,
+              onClick: () => setImportOpen(true),
+            } : undefined}
+          />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency). It
+             carried no shared class at all — every border, size and colour was written at this
+             call site — and it printed "Deposit" and "Balance" as headings on EVERY card. It is
+             now the same list table as the Expenses sub-tab beside it, so the two halves of one
+             screen finally agree on what a row of money looks like.
+
+             ⚠ THE DEPOSIT/BALANCE PAIR IS UNCHANGED, it has just moved one click in. It is the
+             one genuinely NESTED row in the hub — two instalments, two due dates, two buttons —
+             and flattening that into columns would have cost the Mark-paid actions their home.
+             So the row summarises and the chevron opens exactly the pair that was there before.
+             (A coach who wants every half on one screen has the Payment schedule sub-tab, which
+             already lists them by due date.) */
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th}>Description</th>
+                  <th className={styles.th}>Category</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+                  <th className={styles.th}>Status</th>
+                  <th className={styles.th}></th>
+                </tr>
+              </thead>
+              <tbody>
             {tournamentPayables.map(e => {
               const depositOverdue = isInstallmentOverdue(e.depositDueDate, e.depositPaidAt);
               const balanceOverdue = isInstallmentOverdue(e.balanceDueDate, e.balancePaidAt);
+              const open = expandedPayable === e.id;
+              const status = payableStatus(e, { deposit: depositOverdue, balance: balanceOverdue });
               return (
-                <div key={e.id} className={styles.detailSection}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <div>
-                      <p style={{ fontWeight: 600, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0 }}>{e.description}</p>
-                      {e.category && <p className={styles.muted} style={{ margin: 0, fontSize: '0.78rem' }}>{e.category}</p>}
-                    </div>
-                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--home-ink, rgba(255,255,255,0.85))', flexShrink: 0 }}>{fmt(e.amount)}</span>
-                  </div>
+                <Fragment key={e.id}>
+                <tr className={styles.tr}>
+                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">{e.description}</td>
+                  <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
+                  <td className={styles.td} data-label="Status">
+                    <span className={`${styles.badge} ${status.cls}`} style={{ fontSize: '0.75rem' }}>{status.label}</span>
+                  </td>
+                  <td className={`${styles.td} ${styles.cardActionCell}`}>
+                    <button
+                      type="button"
+                      className={`${styles.btnGhost} ${styles.compactAction}`}
+                      aria-expanded={open}
+                      /* ⚠ The aria-label is NOT redundant with the span beside it. `.cardActionLabel`
+                         is `display: none` above 640px, so on a desktop the span is out of the
+                         accessibility tree and the icon is aria-hidden — without this the button
+                         would announce with NO NAME AT ALL. Caught in review 2026-08-13; the
+                         identical control on Payment requests had it and this one did not. */
+                      aria-label={open ? `Hide ${e.description}'s payment details` : `Show ${e.description}'s payment details`}
+                      onClick={() => setExpandedPayable(open ? null : e.id)}
+                    >
+                      {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+                      <span className={styles.cardActionLabel}>{open ? 'Hide details' : 'Payment details'}</span>
+                    </button>
+                  </td>
+                </tr>
+                {open && (
+                <tr className={styles.tr}>
+                  <td className={`${styles.td} ${styles.cardStackCell}`} colSpan={5}>
 
                   {/* Deposit + balance share a row on a desktop and stack on a phone. Two
                       ~150px boxes each holding an amount, a due date, an overdue warning and a
@@ -709,8 +894,8 @@ export function ExpensesPayablesPanel({
                     <div style={{ marginTop: '0.6rem', maxWidth: 360 }}>
                       <TagSearchCombobox library={expenseTags} selectedIds={editTagIds} onChange={setEditTagIds} onCreate={createMoneyTag} showLegend={false} placeholder="Add money tags…" />
                       <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                        <button className={styles.btnSecondary} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
-                        <button className={styles.btnGhost} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
+                        <button className={`${styles.btnSecondary} ${styles.compactAction}`} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
+                        <button className={`${styles.btnGhost} ${styles.compactAction}`} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
                       </div>
                     </div>
                   ) : (
@@ -726,9 +911,14 @@ export function ExpensesPayablesPanel({
                       )}
                     </div>
                   )}
-                </div>
+                  </td>
+                </tr>
+                )}
+                </Fragment>
               );
             })}
+              </tbody>
+            </table>
           </div>
         )
       ) : (
@@ -770,7 +960,7 @@ export function ExpensesPayablesPanel({
                       <th className={styles.th}>Due</th>
                       <th className={styles.th}>What</th>
                       <th className={styles.th}>Category</th>
-                      <th className={styles.th}>Amount</th>
+                      <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                       <th className={styles.th}>Status</th>
                       <th className={styles.th}></th>
                     </tr>
@@ -786,7 +976,7 @@ export function ExpensesPayablesPanel({
                         <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                           {row.source === 'org' ? 'Org allocation' : (row.category ?? '—')}
                         </td>
-                        <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(row.amount)}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(row.amount)}</td>
                         <td className={styles.td} data-label="Status">
                           {row.paid ? (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>

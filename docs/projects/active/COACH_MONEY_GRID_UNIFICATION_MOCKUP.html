@@ -1,0 +1,237 @@
+<title>Two Grids, One Table</title>
+<style>
+:root {
+  --ground:#FBFAF7; --ink:#1B1913; --ink-2:#45403A; --muted:#6E685E;
+  --rule:rgba(28,26,22,0.11); --rule-2:rgba(28,26,22,0.22);
+  --accent:#57651E; --accent-soft:rgba(87,101,30,0.10);
+  --ok:#34662A; --flag:#A33A1E; --flag-soft:rgba(163,58,30,0.09);
+  --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --cond: "Arial Narrow", "Liberation Sans Narrow", ui-sans-serif, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#17160F; --ink:#EFEBE0; --ink-2:#C4BEB0; --muted:#948E82;
+    --rule:rgba(239,235,224,0.13); --rule-2:rgba(239,235,224,0.26);
+    --accent:#B4C96A; --accent-soft:rgba(180,201,106,0.12);
+    --ok:#86C57A; --flag:#E58267; --flag-soft:rgba(229,130,103,0.12);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#17160F; --ink:#EFEBE0; --ink-2:#C4BEB0; --muted:#948E82;
+  --rule:rgba(239,235,224,0.13); --rule-2:rgba(239,235,224,0.26);
+  --accent:#B4C96A; --accent-soft:rgba(180,201,106,0.12);
+  --ok:#86C57A; --flag:#E58267; --flag-soft:rgba(229,130,103,0.12);
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--sans); font-size:16px; line-height:1.6; margin:0; padding:0 1.25rem 5rem; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+header { padding: 3.5rem 0 1.75rem; border-bottom: 2px solid var(--ink); }
+.kicker { font-family: var(--mono); font-size:0.7rem; letter-spacing:0.16em; text-transform:uppercase; color: var(--muted); margin: 0 0 1rem; }
+h1 { font-size: clamp(2rem,5vw,3.1rem); line-height:1.02; letter-spacing:-0.035em; font-weight:800; margin:0 0 1rem; text-wrap: balance; }
+.standfirst { font-size:1.05rem; color: var(--ink-2); margin:0; max-width:62ch; }
+blockquote { margin:1.2rem 0 0; padding:0 0 0 1.1rem; border-left:3px solid var(--accent); font-style:italic; color: var(--ink-2); max-width:58ch; }
+p { margin:0 0 0.9rem; max-width:68ch; }
+h2 { font-size:1.35rem; letter-spacing:-0.02em; margin:3rem 0 0.3rem; border-bottom:1px solid var(--rule-2); padding-bottom:0.4rem; }
+h3 { font-size:1.02rem; margin:2rem 0 0.4rem; }
+code { font-family: var(--mono); font-size:0.86em; background: var(--accent-soft); padding:0.08em 0.34em; border-radius:3px; }
+
+.flag { border-left:3px solid var(--flag); background: var(--flag-soft); padding:0.9rem 1.1rem; margin:1.3rem 0; max-width:74ch; border-radius:0 6px 6px 0; }
+.flag p:last-child { margin-bottom:0; }
+.flag .lbl { font-family: var(--mono); font-size:0.65rem; letter-spacing:0.13em; text-transform:uppercase; color: var(--flag); font-weight:700; display:block; margin-bottom:0.3rem; }
+.good { border-left:3px solid var(--ok); background: var(--accent-soft); padding:0.9rem 1.1rem; margin:1.3rem 0; max-width:74ch; border-radius:0 6px 6px 0; }
+.good p:last-child { margin-bottom:0; }
+.good .lbl { font-family: var(--mono); font-size:0.65rem; letter-spacing:0.13em; text-transform:uppercase; color: var(--ok); font-weight:700; display:block; margin-bottom:0.3rem; }
+
+.diff { overflow-x:auto; margin:1rem 0 1.5rem; }
+table.diff-t { border-collapse:collapse; width:100%; min-width:720px; font-size:0.86rem; }
+table.diff-t th { text-align:left; font-family: var(--mono); font-size:0.63rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--muted); font-weight:600; padding:0.5rem 0.8rem 0.5rem 0; border-bottom:1px solid var(--rule-2); vertical-align:bottom; }
+table.diff-t td { padding:0.55rem 0.8rem 0.55rem 0; border-bottom:1px solid var(--rule); vertical-align:top; color: var(--ink-2); }
+table.diff-t td:first-child { color: var(--ink); font-weight:620; }
+.tag { display:inline-block; font-family: var(--mono); font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; padding:0.12em 0.42em; border-radius:3px; border:1px solid var(--rule-2); color: var(--muted); white-space:nowrap; }
+.tag.bad { color: var(--flag); border-color: var(--flag); background: var(--flag-soft); }
+.tag.ok { color: var(--ok); border-color: var(--ok); }
+
+/* ══ specimens ══ */
+.screen {
+  --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-soft:#4A4235; --p-dim:#6A635C;
+  --p-line:rgba(70,55,30,0.12); --p-line-2:rgba(70,55,30,0.22); --p-fill:rgba(70,55,30,0.06);
+  --p-olive:#57651E; --p-osoft:rgba(87,101,30,0.10); --p-live:#B03A22;
+  background: var(--p-paper); color: var(--p-ink);
+  border:1px solid var(--rule-2); border-radius:10px; overflow:hidden; font-size:16px; line-height:1.45;
+}
+.screen .bar { display:flex; align-items:center; justify-content:space-between; gap:0.7rem; padding:0.45rem 0.85rem; background: var(--p-card); border-bottom:1px solid var(--p-line); font-family: var(--mono); font-size:0.61rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--p-dim); }
+.screen .bar em { font-style:normal; font-weight:700; }
+.screen .bar em.now { color:#A33A1E; } .screen .bar em.next { color:#34662A; }
+.screen .body { padding:0.85rem; }
+.screen .scroll { overflow-x:auto; }
+
+.g { border-collapse:collapse; width:100%; font-variant-numeric: tabular-nums; }
+.g th, .g td { padding:0.42rem 0.6rem; border-bottom:1px solid var(--p-line); white-space:nowrap; text-align:right; font-weight:400; }
+.g thead th { font-size:0.78rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color: var(--p-dim); border-bottom:1px solid var(--p-line-2); }
+.g th:first-child, .g td:first-child { text-align:left; min-width:168px; }
+.g tbody td { font-size:0.82rem; color: var(--p-soft); }
+.band th { text-align:center !important; font-size:0.7rem; letter-spacing:0.14em; color: var(--p-dim); border-bottom:1px solid var(--p-line); font-weight:400; }
+.nil { color: rgba(70,55,30,0.35); }
+.neg { color:#B03A22; }
+
+/* ── TODAY: By period ── */
+.nowA tbody th { font-size:0.84rem; font-weight:600; color: var(--p-ink); }
+.nowA .cat th, .nowA .cat td { font-size:0.74rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color: var(--p-soft); }
+.nowA .lead2 { padding-left:1.4rem; }
+.nowA .tot th, .nowA .tot td { border-top:2px solid var(--p-line-2); border-bottom:none; font-weight:800; font-size:0.84rem; color: var(--p-ink); }
+
+/* ── TODAY: Months (the defect) ── */
+.nowB tbody th { font-family: var(--cond); font-size:0.8rem; font-weight:400; text-transform:uppercase; letter-spacing:0.1em; color: var(--p-dim); }
+.nowB .cat th, .nowB .cat td { background: rgba(120,140,190,0.10); }
+.nowB .cat th { font-family: var(--sans); text-transform:none; letter-spacing:0; font-size:0.82rem; font-weight:600; color: var(--p-ink); }
+.nowB .tot th, .nowB .tot td { border-top:1px solid var(--p-line-2); font-weight:600; }
+.nowB .flow th, .nowB .flow td { border-bottom:none; color: var(--p-dim); }
+.nowB .lead2 { padding-left:1.7rem; }
+
+/* ── PROPOSED: one recipe, both grids ── */
+.next-g tbody th { font-family: var(--sans); text-transform:none; letter-spacing:0; font-size:0.84rem; font-weight:600; color: var(--p-ink); }
+.next-g .cat th, .next-g .cat td { background: var(--p-fill); font-size:0.92rem; font-weight:800; color: var(--p-ink); text-transform:none; letter-spacing:0; }
+.next-g .cat td { font-size:0.86rem; }
+.next-g .lead2 { padding-left:1.55rem; }
+.next-g .tot th, .next-g .tot td { border-top:2px solid var(--p-line-2); border-bottom:none; font-size:0.92rem; font-weight:800; color: var(--p-ink); }
+.next-g .flow th { border-top:1px solid var(--p-line-2); font-size:0.82rem; font-weight:600; color: var(--p-soft); }
+.next-g .flow td { border-top:1px solid var(--p-line-2); border-bottom:none; color: var(--p-soft); }
+.next-g .flow.mid th, .next-g .flow.mid td { border-top:none; }
+.chev { display:inline-block; width:0.9em; color: var(--p-dim); }
+
+.pair { display:grid; grid-template-columns:1fr; gap:1.4rem; margin:1rem 0 0; }
+.specimen { display:flex; flex-direction:column; gap:0.5rem; min-width:0; }
+.caption { font-family: var(--mono); font-size:0.68rem; letter-spacing:0.04em; color: var(--muted); margin:0; max-width:70ch; line-height:1.6; }
+.caption b { letter-spacing:0.1em; text-transform:uppercase; font-weight:700; }
+.caption b.now { color: var(--flag); } .caption b.next { color: var(--ok); }
+footer { margin-top:3.5rem; padding-top:1.2rem; border-top:1px solid var(--rule); font-family: var(--mono); font-size:0.66rem; letter-spacing:0.06em; color: var(--muted); text-transform:uppercase; }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="kicker">Coach portal · Money hub · 2026-08-13</p>
+  <h1>Two grids,<br>one table</h1>
+  <p class="standfirst">The table pass unified these two screens' heading row and pinned column and stopped there. Their bodies were never touched — and one of them has been shouting the coach's own words back at them.</p>
+  <blockquote>I like option C, but also these still look like 2 differently formatted tables. weren't we trying to unify these?</blockquote>
+</header>
+
+<h2>What is actually different</h2>
+<div class="diff">
+<table class="diff-t">
+  <thead><tr><th>Element</th><th>Budget Plan · By period</th><th>Budget vs. Actual · Months</th><th></th></tr></thead>
+  <tbody>
+    <tr><td>Line names (coach-typed)</td><td>Sentence case, body face, 13.4px</td><td><strong>UPPERCASE, condensed display face, 12.8px</strong></td><td><span class="tag bad">defect</span></td></tr>
+    <tr><td>Category row</td><td>Small caps, <em>smaller</em> than its lines</td><td>Sentence case, tinted band, chevron</td><td><span class="tag bad">inverted</span></td></tr>
+    <tr><td>Closing total</td><td>Sentence case, biggest, 2px rule</td><td><strong>Small caps, quietest row on the screen</strong></td><td><span class="tag bad">mirror images</span></td></tr>
+    <tr><td>Cash-flow strip</td><td>—</td><td>Small caps, condensed face</td><td><span class="tag bad">shouts</span></td></tr>
+    <tr><td>First column heading</td><td>&ldquo;Line&rdquo;</td><td>&ldquo;Category / line&rdquo;</td><td><span class="tag bad">two names</span></td></tr>
+    <tr><td>Line indent</td><td>1.4rem</td><td>1.7rem</td><td><span class="tag bad">drift</span></td></tr>
+    <tr><td>Negative figures</td><td>One minus</td><td><strong>Two</strong> — <code>&minus;-2,000</code></td><td><span class="tag bad">bug</span></td></tr>
+    <tr><td>Heading row · pinned column</td><td colspan="2">Already agreed &mdash; unified in the table pass</td><td><span class="tag ok">done</span></td></tr>
+    <tr><td>Year band vs. &ldquo;&rsquo;26&rdquo; suffix</td><td colspan="2">Different data, not drift &mdash; a season view spans one or two years; a month view labels twelve</td><td><span class="tag ok">keep</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="flag">
+  <span class="lbl">The defect underneath the inconsistency</span>
+  <p>A global table rule uppercases every row heading into the condensed display face. The By-period grid <strong>explicitly cancels it</strong> — its code carries a note about a coach seeing <em>&ldquo;MCTAVISH ARENA &mdash; WINTER BLOCK&rdquo;</em> shouted back. The Months grid never did, so every line a coach typed, its closing total, and the whole cash-flow strip render in a typeface used nowhere else for a coach's own words. Measured, not eyeballed: <code>text-transform: uppercase</code>, <code>Barlow&nbsp;Condensed</code>, on <em>Winter dome block</em>, <em>Diamond permits</em> and <em>Spring classic entry</em>.</p>
+</div>
+
+<h2>Today</h2>
+<div class="pair">
+  <div class="specimen">
+    <div class="screen"><div class="bar"><span>Budget Plan · By period</span><em class="now">today</em></div><div class="body"><div class="scroll">
+      <table class="g nowA">
+        <thead>
+          <tr class="band"><th></th><th colspan="2">2026</th><th></th><th></th></tr>
+          <tr><th>Line</th><th>Jan</th><th>Feb</th><th>Unscheduled</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cat"><th>Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+          <tr><th class="lead2">Entry Fees</th><td class="nil">—</td><td class="nil">—</td><td>3,000</td><td>3,000</td></tr>
+          <tr><th class="lead2">Uniforms</th><td class="nil">—</td><td class="nil">—</td><td>2,000</td><td>2,000</td></tr>
+          <tr><th class="lead2">Travel</th><td>1,000</td><td>1,000</td><td class="nil">—</td><td>2,000</td></tr>
+          <tr class="cat"><th>Officials</th><td class="nil">—</td><td class="nil">—</td><td>1,000</td><td>1,000</td></tr>
+          <tr><th class="lead2">Umpire Fees</th><td class="nil">—</td><td class="nil">—</td><td>1,000</td><td>1,000</td></tr>
+          <tr class="tot"><th>Total planned budget</th><td>1,000</td><td>1,000</td><td>6,000</td><td>8,000</td></tr>
+        </tbody>
+      </table>
+    </div></div></div>
+    <p class="caption"><b class="now">Now.</b> Category smaller than the lines it groups. Total is the biggest thing on the screen.</p>
+  </div>
+
+  <div class="specimen">
+    <div class="screen"><div class="bar"><span>Budget vs. Actual · Months</span><em class="now">today</em></div><div class="body"><div class="scroll">
+      <table class="g nowB">
+        <thead><tr><th>Category / line</th><th>No date yet</th><th>Jan '26</th><th>Feb '26</th><th>Mar '26</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr class="cat"><th><span class="chev">›</span>Tournaments</th><td>5,000</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>7,000</td></tr>
+          <tr><th class="lead2">Winter dome block</th><td class="nil">—</td><td>1,733</td><td>1,733</td><td>1,734</td><td>5,200</td></tr>
+          <tr><th class="lead2">Spring classic entry</th><td>3,000</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td>3,000</td></tr>
+          <tr class="tot"><th>Total</th><td>6,000</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>8,000</td></tr>
+          <tr class="flow"><th>Money in</th><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td></tr>
+          <tr class="flow"><th>Money out</th><td class="nil">—</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>2,000</td></tr>
+          <tr class="flow"><th>Running balance</th><td class="nil">—</td><td class="neg">&minus;-1,000</td><td class="neg">&minus;-2,000</td><td class="neg">&minus;-2,000</td><td class="nil">—</td></tr>
+        </tbody>
+      </table>
+    </div></div></div>
+    <p class="caption"><b class="now">Now.</b> <strong>Winter dome block</strong> and <strong>Spring classic entry</strong> are names the coach typed, printed as small caps in a condensed face. The closing total is quieter than the rows above it. The running balance carries two minus signs.</p>
+  </div>
+</div>
+
+<h2>Proposed — one recipe, both grids</h2>
+<div class="pair">
+  <div class="specimen">
+    <div class="screen"><div class="bar"><span>Budget Plan · By period</span><em class="next">proposed</em></div><div class="body"><div class="scroll">
+      <table class="g next-g">
+        <thead>
+          <tr class="band"><th></th><th colspan="2">2026</th><th></th><th></th></tr>
+          <tr><th>Category / line</th><th>Jan</th><th>Feb</th><th>Unscheduled</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cat"><th>Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+          <tr><th class="lead2">Entry Fees</th><td class="nil">—</td><td class="nil">—</td><td>3,000</td><td>3,000</td></tr>
+          <tr><th class="lead2">Uniforms</th><td class="nil">—</td><td class="nil">—</td><td>2,000</td><td>2,000</td></tr>
+          <tr><th class="lead2">Travel</th><td>1,000</td><td>1,000</td><td class="nil">—</td><td>2,000</td></tr>
+          <tr class="cat"><th>Officials</th><td class="nil">—</td><td class="nil">—</td><td>1,000</td><td>1,000</td></tr>
+          <tr><th class="lead2">Umpire Fees</th><td class="nil">—</td><td class="nil">—</td><td>1,000</td><td>1,000</td></tr>
+          <tr class="tot"><th>Total planned budget</th><td>1,000</td><td>1,000</td><td>6,000</td><td>8,000</td></tr>
+        </tbody>
+      </table>
+    </div></div></div>
+    <p class="caption"><b class="next">Proposed.</b> Option C: the category is the biggest name in its group, sentence case, on a quiet band. Its lines sit under it at reading size. The closing total matches the category weight, separated by a rule rather than by shouting.</p>
+  </div>
+
+  <div class="specimen">
+    <div class="screen"><div class="bar"><span>Budget vs. Actual · Months</span><em class="next">proposed</em></div><div class="body"><div class="scroll">
+      <table class="g next-g">
+        <thead><tr><th>Category / line</th><th>No date yet</th><th>Jan '26</th><th>Feb '26</th><th>Mar '26</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr class="cat"><th><span class="chev">›</span>Tournaments</th><td>5,000</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>7,000</td></tr>
+          <tr><th class="lead2">Winter dome block</th><td class="nil">—</td><td>1,733</td><td>1,733</td><td>1,734</td><td>5,200</td></tr>
+          <tr><th class="lead2">Spring classic entry</th><td>3,000</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td>3,000</td></tr>
+          <tr class="tot"><th>Total</th><td>6,000</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>8,000</td></tr>
+          <tr class="flow"><th>Money in</th><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td><td class="nil">—</td></tr>
+          <tr class="flow mid"><th>Money out</th><td class="nil">—</td><td>1,000</td><td>1,000</td><td class="nil">—</td><td>2,000</td></tr>
+          <tr class="flow mid"><th>Running balance</th><td class="nil">—</td><td class="neg">&minus;1,000</td><td class="neg">&minus;2,000</td><td class="neg">&minus;2,000</td><td class="nil">—</td></tr>
+        </tbody>
+      </table>
+    </div></div></div>
+    <p class="caption"><b class="next">Proposed.</b> Identical chrome to the panel above. Line names read as the coach typed them. The cash-flow strip stays visibly a different KIND of row — separated by a rule and set in quieter ink — rather than by being the loudest thing on the screen. One minus sign.</p>
+  </div>
+</div>
+
+<div class="good">
+  <span class="lbl">What stays different, on purpose</span>
+  <p><strong>The year band vs. the &ldquo;&rsquo;26&rdquo; suffix.</strong> A season plan spans one or two years and groups its columns under a band; a twelve-month view labels every column. Different data, not drift.</p>
+  <p><strong>The chevron.</strong> It appears only where categories actually collapse (Months). An affordance for a behaviour, not decoration — a chevron that does nothing is worse than none. If you want By&nbsp;period to collapse too, say so and it becomes one more line rather than a redesign.</p>
+  <p><strong>The cash-flow strip belongs to Months alone.</strong> Projecting a running balance needs dated columns; the plan's period view has an <em>Unscheduled</em> column precisely because some of it has no date.</p>
+</div>
+
+<h2>What this costs</h2>
+<p>Three edits in the shared grid treatment and one in the number formatter. No behaviour changes, no controls move, no data changes. The line-name fix is the same reset the By-period grid already carries, moved somewhere both can use it &mdash; so the next money grid inherits it instead of re-discovering the shouting.</p>
+
+<footer>Mockup is the spec · measured with computed styles, not screenshots · Money hub only</footer>
+</div>

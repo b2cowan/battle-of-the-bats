@@ -13,136 +13,172 @@
 .muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
 
-/* ── Summary banner ──────────────────────────────────────────────────────── */
-.summaryBanner {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-  padding: 1rem 1.5rem;
+/* ── The summary ladder ──────────────────────────────────────────────────────
+   Replaced a row of up to five equal tiles (2026-08-12). Those tiles presented six
+   figures as unrelated peers and then needed a caption under each explaining its
+   relationship to its neighbour — but they are ONE sum worked downward. Here the
+   position of a number is its explanation, so the captions are gone.
+
+   A two-column grid, label left / money right, with rules where the arithmetic
+   closes. It is already a single column of pairs, so the phone layout is the same
+   layout — which is what the old tiles could not manage (they wrapped ragged).
+   Tokens only — no colour literals (the six colour-token baselines stay at zero). */
+.ladder {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 1.5rem;
+  align-items: baseline;
+  padding: 0.9rem 1.25rem 1rem;
   border-radius: 12px;
   background: rgba(var(--blueprint-blue-rgb), 0.07);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   margin-bottom: 1.75rem;
 }
 
-.summaryItem { min-width: 120px; }
-
-.summaryLabel {
-  display: block;
-  font-size: 0.68rem;
+.ladderCap {
+  grid-column: 1 / -1;
+  font-size: 0.66rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  font-weight: 700;
   color: var(--white-40, rgba(255,255,255,0.4));
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.35rem;
 }
 
-.summaryValue {
-  font-size: 1.15rem;
+.ladderKey {
+  font-size: 0.88rem;
+  color: var(--white-70, rgba(255,255,255,0.7));
+  min-width: 0;
+}
+
+.ladderValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+}
+
+/* The line count beside a row's name — quiet, and never competing with the money. */
+.ladderCount {
+  margin-left: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.ladderSub {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+.ladderValue.ladderSub { color: var(--white-70, rgba(255,255,255,0.7)); }
+
+.ladderHead {
+  font-size: 1rem;
   font-weight: 700;
   color: var(--white-90);
+}
+.ladderValue.ladderHead { font-size: 1.15rem; font-weight: 800; }
+
+/* ⚠ Compound selectors, deliberately. `.ladderValue.ladderSub` above sets a colour and carries
+   specificity 0-2-0, so a plain `.ladderBad` (0-1-0) LOST to it — the over-plan number rendered in
+   warm grey while every other signal on the page said "this is the red one". Found by reading the
+   computed colour in a browser, which is the only thing that could have found it. */
+.ladderValue.ladderGood,
+.ladderValue.ladderSub.ladderGood { color: var(--success-light); }
+.ladderValue.ladderBad,
+.ladderValue.ladderSub.ladderBad  { color: var(--danger-light); }
+
+.ladderRule {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--home-line-strong, rgba(255,255,255,0.15));
+  margin: 0.5rem 0;
+}
+
+.ladderLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--blueprint-blue, var(--link));
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ladderLink:disabled { opacity: 0.6; cursor: default; }
+
+/* The estimate's editor sits in the ladder's flow, spanning both columns — a control
+   pinned into the money column would be a text field where a figure belongs. */
+.ladderEditor {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0.15rem;
+}
+.ladderEditorLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+/* The outcome: the one number a coach acts on, at the foot where a total belongs. */
+.ladderPay {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+.ladderBig {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
   font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+}
+.ladderSay {
+  font-size: 0.8rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
 }
 
 /* ── Line items ──────────────────────────────────────────────────────────── */
+/* ⚠ THE PLAN'S OUTLINE NOW COMES FROM THE SHARED LEDGER (coaches.module.css `.ledgerList` and
+   friends, Money-hub table consistency 2026-08-13). This file's own `.categoryGroup` /
+   `.lineMain` / `.periodRow` / `.grandTotal` fork is GONE — it was the same structure Budget vs.
+   Actual had written independently, disagreeing on radius, header layout, name size and ink.
+   What survives here is only what is specific to THIS plan: its column tracks, its funding
+   accent, and its outer spacing.
+
+   ⚠ THE ADMIN BUDGET PAGE DOES NOT IMPORT THIS FILE, whatever a future search suggests.
+   `app/[orgSlug]/admin/accounting/budget/page.tsx` imports `./budget.module.css` — its OWN file in
+   the admin directory, which merely shares a filename; CSS Modules scope per file. A comment here
+   once claimed the opposite and, on that false constraint, seven classes were preserved as
+   "load-bearing" when they were already dead. The real importers are the coach budget panel,
+   `GenerateInstallmentsModal.tsx` and `DateField.tsx` — grep those three, and only those three,
+   before deciding anything here is unused. */
 .linesContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  /* The plan's tracks: line name · amount · row actions. The trailing `auto` collapses to nothing
+     for a read-only money coach, so the same three tracks serve both.
+
+     ⚠ `minmax(0, 1fr)`, NOT `1fr`. A bare `1fr` track floors at `min-content`, so a long line name
+     refuses to shrink and pushes the row wider than the page — and unlike Budget vs. Actual, this
+     list has NO horizontal scroller to own the overflow, so it spills the document. Caught by the
+     rendered sweep at 361px the moment the fixture had budget lines in it: "Spring classic entry"
+     spilled 39px with `overflow-x: visible` and nothing owning it. The name ellipses (and wraps
+     below 640) instead. */
+  --ledger-cols: minmax(0, 1fr) 130px auto;
   margin-bottom: 1.75rem;
 }
 
-.categoryGroup {
-  border-radius: 12px;
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  overflow: hidden;
-}
 
-.categoryHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 1rem;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
-}
-
-.categoryName {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--white-40, rgba(255,255,255,0.4));
-}
-
-.categoryTotal {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--white-70, rgba(255,255,255,0.7));
-  font-variant-numeric: tabular-nums;
-}
-
-.lineRow {
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.04));
-}
-.lineRow:last-child { border-bottom: none; }
-
-.lineMain {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1rem;
-}
-
-.expandBtn, .expandSpacer {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.expandBtn {
-  background: none;
-  border: none;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 0;
-  transition: color 0.12s;
-}
-.expandBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
-
+/* The leading cell's stacked name + note. Everything else a line row used to need — its own
+   frame, chevron, amount and action rail — now comes from the shared ledger. */
 .lineInfo { flex: 1; min-width: 0; }
 
-.lineDesc {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--white-85, rgba(255,255,255,0.85));
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lineNotes {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lineAmount {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--white-90);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-.lineActions { display: flex; gap: 0.3rem; margin-left: 0.5rem; }
 
 .actionBtn {
   background: none;
@@ -158,46 +194,170 @@
 .actionBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); border-color: var(--home-line, rgba(255,255,255,0.25)); }
 .actionBtnDanger:hover { color: var(--danger-light); border-color: color-mix(in srgb, var(--danger-light) 40%, transparent); }
 
-/* ── Period breakdown (expanded) ─────────────────────────────────────────── */
-.periodsTable {
-  padding: 0.25rem 1rem 0.75rem 2.75rem;
+/* ── Expected funding ────────────────────────────────────────────────────────
+   Money coming IN — one section, always after the costs, shown negative so the
+   arithmetic reads down the column. It borrows the shared ledger's frame; only the
+   accent differs, because it is still a group of budget lines.
+
+   ⚠ BOTH SELECTORS ARE DOUBLED ON PURPOSE. Each of these is applied ALONGSIDE a shared class
+   that also sets the property it overrides — `.ledgerGroup` sets the `border` shorthand (which
+   carries a colour) and `.ledgerNum`/`.ledgerNumStrong` set `color`. Written as a single class
+   this file's rule would be the same specificity as the shared one, leaving SOURCE ORDER across
+   two stylesheets to decide the winner — a bundling detail, not a decision. Doubling the class
+   raises specificity to 0-2-0 so the accent wins deterministically. This is the exact failure
+   mode recorded in `memory/reference_cascade_collisions_coach_budget.md`: the class is present,
+   is outranked, and silently does nothing. Assert the COMPUTED colour, never the class list. */
+.fundingGroup.fundingGroup {
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+.fundingAmount.fundingAmount { color: var(--success-light); }
+
+/* ── What KIND of line (cost / expected funding) ─────────────────────────── */
+.kindChoice {
+  display: flex;
+  gap: 0.5rem;
+}
+.kindOption {
+  flex: 1;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 9px;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+  background: transparent;
+  color: var(--white-70, rgba(255,255,255,0.7));
+  cursor: pointer;
+}
+.kindOption:hover { border-color: var(--home-olive, var(--logic-lime)); color: var(--white-90); }
+.kindOption[aria-pressed='true'] {
+  background: var(--home-olive-soft, rgba(255,255,255,0.14));
+  border-color: var(--home-olive, var(--logic-lime));
+  color: var(--home-ink, rgba(255,255,255,0.9));
+  font-weight: 700;
+}
+.kindOption small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  margin-top: 0.1rem;
+}
+.kindHint {
+  margin: 0.5rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+
+/* ── List ⇄ By period ────────────────────────────────────────────────────── */
+/* The ROW is `.panelToolbar` in coaches.module.css — the shared control row every Money tab now
+   uses (page-level action ruling 2026-08-13). This file used to declare a byte-identical copy of
+   it; the two agreed only by coincidence, so tuning the shared row portal-wide would have left
+   the Budget tab quietly out of step with its four siblings. Only the CONTROLS inside the row
+   are budget-local, and they are below. */
+/* ⚠ `.segmented` is NOT the shared `.viewToggle` in coaches.module.css, deliberately. That control's button has
+   no height floor and renders ~30px — below the portal's own 44px tap floor, which the rendered
+   layout sweep enforces. Adopting it here would take a brand-new control below the floor on the
+   day it shipped; changing the shared one would move layout on several already-QA'd screens.
+   Reconcile the two when that shared control is next revisited. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+  border-radius: 8px;
+  overflow: hidden;
+}
+.segmented button {
+  font: inherit;
+  font-size: 0.8rem;
+  /* 44px is the portal's tap floor; the rendered baseline check enforces it. */
+  min-height: 44px;
+  padding: 0.3rem 0.85rem;
+  border: none;
+  border-right: 1px solid var(--home-line, rgba(255,255,255,0.1));
+  background: transparent;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  cursor: pointer;
+}
+.segmented button:last-child { border-right: none; }
+.segmented button:hover { color: var(--white-90); }
+.segmented button[aria-pressed='true'] {
+  background: var(--home-olive-soft, rgba(255,255,255,0.14));
+  color: var(--home-ink, rgba(255,255,255,0.9));
+  font-weight: 700;
+}
+
+/* ── The plan, across time ───────────────────────────────────────────────────
+   A genuine 2-D comparison, so it keeps its shape at every width and scrolls
+   inside <CoachScrollX> with the line name pinned — the same contract as the
+   Budget-vs-Actual month grid it deliberately resembles. Read-only: every edit
+   still happens in the list's own form. */
+.periodGridWrap {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+/* ⚠ Geometry, ink and the heading row now come from the shared `.moneyGrid` (coaches.module.css),
+   which this table also carries. What is left here is only what is TRUE OF THIS GRID ALONE: the
+   year band, the pinned column's width, the unscheduled column and the funding accent. */
+.periodGrid td { color: var(--white-80, rgba(255,255,255,0.8)); }
+/* ⚠ THIS ROW'S RECIPE IS NOW SHARED WITH THE MONTH GRID (Money-hub table consistency
+   2026-08-13) — `components/coaches/MoneyMonthGrid.module.css` was moved onto it, not the other
+   way round, because of the dated reason below. Change one, change both, or they fork again. */
+/* The year band sits above the period names, so it pins one step higher and the pinned first
+   column outranks both — otherwise the scrolled money columns slide over the line name. */
+.periodGrid thead .periodGridYearRow th { z-index: 2; }
+
+/* The year band above the months. Quiet — it is structure, not a heading to read — and its own
+   hairline shows how far each year reaches. */
+.periodGridYearRow th {
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  padding-bottom: 0.2rem;
+}
+.periodGridYear {
+  text-align: center !important;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+/* The blank cells over Line / Unscheduled / Total carry no rule: those columns are outside time,
+   and a hairline there would imply they belong to the year beside them. */
+.periodGridYearRow th[aria-hidden] { border-bottom-color: transparent; }
+/* The pinned first column must be OPAQUE — a translucent label lets the scrolled money
+   columns read through it (the Chunk A D3 lesson). */
+.periodGrid th:first-child,
+.periodGrid td:first-child {
+  text-align: left;
+  white-space: normal;
+  /* Matched to the month grid's pinned column (Money-hub table pass 2026-08-13) so the two grids
+     start their figures at the same place. */
+  min-width: 168px;
+  max-width: 260px;
+  background: var(--card-bg);
 }
 
-.periodRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.82rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
+/* ⚠ THE `<th scope="row">` RESET, THE CATEGORY/TOTAL TREATMENT AND THE COLUMN HEADINGS ALL COME
+   FROM THE SHARED `.moneyGrid` NOW (coaches.module.css). The reset that used to live here — with
+   its note about the coach's own line names being shouted back as "MCTAVISH ARENA — WINTER BLOCK"
+   — turned out to be missing entirely from the month grid next door, which is exactly why it moved
+   somewhere both grids read it. Do not reinstate a local copy. */
+.periodGridUnscheduled { color: var(--white-60, rgba(255,255,255,0.6)); }
+/* ⚠ Written to OUTRANK the shared `.moneyGrid tbody th` (0-2-1 vs 0-1-1), and DOUBLED so it also
+   beats the shared rule across stylesheets, where equal specificity would leave bundling order to
+   decide. The line NAME keeps the normal ink; only its figures go green.
+   ⚠ Expected funding is money coming IN — its minus sign is arithmetic, not a warning, which is
+   why it is green here while a negative running balance is red (owner, 2026-08-13). */
+.periodGrid tbody tr.periodGridFunding.periodGridFunding td { color: var(--success-light); }
+.periodGridNote {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
 }
-
-.periodLabel { flex: 1; font-weight: 600; }
-.periodDate  { color: var(--white-40, rgba(255,255,255,0.4)); font-size: 0.78rem; }
-.periodAmount { font-variant-numeric: tabular-nums; font-weight: 600; margin-left: auto; }
 
 /* ── Grand total row ─────────────────────────────────────────────────────── */
-.grandTotal {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  border-radius: 10px;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--white-70, rgba(255,255,255,0.7));
-}
-
-.grandTotalValue {
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: var(--white-90);
-  font-variant-numeric: tabular-nums;
-}
+/* (The plan's closing row is the shared `.ledgerTotal` — its own `.grandTotal` / `.grandTotalValue`
+   pair was a third copy of a total row and is retired.) */
 
 /* ── Generate installments CTA ───────────────────────────────────────────── */
 .generateSection {
@@ -293,6 +453,55 @@
 }
 .input:focus { outline: none; border-color: var(--blueprint-blue); }
 
+/* The browser draws the only calendar button on a date field (we add none of our own — two
+   calendar icons on one control is one icon explaining the other, the scorekeeper's precedent).
+   Chrome renders it faint by default, which on the warm portal's paper reads as decoration rather
+   than something pressable.
+   `color-scheme` is the other half, and the half opacity alone can't fix: without it the browser
+   draws a LIGHT-mode glyph and popup regardless of the portal's theme, so on the dark portal the
+   icon is a dark glyph on a dark field. Declared per theme so the picker that opens matches the
+   form it opened from. */
+.input[type='date'] { color-scheme: dark; }
+:global(html[data-user-theme='warm'] [data-coach-warm-enabled]) .input[type='date'] {
+  color-scheme: light;
+}
+
+/* We supply the calendar button (see DateField) instead of styling the browser's.
+   Chrome paints its indicator AS a masked background-colour, which is why three attempts to tame
+   it failed three different ways — opacity did nothing (never faded, just drawn pale), recolouring
+   it flattened Chrome's hover highlight into a grey square, and clearing that highlight erased the
+   glyph. It also came out green against this palette, and its own padding made the field TALLER
+   than the label and amount beside it.
+   Hiding it fixes the height by construction: the input goes back to being sized by its text. */
+.dateField {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+.dateField .input { padding-right: 2.15rem; }
+.dateField .input::-webkit-calendar-picker-indicator { display: none; }
+
+/* Ink, not accent. This is a control affordance belonging to the field's own chrome; an accent
+   here reads as decoration and competes with the real accents on the form. */
+.dateFieldBtn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.dateFieldBtn:hover { color: var(--white-90, rgba(255,255,255,0.9)); }
+
 .toggleLabel {
   display: flex;
   align-items: center;
@@ -332,13 +541,169 @@
 }
 .addPeriodBtn:hover { color: var(--white-90); border-color: var(--home-line, rgba(255,255,255,0.3)); }
 
+/* The Add/Edit Budget Line dialog runs wider than the shared default so the period row's three
+   controls (picker / label / amount) all get their full width — a date field narrow enough to clip
+   "yyyy-mm-dd", or a label box that only takes a word, is the row failing at its job. Same
+   precedent as .eventFormModal, one step further because this row carries one more control. */
+.budgetLineModal { max-width: 720px; }
+
+/* A field that stopped the save. Only ever applied AFTER Save has been pressed — a form that
+   shouts at a coach who is still typing is its own defect. */
+.inputBad {
+  border-color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.07);
+}
+.inputBad:focus { border-color: var(--danger); }
+
+/* ── The split: step 1 (how) then step 2 (the rows) ───────────────────────── */
+.splitStep {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+.splitStepNum { font-weight: 700; color: var(--white-75, rgba(255,255,255,0.75)); }
+
+.splitModes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.9rem;
+}
+.splitMode {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+  border-radius: 999px;
+  padding: 0.27rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--white-75, rgba(255,255,255,0.75));
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  min-height: 32px;
+}
+.splitMode:hover { border-color: var(--home-olive, var(--logic-lime)); color: var(--white-90); }
+
+/* Selected = a TINT plus a stronger border, NEVER an olive fill.
+   Ratified 2026-07-22 and owner-reinforced: in the warm portal olive is a text/border/tint accent
+   only — an olive FILL reads muddy on cream and collapses the button hierarchy against the real
+   lime CTA (the same E3 violation the `--logic-lime-fixed` decision exists to prevent).
+   It also has to match the $/% segment sitting twelve pixels above it: two selection controls in
+   one box speaking two visual languages is drift, and the heavier one wrongly reads as the thing
+   to press rather than the thing that is chosen. */
+.splitMode[aria-pressed='true'] {
+  background: var(--home-olive-soft, rgba(255,255,255,0.14));
+  border-color: var(--home-olive, var(--logic-lime));
+  color: var(--home-ink, rgba(255,255,255,0.9));
+  font-weight: 700;
+}
+
+/* Column headings — desktop only; the ≤640 group labels every field individually. Their widths
+   MUST track .periodFieldLabel's flex values below or the headings drift off their columns. */
+.periodColHead {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  /* Reserve the trailing remove button's width so "Amount" sits over the amount field. */
+  padding: 0 1.85rem 0.3rem 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+.periodColWhen   { flex: 0 0 10.5rem; }
+.periodColLabel  { flex: 2; min-width: 0; }
+.periodColAmount { flex: 1; min-width: 0; text-align: right; }
+
 .periodInputRow {
   display: flex;
   gap: 0.5rem;
   align-items: center;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 .periodInputRow:last-child { margin-bottom: 0; }
+
+/* Per-row advisory / error, on its own line under the controls. */
+.periodRowMsg, .periodRowMsgBad {
+  flex: 1 1 100%;
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+.periodRowMsgBad { color: var(--danger-light); }
+
+.periodEmpty {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+}
+
+.periodAddBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.7rem;
+}
+
+/* The secondary bulk actions. Quiet by design: "+ Add period" is the gesture, these are the
+   accelerators beside it. */
+.periodQuietBtn {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  font-size: 0.78rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  text-decoration: underline;
+  cursor: pointer;
+}
+.periodQuietBtn:hover { color: var(--white-90); }
+
+/* The way back from a bulk action — offered INSTEAD of a confirmation dialog, so a coach is never
+   stopped to answer a question they will almost always say yes to. */
+.periodUndo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.2));
+  border-radius: 8px;
+  font-size: 0.76rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+.periodUndo button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--home-olive, var(--logic-lime));
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The verdict that survives scrolling. Sits in the sticky footer, left of the actions. */
+.fixCounter {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.45);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--danger-light);
+  cursor: pointer;
+}
+.fixCounter:hover { background: rgba(var(--danger-rgb), 0.18); }
 
 /* Period field wrappers. On a desktop these are invisible — the <label> is just a flex
    child sized like the bare <input> it replaced, and its text is hidden — so the row
@@ -346,8 +711,13 @@
    full-width row inside a labelled group (see the reflow block at the foot of this file). */
 .periodFieldLabel { display: flex; flex: 2; min-width: 0; }
 .periodFieldDate  { flex: 1.5; }
+/* The period's identity — month/quarter select or a date input. FIXED width, and first in the
+   row, so a twelve-row budget reads as a clean column of months down the left edge. Wide enough
+   for a whole date plus its calendar button without clipping. Keep in step with .periodColWhen. */
+.periodFieldWhen  { flex: 0 0 10.5rem; }
 .periodFieldAmount { flex: 1; }
-.periodFieldLabel > .input { width: 100%; }
+.periodFieldLabel > .input,
+.periodFieldLabel > .select { width: 100%; }
 .periodFieldLabelText { display: none; }
 
 .periodGroupHead { display: none; }
@@ -563,10 +933,16 @@
   gap: 0.3rem;
 }
 
+/* The quiet doors on the first-run card and at the foot of the plan. They looked like text and
+   were 21px tall — under the portal's 44px tap floor, on the one screen a coach meets before they
+   have anything. Height, not font size: they stay visually quiet and become properly tappable. */
 .sampleLink {
   background: none;
   border: none;
   padding: 0.2rem 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--home-dim, rgba(255,255,255,0.45));
@@ -593,14 +969,21 @@
    Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
    ════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
-  /* Summary tiles read top-to-bottom instead of as a wrapping multi-column banner.
-     The axis flip comes from the shared .stack640 on the element; only the page's own
-     spacing lives here. */
-  .summaryBanner {
-    gap: 1rem;
-    padding: 1rem 1.1rem;
+  /* The ladder needs no axis flip — it is a column of label/money pairs at every width,
+     which is the point of it. Only the padding tightens. (The tiles it replaced wrapped
+     into a ragged two-row block here; that is the bug this shape retires.) */
+  .ladder {
+    padding: 0.85rem 1rem 0.9rem;
+    gap: 0.1rem 0.9rem;
   }
-  .summaryItem { min-width: 0; }
+  .ladderBig { font-size: 1.35rem; }
+
+  /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */
+  .kindChoice { flex-direction: column; }
+
+  /* The period grid keeps its shape and scrolls (CoachScrollX) rather than card-stacking —
+     a 2-D comparison stops being one the moment it becomes a list. */
+  .periodGrid { min-width: 460px; }
 
   /* (The amount field and the "split by period" checkbox stop sharing a row via the
      shared .stack640 on .formRow — the page's own gap is all that's left here.) */
@@ -618,6 +1001,10 @@
     gap: 0.5rem;
     align-items: flex-start;
   }
+
+  /* Column headings are a desktop device: down here every field already carries its own visible
+     label inside the group, so the headings would say everything twice. */
+  .periodColHead { display: none; }
 
   .periodInputRow {
     display: block;
@@ -682,11 +1069,14 @@
   }
 
   /* (Long descriptions wrap rather than ellipse — shared .wrap640 on the elements
-     themselves, not a rule here.) …which means the amount can no longer be pinned by
-     `margin-left: auto` against a nowrap description; the row wraps and the amount
-     sits under the name. */
-  .lineMain { flex-wrap: wrap; }
-  .lineInfo { flex-basis: 100%; }
+     themselves, not a rule here.)
+
+     ⚠ THE OUTLINE KEEPS ITS SHAPE ON A PHONE — it does NOT stack (approved render `14181bd3`;
+     the same call Budget vs. Actual's category view already makes). It is a hierarchy read down
+     a column, so dropping the amount under its own line name would put the figure a coach is
+     scanning for in a different place on every row. What gives instead is the money track,
+     narrowed to what a five-figure amount actually needs so the line name keeps the rest. */
+  .linesContainer { --ledger-cols: minmax(0, 1fr) 88px auto; }
 
   /* The "generate installments" CTA stacks its copy above its button. */
   .generateSection { gap: 0.85rem; }

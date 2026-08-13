@@ -33,6 +33,16 @@ interface Props {
   /** Where the full, unwindowed commitment list lives. This panel is a 30/60/90-day preview;
    *  the schedule behind this link is the whole thing (chunk H). */
   fullScheduleUrl?: string;
+  /** Render NOTHING — no header, no skeleton, no all-clear line — until the fetch comes back
+   *  with at least one item. For the setup-stage Money Overview, where a panel that says
+   *  "nothing due" three times on a team that has never entered a number is pure noise.
+   *
+   *  ⚠ The panel decides this, not its caller. An earlier pass inferred emptiness at the
+   *  caller from three counts on the money summary; review found the org-allocation lane is
+   *  NOT season-scoped while the count that stood in for it IS, so a team carrying an unpaid
+   *  allocation from a previous season could have that debt silently suppressed. Only the
+   *  thing that fetches the lanes can know whether they are empty. */
+  hideWhenEmpty?: boolean;
 }
 
 function fmt(n: number) {
@@ -123,7 +133,7 @@ function Lane({ lane, reviewQueueUrl }: { lane: PayableLane; reviewQueueUrl?: st
   );
 }
 
-export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullScheduleUrl }: Props) {
+export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullScheduleUrl, hideWhenEmpty }: Props) {
   const [days, setDays]   = useState<30 | 60 | 90>(30);
   const [lanes, setLanes] = useState<PayableLane[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +159,12 @@ export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullSche
 
   const totalOverdue = lanes.reduce((s, l) => s + l.items.filter(i => i.overdue).length, 0);
   const totalItems   = lanes.reduce((s, l) => s + l.items.length, 0);
+
+  // Opt-in callers get nothing at all rather than an empty panel — including while the
+  // first fetch is in flight, so the panel never appears and then removes itself. An
+  // ERROR still renders: a caller that asked to hide "nothing due" did not ask to hide
+  // "we could not find out", which on a money screen is the more important of the two.
+  if (hideWhenEmpty && !error && totalItems === 0) return null;
 
   return (
     <div className={styles.root}>

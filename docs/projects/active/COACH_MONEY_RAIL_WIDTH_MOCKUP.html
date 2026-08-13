@@ -1,0 +1,1312 @@
+<title>Money Rail at Desktop Width</title>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   DOCUMENT CHROME — the paper this review is printed on. Same skin as
+   COACH_MONEY_SETUP_OVERVIEW_MOCKUP.html (12 Aug), so the two read as a
+   pair: deliberately cooler and quieter than the product renders inside
+   it, so the eye never confuses annotation with artwork.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --doc-bg:        #F7F6F2;
+  --doc-panel:     #FFFFFF;
+  --doc-ink:       #1C1B17;
+  --doc-ink-soft:  #55524A;
+  --doc-dim:       #7A766C;
+  --doc-line:      rgba(45, 38, 22, 0.14);
+  --doc-line-soft: rgba(45, 38, 22, 0.07);
+  --doc-accent:    #4A5A1C;
+  --doc-accent-bg: rgba(74, 90, 28, 0.09);
+  --doc-red:       #A33A22;
+  --doc-red-bg:    rgba(163, 58, 34, 0.09);
+  --doc-blue:      #2C4C8C;
+  --doc-blue-bg:   rgba(44, 76, 140, 0.09);
+  --doc-shadow:    0 1px 2px rgba(30, 25, 12, 0.05), 0 8px 28px rgba(30, 25, 12, 0.06);
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+  --sans:  ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono:  ui-monospace, 'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg:        #16171A;
+    --doc-panel:     #1D1F23;
+    --doc-ink:       #ECE9E2;
+    --doc-ink-soft:  #B3AFA6;
+    --doc-dim:       #8B877E;
+    --doc-line:      rgba(236, 233, 226, 0.16);
+    --doc-line-soft: rgba(236, 233, 226, 0.08);
+    --doc-accent:    #B6CB6A;
+    --doc-accent-bg: rgba(182, 203, 106, 0.13);
+    --doc-red:       #E58A6E;
+    --doc-red-bg:    rgba(229, 138, 110, 0.13);
+    --doc-blue:      #8FB0E8;
+    --doc-blue-bg:   rgba(143, 176, 232, 0.13);
+    --doc-shadow:    0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg:        #16171A;
+  --doc-panel:     #1D1F23;
+  --doc-ink:       #ECE9E2;
+  --doc-ink-soft:  #B3AFA6;
+  --doc-dim:       #8B877E;
+  --doc-line:      rgba(236, 233, 226, 0.16);
+  --doc-line-soft: rgba(236, 233, 226, 0.08);
+  --doc-accent:    #B6CB6A;
+  --doc-accent-bg: rgba(182, 203, 106, 0.13);
+  --doc-red:       #E58A6E;
+  --doc-red-bg:    rgba(229, 138, 110, 0.13);
+  --doc-blue:      #8FB0E8;
+  --doc-blue-bg:   rgba(143, 176, 232, 0.13);
+  --doc-shadow:    0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+body {
+  background: var(--doc-bg);
+  color: var(--doc-ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3.25rem;
+}
+@media (max-width: 640px) { .wrap { padding: 2rem 1rem 4rem; gap: 2.5rem; } }
+
+/* ── Document typography ─────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--doc-dim);
+  margin: 0;
+}
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4.5vw, 2.9rem);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0.5rem 0 0;
+  text-wrap: balance;
+  max-width: 26ch;
+}
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+h3 {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 1.08rem; color: var(--doc-ink-soft); max-width: 64ch; }
+.note { font-size: 0.88rem; color: var(--doc-ink-soft); }
+.dim { color: var(--doc-dim); }
+strong { font-weight: 650; color: var(--doc-ink); }
+a { color: var(--doc-accent); }
+:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; border-radius: 3px; }
+
+section { display: flex; flex-direction: column; gap: 1.1rem; }
+.sechead { display: flex; flex-direction: column; gap: 0.35rem; max-width: 68ch; }
+.rule { height: 1px; background: var(--doc-line); border: 0; margin: 0; }
+
+/* ── Callout ─────────────────────────────────────────────────────── */
+.callout {
+  background: var(--doc-panel);
+  border: 1px solid var(--doc-line);
+  border-left: 3px solid var(--doc-accent);
+  border-radius: 4px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: var(--doc-shadow);
+  max-width: 1120px;
+}
+.callout.warn { border-left-color: var(--doc-red); }
+.callout.blue { border-left-color: var(--doc-blue); }
+
+/* ── Zone tags (mockups-are-spec vocabulary) ─────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.tag-new       { color: var(--doc-accent); background: var(--doc-accent-bg); border-color: var(--doc-accent); }
+.tag-removed   { color: var(--doc-red);    background: var(--doc-red-bg);    border-color: var(--doc-red); }
+.tag-unchanged { color: var(--doc-dim);    background: var(--doc-line-soft); border-color: var(--doc-line); }
+.tag-restyled  { color: var(--doc-blue);   background: var(--doc-blue-bg);   border-color: var(--doc-blue); }
+.taglist { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; }
+
+/* ── Screen frame: a render of the product, framed as a browser pane ── */
+.frame {
+  border: 1px solid var(--doc-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--doc-panel);
+  box-shadow: var(--doc-shadow);
+}
+.frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--doc-line);
+  background: var(--doc-bg);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--doc-dim);
+}
+.frame-bar .dots { display: flex; gap: 0.28rem; flex: none; }
+.frame-bar .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--doc-line); display: block; }
+.frame-bar .url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frame-bar .stamp {
+  margin-left: auto;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  flex: none;
+}
+.frame-scroll { overflow-x: auto; }
+
+/* Phone renders laid side by side */
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+.opt { display: flex; flex-direction: column; gap: 0.7rem; }
+.opt-head { display: flex; flex-direction: column; gap: 0.3rem; }
+.opt-title { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
+.opt-title h3 { font-size: 1.02rem; }
+.pick {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--doc-panel);
+  background: var(--doc-accent);
+  padding: 0.16rem 0.45rem;
+  border-radius: 3px;
+}
+.pick.no { background: var(--doc-dim); }
+
+/* ── Trade-off table ─────────────────────────────────────────────── */
+.tablewrap { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 6px; background: var(--doc-panel); max-width: 1120px; }
+table { border-collapse: collapse; width: 100%; min-width: 660px; font-size: 0.88rem; }
+th, td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--doc-line-soft); vertical-align: top; }
+thead th {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--doc-dim);
+  border-bottom: 1px solid var(--doc-line);
+}
+tbody tr:last-child td { border-bottom: none; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.good { color: var(--doc-accent); font-weight: 650; }
+td.bad  { color: var(--doc-red); font-weight: 650; }
+
+/* ── Measurement bars ────────────────────────────────────────────── */
+.bars { display: flex; flex-direction: column; gap: 0.55rem; max-width: 1120px; }
+.barrow { display: grid; grid-template-columns: 15rem minmax(0, 1fr) 6rem; gap: 0.75rem; align-items: center; }
+@media (max-width: 640px) { .barrow { grid-template-columns: 1fr; gap: 0.2rem; } }
+.barlabel { font-size: 0.85rem; font-weight: 600; }
+.bartrack { height: 20px; border-radius: 3px; background: var(--doc-line-soft); overflow: hidden; }
+.barfill { height: 100%; border-radius: 3px; background: var(--doc-accent); }
+.barfill.hot { background: var(--doc-red); }
+.barval { font-family: var(--mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--doc-ink-soft); text-align: right; }
+
+/* ── Decision list ───────────────────────────────────────────────── */
+.asks { display: flex; flex-direction: column; gap: 0.8rem; list-style: none; padding: 0; margin: 0; counter-reset: ask; max-width: 1120px; }
+.asks li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--doc-line-soft);
+}
+.asks li:last-child { border-bottom: none; padding-bottom: 0; }
+.asks li::before {
+  counter-increment: ask;
+  content: counter(ask);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--doc-accent);
+  background: var(--doc-accent-bg);
+  border-radius: 3px;
+  text-align: center;
+  line-height: 1.6rem;
+  height: 1.6rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PRODUCT CANVAS — the coach portal's warm palette, reproduced exactly.
+   Pinned in BOTH document themes on purpose: these are renders of a
+   screen that ships in one palette. Treat them as photographs.
+   ═══════════════════════════════════════════════════════════════════════ */
+.pf {
+  --paper:       #F8F4ED;
+  --card:        #FFFFFF;
+  --ink:         #241E15;
+  --ink-soft:    #4A4235;
+  --dimc:        #6A635C;
+  --line:        rgba(70, 55, 30, 0.12);
+  --line-strong: rgba(70, 55, 30, 0.20);
+  --olive:       #57651E;
+  --olive-soft:  rgba(87, 101, 30, 0.10);
+  --live:        #B03A22;
+  --plum:        #7B4B6E;
+  --rust:        #B45309;
+  --amber:       #835006;
+  --blue:        #134FD3;
+  --win:         #34662A;
+  --lime:        #D9F99D;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  padding: 0 0 1.4rem;
+}
+/* The real page column is 1200px wide (.page + .pageWide). These renders are
+   1:1 at that width — the whole point of the review is what happens there. */
+.pf.wide { min-width: 1240px; }
+.pf.phone { width: 390px; min-width: 0; }
+.pf * { min-width: 0; }
+.pf-body { padding: 0 1.15rem; display: flex; flex-direction: column; }
+.pf.phone .pf-body { padding: 0 0.85rem; }
+
+/* masthead + page header */
+.pf-mast {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 0.7rem 1.15rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.pf.phone .pf-mast { padding: 0.7rem 0.85rem 0.75rem; }
+.pf-org { font-family: var(--mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dimc); }
+.pf-teamline { display: flex; align-items: center; gap: 0.5rem; }
+.pf-team { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; }
+.pf-roletag {
+  font-family: var(--mono); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.12rem 0.45rem;
+}
+.pf-season { font-size: 0.75rem; color: var(--dimc); }
+
+.pf-pagehead { display: flex; align-items: center; gap: 0.55rem; padding: 1rem 1.15rem 0.75rem; }
+.pf.phone .pf-pagehead { padding: 0.85rem 0.85rem 0.7rem; }
+.pf-pagehead .gl-dollar { width: 22px; height: 22px; }
+.pf-pagetitle { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.015em; }
+.pf-help {
+  margin-left: auto; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--line-strong); color: var(--dimc);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; flex: none;
+}
+
+/* tab bar */
+.pf-tabs {
+  display: flex; gap: 0.15rem; overflow: hidden;
+  border-bottom: 1px solid var(--line); margin: 0 1.15rem 1rem;
+}
+.pf.phone .pf-tabs { margin: 0 0.85rem 0.85rem; }
+.pf-tab {
+  font-family: var(--mono);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--dimc);
+  padding: 0.5rem 0.6rem; white-space: nowrap; border-bottom: 2px solid transparent;
+}
+.pf-tab.on { color: var(--olive); border-bottom-color: var(--olive); }
+.pf-tabfade { position: relative; }
+.pf-tabfade::after {
+  content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 34px;
+  background: linear-gradient(to right, rgba(248, 244, 237, 0), var(--paper));
+}
+
+/* anchor card */
+.pf-now {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  padding: 1rem 1.15rem; margin: 0 0 1.2rem;
+  background: var(--card);
+  border: 1px solid rgba(87, 101, 30, 0.3);
+  border-left: 3px solid var(--olive);
+  border-radius: 12px;
+}
+.pf-noweye { font-family: var(--mono); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dimc); }
+.pf-nowhead { font-size: 1.22rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+.pf-nowmeta { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.5; max-width: 74ch; }
+.pf-nowacts { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: 0.45rem; }
+.pf-cta {
+  background: var(--lime); color: var(--ink); font-size: 0.8rem; font-weight: 750;
+  padding: 0.42rem 0.8rem; border-radius: 7px; border: 1px solid rgba(87, 101, 30, 0.35);
+}
+.pf-sec { color: var(--olive); font-size: 0.8rem; font-weight: 700; }
+
+/* ── The rail ─────────────────────────────────────────────────────
+   Values below mirror overview-dashboard.module.css exactly: 44px row
+   floor, 0.6rem grid gap, 10px dot and chevron tracks, hairline group
+   rules, --home-dim chevron. */
+.pf-rail {
+  background: var(--card); border: 1px solid rgba(87, 101, 30, 0.15);
+  border-radius: 8px; padding: 0.95rem 1.05rem; margin-bottom: 1.2rem;
+  display: flex; flex-direction: column; gap: 0.45rem;
+}
+.pf-raileye { font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dimc); }
+.pf-railgroup { border-top: 1px solid var(--line); }
+.pf-railgroup:first-child { border-top: none; }
+.pf-railrow {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 10px;
+  gap: 0.6rem; align-items: center; min-height: 44px;
+  padding: 0.1rem 0;
+  border-top: 1px solid var(--line);
+}
+.pf-railrow:first-of-type { border-top: none; }
+.pf-raildot { width: 8px; height: 8px; border-radius: 50%; }
+.pf-railname { font-size: 0.78rem; font-weight: 650; color: var(--ink); }
+.pf-railstat { font-size: 0.7rem; color: var(--dimc); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pf-railstat b { color: var(--ink-soft); font-weight: 650; }
+.pf-railstat .bad { color: var(--live); font-weight: 700; }
+.pf-railchev { color: var(--dimc); font-size: 0.75rem; }
+.pf-railstep {
+  margin: 0;
+  font-family: var(--mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--dimc);
+  padding: 0.5rem 0 0.1rem;
+}
+
+/* ── PROPOSED: two columns at desktop, tighter rows on a mouse ─────
+   Multi-column, NOT a two-column grid: a grid forces the top of Collect to
+   line up with the bottom of Spend, which opens a dead gap under a
+   one-row group. Multicol flows continuously, and the groups stay whole
+   (break-inside) so a step never splits across the fold. The markup order
+   is still Plan → Collect → Spend → Review, so reading and tab order
+   follow the season, not the columns. */
+.pf-railcols {
+  columns: 2;
+  column-gap: 2rem;
+}
+.pf-railcols .pf-railgroup { border-top: none; break-inside: avoid; margin-bottom: 0.55rem; }
+.pf-railcols .pf-railgroup:last-child { margin-bottom: 0; }
+/* Row floor stays 44px — see the amendment note in the document. */
+/* Step markers step DOWN in dimness so they read as the content's structure,
+   not as a sibling of the card's own eyebrow one line above. */
+.pf-railcols .pf-railstep { color: var(--ink-soft); font-size: 0.6rem; padding-top: 0.1rem; }
+
+/* Option B: capped measure, left-aligned, with the hole it leaves */
+.pf-railcap { max-width: 640px; }
+.pf-railhole {
+  border: 1px dashed var(--doc-red);
+  border-radius: 5px;
+  background: var(--doc-red-bg);
+  color: var(--doc-red);
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 0.5rem;
+}
+.pf-railsplit { display: grid; grid-template-columns: 640px minmax(0, 1fr); gap: 1rem; align-items: stretch; }
+
+/* the dead-space marker: drawn INSIDE one row so the distance is the point */
+.pf-gap { display: flex; align-items: center; gap: 0.6rem; }
+.pf-gapline { flex: 1; border-top: 1px dashed var(--doc-red); height: 0; }
+.pf-gaplab {
+  font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--doc-red);
+  white-space: nowrap;
+}
+.pf-gaplab.ok { color: var(--doc-accent); }
+.pf-gapline.ok { border-top-color: var(--doc-accent); }
+
+/* annotation overlay inside a render */
+.pf-anno {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0.35rem 0 0.9rem; padding: 0.4rem 0.6rem;
+  border: 1px dashed var(--doc-red); border-radius: 5px;
+  background: var(--doc-red-bg);
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--doc-red);
+}
+.pf-anno.keep { border-color: var(--doc-accent); background: var(--doc-accent-bg); color: var(--doc-accent); }
+.pf-anno.info { border-color: var(--doc-blue); background: var(--doc-blue-bg); color: var(--doc-blue); }
+.pf-fold {
+  display: flex; align-items: center; gap: 0.6rem; margin: 0.2rem 0 0.9rem;
+  font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--doc-blue);
+}
+.pf-fold::before, .pf-fold::after { content: ''; flex: 1; height: 1px; background: var(--doc-blue); opacity: 0.5; }
+
+/* dot colours */
+.d-olive { background: #57651E; } .d-plum { background: #7B4B6E; } .d-win { background: #34662A; }
+.d-rust  { background: #B45309; } .d-blue { background: #134FD3; } .d-amber { background: #835006; }
+
+/* tiny inline icon glyph standing in for the lucide dollar-sign */
+.gl { width: 18px; height: 18px; display: inline-block; border-radius: 4px; flex: none; }
+.gl-dollar { background: var(--olive-soft); border: 1px solid rgba(87, 101, 30, 0.3); border-radius: 6px; }
+</style>
+
+<div class="wrap">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header>
+    <p class="eyebrow">Coach portal &middot; Money &middot; design review &middot; 12 Aug 2026</p>
+    <h1>Everything in Money, drawn one row per screen&nbsp;width</h1>
+    <p class="lede" style="margin-top: 0.85rem;">
+      The rail&rsquo;s rows are the right height for a thumb and the wrong shape for a 1200-pixel column.
+      Same seven surfaces, same seven numbers, same order &mdash; laid out for the screen they&rsquo;re
+      actually being read on.
+    </p>
+  </header>
+
+  <div class="callout">
+    <h3>What this review does and does not touch</h3>
+    <p class="note">
+      This morning&rsquo;s ruling settled <strong>what the Overview contains</strong>: one shape all
+      season, the four-step card stack gone, the rail as the single index at every stage. None of that
+      reopens here. Row wording, row order, the four step markers, which surfaces appear, the tiles,
+      the anchor card and the &ldquo;money first, alert second&rdquo; rule are all
+      <span class="tag tag-unchanged">Unchanged</span>.
+    </p>
+    <p class="note">
+      On the table is one thing only: <strong>the rail&rsquo;s layout when it has a wide card to sit
+      in</strong>. Phones, tablets and the live operating dashboard&rsquo;s narrow slot are all
+      untouched, and it is the same component in every one of those places.
+    </p>
+    <div class="taglist" style="margin-top: 0.35rem;">
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-restyled">Restyled</span>
+      <span class="tag tag-unchanged">Unchanged</span>
+      <span class="tag tag-removed">Removed</span>
+      <span class="note dim" style="font-size: 0.8rem;">&mdash; untagged chrome is unchanged</span>
+    </div>
+  </div>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ TODAY ═══════════ -->
+  <section id="today">
+    <div class="sechead">
+      <p class="eyebrow">Ships today</p>
+      <h2>One row, the full width of the column</h2>
+      <p class="note">
+        This is your screenshot, rendered 1:1 at the real 1200-pixel column width. The dashed marker
+        on the first row is not a design element &mdash; it is the empty space between a row&rsquo;s
+        name and its number, on every row, seven times down the card.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/coaches/teams/&hellip;/accounting</span>
+        <span class="stamp" style="color: var(--doc-red);">Today</span>
+      </div>
+      <div class="frame-scroll">
+        <div class="pf wide">
+          <div class="pf-mast">
+            <p class="pf-org">QA Money Lab (throwaway)</p>
+            <div class="pf-teamline">
+              <span class="pf-team">QA Money U11</span>
+              <span class="pf-roletag">Head Coach</span>
+            </div>
+            <p class="pf-season">2026 Season</p>
+          </div>
+
+          <div class="pf-pagehead">
+            <span class="gl gl-dollar"></span>
+            <span class="pf-pagetitle">Money</span>
+            <span class="pf-help">?</span>
+          </div>
+          <div class="pf-tabs">
+            <span class="pf-tab on">Overview</span>
+            <span class="pf-tab">Budget plan</span>
+            <span class="pf-tab">Player dues</span>
+            <span class="pf-tab">Fundraisers</span>
+            <span class="pf-tab">Expenses &amp; payables</span>
+            <span class="pf-tab">Allocations</span>
+            <span class="pf-tab">Payments</span>
+            <span class="pf-tab">Budget vs. actual</span>
+          </div>
+
+          <div class="pf-body">
+            <div class="pf-now">
+              <p class="pf-noweye">Budget ready</p>
+              <p class="pf-nowhead">Turn your plan into player dues</p>
+              <p class="pf-nowmeta">$6,000.00 across 10 players &asymp; $600.00 each. Generate every player&rsquo;s installment schedule in one click.</p>
+              <div class="pf-nowacts">
+                <span class="pf-cta">Generate installments &rarr;</span>
+                <span class="pf-sec">Set dues manually &rarr;</span>
+              </div>
+            </div>
+
+            <div class="pf-rail">
+              <p class="pf-raileye">Everything in Money</p>
+              <div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Plan</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-plum"></span>
+                    <span class="pf-gap">
+                      <span class="pf-railname">Season Budget Plan</span>
+                      <span class="pf-gapline"></span>
+                      <span class="pf-gaplab">&asymp; 930px of nothing</span>
+                      <span class="pf-gapline"></span>
+                    </span>
+                    <span class="pf-railstat"><b>$6,000.00</b> set</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Collect</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-win"></span>
+                    <span class="pf-railname">Player Dues</span>
+                    <span class="pf-railstat">Not set</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-win"></span>
+                    <span class="pf-railname">Fundraisers</span>
+                    <span class="pf-railstat">None yet &middot; <b>start one</b></span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Spend</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-rust"></span>
+                    <span class="pf-railname">Expenses &amp; Payables</span>
+                    <span class="pf-railstat">None logged</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-blue"></span>
+                    <span class="pf-railname">Org Allocations</span>
+                    <span class="pf-railstat">None assigned</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-rust"></span>
+                    <span class="pf-railname">Payment Requests</span>
+                    <span class="pf-railstat">None pending</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Review</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-olive"></span>
+                    <span class="pf-railname">Budget vs. Actual</span>
+                    <span class="pf-railstat">Needs a budget</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="pf-fold">Typical laptop fold &mdash; 1440 &times; 900</p>
+            <div class="pf-anno">Two of the four steps need a scroll, on a screen with two-thirds of its width empty</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <h3>Three symptoms, one cause</h3>
+      <p class="note">
+        <strong>1. The name and its number are ~930px apart.</strong> A row is one fact split across
+        the full column, with a hairline as the only thing keeping your eye on the line. Nearness is
+        what makes a row read as a single thing, and at this width there is none left.
+      </p>
+      <p class="note">
+        <strong>2. Every row is floored at 44px tall</strong> &mdash; a thumb target &mdash; carrying
+        13-pixel text. On a phone the two ends of that row are 40px apart and this is exactly right.
+        On a mouse-driven screen it is mostly air, multiplied by seven.
+      </p>
+      <p class="note">
+        <strong>3. So the card runs ~465px tall</strong> and the last two steps drop below a normal
+        laptop fold &mdash; while roughly 800px of horizontal space carries nothing at all. You are
+        scrolling down a screen that has room to spare across.
+      </p>
+      <p class="note dim" style="font-size: 0.82rem;">
+        Distances and heights here are computed from the shipped stylesheet (column width, row grid,
+        row floor, step-marker leading), not eyeballed from a screenshot. The fold line is indicative
+        &mdash; exact position depends on browser chrome, and gets confirmed in the rendered sweep.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ OPTION A ═══════════ -->
+  <section id="option-a">
+    <div class="sechead">
+      <p class="eyebrow">Proposed</p>
+      <div class="opt-title">
+        <h2>Two columns when the card is wide</h2>
+        <span class="pick">Built</span>
+      </div>
+      <p class="note">
+        Plan and Collect on the left, Spend and Review on the right &mdash; so the season&rsquo;s order
+        still reads down, then across, exactly as ruled this morning. Nothing is added, removed or
+        reworded; the same seven rows are folded into the space that was already there.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/coaches/teams/&hellip;/accounting</span>
+        <span class="stamp" style="color: var(--doc-accent);">Proposed</span>
+      </div>
+      <div class="frame-scroll">
+        <div class="pf wide">
+          <div class="pf-mast">
+            <p class="pf-org">QA Money Lab (throwaway)</p>
+            <div class="pf-teamline">
+              <span class="pf-team">QA Money U11</span>
+              <span class="pf-roletag">Head Coach</span>
+            </div>
+            <p class="pf-season">2026 Season</p>
+          </div>
+
+          <div class="pf-pagehead">
+            <span class="gl gl-dollar"></span>
+            <span class="pf-pagetitle">Money</span>
+            <span class="pf-help">?</span>
+          </div>
+          <div class="pf-tabs">
+            <span class="pf-tab on">Overview</span>
+            <span class="pf-tab">Budget plan</span>
+            <span class="pf-tab">Player dues</span>
+            <span class="pf-tab">Fundraisers</span>
+            <span class="pf-tab">Expenses &amp; payables</span>
+            <span class="pf-tab">Allocations</span>
+            <span class="pf-tab">Payments</span>
+            <span class="pf-tab">Budget vs. actual</span>
+          </div>
+
+          <div class="pf-body">
+            <div class="pf-now">
+              <p class="pf-noweye">Budget ready</p>
+              <p class="pf-nowhead">Turn your plan into player dues</p>
+              <p class="pf-nowmeta">$6,000.00 across 10 players &asymp; $600.00 each. Generate every player&rsquo;s installment schedule in one click.</p>
+              <div class="pf-nowacts">
+                <span class="pf-cta">Generate installments &rarr;</span>
+                <span class="pf-sec">Set dues manually &rarr;</span>
+              </div>
+            </div>
+
+            <div class="pf-rail">
+              <p class="pf-raileye">Everything in Money</p>
+              <div class="pf-railcols">
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Plan</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-plum"></span>
+                    <span class="pf-gap">
+                      <span class="pf-railname">Season Budget Plan</span>
+                      <span class="pf-gapline ok"></span>
+                      <span class="pf-gaplab ok">&asymp; 330px</span>
+                    </span>
+                    <span class="pf-railstat"><b>$6,000.00</b> set</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Collect</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-win"></span>
+                    <span class="pf-railname">Player Dues</span>
+                    <span class="pf-railstat">Not set</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-win"></span>
+                    <span class="pf-railname">Fundraisers</span>
+                    <span class="pf-railstat">None yet &middot; <b>start one</b></span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Spend</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-rust"></span>
+                    <span class="pf-railname">Expenses &amp; Payables</span>
+                    <span class="pf-railstat">None logged</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-blue"></span>
+                    <span class="pf-railname">Org Allocations</span>
+                    <span class="pf-railstat">None assigned</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-rust"></span>
+                    <span class="pf-railname">Payment Requests</span>
+                    <span class="pf-railstat">None pending</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+                <div class="pf-railgroup">
+                  <p class="pf-railstep">Review</p>
+                  <div class="pf-railrow">
+                    <span class="pf-raildot d-olive"></span>
+                    <span class="pf-railname">Budget vs. Actual</span>
+                    <span class="pf-railstat">Needs a budget</span>
+                    <span class="pf-railchev">&rsaquo;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pf-anno keep">Whole rail above the fold &mdash; ~278px, down from ~465px</div>
+            <p class="pf-fold">Typical laptop fold &mdash; 1440 &times; 900</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="taglist">
+      <span class="tag tag-restyled">Restyled</span>
+      <span class="note">Two columns once the card itself is wide enough &mdash; row order reads down the left, then down the right</span>
+    </div>
+    <div class="taglist">
+      <span class="tag tag-unchanged">Unchanged</span>
+      <span class="note">Row height stays 44px at every width and every pointer &mdash; amended during the build, see below</span>
+    </div>
+    <div class="taglist">
+      <span class="tag tag-removed">Removed</span>
+      <span class="note">The hairline between step groups, in the two-column state only &mdash; see the note below</span>
+    </div>
+    <div class="taglist">
+      <span class="tag tag-restyled">Restyled</span>
+      <span class="note">Step markers (Plan / Collect / Spend / Review) darken one step</span>
+    </div>
+
+    <div class="callout warn">
+      <h3>Amended during the build: the rows keep their full height</h3>
+      <p class="note">
+        The version you approved also tightened rows from 44px to 34px on mouse and trackpad. That is
+        <strong>not built</strong>, for two reasons that only showed up on the way in.
+      </p>
+      <p class="note">
+        <strong>A fine pointer does not mean no finger.</strong> A Windows touchscreen laptop reports a
+        mouse as its primary pointer, so it would have been served 34-pixel rows to a hand &mdash; a
+        real device class, quietly regressed, and no screen rule can separate it out.
+      </p>
+      <p class="note">
+        <strong>And it was buying the last 15%.</strong> Two columns alone take the rail from ~465px to
+        ~278px; the tighter rows would have added about 40px more. The &ldquo;mostly air&rdquo; problem
+        was mostly a width problem &mdash; a 44px row inside a 567px column is an ordinary list row,
+        not the same object it was at 1166px. It would also have added seven new sub-floor entries to
+        the tap-target gate on a screen about to be QA&rsquo;d. Easy to revisit later if the density is
+        ever wanted.
+      </p>
+    </div>
+
+    <div class="callout blue">
+      <h3>Two things worth knowing before you say yes</h3>
+      <p class="note">
+        <strong>The group hairlines have to go at desktop width.</strong> In two columns, &ldquo;first
+        group&rdquo; stops meaning &ldquo;top of the list&rdquo;, so a rule above a column reads as a
+        dangling line. The step marker plus the space around it is what actually communicates the
+        grouping &mdash; the hairline was never doing that job. It stays on phones, where the list is
+        still one column.
+      </p>
+      <p class="note">
+        <strong>The step markers currently look like the card&rsquo;s own label.</strong>
+        &ldquo;PLAN&rdquo; and &ldquo;EVERYTHING IN MONEY&rdquo; are the same face, the same casing and
+        the same grey, four hundredths of a rem apart &mdash; so they read as siblings rather than
+        label-and-contents. Today the hairlines paper over it; once those go, it shows. The fix drawn
+        above darkens the step markers one step so the structure of the content outranks the name of
+        the card. If you&rsquo;d rather leave that alone, say so and it stays as-is &mdash; it is the
+        one piece here that is taste rather than geometry.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ OPTION B ═══════════ -->
+  <section id="option-b">
+    <div class="sechead">
+      <p class="eyebrow">Considered</p>
+      <div class="opt-title">
+        <h2>Just cap the width</h2>
+        <span class="pick no">Not recommended</span>
+      </div>
+      <p class="note">
+        The one-line version: hold the rows to a readable measure and left-align them. It does fix the
+        pairing. It also leaves a visible hole in the right half of the card, and it saves no height at
+        all &mdash; the scroll stays exactly where it is.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/coaches/teams/&hellip;/accounting</span>
+        <span class="stamp" style="color: var(--doc-dim);">Alternative</span>
+      </div>
+      <div class="frame-scroll">
+        <div class="pf wide">
+          <div class="pf-body" style="padding-top: 1.15rem;">
+            <div class="pf-rail">
+              <p class="pf-raileye">Everything in Money</p>
+              <div class="pf-railsplit">
+                <div class="pf-railcap">
+                  <div class="pf-railgroup">
+                    <p class="pf-railstep">Plan</p>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-plum"></span>
+                      <span class="pf-gap">
+                        <span class="pf-railname">Season Budget Plan</span>
+                        <span class="pf-gapline ok"></span>
+                        <span class="pf-gaplab ok">&asymp; 405px</span>
+                      </span>
+                      <span class="pf-railstat"><b>$6,000.00</b> set</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                  </div>
+                  <div class="pf-railgroup">
+                    <p class="pf-railstep">Collect</p>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-win"></span>
+                      <span class="pf-railname">Player Dues</span>
+                      <span class="pf-railstat">Not set</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-win"></span>
+                      <span class="pf-railname">Fundraisers</span>
+                      <span class="pf-railstat">None yet &middot; <b>start one</b></span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                  </div>
+                  <div class="pf-railgroup">
+                    <p class="pf-railstep">Spend</p>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-rust"></span>
+                      <span class="pf-railname">Expenses &amp; Payables</span>
+                      <span class="pf-railstat">None logged</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-blue"></span>
+                      <span class="pf-railname">Org Allocations</span>
+                      <span class="pf-railstat">None assigned</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-rust"></span>
+                      <span class="pf-railname">Payment Requests</span>
+                      <span class="pf-railstat">None pending</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                  </div>
+                  <div class="pf-railgroup">
+                    <p class="pf-railstep">Review</p>
+                    <div class="pf-railrow">
+                      <span class="pf-raildot d-olive"></span>
+                      <span class="pf-railname">Budget vs. Actual</span>
+                      <span class="pf-railstat">Needs a budget</span>
+                      <span class="pf-railchev">&rsaquo;</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="pf-railhole">526px of white card, reading as a bug</div>
+              </div>
+            </div>
+            <div class="pf-anno">Pairing fixed, height unchanged, and now the card looks broken</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ PHONE ═══════════ -->
+  <section id="phone">
+    <div class="sechead">
+      <p class="eyebrow">Unchanged</p>
+      <h2>Nothing moves on a phone</h2>
+      <p class="note">
+        This is the state the two-column rule is scoped away from. One column, the 44-pixel thumb
+        target intact, the group hairlines still doing their job, and the name sitting a few
+        millimetres from its number. Left is today, right is after &mdash; they are the same render,
+        which is the point.
+      </p>
+    </div>
+
+    <div class="cols">
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-title"><h3>Today &mdash; 390px</h3></div>
+        </div>
+        <div class="frame">
+          <div class="frame-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="url">390 &times; 844</span>
+            <span class="stamp" style="color: var(--doc-dim);">Today</span>
+          </div>
+          <div class="frame-scroll">
+            <div class="pf phone">
+              <div class="pf-mast">
+                <p class="pf-org">QA Money Lab</p>
+                <div class="pf-teamline">
+                  <span class="pf-team">QA Money U11</span>
+                  <span class="pf-roletag">Head Coach</span>
+                </div>
+              </div>
+              <div class="pf-pagehead">
+                <span class="gl gl-dollar"></span>
+                <span class="pf-pagetitle">Money</span>
+                <span class="pf-help">?</span>
+              </div>
+              <div class="pf-tabs pf-tabfade">
+                <span class="pf-tab on">Overview</span>
+                <span class="pf-tab">Budget plan</span>
+                <span class="pf-tab">Player dues</span>
+              </div>
+              <div class="pf-body">
+                <div class="pf-rail">
+                  <p class="pf-raileye">Everything in Money</p>
+                  <div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Plan</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-plum"></span>
+                        <span class="pf-railname">Season Budget Plan</span>
+                        <span class="pf-railstat"><b>$6,000.00</b> set</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Collect</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-win"></span>
+                        <span class="pf-railname">Player Dues</span>
+                        <span class="pf-railstat">Not set</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-win"></span>
+                        <span class="pf-railname">Fundraisers</span>
+                        <span class="pf-railstat">None yet</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Spend</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-rust"></span>
+                        <span class="pf-railname">Expenses &amp; Payables</span>
+                        <span class="pf-railstat">None logged</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-blue"></span>
+                        <span class="pf-railname">Org Allocations</span>
+                        <span class="pf-railstat">None assigned</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-rust"></span>
+                        <span class="pf-railname">Payment Requests</span>
+                        <span class="pf-railstat">None pending</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Review</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-olive"></span>
+                        <span class="pf-railname">Budget vs. Actual</span>
+                        <span class="pf-railstat">Needs a budget</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-title"><h3>After &mdash; 390px</h3><span class="pick">Identical</span></div>
+        </div>
+        <div class="frame">
+          <div class="frame-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="url">390 &times; 844</span>
+            <span class="stamp" style="color: var(--doc-accent);">Proposed</span>
+          </div>
+          <div class="frame-scroll">
+            <div class="pf phone">
+              <div class="pf-mast">
+                <p class="pf-org">QA Money Lab</p>
+                <div class="pf-teamline">
+                  <span class="pf-team">QA Money U11</span>
+                  <span class="pf-roletag">Head Coach</span>
+                </div>
+              </div>
+              <div class="pf-pagehead">
+                <span class="gl gl-dollar"></span>
+                <span class="pf-pagetitle">Money</span>
+                <span class="pf-help">?</span>
+              </div>
+              <div class="pf-tabs pf-tabfade">
+                <span class="pf-tab on">Overview</span>
+                <span class="pf-tab">Budget plan</span>
+                <span class="pf-tab">Player dues</span>
+              </div>
+              <div class="pf-body">
+                <div class="pf-rail">
+                  <p class="pf-raileye">Everything in Money</p>
+                  <div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Plan</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-plum"></span>
+                        <span class="pf-railname">Season Budget Plan</span>
+                        <span class="pf-railstat"><b>$6,000.00</b> set</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Collect</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-win"></span>
+                        <span class="pf-railname">Player Dues</span>
+                        <span class="pf-railstat">Not set</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-win"></span>
+                        <span class="pf-railname">Fundraisers</span>
+                        <span class="pf-railstat">None yet</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Spend</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-rust"></span>
+                        <span class="pf-railname">Expenses &amp; Payables</span>
+                        <span class="pf-railstat">None logged</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-blue"></span>
+                        <span class="pf-railname">Org Allocations</span>
+                        <span class="pf-railstat">None assigned</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-rust"></span>
+                        <span class="pf-railname">Payment Requests</span>
+                        <span class="pf-railstat">None pending</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                    <div class="pf-railgroup">
+                      <p class="pf-railstep">Review</p>
+                      <div class="pf-railrow">
+                        <span class="pf-raildot d-olive"></span>
+                        <span class="pf-railname">Budget vs. Actual</span>
+                        <span class="pf-railstat">Needs a budget</span>
+                        <span class="pf-railchev">&rsaquo;</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ NUMBERS ═══════════ -->
+  <section id="numbers">
+    <div class="sechead">
+      <p class="eyebrow">The numbers</p>
+      <h2>What each option costs and buys</h2>
+      <p class="note">
+        Rail height, measured from the top of the card to the bottom, on the setup Overview with all
+        seven rows showing.
+      </p>
+    </div>
+
+    <div class="bars">
+      <div class="barrow">
+        <span class="barlabel">Today &mdash; one full-width column</span>
+        <span class="bartrack"><span class="barfill hot" style="width: 100%;"></span></span>
+        <span class="barval">~465px</span>
+      </div>
+      <div class="barrow">
+        <span class="barlabel">Capped width only</span>
+        <span class="bartrack"><span class="barfill hot" style="width: 100%;"></span></span>
+        <span class="barval">~465px</span>
+      </div>
+      <div class="barrow">
+        <span class="barlabel">Two columns</span>
+        <span class="bartrack"><span class="barfill" style="width: 60%;"></span></span>
+        <span class="barval">~278px</span>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>&nbsp;</th>
+            <th>Name&nbsp;&rarr;&nbsp;number</th>
+            <th>Rail height</th>
+            <th>Above the fold</th>
+            <th>Card looks right</th>
+            <th>Phone affected</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Today</strong></td>
+            <td class="num bad">~930px</td>
+            <td class="num bad">~465px</td>
+            <td class="bad">Two steps below</td>
+            <td class="bad">Two-thirds empty</td>
+            <td>&mdash;</td>
+          </tr>
+          <tr>
+            <td><strong>Capped width</strong></td>
+            <td class="num">~405px</td>
+            <td class="num bad">~465px</td>
+            <td class="bad">Two steps below</td>
+            <td class="bad">526px hole</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><strong>Two columns</strong></td>
+            <td class="num good">~330px</td>
+            <td class="num good">~278px</td>
+            <td class="good">All of it</td>
+            <td class="good">Yes</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ═══════════ SCOPE ═══════════ -->
+  <section id="scope">
+    <div class="sechead">
+      <p class="eyebrow">If you approve</p>
+      <h2>What else this touches</h2>
+    </div>
+
+    <ol class="asks">
+      <li>
+        <div>
+          <h3>A live operating season is NOT affected &mdash; correcting what I told you</h3>
+          <p class="note">
+            I said this would also change the operating dashboard&rsquo;s rail. It does not, and the
+            reason matters: on a season with money moving, that rail sits in the <strong>narrow
+            right-hand slot beside the Next-30-days ledger</strong> &mdash; about 362px wide, where the
+            rows are already the right shape and two columns would mean two 175px columns. It stays
+            exactly as you QA&rsquo;d it.
+          </p>
+          <p class="note">
+            So the trigger is <strong>the card&rsquo;s own width, not the window&rsquo;s</strong>. The
+            same rail is wide on the setup Overview and narrow on the operating one, on the very same
+            screen; only the wide one folds into two columns, and it works that out from the space it
+            has been given rather than from a screen size.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>An archived season&rsquo;s rail does pick it up</h3>
+          <p class="note">
+            A finished season drops the forward-looking ledger &mdash; it is a record, not an
+            instrument &mdash; so its rail takes the full page column alone and has exactly the problem
+            this fixes. Five rows, no step markers, three down the left and two down the right.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Every other Money screen is untouched</h3>
+          <p class="note">
+            Budget plan, Player dues, Fundraisers, Expenses, Allocations, Payments and Budget vs.
+            Actual are all their own tabs with their own tables. Nothing here reaches them.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>The in-app Money help needs no edit</h3>
+          <p class="note">
+            The help text describes what the Overview contains, not how many columns it is drawn in.
+            Nothing to correct.
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="callout">
+      <h3>Status</h3>
+      <p class="note">
+        Approved and built on dev, 12 Aug 2026 &mdash; with the one amendment noted above (rows keep
+        their 44px height). This document is the spec as built, not the proposal.
+      </p>
+    </div>
+  </section>
+
+</div>

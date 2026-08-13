@@ -102,6 +102,15 @@ export const SCREENS = [
   { id: 'coach-budget-vs-actual',  session: 'coach', path: (c) => `${team(c)}/accounting/budget-vs-actual`, ready: 'h1' },
   { id: 'coach-expenses',          session: 'coach', path: (c) => `${team(c)}/accounting/expenses`,         ready: 'h1' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting/dues`,             ready: 'h1' },
+  /* ⚠ ADDED 2026-08-13 (Money-hub table consistency). These three Money tabs had NO rendered
+     coverage at all. The hub at `/accounting` keeps every panel MOUNTED but `display: none` while
+     inactive, so a hidden panel has zero geometry and the sweep measures nothing in it — the hub
+     screen above proves only whichever tab opens by default. Their standalone routes are the only
+     place these tables can actually be rendered and measured, which is exactly what the pass that
+     rewrote all three of them needed. */
+  { id: 'coach-fundraisers',       session: 'coach', path: (c) => `${team(c)}/accounting/fundraisers`,      ready: 'h1' },
+  { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting/payment-requests`, ready: 'h1' },
+  { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting/allocations`,      ready: 'h1' },
 
   // ── The season around it ────────────────────────────────────────────────────
   { id: 'coach-announcements', session: 'coach', path: (c) => `${team(c)}/announcements`, ready: 'h1' },

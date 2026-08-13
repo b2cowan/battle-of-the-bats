@@ -1,0 +1,1235 @@
+<title>One Total, Funding In</title>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     MOCKUP CHROME — deliberately NOT the product palette, so the
+     annotation layer can never be mistaken for product UI.
+     Cool slate neutrals + one steel-blue accent. Matches the
+     period-split mockup this one sits next to.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #E9ECEF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F4F6F8;
+    --ink:         #1B1F24;
+    --ink-2:       #4B545E;
+    --ink-3:       #78828D;
+    --rule:        rgba(27, 31, 36, 0.13);
+    --rule-soft:   rgba(27, 31, 36, 0.07);
+    --accent:      #2F5D8A;
+    --accent-soft: rgba(47, 93, 138, 0.10);
+    --on-accent:   #FFFFFF;
+    --new:         #0E6E64;
+    --new-bg:      rgba(14, 110, 100, 0.10);
+    --restyled:    #8A5410;
+    --restyled-bg: rgba(138, 84, 16, 0.11);
+    --same:        #5C6773;
+    --same-bg:     rgba(92, 103, 115, 0.10);
+    --gone:        #A03434;
+    --gone-bg:     rgba(160, 52, 52, 0.10);
+    --shadow:      0 1px 2px rgba(16,22,28,.06), 0 8px 28px rgba(16,22,28,.09);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --f-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono:    ui-monospace, "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15181C;
+      --surface:     #1D2126;
+      --surface-2:   #24292F;
+      --ink:         #E7EBEF;
+      --ink-2:       #B2BBC4;
+      --ink-3:       #87929C;
+      --rule:        rgba(231, 235, 239, 0.16);
+      --rule-soft:   rgba(231, 235, 239, 0.08);
+      --accent:      #85B4DF;
+      --accent-soft: rgba(133, 180, 223, 0.13);
+      --on-accent:   #10141A;
+      --new:         #5FCFC2;
+      --new-bg:      rgba(95, 207, 194, 0.13);
+      --restyled:    #E3A85C;
+      --restyled-bg: rgba(227, 168, 92, 0.13);
+      --same:        #9AA5B1;
+      --same-bg:     rgba(154, 165, 177, 0.12);
+      --gone:        #EE8A8A;
+      --gone-bg:     rgba(238, 138, 138, 0.13);
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #15181C;
+    --surface:     #1D2126;
+    --surface-2:   #24292F;
+    --ink:         #E7EBEF;
+    --ink-2:       #B2BBC4;
+    --ink-3:       #87929C;
+    --rule:        rgba(231, 235, 239, 0.16);
+    --rule-soft:   rgba(231, 235, 239, 0.08);
+    --accent:      #85B4DF;
+    --accent-soft: rgba(133, 180, 223, 0.13);
+    --on-accent:   #10141A;
+    --new:         #5FCFC2;
+    --new-bg:      rgba(95, 207, 194, 0.13);
+    --restyled:    #E3A85C;
+    --restyled-bg: rgba(227, 168, 92, 0.13);
+    --same:        #9AA5B1;
+    --same-bg:     rgba(154, 165, 177, 0.12);
+    --gone:        #EE8A8A;
+    --gone-bg:     rgba(238, 138, 138, 0.13);
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 0 0 0.35rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 1.03rem;
+    margin: 0 0 1.4rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin: 0 0 2.6rem; }
+  .tag {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.14rem 0.46rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag.new      { color: var(--new);      background: var(--new-bg); }
+  .tag.restyled { color: var(--restyled); background: var(--restyled-bg); }
+  .tag.same     { color: var(--same);     background: var(--same-bg); }
+  .tag.gone     { color: var(--gone);     background: var(--gone-bg); }
+
+  /* ── Section rhythm. The numbers are the owner's four items, in the
+        order they were raised — a real sequence, not decoration. ── */
+  .sect { margin: 0 0 3.4rem; }
+  .sect-head { display: flex; align-items: baseline; gap: 0.7rem; margin: 0 0 0.5rem; flex-wrap: wrap; }
+  .sect-num {
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 1.9rem 0 0.6rem;
+  }
+  .sect > p, .sect > ul { max-width: 70ch; color: var(--ink-2); margin: 0 0 1.1rem; }
+  .sect > p strong, .sect > ul strong { color: var(--ink); font-weight: 600; }
+  ul { padding-left: 1.1rem; }
+  li { margin: 0 0 0.35rem; }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    margin: 1.1rem 0;
+    max-width: 70ch;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note.warn { border-left-color: var(--gone); }
+
+  /* ── Stage: the fake page ground a product frame sits on ── */
+  .stage {
+    border-radius: 14px;
+    padding: 1.4rem;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(0deg, var(--rule-soft) 1px, transparent 1px) 0 0 / 100% 26px,
+      var(--surface-2);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+  .stage + .stage { margin-top: 0.9rem; }
+  .caption {
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    margin: 0.5rem 0 0;
+    max-width: 70ch;
+  }
+  .caption b { color: var(--ink-2); }
+
+  /* ─────────────────────────────────────────────────────────────
+     PRODUCT SKIN — the real coaches-portal tokens (warm portal).
+     ───────────────────────────────────────────────────────────── */
+  .skin {
+    --p-card:        #FFFFFF;
+    --p-inset:       #FCFBF8;
+    --p-ground:      #F5F1E8;
+    --p-ink:         #241E15;
+    --p-ink-soft:    #4A4235;
+    --p-dim:         #6A635C;
+    --p-line:        rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-field:       #FFFFFF;
+    --p-lime:        #D9F99D;
+    --p-olive:       #57651E;
+    --p-olive-soft:  rgba(87, 101, 30, 0.10);
+    --p-danger:      #C2410C;
+    --p-danger-soft: rgba(194, 65, 12, 0.09);
+    --p-good:        #2F6B3C;
+    --p-link:        #1D4ED8;
+    --p-on-olive:    #FFFFFF;
+    width: 100%;
+    max-width: 720px;
+    font-family: var(--f-body);
+    color: var(--p-ink);
+  }
+  .skin.wide { max-width: 100%; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .skin {
+      --p-card:        #111827;
+      --p-inset:       rgba(255,255,255,0.03);
+      --p-ground:      #0C111B;
+      --p-ink:         rgba(255,255,255,0.9);
+      --p-ink-soft:    rgba(255,255,255,0.7);
+      --p-dim:         rgba(255,255,255,0.45);
+      --p-line:        rgba(255,255,255,0.12);
+      --p-line-strong: rgba(255,255,255,0.2);
+      --p-field:       rgba(255,255,255,0.05);
+      --p-olive:       #A3B546;
+      --p-olive-soft:  rgba(255,255,255,0.10);
+      --p-danger:      #F87171;
+      --p-danger-soft: rgba(248, 113, 113, 0.12);
+      --p-good:        #6EE7A8;
+      --p-link:        #93B4FF;
+      --p-on-olive:    #0A0A0A;
+    }
+  }
+  :root[data-theme="dark"] .skin {
+    --p-card:        #111827;
+    --p-inset:       rgba(255,255,255,0.03);
+    --p-ground:      #0C111B;
+    --p-ink:         rgba(255,255,255,0.9);
+    --p-ink-soft:    rgba(255,255,255,0.7);
+    --p-dim:         rgba(255,255,255,0.45);
+    --p-line:        rgba(255,255,255,0.12);
+    --p-line-strong: rgba(255,255,255,0.2);
+    --p-field:       rgba(255,255,255,0.05);
+    --p-olive:       #A3B546;
+    --p-olive-soft:  rgba(255,255,255,0.10);
+    --p-danger:      #F87171;
+    --p-danger-soft: rgba(248, 113, 113, 0.12);
+    --p-good:        #6EE7A8;
+    --p-link:        #93B4FF;
+    --p-on-olive:    #0A0A0A;
+  }
+
+  /* Summary tiles */
+  .sumbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.6rem 2.4rem;
+    background: var(--p-olive-soft);
+    border-radius: 10px;
+    padding: 1.05rem 1.2rem;
+  }
+  .tile { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .tile-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--p-dim);
+    font-weight: 600;
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+  .tile-value {
+    font-size: 1.32rem;
+    font-weight: 700;
+    color: var(--p-ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .tile-value.minus { color: var(--p-good); }
+  .tile-value.bad   { color: var(--p-danger); }
+  .tile-sub { font-size: 0.72rem; color: var(--p-dim); }
+  .tile-link {
+    font-size: 0.74rem; color: var(--p-link);
+    text-decoration: none; border-bottom: 1px solid currentColor;
+    padding-bottom: 1px; cursor: pointer;
+  }
+  .explain {
+    font-size: 0.82rem;
+    color: var(--p-dim);
+    margin: 0.85rem 0 0;
+    max-width: 78ch;
+  }
+  .explain.bad { color: var(--p-danger); }
+  .explain b { color: var(--p-ink-soft); font-weight: 600; }
+
+  /* ── Summary treatments (section 00) ── */
+  .ladder {
+    background: var(--p-olive-soft);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.05rem 1.5rem;
+    align-items: baseline;
+  }
+  .ladder .lk { font-size: 0.88rem; color: var(--p-ink-soft); display: flex; align-items: baseline; gap: 0.45rem; }
+  .ladder .lv { font-size: 0.95rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .ladder .lk.sub, .ladder .lv.sub { font-size: 0.8rem; color: var(--p-dim); font-weight: 500; }
+  .ladder .rule { grid-column: 1 / -1; height: 1px; background: var(--p-line-strong); margin: 0.5rem 0; }
+  .ladder .lk.head, .ladder .lv.head { font-size: 1.02rem; font-weight: 700; color: var(--p-ink); }
+  .ladder .lv.head { font-size: 1.15rem; font-weight: 800; }
+  .ladder .lv.good { color: var(--p-good); }
+  .ladder .lv.bad  { color: var(--p-danger); }
+  .ladder .cap {
+    grid-column: 1 / -1;
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 700; color: var(--p-dim); margin-bottom: 0.3rem;
+  }
+  .ladder .cap + .cap { margin-top: 0.7rem; }
+  .payline { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .payline .big { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+  .payline .say { font-size: 0.8rem; color: var(--p-dim); }
+
+  .pick {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--new); background: var(--new-bg);
+    padding: 0.16rem 0.5rem; border-radius: 3px;
+  }
+
+  /* Line list */
+  .lines { margin-top: 1.4rem; border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+  .grp-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 0.62rem 0.95rem;
+    background: var(--p-inset);
+    border-bottom: 1px solid var(--p-line);
+  }
+  .grp-name {
+    font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--p-ink-soft);
+  }
+  .grp-total { font-size: 0.86rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 0.6rem 0.95rem 0.6rem 1.5rem;
+    border-bottom: 1px solid var(--p-line);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-main { min-width: 0; }
+  .row-name { font-size: 0.92rem; font-weight: 600; }
+  .row-sub  { font-size: 0.75rem; color: var(--p-dim); }
+  .row-right { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; }
+  .row-amt { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row-amt.minus { color: var(--p-good); }
+  .row-amt.bad   { color: var(--p-danger); }
+  .icon {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid var(--p-line); background: var(--p-card);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: var(--p-dim);
+  }
+  .row.derived { background: var(--p-inset); }
+  .row.derived .row-name { display: flex; align-items: center; gap: 0.4rem; }
+  .pill {
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; padding: 0.1rem 0.36rem; border-radius: 3px;
+    background: var(--p-olive-soft); color: var(--p-olive);
+  }
+  .pill.warn { background: var(--p-danger-soft); color: var(--p-danger); }
+
+  .totals { border-top: 2px solid var(--p-line-strong); background: var(--p-inset); }
+  .trow {
+    display: flex; justify-content: space-between; gap: 1rem;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.9rem;
+    color: var(--p-ink-soft);
+  }
+  .trow span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .trow.final {
+    border-top: 1px solid var(--p-line);
+    font-size: 1.02rem; font-weight: 700; color: var(--p-ink);
+    padding-top: 0.65rem; padding-bottom: 0.7rem;
+  }
+  .trow.final span:last-child { font-weight: 800; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem;
+    justify-content: space-between;
+    margin-bottom: 0.9rem;
+  }
+  .seg { display: inline-flex; border: 1px solid var(--p-line-strong); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    font: inherit; font-size: 0.8rem; padding: 0.3rem 0.75rem;
+    background: var(--p-card); color: var(--p-ink-soft);
+    border: none; border-right: 1px solid var(--p-line); cursor: pointer;
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] { background: var(--p-olive); color: var(--p-on-olive); font-weight: 700; }
+  .btn {
+    font: inherit; font-size: 0.82rem; padding: 0.36rem 0.8rem;
+    border-radius: 8px; border: 1px solid var(--p-line-strong);
+    background: var(--p-card); color: var(--p-ink); cursor: pointer;
+  }
+  .btn.primary { background: var(--p-lime); border-color: var(--p-lime); color: #241E15; font-weight: 700; }
+
+  /* Period grid */
+  .gridwrap { overflow-x: auto; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); }
+  table.grid { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+  table.grid th, table.grid td { padding: 0.42rem 0.6rem; text-align: right; white-space: nowrap; }
+  table.grid th:first-child, table.grid td:first-child { text-align: left; position: sticky; left: 0; background: var(--p-card); }
+  table.grid thead th {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--p-dim); font-weight: 700;
+    border-bottom: 1px solid var(--p-line-strong);
+    background: var(--p-inset);
+  }
+  table.grid thead th:first-child { background: var(--p-inset); }
+  table.grid td { font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--p-line); }
+  table.grid tr.cat td { background: var(--p-inset); font-weight: 700; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.07em; }
+  table.grid tr.cat td:first-child { background: var(--p-inset); }
+  table.grid tr.fund td { color: var(--p-good); }
+  table.grid tr.tot td { border-top: 2px solid var(--p-line-strong); font-weight: 800; border-bottom: none; }
+  table.grid td.dim { color: var(--p-dim); }
+  table.grid .lead { padding-left: 1.4rem; font-weight: 600; }
+
+  /* ── Header rework (owner, 2026-08-13) ───────────────────────────────────
+     The year band: one quiet row spanning the months it covers, replacing the
+     per-column year that made a single column taller than its neighbours. */
+  table.grid thead th.yearband {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--p-dim);
+    text-align: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--p-line);
+    background: var(--p-inset);
+  }
+  table.grid thead th.yearband.blank { border-bottom-color: transparent; }
+  /* The month row, one size up from where it shipped. */
+  table.grid thead th.month {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: var(--p-ink-soft);
+  }
+  /* The coach's own words, shown as typed — not shouted by the table's own
+     column-heading styling. */
+  table.grid th.rowname {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--p-ink);
+    text-align: left;
+    padding-left: 1.4rem;
+  }
+  table.grid tr.cat th.rowname {
+    padding-left: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--p-ink-soft);
+  }
+
+  .before-after { display: grid; gap: 0.9rem; }
+  @media (min-width: 760px) { .before-after { grid-template-columns: 1fr 1fr; } }
+  .ba-cap {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ink-3);
+    margin: 0 0 0.4rem;
+  }
+
+  /* Modal fragment */
+  .modal {
+    background: var(--p-card); border: 1px solid var(--p-line-strong);
+    border-radius: 12px; box-shadow: var(--shadow); max-width: 520px; width: 100%;
+  }
+  .modal-head { padding: 1rem 1.15rem 0.6rem; font-weight: 700; }
+  .modal-body { padding: 0 1.15rem 1.1rem; }
+  .p-label { display: block; font-size: 0.76rem; font-weight: 600; color: var(--p-dim); margin: 0.9rem 0 0.35rem; }
+  .p-input {
+    width: 100%; background: var(--p-field); border: 1px solid var(--p-line-strong);
+    border-radius: 8px; padding: 0.42rem 0.6rem; font: inherit; font-size: 0.88rem; color: var(--p-ink);
+  }
+  .kind { display: flex; gap: 0.5rem; }
+  .kind button {
+    flex: 1; font: inherit; font-size: 0.83rem; padding: 0.5rem 0.6rem;
+    border-radius: 8px; border: 1px solid var(--p-line-strong);
+    background: var(--p-card); color: var(--p-ink-soft); cursor: pointer; text-align: left;
+  }
+  .kind button[aria-pressed="true"] { border-color: var(--p-olive); background: var(--p-olive-soft); color: var(--p-ink); font-weight: 700; }
+  .kind small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--p-dim); }
+  .p-hint { font-size: 0.75rem; color: var(--p-dim); margin: 0.45rem 0 0; }
+  .p-hint.warn { color: var(--p-danger); }
+
+  /* Popover fragment */
+  .pop {
+    background: var(--p-card); border: 1px solid var(--p-line-strong);
+    border-radius: 10px; box-shadow: var(--shadow); padding: 0.95rem 1rem; max-width: 400px; width: 100%;
+  }
+  .pop h4 { margin: 0 0 0.15rem; font-size: 0.95rem; }
+  .pop p  { margin: 0 0 0.7rem; font-size: 0.78rem; color: var(--p-dim); }
+  .pop-row { display: flex; gap: 0.5rem; align-items: center; }
+
+  /* Comparison table (chrome, not product) */
+  .cmp { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0 0 1.1rem; }
+  .cmp th, .cmp td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .cmp thead th {
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.74rem; color: var(--ink-3); border-bottom: 1px solid var(--rule);
+  }
+  .cmp td:first-child { color: var(--ink); font-weight: 600; width: 30%; }
+  .cmp td { color: var(--ink-2); }
+  .cmpwrap { overflow-x: auto; }
+
+  .decisions { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); padding: 1.2rem 1.3rem; }
+  .decisions h3 { margin-top: 0; }
+  .decisions ol { padding-left: 1.2rem; margin: 0; color: var(--ink-2); }
+  .decisions li { margin-bottom: 0.7rem; }
+  .decisions b { color: var(--ink); }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches → Money → Season Budget Plan</p>
+  <h1>One ladder, funding in, months across</h1>
+  <p class="standfirst">
+    Four owner findings on the Budget Plan screen, answered in one pass. The two competing totals and the
+    tiles around them become a single ladder that shows its working. Expected fundraising and sponsorship
+    earn a place in the plan, so player dues can be set net of them. The plan gets month and quarter
+    columns of its own. And a duplicate link at the foot of the page goes.
+  </p>
+
+  <div class="legend">
+    <span class="tag new">New</span>
+    <span class="tag restyled">Restyled</span>
+    <span class="tag same">Unchanged</span>
+    <span class="tag gone">Removed</span>
+    <span style="color:var(--ink-3);font-size:0.85rem">— every element in every frame carries one.</span>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 0 -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">00</span>
+      <h2>The summary block — the ladder</h2>
+    </div>
+
+    <p>
+      Once an estimate and expected funding both exist, the top of this page has <strong>six numbers</strong>
+      to carry: line items, estimated total, difference, expected funding, funded by players, per player.
+      A row of equal tiles was the wrong instrument — it presents six unrelated statistics and then needs a
+      caption under each one explaining how it relates to its neighbour. They aren't unrelated. They're
+      <strong>one sum, worked downward</strong>:
+    </p>
+
+    <div class="note">
+      Line items <b>+</b> the part of the estimate you haven't itemized <b>=</b> total planned budget
+      <b>−</b> expected funding <b>=</b> what players fund <b>÷</b> the roster <b>=</b> per player.
+    </div>
+
+    <p>
+      Both frames below show the same team in the fullest state — a $10,000 estimate, $8,000 itemized,
+      $4,000 of expected funding, 10 players. Teams with no estimate and no funding lose those rows
+      entirely and are left with three.
+    </p>
+
+    <h3>The ladder <span class="pick">Chosen 2026-08-12</span></h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk">Line items <span style="font-size:0.75rem;color:var(--p-dim)">6 lines</span></span>
+          <span class="lv">$8,000.00</span>
+          <span class="lk sub">Not itemized yet — from your $10,000.00 estimate <span class="tile-link">Edit</span></span>
+          <span class="lv sub">$2,000.00</span>
+          <span class="rule"></span>
+          <span class="lk head">Total planned budget</span>
+          <span class="lv head">$10,000.00</span>
+          <span class="lk">Expected funding <span style="font-size:0.75rem;color:var(--p-dim)">2 lines</span></span>
+          <span class="lv good">−$4,000.00</span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span>
+              <span class="big">$600.00</span>
+              <span class="say"> per player</span>
+            </span>
+            <span class="say">$6,000.00 funded by players ÷ 10 on the roster</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Reads top to bottom as the arithmetic it is, so nothing needs a caption explaining it — the position
+      of a number <i>is</i> its explanation. The one number a coach acts on, per player, is the biggest and
+      sits at the bottom where a total belongs. Collapses gracefully: no estimate drops row two, no funding
+      drops row four, and a plain team sees three lines. Identical on a phone — it's already a single column,
+      where tiles wrap into that ragged shape you spotted.
+    </p>
+
+    <h3>The same ladder, over-plan</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk">Line items <span style="font-size:0.75rem;color:var(--p-dim)">6 lines</span></span>
+          <span class="lv">$8,000.00</span>
+          <span class="lk sub">Over your $6,000.00 estimate <span class="tile-link">Edit</span></span>
+          <span class="lv sub bad">−$2,000.00</span>
+          <span class="rule"></span>
+          <span class="lk head">Total planned budget</span>
+          <span class="lv head">$6,000.00</span>
+          <span class="lk">Expected funding <span style="font-size:0.75rem;color:var(--p-dim)">2 lines</span></span>
+          <span class="lv good">−$4,000.00</span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span>
+              <span class="big">$200.00</span>
+              <span class="say"> per player</span>
+            </span>
+            <span class="say">$2,000.00 funded by players ÷ 10 on the roster</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      One red number in the position where the reader already knows what it means. No banner, no paragraph.
+    </p>
+
+    <div class="note">
+      <b>Considered and rejected:</b> two side-by-side zones (plan on the left, "what players pay" on the
+      right) — the left column read as a list rather than a calculation, so <i>Difference</i> still leaned on
+      its label; and a hero-plus-strip (per player huge, working behind a "how this is worked out" link) —
+      too compact, it hid the reconciliation a coach opens this page to do.
+    </div>
+
+    <div class="note">
+      <b>This block is stated once.</b> It replaces the tile bar everywhere below; the plan's foot keeps a
+      plain grand total and nothing else.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ 1 -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">01</span>
+      <h2>Budget, estimate, difference — stated, not inferred</h2>
+    </div>
+
+    <p>
+      Today the screen shows <b>Total Planned Budget</b> and <b>Season Total</b> side by side, and the
+      top number is quietly "whichever is bigger". Nothing says what the second one is for. After this
+      change the top of the page states all three facts plainly and in order:
+      <strong>Budget</strong> — the sum of the lines below — then an optional
+      <strong>Estimated total</strong>, then the <strong>Difference</strong> between them. No estimate,
+      no difference tile.
+    </p>
+
+    <h3>1a · No estimate set — the ordinary case, and the shortest the block ever gets</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk head">Total planned budget <span style="font-size:0.75rem;font-weight:500;color:var(--p-dim)">6 lines</span></span>
+          <span class="lv head">$8,000.00</span>
+          <span class="lk sub"><span class="tile-link">Set an estimated total</span> — plan to a number before every cost is known</span>
+          <span class="lv sub"></span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span><span class="big">$800.00</span><span class="say"> per player</span></span>
+            <span class="say">÷ 10 on the roster</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      With nothing to add to them, the line items <b>are</b> the total, so they're labelled that way — no
+      row states the same number twice. <b>Gone:</b> the Season Total tile, the Roster Size tile, the
+      Non-Itemized Buffer tile, and the sentence "No season total set — your total planned budget is the
+      sum of your line items".
+    </p>
+
+    <h3>1b · Setting the estimate</h3>
+    <div class="stage">
+      <div class="skin" style="max-width:420px">
+        <div class="pop">
+          <h4>Estimated total <span class="tag new">New</span></h4>
+          <p>
+            Optional. What you think the season costs, before it's all itemized. Anything you haven't
+            itemized shows as the difference, and shrinks as you add lines.
+          </p>
+          <div class="pop-row">
+            <input class="p-input" value="10,000.00" style="max-width:150px" readonly>
+            <button class="btn primary" type="button">Save</button>
+            <button class="btn" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>1c · Estimate above the lines</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk">Line items <span style="font-size:0.75rem;color:var(--p-dim)">6 lines</span></span>
+          <span class="lv">$8,000.00</span>
+          <span class="lk sub">Not itemized yet — from your $10,000.00 estimate <span class="tile-link">Edit</span> · <span class="tile-link">Clear</span></span>
+          <span class="lv sub">$2,000.00</span>
+          <span class="rule"></span>
+          <span class="lk head">Total planned budget</span>
+          <span class="lv head">$10,000.00</span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span><span class="big">$1,000.00</span><span class="say"> per player</span></span>
+            <span class="say">÷ 10 on the roster</span>
+          </div>
+        </div>
+
+        <div class="lines">
+          <div class="grp-head"><span class="grp-name">Tournaments</span><span class="grp-total">$7,000.00</span></div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Entry fees</div><div class="row-sub">3 × $1000</div></div>
+            <div class="row-right"><span class="row-amt">$3,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Uniforms</div></div>
+            <div class="row-right"><span class="row-amt">$2,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Travel</div><div class="row-sub">Split across Oct–Feb</div></div>
+            <div class="row-right"><span class="row-amt">$2,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="totals">
+            <div class="trow final"><span>Total planned budget</span><span>$10,000.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      The un-itemized part is <b>calculated, never typed</b> — always exactly the estimate minus the
+      lines — so "it shrinks as you itemize, the total holds" happens on its own. It is a row in the
+      summary, not a line among the things you typed: no pencil, no bin, and the only control that moves
+      it is <b>Edit</b> on the estimate. The foot of the plan carries the grand total and nothing else.
+    </p>
+
+    <h3>1d · Estimate below the lines</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk">Line items <span style="font-size:0.75rem;color:var(--p-dim)">6 lines</span></span>
+          <span class="lv">$8,000.00</span>
+          <span class="lk sub">Over your $6,000.00 estimate <span class="tile-link">Edit</span> · <span class="tile-link">Clear</span></span>
+          <span class="lv sub bad">−$2,000.00</span>
+          <span class="rule"></span>
+          <span class="lk head">Total planned budget</span>
+          <span class="lv head">$6,000.00</span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span><span class="big">$600.00</span><span class="say"> per player</span></span>
+            <span class="say">÷ 10 on the roster</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Same block, one red number, in the position where a reader already knows what it means. Nothing is
+      blocked and nothing is silently ignored — the improvement over today, where the typed number is kept
+      but the screen goes on using the bigger one.
+    </p>
+
+    <div class="note">
+      <b>Settled 2026-08-12.</b> Per player — and therefore generated dues — follows <b>the estimate</b>
+      whenever one is set: $600 here, off $6,000, not the $8,000 of lines. The number you set is the number
+      that counts, and the red row is what stops that being a silent shortfall.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ 2 -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">02</span>
+      <h2>Expected funding — budget the money that isn't dues</h2>
+    </div>
+
+    <p>
+      A budget line can now be a <strong>cost</strong> or <strong>expected funding</strong>: money the
+      team plans to bring in from fundraising, a sponsor, or a club grant. Costs less expected funding
+      is <strong>funded by players</strong>, and that — not the gross cost — is what drives per player
+      and the installment generator. Budget $4,000 of fundraising against an $8,000 season and every
+      player's dues drop from $800 to $400.
+    </p>
+
+    <h3>2a · The full plan, with funding</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="ladder">
+          <span class="cap">The plan</span>
+          <span class="lk head">Total planned budget <span style="font-size:0.75rem;font-weight:500;color:var(--p-dim)">6 cost lines</span></span>
+          <span class="lv head">$8,000.00</span>
+          <span class="lk">Expected funding <span style="font-size:0.75rem;color:var(--p-dim)">2 lines</span> <span class="tag new">New</span></span>
+          <span class="lv good">−$4,000.00</span>
+          <span class="rule"></span>
+          <div class="payline">
+            <span><span class="big">$400.00</span><span class="say"> per player</span></span>
+            <span class="say">$4,000.00 funded by players ÷ 10 on the roster</span>
+          </div>
+        </div>
+
+        <div class="lines">
+          <div class="grp-head"><span class="grp-name">Tournaments</span><span class="grp-total">$7,000.00</span></div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Entry fees</div><div class="row-sub">3 × $1000</div></div>
+            <div class="row-right"><span class="row-amt">$3,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Uniforms</div></div>
+            <div class="row-right"><span class="row-amt">$2,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Travel</div><div class="row-sub">Split across Oct–Feb</div></div>
+            <div class="row-right"><span class="row-amt">$2,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="grp-head"><span class="grp-name">Equipment</span><span class="grp-total">$1,000.00</span></div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Practice gear</div></div>
+            <div class="row-right"><span class="row-amt">$1,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+
+          <div class="grp-head" style="background:var(--p-olive-soft)">
+            <span class="grp-name">Expected funding <span class="tag new">New</span></span>
+            <span class="grp-total" style="color:var(--p-good)">−$4,000.00</span>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-name">Fundraising (estimated)</div>
+              <div class="row-sub">What we expect the team to keep from all campaigns</div>
+            </div>
+            <div class="row-right"><span class="row-amt minus">−$3,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-name">Sponsorship — Rink Auto</div></div>
+            <div class="row-right"><span class="row-amt minus">−$1,000.00</span><span class="icon">✎</span><span class="icon">🗑</span></div>
+          </div>
+
+          <div class="totals">
+            <div class="trow final"><span>Funded by players</span><span>$4,000.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Funding lines sit in one section at the foot of the plan, always after the costs, and show with a
+      minus so the arithmetic reads down the column. A team with no funding lines sees none of this —
+      the section and its row in the summary only appear once something is budgeted. The foot of the plan
+      states the outcome, <b>Funded by players</b>; the working is up top, once.
+    </p>
+
+    <h3>2b · Adding one</h3>
+    <div class="stage">
+      <div class="skin" style="max-width:520px">
+        <div class="modal">
+          <div class="modal-head">Add Budget Line</div>
+          <div class="modal-body">
+            <span class="p-label">This line is <span class="tag new">New</span></span>
+            <div class="kind">
+              <button type="button" aria-pressed="false">A cost<small>Money the team spends</small></button>
+              <button type="button" aria-pressed="true">Expected funding<small>Money coming in</small></button>
+            </div>
+
+            <span class="p-label">Description</span>
+            <input class="p-input" value="Fundraising (estimated)" readonly>
+
+            <span class="p-label">Amount</span>
+            <input class="p-input" value="3,000.00" style="max-width:170px" readonly>
+
+            <p class="p-hint">
+              Expected funding lowers what players are asked to pay. Enter what you expect the
+              <b>team</b> to keep — if a campaign pays part of what a player raises back to that player,
+              that part lowers their dues directly and shouldn't be counted here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      The rest of the form — category, notes, and the new period split (months / quarters / dates /
+      names, already built and awaiting your QA) — is unchanged and works the same on a funding line, so
+      "$3,000 of fundraising, $1,000 a month from October" is expressible.
+    </p>
+
+    <h3>2c · How it lands in Budget vs. Actual</h3>
+    <div class="stage">
+      <div class="skin">
+        <div class="gridwrap">
+          <table class="grid">
+            <thead>
+              <tr><th>Category</th><th>Budget</th><th>Actual</th><th>Difference</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="lead">Tournaments</td><td>7,000.00</td><td>6,400.00</td><td style="color:var(--p-good)">600.00</td></tr>
+              <tr><td class="lead">Equipment</td><td>1,000.00</td><td>1,180.00</td><td style="color:var(--p-danger)">−180.00</td></tr>
+              <tr class="fund"><td class="lead">Expected funding <span class="tag new">New</span></td><td>−4,000.00</td><td>−2,650.00</td><td style="color:var(--p-danger)">−1,350.00</td></tr>
+              <tr class="tot"><td>Funded by players</td><td>4,000.00</td><td>4,930.00</td><td style="color:var(--p-danger)">−930.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Per your rule: the actual against a funding line is <b>the team's share</b> — everything raised,
+      less whatever went back to the player who raised it — plus any sponsorship or grant money recorded
+      as team income. Money rebated to a player already lowers that player's own dues, so counting it
+      here would count the same dollar twice.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ 3 -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">03</span>
+      <h2>The plan, in month or quarter columns</h2>
+    </div>
+
+    <p>
+      Month columns exist today, but only on the <b>Budget vs. Actual</b> tab, mixed in with actuals —
+      which is why the plan itself feels like it hasn't got them. This puts a <strong>List / By period</strong>
+      toggle on the Budget Plan tab and adds <strong>quarters</strong>, reading straight from the period
+      splits coaches already enter on each line.
+    </p>
+
+    <h3>3a · The header, reworked <span class="pick">Owner, 2026-08-13</span></h3>
+    <p>
+      Three problems, all visible in one screenshot of the shipped build.
+    </p>
+    <div class="before-after">
+      <div>
+        <p class="ba-cap">Shipped — three faults</p>
+        <div class="stage" style="padding:1rem">
+          <div class="skin wide">
+            <div class="gridwrap">
+              <table class="grid">
+                <thead>
+                  <tr>
+                    <th>Line</th>
+                    <th>Jan<span class="periodGridYear" style="display:block;font-size:0.6rem;opacity:.6">2026</span></th>
+                    <th>Feb</th><th>Unscheduled</th><th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="cat"><td>Tournaments</td><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+                  <tr><td class="lead" style="text-transform:uppercase;letter-spacing:.1em;font-family:var(--f-display)">Entry fees</td><td class="dim">—</td><td class="dim">—</td><td>3,000</td><td>3,000</td></tr>
+                  <tr><td class="lead" style="text-transform:uppercase;letter-spacing:.1em;font-family:var(--f-display)">Travel</td><td>1,000</td><td>1,000</td><td class="dim">—</td><td>2,000</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="caption" style="max-width:none">
+          ① one column taller than the rest, ② headings smaller than the numbers under them,
+          ③ the coach's own line names shouted in a different face.
+        </p>
+      </div>
+      <div>
+        <p class="ba-cap">Proposed</p>
+        <div class="stage" style="padding:1rem">
+          <div class="skin wide">
+            <div class="gridwrap">
+              <table class="grid">
+                <thead>
+                  <tr>
+                    <th class="yearband blank"></th>
+                    <th class="yearband" colspan="2">2026</th>
+                    <th class="yearband blank" colspan="2"></th>
+                  </tr>
+                  <tr>
+                    <th class="month">Line</th><th class="month">Jan</th><th class="month">Feb</th>
+                    <th class="month">Unscheduled</th><th class="month">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="cat"><th class="rowname">Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+                  <tr><th class="rowname">Entry fees</th><td class="dim">—</td><td class="dim">—</td><td>3,000</td><td>3,000</td></tr>
+                  <tr><th class="rowname">Travel</th><td>1,000</td><td>1,000</td><td class="dim">—</td><td>2,000</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="caption" style="max-width:none">
+          Every month column the same height, headings a size up, and names as typed.
+        </p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Why a band rather than a year on every column.</b> Repeating "2026" twelve times is noise;
+      printing it once where it changes is what produced the ragged header. A band says it once
+      <i>per year</i> and turns the year into structure instead of a label — which is what it is.
+      <b>Unscheduled</b> and <b>Total</b> sit under a deliberately empty band: they belong to no year,
+      and giving them one would be a lie in the direction of tidiness.
+    </div>
+
+    <h3>3b · Where the band earns its keep — a season crossing New Year</h3>
+    <div class="stage">
+      <div class="skin wide">
+        <div class="toolbar">
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+            <span class="seg">
+              <button type="button" aria-pressed="false">List</button>
+              <button type="button" aria-pressed="true">By period</button>
+            </span>
+            <span class="tag new">New</span>
+            <span class="seg">
+              <button type="button" aria-pressed="true">Months</button>
+              <button type="button" aria-pressed="false">Quarters</button>
+            </span>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn" type="button">Import</button>
+            <button class="btn primary" type="button">+ Add Line</button>
+          </div>
+        </div>
+
+        <div class="gridwrap">
+          <table class="grid">
+            <thead>
+              <tr>
+                <th class="yearband blank"></th>
+                <th class="yearband" colspan="4">2026</th>
+                <th class="yearband" colspan="2">2027</th>
+                <th class="yearband blank" colspan="2"></th>
+              </tr>
+              <tr>
+                <th class="month">Line</th>
+                <th class="month">Sep</th><th class="month">Oct</th><th class="month">Nov</th><th class="month">Dec</th>
+                <th class="month">Jan</th><th class="month">Feb</th>
+                <th class="month">Unscheduled</th><th class="month">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="cat"><th class="rowname">Tournaments</th><td>1,000</td><td>1,400</td><td>1,400</td><td>1,400</td><td>1,400</td><td>400</td><td class="dim">—</td><td>7,000</td></tr>
+              <tr><th class="rowname">Entry fees</th><td>1,000</td><td>1,000</td><td>1,000</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>3,000</td></tr>
+              <tr><th class="rowname">Uniforms</th><td class="dim">—</td><td class="dim">—</td><td>2,000</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>2,000</td></tr>
+              <tr><th class="rowname">Travel</th><td class="dim">—</td><td>400</td><td>400</td><td>400</td><td>400</td><td>400</td><td class="dim">—</td><td>2,000</td></tr>
+              <tr class="cat"><th class="rowname">Equipment</th><td>1,000</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>1,000</td></tr>
+              <tr><th class="rowname">Practice gear</th><td>1,000</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>1,000</td></tr>
+              <tr class="cat fund"><th class="rowname">Expected funding</th><td class="dim">—</td><td>−1,000</td><td>−1,000</td><td>−1,000</td><td class="dim">—</td><td class="dim">—</td><td>−1,000</td><td>−4,000</td></tr>
+              <tr class="fund"><th class="rowname">Fundraising (estimated)</th><td class="dim">—</td><td>−1,000</td><td>−1,000</td><td>−1,000</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>−3,000</td></tr>
+              <tr class="fund"><th class="rowname">Sponsorship — Rink Auto</th><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td>−1,000</td><td>−1,000</td></tr>
+              <tr class="tot"><th class="rowname">Funded by players</th><td>2,000</td><td>400</td><td>400</td><td>400</td><td>1,400</td><td>400</td><td>−1,000</td><td>4,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Sep–Dec sit under 2026, Jan–Feb under 2027, and the two are told apart at a glance rather than
+      by reading a suffix on one column. This is the ordinary case for a winter sport.
+    </p>
+
+    <h3>3c · Quarters, same treatment</h3>
+    <div class="stage">
+      <div class="skin wide">
+        <div class="toolbar">
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <span class="seg">
+              <button type="button" aria-pressed="false">List</button>
+              <button type="button" aria-pressed="true">By period</button>
+            </span>
+            <span class="seg">
+              <button type="button" aria-pressed="false">Months</button>
+              <button type="button" aria-pressed="true">Quarters</button>
+            </span>
+          </div>
+        </div>
+        <div class="gridwrap">
+          <table class="grid">
+            <thead>
+              <tr>
+                <th class="yearband blank"></th>
+                <th class="yearband" colspan="2">2026</th>
+                <th class="yearband" colspan="1">2027</th>
+                <th class="yearband blank" colspan="2"></th>
+              </tr>
+              <tr>
+                <th class="month">Line</th><th class="month">Q3</th><th class="month">Q4</th><th class="month">Q1</th>
+                <th class="month">Unscheduled</th><th class="month">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="cat"><th class="rowname">Tournaments</th><td>1,800</td><td>4,200</td><td>1,000</td><td class="dim">—</td><td>7,000</td></tr>
+              <tr><th class="rowname">Entry fees</th><td>1,000</td><td>1,000</td><td>1,000</td><td class="dim">—</td><td>3,000</td></tr>
+              <tr><th class="rowname">Uniforms</th><td class="dim">—</td><td>2,000</td><td class="dim">—</td><td class="dim">—</td><td>2,000</td></tr>
+              <tr><th class="rowname">Travel</th><td>800</td><td>1,200</td><td class="dim">—</td><td class="dim">—</td><td>2,000</td></tr>
+              <tr class="cat"><th class="rowname">Equipment</th><td class="dim">—</td><td class="dim">—</td><td>1,000</td><td class="dim">—</td><td>1,000</td></tr>
+              <tr class="cat fund"><th class="rowname">Expected funding</th><td class="dim">—</td><td>−2,000</td><td>−1,000</td><td>−1,000</td><td>−4,000</td></tr>
+              <tr class="tot"><th class="rowname">Funded by players</th><td>1,800</td><td>2,200</td><td>1,000</td><td>−1,000</td><td>4,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Quarters carry a year for exactly the same reason months do — <b>Q1</b> alone doesn't say which
+      season it belongs to when a plan spans a New Year.
+    </p>
+
+    <div class="note">
+      <b>Unscheduled is deliberate.</b> A line with no period split has to go somewhere, and a column
+      that says so is honest — the alternative is dropping it from the view, which makes the columns
+      quietly disagree with the plan's total. The buffer isn't in this view at all; it isn't a line and
+      has no dates. Columns cover the months your plan actually touches, not a fixed twelve.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ 4 -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">04</span>
+      <h2>The duplicate link at the foot goes</h2>
+    </div>
+    <div class="stage">
+      <div class="skin" style="max-width:520px">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;padding:0.9rem 0.2rem">
+          <span style="color:var(--p-link);text-decoration:line-through;opacity:0.55">View Budget vs. Actual →</span>
+          <span class="tag gone" style="align-self:flex-end">Removed</span>
+          <span style="color:var(--p-dim);font-size:0.85rem;margin-top:0.3rem">See a sample budget <span class="tag same">Unchanged</span></span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Budget vs. Actual is already a tab two inches above it. "See a sample budget" stays — it is the
+      only way back to the worked example once a plan exists.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <section class="sect">
+    <div class="sect-head"><h2>What changes, at a glance</h2></div>
+    <div class="cmpwrap">
+      <table class="cmp">
+        <thead><tr><th>On screen</th><th>Today</th><th>After</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>The big number</td>
+            <td>Whichever is larger of the itemized sum and a separately-stored Season Total</td>
+            <td><b>Budget</b> — the sum of the lines, and nothing else</td>
+          </tr>
+          <tr>
+            <td>Season Total</td>
+            <td>A tile with no explanation, next to the total it sometimes overrides</td>
+            <td>Renamed <b>Estimated total</b>, optional, explained where it's set, clearable</td>
+          </tr>
+          <tr>
+            <td>The gap between them</td>
+            <td>A ghost row and a tile, both called "Non-itemized buffer"; a red warning if the coach goes the other way</td>
+            <td>One row of the summary ladder, directly under the line items it's added to — red when the lines run over</td>
+          </tr>
+          <tr>
+            <td>The summary itself</td>
+            <td>A wrapping row of up to five equal tiles, each needing a caption to relate it to its neighbour</td>
+            <td>A <b>ladder</b>: the sum worked downward, ending in per player</td>
+          </tr>
+          <tr>
+            <td>Fundraising &amp; sponsors</td>
+            <td>Not budgetable; dues are always set off gross costs</td>
+            <td><b>Expected funding</b> lines; dues are set off <b>Funded by players</b></td>
+          </tr>
+          <tr>
+            <td>Month columns</td>
+            <td>Budget vs. Actual tab only, months only</td>
+            <td>Also on the plan, with a quarters view</td>
+          </tr>
+          <tr>
+            <td>Foot of the page</td>
+            <td>Two quiet links, one duplicating a tab</td>
+            <td>One</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sect">
+    <div class="decisions">
+      <h3 style="margin-top:0">Settled, and what's left open</h3>
+      <p style="color:var(--ink-2);margin:0 0 0.9rem;font-size:0.92rem">
+        <b>Settled 2026-08-12:</b> the ladder is the summary block; the estimate is optional and named
+        <i>Estimated total</i>; the un-itemized difference is calculated, never typed; per player and dues
+        follow the estimate whenever one is set, including when the lines run over it; expected funding is
+        a plain total that doesn't link to individual campaigns, and its actual is the team's share.
+      </p>
+      <ol>
+        <li>
+          <b>Where funding sits in the season's cash flow.</b> Expected funding reduces total dues, but
+          the money often arrives mid-season while costs land early. The installment generator will keep
+          proposing even installments unless you want it to shape them around when funding is expected.
+        </li>
+        <li>
+          <b>Existing teams.</b> A stored Season Total becomes that team's Estimated total, untouched —
+          the difference simply starts being shown. Teams currently sitting below their own stored total
+          see a red difference for the first time, rather than having it overridden.
+        </li>
+      </ol>
+    </div>
+  </section>
+
+</div>

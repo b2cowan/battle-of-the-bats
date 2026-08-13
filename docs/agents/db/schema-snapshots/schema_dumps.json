@@ -9020,6 +9020,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_budget_lines",
+        "pos": 13,
+        "column_name": "line_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'cost'::text"
+      },
+      {
         "table_name": "rep_budget_periods",
         "pos": 1,
         "column_name": "id",
@@ -12244,6 +12253,141 @@
       {
         "table_name": "rep_team_groups",
         "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 5,
+        "column_name": "dataset",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 6,
+        "column_name": "shape",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 7,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 8,
+        "column_name": "source_filename",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 9,
+        "column_name": "rows_created",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 10,
+        "column_name": "rows_updated",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 11,
+        "column_name": "rows_skipped",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 12,
+        "column_name": "rows_failed",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 13,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 14,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 15,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -17822,14 +17966,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -17864,14 +18008,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -18573,6 +18717,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_team_groups_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fk_rep_team_import_events_created_by"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_org"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_team"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_year"
       },
       {
         "table_name": "rep_team_lineup_entries",
@@ -21355,6 +21527,16 @@
         "indexdef": "CREATE UNIQUE INDEX rep_team_groups_pkey ON public.rep_team_groups USING btree (id)"
       },
       {
+        "tablename": "rep_team_import_events",
+        "indexname": "idx_rep_team_import_events_season",
+        "indexdef": "CREATE INDEX idx_rep_team_import_events_season ON public.rep_team_import_events USING btree (team_id, program_year_id, created_at DESC)"
+      },
+      {
+        "tablename": "rep_team_import_events",
+        "indexname": "rep_team_import_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_import_events_pkey ON public.rep_team_import_events USING btree (id)"
+      },
+      {
         "tablename": "rep_team_lineup_entries",
         "indexname": "rep_team_lineup_entries_batting_order_idx",
         "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_entries_batting_order_idx ON public.rep_team_lineup_entries USING btree (lineup_id, batting_order) WHERE (batting_order IS NOT NULL)"
@@ -23160,6 +23342,12 @@
       {
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
+        "detail": "rep_budget_lines_line_kind_check",
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_total_amount_check",
         "check_clause": "(total_amount > (0)::numeric)"
       },
@@ -23688,6 +23876,30 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_dataset_check",
+        "check_clause": "(dataset = ANY (ARRAY['budget_lines'::text, 'payables'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_shape_check",
+        "check_clause": "(shape = ANY (ARRAY['month-grid'::text, 'list'::text, 'payables'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_source_check",
+        "check_clause": "(source = ANY (ARRAY['paste'::text, 'file'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_import_events",
         "detail": "ENABLED",
         "check_clause": null
       },

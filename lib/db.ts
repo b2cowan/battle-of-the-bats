@@ -3982,7 +3982,7 @@ export async function getCoachTeamMilestones(
   const countHead = { count: 'exact' as const, head: true };
 
   const [
-    lineupEventIds, announcements, dues, programYear, assistants, documents,
+    lineupEventIds, announcements, dues, programYear, budgetLines, assistants, documents,
   ] = await Promise.all([
     // Reuses the SAME definition of "has a lineup" as the Lineups page's readiness chips: a lineup
     // row alone isn't enough, because opening the builder auto-seeds every player into the batting
@@ -4002,6 +4002,11 @@ export async function getCoachTeamMilestones(
       .eq('program_year_id', programYearId),
     supabaseAdmin.from('rep_program_years').select('budget_amount')
       .eq('id', programYearId).maybeSingle(),
+    // ⚠ An ESTIMATED total is no longer the only way to start a budget — and since 2026-08-12 it
+    // is optional and clearable, so a coach who itemizes six lines and never estimates had this
+    // milestone reading "not started" over a finished budget. Any budget line counts.
+    supabaseAdmin.from('rep_budget_lines').select('id', countHead)
+      .eq('program_year_id', programYearId),
     supabaseAdmin.from('rep_team_coaches').select('id', countHead)
       .eq('program_year_id', programYearId).eq('coach_role', 'assistant_coach'),
     // Team-owned templates only (the org's shared library isn't this team's doing), and only
@@ -4011,14 +4016,16 @@ export async function getCoachTeamMilestones(
       .eq('team_id', teamId).eq('is_active', true),
   ]);
 
-  for (const [label, result] of Object.entries({ announcements, dues, programYear, assistants, documents })) {
+  for (const [label, result] of Object.entries({ announcements, dues, programYear, budgetLines, assistants, documents })) {
     if (result.error) console.error(`[getCoachTeamMilestones] ${label} query failed (treated as not started):`, result.error.message);
   }
 
   return {
     hasLineup: lineupEventIds.length > 0,
     hasSentAnnouncement: (announcements.count ?? 0) > 0,
-    moneyStarted: (dues.count ?? 0) > 0 || (programYear.data as { budget_amount?: number | null } | null)?.budget_amount != null,
+    moneyStarted: (dues.count ?? 0) > 0
+      || (budgetLines.count ?? 0) > 0
+      || (programYear.data as { budget_amount?: number | null } | null)?.budget_amount != null,
     assistants: assistants.count ?? 0,
     teamDocuments: documents.count ?? 0,
   };
@@ -10169,7 +10176,7 @@ export async function setOrgClubBookSharingEnabled(orgId: string, enabled: boole
   return data.club_book_sharing_enabled === true;
 }
 
-import type { RepTeamGameMoment } from './types';
+import type { RepTeamGameMoment, RepTeamImportEvent } from './types';
 
 // ─── Game-Day Mode P2 — moments (rep_team_game_moments) ─────────────────────────────────────
 // One line a coach captured at the bench. Append-only at the app layer: there is deliberately
@@ -10269,4 +10276,73 @@ export async function deleteRepTeamGameMoment(teamId: string, momentId: string):
     // team_id alongside the PK: defense-in-depth, like every sibling delete helper.
     .eq('id', momentId).eq('team_id', teamId);
   if (error) throw error;
+}
+
+// ─── Money imports — receipts (rep_team_import_events, migration 231) ────────────────────────
+// What the Money hub's `Import ▾ → Recent imports` lists. Append-only at the app layer, like the
+// moments above: no update helper exists here, so the property belongs to the module rather than
+// to a route's good intentions. The write is best-effort by contract (see recordRepTeamImport).
+
+function mapRepTeamImportEvent(row: Record<string, unknown>): RepTeamImportEvent {
+  return {
+    id: row.id as string,
+    teamId: row.team_id as string,
+    orgId: row.org_id as string,
+    programYearId: row.program_year_id as string,
+    dataset: row.dataset as RepTeamImportEvent['dataset'],
+    shape: row.shape as RepTeamImportEvent['shape'],
+    source: row.source as RepTeamImportEvent['source'],
+    sourceFilename: (row.source_filename as string | null) ?? null,
+    rowsCreated: (row.rows_created as number | null) ?? 0,
+    rowsUpdated: (row.rows_updated as number | null) ?? 0,
+    rowsSkipped: (row.rows_skipped as number | null) ?? 0,
+    rowsFailed: (row.rows_failed as number | null) ?? 0,
+    createdBy: (row.created_by as string | null) ?? null,
+    createdByName: (row.created_by_name as string | null) ?? null,
+    createdAt: row.created_at as string,
+  };
+}
+
+/**
+ * Write the receipt for an import that already landed.
+ *
+ * ⚠ NEVER THROWS. It is called after the commit loop, at which point the coach's rows are in the
+ * database and the response is about to be built. A history line is a footnote; failing the
+ * request over one would throw away a successful forty-row import and tell the coach it broke.
+ */
+export async function recordRepTeamImport(opts: {
+  teamId: string; orgId: string; programYearId: string;
+  dataset: RepTeamImportEvent['dataset'];
+  shape: RepTeamImportEvent['shape'];
+  source: RepTeamImportEvent['source'];
+  sourceFilename: string | null;
+  rowsCreated: number; rowsUpdated: number; rowsSkipped: number; rowsFailed: number;
+  createdBy: string | null; createdByName: string | null;
+}): Promise<void> {
+  try {
+    await supabaseAdmin.from('rep_team_import_events').insert({
+      team_id: opts.teamId, org_id: opts.orgId, program_year_id: opts.programYearId,
+      dataset: opts.dataset, shape: opts.shape,
+      source: opts.source, source_filename: opts.sourceFilename,
+      rows_created: opts.rowsCreated, rows_updated: opts.rowsUpdated,
+      rows_skipped: opts.rowsSkipped, rows_failed: opts.rowsFailed,
+      created_by: opts.createdBy, created_by_name: opts.createdByName,
+    });
+  } catch {
+    // Deliberately swallowed — see the contract above.
+  }
+}
+
+/** The newest receipts for one team's season, newest first. Bounded by `limit` at the DB. */
+export async function getRepTeamImportEvents(
+  teamId: string, programYearId: string, limit: number,
+): Promise<RepTeamImportEvent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_import_events').select('*')
+    .eq('team_id', teamId).eq('program_year_id', programYearId)
+    // `id` tiebreak: two imports committed in the same second must not swap places between loads.
+    .order('created_at', { ascending: false }).order('id', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamImportEvent);
 }

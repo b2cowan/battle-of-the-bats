@@ -1,26 +1,20 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowRight, ArrowLeft, DollarSign } from 'lucide-react';
+import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowLeft, DollarSign } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import { useOrg } from '@/lib/org-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
-import {
-  downloadXLSX, generateCSV, downloadCSVBlob,
-  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
-} from '@/lib/export';
-import { hasPlanFeature } from '@/lib/plan-features';
-import { isNeverPaidPlayer } from '@/lib/dues-status';
+import { DUES_EXPORT_COLUMNS, duesExportRows, duesPdfRows } from '@/lib/coach-money-exports';
+import { isNeverPaidPlayer, duesStatusLabel } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import ExportMenu from '@/components/admin/ExportMenu';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import styles from '../../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
+import { fmt } from '@/lib/coach-money-summary';
 import type {
   RepRosterPlayer,
   RepPlayerDuesSchedule,
@@ -49,28 +43,39 @@ interface SeasonSurplusData {
   playerCount: number;
 }
 
-function fmt(n: number) {
-  const abs = Math.abs(n);
-  const str = abs.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n < 0 ? `-$${str}` : `$${str}`;
-}
+/* (`fmt` is the shared one — this file's local copy was byte-for-byte the same behaviour. The other
+   Money panels' local `fmt`s are NOT duplicates: several deliberately strip the sign because their
+   callers print their own, so they stay where they are.) */
 
 function fmtDate(s: string) {
   return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** ⚠ A SETTLED BALANCE IS QUIET, NOT GREEN (Money-hub table pass 2026-08-13, approved render
+ *  `14181bd3`). Zero used to be drawn in the same success green as a credit, so a roster where
+ *  everyone had paid was a full column of green — the loudest thing on the screen saying nothing.
+ *  Colour in this table now means "there is something here": green a credit, amber an amount still
+ *  owed, muted a nil. The two that matter keep the colour they always had. */
 function balanceColor(b: number): string {
   if (b < -0.005) return 'var(--success-light)'; // in credit (good)
   if (b > 0.005)  return 'var(--warning)'; // still owes
-  return 'var(--success-light)';                 // fully clear
+  return 'var(--home-dim, rgba(255,255,255,0.35))'; // fully clear — nothing to flag
 }
 
+/** The colour each dues status is drawn in. The WORD comes from the shared list so this table
+ *  and the Money hub's "Player dues" export can never call the same player two different
+ *  things; colour is presentation and stays here, where the table is. */
+const DUES_STATUS_COLOR: Record<ReturnType<typeof duesStatusLabel>, string> = {
+  'Not set':    'var(--home-dim, rgba(255,255,255,0.3))',
+  'In credit':  'var(--success-light)',
+  'Fully paid': 'var(--success-light)',
+  Partial:      'var(--warning)',
+  Unpaid:       'var(--home-dim, rgba(255,255,255,0.4))',
+};
+
 function statusLabel(p: PlayerWithDues) {
-  if (!p.schedule) return { label: 'Not set', color: 'var(--home-dim, rgba(255,255,255,0.3))' };
-  if (p.rollingBalance < -0.005) return { label: 'In credit', color: 'var(--success-light)' };
-  if (p.rollingBalance <= 0.005) return { label: 'Fully paid', color: 'var(--success-light)' };
-  if (p.paidAmount > 0 || p.totalCredits > 0) return { label: 'Partial', color: 'var(--warning)' };
-  return { label: 'Unpaid', color: 'var(--home-dim, rgba(255,255,255,0.4))' };
+  const label = duesStatusLabel(p);
+  return { label, color: DUES_STATUS_COLOR[label] };
 }
 
 const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
@@ -96,27 +101,27 @@ const BLANK_CREDIT_FORM = {
   notes:      '',
 };
 
-const DUES_EXPORT_COLS: ExportColumnDef[] = [
-  { label: 'Player',     key: 'player',    format: 'text' },
-  { label: 'Total Dues', key: 'totalDues', format: 'currency' },
-  { label: 'Credits',    key: 'credits',   format: 'currency' },
-  { label: 'Paid',       key: 'paid',      format: 'currency' },
-  { label: 'Balance',    key: 'balance',   format: 'currency' },
-  { label: 'Status',     key: 'status',    format: 'text' },
-];
+// ⚠ The columns and the row mapping are NOT declared here. They live in `lib/coach-money-exports`
+// alongside the Money hub's own "Player dues" export, so this screen's file and the hub's file
+// cannot drift into two different spreadsheets from one product. This panel only supplies the
+// players it already holds.
 
 export function PlayerDuesPanel({
   params: paramsPromise,
   embedded = false,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
   /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
   embedded?: boolean;
+  /** Is this panel the tab currently on screen? The hub passes it to every panel; this one
+   *  needs it because the bulk-dues generator it opens guards against unsaved work, and a
+   *  guard left armed on a background tab hijacks clicks app-wide. */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
-  const { currentOrg } = useOrg();
 
   const [players, setPlayers] = useState<PlayerWithDues[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,14 +144,11 @@ export function PlayerDuesPanel({
   const [creditError, setCreditError] = useState('');
   const [deletingCreditId, setDeletingCreditId] = useState<string | null>(null);
 
-  // Apply to all
+  // Set dues for all players. It opens the SAME generator the Budget Plan tab uses (owner ruling
+  // 2026-08-13) — this screen used to carry a second, cruder bulk form of its own: type a total,
+  // type installments, no preview of what any player would actually owe, and a save path that
+  // deleted paid installments along with the rest. One door, and the safe one.
   const [applyAllOpen, setApplyAllOpen] = useState(false);
-  const [allForm, setAllForm] = useState(BLANK_SCHEDULE_FORM);
-  const [allInstallmentRows, setAllInstallmentRows] = useState<InstallmentRow[]>([
-    { installmentNumber: 1, amount: '', dueDate: '' },
-  ]);
-  const [applyAllSaving, setApplyAllSaving] = useState(false);
-  const [applyAllError, setApplyAllError] = useState('');
 
   // Reminders (proximity — installments due soon)
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -177,18 +179,14 @@ export function PlayerDuesPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   useOverlayOpen(!!selected);
-  useOverlayOpen(applyAllOpen);
+  // The bulk-dues generator registers its own overlay — a second one here would double-count.
 
-  // PDF settings — fetched once on mount; used in handleExportPDF
-  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  // PDF branding and its plan gate both live in MoneyExportButton now — one place for every
+  // Money tab, and the branding is fetched on the first PDF export rather than on every mount.
 
-  // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with
-  // dues) + budget-plan awareness for the "generate from your budget" cross-link.
+  // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with dues).
   const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
   const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
-  const [hasBudgetLines, setHasBudgetLines] = useState(false);
-  const [budgetHasInstallments, setBudgetHasInstallments] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,24 +206,9 @@ export function PlayerDuesPanel({
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
-
-  useEffect(() => {
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings${seasonQuery}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setAutoReminders(d.autoRemindersEnabled ?? true); })
-      .catch(() => {});
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (!d?.plan) return;
-        setHasBudgetLines((d.plan.lines?.length ?? 0) > 0);
-        setBudgetHasInstallments(!!d.plan.hasInstallments);
-      })
       .catch(() => {});
   }, [orgSlug, teamId, seasonQuery]);
 
@@ -246,67 +229,25 @@ export function PlayerDuesPanel({
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
-  function buildDuesExportRows() {
-    return players.map(p => ({
-      player:    [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' '),
-      totalDues: p.schedule?.totalAmount ?? '',
-      credits:   p.totalCredits || '',
-      paid:      p.schedule ? p.paidAmount : '',
-      balance:   p.schedule ? p.rollingBalance : '',
-      status:    statusLabel(p).label,
-    }));
-  }
-
-  async function handleExportXLSX() {
-    const src = buildDuesExportRows();
-    if (!src.length) return;
-    const headers = serializeHeaders(DUES_EXPORT_COLS);
-    const rows = serializeRows(src, DUES_EXPORT_COLS);
-    await downloadXLSX(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: assignment?.programYearName ?? teamId }, 'xlsx'),
-      headers, rows, 'Player Dues',
-    );
-  }
-
-  function handleExportCSV() {
-    const src = buildDuesExportRows();
-    const headers = serializeHeaders(DUES_EXPORT_COLS);
-    const rows = serializeRows(src, DUES_EXPORT_COLS);
-    downloadCSVBlob(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: assignment?.programYearName ?? teamId }, 'csv'),
-      generateCSV(headers, rows),
-    );
-  }
-
-  async function handleExportPDF() {
-    const src = buildDuesExportRows();
-    if (!src.length) return;
-    const settings: OrgPdfSettings = {
-      ...DEFAULT_PDF_SETTINGS,
-      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+  // Rows and columns both come from the SHARED contract: this screen supplies the players it
+  // already holds in state, and the Money hub's own "Player dues" export supplies the ones it
+  // fetches. One mapping, so the two cannot become two different spreadsheets.
+  /**
+   * Built at click time from the players already on screen — no refetch, and no chance of
+   * exporting a roster the coach is no longer looking at. Columns and row mapping come from the
+   * shared contract so this file and any other view of dues cannot disagree about a player.
+   */
+  function buildExport() {
+    return {
+      dataset: 'player-dues',
+      title: 'Player Dues',
+      columns: DUES_EXPORT_COLUMNS,
+      rows: duesExportRows(players),
+      pdfRows: duesPdfRows,
+      scopeLabel: assignment?.programYearName ?? '',
+      teamName: assignment?.teamName ?? '',
+      emptyMessage: 'There are no player dues to export yet.',
     };
-    const teamName = assignment?.teamName ?? teamId;
-    const programYearName = assignment?.programYearName ?? '';
-
-    // Pre-format currency values as strings so jsPDF renders them correctly
-    const pdfHeaders = ['Player', 'Total Dues', 'Credits', 'Paid', 'Balance', 'Status'];
-    const pdfRows = src.map(r => [
-      r.player,
-      r.totalDues !== '' ? fmt(Number(r.totalDues)) : '—',
-      r.credits   !== '' ? fmt(Number(r.credits))   : '—',
-      r.paid      !== '' ? fmt(Number(r.paid))       : '—',
-      r.balance   !== '' ? fmt(Number(r.balance))    : '—',
-      r.status,
-    ]);
-
-    await downloadPDF(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: programYearName || teamName }, 'pdf'),
-      'Player Dues Statement',
-      `${teamName} — ${programYearName}`,
-      pdfHeaders,
-      pdfRows,
-      settings,
-    );
   }
 
   // Keep selected player data fresh after reload
@@ -467,40 +408,6 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function applyToAll() {
-    setApplyAllError('');
-    setApplyAllSaving(true);
-    try {
-      const totalAmount = parseFloat(allForm.totalAmount);
-      if (isNaN(totalAmount) || totalAmount <= 0) throw new Error('Enter a valid total amount');
-      const installments = allInstallmentRows.map((r, idx) => ({
-        installmentNumber: r.installmentNumber ?? idx + 1,
-        amount: parseFloat(r.amount),
-        dueDate: r.dueDate,
-      }));
-      if (installments.some(i => isNaN(i.amount) || !i.dueDate)) {
-        throw new Error('All installments need a valid amount and due date');
-      }
-      const instSum = installments.reduce((s, i) => s + i.amount, 0);
-      if (Math.abs(instSum - totalAmount) > 0.01) {
-        throw new Error(`Installments sum (${fmt(instSum)}) must equal total (${fmt(totalAmount)})`);
-      }
-      for (const p of players) {
-        await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playerId: p.player.id, totalAmount, notes: allForm.notes || null, installments }),
-        });
-      }
-      setApplyAllOpen(false);
-      await load();
-    } catch (e: unknown) {
-      setApplyAllError(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setApplyAllSaving(false);
-    }
-  }
-
   async function sendReminders() {
     setSendingReminders(true);
     setReminderError('');
@@ -590,25 +497,38 @@ export function PlayerDuesPanel({
   /** Is anyone ACTUALLY late? Distinct from "hasn't paid" — see the chase card below. */
   const anyoneLate = railTotals.overduePlayers > 0;
 
-  // Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
-  // The reminder status lines stay stacked under the buttons — they're feedback about this
-  // action group, so they travel with it.
-  const headerActions = (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-        <ExportMenu
-          formats={['xlsx', 'csv', 'pdf']}
-          onExportXLSX={handleExportXLSX}
-          onExportCSV={handleExportCSV}
-          onExportPDF={handleExportPDF}
-          planId={currentOrg?.planId}
-          pdfFeatureKey="pdf_exports"
-          disabled={players.length === 0}
-        />
-        {moneyCanWrite && (
-          <>
-            <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }} aria-label="Set dues for all players">
-              <DollarSign size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Set dues for all players</span>
+  // Page-level action ruling 2026-08-13, decision 2 — "PLAYER DUES RESOLVES ITSELF": its two
+  // bulk actions act on the DUES LIST, not on Money, so they come down into the list's own
+  // toolbar with everything else. That is what stopped this hub's header from running four
+  // buttons wide. The reminder status lines stay stacked under the buttons — they are feedback
+  // about this action group, so they travel with it.
+  // ⚠ EXPORT IS NOT A HEADER ACTION ANY MORE, on either surface. It sits in the list's own
+  // toolbar below, beside the bulk actions — the same place it sits on every other Money tab
+  // (owner ruling 2026-08-13). Dues is the one dataset whose export has no view state to honour,
+  // which is exactly why it must NOT be the exception: a coach should not have to learn where
+  // Export lives per screen.
+  const duesExport = (
+    <MoneyExportButton
+      label="Player dues"
+      formats={['xlsx', 'csv', 'pdf']}
+      build={buildExport}
+      disabled={players.length === 0}
+    />
+  );
+  // ⚠ THE ROW RENDERS FOR A READ-ONLY MONEY ASSISTANT TOO — only its write buttons are gated.
+  // Reading is not writing: an assistant who can see every dues figure can take them away in a
+  // spreadsheet, and gating Export behind write access would have been a quiet permission change
+  // smuggled in by a layout move.
+  const duesToolbar = (
+    <div className={styles.panelToolbar}>
+      <div className={styles.panelToolbarActions}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {duesExport}
+            {moneyCanWrite && (
+            <>
+            <button className={styles.btnSecondary} onClick={() => setApplyAllOpen(true)}>
+              <DollarSign size={14} aria-hidden /> Set dues for all players
             </button>
             <button
               className={styles.btnSecondary}
@@ -619,24 +539,28 @@ export function PlayerDuesPanel({
                  reminders" while sighted users watch "Sending…" (/review finding). */
               aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
             >
-              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send Due Reminders'}</span>
+              <Bell size={14} aria-hidden /> {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
             </button>
-          </>
-        )}
+            </>
+            )}
+          </div>
+          {reminderResult && reminderResult.emailsSent > 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
+              Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
+            </span>
+          )}
+          {reminderResult && reminderResult.emailsSent === 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
+              No reminders needed — no installments due within 3 days.
+            </span>
+          )}
+          {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
+        </div>
       </div>
-      {reminderResult && reminderResult.emailsSent > 0 && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
-          Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
-        </span>
-      )}
-      {reminderResult && reminderResult.emailsSent === 0 && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-          No reminders needed — no installments due within 3 days.
-        </span>
-      )}
-      {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
     </div>
   );
+
+
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
@@ -652,7 +576,6 @@ export function PlayerDuesPanel({
         title="Player Dues"
         season={page.season}
         teamBase={page.teamBase}
-        actions={headerActions}
         helpLabel="Player Dues"
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
@@ -665,31 +588,10 @@ export function PlayerDuesPanel({
         <div className={styles.emptyState}>No active roster players found.</div>
       ) : (
         <>
-          {/* Budget cross-link — the schedule generator (the fastest path to dues) lives
-              on the Budget page; surface it here where coaches actually look first. */}
-          {moneyCanWrite && !players.some(p => p.schedule) && (
-            <div className={styles.detailSection} style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 220 }}>
-                <p style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0, fontSize: '0.92rem' }}>
-                  {hasBudgetLines && !budgetHasInstallments
-                    ? 'Generate everyone’s schedule from your budget'
-                    : 'Fastest way to set dues: start with a budget'}
-                </p>
-                <p className={styles.muted} style={{ margin: '0.2rem 0 0', fontSize: '0.8rem' }}>
-                  {hasBudgetLines && !budgetHasInstallments
-                    ? 'Your Season Budget Plan can create every player’s installment schedule in one step — same dates and amounts for the whole roster.'
-                    : 'Build a Season Budget Plan and it can generate every player’s installment schedule in one click — or set dues for all players manually here.'}
-                </p>
-              </div>
-              <Link
-                href={`${base}/accounting/budget${hasBudgetLines && !budgetHasInstallments ? '?generate=1' : ''}`}
-                className="btn btn-lime btn-sm"
-                style={{ flexShrink: 0 }}
-              >
-                {hasBudgetLines && !budgetHasInstallments ? 'Generate installments' : 'Open budget plan'} <ArrowRight size={14} />
-              </Link>
-            </div>
-          )}
+          {/* The budget cross-link banner that used to sit here is GONE (owner, 2026-08-13). It
+              pushed the coach out to a page to do a thing this screen can now do in place —
+              "Set dues for all players" opens the generator itself, and carries the
+              start-with-a-budget nudge as its own empty state, at the moment it's wanted. */}
 
           {/* Who to chase — ONE LINE plus the bulk action (owner ruling 2026-08-03).
               It used to list every never-paid player with a per-player Remind. On a team early in
@@ -753,16 +655,19 @@ export function PlayerDuesPanel({
             </div>
           )}
 
+          {/* The dues list's own toolbar — the bulk actions sit with the list they act on. */}
+          {duesToolbar}
+
           <div className={styles.railCols}>
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th className={styles.th}>Player</th>
-                  <th className={styles.th}>Total Dues</th>
-                  <th className={styles.th}>Credits</th>
-                  <th className={styles.th}>Paid</th>
-                  <th className={styles.th}>Balance</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Total Dues</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Paid</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Balance</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th}></th>
                 </tr>
@@ -780,16 +685,16 @@ export function PlayerDuesPanel({
                       <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
                       </td>
-                      <td className={styles.td} data-label="Total Dues" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Total Dues">
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
                       </td>
-                      <td className={styles.td} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                         {p.totalCredits > 0 ? `-${fmt(p.totalCredits)}` : '—'}
                       </td>
-                      <td className={styles.td} data-label="Paid" style={{ color: 'var(--success-light)', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.paidAmount > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
                         {p.schedule ? fmt(p.paidAmount) : '—'}
                       </td>
-                      <td className={styles.td} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
                         {p.schedule ? fmt(p.rollingBalance) : '—'}
                       </td>
                       <td className={styles.td} data-label="Status">
@@ -940,29 +845,34 @@ export function PlayerDuesPanel({
                           </span>
                         </div>
 
-                        <div className={styles.tableWrap}>
+                        {/* ⚠ `tableAsCards` added 2026-08-13 (Money-hub table pass). This frame carried
+                            `.tableWrap` alone, whose `overflow-x: auto` let a five-column refund
+                            table scroll sideways on a phone with NOTHING saying it could — the
+                            silent sideways scroll every other table in the hub already avoids.
+                            One record per row makes it a list, so it stacks; it does not scroll. */}
+                        <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
                           <table className={styles.table}>
                             <thead>
                               <tr>
                                 <th className={styles.th}>Player</th>
-                                <th className={styles.th}>Rolling Balance</th>
-                                <th className={styles.th}>Credit Portion</th>
-                                <th className={styles.th}>Even Share</th>
-                                <th className={styles.th}>Total Refund</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Rolling Balance</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Credit Portion</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Even Share</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Total Refund</th>
                               </tr>
                             </thead>
                             <tbody>
                               {surplusData.breakdown.map(row => (
                                 <tr key={row.playerId} className={styles.tr}>
-                                  <td className={styles.td}>{[row.playerFirstName, row.playerLastName].filter(Boolean).join(' ')}</td>
-                                  <td className={styles.td} style={{ color: balanceColor(row.rollingBalance), fontVariantNumeric: 'tabular-nums' }}>
+                                  <td className={styles.td} data-label="Player">{[row.playerFirstName, row.playerLastName].filter(Boolean).join(' ')}</td>
+                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Rolling balance" style={{ color: balanceColor(row.rollingBalance) }}>
                                     {fmt(row.rollingBalance)}
                                   </td>
-                                  <td className={styles.td} style={{ color: row.creditPortion > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))', fontVariantNumeric: 'tabular-nums' }}>
+                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Credit portion" style={{ color: row.creditPortion > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                                     {row.creditPortion > 0 ? fmt(row.creditPortion) : '—'}
                                   </td>
-                                  <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(row.evenShare)}</td>
-                                  <td className={styles.td} style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Even share">{fmt(row.evenShare)}</td>
+                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Total refund" style={{ color: 'var(--success-light)', fontWeight: 700 }}>
                                     {fmt(row.totalRefund)}
                                   </td>
                                 </tr>
@@ -1089,14 +999,17 @@ export function PlayerDuesPanel({
                       </p>
                     )}
 
-                    {/* Installments */}
+                    {/* Installments.
+                        ⚠ `tableAsCards` added 2026-08-13 (Money-hub table pass) — see the refund
+                        preview above: this frame also carried `.tableWrap` alone and scrolled
+                        sideways on a phone in silence. One instalment per row is a list. */}
                     {selected.installments.length > 0 && (
-                      <div className={styles.tableWrap} style={{ marginBottom: '1.25rem' }}>
+                      <div className={`${styles.tableWrap} ${styles.tableAsCards}`} style={{ marginBottom: '1.25rem' }}>
                         <table className={styles.table}>
                           <thead>
                             <tr>
                               <th className={styles.th}>#</th>
-                              <th className={styles.th}>Amount</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                               <th className={styles.th}>Due</th>
                               <th className={styles.th}>Status</th>
                               <th className={styles.th}></th>
@@ -1107,13 +1020,13 @@ export function PlayerDuesPanel({
                               const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                               return (
                                 <tr key={inst.id} className={styles.tr}>
-                                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                                  <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                                  <td className={styles.td} style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
+                                  <td className={styles.td} data-label="Instalment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
+                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
+                                  <td className={styles.td} data-label="Due" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                     {fmtDate(inst.dueDate)}
                                     {overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                   </td>
-                                  <td className={styles.td}>
+                                  <td className={styles.td} data-label="Status">
                                     {inst.paidAt ? (
                                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                                         <CheckCircle2 size={12} /> Paid {fmtDate(inst.paidAt)}
@@ -1124,11 +1037,10 @@ export function PlayerDuesPanel({
                                       </span>
                                     )}
                                   </td>
-                                  <td className={styles.td}>
+                                  <td className={`${styles.td} ${styles.cardActionCell}`}>
                                     {!inst.paidAt && (
                                       <button
-                                        className={styles.btnSecondary}
-                                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+                                        className={`${styles.btnSecondary} ${styles.compactAction}`}
                                         disabled={!!marking[inst.id]}
                                         onClick={() => markPaid(selected, inst)}
                                       >
@@ -1308,29 +1220,18 @@ export function PlayerDuesPanel({
         </div>
       )}
 
-      {/* Apply to all modal */}
+      {/* Set dues for all players — the shared generator. `duesHref` is deliberately omitted:
+          its success state links to the dues list, and this IS the dues list. */}
       {applyAllOpen && (
-        <div className={styles.modalOverlay} onClick={() => setApplyAllOpen(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Set dues for all players" onClose={() => setApplyAllOpen(false)} />
-            <p className={styles.muted} style={{ fontSize: '0.82rem', marginBottom: '1rem' }}>
-              This will create or replace the dues schedule for every active roster player ({players.length} players).
-            </p>
-            <ScheduleForm
-              form={allForm}
-              setForm={setAllForm}
-              installmentRows={allInstallmentRows}
-              setInstallmentRows={setAllInstallmentRows}
-              saveError={applyAllError}
-              saving={applyAllSaving}
-              onSave={applyToAll}
-              onCancel={() => { setApplyAllOpen(false); setApplyAllError(''); }}
-              addRow={() => addInstallmentRow(allInstallmentRows, setAllInstallmentRows)}
-              removeRow={(idx) => removeInstallmentRow(idx, allInstallmentRows, setAllInstallmentRows)}
-              saveLabel={`Apply to all ${players.length} players`}
-            />
-          </div>
-        </div>
+        <GenerateInstallmentsModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          seasonQuery={seasonQuery}
+          budgetHref={`${base}/accounting?section=budget`}
+          tabActive={tabActive}
+          onClose={() => setApplyAllOpen(false)}
+          onGenerated={load}
+        />
       )}
     </div>
   );
@@ -1349,13 +1250,14 @@ interface ScheduleFormProps {
   onCancel: () => void;
   addRow: () => void;
   removeRow: (idx: number) => void;
-  saveLabel?: string;
 }
 
+/** ONE player's dues schedule. The roster-wide version is not this form any more — it is the
+ *  shared Generate Installments modal (see the toolbar button), which is why the configurable
+ *  save label that used to live here is gone with its only caller. */
 function ScheduleForm({
   form, setForm, installmentRows, setInstallmentRows,
   saveError, saving, onSave, onCancel, addRow, removeRow,
-  saveLabel = 'Save schedule',
 }: ScheduleFormProps) {
   return (
     <div>
@@ -1425,7 +1327,7 @@ function ScheduleForm({
       <div className={styles.modalFooter}>
         <button className={styles.btnGhost} onClick={onCancel}>Cancel</button>
         <button className={styles.btnPrimary} disabled={saving} onClick={onSave}>
-          {saving ? 'Saving…' : saveLabel}
+          {saving ? 'Saving…' : 'Save schedule'}
         </button>
       </div>
     </div>

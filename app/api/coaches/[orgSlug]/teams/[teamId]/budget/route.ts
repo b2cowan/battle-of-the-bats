@@ -76,8 +76,16 @@ export const PATCH = withObservability(async (req: Request,
   const body = await req.json();
   const { budgetAmount } = body;
 
+  // NULL clears the estimated total — a coach who sets one must be able to take it back, and
+  // "delete this number" was previously only expressible as a $0 estimate, which is a different
+  // and much louder statement (it reads as "this season costs nothing").
+  if (budgetAmount === null) {
+    const cleared = await updateRepProgramYear(programYear.id, { budgetAmount: null });
+    return NextResponse.json({ programYear: cleared });
+  }
+
   if (budgetAmount === undefined || typeof budgetAmount !== 'number' || budgetAmount < 0) {
-    return NextResponse.json({ error: 'budgetAmount must be a non-negative number' }, { status: 400 });
+    return NextResponse.json({ error: 'budgetAmount must be a non-negative number, or null to clear it' }, { status: 400 });
   }
 
   const updated = await updateRepProgramYear(programYear.id, { budgetAmount });

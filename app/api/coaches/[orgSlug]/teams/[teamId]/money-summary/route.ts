@@ -9,6 +9,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
+import { computeBudgetTotals } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -20,10 +21,12 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 // installments, APPROVED payment requests) so the hub always agrees with
 // Budget vs. Actual, which uses the same paid-only semantics.
 //
-// Budget reconciliation (owner decision 2026-07-08): a coach may set a single season
-// total (rep_program_years.budget_amount), itemize lines, or both. effectiveTotal =
-// max(itemized, seasonTotal); a seasonTotal above the itemized sum surfaces as a
-// "non-itemized buffer", never as silent disagreement.
+// Budget reconciliation (owner ruling 2026-08-12, superseding 2026-07-08): a coach may set an
+// optional ESTIMATED total (rep_program_years.budget_amount), itemize lines, or both.
+// effectiveTotal is the ESTIMATE whenever one is set — in both directions. It used to be
+// max(itemized, estimate), which stored a lower estimate and then ignored it everywhere. A
+// budget line is also now a COST or EXPECTED FUNDING; funding never counts toward what the
+// season costs, only toward what players don't have to fund. All of it in one shared module.
 //
 // Note: rep_team_payment_requests has no program-year scoping — approved sums are
 // team-lifetime. Acceptable under single-active-season semantics (documented in
@@ -55,7 +58,7 @@ export const GET = withObservability(async (req: Request,
     getRepTeamExpenses(programYear.id),
     supabaseAdmin
       .from('rep_budget_lines')
-      .select('total_amount')
+      .select('total_amount, line_kind')
       .eq('program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_roster_players')
@@ -174,13 +177,21 @@ export const GET = withObservability(async (req: Request,
     .reduce((s, rq) => s + (rq.amount ?? 0), 0);
 
   // ── Budget reconciliation ────────────────────────────────────────────────
-  const lines = (linesRes.data ?? []) as Array<{ total_amount: number }>;
-  const itemizedTotal = lines.reduce((s, l) => s + (l.total_amount ?? 0), 0);
-  const seasonTotal = programYear.budgetAmount ?? null;
-  const effectiveTotal = Math.max(itemizedTotal, seasonTotal ?? 0);
-  const buffer = seasonTotal != null && seasonTotal > itemizedTotal ? seasonTotal - itemizedTotal : 0;
-  const overItemized = seasonTotal != null && seasonTotal > 0 && itemizedTotal > seasonTotal;
+  // ONE arithmetic, shared with the planner and Budget vs. Actual (lib/coach-budget-totals).
+  // Doing it inline in three routes is what let them disagree about the same two numbers.
+  const lines = (linesRes.data ?? []) as Array<{ total_amount: number; line_kind?: string | null }>;
   const rosterCount = rosterRes.count ?? 0;
+  const totals = computeBudgetTotals({
+    lines: lines.map(l => ({
+      totalAmount: l.total_amount ?? 0,
+      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+    })),
+    estimatedTotal: programYear.budgetAmount ?? null,
+    rosterCount,
+  });
+  const seasonTotal = totals.estimatedTotal;
+  const itemizedTotal = totals.itemized;
+  const effectiveTotal = totals.totalPlanned;
 
   const { count: generatedCount } = schedules.length > 0
     ? await supabaseAdmin
@@ -218,15 +229,26 @@ export const GET = withObservability(async (req: Request,
     onHand: r2(moneyInTotal - moneyOutTotal),
     headroom: headroom == null ? null : r2(headroom),
     budget: {
-      seasonTotal: seasonTotal == null ? null : r2(seasonTotal),
-      itemizedTotal: r2(itemizedTotal),
-      effectiveTotal: r2(effectiveTotal),
-      buffer: r2(buffer),
-      overItemized,
-      lineCount: lines.length,
+      seasonTotal,
+      itemizedTotal,
+      effectiveTotal,
+      /** The un-itemized part of the estimate. Now SIGNED: negative means the lines have
+       *  outgrown the estimate, which used to be reported as a separate boolean and a total
+       *  that quietly ignored the coach's own number. */
+      buffer: totals.difference,
+      overItemized: totals.overPlanned,
+      expectedFunding: totals.expectedFunding,
+      fundedByPlayers: totals.fundedByPlayers,
+      // COST lines: the count captions "6 lines" next to what the season costs.
+      lineCount: totals.costLineCount,
+      fundingLineCount: totals.fundingLineCount,
       hasInstallments: (generatedCount ?? 0) > 0,
       rosterCount,
-      perPlayer: rosterCount > 0 && effectiveTotal > 0 ? r2(effectiveTotal / rosterCount) : null,
+      // Off what players FUND, not off gross cost — budgeting expected funding exists precisely
+      // so this number comes down. ⚠ No extra gate on top of the shared module: this route used to
+      // add `&& effectiveTotal > 0`, which meant a team holding only a funding line got a figure
+      // on the budget page and none here, for identical data.
+      perPlayer: totals.perPlayer,
     },
     dues: {
       expected: r2(duesExpected),

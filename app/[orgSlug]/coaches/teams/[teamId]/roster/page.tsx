@@ -158,8 +158,11 @@ export default function RosterPage({
     setFetching(true);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster${seasonQuery}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to load roster');
+      // A failure that isn't JSON (an HTML 404/error page, a gateway timeout) must not surface as a
+      // raw parser message — parse defensively and let the status decide what the coach is told.
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to load roster');
+      if (!data) throw new Error('Failed to load roster');
       setPlayers(data.players ?? []);
       setProgramYear(data.programYear ?? null);
     } catch (e: unknown) {

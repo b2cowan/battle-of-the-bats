@@ -4,6 +4,498 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-13 (placement, final) — IMPORT is hub-wide; EXPORT never is. If the answer changes with what the coach is looking at, the button belongs beside what they are looking at
+
+**Trigger:** owner, on Budget vs. Actual: *"we have 2 exports in budget vs actual, how do you propose
+we resolve this?"* — then, on being shown the options: *"I am reconsidering this export now that I
+realize how many variations of money exports we seem to have in the application, it is going to make
+this universal one too complicated and not relevant to what they are viewing on the screen."*
+Mockup (approved, binding): `claude.ai/code/artifact/96675523-ec03-4431-9e67-ffef4ce1c69a`
+(source `docs/projects/active/COACH_MONEY_EXPORT_PLACEMENT_MOCKUP.html`).
+
+⚠ **THIS REVERSES DECISION 1 OF THE 2026-08-13 ACTION RULING FOR EXPORT ONLY.** That ruling gave the
+Money hub two hub-wide dataset menus, `Import ▾` and `Export ▾`. Import was right. Export was not,
+and the screen said so out loud: **Budget vs. Actual grew a SECOND Export button**, because the hub
+menu could only offer a generic category table while the page could offer the month grid at the
+reading the coach had actually chosen. Two buttons, same word, different files, forty millimetres
+apart.
+
+⚠ **THE GOVERNING DISTINCTION, worth carrying to any surface: THE TWO ARE NOT THE SAME KIND OF
+DOOR.**
+- **Import has one right answer per dataset, wherever the coach is standing.** Bringing in budget
+  lines does not depend on which tab is open or how anything is filtered. Genuinely hub-wide.
+- **Export never does.** Every Money tab carries view state a header cannot see — two shapes and
+  four readings on Budget vs. Actual, List/By period on the plan, three sub-tabs and a tag filter
+  on Expenses. A hub-wide export can only be honest for a dataset with ONE shape, and almost none
+  of them have one.
+
+**DECISION — Export moved into each tab's own control row; Import stayed in the header.** Seven of
+eight tabs gained one (Overview is a dashboard, not a dataset, and keeps carrying no actions). It
+exports what is on screen, arranged the way the coach arranged it, so "which shape did you mean?"
+stops existing rather than being answered. The **file-type dialog is unchanged** and is now the one
+place that question is asked anywhere in the hub.
+
+**Not five placements — one placement, five times.** Every tab already had the same control row from
+the action pass; Export joins it as the right-most item. That was the owner's stated worry
+("different places depending on the page") and the row is what answers it.
+
+⚠ **THE PHONE RULE GOT SIMPLER, WHICH IS USUALLY THE SIGN A PLACEMENT IS RIGHT.** It read "the phone
+header drops imports and spreadsheet exports" — tied to the header. It now reads: **a phone is
+offered an export only where the file is something a coach can READ, SHOW or SEND.** Player Dues and
+Budget vs. Actual keep one, as PDF; the rest do not. That is what it always meant.
+
+⚠ **EXPORT IS NOT WRITE-GATED — reading is not writing.** A read-only money assistant sees Export on
+every tab and no create buttons. Moving a control must never quietly change who can use it.
+
+**Accepted costs, both real and both the owner's call:** the hub no longer has one place listing
+everything exportable (the original complaint was "only 2 of 7 tabs have an export", and the fix for
+that is every tab having one in a predictable spot); and "which datasets make a PDF?" is no longer
+answerable from one screen, so the in-app Money guide names them.
+
+**Status:** design ruling + binding mockup, 2026-08-13. **BUILT on dev the same day.**
+`MoneyDataMenus` became `MoneyImportMenu`; `MoneyExportButton` is the one Export control, owning
+the dialog, the PDF plan gate and the phone rule so none of it is re-decided per tab; the shared
+export module became PURE BUILDERS over data the caller already has, because a module that fetched
+its own data was the hub-wide assumption in disguise. [[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-13 (file type, superseded in placement only) — Anything drawn beside every item in a list is drawn as many times as the list is long: the file type moved into a Save-As dialog
+
+**Trigger:** the owner rejected TWO in-menu attempts on sight, in the same session. First format
+chips on every row (12 buttons for 3 file types); then a quieter shape — a muted default label plus
+a "···" overflow — which they also declined: *"I don't like this option, doesn't look good. let's
+remove the 3 dots, the title, and the excel tags and just when a user clicks they can click which
+format they want in a new modal. this is normal experience that users are familiar with in other pc
+apps when they want to print or save a file."* Mockup that framed the choice:
+`claude.ai/code/artifact/6dfb7890-184f-4141-ae96-2fd5ce09f591`.
+
+⚠ **THE GENERAL RULE, and the reason two builds failed before this one landed: ANYTHING YOU DRAW
+BESIDE EVERY ITEM IN A LIST IS DRAWN AS MANY TIMES AS THE LIST IS LONG.** At five datasets, one
+extra token per row is five tokens; three is twelve. It does not matter how quiet each one is —
+collectively they out-shout the names they decorate, which are the only thing the coach is choosing
+between. **Both failed attempts were variations on "put the format on the row"; the fix was to stop
+putting anything on the row.**
+
+**DECISION — the Export menu is FIVE NAMES AND NOTHING ELSE. Picking one opens a dialog asking
+which file type.** No heading, no format tags, no overflow control. The dialog is the Save As /
+Export dialog every desktop application already has, so it needs no teaching — and it is the one
+place with room to say what each file type is FOR ("Excel — best for working with the numbers",
+"PDF — a printable document you can share") rather than assuming a volunteer treasurer reads file
+extensions.
+
+**Accepted costs, both real:**
+- **Two clicks instead of one** for every export. Judged worth it: the menu is now scannable, and
+  the second click is the one that removes doubt about what you are getting.
+- **"Which datasets can I print?" is no longer answerable from the menu** — a coach must open a
+  dataset to find out. The in-app Money guide names the two that offer PDF, because the menu no
+  longer can.
+
+**Kept:** a dataset left with only ONE format after plan-gating skips the dialog and downloads —
+a dialog whose only answer is already known is a click nobody needed.
+
+**Status:** design ruling, 2026-08-13, **BUILT and probed on the live page the same day** (menu
+rows carry no tags; the dialog opens, names each format, and Escape closes it; PDF verified absent
+on a `tournament`-plan org — absent, not locked). This supersedes the Export half of the amendment
+directly below, which is kept only for the reasoning that led here. [[design-principles]]
+[[design-system]]
+
+---
+
+### 2026-08-13 (superseded, kept for the reasoning) — A format is a property of the COACH, not of the dataset: the row is the spreadsheet, everything else is one step in
+
+**Trigger:** owner, on the shipped Export menu: *"do we need all of these repetitive buttons? is
+there a better way to organize this? perhaps after clicking what I want to export I select the
+format?"* Mockup (approved, binding): `claude.ai/code/artifact/6dfb7890-184f-4141-ae96-2fd5ce09f591`
+(source `docs/projects/active/COACH_MONEY_EXPORT_MENU_MOCKUP.html`) — today's render, three options
+drawn full-size, and the trade-offs counted.
+
+⚠ **THIS AMENDS THE ENTRY BELOW, WHICH SPECIFIED FORMAT CHIPS ON EVERY ROW.** That was drawn to
+avoid a nested menu, and the reasoning was sound in the abstract. Rendered, it was wrong: five
+datasets × three file types produced **twelve buttons**, with "XLSX" and "CSV" each printed five
+times down a five-item column. **The repeated part read louder than the dataset names — the only
+part a coach is actually choosing between.** Nothing else in that entry is reopened.
+
+**DECISION — clicking a dataset gives the SPREADSHEET; the rest sit behind a "···" on that row.**
+Twelve controls become five. The common case stays one click. This is not a new invention: it is
+the tournament admin's export convention and the platform's own written export standard
+(spreadsheet on the primary click, everything else one step in), so the coach and admin halves of
+the product now agree rather than each having their own idea.
+
+⚠ **THE OVERFLOW OPENS ON CLICK, NOT HOVER — and the approved render showed hover.** A hover-only
+reveal cannot be reached by keyboard and does not exist for a screen reader, so the single
+affordance carrying CSV and PDF would have been invisible to anyone not using a mouse. Same
+affordance, same one step; it is a real button with a real expanded state. **Generalises: a mockup
+can draw an interaction that only works for a pointer, and the build is where that gets caught —
+"revealed on hover" in a drawing means "unreachable for some people" in code.**
+
+**Two options were drawn and declined, both for reasons worth keeping:**
+- **Format picked once, at the head of the menu** (the strongest rival, and the recommendation the
+  owner overruled). Twelve controls → three, and it answers "what can I print?" outright. Declined
+  because it needs a DISABLED row: only two of five datasets make a PDF, so choosing PDF leaves
+  three rows with nothing to give, and the portal otherwise avoids disabled states.
+- **Pick the data, then the format** (the owner's own opening proposal). Declined on the count: two
+  clicks for the thing coaches do most, and which datasets can be printed stays invisible until
+  you have already committed to one — "what can I print?" would take five openings to answer.
+
+**Kept from the declined pair:** the second panel's insight that file types read better as WORDS
+than extensions. The overflow says "Excel", "CSV", "PDF" — and the menu's heading names what a
+plain click gives ("Take out of Money — as Excel"), so a bare dataset name still says what it
+produces.
+
+**Status:** design ruling + binding mockup, 2026-08-13. **BUILT on dev the same day.** Amends the
+Export half of the entry below; the Import menu, the menus' placement, the phone rule and every
+tab-toolbar decision are untouched. [[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-13 — A button belongs to the nearest chrome that NAMES what it acts on; a hub header names the container, not the thing
+
+**Trigger:** owner, on the Money hub's Budget Plan tab: *"can we move all import/export buttons next
+to the help button in the coaches portal headers for consistency? it seems to be there sometimes and
+not other times… perhaps an overall review of all pages should be taken first, inventory the buttons
+and their types."* Mockup (approved, binding visual spec):
+`claude.ai/code/artifact/44162825-32ef-4744-90dc-7939ee635e9e` (source
+`docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html`). Plan + PM brief:
+`COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`.
+
+**The literal request was declined and the observation behind it granted.** The help "?" is chrome
+and owns the top-right corner alone (2026-08-11 rule 3); actions may not move into its slot. On the
+ten screens that already have header actions, Import/Export are *already* immediately left of it —
+so the ask was largely true where it applied, and the real faults were elsewhere.
+
+⚠ **THE GOVERNING RULE, and the one worth carrying to any other surface: a button belongs to the
+NEAREST CHROME THAT NAMES WHAT IT ACTS ON.** This supplies the answer the 2026-08-11 ruling could
+not, because that ruling was written for pages whose header names the page. A **hub** header names
+the *container* — "Money" — so a create button parked up there is orphaned by construction and
+becomes three different buttons as the coach changes tab. The rule explains why standard pages pull
+their stray actions UP into the header while hub tabs push their creates DOWN into content: both are
+moving toward the label that describes them. **It also predicts the non-changes** — Lineups' "New
+template" already sits in the templates card, so Lineups needed nothing.
+
+**DECISION 1 — a hub's header carries only hub-wide doors, as DATASET MENUS.** Money gets constant
+`Import ▾ / Export ▾`, identical on all seven tabs, each listing what to move (budget lines, dues,
+expenses, fundraisers, budget vs. actual) with format chips on the row so there is no second menu.
+This is the tournament admin's Data Tools pattern brought across, not a new invention. It answers a
+question the old design could not: a coach wanting the season's money in a spreadsheet no longer has
+to guess which tab hides the export (2 of 7 had one).
+
+**DECISION 2 — the tab bar stays PURE NAVIGATION; every tab-scoped action drops into that tab's own
+toolbar.** Five of the seven tabs already have a control row (List/By period, the category filter,
+the lens picker), so this REMOVES a band on net rather than adding one. It also retires the
+"shorten the tab labels to make room" trade-off entirely. **Player Dues resolves itself:** its two
+bulk actions act on the dues list, not on Money, so the header that was going to run four buttons
+wide runs two.
+
+**DECISION 3 — the header cap is TWO buttons plus help, lowered from three DURING the review.** The
+three-button Plan templates render was drawn to spec and rejected on sight by the owner as
+"jumbled". It was: three buttons plus a long title plus help is unreadable below ~900px. ⚠ **The
+lesson generalises past the number — "move stray actions into the header" was never the rule, and
+treating it as one is what produced the bad render.** Each button must earn the header on its own.
+Two consequences, both now rules: **two ways to create one thing is ONE button with a choice inside
+it** (`New template ▾` = blank | from a past season; same fold for Drills), and **a library control
+that outlives the page goes to the list toolbar** (Plan templates' "Your tags", matching the
+identical call already made for Expenses' "Manage tags" — an inconsistency introduced and caught
+inside the same review).
+
+**DECISION 4 — phones get OUTPUTS, not files.** The phone header offers only exports a coach can
+read, show or send: PDF, and add-to-calendar (which on Schedule becomes the most useful button on
+the screen at 390px). All imports and every spreadsheet export drop out. Keyed on **what the export
+PRODUCES**, not on which screen it sits on, so the rule is one sentence rather than a per-screen
+list. Accepted cost: PDF is plan-gated, so a free-plan coach on a phone sees no export at all on
+Roster / Dues / Budget vs. Actual — nothing to offer beats a locked button.
+
+⚠ **DECISION 4 RETIRES A DELIBERATE ACCOMMODATION, AND THE MITIGATION IS NOT OPTIONAL.** Both
+importers carry a paste-a-block mode built *specifically because phones have no file picker* (it is
+documented in the sheet headers). Hiding Import in the phone header makes that path unreachable. So:
+**every empty state that can accept an import keeps offering it at 390px.** Import is offered where
+the need is felt and not carried around the rest of the time. **Generalises: before removing an
+affordance from a breakpoint, read why it was built — an accommodation for that exact breakpoint
+looks like clutter from every other one.**
+
+**DECISION 5 — an icon-only secondary is legal only where the coach would have met its LABEL on a
+wider screen.** Import, Export and Attendance qualify; "Your tags" never does. A button that exists
+*only* as an icon is a guessing game and goes to the list toolbar with its words on. This is the
+missing half of the 2026-08-11 phone rule, which said secondaries collapse to icons without saying
+which ones may.
+
+**DECISION 6 — a contextual export stays with its context.** Awards' "Print N certificates" prints
+the *chosen* award type, so it lives beside the type filter, never in the header.
+
+**Also ruled (same pass):** one name and one weight per idea — "Import payables" → "Import"; every
+page's main create is the **filled lime** button (Add Line and Add Expense stop being outlined while
+New Fundraiser is filled, one tab apart today); header actions survive the empty state and every
+view mode (Roster's whole group, Export included, currently vanishes in Depth-chart view);
+navigation is not an action (Roster's "Attendance" becomes a link in the roster count line); and
+Overview's setup ring stops travelling through the actions slot, because it is a state display.
+
+**The one real defect found, as opposed to drift:** **Roster bulk-add is unreachable once a single
+player exists** — offered only in the empty state and as a second door inside the Add Player modal.
+A coach entering fifteen players after tryouts has no way to find a feature that shipped.
+
+**A Data Tools DESTINATION was considered and declined.** Tidiness argues for one, and the
+tournament admin has it. Declined for coaches on three grounds: a volunteer between innings is not
+in a back-office frame of mind; a destination moves the button away from the moment of need (you
+want to import a budget while staring at an empty budget); and coach grants are per-area, so one
+page would be half-locked for a coach with roster write and money read. **The useful half was taken
+without the page:** "Recent imports" sits at the foot of the Import menu.
+
+**Enforced by a build failure, not discipline** (per the `APPROVED_ARCHIVE_DOORS` idiom): a unit
+test pins per screen how many header actions exist and of what kind, so a third button fails the
+build until the list is edited — which is the decision point.
+
+**Status:** design ruling + binding mockup, 2026-08-13. **PHASE 1 (the Money hub) BUILT on dev
+2026-08-13**; Phases 2–4 (Roster/Schedule → the folds → shared classes + the guard) open. Extends
+the 2026-08-11 page-header ruling; reopens nothing in it.
+
+⚠ **THREE THINGS THE BUILD SETTLED THAT THE RULING DID NOT SAY.**
+1. **A hub tab and its standalone route are ONE panel, and the doors differ by which chrome is on
+   screen.** The `/accounting/{tab}` routes still exist and are still linked. Inside the hub the
+   header's menus own Import/Export; on the standalone route there is no such menu, so the panel
+   keeps its own plain Import/Export button (rule 8's "single-dataset screens keep plain buttons").
+   The CREATE lives in the tab's toolbar in both. Without this the importer and the dues export
+   would have become unreachable outside the hub — a silent removal wearing a tidy-up's clothes.
+2. **A view-dependent export does NOT fold into the hub menu.** Budget vs. Actual's month grid
+   exports what the coach's chosen view and lens show, which a hub-wide menu cannot see; the hub
+   row exports the canonical CATEGORY table instead, and the grid's export moved beside the lens
+   picker (rule 12). Folding it in would have swapped one export for a different one under the
+   same words.
+3. **The hub's Import needed a refresh SIGNAL, not a remount.** Panels stay mounted so a
+   half-filled form survives a tab switch — so an import fired from the header while another tab
+   is on screen would have left a stale budget in memory. Mounted panels re-read; nothing
+   remounts. Generalises: when a page-level action reaches past the surface that owns the data,
+   ask what the mounted-but-hidden copy of that data now believes.
+
+**Also built, and it is the reason rule 11 is honest:** the empty **payables** list had no import
+door at all, so hiding the header menu on phones would have made the paste path unreachable there.
+It has one now. [[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-12 — "Everything in Money" folds into TWO columns when its CARD is wide — the trigger is the container, never the viewport
+
+**Trigger:** owner, on the setup Overview shipped hours earlier (entry directly below): *"given the screen
+size that we have to work with, is this a good size for these tiles?"* Mockup (approved, binding visual
+spec): `claude.ai/code/artifact/b4f5898b-0202-4379-9763-ee080fb1f0b2` (source
+`docs/projects/active/COACH_MONEY_RAIL_WIDTH_MOCKUP.html`) — today's render annotated, the two-column
+proposal, the capped-measure alternative recorded as **rejected**, and the phone pair.
+
+**The diagnosis was not "the rows are too big."** The rows are the right height; a single full-width
+column is the wrong SHAPE for a seven-item index at 1156px. Measured in the browser: the rail ran
+**464px tall** with a name and its number at opposite ends of a 1039px cell, while ~800px of horizontal
+space carried nothing — vertical scroll paid for on a screen with room to spare across.
+
+**DECISION 1 — two columns, and the season's order survives as down-then-across.** Plan and Collect
+left, Spend and Review right. Measured after: **277px** (−40%), the whole rail above a 1440×900 fold,
+each row 544px wide. Drawn with **multi-column, not a two-column grid**: a grid forces the top of
+Collect to align with the bottom of Spend, opening dead space under a one-row group. Groups carry
+`break-inside: avoid` so a step never splits from its rows — keyed on **the presence of a step marker**
+rather than on the variant, because the operate rail is one UNLABELLED group and forbidding a break
+inside that one would pack every row into column 1 and leave column 2 empty. Markup order is
+unchanged, so reading and tab order still follow the season, not the columns.
+
+⚠ **THE TRIGGER IS THE CARD'S OWN WIDTH, AND A VIEWPORT MEDIA QUERY WOULD HAVE BEEN A BUG.** The same
+component renders in two very different holes **on the same desktop**: the setup Overview and an
+ARCHIVED season give it the full ~1156px page column, while a LIVE operating season puts it in the 1fr
+slot of `.row2` beside the Next-30-days ledger — measured at ~362px, where the row shape is already
+right and two columns would mean two ~175px columns. No viewport query can tell those apart. A
+container query can, so the live dashboard's rail is spared **by construction** rather than by an
+exception someone has to remember. **Generalises: when a component's correct layout depends on the
+space it was GIVEN rather than the space the window has, the query belongs on the component's own box.
+Ask "does this thing render in more than one width of hole?" before reaching for a breakpoint.**
+
+⚠ **THE THRESHOLD IS 940px OF CARD WIDTH, RAISED FROM 720 BY `/review`, AND THE RAISE IS THE MOST
+IMPORTANT THING IN THIS ENTRY.** At 720 the rule was measurably wrong twice over, and neither fault
+was visible in the mockup, in the approved spec, or in a single-width check:
+
+1. **The card's width is NOT MONOTONIC in the viewport.** Measured on dev, a full-width rail's card
+   content goes `786→718 · 800→732 · 900→832 · 940→620 · 1024→704 · 1100→780 · 1280→960 · 1440→1120`.
+   The dip at 940 is the portal's own sidebar appearing and taking the width back — so the card is
+   **wider at a 900px window than at a 1000px one**. A 720 threshold crossed that curve THREE times,
+   and the rail folded, unfolded and folded again as a window was dragged wider.
+2. **It broke the very guarantee this design rests on.** `.row2` collapses at ≤860px, so between ~788
+   and 860 the LIVE operate rail is full-width too — and at 720 it folded there, into two ~354px
+   columns on an iPad Pro portrait (834px), where the `white-space: nowrap` stat squeezes the row name
+   into wrapping. "The live dashboard is spared" was false in exactly that band. Two independent
+   reviewers reached the same band, one by arithmetic from the three stylesheets and one by
+   measurement; they agreed to within 2px.
+
+**940 fixes both with one number:** the no-sidebar band tops out at 832 so it can never fire there,
+and the sidebar band only reaches 940 at ~1260px of viewport. Measured after: one column at 390, 768,
+800, 834, 860, 900, 940, 1024, 1100, 1180 and 1240; two columns at 1280, 1440 and 1536. **Monotonic —
+one switch on the way down, at ~1250.** Every folded column is ≥454px, which is the width the rows
+actually needed. The operate rail now never folds at any width, so the guarantee is true rather than
+nearly true. **The floor is "two columns must each be worth having", not "the card is biggish"** —
+and the cost, accepted: a 1024–1180 laptop keeps the single wide column.
+
+⚠ **Generalises, and this is the transferable lesson: A CONTAINER QUERY IS ONLY AS HONEST AS THE
+CONTAINER, AND A SHELL WITH A SIDEBAR BREAKPOINT MAKES CONTAINER WIDTH NON-MONOTONIC IN VIEWPORT
+WIDTH.** Choosing the threshold from one wide screenshot is not enough; sweep the width range and look
+for the curve doubling back. The fix is never to reach for a viewport breakpoint — that is the bug the
+container query exists to avoid — it is to set the threshold above the local maximum of the smaller
+band. Do not lower this number.
+
+**DECISION 2 — the group hairline is a SINGLE-COLUMN device and is dropped in the two-column state.**
+Across two columns "first group" stops meaning "top of the list", so a rule above a column reads as a
+dangling line. The step marker plus the space around it carries the grouping — the hairline never was
+what communicated it. It stays wherever the rail is one column. **The unlabelled (operate) rail has no
+marker to open a column with, so there its rows keep a hairline on EVERY row including the first** —
+otherwise column 1 opens bare and column 2 opens with a rule, and the asymmetry is the same dangling
+line by another route.
+
+**DECISION 3 — the step markers step one shade darker (`--home-ink-soft`, 0.6rem) once the hairlines go.**
+At `--home-dim` a marker was the same face, casing, tracking and colour as the card's own eyebrow one
+line above (0.58rem against 0.62rem), so "PLAN" and "EVERYTHING IN MONEY" read as siblings rather than
+as label-and-contents; the hairlines had been papering over it. Verified rendered: `#4A4235` (9.90:1 on
+the white card), `--white-70` on dark.
+
+⚠ **AMENDMENT MADE DURING THE BUILD, disclosed not silent: the approved mouse-only 34px row floor is
+NOT built. `(pointer: fine)` DOES NOT MEAN "no finger."** A Windows touchscreen laptop reports a fine
+primary pointer, so the rule would have served 34px rows to a hand at 1440 — a real device class,
+silently regressed, and no media query separates it out. It was also buying the last ~40px of a 187px
+win (the "mostly air" complaint was mostly a WIDTH problem: a 44px row in a 544px column is an
+ordinary list row, not the object it was at 1156px), and would have added seven NEW sub-floor entries
+to the rendered tap-target baseline on a screen about to be QA'd. **Generalises: a pointer-media query
+is a guess about the DEVICE, not a fact about the hand; do not trade a touch target for it unless the
+height it buys is the point of the change.**
+
+**Closes** the "two-thirds empty" half of the shape question the entry below opened, and supersedes
+nothing in it: row wording, row order, which surfaces appear, the step grouping, the tiles and the
+anchor card are all untouched. **Also corrected:** the in-app Money help said *"reading down the list
+is reading your season in the order it happens"* — true in one column, half-true in two; it now names
+both shapes.
+
+**Also ruled by review (same pass):** the labelled groups carry **no `:last-child` margin reset**.
+`:last-child` is DOM order and multicol fragments by COLUMN, so the reset zeroed the gap under whichever
+group happened to be last in the source and left the two columns asymmetric at their feet. **Generalises:
+in a fragmented layout (multicol, print, `columns`), spacing that must look identical in every fragment
+cannot be keyed on a position in the source order.** Dropping the reset costs no height — measured 277px
+either way, because fragmentation truncates a trailing margin at a column's foot instead of adding it. And a note now sits on `.railCard` because
+`container-type: inline-size` silently makes the card a containing block for absolutely-positioned
+descendants — inert today, a trap for the first tooltip or badge added inside the rail.
+
+**Status:** built on dev 2026-08-12; **`/review` run (standard tier, 3 lenses) and it earned its keep —
+the 720px threshold was a real defect on real hardware, found by two lenses independently.** Verified by
+measurement, not screenshot: typecheck ✓, full `verify:changed` ✓, 1,636 tests ✓, and Playwright probes
+reading computed styles and geometry across **fourteen** widths — because a layout change that silently
+no-ops passes every file-reading gate, and because one width cannot see a non-monotonic curve. ⚠ The
+first `check:layout` run after the fix **ABORTED on the memory floor** (a partial sweep is a failure, not
+a pass — the exit code seen through a pipe was `tail`'s, not the script's; read the output, never the
+code). Re-run on a fresh server. `@container` is this codebase's **first** container query, and the
+production build uses webpack + cssnano where dev uses Turbopack + Lightning CSS, so its survival was
+proven against a real production build rather than assumed. Owner QA pending, ledger §11.
+**Applies to:** the coach Money hub's Overview rail, both shapes. [[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-12 — The Money Overview keeps ONE shape all season: the journey-card stack leaves the setup stages too, and the tiles wait until money has moved
+
+**Trigger:** owner, looking at the Money Overview on a team with nothing set up: *"didn't we plan on
+getting rid of these sections now that we have the header tabs and the metric cards? this seems like
+additional scrolling for no real added value."* Mockup (approved, binding visual spec):
+`claude.ai/code/artifact/f28ebd03-06b8-4c97-9649-fff303da581d` (source
+`docs/projects/active/COACH_MONEY_SETUP_OVERVIEW_MOCKUP.html`) — today's render, three options
+(A anchor+rail, B prune-the-empties, C anchor-only), a phone pair, and the budget-built stage.
+Owner picked **A plus all three follow-on asks** ("go with your recommendations").
+
+**The carve-out being closed.** The Money Overview redesign (2026-08-11) removed the
+1·Plan → 4·Review card stack for exactly this reason — *"two navigation systems on one screen"* —
+but scoped the removal to `stage === 'operate'` and wrote **"plan | collect keeps today's guided
+layout exactly … it is good onboarding."** That sentence is now retired. It reads plausibly and
+survives review, because "keep the onboarding" always sounds like the careful choice; it does not
+survive the screenshot. ⚠ **This is the second time in two days that a deliberate one-screen
+exception, carved for a defensible reason, was rejected on sight by the owner within a day** (the
+first: the Overview's iconless page header, entry directly below). The pattern is worth naming: *an
+exception scoped to one state is invisible to the person who made it and obvious to the person who
+meets the states in sequence.*
+
+**DECISION 1 — the 1·Plan → 4·Review stack is gone from the Overview at EVERY stage.** On a
+brand-new team it rendered four section headings and six drill-in cards whose entire content was
+*Not started · Not set · None yet · None logged · None assigned · None pending* — the emptiest
+possible team getting the longest possible page, below four tiles reading $0 · $0 · $0 · — and a
+30-day payables panel saying "nothing due" in three columns. The journey itself was told **three
+times on one screen**: in the anchor card's "Plan → Collect → Spend → Review" sentence, in the tab
+bar, and again as the four headed sections.
+
+**DECISION 2 — both Overview shapes now end in ONE shared rail.** The setup stages get it as
+**"Everything in Money"** — all seven surfaces, one live stat each, grouped under four quiet step
+markers so the season's order survives as **row order** rather than as four headings competing with
+the tab bar one line above. The operating season keeps it as **"More in Money"** (the surfaces the
+three story cards don't already own), unchanged in content and row order. Same component; the
+variant decides which rows and whether the step markers show. The Overview therefore keeps one
+shape from a team's first day to its last game, and the stage decides only what sits above the rail.
+
+**DECISION 3 — the four headline tiles, and the cash-basis sentence that qualifies them, wait until
+money has actually moved.** `$0 · $0 · $0 · —` is four cards restating what the anchor card directly
+above them already says, and a caveat about "cash received, not what's owed" qualifies numbers that
+don't exist yet. Keyed on money in/out being non-zero — deliberately **not** on the budget:
+**a plan is not cash.** They return the moment there is something to report.
+
+**DECISION 4 — the "What's coming up" payables panel waits until something could fall due**, and
+**the panel itself decides that, from its own fetch.** ⚠ **Scoped to the setup Overview only.** The
+operating dashboard's Next-30-days ledger keeps its all-clear line: on a season with money moving,
+"nothing falls due in the next 30 days" is a real answer to a real question, where on a team that
+has never entered a number it is noise. Extending the gate there was considered and declined, not
+overlooked.
+
+⚠ **ONLY THE THING THAT FETCHES THE LANES MAY DECIDE THEY ARE EMPTY** — this rule cost a Critical
+finding to learn, and it generalises. The first implementation inferred emptiness at the CALLER,
+from three counts already sitting in the money summary: no round trip, no flash, and a
+compiler-checked lane map so a fourth lane could not be added without updating it. Every one of
+those arguments was true. The bug was upstream of all of them: the payables route's
+org-allocation lane is scoped by ORG with no date floor, while the summary's `allocations.count`
+is scoped by PROGRAM YEAR — so **a team carrying an unpaid allocation from a previous season had
+real money owed, a count of zero, and a panel that never rendered.** A saved fetch is a cosmetic
+win; a hidden debt is a money bug. The panel now carries `hideWhenEmpty` and answers the question
+itself. **Generalises: when a component's emptiness gates whether it renders at all, that decision
+belongs to whatever loads its data — never to a caller reading a proxy for it.**
+
+**Also ruled (same pass):** the anchor card's second paragraph (the dues/reminders/tryouts value
+sentence) is **desktop-only** — on a phone it pushed the lime CTA, the one thing that card exists
+for, below the fold. Same trim the Overview's One Thing card took the day before.
+
+⚠ **A CHEVRON MADE OF TEXT IS TEXT, and may not wear a hairline token.** The rendered sweep caught
+the rail's `›` at `--white-30` measuring **1.44:1** on the white card, at all four widths. It had
+been there since the operate dashboard shipped and no gate had caught it — because the journey
+cards it now replaces drew their chevron as an **SVG**, which the contrast checker exempts, and the
+rail only reached this screen's sweep once it started rendering at the setup stage. Now
+`--home-dim` (5.91:1 — the muted ink corrected in 2026-08-02 *precisely so quiet things still
+read*), which also closes the latent failure on the operating dashboard. **Generalises:** swapping
+an icon for a typographic glyph is a contrast change even when the colour is untouched — the
+exemption travelled with the element, not the token. Only a RENDERED sweep finds this; every
+file-reading gate passed the whole way.
+
+**Closes** the standing audit candidate named in the 2026-07-09 "grid or tabs — never a stack"
+ruling further down this file: *"the Money hub landing (summary grid + stacked groups)"*. The stack
+is gone and the landing is a grid-and-index at every stage.
+
+**Enforced by absence, not discipline:** every `.moneyGroup*` / `.moneyCard*` / `.moneyStat*` class
+is **deleted** from `coaches.module.css` with zero consumers left, so the stack cannot return one
+card at a time — the same move that made the page-header ruling stick.
+
+**A rail row carries the MONEY first; an alert qualifies it, never replaces it.** Review caught
+three rows (dues, expenses, allocations) swapping their dollar figure for a bare count the moment
+anything was overdue or due soon — so a coach who had collected $400 of $900 saw only "2 overdue".
+The drill-in cards these replaced always showed both. Fixed on all three, which also changes two
+rows on the already-QA'd operating dashboard; disclosed rather than shipped quietly. Same disclosure
+for the Budget vs. Actual row, whose null state reads **"Needs a budget"** instead of an em-dash on
+both shapes — a dash reads as missing data, and this row's emptiness has a cause the coach can act
+on. **The Overview also re-reads itself when a coach returns to that tab** (quietly — a loud
+refresh would evict half-filled forms on the panels the hub keeps mounted): its facts all come from
+one payload fetched per SEASON, so generating installments on the Budget tab used to leave the
+Overview telling you to generate installments for the rest of the session.
+
+**Applies to:** the coach Money hub. After `/simplify` the two Overview shapes are **symmetric
+siblings** — `accounting/SetupOverview.tsx` (new) and `accounting/OverviewDashboard.tsx`, both
+ending in `accounting/MoneyRail.tsx` (new), with `page.tsx` reduced to picking one. Their shared
+contract moved to `lib/coach-money-summary.ts`, where a **rail row IS a destination key** (derived
+from `DashboardHrefs`, so a row can never name an unaddressable tab). The in-app Money help had two
+passages describing the deleted sections; corrected in the same unit of work. **Status:** built on
+dev 2026-08-12; `/simplify` (4 lenses) and `/review` (high-risk tier, 5 lenses) both run — owner QA
+pending, ledger §11. [[design-principles]]
+
+---
+
 ### 2026-08-12 — The Overview's icon exception is retired, and the Overview anchor stops paying for its height in stacked rows
 
 **Trigger:** owner, looking at the shipped Pass-2 Overview: *"why doesn't the overview header have an

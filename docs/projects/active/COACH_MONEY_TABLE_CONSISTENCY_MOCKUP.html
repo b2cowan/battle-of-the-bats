@@ -1,0 +1,1176 @@
+<title>Five Tables, One Hub</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Document chrome — a warm-neutral spec sheet. The SPECIMENS inside carry the
+   coach portal's own warm palette at fixed values (that is the surface being
+   specified), so they read as product inset into the page rather than as page.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --ground:      #FBFAF7;
+  --ground-2:    #FFFFFF;
+  --ink:         #1B1913;
+  --ink-2:       #45403A;
+  --muted:       #6E685E;
+  --rule:        rgba(28, 26, 22, 0.11);
+  --rule-2:      rgba(28, 26, 22, 0.20);
+  --accent:      #57651E;
+  --accent-soft: rgba(87, 101, 30, 0.10);
+  --flag:        #A33A1E;
+  --flag-soft:   rgba(163, 58, 30, 0.09);
+  --ok:          #34662A;
+
+  --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #17160F;
+    --ground-2:    #201E16;
+    --ink:         #EFEBE0;
+    --ink-2:       #C4BEB0;
+    --muted:       #948E82;
+    --rule:        rgba(239, 235, 224, 0.13);
+    --rule-2:      rgba(239, 235, 224, 0.24);
+    --accent:      #B4C96A;
+    --accent-soft: rgba(180, 201, 106, 0.12);
+    --flag:        #E58267;
+    --flag-soft:   rgba(229, 130, 103, 0.12);
+    --ok:          #86C57A;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #17160F;
+  --ground-2:    #201E16;
+  --ink:         #EFEBE0;
+  --ink-2:       #C4BEB0;
+  --muted:       #948E82;
+  --rule:        rgba(239, 235, 224, 0.13);
+  --rule-2:      rgba(239, 235, 224, 0.24);
+  --accent:      #B4C96A;
+  --accent-soft: rgba(180, 201, 106, 0.12);
+  --flag:        #E58267;
+  --flag-soft:   rgba(229, 130, 103, 0.12);
+  --ok:          #86C57A;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.62;
+  margin: 0;
+  padding: 0 1.25rem 6rem;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+.prose { max-width: 66ch; }
+
+/* ── Masthead ─────────────────────────────────────────────────────────── */
+.mast {
+  padding: 4.5rem 0 2.25rem;
+  border-bottom: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.kicker {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+h1 {
+  font-size: clamp(2.4rem, 6.5vw, 4.1rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  margin: 0;
+  text-wrap: balance;
+}
+.standfirst {
+  font-size: 1.08rem;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 60ch;
+}
+blockquote {
+  margin: 0;
+  padding: 0 0 0 1.15rem;
+  border-left: 3px solid var(--accent);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--ink-2);
+  max-width: 58ch;
+}
+blockquote cite {
+  display: block;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
+
+/* ── Tally strip ──────────────────────────────────────────────────────── */
+.tally {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.tally > div {
+  padding: 1.4rem 1.2rem 1.4rem 0;
+  border-right: 1px solid var(--rule);
+}
+.tally > div:last-child { border-right: none; }
+.tally b {
+  display: block;
+  font-size: 2.7rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.tally span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.45rem;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────── */
+section { padding: 3.5rem 0 0; }
+.sechead {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--rule-2);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.9rem;
+}
+.sechead .n {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.sechead h2 {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  letter-spacing: -0.02em;
+  font-weight: 750;
+  margin: 0;
+  text-wrap: balance;
+}
+h3 {
+  font-size: 1.06rem;
+  letter-spacing: -0.01em;
+  font-weight: 720;
+  margin: 2.4rem 0 0.55rem;
+  text-wrap: balance;
+}
+h4 {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0 0 0.55rem;
+}
+p { margin: 0 0 0.95rem; }
+p.prose { max-width: 66ch; }
+ul { max-width: 66ch; padding-left: 1.15rem; margin: 0 0 1rem; }
+li { margin-bottom: 0.45rem; }
+strong { font-weight: 680; }
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--accent-soft);
+  padding: 0.08em 0.34em;
+  border-radius: 3px;
+}
+
+/* ── Inventory table ──────────────────────────────────────────────────── */
+.invwrap { overflow-x: auto; margin: 0 0 1.5rem; }
+table.inv {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 780px;
+  font-size: 0.855rem;
+}
+table.inv th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.5rem 0.8rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: bottom;
+}
+table.inv td {
+  padding: 0.6rem 0.8rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  color: var(--ink-2);
+}
+table.inv td:first-child { color: var(--ink); font-weight: 620; }
+table.inv tr.grp td {
+  background: var(--accent-soft);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 700;
+  padding-left: 0.6rem;
+}
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 0.14em 0.44em;
+  border-radius: 3px;
+  border: 1px solid var(--rule-2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag.bad { color: var(--flag); border-color: var(--flag); background: var(--flag-soft); }
+.tag.good { color: var(--ok); border-color: var(--ok); }
+
+/* ── Flags ────────────────────────────────────────────────────────────── */
+.flag {
+  border-left: 3px solid var(--flag);
+  background: var(--flag-soft);
+  padding: 1rem 1.15rem;
+  margin: 1.4rem 0;
+  max-width: 72ch;
+  border-radius: 0 6px 6px 0;
+}
+.flag p:last-child { margin-bottom: 0; }
+.flag .lbl {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--flag);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.rule-note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 1rem 1.15rem;
+  margin: 1.4rem 0;
+  max-width: 72ch;
+  border-radius: 0 6px 6px 0;
+}
+.rule-note p:last-child { margin-bottom: 0; }
+.rule-note .lbl {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SPECIMENS — the coach portal's warm palette, fixed. This is the surface
+   under discussion, so it does not follow the reader's theme.
+   ═══════════════════════════════════════════════════════════════════════ */
+.screen {
+  --p-paper:  #F8F4ED;
+  --p-card:   #FFFFFF;
+  --p-ink:    #241E15;
+  --p-soft:   #4A4235;
+  --p-dim:    #6A635C;
+  --p-line:   rgba(70, 55, 30, 0.12);
+  --p-line-2: rgba(70, 55, 30, 0.22);
+  --p-fill:   rgba(70, 55, 30, 0.055);
+  --p-olive:  #57651E;
+  --p-osoft:  rgba(87, 101, 30, 0.10);
+  --p-win:    #34662A;
+  --p-live:   #B03A22;
+  --p-amber:  #835006;
+  --p-lime:   #D9F99D;
+
+  background: var(--p-paper);
+  color: var(--p-ink);
+  border: 1px solid var(--rule-2);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.screen .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--p-card);
+  border-bottom: 1px solid var(--p-line);
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--p-dim);
+}
+.screen .bar em {
+  font-style: normal;
+  color: var(--p-olive);
+  font-weight: 700;
+}
+.screen .body { padding: 0.95rem; }
+.screen .scroll { overflow-x: auto; }
+
+/* the shared list-table idiom, as shipped */
+.t { border-collapse: collapse; width: 100%; font-size: 0.855rem; }
+.t th {
+  text-align: left;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--p-dim);
+  background: var(--p-osoft);
+  border-bottom: 1px solid var(--p-line);
+  white-space: nowrap;
+}
+.t td {
+  padding: 0.58rem 0.8rem;
+  color: var(--p-ink);
+  border-bottom: 1px solid var(--p-line);
+  vertical-align: middle;
+}
+.t tr:last-child td { border-bottom: none; }
+.tframe { border: 1px solid var(--p-line-2); border-radius: 8px; overflow: hidden; }
+.num { font-variant-numeric: tabular-nums; }
+/* PROPOSED number cell */
+.numR { text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.win  { color: var(--p-win); }
+.live { color: var(--p-live); }
+.dim  { color: var(--p-dim); }
+
+.pill {
+  display: inline-block;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.12em 0.5em;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill.p-ok   { background: rgba(52,102,42,0.13);  color: var(--p-win); }
+.pill.p-warn { background: rgba(131,80,6,0.13);   color: var(--p-amber); }
+.pill.p-bad  { background: rgba(176,58,34,0.13);  color: var(--p-live); }
+.pill.p-mute { background: var(--p-fill);         color: var(--p-dim); }
+
+/* Budget Plan outline, as shipped */
+.oldGroup { border: 1px solid var(--p-line); border-radius: 12px; overflow: hidden; margin-bottom: 0.9rem; }
+.oldGroupHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.55rem 0.9rem; background: var(--p-fill);
+  border-bottom: 1px solid var(--p-line);
+}
+.oldGroupHead .nm { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--p-dim); }
+.oldGroupHead .tot { font-size: 0.8rem; font-weight: 700; color: var(--p-soft); font-variant-numeric: tabular-nums; }
+.oldLine { display: flex; align-items: center; gap: 0.55rem; padding: 0.62rem 0.9rem; border-bottom: 1px solid rgba(70,55,30,0.055); }
+.oldLine:last-child { border-bottom: none; }
+.oldLine .chev { color: var(--p-dim); flex-shrink: 0; width: 14px; }
+.oldLine .desc { flex: 1; min-width: 0; font-size: 0.87rem; font-weight: 620; color: var(--p-ink); }
+.oldLine .desc small { display: block; font-weight: 400; font-size: 0.73rem; color: var(--p-dim); }
+.oldLine .amt { font-size: 0.9rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-left: auto; }
+.oldLine .acts { display: flex; gap: 0.28rem; margin-left: 0.4rem; }
+.iconBtn {
+  border: 1px solid var(--p-line); border-radius: 6px; padding: 0.2rem 0.34rem;
+  color: var(--p-dim); background: none; font-size: 0.68rem; line-height: 1;
+}
+
+/* BvA outline, as shipped — grid, different geometry */
+.bvaHead {
+  display: grid; grid-template-columns: 1fr 92px 92px 92px; gap: 0.4rem;
+  padding: 0.35rem 0.9rem; font-size: 0.63rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--p-dim);
+}
+.bvaGroup { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; margin-bottom: 0.7rem; }
+.bvaGroupHead {
+  display: grid; grid-template-columns: 1fr 92px 92px 92px; gap: 0.4rem; align-items: center;
+  padding: 0.62rem 0.9rem; background: var(--p-fill);
+}
+.bvaGroupHead .nm { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--p-soft); }
+.bvaGroupHead .n { text-align: right; font-size: 0.84rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--p-soft); }
+.bvaLine {
+  display: grid; grid-template-columns: 1fr 92px 92px 92px; gap: 0.4rem; align-items: center;
+  padding: 0.52rem 0.9rem 0.52rem 1.5rem; border-top: 1px solid rgba(70,55,30,0.05);
+}
+.bvaLine .d { font-size: 0.84rem; color: var(--p-soft); }
+.bvaLine .n { text-align: right; font-size: 0.84rem; font-variant-numeric: tabular-nums; color: var(--p-dim); }
+
+/* fundraiser / payment card list, as shipped */
+.cardList { display: flex; flex-direction: column; gap: 0.6rem; }
+.cardRow {
+  background: var(--p-card); border: 1px solid var(--p-line-2); border-radius: 8px;
+  padding: 0.9rem 1rem; display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+}
+.cardRow .lft { min-width: 0; flex: 1; }
+.cardRow .ttl { font-weight: 700; font-size: 0.92rem; margin: 0 0 0.12rem; }
+.cardRow .sub { font-size: 0.76rem; color: var(--p-dim); margin: 0; }
+.cardStats { display: flex; align-items: flex-start; gap: 1.3rem; flex-shrink: 0; }
+.cardStat { text-align: right; }
+.cardStat .k {
+  display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--p-dim); margin-bottom: 0.05rem;
+}
+.cardStat .v { display: block; font-weight: 700; font-size: 0.94rem; font-variant-numeric: tabular-nums; }
+
+/* the 2-D money grid */
+.mg { border-collapse: collapse; width: 100%; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.mg th, .mg td { padding: 0.36rem 0.55rem; border-bottom: 1px solid var(--p-line); white-space: nowrap; font-weight: 400; }
+.mg thead th {
+  background: var(--p-card); font-size: 0.62rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--p-dim); border-bottom: 1px solid var(--p-line-2);
+}
+.mg .lead { text-align: left; min-width: 150px; background: var(--p-card); font-weight: 600; position: sticky; left: 0; }
+.mg td.n, .mg th.n { text-align: right; }
+.mg .catrow th, .mg .catrow td { background: var(--p-fill); font-weight: 650; }
+.mg .totrow th, .mg .totrow td { border-top: 1px solid var(--p-line-2); font-weight: 750; }
+.mg .now { color: var(--p-olive); }
+.swipe {
+  display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 0.45rem;
+  padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.64rem; font-weight: 650;
+  color: var(--p-olive); background: var(--p-osoft); border: 1px solid var(--p-line);
+}
+
+/* ── Comparison scaffolding ───────────────────────────────────────────── */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.4rem;
+  margin: 1.1rem 0 0.4rem;
+  align-items: start;
+}
+.specimen { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.caption {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0;
+  max-width: 52ch;
+}
+.caption b { color: var(--ink); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+.caption b.now { color: var(--flag); }
+.caption b.next { color: var(--ok); }
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.4rem;
+  margin: 1.2rem 0;
+  align-items: start;
+}
+
+/* phone frames */
+.phones { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: 1.2rem 0; }
+.phone { width: 260px; flex-shrink: 0; }
+.phone .screen { font-size: 12.5px; }
+.stackCard {
+  border: 1px solid var(--p-line-2); border-radius: 10px; padding: 0.55rem 0.75rem;
+  margin-bottom: 0.55rem; background: var(--p-card);
+}
+.stackCard div {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  padding: 0.2rem 0; text-align: right;
+}
+.stackCard div::before {
+  content: attr(data-k);
+  font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--p-dim); text-align: left; flex-shrink: 0;
+}
+
+/* ── Phasing ──────────────────────────────────────────────────────────── */
+.phases { display: flex; flex-direction: column; gap: 0; margin: 1.2rem 0 0; }
+.phase {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 1.2rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--rule);
+}
+.phase:last-child { border-bottom: 1px solid var(--rule); }
+.phase .id {
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent); font-weight: 700; padding-top: 0.15rem;
+}
+.phase h5 { margin: 0 0 0.3rem; font-size: 0.98rem; font-weight: 700; letter-spacing: -0.01em; }
+.phase p { margin: 0; font-size: 0.9rem; color: var(--ink-2); max-width: 64ch; }
+
+.qbox {
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 1.5rem 1.6rem;
+  margin: 2rem 0 0;
+  background: var(--ground-2);
+}
+.qbox h3 { margin-top: 0; }
+.qbox ol { max-width: 68ch; padding-left: 1.3rem; }
+.qbox li { margin-bottom: 0.8rem; }
+
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">Coach portal · Money hub · Design review 2026-08-13</p>
+  <h1>Five tables,<br>one hub</h1>
+  <p class="standfirst">Twelve surfaces in the Money hub show rows of money. They are drawn five different ways. Underneath, there are only three jobs.</p>
+  <blockquote>
+    I am also noticing that our formatting of tables is inconsistent across these screens, should we do something to aim for better consistency?
+    <cite>Owner, looking at Budget vs. Actual and Budget Plan side by side</cite>
+  </blockquote>
+</header>
+
+<div class="tally">
+  <div><b>12</b><span>table-shaped surfaces</span></div>
+  <div><b>5</b><span>treatments in use</span></div>
+  <div><b>3</b><span>jobs actually being done</span></div>
+  <div><b>3</b><span>defects found on the way</span></div>
+</div>
+
+<!-- ══════════════════ PART 1 — INVENTORY ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">01</span><h2>What is there today</h2></div>
+
+  <p class="prose">Every surface in the hub that puts money in rows, and what it actually is. Grouped by the treatment it uses — not by the tab it lives on, because the tab is not what decides how it looks today.</p>
+
+  <div class="invwrap">
+  <table class="inv">
+    <thead>
+      <tr>
+        <th>Surface</th>
+        <th>Container</th>
+        <th>Column heads</th>
+        <th>Figures</th>
+        <th>Drill-in</th>
+        <th>On a phone</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="grp"><td colspan="6">Treatment 1 · the shared list table — 5 surfaces</td></tr>
+      <tr>
+        <td>Player Dues</td>
+        <td>Bordered frame, 7 columns</td>
+        <td>Tinted bar, 0.72rem</td>
+        <td><span class="tag bad">left-aligned</span></td>
+        <td>Row opens a drawer</td>
+        <td>Stacks into cards</td>
+      </tr>
+      <tr>
+        <td>Expenses</td>
+        <td>Bordered frame, 5 columns</td>
+        <td>Tinted bar, 0.72rem</td>
+        <td><span class="tag bad">left-aligned</span></td>
+        <td>Row expands in place</td>
+        <td>Stacks into cards</td>
+      </tr>
+      <tr>
+        <td>Payment schedule</td>
+        <td>Bordered frame, 6 columns</td>
+        <td>Tinted bar, 0.72rem</td>
+        <td><span class="tag bad">left-aligned</span></td>
+        <td>Per-row button</td>
+        <td>Stacks into cards</td>
+      </tr>
+      <tr>
+        <td>Allocations → instalments</td>
+        <td>Nested in an expandable card</td>
+        <td>Tinted bar, 0.72rem</td>
+        <td><span class="tag bad">left-aligned</span></td>
+        <td>Per-row button</td>
+        <td>Stacks into cards</td>
+      </tr>
+      <tr>
+        <td>Dues → one player's schedule</td>
+        <td>Bordered frame, 4 columns</td>
+        <td>Tinted bar, 0.72rem</td>
+        <td><span class="tag bad">left-aligned</span></td>
+        <td>Per-row button</td>
+        <td><span class="tag bad">scrolls sideways, silently</span></td>
+      </tr>
+
+      <tr class="grp"><td colspan="6">Treatment 2 · Budget Plan's outline — 1 surface</td></tr>
+      <tr>
+        <td>Budget Plan · List</td>
+        <td>Stack of 12px cards, one per category</td>
+        <td>Category bar, name + total</td>
+        <td><span class="tag good">right-aligned</span></td>
+        <td>Chevron opens instalments</td>
+        <td>Keeps its shape, text wraps</td>
+      </tr>
+
+      <tr class="grp"><td colspan="6">Treatment 3 · Budget vs. Actual's outline — 1 surface</td></tr>
+      <tr>
+        <td>Budget vs. Actual · Categories</td>
+        <td>Stack of 10px cards, one per category</td>
+        <td>Loose head row + category bar</td>
+        <td><span class="tag good">right-aligned</span></td>
+        <td>Category bar toggles</td>
+        <td>Scrolls, first column pinned</td>
+      </tr>
+
+      <tr class="grp"><td colspan="6">Treatment 4 · hand-built card lists — 3 surfaces</td></tr>
+      <tr>
+        <td>Fundraisers</td>
+        <td>Cards, no shared class</td>
+        <td><span class="tag bad">repeated on every card</span></td>
+        <td>Right-aligned, own sizes</td>
+        <td>Whole card is a link</td>
+        <td>Cards reflow</td>
+      </tr>
+      <tr>
+        <td>Payables</td>
+        <td>Cards, no shared class</td>
+        <td><span class="tag bad">repeated on every card</span></td>
+        <td>Mixed</td>
+        <td>Per-row buttons</td>
+        <td>Cards reflow</td>
+      </tr>
+      <tr>
+        <td>Payments</td>
+        <td>Cards, no shared class</td>
+        <td><span class="tag bad">none at all</span></td>
+        <td>Inline with the title</td>
+        <td>Chevron expands notes</td>
+        <td>Cards reflow</td>
+      </tr>
+
+      <tr class="grp"><td colspan="6">Treatment 5 · the 2-D money grid — 2 surfaces</td></tr>
+      <tr>
+        <td>Budget Plan · By period</td>
+        <td>Grid, year bands over periods</td>
+        <td>Two-row head, 0.7rem</td>
+        <td><span class="tag good">right-aligned</span></td>
+        <td>Read-only</td>
+        <td>Scrolls, first column pinned</td>
+      </tr>
+      <tr>
+        <td>Budget vs. Actual · Months</td>
+        <td>Grid, one column per month</td>
+        <td>Sticky head, 0.66rem, data face</td>
+        <td><span class="tag good">right-aligned</span></td>
+        <td>Cells link to the source</td>
+        <td>Scrolls, first column pinned</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The five, side by side</h3>
+  <p class="prose">Rendered at the same size, in the portal's own colours, so the differences are visible rather than described.</p>
+
+  <div class="pair">
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Player Dues</span><em>treatment 1</em></div>
+        <div class="body">
+          <div class="tframe">
+            <table class="t">
+              <thead><tr><th>Player</th><th>Total dues</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Avery Chen</td><td class="num">$1,250.00</td><td class="num win">$1,250.00</td><td class="num">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Bilal Osman</td><td class="num">$1,250.00</td><td class="num win">$800.00</td><td class="num live">$450.00</td><td><span class="pill p-warn">Partial</span></td></tr>
+                <tr><td>Charlotte Reid</td><td class="num">$975.00</td><td class="num win">$975.00</td><td class="num">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Devon Ngata</td><td class="num">$1,250.00</td><td class="num dim">$0.00</td><td class="num live">$1,250.00</td><td><span class="pill p-bad">Overdue</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">As shipped.</b> Every money column is left-aligned, so <code>$975.00</code> and <code>$1,250.00</code> do not line up on the dollar. Four columns of digits, none of them in a column.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Budget Plan · List</span><em>treatment 2</em></div>
+        <div class="body">
+          <div class="oldGroup">
+            <div class="oldGroupHead"><span class="nm">Ice &amp; field</span><span class="tot">$8,400.00</span></div>
+            <div class="oldLine"><span class="chev">›</span><span class="desc">Winter dome block<small>16 sessions, Jan–Mar</small></span><span class="amt">$5,200.00</span><span class="acts"><button class="iconBtn">✎</button><button class="iconBtn">🗑</button></span></div>
+            <div class="oldLine"><span class="chev">›</span><span class="desc">Diamond permits</span><span class="amt">$3,200.00</span><span class="acts"><button class="iconBtn">✎</button><button class="iconBtn">🗑</button></span></div>
+          </div>
+          <div class="oldGroup">
+            <div class="oldGroupHead"><span class="nm">Tournaments</span><span class="tot">$4,100.00</span></div>
+            <div class="oldLine"><span class="chev">›</span><span class="desc">Spring classic entry</span><span class="amt">$1,600.00</span><span class="acts"><button class="iconBtn">✎</button><button class="iconBtn">🗑</button></span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">As shipped.</b> 12px corners, a flex category bar, one number column pinned right. An editable outline — and correctly so.</p>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Budget vs. Actual · Categories</span><em>treatment 3</em></div>
+        <div class="body">
+          <div class="bvaHead"><span>Category / line item</span><span style="text-align:right">Planned</span><span style="text-align:right">Actual</span><span style="text-align:right">Variance</span></div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead"><span class="nm">Ice &amp; field</span><span class="n">$8,400</span><span class="n">$7,910</span><span class="n win">$490</span></div>
+            <div class="bvaLine"><span class="d">Winter dome block</span><span class="n">$5,200</span><span class="n">$5,200</span><span class="n">$0</span></div>
+            <div class="bvaLine"><span class="d">Diamond permits</span><span class="n">$3,200</span><span class="n">$2,710</span><span class="n win">$490</span></div>
+          </div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead"><span class="nm">Tournaments</span><span class="n">$4,100</span><span class="n">$4,450</span><span class="n live">−$350</span></div>
+            <div class="bvaLine"><span class="d">Spring classic entry</span><span class="n">$1,600</span><span class="n">$1,950</span><span class="n live">−$350</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">As shipped.</b> The same idea as Budget Plan — categories containing lines — drawn a second time from scratch: 10px corners, a grid category bar, a loose head row floating above the frames, a different name size and a different muted grey.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Fundraisers</span><em>treatment 4</em></div>
+        <div class="body">
+          <div class="cardList">
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Chocolate sale</p><p class="sub">15% rebate · Mar 1 → Apr 15</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$4,820</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$4,097</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$723</span></div>
+              </div>
+            </div>
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Bottle drive</p><p class="sub">20% rebate · May 4</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$1,240</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$992</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$248</span></div>
+              </div>
+            </div>
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Raffle — spring</p><p class="sub">10% rebate · Apr 20 → Jun 1</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$3,105</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$2,795</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$310</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">As shipped.</b> Three column headings, printed three times each — nine labels for three fundraisers. At ten fundraisers it is thirty.</p>
+    </div>
+  </div>
+
+  <div class="rule-note">
+    <span class="lbl">This is a rule you already ratified</span>
+    <p><strong>Anything drawn beside every item in a list is drawn as many times as the list is long.</strong> It cost two rejected builds on the Export menu earlier the same day. The Fundraisers card list is the same mistake in a different place: the repeated labels out-shout the fundraiser names, which are the only thing a coach is choosing between. Payables repeats its labels the same way; Payments prints none at all, so its figures have nothing naming them.</p>
+  </div>
+
+  <div class="specimen" style="margin-top:1.6rem">
+    <div class="screen">
+      <div class="bar"><span>Budget vs. Actual · Months</span><em>treatment 5</em></div>
+      <div class="body">
+        <span class="swipe">→ Swipe the grid to see later months</span>
+        <div class="scroll">
+          <table class="mg">
+            <thead><tr><th class="lead">Category / line</th><th class="n">No date yet</th><th class="n">Sep</th><th class="n">Oct</th><th class="n now">Nov</th><th class="n">Dec</th><th class="n">Jan</th><th class="n">Total</th></tr></thead>
+            <tbody>
+              <tr class="catrow"><th class="lead">Ice &amp; field</th><td class="n">—</td><td class="n">1,400</td><td class="n">1,400</td><td class="n now">1,400</td><td class="n">1,400</td><td class="n">1,400</td><td class="n">8,400</td></tr>
+              <tr><th class="lead" style="padding-left:1.5rem;font-weight:400">Winter dome block</th><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n now">1,733</td><td class="n">1,733</td><td class="n">1,734</td><td class="n">5,200</td></tr>
+              <tr class="catrow"><th class="lead">Tournaments</th><td class="n">900</td><td class="n">—</td><td class="n">1,600</td><td class="n now">—</td><td class="n">1,600</td><td class="n">—</td><td class="n">4,100</td></tr>
+              <tr class="totrow"><th class="lead">Total</th><td class="n">900</td><td class="n">1,400</td><td class="n">3,000</td><td class="n now">1,400</td><td class="n">3,000</td><td class="n">1,400</td><td class="n">12,500</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="caption"><b class="now">As shipped, and correct.</b> A genuine comparison read across time. It keeps its shape at every width, scrolls inside its own frame with the line name pinned, and never becomes cards. Budget Plan's <em>By period</em> grid does the same job with a slightly different head row, a different type size and no sticky heading.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ DEFECTS ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">02</span><h2>Three things the inventory turned up</h2></div>
+
+  <div class="flag">
+    <span class="lbl">1 · Money does not line up anywhere in the list tables</span>
+    <p>The shared table has no number treatment at all — figures inherit left alignment from text. Five surfaces are affected, including the two a treasurer reads most. The portal's own design principles already say numeric columns use the data face; none of these do. <strong>This is the single change that makes the biggest visible difference for the least work.</strong></p>
+  </div>
+
+  <div class="flag">
+    <span class="lbl">2 · Two tables scroll sideways on a phone with no warning</span>
+    <p>Inside the Player Dues drawer, one player's payment schedule and the season-end refund preview sit in a frame that scrolls horizontally with nothing telling the coach it can. Every other table in the hub either stacks into cards or shows a swipe hint. These two were missed.</p>
+  </div>
+
+  <div class="flag">
+    <span class="lbl">3 · Three lists are built entirely from hand-written styling</span>
+    <p>Fundraisers, Payables and Payments carry no shared class between them — every border, size and colour is written at the call site. They look similar today by coincidence, not by contract, and the next edit to any one of them moves it away from the other two.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ PART 2 — PROPOSAL ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">03</span><h2>Three jobs, three treatments</h2></div>
+
+  <p class="prose">Consistency here does not mean one table. It means <strong>no more than one treatment per job</strong> — and there are exactly three jobs in this hub. Five treatments collapse to three, and every surface can name which one it is and why.</p>
+
+  <div class="grid3">
+    <div>
+      <h4>Job one</h4>
+      <h3 style="margin-top:0">The list</h3>
+      <p style="font-size:0.92rem">Many records of the same kind. One row each. Read down a column, act on a row. <strong>Eight surfaces.</strong></p>
+      <p style="font-size:0.86rem;color:var(--muted)">Dues · Expenses · Payables · Payment schedule · Fundraisers · Payments · Allocation instalments · one player's schedule</p>
+    </div>
+    <div>
+      <h4>Job two</h4>
+      <h3 style="margin-top:0">The outline</h3>
+      <p style="font-size:0.92rem">A hierarchy — categories holding lines holding instalments — with a figure at every level. Read down, and expand. <strong>Two surfaces.</strong></p>
+      <p style="font-size:0.86rem;color:var(--muted)">Budget Plan · List &nbsp;·&nbsp; Budget vs. Actual · Categories</p>
+    </div>
+    <div>
+      <h4>Job three</h4>
+      <h3 style="margin-top:0">The grid</h3>
+      <p style="font-size:0.92rem">A comparison read <em>across</em> — time, or plan against actual. Never a list. Never cards. <strong>Two surfaces.</strong></p>
+      <p style="font-size:0.86rem;color:var(--muted)">Budget Plan · By period &nbsp;·&nbsp; Budget vs. Actual · Months</p>
+    </div>
+  </div>
+
+  <div class="rule-note">
+    <span class="lbl">What the three share</span>
+    <p>One number cell — right-aligned, tabular figures, the data face, one size. One column-heading recipe — uppercase, letter-spaced, one muted ink, one tint, with a documented denser size for grids that carry twelve columns. One category bar. One row rule and one hover. <strong>That set is the liftable piece</strong> — it would serve roster, schedule, attendance and results unchanged — but it lands inside Money and nowhere else in this pass.</p>
+  </div>
+
+  <h3>Job one · the list, before and after</h3>
+  <div class="pair">
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Player Dues</span><em>today</em></div>
+        <div class="body">
+          <div class="tframe">
+            <table class="t">
+              <thead><tr><th>Player</th><th>Total dues</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Avery Chen</td><td class="num">$1,250.00</td><td class="num win">$1,250.00</td><td class="num">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Bilal Osman</td><td class="num">$1,250.00</td><td class="num win">$800.00</td><td class="num live">$450.00</td><td><span class="pill p-warn">Partial</span></td></tr>
+                <tr><td>Charlotte Reid</td><td class="num">$975.00</td><td class="num win">$975.00</td><td class="num">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Devon Ngata</td><td class="num">$1,250.00</td><td class="num dim">$0.00</td><td class="num live">$1,250.00</td><td><span class="pill p-bad">Overdue</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">Now.</b> Nothing lines up. To compare two balances you read the digits, not the shape.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Player Dues</span><em>proposed</em></div>
+        <div class="body">
+          <div class="tframe">
+            <table class="t">
+              <thead><tr><th>Player</th><th class="numR">Total dues</th><th class="numR">Paid</th><th class="numR">Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Avery Chen</td><td class="numR">$1,250.00</td><td class="numR win">$1,250.00</td><td class="numR dim">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Bilal Osman</td><td class="numR">$1,250.00</td><td class="numR win">$800.00</td><td class="numR live">$450.00</td><td><span class="pill p-warn">Partial</span></td></tr>
+                <tr><td>Charlotte Reid</td><td class="numR">$975.00</td><td class="numR win">$975.00</td><td class="numR dim">$0.00</td><td><span class="pill p-ok">Paid</span></td></tr>
+                <tr><td>Devon Ngata</td><td class="numR">$1,250.00</td><td class="numR dim">$0.00</td><td class="numR live">$1,250.00</td><td><span class="pill p-bad">Overdue</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="next">Proposed.</b> Figures and their headings both move right; digits line up on the dollar; a zero balance drops to the muted ink so the ones that matter carry the colour. <strong>Same rows, same columns, same actions.</strong></p>
+    </div>
+  </div>
+
+  <h3>Job one · the three hand-built lists become lists</h3>
+  <div class="pair">
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Fundraisers</span><em>today</em></div>
+        <div class="body">
+          <div class="cardList">
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Chocolate sale</p><p class="sub">15% rebate · Mar 1 → Apr 15</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$4,820</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$4,097</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$723</span></div>
+              </div>
+            </div>
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Bottle drive</p><p class="sub">20% rebate · May 4</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$1,240</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$992</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$248</span></div>
+              </div>
+            </div>
+            <div class="cardRow">
+              <div class="lft"><p class="ttl">Raffle — spring</p><p class="sub">10% rebate · Apr 20 → Jun 1</p></div>
+              <div class="cardStats">
+                <div class="cardStat"><span class="k">Raised</span><span class="v win">$3,105</span></div>
+                <div class="cardStat"><span class="k">Team keeps</span><span class="v">$2,795</span></div>
+                <div class="cardStat"><span class="k">Credits</span><span class="v">$310</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="now">Now.</b> Nine repeated labels. And the three <em>Raised</em> figures are in three different places, because each card sizes itself to its own name.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Fundraisers</span><em>proposed</em></div>
+        <div class="body">
+          <div class="tframe">
+            <table class="t">
+              <thead><tr><th>Fundraiser</th><th class="numR">Raised</th><th class="numR">Team keeps</th><th class="numR">Credits</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Chocolate sale</strong><br><span class="dim" style="font-size:0.76rem">15% rebate · Mar 1 → Apr 15</span></td><td class="numR win">$4,820</td><td class="numR">$4,097</td><td class="numR">$723</td><td><span class="pill p-ok">Active</span></td></tr>
+                <tr><td><strong>Bottle drive</strong><br><span class="dim" style="font-size:0.76rem">20% rebate · May 4</span></td><td class="numR win">$1,240</td><td class="numR">$992</td><td class="numR">$248</td><td><span class="pill p-ok">Active</span></td></tr>
+                <tr><td><strong>Raffle — spring</strong><br><span class="dim" style="font-size:0.76rem">10% rebate · Apr 20 → Jun 1</span></td><td class="numR win">$3,105</td><td class="numR">$2,795</td><td class="numR">$310</td><td><span class="pill p-mute">Closed</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="next">Proposed.</b> Three labels instead of nine, at the top where a heading belongs. Every fundraiser's takings now sit in one column, so "which one raised most" is a glance rather than a comparison. <strong>Rows still open the fundraiser; on a phone they stack back into cards.</strong> Payables and Payments get the identical treatment.</p>
+    </div>
+  </div>
+
+  <h3>Job two · one outline, drawn once</h3>
+  <p class="prose">Budget Plan and Budget vs. Actual are the same structure with a different number of money columns. Below, both are rendered from a single set of shared classes — one frame, one category bar, one row, one number cell. Only the column count differs.</p>
+
+  <div class="pair">
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Budget Plan · List</span><em>proposed · one number column</em></div>
+        <div class="body">
+          <div class="bvaHead" style="grid-template-columns:1fr 110px"><span>Category / line</span><span style="text-align:right">Planned</span></div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead" style="grid-template-columns:1fr 110px"><span class="nm">Ice &amp; field</span><span class="n">$8,400.00</span></div>
+            <div class="bvaLine" style="grid-template-columns:1fr 110px"><span class="d">▸ Winter dome block</span><span class="n">$5,200.00</span></div>
+            <div class="bvaLine" style="grid-template-columns:1fr 110px"><span class="d">▸ Diamond permits</span><span class="n">$3,200.00</span></div>
+          </div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead" style="grid-template-columns:1fr 110px"><span class="nm">Tournaments</span><span class="n">$4,100.00</span></div>
+            <div class="bvaLine" style="grid-template-columns:1fr 110px"><span class="d">▸ Spring classic entry</span><span class="n">$1,600.00</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="next">Proposed.</b> The card stack stays — it is an editable outline, not a report, and that judgement is not reopened. What changes is that its frame, its category bar and its number column are now the same ones Budget vs. Actual uses. Row actions appear on hover and on focus, exactly as today.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="screen">
+        <div class="bar"><span>Budget vs. Actual · Categories</span><em>proposed · three number columns</em></div>
+        <div class="body">
+          <div class="bvaHead"><span>Category / line</span><span style="text-align:right">Planned</span><span style="text-align:right">Actual</span><span style="text-align:right">Variance</span></div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead"><span class="nm">Ice &amp; field</span><span class="n">$8,400</span><span class="n">$7,910</span><span class="n win">$490</span></div>
+            <div class="bvaLine"><span class="d">▸ Winter dome block</span><span class="n">$5,200</span><span class="n">$5,200</span><span class="n dim">$0</span></div>
+            <div class="bvaLine"><span class="d">▸ Diamond permits</span><span class="n">$3,200</span><span class="n">$2,710</span><span class="n win">$490</span></div>
+          </div>
+          <div class="bvaGroup">
+            <div class="bvaGroupHead"><span class="nm">Tournaments</span><span class="n">$4,100</span><span class="n">$4,450</span><span class="n live">−$350</span></div>
+            <div class="bvaLine"><span class="d">▸ Spring classic entry</span><span class="n">$1,600</span><span class="n">$1,950</span><span class="n live">−$350</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b class="next">Proposed.</b> Identical chrome to the panel on the left. The head row now sits inside the same rhythm as the frames below it rather than floating loose above them, and a zero variance drops to muted so the real variances carry the colour alone.</p>
+    </div>
+  </div>
+
+  <h3>Job three · the grid keeps its ruling, and gains its twin</h3>
+  <p class="prose">Nothing about the month grid's behaviour changes: it scrolls sideways on a phone with the first column pinned and a visible swipe hint, and it never becomes cards. That is a standing ruling and this pass does not touch it. What changes is that <strong>Budget Plan's <em>By period</em> grid stops being a near-copy</strong> — it adopts the same sticky heading, the same head-row type and the same number cell, so moving between the two reads as one product.</p>
+</section>
+
+<!-- ══════════════════ PHONE ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">04</span><h2>What a phone gets</h2></div>
+  <p class="prose">The phone rules are already right and are not being reopened. A <strong>list</strong> stacks into labelled cards. An <strong>outline</strong> keeps its shape and wraps its text. A <strong>grid</strong> scrolls with its first column pinned. The only phone change in this pass is fixing the two Dues tables that currently do none of the three.</p>
+
+  <div class="phones">
+    <div class="phone">
+      <div class="screen">
+        <div class="bar"><span>Dues</span><em>list</em></div>
+        <div class="body">
+          <div class="stackCard">
+            <div data-k="Player"><span><strong>Bilal Osman</strong></span></div>
+            <div data-k="Total dues"><span class="num">$1,250.00</span></div>
+            <div data-k="Paid"><span class="num win">$800.00</span></div>
+            <div data-k="Balance"><span class="num live">$450.00</span></div>
+            <div data-k="Status"><span class="pill p-warn">Partial</span></div>
+          </div>
+          <div class="stackCard">
+            <div data-k="Player"><span><strong>Devon Ngata</strong></span></div>
+            <div data-k="Total dues"><span class="num">$1,250.00</span></div>
+            <div data-k="Paid"><span class="num dim">$0.00</span></div>
+            <div data-k="Balance"><span class="num live">$1,250.00</span></div>
+            <div data-k="Status"><span class="pill p-bad">Overdue</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption" style="margin-top:0.5rem"><b class="next">Unchanged.</b> Each row a card, each cell carrying its own label. Fundraisers, Payables and Payments arrive here too — which is roughly what they already look like at this width.</p>
+    </div>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="bar"><span>Budget Plan</span><em>outline</em></div>
+        <div class="body">
+          <div class="bvaGroup" style="margin-bottom:0.5rem">
+            <div class="bvaGroupHead" style="grid-template-columns:1fr 78px;padding:0.5rem 0.7rem"><span class="nm">Ice &amp; field</span><span class="n">$8,400</span></div>
+            <div class="bvaLine" style="grid-template-columns:1fr 78px;padding:0.45rem 0.7rem 0.45rem 1.1rem"><span class="d" style="white-space:normal">▸ Winter dome block</span><span class="n">$5,200</span></div>
+            <div class="bvaLine" style="grid-template-columns:1fr 78px;padding:0.45rem 0.7rem 0.45rem 1.1rem"><span class="d" style="white-space:normal">▸ Diamond permits</span><span class="n">$3,200</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption" style="margin-top:0.5rem"><b class="next">Unchanged.</b> Keeps its shape; long line names wrap rather than truncate.</p>
+    </div>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="bar"><span>By month</span><em>grid</em></div>
+        <div class="body">
+          <span class="swipe">→ Swipe to see later months</span>
+          <div class="scroll">
+            <table class="mg" style="font-size:0.7rem">
+              <thead><tr><th class="lead" style="min-width:104px">Category</th><th class="n">Sep</th><th class="n">Oct</th><th class="n now">Nov</th><th class="n">Dec</th></tr></thead>
+              <tbody>
+                <tr class="catrow"><th class="lead">Ice &amp; field</th><td class="n">1,400</td><td class="n">1,400</td><td class="n now">1,400</td><td class="n">1,400</td></tr>
+                <tr class="catrow"><th class="lead">Tournaments</th><td class="n">—</td><td class="n">1,600</td><td class="n now">—</td><td class="n">1,600</td></tr>
+                <tr class="totrow"><th class="lead">Total</th><td class="n">1,400</td><td class="n">3,000</td><td class="n now">1,400</td><td class="n">3,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="caption" style="margin-top:0.5rem"><b class="next">Unchanged — by ruling.</b> Scrolls sideways inside its own frame, first column pinned, hint shown. The page itself never scrolls sideways.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ EXCEPTIONS ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">05</span><h2>What is deliberately left different</h2></div>
+  <p class="prose">Three surfaces depart from the list treatment, and each departure is load-bearing. Naming them is the point of the exercise — an unnamed exception is what drift looks like from the inside.</p>
+
+  <div class="phases">
+    <div class="phase">
+      <span class="id">Keep</span>
+      <div>
+        <h5>Budget Plan stays a card stack</h5>
+        <p>It is an editable outline with nested instalments and per-row actions, not a report. A flat table would make every line's period breakdown a second table inside a cell. It joins the shared chrome; it does not become a list.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Keep</span>
+      <div>
+        <h5>The month grid scrolls sideways on a phone</h5>
+        <p>A standing ruling. It is a comparison read across time; card-stacking would destroy the only thing it is for. It scrolls inside its own frame with the first column pinned and a visible hint, and the page around it never scrolls.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Keep</span>
+      <div>
+        <h5>Card-stacking on phones, with a label per cell</h5>
+        <p>A desktop table that becomes an unreadable phone table is a regression, not a tidy-up. Every list surface keeps stacking, and every stacked cell keeps its own label.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Watch</span>
+      <div>
+        <h5>Payables carries a deposit and a balance</h5>
+        <p>The one list row with genuine nesting. It becomes a list row whose chevron opens the two instalments underneath — the same expand-in-place the outline already uses — rather than a card that prints both inline. The Payment schedule sub-tab next door already tabulates exactly this, which is the argument for it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PHASING ══════════════════ -->
+<section>
+  <div class="sechead"><span class="n">06</span><h2>How it lands</h2></div>
+  <p class="prose">Four passes, each independently shippable, each verified by a rendered sweep across the Money hub before the next begins. Ordered so the highest-visibility change is also the smallest and safest.</p>
+
+  <div class="phases">
+    <div class="phase">
+      <span class="id">Pass 1</span>
+      <div>
+        <h5>Money lines up</h5>
+        <p>One number cell and one column heading, shared. Applies to all five list tables and both grids at once. No layout moves, no controls move — figures right-align, digits become tabular, headings match. Roughly thirty hand-written styles disappear into two classes.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Pass 2</span>
+      <div>
+        <h5>One outline</h5>
+        <p>Budget Plan and Budget vs. Actual's category view render from the same frame, category bar and row. Two forks become one. Nothing a coach does changes.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Pass 3</span>
+      <div>
+        <h5>The three card lists become lists</h5>
+        <p>Fundraisers, Payables and Payments. The most visible change of the four, and the only one where a coach will notice a different shape on a desktop — a heading row instead of repeated labels. Phones look much as they do now.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="id">Pass 4</span>
+      <div>
+        <h5>The two grids agree, and the phone gaps close</h5>
+        <p>Budget Plan's <em>By period</em> grid adopts the month grid's heading and type. The two Dues tables that scroll sideways in silence get the same phone treatment as everything else. The in-app Money guide and the demo tour narration are checked in the same unit of work.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="qbox">
+    <h3>Three calls to make before any code</h3>
+    <ol>
+      <li><strong>Is the three-job model the right cut?</strong> It is what makes "consistent" mean something specific rather than "make everything the grid". If you would rather see two treatments, or four, that changes the whole pass.</li>
+      <li><strong>Do Fundraisers, Payables and Payments become tables?</strong> This is the only genuinely visible desktop change, and the one worth seeing rendered before committing. The argument for is the repeated-label rule you already ratified; the argument against is that a fundraiser has a description that reads better in a card.</li>
+      <li><strong>Is Pass 1 alone enough for now?</strong> Right-aligning the money is most of the perceived inconsistency for a fraction of the work. Passes 2–4 are the part that stops it coming back.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  Mockup is the spec · Coach portal · Money hub · Scope: Money only — the same inconsistency exists on roster, schedule and attendance and is noted, not fixed
+</footer>
+
+</div>

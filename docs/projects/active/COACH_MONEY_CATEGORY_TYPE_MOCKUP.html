@@ -1,0 +1,213 @@
+<title>Category Reads Smaller</title>
+<style>
+:root {
+  --ground:  #FBFAF7;
+  --ink:     #1B1913;
+  --ink-2:   #45403A;
+  --muted:   #6E685E;
+  --rule:    rgba(28,26,22,0.11);
+  --rule-2:  rgba(28,26,22,0.22);
+  --accent:  #57651E;
+  --accent-soft: rgba(87,101,30,0.10);
+  --ok:      #34662A;
+  --flag:    #A33A1E;
+  --flag-soft: rgba(163,58,30,0.09);
+  --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #17160F; --ink: #EFEBE0; --ink-2: #C4BEB0; --muted: #948E82;
+    --rule: rgba(239,235,224,0.13); --rule-2: rgba(239,235,224,0.26);
+    --accent: #B4C96A; --accent-soft: rgba(180,201,106,0.12);
+    --ok: #86C57A; --flag: #E58267; --flag-soft: rgba(229,130,103,0.12);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #17160F; --ink: #EFEBE0; --ink-2: #C4BEB0; --muted: #948E82;
+  --rule: rgba(239,235,224,0.13); --rule-2: rgba(239,235,224,0.26);
+  --accent: #B4C96A; --accent-soft: rgba(180,201,106,0.12);
+  --ok: #86C57A; --flag: #E58267; --flag-soft: rgba(229,130,103,0.12);
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  margin: 0; padding: 0 1.25rem 5rem; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+header { padding: 3.5rem 0 1.75rem; border-bottom: 2px solid var(--ink); }
+.kicker {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 1rem;
+}
+h1 { font-size: clamp(2rem,5vw,3.1rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 800; margin: 0 0 1rem; text-wrap: balance; }
+.standfirst { font-size: 1.05rem; color: var(--ink-2); margin: 0; max-width: 60ch; }
+p { margin: 0 0 0.9rem; max-width: 66ch; }
+h2 { font-size: 1.3rem; letter-spacing: -0.02em; margin: 3rem 0 0.4rem; }
+.note { font-size: 0.9rem; color: var(--ink-2); max-width: 66ch; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--accent-soft); padding: 0.08em 0.34em; border-radius: 3px; }
+
+.flag { border-left: 3px solid var(--flag); background: var(--flag-soft); padding: 0.9rem 1.1rem; margin: 1.4rem 0; max-width: 72ch; border-radius: 0 6px 6px 0; }
+.flag p:last-child { margin-bottom: 0; }
+.flag .lbl { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--flag); font-weight: 700; display: block; margin-bottom: 0.3rem; }
+
+/* ── specimens: the coach portal's warm palette, fixed ── */
+.screen {
+  --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-soft:#4A4235; --p-dim:#6A635C;
+  --p-line:rgba(70,55,30,0.12); --p-line-2:rgba(70,55,30,0.22); --p-fill:rgba(70,55,30,0.055);
+  --p-olive:#57651E; --p-osoft:rgba(87,101,30,0.10);
+  background: var(--p-paper); color: var(--p-ink);
+  border: 1px solid var(--rule-2); border-radius: 10px; overflow: hidden;
+  font-size: 16px; line-height: 1.45;
+}
+.screen .bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.45rem 0.85rem; background: var(--p-card); border-bottom: 1px solid var(--p-line);
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim);
+}
+.screen .bar em { font-style: normal; font-weight: 700; }
+.screen .bar em.now  { color: #A33A1E; }
+.screen .bar em.opt  { color: #57651E; }
+.screen .body { padding: 0.9rem; }
+
+.g { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.g th, .g td { padding: 0.42rem 0.65rem; border-bottom: 1px solid var(--p-line); white-space: nowrap; font-weight: 400; text-align: right; }
+.g thead th {
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--p-dim); border-bottom: 1px solid var(--p-line-2);
+}
+.g th:first-child, .g td:first-child { text-align: left; min-width: 168px; }
+/* line rows — the coach's own words */
+.g tbody th { font-size: 0.84rem; font-weight: 600; color: var(--p-ink); text-transform: none; letter-spacing: 0; }
+.lead2 { padding-left: 1.4rem !important; }
+.g tbody td { font-size: 0.82rem; color: var(--p-soft); }
+.tot th, .tot td { border-top: 2px solid var(--p-line-2); border-bottom: none; font-weight: 800; font-size: 0.84rem; color: var(--p-ink); }
+
+/* CATEGORY ROW — the variable under test */
+.cat th, .cat td { font-weight: 700; color: var(--p-soft); }
+
+/* A — as shipped */
+.optA .cat th, .optA .cat td { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; }
+/* B — same size as its lines, still a label */
+.optB .cat th, .optB .cat td { font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.optB .cat th { color: var(--p-ink); }
+/* C — hierarchy by size, sentence case */
+.optC .cat th, .optC .cat td { font-size: 0.92rem; text-transform: none; letter-spacing: 0; color: var(--p-ink); font-weight: 800; }
+.optC .cat th, .optC .cat td { background: var(--p-fill); }
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px,1fr)); gap: 1.4rem; margin: 1.1rem 0 0; align-items: start; }
+.specimen { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.caption { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.05em; color: var(--muted); margin: 0; max-width: 54ch; line-height: 1.55; }
+.caption b { letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+.caption b.now { color: var(--flag); }
+.caption b.rec { color: var(--ok); }
+.caption b.alt { color: var(--ink); }
+
+.measure { display: flex; gap: 1.6rem; flex-wrap: wrap; margin: 1rem 0 0; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.measure b { color: var(--ink); }
+
+footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="kicker">Coach portal · Money hub · 2026-08-13</p>
+  <h1>The category reads<br>smaller than its lines</h1>
+  <p class="standfirst">Owner, on the Budget Plan's By&nbsp;period grid: <em>why is TOURNAMENTS smaller than Entry Fees?</em> It is, and it is on the List view too. Three ways out, drawn at true size.</p>
+</header>
+
+<h2>Why it happens</h2>
+<p>A category name is drawn as a <strong>taxonomy label</strong> — small, bold, uppercase, letter-spaced — because it comes from a fixed library. A line name is drawn as <strong>the coach's own words</strong>, at reading size in sentence case. The intent was to keep those two things visibly different, and that part works.</p>
+<p>What was never checked is the resulting <em>height</em>. Uppercase has no ascenders or descenders, so at 0.74rem its cap-height lands around 0.52rem — shorter than the 0.59rem cap-height of a 0.84rem sentence-case line beneath it. <strong>The row that groups four others is physically the smallest text in the group.</strong></p>
+
+<div class="flag">
+  <span class="lbl">Not new — and now cheap to change</span>
+  <p>Both the plan's grid and its List view already did this before the table pass; the convention was carried forward untouched. Because that pass put both views on one shared category treatment, this is now <strong>one value in one place</strong> rather than two independent edits that could disagree again.</p>
+</div>
+
+<h2>A · as shipped</h2>
+<div class="pair">
+  <div class="specimen">
+    <div class="screen optA">
+      <div class="bar"><span>Budget Plan · By period</span><em class="now">today</em></div>
+      <div class="body">
+        <table class="g">
+          <thead><tr><th>Line</th><th>Jan</th><th>Feb</th><th>Unscheduled</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="cat"><th>Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+            <tr><th class="lead2">Entry Fees</th><td>—</td><td>—</td><td>3,000</td><td>3,000</td></tr>
+            <tr><th class="lead2">Uniforms</th><td>—</td><td>—</td><td>2,000</td><td>2,000</td></tr>
+            <tr><th class="lead2">Travel</th><td>1,000</td><td>1,000</td><td>—</td><td>2,000</td></tr>
+            <tr class="cat"><th>Officials</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr><th class="lead2">Umpire Fees</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr class="tot"><th>Total planned budget</th><td>1,000</td><td>1,000</td><td>6,000</td><td>8,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="caption"><b class="now">Now.</b> Category 0.74rem uppercase · line 0.84rem sentence case. The parent is the quietest row in its own group, and the eye lands on <em>Entry Fees</em> before <em>Tournaments</em>.</p>
+  </div>
+
+  <div class="specimen">
+    <div class="screen optB">
+      <div class="bar"><span>Option B · same size, still a label</span><em class="opt">recommended</em></div>
+      <div class="body">
+        <table class="g">
+          <thead><tr><th>Line</th><th>Jan</th><th>Feb</th><th>Unscheduled</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="cat"><th>Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+            <tr><th class="lead2">Entry Fees</th><td>—</td><td>—</td><td>3,000</td><td>3,000</td></tr>
+            <tr><th class="lead2">Uniforms</th><td>—</td><td>—</td><td>2,000</td><td>2,000</td></tr>
+            <tr><th class="lead2">Travel</th><td>1,000</td><td>1,000</td><td>—</td><td>2,000</td></tr>
+            <tr class="cat"><th>Officials</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr><th class="lead2">Umpire Fees</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr class="tot"><th>Total planned budget</th><td>1,000</td><td>1,000</td><td>6,000</td><td>8,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="caption"><b class="rec">Recommended.</b> Category matched to its lines at 0.84rem, still uppercase and bold, and taken to the full ink. It stays visibly a <em>label</em> rather than something typed, and stops being the smallest thing on the row. <strong>One value changes.</strong></p>
+  </div>
+</div>
+
+<h2>C · hierarchy by size, the ordinary way</h2>
+<div class="pair">
+  <div class="specimen">
+    <div class="screen optC">
+      <div class="bar"><span>Option C · category outranks its lines</span><em class="opt">bigger change</em></div>
+      <div class="body">
+        <table class="g">
+          <thead><tr><th>Line</th><th>Jan</th><th>Feb</th><th>Unscheduled</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="cat"><th>Tournaments</th><td>1,000</td><td>1,000</td><td>5,000</td><td>7,000</td></tr>
+            <tr><th class="lead2">Entry Fees</th><td>—</td><td>—</td><td>3,000</td><td>3,000</td></tr>
+            <tr><th class="lead2">Uniforms</th><td>—</td><td>—</td><td>2,000</td><td>2,000</td></tr>
+            <tr><th class="lead2">Travel</th><td>1,000</td><td>1,000</td><td>—</td><td>2,000</td></tr>
+            <tr class="cat"><th>Officials</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr><th class="lead2">Umpire Fees</th><td>—</td><td>—</td><td>1,000</td><td>1,000</td></tr>
+            <tr class="tot"><th>Total planned budget</th><td>1,000</td><td>1,000</td><td>6,000</td><td>8,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="caption"><b class="alt">Alternative.</b> Sentence case at 0.92rem, heaviest weight, on a tinted band. Hierarchy reads by size the way it does everywhere else — but it drops the small-caps convention the whole portal uses for a label from a fixed library, and the tint competes with the total row below.</p>
+  </div>
+
+  <div class="specimen">
+    <div style="padding-top:0.5rem">
+      <h2 style="margin-top:0">What each costs</h2>
+      <p class="note"><strong>A — leave it.</strong> Nothing changes, and the small-caps eyebrow stays consistent with the tab bar, the summary labels and every other label in the portal. The hierarchy keeps reading backwards.</p>
+      <p class="note"><strong>B — match the size.</strong> Keeps the convention and fixes the inversion. Category and line sit at the same size; uppercase, weight and letter-spacing carry the difference instead of size. Applies to <strong>both</strong> Budget Plan views and Budget vs. Actual's category view in one edit, so the three stay agreed.</p>
+      <p class="note"><strong>C — invert it properly.</strong> The clearest hierarchy, and the biggest departure: it makes a category name look like a heading a coach wrote rather than a library label, and it is the only option that adds a new band of colour to a screen that already has a total row.</p>
+      <div class="measure">
+        <span>cap-height today · category <b>≈0.52rem</b></span>
+        <span>line <b>≈0.59rem</b></span>
+        <span>option B · category <b>≈0.59rem</b></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Mockup is the spec · one shared category treatment now serves Budget Plan List, Budget Plan By period, and Budget vs. Actual</footer>
+</div>

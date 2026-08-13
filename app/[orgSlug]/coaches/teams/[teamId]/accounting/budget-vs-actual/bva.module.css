@@ -59,10 +59,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ⚠ WAS `--white-30`, which the warm portal remaps to a HAIRLINE token — so "under budget" and
+   "incl. $X not itemized yet" were rendering at rgba(70,55,30,0.2) on the banner's own ground, far
+   under AA. Pre-existing, and invisible to every gate until 2026-08-13: `check:text-contrast`
+   reads declared colours rather than rendered ones, and the rendered sweep had never drawn this
+   banner because the layout fixture had no budget in it. `--white-45` is the portal's third text
+   tier and the floor the ladder is capped at. */
 .summaryHint {
   display: block;
   font-size: 0.72rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--white-45, rgba(255,255,255,0.45));
   margin-top: 0.15rem;
 }
 
@@ -172,53 +178,27 @@
 /* ── Category breakdown ──────────────────────────────────────────────────── */
 .section { margin-bottom: 1.5rem; }
 
-.tableHeader {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 110px;
-  padding: 0.4rem 1rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-30, rgba(255,255,255,0.3));
-  gap: 0.5rem;
-}
+/* ⚠ THIS PAGE'S OUTLINE NOW COMES FROM THE SHARED LEDGER (coaches.module.css `.ledgerList` and
+   friends, Money-hub table consistency 2026-08-13). The `.categoryGroup` / `.catHeaderInner` /
+   `.lineInner` / `.lineNum` / `.periodNum` / `.grandNum` fork this file carried is GONE: it was
+   the same categories-holding-lines structure Budget Plan had written independently, and the two
+   disagreed on radius, category-bar layout, name size and ink for no decided reason.
 
-.colDesc { }
-.colNum { text-align: right; }
-
-.linesContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.categoryGroup {
-  border-radius: 10px;
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  overflow: hidden;
-}
-
-.categoryHeader {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 110px;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.7rem 1rem;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-}
-.categoryHeader:hover { background: var(--home-card, rgba(255,255,255,0.05)); }
-
-.catHeaderInner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
+   What survives here is only what is specific to THIS page: its four column tracks, the scroller
+   and pin gutters that let the comparison scroll on a phone, and the unbudgeted section below. */
+.linesContainer,
+.tableHeader,
+.grandTotal,
+.categoryHeader,
+.lineMain,
+.periodRow {
+  /* Category / line · Budgeted · Actual · Variance. Declared on every part that lays out in these
+     tracks rather than once on a wrapper, because the header and the totals are SIBLINGS of the
+     list, not children of it. */
+  --ledger-cols: 1fr 110px 110px 110px;
+  /* The period sub-row inserts a date column; the three money tracks stay fixed-width, so they
+     still land under the line figures above them. */
+  --ledger-sub-cols: 1fr 100px 110px 110px 110px;
 }
 
 .expandIcon {
@@ -228,144 +208,23 @@
   flex-shrink: 0;
 }
 
-.categoryName {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-50, rgba(255,255,255,0.5));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.catNum {
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-75, rgba(255,255,255,0.75));
-  text-align: right;
-  white-space: nowrap;
-}
-
 /* ── Line rows ───────────────────────────────────────────────────────────── */
-.linesBody {}
+/* (The expanded category's lines need no wrapper rule at all — the shared `.ledgerRow` draws each
+   line's separating rule and `.ledgerSubRows` its expanded periods.) */
 
-.lineRow {
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.04));
-}
-
-.lineMain {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 110px;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.6rem 1rem 0.6rem 1.75rem;
-}
-
-.lineInner {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
+/* The one sentence the funding row can't say in a column heading: what its "actual" counts.
+   It sits under the table rather than inside it — a paragraph in a grid row would fight the
+   four fixed money columns. */
+.fundingNote {
+  margin: 0.6rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--white-45, rgba(255,255,255,0.45));
 }
 
-.expandBtn, .expandSpacer {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.expandBtn {
-  background: none;
-  border: none;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  cursor: pointer;
-  padding: 0;
-  border-radius: 4px;
-  transition: color 0.12s;
-}
-.expandBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
-
-.lineDesc {
-  font-size: 0.88rem;
-  color: var(--white-75, rgba(255,255,255,0.75));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lineNum {
-  font-size: 0.88rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-60, rgba(255,255,255,0.6));
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* ── Period sub-rows ─────────────────────────────────────────────────────── */
-.periodsBody {
-  background: var(--home-card, rgba(255,255,255,0.015));
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.04));
-}
-
-.periodRow {
-  display: grid;
-  grid-template-columns: 1fr 100px 110px 110px 110px;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.45rem 1rem 0.45rem 3.25rem;
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.025));
-  font-size: 0.82rem;
-}
-.periodRow:last-child { border-bottom: none; }
-
-.periodLabel {
-  color: var(--white-65, rgba(255,255,255,0.65));
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.periodDate {
-  color: var(--white-30, rgba(255,255,255,0.3));
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.periodNum {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* ── Grand total ─────────────────────────────────────────────────────────── */
-.grandTotal {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 110px;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  margin-top: 0.5rem;
-  border-radius: 10px;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--white-70, rgba(255,255,255,0.7));
-}
-
-.grandNum {
-  font-size: 0.95rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-90);
-  text-align: right;
-  white-space: nowrap;
-}
+/* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
+   retired. `.grandTotal` survives only as the hook that hands it the column tracks and its pin
+   gutter — see the `--ledger-cols` block above and the phone block below.) */
 
 /* ── Unbudgeted actuals ──────────────────────────────────────────────────── */
 .unbudgetedSection {
@@ -488,11 +347,18 @@
      shared primitive. Each row hands down what its left padding used to be, INCLUDING the
      hierarchy indent (line rows sit inside categories, period rows inside lines), so the
      nesting still reads while the label stays put through a swipe. */
-  .tableHeader,
-  .categoryHeader,
-  .lineMain,
-  .periodRow,
-  .grandTotal { padding-left: 0; padding-right: 0.7rem; }
+  /* ⚠ THE SELECTORS ARE DOUBLED ON PURPOSE. Each of these rows now also carries a shared
+     `.ledger*` class that sets the `padding` SHORTHAND — which includes padding-left. Written as
+     a single class this rule would tie with the shared one on specificity, leaving the winner to
+     source order ACROSS TWO STYLESHEETS: a bundling detail deciding whether the pinned label
+     lurches by 16px on the first swipe. 0-2-0 settles it here, deliberately.
+     (Same failure mode as the funding accent in `budget.module.css`; see
+     `memory/reference_cascade_collisions_coach_budget.md`.) */
+  .tableHeader.tableHeader,
+  .categoryHeader.categoryHeader,
+  .lineMain.lineMain,
+  .periodRow.periodRow,
+  .grandTotal.grandTotal { padding-left: 0; padding-right: 0.7rem; }
   .tableHeader,
   .categoryHeader,
   .grandTotal { --scrollx-pin-gutter: 0.7rem; }

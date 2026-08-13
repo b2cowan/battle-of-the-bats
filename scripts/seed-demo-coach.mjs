@@ -35,7 +35,7 @@ import {
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
-  OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_DUES,
+  OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES,
   OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_TESTING_ABSENT,
   OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue, demoPaidStampIso,
   SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
@@ -595,11 +595,20 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // The budget plan: real platform categories, each line phased across four months so the report
   // this moment lands on has a month grid rather than one undated lump.
   // Ids are minted here, so lines and their phasing are two batched writes rather than twelve.
-  const budgetLineRows = OFFSEASON_BUDGET_LINES.map((line, i) => ({
-    id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
-    category_id: budgetCategoryIds.get(line.category.toLowerCase()),
-    description: line.description, total_amount: line.total, sort_order: i,
-  }));
+  const budgetLineRows = [
+    ...OFFSEASON_BUDGET_LINES.map((line, i) => ({
+      id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
+      category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+      description: line.description, total_amount: line.total, line_kind: 'cost', sort_order: i,
+    })),
+    // Money coming IN — stored positive, displayed negative, no category (see the constant).
+    ...OFFSEASON_FUNDING_LINES.map((line, i) => ({
+      id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
+      category_id: null,
+      description: line.description, total_amount: line.total, line_kind: 'funding',
+      sort_order: OFFSEASON_BUDGET_LINES.length + i,
+    })),
+  ];
   await insertAll('rep_budget_lines', budgetLineRows);
   // Periods must sum to their line within $0.02 (the planner enforces it); quarters divide every
   // one of these totals exactly, so the demo never sits on that tolerance.

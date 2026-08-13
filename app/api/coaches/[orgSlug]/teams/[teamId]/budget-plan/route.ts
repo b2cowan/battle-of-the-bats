@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepBudgetLineWithPeriods, RepBudgetPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
+import { computeBudgetTotals } from '@/lib/coach-budget-totals';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
@@ -27,6 +28,9 @@ function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
     itemId:         row.item_id as string | null,
     description:    row.description as string,
     totalAmount:    row.total_amount as number,
+    // Anything unrecognised reads as a cost — that is the column default, and a row written
+    // before migration 230 IS a cost. Never guess a line is money coming in.
+    lineKind:       row.line_kind === 'funding' ? 'funding' : 'cost',
     notes:          row.notes as string | null,
     sortOrder:      row.sort_order as number,
     createdAt:      row.created_at as string,
@@ -59,7 +63,10 @@ export const GET = withObservability(async (req: Request,
   if (linesErr) return NextResponse.json({ error: linesErr.message }, { status: 500 });
 
   const lines = (linesData ?? []).map(mapLine);
-  const totalBudget = lines.reduce((s, l) => s + l.totalAmount, 0);
+  // COSTS only, and through the SHARED arithmetic — the fourth call site of the same sum. The
+  // module exists so the planner, the Money hub and Budget vs. Actual cannot drift on it; a
+  // hand-rolled reduce here would be exactly the drift it was written to stop.
+  const totalBudget = computeBudgetTotals({ lines, estimatedTotal: null }).itemized;
 
   // Check whether any budget-generated installments already exist for this year
   const { count: installmentCount } = await supabaseAdmin
@@ -89,8 +96,8 @@ export const GET = withObservability(async (req: Request,
     rosterCount:     rosterCount ?? 0,
   };
 
-  // The optional single "season total" (rep_program_years.budget_amount) rides along so
-  // the planner can reconcile it against the itemized sum (non-itemized buffer display).
+  // The optional ESTIMATED total (rep_program_years.budget_amount) rides along so the planner
+  // can state the difference between it and the itemized sum.
   // The season YEAR rides along too (chunk H2): it anchors bare month names in an imported
   // sheet ("Sep" with no year), and the paste path parses in the browser — so the client needs
   // the same anchor the server's file path already has, or the two would disagree.

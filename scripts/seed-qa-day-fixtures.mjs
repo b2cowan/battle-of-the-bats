@@ -12,6 +12,10 @@
  *                  `toronto blue jays5` fixture, with a saved lineup whose bench histories are
  *                  deliberately UNEVEN (so "longest sitting first" is a real claim, not a
  *                  coincidence) and one pitcher sitting on two innings.
+ *   --money       Group 1C / §1.2+§1.3+§2.3 — a throwaway money club with TWO teams: one
+ *                  deliberately data-rich and in its second season (months view, phone), one
+ *                  deliberately EMPTY (the budget starter's first-run card). Four sign-ins
+ *                  covering head coach, money-read, money-off and money-without-contacts.
  *   --book         Group 1D / §1.12–§1.14 + §1.16 — opponent book lines and observations on
  *                  `toronto blue jays5`, a SECOND SPELLING of one opponent so the merge has
  *                  something to merge, lineups vs one opponent across wins and losses, and a
@@ -372,7 +376,12 @@ async function seedCancelLab() {
     // Finished, but alphabetically first in the same year — the decoy the old rule preferred.
     { name: 'QA Lab April Open', slug: 'qa-lab-april-open', year, status: 'completed', start: -60, end: -58 },
     // Running right now, and the one carrying today's games for the scorekeeper.
-    { name: 'QA Lab Summer Showdown', slug: 'qa-lab-summer-showdown', year, status: 'active', start: -1, end: 1, games: true },
+    // ⚠ Starts TODAY, not yesterday. A tournament whose first day is in the past reads at a glance
+    // like a stale fixture — the QA screen shows "started Aug 9" on Aug 10 and the first question
+    // becomes "is this seed out of date?" rather than the one the step is asking. Day 1 = today
+    // makes the state self-evidently current, and it still lands inside its own window, which is
+    // what the keep-the-live-one rule actually reads.
+    { name: 'QA Lab Summer Showdown', slug: 'qa-lab-summer-showdown', year, status: 'active', start: 0, end: 2, games: true },
     // Last year, long finished.
     { name: 'QA Lab Fall Invitational', slug: 'qa-lab-fall-invitational', year: year - 1, status: 'completed', start: -400, end: -398 },
   ];
@@ -812,10 +821,330 @@ async function seedBook() {
   console.log(`  Team B       ${teamB.name}`);
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// PART D — Group 1C, the money lab
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// ⚠ WHY A DEDICATED ORG. Every team on dev that carries real money data is one we must not
+// disturb: the coach demo sandbox (`riverdale-ridge`, the shop window a prospect walks into) and
+// the owner's standing `toronto blue jays5` fixture, which was deliberately retained by ruling.
+// Money QA needs to CHANGE numbers — add lines, pay instalments, import a sheet — so it gets its
+// own throwaway club, the same way §1.19 did.
+//
+// Two teams, because §1.2 and §1.3 want opposite states and one team cannot be both:
+//   · U13 — deliberately data-RICH, and in its SECOND season, for the months view and the phone.
+//   · U11 — deliberately EMPTY, so the budget starter's first-run card has somewhere to appear.
+const MONEY = {
+  slug: 'qa-money-lab',
+  name: 'QA Money Lab (throwaway)',
+  password: 'devpass123',
+  people: [
+    // capabilities null = head coach, holds everything including money: 'write'.
+    { email: 'qa-money-head@dev.local', name: 'QA Money Head Coach', role: 'head_coach', caps: null },
+    // ⚠ The repeat-offender leak class: an assistant who may READ money and must never write it.
+    { email: 'qa-money-read@dev.local', name: 'QA Money Read-Only', role: 'assistant_coach', caps: { money: 'read' } },
+    // Money OFF is the assistant DEFAULT, set explicitly so a later capability edit cannot
+    // silently change what this account is testing.
+    { email: 'qa-money-off@dev.local', name: 'QA Money Off', role: 'assistant_coach', caps: { money: 'off' } },
+    // Money but NOT guardian contacts — the case where family answers must fall back to naming
+    // families by their PLAYERS ("Maya and Sam's family") rather than by a guardian.
+    { email: 'qa-money-nopii@dev.local', name: 'QA Money No Contacts', role: 'assistant_coach', caps: { money: 'write', rosterPii: false } },
+  ],
+};
+
+/** Month boundary helpers — every date a month-grid column will be compared against. */
+const monthStart = (offset) => {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  return isoDate(d);
+};
+const dayIn = (offset, day) => {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  d.setDate(day);
+  return isoDate(d);
+};
+
+async function seedMoneyLab() {
+  head('Part D — Group 1C, the money lab');
+
+  const users = [];
+  for (const p of MONEY.people) users.push({ ...p, user: await ensureUser(p.email, MONEY.password, p.name) });
+  const ourIds = new Set(users.map(u => u.user.id));
+
+  // ── org ──────────────────────────────────────────────────────────────────────────────────
+  const orgFields = {
+    name: MONEY.name, plan_id: 'club', subscription_status: 'active',
+    is_public: false, is_discoverable: false, account_kind: 'organization', theme_preset: 'platform',
+  };
+  let org = (await db.from('organizations').select('id').eq('slug', MONEY.slug).maybeSingle()).data;
+  if (!org) {
+    const row = { id: randomUUID(), slug: MONEY.slug, ...orgFields };
+    die('org insert', (await db.from('organizations').insert(row)).error);
+    org = row;
+    ok(`org created ${MONEY.slug}`);
+  } else {
+    const { data: foreign } = await db.from('organization_members')
+      .select('user_id').eq('organization_id', org.id).limit(50);
+    const strangers = (foreign ?? []).filter(m => !ourIds.has(m.user_id));
+    if (strangers.length) {
+      console.error(`✗ Refusing to adopt "${MONEY.slug}": ${strangers.length} member(s) this script did not create.`);
+      process.exit(1);
+    }
+    die('org update', (await db.from('organizations').update(orgFields).eq('id', org.id)).error);
+    ok(`org reset ${MONEY.slug}`);
+  }
+  for (const u of users) await ensureMember(org.id, u.user.id, 'coach', u.name);
+
+  // ── categories/items, looked up by name so the fixture never invents its own taxonomy ─────
+  const { data: cats } = await db.from('budget_categories').select('id, name');
+  const { data: items } = await db.from('budget_items').select('id, name, category_id');
+  const catBy = Object.fromEntries((cats ?? []).map(c => [c.name, c.id]));
+  const itemBy = (catName, itemName) => (items ?? []).find(i => i.category_id === catBy[catName] && i.name === itemName)?.id ?? null;
+
+  async function makeTeam(name, slug, division) {
+    let team = (await db.from('rep_teams').select('id, name').eq('org_id', org.id).eq('slug', slug).maybeSingle()).data;
+    if (!team) {
+      const ins = await db.from('rep_teams').insert({
+        org_id: org.id, name, slug, sport: 'baseball', division,
+      }).select('id, name').single();
+      die('team insert', ins.error);
+      team = ins.data;
+      ok(`team created ${name}`);
+    }
+    return team;
+  }
+
+  async function makeYear(team, year, status) {
+    let py = (await db.from('rep_program_years').select('id, year, status')
+      .eq('team_id', team.id).eq('year', year).maybeSingle()).data;
+    if (!py) {
+      const ins = await db.from('rep_program_years').insert({
+        team_id: team.id, org_id: org.id, name: `${year} Season`, year, status,
+      }).select('id, year, status').single();
+      die('program year insert', ins.error);
+      py = ins.data;
+      ok(`${team.name} ${year} (${status}) created`);
+    } else if (py.status !== status) {
+      die('year status', (await db.from('rep_program_years').update({ status }).eq('id', py.id)).error);
+    }
+    return py;
+  }
+
+  async function assignStaff(team, py) {
+    for (const u of users) {
+      const has = (await db.from('rep_team_coaches').select('id')
+        .eq('program_year_id', py.id).eq('user_id', u.user.id).maybeSingle()).data;
+      const row = {
+        program_year_id: py.id, team_id: team.id, org_id: org.id,
+        user_id: u.user.id, coach_role: u.role, capabilities: u.caps,
+      };
+      if (has) die('staff update', (await db.from('rep_team_coaches').update(row).eq('id', has.id)).error);
+      else die('staff insert', (await db.from('rep_team_coaches').insert(row)).error);
+    }
+  }
+
+  async function makeRoster(team, py, names) {
+    let players = (await db.from('rep_roster_players').select('id, player_first_name')
+      .eq('program_year_id', py.id).eq('status', 'active').order('display_order')).data ?? [];
+    if (players.length) return players;
+    const ins = await db.from('rep_roster_players').insert(names.map((n, i) => ({
+      program_year_id: py.id, team_id: team.id, org_id: org.id,
+      player_first_name: n, player_last_name: 'Ledger', player_number: String(i + 1),
+      status: 'active', source: 'admin_manual', display_order: i,
+      // Two SIBLINGS share a guardian, so "what does each family still owe?" has a real
+      // one-family-two-players case and a surname that differs from the players'.
+      guardian_first_name: i < 2 ? 'Robin' : `G${i}`,
+      guardian_last_name: i < 2 ? 'Okafor' : 'Ledger',
+      guardian_email: i < 2 ? 'robin.okafor@example.com' : `g${i}@example.com`,
+    }))).select('id, player_first_name');
+    die('roster insert', ins.error);
+    ok(`${team.name} roster seeded (${ins.data.length}, first two are siblings)`);
+    return ins.data;
+  }
+
+  // ═══ TEAM A — data-rich, second season ═══════════════════════════════════════════════════
+  const u13 = await makeTeam('QA Money U13', 'qa-money-u13', 'U13');
+  const yr = new Date().getFullYear();
+  const prev = await makeYear(u13, yr - 1, 'completed');
+  const cur = await makeYear(u13, yr, 'active');
+  await assignStaff(u13, cur);
+  await assignStaff(u13, prev);
+  const roster = await makeRoster(u13, cur, ['Maya', 'Sam', 'Ari', 'Bo', 'Cleo', 'Dez', 'Eli', 'Fay', 'Gus', 'Hana', 'Ira', 'Jo']);
+
+  // ── budget lines, deliberately spread across MONTHS so the grid has columns to fill ──────
+  // ⚠ One line is left with NO periods on purpose. An undated line must NOT be smeared across
+  // the months (that behaviour changed deliberately) — it is the case the cumulative chart note
+  // in the ledger is about, and without one here the check cannot be made.
+  const LINES = [
+    { cat: 'Tournaments', item: 'Entry Fees',      desc: 'Tournament entry fees', total: 2400, periods: [[-4, 600], [-3, 600], [-2, 600], [-1, 600]] },
+    { cat: 'Team Gear',   item: 'Uniforms',        desc: 'Uniform order',         total: 1800, periods: [[-5, 1800]] },
+    { cat: 'Facilities',  item: 'Diamond Permits', desc: 'Diamond permits',       total: 1200, periods: [[-4, 300], [-3, 300], [-2, 300], [-1, 300]] },
+    { cat: 'Officials',   item: null,              desc: 'Umpires',               total: 900,  periods: [[-3, 300], [-2, 300], [-1, 300]] },
+    { cat: 'Training',    item: null,              desc: 'Winter training',       total: 1500, periods: [[-6, 500], [-5, 500], [-4, 500]] },
+    { cat: 'Admin',       item: null,              desc: 'Miscellaneous',         total: 300,  periods: [] },
+  ];
+  const { data: haveLines } = await db.from('rep_budget_lines').select('id').eq('program_year_id', cur.id).limit(1);
+  if (!haveLines?.length) {
+    for (const [i, l] of LINES.entries()) {
+      const ins = await db.from('rep_budget_lines').insert({
+        org_id: org.id, team_id: u13.id, program_year_id: cur.id,
+        category_id: catBy[l.cat] ?? null, item_id: l.item ? itemBy(l.cat, l.item) : null,
+        description: l.desc, total_amount: l.total, sort_order: i,
+      }).select('id').single();
+      die('budget line', ins.error);
+      if (l.periods.length) {
+        die('budget periods', (await db.from('rep_budget_periods').insert(
+          l.periods.map(([m, amt], n) => ({
+            budget_line_id: ins.data.id, period_label: monthStart(m).slice(0, 7),
+            period_date: monthStart(m), amount: amt, sort_order: n,
+          })),
+        )).error);
+      }
+    }
+    ok(`budget seeded — 6 lines / $8,100, five phased across months, ONE deliberately undated`);
+  } else note('budget lines already present');
+
+  // ── expenses: paid, payable, over-plan and unbudgeted ────────────────────────────────────
+  // ⚠ The "Team photos" row has NO category on purpose — an unbudgeted spend is what makes the
+  // report earn its keep, and a fixture where everything reconciles teaches the opposite lesson.
+  // ⚠ "Uniform order" is $50 OVER its line, so exactly one row reads over-plan. A sheet where
+  // every line comes in under is a sheet that flatters, and the Difference column proves nothing.
+  const EXPENSES = [
+    { desc: 'Spring Invitational entry', cat: 'Tournaments', amount: 600,  paid: dayIn(-4, 12) },
+    { desc: 'Summer Classic entry',      cat: 'Tournaments', amount: 600,  paid: dayIn(-2, 8) },
+    { desc: 'Uniform order',             cat: 'Team Gear',   amount: 1850, paid: dayIn(-5, 20) },
+    { desc: 'Diamond permits — spring',  cat: 'Facilities',  amount: 650,  paid: dayIn(-4, 3) },
+    { desc: 'Umpires — midseason',       cat: 'Officials',   amount: 300,  paid: dayIn(-2, 15) },
+    { desc: 'Team photo day',            cat: null,          amount: 180,  paid: dayIn(-1, 9) },
+  ];
+  const { data: haveExp } = await db.from('rep_team_expenses').select('id').eq('program_year_id', cur.id).limit(1);
+  if (!haveExp?.length) {
+    die('expenses', (await db.from('rep_team_expenses').insert(EXPENSES.map(e => ({
+      program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+      expense_type: 'expense', description: e.desc, category: e.cat,
+      amount: e.amount, expense_paid_at: e.paid,
+    })))).error);
+    // A payable with a deposit paid and a balance still owed NEXT month — this is the row the
+    // Payment schedule tab's Unpaid default exists for, and the one that creates a shortfall.
+    die('payable', (await db.from('rep_team_expenses').insert({
+      program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+      expense_type: 'tournament_payable', description: 'Fall Showdown entry', category: 'Tournaments',
+      amount: 600, deposit_amount: 200, deposit_due_date: dayIn(-1, 15), deposit_paid_at: dayIn(-1, 14),
+      balance_amount: 400, balance_due_date: dayIn(1, 10),
+    })).error);
+    ok('expenses seeded — 6 paid (one OVER plan, one UNBUDGETED) + 1 payable with a balance due next month');
+  } else note('expenses already present');
+
+  // ── dues: most paid, two families behind ─────────────────────────────────────────────────
+  const { data: haveDues } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', cur.id).limit(1);
+  if (!haveDues?.length) {
+    for (const [i, p] of roster.entries()) {
+      const sched = await db.from('rep_player_dues_schedules').insert({
+        program_year_id: cur.id, player_id: p.id, team_id: u13.id, org_id: org.id, total_amount: 650,
+      }).select('id').single();
+      die('dues schedule', sched.error);
+      // Three instalments. The last two players (incl. one of the two siblings) are behind, so
+      // "what does each family still owe?" has both a family in arrears and a sibling pair.
+      const behind = i >= roster.length - 2 || i === 0;
+      die('dues installments', (await db.from('rep_player_dues_installments').insert(
+        [1, 2, 3].map(n => ({
+          schedule_id: sched.data.id, player_id: p.id, installment_number: n,
+          amount: n === 3 ? 216.66 : 216.67, due_date: dayIn(-5 + n * 2, 1),
+          paid_at: behind && n === 3 ? null : dayIn(-5 + n * 2, 3),
+          org_id: org.id, team_id: u13.id,
+        })),
+      )).error);
+    }
+    ok(`dues seeded — $650 × ${roster.length} in three instalments; 3 families a payment behind`);
+  } else note('dues already present');
+
+  // ── a fundraiser with a leaderboard ──────────────────────────────────────────────────────
+  const { data: haveFund } = await db.from('rep_fundraisers').select('id').eq('program_year_id', cur.id).limit(1);
+  if (!haveFund?.length) {
+    const f = await db.from('rep_fundraisers').insert({
+      org_id: org.id, team_id: u13.id, program_year_id: cur.id,
+      name: 'Spring Bottle Drive', description: 'Team bottle drive — 40% back to the player.',
+      player_rebate_percent: 40, start_date: monthStart(-3), end_date: monthStart(-1), is_active: true,
+    }).select('id').single();
+    die('fundraiser', f.error);
+    die('fundraiser entries', (await db.from('rep_fundraiser_entries').insert(
+      roster.slice(0, 8).map((p, i) => ({
+        fundraiser_id: f.data.id, org_id: org.id, team_id: u13.id, player_id: p.id,
+        amount_raised: 120 - i * 12, rebate_percent: 40, rebate_amount: (120 - i * 12) * 0.4,
+      })),
+    )).error);
+    ok('fundraiser seeded — 8 entries, an uneven leaderboard');
+  } else note('fundraiser already present');
+
+  // ── one pending payment request, so Allocations has something to cross-link to ────────────
+  const { data: havePr } = await db.from('rep_team_payment_requests').select('id').eq('team_id', u13.id).limit(1);
+  if (!havePr?.length) {
+    die('payment request', (await db.from('rep_team_payment_requests').insert({
+      org_id: org.id, team_id: u13.id, request_type: 'charge_to_org',
+      amount: 450, description: 'Share of the spring dome block', status: 'pending',
+      created_by: users[0].user.id,
+    })).error);
+    ok('payment request seeded (pending)');
+  } else note('payment request already present');
+
+  // ── the PRIOR season, so the months view has a prior-season column ───────────────────────
+  const { data: havePrev } = await db.from('rep_budget_lines').select('id').eq('program_year_id', prev.id).limit(1);
+  if (!havePrev?.length) {
+    // ⚠ One of these categories (Fundraising Costs) appears ONLY last season — that is what
+    // produces the "last season only" group the ledger asks you to look for.
+    const PREV = [
+      { cat: 'Tournaments', desc: 'Tournament entry fees', total: 2100 },
+      { cat: 'Team Gear', desc: 'Uniform order', total: 1600 },
+      { cat: 'Fundraising Costs', desc: 'Bottle drive supplies', total: 250 },
+    ];
+    for (const [i, l] of PREV.entries()) {
+      die('prev budget line', (await db.from('rep_budget_lines').insert({
+        org_id: org.id, team_id: u13.id, program_year_id: prev.id,
+        category_id: catBy[l.cat] ?? null, description: l.desc, total_amount: l.total, sort_order: i,
+      })).error);
+    }
+    die('prev expenses', (await db.from('rep_team_expenses').insert(PREV.map((l, i) => ({
+      program_year_id: prev.id, team_id: u13.id, org_id: org.id,
+      expense_type: 'expense', description: l.desc, category: l.cat,
+      amount: l.total - 50, expense_paid_at: dayIn(-13 + i, 10),
+    })))).error);
+    ok('prior season seeded — 3 lines incl. ONE category that exists only last season');
+  } else note('prior season already present');
+
+  // ═══ TEAM B — deliberately EMPTY, for the budget starter ═════════════════════════════════
+  const u11 = await makeTeam('QA Money U11', 'qa-money-u11', 'U11');
+  const curB = await makeYear(u11, yr, 'active');
+  await assignStaff(u11, curB);
+  await makeRoster(u11, curB, ['Nia', 'Omar', 'Pia', 'Quinn', 'Rex', 'Sol', 'Tam', 'Uma', 'Vik', 'Wren']);
+  const { data: bLines } = await db.from('rep_budget_lines').select('id').eq('program_year_id', curB.id).limit(1);
+  const { data: bDues } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', curB.id).limit(1);
+  if (bLines?.length || bDues?.length) {
+    note('⚠ U11 has money data — the starter\'s first-run card needs it EMPTY. Clearing.');
+    await db.from('rep_budget_lines').delete().eq('program_year_id', curB.id);
+    await db.from('rep_player_dues_schedules').delete().eq('program_year_id', curB.id);
+  }
+  ok('U11 confirmed EMPTY — no budget, no dues (the starter\'s first-run state)');
+
+  console.log('');
+  console.log(`  Org            /${MONEY.slug}`);
+  for (const u of users) {
+    const label = u.caps === null ? 'head coach — full money' :
+      u.caps.money === 'read' ? 'assistant — money READ only' :
+      u.caps.money === 'off' ? 'assistant — money OFF' : 'assistant — money write, NO contacts';
+    console.log(`  ${u.email.padEnd(30)} ${MONEY.password}   ${label}`);
+  }
+  console.log(`  Data-rich team  QA Money U13  → /${MONEY.slug}/coaches/teams/${u13.id}`);
+  console.log(`  Empty team      QA Money U11  → /${MONEY.slug}/coaches/teams/${u11.id}`);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 if (wants('cancel-lab')) await seedCancelLab();
 if (wants('game-day')) await seedGameDay();
 if (wants('book')) await seedBook();
+if (wants('money')) await seedMoneyLab();
 
 console.log('\n✓ Done.\n');
 console.log('⚠ Restart the dev server before testing — this run added events and lineups.');

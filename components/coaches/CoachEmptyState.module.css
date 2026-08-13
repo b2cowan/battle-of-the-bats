@@ -133,6 +133,17 @@
   .actions {
     justify-content: flex-start;
   }
+
+  /* The portal's 44px phone tap floor, on the ONE row in this component a coach taps. The
+     global `.btn` renders ~39px here, which the rendered-layout sweep flags — and it matters
+     more on an empty state than almost anywhere else: this is the surface whose entire job is
+     to get a stuck coach moving, and since the 2026-08-13 action ruling it is also where an
+     import survives on a phone once the page header stops offering one. Placed on the shared
+     component rather than per caller, which is what stopped the Money panels hand-rolling a
+     parallel action row with its own floor. */
+  .actions :global(.btn) {
+    min-height: var(--tap-min, 44px);
+  }
 }
 
 /* Quiet / "waiting" variant (COACH_SURFACE_DESIGN_ADDENDUM §iii — the tier between Compact and

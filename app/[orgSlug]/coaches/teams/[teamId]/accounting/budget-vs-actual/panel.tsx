@@ -1,23 +1,21 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coach-budget-months';
-import ExportMenu from '@/components/admin/ExportMenu';
-import {
-  downloadXLSX, generateCSV, downloadCSVBlob,
-  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
-} from '@/lib/export';
+import { useMoneyRevision } from '@/lib/coach-money-refresh';
+import { toggleKey } from '@/lib/toggle-key';
+import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
+import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import type { ExportColumnDef } from '@/lib/export';
 import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import styles from './bva.module.css';
 import shared from '../../../../coaches.module.css';
@@ -69,10 +67,21 @@ interface MonthlyPoint {
 
 interface BvaData extends MonthGridPayload {
   headroom: number;
-  totalBudget: number;      // itemized line-item sum
-  seasonTotal: number | null;
-  effectiveBudget: number;  // max(itemized, season total)
-  buffer: number;           // season total not yet itemized
+  totalBudget: number;      // itemized COST sum (funding lines are never in here)
+  seasonTotal: number | null;   // the optional estimated total
+  effectiveBudget: number;  // the estimate when one is set, else the itemized sum
+  buffer: number;           // estimate not yet itemized (positive part only)
+  /** Signed: negative means the lines have outgrown the estimate. */
+  estimateDifference: number;
+  overPlanned: boolean;
+  /** Null when the team budgets no expected funding — the row simply isn't there. */
+  funding: {
+    budget: number;
+    /** The team's SHARE of what was raised: total less what went back to the players. */
+    actual: number;
+    lines: Array<{ id: string; description: string; amount: number }>;
+    fundedByPlayers: number;
+  } | null;
   totalActual: number;
   categories: CategoryResult[];
   unbudgetedActuals: UnbudgetedActual[];
@@ -86,15 +95,19 @@ interface BvaData extends MonthGridPayload {
 
 type BvaView = 'categories' | 'months';
 
-const BVA_EXPORT_COLS: ExportColumnDef[] = [
-  { label: 'Item',     key: 'item',     format: 'text' },
-  { label: 'Budgeted', key: 'budgeted', format: 'currency' },
-  { label: 'Actual',   key: 'actual',   format: 'currency' },
-  { label: 'Variance', key: 'variance', format: 'currency' },
-];
+// The category table's columns and rows are NOT declared here — they live in
+// `lib/coach-money-exports` beside the Money hub's own "Budget vs. actual" export, so the two
+// cannot become two different spreadsheets. Only the MONTH-GRID export is local to this file,
+// because its shape depends on the view and lens the coach chose (rule 12).
 
+/** ⚠ STRIPS THE SIGN — every screen caller prints its own (`fmtVariance`, the headroom's ±). */
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** The same figure with its sign kept — for anywhere nothing else supplies one, i.e. a file. */
+function fmtSigned(n: number) {
+  return n < 0 ? `-${fmt(n)}` : fmt(n);
 }
 
 function fmtMonth(yyyyMm: string): string {
@@ -107,6 +120,19 @@ function varianceColor(v: number): string {
   if (v > 0.005) return 'var(--success-light)';
   if (v < -0.005) return 'var(--danger-light)';
   return 'var(--home-ink-soft, rgba(255,255,255,0.6))';
+}
+
+/** A variance's sign, on the same half-cent deadband as its colour — the two must agree, and
+ *  five hand-written copies of the ternary were one epsilon edit away from disagreeing. */
+function signPrefix(v: number): string {
+  if (v > 0.005) return '+';
+  if (v < -0.005) return '-';
+  return '';
+}
+
+/** A variance rendered whole: sign, then magnitude. */
+function fmtVariance(v: number): string {
+  return `${signPrefix(v)}${fmt(Math.abs(v))}`;
 }
 
 function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
@@ -195,7 +221,6 @@ export function BudgetVsActualPanel({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
-  const { currentOrg } = useOrg();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [data,    setData]    = useState<BvaData | null>(null);
@@ -226,8 +251,9 @@ export function BudgetVsActualPanel({
   const [recatSaving, setRecatSaving] = useState(false);
   const [recatError, setRecatError] = useState('');
 
-  // PDF settings — fetched once on mount; used in handleExportPDF
-  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  // No PDF-settings fetch here any more: MoneyExportButton loads the org's branding on the FIRST
+  // PDF export and remembers it, rather than every Money tab requesting it on mount for a file
+  // most coaches never ask for.
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
@@ -267,7 +293,10 @@ export function BudgetVsActualPanel({
     }
   }, [orgSlug, teamId, filterTagId, bvaQuery]);
 
-  useEffect(() => { load(); }, [load]);
+  // Budget lines imported from the hub's Import menu change what this report compares against,
+  // so it re-reads on the same signal — without remounting anything.
+  const moneyRevision = useMoneyRevision();
+  useEffect(() => { load(); }, [load, moneyRevision]);
 
   const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
   useEffect(() => {
@@ -288,13 +317,6 @@ export function BudgetVsActualPanel({
     if (!prefsKey || !prefsLoaded) return;
     try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens })); } catch { /* device memory only */ }
   }, [prefsKey, prefsLoaded, view, lens]);
-
-  useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
 
   async function saveRecategorize() {
     if (!recatTarget) return;
@@ -374,7 +396,7 @@ export function BudgetVsActualPanel({
   }
 
   const inMonthView = view === 'months' && !!data?.monthGrid;
-  const exportCols = inMonthView ? monthExportColumns() : BVA_EXPORT_COLS;
+  const exportCols = inMonthView ? monthExportColumns() : BVA_EXPORT_COLUMNS;
   const exportTitle = inMonthView
     ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
     : 'Budget vs. Actual';
@@ -384,93 +406,48 @@ export function BudgetVsActualPanel({
   }
 
   function buildExportRows() {
-    if (!data) return [];
-    const rows: Array<{ item: string; budgeted: number | ''; actual: number | ''; variance: number | '' }> = [];
-    for (const cat of data.categories) {
-      rows.push({ item: cat.categoryName, budgeted: cat.categoryEstimated, actual: cat.categoryActual, variance: cat.categoryVariance });
-      for (const line of cat.lines) {
-        rows.push({ item: `  — ${line.description}`, budgeted: line.totalEstimated, actual: '', variance: '' });
-      }
-    }
-    if (data.buffer > 0) {
-      rows.push({ item: 'Non-itemized buffer', budgeted: data.buffer, actual: '', variance: '' });
-    }
-    for (const u of data.unbudgetedActuals) {
-      rows.push({ item: `Unbudgeted — ${u.description}${u.category ? ` (${u.category})` : ''}`, budgeted: '', actual: u.amount, variance: '' });
-    }
-    rows.push({ item: 'Total', budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom });
-    return rows;
+    // The category table comes from the SHARED builder, so this page's export and the Money hub's
+    // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
+    // without which the spreadsheet's totals would disagree with the screen.
+    return bvaCategoryRows(data);
   }
 
-  function exportMeta() {
+
+  /**
+   * Everything the export needs, built AT CLICK TIME from what is on screen — the view, the
+   * reading, the whole lot. This is the reason Export sits on the tab rather than in the hub
+   * header: none of it is visible from up there, and pretending otherwise is what gave this
+   * screen two Export buttons producing different files (owner ruling 2026-08-13).
+   */
+  function buildExport() {
     return {
-      org: currentOrg?.slug ?? orgSlug,
       dataset: inMonthView ? `budget-by-month-${lens}` : 'budget-vs-actual',
-      scope: assignment?.programYearName ?? teamId,
+      title: exportTitle,
+      columns: exportCols,
+      rows: buildRows(),
+      // The month grid's columns depend on the season, so its PDF rows are formatted from the
+      // same column definitions rather than a hand-written list — that is what keeps the three
+      // formats in step when the month range or the reading changes.
+      //
+      // ⚠ `fmtSigned`, NOT this file's `fmt`. `fmt` strips the sign because every SCREEN caller
+      // prints its own (`fmtVariance`, the headroom's `+`/`-`) — but a PDF cell has no such
+      // partner, so using it here printed an over-budget variance and an under-budget one
+      // identically, and negated the expected-funding rows into positives (/review, 2026-08-13).
+      pdfRows: (rows: Array<Record<string, string | number>>) => rows.map(r => exportCols.map(c => {
+        const v = r[c.key];
+        if (c.format !== 'currency') return String(v ?? '');
+        return v === '' || v === undefined || v === null ? '—' : fmtSigned(Number(v));
+      })),
+      scopeLabel: assignment?.programYearName ?? '',
+      teamName: assignment?.teamName ?? '',
+      emptyMessage: inMonthView
+        ? 'There is nothing in this month view to export yet.'
+        : 'Budget vs. Actual has nothing to report yet — it needs a budget plan.',
     };
   }
 
-  async function handleExportXLSX() {
-    const src = buildRows();
-    if (!src.length) return;
-    await downloadXLSX(
-      buildFilename(exportMeta(), 'xlsx'),
-      serializeHeaders(exportCols), serializeRows(src, exportCols),
-      inMonthView ? 'Budget by month' : 'Budget vs Actual',
-    );
-  }
-
-  function handleExportCSV() {
-    const src = buildRows();
-    if (!src.length) return;
-    downloadCSVBlob(
-      buildFilename(exportMeta(), 'csv'),
-      generateCSV(serializeHeaders(exportCols), serializeRows(src, exportCols)),
-    );
-  }
-
-  async function handleExportPDF() {
-    const src = buildRows();
-    if (!src.length) return;
-    const settings: OrgPdfSettings = {
-      ...DEFAULT_PDF_SETTINGS,
-      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-    };
-    const teamName = assignment?.teamName ?? teamId;
-    const programYearName = assignment?.programYearName ?? '';
-    // Built from the same column definitions as the sheet exports, so the three formats can't
-    // drift apart when the month range or the lens changes.
-    const pdfHeaders = exportCols.map(c => c.label);
-    const pdfRows = src.map(r => exportCols.map(c => {
-      const v = r[c.key];
-      if (c.format !== 'currency') return String(v ?? '');
-      return v === '' || v === undefined || v === null ? '—' : fmt(Number(v));
-    }));
-    await downloadPDF(
-      buildFilename(exportMeta(), 'pdf'),
-      exportTitle,
-      `${teamName} — ${programYearName}`,
-      pdfHeaders,
-      pdfRows,
-      settings,
-    );
-  }
-
-  function toggleCat(name: string) {
-    setExpandedCats(prev => {
-      const s = new Set(prev);
-      s.has(name) ? s.delete(name) : s.add(name);
-      return s;
-    });
-  }
-
-  function toggleLine(id: string) {
-    setExpandedLines(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
-    });
-  }
+  function toggleCat(name: string) { setExpandedCats(prev => toggleKey(prev, name)); }
+  function toggleLine(id: string)  { setExpandedLines(prev => toggleKey(prev, id)); }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!page.hasAccess) {
@@ -484,16 +461,16 @@ export function BudgetVsActualPanel({
 
   const unbudgetedTotal = data?.unbudgetedActuals.reduce((s, u) => s + u.amount, 0) ?? 0;
 
-  // Page-header ruling 2026-08-11: the one action, shared by the standalone header and the
-  // embedded (Money-hub tab) actions row.
-  const bvaExportMenu = (
-    <ExportMenu
+  // ⚠ THIS SCREEN IS WHY EXPORT LEFT THE HUB HEADER (owner ruling 2026-08-13, mockup 96675523).
+  // For a while it had TWO Export buttons: one above the tab bar exporting the category table,
+  // one here exporting the month grid at the chosen reading — both labelled "Export", neither
+  // saying which. There is now one, and it sits beside the switches that decide what it contains,
+  // so it can only mean "what I am looking at".
+  const bvaExport = (
+    <MoneyExportButton
+      label={inMonthView ? 'Budget by month' : 'Budget vs. actual'}
       formats={['xlsx', 'csv', 'pdf']}
-      onExportXLSX={handleExportXLSX}
-      onExportCSV={handleExportCSV}
-      onExportPDF={handleExportPDF}
-      planId={currentOrg?.planId}
-      pdfFeatureKey="pdf_exports"
+      build={buildExport}
       disabled={!data || (data.effectiveBudget === 0 && data.totalActual === 0)}
     />
   );
@@ -512,7 +489,6 @@ export function BudgetVsActualPanel({
         title="Budget vs. Actual"
         season={page.season}
         teamBase={page.teamBase}
-        actions={bvaExportMenu}
         helpLabel="Budget vs. Actual"
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
@@ -586,7 +562,16 @@ export function BudgetVsActualPanel({
               <span className={styles.summaryLabel}>Total Budget</span>
               <span className={styles.summaryValue}>{fmt(data.effectiveBudget)}</span>
               {data.buffer > 0 && (
-                <span className={styles.summaryHint}>incl. {fmt(data.buffer)} non-itemized</span>
+                <span className={styles.summaryHint}>incl. {fmt(data.buffer)} not itemized yet</span>
+              )}
+              {/* When the plan is over its own estimate this report measures against the ESTIMATE
+                  (the shared rule), which is a lower number than the lines add up to. The budget
+                  page says so in red; without this the report just showed the smaller figure and
+                  left the coach to notice — the same two-pages-disagree problem the rule fixed. */}
+              {data.overPlanned && (
+                <span className={styles.summaryHint} style={{ color: 'var(--danger-light)' }}>
+                  your lines are {fmt(Math.abs(data.estimateDifference))} over this estimate
+                </span>
               )}
             </div>
             <div className={styles.summaryItem}>
@@ -676,6 +661,11 @@ export function BudgetVsActualPanel({
                 </div>
               </>
             )}
+
+            {/* On EVERY view, not just the month one — it exports whichever is on screen, so it
+                has no reason to appear and disappear. Standalone route included: this row is on
+                both, which is what stops the two shapes drifting apart. */}
+            <span className={shared.panelToolbarActions}>{bvaExport}</span>
           </div>
 
           {view === 'months' ? (
@@ -718,99 +708,101 @@ export function BudgetVsActualPanel({
                  borders, and on a desktop this never overflows at all. */}
              <CoachScrollX sticky frame={false} hint="Swipe the table to see Actual and Variance">
               <div className={styles.gridInner}>
-              <div className={styles.tableHeader}>
-                <span className={`${styles.colDesc} ${shared.scrollXStickyCell}`}>Category / Line Item</span>
-                <span className={styles.colNum}>Budgeted</span>
-                <span className={styles.colNum}>Actual</span>
-                <span className={styles.colNum}>Variance</span>
+              <div className={`${shared.ledgerHead} ${styles.tableHeader}`}>
+                <span className={shared.scrollXStickyCell}>Category / Line Item</span>
+                <span className={shared.thNum}>Budgeted</span>
+                <span className={shared.thNum}>Actual</span>
+                <span className={shared.thNum}>Variance</span>
               </div>
 
-              <div className={styles.linesContainer}>
+              <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
                 {data.categories.map(cat => (
-                  <div key={cat.categoryName} className={styles.categoryGroup}>
+                  <div key={cat.categoryName} className={shared.ledgerGroup}>
                     <button
-                      className={styles.categoryHeader}
+                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader}`}
+                      aria-expanded={expandedCats.has(cat.categoryName)}
                       onClick={() => toggleCat(cat.categoryName)}
                     >
-                      <div className={`${styles.catHeaderInner} ${shared.scrollXStickyCell}`}>
+                      <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
                         <span className={styles.expandIcon}>
                           {expandedCats.has(cat.categoryName)
-                            ? <ChevronDown size={14} />
-                            : <ChevronRight size={14} />}
+                            ? <ChevronDown size={14} aria-hidden />
+                            : <ChevronRight size={14} aria-hidden />}
                         </span>
-                        <span className={styles.categoryName}>{cat.categoryName}</span>
-                      </div>
-                      <span className={styles.catNum}>{fmt(cat.categoryEstimated)}</span>
-                      <span className={styles.catNum}>{fmt(cat.categoryActual)}</span>
+                        <span className={shared.ledgerName}>{cat.categoryName}</span>
+                      </span>
+                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.categoryEstimated)}</span>
+                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.categoryActual)}</span>
                       <span
-                        className={styles.catNum}
+                        className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}
                         style={{ color: varianceColor(cat.categoryVariance) }}
                       >
-                        {cat.categoryVariance > 0.005 ? '+' : cat.categoryVariance < -0.005 ? '-' : ''}
-                        {fmt(Math.abs(cat.categoryVariance))}
+                        {fmtVariance(cat.categoryVariance)}
                       </span>
                     </button>
 
                     {expandedCats.has(cat.categoryName) && (
-                      <div className={styles.linesBody}>
+                      <div>
                         {cat.lines.map(line => (
-                          <div key={line.budgetLineId} className={styles.lineRow}>
-                            <div className={styles.lineMain}>
-                              <div className={`${styles.lineInner} ${shared.scrollXStickyCell}`}>
+                          <Fragment key={line.budgetLineId}>
+                            <div className={`${shared.ledgerRow} ${styles.lineMain}`}>
+                              <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
                                 {line.hasPeriods ? (
                                   <button
-                                    className={styles.expandBtn}
+                                    className={shared.ledgerExpand}
+                                    aria-expanded={expandedLines.has(line.budgetLineId)}
+                                    aria-label={expandedLines.has(line.budgetLineId)
+                                      ? `Hide ${line.description}'s periods`
+                                      : `Show ${line.description}'s periods`}
                                     onClick={() => toggleLine(line.budgetLineId)}
                                   >
                                     {expandedLines.has(line.budgetLineId)
-                                      ? <ChevronDown size={13} />
-                                      : <ChevronRight size={13} />}
+                                      ? <ChevronDown size={13} aria-hidden />
+                                      : <ChevronRight size={13} aria-hidden />}
                                   </button>
                                 ) : (
-                                  <span className={styles.expandSpacer} />
+                                  <span className={shared.ledgerExpandSpacer} />
                                 )}
-                                <span className={`${styles.lineDesc} ${shared.wrap640}`}>{line.description}</span>
-                              </div>
-                              <span className={styles.lineNum}>{fmt(line.totalEstimated)}</span>
-                              <span className={styles.lineNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
-                              <span className={styles.lineNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
+                                <span className={shared.ledgerDesc}>{line.description}</span>
+                              </span>
+                              <span className={shared.ledgerNum}>{fmt(line.totalEstimated)}</span>
+                              <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                              <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
                             </div>
 
                             {line.hasPeriods && expandedLines.has(line.budgetLineId) && (
-                              <div className={styles.periodsBody}>
+                              <div className={shared.ledgerSubRows}>
                                 {line.periods.map((p, pi) => {
                                   const variance = p.estimated - p.actual;
                                   return (
-                                    <div key={pi} className={styles.periodRow}>
-                                      <span className={`${styles.periodLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
-                                      <span className={styles.periodDate}>
+                                    <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
+                                      <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
+                                      <span className={shared.ledgerSubMeta}>
                                         {p.periodDate
                                           ? new Date(p.periodDate + 'T12:00:00').toLocaleDateString('en-CA', {
                                               month: 'short', day: 'numeric', year: 'numeric',
                                             })
                                           : ''}
                                       </span>
-                                      <span className={styles.periodNum}>{fmt(p.estimated)}</span>
+                                      <span className={shared.ledgerNum}>{fmt(p.estimated)}</span>
                                       <span
-                                        className={styles.periodNum}
-                                        style={{ color: p.actual > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.25))' }}
+                                        className={`${shared.ledgerNum} ${p.actual > 0 ? '' : shared.ledgerNumMuted}`}
+                                        style={p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
                                       >
                                         {p.actual > 0 ? fmt(p.actual) : '—'}
                                       </span>
                                       <span
-                                        className={styles.periodNum}
-                                        style={{ color: p.actual > 0 ? varianceColor(variance) : 'var(--home-dim, rgba(255,255,255,0.25))' }}
+                                        className={`${shared.ledgerNum} ${p.actual > 0 ? '' : shared.ledgerNumMuted}`}
+                                        style={p.actual > 0 ? { color: varianceColor(variance) } : undefined}
                                       >
-                                        {p.actual > 0
-                                          ? `${variance > 0.005 ? '+' : variance < -0.005 ? '-' : ''}${fmt(Math.abs(variance))}`
-                                          : '—'}
+                                        {p.actual > 0 ? fmtVariance(variance) : '—'}
                                       </span>
                                     </div>
                                   );
                                 })}
                               </div>
                             )}
-                          </div>
+                          </Fragment>
                         ))}
                       </div>
                     )}
@@ -818,35 +810,79 @@ export function BudgetVsActualPanel({
                 ))}
               </div>
 
-              {/* Non-itemized buffer — season-total dollars not yet covered by lines */}
+              {/* The part of the estimated total not yet covered by lines. Positive only — an
+                  estimate BELOW the lines has nothing unallocated to show. */}
               {data.buffer > 0 && (
-                <div className={styles.categoryGroup}>
-                  <div className={styles.categoryHeader} style={{ cursor: 'default' }}>
-                    <div className={`${styles.catHeaderInner} ${shared.scrollXStickyCell}`}>
+                <div className={shared.ledgerGroup}>
+                  <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
+                    <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
                       <span className={styles.expandIcon} />
-                      <span className={styles.categoryName}>Non-itemized buffer</span>
-                    </div>
-                    <span className={styles.catNum}>{fmt(data.buffer)}</span>
-                    <span className={styles.catNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
-                    <span className={styles.catNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
+                      <span className={shared.ledgerName}>Not itemized yet</span>
+                    </span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.buffer)}</span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
                   </div>
                 </div>
               )}
 
-              <div className={styles.grandTotal}>
+              {/* Expected funding — the money the team planned to bring IN, measured against what
+                  it actually KEPT: everything raised, less whatever was rebated to the player who
+                  raised it (owner ruling 2026-08-12). A rebate lowers that player's own dues, so
+                  counting it here would lower the same dues twice. */}
+              {data.funding && (
+                <div className={shared.ledgerGroup}>
+                  <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
+                    <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+                      <span className={styles.expandIcon} />
+                      <span className={shared.ledgerName}>Expected funding</span>
+                    </span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>−{fmt(data.funding.budget)}</span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>−{fmt(data.funding.actual)}</span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceColor(data.funding.actual - data.funding.budget) }}>
+                      {fmtVariance(data.funding.actual - data.funding.budget)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
                 <span className={shared.scrollXStickyCell}>Total</span>
-                <span className={styles.grandNum}>{fmt(data.effectiveBudget)}</span>
-                <span className={styles.grandNum}>{fmt(data.totalActual - unbudgetedTotal)}</span>
+                <span className={shared.ledgerTotalNum}>{fmt(data.effectiveBudget)}</span>
+                <span className={shared.ledgerTotalNum}>{fmt(data.totalActual - unbudgetedTotal)}</span>
                 <span
-                  className={styles.grandNum}
+                  className={shared.ledgerTotalNum}
                   style={{ color: varianceColor(data.headroom + unbudgetedTotal) }}
                 >
-                  {(data.headroom + unbudgetedTotal) > 0.005 ? '+' : (data.headroom + unbudgetedTotal) < -0.005 ? '-' : ''}
-                  {fmt(Math.abs(data.headroom + unbudgetedTotal))}
+                  {fmtVariance(data.headroom + unbudgetedTotal)}
                 </span>
               </div>
+
+              {/* What players actually had to fund, once the money coming in is taken off. The
+                  Total above stays the COST comparison — this closes the same subtraction the
+                  budget plan's summary makes, so the two pages end on the same number. */}
+              {data.funding && (() => {
+                const fundedActual = data.totalActual - unbudgetedTotal - data.funding.actual;
+                const fundedVariance = data.funding.fundedByPlayers - fundedActual;
+                return (
+                  <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
+                    <span className={shared.scrollXStickyCell}>Funded by players</span>
+                    <span className={shared.ledgerTotalNum}>{fmt(data.funding.fundedByPlayers)}</span>
+                    <span className={shared.ledgerTotalNum}>{fmt(fundedActual)}</span>
+                    <span className={shared.ledgerTotalNum} style={{ color: varianceColor(fundedVariance) }}>
+                      {fmtVariance(fundedVariance)}
+                    </span>
+                  </div>
+                );
+              })()}
               </div>
              </CoachScrollX>
+             {data.funding && (
+               <p className={styles.fundingNote}>
+                 Expected funding&apos;s actual is your team&apos;s share — everything raised, less
+                 anything paid back to the player who raised it (that already lowers their own dues).
+               </p>
+             )}
             </div>
           )}
 

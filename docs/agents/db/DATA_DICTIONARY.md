@@ -2341,6 +2341,49 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_game_moments.created_by_name -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_name`** (text, nullable) — attribution: identity for author-own deletion + display snapshot.
 
+### `rep_team_import_events`
+<!-- dict:table:rep_team_import_events -->
+
+**Purpose:** a RECEIPT for a committed coach money import (budget lines / payables) — what was brought in, when, and by whom. It is the data source for **"Recent imports"** at the foot of the Money hub's `Import ▾` menu (page-level action ruling 2026-08-13, `COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §4.1). Added by migration 231. **Applied to dev 2026-08-13; prod apply rides the next release.**
+
+**Gotchas (read first):**
+1. **⚠ THIS IS NOT `import_batches`.** The tournament admin's `import_batches`/`import_batch_rows` pair STAGES an uncommitted preview that a second request applies. The coach importer previews **in the browser** and commits in one shot, so there is nothing to stage — one row is written *after* the commit loop, describing what actually landed. Do not "unify" the two: they answer different questions at different points in a flow.
+2. **⚠ WRITTEN BEST-EFFORT AND NEVER THROWS** (`recordRepTeamImport`, `lib/db.ts`). It is called once the coach's rows are already in the database; failing the request over a lost history line would throw away a successful forty-row import and report it as broken. A missing receipt is a footnote.
+3. **Only written when something LANDED.** The import route returns 400 before this point when every row failed, so the history can never list an import that imported nothing.
+4. **Append-only at the app layer** — no UPDATE route, no update helper. A receipt that can be edited is not a receipt.
+5. **Never read into a write path.** It feeds one menu item and nothing else; no total, no reconciliation and no analytic surface may derive from it.
+6. **The read is WRITE-gated and LIVE-SEASON-ONLY.** `/api/coaches/[orgSlug]/teams/[teamId]/money-imports` requires money **write** (a history of who changed the budget is not offered to a read-only assistant) and deliberately does **not** join the season-read rail — importing is an instrument, not a record, so it resolves the ACTIVE program year and cannot address a past season. The menu hosting it is write-gated and therefore already absent in an archive.
+7. **Coach-API-only.** RLS ENABLED with **zero policies**, so prod's default anon SELECT grant cannot reach it — the migs 225/228 treatment (see [[reference_supabase_rls_grants]]).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_import_events.team_id -->
+<!-- dict:col:rep_team_import_events.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the route's resolved coach context.
+
+<!-- dict:col:rep_team_import_events.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id` CASCADE, NOT NULL) — the season the import landed in. Stored rather than derived so an archived season can answer "what was imported that year" without walking anything. Leading columns of the table's one index.
+
+<!-- dict:col:rep_team_import_events.dataset -->
+**`dataset`** (text, NOT NULL, CHECK `budget_lines|payables`) — which dataset was brought in, in the **Import menu's own vocabulary**, so the history reads back in the words it was offered in. Derived from the commit route's existing write discriminator, never from client input.
+
+<!-- dict:col:rep_team_import_events.shape -->
+**`shape`** (text, NOT NULL, CHECK `month-grid|list|payables`) — the sheet shape the coach chose. Kept separately from `dataset` because "a month grid" and "a simple list" produce very different budgets from the same dataset. Client-supplied and **normalized server-side** to a CHECK-legal value; used for display only.
+
+<!-- dict:col:rep_team_import_events.source -->
+<!-- dict:col:rep_team_import_events.source_filename -->
+**`source`** (text, NOT NULL, CHECK `paste|file`) / **`source_filename`** (text ≤200, nullable) — how the rows arrived. **`paste` is the phone path** that the 2026-08-13 phone-header rule depends on surviving (the importer's paste-a-block mode exists because phones have no file picker), so it is worth being able to see it being used. Both are display-only and cannot affect what was written.
+
+<!-- dict:col:rep_team_import_events.rows_created -->
+<!-- dict:col:rep_team_import_events.rows_updated -->
+<!-- dict:col:rep_team_import_events.rows_skipped -->
+<!-- dict:col:rep_team_import_events.rows_failed -->
+**`rows_created` / `rows_updated` / `rows_skipped` / `rows_failed`** (integer, NOT NULL, DEFAULT 0) — the outcome counts the commit route already reports to the coach, kept so the same sentence can be re-read later. Skipped and failed are recorded too: an import that half-worked is exactly the one worth looking back at.
+
+<!-- dict:col:rep_team_import_events.created_by -->
+<!-- dict:col:rep_team_import_events.created_by_name -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_name`** (text, nullable) — attribution: identity plus a display snapshot taken from the season's staff list, the `rep_team_game_moments` convention. A coach later removed from staff still shows the name they had.
+
 ### `rep_team_tags`
 <!-- dict:table:rep_team_tags -->
 
@@ -3176,14 +3219,16 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ### `rep_budget_lines`
 <!-- dict:table:rep_budget_lines -->
 
-**Purpose:** a TEAM's season budget plan — one row per planned line item (e.g. "Tournament fees", $4,000) for a `(team_id, program_year_id)`. The estimated side of budget-vs-actual; read/written only by the coach budget-plan routes.
+**Purpose:** a TEAM's season budget plan — one row per planned line item (e.g. "Tournament fees", $4,000) for a `(team_id, program_year_id)`. Each row is either a **cost** or **expected funding** (`line_kind`). The estimated side of budget-vs-actual; read/written only by the coach budget-plan routes.
 
 **Gotchas (read first):**
 1. **The team one, not `org_budget_lines`** (dual-budget-line trap). Keyed by UUID `program_year_id`; `org_budget_lines` is the org-scoped Accounting table keyed by integer `season_year`. Independent rows, not views of each other.
-2. **`budget-vs-actual` matches actual expenses to a line by category NAME (case-insensitive string), NOT by `category_id`** — it joins `budget_categories(name)`, lowercases, and string-matches `rep_team_expenses.category` text. A line with `category_id IS NULL` ("Uncategorized") never matches any actual, and renaming a category silently breaks matching.
-3. **Drives per-player dues generation** — `generate-installments` divides Σ`total_amount` across the roster (see `rep_player_dues_installments`). The line-delete route 409s when `source='budget_generated'` dues installments exist — though note that guard's schedule lookup is undermined by the dead `rep_player_dues_schedules.budget_line_id` (see that table).
-4. **CHECK `total_amount > 0`** (`rep_budget_lines_total_amount_check`).
-5. **`sort_order` is never set on insert** — both create paths rely on the DB default `0` and there is no reorder route, so every line shares `sort_order = 0` (display order is effectively `created_at`).
+2. **`budget-vs-actual` matches actual expenses to a line by category NAME (case-insensitive string), NOT by `category_id`** — it joins `budget_categories(name)`, lowercases, and string-matches `rep_team_expenses.category` text. A line with `category_id IS NULL` ("Uncategorized") never matches any actual, and renaming a category silently breaks matching. ⚠ **`line_kind='funding'` rows are excluded from this match entirely** (they are not expenses); a funding line left in the cost path would both absorb a real expense and inflate the budget it exists to offset.
+3. **Drives per-player dues generation — NET OF FUNDING.** `generate-installments` divides what players actually fund across the roster: Σ cost lines (or the estimated total when one is set) **less** Σ funding lines. The line-delete route 409s when `source='budget_generated'` dues installments exist — though note that guard's schedule lookup is undermined by the dead `rep_player_dues_schedules.budget_line_id` (see that table).
+4. **CHECK `total_amount > 0`** (`rep_budget_lines_total_amount_check`) — for BOTH kinds. A funding line is stored **positive** and displayed negative; the kind carries the sign, never the amount.
+5. **`sort_order` is never set on insert** — both create paths rely on the DB default `0` and there is no reorder route, so every line shares `sort_order = 0` (display order is effectively `created_at`). The spreadsheet import is the exception: it continues from `MAX(sort_order)` over **every** line, funding included.
+6. **The effective season total is the ESTIMATE whenever `rep_program_years.budget_amount` is set** — in both directions (owner ruling 2026-08-12). It used to be `max(itemized, estimate)`, which stored a lower estimate and then ignored it. One shared module (`lib/coach-budget-totals.ts`) decides this for the planner, the Money hub and Budget vs. Actual — including whether a per-player figure exists at all.
+7. **Every reader must account for `line_kind`** — enforced by `tests/unit/budget-line-kind-guard.test.ts`, a build-failing allow-list over every call site. Three consumers were already summing funding as cost when the column landed (season rollover, the installment preview, the tryout fee suggestion).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -3200,7 +3245,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`description`** (text, NOT NULL) — line label (1–200 chars).
 
 <!-- dict:col:rep_budget_lines.total_amount -->
-**`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — estimated dollars; if periods exist they must sum to it (±$0.02, see `rep_budget_periods`).
+**`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — estimated dollars, always POSITIVE whatever the kind; if periods exist they must sum to it (±$0.02, see `rep_budget_periods`).
+
+<!-- dict:col:rep_budget_lines.line_kind -->
+**`line_kind`** (text, NOT NULL, default `'cost'`, CHECK `in ('cost','funding')`) — `cost` = money the team spends (what every row written before migration 230 is); `funding` = money it expects to bring in (fundraising, sponsorship, a grant). Funding lines never count toward what the season costs, only toward what players don't have to fund, and are excluded from actual-expense matching (gotcha 2).
 
 <!-- dict:col:rep_budget_lines.notes -->
 **`notes`** (text, nullable) — free text.

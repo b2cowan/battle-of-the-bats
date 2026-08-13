@@ -1,0 +1,1252 @@
+<title>Three Ways to Split</title>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     MOCKUP CHROME — deliberately NOT the product palette, so the
+     annotation layer can never be mistaken for product UI.
+     Cool slate neutrals + one steel-blue accent. Matches the
+     budget-totals and period-split mockups this one sits beside.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #E9ECEF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F4F6F8;
+    --ink:         #1B1F24;
+    --ink-2:       #4B545E;
+    --ink-3:       #78828D;
+    --rule:        rgba(27, 31, 36, 0.13);
+    --rule-soft:   rgba(27, 31, 36, 0.07);
+    --accent:      #2F5D8A;
+    --accent-soft: rgba(47, 93, 138, 0.10);
+    --on-accent:   #FFFFFF;
+    --new:         #0E6E64;
+    --new-bg:      rgba(14, 110, 100, 0.10);
+    --restyled:    #8A5410;
+    --restyled-bg: rgba(138, 84, 16, 0.11);
+    --same:        #5C6773;
+    --same-bg:     rgba(92, 103, 115, 0.10);
+    --gone:        #A03434;
+    --gone-bg:     rgba(160, 52, 52, 0.10);
+    --shadow:      0 1px 2px rgba(16,22,28,.06), 0 8px 28px rgba(16,22,28,.09);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --f-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono:    ui-monospace, "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15181C;
+      --surface:     #1D2126;
+      --surface-2:   #24292F;
+      --ink:         #E7EBEF;
+      --ink-2:       #B2BBC4;
+      --ink-3:       #87929C;
+      --rule:        rgba(231, 235, 239, 0.16);
+      --rule-soft:   rgba(231, 235, 239, 0.08);
+      --accent:      #85B4DF;
+      --accent-soft: rgba(133, 180, 223, 0.13);
+      --on-accent:   #10141A;
+      --new:         #5FCFC2;
+      --new-bg:      rgba(95, 207, 194, 0.13);
+      --restyled:    #E3A85C;
+      --restyled-bg: rgba(227, 168, 92, 0.13);
+      --same:        #9AA5B1;
+      --same-bg:     rgba(154, 165, 177, 0.12);
+      --gone:        #EE8A8A;
+      --gone-bg:     rgba(238, 138, 138, 0.13);
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #15181C;
+    --surface:     #1D2126;
+    --surface-2:   #24292F;
+    --ink:         #E7EBEF;
+    --ink-2:       #B2BBC4;
+    --ink-3:       #87929C;
+    --rule:        rgba(231, 235, 239, 0.16);
+    --rule-soft:   rgba(231, 235, 239, 0.08);
+    --accent:      #85B4DF;
+    --accent-soft: rgba(133, 180, 223, 0.13);
+    --on-accent:   #10141A;
+    --new:         #5FCFC2;
+    --new-bg:      rgba(95, 207, 194, 0.13);
+    --restyled:    #E3A85C;
+    --restyled-bg: rgba(227, 168, 92, 0.13);
+    --same:        #9AA5B1;
+    --same-bg:     rgba(154, 165, 177, 0.12);
+    --gone:        #EE8A8A;
+    --gone-bg:     rgba(238, 138, 138, 0.13);
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 0 0 0.35rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 1.03rem;
+    margin: 0 0 1.4rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin: 0 0 2.4rem; }
+  .tag {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.14rem 0.46rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag.new      { color: var(--new);      background: var(--new-bg); }
+  .tag.restyled { color: var(--restyled); background: var(--restyled-bg); }
+  .tag.same     { color: var(--same);     background: var(--same-bg); }
+  .tag.gone     { color: var(--gone);     background: var(--gone-bg); }
+
+  /* ── Section rhythm. The numbers are the coach's own path DOWN the
+        sheet — a real top-to-bottom order, not decoration. ── */
+  .sect { margin: 0 0 3.4rem; }
+  .sect-head { display: flex; align-items: baseline; gap: 0.7rem; margin: 0 0 0.5rem; flex-wrap: wrap; }
+  .sect-num {
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 1.9rem 0 0.6rem;
+  }
+  .sect > p, .sect > ul { max-width: 70ch; color: var(--ink-2); margin: 0 0 1.1rem; }
+  .sect > p strong, .sect > ul strong { color: var(--ink); font-weight: 600; }
+  ul { padding-left: 1.1rem; }
+  li { margin: 0 0 0.4rem; }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    margin: 1.1rem 0;
+    max-width: 70ch;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note.warn { border-left-color: var(--gone); }
+
+  /* ── Stage: the fake page ground a product frame sits on ── */
+  .stage {
+    border-radius: 14px;
+    padding: 1.4rem;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(0deg, var(--rule-soft) 1px, transparent 1px) 0 0 / 100% 26px,
+      var(--surface-2);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+  .stage + .stage { margin-top: 0.9rem; }
+  .stage.pair { gap: 1.2rem; flex-wrap: wrap; align-items: flex-start; }
+  .caption {
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    margin: 0.5rem 0 0;
+    max-width: 74ch;
+  }
+  .caption b { color: var(--ink-2); }
+
+  /* ── The defect strip: typed → previewed → created ── */
+  .defect {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.9rem;
+    margin: 1.3rem 0 0.6rem;
+  }
+  .dcell {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+  }
+  .dcell.bad { border-color: var(--gone); }
+  .dlabel {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ink-3);
+    margin: 0 0 0.25rem;
+  }
+  .dval {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .dcell.bad .dval { color: var(--gone); }
+  .dsub { font-size: 0.78rem; color: var(--ink-3); margin-top: 0.15rem; }
+
+  /* ─────────────────────────────────────────────────────────────
+     PRODUCT SKIN — the real coaches-portal tokens (warm portal).
+     ───────────────────────────────────────────────────────────── */
+  .skin {
+    --p-card:        #FFFFFF;
+    --p-inset:       #FCFBF8;
+    --p-ground:      #F5F1E8;
+    --p-ink:         #241E15;
+    --p-ink-soft:    #4A4235;
+    --p-dim:         #6A635C;
+    --p-line:        rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-field:       #FFFFFF;
+    --p-lime:        #D9F99D;
+    --p-olive:       #57651E;
+    --p-olive-soft:  rgba(87, 101, 30, 0.10);
+    --p-danger:      #C2410C;
+    --p-danger-soft: rgba(194, 65, 12, 0.09);
+    --p-warn:        #92600A;
+    --p-warn-soft:   rgba(146, 96, 10, 0.10);
+    --p-good:        #2F6B3C;
+    --p-good-soft:   rgba(47, 107, 60, 0.10);
+    --p-link:        #1D4ED8;
+    --p-on-olive:    #24310A;
+    width: 100%;
+    max-width: 560px;
+    font-family: var(--f-body);
+    color: var(--p-ink);
+  }
+  .skin.wide { max-width: 660px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .skin {
+      --p-card:        #111827;
+      --p-inset:       rgba(255,255,255,0.03);
+      --p-ground:      #0C111B;
+      --p-ink:         rgba(255,255,255,0.9);
+      --p-ink-soft:    rgba(255,255,255,0.7);
+      --p-dim:         rgba(255,255,255,0.45);
+      --p-line:        rgba(255,255,255,0.12);
+      --p-line-strong: rgba(255,255,255,0.2);
+      --p-field:       rgba(255,255,255,0.05);
+      --p-olive:       #A3B546;
+      --p-olive-soft:  rgba(255,255,255,0.10);
+      --p-danger:      #F87171;
+      --p-danger-soft: rgba(248, 113, 113, 0.12);
+      --p-warn:        #E3B061;
+      --p-warn-soft:   rgba(227, 176, 97, 0.13);
+      --p-good:        #6EE7A8;
+      --p-good-soft:   rgba(110, 231, 168, 0.12);
+      --p-link:        #93B4FF;
+      --p-on-olive:    #0A0A0A;
+    }
+  }
+  :root[data-theme="dark"] .skin {
+    --p-card:        #111827;
+    --p-inset:       rgba(255,255,255,0.03);
+    --p-ground:      #0C111B;
+    --p-ink:         rgba(255,255,255,0.9);
+    --p-ink-soft:    rgba(255,255,255,0.7);
+    --p-dim:         rgba(255,255,255,0.45);
+    --p-line:        rgba(255,255,255,0.12);
+    --p-line-strong: rgba(255,255,255,0.2);
+    --p-field:       rgba(255,255,255,0.05);
+    --p-olive:       #A3B546;
+    --p-olive-soft:  rgba(255,255,255,0.10);
+    --p-danger:      #F87171;
+    --p-danger-soft: rgba(248, 113, 113, 0.12);
+    --p-warn:        #E3B061;
+    --p-warn-soft:   rgba(227, 176, 97, 0.13);
+    --p-good:        #6EE7A8;
+    --p-good-soft:   rgba(110, 231, 168, 0.12);
+    --p-link:        #93B4FF;
+    --p-on-olive:    #0A0A0A;
+  }
+
+  /* ── The sheet ── */
+  .modal {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.9rem 1.1rem 0.75rem;
+  }
+  .modal-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+  .x { color: var(--p-dim); font-size: 0.95rem; }
+  .modal-body { padding: 0 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.95rem; }
+  .modal-foot {
+    display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--p-line);
+    background: var(--p-inset);
+  }
+  .lede { font-size: 0.86rem; color: var(--p-ink-soft); margin: 0; }
+  .lede b { font-weight: 700; color: var(--p-ink); }
+
+  .btn {
+    font: inherit; font-size: 0.84rem; font-weight: 600;
+    padding: 0.42rem 0.85rem; border-radius: 7px;
+    border: 1px solid transparent; background: transparent; color: var(--p-ink-soft);
+    cursor: default;
+  }
+  .btn.ghost { color: var(--p-dim); }
+  .btn.secondary { border-color: var(--p-line-strong); background: var(--p-card); color: var(--p-ink); }
+  .btn.primary { background: var(--p-lime); color: var(--p-on-olive); font-weight: 700; }
+
+  /* ── 1. Basis picker ── */
+  .basis { display: flex; flex-direction: column; gap: 0.45rem; }
+  .basis-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .bcard {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.15rem 0.7rem;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--p-line);
+    border-radius: 9px;
+    background: var(--p-card);
+  }
+  .bcard.on { border-color: var(--p-olive); background: var(--p-olive-soft); }
+  .bcard.off { opacity: 0.55; }
+  .bdot {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 1.5px solid var(--p-line-strong); background: var(--p-field);
+    grid-row: span 2; align-self: center;
+  }
+  .bcard.on .bdot { border-color: var(--p-olive); box-shadow: inset 0 0 0 3.5px var(--p-card), inset 0 0 0 9px var(--p-olive); }
+  .bname { font-size: 0.9rem; font-weight: 700; }
+  .bval {
+    grid-row: span 2; text-align: right;
+    font-size: 1.12rem; font-weight: 800; letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+  }
+  .bval small { display: block; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); }
+  .bval.muted { font-size: 0.86rem; font-weight: 700; color: var(--p-dim); letter-spacing: 0; }
+  .bmath { font-size: 0.75rem; color: var(--p-dim); font-variant-numeric: tabular-nums; }
+  .bmath.stop { color: var(--p-warn); }
+
+  /* ── 2. Installment rows ── */
+  .inst { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .inst-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--p-inset);
+    border-bottom: 1px solid var(--p-line);
+  }
+  .inst-head span {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .add {
+    font: inherit; font-size: 0.74rem; font-weight: 700;
+    color: var(--p-olive); background: transparent;
+    border: 1px solid var(--p-line-strong); border-radius: 6px;
+    padding: 0.16rem 0.5rem;
+  }
+  .irow {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 0.55rem;
+    align-items: end;
+    padding: 0.6rem 0.8rem;
+  }
+  .irow + .irow { border-top: 1px solid var(--p-line); }
+  .inum {
+    font-size: 0.78rem; font-weight: 700; color: var(--p-dim);
+    font-variant-numeric: tabular-nums; padding-bottom: 0.45rem;
+  }
+  .ifield { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .flabel { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; color: var(--p-dim); }
+  .fbox {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
+    border: 1px solid var(--p-line-strong); border-radius: 7px;
+    background: var(--p-field);
+    padding: 0.36rem 0.55rem;
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+  .fbox .cal { color: var(--p-dim); font-size: 0.85rem; }
+  .fbox.calc { background: var(--p-inset); border-style: dashed; color: var(--p-ink-soft); }
+  .fbox .auto {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--p-olive); background: var(--p-olive-soft);
+    padding: 0.05rem 0.3rem; border-radius: 3px;
+  }
+  .fbox .caret { width: 1px; height: 15px; background: var(--p-ink); }
+
+  /* ── 3. Reconciliation strip ── */
+  .recon {
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    border-radius: 9px; padding: 0.6rem 0.8rem;
+    font-size: 0.82rem; line-height: 1.45;
+  }
+  .recon .mk { font-weight: 800; flex: 0 0 auto; }
+  .recon b { font-weight: 700; }
+  .recon.short { background: var(--p-warn-soft); color: var(--p-warn); }
+  .recon.over  { background: var(--p-danger-soft); color: var(--p-danger); }
+  .recon.match { background: var(--p-good-soft); color: var(--p-good); }
+  .recon .body { color: inherit; }
+  .recon .body .quiet { color: inherit; opacity: 0.85; display: block; font-size: 0.76rem; margin-top: 0.1rem; }
+
+  /* ── 4. Preview ── */
+  .prev { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .prow {
+    display: grid;
+    grid-template-columns: 1fr 82px 82px 88px;
+    gap: 0.5rem;
+    padding: 0.42rem 0.8rem;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .prow span:not(:first-child) { text-align: right; }
+  .prow + .prow { border-top: 1px solid var(--p-line); }
+  .prow.head {
+    background: var(--p-inset);
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .prow .tot { font-weight: 700; }
+  .prow.more { color: var(--p-dim); font-size: 0.78rem; background: var(--p-inset); }
+  .prow.foot { background: var(--p-inset); font-weight: 700; border-top: 1.5px solid var(--p-line-strong); }
+
+  /* ── Inline annotation marker inside product frames ── */
+  .mark {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.66rem; font-weight: 700;
+    padding: 0.1rem 0.36rem; border-radius: 3px;
+    vertical-align: middle;
+  }
+  .mark.new { color: var(--new); background: var(--new-bg); }
+  .mark.restyled { color: var(--restyled); background: var(--restyled-bg); }
+
+  /* ── Closing checklist ── */
+  .keeps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.7rem; margin-top: 1rem; }
+  .keep {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .keep h4 { margin: 0 0 0.2rem; font-size: 0.9rem; font-weight: 700; }
+  .keep p { margin: 0; font-size: 0.82rem; color: var(--ink-3); }
+
+  /* ── Decisions awaiting the owner ── */
+  .tag.call  { color: var(--accent); background: var(--accent-soft); }
+  .mark.call { color: var(--accent); background: var(--accent-soft); }
+
+  .calls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2.8rem;
+  }
+  .call {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .call-n {
+    font-family: var(--f-mono);
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+    display: block; margin-bottom: 0.15rem;
+  }
+  .call h4 { margin: 0 0 0.25rem; font-size: 0.92rem; font-weight: 700; text-wrap: balance; }
+  .call p { margin: 0; font-size: 0.81rem; color: var(--ink-3); }
+  .call p b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── Before / after comparison ── */
+  .vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 1.1rem; width: 100%; }
+  .vsitem { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+  .vslab {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .vslab.now  { color: var(--same); }
+  .vslab.next { color: var(--new); }
+  .stage.vsstage { display: block; }
+
+  /* ── A blocked / dead-end state ── */
+  .blocker { text-align: center; padding: 1.4rem 1.1rem 1.5rem; }
+  .blocker .bt { font-size: 0.98rem; font-weight: 700; display: block; }
+  .blocker .bb { font-size: 0.84rem; color: var(--p-dim); margin: 0.4rem 0 0; }
+  .blocker .btn { margin-top: 1rem; display: inline-block; }
+  .nudge {
+    display: block; margin-top: 0.55rem;
+    font-size: 0.78rem; color: var(--p-link);
+    text-decoration: none; border-bottom: 1px solid currentColor;
+    width: fit-content;
+  }
+
+  @media (max-width: 620px) {
+    .irow { grid-template-columns: auto 1fr; }
+    .irow .ifield:last-child { grid-column: 2; }
+    .prow { grid-template-columns: 1fr 68px 68px 76px; font-size: 0.78rem; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches · Money · Budget Plan</p>
+  <h1>Three Ways to Split</h1>
+  <p class="standfirst">
+    The Generate Player Installments sheet gets a basis picker: split the budget evenly, split the
+    season estimate evenly, or set the amounts yourself. The preview stops showing numbers other than
+    the ones it is about to create. The sheet is now <strong>one door opened from two tabs</strong> —
+    Budget Plan and Player Dues — which is where the open decisions come from.
+  </p>
+  <div class="legend">
+    <span class="tag new">New</span>
+    <span class="tag restyled">Restyled</span>
+    <span class="tag same">Unchanged</span>
+    <span class="tag gone">Removed</span>
+    <span class="tag call">Needs your call</span>
+    <span style="font-size:0.82rem;color:var(--ink-3);">— every element in the frames below carries one.</span>
+  </div>
+
+  <div class="calls">
+    <div class="call">
+      <span class="call-n">Call 1</span>
+      <h4>Does manual unblock a coach with no budget?</h4>
+      <p>Drawn in <b>§5</b>, both ways. Today the sheet stops dead; manual amounts don't need a
+        number to divide.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 2</span>
+      <h4>Build the preview on the shared money cell?</h4>
+      <p>No visual difference to show — a sequencing call against the Money-table Pass 1. Written up
+        at the foot of <b>§4</b>.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 3</span>
+      <h4>Trim the sheet's opening paragraphs?</h4>
+      <p>Drawn in <b>§1</b>, both ways. The picker restates the arithmetic the first paragraph
+        currently carries.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>The defect underneath the request</h2></div>
+    <p>
+      Today the amount box accepts your number and the Preview button throws it away — the sheet asks
+      the server for a fresh even split every time. But <strong>Confirm &amp; Generate sends your
+      number after all.</strong> So the screen a coach reads before attaching money to ten families
+      shows one figure and creates another.
+    </p>
+    <div class="defect">
+      <div class="dcell">
+        <p class="dlabel">You type</p>
+        <div class="dval">$150.00</div>
+        <p class="dsub">One installment, due 30 Sep</p>
+      </div>
+      <div class="dcell">
+        <p class="dlabel">Preview shows</p>
+        <div class="dval">$800.00</div>
+        <p class="dsub">$8,000 budget ÷ 10 players</p>
+      </div>
+      <div class="dcell bad">
+        <p class="dlabel">Actually created</p>
+        <div class="dval">$150.00</div>
+        <p class="dsub">Your number, never previewed</p>
+      </div>
+    </div>
+    <div class="note warn">
+      <b>Fixed first, regardless of the rest.</b> The preview will render the exact amounts that will
+      be written, in every mode. A confirmation screen that disagrees with itself is the most expensive
+      kind of wrong, because it is the screen a coach trusts.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">1</span><h2>Choose what the amounts come from</h2></div>
+    <p>
+      Three choices at the top of the sheet, each showing what it works out to <em>before</em> you pick
+      it. The example team: <strong>$8,000.00</strong> of cost lines, <strong>$1,200.00</strong> of
+      expected funding, a <strong>$9,000.00</strong> season estimate, <strong>10</strong> active players.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Generate Player Installments</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <p class="lede">
+              Every active roster player receives the same schedule. Choose how the amounts are set,
+              then add a due date for each installment.
+            </p>
+
+            <div class="basis">
+              <div class="basis-head">
+                <span>How amounts are set <span class="mark new">New</span></span>
+              </div>
+
+              <div class="bcard on">
+                <span class="bdot"></span>
+                <span class="bname">Split the budget evenly</span>
+                <span class="bval">$680.00<small>per player</small></span>
+                <span class="bmath">$8,000.00 line items − $1,200.00 expected funding ÷ 10 players</span>
+              </div>
+
+              <div class="bcard">
+                <span class="bdot"></span>
+                <span class="bname">Split the season estimate evenly</span>
+                <span class="bval">$780.00<small>per player</small></span>
+                <span class="bmath">$9,000.00 estimate − $1,200.00 expected funding ÷ 10 players</span>
+              </div>
+
+              <div class="bcard">
+                <span class="bdot"></span>
+                <span class="bname">Set the amounts myself</span>
+                <span class="bval muted">You decide</span>
+                <span class="bmath">Type each installment. We'll show how it compares to the budget.</span>
+              </div>
+            </div>
+
+            <div class="inst">
+              <div class="inst-head">
+                <span>Installments</span>
+                <button class="add" type="button">+ Add</button>
+              </div>
+              <div class="irow">
+                <span class="inum">#1</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2026-09-30 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox calc">$680.00 <span class="auto">Auto</span></span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn secondary" type="button">Preview</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the whole basis block, and the per-player figure on each card — you can compare all
+      three answers without committing to one.
+      <b>Restyled:</b> the amount box, which in a split mode fills itself in, goes dashed and reads
+      "Auto" rather than pretending to be typeable.
+      <b>Unchanged:</b> the sheet title, the due-date field, Cancel and Preview.
+      <b>Removed:</b> the silent recalculation that used to overwrite whatever you typed.
+    </p>
+
+    <div class="note">
+      <b>Expected funding comes off both split bases.</b> Budgeting a chocolate drive exists precisely
+      so dues come down by it, so both even splits subtract it before dividing — which does mean the
+      estimate option is not literally the estimate ÷ roster. The card spells the arithmetic out so
+      nobody has to guess.
+    </div>
+
+    <h3>Call 3 — what sits above the picker <span class="tag call">Needs your call</span></h3>
+    <p>
+      The sheet can already open with three stacked paragraphs before a coach reaches the first field.
+      The basis cards restate the first one's arithmetic on the card itself, so it can go — or it can
+      stay and the inputs sit further down.
+    </p>
+
+    <div class="stage vsstage">
+      <div class="vs">
+        <div class="vsitem">
+          <span class="vslab now">Keep it — today's opening</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="modal">
+              <div class="modal-head">
+                <span class="modal-title">Generate Player Installments</span>
+                <span class="x">✕</span>
+              </div>
+              <div class="modal-body">
+                <p class="lede">
+                  Set due dates and amounts for each installment. Every active roster player will
+                  receive the same schedule. Funded by players: <b>$6,800.00</b> ($8,000.00 less
+                  $1,200.00 expected funding) ÷ 10 players = <b>$680.00</b> each.
+                </p>
+                <p class="lede" style="color:var(--p-danger);">
+                  Your line items are $1,000.00 above your $9,000.00 estimate. Dues generated now are
+                  based on the estimate, so they won't cover everything you've planned.
+                </p>
+                <p class="lede" style="color:var(--p-dim);">
+                  This roster already has a dues schedule. Generating replaces it — except for players
+                  who have already paid something, who are left exactly as they are.
+                </p>
+                <div class="basis">
+                  <div class="bcard on">
+                    <span class="bdot"></span>
+                    <span class="bname">Split the budget evenly</span>
+                    <span class="bval">$680.00<small>per player</small></span>
+                    <span class="bmath">$8,000.00 line items − $1,200.00 expected funding ÷ 10 players</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vsitem">
+          <span class="vslab next">Trim it — proposed</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="modal">
+              <div class="modal-head">
+                <span class="modal-title">Generate Player Installments</span>
+                <span class="x">✕</span>
+              </div>
+              <div class="modal-body">
+                <p class="lede">
+                  Every active roster player receives the same schedule.
+                </p>
+                <p class="lede" style="color:var(--p-danger);">
+                  Your line items are $1,000.00 above your $9,000.00 estimate — dues follow the estimate.
+                </p>
+                <p class="lede" style="color:var(--p-dim);">
+                  This roster already has dues. Generating replaces them, except for anyone who has
+                  already paid.
+                </p>
+                <div class="basis">
+                  <div class="bcard on">
+                    <span class="bdot"></span>
+                    <span class="bname">Split the budget evenly</span>
+                    <span class="bval">$680.00<small>per player</small></span>
+                    <span class="bmath">$8,000.00 line items − $1,200.00 expected funding ÷ 10 players</span>
+                  </div>
+                  <div class="bcard">
+                    <span class="bdot"></span>
+                    <span class="bname">Split the season estimate evenly</span>
+                    <span class="bval">$780.00<small>per player</small></span>
+                    <span class="bmath">$9,000.00 estimate − $1,200.00 expected funding ÷ 10 players</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Both frames are cut at the same depth, so the difference is what you can see before scrolling.
+      Left, the picker has barely started. Right, two of the three choices are already on screen.
+      The arithmetic isn't lost — it moved onto the card that uses it. The two warnings stay in both;
+      they say things the cards don't.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">2</span><h2>Adding a date splits it again</h2></div>
+    <p>
+      In either split mode the amounts are a consequence, not an input. Press <strong>+ Add</strong>,
+      give the new row a date, and every amount recalculates — the same money divided across players
+      <em>and</em> periods, which is the behaviour you asked for. Rounding remainders land on the last
+      installment so each player's total is exact to the cent.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Generate Player Installments</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="basis">
+              <div class="bcard on">
+                <span class="bdot"></span>
+                <span class="bname">Split the budget evenly</span>
+                <span class="bval">$680.00<small>per player</small></span>
+                <span class="bmath">$8,000.00 line items − $1,200.00 expected funding ÷ 10 players</span>
+              </div>
+            </div>
+
+            <div class="inst">
+              <div class="inst-head">
+                <span>Installments — 3 dates <span class="mark restyled">Restyled</span></span>
+                <button class="add" type="button">+ Add</button>
+              </div>
+              <div class="irow">
+                <span class="inum">#1</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2026-09-30 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox calc">$226.67 <span class="auto">Auto</span></span>
+                </span>
+              </div>
+              <div class="irow">
+                <span class="inum">#2</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2026-11-15 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox calc">$226.67 <span class="auto">Auto</span></span>
+                </span>
+              </div>
+              <div class="irow">
+                <span class="inum">#3</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2027-01-15 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox calc">$226.66 <span class="auto">Auto</span></span>
+                </span>
+              </div>
+            </div>
+
+            <div class="recon match">
+              <span class="mk">✓</span>
+              <span class="body">
+                Three payments of <b>$680.00</b> per player — <b>$6,800.00</b> across the roster, which
+                is exactly what players need to fund.
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn secondary" type="button">Preview</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Restyled:</b> the installment list — same Add and Remove controls, but the amounts are now
+      derived. Note <b>#3 is $226.66</b>: the odd cent lands on the last payment rather than leaving
+      each player two cents short.
+      <b>New:</b> the running total strip beneath, which in a split mode simply confirms the sum.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">3</span><h2>Manual amounts warn, they don't block</h2></div>
+    <p>
+      Pick <strong>Set the amounts myself</strong> and the boxes become yours: a $150 deposit now, $250
+      in November, whatever the season actually needs. Underneath, a running comparison against what
+      players need to fund. It is a sentence, not a barrier — you can generate a short schedule on
+      purpose, and there are good reasons to.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Generate Player Installments</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="basis">
+              <div class="bcard on">
+                <span class="bdot"></span>
+                <span class="bname">Set the amounts myself</span>
+                <span class="bval muted">You decide</span>
+                <span class="bmath">Compared against $7,800.00 funded by players</span>
+              </div>
+            </div>
+
+            <div class="inst">
+              <div class="inst-head">
+                <span>Installments</span>
+                <button class="add" type="button">+ Add</button>
+              </div>
+              <div class="irow">
+                <span class="inum">#1</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2026-09-30 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox">150.00 <span class="caret"></span></span>
+                </span>
+              </div>
+              <div class="irow">
+                <span class="inum">#2</span>
+                <span class="ifield">
+                  <span class="flabel">Due date</span>
+                  <span class="fbox">2026-11-15 <span class="cal">▤</span></span>
+                </span>
+                <span class="ifield">
+                  <span class="flabel">Amount per player</span>
+                  <span class="fbox">250.00 <span class="caret"></span></span>
+                </span>
+              </div>
+            </div>
+
+            <div class="recon short">
+              <span class="mk">!</span>
+              <span class="body">
+                Collecting <b>$400.00</b> per player — <b>$4,000.00</b> across the roster.
+                That's <b>$3,800.00 short</b> of what players need to fund.
+                <span class="quiet">You can still generate this. Add more installments later if you need to.</span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn secondary" type="button">Preview</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> everything from the basis card down to the amber strip.
+      <b>Restyled:</b> the amount boxes lose the "Auto" chip and take a caret — the same control,
+      visibly live again.
+      <b>Unchanged:</b> the footer. Preview still comes before Confirm; nothing generates in one click.
+    </p>
+
+    <h3>The other two outcomes</h3>
+    <div class="stage pair">
+      <div class="skin" style="max-width:430px;">
+        <div class="recon over" style="border:1px solid var(--p-line);">
+          <span class="mk">!</span>
+          <span class="body">
+            Collecting <b>$1,050.00</b> per player — <b>$10,500.00</b> across the roster.
+            That's <b>$2,700.00 more</b> than players need to fund.
+            <span class="quiet">Families will be billed the higher amount.</span>
+          </span>
+        </div>
+      </div>
+      <div class="skin" style="max-width:430px;">
+        <div class="recon match" style="border:1px solid var(--p-line);">
+          <span class="mk">✓</span>
+          <span class="body">
+            Collecting <b>$780.00</b> per player — <b>$7,800.00</b> across the roster.
+            <b>Matches what players need to fund.</b>
+          </span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Over-collecting gets the sharper colour because it is the one that takes real money off families
+      who don't owe it. An exact match gets a quiet tick rather than silence, so a coach who did the
+      arithmetic themselves sees it confirmed.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">4</span><h2>The preview tells the truth</h2></div>
+    <p>
+      Same manual schedule, previewed. These are the rows that will be created — no recalculation
+      between this screen and the button. A <strong>Total</strong> column is added so the number a
+      family will owe for the season is on the screen where you approve it.
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Generate Player Installments</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="recon short">
+              <span class="mk">!</span>
+              <span class="body">
+                Collecting <b>$400.00</b> per player — <b>$3,800.00 short</b> of what players need to fund.
+              </span>
+            </div>
+
+            <div class="basis-head"><span>Preview — 10 players</span></div>
+            <div class="prev">
+              <div class="prow head">
+                <span>Player</span><span>30 Sep</span><span>15 Nov</span><span>Total</span>
+              </div>
+              <div class="prow"><span>Ledger, Nia</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow"><span>Ledger, Omar</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow"><span>Ledger, Pia</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow"><span>Ledger, Quinn</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow"><span>Ledger, Rex</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow"><span>Ledger, Sol</span><span>$150.00</span><span>$250.00</span><span class="tot">$400.00</span></div>
+              <div class="prow more"><span>+4 more players</span><span></span><span></span><span></span></div>
+              <div class="prow foot"><span>Team total</span><span>$1,500.00</span><span>$2,500.00</span><span class="tot">$4,000.00</span></div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Back</button>
+            <button class="btn primary" type="button">Confirm &amp; Generate for 10 Players</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Restyled:</b> the preview table now reflects the chosen mode instead of always re-deriving an
+      even split. Column headers are the due date alone — the old <b>#1 / #2</b> numbering is dropped,
+      since the date says which payment this is and the number never did.
+      <b>New:</b> the Total column, the team-total footer row, and the warning carried forward — the
+      shortfall follows you to the confirmation step rather than being left on the previous screen.
+      <b>Unchanged:</b> Back, the confirm button and its player count, the ten-row cap with "+N more".
+    </p>
+
+    <div class="note">
+      <b>Call 2 — nothing to look at, but a decision all the same.</b> The separate Money-table
+      consistency work proposes one shared money cell for the whole hub, retiring about thirty
+      hand-written alignment rules. This preview is a <b>thirteenth</b> money table its inventory
+      missed — it sits inside a modal, so a tab-by-tab walk never met it, and it is now reachable from
+      two tabs. Either it is built on that shared cell (which means this work waits on that decision),
+      or it matches today's convention and gets swept later. The rendered result is the same either
+      way; only the order of work changes. <b>Worth adding it to that inventory regardless</b> — it is
+      the one table in the hub that tells a coach what families will owe.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">5</span><h2>When a basis isn't available</h2></div>
+    <p>
+      Two of the three choices depend on numbers that may not exist yet. Rather than offering a card
+      that produces $0.00, the card states why it can't be used and where to fix it — and manual
+      always remains available.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Generate Player Installments</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="basis">
+              <div class="basis-head"><span>How amounts are set</span></div>
+
+              <div class="bcard on">
+                <span class="bdot"></span>
+                <span class="bname">Split the budget evenly</span>
+                <span class="bval">$680.00<small>per player</small></span>
+                <span class="bmath">$8,000.00 line items − $1,200.00 expected funding ÷ 10 players</span>
+              </div>
+
+              <div class="bcard off">
+                <span class="bdot"></span>
+                <span class="bname">Split the season estimate evenly</span>
+                <span class="bval muted">Not set</span>
+                <span class="bmath stop">No season estimate yet — add one on the budget page to split against it.</span>
+              </div>
+
+              <div class="bcard">
+                <span class="bdot"></span>
+                <span class="bname">Set the amounts myself</span>
+                <span class="bval muted">You decide</span>
+                <span class="bmath">Type each installment. We'll show how it compares to the budget.</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn secondary" type="button">Preview</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the unavailable state. The same treatment covers the case where expected funding
+      already covers the whole season — both split cards read <b>$0.00</b> and say so, and manual is
+      the way through if the team still wants to collect something.
+    </p>
+
+    <h3>Call 1 — when there is no budget at all <span class="tag call">Needs your call</span></h3>
+    <p>
+      This sheet is now reached from <strong>Player Dues</strong> as well, where a coach may never have
+      built a budget. Today that is a dead end: the sheet refuses and sends them away. But the reason
+      it refuses is that there is no number to divide — and manual amounts don't need one.
+    </p>
+    <p>
+      The same applies to two other dead ends already in the product: expected funding covering the
+      whole season, and a season estimate of $0. All three block the split options honestly. None of
+      them is a reason a coach can't type $400.
+    </p>
+
+    <div class="stage vsstage">
+      <div class="vs">
+        <div class="vsitem">
+          <span class="vslab now">Today — "Set dues for all players", no budget</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="modal">
+              <div class="modal-head">
+                <span class="modal-title">Generate Player Installments</span>
+                <span class="x">✕</span>
+              </div>
+              <div class="blocker">
+                <span class="bt">Start with your Season Budget Plan</span>
+                <p class="bb">
+                  Dues come from the budget: add what the season costs and this can build every
+                  player's installment schedule in one step — same dates and amounts for the whole
+                  roster.
+                </p>
+                <span class="btn primary">Open Budget Plan →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vsitem">
+          <span class="vslab next">Proposed — the nudge survives, the door doesn't close</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="modal">
+              <div class="modal-head">
+                <span class="modal-title">Generate Player Installments</span>
+                <span class="x">✕</span>
+              </div>
+              <div class="modal-body">
+                <p class="lede">Every active roster player receives the same schedule.</p>
+                <div class="basis">
+                  <div class="bcard off">
+                    <span class="bdot"></span>
+                    <span class="bname">Split the budget evenly</span>
+                    <span class="bval muted">No budget</span>
+                    <span class="bmath stop">No cost lines yet — build a budget and this splits it for you.</span>
+                  </div>
+                  <div class="bcard off">
+                    <span class="bdot"></span>
+                    <span class="bname">Split the season estimate evenly</span>
+                    <span class="bval muted">Not set</span>
+                    <span class="bmath stop">No season estimate yet.</span>
+                  </div>
+                  <div class="bcard on">
+                    <span class="bdot"></span>
+                    <span class="bname">Set the amounts myself</span>
+                    <span class="bval muted">You decide</span>
+                    <span class="bmath">Type each installment. Nothing to compare against until you have a budget.</span>
+                  </div>
+                </div>
+                <a class="nudge" href="#">Build a Season Budget Plan first →</a>
+                <div class="inst">
+                  <div class="inst-head">
+                    <span>Installments</span>
+                    <button class="add" type="button">+ Add</button>
+                  </div>
+                  <div class="irow">
+                    <span class="inum">#1</span>
+                    <span class="ifield">
+                      <span class="flabel">Due date</span>
+                      <span class="fbox">2026-09-30 <span class="cal">▤</span></span>
+                    </span>
+                    <span class="ifield">
+                      <span class="flabel">Amount per player</span>
+                      <span class="fbox">400.00 <span class="caret"></span></span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn ghost" type="button">Cancel</button>
+                <button class="btn secondary" type="button">Preview</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>The trade, stated plainly.</b> Right-hand frame: a coach who wants to charge everyone $400
+      can do it in four taps instead of being sent to build a budget first — and the budget nudge is
+      still on screen, as a link rather than a wall. The cost is that the budget-first path becomes
+      guidance instead of a gate, and a team can end up with dues that no plan stands behind. The
+      reconciliation strip from §3 stays silent here, because there is nothing to reconcile against.
+      <b>If you'd rather it stayed a gate</b>, the left frame is unchanged and §5's greyed cards only
+      ever appear when a budget exists.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>What this deliberately leaves alone</h2></div>
+    <div class="keeps">
+      <div class="keep">
+        <h4>The safe replace</h4>
+        <p>Re-running still replaces the schedule and still skips anyone who has already paid, naming
+          them afterwards. The confirm step is untouched.</p>
+      </div>
+      <div class="keep">
+        <h4>Who can do it</h4>
+        <p>Still gated on permission to change team finances. Assistants without it never see the button.</p>
+      </div>
+      <div class="keep">
+        <h4>Both doors, one sheet</h4>
+        <p>Budget Plan and Player Dues keep opening the same sheet. Every mode works identically from
+          either — see Call 1 for the one place they differ.</p>
+      </div>
+      <div class="keep">
+        <h4>The over-planned warning</h4>
+        <p>Line items above your estimate still show the existing red note. It sits above the new picker.</p>
+      </div>
+      <div class="keep">
+        <h4>Everyone gets the same schedule</h4>
+        <p>Per-player exceptions remain a Player Dues job, not something this sheet tries to do.</p>
+      </div>
+      <div class="keep">
+        <h4>Preview before confirm</h4>
+        <p>Two steps, always. Nothing writes dues in one click, in any of the three modes.</p>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,76 @@
+/* MoneyExportButton — the one Export control, once per Money tab (owner ruling 2026-08-13). */
+
+.trigger { flex-shrink: 0; }
+
+/* ⚠ THE PHONE RULE, IN CSS. "A phone is offered an export only where the file is something a
+   coach can read, show or send" — a spreadsheet lands in a downloads folder nobody opens on a
+   phone; a PDF dues statement is held up to a parent. It is CSS rather than a viewport check in
+   JS because the server and the browser would disagree about the width on first paint, and a
+   control that appears a beat after the page does is worse than one that never appears.
+
+   Two levels: the trigger goes when the tab produces no phone-friendly file at all, and inside
+   the dialog the spreadsheet choices go even on a tab that also makes a PDF.
+
+   ⚠ Each selector carries its own class. A CSS module refuses a bare `[data-phone]` — every
+   selector must be local to the module, or it could leak out and hide anything on the page
+   carrying that attribute. */
+@media (max-width: 640px) {
+  .trigger[data-phone='drop'],
+  .choice[data-phone='drop'] { display: none; }
+}
+
+/* Save As, essentially: the coach has said WHAT, this asks in which file type. Inherits the
+   shared modal (safe on a phone, scroll-locked, X-close) and only narrows the measure — a
+   three-option list has no business being 520px wide. */
+.dialog { max-width: 400px; }
+
+.intro {
+  margin: -0.6rem 0 1rem;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.list { display: grid; gap: 0.5rem; }
+
+/* Each choice is a full-width card rather than a radio: there is no Confirm step, so picking IS
+   the action, and something you press should look like something you press. */
+.choice {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0.9rem;
+  background: var(--white-05);
+  border: 1px solid var(--home-line, var(--white-10));
+  border-radius: var(--home-radius-sm, 9px);
+  text-align: left;
+  cursor: pointer;
+}
+.choice:hover:not(:disabled),
+.choice:focus-visible {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: var(--home-olive-soft, var(--white-10));
+}
+.choice:disabled { opacity: 0.55; cursor: progress; }
+
+.name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+/* The extension is the technical half — there for the coach who wants it, quiet for the one who
+   doesn't. */
+.ext {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+.hint { font-size: 0.8rem; line-height: 1.4; color: var(--text-secondary); }
+
+/* Failure is reported INSIDE the dialog — it covers the page, so a message anywhere else would
+   be hidden behind it, and the coach can pick a different format without reopening anything. */
+.error { margin-top: 0.9rem; }

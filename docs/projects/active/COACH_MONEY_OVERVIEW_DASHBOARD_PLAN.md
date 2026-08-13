@@ -125,8 +125,17 @@ never-paid / on-track cards — absorbed by the Collections card), the 4-tile
 `summaryGrid`, the page-level basis sentence, the `UpcomingPayablesPanel` usage on
 Overview, and the entire 1·Plan → 4·Review `moneyGroup` card stack.
 
-**Unchanged:** `stage === 'plan' | 'collect'` keeps today's guided layout exactly
-(anchor card, tiles, payables panel, journey cards — it is good onboarding). Header,
+⚠ **SUPERSEDED 2026-08-12 — the paragraph below is kept for the record and is NO
+LONGER TRUE.** The setup-stage carve-out was closed the day after it shipped: the
+owner met the empty-team render and asked the same question this plan asks about
+the operate stage. The journey stack is now gone at EVERY stage, both Overview
+shapes end in one shared rail, and the tiles + payables panel wait until they have
+something to report. See `memory/design_decisions.md` 2026-08-12 ("The Money
+Overview keeps ONE shape all season") and the mockup
+`claude.ai/code/artifact/f28ebd03-06b8-4c97-9649-fff303da581d`.
+
+~~**Unchanged:** `stage === 'plan' | 'collect'` keeps today's guided layout exactly
+(anchor card, tiles, payables panel, journey cards — it is good onboarding).~~ Header,
 tab bar, all seven tab panels, old standalone routes, season gating, archive
 allow-lists (correction 2026-08-11, found in review: `'Money'` IS in
 `APPROVED_ARCHIVE_DOORS` and `money-summary` IS season-aware — this plan originally

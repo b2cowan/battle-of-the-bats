@@ -32,6 +32,8 @@
      • .cardStackCell / .cardActionCell
                                inside .tableAsCards: a cell too big for one
                                label/value line, and the trailing action cell.
+     • .cardActionLabel        words for an icon-only row control, shown only once
+                               .cardActionCell has made it a full-width button @640.
      • .modalFlushFooter       a modal tall enough to SCROLL: kills the sticky footer's bottom
                                bleed (which otherwise hides the form's last ~1.5rem on a
                                desktop) and drops the panel's own bottom padding to match.
@@ -100,6 +102,23 @@
   .tableAsCards td.cardActionCell {
     padding-top: 0.6rem !important;
   }
+}
+
+/* cardActionLabel — words for an icon-only row control, revealed only once its row has become a
+   card. A trailing chevron reads fine at the right edge of a table row, but `.cardActionCell`
+   turns that same control into a FULL-WIDTH button at 640 — and a full-width button containing
+   one chevron says nothing about where it goes. Hidden on a desktop, shown in card mode. The
+   control still carries its own aria-label at every width, so this is presentation only and
+   never the accessible name.
+
+   ⚠ THE MEDIA RULE MUST COME AFTER THE BASE RULE, and originally did not — the `display: inline`
+   lived up in the big `.tableAsCards` media block and the `display: none` down here, textually
+   LATER. A media query adds NO specificity, so the later unconditional rule won at every width and
+   **the label never rendered at all**. Measured, not reasoned: `display: none` at 390px. Caught in
+   review 2026-08-13. Keep these two rules adjacent and in this order. */
+.cardActionLabel { display: none; }
+@media (max-width: 640px) {
+  .cardActionLabel { display: inline; }
 }
 
 /* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
@@ -211,6 +230,16 @@
     display: flex !important;
     width: 100%;
     justify-content: center;
+    /* ⚠ "full-touch-target" was only ever the DOCSTRING's claim — nothing here set a height, and
+       0.45rem of padding around a 0.82rem label lands at ~28px. Measured 2026-08-13, the first
+       time the rendered sweep had list rows to draw: Fundraisers' "Open", Payments' "Details" and
+       "Cancel", and the Dues instalments' "Mark Paid" were all 28–32px on a phone. `align-items`
+       goes with it, or the label sits on the top edge of the taller box.
+       This reaches every list table in the portal, not only Money's — deliberately: the promise
+       was portal-wide, and a control that is full width but not full height is the worse half of
+       the pair. It applies at the phone breakpoint only. */
+    align-items: center;
+    min-height: var(--tap-min, 44px);
     padding: 0.45rem 0.6rem;
     font-size: 0.82rem;
   }
@@ -917,6 +946,10 @@ a.railRow:focus-visible {
   .pageHeaderStd .pageHeaderHelp button {
     min-height: var(--tap-min, 44px);
   }
+  /* A page whose actions genuinely do not exist on a phone (the Money hub's Import/Export
+     menus — rule 11, 2026-08-13) drops the WHOLE row. Hiding just the buttons would leave the
+     grid row and its 0.75rem row-gap behind as a dead band under the title. */
+  .pageHeaderStd .pageHeaderActionsWideOnly { display: none; }
 }
 
 .headerIcon {
@@ -2012,6 +2045,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .nowRecord { font-size: 2rem; letter-spacing: 0.01em; }
 .nowMeta { margin: 0; color: var(--white-55); font-size: 0.9rem; }
+/* A supporting paragraph that must not push the card's action below a phone's fold.
+   The card keeps its headline + first meta line everywhere; only the elaboration goes. */
+@media (max-width: 640px) {
+  .nowMetaWide { display: none; }
+}
 
 .nowScoreline {
   margin: 0.15rem 0 0;
@@ -2515,6 +2553,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   max-width: 280px;
   line-height: 1.5;
 }
+/* ⚠ NO `.emptyStateActions` CLASS LIVES HERE. An empty state that offers the coach an action is
+   `CoachEmptyState` (its own docstring draws that line: full card when the coach CAN act, a bare
+   <p> when they cannot), and that component already owns the action row. A second copy was
+   written during the 2026-08-13 action pass and removed the same day — the `.emptyState` /
+   `.emptyStateTitle` / `.emptyStateSub` trio above is for text-only empties only. */
 
 /* ── Table ──────────────────────────────────────────────────────────────── */
 .tableWrap {
@@ -2552,6 +2595,521 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .tr { transition: background 0.1s; }
 .tr:hover .td { background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
 .tr:last-child .td { border-bottom: none; }
+
+/* ── The number column (Money-hub table consistency 2026-08-13, plan §3.1) ──────────────────
+   ONE numeric cell and ONE numeric column heading, added ALONGSIDE `.td` / `.th`
+   (`${styles.td} ${styles.tdNum}`) rather than replacing them.
+
+   ⚠ WHY THIS EXISTS: `.td` sets no alignment at all, so every money figure in the Money hub's
+   five list tables inherited the LEFT alignment of text — $975.00 and $1,250.00 did not line up
+   on the dollar in a treasurer's own screen, while Budget Plan and Budget vs. Actual next door
+   right-aligned theirs. That was the largest single piece of the inconsistency the owner raised.
+   It also retires ~30 inline `style={{ fontVariantNumeric: 'tabular-nums' }}` call sites, which
+   were the vector by which the next money column would have drifted again.
+
+   ⚠ MUST STAY BELOW `.th` / `.td`. All four are single-class selectors of equal specificity, so
+   the cascade resolves by SOURCE ORDER. Declared above `.th`, `.thNum` would silently lose the
+   one declaration it exists to make. (Same trap as `.compactAction` vs `.block640` at the top of
+   this file.)
+
+   ⚠ NOT `--font-data`, deliberately. The design principles name the data face for numeric
+   columns and the month grid uses it for its HEADINGS — but the approved render (mockup artifact
+   `14181bd3`) carries the body face in the cells, and a mono column at these widths re-measures
+   every other column on the row. Alignment was the defect; the face was not.
+
+   In card mode `.tableAsCards td` (0-1-1) already right-aligns every cell and outranks these, so
+   a stacked card is unaffected — the tabular figures simply travel with it. */
+.thNum { text-align: right; }
+.tdNum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ── The ledger group (Money-hub table consistency 2026-08-13, plan §3.1 "job two") ─────────
+   ONE outline treatment: a bordered group per category, a tinted bar carrying the category name
+   and its figures, line rows inside it, sub-rows when a line expands, and a closing total.
+
+   ⚠ WHY THIS EXISTS: Budget Plan's List and Budget vs. Actual's Categories are the SAME
+   structure — categories holding lines holding periods, a figure at every level — and were
+   written from scratch twice. They disagreed on corner radius (12px vs 10px), on whether the
+   category bar was flex or grid, on the name's size (0.72 vs 0.78rem) and ink (--white-40 vs
+   --white-50), on the figure's ink, and on row padding. Nobody decided any of that. Two tabs of
+   one hub reading as two products is exactly what the owner raised.
+
+   ⚠ THE COLUMN COUNT IS A VARIABLE, NOT A DIFFERENT TREATMENT. An adopting surface sets
+   `--ledger-cols` ONCE on its container and every part below inherits it — Budget Plan uses
+   `1fr <amount> auto` (the trailing `auto` is its per-row actions, and collapses to nothing for
+   a read-only coach), Budget vs. Actual uses `1fr 110px 110px 110px`. Sub-rows may carry a track
+   the line rows don't (BvA puts the period DATE in one) via `--ledger-sub-cols`, which defaults
+   to the row tracks so a surface that needs no such column says nothing.
+
+   ⚠ EACH ROW OWNS ITS OWN LEADING INDENT, and hands it down as `--scrollx-pin-gutter` at the
+   phone breakpoint if it lives inside <CoachScrollX sticky>. Do not "simplify" the indent onto a
+   wrapper: `left: 0` on a pinned cell is measured from the SCROLLER's edge, so a row keeping its
+   own padding-left makes the label lurch on the first swipe (the Chunk A D3 lesson).
+
+   These are LIFTABLE — nothing here knows it is about money — but they land inside Money only in
+   this pass, by scope ruling. */
+
+/* ══ ONE SOURCE FOR THE MONEY HIERARCHY'S TYPE SCALE ═══════════════════════════════════════════
+   The OUTLINE (`.ledger*`, a card stack) and the GRID (`.moneyGrid*`, a real table) draw the same
+   category → line → total tree, one toggle apart on Budget Plan. Their sizes and weights are
+   therefore ONE decision, and they are declared exactly once, here.
+
+   ⚠ These began as duplicated literals in both families and forked TWICE in a single day — which
+   is why `tests/unit/money-hierarchy-type-scale.test.ts` exists. With one declaration the two
+   halves cannot disagree at all, so that test's equality assertions are now belt-and-braces; what
+   it still genuinely guards is the two RELATIONSHIPS a variable cannot express — that a category
+   reads LARGER than its own lines, and that neither family reverts to small caps.
+
+   Declared on :root rather than on each family's container because the two families share no
+   common ancestor class, and a per-family declaration would be the duplication all over again. */
+:global(:root) {
+  --money-cat-size:    0.92rem;
+  --money-cat-weight:  800;
+  --money-line-size:   0.84rem;
+  --money-line-weight: 600;
+  /* A category's own figure sits a step under its name — it is read across, not scanned down. */
+  --money-catnum-size: 0.86rem;
+}
+
+.ledgerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* The column headings, sitting in the same track rhythm as the frames below rather than
+   floating loose above them. */
+.ledgerHead {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-35);
+}
+
+/* ⚠ NO `overflow: hidden` HERE, deliberately — the category bar rounds its own corners instead.
+   A clipping frame around these rows is the obvious way to keep the head's tint inside the radius,
+   and it is a trap: it becomes the nearest clipping ancestor of the PINNED first cell, so inside
+   Budget vs. Actual's horizontal scroller the pin ends up trapped in a box that runs past the
+   viewport and cannot scroll — the label sails away on the first swipe instead of sticking. The
+   rendered sweep names this exactly (`sticky-no-travel`), and only once there is real data to make
+   the grid overflow. Rounding the one child that has a background costs nothing and keeps the pin
+   answerable to the real scroller. */
+.ledgerGroup {
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  border-radius: 10px;
+}
+
+/* Used for BOTH a <div> (Budget Plan, whose categories don't collapse) and a <button> (Budget
+   vs. Actual, whose do). The button-only affordances are a separate class rather than an
+   element selector, so a surface opts into "this bar is clickable" explicitly. */
+.ledgerGroupHead {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  /* 0.7rem, not 0.65 — at 0.65 the bar rendered 43px tall, one pixel under the portal's tap floor,
+     on every width. A one-pixel miss on a full-width row is cheaper to fix than to justify, and it
+     clears the floor at every width rather than only on a phone. */
+  padding: 0.7rem 1rem;
+  /* The SAME band the grid's category row paints (`.moneyGridCat`). It was the olive tint here and
+     the neutral fill there, so switching List → By period changed the colour of the same row. */
+  background: var(--home-fill, rgba(255,255,255,0.05));
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  /* Rounds itself rather than being clipped by the frame — see the note on `.ledgerGroup`. 9px is
+     10px less the frame's 1px border, so the tint meets the border cleanly. A collapsed category
+     is a head with no rows under it, and rounds all four. */
+  border-radius: 9px 9px 0 0;
+}
+.ledgerGroupHead:last-child { border-radius: 9px; }
+.ledgerGroupHeadBtn { cursor: pointer; transition: background 0.12s; }
+.ledgerGroupHeadBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
+.ledgerGroupHeadBtn:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+/* A category bar that opens and closes is a real control, so it clears the portal's tap floor at
+   the phone breakpoint. Its natural height lands at ~39px, which the rendered sweep caught the
+   moment these bars became buttons (2026-08-13). */
+@media (max-width: 640px) {
+  .ledgerGroupHeadBtn { min-height: var(--tap-min, 44px); }
+}
+
+/* The leading cell of any row: a chevron (or its spacer) beside a name, sharing one track. */
+.ledgerCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* ⚠ ONE TYPE SCALE FOR A MONEY HIERARCHY, WHATEVER DRAWS IT — the outline (these `.ledger*` classes)
+   and the grid (`.moneyGrid*` below) are two VIEWS OF THE SAME DATA, one toggle apart on the same
+   screen, so their category / line / total must measure the same:
+
+       category  0.92rem · 800    line  0.84rem · 600    total  0.92rem · 800
+
+   ⚠ This is the SECOND time the two halves drifted, and both times the fix was applied to the half
+   being looked at. Owner, 2026-08-13, on List vs By-period: *"shouldn't we also be consistent
+   between list and by period?"* — the grid had adopted the ruling and the outline still carried
+   small caps, so one toggle turned "Tournaments" into "TOURNAMENTS" and inverted the hierarchy back.
+   `tests/unit/money-hierarchy-type-scale.test.ts` now parses this stylesheet and FAILS THE BUILD if
+   the three pairs stop matching, because a comment asking the next contributor to remember has
+   already not worked twice. */
+.ledgerName {
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ledgerRow {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 1rem 0.6rem 1.6rem;
+  border-top: 1px solid var(--white-05);
+}
+
+/* ⚠ `display: block` IS LOAD-BEARING, not tidiness. `overflow` and `text-overflow` do nothing on an
+   inline box, so without it a long line name simply ran on and pushed the row past the page — 39px
+   of document-level sideways scroll at 361px, found by the rendered sweep. It reads as blockified
+   when it happens to be a direct flex child (Budget vs. Actual's rows), and NOT when it sits inside
+   a stacked name+note cell (Budget Plan's), which is exactly the kind of difference a file-reading
+   gate cannot see. */
+.ledgerDesc {
+  display: block;
+  font-size: var(--money-line-size);
+  font-weight: var(--money-line-weight);
+  color: var(--white-90);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* (The phone wrap for this and its two sibling text classes is declared AFTER all three — see the
+   block below `.ledgerSubLabel`. It cannot live here.) */
+/* A second line under the description — a coach's own note. Never a column of its own. */
+.ledgerNote {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--white-40);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ledgerSubRows {
+  background: var(--home-card, rgba(255,255,255,0.015));
+  border-top: 1px solid var(--white-05);
+}
+.ledgerSubRow {
+  display: grid;
+  grid-template-columns: var(--ledger-sub-cols, var(--ledger-cols));
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.45rem 1rem 0.45rem 3.05rem;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--white-05);
+}
+.ledgerSubRow:last-child { border-bottom: none; }
+.ledgerSubLabel {
+  font-weight: 600;
+  color: var(--white-65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ⚠ THE PHONE WRAP FOR ALL THREE LEDGER TEXT CLASSES, AND IT MUST STAY BELOW ALL THREE.
+   `.wrap640` at the top of this file is a single-class rule, so every `nowrap` declared later in
+   the file silently beat it — the class sat on every ledger row doing nothing. A name or note that
+   truncates on a phone is worse than one that takes two lines.
+   ⚠ THIS BLOCK WAS ITSELF WRITTEN IN THE WRONG PLACE ONCE: it was first put after `.ledgerDesc`
+   only, where it still preceded `.ledgerNote` (declared later) and so lost to it in exactly the
+   same way. Measured at 390px both times — the note stayed `nowrap` while the name wrapped.
+   A media query adds NO specificity; only position saves you. Any new `.ledger*` text class that
+   sets `nowrap` must be declared ABOVE this block and added to the list. */
+@media (max-width: 640px) {
+  .ledgerDesc,
+  .ledgerNote,
+  .ledgerSubLabel { white-space: normal; }
+}
+.ledgerSubMeta {
+  font-size: 0.75rem;
+  color: var(--white-30);
+  white-space: nowrap;
+}
+
+/* The number cell for all three levels. Weight is what separates them, not alignment or face —
+   so a category total, a line and a period all land in one column. */
+.ledgerNum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+  font-size: 0.84rem;
+  color: var(--white-75);
+}
+/* A category's total and a line's amount — matched to the grid's category figure. */
+.ledgerNumStrong { font-size: var(--money-catnum-size); font-weight: var(--money-cat-weight); color: var(--white-90); }
+/* A nil is not news. Dropping it to the quietest ink leaves the colour to the figures that
+   actually need reading — the same call the Dues balance column makes. */
+.ledgerNumMuted { color: var(--white-30); }
+
+.ledgerTotal {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 10px;
+  background: var(--home-card, rgba(255,255,255,0.03));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+}
+.ledgerTotalNum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+}
+
+/* The expand chevron, and the spacer that keeps a childless row's name in the same place. */
+.ledgerExpand,
+.ledgerExpandSpacer {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ledgerExpand {
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 4px;
+  color: var(--white-40);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.ledgerExpand:hover { color: var(--white-80); }
+/* Matches the focus treatment its sibling controls already carry (`.ledgerGroupHeadBtn`,
+   `.moneyGridToggle`) — this one was the odd one out. */
+.ledgerExpand:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
+
+/* ── The money grid (Money-hub table consistency 2026-08-13, "job three") ────────────────────
+   ONE recipe for a comparison read ACROSS — Budget Plan's `By period` view and Budget vs. Actual's
+   `Months` view. Applied as a single class on the <table>; descendant selectors do the rest, so an
+   adopting grid does not have to tag every cell.
+
+   ⚠ THE DEFECT THIS EXISTS TO KILL: globals.css styles bare `<th>` as a COLUMN heading —
+   uppercase, letter-spaced, in the condensed display face. A row heading is a `<th scope="row">`
+   and inherits all of it, so **the coach's own typed line names were being shouted back at them in
+   a typeface used nowhere else for their words**: "WINTER DOME BLOCK", "SPRING CLASSIC ENTRY".
+   Budget Plan's grid had cancelled this locally (with a note about "MCTAVISH ARENA — WINTER
+   BLOCK"); Budget vs. Actual's month grid never did, and nothing caught it for two reasons —
+   a file-reading gate cannot see an inherited cascade, and the rendered sweep had no budget data
+   to draw. Measured with computed styles, 2026-08-13. The reset now lives where BOTH read it.
+
+   ⚠ HIERARCHY READS BY SIZE (owner ruling 2026-08-13, mockups `6e535821` + `0e657e67`). A category
+   is the LARGEST name in its group, not a small-caps eyebrow above it. Before this, Budget Plan
+   drew the category smaller than the lines it grouped and Budget vs. Actual drew its closing total
+   smaller than the rows it summed — the two screens inverted the hierarchy in opposite directions.
+   Uppercase has no ascenders or descenders, so small-caps at 0.74rem measures SHORTER than
+   sentence case at 0.84rem even though it reads "louder" per glyph. Size is the honest signal. */
+.moneyGrid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+.moneyGrid th,
+.moneyGrid td {
+  padding: 0.42rem 0.65rem;
+  border-bottom: 1px solid var(--home-line, var(--border));
+  white-space: nowrap;
+  font-weight: 400;
+  text-align: right;
+}
+.moneyGrid th:first-child,
+.moneyGrid td:first-child { text-align: left; }
+
+/* Column headings — the row a coach scans across. Sticky, so a long grid keeps them on screen. */
+.moneyGrid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card-bg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-60);
+  border-bottom: 1px solid var(--home-line-strong, var(--border-2));
+}
+/* The pinned first column outranks the sticky heading row, or the scrolled money columns slide
+   over the line name at the crossing point. */
+.moneyGrid thead th:first-child { z-index: 3; }
+
+/* ⚠ THE RESET. A ROW heading is not a COLUMN heading — keep the semantics, drop the shouting. */
+.moneyGrid tbody th {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+  font-size: var(--money-line-size);
+  font-weight: var(--money-line-weight);
+  color: var(--white-90);
+}
+
+/* A category and its figures. Written with the row class on the ROW so it outranks the reset
+   above (0-2-1 vs 0-1-1) — a plain `.moneyGridCat th` is 0-1-1 and would lose. */
+/* ⚠ AN OPAQUE GROUND WITH THE TINT PAINTED ON IT — never a translucent `background`. The first
+   cell of this row is the PINNED column, and a translucent pin lets the scrolled money columns
+   read straight through the category label (the Chunk A D3 lesson).
+
+   This rule shipped as `background: var(--home-fill)` and REINTRODUCED that exact defect in BOTH
+   grids. The month grid carried a local `.catRow.catRow` override meant to keep its ground opaque,
+   and it lost: doubling a class gets you (0,2,1), while this selector is (0,2,3) — the `tbody`/`tr`
+   type selectors outrank it, and the `background` SHORTHAND additionally reset the local rule's
+   `background-image` to none. Measured at 390px in review 2026-08-13: `rgba(70,55,30,0.08)`,
+   `background-image: none`, in both grids.
+
+   Fixed HERE rather than by escalating the local overrides, because the requirement is universal:
+   every adopter of this class pins its first column. `background-color` + `background-image` as
+   separate longhands, so nothing a page adds later is silently reset by a shorthand. */
+.moneyGrid tbody tr.moneyGridCat th,
+.moneyGrid tbody tr.moneyGridCat td {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(var(--home-fill, rgba(255,255,255,0.05)), var(--home-fill, rgba(255,255,255,0.05)));
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.moneyGrid tbody tr.moneyGridCat td { font-size: var(--money-catnum-size); }
+
+/* A line sits under its category, indented and at reading size. */
+.moneyGridLead { padding-left: 1.55rem !important; }
+/* ⚠ The phone indent came across from the month grid, whose own `@media` override was left behind
+   when its base rule moved here — so line names were sitting ~7px deeper on the narrowest table in
+   the portal, with the phone-specific tightening silently gone. Found in review 2026-08-13. */
+@media (max-width: 640px) {
+  .moneyGridLead { padding-left: 1.1rem !important; }
+}
+
+/* The closing total: the category's weight, set apart by a rule rather than by shouting. */
+.moneyGrid tbody tr.moneyGridTotal th,
+.moneyGrid tbody tr.moneyGridTotal td {
+  border-top: 2px solid var(--home-line-strong, var(--border-2));
+  border-bottom: none;
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+}
+
+/* A projection strip is a different KIND of row (a consequence of the plan, not part of it). It
+   reads as one by sitting below a rule in quieter ink — never by being the loudest thing on the
+   screen, which is what the condensed-display inheritance was doing to it. */
+.moneyGrid tbody tr.moneyGridFlow th,
+.moneyGrid tbody tr.moneyGridFlow td {
+  border-bottom: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-65);
+}
+.moneyGridFlowFirst th,
+.moneyGridFlowFirst td { border-top: 1px solid var(--home-line-strong, var(--border-2)) !important; padding-top: 0.55rem; }
+
+/* The chevron that opens a category. ⚠ It appears ONLY where the category actually collapses — an
+   affordance for a behaviour, never decoration. Owner ruling 2026-08-13: every hierarchy in a
+   table IS collapsible, so in practice both money grids carry one. */
+.moneyGridToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 0;
+  padding: 0.15rem 0.2rem;
+  margin: -0.15rem -0.2rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+}
+.moneyGridToggle:disabled { cursor: default; }
+.moneyGridToggle:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
+.moneyGridChevron { display: inline-flex; align-items: center; flex-shrink: 0; color: var(--white-45); }
+/* Keeps a childless category's name aligned with its collapsible neighbours'. */
+.moneyGridChevronSpacer { display: inline-block; width: 13px; flex-shrink: 0; }
+
+/* ⚠ NEGATIVE MONEY STAYS RED (owner, 2026-08-13). A running balance below zero is the one figure
+   on these screens that is genuinely bad news, and it is the reason the cash-flow strip exists.
+   Not to be confused with EXPECTED FUNDING, which the plan also prints with a minus and draws
+   GREEN — that is money coming IN, and its sign is arithmetic rather than a warning.
+   The two colours are applied per grid, next to the values that carry them: the month grid's
+   `.pos`/`.neg` and the plan grid's funding-row rule. A shared pair was declared here and never
+   wired to either, so it is not restated. */
+
+@media (max-width: 640px) {
+  /* The toggle is the row's own control and must clear the tap floor like every other. */
+  .moneyGridToggle { min-height: var(--tap-min, 44px); }
+  /* A grid does NOT reflow on a phone — it is a comparison, so it keeps its columns and scrolls.
+     It only gets tighter, so more months fit inside one swipe. Lives here rather than in either
+     grid's own stylesheet: as a page-local rule it tied with the shared unconditional one across
+     two files and let bundle order decide. */
+  .moneyGrid { font-size: 0.74rem; }
+  .moneyGrid th,
+  .moneyGrid td { padding: 0.35rem 0.45rem; }
+}
+
+/* ⚠ ALWAYS RENDERED, NEVER HOVER-REVEALED. The approved render's caption said these appear on
+   hover; the build is where that gets caught. A hover-only control cannot be reached by keyboard
+   and does not exist for a screen reader — the same finding that sent the Export overflow from
+   hover to click on 2026-08-13. They stay on screen. */
+.ledgerActions {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
+
+/* The portal's one tap floor, at the phone breakpoint only — the same rule `.panelToolbarActions`
+   already applies, rather than a second convention. Desktop keeps the portal's compact control
+   heights, which are a grandfathered portal-wide decision this pass does not reopen.
+   ⚠ Width as well as height: these are icon-only controls, so a 44px-tall 25px-wide button is
+   still a miss for a thumb. */
+@media (max-width: 640px) {
+  .ledgerActions button,
+  .ledgerActions a,
+  .ledgerExpand {
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+  }
+  /* The spacer has to grow with the chevron it stands in for, or a childless line's name starts
+     in a different place from its siblings'. */
+  .ledgerExpandSpacer { width: var(--tap-min, 44px); }
+}
 
 .playerName { font-weight: 600; font-size: 0.92rem; }
 
@@ -5309,88 +5867,24 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
      longer has to exist. `.lineupMoveControls` / `.lineupMoveBtn` are gone with them. */
 }
 
-/* ── Money hub (Plan → Collect → Spend → Review) ─────────────────────────
-   Grouped drill-in cards with live stats — the hub idiom (section cards +
-   sub-routes, never a flat stack; design_decisions 2026-07-08). Anchor at
-   the top reuses the shared .nowCard language. */
-.moneyGroup { margin-bottom: 1.4rem; }
-.moneyGroupHead {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  margin: 0 0 0.55rem;
-}
-.moneyGroupTitle {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-45);
-}
-.moneyGroupHint { margin: 0; font-size: 0.75rem; color: var(--white-40); }
-
-.moneyCards { display: flex; flex-direction: column; gap: 0.6rem; }
-
-.moneyCard {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.95rem 1.15rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.03));
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 8px;
-  text-decoration: none;
-  transition: border-color 0.12s ease, background 0.12s ease;
-}
-.moneyCard:hover {
-  background: var(--home-olive-soft, rgba(255,255,255,0.05));
-  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
-}
-.moneyCardIcon { flex-shrink: 0; display: inline-flex; }
-.moneyCardBody { flex: 1; min-width: 0; }
-.moneyCardTitle { margin: 0; font-weight: 700; color: var(--white-90); font-size: 0.95rem; }
-.moneyCardDesc { margin: 0.1rem 0 0; font-size: 0.8rem; color: var(--white-45); }
-.moneyCardStat {
-  flex-shrink: 0;
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  align-items: flex-end;
-}
-.moneyCardStatValue {
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: var(--white-80);
-  font-variant-numeric: tabular-nums;
-}
-.moneyCardStatSub { font-size: 0.72rem; color: var(--white-40); }
-.moneyStatGood { color: var(--success); }
-.moneyStatBad { color: var(--danger); }
-.moneyStatWarnChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--warning);
-}
-.moneyStatDangerChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--danger);
-}
-.moneyCardChevron { flex-shrink: 0; color: var(--white-30); }
+/* ── Money hub: the Overview's headline tiles ────────────────────────────
+   The 1·Plan → 4·Review group headers and their drill-in cards are GONE
+   (owner ruling 2026-08-12). They were a second navigation system one line
+   under the tab bar, and on a team with nothing set up every card in the
+   stack read "nothing yet". Both Overview shapes now end in the shared rail
+   (overview-dashboard.module.css). The classes are deleted rather than left
+   unused so the stack cannot quietly come back one card at a time. */
 
 .moneySummarySub {
   font-size: 0.72rem;
   color: var(--white-40);
   margin-top: 0.2rem;
 }
+
+/* A slot whose occupant may decline to render (the upcoming-payables panel hides itself
+   when nothing falls due). `:empty` means the gap goes with it — a slot that kept its
+   margin would leave dead air exactly on the emptiest screen. */
+.payablesSlot:not(:empty) { margin-bottom: 1.5rem; }
 
 /* The accounting basis for the headline row, stated once above it rather than bolted onto
    whichever tile happened to get a caveat (review f4-6). */
@@ -5401,11 +5895,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   color: var(--white-45);
 }
 
-@media (max-width: 640px) {
-  .moneyCard { padding: 0.8rem 0.9rem; gap: 0.7rem; }
-  .moneyCardStat { max-width: 40%; }
-  .moneyCardDesc { display: none; }
-}
+
 
 /* ── Money hub tab bar (Overview + one tab per section) ───────────────────
    Same underline-tab idiom as TournamentTopTabs/CoachRecordJumpNav — mono
@@ -5423,6 +5913,37 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    measured only its content and the absolutely-positioned arrows — inset by those same
    margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
 .moneyTabBarWrap { position: relative; margin: 0.9rem 0 1.4rem; }
+
+/* ── Panel toolbar (page-level action ruling 2026-08-13, plan §5.3) ─────────────────────────
+   A tab's own control row: whatever the tab already had on the left (a view switch, a status
+   filter, a lens picker), and the tab's actions pinned right. ONE class so the two tabs that
+   gain a row match the five that already had one — a hand-rolled second copy per panel is
+   precisely how the budget/bva header CSS forked before.
+
+   Actions pin right via .panelToolbarActions' auto margin, so a toolbar with nothing on its
+   left still reads as a right-pinned row rather than a left-hugging one. */
+.panelToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.panelToolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* The portal's one tap floor, at the phone breakpoint only — matching the page header's rule
+   rather than inventing a second convention. Desktop keeps the portal's compact control
+   heights, which are a grandfathered portal-wide decision this pass does not reopen. */
+@media (max-width: 640px) {
+  .panelToolbarActions button,
+  .panelToolbarActions a { min-height: var(--tap-min, 44px); }
+}
 .moneyTabBar {
   display: flex;
   gap: 0.15rem;

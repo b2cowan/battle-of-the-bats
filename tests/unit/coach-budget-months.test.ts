@@ -200,11 +200,11 @@ describe('buildMonthGrid', () => {
     assert.deepEqual(g.priorOnly, []);
   });
 
-  it('carries the non-itemized buffer so both views report the same budget total', () => {
+  it('carries the not-itemized-yet estimate so both views report the same budget total', () => {
     const g = buildMonthGrid({
       lines, actuals: [], scheduled: [], priorLines: [], todayMonth: TODAY, bufferAmount: 700,
     });
-    const bufferRow = g.categories.find(c => c.categoryName === 'Non-itemized buffer')!;
+    const bufferRow = g.categories.find(c => c.categoryName === 'Not itemized yet')!;
     assert.equal(bufferRow.total.budget, 700);
     // It has no date by definition, so it belongs in the "no date yet" column, never a month.
     assert.equal(bufferRow.undatedBudget, 700);

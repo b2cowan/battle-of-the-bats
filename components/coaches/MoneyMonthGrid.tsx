@@ -7,6 +7,8 @@ import {
   buildCashFlow, lensCell, lensTotal, lensReadsPlan, formatMonthLabel, formatMonthLong,
   type MonthGrid, type MonthKey, type MoneyLens, type CashFlowRow,
 } from '@/lib/coach-budget-months';
+import { fmtCompact } from '@/lib/coach-money-summary';
+import { toggleKey } from '@/lib/toggle-key';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './MoneyMonthGrid.module.css';
 
@@ -39,11 +41,9 @@ function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** Compact money for a grid cell — a month column can't afford ".00" twelve times over. */
-function fmtCell(n: number) {
-  if (Math.abs(n) < 0.005) return null;
-  return n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
+/** Compact money for a grid cell. Shared with the budget plan's period view — the two money grids
+ *  had a copy each of the same formatter. */
+const fmtCell = fmtCompact;
 
 function fmtDay(d: string | null) {
   if (!d) return '';
@@ -101,13 +101,7 @@ export default function MoneyMonthGrid({
     return buildCashFlow(grid.months, inByMonth, outByMonth);
   }, [grid, lens, moneyIn]);
 
-  function toggle(key: string) {
-    setExpanded(prev => {
-      const s = new Set(prev);
-      if (s.has(key)) s.delete(key); else s.add(key);
-      return s;
-    });
-  }
+  function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
   function openDetail(kind: 'actual' | 'scheduled', categoryKey: string, categoryName: string, month: MonthKey) {
     const items = cellDetails[`${kind}|${categoryKey}|${month}`] ?? [];
@@ -125,11 +119,15 @@ export default function MoneyMonthGrid({
     value: number | null,
     opts: { onClick?: () => void; href?: string; title?: string; emphasis?: boolean } = {},
   ) {
-    const text = value === null ? null : fmtCell(value);
+    // ⚠ ONE MINUS SIGN. `fmtCell` already carries the sign; this also prepended a typographic
+    // minus, so every negative rendered as "−-2,000" — two dashes. Only the running balance ever
+    // goes negative, which is why it survived until the layout fixture gained budget data
+    // (2026-08-13). The swap to the typographic minus stays, applied to the ONE sign there is.
+    const text = value === null ? null : fmtCell(value)?.replace('-', '−');
     // Null = "nothing to say here" (a future month under Difference, a lens this row can't
     // answer); zero = "nothing happened". Both read as an em dash — a grid full of $0 is noise.
-    if (text === null) return <span className={styles.nil}>—</span>;
-    const body = <>{value! < 0 ? '−' : ''}{text}</>;
+    if (text == null) return <span className={styles.nil}>—</span>;
+    const body = <>{text}</>;
     const cls = `${styles.cellValue} ${opts.emphasis ? signClass(value!) : ''}`;
     if (opts.href) {
       return <Link href={opts.href} className={`${cls} ${styles.cellLink}`} title={opts.title}>{body}</Link>;
@@ -145,7 +143,11 @@ export default function MoneyMonthGrid({
       {/* A month grid is a COMPARISON, so it keeps its shape and scrolls with the line name
           pinned rather than stacking into cards (Chunk A D1/D2). */}
       <CoachScrollX sticky hint="Swipe the grid to see later months" className={styles.scroller}>
-        <table className={styles.grid}>
+        {/* ⚠ `styles.grid` is NOT a no-op, however empty its own rule looks. It is the ancestor in
+            `.grid thead th.lead` (the pinned header corner's stacking order) and in the two heading
+            colours for the "No date yet" and current-month columns. Removing it silently unstyles
+            three things a search for `.grid {` will not show you. */}
+        <table className={`${shared.moneyGrid} ${styles.grid}`}>
           <thead>
             <tr>
               <th className={styles.lead}>Category / line</th>
@@ -164,17 +166,17 @@ export default function MoneyMonthGrid({
               const catTotal = lensTotal(cat.total, lens);
               return (
                 <Fragment key={cat.categoryKey}>
-                  <tr className={styles.catRow}>
+                  <tr className={shared.moneyGridCat}>
                     <th scope="row" className={`${styles.lead} ${styles.catLead}`}>
                       <button
                         type="button"
-                        className={styles.catToggle}
+                        className={shared.moneyGridToggle}
                         onClick={() => toggle(cat.categoryKey)}
                         aria-expanded={open}
                         disabled={cat.lines.length === 0}
                       >
                         {cat.lines.length === 0
-                          ? <span className={styles.chevSpacer} aria-hidden />
+                          ? <span className={shared.moneyGridChevronSpacer} aria-hidden />
                           : open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
                         <span className={shared.wrap640}>{cat.categoryName}</span>
                       </button>
@@ -205,7 +207,7 @@ export default function MoneyMonthGrid({
 
                   {open && cat.lines.map(line => (
                     <tr key={line.id} className={styles.lineRow}>
-                      <th scope="row" className={`${styles.lead} ${styles.lineLead}`}>
+                      <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
                         <span className={shared.wrap640}>{line.description}</span>
                       </th>
                       {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(line.priorTotal)}</td>}
@@ -243,7 +245,7 @@ export default function MoneyMonthGrid({
               );
             })}
 
-            <tr className={styles.totalRow}>
+            <tr className={`${shared.moneyGridTotal} ${styles.totalRow}`}>
               <th scope="row" className={styles.lead}>Total</th>
               {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(grid.totals.priorTotal)}</td>}
               {showUndated && (
@@ -264,7 +266,7 @@ export default function MoneyMonthGrid({
             {/* The cash-flow strip: three rows that share the grid's own columns, so a coach
                 reads the plan and its consequence in one place instead of two widgets. */}
             {cash && CASH_ROWS.map((row, i) => (
-              <tr key={row.key} className={`${styles.flowRow} ${i === 0 ? styles.flowFirst : ''} ${row.emphasis ? styles.runningRow : ''}`}>
+              <tr key={row.key} className={`${shared.moneyGridFlow} ${i === 0 ? shared.moneyGridFlowFirst : ''} ${row.emphasis ? styles.runningRow : ''}`}>
                 <th scope="row" className={styles.lead}>{row.label}</th>
                 {showPrior && <td className={`${styles.num} ${styles.prior}`}><span className={styles.nil}>—</span></td>}
                 {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}

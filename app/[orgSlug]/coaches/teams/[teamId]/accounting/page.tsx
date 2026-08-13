@@ -1,16 +1,16 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, use, type ReactNode, type ComponentType } from 'react';
+import { useState, useEffect, useCallback, useRef, use, type ComponentType } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import {
-  DollarSign, Users, Receipt, Building2, BarChart3, TrendingUp, Gift,
-  ArrowLeftRight, ArrowRight, ChevronLeft, ChevronRight, AlertTriangle,
-} from 'lucide-react';
+import { DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
-import OverviewDashboard, { fmt, type MoneySummary } from './OverviewDashboard';
+import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
+import { MoneyRefreshProvider } from '@/lib/coach-money-refresh';
+import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
+import OverviewDashboard from './OverviewDashboard';
+import SetupOverview from './SetupOverview';
 import styles from '../../../coaches.module.css';
 
 // Code-split, not just lazy-mounted: each panel is 1000+ lines and a couple pull in
@@ -46,8 +46,6 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
 ];
 
-// MoneySummary now lives with the operate-stage dashboard, its main consumer.
-
 // Money hub tab ids — match the sub-route folder names 1:1 so a coach's mental
 // model ("I'm in the dues screen") and the URL agree.
 type SectionId = 'overview' | 'budget' | 'dues' | 'fundraisers' | 'expenses' | 'allocations' | 'payment-requests' | 'budget-vs-actual';
@@ -64,6 +62,12 @@ export default function CoachesAccountingPage({
   const [summary, setSummary] = useState<MoneySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // What the header's Import menu needs the coach to READ — an import result, or a failure.
+  // It lives here rather than in the menu because the menu sits in the header's action row and
+  // closes on every pick: a message rendered inside it would be squeezed into the button row or
+  // dismissed before it could be read. (Export reports its own failures inside its dialog, which
+  // covers the page — a different surface, so a different answer.)
+  const [dataNotice, setDataNotice] = useState<MoneyDataNotice>(null);
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
@@ -138,21 +142,36 @@ export default function CoachesAccountingPage({
     return `${base}/accounting${qs ? `?${qs}` : ''}`;
   }
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setSummary(await res.json());
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load money summary.');
+      // A QUIET refresh must never take the page down. Both `loading` and `error` replace the
+      // whole tab area — panels included — so a failed background refresh would evict a coach's
+      // half-filled form on another tab. It leaves the last good summary on screen instead.
+      if (!quiet) setError(e instanceof Error ? e.message : 'Failed to load money summary.');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Coming BACK to Overview re-reads the summary — quietly, without unmounting anything.
+  // Every fact on that screen comes from this one payload: which anchor the coach sees, the
+  // headline tiles, every rail row. The hub keeps visited panels mounted and never remounts
+  // the page on a tab switch, and the fetch is keyed on the SEASON, so a coach who generated
+  // installments on the Budget tab used to come back to an Overview still telling them to
+  // generate installments — for the rest of the session (found in review, 2026-08-12).
+  const onOverview = activeSection === 'overview';
+  const wasOnOverview = useRef(true);
+  useEffect(() => {
+    if (onOverview && !wasOnOverview.current) load(true);
+    wasOnOverview.current = onOverview;
+  }, [onOverview, load]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!page.hasAccess) {
@@ -165,105 +184,9 @@ export default function CoachesAccountingPage({
   }
 
   const canWrite = page.canWrite(page.capabilities?.money === 'write');
-
-  // ── Stage anchor content (plan/collect only) ─────────────────────────────
-  // One "right now" card, one lime CTA max (earned-lime rule). The operate
-  // stage renders the OverviewDashboard instead — its old operate sub-states
-  // (overdue → never-paid → on-track) live on as the Collections card's chip.
-  function renderAnchor(s: MoneySummary) {
-    const { budget } = s;
-
-    if (s.stage === 'plan') {
-      return (
-        <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
-          <p className={styles.nowEyebrow}>Money · Getting started</p>
-          <p className={styles.nowHeadline}>Start with your season budget</p>
-          <p className={styles.nowMeta}>
-            Estimate the season&apos;s costs, turn them into player dues in one click, then track
-            every dollar against the plan. Plan → Collect → Spend → Review.
-          </p>
-          <p className={styles.nowMeta}>
-            Dues you set here drive the automatic payment reminders families receive, show up on your
-            Overview and in Insights as &ldquo;Where&apos;s the money?&rdquo;, and are prefilled when you accept
-            a player from tryouts — so you never chase a spreadsheet.
-          </p>
-          {canWrite ? (
-            <div className={styles.nowActions}>
-              {/* Deep-links into the budget starter (Chunk G) — same copy, but the coach
-                  lands in the questions instead of on a blank page. */}
-              <Link href={sectionHref('budget', { starter: '1' })} className="btn btn-lime btn-sm">Build your budget <ArrowRight size={14} /></Link>
-              <Link href={sectionHref('dues')} className={styles.nowSecondary}>Skip — set dues directly <ArrowRight size={13} /></Link>
-            </div>
-          ) : (
-            <p className={styles.nowMeta}>
-              No budget or dues have been set up for this team yet. Building the budget and setting dues
-              is the head coach&apos;s job — you&apos;ll see the numbers here once they do.
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    if (s.stage === 'collect') {
-      const needsRoster = budget.rosterCount === 0;
-      const needsLines = budget.lineCount === 0;
-      return (
-        <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
-          <p className={styles.nowEyebrow}>Budget ready</p>
-          <p className={styles.nowHeadline}>
-            {needsRoster ? 'Add your roster to assign dues'
-              : needsLines ? 'Break your budget into line items'
-              : 'Turn your plan into player dues'}
-          </p>
-          <p className={styles.nowMeta}>
-            {needsRoster
-              ? `Your ${fmt(budget.effectiveTotal)} budget is set. Add players to the roster, then generate everyone's payment schedule in one click.`
-              : needsLines
-                ? `You've set a ${fmt(budget.seasonTotal ?? 0)} season total. Itemize it to unlock Budget vs. Actual tracking — or generate player dues right away.`
-                : `${fmt(budget.effectiveTotal)} across ${budget.rosterCount} players${budget.perPlayer != null ? ` ≈ ${fmt(budget.perPlayer)} each` : ''}. Generate every player's installment schedule in one click.`}
-          </p>
-          {canWrite && (
-            <div className={styles.nowActions}>
-              {needsRoster ? (
-                <Link href={`${base}/roster`} className="btn btn-lime btn-sm">Open roster <ArrowRight size={14} /></Link>
-              ) : needsLines ? (
-                <Link href={sectionHref('budget')} className="btn btn-lime btn-sm">Add line items <ArrowRight size={14} /></Link>
-              ) : (
-                <Link href={sectionHref('budget', { generate: '1' })} className="btn btn-lime btn-sm">Generate installments <ArrowRight size={14} /></Link>
-              )}
-              <Link href={sectionHref('dues')} className={styles.nowSecondary}>Set dues manually <ArrowRight size={13} /></Link>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // operate never reaches here — the dashboard owns that stage.
-    return null;
-  }
-
-  // ── Grouped drill-in cards ───────────────────────────────────────────────
-  // Cards switch the active tab in place (sectionHref keeps you on this page,
-  // just changes `?section=`) instead of doing a full navigation away.
-  function card(
-    sectionId: SectionId,
-    icon: ReactNode,
-    title: string,
-    desc: string,
-    stat: ReactNode,
-  ) {
-    return (
-      <Link href={sectionHref(sectionId)} className={styles.moneyCard}>
-        <span className={styles.moneyCardIcon}>{icon}</span>
-        <span className={styles.moneyCardBody}>
-          <p className={styles.moneyCardTitle}>{title}</p>
-          <p className={styles.moneyCardDesc}>{desc}</p>
-        </span>
-        <span className={styles.moneyCardStat}>{stat}</span>
-        <ChevronRight size={16} className={styles.moneyCardChevron} aria-hidden />
-      </Link>
-    );
-  }
+  // The hub's data doors are money-scoped: no money access, no menus at all. Export survives
+  // for a read-only money assistant; Import (a write) does not — that split lives in the menus.
+  const canViewMoney = !!page.capabilities && page.capabilities.money !== 'off';
 
   const showOrgTabs = !!summary?.orgLinked && !page.isReadOnly;
   // A coach can land on an org-only tab (bookmark, shared link) from a moment when it WAS
@@ -288,23 +211,80 @@ export default function CoachesAccountingPage({
     { id: 'budget-vs-actual', label: 'Budget vs. Actual' },
   ];
 
+  // ONE set of destinations for both Overview shapes — the operate dashboard and the
+  // setup layout address the same surfaces, so a divergence here would be a bug in one
+  // of them. Every Money link either shape renders comes from this object and nowhere
+  // else; a second hand-built `sectionHref(...)` beside a consumer is how the two fall
+  // out of step. Org-only entries follow their href: absent means the gate said no.
+  const moneyHrefs: DashboardHrefs = {
+    dues: sectionHref('dues'),
+    budget: sectionHref('budget'),
+    budgetVsActual: sectionHref('budget-vs-actual'),
+    fundraisers: sectionHref('fundraisers'),
+    expenses: sectionHref('expenses'),
+    budgetStarter: sectionHref('budget', { starter: '1' }),
+    budgetGenerate: sectionHref('budget', { generate: '1' }),
+    expensesSchedule: sectionHref('expenses', { tab: 'schedule' }),
+    ...(showOrgTabs ? {
+      allocations: sectionHref('allocations'),
+      paymentRequests: sectionHref('payment-requests'),
+    } : {}),
+  };
+
   // Wide column: Money is now a tabbed hub whose panels include the densest tables in the
   // portal (Dues, Expenses and Budget vs. Actual each already opted into pageWide on their
   // own). At 960px the 8-tab row also truncated with no cue — see the tab-bar rules.
   return (
+    <MoneyRefreshProvider>
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Page-header ruling 2026-08-11: title + archive chip + help, nothing under the title —
           the masthead above owns the season. The old in-header breadcrumb repeated the masthead's
-          team name and this h1 one line away (and was display:none anyway). */}
+          team name and this h1 one line away (and was display:none anyway).
+
+          Page-level ACTION ruling 2026-08-13: a hub header names the CONTAINER, so it carries
+          only hub-wide doors, and after the export placement pass there is exactly ONE — Import ▾.
+          Every tab-scoped action lives in that tab's own toolbar beside the thing it names, and
+          EXPORT WENT DOWN THERE TOO: what a tab exports depends on the view, the sub-tab and the
+          filters the coach has set, none of which a header above the tab bar can see. Budget vs.
+          Actual proved it by growing a second Export button.
+
+          `actionsPhoneHidden` is rule 11: importing needs a file picker a phone does not have,
+          so the whole row leaves the phone header rather than collapsing to an icon. The import
+          stays reachable at 390px through every Money empty state that can accept one — that
+          mitigation is mandatory. */}
       <CoachPageHeader
         icon={DollarSign}
         title="Money"
         season={page.season}
         teamBase={page.teamBase}
         chipExtraQuery={effectiveSection !== 'overview' ? `section=${effectiveSection}` : undefined}
+        actions={canViewMoney ? (
+          <MoneyImportMenu
+            orgSlug={orgSlug}
+            teamId={teamId}
+            seasonQuery={seasonQuery}
+            canWriteMoney={canWrite}
+            onNotice={setDataNotice}
+            onImported={() => { void load(true); }}
+          />
+        ) : undefined}
+        actionsPhoneHidden
         helpLabel="Money"
         help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
+
+      {/* What the header's data menus have to say — an import result, or why an export couldn't be
+          built. Announced, because the act that produced it (a menu pick) leaves nothing on screen
+          for a screen-reader user to notice. */}
+      {dataNotice && (
+        <p
+          className={dataNotice.tone === 'bad' ? styles.errorText : styles.successText}
+          style={{ margin: '-1rem 0 1.25rem' }}
+          role="status"
+        >
+          {dataNotice.text}
+        </p>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -355,9 +335,12 @@ export default function CoachesAccountingPage({
             )}
           </div>
 
-          {/* Overview forks by stage: an operating season gets the one-screen dashboard
-              (each fact rendered once — see OverviewDashboard); a coach still setting up
-              keeps the guided walk below (anchor, tiles, payables, journey cards). */}
+          {/* Overview forks by stage, but no longer by SHAPE: an operating season gets the
+              three story cards and the merged ledger above the rail; a season still being
+              set up gets the anchor card above the same rail. Both end in one index; the
+              1·Plan → 4·Review card stack that used to sit under the setup view is gone
+              (owner ruling 2026-08-12 — it was a second navigation system one line under
+              the tab bar, and on an empty team every card in it said "nothing yet"). */}
           {effectiveSection === 'overview' && summary.stage === 'operate' && (
             <OverviewDashboard
               summary={summary}
@@ -366,255 +349,19 @@ export default function CoachesAccountingPage({
                  (owner ruling 2026-08-11: hide it rather than invent an archived "next
                  30 days" that never existed). */
               payablesApiUrl={page.isReadOnly ? undefined : `/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
-              hrefs={{
-                dues: sectionHref('dues'),
-                budget: sectionHref('budget'),
-                budgetStarter: sectionHref('budget', { starter: '1' }),
-                budgetVsActual: sectionHref('budget-vs-actual'),
-                fundraisers: sectionHref('fundraisers'),
-                expenses: sectionHref('expenses'),
-                expensesSchedule: sectionHref('expenses', { tab: 'schedule' }),
-                ...(showOrgTabs ? {
-                  allocations: sectionHref('allocations'),
-                  paymentRequests: sectionHref('payment-requests'),
-                } : {}),
-              }}
+              hrefs={moneyHrefs}
             />
           )}
 
           {effectiveSection === 'overview' && summary.stage !== 'operate' && (
-            <>
-              {renderAnchor(summary)}
-
-              {/* Cash-honest headline numbers — same paid-only basis as Budget vs. Actual.
-                  The basis is stated ONCE above the row (review f4-6). It used to be bolted onto
-                  Money Out alone as "(paid only)", while Money In carried no caveat despite being
-                  equally collected-only and On Hand silently inherited both — so the row read as
-                  "committed revenue vs. cash spent" when it is cash on both sides. */}
-              <p className={styles.moneySummaryBasis}>
-                Cash actually received and actually paid — not what&apos;s still owed.{' '}
-                <Link href={sectionHref('dues')} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
-                  See what&apos;s outstanding <ArrowRight size={12} aria-hidden />
-                </Link>
-              </p>
-              <div className={styles.summaryGrid} style={{ marginBottom: '1.5rem' }}>
-                <div className={styles.summaryCard}>
-                  <span className={styles.summaryCardLabel}>Money In</span>
-                  <span className={styles.summaryCardValue} style={{ color: summary.moneyIn.total > 0 ? 'var(--success)' : undefined }}>
-                    {fmt(summary.moneyIn.total)}
-                  </span>
-                  <span className={styles.moneySummarySub}>dues + fundraising{summary.moneyIn.orgFunding > 0 ? ' + org' : ''} received</span>
-                </div>
-                <div className={styles.summaryCard}>
-                  <span className={styles.summaryCardLabel}>Money Out</span>
-                  <span className={styles.summaryCardValue} style={{ color: summary.moneyOut.total > 0 ? 'var(--danger)' : undefined }}>
-                    {fmt(summary.moneyOut.total)}
-                  </span>
-                  <span className={styles.moneySummarySub}>expenses{summary.orgLinked ? ' + org payments' : ''} paid</span>
-                </div>
-                <div className={styles.summaryCard}>
-                  <span className={styles.summaryCardLabel}>On Hand</span>
-                  <span className={styles.summaryCardValue} style={{ color: summary.onHand >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                    {fmt(summary.onHand)}
-                  </span>
-                  <span className={styles.moneySummarySub}>received − paid</span>
-                </div>
-                <div className={styles.summaryCard}>
-                  <span className={styles.summaryCardLabel}>Budget Headroom</span>
-                  {summary.headroom == null ? (
-                    <>
-                      <span className={styles.summaryCardValue} style={{ color: 'var(--white-40)' }}>—</span>
-                      <span className={styles.moneySummarySub}>no budget yet</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={styles.summaryCardValue} style={{ color: summary.headroom >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                        {fmt(summary.headroom)}
-                      </span>
-                      <span className={styles.moneySummarySub}>vs {fmt(summary.budget.effectiveTotal)} budget</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Same archive rule as the dashboard's ledger: forward-looking preview,
-                  active-year API — a read-only season doesn't offer it. */}
-              {!page.isReadOnly && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <UpcomingPayablesPanel
-                    apiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
-                    /* This panel is a 30/60/90-day preview; the schedule tab is every commitment (chunk H). */
-                    fullScheduleUrl={sectionHref('expenses', { tab: 'schedule' })}
-                  />
-                </div>
-              )}
-
-              {/* Plan */}
-              <div className={styles.moneyGroup}>
-                <div className={styles.moneyGroupHead}>
-                  <h2 className={styles.moneyGroupTitle}>1 · Plan</h2>
-                  <p className={styles.moneyGroupHint}>Estimate the season</p>
-                </div>
-                <div className={styles.moneyCards}>
-                  {card(
-                    'budget',
-                    <BarChart3 size={20} style={{ color: 'var(--success)' }} />,
-                    'Season Budget Plan',
-                    'Estimate costs by category, set a season total, generate player installments',
-                    summary.budget.effectiveTotal > 0 ? (
-                      <>
-                        <span className={styles.moneyCardStatValue}>{fmt(summary.budget.effectiveTotal)}</span>
-                        <span className={styles.moneyCardStatSub}>
-                          {summary.budget.perPlayer != null ? `${fmt(summary.budget.perPlayer)} / player` : `${summary.budget.lineCount} line item${summary.budget.lineCount === 1 ? '' : 's'}`}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>Not started</span>
-                        <span className={styles.moneyCardStatSub}>Start here</span>
-                      </>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {/* Collect */}
-              <div className={styles.moneyGroup}>
-                <div className={styles.moneyGroupHead}>
-                  <h2 className={styles.moneyGroupTitle}>2 · Collect</h2>
-                  <p className={styles.moneyGroupHint}>Money coming in</p>
-                </div>
-                <div className={styles.moneyCards}>
-                  {card(
-                    'dues',
-                    <Users size={20} style={{ color: 'var(--home-plum, #a855f7)' }} />,
-                    'Player Dues',
-                    'Installment schedules, payments, credits, reminders',
-                    summary.dues.schedulesCount > 0 ? (
-                      <>
-                        <span className={styles.moneyCardStatValue}>
-                          <span className={styles.moneyStatGood}>{fmt(summary.dues.collected)}</span> of {fmt(summary.dues.expected)}
-                        </span>
-                        {summary.dues.overdueCount > 0 ? (
-                          <span className={styles.moneyStatDangerChip}><AlertTriangle size={11} aria-hidden /> {summary.dues.overdueCount} overdue</span>
-                        ) : summary.dues.neverPaidCount > 0 ? (
-                          <span className={styles.moneyStatWarnChip}>{summary.dues.neverPaidCount} unpaid</span>
-                        ) : (
-                          <span className={styles.moneyCardStatSub}>collected</span>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>Not set</span>
-                        <span className={styles.moneyCardStatSub}>Generate from your budget</span>
-                      </>
-                    ),
-                  )}
-                  {card(
-                    'fundraisers',
-                    <Gift size={20} style={{ color: 'var(--success)' }} />,
-                    'Fundraisers',
-                    'Per-player fundraising — rebates credit dues automatically',
-                    summary.fundraisers.totalRaised > 0 ? (
-                      <>
-                        <span className={`${styles.moneyCardStatValue} ${styles.moneyStatGood}`}>{fmt(summary.fundraisers.totalRaised)} raised</span>
-                        <span className={styles.moneyCardStatSub}>{fmt(summary.fundraisers.creditsIssued)} credited to dues</span>
-                      </>
-                    ) : (
-                      <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>
-                        {summary.fundraisers.activeCount > 0 ? `${summary.fundraisers.activeCount} active` : 'None yet'}
-                      </span>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {/* Spend */}
-              <div className={styles.moneyGroup}>
-                <div className={styles.moneyGroupHead}>
-                  <h2 className={styles.moneyGroupTitle}>3 · Spend</h2>
-                  <p className={styles.moneyGroupHint}>Money going out</p>
-                </div>
-                <div className={styles.moneyCards}>
-                  {card(
-                    'expenses',
-                    <Receipt size={20} style={{ color: 'var(--home-rust, #f97316)' }} />,
-                    'Expenses & Payables',
-                    'Log spending by category, track what you owe and when it falls due',
-                    summary.expenses.loggedCount > 0 ? (
-                      <>
-                        <span className={styles.moneyCardStatValue}>{fmt(summary.expenses.paidTotal)} paid</span>
-                        {summary.expenses.upcomingDueCount > 0 ? (
-                          <span className={styles.moneyStatWarnChip}>{summary.expenses.upcomingDueCount} due soon</span>
-                        ) : (
-                          <span className={styles.moneyCardStatSub}>{summary.expenses.loggedCount} logged</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>None logged</span>
-                    ),
-                  )}
-                  {/* D-F7: instruments, not records — org allocations and payment requests MOVE money and
-                      their pages are live-season only, so a finished season does not offer them. */}
-                  {showOrgTabs && card(
-                    'allocations',
-                    <Building2 size={20} style={{ color: 'var(--blueprint-blue)' }} />,
-                    'Org Allocations',
-                    'Costs your organization has allocated to this team',
-                    summary.allocations.count > 0 ? (
-                      <>
-                        <span className={styles.moneyCardStatValue}>{fmt(summary.allocations.outstanding)} outstanding</span>
-                        {summary.allocations.overdueCount > 0
-                          ? <span className={styles.moneyStatDangerChip}><AlertTriangle size={11} aria-hidden /> {summary.allocations.overdueCount} overdue</span>
-                          : <span className={styles.moneyCardStatSub}>of {fmt(summary.allocations.totalAllocated)}</span>}
-                      </>
-                    ) : (
-                      <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>None assigned</span>
-                    ),
-                  )}
-                  {showOrgTabs && card(
-                    'payment-requests',
-                    <ArrowLeftRight size={20} style={{ color: 'var(--warning)' }} />,
-                    'Payment Requests',
-                    'Pay the org or request reimbursement — admin approves',
-                    summary.paymentRequests.pendingCount > 0 ? (
-                      <span className={styles.moneyCardStatValue}>{summary.paymentRequests.pendingCount} pending</span>
-                    ) : (
-                      <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>None pending</span>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {/* Review */}
-              <div className={styles.moneyGroup}>
-                <div className={styles.moneyGroupHead}>
-                  <h2 className={styles.moneyGroupTitle}>4 · Review</h2>
-                  <p className={styles.moneyGroupHint}>How you&apos;re tracking</p>
-                </div>
-                <div className={styles.moneyCards}>
-                  {card(
-                    'budget-vs-actual',
-                    <TrendingUp size={20} style={{ color: 'var(--blueprint-blue)' }} />,
-                    'Budget vs. Actual',
-                    'Headroom, category variance, monthly trends, export',
-                    summary.headroom != null ? (
-                      <>
-                        <span className={`${styles.moneyCardStatValue} ${summary.headroom >= 0 ? styles.moneyStatGood : styles.moneyStatBad}`}>
-                          {fmt(summary.headroom)}
-                        </span>
-                        <span className={styles.moneyCardStatSub}>{summary.headroom >= 0 ? 'headroom' : 'over budget'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>—</span>
-                        <span className={styles.moneyCardStatSub}>Needs a budget plan</span>
-                      </>
-                    ),
-                  )}
-                </div>
-              </div>
-            </>
+            <SetupOverview
+              summary={summary}
+              hrefs={moneyHrefs}
+              rosterHref={`${base}/roster`}
+              canWrite={canWrite}
+              showPayables={!page.isReadOnly}
+              payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+            />
           )}
 
           {/* Panels: lazy-mount on first visit, then keep mounted (display:none while
@@ -631,5 +378,6 @@ export default function CoachesAccountingPage({
         </>
       )}
     </div>
+    </MoneyRefreshProvider>
   );
 }

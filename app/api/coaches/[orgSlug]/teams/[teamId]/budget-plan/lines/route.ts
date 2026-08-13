@@ -45,12 +45,20 @@ export const POST = withObservability(async (req: Request,
   const categoryId: string | null = body.categoryId || null;
   const itemId:     string | null = body.itemId     || null;
   const notes:      string | null = body.notes?.trim() || null;
+  // Absent = cost, which is what every line was before migration 230. Only the two known kinds
+  // are accepted; the DB CHECK would reject anything else, but a 400 explains it.
+  const lineKind: string = body.lineKind === undefined ? 'cost' : String(body.lineKind);
 
   if (!description || description.length > 200) {
     return NextResponse.json({ error: 'description is required (max 200 chars)' }, { status: 400 });
   }
   if (isNaN(totalAmount) || totalAmount <= 0) {
+    // Positive for BOTH kinds: expected funding is stored positive and displayed negative, so
+    // the sign lives in one place (the kind) and never in the data.
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
+  }
+  if (lineKind !== 'cost' && lineKind !== 'funding') {
+    return NextResponse.json({ error: 'lineKind must be "cost" or "funding"' }, { status: 400 });
   }
 
   // The FK payload must belong to this org's taxonomy (platform defaults are org_id
@@ -82,6 +90,7 @@ export const POST = withObservability(async (req: Request,
       item_id:         itemId,
       description,
       total_amount:    totalAmount,
+      line_kind:       lineKind,
       notes,
     })
     .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')

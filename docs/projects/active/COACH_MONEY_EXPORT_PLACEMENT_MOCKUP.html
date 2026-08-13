@@ -1,0 +1,545 @@
+<title>Where Export Lives</title>
+<style>
+  /* Third page of the same publication as COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html and
+     COACH_MONEY_EXPORT_MENU_MOCKUP.html — same chrome, same render scope, deliberately.
+     Document chrome is cool graphite; every product render paints the WARM portal palette as
+     literals inside its own .screen scope and is therefore theme-independent. */
+  :root {
+    --ground:#E7E9EC; --panel:#FCFCFD; --panel-2:#F1F3F5;
+    --ink:#171B20; --ink-2:#5A626C; --ink-3:#858D97;
+    --hair:#D2D6DB; --hair-2:#BFC5CC;
+    --accent:#4E5C1B; --accent-bg:rgba(78,92,27,0.10);
+    --flag:#A6431C; --flag-bg:rgba(166,67,28,0.10);
+    --fix:#2F6046; --fix-bg:rgba(47,96,70,0.10);
+    --bezel:#C9CED4;
+    --sans:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+    --grot:"Inter Tight","Segoe UI Semibold","Helvetica Neue",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Consolas",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#101418; --panel:#171C21; --panel-2:#1D242A;
+      --ink:#E4E8EC; --ink-2:#98A2AC; --ink-3:#6E7883;
+      --hair:#262D34; --hair-2:#333C44;
+      --accent:#A9C24E; --accent-bg:rgba(169,194,78,0.13);
+      --flag:#E08A5F; --flag-bg:rgba(224,138,95,0.13);
+      --fix:#78BF98; --fix-bg:rgba(120,191,152,0.13);
+      --bezel:#2B333A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#101418; --panel:#171C21; --panel-2:#1D242A;
+    --ink:#E4E8EC; --ink-2:#98A2AC; --ink-3:#6E7883;
+    --hair:#262D34; --hair-2:#333C44;
+    --accent:#A9C24E; --accent-bg:rgba(169,194,78,0.13);
+    --flag:#E08A5F; --flag-bg:rgba(224,138,95,0.13);
+    --fix:#78BF98; --fix-bg:rgba(120,191,152,0.13);
+    --bezel:#2B333A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--sans);
+    font-size: 16px; line-height: 1.6; margin: 0; padding: 0 1.25rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  .masthead { padding: 4rem 0 2.5rem; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--grot); font-size: clamp(2.1rem,5.5vw,3.4rem); font-weight: 700;
+    letter-spacing: -0.028em; line-height: 1.02; text-wrap: balance; margin: 0 0 1.1rem;
+  }
+  .standfirst { font-size: 1.08rem; color: var(--ink-2); max-width: 62ch; margin: 0; }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  .contents {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--hair); margin-bottom: 3.5rem;
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .contents a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid transparent; }
+  .contents a:hover, .contents a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin-bottom: 4.5rem; scroll-margin-top: 1.5rem; }
+  h2 {
+    font-family: var(--grot); font-size: 1.85rem; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.15; text-wrap: balance; margin: 0 0 0.5rem;
+  }
+  h3 {
+    font-family: var(--grot); font-size: 1.15rem; font-weight: 650;
+    letter-spacing: -0.012em; margin: 2.75rem 0 0.5rem;
+  }
+  .lede { color: var(--ink-2); max-width: 66ch; margin: 0 0 2rem; }
+  p { max-width: 68ch; }
+  p + p { margin-top: 0.9rem; }
+
+  .plate { margin: 1.75rem 0 0; }
+  .plate-bar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 0.55rem;
+  }
+  .stamp {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.13em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 3px;
+  }
+  .stamp-today { color: var(--flag); background: var(--flag-bg); }
+  .stamp-rec   { color: var(--fix);  background: var(--fix-bg); }
+  .stamp-note  { color: var(--ink-2); background: var(--panel-2); border: 1px solid var(--hair); }
+  .plate-name { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); letter-spacing: 0.04em; }
+  .frame {
+    border: 1px solid var(--bezel); border-radius: 8px; overflow-x: auto; background: #F8F4ED;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px -18px rgba(0,0,0,0.35);
+  }
+  .caption { margin: 0.7rem 0 0; font-size: 0.88rem; color: var(--ink-2); max-width: 72ch; }
+  .caption b { color: var(--ink); font-weight: 600; }
+
+  /* ── PRODUCT RENDER SCOPE — warm portal palette as literals ─────────── */
+  .screen {
+    background: #F8F4ED; color: #241E15;
+    font-family: "Inter","Segoe UI",system-ui,sans-serif;
+    padding: 1.5rem 1.6rem 1.7rem; min-width: 860px;
+  }
+  .screen.narrow { min-width: 0; width: 100%; padding: 1rem 1rem 1.2rem; }
+
+  .cp-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+  .cp-left { display: flex; align-items: center; gap: 1rem; margin-right: auto; min-width: 0; }
+  .cp-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(87,101,30,0.12); border: 1px solid rgba(87,101,30,0.30);
+    color: #57651E; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 1.05rem; font-weight: 700;
+  }
+  .cp-title {
+    font-family: "Barlow Condensed","Arial Narrow","Segoe UI",sans-serif;
+    font-size: 1.6rem; font-weight: 900; line-height: 1.1; color: #241E15; margin: 0;
+  }
+  .cp-actions { display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end; margin-left: auto; }
+  .cp-help {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid rgba(70,55,30,0.20); background: #FFF; color: #6A635C;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0;
+  }
+  .b {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border-radius: 6px; cursor: default; white-space: nowrap; font-family: inherit;
+  }
+  .b-sec {
+    background: #FFF; color: #4A4235; border: 1px solid rgba(70,55,30,0.20);
+    padding: 0.45rem 0.9rem; font-size: 0.86rem; font-weight: 600;
+  }
+  .b-lime { background: #D9F99D; color: #241E15; border: none; padding: 0.45rem 0.9rem; font-size: 0.86rem; font-weight: 700; }
+  .b .ic { font-size: 0.9em; opacity: 0.85; }
+  /* A ring on the thing being pointed at. */
+  .hit { box-shadow: 0 0 0 2px #A6431C, 0 0 0 6px rgba(166,67,28,0.18); }
+  .hit-ok { box-shadow: 0 0 0 2px #2F6046, 0 0 0 6px rgba(47,96,70,0.16); }
+
+  .cp-tabs { display: flex; gap: 0.15rem; border-bottom: 1px solid rgba(87,101,30,0.15); overflow: hidden; }
+  .cp-tab {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 40px; padding: 0.5rem 0.7rem; white-space: nowrap;
+    font-family: ui-monospace,"Cascadia Mono",Consolas,monospace;
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.045em;
+    text-transform: uppercase; color: #6A635C; border-bottom: 2px solid transparent;
+  }
+  .cp-tab.on { color: #57651E; border-bottom-color: #57651E; }
+
+  .cp-paneltoolbar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 1rem 0 0; }
+  .cp-paneltoolbar .spacer { flex: 1; }
+  .cp-viewsw { display: inline-flex; border: 1px solid rgba(70,55,30,0.20); border-radius: 6px; overflow: hidden; }
+  .cp-viewsw span { padding: 0.35rem 0.7rem; font-size: 0.78rem; font-weight: 600; color: #6A635C; background: #FFF; }
+  .cp-viewsw span.on { background: rgba(87,101,30,0.12); color: #3F4A16; }
+  .cp-lbl { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8A8377; font-family: ui-monospace,Consolas,monospace; }
+  .cp-chip {
+    border: 1px solid rgba(70,55,30,0.20); background: #FFF; border-radius: 999px;
+    padding: 0.22rem 0.6rem; font-size: 0.75rem; color: #6A635C;
+  }
+  .cp-body {
+    margin-top: 1.1rem; border: 1px dashed rgba(70,55,30,0.22); border-radius: 10px;
+    padding: 1rem 1.1rem; color: #6A635C; font-size: 0.83rem; background: rgba(255,255,255,0.55);
+  }
+  .cp-summary {
+    margin-top: 1rem; border-radius: 10px; background: rgba(87,101,30,0.07);
+    padding: 0.9rem 1.1rem; display: flex; gap: 2.2rem; font-size: 0.8rem; color: #6A635C;
+  }
+  .cp-summary b { display: block; color: #241E15; font-size: 1.05rem; font-weight: 800; }
+
+  .screen.narrow .cp-header { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 0.7rem; }
+  .screen.narrow .cp-left { grid-row: 1; grid-column: 1; gap: 0.6rem; }
+  .screen.narrow .cp-help { grid-row: 1; grid-column: 2; }
+  .screen.narrow .cp-actions { grid-row: 2; grid-column: 1/-1; }
+  .screen.narrow .cp-icon { width: 38px; height: 38px; font-size: 0.95rem; }
+  .screen.narrow .cp-title { font-size: 1.35rem; }
+  .screen.narrow .b { min-height: 44px; }
+  .screen.narrow .cp-tabs { overflow-x: auto; }
+
+  .tablewrap { overflow-x: auto; margin: 1.5rem 0 0; border: 1px solid var(--hair); border-radius: 8px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; min-width: 660px; }
+  th, td { text-align: left; padding: 0.62rem 0.9rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); background: var(--panel-2);
+    border-bottom: 1px solid var(--hair-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.name { font-weight: 600; white-space: nowrap; }
+  .none { color: var(--flag); font-family: var(--mono); font-size: 0.78rem; }
+  .yes  { color: var(--fix); font-family: var(--mono); font-size: 0.78rem; font-weight: 700; }
+  .ok   { color: var(--ink-2); }
+  code {
+    font-family: var(--mono); font-size: 0.83em; background: var(--panel-2);
+    padding: 0.08em 0.34em; border-radius: 3px; border: 1px solid var(--hair);
+  }
+
+  .note {
+    border-left: 3px solid var(--flag); background: var(--flag-bg);
+    padding: 0.9rem 1.1rem; margin: 1.75rem 0 0; border-radius: 0 6px 6px 0;
+    font-size: 0.92rem; max-width: 74ch;
+  }
+  .note.fix { border-left-color: var(--fix); background: var(--fix-bg); }
+  .note.quiet { border-left-color: var(--hair-2); background: var(--panel-2); }
+  .note b { font-weight: 650; }
+
+  .split { display: grid; gap: 1rem; margin-top: 1.5rem; }
+  @media (min-width: 820px) { .split.two { grid-template-columns: 1fr 1fr; } }
+  .job {
+    border: 1px solid var(--hair); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem;
+  }
+  .job h4 {
+    font-family: var(--grot); font-size: 1rem; font-weight: 650; margin: 0 0 0.4rem; color: var(--ink);
+  }
+  .job p { font-size: 0.9rem; color: var(--ink-2); margin: 0; max-width: none; }
+  .job .where {
+    display: inline-block; margin-top: 0.7rem; font-family: var(--mono);
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem; border-radius: 3px;
+  }
+  .job .where.up { color: var(--accent); background: var(--accent-bg); }
+  .job .where.down { color: var(--fix); background: var(--fix-bg); }
+
+  .pair { display: grid; gap: 2rem; margin-top: 1.75rem; }
+  .pair.phones { grid-template-columns: repeat(auto-fit, minmax(320px, 380px)); justify-content: start; }
+  .pair.phones .plate { margin-top: 0; }
+
+  footer.doc {
+    border-top: 1px solid var(--hair); padding-top: 1.75rem; margin-top: 4rem;
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3);
+    letter-spacing: 0.03em; line-height: 1.8;
+  }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Coach portal · Money hub · 13 Aug 2026</p>
+  <h1>Where Export lives</h1>
+  <p class="standfirst">
+    Budget vs. Actual grew a second Export button, and it was not a slip — it was the first sign
+    that <strong>Import and Export are not the same kind of door.</strong> One is hub-wide by
+    nature. The other can only ever be honest about the screen you are standing on.
+  </p>
+</header>
+
+<nav class="contents">
+  <a href="#fault">The fault</a>
+  <a href="#jobs">Two jobs, one word</a>
+  <a href="#decided">The decided shape</a>
+  <a href="#tabs">Tab by tab</a>
+  <a href="#phone">On a phone</a>
+  <a href="#cost">What we give up</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="fault">
+  <h2>The fault</h2>
+  <p class="lede">
+    Two buttons, both saying <em>Export</em>, forty millimetres apart — producing entirely
+    different files.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-today">Today</span>
+      <span class="plate-name">Money → Budget vs. Actual → Months</span>
+    </div>
+    <div class="frame">
+      <div class="screen">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+            <span class="b b-sec hit"><span class="ic">↓</span> Export ▾</span>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+        <div class="cp-tabs">
+          <span class="cp-tab">Overview</span><span class="cp-tab">Budget Plan</span>
+          <span class="cp-tab">Player Dues</span><span class="cp-tab">Fundraisers</span>
+          <span class="cp-tab">Expenses &amp; Payables</span><span class="cp-tab">Allocations</span>
+          <span class="cp-tab">Payments</span><span class="cp-tab on">Budget vs. Actual</span>
+        </div>
+        <div class="cp-summary">
+          <span>Headroom <b>+$8,000.00</b></span>
+          <span>Total budget <b>$8,000.00</b></span>
+          <span>Total actual <b>$0.00</b></span>
+        </div>
+        <div class="cp-paneltoolbar">
+          <span class="cp-lbl">View</span>
+          <span class="cp-viewsw"><span>Categories</span><span class="on">Months</span></span>
+          <span class="cp-lbl">Showing</span>
+          <span class="cp-viewsw"><span>Budget</span><span>Scheduled</span><span>Actual</span><span class="on">Difference</span></span>
+          <span class="spacer"></span>
+          <span class="b b-sec hit"><span class="ic">↓</span> Export ▾</span>
+        </div>
+        <div class="cp-body">The month grid — one column per month, at the chosen reading.</div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>The one at the top exports the category table. The one in the view bar exports the month
+      grid, at whichever of the four readings is selected.</b> Nothing on screen says so. A coach
+      who has just set the grid to <i>Difference</i> and reaches for the obvious button at the top
+      gets a file with no months in it at all.
+    </p>
+  </div>
+
+  <div class="note">
+    <b>This is not a Budget vs. Actual problem.</b> Budget Plan has List and By&nbsp;period.
+    Expenses &amp; Payables has three sub-tabs and a tag filter. Every tab carries arrangement the
+    header cannot see — Budget vs. Actual is simply the first one where the mismatch grew a second
+    button and became visible.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="jobs">
+  <h2>Two jobs, one word</h2>
+  <p class="lede">
+    The hub menu was built for the first of these. Every tab keeps quietly needing the second.
+  </p>
+
+  <div class="split two">
+    <div class="job">
+      <h4>“Bring this into Money”</h4>
+      <p>
+        Budget lines, or a payables schedule. It does not matter which tab you are standing on, and
+        nothing you have arranged on screen changes what happens. There is one right answer per
+        dataset, always.
+      </p>
+      <span class="where up">Belongs in the header</span>
+    </div>
+    <div class="job">
+      <h4>“Take out what I am looking at”</h4>
+      <p>
+        The month grid at the reading you chose. The payables sub-tab, not the expenses one. The
+        plan by period rather than as a list. Filtered to a tag. <b>A hub-wide menu cannot see any
+        of it</b>, so it can only ever offer a generic version and hope that was what you meant.
+      </p>
+      <span class="where down">Belongs on the page</span>
+    </div>
+  </div>
+
+  <div class="note fix">
+    <b>This is the rule already agreed, applied one step further.</b> A button belongs to the
+    nearest chrome that names what it acts on — which is why the creates came down out of a header
+    that said “Money”. An export that depends on a picker two hundred pixels below it is orphaned
+    in exactly the same way. <b>Import survives the test; Export does not.</b>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="decided">
+  <h2>The decided shape</h2>
+  <p class="lede">
+    <strong>Import stays at the top. Export moves down</strong> into the control row each tab
+    already has — beside the switches that decide what it will contain.
+  </p>
+
+  <div class="plate">
+    <div class="plate-bar">
+      <span class="stamp stamp-rec">Built 13 Aug</span>
+      <span class="plate-name">The same screen · one Export, beside its controls</span>
+    </div>
+    <div class="frame">
+      <div class="screen">
+        <div class="cp-header">
+          <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+          <div class="cp-actions">
+            <span class="b b-sec"><span class="ic">↑</span> Import ▾</span>
+          </div>
+          <span class="cp-help">?</span>
+        </div>
+        <div class="cp-tabs">
+          <span class="cp-tab">Overview</span><span class="cp-tab">Budget Plan</span>
+          <span class="cp-tab">Player Dues</span><span class="cp-tab">Fundraisers</span>
+          <span class="cp-tab">Expenses &amp; Payables</span><span class="cp-tab">Allocations</span>
+          <span class="cp-tab">Payments</span><span class="cp-tab on">Budget vs. Actual</span>
+        </div>
+        <div class="cp-summary">
+          <span>Headroom <b>+$8,000.00</b></span>
+          <span>Total budget <b>$8,000.00</b></span>
+          <span>Total actual <b>$0.00</b></span>
+        </div>
+        <div class="cp-paneltoolbar">
+          <span class="cp-lbl">View</span>
+          <span class="cp-viewsw"><span>Categories</span><span class="on">Months</span></span>
+          <span class="cp-lbl">Showing</span>
+          <span class="cp-viewsw"><span>Budget</span><span>Scheduled</span><span>Actual</span><span class="on">Difference</span></span>
+          <span class="spacer"></span>
+          <span class="b b-sec hit-ok"><span class="ic">↓</span> Export</span>
+        </div>
+        <div class="cp-body">The month grid — and the file you get is this grid.</div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>One Export, and it can only mean one thing:</b> what is on screen, arranged the way you
+      arranged it. The “which shape did you mean?” question stops existing rather than being
+      answered. Picking it still opens the <b>Choose a file type</b> dialog — that part is
+      unchanged, and it is now the one place the question gets asked anywhere in the hub.
+    </p>
+  </div>
+
+  <div class="note quiet">
+    <b>Every tab already has this row.</b> It was built as one shape during the action pass, and it
+    is where Add&nbsp;Line, Add&nbsp;Expense and New&nbsp;Fundraiser now live. Export joins it as
+    the right-most item on every tab that has data to give — <b>so it is not five different
+    placements, it is the same placement five times.</b>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="tabs">
+  <h2>Tab by tab</h2>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Tab</th><th>Export sits in</th><th>And gives you</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="name">Overview</td><td class="none">no export</td><td class="ok">A dashboard, not a dataset — every figure on it belongs to a tab that exports.</td></tr>
+        <tr><td class="name">Budget Plan</td><td class="yes">the List / By period row</td><td class="ok">The plan, in the shape you are reading it.</td></tr>
+        <tr><td class="name">Player Dues</td><td class="yes">the bulk-actions row</td><td class="ok">Every player, their dues, credits, paid and balance.</td></tr>
+        <tr><td class="name">Fundraisers</td><td class="yes">its thin action row</td><td class="ok">Per-fundraiser totals. Never the per-player breakdown.</td></tr>
+        <tr><td class="name">Expenses &amp; Payables</td><td class="yes">the filter row</td><td class="ok">The sub-tab you are on, honouring the tag filter.</td></tr>
+        <tr><td class="name">Allocations</td><td class="yes">gains a thin row</td><td class="ok">What the club has billed this team. Read-only, still worth taking out.</td></tr>
+        <tr><td class="name">Payments</td><td class="yes">its thin action row</td><td class="ok">Requests, their status and amounts.</td></tr>
+        <tr><td class="name">Budget vs. Actual</td><td class="yes">the view / reading row</td><td class="ok">The category table or the month grid — whichever is on screen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Seven of eight gain one. <b>Overview is the only deliberate omission</b>: it reports, it does
+    not hold a dataset, and the ruling that shaped it already says it carries no actions.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="phone">
+  <h2>On a phone</h2>
+  <p class="lede">
+    The phone rule was written about the header. Moving the button does not move the reasoning —
+    it was never about <em>where</em> the button sat, but about <strong>what the file is
+    good for</strong>.
+  </p>
+
+  <div class="pair phones">
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-rec">Budget Plan · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-tabs"><span class="cp-tab on">Budget Plan</span><span class="cp-tab">Dues</span><span class="cp-tab">Fund…</span></div>
+          <div class="cp-paneltoolbar">
+            <span class="cp-viewsw"><span class="on">List</span><span>By period</span></span>
+            <span class="spacer"></span>
+            <span class="b b-lime"><span class="ic">+</span> Add Line</span>
+          </div>
+          <div class="cp-body">The plan.</div>
+        </div>
+      </div>
+      <p class="caption"><b>No Export.</b> This tab makes spreadsheets only, and a spreadsheet on a phone lands in a downloads folder nobody opens there.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-bar"><span class="stamp stamp-rec">Player Dues · 390px</span></div>
+      <div class="frame">
+        <div class="screen narrow">
+          <div class="cp-header">
+            <div class="cp-left"><div class="cp-icon">$</div><h1 class="cp-title">Money</h1></div>
+            <span class="cp-help">?</span>
+          </div>
+          <div class="cp-tabs"><span class="cp-tab">Budget</span><span class="cp-tab on">Player Dues</span><span class="cp-tab">Fund…</span></div>
+          <div class="cp-paneltoolbar">
+            <span class="cp-chip">All statuses</span>
+            <span class="spacer"></span>
+            <span class="b b-sec"><span class="ic">↓</span> PDF</span>
+          </div>
+          <div class="cp-body">The dues table, stacked as cards.</div>
+        </div>
+      </div>
+      <p class="caption"><b>Export survives — as PDF alone.</b> A dues statement is something a coach shows a parent standing in front of them. That is phone work; a spreadsheet is not.</p>
+    </div>
+  </div>
+
+  <div class="note fix">
+    <b>The rule gets simpler, not more complicated.</b> Before, it was “the phone header drops
+    imports and spreadsheet exports”. Now it is <b>“a phone is offered an export only where the
+    file is something a coach can read, show or send”</b> — which is what it always meant. Two tabs
+    keep one (Player Dues, Budget vs. Actual, both PDF); the rest do not, and Import keeps its
+    survival route through the empty states exactly as before.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section id="cost">
+  <h2>What we give up</h2>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Cost</th><th>Honest assessment</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">One place to see everything exportable</td>
+          <td class="ok">Real, and it was the original complaint. But the complaint was <b>“only two of seven tabs have an export”</b> — and the fix for that is every tab having one <i>in a predictable spot</i>, not one menu listing them all. A coach goes to the tab whose numbers they want, which is where they were looking anyway.</td>
+        </tr>
+        <tr>
+          <td class="name">“Which datasets make a PDF?”</td>
+          <td class="ok">No longer answerable from one screen. It was not answerable from the menu either after the file type moved into a dialog — the in-app Money guide names them, and that stays true.</td>
+        </tr>
+        <tr>
+          <td class="name">Work already built today</td>
+          <td class="ok">The dataset menu and its dialog are done. The dialog survives unchanged. Roughly half a day of the menu goes; better spent than shipping a door that lies about what is behind it.</td>
+        </tr>
+        <tr>
+          <td class="name">A third decision on one surface in one day</td>
+          <td class="none">Worth naming. Each was made from a render rather than a description, and each was cheaper than the one before.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note quiet">
+    <b>Separately, and not in this change:</b> these screens do not agree with each other about what
+    a table looks like — a bordered grid here, white stacked cards there, a third treatment on
+    Player Dues. Each is defensible alone; together they make one hub look like three products.
+    That is its own pass, with its own inventory and its own renders.
+  </div>
+</section>
+
+<footer class="doc">
+  Coach portal · Money hub · Export placement<br />
+  Third in a set: <em>Where the buttons live</em> (12 Aug) decided the slot,
+  <em>Which format, and when</em> (13 Aug) decided the file type, this one decides the door.<br />
+  Renders are the shipped palette and geometry; typefaces approximate the shipped stack.
+</footer>
+
+</div>

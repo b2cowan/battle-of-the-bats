@@ -1,0 +1,1557 @@
+<title>Split by Period</title>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     MOCKUP CHROME — deliberately NOT the product palette, so the
+     annotation layer can never be mistaken for product UI.
+     Cool slate neutrals + one steel-blue accent.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #E9ECEF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F4F6F8;
+    --ink:         #1B1F24;
+    --ink-2:       #4B545E;
+    --ink-3:       #78828D;
+    --rule:        rgba(27, 31, 36, 0.13);
+    --rule-soft:   rgba(27, 31, 36, 0.07);
+    --accent:      #2F5D8A;
+    --accent-soft: rgba(47, 93, 138, 0.10);
+    --on-accent:   #FFFFFF;
+    --new:         #0E6E64;
+    --new-bg:      rgba(14, 110, 100, 0.10);
+    --restyled:    #8A5410;
+    --restyled-bg: rgba(138, 84, 16, 0.11);
+    --same:        #5C6773;
+    --same-bg:     rgba(92, 103, 115, 0.10);
+    --shadow:      0 1px 2px rgba(16,22,28,.06), 0 8px 28px rgba(16,22,28,.09);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --f-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono:    ui-monospace, "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15181C;
+      --surface:     #1D2126;
+      --surface-2:   #24292F;
+      --ink:         #E7EBEF;
+      --ink-2:       #B2BBC4;
+      --ink-3:       #87929C;
+      --rule:        rgba(231, 235, 239, 0.16);
+      --rule-soft:   rgba(231, 235, 239, 0.08);
+      --accent:      #85B4DF;
+      --accent-soft: rgba(133, 180, 223, 0.13);
+      --on-accent:   #10141A;
+      --new:         #5FCFC2;
+      --new-bg:      rgba(95, 207, 194, 0.13);
+      --restyled:    #E3A85C;
+      --restyled-bg: rgba(227, 168, 92, 0.13);
+      --same:        #9AA5B1;
+      --same-bg:     rgba(154, 165, 177, 0.12);
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #15181C;
+    --surface:     #1D2126;
+    --surface-2:   #24292F;
+    --ink:         #E7EBEF;
+    --ink-2:       #B2BBC4;
+    --ink-3:       #87929C;
+    --rule:        rgba(231, 235, 239, 0.16);
+    --rule-soft:   rgba(231, 235, 239, 0.08);
+    --accent:      #85B4DF;
+    --accent-soft: rgba(133, 180, 223, 0.13);
+    --on-accent:   #10141A;
+    --new:         #5FCFC2;
+    --new-bg:      rgba(95, 207, 194, 0.13);
+    --restyled:    #E3A85C;
+    --restyled-bg: rgba(227, 168, 92, 0.13);
+    --same:        #9AA5B1;
+    --same-bg:     rgba(154, 165, 177, 0.12);
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  /* ── Page head ─────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 0 0 0.35rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    max-width: 64ch;
+    color: var(--ink-2);
+    font-size: 1.03rem;
+    margin: 0 0 1.6rem;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin: 0 0 2.4rem; }
+  .tag {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.14rem 0.46rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag.new      { color: var(--new);      background: var(--new-bg); }
+  .tag.restyled { color: var(--restyled); background: var(--restyled-bg); }
+  .tag.same     { color: var(--same);     background: var(--same-bg); }
+
+  /* ── Section rhythm ────────────────────────────────────── */
+  .sect { margin: 0 0 3.2rem; }
+  .sect-head { display: flex; align-items: baseline; gap: 0.7rem; margin: 0 0 0.5rem; flex-wrap: wrap; }
+  .sect-num {
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.005em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sect > p { max-width: 68ch; color: var(--ink-2); margin: 0 0 1.1rem; }
+  .sect > p strong { color: var(--ink); font-weight: 600; }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    margin: 1.1rem 0;
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+
+  /* ── Stage: a fake page ground the modal sits on ────────── */
+  .stage {
+    border-radius: 14px;
+    padding: 1.4rem;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(0deg, var(--rule-soft) 1px, transparent 1px) 0 0 / 100% 26px,
+      var(--surface-2);
+    display: flex;
+    justify-content: center;
+  }
+  .stage-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 0.9rem;
+    margin: 0 0 0.55rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+  }
+  .stage-bar .grp { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+  .stage-bar .cap {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+  .segbtn {
+    font: inherit;
+    font-size: 0.83rem;
+    padding: 0.24rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .segbtn:hover { border-color: var(--accent); color: var(--ink); }
+  .segbtn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+  }
+  .segbtn:focus-visible,
+  .modal button:focus-visible,
+  .modal input:focus-visible,
+  .modal select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ─────────────────────────────────────────────────────────────
+     PRODUCT SKIN — the real coaches-portal tokens, both themes.
+     Fixed by the [data-skin] switch, independent of page theme.
+     ───────────────────────────────────────────────────────────── */
+  .skin {
+    --p-card:        #FFFFFF;
+    --p-inset:       #FCFBF8;
+    --p-ink:         #241E15;
+    --p-ink-soft:    #4A4235;
+    --p-dim:         #6A635C;
+    --p-line:        rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-field:       #FFFFFF;
+    --p-lime:        #D9F99D;
+    --p-lime-ink:    #241E15;
+    --p-olive:       #57651E;
+    --p-olive-soft:  rgba(87, 101, 30, 0.10);
+    --p-danger:      #C2410C;
+    --p-danger-soft: rgba(194, 65, 12, 0.09);
+    --p-good:        #2F6B3C;
+    --p-on-olive:    #FFFFFF;
+    width: 100%;
+    max-width: 600px;
+    font-family: var(--f-body);
+  }
+  .skin[data-skin="dark"] {
+    --p-card:        #111827;
+    --p-inset:       rgba(255,255,255,0.03);
+    --p-ink:         rgba(255,255,255,0.9);
+    --p-ink-soft:    rgba(255,255,255,0.7);
+    --p-dim:         rgba(255,255,255,0.45);
+    --p-line:        rgba(255,255,255,0.12);
+    --p-line-strong: rgba(255,255,255,0.2);
+    --p-field:       rgba(255,255,255,0.05);
+    --p-lime:        #D9F99D;
+    --p-lime-ink:    #0A0A0A;
+    --p-olive:       #A3B546;
+    --p-olive-soft:  rgba(255,255,255,0.12);
+    --p-danger:      #F87171;
+    --p-danger-soft: rgba(248, 113, 113, 0.12);
+    --p-good:        #6EE7A8;
+    --p-on-olive:    #0A0A0A;
+  }
+
+  .modal {
+    background: var(--p-card);
+    border: 1px solid var(--p-line-strong);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    color: var(--p-ink);
+    display: flex;
+    flex-direction: column;
+    max-height: 74vh;
+    min-height: 460px;
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.15rem 1.25rem 0.9rem;
+    flex: 0 0 auto;
+  }
+  .modal-title { font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--p-ink); }
+  .modal-x {
+    background: none; border: none; cursor: pointer; color: var(--p-dim);
+    font-size: 1.15rem; line-height: 1; padding: 0.2rem 0.3rem;
+  }
+  .modal-body { overflow-y: auto; padding: 0 1.25rem 1.1rem; flex: 1 1 auto; }
+  .modal-foot {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 0.6rem;
+    justify-content: flex-end;
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--p-line);
+    background: var(--p-card);
+  }
+
+  .p-hint { font-size: 0.72rem; color: var(--p-dim); margin: 0 0 0.9rem; }
+  .p-req { color: var(--p-danger); font-weight: 700; }
+  .p-field { margin: 0 0 0.85rem; }
+  .p-label {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    color: var(--p-dim); margin: 0 0 0.35rem;
+  }
+  .p-input {
+    width: 100%;
+    background: var(--p-field);
+    border: 1px solid var(--p-line-strong);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    color: var(--p-ink);
+    font: inherit;
+    font-size: 0.9rem;
+  }
+  .p-input::placeholder { color: var(--p-dim); opacity: 1; }
+  .p-input:focus { outline: none; border-color: var(--p-olive); box-shadow: 0 0 0 2px var(--p-olive-soft); }
+  .p-input.bad { border-color: var(--p-danger); background: var(--p-danger-soft); }
+  select.p-input { appearance: auto; }
+
+  .p-row { display: flex; gap: 0.8rem; align-items: flex-end; margin: 0 0 0.85rem; }
+  .p-row > .p-field { margin: 0; }
+  .p-check {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.82rem; color: var(--p-ink-soft); cursor: pointer;
+    white-space: nowrap; padding-bottom: 0.5rem;
+  }
+
+  .p-periods {
+    background: var(--p-inset);
+    border: 1px solid var(--p-line);
+    border-radius: 10px;
+    padding: 0.85rem;
+    margin: 0 0 0.9rem;
+  }
+  .p-periods-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem; flex-wrap: wrap; margin: 0 0 0.6rem;
+  }
+  .p-sub {
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.74rem; font-weight: 600; color: var(--p-dim);
+  }
+  .p-mini {
+    background: none; border: 1px solid var(--p-line-strong); border-radius: 6px;
+    padding: 0.24rem 0.55rem; font: inherit; font-size: 0.78rem; color: var(--p-ink-soft); cursor: pointer;
+  }
+  .p-mini:hover { border-color: var(--p-olive); color: var(--p-ink); }
+  .p-mini.quiet { border-color: transparent; color: var(--p-dim); text-decoration: underline; }
+  .p-mini.quiet:hover { color: var(--p-ink); }
+  .p-seg { display: inline-flex; border: 1px solid var(--p-line-strong); border-radius: 6px; overflow: hidden; }
+  .p-seg button {
+    border: none; background: none; font: inherit; font-size: 0.75rem; font-weight: 700;
+    padding: 0.2rem 0.55rem; color: var(--p-dim); cursor: pointer;
+  }
+  .p-seg button[aria-pressed="true"] { background: var(--p-olive-soft); color: var(--p-ink); }
+
+  /* Step 1 — how is this line split? */
+  .p-step {
+    font-size: 0.76rem; color: var(--p-dim);
+    display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+    margin: 0 0 0.4rem;
+  }
+  .p-modes { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.9rem; }
+  .p-mode {
+    font: inherit; font-size: 0.8rem;
+    border: 1px solid var(--p-line-strong); background: var(--p-card);
+    color: var(--p-ink-soft); border-radius: 999px; padding: 0.27rem 0.72rem; cursor: pointer;
+  }
+  .p-mode:hover { border-color: var(--p-olive); }
+  /* Selected = tint + stronger border, never an olive FILL — ratified 2026-07-22 (olive is a
+     text/border/tint accent in the warm portal; a fill reads muddy on cream and out-weights the
+     real CTA). Matches the $/% segment above it. */
+  .p-mode[aria-pressed="true"] {
+    background: var(--p-olive-soft); border-color: var(--p-olive);
+    color: var(--p-ink); font-weight: 700;
+  }
+
+  /* Step 2 — the period rows */
+  .p-colhead {
+    display: flex; gap: 0.4rem; align-items: center;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 600; color: var(--p-dim);
+    padding: 0 1.85rem 0.3rem 0;
+  }
+  .p-prow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem 0.5rem;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-top: 1px solid var(--p-line);
+  }
+  .p-prow:first-of-type { border-top: none; }
+  .p-prow .fields { display: flex; gap: 0.4rem; align-items: center; min-width: 0; }
+  .p-prow .fields > * { min-width: 0; }
+  .f-when  { flex: 0 0 8.4rem; font-variant-numeric: tabular-nums; }
+  .f-label { flex: 1 1 auto; }
+  .f-amt   { flex: 0 0 6.2rem; }
+  .p-prow .p-input { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+  .p-x {
+    background: none; border: none; color: var(--p-dim); cursor: pointer;
+    font-size: 0.95rem; line-height: 1; padding: 0.25rem;
+  }
+  .p-x:hover { color: var(--p-danger); }
+  .p-conv { font-size: 0.76rem; color: var(--p-dim); font-variant-numeric: tabular-nums; min-width: 4.2rem; text-align: right; }
+  .p-rowmsg { grid-column: 1 / -1; font-size: 0.72rem; color: var(--p-dim); margin: 0; }
+  .p-rowmsg:empty { display: none; }
+  .p-rowmsg.err { color: var(--p-danger); }
+
+  .p-addbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.6rem; }
+  .p-undo {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    margin-top: 0.5rem; padding: 0.35rem 0.55rem;
+    border: 1px dashed var(--p-line-strong); border-radius: 7px;
+    font-size: 0.76rem; color: var(--p-dim);
+  }
+  .p-undo button {
+    font: inherit; font-size: 0.76rem; font-weight: 700;
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: var(--p-olive); text-decoration: underline;
+  }
+
+  .p-sum {
+    display: flex; justify-content: space-between; gap: 0.6rem;
+    font-size: 0.78rem; color: var(--p-dim);
+    margin-top: 0.55rem; padding-top: 0.5rem;
+    border-top: 1px solid var(--p-line);
+    font-variant-numeric: tabular-nums;
+  }
+  .p-sum.err, .p-sum.err span { color: var(--p-danger); font-weight: 600; }
+  .p-sum.ok .amt { color: var(--p-good); font-weight: 600; }
+
+  .p-empty { font-size: 0.8rem; color: var(--p-dim); padding: 0.5rem 0 0; margin: 0; }
+
+  .p-btn {
+    font: inherit; border-radius: 6px; cursor: pointer;
+    padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 700;
+    border: none; background: var(--p-lime); color: var(--p-lime-ink);
+  }
+  .p-btn:hover { opacity: 0.88; }
+  .p-btn.ghost { background: none; color: var(--p-dim); font-weight: 500; font-size: 0.85rem; }
+  .p-btn.ghost:hover { color: var(--p-ink); opacity: 1; }
+
+  .p-foot-flag {
+    margin-right: auto;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.8rem; font-weight: 600; color: var(--p-danger);
+    background: var(--p-danger-soft);
+    border: 1px solid var(--p-danger);
+    border-radius: 999px;
+    padding: 0.22rem 0.62rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .p-foot-flag[hidden] { display: none; }
+
+  /* ── "Today" panel — the hidden-message demo ───────────── */
+  .today-demo {
+    max-width: 460px;
+    margin: 0 auto;
+    background: var(--p-card);
+    border: 1px solid var(--p-line-strong);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    height: 240px;
+  }
+  .today-scroll { overflow-y: auto; padding: 0.9rem 1.15rem; flex: 1 1 auto; }
+  .today-err { color: var(--p-danger); font-size: 0.85rem; margin: 0.6rem 0 0; }
+  .today-demo .f-old-label { flex: 2; }
+  .today-demo .f-old-date  { flex: 1.5; }
+  .today-demo .f-old-amt   { flex: 1; }
+
+  /* ── Findings list ─────────────────────────────────────── */
+  .cards { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+  .card h3 {
+    font-family: var(--f-display); font-size: 1.1rem; font-weight: 700;
+    margin: 0 0 0.4rem; letter-spacing: 0.005em;
+  }
+  .card p { margin: 0 0 0.5rem; font-size: 0.92rem; color: var(--ink-2); }
+  .card p:last-child { margin-bottom: 0; }
+
+  table.matrix { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .scrollx { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+  .matrix th, .matrix td { text-align: left; padding: 0.62rem 0.85rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  .matrix thead th {
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.74rem; color: var(--ink-3); font-weight: 600; white-space: nowrap;
+  }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix td:first-child { font-weight: 600; white-space: nowrap; }
+
+  ul.plain { margin: 0 0 1rem; padding-left: 1.15rem; color: var(--ink-2); max-width: 68ch; }
+  ul.plain li { margin: 0 0 0.35rem; }
+  ul.plain b { color: var(--ink); }
+
+  .qa { border-top: 1px solid var(--rule); padding-top: 1.4rem; }
+
+  @media (max-width: 640px) {
+    .p-row { flex-direction: column; align-items: stretch; }
+    .p-check { padding-bottom: 0; }
+    .p-colhead { display: none; }
+    .p-prow .fields { flex-wrap: wrap; }
+    .f-when { flex: 1 1 45%; }
+    .f-amt  { flex: 1 1 45%; }
+    .f-label { flex: 1 1 100%; order: 3; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches portal · Money · Season Budget Plan</p>
+  <h1>Splitting a budget line by period</h1>
+  <p class="standfirst">
+    A working mockup of the Add / Edit Budget Line form. Three changes: the save warning becomes
+    impossible to miss, period labels stop being mandatory, and a coach says <em>how</em> the line is
+    split — by month, by quarter, or by exact dates — so an annual budget stops costing twelve trips
+    through a date picker.
+  </p>
+
+  <div class="legend">
+    <span class="tag new">New</span>
+    <span class="tag restyled">Restyled</span>
+    <span class="tag same">Unchanged</span>
+    <span style="font-size:.86rem;color:var(--ink-3);">— every element in the proposed form carries one of these.</span>
+  </div>
+
+  <!-- ══════════════════ 1 · THE PROBLEM ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">01</span>
+      <h2>What happens today</h2>
+    </div>
+    <p>
+      The warning sits inside the part of the form that scrolls, just above the buttons. When a coach
+      presses <strong>Save Changes</strong> with the period rows on screen, the page doesn't move and the
+      message never comes into view — so the button reads as broken. Scroll the panel below to find it.
+    </p>
+
+    <div class="stage">
+      <div class="skin" data-skin="warm" style="max-width:460px;">
+        <div class="today-demo">
+          <div class="today-scroll" id="todayScroll">
+            <div class="p-field">
+              <span class="p-label">Period Breakdown</span>
+              <div class="p-periods" style="margin:0;">
+                <div class="p-prow" style="border:none;">
+                  <div class="fields">
+                    <input class="p-input f-old-label" placeholder="Label (e.g. May)" aria-label="Period 1 label" />
+                    <input class="p-input f-old-date" value="2027-02-01" aria-label="Period 1 date" />
+                    <input class="p-input f-old-amt" value="1500" aria-label="Period 1 amount" />
+                  </div>
+                </div>
+                <div class="p-prow">
+                  <div class="fields">
+                    <input class="p-input f-old-label" placeholder="Label (e.g. May)" aria-label="Period 2 label" />
+                    <input class="p-input f-old-date" value="2027-06-01" aria-label="Period 2 date" />
+                    <input class="p-input f-old-amt" value="1500" aria-label="Period 2 amount" />
+                  </div>
+                </div>
+                <div class="p-sum"><span>Period total</span><span>$3,000.00 / $3,000.00</span></div>
+              </div>
+            </div>
+            <div class="p-field">
+              <span class="p-label">Notes</span>
+              <input class="p-input" value="3 &times; $1000" aria-label="Notes" />
+            </div>
+            <p class="today-err">Each period must have a label</p>
+          </div>
+          <div class="modal-foot">
+            <button class="p-btn ghost" type="button">Cancel</button>
+            <button class="p-btn" type="button" id="todaySave">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Three things go wrong at once.</b> The message is out of view, it doesn't say <i>which</i> of the
+      rows is wrong, and the thing it's asking for — a label — is something the form could have worked out
+      for itself from the date sitting right beside it.
+    </div>
+  </section>
+
+  <!-- ══════════════════ 2 · THE PROPOSAL ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">02</span>
+      <h2>Proposed form</h2>
+    </div>
+    <p>
+      Fully interactive. Two steps inside the breakdown: <strong>pick how this line is split</strong>, then
+      <strong>add periods</strong> one at a time exactly as today. Each row carries its own period picker, so
+      what a row <em>is</em> stays on screen no matter what gets typed in the label.
+    </p>
+
+    <div class="stage-bar">
+      <div class="grp">
+        <span class="cap">Scenario</span>
+        <button class="segbtn" type="button" data-scenario="blank"    aria-pressed="true">New line (the default)</button>
+        <button class="segbtn" type="button" data-scenario="months"   aria-pressed="false">Annual budget by month</button>
+        <button class="segbtn" type="button" data-scenario="quarters" aria-pressed="false">Quarterly</button>
+        <button class="segbtn" type="button" data-scenario="dates"    aria-pressed="false">Tournament payable</button>
+        <button class="segbtn" type="button" data-scenario="names"    aria-pressed="false">Deposit + balance</button>
+      </div>
+      <div class="grp" style="margin-left:auto;">
+        <span class="cap">Portal theme</span>
+        <button class="segbtn" type="button" data-skinset="warm" aria-pressed="true">Warm</button>
+        <button class="segbtn" type="button" data-skinset="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="skin" data-skin="warm" id="skin">
+        <div class="modal" role="dialog" aria-label="Edit Budget Line">
+          <div class="modal-head">
+            <h3 class="modal-title">Edit Budget Line</h3>
+            <button class="modal-x" type="button" aria-label="Close">&times;</button>
+          </div>
+
+          <div class="modal-body" id="modalBody">
+            <p class="p-hint"><span class="p-req">*</span> Required</p>
+
+            <div class="p-field">
+              <span class="p-label">Category &amp; Item <span class="tag same">Unchanged</span></span>
+              <div class="p-row" style="margin:0;">
+                <div class="p-field" style="flex:1;">
+                  <select class="p-input" aria-label="Category">
+                    <option>Tournaments</option>
+                    <option>Uniforms</option>
+                    <option>Ice / Field time</option>
+                  </select>
+                </div>
+                <div class="p-field" style="flex:1;">
+                  <select class="p-input" aria-label="Item">
+                    <option>Entry Fees</option>
+                    <option>Travel</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-field">
+              <span class="p-label">Description <span class="tag same">Unchanged</span></span>
+              <input class="p-input" id="descInput" value="Entry Fees" aria-label="Description" />
+            </div>
+
+            <div class="p-row">
+              <div class="p-field" style="flex:1;">
+                <label class="p-label" for="totalInput">Total Amount ($) <span class="p-req">*</span> <span class="tag same">Unchanged</span></label>
+                <input class="p-input" id="totalInput" type="number" min="0" step="0.01" value="3000" />
+              </div>
+              <label class="p-check">
+                <input type="checkbox" id="useSplit" checked />
+                Split by period
+              </label>
+            </div>
+
+            <div class="p-periods" id="periodsBox">
+              <div class="p-periods-head">
+                <span class="p-sub">Period Breakdown</span>
+                <span style="display:inline-flex;gap:.4rem;align-items:center;">
+                  <span class="p-seg" id="valueMode">
+                    <button type="button" data-vm="amount"  aria-pressed="true">$</button>
+                    <button type="button" data-vm="percent" aria-pressed="false">%</button>
+                  </span>
+                  <button class="p-mini" type="button" id="splitEvenly">Split evenly</button>
+                </span>
+              </div>
+
+              <p class="p-step">
+                <b style="font-weight:600;color:var(--p-ink-soft);">1.</b> Split this line by
+                <span class="tag new">New</span>
+              </p>
+              <div class="p-modes" id="modePicker">
+                <button class="p-mode" type="button" data-mode="months"   aria-pressed="true">Months</button>
+                <button class="p-mode" type="button" data-mode="quarters" aria-pressed="false">Quarters</button>
+                <button class="p-mode" type="button" data-mode="dates"    aria-pressed="false">Specific dates</button>
+                <button class="p-mode" type="button" data-mode="names"    aria-pressed="false">Just names</button>
+              </div>
+
+              <p class="p-step">
+                <b style="font-weight:600;color:var(--p-ink-soft);">2.</b>
+                <span id="stepTwoText">Add a period for each month you spend in</span>
+                <span class="tag restyled">Restyled</span>
+              </p>
+
+              <div class="p-colhead" id="colHead"></div>
+              <div id="rowZone"></div>
+              <div class="p-sum" id="sumRow"><span>Period total</span><span class="amt">&mdash;</span></div>
+            </div>
+
+            <div class="p-field">
+              <span class="p-label">Notes <span class="tag same">Unchanged</span></span>
+              <input class="p-input" value="3 &times; $1000" aria-label="Notes" />
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button class="p-foot-flag" type="button" id="footFlag" hidden></button>
+            <button class="p-btn ghost" type="button">Cancel</button>
+            <button class="p-btn" type="button" id="saveBtn">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Press &ldquo;Add period&rdquo; a few times.</b> In month and quarter mode the picker advances on its own
+      — Feb, Mar, Apr — so a twelve-month budget is twelve taps on one button and then
+      <i>Split evenly</i>, with no typing at all. Change any month afterwards and the row's name follows it.
+      <i>Fill the season</i> does the same job in one click, and both it and <i>Clear all periods</i> leave an
+      <i>Undo</i> behind.
+    </div>
+
+    <div class="note">
+      <b>Then clear an amount and press Save Changes.</b> The form scrolls to the offending row, outlines
+      it, puts the cursor in it, and a counter appears next to the button that stays visible however far the
+      form is scrolled. Nothing gets covered by a second dialog.
+    </div>
+  </section>
+
+  <!-- ══════════════════ 3 · WHAT CHANGED SINCE V1 ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">03</span>
+      <h2>Changed after each look</h2>
+    </div>
+    <p><b style="color:var(--ink);">Fourth round</b></p>
+    <ul class="plain">
+      <li><b>The selected mode chip is a tint, not a filled olive button.</b> The warm portal's
+          standing rule is that olive is a text, border and tint accent only — a filled olive button
+          reads muddy on cream and competes with the real lime action. The chip now matches the
+          <i>$ / %</i> segment directly above it, which is the same kind of control and was already
+          doing it correctly.</li>
+    </ul>
+    <p><b style="color:var(--ink);">Third round</b></p>
+    <ul class="plain">
+      <li><b>Changing the split mode now starts the periods over.</b> The previous version tried to convert
+          one shape into another, which only works when the shapes correspond — and they don't. Twelve
+          months mapped onto four quarters piled three rows into each quarter, and switching back produced
+          three Januaries, three Aprils and so on.</li>
+      <li><b>The reset is recoverable.</b> Switching away from a split that had periods in it leaves the
+          same <i>Undo</i> the other bulk actions do, and undoing puts back both the periods and the mode
+          they belonged to. Switching away from an untouched single row says nothing, because nothing
+          was lost.</li>
+    </ul>
+    <p><b style="color:var(--ink);">Second round</b></p>
+    <ul class="plain">
+      <li><b>A new line starts with one empty period, never twelve.</b> The scenario buttons above load
+          finished budgets to show the shape; the first one, <i>New line</i>, is what a coach actually
+          gets on ticking &ldquo;Split by period&rdquo;. One row rather than none, so the shape of a
+          period — picker, label, amount — is visible without having to click to find out.</li>
+      <li><b>&ldquo;Clear all periods&rdquo; joins the add bar</b> once there are two or more rows, so
+          rebuilding doesn't mean clicking &times; twelve times.</li>
+      <li><b>Bulk actions can be undone.</b> Fill the season or clear the lot and a quiet strip appears
+          offering <i>Undo</i>. It's there instead of a confirmation dialog — the coach isn't stopped to
+          answer a question they'll almost always say yes to, and the accident is still one click from
+          being repaired. Doing anything else retires the offer.</li>
+    </ul>
+    <p><b style="color:var(--ink);">First round</b></p>
+    <ul class="plain">
+      <li><b>The wall of month chips is gone.</b> Periods are added one at a time with
+          &ldquo;Add period&rdquo;, the same gesture as today — the mode just decides what kind of picker
+          each row gets.</li>
+      <li><b>Every row carries its own visible period picker.</b> Previously the month lived only in the
+          label's grey placeholder text, so typing a label hid it and row order became the only clue.
+          Now the month is a control that never goes away.</li>
+      <li><b>The picker sits first, the optional label second.</b> Scanning down a twelve-row budget gives
+          you a clean column of months on the left edge.</li>
+      <li><b>Column headings appear above the rows</b> so &ldquo;optional&rdquo; is stated once, in
+          writing, rather than implied by an empty box.</li>
+      <li><b>The form is a touch wider</b> — matching the event form — to fit three controls per row
+          without crushing them.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 4 · MODE MATRIX ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">04</span>
+      <h2>What each mode asks for</h2>
+    </div>
+    <p>
+      All four produce exactly the same thing underneath — a set of named, dated amounts — so
+      Budget&nbsp;vs.&nbsp;Actual, the month grid and player installments keep working untouched. The mode is
+      only about what the coach is asked to do. Changing it starts the split over — it's a decision about
+      how the line works, not a display setting — with an <i>Undo</i> offered whenever there was anything
+      to lose.
+    </p>
+
+    <div class="scrollx">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Each row shows</th>
+            <th>Period is named</th>
+            <th>Period is dated</th>
+            <th>Best for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Months</td>
+            <td>Month picker, label, amount</td>
+            <td>&ldquo;Apr 2027&rdquo;, automatically</td>
+            <td>1st of the month</td>
+            <td>Annual budgets, ice/field time, coaching fees</td>
+          </tr>
+          <tr>
+            <td>Quarters</td>
+            <td>Quarter picker, label, amount</td>
+            <td>&ldquo;Q2 2027&rdquo;, automatically</td>
+            <td>First day of the quarter</td>
+            <td>Board-facing plans, longer programs</td>
+          </tr>
+          <tr>
+            <td>Specific dates</td>
+            <td>Date picker, label, amount</td>
+            <td>From the date, unless typed</td>
+            <td>Exactly what's picked</td>
+            <td>Entry fees, deposits, anything with a due date</td>
+          </tr>
+          <tr>
+            <td>Just names</td>
+            <td>Label, amount</td>
+            <td>Typed, or &ldquo;Period 1&rdquo;</td>
+            <td>No date</td>
+            <td>&ldquo;Deposit / Balance&rdquo; before dates are known</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <b>Undated periods are allowed, with a warning, not a block.</b> A period with no date can't be placed on
+      a calendar, so Budget&nbsp;vs.&nbsp;Actual lumps it in with the last one. The form says so on the row.
+      That's information the coach needs — it isn't a reason to stop them saving.
+    </div>
+  </section>
+
+  <!-- ══════════════════ 5 · THE THREE CHANGES ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">05</span>
+      <h2>The three changes, stated plainly</h2>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>A save that fails does something visible</h3>
+        <p>The form jumps to the first problem, marks the field, and shows a count beside the button that
+           stays visible however far the form is scrolled.</p>
+        <p>Clicking the count jumps to the problem again. No second dialog — a dialog would cost an extra
+           dismissal and still wouldn't say which row was wrong.</p>
+      </div>
+      <div class="card">
+        <h3>Labels stop being mandatory</h3>
+        <p>A period that has a month, quarter or date names itself, and that name is shown greyed in the
+           label box until the coach types over it. The period's identity lives in its own picker, so it
+           stays visible either way.</p>
+        <p>With no date and no name, periods fall back to &ldquo;Period 1&rdquo;, &ldquo;Period 2&rdquo;.
+           Nothing about naming can block a save any more.</p>
+      </div>
+      <div class="card">
+        <h3>Only amounts can block a save</h3>
+        <p>Every period needs an amount, and the amounts have to add up to the line total. Those are real
+           accounting constraints, and the running total already shows them live.</p>
+        <p>Everything else &mdash; names, dates, notes &mdash; is either derived or advisory.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 6 · SIDE EFFECTS ══════════════════ -->
+  <section class="sect">
+    <div class="sect-head">
+      <span class="sect-num">06</span>
+      <h2>What else this touches</h2>
+    </div>
+    <ul class="plain">
+      <li><b>Budget vs. Actual</b> — unaffected. It reads names and dates, and now gets better ones: real month
+          names instead of whatever a coach typed at 11pm.</li>
+      <li><b>The month grid</b> — improves. Month mode produces periods that land cleanly in month columns by
+          construction, which is what the grid wants anyway.</li>
+      <li><b>Player installments</b> — unaffected. Generating dues still reads the plan the same way.</li>
+      <li><b>Spreadsheet import</b> — worth a look in the same pass. An imported budget arrives month-shaped
+          more often than not, so it should land in month mode rather than as loose dated rows.</li>
+      <li><b>The org-side budget planner</b> — stores periods the same way and probably carries the same
+          required-label friction. Not yet confirmed; worth checking before committing to it.</li>
+      <li><b>Existing budget lines</b> — untouched. A line saved before this change opens in whichever mode
+          matches what it already holds.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 7 · OPEN QUESTIONS ══════════════════ -->
+  <section class="sect qa">
+    <div class="sect-head">
+      <span class="sect-num">07</span>
+      <h2>Decisions needed before build</h2>
+    </div>
+    <ul class="plain">
+      <li><b>Default mode for a new line.</b> Mockup remembers the coach's last choice on that team. The
+          alternative is defaulting by category — tournaments to dates, ice time to months.</li>
+      <li><b>One starting row, or none at all.</b> The mockup opens a new split with a single empty period,
+          on the grounds that it shows what a period looks like without a click. Starting completely empty
+          is the cleaner-looking option and just as defensible.</li>
+      <li><b>Which month the first row lands on.</b> January today, because that's the start of the season
+          year on record. If your clubs' seasons start in September this will be wrong every time — but
+          fixing it properly means recording a season start month, which is a bigger change than this one.</li>
+      <li><b>Season span.</b> The picker offers the season year and the one after it, so a season crossing
+          New Year works. Whether the <i>first</i> row should default to January or to the month the season
+          starts is a real question — the platform doesn't currently record a season start month.</li>
+      <li><b>Quarters.</b> Calendar quarters in the mockup. Nothing stops these being season quarters if
+          that's how your clubs talk.</li>
+      <li><b>Repeat months.</b> Two rows can sit in the same month — legitimate for two payments, but also
+          an easy slip. Silent, or a quiet note on the row?</li>
+      <li><b>Months &rarr; specific dates is the one switch that could survive.</b> Roughing a line out by
+          month and then pinning exact due dates is a real habit, and each month has an obvious date to
+          become. Everything else resets; carving out this one case would be genuinely useful but breaks
+          the &ldquo;a mode change starts over&rdquo; rule the rest of the form now follows.</li>
+      <li><b>The blocking dialog.</b> This mockup deliberately doesn't use one. If you'd still prefer a
+          modal warning, it drops in without disturbing anything else here.</li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var SEASON_YEAR = 2027;
+  var YEARS = [SEASON_YEAR, SEASON_YEAR + 1];
+
+  /* A row holds an optional label, an amount, and — depending on the mode — an anchor:
+     month+year, quarter+year, or a date. Switching mode converts the anchor, never
+     discards the amount. */
+  var state = {
+    mode: 'months',
+    rows: [],
+    valueMode: 'amount',
+    attempted: false
+  };
+  var seq = 0;
+  function nid() { seq += 1; return 'r' + seq; }
+
+  /* The way back from a bulk fill or a clear. Holds the period list as it was
+     immediately before, and survives only until the coach does something else. */
+  var undo = null;
+
+  var el = {
+    body:      document.getElementById('modalBody'),
+    rowZone:   document.getElementById('rowZone'),
+    colHead:   document.getElementById('colHead'),
+    stepTwo:   document.getElementById('stepTwoText'),
+    sumRow:    document.getElementById('sumRow'),
+    total:     document.getElementById('totalInput'),
+    desc:      document.getElementById('descInput'),
+    useSplit:  document.getElementById('useSplit'),
+    periods:   document.getElementById('periodsBox'),
+    modePicker:document.getElementById('modePicker'),
+    valueMode: document.getElementById('valueMode'),
+    splitEven: document.getElementById('splitEvenly'),
+    save:      document.getElementById('saveBtn'),
+    flag:      document.getElementById('footFlag')
+  };
+
+  function money(n) {
+    return '$' + Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function totalVal() { return parseFloat(el.total.value) || 0; }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  /* ── Names derived from whatever anchors the row ────────── */
+  function autoName(row, index) {
+    if (state.mode === 'months' && row.month != null)   return MONTHS[row.month] + ' ' + row.year;
+    if (state.mode === 'quarters' && row.quarter != null) return 'Q' + (row.quarter + 1) + ' ' + row.year;
+    if (state.mode === 'dates' && row.date) {
+      var p = row.date.split('-');
+      if (p.length === 3) {
+        var m = MONTHS[parseInt(p[1], 10) - 1] || '';
+        var d = parseInt(p[2], 10);
+        return d === 1 ? m + ' ' + p[0] : m + ' ' + d + ', ' + p[0];
+      }
+    }
+    return 'Period ' + (index + 1);
+  }
+  function effectiveName(row, index) {
+    return row.label.trim() ? row.label.trim() : autoName(row, index);
+  }
+  function rowDate(row) {
+    if (state.mode === 'months' && row.month != null) return row.year + '-' + pad2(row.month + 1) + '-01';
+    if (state.mode === 'quarters' && row.quarter != null) return row.year + '-' + pad2(row.quarter * 3 + 1) + '-01';
+    if (state.mode === 'dates') return row.date || '';
+    return '';
+  }
+
+  /* ── New rows: advance from the last one ────────────────── */
+  function nextAnchor() {
+    var last = state.rows[state.rows.length - 1];
+    if (state.mode === 'months') {
+      if (!last || last.month == null) return { month: 0, year: SEASON_YEAR };
+      var m = last.month + 1, y = last.year;
+      if (m > 11) { m = 0; y += 1; }
+      if (YEARS.indexOf(y) === -1) { m = last.month; y = last.year; }
+      return { month: m, year: y };
+    }
+    if (state.mode === 'quarters') {
+      if (!last || last.quarter == null) return { quarter: 0, year: SEASON_YEAR };
+      var q = last.quarter + 1, qy = last.year;
+      if (q > 3) { q = 0; qy += 1; }
+      if (YEARS.indexOf(qy) === -1) { q = last.quarter; qy = last.year; }
+      return { quarter: q, year: qy };
+    }
+    return {};
+  }
+
+  function addRow() {
+    undo = null;
+    var row = { id: nid(), label: '', amount: '', date: '' };
+    var a = nextAnchor();
+    if (a.month !== undefined) { row.month = a.month; row.year = a.year; }
+    if (a.quarter !== undefined) { row.quarter = a.quarter; row.year = a.year; }
+    state.rows.push(row);
+    render();
+  }
+
+  /* ── Mode switching starts the split over ────────────────
+     Converting between shapes only works when the shapes correspond, and they
+     don't: twelve months mapped onto four quarters piles three rows into each,
+     and mapping back gives three Januaries. Picking a mode is a fresh decision
+     about how this line is split, so it resets to a single empty period — and
+     leaves an Undo behind whenever there was anything worth losing. */
+  var MODE_NAMES = { months: 'months', quarters: 'quarters', dates: 'specific dates', names: 'names only' };
+
+  function defaultRow(mode) {
+    var row = { id: nid(), label: '', amount: '', date: '' };
+    if (mode === 'months')   { row.month = 0;   row.year = SEASON_YEAR; }
+    if (mode === 'quarters') { row.quarter = 0; row.year = SEASON_YEAR; }
+    return row;
+  }
+
+  function applyModeButtons() {
+    [].forEach.call(el.modePicker.querySelectorAll('[data-mode]'), function (x) {
+      x.setAttribute('aria-pressed', x.dataset.mode === state.mode ? 'true' : 'false');
+    });
+  }
+
+  function setMode(mode) {
+    if (state.mode === mode) return;
+    var had = state.rows.slice();
+    var worthKeeping = had.length > 1 || had.some(function (r) {
+      return r.label.trim() || String(r.amount).trim();
+    });
+    var fromMode = state.mode;
+
+    state.mode = mode;
+    state.rows = [defaultRow(mode)];
+    state.attempted = false;
+
+    undo = worthKeeping
+      ? {
+          rows: had,
+          mode: fromMode,
+          text: 'Now splitting by ' + MODE_NAMES[mode] + '. The previous ' + had.length
+                + ' period' + (had.length === 1 ? '' : 's') + ' were cleared.'
+        }
+      : null;
+
+    applyModeButtons();
+    render();
+  }
+
+  /* ── Row rendering ──────────────────────────────────────── */
+  function renderColHead() {
+    var h = el.colHead;
+    h.innerHTML = '';
+    if (!state.rows.length) return;
+    var whenLabel = state.mode === 'months' ? 'Month'
+                  : state.mode === 'quarters' ? 'Quarter'
+                  : state.mode === 'dates' ? 'Date' : '';
+    if (whenLabel) {
+      var a = document.createElement('span');
+      a.className = 'f-when';
+      a.textContent = whenLabel;
+      h.appendChild(a);
+    }
+    var b = document.createElement('span');
+    b.className = 'f-label';
+    b.textContent = 'Label (optional)';
+    h.appendChild(b);
+    var c = document.createElement('span');
+    c.className = 'f-amt';
+    c.style.textAlign = 'right';
+    c.textContent = state.valueMode === 'percent' ? 'Share' : 'Amount';
+    h.appendChild(c);
+  }
+
+  function whenControl(row, i) {
+    if (state.mode === 'names') return null;
+
+    if (state.mode === 'dates') {
+      var d = document.createElement('input');
+      d.className = 'p-input f-when';
+      d.type = 'date';
+      d.value = row.date || '';
+      d.setAttribute('aria-label', 'Date for period ' + (i + 1));
+      d.addEventListener('input', function () { row.date = d.value; refresh(); });
+      return d;
+    }
+
+    var s = document.createElement('select');
+    s.className = 'p-input f-when';
+    s.setAttribute('aria-label', (state.mode === 'months' ? 'Month' : 'Quarter') + ' for period ' + (i + 1));
+    YEARS.forEach(function (yr) {
+      var g = document.createElement('optgroup');
+      g.label = String(yr);
+      var names = state.mode === 'months' ? MONTHS : ['Q1', 'Q2', 'Q3', 'Q4'];
+      names.forEach(function (name, ix) {
+        var o = document.createElement('option');
+        o.value = yr + '|' + ix;
+        o.textContent = name + ' ' + yr;
+        g.appendChild(o);
+      });
+      s.appendChild(g);
+    });
+    var cur = (row.year || SEASON_YEAR) + '|' + (state.mode === 'months' ? row.month : row.quarter);
+    s.value = cur;
+    s.addEventListener('change', function () {
+      var parts = s.value.split('|');
+      row.year = parseInt(parts[0], 10);
+      if (state.mode === 'months') row.month = parseInt(parts[1], 10);
+      else row.quarter = parseInt(parts[1], 10);
+      refresh();
+    });
+    return s;
+  }
+
+  function renderRows() {
+    var z = el.rowZone;
+    z.innerHTML = '';
+
+    state.rows.forEach(function (row, i) {
+      var wrap = document.createElement('div');
+      wrap.className = 'p-prow';
+
+      var fields = document.createElement('div');
+      fields.className = 'fields';
+
+      var when = whenControl(row, i);
+      if (when) fields.appendChild(when);
+
+      var nameIn = document.createElement('input');
+      nameIn.className = 'p-input f-label';
+      nameIn.type = 'text';
+      nameIn.value = row.label;
+      nameIn.dataset.label = '1';
+      nameIn.setAttribute('aria-label', 'Label for period ' + (i + 1) + ' (optional)');
+      nameIn.addEventListener('input', function () { row.label = nameIn.value; refresh(); });
+      fields.appendChild(nameIn);
+
+      var amtIn = document.createElement('input');
+      amtIn.className = 'p-input f-amt';
+      amtIn.type = 'number';
+      amtIn.min = '0';
+      amtIn.step = '0.01';
+      amtIn.value = row.amount;
+      amtIn.placeholder = state.valueMode === 'percent' ? '%' : '$';
+      amtIn.dataset.amount = '1';
+      amtIn.setAttribute('aria-label', (state.valueMode === 'percent' ? 'Share' : 'Amount') + ' for period ' + (i + 1));
+      amtIn.addEventListener('input', function () { row.amount = amtIn.value; refresh(); });
+      fields.appendChild(amtIn);
+
+      wrap.appendChild(fields);
+
+      var right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.alignItems = 'center';
+      right.style.gap = '.25rem';
+
+      if (state.valueMode === 'percent') {
+        var conv = document.createElement('span');
+        conv.className = 'p-conv';
+        conv.dataset.conv = '1';
+        right.appendChild(conv);
+      }
+
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'p-x';
+      x.innerHTML = '&times;';
+      x.setAttribute('aria-label', 'Remove period ' + (i + 1));
+      x.addEventListener('click', function () {
+        undo = null;
+        state.rows = state.rows.filter(function (r) { return r.id !== row.id; });
+        render();
+      });
+      right.appendChild(x);
+      wrap.appendChild(right);
+
+      var msg = document.createElement('p');
+      msg.className = 'p-rowmsg';
+      msg.dataset.msg = '1';
+      wrap.appendChild(msg);
+
+      z.appendChild(wrap);
+    });
+
+    if (!state.rows.length) {
+      var p = document.createElement('p');
+      p.className = 'p-empty';
+      p.textContent = 'No periods yet.';
+      z.appendChild(p);
+    }
+
+    var bar = document.createElement('div');
+    bar.className = 'p-addbar';
+    var add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'p-mini';
+    add.textContent = '+ Add period';
+    add.addEventListener('click', addRow);
+    bar.appendChild(add);
+
+    if (state.mode === 'months' || state.mode === 'quarters') {
+      var unit = state.mode === 'months' ? 12 : 4;
+      var fill = document.createElement('button');
+      fill.type = 'button';
+      fill.className = 'p-mini quiet';
+      fill.textContent = state.mode === 'months' ? 'Fill the season (12 months)' : 'Fill the season (4 quarters)';
+      fill.addEventListener('click', function () {
+        var before = state.rows.slice();
+        var taken = {};
+        state.rows.forEach(function (r) {
+          var k = state.mode === 'months' ? r.month : r.quarter;
+          if (r.year === SEASON_YEAR && k != null) taken[k] = true;
+        });
+        var added = 0;
+        for (var k = 0; k < unit; k++) {
+          if (taken[k]) continue;
+          var row = { id: nid(), label: '', amount: '', date: '', year: SEASON_YEAR };
+          if (state.mode === 'months') row.month = k; else row.quarter = k;
+          state.rows.push(row);
+          added += 1;
+        }
+        state.rows.sort(function (a, b) {
+          var ka = (a.year * 100) + (state.mode === 'months' ? a.month : a.quarter);
+          var kb = (b.year * 100) + (state.mode === 'months' ? b.month : b.quarter);
+          return ka - kb;
+        });
+        undo = added
+          ? { rows: before, text: 'Added ' + added + ' ' + (state.mode === 'months' ? 'month' : 'quarter') + (added === 1 ? '' : 's') + '.' }
+          : null;
+        render();
+      });
+      bar.appendChild(fill);
+    }
+
+    // Start over — the way back from a mistaken "Fill the season", and from any
+    // set of periods a coach wants to rebuild. Only offered once there's enough
+    // on screen for the per-row × to be tedious.
+    if (state.rows.length >= 2) {
+      var clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'p-mini quiet';
+      clear.textContent = 'Clear all periods';
+      clear.addEventListener('click', function () {
+        var before = state.rows.slice();
+        state.rows = [];
+        undo = { rows: before, text: 'Removed ' + before.length + ' periods.' };
+        render();
+      });
+      bar.appendChild(clear);
+    }
+
+    z.appendChild(bar);
+
+    // Undo strip — bulk actions only. A single × is one click to put back;
+    // twelve rows are not, so those get a way home rather than a confirm dialog.
+    if (undo) {
+      var strip = document.createElement('div');
+      strip.className = 'p-undo';
+      var t = document.createElement('span');
+      t.textContent = undo.text;
+      strip.appendChild(t);
+      var u = document.createElement('button');
+      u.type = 'button';
+      u.textContent = 'Undo';
+      u.addEventListener('click', function () {
+        state.rows = undo.rows;
+        // A mode switch is undone whole — restoring twelve month-rows into
+        // quarter mode would be meaningless.
+        if (undo.mode) { state.mode = undo.mode; applyModeButtons(); }
+        undo = null;
+        render();
+      });
+      strip.appendChild(u);
+      z.appendChild(strip);
+    }
+  }
+
+  /* ── Live derived state: names, warnings, totals ─────────── */
+  function refresh() {
+    var total = totalVal();
+    var sum = 0;
+    var problems = [];
+
+    var rowEls = el.rowZone.querySelectorAll('.p-prow');
+    state.rows.forEach(function (row, i) {
+      var node = rowEls[i];
+      if (!node) return;
+
+      var nameIn = node.querySelector('[data-label]');
+      if (nameIn) nameIn.placeholder = autoName(row, i);
+
+      var amtIn = node.querySelector('[data-amount]');
+      var val = parseFloat(row.amount);
+      var missing = isNaN(val) || val <= 0;
+      if (!missing) sum += val;
+
+      if (amtIn) {
+        amtIn.classList.toggle('bad', state.attempted && missing);
+        if (missing) problems.push({ node: amtIn, why: 'needs an amount' });
+      }
+
+      var conv = node.querySelector('[data-conv]');
+      if (conv) {
+        conv.textContent = (state.valueMode === 'percent' && total > 0 && !missing)
+          ? money((total * val) / 100) : '—';
+      }
+
+      var msg = node.querySelector('[data-msg]');
+      if (msg) {
+        if (state.attempted && missing) {
+          msg.className = 'p-rowmsg err';
+          msg.textContent = 'Enter an amount for “' + effectiveName(row, i) + '”.';
+        } else if (!rowDate(row)) {
+          msg.className = 'p-rowmsg';
+          msg.textContent = 'No date — this won’t show in Budget vs. Actual month columns.';
+        } else {
+          msg.className = 'p-rowmsg';
+          msg.textContent = '';
+        }
+      }
+    });
+
+    var sumErr = false, txt;
+    if (state.valueMode === 'percent') {
+      sumErr = state.rows.length > 0 && Math.abs(sum - 100) > 0.1;
+      txt = sum.toFixed(1) + '%' + (total > 0 ? ' = ' + money((total * sum) / 100) : '');
+      if (sumErr) problems.push({ node: el.rowZone.querySelector('[data-amount]'), why: 'shares must total 100%' });
+    } else {
+      sumErr = state.rows.length > 0 && total > 0 && Math.abs(sum - total) > 0.02;
+      txt = money(sum) + (total > 0 ? ' / ' + money(total) : '');
+      if (sumErr) problems.push({ node: el.rowZone.querySelector('[data-amount]'), why: 'amounts must add up to the line total' });
+    }
+    el.sumRow.className = 'p-sum' + (sumErr ? ' err' : (state.rows.length && !problems.length ? ' ok' : ''));
+    el.sumRow.innerHTML = '<span>Period total</span><span class="amt">' + txt + '</span>';
+
+    if (total <= 0) problems.push({ node: el.total, why: 'the line needs a total amount' });
+    if (el.useSplit.checked && !state.rows.length) {
+      problems.push({ node: el.rowZone, why: 'add at least one period, or turn the split off' });
+    }
+    el.total.classList.toggle('bad', state.attempted && total <= 0);
+
+    el.stepTwo.textContent =
+      state.mode === 'months'   ? 'Add a period for each month you spend in'
+    : state.mode === 'quarters' ? 'Add a period for each quarter'
+    : state.mode === 'dates'    ? 'Add a period for each payment date'
+    :                             'Add a period for each part of the split';
+
+    if (state.attempted && problems.length) {
+      el.flag.hidden = false;
+      el.flag.textContent = '⚠ ' + problems.length + (problems.length === 1 ? ' thing to fix' : ' things to fix');
+      el.flag.onclick = function () { jumpTo(problems[0]); };
+    } else {
+      el.flag.hidden = true;
+      el.flag.onclick = null;
+    }
+    return problems;
+  }
+
+  function jumpTo(problem) {
+    if (!problem || !problem.node) return;
+    problem.node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (problem.node.focus) {
+      try { problem.node.focus({ preventScroll: true }); } catch (e) { problem.node.focus(); }
+    }
+  }
+
+  function render() {
+    renderRows();
+    renderColHead();
+    refresh();
+  }
+
+  /* ── Controls ──────────────────────────────────────────── */
+  el.modePicker.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-mode]');
+    if (!b) return;
+    setMode(b.dataset.mode);
+    syncScenarioBar(null); // the coach has left the preset behind
+  });
+
+  el.valueMode.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-vm]');
+    if (!b || b.dataset.vm === state.valueMode) return;
+    undo = null;
+    var total = totalVal();
+    var to = b.dataset.vm;
+    state.rows.forEach(function (r) {
+      var v = parseFloat(r.amount);
+      if (isNaN(v) || total <= 0) { r.amount = ''; return; }
+      r.amount = String(to === 'percent'
+        ? Math.round((v / total) * 1000) / 10
+        : Math.round(total * v) / 100);
+    });
+    state.valueMode = to;
+    [].forEach.call(el.valueMode.querySelectorAll('[data-vm]'), function (x) {
+      x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+    });
+    render();
+  });
+
+  el.splitEven.addEventListener('click', function () {
+    var n = state.rows.length;
+    if (!n) return;
+    undo = null;
+    var whole = state.valueMode === 'percent' ? 100 : totalVal();
+    if (whole <= 0) return;
+    var share = Math.floor((whole / n) * 100) / 100;
+    var last  = Math.round((whole - share * (n - 1)) * 100) / 100;
+    state.rows.forEach(function (r, i) { r.amount = String(i === n - 1 ? last : share); });
+    render();
+  });
+
+  el.total.addEventListener('input', refresh);
+  el.useSplit.addEventListener('change', function () {
+    el.periods.style.display = el.useSplit.checked ? '' : 'none';
+    refresh();
+  });
+
+  el.save.addEventListener('click', function () {
+    state.attempted = true;
+    var problems = refresh();
+    if (problems.length) { jumpTo(problems[0]); return; }
+    var names = state.rows.map(function (r, i) { return effectiveName(r, i); }).join(', ');
+    el.flag.hidden = false;
+    el.flag.style.color = 'var(--p-good)';
+    el.flag.style.borderColor = 'var(--p-good)';
+    el.flag.style.background = 'transparent';
+    el.flag.textContent = '✓ Saved as: ' + names;
+    el.flag.onclick = null;
+    setTimeout(function () {
+      el.flag.hidden = true;
+      el.flag.style.color = '';
+      el.flag.style.borderColor = '';
+      el.flag.style.background = '';
+    }, 5000);
+  });
+
+  /* ── Scenario + theme bar ──────────────────────────────── */
+  var SCENARIOS = {
+    // What a coach actually gets on ticking "Split by period": ONE empty row.
+    blank: {
+      desc: 'Entry Fees', total: '3000', mode: 'months',
+      rows: [{ month: 0, year: SEASON_YEAR }]
+    },
+    months: {
+      desc: 'Ice / field time', total: '12000', mode: 'months', even: true,
+      rows: [0,1,2,3,4,5,6,7,8,9,10,11].map(function (m) { return { month: m, year: SEASON_YEAR }; })
+    },
+    quarters: {
+      desc: 'Coaching fees', total: '8000', mode: 'quarters', even: true,
+      rows: [0,1,2,3].map(function (q) { return { quarter: q, year: SEASON_YEAR }; })
+    },
+    dates: {
+      desc: 'Entry Fees', total: '3000', mode: 'dates',
+      rows: [{ date: '2027-02-14', amount: '1500' }, { date: '2027-06-06', amount: '1500' }]
+    },
+    names: {
+      desc: 'Uniform order', total: '2400', mode: 'names',
+      rows: [{ label: 'Deposit', amount: '800' }, { label: 'Balance', amount: '1600' }]
+    }
+  };
+
+  function syncScenarioBar(key) {
+    [].forEach.call(document.querySelectorAll('[data-scenario]'), function (b) {
+      b.setAttribute('aria-pressed', b.dataset.scenario === key ? 'true' : 'false');
+    });
+  }
+
+  function loadScenario(key) {
+    var s = SCENARIOS[key];
+    undo = null;
+    state.attempted = false;
+    state.valueMode = 'amount';
+    [].forEach.call(el.valueMode.querySelectorAll('[data-vm]'), function (x) {
+      x.setAttribute('aria-pressed', x.dataset.vm === 'amount' ? 'true' : 'false');
+    });
+    el.desc.value = s.desc;
+    el.total.value = s.total;
+    el.useSplit.checked = true;
+    el.periods.style.display = '';
+    state.mode = s.mode;
+    state.rows = s.rows.map(function (r) {
+      var row = { id: nid(), label: r.label || '', amount: r.amount || '', date: r.date || '' };
+      if (r.month !== undefined) { row.month = r.month; row.year = r.year; }
+      if (r.quarter !== undefined) { row.quarter = r.quarter; row.year = r.year; }
+      return row;
+    });
+    // Even split for the pre-built month/quarter scenarios
+    if (s.even) {
+      var whole = parseFloat(s.total) || 0;
+      var n = state.rows.length;
+      var share = Math.floor((whole / n) * 100) / 100;
+      state.rows.forEach(function (r, i) {
+        r.amount = String(i === n - 1 ? Math.round((whole - share * (n - 1)) * 100) / 100 : share);
+      });
+    }
+    [].forEach.call(el.modePicker.querySelectorAll('[data-mode]'), function (x) {
+      x.setAttribute('aria-pressed', x.dataset.mode === s.mode ? 'true' : 'false');
+    });
+    syncScenarioBar(key);
+    render();
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!e.target || !e.target.closest) return;
+    var sc = e.target.closest('[data-scenario]');
+    if (sc) { loadScenario(sc.dataset.scenario); return; }
+
+    var sk = e.target.closest('[data-skinset]');
+    if (sk) {
+      [].forEach.call(document.querySelectorAll('[data-skinset]'), function (b) {
+        b.setAttribute('aria-pressed', b === sk ? 'true' : 'false');
+      });
+      [].forEach.call(document.querySelectorAll('.skin'), function (s) {
+        s.setAttribute('data-skin', sk.dataset.skinset);
+      });
+    }
+  });
+
+  // The "today" panel: pressing Save does nothing visible, which is the point.
+  document.getElementById('todaySave').addEventListener('click', function () {
+    var box = document.getElementById('todayScroll');
+    box.scrollTop = box.scrollTop; // deliberately inert
+  });
+
+  loadScenario('blank');
+})();
+</script>

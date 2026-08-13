@@ -220,10 +220,11 @@ export function buildMonthGrid(input: {
   todayMonth: MonthKey;
   maxMonths?: number;
   /**
-   * Season-total dollars not yet covered by any line (`rep_program_years.budget_amount` above the
-   * itemized sum). The category view already shows this as a "Non-itemized buffer" row; the month
+   * ESTIMATE dollars not yet covered by any line (`rep_program_years.budget_amount` above the
+   * itemized sum). The category view already shows this as a "Not itemized yet" row; the month
    * grid must too, or the same page would report two different budget totals. It has no date by
-   * definition, so it lands in the "no date yet" column.
+   * definition, so it lands in the "no date yet" column. Positive only — an estimate BELOW the
+   * lines has nothing unallocated to stand in for, and a negative row here would read as a refund.
    */
   bufferAmount?: number;
 }): MonthGrid {
@@ -410,7 +411,7 @@ export function buildMonthGrid(input: {
 
   if (bufferAmount > 0.005) {
     categories.push({
-      categoryName: 'Non-itemized buffer',
+      categoryName: 'Not itemized yet',
       categoryKey: '__buffer__',
       cells: blankCells(months.length),
       undatedBudget: bufferAmount,

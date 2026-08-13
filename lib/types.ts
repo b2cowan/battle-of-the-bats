@@ -1,4 +1,5 @@
 import type { CoachCapabilities } from './coach-capabilities';
+import type { BudgetLineKind } from './coach-budget-totals';
 
 export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club' | 'club_large';
 
@@ -1665,6 +1666,32 @@ export interface RepTeamGameMoment {
   createdAt: string;
 }
 
+/**
+ * A receipt for a COMMITTED coach money import (migration 231) — what the Money hub's
+ * `Import ▾ → Recent imports` lists. Append-only: there is no update shape and no update
+ * helper, because a receipt that can be edited is not a receipt.
+ */
+export interface RepTeamImportEvent {
+  id: string;
+  teamId: string;
+  orgId: string;
+  programYearId: string;
+  /** The Import menu's own vocabulary, so the history reads back in the words it was offered in. */
+  dataset: 'budget_lines' | 'payables';
+  /** The sheet shape the coach chose — a month grid and a simple list build very different plans. */
+  shape: 'month-grid' | 'list' | 'payables';
+  /** 'paste' is the phone path the phone-header rule (2026-08-13 decision 4) relies on surviving. */
+  source: 'paste' | 'file';
+  sourceFilename: string | null;
+  rowsCreated: number;
+  rowsUpdated: number;
+  rowsSkipped: number;
+  rowsFailed: number;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
 export interface RepTeamEventAttendance {
   id: string;
   eventId: string;
@@ -2295,6 +2322,9 @@ export interface RepBudgetLine {
   itemId: string | null;
   description: string;
   totalAmount: number;
+  /** Is this money the team SPENDS or money it expects to bring IN (fundraising, sponsorship,
+   *  a grant)? The amount is always positive — the kind carries the sign (migration 230). */
+  lineKind: BudgetLineKind;
   notes: string | null;
   sortOrder: number;
   createdAt: string;
@@ -2319,6 +2349,8 @@ export interface RepBudgetLineWithPeriods extends RepBudgetLine {
 
 export interface RepBudgetPlan {
   lines: RepBudgetLineWithPeriods[];
+  /** Σ COST lines only. Funding lines are not part of what the season costs — they are what
+   *  offsets it — so a payload that lumped them together would report a smaller season. */
   totalBudget: number;
   hasInstallments: boolean;
   rosterCount: number;

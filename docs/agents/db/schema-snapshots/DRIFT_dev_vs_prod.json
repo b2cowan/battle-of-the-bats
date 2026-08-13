@@ -1,12 +1,125 @@
 {
-  "generated": "2026-08-12",
-  "total": 0,
+  "generated": "2026-08-13",
+  "total": 28,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 1,
+    "columns": 16,
+    "indexes": 2,
+    "constraints": 5,
+    "rls": 4
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_budget_lines.rep_budget_lines_line_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_import_events.rep_team_import_events_dataset_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_import_events.rep_team_import_events_shape_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_import_events.rep_team_import_events_source_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_budget_lines.line_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.created_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.dataset",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.rows_created",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.rows_failed",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.rows_skipped",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.rows_updated",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.shape",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.source_filename",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_import_events.team_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_created_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_org",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_team",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_year",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_import_events.rep_team_import_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_import_events_season",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_import_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_import_events",
+      "sig": ""
+    }
+  ]
 }

@@ -144,6 +144,10 @@ export default function BudgetImportSheet({
 
   function reviewPaste() {
     setError('');
+    // Clear any filename left by an earlier file attempt in the same sheet — it labels the
+    // review AND (since migration 231) the import receipt, so a stale one would record a paste
+    // as an upload of a file the coach abandoned.
+    setFileName('');
     const text = pasteText.trim();
     if (!text) { setError('Paste your rows first — include the header row from your sheet.'); return; }
     try {
@@ -198,7 +202,16 @@ export default function BudgetImportSheet({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shape: isPayables ? 'payables' : 'budget', rows: ready }),
+        body: JSON.stringify({
+          shape: isPayables ? 'payables' : 'budget',
+          rows: ready,
+          // Receipt-only fields (migration 231): what the coach chose and how the rows arrived,
+          // so "Recent imports" can say "a month grid, pasted" rather than just "an import".
+          // `shape` above stays the write discriminator and is untouched by these.
+          sheetShape: shape,
+          source: fileName ? 'file' : 'paste',
+          sourceFilename: fileName || null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Those rows could not be imported.');
@@ -300,8 +313,12 @@ export default function BudgetImportSheet({
             </p>
 
             <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="group" aria-label="How to bring your rows in">
-              <button type="button" className={`${shared.segBtn} ${tab === 'paste' ? shared.segBtnActive : ''}`} onClick={() => setTab('paste')}>Paste</button>
-              <button type="button" className={`${shared.segBtn} ${tab === 'file' ? shared.segBtnActive : ''}`} onClick={() => setTab('file')}>Upload a file</button>
+              {/* ⚠ Both locked while a file is being reviewed. Switching to Paste and reviewing a
+                  block mid-upload let the slower file response land afterwards and REPLACE the
+                  rows the coach was reading — and because the paste path clears the filename, the
+                  eventual import would then have been recorded as pasted (/review, 2026-08-13). */}
+              <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'paste' ? shared.segBtnActive : ''}`} onClick={() => setTab('paste')}>Paste</button>
+              <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'file' ? shared.segBtnActive : ''}`} onClick={() => setTab('file')}>Upload a file</button>
             </div>
 
             {tab === 'paste' ? (
@@ -347,7 +364,7 @@ export default function BudgetImportSheet({
             <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
               {tab === 'paste' && (
-                <button type="button" className={shared.btnPrimary} onClick={reviewPaste}>Review rows</button>
+                <button type="button" disabled={busy} className={shared.btnPrimary} onClick={reviewPaste}>Review rows</button>
               )}
             </div>
           </>

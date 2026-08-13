@@ -268,6 +268,12 @@ export async function startNextRepSeason(params: {
         item_id: string | null;
         description: string;
         total_amount: number;
+        /** ⚠ Carried, never defaulted. Omitting it let the column default win, which silently
+         *  reclassified every EXPECTED-FUNDING line as a COST in the new season — money the team
+         *  planned to raise came back as money it planned to spend, doubling the season total and
+         *  the dues generated from it, with nothing on screen to reveal it. A write path, so the
+         *  damage was permanent and invisible without a DB audit. */
+        line_kind: string | null;
         notes: string | null;
         sort_order: number;
       };
@@ -289,6 +295,7 @@ export async function startNextRepSeason(params: {
               item_id: line.item_id ?? null,
               description: line.description,
               total_amount: line.total_amount,
+              line_kind: line.line_kind ?? 'cost',
               notes: line.notes ?? null,
               sort_order: line.sort_order ?? 0,
             })
