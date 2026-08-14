@@ -1575,19 +1575,22 @@ suppressed before capture, so the pictures show the product a coach actually see
 - [ ] The "?" drawer shows the same figures at drawer width without overflowing.
 
 **Batch 6 (2026-08-14 — the guide becomes a reading surface):** owner-spotted, two changes.
-**(1) No portal furniture.** The full guide opens in its own tab, so the sidebar, the desktop
-top strip and the phone bottom nav are gone — they were three ways out of a document nobody
-navigated into. In their place, one slim bar: the wordmark, and **← Back to your portal**
-(without it a bookmarked guide is a dead end, since that tab has no history). This is parity
-with the admin side, which has treated help as a focused surface since Stage C. **(2) One fixed
-look.** The guide now renders **dark whatever the account's theme**, matching the "?" panel —
+**(1) No portal furniture — none at all.** The full guide opens in its own tab, so the sidebar,
+the desktop top strip and the phone bottom nav are gone; they were three ways out of a document
+nobody navigated into. A "← Back to your portal" bar was built and then **removed on owner
+ruling the same day**: both doors into the guide force a new tab (the panel's *Open the full
+guide* and the sidebar's *Help*), so the portal is still sitting in the tab the reader came
+from and a way back is furniture for a journey nobody took. The guide's own breadcrumb still
+moves between guides. This is parity with the admin side, which has treated help as a focused
+surface since Stage C. **(2) One fixed look.** The guide now renders **dark whatever the account's theme**, matching the "?" panel —
 which has always been dark even in a warm portal, because it floats free of the portal's skin.
 So help stops being an app screen that changes colour and becomes documentation.
 - [ ] Coach portal on the **warm** theme → open "?" on any page → **Open the full guide**: the
       new tab is DARK, with no sidebar, no top strip, no bottom nav.
-- [ ] The slim bar shows **← Back to your portal** and it returns you to your team list.
-- [ ] **Phone width:** the back link is tappable and NOT hidden under the guide's own search
-      bar (that overlap was the defect the rendered check caught here).
+- [ ] There is **no bar and no back link** — the page starts at the guide's own breadcrumb.
+      Closing the tab is the way out; the portal is untouched in the tab behind it.
+- [ ] Both doors still open a NEW tab: the panel's **Open the full guide**, and **Help** in the
+      portal sidebar. (If either ever opens in place, this surface needs a way out again.)
 - [ ] Jump chips: comfortably tappable, and a long chip label **wraps** instead of pushing the
       page sideways.
 - [ ] Hover a sub-topic heading on desktop: the **#** permalink appears and copies a link. On a

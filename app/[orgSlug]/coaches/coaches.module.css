@@ -389,58 +389,9 @@
   background: var(--pitch-black);
 }
 
-/* Fixed, and it owns the top slot. The guide's own mobile bar (search + What's New) is
-   `position: fixed; top: 0` in help.module.css, so a bar merely sitting first in the flow
-   was rendered UNREACHABLE underneath it on every narrow screen — the rendered check hit-
-   tested the back link and got the search bar instead. Since this is the only way out of a
-   focused surface, being covered is the one failure it cannot have. help.module.css offsets
-   its bar by this height inside [data-help-surface]. */
-.focusedBar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  height: var(--chrome-bar-h);
-  padding: 0 1.25rem;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-  background: var(--hud-surface);
-}
-
-.focusedMark {
-  font-family: var(--font-display, sans-serif);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  font-size: 0.95rem;
-  color: var(--fl-text, rgba(255, 255, 255, 0.9));
-}
-
-.focusedMark span {
-  color: var(--primary-light);
-}
-
-.focusedBack {
-  /* Tap floor: this is the only way out of the surface on a phone. */
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--white-70, rgba(255, 255, 255, 0.7));
-  text-decoration: none;
-}
-
-.focusedBack:hover { color: var(--fl-text, rgba(255, 255, 255, 0.9)); }
-.focusedBack:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
-
 .coachesMainFocused {
   min-height: 100vh;
-  /* Clears the fixed bar above. */
-  padding: calc(2rem + var(--chrome-bar-h)) 2rem 2rem;
+  padding: 2rem;
   /* Focused flows scroll on the DOCUMENT, not inside this element — an intervening
      scroll container neutralises the guide TOC's position:sticky, so the side nav
      would never pin (the admin side learned this in the same place). */
@@ -448,8 +399,7 @@
 }
 
 @media (max-width: 900px) {
-  .coachesMainFocused { padding: calc(1rem + var(--chrome-bar-h)) 1rem 2rem; }
-  .focusedBar { padding: 0 0.9rem; }
+  .coachesMainFocused { padding: 1rem 1rem 2rem; }
 }
 
 /* ── Pinned team masthead (D2 Option A, owner-picked 2026-08-02) ────────────

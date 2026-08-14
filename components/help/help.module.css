@@ -870,16 +870,6 @@
     left: 0;
     right: 0;
     z-index: 30;
-  }
-
-  /* Inside the coaches' focused reading surface a fixed "back to your portal" bar already
-     owns top:0, so this one starts below it. Everywhere else (admin help, the platform-admin
-     mirror) there is no such bar and top:0 stays correct. */
-  :global([data-help-surface]) .helpTocBar {
-    top: var(--chrome-bar-h);
-  }
-
-  .helpTocBar {
     padding: 0.7rem 1rem;
     background: #080c14; /* token-exempt: mobile TOC bar bg, no central token */
     border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));

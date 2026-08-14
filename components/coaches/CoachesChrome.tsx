@@ -1,7 +1,6 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import CoachTopStrip from './CoachTopStrip';
 import CoachesSidebar from './CoachesSidebar';
 import CoachesBottomNav from './CoachesBottomNav';
@@ -18,6 +17,11 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * covering help + onboarding + tournament preview); the coaches portal simply
  * never got the same treatment, so its guide wore the full app chrome. This is
  * that parity, deliberately using the same shape and the same vocabulary.
+ *
+ * ⚠ The "new tab" above is a real invariant, not an assumption: both entry points
+ * carry target="_blank" (HelpDrawer's "Open the full guide" and CoachesSidebar's
+ * Help item). If either ever navigates in place, this surface becomes reachable
+ * with no way out and needs one — that is the condition to re-check, not the tab.
  *
  * ── AND THE THEME ─────────────────────────────────────────────────────────────
  * Focused help also pins the DARK palette (`data-help-surface`, see globals.css)
@@ -39,17 +43,13 @@ export default function CoachesChrome({
   const isHelp = pathname.includes('/coaches/help');
 
   if (isHelp) {
+    // No chrome at all — not even a "back to your portal" bar. BOTH doors into the
+    // guide force a new tab (the drawer's "Open the full guide" and the sidebar's
+    // Help entry both carry target="_blank"), so the portal is still sitting in the
+    // tab the reader came from and a way back is furniture for a journey nobody took.
+    // Owner ruling 2026-08-14, after seeing the bar in place.
     return (
       <div className={styles.coachesShellFocused} data-help-surface>
-        {/* The one piece of chrome a bare reading surface DOES need: a way back.
-            Without it a bookmarked or refreshed guide is a dead end — the tab it
-            usually opens in has no history to go back through. */}
-        <header className={styles.focusedBar}>
-          <span className={styles.focusedMark}>FIELDLOGIC<span>HQ</span></span>
-          <Link href={`/${orgSlug}/coaches`} className={styles.focusedBack}>
-            ← Back to your portal
-          </Link>
-        </header>
         <main className={styles.coachesMainFocused}>{children}</main>
       </div>
     );
