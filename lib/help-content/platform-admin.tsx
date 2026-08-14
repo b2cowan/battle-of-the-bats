@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
+import { HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 const platformAdminHelp: HelpPageContent = {
   title: 'Platform Admin Operations',
@@ -743,24 +744,59 @@ const platformAdminHelp: HelpPageContent = {
       content: (
         <>
           <p>Use this when a customer has explicitly asked to cancel and either cannot complete the self-serve flow or has contacted support directly. Confirm the request with the account owner before taking action.</p>
-          <ol>
-            <li>Go to <strong>Organizations</strong> and open the customer account.</li>
-            <li>Confirm the subscription status in Account Context is not already <code>canceled</code>.</li>
-            <li>Open <strong>Billing &amp; Access</strong>.</li>
-            <li>Scroll to <strong>Cancel Subscription</strong> at the bottom of the tab. This section only appears when a Stripe subscription ID is on file and the account is not already canceled.</li>
-            <li>Click <strong>Cancel Subscription…</strong>.</li>
-            <li>Review the preflight: modules shutting down and the number of tournaments that will be archived.</li>
-            <li>Enter a reason that explains why the cancellation is being initiated by platform staff rather than the customer. This appears in the audit log.</li>
-            <li>Check <strong>Send cancellation confirmation email to org owner</strong> if the customer expects a confirmation email.</li>
-            <li>Click <strong>Confirm Cancel Subscription</strong>.</li>
-            <li>Add an internal note on the <strong>Support</strong> tab with the customer-facing context: what was discussed, who approved, and any retention or resubscription commitments.</li>
-          </ol>
-          <p>After cancellation the account moves to <code>canceled</code> status, the public site is unpublished, all non-archived tournaments are archived, and data is retained for 90 days. The Stripe subscription is canceled immediately. If Stripe cancellation fails but the in-app state succeeded, you will see a warning — complete the Stripe cancellation manually from the <strong>Open Stripe</strong> link on the org detail page.</p>
-          <p><strong>Access stops immediately and completely</strong> (owner ruling 2026-08-06). Expect calls: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, the family team pages and calendar feeds, and the public tournament site all close the moment you confirm. Coaches and volunteers see a plain &ldquo;subscription has ended — nothing has been deleted&rdquo; notice. Tryout registration closes and automated dues-reminder emails stop. <strong>Nothing is deleted</strong>, and resubscribing restores everything intact — that is the reassurance to lead with on a support call.</p>
-          <p>Two things deliberately keep working: the customer&rsquo;s own <strong>Billing page</strong> (that is how they come back — an admin who opens the admin area is redirected there), and any coach&rsquo;s <strong>free personal Coaches Portal</strong>, which is user-owned and has no subscription to cancel.</p>
-          <p>Check the <strong>Retention</strong> queue after cancellation and extend the deadline if the customer has negotiated additional time.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'cancel-subscription-find',
+          title: 'Get to the Cancel Subscription control',
+          content: (
+            <HelpSteps>
+              <li>Go to <strong>Organizations</strong> and open the customer account.</li>
+              <li>Confirm the subscription status in Account Context is not already <code>canceled</code>.</li>
+              <li>Open <strong>Billing &amp; Access</strong>.</li>
+              <li>Scroll to <strong>Cancel Subscription</strong> at the bottom of the tab. This section only appears when a Stripe subscription ID is on file and the account is not already canceled.</li>
+              <li>Click <strong>Cancel Subscription…</strong>.</li>
+            </HelpSteps>
+          ),
+        },
+        {
+          id: 'cancel-subscription-confirm',
+          title: 'Confirm it, and record what happened',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Review the preflight: modules shutting down and the number of tournaments that will be archived.</li>
+                <li>Enter a reason that explains why the cancellation is being initiated by platform staff rather than the customer. This appears in the audit log.</li>
+                <li>Check <strong>Send cancellation confirmation email to org owner</strong> if the customer expects a confirmation email.</li>
+                <li>Click <strong>Confirm Cancel Subscription</strong>.</li>
+                <li>Add an internal note on the <strong>Support</strong> tab with the customer-facing context: what was discussed, who approved, and any retention or resubscription commitments.</li>
+              </HelpSteps>
+              <p>Check the <strong>Retention</strong> queue after cancellation and extend the deadline if the customer has negotiated additional time.</p>
+            </>
+          ),
+        },
+        {
+          id: 'cancel-subscription-result',
+          title: 'What the cancellation does to the account',
+          content: (
+            <>
+              <p>After cancellation the account moves to <code>canceled</code> status, the public site is unpublished, all non-archived tournaments are archived, and data is retained for 90 days. The Stripe subscription is canceled immediately.</p>
+              <HelpNote variant="warning" title="If Stripe fails but the in-app state succeeded">You will see a warning — complete the Stripe cancellation manually from the <strong>Open Stripe</strong> link on the org detail page.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'cancel-subscription-access',
+          title: 'Access stops immediately — expect calls',
+          content: (
+            <>
+              <p><strong>Access stops immediately and completely</strong> (owner ruling 2026-08-06). The Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, the family team pages and calendar feeds, and the public tournament site all close the moment you confirm. Coaches and volunteers see a plain &ldquo;subscription has ended — nothing has been deleted&rdquo; notice. Tryout registration closes and automated dues-reminder emails stop. <strong>Nothing is deleted</strong>, and resubscribing restores everything intact — that is the reassurance to lead with on a support call.</p>
+              <p>Two things deliberately keep working: the customer&rsquo;s own <strong>Billing page</strong> (that is how they come back — an admin who opens the admin area is redirected there), and any coach&rsquo;s <strong>free personal Coaches Portal</strong>, which is user-owned and has no subscription to cancel.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-cancel-stripe-fails',

@@ -404,18 +404,42 @@ const orgHelp: HelpPageContent = {
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. This is what they can do once they are there.</p>
-
-          <p><strong>Moving between your sections.</strong> On <strong>League and Club</strong> plans, a row of tabs sits under your organization&rsquo;s name — <strong>Home</strong>, <strong>League</strong>, <strong>Archives</strong> — so a visitor can move straight between them instead of reversing back to your front page each time. The row appears only when you actually have more than one section to offer. On <strong>Tournament</strong> and <strong>Tournament Plus</strong>, you get a simpler trail instead: your organization&rsquo;s name followed by the section, like <em>Cedarvale Ravens &rsaquo; Archives</em>, with the name itself linking back to your front page.</p>
-
-          <p><strong>On a phone, families keep the app.</strong> On phone-sized screens your public pages carry the FieldLogicHQ bottom bar — <strong>Home</strong>, <strong>Scores</strong>, <strong>Chat</strong> and <strong>Account</strong> (a signed-out visitor sees Home, Scores and Sign In). Before this, a family who reached your league or archive pages on a phone had no route back into the app except the browser&rsquo;s Back button. Your own header sheds its utility links on phones so your organization&rsquo;s name gets the whole row to itself: Discover, Account and Sign In move to that bottom bar, and <strong>our Pricing link is dropped altogether</strong> — your pages are yours, and we don&rsquo;t advertise on them. <strong>Desktop is deliberately unchanged</strong>: no FieldLogicHQ bar sits above your name there.</p>
-
-          <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations.</p>
-
-          <p><strong>Your events keep their own colours.</strong> When your front page lists several tournaments, each card wears <em>that event&rsquo;s</em> branding rather than one shared colour — so a red event and a purple event look like themselves, and each card looks like the page it opens.</p>
-
-          <p><strong>If you help run this organization</strong> and you are signed in, a <strong>&#8646;</strong> pill appears in the corner of your own public pages and takes you back to your admin area or Coaches Portal in the same tab. It remembers the exact screen you came from, so a quick look at the public site and back is two taps. Families and signed-out visitors never see it. If you hold more than one role here, the pill opens a short list so you can pick.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'public-org-page-sections',
+          title: 'Moving between your sections',
+          content: (
+            <p>On <strong>League and Club</strong> plans, a row of tabs sits under your organization&rsquo;s name — <strong>Home</strong>, <strong>League</strong>, <strong>Archives</strong> — so a visitor can move straight between them instead of reversing back to your front page each time. The row appears only when you actually have more than one section to offer. On <strong>Tournament</strong> and <strong>Tournament Plus</strong>, you get a simpler trail instead: your organization&rsquo;s name followed by the section, like <em>Cedarvale Ravens &rsaquo; Archives</em>, with the name itself linking back to your front page.</p>
+          ),
+        },
+        {
+          id: 'public-org-page-app-access',
+          title: 'How visitors get into the app from your pages',
+          content: (
+            <>
+              <p><strong>On a phone, families keep the app.</strong> On phone-sized screens your public pages carry the FieldLogicHQ bottom bar — <strong>Home</strong>, <strong>Scores</strong>, <strong>Chat</strong> and <strong>Account</strong> (a signed-out visitor sees Home, Scores and Sign In). Before this, a family who reached your league or archive pages on a phone had no route back into the app except the browser&rsquo;s Back button.</p>
+              <p>Your own header sheds its utility links on phones so your organization&rsquo;s name gets the whole row to itself: Discover, Account and Sign In move to that bottom bar, and <strong>our Pricing link is dropped altogether</strong> — your pages are yours, and we don&rsquo;t advertise on them. <strong>Desktop is deliberately unchanged</strong>: no FieldLogicHQ bar sits above your name there.</p>
+              <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-org-page-event-colours',
+          title: 'Your events keep their own colours',
+          content: (
+            <p>When your front page lists several tournaments, each card wears <em>that event&rsquo;s</em> branding rather than one shared colour — so a red event and a purple event look like themselves, and each card looks like the page it opens.</p>
+          ),
+        },
+        {
+          id: 'public-org-page-admin-shortcut',
+          title: 'Your shortcut back to admin',
+          content: (
+            <p>If you help run this organization and you are signed in, a <strong>&#8646;</strong> pill appears in the corner of your own public pages and takes you back to your admin area or Coaches Portal in the same tab. It remembers the exact screen you came from, so a quick look at the public site and back is two taps. Families and signed-out visitors never see it. If you hold more than one role here, the pill opens a short list so you can pick.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-public-page-no-teams-tab',

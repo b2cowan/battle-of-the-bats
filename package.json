@@ -33,7 +33,8 @@
     "tick:demos": "node scripts/check-demos.mjs --tick",
     "measure:memory": "node scripts/measure-dev-memory.mjs",
     "capture:help-shots": "node scripts/capture-help-shots.mjs",
-    "check:help-shots": "node scripts/capture-help-shots.mjs --check"
+    "check:help-shots": "node scripts/capture-help-shots.mjs --check",
+    "measure:help": "node scripts/measure-help-length.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

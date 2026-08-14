@@ -48,15 +48,33 @@ platform-admin help mirror updates automatically because both read the same sour
 
 ## Rollout & how to test
 
-**All four steps are built (2026-08-14).** (1) the machinery; (2) Money converted; (3) every
+**Five steps are built (2026-08-14).** (1) the machinery; (2) Money converted; (3) every
 other long topic — swept to completion rather than left half-done, because the "?" is one
 control and had to behave the same everywhere; (4) the screenshot pipeline with its first two
-pictures. QA is the Owner QA Ledger's §18, in five batches.
+pictures; (5) the eight topics the original yardstick could not see. QA is the Owner QA
+Ledger's §18, in seven batches.
+
+**Step 5 — why there was more to do after "complete".** The rule for "this topic is too long"
+counted paragraphs. A topic that is three paragraphs plus one sixteen-item list scored a 3 and
+was left alone — even though it was the longest topic in the product at 1,386 words. That was
+"How to run tryout day", and you found it by spot-checking. The rule now measures **how much
+there is to read**, list items included, and one command reports it (`npm run measure:help`)
+so the next person measures the same way. Eight topics missed the old rule; all eight are now
+menus of answers, with no sentence rewritten.
+
+**Step 6 — the guide becomes an article. Not built: it is waiting on you.** Even with every
+topic scannable, opening the full guide still hands a coach all forty topics on one page —
+22,131 words. The proposal is to make it work the way the "?" panel already does: pick a topic,
+read that topic, nothing else on screen. Mockups are published (the Claude artifact **"Help
+Guide, One Topic at a Time"**) with two options at real density on the longest topic, on desktop
+and phone, plus the landing-state decision. Nothing will be built until you pick one — the change
+alters how every help link in the product behaves.
 
 ## Where it landed
 
-- **21 topics** now open as a menu of answers, **109 sub-answers** in total.
-- **Zero** long topics left in the old paragraph-wall form, anywhere in the product.
+- **29 topics** now open as a menu of answers.
+- **Zero** long topics left in the old paragraph-wall form, measured by a yardstick that can
+  finally see a list.
 - Pictures are possible where words struggle — rare by policy, demo-data-only by mechanism.
 
 ## Success criteria — all met, pending your QA

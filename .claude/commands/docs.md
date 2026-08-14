@@ -50,10 +50,28 @@ Long help topics must be **scannable, not essays**. Full design + rollout:
 `docs/projects/active/HELP_SCANNABLE_FORMAT_PLAN.md` (mockups: Claude artifact "Scannable Help").
 These rules govern every section you write or substantially edit:
 
-1. **A section longer than ~6 paragraphs must be sub-topics** — a 1–2 sentence overview plus
-   titled sub-topics (`subtopics` on `HelpSection` once the renderer support from the plan's
-   Step 1 exists; until then, `<h4>` sub-headings inside `content`). The drawer renders
-   sub-topics as expanders; the guide renders them as anchored headings with jump-chips.
+1. **A section over ~350 words of body copy must be sub-topics** — a 1–2 sentence overview plus
+   titled sub-topics (`subtopics` on `HelpSection`). The drawer renders sub-topics as expanders;
+   the guide renders them as anchored headings with jump-chips.
+
+   **Measure it, don't eyeball it: `npm run measure:help`** (add `--all` to see every section,
+   `--module=coaches` to narrow). The counting method, which the script is the executable copy of:
+
+   - **Body copy = the words a reader actually faces** — the text inside the section's `content:`
+     and inside each sub-topic's `content:`, **list items included**. Tags, component names and
+     attributes don't count; an HTML entity is a character, not a word. `summary`, `keywords`,
+     `searchText` and FAQ answers are not body copy.
+   - **The trigger is words, not paragraphs, and not blocks.** ⚠ **A long bulleted list is a wall
+     too** — this rule replaces a "~6 paragraphs" version that counted `<p>` and ignored `<li>`,
+     which is exactly how "How to run tryout day" (1,386 words: three paragraphs plus one 16-item
+     list) scored a 3 and survived the whole 2026-08-14 sweep untouched.
+   - **Block count is a prompt for judgement, never a threshold.** The script reports sections
+     over ~12 blocks that are still under the word limit; decide by reading them. Measured on the
+     same date, a hard >8-block rule would have flagged "Tournament workflow at a glance" — 77
+     words in a 10-item list, the most scannable section in the guide.
+   - **Under the limit, leave it alone.** A short section split into one-line accordions is worse
+     than the section was: the reader has to open everything to read anything. When a long section
+     does convert, the floor is **3–5 grouped sub-topics, never one paragraph each**.
 2. **A paragraph that is secretly a list must be a list.** Procedures → numbered steps
    (imperative, one action per step, ≤6 before splitting). Term explanations ("what does X
    mean") → definition rows (term | meaning), never serial bolded sentences. Rules → short
@@ -79,7 +97,7 @@ These rules govern every section you write or substantially edit:
 5. **The search contract still applies unchanged** — rendered content (including sub-topic
    bodies) is not searched; terms must live in `keywords`/`searchText`/`answerText`. Sub-topic
    titles join the section's search haystack once Step 1 lands.
-6. **Short sections (≤6 paragraphs) need no conversion.** Don't churn them; the standard exists
+6. **Short sections (≤~350 words) need no conversion.** Don't churn them; the standard exists
    for the long topics. When you touch a long legacy section for a content sync, convert it in
    the same unit of work if the edit is substantial; a one-line correction doesn't oblige a
    restructure.
