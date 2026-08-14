@@ -1,8 +1,12 @@
 # Coach Money — credits meet the bills, money goes out, and the refund sheet derives
 
-**Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 BUILT on dev 2026-08-14**
-(`/simplify` + `/review` + `/docs` all run; mig 233 dev-only) · **Passes 2–3 open**
-(mig 234 drafted, not applied — see §6)
+**Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 committed `8fb37066` 2026-08-14**
+(`/simplify` + `/review` + `/docs` all run; mig 233 applied to dev) · **Passes 2–3 open**
+
+⚠ **The `/docs` help edits are NOT in `8fb37066`.** A concurrent session was mid-flight in the
+same guide file, so committing it would have swept up work that was not this project's to commit
+(it did, once — caught by the post-commit stat check, unwound, re-committed without it). The
+Money-guide copy sits on disk and rides that session's next commit.
 **PM brief:** [COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md](COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md)
 **Binding mockups:** `claude.ai/code/artifact/eae663d0-56e5-46e9-a2e2-9f7220468be2`
 (source `COACH_CREDIT_APPLICATION_MOCKUP.html` — tagged NEW/RESTYLED/UNCHANGED; the mockups ARE
