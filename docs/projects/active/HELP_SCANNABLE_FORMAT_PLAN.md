@@ -139,14 +139,21 @@ Your tournament records 12¶→5 · Player Development 12→5 · Export formats 
 became the sub-topics; `exports.tsx` gained the HelpNote import) · Season's End 11→5 ·
 Plan templates 11→5 · Opponent book 11→6 · Assistant coaches & helpers 11→5.
 
-**Coverage now: 13 of 147 sections carry sub-topics; 8 sections remain over the standard, all
-at 7–9¶** — Chat with your coaches (9) · What the Coaches Portal is (8) · Running a practice at
-the field (8) · Create/edit/launch a tournament (8) · How to turn on the tools you need (7) ·
-How to message your team (7) · Game-day details (7) · Building lineups (7).
+**Batch 3 DONE 2026-08-14 — the sweep. Step 3 is COMPLETE: 21 of 147 sections carry
+sub-topics (109 sub-topics in all) and ZERO sections remain over the six-paragraph standard.**
+The last eight: Chat with your coaches 9¶→5 · What the Coaches Portal is 8→3 · Running a
+practice at the field 8→3 · Create/edit/launch a tournament 8→2 · How to turn on the tools you
+need 7→3 · How to message your team 7→3 · Game-day details 7→4 · Building lineups 7→2.
 
-**Ruling on that tail: convert-on-touch, not a sweep.** At 7–9 paragraphs a reader can still
-scan the bolded lead-ins; the standard already requires conversion when a substantial edit
-lands in one, so they arrive over time without a dedicated pass.
+**Owner ruling 2026-08-14 that replaced the earlier convert-on-touch plan:** consistency is
+itself the feature. The "?" is ONE control, and a reader cannot form an expectation if it opens
+a menu on one page and a wall on the next — that outweighs the smaller per-topic navigation win
+at 7–9¶.
+
+⚠ **The rule that keeps a sweep from making things worse:** a short section must break into
+**3–5 grouped sub-topics, never one-paragraph-each**. Six one-paragraph accordions is worse
+than six paragraphs — the reader has to open everything to read anything. Two sections in this
+batch legitimately took only 2 sub-topics; that is the floor, not a target to pad past.
 
 ⚠ **Measuring coverage: count paragraphs between a section's `content: (` and its closing
 `      ),` — do NOT split the section text on `links:`/`faqs:`, because `links` sometimes

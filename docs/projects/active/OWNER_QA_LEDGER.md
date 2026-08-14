@@ -1537,6 +1537,23 @@ rather than swept, since at that length the bolded lead-ins still work.
 ⚠ A pre-existing lint warning sits in the exports guide's PDF-privacy paragraph (untouched by
 this work, flagged only because the whole file was linted) — left alone deliberately.
 
+**Batch 4 (2026-08-14 — the sweep; step 3 COMPLETE):** owner ruled the remaining eight 7–9¶
+topics in rather than convert-on-touch, because **the "?" is one control and must behave the
+same everywhere**. Converted: Chat with your coaches, What the Coaches Portal is, Running a
+practice at the field, Create/edit/launch a tournament, How to turn on the tools you need, How
+to message your team, Game-day details, Building lineups. **Every long topic in the help system
+now follows the standard — 21 sections, 109 sub-topics, zero over the line.** Short sections
+took 2–4 grouped sub-topics deliberately, never one-per-paragraph.
+- [ ] The consistency check that motivated this: open "?" on four or five DIFFERENT coach
+      pages in a row (Overview, Schedule, Lineups, a practice, Money). Every one opens the
+      same shape — summary, then a titled expander list. No wall of paragraphs anywhere.
+- [ ] Free-portal pages too (Explore / Announcements): same shape, and the numbered send steps
+      on "How to message your team" read as steps.
+- [ ] Tournaments guide: Chat and Create-a-tournament both have chips; the six-step
+      open-registration list is numbered.
+- [ ] Nothing reads as over-split — no topic is a list of one-line accordions you must open to
+      read a single sentence.
+
 ### 19 🖥📱 Fundraising pays the bill — **ON DEV** (built 2026-08-14) · ⚠ carries migration **233** (dev only)
 
 **What changed:** a credit is now **money the team owes a family**, and it lands on their real

@@ -19,18 +19,42 @@ const coachesHelp: HelpPageContent = {
         <>
           <p>The Coaches Portal is free. It often starts when you register a team for a tournament, but it&apos;s built to stay useful between events — a year-round home for your roster, schedule, team fees, and parent announcements.</p>
           <p>The portal opens with two sections always available:</p>
-          <ul>
-            <li><strong>Overview</strong> — your team&apos;s home page, in the order a coach actually needs it.</li>
-            <li><strong>Tournaments</strong> — every tournament you&apos;ve registered the team for, with status and schedule.</li>
-          </ul>
-          <p><strong>What&apos;s on your Overview, top to bottom:</strong> <strong>your tournament</strong> comes first — one card naming the event that matters right now, since that&apos;s usually why you&apos;re here. Below it sits a divider, <em>&ldquo;Your team — beyond this tournament&rdquo;</em>, and everything under it belongs to your team rather than to any one event: <strong>At a glance</strong> (roster size, unpaid fees, how many parents you can reach, your next practice or game, and how many tournaments you&apos;re in) and the free team tools. Nothing below that divider is homework an organizer is waiting on — it&apos;s yours to use whenever you like, and it carries over to every event you enter.</p>
-          <p>The Overview names <strong>one</strong> tournament, not all of them: whichever event is being played, or else the next one coming up, or else the most recent one you finished. Your full list — every entry, including ones you weren&apos;t accepted into — lives on the <strong>Tournaments</strong> tab, and the <strong>Tournaments</strong> tile has a <strong>See all &rarr;</strong> link straight to it. On a phone the At-a-glance tiles sit two across so more of your team&apos;s numbers fit on the first screen.</p>
-          <p><strong>Getting around:</strong> your team&apos;s name sits in a header at the top of every portal page, and the portal&apos;s sections run as a row of <strong>tabs</strong> beneath it (on a computer they&apos;re a list on the left instead). The FieldLogicHQ bar — <strong>Home · Scores · Chat · Account</strong> — stays at the bottom of your phone the whole time, so live scores and your tournament chat are always one tap away. When you tap <strong>Chat</strong> from inside your portal, the chat screen shows a <strong>← Back to your Coaches Portal</strong> link at the top that returns you to the exact page you left.</p>
-          <p>The Overview&apos;s <strong>Schedule</strong> tile shows your own next practice or game once you&apos;ve added events. Haven&apos;t added any? If your team is in a tournament with a published schedule, the tile borrows your next tournament game instead — and during a game it shows the <strong>live score</strong> — so game day is never a blank &ldquo;None.&rdquo; The tournament card at the top carries a badge for where the event stands (<strong>Live</strong>, <strong>Game Day</strong>, a countdown like <em>In 5 days</em>, or <strong>Complete</strong>) and, once the organizer has published the event, a <strong>⇄ Fan view</strong> link that opens its public site — the schedule, live scores, and standings exactly as families see them.</p>
-          <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
-          <p><strong>Premium Coaches Portal</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
+          <HelpDefs>
+            <HelpDef term="Overview">Your team&apos;s home page, in the order a coach actually needs it.</HelpDef>
+            <HelpDef term="Tournaments">Every tournament you&apos;ve registered the team for, with status and schedule.</HelpDef>
+          </HelpDefs>
         </>
       ),
+      subtopics: [
+        {
+          id: 'overview-whats-on-it',
+          title: 'What’s on your Overview, top to bottom',
+          content: (
+            <>
+              <p><strong>Your tournament</strong> comes first — one card naming the event that matters right now, since that&apos;s usually why you&apos;re here. Below it sits a divider, <em>&ldquo;Your team — beyond this tournament&rdquo;</em>, and everything under it belongs to your team rather than to any one event: <strong>At a glance</strong> (roster size, unpaid fees, how many parents you can reach, your next practice or game, and how many tournaments you&apos;re in) and the free team tools. Nothing below that divider is homework an organizer is waiting on — it&apos;s yours to use whenever you like, and it carries over to every event you enter.</p>
+              <p>The Overview names <strong>one</strong> tournament, not all of them: whichever event is being played, or else the next one coming up, or else the most recent one you finished. Your full list — every entry, including ones you weren&apos;t accepted into — lives on the <strong>Tournaments</strong> tab, and the <strong>Tournaments</strong> tile has a <strong>See all &rarr;</strong> link straight to it. On a phone the At-a-glance tiles sit two across so more of your team&apos;s numbers fit on the first screen.</p>
+              <p>The <strong>Schedule</strong> tile shows your own next practice or game once you&apos;ve added events. Haven&apos;t added any? If your team is in a tournament with a published schedule, the tile borrows your next tournament game instead — and during a game it shows the <strong>live score</strong> — so game day is never a blank &ldquo;None.&rdquo; The tournament card at the top carries a badge for where the event stands (<strong>Live</strong>, <strong>Game Day</strong>, a countdown like <em>In 5 days</em>, or <strong>Complete</strong>) and, once the organizer has published the event, a <strong>⇄ Fan view</strong> link that opens its public site — the schedule, live scores, and standings exactly as families see them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'overview-getting-around',
+          title: 'Getting around',
+          content: (
+            <p>Your team&apos;s name sits in a header at the top of every portal page, and the portal&apos;s sections run as a row of <strong>tabs</strong> beneath it (on a computer they&apos;re a list on the left instead). The FieldLogicHQ bar — <strong>Home · Scores · Chat · Account</strong> — stays at the bottom of your phone the whole time, so live scores and your tournament chat are always one tap away. When you tap <strong>Chat</strong> from inside your portal, the chat screen shows a <strong>← Back to your Coaches Portal</strong> link at the top that returns you to the exact page you left.</p>
+          ),
+        },
+        {
+          id: 'overview-free-and-premium',
+          title: 'What’s free, and what Premium adds',
+          content: (
+            <>
+              <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
+              <p><strong>Premium Coaches Portal</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-overview-one-tournament',
@@ -141,19 +165,43 @@ const coachesHelp: HelpPageContent = {
         <>
           <p><em>This applies to the free portal.</em> On <strong>Premium Coaches Portal</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
           <p>To keep the free portal uncluttered, the four team tools start switched off. Open <strong>Explore</strong> — always the <em>last tab</em> in your team&apos;s tab row (the last item in the left-hand list on a computer) — to see them:</p>
-          <ul>
-            <li><strong>Roster</strong> — enter your team once and reuse it for your next tournament registration.</li>
-            <li><strong>Schedule</strong> — your tournament games plus your own practices, in one calendar.</li>
-            <li><strong>Fees</strong> — track who has paid their team fees, no spreadsheet.</li>
-            <li><strong>Announcements</strong> — send a note to your whole team at once.</li>
-          </ul>
-          <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears as a new tab and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
-          <p><strong>There&apos;s a second way in.</strong> On a brand-new team you started yourself, the <strong>Let&rsquo;s set up your team</strong> card on your Overview has a <strong>Turn on</strong> button on each step, which does exactly the same thing — switches the tool on and opens it. Explore is still the place to browse all four and to turn one on later; the card is just a shortcut for the three it names.</p>
-          <p>If you can&apos;t find your Roster or Schedule tab, it&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
-          <p>A saved link or an old bookmark to one of these tools still opens and still works, even when the tool is switched off — but it stays out of your tabs until you turn it on. If you find yourself back in a tool you can&apos;t otherwise see, turn it on from Explore (or from its step on the setup card) so it&apos;s there next time.</p>
-          <p>Explore is also the one place that lists <strong>what the Premium Coaches Portal adds</strong>, if you ever want to look: game lineups, attendance tracking, <strong>assistant coaches with their own sign-in</strong> (a free team is a single login — there&apos;s no way to give another coach their own access), team documents, dues schedules with automatic reminders, a season budget, and carrying your roster into next season. Everything above stays free either way.</p>
+          <HelpDefs>
+            <HelpDef term="Roster">Enter your team once and reuse it for your next tournament registration.</HelpDef>
+            <HelpDef term="Schedule">Your tournament games plus your own practices, in one calendar.</HelpDef>
+            <HelpDef term="Fees">Track who has paid their team fees, no spreadsheet.</HelpDef>
+            <HelpDef term="Announcements">Send a note to your whole team at once.</HelpDef>
+          </HelpDefs>
         </>
       ),
+      subtopics: [
+        {
+          id: 'explore-turning-on',
+          title: 'Turning one on — two ways',
+          content: (
+            <>
+              <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears as a new tab and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
+              <p><strong>There&apos;s a second way in.</strong> On a brand-new team you started yourself, the <strong>Let&rsquo;s set up your team</strong> card on your Overview has a <strong>Turn on</strong> button on each step, which does exactly the same thing — switches the tool on and opens it. Explore is still the place to browse all four and to turn one on later; the card is just a shortcut for the three it names.</p>
+            </>
+          ),
+        },
+        {
+          id: 'explore-missing-tab',
+          title: 'Can’t find your Roster or Schedule tab?',
+          content: (
+            <>
+              <p>It&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
+              <p>A saved link or an old bookmark to one of these tools still opens and still works, even when the tool is switched off — but it stays out of your tabs until you turn it on. If you find yourself back in a tool you can&apos;t otherwise see, turn it on from Explore (or from its step on the setup card) so it&apos;s there next time.</p>
+            </>
+          ),
+        },
+        {
+          id: 'explore-premium-list',
+          title: 'Where to see what Premium adds',
+          content: (
+            <p>Explore is also the one place that lists it, if you ever want to look: game lineups, attendance tracking, <strong>assistant coaches with their own sign-in</strong> (a free team is a single login — there&apos;s no way to give another coach their own access), team documents, dues schedules with automatic reminders, a season budget, and carrying your roster into next season. Everything above stays free either way.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-tool-used-but-no-tab',
@@ -455,21 +503,45 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
-          <ol>
+          <HelpSteps>
             <li>Write a <strong>subject</strong> and your <strong>message</strong>.</li>
             <li>The recipient count shows how many parents will get it — everyone on your Roster who has a contact email.</li>
             <li>Click <strong>Send announcement</strong>.</li>
-          </ol>
+          </HelpSteps>
           <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
-          <p><strong>Premium Coaches Portal adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
-          <p><strong>In the Premium portal this is called &ldquo;Email families&rdquo;</strong> — same screen, clearer name. It sits next to <strong>Chat</strong> in your menu and the two do different jobs: Email families is a <strong>one-way email out to parents</strong>; Chat is a <strong>conversation</strong> with your own coaching staff, and with the organizer and other coaches while a tournament is running.</p>
-          <p><strong>Families can unsubscribe.</strong> Every email you send now carries an unsubscribe link, and we honour it on every send afterwards. If anyone has opted out you&apos;ll see it as a count beside your recipient number — you see <em>how many</em>, never <em>which families</em>, because that is the point of an opt-out. A family who has opted out can only be reached by talking to them directly.</p>
-
-          <h4>The after-the-game email, written for you</h4>
-          <p>When you save a <strong>final score</strong> on the Schedule, a <strong>Draft the family email</strong> line appears under it. One tap opens this screen with the subject and message already written — the result, and what&apos;s next on your calendar. Change any of it, or delete it and write your own.</p>
-          <p><strong>Nothing sends by itself.</strong> The draft just puts words in the box; it still takes your <strong>Send</strong> like any other message, and a note at the top of the compose box says so. If you never use it, nothing is missing — families are never told an after-game email is coming, so one you skip isn&apos;t one they notice.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'announce-premium',
+          title: 'What Premium adds, and why it’s called Email families',
+          content: (
+            <>
+              <p><strong>Premium Coaches Portal adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
+              <p><strong>In the Premium portal this is called &ldquo;Email families&rdquo;</strong> — same screen, clearer name. It sits next to <strong>Chat</strong> in your menu and the two do different jobs: Email families is a <strong>one-way email out to parents</strong>; Chat is a <strong>conversation</strong> with your own coaching staff, and with the organizer and other coaches while a tournament is running.</p>
+            </>
+          ),
+        },
+        {
+          id: 'announce-unsubscribe',
+          title: 'Families can unsubscribe',
+          content: (
+            <p>Every email you send carries an unsubscribe link, and we honour it on every send afterwards. If anyone has opted out you&apos;ll see it as a count beside your recipient number — you see <em>how many</em>, never <em>which families</em>, because that is the point of an opt-out. A family who has opted out can only be reached by talking to them directly.</p>
+          ),
+        },
+        {
+          id: 'announce-after-game',
+          title: 'The after-the-game email, written for you',
+          content: (
+            <>
+              <p>When you save a <strong>final score</strong> on the Schedule, a <strong>Draft the family email</strong> line appears under it. One tap opens this screen with the subject and message already written — the result, and what&apos;s next on your calendar. Change any of it, or delete it and write your own.</p>
+              <HelpNote variant="info" title="Nothing sends by itself">
+                <p>The draft just puts words in the box; it still takes your <strong>Send</strong> like any other message, and a note at the top of the compose box says so. If you never use it, nothing is missing — families are never told an after-game email is coming, so one you skip isn&apos;t one they notice.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-announcement-no-recipients',
@@ -1284,8 +1356,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Managing your team’s money (Premium)',
       summary: 'Money opens with your next step while you set up, then becomes a one-screen season dashboard — collections, cash on hand, budget, and the next 30 days of money. All of it reads on a phone.',
-      keywords: ['money', 'money hub', 'money tabs', 'tab bar', 'switch between money screens', 'budget', 'season budget', 'dues', 'expenses', 'money in', 'money out', 'on hand', 'headroom', 'budget headroom', 'overview', 'money overview', 'dashboard', 'collections', 'cash on hand', 'next 30 days', 'money timeline', 'coming due', 'what is coming due', 'more in money', 'season total', 'estimated total', 'estimate', 'set an estimate', 'not itemized yet', 'over your estimate', 'budget buffer', 'expected funding', 'expected fundraising', 'fundraising in the budget', 'estimated fundraising', 'sponsorship', 'sponsor', 'grant', 'money coming in', 'lower player dues', 'funded by players', 'player installments', 'planned costs', 'estimated installments', 'scheduled installments', 'buffer above the plan', 'planned buffer', 'short of covering the plan', 'reduce dues with fundraising', 'list or by period', 'by period', 'plan by month', 'plan by quarter', 'unscheduled', 'spread a cost across the season', 'spreading costs', 'generate installments', 'split evenly', 'percent split', 'custom category', 'budget categories', 'unbudgeted', 'recategorize', 'export budget', 'treasurer', 'money tags', 'tag an expense', 'tag expenses', 'filter expenses by tag', 'spend by tag', 'expense tag', 'manage money tags', 'money on a phone', 'budget on my phone', 'swipe the table', 'table scrolls sideways', 'discard changes', 'keep editing', 'lost my budget line', 'unsaved changes', 'cash received', 'cash paid', 'budget by month', 'month view', 'months', 'month columns', 'monthly budget', 'spreadsheet view', 'scheduled', 'difference', 'no date yet', 'cash flow', 'running balance', 'run out of money', 'will we run short', 'last season', 'prior season', 'compare to last year', 'payables', 'payment schedule', 'what do we owe', 'overdue payable', 'deposit and balance', 'import', 'import a spreadsheet', 'import budget', 'import payables', 'upload a spreadsheet', 'paste from excel', 'template', 'download a template', 'excel', 'csv', 'bring my budget in', 'round trip', 'export and import', 'split by period', 'how is this line split', 'split by month', 'budget by month', 'monthly budget line', 'split by quarter', 'budget by quarter', 'quarterly budget', 'specific dates', 'just names', 'add period', 'fill the season', 'clear all periods', 'undo periods', 'period label', 'label optional', 'name a period', 'do i have to name a period', 'period has no date', 'undated period', 'deposit and balance', 'save changes does nothing', 'budget line will not save', 'things to fix', 'period total red', 'amounts do not add up', 'year band', 'year above the months', 'which year is this column', 'import will not update my fundraising line', 'sheet row is a cost', 'where is import', 'where is export', 'import button moved', 'export button moved', 'cant find import', 'cant find export', 'recent imports', 'import history', 'who imported', 'what was imported', 'export budget lines', 'export expenses', 'export payables', 'export fundraisers', 'export player dues', 'how do i get a csv', 'where is csv', 'where is pdf', 'choose a file type', 'which format', 'file type', 'save as', 'export as excel', 'printable dues statement', 'no export on my phone', 'export missing on phone', 'import missing on phone', 'download the season money', 'money in a spreadsheet', 'set dues for all players', 'redo dues', 'change dues', 'wrong due date', 'regenerate installments', 'replace the dues schedule', 'already paid', 'build a budget first', 'no budget yet', 'payment details', 'where is mark paid', 'deposit and balance hidden', 'expand a payable', 'payable status', 'part paid', 'scheduled', 'no schedule', 'payable row', 'fundraiser columns', 'raised team keeps credits', 'which fundraiser raised the most', 'record a payment', 'record payment', 'partial payment', 'part payment', 'pays monthly', 'smaller amounts', 'e-transfer', 'etransfer', 'cash', 'cheque', 'date received', 'payment date', 'backdate a payment', 'remove a payment', 'delete a payment', 'payments list', 'receipt', 'mark rest paid', 'overpayment', 'overpaid', 'paid too much', 'in credit', 'auto credit', 'balance owing', 'payments kept', 'change dues after payment', 'season totals', 'totals row', 'dues totals', 'total assessed', 'total collected', 'next due date', 'where are my dues totals', 'no totals row', 'see an example', 'preview the reminder email', 'what does the reminder email say', 'when do reminders go out'],
-      searchText: 'money hub budget dues expenses where do i start money in money out on hand budget headroom cash treasurer team accountant plan collect spend review guide card next step season budget plan estimated total optional estimate plan to a number before you know every cost not itemized yet difference shrinks as you add lines over your estimate red row clear the estimate itemize line items expected funding fundraising sponsorship grant money coming in lowers player dues funded by players team share list or by period plan by month plan by quarter unscheduled column categories items custom category create category picker split by period percent split evenly installments generate installments every player same schedule preview player dues fundraisers expenses tournament payables deposits balances org allocations payment requests club owned budget vs actual variance monthly trend export excel csv pdf unbudgeted recategorize fix category automatic dues reminders toggle 30 days 7 days back to money read only assistant money access money tags tag an expense tag expenses label spending winter dome fundraiser search box tag picker create tag filter expenses by tag vs tag spend by tag across categories manage money tags rename merge delete money tag shared org tag blue chip organization shared tag money on a phone mobile budget on my phone read my budget on a phone cards one card per expense labels on every line budget vs actual swipes sideways swipe the table scroll sideways horizontal scroll line name stays pinned first column stays put page does not slide cash received cash paid not what is still owed outstanding link to dues discard this budget line keep editing lost my work closed the form by accident unsaved changes asks before discarding untouched form closes org allocations payment requests link to each other cross link pay the org back claim a reimbursement read only assistant no action buttons no buttons i cannot use budget by month months view month columns spreadsheet view rows down side months across top budget scheduled actual difference lens what each cell shows no date yet column undated budget cash flow money in money out running balance do we run dry run short in july will we run out of money projection last season column prior season compare to last year lines i had last year and have not planned payables payment schedule tab every commitment by due date unpaid paid all overdue days late mark paid dome block umpire invoice uniform order deposit and balance split remembers which view you prefer tap a figure opens the form drill in import a spreadsheet import budget import payables upload excel xlsx csv paste from excel google sheets month grid simple list payables schedule template download a template amounts left blank we never put a figure in your budget preview verdict per row adds updates cant import reason fix a row in the preview nothing is saved until you confirm what was added updated skipped nothing could be imported never guesses ambiguous date names and numbers only payables always add look alike flagged not overwritten export edit import back round trip money edit access overview dashboard season dashboard collections card progress bar cash on hand card in out bars budget card next 30 days next 60 days next 90 days one list date ordered timeline coming due going out grouped installments twelve players one line remind shortcut overdue chip unpaid chip on track all in more in money list live figure per screen no big buttons split by period how is this line split months quarters specific dates just names period picker per row add period advances the month feb mar apr twelve taps fill the season twelve months four quarters clear all periods split evenly dollars or percentages changing the split clears the periods starts over fresh decision undo puts the periods back label is optional period names itself apr 2027 q2 2027 mar 14 2027 greyed in the label box type over it spring tournament deposit balance date is optional period without a date still saves no date yet column budget vs actual month columns only money blocks a save period with no amount amounts must add up to the line total period total turns red save changes does nothing button looks broken nothing happens when i save scrolls to the row at fault outlines it counter beside the button two things to fix jumps back to the problem missing label never blocks a save missing date never blocks a save annual budget by month ice time field rental coaching fees monthly entry fee due date uniform deposit import and export at the top of money same on every tab where is import where is export import button moved export button moved recent imports import history who imported it what was imported budget lines player dues expenses payables fundraisers budget vs actual pick what to export then choose a file type excel csv pdf like save as printable statement pdf only on plans that include it and only on player dues and budget vs actual put away on a phone no export on my phone spreadsheet is not phone work empty budget still offers import empty payables offers import paste from a message add line add expense add payable new fundraiser new request sit with their own screen create button moved down set dues for all players opens the same window as generate installments one door both screens preview every player before you confirm how amounts are set split the budget evenly split the season estimate evenly set the amounts myself manual amounts type my own amounts deposit now balance later uneven installments per player figure shown before you pick amounts fill themselves in auto recalculate when you add a due date odd cents on the last payment short of what players need to fund collecting more than the budget a note never a block no budget yet even split greyed out with the reason you can still set dues by hand link to build a budget expected funding already covers the season estimated total is zero add players to the roster first empty roster is the only hard stop redo the dues change the dues wrong due dates wrong amount regenerate replaces the schedule payments are kept payment is never thrown away counts toward the new schedule paid more than the new total overpayment credit edit schedule on a player row record a payment amount date received method e-transfer cash cheque note oldest installment first part paid partial payment 200 of 300 mark rest paid payments list receipt remove a payment voids the books entry undo a payment overpayment auto credit balance owing reminder quotes what is left thank you for what has arrived season totals totals row at the bottom of the dues table dues totals total assessed total credits total collected balance owing next due date overdue count under next due where are my dues totals why is there no totals row totals hidden until dues are set last card on a phone',
+      keywords: ['money', 'money hub', 'money tabs', 'tab bar', 'switch between money screens', 'budget', 'season budget', 'dues', 'expenses', 'money in', 'money out', 'on hand', 'headroom', 'budget headroom', 'overview', 'money overview', 'dashboard', 'collections', 'cash on hand', 'next 30 days', 'money timeline', 'coming due', 'what is coming due', 'more in money', 'season total', 'estimated total', 'estimate', 'set an estimate', 'not itemized yet', 'over your estimate', 'budget buffer', 'expected funding', 'expected fundraising', 'fundraising in the budget', 'estimated fundraising', 'sponsorship', 'sponsor', 'grant', 'money coming in', 'lower player dues', 'funded by players', 'player installments', 'planned costs', 'estimated installments', 'scheduled installments', 'buffer above the plan', 'planned buffer', 'short of covering the plan', 'reduce dues with fundraising', 'list or by period', 'by period', 'plan by month', 'plan by quarter', 'unscheduled', 'spread a cost across the season', 'spreading costs', 'generate installments', 'split evenly', 'percent split', 'custom category', 'budget categories', 'unbudgeted', 'recategorize', 'export budget', 'treasurer', 'money tags', 'tag an expense', 'tag expenses', 'filter expenses by tag', 'spend by tag', 'expense tag', 'manage money tags', 'money on a phone', 'budget on my phone', 'swipe the table', 'table scrolls sideways', 'discard changes', 'keep editing', 'lost my budget line', 'unsaved changes', 'cash received', 'cash paid', 'budget by month', 'month view', 'months', 'month columns', 'monthly budget', 'spreadsheet view', 'scheduled', 'difference', 'no date yet', 'cash flow', 'running balance', 'run out of money', 'will we run short', 'last season', 'prior season', 'compare to last year', 'payables', 'payment schedule', 'what do we owe', 'overdue payable', 'deposit and balance', 'import', 'import a spreadsheet', 'import budget', 'import payables', 'upload a spreadsheet', 'paste from excel', 'template', 'download a template', 'excel', 'csv', 'bring my budget in', 'round trip', 'export and import', 'split by period', 'how is this line split', 'split by month', 'budget by month', 'monthly budget line', 'split by quarter', 'budget by quarter', 'quarterly budget', 'specific dates', 'just names', 'add period', 'fill the season', 'clear all periods', 'undo periods', 'period label', 'label optional', 'name a period', 'do i have to name a period', 'period has no date', 'undated period', 'deposit and balance', 'save changes does nothing', 'budget line will not save', 'things to fix', 'period total red', 'amounts do not add up', 'year band', 'year above the months', 'which year is this column', 'import will not update my fundraising line', 'sheet row is a cost', 'where is import', 'where is export', 'import button moved', 'export button moved', 'cant find import', 'cant find export', 'recent imports', 'import history', 'who imported', 'what was imported', 'export budget lines', 'export expenses', 'export payables', 'export fundraisers', 'export player dues', 'how do i get a csv', 'where is csv', 'where is pdf', 'choose a file type', 'which format', 'file type', 'save as', 'export as excel', 'printable dues statement', 'no export on my phone', 'export missing on phone', 'import missing on phone', 'download the season money', 'money in a spreadsheet', 'set dues for all players', 'redo dues', 'change dues', 'wrong due date', 'regenerate installments', 'replace the dues schedule', 'already paid', 'build a budget first', 'no budget yet', 'payment details', 'where is mark paid', 'deposit and balance hidden', 'expand a payable', 'payable status', 'part paid', 'scheduled', 'no schedule', 'payable row', 'fundraiser columns', 'raised team keeps credits', 'which fundraiser raised the most', 'record a payment', 'record payment', 'partial payment', 'part payment', 'pays monthly', 'smaller amounts', 'e-transfer', 'etransfer', 'cash', 'cheque', 'date received', 'payment date', 'backdate a payment', 'remove a payment', 'delete a payment', 'payments list', 'receipt', 'mark rest paid', 'overpayment', 'overpaid', 'paid too much', 'in credit', 'auto credit', 'balance owing', 'payments kept', 'change dues after payment', 'season totals', 'totals row', 'dues totals', 'total assessed', 'total collected', 'next due date', 'where are my dues totals', 'no totals row', 'see an example', 'preview the reminder email', 'what does the reminder email say', 'when do reminders go out', 'credits reduce', 'credit setting', 'last payment first', 'next payment first', 'keep credits separate', 'settle at season end', 'to send', 'left to send', 'covered by fundraising', 'settled', 'settled vs fully paid', 'fundraising lowers the bill', 'which bill does the credit come off', 'team is holding my money', 'owed back', 'where it lands', 'preview the credit'],
+      searchText: 'money hub budget dues expenses where do i start money in money out on hand budget headroom cash treasurer team accountant plan collect spend review guide card next step season budget plan estimated total optional estimate plan to a number before you know every cost not itemized yet difference shrinks as you add lines over your estimate red row clear the estimate itemize line items expected funding fundraising sponsorship grant money coming in lowers player dues funded by players team share list or by period plan by month plan by quarter unscheduled column categories items custom category create category picker split by period percent split evenly installments generate installments every player same schedule preview player dues fundraisers expenses tournament payables deposits balances org allocations payment requests club owned budget vs actual variance monthly trend export excel csv pdf unbudgeted recategorize fix category automatic dues reminders toggle 30 days 7 days back to money read only assistant money access money tags tag an expense tag expenses label spending winter dome fundraiser search box tag picker create tag filter expenses by tag vs tag spend by tag across categories manage money tags rename merge delete money tag shared org tag blue chip organization shared tag money on a phone mobile budget on my phone read my budget on a phone cards one card per expense labels on every line budget vs actual swipes sideways swipe the table scroll sideways horizontal scroll line name stays pinned first column stays put page does not slide cash received cash paid not what is still owed outstanding link to dues discard this budget line keep editing lost my work closed the form by accident unsaved changes asks before discarding untouched form closes org allocations payment requests link to each other cross link pay the org back claim a reimbursement read only assistant no action buttons no buttons i cannot use budget by month months view month columns spreadsheet view rows down side months across top budget scheduled actual difference lens what each cell shows no date yet column undated budget cash flow money in money out running balance do we run dry run short in july will we run out of money projection last season column prior season compare to last year lines i had last year and have not planned payables payment schedule tab every commitment by due date unpaid paid all overdue days late mark paid dome block umpire invoice uniform order deposit and balance split remembers which view you prefer tap a figure opens the form drill in import a spreadsheet import budget import payables upload excel xlsx csv paste from excel google sheets month grid simple list payables schedule template download a template amounts left blank we never put a figure in your budget preview verdict per row adds updates cant import reason fix a row in the preview nothing is saved until you confirm what was added updated skipped nothing could be imported never guesses ambiguous date names and numbers only payables always add look alike flagged not overwritten export edit import back round trip money edit access overview dashboard season dashboard collections card progress bar cash on hand card in out bars budget card next 30 days next 60 days next 90 days one list date ordered timeline coming due going out grouped installments twelve players one line remind shortcut overdue chip unpaid chip on track all in more in money list live figure per screen no big buttons split by period how is this line split months quarters specific dates just names period picker per row add period advances the month feb mar apr twelve taps fill the season twelve months four quarters clear all periods split evenly dollars or percentages changing the split clears the periods starts over fresh decision undo puts the periods back label is optional period names itself apr 2027 q2 2027 mar 14 2027 greyed in the label box type over it spring tournament deposit balance date is optional period without a date still saves no date yet column budget vs actual month columns only money blocks a save period with no amount amounts must add up to the line total period total turns red save changes does nothing button looks broken nothing happens when i save scrolls to the row at fault outlines it counter beside the button two things to fix jumps back to the problem missing label never blocks a save missing date never blocks a save annual budget by month ice time field rental coaching fees monthly entry fee due date uniform deposit import and export at the top of money same on every tab where is import where is export import button moved export button moved recent imports import history who imported it what was imported budget lines player dues expenses payables fundraisers budget vs actual pick what to export then choose a file type excel csv pdf like save as printable statement pdf only on plans that include it and only on player dues and budget vs actual put away on a phone no export on my phone spreadsheet is not phone work empty budget still offers import empty payables offers import paste from a message add line add expense add payable new fundraiser new request sit with their own screen create button moved down set dues for all players opens the same window as generate installments one door both screens preview every player before you confirm how amounts are set split the budget evenly split the season estimate evenly set the amounts myself manual amounts type my own amounts deposit now balance later uneven installments per player figure shown before you pick amounts fill themselves in auto recalculate when you add a due date odd cents on the last payment short of what players need to fund collecting more than the budget a note never a block no budget yet even split greyed out with the reason you can still set dues by hand link to build a budget expected funding already covers the season estimated total is zero add players to the roster first empty roster is the only hard stop redo the dues change the dues wrong due dates wrong amount regenerate replaces the schedule payments are kept payment is never thrown away counts toward the new schedule paid more than the new total overpayment credit edit schedule on a player row record a payment amount date received method e-transfer cash cheque note oldest installment first part paid partial payment 200 of 300 mark rest paid payments list receipt remove a payment voids the books entry undo a payment overpayment auto credit balance owing reminder quotes what is left thank you for what has arrived season totals totals row at the bottom of the dues table dues totals total assessed total credits total collected balance owing next due date overdue count under next due where are my dues totals why is there no totals row totals hidden until dues are set last card on a phone credits reduce credit setting a credit is money the team owes a family last payment first next payment first keep separate settle at season end credits land on real installments to send left to send dues minus cash minus credits covered by fundraising not paid paid stays cash settled fully paid in credit team is holding this family money owed back where it lands preview which bill drops fundraising lowers the bill reminder names the fundraising family never chased when credits settled everything',
       content: (
         <p>On Premium, <strong>Money</strong> opens with a guide card while you&apos;re <strong>setting up</strong> — a brand-new team sees <em>&ldquo;Start with your season budget&rdquo;</em>; once a budget exists it offers to <strong>turn the plan into player dues in one click</strong>. The moment dues are out, the guide card&apos;s job is done and the Overview becomes your <strong>season dashboard</strong>.</p>
       ),
@@ -1371,9 +1443,22 @@ const coachesHelp: HelpPageContent = {
                 <li>Money fills the <strong>oldest installment first</strong> — a part-covered one reads <em>&ldquo;$200.00 of $300.00&rdquo;</em> instead of Unpaid, the table&apos;s <strong>Paid</strong> column includes every dollar received, and the player&apos;s status shows <strong>Partial</strong>.</li>
                 <li>Typed the wrong amount? Remove that payment from the player&apos;s <strong>Payments</strong> list — every payment sits there as its own receipt — and its entry in the books is voided and the schedule rolls back. That&apos;s the undo.</li>
               </HelpSteps>
-              <p><strong>Mark Paid</strong> is still there as the one-tap shortcut — it records whatever is still owing on that installment (on a part-paid one it says <strong>Mark rest paid</strong>), so it can never charge a family twice. Reminder emails follow the same truth: they ask for <strong>what&apos;s left</strong> on an installment and thank the family for what&apos;s already arrived, and a family with any recorded payment is never told they&apos;ve &ldquo;paid nothing.&rdquo;</p>
+              <p><strong>Mark Paid</strong> is still there as the one-tap shortcut — it records whatever the family is still asked to send on that installment (on a part-paid one it says <strong>Mark rest paid</strong>), so it can never charge a family twice. Reminder emails follow the same truth: they ask for <strong>what&apos;s left to send</strong> and thank the family for what&apos;s already arrived, and a family with any recorded payment is never told they&apos;ve &ldquo;paid nothing.&rdquo;</p>
               <HelpNote variant="warning" title="Overpayments keep themselves">Pay <em>more</em> than what&apos;s left on the schedule and the extra is saved automatically as an <strong>Overpayment</strong> credit (marked <em>auto</em> in Credits — it goes away with its payment, not on its own).</HelpNote>
+
+              <h4>Fundraising lowers the bill, not just the balance</h4>
+              <p>A credit is <strong>money the team owes a family</strong> — a fundraising rebate, a contribution, an overpayment. It lands on their real installments, so the amount you ask them for actually drops:</p>
+              <HelpSteps>
+                <li>An $800 installment with $500 of fundraising against it reads <strong>&ldquo;$300.00 to send&rdquo;</strong>, with the earning named underneath.</li>
+                <li>Cover the whole bill and it reads <strong>Covered by fundraising</strong> — deliberately not &ldquo;Paid,&rdquo; because <strong>Paid means cash</strong> and your books should always be able to tell the two apart.</li>
+                <li>The player&apos;s drawer shows <strong>Left to send</strong> — their dues minus cash minus credits: the one number a family can act on.</li>
+                <li>Reminder emails open with the good news (&ldquo;your family&apos;s fundraising has earned $500.00 toward dues — thank you&rdquo;) and then ask only for the rest. A family whose fundraising settled everything isn&apos;t chased at all.</li>
+              </HelpSteps>
+              <p><strong>You choose which bill it lands on.</strong> At the foot of Player Dues, <strong>Credits reduce</strong> offers three answers: <em>the last payment first</em> (the default — near-term amounts keep their dates and the far end of the schedule shrinks), <em>the next payment first</em> (relief now, for the family that needs it now), or <em>they don&apos;t — settle at season&apos;s end</em> (bills never move; the money is handed back instead). Nothing is ever locked in: if a family pays everything in cash anyway, the cash claims the bills and their credit simply becomes money the team owes them.</p>
+              <p>When the team is holding a family&apos;s money, their drawer says so plainly — <em>&ldquo;the team is holding $125.00 of this family&apos;s money&rdquo;</em> — and that&apos;s what season&apos;s end hands back.</p>
+
               <p><strong>Your season&apos;s dues, totalled where you read them.</strong> The last row of the <strong>Player Dues</strong> table is the season&apos;s own: <strong>Assessed</strong>, <strong>Credits</strong>, <strong>Collected</strong>, <strong>Balance owing</strong> — what&apos;s left after payments <em>and</em> credits — and the <strong>next due date</strong>, each figure sitting directly under the column it totals, so none of them needs a second label. If anyone is past their due date, the count sits under that date rather than in a corner of its own. The row appears only once at least one player has a dues schedule: a team that hasn&apos;t set dues yet gets no row instead of a line of zeros. On a phone, where the table reads as one card per player, it becomes the last card in the list.</p>
+              <p>A player&apos;s status word follows the same rule: <strong>Fully paid</strong> means cash covered it, <strong>Settled</strong> means credits did part of the work, and <strong>In credit</strong> means the team is holding money that&apos;s theirs.</p>
             </>
           ),
         },
@@ -1524,6 +1609,25 @@ const coachesHelp: HelpPageContent = {
           keywords: ['record a payment', 'record payment', 'partial payment', 'part payment', 'part paid', 'paying in smaller amounts', 'pays monthly', 'different amounts than installments', 'not the installment amount', 'e-transfer', 'etransfer', 'cash', 'cheque', 'date received', 'backdate a payment', 'payment date', 'remove a payment', 'delete a payment', 'undo a payment', 'wrong payment amount', 'overpaid', 'overpayment', 'paid too much', 'in credit', 'auto credit', 'payments list', 'receipt', 'mark rest paid', 'balance owing'],
         },
         {
+          id: 'faq-money-credit-application',
+          question: 'A player earned a fundraising rebate — which bill does it come off?',
+          popular: true,
+          answer: (
+            <>
+              <p>Their <strong>last</strong> one, by default — so the near-term installments keep their dates and amounts while the far end of the schedule shrinks. A $500 rebate against a final $800 installment leaves that bill reading <strong>&ldquo;$300.00 to send&rdquo;</strong>, with the fundraiser named underneath, and the family&apos;s reminder email says so.</p>
+              <p>Change it at the foot of <strong>Player Dues</strong> under <strong>Credits reduce</strong>:</p>
+              <HelpDefs>
+                <HelpDef term="The last payment first">The default. The far end of the schedule shrinks, so the season&apos;s cash rhythm is protected.</HelpDef>
+                <HelpDef term="The next payment first">Relief lands on the bill that&apos;s coming up — for the family that needs it now.</HelpDef>
+                <HelpDef term="They don&apos;t — settle at season&apos;s end">Bills never move; the money is handed back when the season closes.</HelpDef>
+              </HelpDefs>
+              <p>It&apos;s one setting for the whole team and it applies to every kind of credit. A big rebate simply keeps walking: it finishes the last bill, then starts on the one before it. And nothing is ever locked in — if the family pays everything in cash anyway, the cash claims the bills and their credit becomes money the team owes them.</p>
+            </>
+          ),
+          answerText: 'Their last one, by default — so the near-term installments keep their dates and amounts while the far end of the schedule shrinks. A $500 rebate against a final $800 installment leaves that bill reading $300.00 to send, with the fundraiser named underneath, and the family reminder email says so. Change it at the foot of Player Dues under Credits reduce: the last payment first (default, protects the season cash rhythm); the next payment first (relief lands on the bill coming up); or they don’t — settle at season’s end (bills never move, the money is handed back when the season closes). One setting for the whole team, applying to every kind of credit. A big rebate keeps walking: it finishes the last bill then starts on the one before it. Nothing is locked in — if the family pays everything in cash anyway, the cash claims the bills and their credit becomes money the team owes them, shown as the team is holding $X of this family’s money.',
+          keywords: ['credits reduce', 'which bill does the credit come off', 'which installment does the rebate lower', 'last payment first', 'next payment first', 'keep credits separate', 'settle at season end', 'credit setting', 'how credits work', 'fundraising lowers the bill', 'covered by fundraising', 'to send', 'left to send', 'why is my installment lower', 'credit applied', 'settled vs fully paid', 'settled', 'team is holding my money', 'owed back', 'money the team owes a family'],
+        },
+        {
           id: 'faq-money-fundraising-lowers-dues',
           question: 'Can fundraising lower what families pay?',
           popular: true,
@@ -1531,11 +1635,12 @@ const coachesHelp: HelpPageContent = {
             <>
               <p>Yes — budget it and the dues follow. On the <strong>Season Budget Plan</strong>, add a line and choose <strong>Expected fundraising</strong> instead of <em>A cost</em>: a campaign you expect to run, a sponsor, a club grant. You name it in the description — fundraising lines don&apos;t ask for a spending category. It shows in its own section at the foot of the plan, subtracted from what the season costs, and the plan card&apos;s <strong>Player installments</strong> figure is estimated from what&apos;s left. Budget $4,000 of fundraising against an $8,000 season and per player drops from $800 to $400 — and <strong>Generate installments</strong> starts from the lower figure, so nobody has to do the subtraction by hand.</p>
               <p>Once dues are out, <strong>Player installments</strong> becomes the official scheduled figure, and the plan also lists it as its own row beneath the fundraising section. Schedule more than the plan needs — most teams do — and the card simply notes your <strong>buffer</strong>; schedule less and it says, in amber, how far short of covering the plan you are.</p>
-              <p>Enter what you expect the <strong>team</strong> to keep. If a campaign pays part of what a player raises back to that player, that already comes off their own dues as a credit — counting it here as well would lower the same dues twice. Later, <strong>Budget vs. Actual</strong> compares what you budgeted against your team&apos;s share of what was really raised, so &ldquo;did our fundraising hit the number?&rdquo; has an answer.</p>
+              <p>Enter what you expect the <strong>team</strong> to keep. If a campaign pays part of what a player raises back to that player, that already lands on that player&apos;s own installments as a credit — counting it here as well would lower the same dues twice. Later, <strong>Budget vs. Actual</strong> compares what you budgeted against your team&apos;s share of what was really raised, so &ldquo;did our fundraising hit the number?&rdquo; has an answer.</p>
+              <p>That player-side half happens as you log the results: recording what someone raised shows a <strong>Where it lands</strong> preview — exactly which of their bills drop, and by how much — before you save, and the fundraiser&apos;s roster list carries a <strong>Left to Send</strong> column so you can see the effect across the team.</p>
             </>
           ),
-          answerText: 'Yes — budget it and the dues follow. On the Season Budget Plan, add a line and choose Expected fundraising instead of A cost: a campaign you expect to run, a sponsor, a club grant. You name it in the description — fundraising lines do not ask for a spending category. It shows in its own section at the foot of the plan, subtracted from what the season costs, and the plan card’s Player installments figure is estimated from what is left. Budget $4,000 of fundraising against an $8,000 season and per player drops from $800 to $400 — and Generate installments starts from the lower figure, so nobody has to do the subtraction by hand. Once dues are out, Player installments becomes the official scheduled figure, and the plan also lists it as its own row beneath the fundraising section. Schedule more than the plan needs — most teams do — and the card simply notes your buffer; schedule less and it says, in amber, how far short of covering the plan you are. Enter what you expect the TEAM to keep. If a campaign pays part of what a player raises back to that player, that already comes off their own dues as a credit — counting it here as well would lower the same dues twice. Later, Budget vs. Actual compares what you budgeted against your team’s share of what was really raised, so did our fundraising hit the number has an answer.',
-          keywords: ['fundraising lower dues', 'reduce dues', 'lower what families pay', 'expected funding', 'expected fundraising', 'budget fundraising', 'sponsorship', 'sponsor', 'grant', 'money coming in', 'player installments', 'offset dues', 'subsidize dues', 'raise money instead of charging', 'buffer above the plan', 'planned buffer', 'short of covering the plan', 'player dues in the budget', 'budget complete', 'no category for fundraising'],
+          answerText: 'Yes — budget it and the dues follow. On the Season Budget Plan, add a line and choose Expected fundraising instead of A cost: a campaign you expect to run, a sponsor, a club grant. You name it in the description — fundraising lines do not ask for a spending category. It shows in its own section at the foot of the plan, subtracted from what the season costs, and the plan card’s Player installments figure is estimated from what is left. Budget $4,000 of fundraising against an $8,000 season and per player drops from $800 to $400 — and Generate installments starts from the lower figure, so nobody has to do the subtraction by hand. Once dues are out, Player installments becomes the official scheduled figure, and the plan also lists it as its own row beneath the fundraising section. Schedule more than the plan needs — most teams do — and the card simply notes your buffer; schedule less and it says, in amber, how far short of covering the plan you are. Enter what you expect the TEAM to keep. If a campaign pays part of what a player raises back to that player, that already lands on that player’s own installments as a credit — counting it here as well would lower the same dues twice. Later, Budget vs. Actual compares what you budgeted against your team’s share of what was really raised, so did our fundraising hit the number has an answer. Recording what someone raised shows a Where it lands preview — which of their bills drop and by how much — before you save, and the fundraiser roster list carries a Left to Send column.',
+          keywords: ['fundraising lower dues', 'reduce dues', 'lower what families pay', 'expected funding', 'expected fundraising', 'budget fundraising', 'sponsorship', 'sponsor', 'grant', 'money coming in', 'player installments', 'offset dues', 'subsidize dues', 'raise money instead of charging', 'buffer above the plan', 'planned buffer', 'short of covering the plan', 'player dues in the budget', 'budget complete', 'no category for fundraising', 'where it lands', 'preview the credit', 'which bill does the rebate lower', 'left to send'],
         },
         {
           id: 'faq-money-estimated-total',
@@ -1696,19 +1801,47 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p>When you add or edit an event on the <strong>Premium</strong> schedule, a few optional details make game day smoother. Leave any of them blank if you don&apos;t need them.</p>
-          <ul>
-            <li><strong>Arrival / call time</strong> — a &ldquo;be there by&rdquo; time separate from the start (e.g. arrive 5:15 for a 6:00 game). Shows on the event and travels with the calendar export.</li>
-            <li><strong>Field / Diamond #</strong> — which specific diamond or field at the venue (e.g. &ldquo;Diamond 2&rdquo;), shown right beside the location.</li>
-            <li><strong>Uniform</strong> (games only) — what to wear, e.g. &ldquo;Home whites.&rdquo;</li>
-          </ul>
-          <p><strong>Location, name vs. address.</strong> <em>Location</em> is the place name a coach recognizes (&ldquo;Sherwood Park&rdquo;) — it&apos;s what shows on the schedule. <em>Address</em> is an optional street address that powers the map. On the event, the location becomes a tappable <strong>open-in-Google-Maps</strong> link that uses the address when you&apos;ve added one (and searches the name if you haven&apos;t).</p>
-          <p><strong>Recent locations.</strong> Under the location box, a row of <strong>Recent</strong> chips shows places your team has already used — tap one to fill in both the name and its saved address in a single tap.</p>
-          <p>Arrival time, field/diamond, and uniform also flow into your exports: they appear in the spreadsheet download and ride along in the calendar (.ics) export, so a synced phone calendar shows them too.</p>
-          <p><strong>Tags</strong> (games only) — your own vocabulary for grouping games, e.g. &ldquo;Rivalry&rdquo; or &ldquo;Top in the province.&rdquo; Type in the Tags box: if a tag you&apos;ve used before matches, tap it to apply it; if it&apos;s new, tap <strong>+ Create</strong> to add it to your team&apos;s tag list and apply it in one step. A game can carry as many tags as you like. Use the <strong>Manage tags</strong> link on the same screen to rename a tag, delete one you don&apos;t need, or <strong>merge</strong> two into one (merging keeps all the game history under whichever tag you keep — handy if &ldquo;top team&rdquo; and &ldquo;top in province&rdquo; both crept in for the same idea). Tags are visible to any coach with schedule access on your team. Once you&apos;ve tagged a few games, open <strong>Insights → &ldquo;How are we doing?&rdquo;</strong> to filter the season&apos;s results by tag and see your record just for that group. If your club or league has set up <strong>shared</strong> tags, they appear in <strong>blue</strong> alongside your own — you can apply them, but only an org admin renames or removes them.</p>
-          <p><strong>Awards</strong> (games only, once a final score is entered) — a quick way to recognize a player right after the game. Open the game and tap <strong>Give an award</strong>: pick a player, pick an award from your team&apos;s list — seeded with <strong>MVP</strong>, <strong>Best Hitter</strong>, and <strong>Hustle Award</strong> to start, fully yours to edit — add an optional note, and save. The form clears right away so you can hand out another for the same game without reopening anything. To edit your award list — change an award&apos;s name and icon, retire one you don&apos;t use (past awards keep it, it just drops off the picker for new ones), or bring a retired one back — open <strong>Insights → &ldquo;Who&apos;s earning it?&rdquo;</strong> and tap <strong>Manage award types</strong> there. Awards also show on the player&apos;s profile, and once you&apos;ve given a few, open <strong>Insights → &ldquo;Who&apos;s earning it?&rdquo;</strong> for a season leaderboard. A club or league can also share award types across every team — those show up in your picker to hand out, but only an org admin edits or retires them.</p>
-          <p><strong>Links.</strong> Every event has a <strong>Links</strong> section where you can attach labelled web links — a drill video, a rules page, a field map, a practice-plan doc, a flyer. Give each a short label and paste the address; the form hints what fits each event type. On the event they show as tappable rows with a matching icon (video / map / doc) and open in a new tab. You can add up to 10. (Links are for you and your staff right now; a player/parent view may come later.)</p>
+          <HelpDefs>
+            <HelpDef term="Arrival / call time">A &ldquo;be there by&rdquo; time separate from the start (e.g. arrive 5:15 for a 6:00 game). Shows on the event and travels with the calendar export.</HelpDef>
+            <HelpDef term="Field / Diamond #">Which specific diamond or field at the venue (e.g. &ldquo;Diamond 2&rdquo;), shown right beside the location.</HelpDef>
+            <HelpDef term="Uniform">Games only — what to wear, e.g. &ldquo;Home whites.&rdquo;</HelpDef>
+          </HelpDefs>
+          <p>All three also flow into your exports: they appear in the spreadsheet download and ride along in the calendar (.ics) export, so a synced phone calendar shows them too.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'event-details-location',
+          title: 'Location: name vs. address',
+          content: (
+            <>
+              <p><em>Location</em> is the place name a coach recognizes (&ldquo;Sherwood Park&rdquo;) — it&apos;s what shows on the schedule. <em>Address</em> is an optional street address that powers the map. On the event, the location becomes a tappable <strong>open-in-Google-Maps</strong> link that uses the address when you&apos;ve added one (and searches the name if you haven&apos;t).</p>
+              <p><strong>Recent locations.</strong> Under the location box, a row of <strong>Recent</strong> chips shows places your team has already used — tap one to fill in both the name and its saved address in a single tap.</p>
+            </>
+          ),
+        },
+        {
+          id: 'event-details-tags',
+          title: 'Tags (games only)',
+          content: (
+            <p>Your own vocabulary for grouping games, e.g. &ldquo;Rivalry&rdquo; or &ldquo;Top in the province.&rdquo; Type in the Tags box: if a tag you&apos;ve used before matches, tap it to apply it; if it&apos;s new, tap <strong>+ Create</strong> to add it to your team&apos;s tag list and apply it in one step. A game can carry as many tags as you like. Use the <strong>Manage tags</strong> link on the same screen to rename a tag, delete one you don&apos;t need, or <strong>merge</strong> two into one (merging keeps all the game history under whichever tag you keep — handy if &ldquo;top team&rdquo; and &ldquo;top in province&rdquo; both crept in for the same idea). Tags are visible to any coach with schedule access on your team. Once you&apos;ve tagged a few games, open <strong>Insights → &ldquo;How are we doing?&rdquo;</strong> to filter the season&apos;s results by tag and see your record just for that group. If your club or league has set up <strong>shared</strong> tags, they appear in <strong>blue</strong> alongside your own — you can apply them, but only an org admin renames or removes them.</p>
+          ),
+        },
+        {
+          id: 'event-details-awards',
+          title: 'Awards (games only, once a final score is in)',
+          content: (
+            <p>A quick way to recognize a player right after the game. Open the game and tap <strong>Give an award</strong>: pick a player, pick an award from your team&apos;s list — seeded with <strong>MVP</strong>, <strong>Best Hitter</strong>, and <strong>Hustle Award</strong> to start, fully yours to edit — add an optional note, and save. The form clears right away so you can hand out another for the same game without reopening anything. To edit your award list — change an award&apos;s name and icon, retire one you don&apos;t use (past awards keep it, it just drops off the picker for new ones), or bring a retired one back — open <strong>Insights → &ldquo;Who&apos;s earning it?&rdquo;</strong> and tap <strong>Manage award types</strong> there. Awards also show on the player&apos;s profile, and once you&apos;ve given a few, that same Insights page has a season leaderboard. A club or league can also share award types across every team — those show up in your picker to hand out, but only an org admin edits or retires them.</p>
+          ),
+        },
+        {
+          id: 'event-details-links',
+          title: 'Links',
+          content: (
+            <p>Every event has a <strong>Links</strong> section where you can attach labelled web links — a drill video, a rules page, a field map, a practice-plan doc, a flyer. Give each a short label and paste the address; the form hints what fits each event type. On the event they show as tappable rows with a matching icon (video / map / doc) and open in a new tab. You can add up to 10. (Links are for you and your staff right now; a player/parent view may come later.)</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-tag-a-game',
@@ -1996,18 +2129,38 @@ const coachesHelp: HelpPageContent = {
         <>
           <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Squad menu — the <strong>Games</strong> tab lists every game on your schedule, each marked <strong>Lineup set</strong> or <strong>Not set</strong>, so you can see at a glance what still needs doing before the weekend.</p>
           <p><strong>Why it&rsquo;s worth doing once.</strong> A saved lineup isn&rsquo;t just a game-day sheet. Your game sheet and attendance read from it instead of asking you again, and <strong>Insights</strong> uses it to answer <em>&ldquo;Where is playing time going?&rdquo;</em> — innings on the field versus the bench, positions each player has covered, and pitching against your arm-care caps.</p>
-          <p><strong>You need a game before you can build a lineup.</strong> If the Games tab is empty, add a practice or game on your <strong>Schedule</strong> first. Lineups are always attached to a real game — there&rsquo;s nowhere to put one otherwise.</p>
-          <p><strong>Templates</strong> (the second tab) are reusable base lineups you apply to any game in one tap — your usual order, a rain-day rotation, a tournament arrangement. Build one from scratch, or save a game&rsquo;s lineup as a template once you like it.</p>
-          <p><strong>Filters:</strong> the Games tab has scope chips (League / Tournament / Scrimmage) and a <strong>Needs lineup</strong> toggle that narrows the list to the games still missing one.</p>
-          <p><strong>Inside a game, the lineup has three views</strong> — each answers a different question, and they&rsquo;re all the same lineup:</p>
-          <ul>
-            <li><strong>Batting order</strong> — who bats when. A plain list: <strong>press and hold a row and drag it</strong> where you want, or use the arrows. In 9-player ball the batting nine sit above a line with the bench below; drag someone across it and they swap in.</li>
-            <li><strong>Positions</strong> — who plays where, period by period. This is where the page opens.</li>
-            <li><strong>Playing time</strong> — where the innings are going.</li>
-          </ul>
-          <p>Changes carry across all three, and a player&rsquo;s positions <strong>follow the player</strong> when you move them in the order — nothing gets left behind in the slot they were in.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'lineups-three-views',
+          title: 'Inside a game: three views of one lineup',
+          content: (
+            <>
+              <p>Each answers a different question, and they&rsquo;re all the same lineup:</p>
+              <HelpDefs>
+                <HelpDef term="Batting order">Who bats when. A plain list: <strong>press and hold a row and drag it</strong> where you want, or use the arrows. In 9-player ball the batting nine sit above a line with the bench below; drag someone across it and they swap in.</HelpDef>
+                <HelpDef term="Positions">Who plays where, period by period. This is where the page opens.</HelpDef>
+                <HelpDef term="Playing time">Where the innings are going.</HelpDef>
+              </HelpDefs>
+              <p>Changes carry across all three, and a player&rsquo;s positions <strong>follow the player</strong> when you move them in the order — nothing gets left behind in the slot they were in.</p>
+            </>
+          ),
+        },
+        {
+          id: 'lineups-templates',
+          title: 'Templates, and finding the games that need one',
+          content: (
+            <>
+              <p><strong>Templates</strong> (the second tab) are reusable base lineups you apply to any game in one tap — your usual order, a rain-day rotation, a tournament arrangement. Build one from scratch, or save a game&rsquo;s lineup as a template once you like it.</p>
+              <p><strong>Filters:</strong> the Games tab has scope chips (League / Tournament / Scrimmage) and a <strong>Needs lineup</strong> toggle that narrows the list to the games still missing one.</p>
+              <HelpNote variant="info" title="You need a game before you can build a lineup">
+                <p>If the Games tab is empty, add a practice or game on your <strong>Schedule</strong> first. Lineups are always attached to a real game — there&rsquo;s nowhere to put one otherwise.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-lineup-autofill-positions',
@@ -2787,14 +2940,42 @@ const coachesHelp: HelpPageContent = {
         <>
           <p><strong>Run practice</strong> opens the field screen — one block filling the phone, big enough to read at arm&rsquo;s length in the sun. The block, a countdown, the note, and one quiet line at the foot telling you what&rsquo;s next. Two buttons: a big <strong>Next block</strong> and a smaller <strong>Back</strong>. There&rsquo;s nothing to swipe or drag, because gloves defeat all of that.</p>
           <p>You&rsquo;ll find it on the plan itself, and on the practice in your <strong>Schedule</strong>. Opening it mid-practice lands you on whichever block should be running right now, so you don&rsquo;t tap through from the start.</p>
-          <p><strong>In a rotation the same screen shows the carousel</strong> — which group is at which station right now, who&rsquo;s running each one, and how long until they move. The button reads <strong>Rotate now</strong>, and once there&rsquo;s no round left it goes back to <strong>Next block</strong>. A rotation isn&rsquo;t a mode you have to get out of; it&rsquo;s just part of the same run.</p>
-          <p><strong>It&rsquo;s a clock, not an alarm.</strong> It never beeps, never buzzes, and never moves itself on. If a drill runs long the clock simply turns amber and says so — a practice that overruns is normal, and a phone going off in front of twelve kids is not. <strong>Starting late is fine too:</strong> whenever you tap, that block gets its full length from that moment, so one late start doesn&rsquo;t leave everything reading as overdue for the rest of the night.</p>
-          <p><strong>&ldquo;My station&rdquo; is for whoever&rsquo;s running one.</strong> Tap a station and you get just that patch of grass — the group with you now and how long you&rsquo;ve got, what you&rsquo;re doing, <strong>what you&rsquo;re watching for</strong>, the coaching points, the setup, tonight&rsquo;s note, and who&rsquo;s coming to you next. If you&rsquo;re tagged on a station it&rsquo;s marked as yours, and it stays chosen for the rest of the practice. You can still look at what everyone else is doing.</p>
-          <p><strong>Who&rsquo;s here tonight</strong> sits folded shut at the bottom — the attendance replies you already have, nothing to fill in. It needs <strong>attendance</strong> access.</p>
-          <p><strong>Nothing is recorded at the field.</strong> No ticks, no &ldquo;we did this&rdquo;, and <strong>Rotate now</strong> writes nothing either. That&rsquo;s deliberate: attendance is the one thing coaches reliably finish during a practice and it already exists, and a half-finished second one would quietly turn your plan into a claim about your players.</p>
-          <p><strong>Who can use it:</strong> any coach with <strong>schedule</strong> access can run a practice — that&rsquo;s what makes it useful to hand an assistant a station. There&rsquo;s nothing to save here, so there&rsquo;s nothing that needs head-coach access.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'practice-run-rotation',
+          title: 'Rotations, and the clock',
+          content: (
+            <>
+              <p><strong>In a rotation the same screen shows the carousel</strong> — which group is at which station right now, who&rsquo;s running each one, and how long until they move. The button reads <strong>Rotate now</strong>, and once there&rsquo;s no round left it goes back to <strong>Next block</strong>. A rotation isn&rsquo;t a mode you have to get out of; it&rsquo;s just part of the same run.</p>
+              <HelpNote variant="tip" title="It’s a clock, not an alarm">
+                <p>It never beeps, never buzzes, and never moves itself on. If a drill runs long the clock simply turns amber and says so — a practice that overruns is normal, and a phone going off in front of twelve kids is not. <strong>Starting late is fine too:</strong> whenever you tap, that block gets its full length from that moment, so one late start doesn&rsquo;t leave everything reading as overdue for the rest of the night.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'practice-run-my-station',
+          title: '“My station” is for whoever’s running one',
+          content: (
+            <>
+              <p>Tap a station and you get just that patch of grass — the group with you now and how long you&rsquo;ve got, what you&rsquo;re doing, <strong>what you&rsquo;re watching for</strong>, the coaching points, the setup, tonight&rsquo;s note, and who&rsquo;s coming to you next. If you&rsquo;re tagged on a station it&rsquo;s marked as yours, and it stays chosen for the rest of the practice. You can still look at what everyone else is doing.</p>
+              <p><strong>Who&rsquo;s here tonight</strong> sits folded shut at the bottom — the attendance replies you already have, nothing to fill in. It needs <strong>attendance</strong> access.</p>
+            </>
+          ),
+        },
+        {
+          id: 'practice-run-nothing-recorded',
+          title: 'Nothing is recorded at the field',
+          content: (
+            <>
+              <p>No ticks, no &ldquo;we did this&rdquo;, and <strong>Rotate now</strong> writes nothing either. That&rsquo;s deliberate: attendance is the one thing coaches reliably finish during a practice and it already exists, and a half-finished second one would quietly turn your plan into a claim about your players.</p>
+              <p><strong>Who can use it:</strong> any coach with <strong>schedule</strong> access can run a practice — that&rsquo;s what makes it useful to hand an assistant a station. There&rsquo;s nothing to save here, so there&rsquo;s nothing that needs head-coach access.</p>
+            </>
+          ),
+        },
+      ],
       links: [
         { label: 'Writing the plan', href: '#premium-practice-plans' },
         { label: 'Attendance', href: '#recipe-attendance' },

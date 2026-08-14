@@ -1,5 +1,5 @@
 import type { HelpPageContent } from './index';
-import { HelpDefs, HelpDef, HelpNote } from '@/components/help/HelpBlocks';
+import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 const tournamentsHelp: HelpPageContent = {
   title: 'Tournaments',
@@ -78,23 +78,40 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Click <strong>New Tournament</strong> from Manage Tournaments. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
-          <p>On a wide desktop window, a live preview of your public tournament page sits beside the form. The event name, the date range, the countdown to first pitch, and the public link appear in it as you type, and the division and team-spot counts fill in once you reach the divisions step. Nothing is published until you activate the tournament. On narrower screens the wizard fills the window and the preview is not shown.</p>
-          <p>On Tournament Plus and above, a row of colour presets sits above the preview. It starts on the colours this event would publish in anyway, and choosing one repaints the preview and gives the new tournament those colours. Leave it alone and the event keeps following your organization&rsquo;s colours, so a later rebrand still reaches it. Full colour control, including custom colours, stays in <strong>Branding</strong> under tournament settings.</p>
-          <p>For repeat events, Tournament Plus can start the draft from a previous tournament so divisions, locations, registration setup, public settings, and content are ready for review.</p>
-          <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully. Changing it later can break links already shared by email, social media, or team communications.</p>
-          <p>The dashboard launch checklist shows what is still required before activation. When every required item is complete, use Manage Tournaments to change the status from <strong>Draft</strong> to <strong>Active</strong>.</p>
-          <p>To open team registration:</p>
-          <ol>
-            <li>Finish the launch checklist: dates, public contact, divisions, and required public information.</li>
-            <li>Open <strong>Divisions</strong> and confirm at least one division is accepting registrations.</li>
-            <li>Review capacities, fees, and custom registration questions before sharing the link.</li>
-            <li>Use <strong>Manage Tournaments</strong> to move the tournament from <strong>Draft</strong> to <strong>Active</strong>.</li>
-            <li>Open the public registration page and submit a quick internal test if your workflow allows it.</li>
-            <li>Share the public registration link with teams only after the form shows the right divisions and fees.</li>
-          </ol>
-          <p>If registration is not visible, check the tournament status and division registration settings first.</p>
+          <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully — changing it later can break links already shared by email, social media, or team communications.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'create-live-preview',
+          title: 'The live preview, and starting from last year',
+          content: (
+            <>
+              <p>On a wide desktop window, a live preview of your public tournament page sits beside the form. The event name, the date range, the countdown to first pitch, and the public link appear in it as you type, and the division and team-spot counts fill in once you reach the divisions step. Nothing is published until you activate the tournament. On narrower screens the wizard fills the window and the preview is not shown.</p>
+              <p>On Tournament Plus and above, a row of colour presets sits above the preview. It starts on the colours this event would publish in anyway, and choosing one repaints the preview and gives the new tournament those colours. Leave it alone and the event keeps following your organization&rsquo;s colours, so a later rebrand still reaches it. Full colour control, including custom colours, stays in <strong>Branding</strong> under tournament settings.</p>
+              <p>For repeat events, Tournament Plus can start the draft from a previous tournament so divisions, locations, registration setup, public settings, and content are ready for review.</p>
+            </>
+          ),
+        },
+        {
+          id: 'create-opening-registration',
+          title: 'Opening team registration',
+          content: (
+            <>
+              <p>The dashboard launch checklist shows what is still required before activation. When every required item is complete:</p>
+              <HelpSteps>
+                <li>Finish the launch checklist: dates, public contact, divisions, and required public information.</li>
+                <li>Open <strong>Divisions</strong> and confirm at least one division is accepting registrations.</li>
+                <li>Review capacities, fees, and custom registration questions before sharing the link.</li>
+                <li>Use <strong>Manage Tournaments</strong> to move the tournament from <strong>Draft</strong> to <strong>Active</strong>.</li>
+                <li>Open the public registration page and submit a quick internal test if your workflow allows it.</li>
+                <li>Share the public registration link with teams only after the form shows the right divisions and fees.</li>
+              </HelpSteps>
+              <p>If registration is not visible, check the tournament status and division registration settings first.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-creation-live-preview',
@@ -1205,18 +1222,58 @@ const tournamentsHelp: HelpPageContent = {
         { label: 'Chat', href: '../tournaments/chat' },
       ],
       content: (
-        <>
-          <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the <strong>All coaches</strong> room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough. You&rsquo;ll see an <strong>unread count</strong> on the Chat menu, and new messages also reach you by in-app bell and phone notification — no email.</p>
-          <p><strong>Split a big event into rooms (optional).</strong> A small tournament just uses the one <strong>All coaches</strong> room — nothing to set up. For a larger, multi-division event you can add <strong>rooms</strong> (think Slack-style channels) so coaches only see what&rsquo;s relevant — a U12 room, a Championship room, and so on. Tap <strong>Rooms</strong> at the left of the chat header to see the room list and tap <strong>New room</strong> to create one: give it a name and tick which <strong>division(s)</strong> it covers. That&rsquo;s the whole setup — <strong>membership fills itself in</strong>: every coach whose team is in a covered division joins automatically, and as new teams register into that division their coaches are added too. There are no invite lists to keep up to date. The <strong>All coaches</strong> room is always there as the everyone/announcements room and can&rsquo;t be deleted.</p>
-          <p><strong>It works like a real chat app.</strong> Add an <strong>emoji</strong> from the smiley in the message box, <strong>reply</strong> to a specific message so your answer quotes it (tap the quote to jump back to the original), and type <strong>@</strong> to <strong>mention</strong> a coach by name — a mention reaches that coach directly, even if they&rsquo;ve turned general chat notifications off. The <strong>magnifier</strong> in the chat header <strong>searches</strong> the conversation; today it filters the recent messages on screen, with full-history search coming later. Under your own most recent message, a small receipt moves from <strong>Sent</strong> to <strong>Read by 3 of 8</strong> to <strong>Read by everyone</strong> as coaches catch up.</p>
-          <p><strong>Manage a room from &ldquo;Manage room.&rdquo;</strong> Tap <strong>Manage room</strong> at the right of the chat header to open the management panel for whichever room is open. It lists everyone in that room — with each coach&rsquo;s <strong>last seen</strong> time — and under <strong>Not yet joined</strong> it shows the coaches who haven&rsquo;t signed in yet, so nobody is silently left out. Beside a not-yet-joined name, use <strong>Copy link</strong> or <strong>Email</strong> to send that coach the sign-in link; they join automatically the moment they sign in with their team&rsquo;s email.</p>
-          <p><strong>Keeping it on track.</strong> From the <strong>Manage room</strong> panel you can <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post). The same panel holds <strong>Room settings</strong>: <strong>rename</strong> a room you created, <strong>close</strong> it to make it read-only (and reopen it any time), or <strong>delete</strong> it. To protect the record, <strong>delete is only offered for an empty room</strong> (one with no messages) — once coaches have talked, you can close the room but not delete it, and the <strong>All coaches</strong> room can always be closed but never renamed or deleted. Any coach can <strong>delete a message they sent</strong> (it then reads &ldquo;Message removed&rdquo;); as the organizer you can also <strong>remove anyone&rsquo;s</strong> message using the remove control on the message itself. A muted coach can&rsquo;t delete. Conversations stay readable after the tournament wraps up, so the record is always there.</p>
-          <p><strong>Reported messages come to you.</strong> A coach can flag a message they&rsquo;re uncomfortable with by pressing and holding it and choosing <strong>Report to organizers</strong>. Reported messages collect at the top of the <strong>Manage room</strong> panel (with a count on the button), each showing the message and who reported it. From there you can <strong>Remove</strong> the message — which also clears the report — or <strong>Dismiss</strong> the report if it&rsquo;s fine. Coaches never see each other&rsquo;s reports, and the reporter stays anonymous to the person they reported.</p>
-          <p><strong>Pin what coaches keep asking for.</strong> Pin the schedule, the field map, the rules — any message — to a <strong>banner at the top of the room</strong>. Pin several at once; the banner collapses and expands, and a coach can tap any pinned item to jump straight to it. Pinning and unpinning are yours alone (from the controls on a message, beside <strong>remove</strong>) — coaches see the banner but can&rsquo;t change it.</p>
-          <p><strong>Coaches need no setup.</strong> Each coach automatically sees the <strong>All coaches</strong> room plus any division room that covers their team, with the tournament&rsquo;s name shown beside each so several rooms are easy to tell apart. They never create or manage rooms — they just post, react, and vote.</p>
-          <p>Chat — and everything in it — is included with <strong>Tournament Plus and above</strong>; these conversation tools add no extra cost. On the free Tournament plan the tab shows an upgrade option instead.</p>
-        </>
+        <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the <strong>All coaches</strong> room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough. You&rsquo;ll see an <strong>unread count</strong> on the Chat menu, and new messages also reach you by in-app bell and phone notification — no email.</p>
       ),
+      subtopics: [
+        {
+          id: 'chat-rooms',
+          title: 'Split a big event into rooms (optional)',
+          content: (
+            <p>A small tournament just uses the one <strong>All coaches</strong> room — nothing to set up. For a larger, multi-division event you can add <strong>rooms</strong> (think Slack-style channels) so coaches only see what&rsquo;s relevant — a U12 room, a Championship room, and so on. Tap <strong>Rooms</strong> at the left of the chat header to see the room list and tap <strong>New room</strong> to create one: give it a name and tick which <strong>division(s)</strong> it covers. That&rsquo;s the whole setup — <strong>membership fills itself in</strong>: every coach whose team is in a covered division joins automatically, and as new teams register into that division their coaches are added too. There are no invite lists to keep up to date. The <strong>All coaches</strong> room is always there as the everyone/announcements room and can&rsquo;t be deleted.</p>
+          ),
+        },
+        {
+          id: 'chat-how-it-works',
+          title: 'It works like a real chat app',
+          content: (
+            <>
+              <p>Add an <strong>emoji</strong> from the smiley in the message box, <strong>reply</strong> to a specific message so your answer quotes it (tap the quote to jump back to the original), and type <strong>@</strong> to <strong>mention</strong> a coach by name — a mention reaches that coach directly, even if they&rsquo;ve turned general chat notifications off. The <strong>magnifier</strong> in the chat header <strong>searches</strong> the conversation; today it filters the recent messages on screen, with full-history search coming later. Under your own most recent message, a small receipt moves from <strong>Sent</strong> to <strong>Read by 3 of 8</strong> to <strong>Read by everyone</strong> as coaches catch up.</p>
+              <p><strong>Coaches need no setup.</strong> Each coach automatically sees the <strong>All coaches</strong> room plus any division room that covers their team, with the tournament&rsquo;s name shown beside each so several rooms are easy to tell apart. They never create or manage rooms — they just post, react, and vote.</p>
+            </>
+          ),
+        },
+        {
+          id: 'chat-manage-room',
+          title: 'Managing a room, and keeping it on track',
+          content: (
+            <>
+              <p>Tap <strong>Manage room</strong> at the right of the chat header to open the management panel for whichever room is open. It lists everyone in that room — with each coach&rsquo;s <strong>last seen</strong> time — and under <strong>Not yet joined</strong> it shows the coaches who haven&rsquo;t signed in yet, so nobody is silently left out. Beside a not-yet-joined name, use <strong>Copy link</strong> or <strong>Email</strong> to send that coach the sign-in link; they join automatically the moment they sign in with their team&rsquo;s email.</p>
+              <p>From the same panel you can <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post). <strong>Room settings</strong> lets you <strong>rename</strong> a room you created, <strong>close</strong> it to make it read-only (and reopen it any time), or <strong>delete</strong> it.</p>
+              <HelpNote variant="info" title="Delete is only offered for an empty room">
+                <p>To protect the record: once coaches have talked, you can close the room but not delete it, and the <strong>All coaches</strong> room can always be closed but never renamed or deleted. Conversations stay readable after the tournament wraps up.</p>
+              </HelpNote>
+              <p>Any coach can <strong>delete a message they sent</strong> (it then reads &ldquo;Message removed&rdquo;); as the organizer you can also <strong>remove anyone&rsquo;s</strong> message using the remove control on the message itself. A muted coach can&rsquo;t delete.</p>
+            </>
+          ),
+        },
+        {
+          id: 'chat-reports-pins',
+          title: 'Reported messages, and pinning what coaches keep asking for',
+          content: (
+            <>
+              <p><strong>Reported messages come to you.</strong> A coach can flag a message they&rsquo;re uncomfortable with by pressing and holding it and choosing <strong>Report to organizers</strong>. Reported messages collect at the top of the <strong>Manage room</strong> panel (with a count on the button), each showing the message and who reported it. From there you can <strong>Remove</strong> the message — which also clears the report — or <strong>Dismiss</strong> the report if it&rsquo;s fine. Coaches never see each other&rsquo;s reports, and the reporter stays anonymous to the person they reported.</p>
+              <p><strong>Pin what coaches keep asking for.</strong> Pin the schedule, the field map, the rules — any message — to a <strong>banner at the top of the room</strong>. Pin several at once; the banner collapses and expands, and a coach can tap any pinned item to jump straight to it. Pinning and unpinning are yours alone (from the controls on a message, beside <strong>remove</strong>) — coaches see the banner but can&rsquo;t change it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'chat-plan',
+          title: 'What it costs',
+          content: (
+            <p>Chat — and everything in it — is included with <strong>Tournament Plus and above</strong>; these conversation tools add no extra cost. On the free Tournament plan the tab shows an upgrade option instead.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-tournament-chat-who',
