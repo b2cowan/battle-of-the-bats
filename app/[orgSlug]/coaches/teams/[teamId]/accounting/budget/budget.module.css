@@ -13,93 +13,123 @@
 .muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
 
-/* ── The summary ladder ──────────────────────────────────────────────────────
-   Replaced a row of up to five equal tiles (2026-08-12). Those tiles presented six
-   figures as unrelated peers and then needed a caption under each explaining its
-   relationship to its neighbour — but they are ONE sum worked downward. Here the
-   position of a number is its explanation, so the captions are gone.
-
-   A two-column grid, label left / money right, with rules where the arithmetic
-   closes. It is already a single column of pairs, so the phone layout is the same
-   layout — which is what the old tiles could not manage (they wrapped ragged).
+/* ── The plan card ───────────────────────────────────────────────────────────
+   Round 3 of this panel's summary (owner-approved mockup artifact d37d62e3, 2026-08-13;
+   supersedes the summary ladder of 2026-08-12, which had grown to eight rows / ~330px and
+   kept per-player as its headline after real dues had replaced it). Three CATEGORIES side
+   by side — Planned costs · Expected fundraising · Player installments — separated by quiet
+   hairlines, no operators: labels do the explaining, captions carry the relationships.
    Tokens only — no colour literals (the six colour-token baselines stay at zero). */
-.ladder {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.1rem 1.5rem;
-  align-items: baseline;
-  padding: 0.9rem 1.25rem 1rem;
+.plan {
+  padding: 0.85rem 1.25rem 0.95rem;
   border-radius: 12px;
   background: rgba(var(--blueprint-blue-rgb), 0.07);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   margin-bottom: 1.75rem;
 }
 
-.ladderCap {
-  grid-column: 1 / -1;
+.planHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.planCap {
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
   color: var(--white-40, rgba(255,255,255,0.4));
-  margin-bottom: 0.35rem;
 }
 
-.ladderKey {
-  font-size: 0.88rem;
-  color: var(--white-70, rgba(255,255,255,0.7));
-  min-width: 0;
+.planRow {
+  display: flex;
+  align-items: stretch;
 }
 
-.ladderValue {
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-90);
+.planTerm { min-width: 0; flex: 1; }
+.planTerm + .planTerm {
+  border-left: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+  padding-left: 1.1rem;
+  margin-left: 1.1rem;
 }
 
-/* The line count beside a row's name — quiet, and never competing with the money. */
-.ladderCount {
-  margin-left: 0.45rem;
-  font-size: 0.74rem;
+.planKey {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  white-space: nowrap;
+}
+
+/* The line count beside a category's name — quiet, and never competing with the money. */
+.planCount {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--white-40, rgba(255,255,255,0.4));
 }
 
-.ladderSub {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--white-45, rgba(255,255,255,0.45));
-}
-.ladderValue.ladderSub { color: var(--white-70, rgba(255,255,255,0.7)); }
-
-.ladderHead {
-  font-size: 1rem;
-  font-weight: 700;
+.planVal {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
   color: var(--white-90);
+  line-height: 1.3;
 }
-.ladderValue.ladderHead { font-size: 1.15rem; font-weight: 800; }
-
-/* ⚠ Compound selectors, deliberately. `.ladderValue.ladderSub` above sets a colour and carries
-   specificity 0-2-0, so a plain `.ladderBad` (0-1-0) LOST to it — the over-plan number rendered in
-   warm grey while every other signal on the page said "this is the red one". Found by reading the
-   computed colour in a browser, which is the only thing that could have found it. */
-.ladderValue.ladderGood,
-.ladderValue.ladderSub.ladderGood { color: var(--success-light); }
-.ladderValue.ladderBad,
-.ladderValue.ladderSub.ladderBad  { color: var(--danger-light); }
-
-.ladderRule {
-  grid-column: 1 / -1;
-  height: 1px;
-  background: var(--home-line-strong, rgba(255,255,255,0.15));
-  margin: 0.5rem 0;
+.planVal.planValGood { color: var(--success-light); }
+/* The estimated installment figure: real, but visibly a projection — one step lighter and
+   one step less bold than the scheduled figure it will become. */
+.planVal.planValEst {
+  font-weight: 700;
+  color: var(--white-70, rgba(255,255,255,0.7));
 }
+
+/* The caption under a figure — where every relationship lives (estimate↔lines, buffer,
+   per-player). Ordinary ink on purpose: a PLANNED buffer stated here must read as
+   confirmation, not a warning (owner ruling 2026-08-13). */
+.planCapNote {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  margin-top: 0.1rem;
+}
+.planCapNote.planCapBad  { color: var(--danger-light); }
+/* Short of the plan — the one cautionary state. Amber: attention, not alarm.
+   --warning-light resolves per theme (AA-corrected --home-amber on warm). */
+.planCapNote.planCapWarn { color: var(--warning-light); }
+
+/* Estimated vs Scheduled — the third figure's state, worn as a tag. */
+.planBadgeEst,
+.planBadgeOff {
+  display: inline-block;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
+  padding: 0.08rem 0.35rem;
+  margin-left: 0.4rem;
+  vertical-align: 1px;
+}
+.planBadgeEst { color: var(--warning-light); border: 1px dashed var(--warning-light); }
+.planBadgeOff { color: var(--success-light);       border: 1px solid var(--success-light); }
 
 .ladderLink {
   background: none;
   border: none;
-  padding: 0;
+  /* Tap floor without layout shift (rendered-sweep finding: these quiet links measured 20px
+     against the 44px floor). The padding grows the HIT BOX to the floor; the matching negative
+     margin keeps the caption line it sits in at text height. */
+  padding: 13px 0;
+  margin: -13px 0;
   font: inherit;
   font-size: 0.8rem;
   color: var(--blueprint-blue, var(--link));
@@ -108,15 +138,14 @@
 }
 .ladderLink:disabled { opacity: 0.6; cursor: default; }
 
-/* The estimate's editor sits in the ladder's flow, spanning both columns — a control
-   pinned into the money column would be a text field where a figure belongs. */
+/* The estimate's editor sits in the card's flow, full width — a control pinned into a
+   money column would be a text field where a figure belongs. */
 .ladderEditor {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
-  margin: 0.5rem 0 0.15rem;
+  margin: 0.6rem 0 0.15rem;
 }
 .ladderEditorLabel {
   font-size: 0.78rem;
@@ -124,25 +153,24 @@
   color: var(--white-70, rgba(255,255,255,0.7));
 }
 
-/* The outcome: the one number a coach acts on, at the foot where a total belongs. */
-.ladderPay {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.35rem 1rem;
-}
-.ladderBig {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-90);
-}
-.ladderSay {
-  font-size: 0.8rem;
-  color: var(--white-45, rgba(255,255,255,0.45));
+/* The amber close on the list below ("Short of covering the plan") — same voice as
+   .planCapWarn, on the ledger's total row. */
+.closeWarn { color: var(--warning-light); }
+
+/* ── ≤900 (the shell breakpoint): the plan card stacks ───────────────────────
+   Three side-by-side categories pinch at tablet widths — the rendered sweep caught the row
+   spilling 25px at 768 with `overflow-x: visible` and nothing owning it (the same failure mode
+   the list's own `minmax(0,1fr)` note records). Below the shell breakpoint the terms stack,
+   the hairline turning from a left border into a top one so each keeps its quiet frame. */
+@media (max-width: 900px) {
+  .planRow { flex-direction: column; gap: 0.55rem; }
+  .planTerm + .planTerm {
+    border-left: none;
+    border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+    padding-left: 0;
+    margin-left: 0;
+    padding-top: 0.55rem;
+  }
 }
 
 /* ── Line items ──────────────────────────────────────────────────────────── */
@@ -174,6 +202,19 @@
   margin-bottom: 1.75rem;
 }
 
+/* Round 4 (owner 2026-08-13, mockup artifact d37d62e3): ONE money column. The trailing track is
+   `auto`, and each row is its own grid — so header/total rows (empty actions cell) collapsed it
+   to 0 while line rows held buttons, and the amount column stepped left and right down the page.
+   For a WRITE coach the track is FIXED at the pencil's width, reserved on every row, so every
+   figure — line, category bar, section bar, closing row — lands in one right-aligned column.
+   Read-only never gets this class: no row has a button, `auto` collapses uniformly, and the
+   money sits at the edge — aligned either way, no dead gutter. */
+.linesCanWrite { --ledger-cols: minmax(0, 1fr) 130px 40px; }
+
+/* The row as the edit door (write coaches; the pencil is the semantic control, this is the
+   pointer/touch shortcut — and on a phone, the only visible door). */
+.rowTappable { cursor: pointer; }
+
 
 /* The leading cell's stacked name + note. Everything else a line row used to need — its own
    frame, chevron, amount and action rail — now comes from the shared ledger. */
@@ -192,12 +233,30 @@
   transition: color 0.12s, border-color 0.12s;
 }
 .actionBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); border-color: var(--home-line, rgba(255,255,255,0.25)); }
-.actionBtnDanger:hover { color: var(--danger-light); border-color: color-mix(in srgb, var(--danger-light) 40%, transparent); }
 
-/* ── Expected funding ────────────────────────────────────────────────────────
-   Money coming IN — one section, always after the costs, shown negative so the
-   arithmetic reads down the column. It borrows the shared ledger's frame; only the
-   accent differs, because it is still a group of budget lines.
+/* Deleting a line moved INTO the edit modal (owner 2026-08-13): a quiet danger link in the
+   footer, opposite Save, in front of the same confirm dialog as before. One control per row
+   outside, full capability inside — the phone's tap-a-row door and the desktop pencil can
+   never offer different powers. */
+.deleteLineBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--danger-light);
+  text-decoration: underline;
+  cursor: pointer;
+  margin-right: auto;
+}
+.deleteLineBtn:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Expected fundraising ────────────────────────────────────────────────────
+   Money coming IN — one section, always after the costs, shown POSITIVE in green
+   (owner 2026-08-13: the label says the direction; a minus sign made readers
+   re-check arithmetic). It borrows the shared ledger's frame; only the accent
+   differs, because it is still a group of budget lines.
 
    ⚠ BOTH SELECTORS ARE DOUBLED ON PURPOSE. Each of these is applied ALONGSIDE a shared class
    that also sets the property it overrides — `.ledgerGroup` sets the `border` shorthand (which
@@ -346,8 +405,8 @@
 /* ⚠ Written to OUTRANK the shared `.moneyGrid tbody th` (0-2-1 vs 0-1-1), and DOUBLED so it also
    beats the shared rule across stylesheets, where equal specificity would leave bundling order to
    decide. The line NAME keeps the normal ink; only its figures go green.
-   ⚠ Expected funding is money coming IN — its minus sign is arithmetic, not a warning, which is
-   why it is green here while a negative running balance is red (owner, 2026-08-13). */
+   ⚠ Expected fundraising is money coming IN — shown positive AND green (owner, 2026-08-13):
+   the colour says the direction, while a negative running balance stays red. */
 .periodGrid tbody tr.periodGridFunding.periodGridFunding td { color: var(--success-light); }
 .periodGridNote {
   margin: 0;
@@ -386,23 +445,6 @@
   margin: 0;
   max-width: 500px;
 }
-
-.installmentsExist {
-  margin-top: 1.5rem;
-  padding: 0.85rem 1.25rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--success-light) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--success-light) 18%, transparent);
-  font-size: 0.88rem;
-  color: var(--success-light);
-}
-
-.inlineLink {
-  color: var(--info-light);
-  text-decoration: none;
-  font-weight: 600;
-}
-.inlineLink:hover { text-decoration: underline; }
 
 /* ── Form fields ─────────────────────────────────────────────────────────── */
 .field { margin-bottom: 1rem; }
@@ -790,6 +832,147 @@
 }
 
 /* ── Preview table ───────────────────────────────────────────────────────── */
+/* ── How installment amounts are set (owner ruling 2026-08-13) ──────────────────────────────
+   Three radio cards, each printing its own arithmetic and its per-player result BEFORE it is
+   chosen, so a coach can compare all three answers without committing to one.
+
+   ⚠ A real <fieldset>/<legend> with real radios. The visual is a card, but the thing being done
+   is picking one of three, and rebuilding that out of divs costs arrow-key navigation, the
+   grouped announcement, and the label-click target — on the one screen in the portal that
+   decides what families are charged. */
+.basisSection {
+  border: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.basisSection > legend { padding: 0; margin-bottom: 0.4rem; }
+
+.basisCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.1rem 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.09));
+  border-radius: 9px;
+  cursor: pointer;
+  min-width: 0;
+}
+.basisCardOn {
+  border-color: var(--home-olive, rgba(163,181,70,0.6));
+  background: var(--home-olive-soft, rgba(255,255,255,0.05));
+}
+/* Not `disabled`-styled into invisibility: the REASON on the card is the useful part, and a coach
+   needs to be able to read why the option they expected isn't there. */
+.basisCardOff { opacity: 0.6; cursor: not-allowed; }
+
+.basisRadio { grid-row: span 2; align-self: center; margin: 0; accent-color: var(--home-olive); }
+.basisName { font-size: 0.88rem; font-weight: 600; color: var(--white-90); }
+.basisMath {
+  font-size: 0.74rem;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  font-variant-numeric: tabular-nums;
+}
+.basisMathStop { color: var(--warning); }
+.basisValue {
+  grid-row: span 2;
+  text-align: right;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.basisValue small {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+.basisValueMuted { font-size: 0.8rem; font-weight: 600; color: var(--white-50, rgba(255,255,255,0.5)); }
+
+/* The budget offer that used to be a WALL, kept as a door. */
+.basisNudge {
+  display: inline-block;
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.8rem;
+  color: var(--blueprint-blue, var(--link));
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+
+/* ── The derived amount (split modes) ───────────────────────────────────────────────────────
+   An OUTPUT drawn as one. The dashed rule and the "Auto" badge exist so nobody tries to type
+   into it — a box that accepts keystrokes and discards them is the exact defect this screen was
+   rebuilt to end. */
+.amountAuto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.18));
+  border-radius: 8px;
+  background: var(--home-card, rgba(255,255,255,0.03));
+  color: var(--white-70);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.autoChip {
+  flex: 0 0 auto;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  padding: 0.08rem 0.32rem;
+  border-radius: 3px;
+}
+
+/* ── What this schedule collects vs what players must fund ──────────────────────────────────
+   ⚠ NEVER A BARRIER. A short schedule is a legitimate thing to build on purpose (a deposit now,
+   the rest set later), so this is a sentence the coach reads past — the confirm button is live
+   behind all three states. Over-collecting takes the danger colour rather than the warning one:
+   it is the state that charges families money they do not owe. */
+.reconStrip {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0 0 0.9rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.reconMark { font-weight: 800; flex: 0 0 auto; }
+.reconAside { display: block; font-size: 0.76rem; opacity: 0.85; margin-top: 0.1rem; }
+.reconShort { background: rgba(var(--warning-rgb), 0.13); color: var(--warning); }
+.reconOver  { background: rgba(var(--danger-rgb),  0.12); color: var(--danger-light); }
+.reconMatch { background: rgba(var(--success-rgb), 0.12); color: var(--success-light); }
+
+/* ── The sandbox's answer to Confirm ────────────────────────────────────────────────────────
+   Deliberately NOT `.errorText`. A demo refusing to save is the demo working exactly as promised,
+   and the sentence it carries is an invitation to start a real team — read in red, at the moment a
+   prospect has just decided they want the feature, that reads as "this product is broken". */
+.sandboxNote {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 9px;
+  background: var(--home-olive-soft);
+  color: var(--white-90);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .previewSection { margin-bottom: 1rem; }
 
 .previewTable {
@@ -822,6 +1005,16 @@
   color: var(--white-70, rgba(255,255,255,0.7));
 }
 .previewRow:last-child { border-bottom: none; }
+
+/* The per-player season total, and the team's. This is the figure a family actually owes and the
+   figure the team is actually asking for — neither was on the screen where they get approved. */
+.previewTotalCell { color: var(--white-90); font-weight: 700; }
+.previewFootRow {
+  background: var(--home-card, rgba(255,255,255,0.03));
+  border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
+  color: var(--white-90);
+  font-weight: 700;
+}
 
 .previewMore {
   padding: 0.5rem 0.75rem;
@@ -925,17 +1118,9 @@
   color: var(--home-dim, rgba(255,255,255,0.4));
 }
 
-.quietLinks {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.3rem;
-}
-
-/* The quiet doors on the first-run card and at the foot of the plan. They looked like text and
-   were 21px tall — under the portal's 44px tap floor, on the one screen a coach meets before they
-   have anything. Height, not font size: they stay visually quiet and become properly tappable. */
+/* The quiet doors on the first-run card. They looked like text and were 21px tall — under the
+   portal's 44px tap floor, on the one screen a coach meets before they have anything. Height, not
+   font size: they stay visually quiet and become properly tappable. */
 .sampleLink {
   background: none;
   border: none;
@@ -969,14 +1154,10 @@
    Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
    ════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
-  /* The ladder needs no axis flip — it is a column of label/money pairs at every width,
-     which is the point of it. Only the padding tightens. (The tiles it replaced wrapped
-     into a ragged two-row block here; that is the bug this shape retires.) */
-  .ladder {
-    padding: 0.85rem 1rem 0.9rem;
-    gap: 0.1rem 0.9rem;
-  }
-  .ladderBig { font-size: 1.35rem; }
+  /* Plan card at phone width: tighter frame, smaller figures. (The stacking itself moves
+     with the SHELL breakpoint — see the ≤900 block above the form styles.) */
+  .plan { padding: 0.85rem 1rem 0.9rem; }
+  .planVal { font-size: 1.25rem; }
 
   /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */
   .kindChoice { flex-direction: column; }
@@ -1076,7 +1257,38 @@
      a column, so dropping the amount under its own line name would put the figure a coach is
      scanning for in a different place on every row. What gives instead is the money track,
      narrowed to what a five-figure amount actually needs so the line name keeps the rest. */
-  .linesContainer { --ledger-cols: minmax(0, 1fr) 88px auto; }
+  .linesContainer,
+  .linesCanWrite { --ledger-cols: minmax(0, 1fr) 88px auto; }
+
+  /* ≤640 the ROW is the edit door (owner ruling, mockup d37d62e3 round 4): the pencil leaves
+     the layout so rows read clean and the money reaches the edge — but it stays FOCUSABLE
+     (clip pattern, not display:none), so a keyboard or screen reader in a narrow window keeps
+     a real, labelled edit control on every line. With no visible button in any row, the `auto`
+     actions track collapses uniformly and the amounts stay one column. */
+  .editBtn {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* …and it un-clips ON FOCUS (review finding): a keyboard user tabbing the rows must never
+     land on a control with zero visible size — the standard skip-link behavior. */
+  .editBtn:focus-visible {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.28rem 0.4rem;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border: 1px solid var(--home-line, rgba(255,255,255,0.25));
+  }
 
   /* The "generate installments" CTA stacks its copy above its button. */
   .generateSection { gap: 0.85rem; }

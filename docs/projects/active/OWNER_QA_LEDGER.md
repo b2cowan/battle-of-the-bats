@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1148,6 +1148,289 @@ rather than hand you an empty sheet (that message is itself worth seeing once).
       shows the new lines when you switch to it, and **any half-typed form you left on another tab
       is still there**.
 - [ ] An import where every row fails does **not** appear in the history.
+
+---
+
+### 13 🖥📱 A dues payment is a record — Pass 1, the receipt book — **ON DEV** (built 2026-08-13) · ⚠ carries migration **232** (dev only)
+
+**What changed:** a payment is now its own record. Player Dues gains a **Record payment** button in
+each player's drawer (amount · date received · method · note); the sheet states where the money
+lands before saving. The Paid column finally includes part-payments; a part-covered installment
+reads **"$200.00 of $300.00"** in amber instead of "Unpaid"; Mark Paid becomes a one-tap shortcut
+that records whatever is still uncovered (it can never double-charge); a payment row can be removed
+(voids its ledger line — the undo mark-paid never had). Money arriving beyond the schedule
+auto-becomes an overpayment credit (owner ruling — no prompt), labelled `auto` in Credits with no
+delete of its own. Every dues installment ever marked paid (both DBs at release) became one
+migrated payment adopting its existing ledger entry — history should read identically.
+
+Plan: `COACH_DUES_PAYMENT_RECORD_PLAN.md` · mockup artifact `ccc923b8`. **Pass 2 (same day) put
+every READER on payment facts too:** the Money-hub Collections tile, Budget vs. Actual's
+dues-collection card, the month grid's cash-flow ACTUAL (now bucketed by the month money
+ARRIVED), the Dues-Coming-Due panel (quotes remainders), the Budget tab's collected figure, the
+roster player profile's dues summary, and the Season Refund Calculator's balance column. The dues
+table's footer "Outstanding" was renamed **"Balance owing"** (it always summed the credits-
+subtracted balance; "Outstanding" is the credits-excluded figure the digest quotes). **Pass 3 (same day) closed the edges:** reminder emails now chase the REMAINDER and thank the
+family for what's arrived (all three paths); the bulk dues re-run keeps payments for everyone
+and rewrites the plan (payments beyond a new total auto-credit); the weekly digest's due-date
+line quotes remainders; and the coach demo + QA fixtures seed payment records behind every paid
+stamp. Refund credit provenance deliberately descoped (plan, Pass 3 log). **Owner follow-up
+same day:** the Automatic Dues Reminders card is now ONE compact row with a "See an example"
+button — a modal explaining when every reminder goes out over a rendered sample of the real
+email (same template as the send, so it can't drift).
+- [ ] **Reminders row + example**: the row reads in one line; "See an example" opens the modal;
+      the sample email shows one full row and one part-paid "thank you, $200.00 of $300.00" row;
+      close by X or clicking outside; the toggle still flips and persists.
+
+**✅ /simplify + /review RUN 2026-08-13 (high-risk, 5 lenses) — 2 Criticals + 1 High + 5 Mediums
+confirmed and FIXED** (symmetric overpayment-credit reconciliation on every schedule/money
+change; the per-player Edit-schedule path stopped vanishing overpaid money and now re-projects;
+the Basic→Premium upgrade writes payment records behind carried-over paid fees; Mark Paid
+regained concurrency-safe idempotency and covers the clicked installment; ownership check;
+books-safety hardening). Two review checks join the walk:
+- [ ] **Raise dues after an overshoot**: record more than a player's schedule (auto credit
+      appears), then re-run Set dues for all players with a HIGHER total — the auto credit
+      shrinks/disappears and Balance owing reads total − payments exactly.
+- [ ] **Lower one player below what they've paid**: Edit schedule down past their payments —
+      an "Overpayment (dues changed)" credit appears (this one has a delete button), status
+      reads In credit, and installments show covered.
+
+**Pass 2 additions to the walk (~5 min, same fixture):**
+- [ ] With the part-paid player from above: Money hub **Collections tile** shows their $100 in
+      collected; if their installment is past due, the overdue amount counts only the **missing**
+      part, and a fully-covered-late installment counts nothing.
+- [ ] **Budget vs. Actual → month grid, Actual lens**: each recorded payment lands in the month
+      of its **received date** (backdate one a month to see it move); the dues-collection card's
+      collected includes part-payments.
+- [ ] **Money Overview → what's coming up**: the part-paid installment's row quotes the
+      **remainder** (and shows the player's name instead of grouping).
+- [ ] **Roster → player profile**: the dues line shows the part-paid dollars.
+- [ ] Dues table footer now says **"Balance owing"** where it said "Outstanding".
+
+**The one walk that matters (~10 min), on a dev team with dues set ($300×4 quarterly works):**
+- [ ] Record **$100, e-transfer, dated last month** on an unpaid player. Drawer: Payments section
+      appears with the receipt; installment #1 shows **$100.00 of $300.00**; table row: Paid
+      $100.00, Balance drops $100, Status **Partial**.
+- [ ] The chase card ("N have not paid yet") **no longer counts them**, and per-player Remind is
+      gone from their drawer. Ask the Front Office "Who hasn't paid anything yet?" agrees.
+- [ ] Org-admin ledger (Accounting → team ledger): a **"Player dues — {name}"** income entry dated
+      **the day you typed**, not today.
+- [ ] Record **$250 more**: #1 flips to Paid (dated the completing payment's day), #2 shows
+      $50.00 of $300.00.
+- [ ] **Mark rest paid** on #2: it records only the $250 remainder (check the new payment row and
+      the ledger amount — NOT $300).
+- [ ] Record more than everything left: the sheet warns inline, saving creates an **Overpayment**
+      credit marked `auto` (no trash can on it), player goes **In credit**.
+- [ ] **Remove** that last payment: the credit disappears with it, the ledger entry shows **void**,
+      coverage rolls back.
+- [ ] A player marked paid **before today** (migrated): drawer shows one payment per old stamp,
+      note "Migrated from installment #N marked paid", dated the original day; removing one is
+      possible (it voids the original ledger entry — that's intended; don't do it on a row you
+      want to keep).
+- [ ] **Read-only money assistant**: sees Payments list, no Record payment, no trash cans, no
+      Mark Paid (that button was reachable read-only before this pass; the server always refused).
+
+### 14 🖥📱 The Money hub's old doors close — **ON DEV** (built 2026-08-13) · no migration
+
+**What changed:** the seven standalone Money pages the tabbed hub replaced (the ones with no tab
+bar — you hit one from "view player dues") no longer exist as destinations. Every old URL forwards
+permanently into its hub tab, deep-link details intact (a bookmarked budget line, the schedule
+sub-tab, an archived season's `?year=`); every link in the product — including six *inside* Money
+that were quietly ejecting you from the hub, the team Overview's budget tile, the roster page's
+"Manage dues", the month grid's drill-downs, and the public demo's own tour step 4 and Off-season
+chip — now lands inside the hub with the tab bar present. Nothing about what the screens show
+changed. Admin-side accounting is deliberately untouched (it was never made a hub).
+
+**The walk (~5 min, any money-rich team):**
+- [ ] Player Dues → generate/set dues → follow any cross-link out of the sheet: you land on a
+      Money screen **with the tab bar present**. There is no longer any route into a tab-less
+      Money page.
+- [ ] Type an OLD address by hand (e.g. `…/accounting/dues`, `…/accounting/budget-vs-actual`):
+      it forwards to the hub with the right tab active. Try one with a detail
+      (`…/accounting/expenses?tab=schedule`): the schedule sub-tab opens.
+- [ ] Inside the hub: Expenses' "Player Dues" / "Open allocations", Payment Requests ⇄
+      Allocations cross-links, and BvA's empty-state "Create a budget plan" all switch tabs in
+      place — a half-filled form on another tab survives. (Budget's own "View dues →" was
+      retired by the §15 rework — the Dues tab above it is the door now.)
+- [ ] Month grid (BvA → Months, Budget lens): a line's cell still opens the edit form pre-filled;
+      switching to another tab afterwards drops the `line` deep-link from the URL (it must not
+      refire later).
+- [ ] Fundraiser detail (a real sub-page, kept): "Back to Fundraisers" returns to the hub's
+      Fundraisers tab.
+- [ ] **Public demo** (no login): the Off-season chip and tour step 4 land on Budget vs. Actual
+      *inside* the hub — narration strip appears, the variance section gets its ring, and the
+      step checks off. Press step 4 again while standing on another Money tab: it switches tabs
+      rather than claiming "you're already here".
+- [ ] Archived season (Chunk F): open a past season's Money → tabs still work read-only, and an
+      old-style deep link with `?year=` forwards without losing the year. **Cross-links inside the
+      archived hub (Expenses' links, BvA's empty state) now keep you IN the archived season** —
+      before this pass they silently jumped to the live one (pre-existing leak, fixed during
+      review). (Budget's "View dues →" no longer exists — see §15.)
+
+---
+
+### 15 🖥📱 The Budget Plan reads as three figures — **ON DEV** (built 2026-08-13) · no migration
+
+**What changed:** the budget page's tall summary ladder became a two-line **plan card**: Planned
+costs · Expected fundraising · Player installments, side by side. The third figure is tagged
+**Estimated** (costs less fundraising, with per-player and Generate beside it) until dues go out,
+then becomes the official **Scheduled** total from the schedules — and a deliberate over-schedule
+reads as a quiet "includes a $X buffer above the plan", never a red flag; only scheduling *short*
+of the plan draws amber. The kind is renamed **"Expected fundraising"** everywhere (line form,
+sections, BvA, exports) and money coming in shows **positive in green — no minus signs**. Funding
+lines no longer ask for a spending category. Rows: amounts line up in one money column, each line
+carries a single pencil (desktop), the **whole row opens the editor**, and **Delete moved into the
+edit form** behind the same confirm. On a phone the rows are completely clean — tap a line to
+edit. The "✓ installments generated" banner and the built-page "See a sample budget" link are
+gone (the sample is empty-states-only now). `/review` run (high-risk, 4 lenses): 9 confirmed
+findings all fixed, 16 old layout-baseline defects retired.
+
+**The walk (~7 min, QA Money U11 or any money-rich team):**
+- [ ] Budget tab, dues already out: card reads Planned costs · Expected fundraising ·
+      Player installments **Scheduled**, no per-player figure, and the buffer caption states
+      your planned overage in plain ink — nothing red on a healthy page.
+- [ ] Delete a cost line (row → pencil/row-tap → **Delete line** → confirm): the plan drops,
+      the third figure's caption flips to the amber "short of covering the plan" with
+      "Set dues for all players" beside it — both the card and the list's closing row agree.
+      Re-add the line; both go quiet again.
+- [ ] Add Line → flip "A cost" ⇄ "Expected fundraising": the Category & Item picker disappears
+      for fundraising and Description gains the required *. Clear the description on an EXISTING
+      fundraising line and save: it blocks with the error (no silent old-name revert).
+- [ ] List view: every amount — line, category total, fundraising, installments — sits in one
+      right-aligned column; fundraising figures are green with **no minus sign**. By-period view:
+      same, and its closing row says "Costs less fundraising" (it spreads the plan, not the
+      schedules).
+- [ ] Phone (or narrow window): rows are clean — no icons; tapping a line opens its editor;
+      the › chevron on a split line expands periods without opening the form; the card stacks
+      its three figures vertically.
+- [ ] Set an estimated total: it becomes the Planned costs figure with the "your estimate ·
+      $X itemized" caption; itemize past it and the caption goes red. Clear it from inside the
+      editor.
+- [ ] Empty-team check (starter team): first-run card unchanged, sample reachable there — and
+      confirm the built page offers **no** sample link anywhere.
+
+---
+
+### 16 🖥📱 The Overview's Budget card shows plan vs. actual — **ON DEV** (built 2026-08-14) · no migration
+
+**What changed:** the Money Overview's Budget card stopped quoting a computed **$/player** — an
+even split of the plan that no family was actually billed (it read $700 while every schedule said
+$600) — and now draws the plan against reality as **three small bars on one dollar scale**:
+**Spending** (paid, inside planned costs), **Player dues** (collected, inside what's actually
+*scheduled* — the real figure), and **Fundraising** (raised, inside what was budgeted). Each row
+says its own state in words — "$650.00 left", "$1,200.00 still out", "$350.00 to go". The
+headroom headline, chip, and footer links are unchanged. Spec = approved mockup artifact
+`64d49b0e` (2026-08-14). Directional honesty is deliberate: going **over the plan** is a striped
+segment past the bar's end plus the chip and "▲ $X over" (never colour alone — the olive and the
+danger red are near-identical to red-green colour-blind eyes); **beating a fundraising goal**
+keeps the ordinary fill and gets "✓ $X past goal" instead.
+
+**The walk (~4 min, QA Money U11 or any money-rich team, then squeeze the window):**
+- [ ] Money Overview (dues out): Budget card shows the three rows on one scale, an
+      actual/planned legend, and **no $/player anywhere**. The dues row's total matches the
+      Budget Plan card's **Scheduled** figure exactly (§15's page) — the two screens must agree.
+- [ ] The bars are proportionate to each other: dues + fundraising visibly ≈ the spending
+      track when the plan is fully funded.
+- [ ] Log (or imagine via a team that has one) spending past the plan: chip flips to
+      **over budget**, headline goes red, and the overrun is a striped stub past the bar's end
+      with "▲ $X over" — visible as more than a colour change.
+- [ ] A team with no expected-fundraising line and nothing raised: the Fundraising row is
+      absent entirely, not a $0 row. Raised money with no budgeted goal reads "raised · no goal
+      set".
+- [ ] Phone width: rows wrap their figures below the labels without the card scrolling
+      sideways; the two footer links still sit on one bottom band level with the other cards.
+- [ ] Archived past season's Money Overview: the card renders read-only — in the rare
+      "nothing scheduled" state it must show **no** "Generate installments" door there (live
+      seasons keep it).
+
+### 17 🖥📱 Player Dues gains a "By installment" lens — **ON DEV** (built 2026-08-14) · no migration
+
+**What changed:** the Player Dues tab now has a view toggle on its toolbar — **Season totals**
+(the existing table, untouched, still the default) and **By installment**. The new lens opens
+with a **Collection schedule band** (the Budget plan card's language: one term per installment —
+collected of assessed, due date, "✓ Fully collected — 6 of 6" / "⚠ $280 still to collect · 2
+behind" / "2 of 6 paid early · due in 18 days", with a small meter), then a **player ×
+installment grid**: each cell is that player's installment with its state — ✓ paid + date,
+"$120 of $200" part-payments, ⚠ overdue, quiet "upcoming". Two new columns close each row:
+**Due next** (past-due remainders + the next upcoming installment — the "what does this family
+owe me right now" figure, credits deliberately excluded so it always equals what reminders
+chase) and the familiar Balance. On phones the grid becomes **collapsible per-player cards**,
+closed on the due-next figure with a caption ("⚠ $80 past due + $200 due Sep 1"); opening one
+lists the installments and ends with the season balance + a **Full record ›** door to the
+player drawer. Spec = approved mockup artifact `d7162867` (2026-08-14). The view choice rides
+the URL (`?duesView=installments`).
+
+**The walk (~4 min, QA Money U11 or any team with schedules + mixed payments):**
+- [ ] Toggle appears on the dues toolbar's left only when at least one schedule exists; the
+      default is Season totals and that table is pixel-for-pixel what it was.
+- [ ] By installment: band terms' collected-of-assessed sums match the grid's footer per
+      column; a fully-collected installment reads green with words, a behind one reads amber
+      with ⚠ **and** words, a future one stays neutral (no false alarm before the due date).
+- [ ] Part-paid family: the cell says "$X of $Y" — the same figures the player drawer's
+      chips show for the same installment.
+- [ ] **Due next** column: an on-track player shows only their next installment (not the whole
+      balance); a behind player shows past-due + next with the split in the caption; a fully
+      paid player shows a **muted** $0 (settled is quiet, not green); in-credit shows the
+      credit; no schedule shows "Not set".
+- [ ] Footer: "To collect now" = the due-next column summed; "Balance owing" matches the
+      totals view's footer for the same roster.
+- [ ] Hand-edit one player's installment due date (player drawer → Edit schedule): the column
+      header keeps the team's common date, that player's cell shows their own date, and the
+      band term says "dates vary".
+- [ ] Phone width: the grid is replaced by collapsed cards (no sideways scroll); tapping a
+      header expands it; **Full record ›** opens the drawer; a not-set player's card opens the
+      drawer directly. Row-click on desktop still opens the drawer from both views.
+- [ ] The URL carries `duesView=installments`; reload lands on the same lens; an archived
+      past season renders the lens read-only like the rest of the tab.
+
+**Round 2 (owner feedback 2026-08-14, same day):** table headers were much smaller than their
+data rows — the list-table heading recipe (0.72rem, faint ink) had never been reconciled with
+the grid heading Budget Plan / Budget vs. Actual use (0.78rem, darker ink); **the shared list
+heading now matches the grid heading, which resizes the header row of EVERY list table in the
+coach portal**, not just Money (phones unaffected — cards hide the header row). The phone
+band's giant empty blocks were a real layout bug (a horizontal sizing rule turning into a
+170px minimum HEIGHT once the band stacked) — fixed. And **Send Due Reminders now confirms
+before emailing**: a modal states the scope — past due or due within 3 days, remainders only,
+one email per family, 7-day no-repeat — and **the manual send now includes past-due
+installments** (it was forward-only; the automated 30/7 waves stay forward-looking on
+purpose). Past-due rows in the email say "was due {date}" and the subject switches to
+"outstanding".
+- [ ] Table headers on Player Dues (both lenses) now read at the same size/ink as Budget vs.
+      Actual's column headings — and spot-check one non-Money table (e.g. Roster) since the
+      recipe is shared portal-wide.
+- [ ] Phone: the Collection schedule band's terms sit compact (no tall empty blocks).
+- [ ] Send Due Reminders → modal appears, states past-due + 3-day scope; Cancel sends
+      nothing; Send fires and reports as before.
+- [ ] On a team with a past-due installment: the send now reaches that family; the email row
+      reads "was due {date}" and asks for the remainder only.
+
+**Round 3 (owner feedback 2026-08-14, same day):** column headers spell out **"Installment
+1"** (grid and phone cards both); **the many-installments question is answered structurally,
+not by a threshold** — the grid now lives in the hub's horizontal scroller (the Budget-vs-
+Actual month-grid pattern): up to ~5 installments nothing changes, beyond that it scrolls
+sideways with the swipe hint and the Player column pinned, at any count, and the band wraps
+into rows; **phones lost the lens toggle** — the collapsible cards ARE the phone view (they
+answer both questions), so below 640 the band + cards always render, the totals table and
+toggle stand down; and **all three toolbar buttons go icon-only on phones** via the page-header
+ruling's mechanism — including the shared Export trigger, which sits on all seven Money tabs,
+so every Money toolbar tightens at once.
+- [ ] Headers read "Installment 1 / due Mar 15" on desktop; phone card rows say
+      "Installment 1 · Mar 15".
+- [ ] A monthly-style schedule (7+ installments — hand-add dates via a player's Edit
+      schedule): the grid shows the swipe hint, scrolls sideways, Player column stays pinned
+      with the header tint intact; a 3-installment team sees no pin, no hint, no white stripe.
+- [ ] Phone: no Season totals / By installment toggle — the band + cards are simply the view,
+      from either desktop lens URL; Export / Set dues / Send Due Reminders are icon-only
+      (tap targets still ≥44px, labels read out by screen readers). Check one OTHER Money tab
+      on a phone: its Export is icon-only too (shared trigger).
+
+✅ **/review RUN 2026-08-14 (high-risk tier, 4 lenses + rendered gate), all 5 confirmed
+findings FIXED** — sharpest: the reminder modals left the phone bottom nav tappable underneath
+(overlay registration added), and the lens param was riding every other Money tab's URL (now
+dropped on tab switch — so the lens resets when you leave Dues and come back; a bookmark still
+opens it). Toggle buttons met the 44px floor; same-day installments now sum in Due next
+(suite 1,727). Full log in DUES_BY_INSTALLMENT_PLAN.md. ⚠ The rendered sweep also carries 4
+tap-floor findings on overview/team-hub/schedule/history — NOT this project's (other
+uncommitted work; their owners' sessions should clear them before release).
 
 ---
 

@@ -1,13 +1,5 @@
-'use client';
-import { PaymentRequestsPanel } from './panel';
+import { moneyLegacyRedirectPage } from '@/lib/coach-money-legacy-redirect';
 
-// Thin on purpose: the panel lives in ./panel so the Money hub (../page.tsx) can import it as a
-// tab without importing a PAGE module — a page file may only export Next's page contract, and the
-// BUILD-generated .next/types stubs fail `tsc` on any extra export.
-export default function Page({
-  params,
-}: {
-  params: Promise<{ orgSlug: string; teamId: string }>;
-}) {
-  return <PaymentRequestsPanel params={params} />;
-}
+// Legacy standalone route — permanent redirect into the Money hub's tab (see the factory's doc).
+// The panel itself lives in ./panel, imported by the hub.
+export default moneyLegacyRedirectPage('payment-requests');

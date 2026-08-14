@@ -2202,6 +2202,24 @@ export interface RepPlayerDuesInstallment {
   createdAt: string;
 }
 
+export type DuesPaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'other';
+
+/** A dues payment FACT (mig 232): what arrived, when, how much. Installments are the plan;
+ *  coverage is derived (lib/dues-payments.ts) and projected onto installment paidAt. */
+export interface RepDuesPayment {
+  id: string;
+  programYearId: string;
+  playerId: string;
+  amount: number;
+  /** The day the money arrived (org-timezone date) — also the ledger entry's date. */
+  receivedDate: string;
+  method: DuesPaymentMethod;
+  note: string | null;
+  accountingEntryId: string | null;
+  source: 'recorded' | 'migrated_mark_paid';
+  createdAt: string;
+}
+
 export interface RepDueReminderCandidate {
   installmentId: string;
   scheduleId: string;
@@ -2215,8 +2233,15 @@ export interface RepDueReminderCandidate {
   teamName: string;
   installmentNumber: number;
   totalInstallments: number;
+  /** The installment's face value. */
   amount: number;
+  /** What is still MISSING on it after recorded payments (mig 232) — the figure the reminder
+   *  email quotes (owner ruling 6: chase the remainder, acknowledge what's arrived). */
+  remainingAmount: number;
   dueDate: string;
+  /** Already past its due date (org-timezone calendar). Only the coach's ad-hoc send produces
+   *  these — the automated 30/7 waves look forward by construction. */
+  overdue: boolean;
 }
 
 export interface RepAllocationReminderCandidate {
@@ -2375,6 +2400,9 @@ export interface DuesCredit {
   creditDate: string;
   creditType: DuesCreditType;
   notes: string | null;
+  /** Set only on overpayment credits auto-created by recording a payment (mig 232) — the credit
+   *  is removed with its payment (DB CASCADE), so the UI hides its delete button. */
+  paymentId?: string | null;
   createdAt: string;
 }
 

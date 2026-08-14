@@ -34,6 +34,12 @@ export interface DuesInstallmentLike {
 
 export interface PlayerDuesLike {
   outstanding?: number;
+  /** Dollars actually received (rep_dues_payments, mig 232). REQUIRED, deliberately — an
+   *  installment-stamp fallback existed briefly and was removed: the stamps are only a coverage
+   *  projection, so a caller that forgot to supply payment dollars would silently count a
+   *  part-paying family as "never paid" — this project's founding defect — with no compiler or
+   *  test signal. Making the field mandatory turns that mistake into a type error. */
+  paidAmount: number;
   installments?: DuesInstallmentLike[] | null;
 }
 
@@ -41,8 +47,7 @@ export interface PlayerDuesLike {
 export function isNeverPaidPlayer(p: PlayerDuesLike): boolean {
   const insts = p.installments ?? [];
   const hasDues = insts.length > 0 || (p.outstanding ?? 0) > 0;
-  const paidNothing = !insts.some(i => i.paidAt);
-  return hasDues && paidNothing;
+  return hasDues && p.paidAmount <= 0.005;
 }
 
 /**
@@ -69,10 +74,16 @@ export function duesStatusLabel(p: {
 }
 
 /**
- * ONE definition of what a player still owes: their schedule total minus the installments marked
- * paid. Credits are deliberately EXCLUDED — the dues table, the Insights dashboard and the weekly
+ * ONE definition of what a player still owes: their schedule total minus what has actually been
+ * PAID. Credits are deliberately EXCLUDED — the dues table, the Insights dashboard and the weekly
  * digest have always quoted this figure, and `rollingBalance` (which does subtract credits) is a
  * separate, separately-labelled number.
+ *
+ * Since mig 232 "paid" means recorded payment dollars (capped at the schedule total — see
+ * `duesPaidAmount` in lib/dues-payments.ts), NOT the count of fully-stamped installments; the
+ * old installment-based signature would have read a part-paid family as owing everything. Every
+ * caller passes the same capped figure it displays as "Paid", so the two can never disagree on
+ * one screen.
  *
  * These two lines lived in three places (the dues route, the insights digest, and now the Ask
  * route), each carrying a comment promising it matched the others and nothing enforcing it. A
@@ -81,9 +92,8 @@ export function duesStatusLabel(p: {
  */
 export function outstandingForSchedule(
   schedule: { totalAmount: number } | null | undefined,
-  installments: ReadonlyArray<{ amount: number; paidAt: string | null }>,
+  paidAmount: number,
 ): number {
   if (!schedule) return 0;
-  const paid = installments.filter(i => i.paidAt).reduce((sum, i) => sum + i.amount, 0);
-  return schedule.totalAmount - paid;
+  return Math.round((schedule.totalAmount - paidAmount) * 100) / 100;
 }

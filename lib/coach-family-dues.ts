@@ -32,7 +32,7 @@ export interface FamilyDuesPlayer {
   guardianLastName: string | null;
   /** Schedule total minus paid installments, as the dues route computes it. */
   outstanding: number;
-  installments: { dueDate: string; amount: number; paidAt: string | null }[];
+  installments: { dueDate: string; amount: number; paidAt: string | null; remainingAmount?: number }[];
 }
 
 /** One unpaid installment, positioned within its player's own schedule. */
@@ -136,11 +136,16 @@ export function computeFamilyDues(input: FamilyDuesInput): FamilyDuesRollup {
     const ordered = [...(p.installments ?? [])].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     ordered.forEach((inst, i) => {
       if (inst.paidAt) return;
+      // What a family still owes on an open installment is its REMAINDER (mig 232) — quoting the
+      // face value to a family part-way through paying is the defect the remainder ruling closed
+      // everywhere else. Fully covered remainders have nothing to list.
+      const owed = inst.remainingAmount ?? inst.amount;
+      if (owed <= 0.005) return;
       g!.unpaid.push({
         playerId: p.playerId,
         playerName: p.playerName,
         dueDate: inst.dueDate,
-        amount: inst.amount,
+        amount: owed,
         index: i + 1,
         total: ordered.length,
         overdue: !!inst.dueDate && inst.dueDate < todayISO,

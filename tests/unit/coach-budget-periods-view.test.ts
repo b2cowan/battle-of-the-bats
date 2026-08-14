@@ -150,7 +150,7 @@ describe('funding', () => {
       line('a', 'Entry fees', 3000, [['2027-01-01', 3000]]),
       line('f', 'Fundraising', 1000, [['2027-01-01', 1000]], { funding: true, category: 'Fundraising' }),
     ], 'months');
-    assert.equal(view.groups[1].name, 'Expected funding');
+    assert.equal(view.groups[1].name, 'Expected fundraising');
     assert.equal(view.groups[1].rows[0].cells['2027-01'], -1000);
     assert.equal(view.totals.cells['2027-01'], 2000);
     assert.equal(view.totals.total, 2000);
@@ -175,7 +175,7 @@ describe('funding', () => {
       line('b', 'Gear', 500, [], { category: 'Equipment' }),
     ], 'months');
     assert.deepEqual(view.groups.map(g => g.lineKind), ['cost', 'cost', 'funding']);
-    assert.deepEqual(view.groups.map(g => g.name), ['Tournaments', 'Equipment', 'Expected funding']);
+    assert.deepEqual(view.groups.map(g => g.name), ['Tournaments', 'Equipment', 'Expected fundraising']);
   });
 });
 

@@ -115,6 +115,25 @@ test('money hierarchy — the outline and the grid share ONE type scale', async 
     );
   });
 
+  // ⚠ THE THIRD TOTALS TREATMENT, added 2026-08-13 when the dues reference rail was replaced by a
+  // <tfoot> under the table it summarises. It forked on arrival — written with a hand-copied
+  // `0.92rem` and a typed `700`, so the dues totals rendered a full weight step lighter than the
+  // other two — which is the same failure this file was written for, in a treatment the file did
+  // not yet know about. Measured here so the third can't drift while the first two stay locked.
+  await t.test('the TABLE FOOTER total measures the same as the other two', () => {
+    assert.equal(
+      prop('.footValue', 'font-size'),
+      prop('.ledgerTotal', 'font-size'),
+      'The dues table footer total and the outline\'s total row disagree on size.',
+    );
+    assert.equal(
+      prop('.footValue', 'font-weight'),
+      prop('.ledgerTotal', 'font-weight'),
+      'The dues table footer total and the outline\'s total row disagree on weight. '
+      + 'All three closing totals take --money-cat-*; a literal here is the drift this file exists to catch.',
+    );
+  });
+
   await t.test('a CATEGORY outranks its own lines — the hierarchy never inverts again', () => {
     const cat = rem(prop('.ledgerName', 'font-size'));
     const line = rem(prop('.ledgerDesc', 'font-size'));

@@ -12,8 +12,10 @@
  *    "just names" mode with no date, has to go somewhere. Dropping it would make the columns
  *    quietly disagree with the plan's own total — the failure mode where a coach trusts a row of
  *    numbers that is missing $2,000. Naming it is honest, and doubles as the nudge to split it.
- * 2. **A funding line is stored positive and shown negative.** Same rule as everywhere else: the
- *    KIND carries the sign (migration 230). The closing row is what players fund, per column.
+ * 2. **A funding line is stored positive; the KIND carries the sign** (migration 230). This
+ *    view keeps funding cells SIGNED so the closing row (what players fund, per column) is a
+ *    real subtraction — the plan page abs()es funding cells at render time, because on screen
+ *    money-in reads positive in green (owner 2026-08-13).
  * 3. **The estimated total's difference is not here.** It is not a line and has no dates; it
  *    belongs to the summary ladder, which states it once.
  *

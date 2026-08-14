@@ -188,10 +188,15 @@ describe('the chrome (S4)', () => {
      * Any step whose destination is an ancestor of somewhere else the demo can send someone must
      * therefore be exact.
      */
+    // Ancestry is a PATH relationship — a destination may carry a query string (the Money hub's
+    // tabs are `?section=…` since 2026-08-13), and `"a?x=1".startsWith("a?x=1/")` is false for
+    // every possible child, which would quietly blind this guard for exactly those destinations.
+    const pathOf = (href: string) => href.split('?')[0];
     for (const step of steps) {
-      const isAncestorOfAnother = steps.some(o => o !== step && o.href.startsWith(`${step.href}/`));
+      const stepPath = pathOf(step.href);
+      const isAncestorOfAnother = steps.some(o => o !== step && pathOf(o.href).startsWith(`${stepPath}/`));
       const isAncestorOfADockLanding = sandboxMoments('coach', coachOrg)
-        .some(m => m.fanPath.startsWith(`${step.href}/`));
+        .some(m => pathOf(m.fanPath).startsWith(`${stepPath}/`));
       if (isAncestorOfAnother || isAncestorOfADockLanding) {
         assert.equal(step.exactPath, true,
           `step ${step.n} (${step.href}) is a parent of somewhere the demo already sends people — `

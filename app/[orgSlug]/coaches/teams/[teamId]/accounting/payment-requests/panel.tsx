@@ -12,6 +12,7 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { PAYMENT_REQUEST_COLUMNS, paymentRequestRows } from '@/lib/coach-money-exports';
+import { moneySectionHref } from '@/lib/coach-money-links';
 
 interface PaymentRequest {
   id: string;
@@ -236,7 +237,7 @@ export function PaymentRequestsPanel({
       {/* Cross-link (review f4-7) — the other half of the org-money pair. */}
       <p className={styles.muted} style={{ fontSize: '0.8rem', margin: '-0.75rem 0 1.25rem' }}>
         Looking for what the org has billed this team?{' '}
-        <Link href={`${base}/accounting/allocations`} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
+        <Link href={moneySectionHref(base, 'allocations')} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
           Open Org Allocations <ArrowRight size={12} aria-hidden />
         </Link>
       </p>

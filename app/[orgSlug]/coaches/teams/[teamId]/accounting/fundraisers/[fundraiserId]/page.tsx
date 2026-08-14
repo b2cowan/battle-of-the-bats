@@ -4,6 +4,7 @@ import { Gift, Settings, X, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import styles from '../../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -237,7 +238,7 @@ export default function FundraiserDetailPage({
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/accounting/fundraisers`}>Back to Fundraisers</CoachBackLink>
+      <CoachBackLink href={moneySectionHref(base, 'fundraisers')}>Back to Fundraisers</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the Active/Closed badge is STATE, so it rides the title
           row; the rebate % and dates are live facts about the entity, so they lead the body. */}
       <CoachPageHeader

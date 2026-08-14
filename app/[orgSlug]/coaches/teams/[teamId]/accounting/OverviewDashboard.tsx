@@ -10,9 +10,14 @@ import styles from './overview-dashboard.module.css';
  * the merged Next-N-days ledger, and the "More in Money" rail. A story card is
  * a fact's one home; the rail's Budget rows repeat two headline figures by
  * design — the rail is a complete tab index with a live stat per line, and a
- * gap there would read as "no data". Deliberately no lime CTA and no write
- * action anywhere here (owner call 2026-08-11): the dashboard reports; acting
- * happens one click deeper. */
+ * gap there would read as "no data". The Budget card's plan-vs-actual rows
+ * (approved mockup 64d49b0e, 2026-08-14) restate dues-collected and
+ * fundraising-raised in BUDGET context for the same reason: the card's job is
+ * "how is the plan tracking", and two of the plan's three funding streams live
+ * elsewhere as their own facts. Deliberately no lime CTA and no write action
+ * anywhere here (owner call 2026-08-11): the dashboard reports; acting happens
+ * one click deeper — the dues row's "Generate installments" door is the same
+ * kind of empty-state door the card already keeps for "no budget yet". */
 
 interface Props {
   summary: MoneySummary;
@@ -32,6 +37,50 @@ function segWidth(value: number, total: number): number {
   return Math.max((value / total) * 100, 2);
 }
 
+/* ── Budget card: plan-vs-actual bars ──────────────────────────────────────
+ * All three rows share ONE dollar scale (widths are % of the card, off the
+ * same scaleMax), so "dues + fundraising together cover the plan" reads as
+ * geometry rather than arithmetic the coach has to do. Track = the planned
+ * amount; fill = the actual, capped at the track; anything past the plan is a
+ * separate overrun segment beyond the track's end with a 2px gap. A BAD
+ * overrun is striped, chipped and worded, never colour alone — the olive fill
+ * and the danger red are near-identical to red-green colour-blind viewers
+ * (measured ΔE 1.0 deutan), so colour cannot be asked to carry that verdict. */
+function planBarWidths(actual: number, target: number, scaleMax: number) {
+  const tw = target > 0 ? Math.max((target / scaleMax) * 100, 4) : 0;
+  // No target at all (fundraising money raised with no goal budgeted): a plain
+  // fill sized on the shared scale — NOT the overrun segment, whose "past the
+  // plan" grammar needs a plan to be past (review finding).
+  if (tw <= 0) {
+    return { tw: 0, fillW: actual > 0 ? Math.max((actual / scaleMax) * 100, 2) : 0, overW: 0 };
+  }
+  const fillW = Math.min(actual / target, 1) * tw;
+  const overRaw = actual > target + 0.005 ? Math.max(((actual - target) / scaleMax) * 100, 2) : 0;
+  const overW = Math.min(overRaw, Math.max(100 - tw - 2, 0));
+  return { tw, fillW, overW };
+}
+
+function PlanBar({ actual, target, scaleMax, overGood }: {
+  actual: number; target: number; scaleMax: number;
+  /** Past-the-plan is GOOD here (a beaten fundraising goal): plain fill colour,
+   *  no stripe — beating a goal must never wear the over-budget clothes. */
+  overGood?: boolean;
+}) {
+  const { tw, fillW, overW } = planBarWidths(actual, target, scaleMax);
+  return (
+    <div className={styles.planBar} aria-hidden>
+      {tw > 0 && <span className={styles.planTrack} style={{ width: `${tw}%` }} />}
+      {fillW > 0 && <span className={styles.planFill} style={{ width: `${fillW}%` }} />}
+      {overW > 0 && (
+        <span
+          className={`${styles.planOver} ${overGood ? styles.planOverGood : ''}`}
+          style={{ left: `calc(${tw}% + 2px)`, width: `${overW}%` }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Props) {
   const { dues, budget } = summary;
   const pct = dues.expected > 0 ? Math.round((dues.collected / dues.expected) * 100) : 0;
@@ -40,6 +89,14 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
   const spent = summary.expenses.paidTotal;
   const overBudget = summary.headroom != null && summary.headroom < 0;
   const flowMax = Math.max(summary.moneyIn.total, summary.moneyOut.total, 1);
+  // The Budget card's shared dollar scale — every planned AND actual figure it
+  // draws, so no bar can escape the card however the plan and reality diverge.
+  const raised = summary.fundraisers.totalRaised;
+  const fundGoal = budget.expectedFunding;
+  const duesScheduled = dues.expected > 0.005;
+  const scaleMax = Math.max(
+    budget.effectiveTotal, spent, dues.expected, dues.collected, fundGoal, raised, 1,
+  );
 
   return (
     <>
@@ -150,18 +207,92 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               <div className={`${styles.big} ${overBudget ? styles.vBad : styles.vGood}`}>
                 {fmt(Math.abs(summary.headroom))} <small>{overBudget ? 'over budget' : 'headroom'}</small>
               </div>
-              <div className={styles.bar}>
-                <div
-                  className={`${styles.seg} ${overBudget ? styles.segSpentOver : styles.segSpent}`}
-                  style={{ width: `${Math.min(segWidth(spent, budget.effectiveTotal), 100)}%` }}
-                />
+              <div className={styles.planLegend} aria-hidden>
+                <span><span className={`${styles.planSwatch} ${styles.planSwatchActual}`} />actual</span>
+                <span><span className={`${styles.planSwatch} ${styles.planSwatchPlanned}`} />planned</span>
               </div>
-              <div className={styles.legend}>
-                <span><span className={`${styles.legendDot} ${styles.dotSpent}`} /><b>{fmt(spent)}</b> spent</span>
-                <span>
-                  <span className={`${styles.legendDot} ${styles.dotTrack}`} /><b>{fmt(budget.effectiveTotal)}</b> planned
-                  {budget.perPlayer != null && <> · <b>{fmt(budget.perPlayer)}</b>/player</>}
-                </span>
+              <div className={styles.planRows}>
+                {/* Spending: actual stays UNDER its bar — the headline is this row's delta. */}
+                <div>
+                  <div className={styles.planRowHead}>
+                    <span className={styles.planRowLabel}>Spending</span>
+                    <span className={styles.planRowNums}>
+                      <b>{fmt(spent)}</b> of {fmt(budget.effectiveTotal)}{' · '}
+                      {overBudget
+                        ? <span className={styles.planDeltaBad}>▲ {fmt(spent - budget.effectiveTotal)} over</span>
+                        : <span className={styles.planDelta}>{fmt(budget.effectiveTotal - spent)} left</span>}
+                    </span>
+                  </div>
+                  <PlanBar actual={spent} target={budget.effectiveTotal} scaleMax={scaleMax} />
+                </div>
+
+                {/* Player dues: collected climbs TO what is actually SCHEDULED — the real
+                    figure, never a computed even split of the plan (the retired $/player
+                    projection went stale the moment real installments existed). */}
+                <div>
+                  <div className={styles.planRowHead}>
+                    <span className={styles.planRowLabel}>Player dues</span>
+                    <span className={styles.planRowNums}>
+                      {duesScheduled ? (
+                        <>
+                          <b>{fmt(dues.collected)}</b> of {fmt(dues.expected)} scheduled{' · '}
+                          {dues.outstanding <= 0.005
+                            ? <span className={styles.planDeltaGood}>✓ all in</span>
+                            : <span className={styles.planDelta}>{fmt(dues.outstanding)} still out</span>}
+                        </>
+                      ) : (
+                        <span className={styles.planDelta}>nothing scheduled</span>
+                      )}
+                    </span>
+                  </div>
+                  {duesScheduled ? (
+                    <PlanBar actual={dues.collected} target={dues.expected} scaleMax={scaleMax} />
+                  ) : (
+                    <>
+                      {/* A dashed ghost of what dues WOULD cover — never a projected bar
+                          pretending to be real money, and no ghost at all when funding
+                          already covers the whole plan (review finding: a floored-width
+                          ghost over $0 suggested dues were owed). */}
+                      {budget.fundedByPlayers > 0.005 && (
+                        <div className={styles.planBar} aria-hidden>
+                          <span
+                            className={`${styles.planTrack} ${styles.planTrackEmpty}`}
+                            style={{ width: `${Math.max((budget.fundedByPlayers / scaleMax) * 100, 20)}%` }}
+                          />
+                        </div>
+                      )}
+                      <p className={styles.planEmptyNote}>
+                        <span>No installments yet{payablesApiUrl && ' —'}</span>
+                        {/* Live seasons only: an archived season must not grow a door into a
+                            write flow (payablesApiUrl is absent exactly there). */}
+                        {payablesApiUrl && (
+                          <Link href={hrefs.budgetGenerate} className={styles.planGenLink}>Generate installments →</Link>
+                        )}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Fundraising: raised climbs to expected; beating the goal is GOOD overflow.
+                    Hidden entirely when nothing is planned and nothing raised. */}
+                {(fundGoal > 0.005 || raised > 0.005) && (
+                  <div>
+                    <div className={styles.planRowHead}>
+                      <span className={styles.planRowLabel}>Fundraising</span>
+                      <span className={styles.planRowNums}>
+                        <b>{fmt(raised)}</b> raised{fundGoal > 0.005 && <> of {fmt(fundGoal)}</>}{' · '}
+                        {fundGoal <= 0.005
+                          ? <span className={styles.planDelta}>no goal set</span>
+                          : raised < fundGoal - 0.005
+                            ? <span className={styles.planDelta}>{fmt(fundGoal - raised)} to go</span>
+                            : raised > fundGoal + 0.005
+                              ? <span className={styles.planDeltaGood}>✓ {fmt(raised - fundGoal)} past goal</span>
+                              : <span className={styles.planDeltaGood}>✓ goal met</span>}
+                      </span>
+                    </div>
+                    <PlanBar actual={raised} target={fundGoal} scaleMax={scaleMax} overGood />
+                  </div>
+                )}
               </div>
               <div className={styles.foot}>
                 <Link href={hrefs.budget} className={styles.footLink}>Budget plan →</Link>

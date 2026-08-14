@@ -4,6 +4,7 @@ import {
   DEMO_COACH_SHOWCASE,
 } from './demo-org';
 import { SEE_IT_LIVE_PATH } from './sandbox-door';
+import { moneySectionHref } from './coach-money-links';
 
 // The dock ↔ tournament-provider contract constants live in `lib/demo-org.ts` (the neutral module
 // both sides already import — the shared provider must never depend on THIS file). Re-exported
@@ -154,7 +155,9 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       label: 'Off-season',
       sub: 'between seasons',
       teamId: DEMO_COACH_TEAM_IDS.offSeason,
-      path: teamPath(DEMO_COACH_TEAM_IDS.offSeason, '/accounting/budget-vs-actual'),
+      // The Money hub's Budget-vs-Actual TAB (query-addressed) — the standalone page is a legacy
+      // redirect now, and the chrome's arrival matcher understands `?section=` destinations.
+      path: moneySectionHref(teamPath(DEMO_COACH_TEAM_IDS.offSeason), 'budget-vs-actual'),
       saidPublic: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       saidOperator: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
@@ -506,10 +509,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
     {
       n: 4,
       label: 'See if the season is on budget',
-      href: team(DEMO_COACH_TEAM_IDS.midSeason, '/accounting/budget-vs-actual'),
+      // The hub's Budget-vs-Actual TAB — the tour must never walk a prospect onto the tab-less
+      // legacy page (owner, 2026-08-13). exactPath still binds the PATH; the `?section=` part
+      // additionally requires the right tab, so "already here" on another tab still travels.
+      href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'budget-vs-actual'),
       exactPath: true,
       anchor: '[data-sandbox-tour="budget-variance"]',
-      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, and two families are behind, named, with the amount.',
+      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived.',
       nextLabel: 'Next: playing time',
     },
     {

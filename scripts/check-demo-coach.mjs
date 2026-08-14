@@ -29,6 +29,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
+import { moneySectionHref } from '../lib/coach-money-links.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
@@ -212,7 +213,7 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     check(fundingLines.length === OFFSEASON_FUNDING_LINES.length
       && fundingTotal === OFFSEASON_FUNDING_LINES.reduce((s, l) => s + l.total, 0)
       && fundingLines.every(l => !l.category_id),
-      `expected funding of $${fundingTotal.toLocaleString()} is budgeted (stored positive, shown negative, no category)`);
+      `expected fundraising of $${fundingTotal.toLocaleString()} is budgeted (stored positive, shown positive in green, no category)`);
 
     // Every line, funding included — the phasing rule is the planner's and applies to both kinds,
     // and the nightly re-anchor re-derives them all by sort_order without caring which is which.
@@ -561,7 +562,7 @@ function report() {
   }
   console.log('\n✅ The coach sandbox is presentable.');
   console.log(`   Tryout day:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
-  console.log(`   Off-season:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}/accounting/budget-vs-actual`);
+  console.log(`   Off-season:   ${moneySectionHref(`/${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}`, 'budget-vs-actual')}`);
   console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
   console.log(`   Mid-season:   ${demoOrg.landingPath}`);
   console.log(`   Season's End: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonsEnd.id}/season-end`);

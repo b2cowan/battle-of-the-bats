@@ -35,11 +35,14 @@ export type BudgetLineKind = 'cost' | 'funding';
 
 export const BUDGET_LINE_KINDS: BudgetLineKind[] = ['cost', 'funding'];
 
-/** Coach-facing names. `funding` is deliberately "expected funding", never "income" — nothing has
- *  arrived, and Budget vs. Actual is where expectation meets what was really raised. */
+/** Coach-facing names. `funding` is deliberately "expected FUNDRAISING", never "income" and no
+ *  longer "funding" (owner ruling 2026-08-13: player dues are also funding, so the generic word
+ *  made the section read as if dues belonged in it). Still covers sponsors and grants — the hint
+ *  and the help docs say so — and still "expected": nothing has arrived, and Budget vs. Actual is
+ *  where expectation meets what was really raised. */
 export const LINE_KIND_LABEL: Record<BudgetLineKind, string> = {
   cost:    'A cost',
-  funding: 'Expected funding',
+  funding: 'Expected fundraising',
 };
 
 export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
@@ -48,11 +51,11 @@ export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
 };
 
 /** The heading its section carries — in the plan list, in the summary ladder, in the period grid
- *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected funding" is four
- *  places to miss on a rename. */
+ *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected fundraising" is
+ *  four places to miss on a rename. */
 export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
   cost:    'Costs',
-  funding: 'Expected funding',
+  funding: 'Expected fundraising',
 };
 
 /** Anything with an amount and a kind — the plan's line shape, narrowed to what the maths needs,
@@ -157,4 +160,115 @@ export function computeBudgetTotals({
     rosterCount,
     perPlayer: rosterCount > 0 && totalPlanned > 0 ? r2(fundedByPlayers / rosterCount) : null,
   };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────────────────────
+   WHERE AN INSTALLMENT AMOUNT COMES FROM (owner ruling 2026-08-13)
+
+   The Generate Player Installments sheet offers three answers, and the first two are the same
+   subtraction against two different tops: what the coach ITEMIZED, and what they ESTIMATED.
+
+   ⚠ EXPECTED FUNDING COMES OFF BOTH. Budgeting a fundraiser exists precisely so dues come down by
+   it, so "split the estimate" is deliberately NOT estimate ÷ roster — each card on screen prints
+   its own arithmetic rather than leaving that to be inferred.
+
+   ⚠ This is NOT `totalPlanned`. That figure answers "what is this season's headline number" and
+   the estimate wins it whenever one is set (see the ruling above). Here the coach is choosing
+   BETWEEN the two tops, so both must stay separately addressable — collapsing them back onto
+   `totalPlanned` would make two of the three choices produce the same schedule.
+   ──────────────────────────────────────────────────────────────────────────────────────────── */
+
+/** Which of the three answers the sheet is currently using. */
+export type InstallmentBasis = 'budget' | 'estimate' | 'manual';
+
+export interface BasisOption {
+  /** What players fund on this basis. Null when the basis has no number to offer at all. */
+  amount: number | null;
+  /** amount ÷ roster, or null when either half is missing. */
+  perPlayer: number | null;
+  /**
+   * Why this basis cannot be used, in the coach's words — null when it can.
+   *
+   * ⚠ A basis is never offered as "$0.00". Three real states arrive here (no lines yet, funding
+   * covering everything, an estimate of zero) and each used to be a DEAD END for the whole sheet;
+   * they are now reasons attached to one option while the others stay live.
+   */
+  unavailable: string | null;
+}
+
+export interface InstallmentBases {
+  budget: BasisOption;
+  estimate: BasisOption;
+}
+
+function basisOption(
+  amount: number | null,
+  rosterCount: number,
+  unavailable: string | null,
+): BasisOption {
+  return {
+    amount,
+    perPlayer: unavailable === null && amount != null && rosterCount > 0 ? r2(amount / rosterCount) : null,
+    unavailable,
+  };
+}
+
+/** The two even-split bases, each either usable or carrying the reason it is not. */
+export function describeInstallmentBases(totals: BudgetTotals): InstallmentBases {
+  const { itemized, costLineCount, expectedFunding, estimatedTotal, rosterCount } = totals;
+
+  const budgetAmount = r2(Math.max(0, itemized - expectedFunding));
+  const budgetWhyNot =
+    costLineCount === 0
+      ? 'No cost lines yet — add what the season costs and this splits it for you.'
+      : budgetAmount <= 0
+        ? 'Your expected fundraising already covers every line item.'
+        : null;
+
+  const estimateAmount = estimatedTotal == null ? null : r2(Math.max(0, estimatedTotal - expectedFunding));
+  const estimateWhyNot =
+    estimatedTotal == null
+      ? 'No season estimate set — add one on the Budget Plan to split against it.'
+      : estimatedTotal <= 0
+        ? 'Your season estimate is $0.'
+        : (estimateAmount ?? 0) <= 0
+          ? 'Your expected fundraising already covers the estimate.'
+          : null;
+
+  return {
+    budget:   basisOption(budgetAmount, rosterCount, budgetWhyNot),
+    estimate: basisOption(estimateAmount, rosterCount, estimateWhyNot),
+  };
+}
+
+/**
+ * One player's total, cut into `count` dated chunks that re-add to exactly the whole.
+ *
+ * $680 over three dates is 226.67 / 226.67 / 226.66 — the odd cents ride on the EARLIEST chunks, so
+ * the last payment is never the largest and the parts always sum back to the total.
+ *
+ * ⚠ WORKS IN WHOLE CENTS, and that is the point. The obvious version — round the quotient, then let
+ * the last chunk absorb `total − base × (count−1)` — produces a NEGATIVE final installment whenever
+ * the per-chunk rounding goes up: six cents over twelve dates rounds each chunk to $0.01, spends
+ * $0.11 across the first eleven, and hands the twelfth **−$0.05**. That number then reached a
+ * family's dues through a preview table whose money formatter prints absolute values, so it
+ * displayed as a perfectly ordinary "$0.05" while the write endpoint refused the whole schedule on
+ * `amount > 0`. Flooring and handing out the remainder a cent at a time cannot do that: every chunk
+ * is `floor` or `floor + 1`, so nothing is ever negative and nothing is ever more than a cent off
+ * its neighbours.
+ *
+ * Chunks CAN still be zero when there is less than one cent per date to give (six cents over twelve
+ * dates is six cents and six nothings). That is a real refusal, not a rounding artefact, and the
+ * preview endpoint rejects it by name rather than letting the write path fail generically.
+ *
+ * Shared because the sheet fills its own boxes from this while the preview endpoint builds the
+ * table from it, and a coach who saw one number in the form and another in the preview is the exact
+ * defect this whole change exists to close.
+ */
+export function splitPerPlayer(perPlayer: number, count: number): number[] {
+  if (count < 1) return [];
+  const totalCents = Math.round(perPlayer * 100);
+  const base  = Math.floor(totalCents / count);
+  const extra = totalCents - base * count;   // 0 … count-1 spare cents
+  return Array.from({ length: count }, (_, i) => (base + (i < extra ? 1 : 0)) / 100);
 }

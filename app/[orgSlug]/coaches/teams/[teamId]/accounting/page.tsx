@@ -9,6 +9,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
 import { MoneyRefreshProvider } from '@/lib/coach-money-refresh';
 import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
+import { type CoachMoneySection } from '@/lib/coach-money-links';
 import OverviewDashboard from './OverviewDashboard';
 import SetupOverview from './SetupOverview';
 import styles from '../../../coaches.module.css';
@@ -46,9 +47,10 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
 ];
 
-// Money hub tab ids — match the sub-route folder names 1:1 so a coach's mental
-// model ("I'm in the dues screen") and the URL agree.
-type SectionId = 'overview' | 'budget' | 'dues' | 'fundraisers' | 'expenses' | 'allocations' | 'payment-requests' | 'budget-vs-actual';
+// Money hub tab ids — 'overview' plus the shared tab list every outside caller links with
+// (lib/coach-money-links.ts). Derived, not restated: two hand-copied unions is how a renamed
+// tab compiles clean in one file and 404s from the other.
+type SectionId = 'overview' | CoachMoneySection;
 
 export default function CoachesAccountingPage({
   params: paramsPromise,
@@ -128,10 +130,16 @@ export default function CoachesAccountingPage({
   }
 
   // One-shot deep-link triggers a panel reads to auto-open something (Budget's ?starter=1
-  // / ?generate=1, Expenses's ?tab=). They mean nothing once you've left that panel's tab,
-  // so every OTHER sectionHref call must drop them — otherwise they linger in the URL and
-  // silently refire (or override a sub-view the coach picked by hand) on an unrelated visit.
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab'];
+  // / ?generate=1 / ?line=&periods= edit deep-link, Expenses's ?tab=). They mean nothing once
+  // you've left that panel's tab, so every OTHER sectionHref call must drop them — otherwise
+  // they linger in the URL and silently refire (or override a sub-view the coach picked by
+  // hand) on an unrelated visit. `line`/`periods` joined the list when the month grid's
+  // drill-down started addressing the hub (?section=budget&line=…) instead of the retired
+  // standalone budget page.
+  // `duesView` is the Dues tab's lens, not a one-shot trigger — but the SAME rule applies:
+  // it means nothing off its own tab, so other tabs' hrefs must not carry it (/review
+  // 2026-08-14: it was riding every subsequent tab URL and bookmark in the session).
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());

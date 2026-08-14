@@ -405,12 +405,14 @@ test.describe('no write control survives anywhere in the archive', () => {
    * write UI. This walks the deeper pages and asserts the read-only chip is present and the
    * primary write affordances are not.
    */
+  // Money screens are TABS of one hub (?section=…) since 2026-08-13 — the standalone routes are
+  // permanent redirects now, so the sweep addresses the hub the way the product does.
   const DEEP_PAGES = [
     { path: '/accounting', label: 'Money hub' },
-    { path: '/accounting/expenses', label: 'Expenses' },
-    { path: '/accounting/dues', label: 'Dues' },
-    { path: '/accounting/budget', label: 'Budget' },
-    { path: '/accounting/fundraisers', label: 'Fundraisers' },
+    { path: '/accounting?section=expenses', label: 'Expenses' },
+    { path: '/accounting?section=dues', label: 'Dues' },
+    { path: '/accounting?section=budget', label: 'Budget' },
+    { path: '/accounting?section=fundraisers', label: 'Fundraisers' },
     { path: '/development', label: 'Development' },
     { path: '/lineups', label: 'Lineups' },
     { path: '/tryouts/history', label: 'Tryout history' },
@@ -419,7 +421,7 @@ test.describe('no write control survives anywhere in the archive', () => {
   for (const { path, label } of DEEP_PAGES) {
     test(`${label} is a record, not an editor`, async ({ page }) => {
       await signIn(page, HEAD_EMAIL);
-      await open(page, `${base()}${path}?year=${pastYearId}`);
+      await open(page, `${base()}${path}${path.includes('?') ? '&' : '?'}year=${pastYearId}`);
 
       // It must KNOW it is an archive — otherwise it is showing the live season and the
       // absence of write controls below would prove nothing.

@@ -11,6 +11,45 @@ import {
   type CreateRepTeamEventFields,
 } from './db';
 import type { RepEventType } from './types';
+import { orgDayKey } from './timezone';
+
+/**
+ * Carry a Basic-ledger "paid" fee into the Premium receipt book (mig 232): stamp the installment
+ * AND write the payment FACT behind it — the same one-payment-per-stamp rule the migration's
+ * backfill applied. A naked stamp here was review finding High-1 (2026-08-13): every dues reader
+ * derives paid dollars from rep_dues_payments, so a stamp with no payment showed the family owing
+ * everything while BOTH reminder paths skipped them as "already paid".
+ */
+async function stampInstallmentPaidWithPayment(opts: {
+  installmentId: string;
+  programYearId: string;
+  playerId: string;
+  orgId: string;
+  teamId: string;
+  amount: number;
+  paidAtIso: string;
+}): Promise<{ error: boolean }> {
+  const { error: stampErr } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ paid_at: opts.paidAtIso })
+    .eq('id', opts.installmentId);
+  if (stampErr) return { error: true };
+  const { error: payErr } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .insert({
+      program_year_id: opts.programYearId,
+      player_id: opts.playerId,
+      org_id: opts.orgId,
+      team_id: opts.teamId,
+      amount: opts.amount,
+      received_date: orgDayKey(opts.paidAtIso),
+      method: 'other',
+      note: 'Carried over from the free team fees',
+      source: 'recorded',
+      created_at: opts.paidAtIso,
+    });
+  return { error: !!payErr };
+}
 
 /**
  * Coach Premium Upgrade — Phase 4: copy a free Basic team's roster / schedule / fees into the new
@@ -235,10 +274,15 @@ export async function migrateBasicTeamIntoWorkspace(params: {
               if (inst.paid_at) { summary.fees.markedPaid++; continue; }
               if (playerFees[i].status === 'paid') {
                 const paidAt = playerFees[i].markedPaidAt ?? new Date().toISOString();
-                const { error } = await supabaseAdmin
-                  .from('rep_player_dues_installments')
-                  .update({ paid_at: paidAt })
-                  .eq('id', inst.id);
+                const { error } = await stampInstallmentPaidWithPayment({
+                  installmentId: inst.id,
+                  programYearId,
+                  playerId: newPlayerId,
+                  orgId,
+                  teamId,
+                  amount: playerFees[i].amount,
+                  paidAtIso: paidAt,
+                });
                 if (error) stampError = true; else summary.fees.markedPaid++;
               }
             }
@@ -286,10 +330,15 @@ export async function migrateBasicTeamIntoWorkspace(params: {
           const inst = installments.find(x => x.installmentNumber === i + 1);
           if (!inst) continue;
           const paidAt = fee.markedPaidAt ?? new Date().toISOString();
-          const { error } = await supabaseAdmin
-            .from('rep_player_dues_installments')
-            .update({ paid_at: paidAt })
-            .eq('id', inst.id);
+          const { error } = await stampInstallmentPaidWithPayment({
+            installmentId: inst.id,
+            programYearId,
+            playerId: newPlayerId,
+            orgId,
+            teamId,
+            amount: fee.amount,
+            paidAtIso: paidAt,
+          });
           if (error) summary.fees.failed++; else summary.fees.markedPaid++;
         }
       } catch (e) {

@@ -395,7 +395,14 @@ export function formatInsightDigest(findings: InsightFinding[]): { title: string
 // ── Shared dues shaping ──────────────────────────────────────────────────────
 export interface FindingsDuesRow {
   outstanding?: number;
-  installments?: { paidAt: string | null; dueDate: string; amount?: number }[] | null;
+  /** Recorded payment dollars (mig 232) — what makes `isNeverPaidPlayer` stop counting a family
+   *  that is two part-payments into an installment (every paidAt still null). Required, matching
+   *  `PlayerDuesLike`: a row built without it is the silent-regression path this project closed. */
+  paidAmount: number;
+  /** `remainingAmount` (when present) is what is still MISSING on the installment after
+   *  recorded payments — the proximity sentence quotes it instead of the face value, so a
+   *  family $200 into a $300 installment inflates "N unpaid ($X)" by $100, not $300. */
+  installments?: { paidAt: string | null; dueDate: string; amount?: number; remainingAmount?: number }[] | null;
 }
 
 /**
@@ -415,7 +422,7 @@ export function summarizeDuesForFindings(rows: FindingsDuesRow[], todayISO: stri
     ? rows.filter(p => (p.installments ?? []).some(i => !i.paidAt && i.dueDate === minDue))
     : [];
   const minDueTotal = minDue
-    ? atMinDue.reduce((s, p) => s + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate === minDue).reduce((x, i) => x + (i.amount ?? 0), 0), 0)
+    ? atMinDue.reduce((s, p) => s + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate === minDue).reduce((x, i) => x + (i.remainingAmount ?? i.amount ?? 0), 0), 0)
     : 0;
   return {
     outstandingTotal: Math.round(rows.reduce((s, p) => s + (p.outstanding ?? 0), 0)),

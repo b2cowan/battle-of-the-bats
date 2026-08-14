@@ -1,8 +1,7 @@
 # Coach portal — the three reference rails come off
 
-**Date:** 2026-08-13 · **Status:** ⏸ **APPROVED, BUILD BLOCKED** — owner ratified the shape
-2026-08-13 and explicitly deferred the build: *"don't build until the other money work from the
-other chat is completed as there might be conflict."*
+**Date:** 2026-08-13 · **Status:** ✅ **BUILT on dev 2026-08-13, awaiting owner browser QA.**
+Unblocked when the Money-hub work landed (`482a2b19`); owner said go. Static verification below.
 **Mockup (binding spec for the Dues half):** `claude.ai/code/artifact/c19d8500-b0c8-4a3f-bed8-66f460c6e973`
 **Supersedes:** `docs/projects/archive/COACH_PORTAL_OPTION_C_RAILS_PLAN.md` — this removes what that
 built. That plan stays in the archive; its reasoning is still the record of why the rails existed and
@@ -98,37 +97,105 @@ rosters run 12–20 rows, not hundreds.
 
 ---
 
-## ⚠ Why this is blocked, specifically
+## The block, and how it resolved
 
-Another session has **uncommitted work across the entire Money hub on this same branch**, including
-the dues screen this plan edits, plus four new files not yet committed. Editing the dues panel now
-means two sessions writing the same file with no merge boundary between them.
+The build was deferred 2026-08-13 because another session held the whole Money hub uncommitted on
+this branch, including the dues screen. It landed as `482a2b19` ("the Money hub's tables read as one
+product"), which **moved this target** exactly as the hold anticipated:
 
-**The blocking overlap is the Money hub only.** The player profile and the lineup builder are clean
-in the working tree and share no file with that work except the portal stylesheet. If the owner wants
-progress before the Money work lands, **those two can be built safely on their own** — the dues half
-waits regardless.
+- The dues table gained shared numeric-column classes (right-aligned, tabular figures). The totals
+  row was built onto those rather than re-declaring alignment, so the footer lines up with the
+  column above it by construction.
+- The mobile card treatment (`.tableAsCards`) did **not** know about `<tfoot>`. It was taught, in
+  the one shared rule, so the totals become the last card in the list at 640 rather than a broken
+  table fragment. Every footer cell carries `data-label` for that reason.
 
-**Before starting, re-check:** that the Money-hub files are committed, and that the dues screen's
-layout has not been changed by that work in a way that moves this target.
+Had this been built before that commit, both points would have been missed.
 
 ---
 
-## Build order (when unblocked)
+## What was built
 
-1. **Player profile** — relocate guardian, safety and dues into three new sections; remove the rail
-   geometry; confirm one Save bar still owns every field.
-2. **Lineup builder** — remove the rail; grid takes full width.
-3. **Money → Player Dues** — remove the rail; add the Option C totals row, with the two open details
-   above resolved.
-4. **Stylesheet** — the shared rail geometry is left in place: the player profile is not its only
-   remaining consumer question to settle at build time. Check whether anything still uses it before
-   deleting; a shared class with no callers is dead code, but removing one still in use is a
-   regression on a surface nobody was looking at.
+1. **Player profile** — rail removed; guardian and safety became two new collapsible sections after
+   Player; the dues card became a section at the foot with Attendance and Awards. All fields still
+   write to the same form state and the same Save bar. Deep-link anchors added: `guardian`,
+   `safety`, `dues`.
+2. **Lineup builder** — rail removed; the editor takes the full width. The In/Out/No-reply headcount
+   is retired in favour of the mismatch strip already above it, which reports the two states that
+   need a decision.
+3. **Money → Player Dues** — rail removed; Option C totals row built in the table's `<tfoot>`, with
+   both open details resolved as proposed: **overdue rides the Status cell** under Next due and stays
+   absent when nobody is behind, and **the whole footer hides until at least one player has a dues
+   schedule**.
+4. **Stylesheet** — the ten shared rail primitives had **zero remaining callers** once the three
+   surfaces were converted (verified: the portal shell's nav rail, the Money hub's `MoneyRail`, the
+   admin `GuidanceRail`, the public `TournamentSideRail` and the account rail each carry their own
+   stylesheet and never used these classes). They were deleted, and a comment block left in their
+   place records that this idea has been tried, trimmed and withdrawn, so a future session proposing
+   a sticky side column knows what it has to beat.
 
-**Verification:** typecheck, focused lint, unit suite, the six token ratchets, and `check:layout`
-(this touches three of the four surfaces that gate held clean when the rails shipped — a re-render at
-361 / 390 / 768 / 1440 is the check that the columns collapse correctly). No migration.
+### Verification (2026-08-13)
 
-**Follow-through:** help docs mention the dues screen; check whether any guide describes the totals
-panel. Owner QA is browser-based per the standing division of labour.
+- `typecheck` **0 errors** (after `npx next typegen`) · focused lint **0 errors** (2 pre-existing
+  warnings in effects this change did not touch) · unit suite **1687/1687**.
+- Token ratchets: consumer / marketing / shared / tsx **clean**; coverage clean. ⚠ The **operator**
+  scope is red on 4 hex literals in `accounting/budget/budget.module.css` — **another session's
+  in-flight file**, unmodified by this work and uncommitted at the time of the run. Not this
+  change's to fix or to re-baseline.
+- `check:layout`: **all 32 coach screens swept at 361 / 390 / 768 / 1440**, in four batches (a single
+  full sweep exhausts the dev server's heap — see below).
+  - **The 8 screens most exposed to this change passed clean** — Dues, Expenses, Fundraisers,
+    Allocations, Payment Requests, Roster, Lineups, Accounting. That set is every table sharing the
+    `.tableAsCards` treatment this change widened, which is where a regression would actually hide.
+  - The other 24 reported findings, **none attributable to this change**: tap-target heights on
+    navigation links (`Insights`, `Development`) and `Help:` buttons — the portal-wide grandfathered
+    control height the baseline documents by name — plus two on **Budget Plan** belonging to another
+    session's in-flight installment-generation feature (`Player installments`, `Set dues for all
+    players`), and one on Schedule that is **structurally unbaselineable**: the finding's key embeds
+    the seeded event's timestamp, so the baseline's `Aug 5 · 4:02 p.m.` and today's fixture's
+    `Aug 13 · 3:10 p.m.` can never match. Nothing reported involves a table footer, a removed panel,
+    or any element this change creates.
+  - ⚠ **Residual uncertainty, stated rather than hidden.** Another session re-baselined this gate at
+    18:47 the same day, net-removing 12 entries, while its own feature work was uncommitted. "New"
+    therefore means "absent from a baseline that moved an hour ago", not "newly broken". These
+    findings were **not** re-baselined away from here — absorbing another session's in-flight state
+    into the accepted list is exactly the failure the baseline file warns about.
+  - ⚠ **The player profile and the lineup builder are not listed screens.** The gate says nothing
+    about either; owner QA carries them. No migration.
+
+  ⚠ **The first attempt at this sweep was ABORTED and its result discarded**, not reported as a
+  pass. Two render sweeps from two sessions plus live browsing exhausted the dev server's compile
+  worker pool, which died and served 500s on the Money hub until the pressure lifted and the
+  supervisor restarted it. An aborted sweep has unmeasured screens and a baseline written from one
+  records the product as cleaner than it is — so it was re-run alone, and the result above is the
+  clean run. **Operational lesson worth keeping: one render sweep at a time, against a server
+  nobody else is using.** This is already written in AGENTS.md; it was broken by two sessions that
+  could not see each other.
+
+**Residual risk, stated rather than assumed:** the two uncovered surfaces rest on owner browser QA.
+The profile is the one to look at hardest — it is the page where inputs moved.
+
+**Follow-through:** ✅ help docs synced 2026-08-13 — the portal tour's "Side panels on two other
+screens" bullet was **entirely false** after this change and was removed; the season-totals row is
+now documented in the Money guide; and the search index (which is what search actually matches — not
+the prose) was corrected. ⚠ Four of the phantom search terms described the Overview rail cut on
+2026-08-03, so the help index had been advertising absent features for ten days: this guide has now
+drifted twice, and unlike the demo sandboxes there is no automated check for it.
+
+Owner QA is browser-based per the standing division of labour.
+
+---
+
+## Two defects in the tooling, found while verifying this (neither belongs to this change)
+
+1. **The layout gate re-reports known findings after every fixture re-seed.** A finding's identity
+   includes the rendered element's text, and one seeded Schedule control carries its own date and
+   time. The baseline holds `Aug 5 · 4:02 p.m.`; the fixture now renders `Aug 13 · 3:10 p.m.`. Same
+   control, same 31px height, permanently unmatchable. The cost is not the noise — it is that a red
+   gate nobody can clear trains the reflex to re-baseline on sight, and reflexive re-baselining is
+   how a real regression gets absorbed into the accepted list unread. Fix: key the finding on
+   something stable (a selector or a test id), not on rendered text.
+2. **A full sweep still kills the dev server.** `--changed` correctly widened to all 32 screens for
+   a shared-stylesheet diff, and the server ran out of heap partway — twice, once at 11 screens.
+   Four batches of 8 completed comfortably. Until the per-request leak upstream is fixed, the gate
+   needs to batch itself rather than expecting one process to survive 128 screen-widths.

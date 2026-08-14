@@ -21,6 +21,7 @@ import {
   markInstallments7ReminderSent,
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { duesReminderEmail } from '@/lib/dues-reminder-email';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -28,16 +29,6 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();
   return null;
-}
-
-function fmtDate(s: string) {
-  return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', {
-    month: 'long', day: 'numeric', year: 'numeric',
-  });
-}
-
-function fmt(n: number) {
-  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export const POST = withObservability(async (req: Request) => {
@@ -87,26 +78,16 @@ export const POST = withObservability(async (req: Request) => {
       const first = items[0];
       const guardianFirst = first.guardianFirstName ?? 'there';
 
-      const rows = items
-        .map(
-          i =>
-            `<li style="margin-bottom:0.5rem;">
-              <strong>${[i.playerFirstName, i.playerLastName].filter(Boolean).join(' ')}</strong> — ${fmt(i.amount)} due ${fmtDate(i.dueDate)}
-              (Installment ${i.installmentNumber} of ${i.totalInstallments})
-            </li>`,
-        )
-        .join('');
+      // ONE template (lib/dues-reminder-email.ts) — shared with the coach route, the sweep, and
+      // the on-screen "See an example" preview, so the sample a coach reads is the send.
+      const { subject, html } = duesReminderEmail({
+        teamName: team.name,
+        window,
+        guardianFirst,
+        items,
+      });
 
-      const html = `
-<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
-  <p>Hi ${guardianFirst},</p>
-  <p>This is a friendly reminder that the following dues installments are coming due for your player(s) on <strong>${team.name}</strong>:</p>
-  <ul style="padding-left:1.25rem;">${rows}</ul>
-  <p>To view your full payment schedule or if you have already submitted payment, please contact your coach directly.</p>
-  <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>
-</div>`;
-
-      await sendEmail(email, `Upcoming dues reminder (${window} days) — ${team.name}`, html);
+      await sendEmail(email, subject, html);
       totalEmailed++;
       for (const i of items) taggedIds.push(i.installmentId);
     }

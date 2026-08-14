@@ -292,6 +292,9 @@ async function signIn(page: Page, email: string) {
 }
 
 const base = () => `/${ORG_SLUG}/coaches/teams/${repTeamId}`;
+// The starter team's base — module-scoped (it was Chunk G-local) because the desktop
+// tall-sheet test now opens the sample from this team's empty state too.
+const sBase = () => `/${ORG_SLUG}/coaches/teams/${starterTeamId}`;
 
 /** Warm a route so a cold Turbopack compile can't be mistaken for a layout failure. */
 async function open(page: Page, url: string) {
@@ -345,14 +348,14 @@ test.describe('Money on a phone @360x740', () => {
 
     const surfaces: Array<[string, string]> = [
       ['Money hub', `${base()}/accounting`],
-      ['Season Budget Plan', `${base()}/accounting/budget`],
-      ['Budget vs. Actual', `${base()}/accounting/budget-vs-actual`],
-      ['Expenses', `${base()}/accounting/expenses`],
-      ['Player Dues', `${base()}/accounting/dues`],
-      ['Fundraisers', `${base()}/accounting/fundraisers`],
+      ['Season Budget Plan', `${base()}/accounting?section=budget`],
+      ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
+      ['Expenses', `${base()}/accounting?section=expenses`],
+      ['Player Dues', `${base()}/accounting?section=dues`],
+      ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting/fundraisers/${fundraiserId}`],
-      ['Org Allocations', `${base()}/accounting/allocations`],
-      ['Payment Requests', `${base()}/accounting/payment-requests`],
+      ['Org Allocations', `${base()}/accounting?section=allocations`],
+      ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ];
 
     for (const [label, url] of surfaces) {
@@ -362,7 +365,7 @@ test.describe('Money on a phone @360x740', () => {
     }
 
     // The payables tab is a separate render of the Expenses page (the two-across split).
-    await open(page, `${base()}/accounting/expenses`);
+    await open(page, `${base()}/accounting?section=expenses`);
     const main = page.locator('main[class*="coachesMain"]');
     // Renamed in chunk H: the same record always handled any commitment, not only a tournament.
     await main.getByRole('button', { name: /^payables/i }).click();
@@ -380,7 +383,7 @@ test.describe('Money on a phone @360x740', () => {
 
   test('Budget vs. Actual keeps the comparison: scrolls inside its own frame, first column pinned, hint present', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/budget-vs-actual`);
+    await open(page, `${base()}/accounting?section=budget-vs-actual`);
 
     // The grid must genuinely overflow at this width — otherwise the rest of this test is vacuous.
     const scroller = page.getByTestId('coach-scrollx').first();
@@ -419,7 +422,7 @@ test.describe('Money on a phone @360x740', () => {
 
   test('a budget period split is full-width and tappable, and a backdrop tap cannot silently bin it', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
 
     await page.getByRole('button', { name: /add line/i }).first().click();
     await page.getByLabel(/total amount/i).fill('4800');
@@ -435,8 +438,10 @@ test.describe('Money on a phone @360x740', () => {
       expect(w, 'a period field should not be a stub at 360px').toBeGreaterThan(200);
       expect(h, 'a period field should meet the touch-target standard').toBeGreaterThanOrEqual(32);
     }
-    // The per-period heading and field labels are revealed at this width.
-    await expect(sheet.getByText(/^Period 1$/)).toBeVisible();
+    // The per-period heading and field labels are revealed at this width. The heading text is
+    // the DERIVED label (a month like "Sep 2026" since the split-modes work — "Period 1" only
+    // survives in names mode), so assert the revealed structure, not a hardcoded name.
+    await expect(sheet.locator('[class*="periodGroupNum"]').first()).toBeVisible();
 
     await page.locator('[class*="periodInputRow"]').first().locator('input').first().fill('May');
     await expectNoPageScroll(page, 'Add Budget Line sheet');
@@ -468,7 +473,7 @@ test.describe('Money on a phone @360x740', () => {
 
   test('an untouched form still closes silently — a guard with nothing to protect is friction', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/expenses`);
+    await open(page, `${base()}/accounting?section=expenses`);
 
     await page.getByRole('button', { name: /add expense/i }).first().click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toBeVisible();
@@ -479,7 +484,7 @@ test.describe('Money on a phone @360x740', () => {
 
   test('list-shaped money tables become labelled cards, and empty action cells draw no blank line', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/expenses`);
+    await open(page, `${base()}/accounting?section=expenses`);
 
     // thead is hidden and each cell carries its own label — the Dues card idiom.
     const wrap = page.locator('[class*="tableAsCards"]').first();
@@ -507,13 +512,13 @@ test.describe('Money on a phone @360x740', () => {
     // miss the gate that every row on it has, so the sweep has to be the whole area.
     for (const [label, url] of [
       ['Money hub', `${base()}/accounting`],
-      ['Season Budget Plan', `${base()}/accounting/budget`],
-      ['Budget vs. Actual', `${base()}/accounting/budget-vs-actual`],
-      ['Expenses', `${base()}/accounting/expenses`],
-      ['Org Allocations', `${base()}/accounting/allocations`],
-      ['Fundraisers', `${base()}/accounting/fundraisers`],
+      ['Season Budget Plan', `${base()}/accounting?section=budget`],
+      ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
+      ['Expenses', `${base()}/accounting?section=expenses`],
+      ['Org Allocations', `${base()}/accounting?section=allocations`],
+      ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting/fundraisers/${fundraiserId}`],
-      ['Payment Requests', `${base()}/accounting/payment-requests`],
+      ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ] as Array<[string, string]>) {
       await open(page, url);
       await expectNoPageScroll(page, `${label} (read-only)`);
@@ -541,7 +546,7 @@ test.describe('Money on a phone @360x740', () => {
     let nativeDialog = '';
     page.on('dialog', async d => { nativeDialog = d.message(); await d.dismiss(); });
 
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
 
     // Force the failure the old alert() reported, without depending on a real server-side conflict.
     await page.route('**/budget-plan/lines/**', route =>
@@ -549,11 +554,21 @@ test.describe('Money on a phone @360x740', () => {
         ? route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: 'This line is used by player installments that have already been generated.' }) })
         : route.fallback());
 
-    await page.locator('[class*="actionBtnDanger"]').first().click();
+    // Deleting moved INTO the edit form (owner 2026-08-13): tapping a line is the door —
+    // rows carry no trash icon any more — and "Delete line" sits in the form's footer.
+    await page.locator('[class*="ledgerRow"]').first().click();
+    const deleteLine = page.getByRole('button', { name: /delete line/i });
+    await expect(deleteLine).toBeVisible();
+    // ⚠ Keyboard, not pointer: the button sits bottom-LEFT of the sticky footer, which on a
+    // dev server is exactly where the Next dev-tools badge floats — it intercepts pointer
+    // clicks at phone width and UAT always runs against dev. Production has no badge.
+    await deleteLine.focus();
+    await page.keyboard.press('Enter');
     await expect(page.getByText(/delete budget line/i)).toBeVisible();
     await page.getByRole('button', { name: /^delete$/i }).click();
 
-    // The reason appears in the dialog that is still open, and the dialog stays open.
+    // The reason appears in the dialog that is still open, and the dialog stays open —
+    // with the edit form intact behind it.
     await expect(page.getByText(/already been generated/i)).toBeVisible();
     await expect(page.getByText(/delete budget line/i)).toBeVisible();
     expect(nativeDialog, 'a native browser dialog fired').toBe('');
@@ -568,7 +583,7 @@ test.describe('Money forms on a desktop', () => {
 
   test('a backdrop click on a dirty Money form asks before discarding', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/expenses`);
+    await open(page, `${base()}/accounting?section=expenses`);
 
     await page.getByRole('button', { name: /add expense/i }).first().click();
     await page.getByPlaceholder(/diamond rental/i).fill('Bat bag');
@@ -581,7 +596,7 @@ test.describe('Money forms on a desktop', () => {
 
   test('Budget vs. Actual has room for the comparison and no internal scrollbar on a wide screen', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/budget-vs-actual`);
+    await open(page, `${base()}/accounting?section=budget-vs-actual`);
 
     // f9-2: with the wider page the grid fits, so the scroller never engages and — because the
     // hint is honest about overflow — no swipe is claimed.
@@ -596,9 +611,11 @@ test.describe('Money forms on a desktop', () => {
   test('a tall sheet\'s last content scrolls clear of the sticky footer (Chunk G fix)', async ({ page }) => {
     // Owner QA finding: the shared footer's desktop bottom bleed shortened the scroll
     // extent, pinning the sample/starter's last row under the button bar forever.
+    // ⚠ The sample is EMPTY-STATE-ONLY now (owner 2026-08-13) — so this opens it from the
+    // starter team, which stays empty until the Chunk G starter test later in this file.
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/budget`);
-    await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a sample budget/i }).click();
+    await open(page, `${sBase()}/accounting?section=budget`);
+    await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a finished example/i }).click();
     const fence = page.getByTestId('sample-budget-fence');
     await expect(fence).toBeVisible();
     const clear = await page.evaluate(() => {
@@ -621,11 +638,9 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
   // runs against a budget that now exists. Reordering them changes what they prove.
   test.use({ viewport: PHONE });
 
-  const sBase = () => `/${ORG_SLUG}/coaches/teams/${starterTeamId}`;
-
   test('the blank page becomes three doors, and a dirty starter guards its dismiss', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${sBase()}/accounting/budget`);
+    await open(page, `${sBase()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
 
     // The first-run surface leads: starter, sample, and the never-walled manual path.
@@ -658,7 +673,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
 
   test('a read-only assistant meets education, never an offer', async ({ page }) => {
     await signIn(page, READ_EMAIL);
-    await open(page, `${sBase()}/accounting/budget`);
+    await open(page, `${sBase()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
 
     // Honest empty state: whose job it is, what they will see — and NO write doors.
@@ -675,10 +690,24 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
 
     // Budget vs. Actual's empty state opens the same sample ON ITS BvA TAB (D4) —
     // the coach on that page came asking what the report becomes.
-    await open(page, `${sBase()}/accounting/budget-vs-actual`);
+    await open(page, `${sBase()}/accounting?section=budget-vs-actual`);
     await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a finished example/i }).click();
-    await expect(page.getByTestId('sample-budget-fence')).toBeVisible();
+    const fence = page.getByTestId('sample-budget-fence');
+    await expect(fence).toBeVisible();
     await expect(page.getByText(/3 of 4 tournaments paid/i)).toBeVisible();
+
+    // The fence assertions live HERE now (they were a separate built-budget test until the
+    // sample became empty-state-only, owner 2026-08-13): clearly a made-up team, uncopyable
+    // by construction — nothing inside is an input, no button offers to use the numbers —
+    // and its BvA tab teaches the comparison idiom: honest swipe hint, a line visibly over.
+    await expect(fence.getByText(/sample — a made-up team/i)).toBeVisible();
+    await expect(fence.getByText('Riverdale 12U')).toBeVisible();
+    expect(await fence.locator('input, select, textarea').count()).toBe(0);
+    expect(await fence.getByRole('button', { name: /use|copy|apply|add|create|import/i }).count()).toBe(0);
+    await expect(page.getByTestId('coach-scrollx-hint')).toBeVisible();
+    await expect(fence.getByText('-$130')).toBeVisible();
+    await expect(fence.getByText(/gone over on purpose/i)).toBeVisible();
+    await expectNoPageScroll(page, 'sample sheet — BvA tab');
   });
 
   test('the starter turns answers into real lines holding only coach-typed numbers', async ({ page }) => {
@@ -686,7 +715,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await signIn(page, WRITE_EMAIL);
     // The Money hub's plan anchor carries ?starter=1 — the deep link opens the questions
     // directly (write-capable + still-empty only).
-    await open(page, `${sBase()}/accounting/budget?starter=1`);
+    await open(page, `${sBase()}/accounting?section=budget&starter=1`);
     const sheet = page.locator('[class*="modalOverlay"]').first();
     await expect(sheet.getByText(/step 1 of 2/i)).toBeVisible();
 
@@ -741,7 +770,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
 
   test('a checklist chip opens Add Line prefilled with the amount EMPTY, and a dismiss is remembered', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${sBase()}/accounting/budget`);
+    await open(page, `${sBase()}/accounting?section=budget`);
     const strip = page.getByTestId('budget-checklist');
     await strip.getByRole('button', { name: /review/i }).click();
 
@@ -769,34 +798,20 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await expect(strip2.getByRole('button', { name: '+ Umpire Fees', exact: true })).toBeVisible();
   });
 
-  test('the sample is fenced and uncopyable, and its BvA tab teaches what "over" looks like', async ({ page }) => {
+  test('a built budget puts the sample away — and read-only still gets no write doors', async ({ page }) => {
+    // The sample is a getting-started aid, EMPTY STATES ONLY (owner 2026-08-13, superseding
+    // Chunk G's D6 "permanent quiet reference"). By this point in the ordered suite the
+    // starter team has a real plan, so the page must offer NO route to it — and the fence's
+    // own assertions live in the read-only education test above, where the sheet still opens.
     await signIn(page, READ_EMAIL);
-    await open(page, `${sBase()}/accounting/budget`);
+    await open(page, `${sBase()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
 
-    // With a budget present, the read-only coach sees the lines — but never the strip
-    // (a write invitation) and never an add door. The quiet sample link IS allowed.
+    // The plan is readable — but never the checklist strip (a write invitation), never an
+    // add door, and no sample link anywhere on a page that has real numbers.
     await expect(page.getByTestId('budget-checklist')).toHaveCount(0);
     await expect(main.getByRole('button', { name: /add line/i })).toHaveCount(0);
-    await main.getByRole('button', { name: /see a sample budget/i }).click();
-
-    const fence = page.getByTestId('sample-budget-fence');
-    await expect(fence).toBeVisible();
-    await expect(fence.getByText(/sample — a made-up team/i)).toBeVisible();
-    await expect(fence.getByText('Riverdale 12U')).toBeVisible();
-
-    // Uncopyable by construction: nothing inside the fence is an input, and no button
-    // offers to use the numbers (the only fence buttons are the two view tabs).
-    expect(await fence.locator('input, select, textarea').count()).toBe(0);
-    expect(await fence.getByRole('button', { name: /use|copy|apply|add|create|import/i }).count()).toBe(0);
-
-    // The BvA tab renders the real comparison idiom — honest swipe hint, and the
-    // over-budget line visibly over.
-    await fence.getByRole('button', { name: /budget vs\. actual/i }).click();
-    await expect(page.getByTestId('coach-scrollx-hint')).toBeVisible();
-    await expect(fence.getByText('-$130')).toBeVisible();
-    await expect(fence.getByText(/gone over on purpose/i)).toBeVisible();
-    await expectNoPageScroll(page, 'sample sheet — BvA tab');
+    await expect(main.getByRole('button', { name: /see a sample budget|see a finished example/i })).toHaveCount(0);
   });
 });
 
@@ -807,7 +822,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
 
 /** Switch Budget vs. Actual into the month grid and (optionally) a lens. */
 async function openMonths(page: Page, lens?: 'Budget' | 'Scheduled' | 'Actual' | 'Difference') {
-  await open(page, `${base()}/accounting/budget-vs-actual`);
+  await open(page, `${base()}/accounting?section=budget-vs-actual`);
   const main = page.locator('main[class*="coachesMain"]');
   await main.getByRole('button', { name: 'Months', exact: true }).click();
   await expect(page.getByRole('table')).toBeVisible();
@@ -895,11 +910,11 @@ test.describe('Money by month @360x740', () => {
     const main = await openMonths(page, 'Budget');
     // Expand the category so a LINE row (and therefore a line-level budget cell) is present.
     await main.getByRole('table').locator('tbody th button').first().click();
-    const drill = main.getByRole('table').locator('a[href*="/accounting/budget?line="]').first();
+    const drill = main.getByRole('table').locator('a[href*="section=budget&line="]').first();
     await expect(drill).toBeVisible();
     await drill.click();
 
-    await expect(page).toHaveURL(/\/accounting\/budget\?line=/);
+    await expect(page).toHaveURL(/\/accounting\?section=budget&line=/);
     const budgetMain = page.locator('main[class*="coachesMain"]');
     await expect(budgetMain.getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
     // The real edit modal, pre-filled — not a second editor built into the grid.
@@ -924,7 +939,7 @@ test.describe('The payment schedule (chunk H)', () => {
 
   test('every commitment in one list, by due date, with a filter that means what it says', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/expenses?tab=schedule`);
+    await open(page, `${base()}/accounting?section=expenses&tab=schedule`);
     const main = page.locator('main[class*="coachesMain"]');
 
     await expect(main.getByRole('heading', { name: /expenses & payables/i })).toBeVisible();
@@ -949,16 +964,16 @@ test.describe('The payment schedule (chunk H)', () => {
   test('a read-only money coach reads the month grid and the schedule, and can change neither', async ({ page }) => {
     await signIn(page, READ_EMAIL);
 
-    await open(page, `${base()}/accounting/budget-vs-actual`);
+    await open(page, `${base()}/accounting?section=budget-vs-actual`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: 'Months', exact: true }).click();
     await expect(page.getByRole('table')).toBeVisible();
     // Reading is never gated on write — the whole grid and the cash-flow strip are present…
     await expect(main.getByRole('table').locator('tbody tr').filter({ hasText: 'Running balance' })).toHaveCount(1);
     // …but no cell offers a way into an editor.
-    expect(await main.locator('a[href*="/accounting/budget?line="]').count()).toBe(0);
+    expect(await main.locator('a[href*="section=budget&line="]').count()).toBe(0);
 
-    await open(page, `${base()}/accounting/expenses?tab=schedule`);
+    await open(page, `${base()}/accounting?section=expenses&tab=schedule`);
     const sched = page.locator('main[class*="coachesMain"]');
     await expect(sched.getByText(/provincials entry — deposit/i)).toBeVisible();
     expect(await sched.getByRole('button', { name: /mark paid/i }).count()).toBe(0);
@@ -970,7 +985,7 @@ test.describe('Money by month on a desktop', () => {
   test.beforeEach(async ({ page }) => { await signIn(page, WRITE_EMAIL); });
 
   test('a budget line cannot be relinked to another org taxonomy', async ({ page }) => {
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     // The lines POST was hardened during the Chunk G review; its PATCH sibling was not, so a
     // crafted request could relink a line to another org's custom category and echo its name.
     const status = await page.evaluate(async ({ orgSlug, teamId }) => {
@@ -991,7 +1006,7 @@ test.describe('Money by month on a desktop', () => {
   });
 
   test('a tall Money form keeps its sticky footer flush instead of eating the last inch', async ({ page }) => {
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /add line/i }).first().click();
 
@@ -1018,7 +1033,7 @@ test.describe('Importing a budget @360x740', () => {
   test.beforeEach(async ({ page }) => { await signIn(page, WRITE_EMAIL); });
 
   test('a pasted sheet previews with a verdict per row, writes nothing until confirmed, then lands', async ({ page }) => {
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /^import$/i }).click();
 
@@ -1071,7 +1086,7 @@ test.describe('Importing a budget @360x740', () => {
   });
 
   test('a sheet where nothing can be read reports failure — never a quiet "0 imported"', async ({ page }) => {
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /^import$/i }).click();
     await page.getByRole('button', { name: /simple list/i }).click();
@@ -1087,7 +1102,7 @@ test.describe('Importing a budget @360x740', () => {
   });
 
   test('a coach can fix a blocked row in the preview and watch its verdict change', async ({ page }) => {
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /^import$/i }).click();
     await page.getByRole('button', { name: /simple list/i }).click();
@@ -1108,11 +1123,11 @@ test.describe('Importing a budget @360x740', () => {
 
   test('a read-only money coach is offered no way to import', async ({ page }) => {
     await signIn(page, READ_EMAIL);
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     expect(await main.getByRole('button', { name: /^import$/i }).count()).toBe(0);
 
-    await open(page, `${base()}/accounting/expenses`);
+    await open(page, `${base()}/accounting?section=expenses`);
     const expensesMain = page.locator('main[class*="coachesMain"]');
     expect(await expensesMain.getByRole('button', { name: /import payables/i }).count()).toBe(0);
   });
@@ -1123,7 +1138,7 @@ test.describe('Import templates (D-G1: structure, never amounts)', () => {
 
   test('every downloadable template ships with its amount cells EMPTY', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting/budget`);
+    await open(page, `${base()}/accounting?section=budget`);
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /^import$/i }).click();
 

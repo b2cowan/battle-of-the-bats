@@ -19,6 +19,7 @@ import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import {
   EXPENSE_COLUMNS, expenseRows,
   // Aliased: this panel already has a local `scheduleRows` holding the filtered schedule ROWS,
@@ -1005,7 +1006,7 @@ export function ExpensesPayablesPanel({
                             </button>
                           )}
                           {row.source === 'org' && !row.paid && (
-                            <Link href={`${base}/accounting/allocations`} className={styles.linkBtn}>Open allocations</Link>
+                            <Link href={moneySectionHref(base, 'allocations', undefined, seasonQuery)} className={styles.linkBtn}>Open allocations</Link>
                           )}
                         </td>
                       </tr>
@@ -1017,7 +1018,7 @@ export function ExpensesPayablesPanel({
             <p className={styles.muted} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
               Money going out only — payable deposits and balances{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
-              <Link href={`${base}/accounting/dues`} className={styles.linkBtn}>Player Dues</Link>.
+              <Link href={moneySectionHref(base, 'dues', undefined, seasonQuery)} className={styles.linkBtn}>Player Dues</Link>.
             </p>
           </>
         )

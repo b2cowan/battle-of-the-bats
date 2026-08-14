@@ -63,7 +63,7 @@ export function budgetLineRows(lines: RepBudgetLineWithPeriods[]): ExportRow[] {
   return lines.map(l => ({
     category: l.categoryName ?? '',
     line: l.description,
-    kind: l.lineKind === 'funding' ? 'Expected funding' : 'Cost',
+    kind: l.lineKind === 'funding' ? 'Expected fundraising' : 'Cost',
     amount: l.totalAmount,
     // The month split flattened into one readable cell. A column per month would make the
     // sheet's width depend on the season — that is the Budget-vs-Actual month grid's job.
@@ -338,7 +338,7 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
   // "funded by players" figure the screen does.
   if (data.funding) {
     rows.push({
-      item: 'Expected funding (team share)',
+      item: 'Expected fundraising (team share)',
       budgeted: -data.funding.budget,
       actual: -data.funding.actual,
       // ⚠ actual − budget, matching the screen. Raising LESS than expected must read as the

@@ -1057,8 +1057,21 @@ async function seedMoneyLab() {
           org_id: org.id, team_id: u13.id,
         })),
       )).error);
+      // A paid stamp is only a coverage PROJECTION since mig 232 — the dollars every dues
+      // reader shows live in rep_dues_payments. One payment per stamped instalment keeps the
+      // fixture's Paid column, Collections tile and chase list telling the seeded story.
+      const paidNs = [1, 2, 3].filter(n => !(behind && n === 3));
+      if (paidNs.length) {
+        die('dues payments', (await db.from('rep_dues_payments').insert(
+          paidNs.map(n => ({
+            program_year_id: cur.id, player_id: p.id, org_id: org.id, team_id: u13.id,
+            amount: n === 3 ? 216.66 : 216.67, received_date: dayIn(-5 + n * 2, 3),
+            method: 'etransfer', source: 'recorded',
+          })),
+        )).error);
+      }
     }
-    ok(`dues seeded — $650 × ${roster.length} in three instalments; 3 families a payment behind`);
+    ok(`dues seeded — $650 × ${roster.length} in three instalments (payments backing every stamp); 3 families a payment behind`);
   } else note('dues already present');
 
   // ── a fundraiser with a leaderboard ──────────────────────────────────────────────────────
@@ -1128,6 +1141,114 @@ async function seedMoneyLab() {
   }
   ok('U11 confirmed EMPTY — no budget, no dues (the starter\'s first-run state)');
 
+  // ═══ TEAM C — season's END: the refunds-review portal (owner ruling 2026-08-13) ═══════════
+  // The owner is redesigning the Season Refund Calculator and wants REAL numbers to reason
+  // against: budget mostly exhausted, money left over, and fundraising that varies family by
+  // family. Everything here is chosen so the refund arithmetic has texture:
+  //   · dues $600 × 10, three instalments, ALL past due and all paid (payments behind every
+  //     stamp — mig 232), so "collections are done" is true on every screen;
+  //   · ONE family overpaid by $50 → an 'overpayment' credit (cash the books actually hold);
+  //   · a closed fundraiser, $2,500 raised at 25% back → fundraiser credits from $0 to $170 —
+  //     two families raised nothing, one raised $680;
+  //   · budget $7,000, paid spending $6,350 — exhausted enough to feel real, ~$1,500-ish of
+  //     real cash left when dues + team-kept fundraising are netted against spending.
+  const u15 = await makeTeam('QA Season End U15', 'qa-season-end-u15', 'U15');
+  const curC = await makeYear(u15, yr, 'active');
+  await assignStaff(u15, curC);
+  const rosterC = await makeRoster(u15, curC, ['Noor', 'Owen', 'Pax', 'Quil', 'Rhea', 'Sef', 'Tia', 'Umar', 'Vera', 'Wynn']);
+
+  const { data: haveC } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', curC.id).limit(1);
+  if (!haveC?.length) {
+    // Budget — five undated lines totalling $7,000 (the story is the season already spent).
+    const LINES_C = [
+      { cat: 'Tournaments', desc: 'Tournament entry fees', total: 3000 },
+      { cat: 'Facilities',  desc: 'Diamond and dome time', total: 1500 },
+      { cat: 'Team Gear',   desc: 'Uniforms and equipment', total: 1200 },
+      { cat: 'Officials',   desc: 'Umpires',                total: 800 },
+      { cat: 'Training',    desc: 'Winter training block',  total: 500 },
+    ];
+    for (const [i, l] of LINES_C.entries()) {
+      die('C budget line', (await db.from('rep_budget_lines').insert({
+        org_id: org.id, team_id: u15.id, program_year_id: curC.id,
+        category_id: catBy[l.cat] ?? null, description: l.desc, total_amount: l.total, sort_order: i,
+      })).error);
+    }
+    // Spending — all PAID, $6,350 of the $7,000 plan.
+    const SPENT_C = [
+      { desc: 'Spring tournament entries', cat: 'Tournaments', amount: 1500, paid: dayIn(-5, 10) },
+      { desc: 'Summer tournament entries', cat: 'Tournaments', amount: 1400, paid: dayIn(-3, 9) },
+      { desc: 'Diamond and dome time',     cat: 'Facilities',  amount: 1450, paid: dayIn(-4, 6) },
+      { desc: 'Uniforms and equipment',    cat: 'Team Gear',   amount: 1100, paid: dayIn(-6, 18) },
+      { desc: 'Umpires — season',          cat: 'Officials',   amount: 500,  paid: dayIn(-2, 12) },
+      { desc: 'Winter training block',     cat: 'Training',    amount: 400,  paid: dayIn(-7, 15) },
+    ];
+    die('C expenses', (await db.from('rep_team_expenses').insert(SPENT_C.map(e => ({
+      program_year_id: curC.id, team_id: u15.id, org_id: org.id,
+      expense_type: 'expense', description: e.desc, category: e.cat,
+      amount: e.amount, expense_paid_at: e.paid,
+    })))).error);
+
+    // Dues — $600 in three $200 instalments, every due date in the PAST, everyone fully paid,
+    // every stamp backed by a payment (mig 232). Umar's family (index 7) sent $250 for the last
+    // one — the $50 excess sits as an overpayment credit, the cash-backed credit type.
+    const dueC = [dayIn(-5, 15), dayIn(-3, 15), dayIn(-1, 15)];
+    const recvC = [dayIn(-5, 12), dayIn(-3, 12), dayIn(-1, 12)];
+    for (const [i, p] of rosterC.entries()) {
+      const sched = await db.from('rep_player_dues_schedules').insert({
+        program_year_id: curC.id, player_id: p.id, team_id: u15.id, org_id: org.id, total_amount: 600,
+      }).select('id').single();
+      die('C dues schedule', sched.error);
+      die('C dues installments', (await db.from('rep_player_dues_installments').insert(
+        [0, 1, 2].map(n => ({
+          schedule_id: sched.data.id, player_id: p.id, installment_number: n + 1,
+          amount: 200, due_date: dueC[n], paid_at: `${recvC[n]}T17:00:00.000Z`,
+          org_id: org.id, team_id: u15.id,
+        })),
+      )).error);
+      die('C dues payments', (await db.from('rep_dues_payments').insert(
+        [0, 1, 2].map(n => ({
+          program_year_id: curC.id, player_id: p.id, org_id: org.id, team_id: u15.id,
+          amount: i === 7 && n === 2 ? 250 : 200, received_date: recvC[n],
+          method: 'etransfer', source: 'recorded',
+        })),
+      )).error);
+    }
+    die('C overpayment credit', (await db.from('rep_dues_credits').insert({
+      program_year_id: curC.id, player_id: rosterC[7].id,
+      amount: 50, description: 'Overpayment', credit_type: 'overpayment', credit_date: recvC[2],
+    })).error);
+
+    // Fundraiser — closed, 25% back to the player, raised amounts all over the map. The credits
+    // are written the authoritative direction (entry first, credit carrying fundraiser_entry_id,
+    // then the entry's credit_id back-filled) so the leaderboard and the dues screen agree.
+    const RAISED_C = [0, 0, 60, 120, 180, 240, 300, 420, 500, 680];
+    const f = await db.from('rep_fundraisers').insert({
+      org_id: org.id, team_id: u15.id, program_year_id: curC.id,
+      name: 'Cookie Dough Drive', description: 'Season fundraiser — 25% back to the player.',
+      player_rebate_percent: 25, start_date: monthStart(-6), end_date: monthStart(-2), is_active: false,
+    }).select('id').single();
+    die('C fundraiser', f.error);
+    for (const [i, p] of rosterC.entries()) {
+      if (RAISED_C[i] <= 0) continue;
+      const rebate = Math.round(RAISED_C[i] * 25) / 100;
+      const entry = await db.from('rep_fundraiser_entries').insert({
+        fundraiser_id: f.data.id, org_id: org.id, team_id: u15.id, player_id: p.id,
+        amount_raised: RAISED_C[i], rebate_percent: 25, rebate_amount: rebate,
+      }).select('id').single();
+      die('C fundraiser entry', entry.error);
+      const credit = await db.from('rep_dues_credits').insert({
+        program_year_id: curC.id, player_id: p.id,
+        amount: rebate, description: 'Fundraiser rebate — Cookie Dough Drive',
+        credit_type: 'fundraiser', credit_date: monthStart(-2),
+        fundraiser_entry_id: entry.data.id,
+      }).select('id').single();
+      die('C fundraiser credit', credit.error);
+      die('C entry credit link', (await db.from('rep_fundraiser_entries')
+        .update({ credit_id: credit.data.id }).eq('id', entry.data.id)).error);
+    }
+    ok('SEASON END U15 seeded — dues settled ($6,050 in incl. one $50 overpay), $6,350 of $7,000 spent, fundraiser credits $0–$170');
+  } else note('season-end team already present');
+
   console.log('');
   console.log(`  Org            /${MONEY.slug}`);
   for (const u of users) {
@@ -1138,6 +1259,7 @@ async function seedMoneyLab() {
   }
   console.log(`  Data-rich team  QA Money U13  → /${MONEY.slug}/coaches/teams/${u13.id}`);
   console.log(`  Empty team      QA Money U11  → /${MONEY.slug}/coaches/teams/${u11.id}`);
+  console.log(`  Season's end    QA Season End U15 → /${MONEY.slug}/coaches/teams/${u15.id}  (refund review)`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
-  getRepTeamTagLibrary, getRepTeamExpenseTagsMap,
+  getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -11,6 +11,7 @@ import {
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
 import { computeBudgetTotals } from '@/lib/coach-budget-totals';
+import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
@@ -217,7 +218,7 @@ export const GET = withObservability(async (req: Request,
   // ── 7. Dues collection summary ────────────────────────────────────────
   const { data: schedules } = await supabaseAdmin
     .from('rep_player_dues_schedules')
-    .select('id, total_amount')
+    .select('id, player_id, total_amount')
     .eq('program_year_id', programYear.id);
 
   const scheduleIds = (schedules ?? []).map((s: { id: string }) => s.id);
@@ -225,20 +226,27 @@ export const GET = withObservability(async (req: Request,
     (s: number, r: { total_amount: number }) => s + (r.total_amount ?? 0), 0,
   );
 
-  // Every installment, not just the paid ones: the paid side is the dues-collection card (below)
-  // and the money-in half of the month grid's cash-flow strip; the due dates are the SCHEDULED
-  // half of it ("what lands in July if everyone pays on time").
+  // Collected = recorded payment FACTS (mig 232), capped per player at their schedule total —
+  // the same figure the dues table's Paid column shows, so this card and that screen can never
+  // disagree. Installments stay fetched for the SCHEDULED half of the cash-flow strip ("what
+  // lands in July if everyone pays on time").
   let collectedDues = 0;
   let duesInstallments: Array<{ amount: number; due_date: string | null; paid_at: string | null }> = [];
+  let duesPayments: Array<{ playerId: string; amount: number; receivedDate: string | null }> = [];
   if (scheduleIds.length > 0) {
-    const { data: inst } = await supabaseAdmin
-      .from('rep_player_dues_installments')
-      .select('amount, due_date, paid_at')
-      .in('schedule_id', scheduleIds);
+    const [{ data: inst }, pays] = await Promise.all([
+      supabaseAdmin
+        .from('rep_player_dues_installments')
+        .select('amount, due_date, paid_at')
+        .in('schedule_id', scheduleIds),
+      getRepDuesPaymentsByProgramYear(programYear.id),
+    ]);
     duesInstallments = (inst ?? []) as typeof duesInstallments;
-    collectedDues = duesInstallments
-      .filter(r => r.paid_at)
-      .reduce((s, r) => s + (r.amount ?? 0), 0);
+    duesPayments = pays;
+    const paymentsByPlayer = paymentsTotalByPlayer(pays);
+    for (const s of (schedules ?? []) as Array<{ player_id: string; total_amount: number }>) {
+      collectedDues += duesPaidAmount(paymentsByPlayer.get(s.player_id) ?? 0, s.total_amount ?? 0);
+    }
   }
 
   const duesCollection = {
@@ -461,8 +469,15 @@ export const GET = withObservability(async (req: Request,
     if (!amt) continue;
     const due = monthKeyOf(i.due_date);
     if (due) duesInScheduled[due] = Math.round(((duesInScheduled[due] ?? 0) + amt) * 100) / 100;
-    const paid = monthKeyOf(i.paid_at);
-    if (paid) duesInActual[paid] = Math.round(((duesInActual[paid] ?? 0) + amt) * 100) / 100;
+  }
+  // ACTUAL is the receipt book, not the stamp: each payment lands in the month the money ARRIVED
+  // (mig 232, owner ruling 3). Under the old model a coach catching up on a month of e-transfers
+  // put them all in "today's" month, and a part-payment appeared in no month at all.
+  for (const p of duesPayments) {
+    const amt = p.amount ?? 0;
+    if (!amt) continue;
+    const m = monthKeyOf(p.receivedDate);
+    if (m) duesInActual[m] = Math.round(((duesInActual[m] ?? 0) + amt) * 100) / 100;
   }
 
   // ── 9. Headroom ───────────────────────────────────────────────────────

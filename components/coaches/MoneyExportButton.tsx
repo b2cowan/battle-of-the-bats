@@ -132,8 +132,12 @@ export default function MoneyExportButton({
         data-phone={available.includes('pdf') ? 'keep' : 'drop'}
         disabled={disabled}
         onClick={() => { setError(''); setOpen(true); }}
+        /* Icon-only on phones like every toolbar secondary (`.headerBtnLabel`, page-header
+           ruling mechanism) — this trigger sits on all seven Money tabs, so the label rule
+           lives here once rather than per caller. */
+        aria-label="Export"
       >
-        <Download size={14} aria-hidden /> Export
+        <Download size={14} aria-hidden /> <span className={shared.headerBtnLabel}>Export</span>
       </button>
 
       {open && (

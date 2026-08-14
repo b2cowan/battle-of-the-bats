@@ -42,6 +42,7 @@ import { getCoachGuidance } from '@/lib/coach-guidance';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
 
@@ -401,7 +402,10 @@ export default function TeamOverviewPage({
 
       // Dues outstanding + overdue count (best-effort — dues failure never breaks the page)
       if (canMoney && duesRes && duesRes.ok) {
-        const duesData: { players?: Array<{ outstanding?: number; installments?: Array<{ paidAt: string | null; dueDate: string }> }> } = await duesRes.json();
+        // `paidAmount` is declared here on purpose: `isNeverPaidPlayer` REQUIRES payment dollars
+        // (mig 232 — the stamps are only a coverage projection), and this local shape is what
+        // turns "the payload happened to carry the field" into a compiler-checked contract.
+        const duesData: { players?: Array<{ outstanding?: number; paidAmount: number; installments?: Array<{ paidAt: string | null; dueDate: string }> }> } = await duesRes.json();
         const players = duesData.players ?? [];
         const totalOutstanding = players.reduce((s, p) => s + (p.outstanding ?? 0), 0);
         // Overdue is a CALENDAR question in the org's timezone — comparing date strings avoids
@@ -1234,7 +1238,7 @@ export default function TeamOverviewPage({
           sub: (!budget || budget.amount == null)
             ? 'Track what the season costs'
             : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
-          href: `${base}/accounting/budget-vs-actual`,
+          href: moneySectionHref(base, 'budget-vs-actual'),
           tone: (!budget || budget.amount == null) ? 'muted'
             : budget.spent > budget.amount ? 'danger' : 'default',
           progress: (!setupLoading && budget && budget.amount != null && budget.amount > 0)

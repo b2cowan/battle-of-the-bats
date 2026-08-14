@@ -1,0 +1,1140 @@
+<title>The Receipt Book</title>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     MOCKUP CHROME — deliberately NOT the product palette, so the
+     annotation layer can never be mistaken for product UI.
+     Cool slate neutrals + one steel-blue accent. Matches the
+     basis-picker, budget-totals and period-split mockups this one
+     sits beside.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #E9ECEF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F4F6F8;
+    --ink:         #1B1F24;
+    --ink-2:       #4B545E;
+    --ink-3:       #78828D;
+    --rule:        rgba(27, 31, 36, 0.13);
+    --rule-soft:   rgba(27, 31, 36, 0.07);
+    --accent:      #2F5D8A;
+    --accent-soft: rgba(47, 93, 138, 0.10);
+    --on-accent:   #FFFFFF;
+    --new:         #0E6E64;
+    --new-bg:      rgba(14, 110, 100, 0.10);
+    --restyled:    #8A5410;
+    --restyled-bg: rgba(138, 84, 16, 0.11);
+    --same:        #5C6773;
+    --same-bg:     rgba(92, 103, 115, 0.10);
+    --gone:        #A03434;
+    --gone-bg:     rgba(160, 52, 52, 0.10);
+    --shadow:      0 1px 2px rgba(16,22,28,.06), 0 8px 28px rgba(16,22,28,.09);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --f-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono:    ui-monospace, "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15181C;
+      --surface:     #1D2126;
+      --surface-2:   #24292F;
+      --ink:         #E7EBEF;
+      --ink-2:       #B2BBC4;
+      --ink-3:       #87929C;
+      --rule:        rgba(231, 235, 239, 0.16);
+      --rule-soft:   rgba(231, 235, 239, 0.08);
+      --accent:      #85B4DF;
+      --accent-soft: rgba(133, 180, 223, 0.13);
+      --on-accent:   #10141A;
+      --new:         #5FCFC2;
+      --new-bg:      rgba(95, 207, 194, 0.13);
+      --restyled:    #E3A85C;
+      --restyled-bg: rgba(227, 168, 92, 0.13);
+      --same:        #9AA5B1;
+      --same-bg:     rgba(154, 165, 177, 0.12);
+      --gone:        #EE8A8A;
+      --gone-bg:     rgba(238, 138, 138, 0.13);
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #15181C;
+    --surface:     #1D2126;
+    --surface-2:   #24292F;
+    --ink:         #E7EBEF;
+    --ink-2:       #B2BBC4;
+    --ink-3:       #87929C;
+    --rule:        rgba(231, 235, 239, 0.16);
+    --rule-soft:   rgba(231, 235, 239, 0.08);
+    --accent:      #85B4DF;
+    --accent-soft: rgba(133, 180, 223, 0.13);
+    --on-accent:   #10141A;
+    --new:         #5FCFC2;
+    --new-bg:      rgba(95, 207, 194, 0.13);
+    --restyled:    #E3A85C;
+    --restyled-bg: rgba(227, 168, 92, 0.13);
+    --same:        #9AA5B1;
+    --same-bg:     rgba(154, 165, 177, 0.12);
+    --gone:        #EE8A8A;
+    --gone-bg:     rgba(238, 138, 138, 0.13);
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 0 0 0.35rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 1.03rem;
+    margin: 0 0 1.4rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin: 0 0 2.4rem; }
+  .tag {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.14rem 0.46rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag.new      { color: var(--new);      background: var(--new-bg); }
+  .tag.restyled { color: var(--restyled); background: var(--restyled-bg); }
+  .tag.same     { color: var(--same);     background: var(--same-bg); }
+  .tag.gone     { color: var(--gone);     background: var(--gone-bg); }
+  .tag.call     { color: var(--accent);   background: var(--accent-soft); }
+
+  .sect { margin: 0 0 3.4rem; }
+  .sect-head { display: flex; align-items: baseline; gap: 0.7rem; margin: 0 0 0.5rem; flex-wrap: wrap; }
+  .sect-num {
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 1.9rem 0 0.6rem;
+  }
+  .sect > p, .sect > ul { max-width: 70ch; color: var(--ink-2); margin: 0 0 1.1rem; }
+  .sect > p strong, .sect > ul strong { color: var(--ink); font-weight: 600; }
+  ul { padding-left: 1.1rem; }
+  li { margin: 0 0 0.4rem; }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    margin: 1.1rem 0;
+    max-width: 70ch;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note.warn { border-left-color: var(--gone); }
+
+  .stage {
+    border-radius: 14px;
+    padding: 1.4rem;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(0deg, var(--rule-soft) 1px, transparent 1px) 0 0 / 100% 26px,
+      var(--surface-2);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+  .stage + .stage { margin-top: 0.9rem; }
+  .caption {
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    margin: 0.5rem 0 0;
+    max-width: 74ch;
+  }
+  .caption b { color: var(--ink-2); }
+
+  /* ── The defect strip ── */
+  .defect {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.9rem;
+    margin: 1.3rem 0 0.6rem;
+  }
+  .dcell {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+  }
+  .dcell.bad { border-color: var(--gone); }
+  .dlabel {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ink-3);
+    margin: 0 0 0.25rem;
+  }
+  .dval {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .dcell.bad .dval { color: var(--gone); }
+  .dsub { font-size: 0.78rem; color: var(--ink-3); margin-top: 0.15rem; }
+
+  /* ── Decisions awaiting the owner ── */
+  .mark.call { color: var(--accent); background: var(--accent-soft); }
+  .calls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2.8rem;
+  }
+  .call {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .call-n {
+    font-family: var(--f-mono);
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+    display: block; margin-bottom: 0.15rem;
+  }
+  .call h4 { margin: 0 0 0.25rem; font-size: 0.92rem; font-weight: 700; text-wrap: balance; }
+  .call p { margin: 0; font-size: 0.81rem; color: var(--ink-3); }
+  .call p b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── Before / after comparison ── */
+  .vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 1.1rem; width: 100%; }
+  .vsitem { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+  .vslab {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .vslab.now  { color: var(--same); }
+  .vslab.next { color: var(--new); }
+  .stage.vsstage { display: block; }
+
+  /* ── Closing checklist ── */
+  .keeps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.7rem; margin-top: 1rem; }
+  .keep {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .keep h4 { margin: 0 0 0.2rem; font-size: 0.9rem; font-weight: 700; }
+  .keep p { margin: 0; font-size: 0.82rem; color: var(--ink-3); }
+
+  /* ─────────────────────────────────────────────────────────────
+     PRODUCT SKIN — the real coaches-portal tokens (warm portal).
+     ───────────────────────────────────────────────────────────── */
+  .skin {
+    --p-card:        #FFFFFF;
+    --p-inset:       #FCFBF8;
+    --p-ground:      #F5F1E8;
+    --p-ink:         #241E15;
+    --p-ink-soft:    #4A4235;
+    --p-dim:         #6A635C;
+    --p-line:        rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-field:       #FFFFFF;
+    --p-lime:        #D9F99D;
+    --p-olive:       #57651E;
+    --p-olive-soft:  rgba(87, 101, 30, 0.10);
+    --p-danger:      #C2410C;
+    --p-danger-soft: rgba(194, 65, 12, 0.09);
+    --p-warn:        #92600A;
+    --p-warn-soft:   rgba(146, 96, 10, 0.10);
+    --p-good:        #2F6B3C;
+    --p-good-soft:   rgba(47, 107, 60, 0.10);
+    --p-link:        #1D4ED8;
+    --p-on-olive:    #24310A;
+    width: 100%;
+    max-width: 560px;
+    font-family: var(--f-body);
+    color: var(--p-ink);
+  }
+  .skin.wide { max-width: 700px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .skin {
+      --p-card:        #111827;
+      --p-inset:       rgba(255,255,255,0.03);
+      --p-ground:      #0C111B;
+      --p-ink:         rgba(255,255,255,0.9);
+      --p-ink-soft:    rgba(255,255,255,0.7);
+      --p-dim:         rgba(255,255,255,0.45);
+      --p-line:        rgba(255,255,255,0.12);
+      --p-line-strong: rgba(255,255,255,0.2);
+      --p-field:       rgba(255,255,255,0.05);
+      --p-olive:       #A3B546;
+      --p-olive-soft:  rgba(255,255,255,0.10);
+      --p-danger:      #F87171;
+      --p-danger-soft: rgba(248, 113, 113, 0.12);
+      --p-warn:        #E3B061;
+      --p-warn-soft:   rgba(227, 176, 97, 0.13);
+      --p-good:        #6EE7A8;
+      --p-good-soft:   rgba(110, 231, 168, 0.12);
+      --p-link:        #93B4FF;
+      --p-on-olive:    #0A0A0A;
+    }
+  }
+  :root[data-theme="dark"] .skin {
+    --p-card:        #111827;
+    --p-inset:       rgba(255,255,255,0.03);
+    --p-ground:      #0C111B;
+    --p-ink:         rgba(255,255,255,0.9);
+    --p-ink-soft:    rgba(255,255,255,0.7);
+    --p-dim:         rgba(255,255,255,0.45);
+    --p-line:        rgba(255,255,255,0.12);
+    --p-line-strong: rgba(255,255,255,0.2);
+    --p-field:       rgba(255,255,255,0.05);
+    --p-olive:       #A3B546;
+    --p-olive-soft:  rgba(255,255,255,0.10);
+    --p-danger:      #F87171;
+    --p-danger-soft: rgba(248, 113, 113, 0.12);
+    --p-warn:        #E3B061;
+    --p-warn-soft:   rgba(227, 176, 97, 0.13);
+    --p-good:        #6EE7A8;
+    --p-good-soft:   rgba(110, 231, 168, 0.12);
+    --p-link:        #93B4FF;
+    --p-on-olive:    #0A0A0A;
+  }
+
+  /* ── The sheet ── */
+  .modal {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.9rem 1.1rem 0.75rem;
+  }
+  .modal-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+  .x { color: var(--p-dim); font-size: 0.95rem; }
+  .modal-body { padding: 0 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.95rem; }
+  .modal-foot {
+    display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--p-line);
+    background: var(--p-inset);
+  }
+  .lede { font-size: 0.86rem; color: var(--p-ink-soft); margin: 0; }
+  .lede b { font-weight: 700; color: var(--p-ink); }
+
+  .btn {
+    font: inherit; font-size: 0.84rem; font-weight: 600;
+    padding: 0.42rem 0.85rem; border-radius: 7px;
+    border: 1px solid transparent; background: transparent; color: var(--p-ink-soft);
+    cursor: default;
+  }
+  .btn.ghost { color: var(--p-dim); }
+  .btn.secondary { border-color: var(--p-line-strong); background: var(--p-card); color: var(--p-ink); }
+  .btn.primary { background: var(--p-lime); color: var(--p-on-olive); font-weight: 700; }
+
+  /* ── Form fields ── */
+  .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+  .ifield { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .ifield.full { grid-column: 1 / -1; }
+  .flabel { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; color: var(--p-dim); }
+  .fbox {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
+    border: 1px solid var(--p-line-strong); border-radius: 7px;
+    background: var(--p-field);
+    padding: 0.36rem 0.55rem;
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+  .fbox .cal { color: var(--p-dim); font-size: 0.85rem; }
+  .fbox .sel { color: var(--p-dim); font-size: 0.7rem; }
+  .fbox .caret { width: 1px; height: 15px; background: var(--p-ink); }
+  .fbox .ph { color: var(--p-dim); }
+
+  /* ── Reconciliation strip ── */
+  .recon {
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    border-radius: 9px; padding: 0.6rem 0.8rem;
+    font-size: 0.82rem; line-height: 1.45;
+  }
+  .recon .mk { font-weight: 800; flex: 0 0 auto; }
+  .recon b { font-weight: 700; }
+  .recon.short { background: var(--p-warn-soft); color: var(--p-warn); }
+  .recon.over  { background: var(--p-danger-soft); color: var(--p-danger); }
+  .recon.match { background: var(--p-good-soft); color: var(--p-good); }
+  .recon.plain { background: var(--p-inset); color: var(--p-ink-soft); border: 1px dashed var(--p-line-strong); }
+  .recon .body { color: inherit; }
+  .recon .body .quiet { color: inherit; opacity: 0.85; display: block; font-size: 0.76rem; margin-top: 0.1rem; }
+
+  /* ── Allocation preview inside the payment sheet ── */
+  .alloc { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .alloc-head {
+    padding: 0.5rem 0.8rem;
+    background: var(--p-inset);
+    border-bottom: 1px solid var(--p-line);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+    display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  }
+  .arow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.8rem;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .arow + .arow { border-top: 1px solid var(--p-line); }
+  .arow .aname { font-weight: 600; }
+  .arow .aamt { text-align: right; font-weight: 700; }
+  .arow .asub { grid-column: 1 / -1; font-size: 0.76rem; color: var(--p-dim); }
+
+  /* ── Roster table (Player Dues) ── */
+  .duestbl { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; background: var(--p-card); box-shadow: var(--shadow); }
+  .drow {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.4fr) 86px 76px 76px 86px 92px;
+    gap: 0.5rem;
+    padding: 0.48rem 0.8rem;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    align-items: center;
+  }
+  .drow span:not(:first-child) { text-align: right; }
+  .drow + .drow { border-top: 1px solid var(--p-line); }
+  .drow.head {
+    background: var(--p-inset);
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .drow.hot { background: var(--p-olive-soft); }
+  .pill {
+    display: inline-flex; justify-content: center;
+    font-size: 0.68rem; font-weight: 700;
+    padding: 0.12rem 0.45rem; border-radius: 999px;
+    justify-self: end;
+  }
+  .pill.paid    { color: var(--p-good);   background: var(--p-good-soft); }
+  .pill.partial { color: var(--p-warn);   background: var(--p-warn-soft); }
+  .pill.unpaid  { color: var(--p-danger); background: var(--p-danger-soft); }
+
+  /* ── Drawer: schedule + payments ── */
+  .drawer {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--p-line);
+  }
+  .drawer-title { font-size: 1rem; font-weight: 700; }
+  .drawer-body { padding: 1rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
+  .statgrid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 0.6rem;
+  }
+  .stat {
+    background: var(--p-inset); border: 1px solid var(--p-line); border-radius: 9px;
+    padding: 0.5rem 0.7rem;
+  }
+  .stat .sl { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--p-dim); display: block; }
+  .stat .sv { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+
+  .subhead {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+    display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  }
+
+  .inst { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .irow2 {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.15rem 0.7rem;
+    padding: 0.55rem 0.8rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .irow2 + .irow2 { border-top: 1px solid var(--p-line); }
+  .inum { font-size: 0.76rem; font-weight: 700; color: var(--p-dim); }
+  .iname { font-weight: 600; }
+  .iright { text-align: right; font-weight: 700; }
+  .isub { grid-column: 2 / -1; font-size: 0.75rem; color: var(--p-dim); }
+  .bar {
+    grid-column: 2 / -1;
+    height: 5px; border-radius: 999px;
+    background: var(--p-line);
+    overflow: hidden;
+    margin-top: 0.25rem;
+  }
+  .bar i { display: block; height: 100%; background: var(--p-olive); border-radius: 999px; }
+  .ichip {
+    font-size: 0.66rem; font-weight: 700;
+    padding: 0.1rem 0.42rem; border-radius: 999px;
+    justify-self: end;
+  }
+  .ichip.done { color: var(--p-good); background: var(--p-good-soft); }
+  .ichip.part { color: var(--p-warn); background: var(--p-warn-soft); }
+  .ichip.open { color: var(--p-dim); background: var(--p-inset); border: 1px solid var(--p-line); }
+
+  .paylist { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .payrow {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.1rem 0.7rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    align-items: baseline;
+  }
+  .payrow + .payrow { border-top: 1px solid var(--p-line); }
+  .paydate { font-size: 0.76rem; color: var(--p-dim); white-space: nowrap; }
+  .paywhat { font-weight: 600; }
+  .payamt { text-align: right; font-weight: 700; }
+  .paysub { grid-column: 2 / -1; font-size: 0.74rem; color: var(--p-dim); }
+
+  /* ── Radio choice (overpayment) ── */
+  .choice { display: flex; flex-direction: column; gap: 0.45rem; }
+  .ccard {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.1rem 0.7rem;
+    align-items: center;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--p-line);
+    border-radius: 9px;
+    background: var(--p-card);
+  }
+  .ccard.on { border-color: var(--p-olive); background: var(--p-olive-soft); }
+  .cdot {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 1.5px solid var(--p-line-strong); background: var(--p-field);
+    grid-row: span 2; align-self: center;
+  }
+  .ccard.on .cdot { border-color: var(--p-olive); box-shadow: inset 0 0 0 3.5px var(--p-card), inset 0 0 0 9px var(--p-olive); }
+  .cname { font-size: 0.88rem; font-weight: 700; }
+  .csub { font-size: 0.76rem; color: var(--p-dim); }
+
+  /* ── Email snippet ── */
+  .mail {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-size: 0.85rem;
+  }
+  .mail-head {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--p-line);
+    background: var(--p-inset);
+    display: flex; flex-direction: column; gap: 0.1rem;
+  }
+  .mail-head .ml { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--p-dim); }
+  .mail-head .ms { font-weight: 700; }
+  .mail-body { padding: 0.75rem 0.9rem 0.9rem; color: var(--p-ink-soft); }
+  .mail-body p { margin: 0 0 0.55rem; max-width: none; }
+  .mail-body p:last-child { margin-bottom: 0; }
+  .mail-body .li {
+    background: var(--p-inset); border: 1px solid var(--p-line); border-radius: 7px;
+    padding: 0.45rem 0.65rem; margin: 0.45rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .mail-body b { color: var(--p-ink); }
+  .mail-body .strike { color: var(--p-danger); }
+
+  /* ── Inline annotation marker inside product frames ── */
+  .mark {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.66rem; font-weight: 700;
+    padding: 0.1rem 0.36rem; border-radius: 3px;
+    vertical-align: middle;
+  }
+  .mark.new { color: var(--new); background: var(--new-bg); }
+  .mark.restyled { color: var(--restyled); background: var(--restyled-bg); }
+
+  @media (max-width: 680px) {
+    .drow { grid-template-columns: minmax(96px, 1.3fr) 70px 62px 62px 70px 76px; font-size: 0.76rem; }
+    .frow { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches · Money · Player Dues</p>
+  <h1>The Receipt Book</h1>
+  <p class="standfirst">
+    Today an installment is simultaneously the bill and the receipt: "paid" is a stamp, with no
+    amount, no date the money arrived, and no way to record part of it. This draws the separation —
+    <strong>an installment stays a plan; a payment becomes a fact</strong> (what arrived, when, how
+    much) — and shows what every screen it touches looks like afterwards.
+  </p>
+  <div class="legend">
+    <span class="tag new">New</span>
+    <span class="tag restyled">Restyled</span>
+    <span class="tag same">Unchanged</span>
+    <span class="tag gone">Removed</span>
+    <span class="tag call">Needs your call</span>
+    <span style="font-size:0.82rem;color:var(--ink-3);">— every element in the frames below carries one.</span>
+  </div>
+
+  <div class="note">
+    <b>All six calls RULED by the owner, 2026-08-13:</b> calls 1, 2, 3, 4 and 6 as recommended.
+    Call 5 simplified — an overpayment beyond the schedule becomes an overpayment credit
+    <em>automatically</em>, no prompt (§3 updated to match). The cards below are kept as the record
+    of what was asked.
+  </div>
+
+  <div class="calls">
+    <div class="call">
+      <span class="call-n">Call 1</span>
+      <h4>A payment record, or a part-paid amount on the installment?</h4>
+      <p>Everything below is drawn as a <b>payment record</b>. The smaller alternative breaks the
+        moment two part-payments land on one installment — argued under §1.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 2</span>
+      <h4>What happens to installments already marked paid?</h4>
+      <p>Proposed: each becomes one payment for the full amount, keeping its ledger link. The
+        alternative is legacy rows the new code reads forever. Under §2.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 3</span>
+      <h4>Does the ledger take the date the money arrived?</h4>
+      <p>Drawn in <b>§1</b>: the coach types it, it defaults to today. This is what makes the
+        month-by-month cash view honest — and it changes history's shape.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 4</span>
+      <h4>Do credits stay credits?</h4>
+      <p>Proposed: <b>yes, untouched</b>. A fundraiser rebate lowers what a player owes and is not
+        income — the standing ruling. Payments end the need to fake them.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 5</span>
+      <h4>Overpayment: automatic credit, or the coach decides?</h4>
+      <p>Drawn in <b>§3</b> as a one-question prompt with a recommended default, rather than a
+        silent conversion.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 6</span>
+      <h4>What do reminders chase once a balance can be partly paid?</h4>
+      <p>Drawn in <b>§5</b>: the unpaid remainder of the overdue installment, and a thank-you for
+        what's arrived. Today they chase the full amount.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>The problem, measured on one family</h2></div>
+    <p>
+      Dues are set at <strong>$300 per quarter</strong>. The family decides to send
+      <strong>$100 a month</strong> instead — same money, different rhythm, and by October two
+      transfers have arrived. Here is what the product knows:
+    </p>
+    <div class="defect">
+      <div class="dcell">
+        <p class="dlabel">The family has sent</p>
+        <div class="dval">$200.00</div>
+        <p class="dsub">$100 in September, $100 in October</p>
+      </div>
+      <div class="dcell bad">
+        <p class="dlabel">The product records</p>
+        <div class="dval">$0.00</div>
+        <p class="dsub">No installment fully paid — nowhere to put a partial amount</p>
+      </div>
+      <div class="dcell bad">
+        <p class="dlabel">So the reminder says</p>
+        <div class="dval">$300.00</div>
+        <p class="dsub">"No dues payments yet" — to a family that is paying</p>
+      </div>
+    </div>
+    <p>
+      Every surface inherits this: the unpaid badge counts them, the "Haven't paid anything yet"
+      panel names them, the digest and Ask the Front Office repeat it, and the team's income shows
+      $0 from them.
+    </p>
+    <div class="note warn">
+      <b>The workaround makes it worse.</b> The only place a coach can type a partial dollar figure
+      today is a <em>credit</em> — and credits post nothing to the team's books. Log the $100s as
+      credits and the export row reads <b>"Paid $0.00 · Status Fully paid"</b>, the ledger is short
+      $300 with no trace, and the Season Refund Calculator schedules that family to be
+      <b>refunded $300</b> it thinks they never owed. A faithful payer becomes a double-payout risk.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">1</span><h2>Recording a payment</h2></div>
+    <p>
+      One new door, opened from a player's drawer (and from the roster row's actions): <strong>Record
+      payment</strong>. Three facts — how much, when it arrived, how — and the sheet shows where the
+      money lands before anything is saved. Amounts spread across installments oldest-first; the
+      coach never allocates by hand.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Record a Payment — Ledger, Omar <span class="mark new">New</span></span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="frow">
+              <span class="ifield">
+                <span class="flabel">Amount received</span>
+                <span class="fbox">$100.00 <span class="caret"></span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Date received <span class="mark call">Call 3</span></span>
+                <span class="fbox">2026-10-12 <span class="cal">▤</span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Method</span>
+                <span class="fbox">E-transfer <span class="sel">▾</span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Note (optional)</span>
+                <span class="fbox"><span class="ph">e.g. from Dana's account</span></span>
+              </span>
+            </div>
+
+            <div class="alloc">
+              <div class="alloc-head"><span>Where it lands</span></div>
+              <div class="arow">
+                <span class="aname">Installment #1 — due Sep 30</span>
+                <span class="aamt">+$100.00</span>
+                <span class="asub">$100.00 already received · after this payment: $200.00 of $300.00 — $100.00 to go</span>
+              </div>
+            </div>
+
+            <div class="recon plain">
+              <span class="mk">↳</span>
+              <span class="body">
+                Posts <b>$100.00 income</b> to the team ledger, dated <b>Oct 12</b> — the day it
+                arrived, not the day you typed it.
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Record $100.00</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the entire sheet. Date received defaults to today, so the quick case is two taps;
+      a coach catching up on a month of e-transfers backdates each one and the books stay honest.
+      <b>Removed (by consequence):</b> nothing — "Mark paid" survives as a shortcut that records a
+      payment for the installment's full amount in one tap.
+    </p>
+
+    <div class="note">
+      <b>Call 1, argued.</b> The smaller build — a part-paid amount stored on the installment itself —
+      handles this frame, and fails the next real Tuesday: two $100 transfers land on the same
+      installment and the product can only show their sum, one date, one method. Reversing the wrong
+      one becomes guesswork, and the ledger can't tie an income line to an actual transfer. A payment
+      record costs one more table and buys receipts that behave like receipts.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">2</span><h2>The part-paid player, at both altitudes</h2></div>
+    <p>
+      The roster table keeps its five money columns — <strong>Paid finally means something</strong>:
+      the sum of recorded payments, whatever rhythm they arrived in. The status word gains no new
+      values; "Partial" simply starts appearing for the people it was always meant to describe.
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="duestbl">
+          <div class="drow head">
+            <span>Player</span><span>Total dues</span><span>Credits</span><span>Paid</span><span>Balance</span><span>Status</span>
+          </div>
+          <div class="drow">
+            <span>Ledger, Nia</span><span>$1,200.00</span><span>$0.00</span><span>$1,200.00</span><span>$0.00</span><span class="pill paid">Fully paid</span>
+          </div>
+          <div class="drow hot">
+            <span>Ledger, Omar</span><span>$1,200.00</span><span>$0.00</span><span>$200.00</span><span>$1,000.00</span><span class="pill partial">Partial</span>
+          </div>
+          <div class="drow">
+            <span>Ledger, Pia</span><span>$1,200.00</span><span>$150.00</span><span>$300.00</span><span>$750.00</span><span class="pill partial">Partial</span>
+          </div>
+          <div class="drow">
+            <span>Ledger, Quinn</span><span>$1,200.00</span><span>$0.00</span><span>$0.00</span><span>$1,200.00</span><span class="pill unpaid">Unpaid</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Restyled:</b> the Paid column now includes part-payments — Omar's row finally shows the
+      $200 that exists. <b>Unchanged:</b> every column name, the status words, the shared money-cell
+      recipe from the table-consistency pass, and the two balance definitions — Balance here is still
+      the rolling one, credits subtracted. Pia's row shows the two side by side doing different jobs:
+      $300 paid <em>and</em> a $150 fundraiser credit.
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="drawer">
+          <div class="drawer-head">
+            <span class="drawer-title">Ledger, Omar — Dues</span>
+            <button class="btn secondary" type="button">Record payment <span class="mark new">New</span></button>
+          </div>
+          <div class="drawer-body">
+            <div class="statgrid">
+              <div class="stat"><span class="sl">Total dues</span><span class="sv">$1,200.00</span></div>
+              <div class="stat"><span class="sl">Credits</span><span class="sv">$0.00</span></div>
+              <div class="stat"><span class="sl">Paid</span><span class="sv">$200.00</span></div>
+              <div class="stat"><span class="sl">Balance</span><span class="sv">$1,000.00</span></div>
+            </div>
+
+            <div>
+              <div class="subhead" style="margin-bottom:0.4rem;"><span>Schedule — 4 installments</span></div>
+              <div class="inst">
+                <div class="irow2">
+                  <span class="inum">#1</span>
+                  <span class="iname">$300.00 · due Sep 30</span>
+                  <span class="ichip part">$200.00 of $300.00 <span class="mark new">New</span></span>
+                  <span class="bar"><i style="width:66%;"></i></span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#2</span>
+                  <span class="iname">$300.00 · due Nov 30</span>
+                  <span class="ichip open">Unpaid</span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#3</span>
+                  <span class="iname">$300.00 · due Jan 31</span>
+                  <span class="ichip open">Unpaid</span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#4</span>
+                  <span class="iname">$300.00 · due Mar 31</span>
+                  <span class="ichip open">Unpaid</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="subhead" style="margin-bottom:0.4rem;">
+                <span>Payments — $200.00 received <span class="mark new">New</span></span>
+              </div>
+              <div class="paylist">
+                <div class="payrow">
+                  <span class="paydate">Sep 14</span>
+                  <span class="paywhat">E-transfer</span>
+                  <span class="payamt">$100.00</span>
+                  <span class="paysub">→ Installment #1 · posted to ledger Sep 14</span>
+                </div>
+                <div class="payrow">
+                  <span class="paydate">Oct 12</span>
+                  <span class="paywhat">E-transfer · "from Dana's account"</span>
+                  <span class="payamt">$100.00</span>
+                  <span class="paysub">→ Installment #1 · posted to ledger Oct 12</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the Payments section — each row is a receipt with its own date, method and ledger
+      line — and the coverage chip and hairline bar on a part-paid installment.
+      <b>Unchanged:</b> the stat grid, the Credits section below (not drawn — it keeps today's shape
+      exactly), and the installment rows for anything untouched.
+    </p>
+
+    <div class="note">
+      <b>Call 2, argued.</b> Installments already stamped paid — on both databases — are proposed to
+      become <b>one payment each</b>: the full amount, dated the day of the stamp, keeping the link
+      to the ledger entry that already exists. History reads identically, no row is deleted, and the
+      new screens never need a second code path for "old-style paid." The alternative — leaving them
+      as legacy stamps — means every surface above carries two definitions of Paid forever.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">3</span><h2>When a payment overshoots</h2></div>
+    <p>
+      Within the schedule, overshoot isn't a question — money rolls forward oldest-first, and the
+      sheet shows it doing so. The question only arises when a payment clears <strong>everything
+      left on the schedule</strong> and keeps going. That gets one visible choice, not a silent
+      conversion.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Record a Payment — Ledger, Quinn</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="frow">
+              <span class="ifield">
+                <span class="flabel">Amount received</span>
+                <span class="fbox">$500.00 <span class="caret"></span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Date received</span>
+                <span class="fbox">2027-03-02 <span class="cal">▤</span></span>
+              </span>
+            </div>
+
+            <div class="alloc">
+              <div class="alloc-head"><span>Where it lands</span></div>
+              <div class="arow">
+                <span class="aname">Installment #3 — due Jan 31</span>
+                <span class="aamt">+$150.00</span>
+                <span class="asub">was $150.00 short — now fully paid</span>
+              </div>
+              <div class="arow">
+                <span class="aname">Installment #4 — due Mar 31</span>
+                <span class="aamt">+$300.00</span>
+                <span class="asub">fully paid</span>
+              </div>
+            </div>
+
+            <div class="recon match">
+              <span class="mk">✓</span>
+              <span class="body">
+                <b>$50.00 more than Quinn's schedule</b> — saved as an overpayment credit.
+                <span class="quiet">Quinn shows "In credit" · counted in the season-end refund <span class="mark call">Call 5 — ruled: automatic</span></span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Record $500.00</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> everything in this frame. <b>Ruled (owner, 2026-08-13):</b> the excess becomes an
+      overpayment credit automatically — the product already has the "overpayment" credit type and
+      the "In credit" status waiting for exactly this. The strip states what happened; a mistyped
+      amount is corrected by removing the payment, which also removes the credit it created.
+      <b>Call 4 sits here too:</b> the credit created is an ordinary credit, same as a fundraiser
+      rebate — no new money concept, and the standing rebate ruling is untouched.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">4</span><h2>Changing dues after money has moved</h2></div>
+    <p>
+      The owner's question that started this: dues rise from $1,200 to $1,400 mid-season, and Omar
+      has paid $200. Today the bulk flow <strong>skips him entirely</strong> to protect his receipts.
+      With payments as their own records, his money no longer lives on the schedule — so the schedule
+      can change and <strong>the receipts simply stay</strong>.
+    </p>
+
+    <div class="stage vsstage">
+      <div class="vs">
+        <div class="vsitem">
+          <span class="vslab now">Today — protected by being frozen</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="recon short" style="border:1px solid var(--p-line);">
+              <span class="mk">!</span>
+              <span class="body">
+                1 player has already paid something, so their existing schedule was left as it is.
+                <span class="quiet">Omar keeps the old $1,200 total. To charge him the new amount, you edit his schedule by hand.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="vsitem">
+          <span class="vslab next">Proposed — paid money kept, the plan re-drawn</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="modal">
+              <div class="modal-head">
+                <span class="modal-title">Replace dues — Ledger, Omar <span class="mark new">New</span></span>
+              </div>
+              <div class="modal-body">
+                <div class="alloc">
+                  <div class="alloc-head"><span>New total: $1,400.00 · $200.00 already paid</span></div>
+                  <div class="arow">
+                    <span class="aname">Received so far</span>
+                    <span class="aamt">$200.00</span>
+                    <span class="asub">Two payments and their ledger entries — untouched, still shown in the drawer</span>
+                  </div>
+                  <div class="arow">
+                    <span class="aname">Remaining $1,200.00 → 3 dates</span>
+                    <span class="aamt">$400.00 each</span>
+                    <span class="asub">Nov 30 · Jan 31 · Mar 31 — the remainder spread over what's left of the season</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the right-hand behaviour — agreed in principle on Aug 13, buildable only once
+      payments stop living on installment rows. Two sub-decisions ride with it: the remainder spreads
+      evenly across the surviving dates (drawn), and a player who has already paid <em>more</em> than
+      the new total lands in §3's overpayment choice rather than a silent negative.
+      <b>Unchanged:</b> the confirmation step, the named skip-list wording for anyone it still can't
+      touch, and the coordination point with the basis-picker project — this rule is the one edge the
+      two share.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">5</span><h2>What chases a family now</h2></div>
+    <p>
+      The sharpest customer-facing edge of the old model was the email. Reminders are the
+      <strong>only</strong> dues figure a family ever sees — there is deliberately no family-facing
+      money screen — so when the email is wrong, the product's entire voice to that family is wrong.
+    </p>
+
+    <div class="stage vsstage">
+      <div class="vs">
+        <div class="vsitem">
+          <span class="vslab now">Today — dunned for the full amount</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="mail">
+              <div class="mail-head">
+                <span class="ml">To the Chen family</span>
+                <span class="ms">Dues reminder — Riverdale Ridge U13</span>
+              </div>
+              <div class="mail-body">
+                <p>This is a friendly reminder that the following dues installments are coming due:</p>
+                <div class="li"><b>$300.00</b> due Sep 30 (Installment 1 of 4)</div>
+                <p class="strike">…sent to a family two transfers into paying it.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="vsitem">
+          <span class="vslab next">Proposed — chases the remainder, credits the rest</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="mail">
+              <div class="mail-head">
+                <span class="ml">To the Chen family</span>
+                <span class="ms">Dues reminder — Riverdale Ridge U13</span>
+              </div>
+              <div class="mail-body">
+                <p>Thanks — we've received <b>$200.00</b> toward Omar's dues so far. One installment
+                  still has a balance:</p>
+                <div class="li"><b>$100.00 remaining</b> of the $300.00 due Sep 30 <span class="mark new">New</span></div>
+                <p>If you've already sent this, it may not be recorded yet — just reply to your coach.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the remainder figure and the received-so-far line, in all three reminder paths
+      (send-now, 30-day, 7-day). <b>Call 6:</b> the wave still fires on the installment's due date —
+      what changes is the number it quotes. <b>Removed:</b> a family with payments on record can no
+      longer receive the "no dues payments yet" nudge; the unpaid badge and "Haven't paid anything
+      yet" panel stop counting anyone with a recorded payment, which is what makes the Overview's
+      count true again.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>What this deliberately leaves alone</h2></div>
+    <div class="keeps">
+      <div class="keep">
+        <h4>Credits stay credits</h4>
+        <p>Fundraiser rebates, contributions and overpayments still reduce what a player owes and
+          still post nothing as income — the standing double-count ruling holds.</p>
+      </div>
+      <div class="keep">
+        <h4>Posted ledger entries are never rewritten</h4>
+        <p>Payments add entries; corrections void and re-post. The audit trail only ever grows.</p>
+      </div>
+      <div class="keep">
+        <h4>Two balances, two names</h4>
+        <p>Outstanding (credits excluded) and rolling Balance keep their separate jobs and labels —
+          this project makes their inputs true, not their definitions different.</p>
+      </div>
+      <div class="keep">
+        <h4>Live seasons only</h4>
+        <p>Dues move money, so nothing here opens in an archived season. The archive allow-lists are
+          not touched.</p>
+      </div>
+      <div class="keep">
+        <h4>Coach rep dues only</h4>
+        <p>Org-level allocations, payment requests and the free-coach fee path have the same shape
+          and are deliberately not in scope — the payment record is designed to be liftable later.</p>
+      </div>
+      <div class="keep">
+        <h4>The table recipe</h4>
+        <p>Every number lands in the shared money cell and column-heading recipe from the
+          table-consistency pass. No new treatments.</p>
+      </div>
+    </div>
+  </div>
+
+</div>

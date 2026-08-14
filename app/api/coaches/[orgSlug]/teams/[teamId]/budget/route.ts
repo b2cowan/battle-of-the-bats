@@ -6,9 +6,10 @@ import {
   getActiveRepProgramYear,
   updateRepProgramYear,
   getRepPlayerDuesSchedules,
-  getRepPlayerDuesInstallments,
+  getRepDuesPaymentsByProgramYear,
   getRepTeamExpenses,
 } from '@/lib/db';
+import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
@@ -44,16 +45,32 @@ export const GET = withObservability(async (req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  // Compute summary stats
-  const schedules = await getRepPlayerDuesSchedules(programYear.id);
-  const installmentLists = await Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id)));
-  const allInstallments = installmentLists.flat();
-  const duesCollected = allInstallments
-    .filter(i => i.paidAt)
-    .reduce((sum, i) => sum + i.amount, 0);
+  // Compute summary stats. Collected = payment FACTS capped per player at their schedule total
+  // (mig 232) — the same figure every other dues reader quotes; the stamp-sum this replaced read
+  // part-payments as $0.
+  const [schedules, seasonPayments] = await Promise.all([
+    getRepPlayerDuesSchedules(programYear.id),
+    getRepDuesPaymentsByProgramYear(programYear.id),
+  ]);
+  const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
+  const duesCollected = schedules.reduce(
+    (sum, s) => sum + duesPaidAmount(paymentsByPlayer.get(s.playerId) ?? 0, s.totalAmount), 0);
 
+  // PAID-ONLY, like every other money surface (owner ruling 2026-08-13, thread 1A). This used
+  // to sum face values — logging a $1,600 payable you hadn't paid yet flashed the Overview tile
+  // "over budget" while the Money hub correctly showed the cash unmoved, two screens apart.
+  // Same settled-legs semantics as money-summary and Budget vs. Actual.
   const expenses = await getRepTeamExpenses(programYear.id);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  let totalExpenses = 0;
+  for (const e of expenses) {
+    if (e.expenseType === 'tournament_payable') {
+      if (e.depositPaidAt) totalExpenses += e.depositAmount ?? 0;
+      if (e.balancePaidAt) totalExpenses += e.balanceAmount ?? 0;
+    } else if (e.expensePaidAt) {
+      totalExpenses += e.amount;
+    }
+  }
+  totalExpenses = Math.round(totalExpenses * 100) / 100;
 
   return NextResponse.json({
     budgetAmount: programYear.budgetAmount ?? null,

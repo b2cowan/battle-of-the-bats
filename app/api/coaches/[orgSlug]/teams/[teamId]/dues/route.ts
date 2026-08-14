@@ -6,13 +6,19 @@ import {
   getActiveRepProgramYear,
   getRepRosterPlayers,
   getRepPlayerDuesSchedules,
-  getRepPlayerDuesInstallments,
+  getRepDuesInstallmentsBySchedules,
+  getRepDuesPaymentsByProgramYear,
+  getRepDuesPaymentsForPlayer,
   upsertRepPlayerDuesSchedule,
+  syncDuesPaidProjection,
+  reconcileOverpaymentCredits,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
+import { allocateDuesPayments, duesPaidAmount } from '@/lib/dues-payments';
+import { tournamentToday } from '@/lib/timezone';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -46,12 +52,28 @@ export const GET = withObservability(async (req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const [rosterPlayers, schedules] = await Promise.all([
+  const [rosterPlayers, schedules, allPayments] = await Promise.all([
     getRepRosterPlayers(programYear.id),
     getRepPlayerDuesSchedules(programYear.id),
+    getRepDuesPaymentsByProgramYear(programYear.id),
   ]);
 
   const scheduleMap = new Map(schedules.map(s => [s.playerId, s]));
+
+  // ONE batched query for the whole roster's installments (the per-schedule helper here was a
+  // 12–20-query N+1 — the same batched helper the digest and Ask already use).
+  const allInstallments = await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id));
+  const installmentsBySchedule = new Map<string, typeof allInstallments>();
+  for (const i of allInstallments) {
+    if (!installmentsBySchedule.has(i.scheduleId)) installmentsBySchedule.set(i.scheduleId, []);
+    installmentsBySchedule.get(i.scheduleId)!.push(i);
+  }
+
+  const paymentsMap = new Map<string, typeof allPayments>();
+  for (const p of allPayments) {
+    if (!paymentsMap.has(p.playerId)) paymentsMap.set(p.playerId, []);
+    paymentsMap.get(p.playerId)!.push(p);
+  }
 
   // Fetch all credits for this program year in one query
   const { data: allCredits } = await supabaseAdmin
@@ -70,12 +92,26 @@ export const GET = withObservability(async (req: Request,
   const playersWithDues = await Promise.all(
     rosterPlayers.map(async p => {
       const schedule = scheduleMap.get(p.id) ?? null;
-      const installments = schedule ? await getRepPlayerDuesInstallments(schedule.id) : [];
-      const paidAmount = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+      const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
+      const payments = paymentsMap.get(p.id) ?? [];
+      const paymentsTotal = payments.reduce((s, pay) => s + pay.amount, 0);
+      // Paid = recorded payment FACTS (mig 232), capped at the schedule total — the auto-created
+      // overpayment credit already carries the excess, and counting it twice would push a family
+      // "In credit" twice over. The stamps on installments are only a projection of coverage.
+      const paidAmount = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
       // ONE shared definition (lib/dues-status.ts) — this figure is also quoted by the weekly
       // digest and by an Ask the Front Office answer, and three hand-copies each promised in a
       // comment that they matched, with nothing enforcing it.
-      const outstanding = outstandingForSchedule(schedule, installments);
+      const outstanding = outstandingForSchedule(schedule, paidAmount);
+      // Per-installment coverage for the drawer's "$200.00 of $300.00" chips — and each
+      // installment carries its own remainder so downstream shapings (the Insights dues line)
+      // quote what's MISSING at a due date, not face values.
+      const coverage = schedule ? allocateDuesPayments(installments, payments).coverage : [];
+      const coverageById = new Map(coverage.map(c => [c.installmentId, c]));
+      const installmentsOut = installments.map(i => ({
+        ...i,
+        remainingAmount: coverageById.get(i.id)?.remaining ?? i.amount,
+      }));
 
       const rawCredits = creditsMap.get(p.id) ?? [];
       const credits = rawCredits.map(c => ({
@@ -87,6 +123,7 @@ export const GET = withObservability(async (req: Request,
         creditDate:  c.credit_date,
         creditType:  c.credit_type,
         notes:       c.notes ?? null,
+        paymentId:   c.payment_id ?? null,
         createdAt:   c.created_at,
       }));
       const totalCredits  = credits.reduce((s, c) => s + (c.amount as number), 0);
@@ -97,7 +134,9 @@ export const GET = withObservability(async (req: Request,
         // money-cleared coach who lacks the PII grant (the dues table shows a guardian identifier).
         player: redactRosterPlayer(p, capabilities),
         schedule,
-        installments,
+        installments: installmentsOut,
+        payments,
+        coverage,
         paidAmount,
         outstanding,
         credits,
@@ -150,6 +189,24 @@ export const POST = withObservability(async (req: Request,
       dueDate: i.dueDate,
     })),
   });
+
+  // The plan changed under recorded money (mig 232): re-project coverage onto the fresh rows,
+  // and reconcile the automatic overpayment credit BOTH ways — before this, editing one player's
+  // total below what their family had sent silently capped the difference out of every figure
+  // (review 2026-08-13, Critical 2), and only the bulk path did any of this.
+  const playerPayments = await getRepDuesPaymentsForPlayer(programYear.id, playerId);
+  if (playerPayments.length > 0) {
+    await syncDuesPaidProjection(programYear.id, playerId);
+    await reconcileOverpaymentCredits({
+      programYearId: programYear.id,
+      playerId,
+      scheduleTotal: totalAmount,
+      paymentsTotal: Math.round(playerPayments.reduce((s, p) => s + Math.round(p.amount * 100), 0)) / 100,
+      creditDate: tournamentToday(),
+      createdBy: resolved.ctx!.user.id,
+      paymentId: null,
+    });
+  }
 
   return NextResponse.json(result, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/dues' });

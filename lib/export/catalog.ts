@@ -393,7 +393,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export the season budget plan — category, line, whether it is a cost or expected funding, amount, its payment months, and notes.',
+      'Export the season budget plan — category, line, whether it is a cost or expected fundraising, amount, its payment months, and notes.',
   },
   {
     id: 'coaches-expenses-payables',

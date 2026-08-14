@@ -32,6 +32,17 @@
      • .cardStackCell / .cardActionCell
                                inside .tableAsCards: a cell too big for one
                                label/value line, and the trailing action cell.
+     • .tableFoot + .footLabel / .footValue / .footNote / .footLeadCell
+                               a season/period TOTALS <tfoot> row under a list
+                               table, each figure beneath the column it totals.
+                               @640 it becomes the last card in the list. Reach
+                               for this before hand-rolling a totals row: it is
+                               the THIRD such treatment in this file (see also
+                               .ledgerTotal for the div-grid outlines and
+                               .moneyGridTotal for the no-reflow comparison
+                               grids) and all three take their size/weight from
+                               --money-cat-*, pinned by
+                               tests/unit/money-hierarchy-type-scale.test.ts.
      • .cardActionLabel        words for an icon-only row control, shown only once
                                .cardActionCell has made it a full-width button @640.
      • .modalFlushFooter       a modal tall enough to SCROLL: kills the sticky footer's bottom
@@ -55,6 +66,7 @@
   .tableAsCards { border: none !important; overflow: visible; }
   .tableAsCards table,
   .tableAsCards tbody,
+  .tableAsCards tfoot,
   .tableAsCards tr,
   .tableAsCards td { display: block; width: auto; }
   .tableAsCards thead { display: none; }
@@ -102,6 +114,22 @@
   .tableAsCards td.cardActionCell {
     padding-top: 0.6rem !important;
   }
+  /* tableFoot — a totals <tfoot> row becomes the LAST card in the list, holding the season figures.
+     Each footer cell carries `data-label` like every other cell, so the label arrives from
+     `td[data-label]::before` and the in-cell `.footLabel` caption must stand down or the card prints
+     every label twice. The footer sheds its desktop rule and tint here: as a card it is already set
+     apart by the card border, and keeping them drew a stray line across the middle of the stack. */
+  .tableAsCards .footLabel { display: none; }
+  .tableAsCards .tableFoot td { border-top: none; background: none; }
+  /* ⚠ EXCEPT THE LEAD CELL, which keeps its caption as the card's heading. It is the one footer
+     cell with no `data-label` — nothing in the Player column above it is a figure to caption — so
+     hiding its label too would leave a cell holding an invisible span. That is NOT `:empty`, so the
+     blank-cell rule above cannot collect it, and the card would open with a blank line.
+     ⚠ A CLASS, NOT `:first-child`. This was written positionally first; `.cardActionCell` two rules
+     up is the file's own answer to the identical problem at the other end of the row, and a
+     positional selector silently styles the wrong cell the day a column is inserted or reordered
+     rather than failing where someone would notice. */
+  .tableAsCards .tableFoot td.footLeadCell .footLabel { display: block; }
 }
 
 /* cardActionLabel — words for an icon-only row control, revealed only once its row has become a
@@ -746,85 +774,30 @@
   .seasonSpread { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
 }
 
-/* Profile pages: main column + sticky quick-facts rail (player profile is the first
-   adopter). The rail pins below the team header via the height it publishes. */
-/* ── The right rail — ONE geometry, every surface that has one ──────────────
-   Shipped first on the player profile; generalised when Option C added rails to the Overview,
-   the lineup builder and Dues (owner-ratified 2026-08-02). Four hand-copies of the same grid is
-   exactly the drift the Budget↔BvA width split taught us to avoid, so the names are surface-neutral.
-   300px at ≥901px, sticky below the pinned masthead; below that the rail moves LAST — work first,
-   reference after (the Staff-rail precedent). NO new breakpoints: the 640/900 pair stands. */
-.railCols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 1.25rem;
-  align-items: start;
-}
-.rail {
-  position: sticky;
-  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 1rem);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-@media (max-width: 900px) {
-  .railCols { grid-template-columns: minmax(0, 1fr); }
-  .rail { position: static; order: 2; }
-  /* ⚠ A REFERENCE RAIL DOES NOT EXIST BELOW THE WIDE BREAKPOINT (owner, 2026-08-03).
-     Moving it last was not enough: a rail earns its place by sitting BESIDE the work, where it
-     costs nothing to glance at. Stacked under the page it stops being a margin note and becomes
-     another block of the same information the coach already scrolled past — on the Overview it
-     landed directly beneath the very tiles it restates. Surfaces that need their rail's content
-     on a phone must put it in the page itself, not rely on the rail falling to the bottom. */
-  .railHideNarrow { display: none; }
-}
+/* ── THE RIGHT RAIL IS GONE (owner ruling 2026-08-13) ───────────────────────
+   `.railCols` / `.rail` / `.railGroup` / `.railLabel` / `.railRow` / `.railRowName` / `.railValue`
+   / `.railValueWrap` / `.railValueBig` / `.railHideNarrow` were deleted here. They gave three
+   surfaces — the player profile, the lineup builder and Money → Player Dues — a 300px sticky
+   reference column. The owner's verdict on a live screenshot was that it made the view clunky,
+   and the measurement agreed: on the player profile the rail was taking 300 of a 960px reading
+   measure, so a form of real inputs was being squeezed into ~635px to make room for it.
 
-/* Rail contents. Deliberately FLATTER than the cards beside them — hairlines and small labels,
-   never a second column of equal weight. A rail is a margin note, not a competing panel. */
-.railGroup { display: flex; flex-direction: column; }
-.railLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--home-dim, rgba(255, 255, 255, 0.4));
-  margin-bottom: 0.4rem;
-}
-.railRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.32rem 0;
-  font-size: 0.84rem;
-  color: var(--home-ink-soft, rgba(255, 255, 255, 0.65));
-  border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
-  text-decoration: none;
-}
-.railRow:last-child { border-bottom: none; }
-a.railRow:hover { color: var(--home-ink, rgba(255, 255, 255, 0.9)); }
-a.railRow:focus-visible {
-  outline: 2px solid var(--home-olive, var(--logic-lime));
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-.railRowName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.railValue {
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  color: var(--home-dim, rgba(255, 255, 255, 0.45));
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-/* `data-warn`, not a conditional class name: every rail had to hand-build
-   `${railValue} ${cond ? railValueWarn : ''}` otherwise, which is four chances to build it slightly
-   differently (one already left a trailing space). Same idiom as the board tiles' `data-tone`. */
-.railValue[data-warn='true'] { color: var(--warning); }
-/* For a value that is a list of NAMES rather than a figure (e.g. who is Out) — it has to be
-   allowed to wrap, or the rail scrolls sideways on the third name. */
-.railValueWrap { white-space: normal; text-align: right; flex-shrink: 1; }
-.railValueBig { font-size: 1.05rem; font-weight: 700; color: var(--home-ink, rgba(255, 255, 255, 0.9)); }
+   ⚠ THIS WAS THE SECOND CORRECTION, NOT THE FIRST. Owner QA on 2026-08-03 had already cut the
+   Overview's rail entirely and removed two of the four groups on the survivors, on the grounds
+   that a rail must hold data the page does not already SHOW. The remaining three failed a further
+   test: the width was worth more than the reference. Recorded so a future session proposing a
+   sticky side column knows this idea has now been tried, trimmed, and withdrawn — and what it has
+   to beat. The full history is in docs/projects/archive/COACH_PORTAL_OPTION_C_RAILS_PLAN.md and
+   docs/projects/active/COACH_RAIL_REMOVAL_PLAN.md.
+
+   Where the contents went: the profile's guardian and safety fields became their own collapsible
+   sections (they were INPUTS, never quick facts); its dues card joined Attendance and Awards at
+   the foot of the page; the dues totals became the table's own `<tfoot>` (see `.tableFoot`); the
+   lineup headcount was retired in favour of the mismatch strip that was already above it.
+
+   Other surfaces still have things called "rails" — the portal shell's nav, the Money hub's
+   `MoneyRail`, the admin GuidanceRail, the public TournamentSideRail. Every one of those carries
+   its OWN stylesheet and none of them ever used these classes. */
 
 /* Collapsible deep-linkable section (portal-styled adoption of admin CollapsibleCard
    behavior): native <details> so children stay mounted; summary carries title + meta. */
@@ -2572,14 +2545,21 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.88rem;
 }
 
+/* ⚠ SIZE AND INK ARE THE GRID HEADING'S (owner call 2026-08-14). This recipe sat at
+   0.72rem/--white-35 while `.moneyGrid thead th` — the heading a coach reads on Budget Plan
+   and Budget vs. Actual — sat at 0.78rem/--white-60, and the owner asked why the list tables'
+   headers read so much smaller than their own data rows. Two heading recipes for one portal
+   was residual drift of exactly the species the 2026-08-13 table pass closed elsewhere; the
+   list heading now matches the grid heading, so the two jobs open the same way. (Phone is
+   unaffected: `.tableAsCards` hides the header row below 640.) */
 .th {
   text-align: left;
   padding: 0.6rem 1rem;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--white-35);
+  letter-spacing: 0.05em;
+  color: var(--white-60);
   background: var(--home-olive-soft, rgba(255,255,255,0.02));
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
   white-space: nowrap;
@@ -2625,6 +2605,66 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
 }
+
+/* ── The totals row (owner ruling 2026-08-13, "Option C" from mockup artifact `c19d8500`) ────
+   Season figures sit in a <tfoot> under the column each one totals — Collected under Paid,
+   Outstanding under Balance — replacing the 300px reference rail that used to carry them beside
+   the table. A number under its own column needs less explaining than a number in a side panel.
+
+   ⚠ EACH CELL STILL CARRIES A CAPTION, because two of the totals RENAME their column: the Paid
+   column totals to "Collected" and Balance to "Outstanding". Without the caption the footer would
+   assert an identity the header doesn't make.
+
+   ⚠ `.tableFoot td` is 0-1-1 and beats the 0-1-0 `.td` it overrides regardless of source order,
+   but it stays below `.td`/`.tdNum` anyway — this file has been bitten twice by equal-specificity
+   rules resolved by position (see `.thNum` above and `.cardActionLabel` at the top), and keeping
+   every table rule in one descending block is what makes that checkable at a glance. */
+.tableFoot td {
+  border-top: 2px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  border-bottom: none;
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
+  padding-top: 0.55rem;
+  padding-bottom: 0.6rem;
+  vertical-align: top;
+}
+.footLabel {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--white-35);
+  line-height: 1.6;
+}
+/* ⚠ THE SHARED TOTAL TOKENS, NOT LITERALS. This is the THIRD closing-total treatment in this file
+   (`.ledgerTotalNum` and `.moneyGridTotal` are the other two) and the one furthest from them, so it
+   is the likeliest to drift. It was written with a hand-copied `0.92rem` and a typed `700` — which
+   is how it shipped a full weight step LIGHTER than the totals on Budget Plan and Budget vs. Actual,
+   the exact fork `--money-cat-*` was introduced to end on 2026-08-13. Caught by /simplify the same
+   day; pinned by `tests/unit/money-hierarchy-type-scale.test.ts`, which now measures this treatment
+   against the other two rather than trusting the declaration to stay right. */
+.footValue {
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--white-90);
+}
+/* A second, quieter line in a footer cell — the overdue headcount under "Next due". `data-warn`
+   rather than a conditional class name, matching the rail primitives this replaces. */
+.footNote {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--white-45);
+  margin-top: 0.15rem;
+}
+.footValue[data-warn='true'],
+.footNote[data-warn='true'] { color: var(--warning); }
+
+/* ⚠ THE CARD-MODE RULES FOR THIS FAMILY DO NOT LIVE HERE. They sit in the ONE canonical
+   `.tableAsCards` @640 block at the top of this file, beside `cardStackCell` / `cardActionCell` /
+   `td:empty`, because that block is what the file header tells an author to read before writing a
+   bespoke phone rule. They were originally written here, ~2,500 lines away from the primitive they
+   extend, which made `.tableAsCards` have two sources of truth about its own behaviour. */
 
 /* ── The ledger group (Money-hub table consistency 2026-08-13, plan §3.1 "job two") ─────────
    ONE outline treatment: a bordered group per category, a tinted bar carrying the category name
@@ -8470,4 +8510,257 @@ button.gdChip[aria-pressed='true'] {
   .gdAttRow { flex-wrap: wrap; }
   .gdAttRow .gdName { flex: 1 1 100%; }
   .gdScoreVal { font-size: 1.9rem; }
+}
+
+/* ── Player Dues — the By-installment lens (owner-approved mockup d7162867, 2026-08-14) ──────
+   A second way of reading the SAME dues list: a Collection-schedule band (the Budget plan
+   card's visual language, one term per installment), a player × installment grid on desktop,
+   and collapsible per-player cards on phones whose CLOSED face is the "due next" figure.
+
+   ⚠ Colour never speaks alone here (deutan ruling, budget-card pass): every warn/behind state
+   pairs its amber with an icon and words, and a settled $0 stays muted (the 2026-08-13
+   settled-is-quiet ruling). */
+
+.duesBand {
+  background: var(--home-card, rgba(255,255,255,0.03));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem 0.95rem; /* the plan card's inset, exactly */
+  margin-bottom: 1.25rem;
+}
+/* ⚠ THE TYPE RECIPE HERE IS THE PLAN CARD'S, BYTE FOR BYTE (budget.module.css `.plan*`,
+   owner-approved artifact d37d62e3). This band deliberately reads as that card's sibling —
+   cap 0.66/0.1em, key = 0.7rem uppercase eyebrow, value 1.35rem/800/-0.015em, caption
+   0.72rem, hairline separators between terms, terms stacking with border-top at 900. First
+   shipped with five near-miss values (0.8rem sentence-case keys, 1.3rem values, 0.76rem
+   notes, no separators) — exactly the "nobody decided any of that" drift the 2026-08-13
+   table pass existed to end; the owner asked, and the values were reconciled same day.
+   Differences that REMAIN are decisions, not drift: the frame stays the hub's neutral card
+   (blueprint blue is the Budget tab's PLANNING identity — this band reports collections
+   reality), each term carries a meter (a fixed 3-term card doesn't need one; a 2–6 term
+   schedule does), and the row wraps for 5+ installments (a wrapped row-leader keeps its
+   hairline — accepted, it stacks at 900 anyway). */
+.duesBandCap {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-bottom: 0.55rem;
+}
+.duesBandRow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  row-gap: 0.55rem;
+}
+.duesTerm { display: flex; flex-direction: column; min-width: 0; flex: 1 1 170px; }
+.duesTerm + .duesTerm {
+  border-left: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+  padding-left: 1.1rem;
+  margin-left: 1.1rem;
+}
+.duesTermKey {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  white-space: nowrap;
+}
+.duesTermDue {
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+.duesTermVal {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+}
+.duesTermOf { font-size: 0.82rem; font-weight: 600; letter-spacing: 0; color: var(--white-45, rgba(255,255,255,0.45)); }
+.duesTermNote { font-size: 0.72rem; color: var(--white-45, rgba(255,255,255,0.45)); margin-top: 0.1rem; }
+.duesTermNote[data-tone='good'] { color: var(--success-light); }
+/* Amber caption = the plan card's warn recipe (--warning-light, ordinary weight) — attention,
+   not alarm, and never colour alone: the JSX pairs it with the ⚠ icon and words. */
+.duesTermNote[data-tone='warn'] { color: var(--warning-light); }
+/* The plan card's own ≤900 stacking, hairline turning from left border to top.
+   ⚠ THE FLEX-BASIS MUST RESET HERE. The row's `flex: 1 1 170px` measures the MAIN axis, and in
+   a column-direction row the main axis is VERTICAL — shipped un-reset, every stacked term was
+   170px+ TALL and the owner's phone showed a band that was two-thirds empty air. */
+@media (max-width: 900px) {
+  .duesBandRow { flex-direction: column; gap: 0.55rem; }
+  .duesTerm { flex: 0 0 auto; }
+  .duesTerm + .duesTerm {
+    border-left: none;
+    border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
+    padding-left: 0;
+    margin-left: 0;
+    padding-top: 0.55rem;
+  }
+}
+.duesMeter {
+  display: block;
+  height: 5px;
+  max-width: 200px;
+  border-radius: 3px;
+  background: var(--home-fill, rgba(255,255,255,0.08));
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+.duesMeterFill { display: block; height: 100%; border-radius: 3px; background: var(--success-light); }
+.duesMeterFill[data-tone='warn'] { background: var(--warning); }
+
+/* Matrix cells: amount on top, state underneath. The state line carries the tone. */
+.duesThDue {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+  margin-top: 1px;
+}
+.duesCellAmt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.duesCellSt {
+  display: block;
+  font-size: 0.72rem;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.duesCellSt[data-tone='paid'] { color: var(--success-light); }
+.duesCellSt[data-tone='part'] { color: var(--warning); font-weight: 700; }
+.duesCellSt[data-tone='over'] { color: var(--danger-light); font-weight: 700; }
+.duesCellSt[data-tone='up']   { color: var(--home-dim, rgba(255,255,255,0.45)); }
+.duesCellSt[data-tone='none'] { color: var(--home-dim, rgba(255,255,255,0.3)); }
+
+/* Phone cards replace the matrix below 640 — the grid would silently sideways-scroll there,
+   the exact defect the Money-hub table pass closed everywhere else.
+
+   PHONES HAVE NO LENS TOGGLE (owner call 2026-08-14): the collapsible cards are the phone
+   view, full stop. `.duesDesktopOnly` hides the toggle and the totals table below 640;
+   `.duesPhoneLens` wraps the whole breakdown when the DESKTOP lens is Season totals, so the
+   band + cards still appear on a phone while desktop shows the table. */
+/* The lens toggle's tap floor. `.segBtn`'s compact height is a grandfathered portal decision,
+   but NEW controls meet the 44px floor at every width (the money-rail ruling: quiet by type
+   size, not by tap size) — and the rendered gate flags sub-floor newcomers on sight. */
+.duesViewSeg .segBtn { min-height: var(--tap-min, 44px); }
+.duesCards { display: none; }
+.duesPhoneLens { display: none; }
+@media (max-width: 640px) {
+  .duesMatrixWrap { display: none; }
+  .duesCards { display: block; }
+  .duesPhoneLens { display: block; }
+  .duesDesktopOnly { display: none; }
+}
+
+/* ── The matrix's horizontal scroller (CoachScrollX sticky) ─────────────────────────────────
+   ⚠ The primitive's table pin (`.scrollXSticky th/td:first-child`) is UNGATED — always sticky,
+   always an opaque card ground. Correct for Budget vs. Actual, whose 12 month columns overflow
+   at every width; wrong here, where a 3-installment table never scrolls and the opaque pin
+   would paint a white Player column onto the paper ground for no reason. Gate it ourselves:
+   static and transparent until the scroller actually overflows. (0-2-2 beats the primitive's
+   0-1-2.) */
+.duesMatrixScroller:not(.scrollXOverflowing) th:first-child,
+.duesMatrixScroller:not(.scrollXOverflowing) td:first-child {
+  position: static;
+  background: transparent;
+}
+/* While scrolling, the pinned Player HEADER keeps the heading row's tint — opaque card ground
+   with the tint painted on it (the `.moneyGridCat` longhand technique, so nothing later resets
+   the image via the shorthand). */
+.duesMatrixScroller.scrollXOverflowing th:first-child {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.02)), var(--home-olive-soft, rgba(255,255,255,0.02)));
+}
+/* Same for the totals row's pinned lead cell — its band tint rides on the opaque pin. */
+.duesMatrixScroller.scrollXOverflowing .tableFoot td:first-child {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.03)), var(--home-olive-soft, rgba(255,255,255,0.03)));
+}
+.duesCard,
+.duesCardStatic {
+  display: block;
+  width: 100%;
+  background: var(--home-card, rgba(255,255,255,0.03));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  margin-bottom: 0.7rem;
+  overflow: hidden;
+}
+/* The not-set card is a plain button (nothing to expand — it opens the drawer directly). */
+.duesCardStatic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  min-height: var(--tap-min, 44px);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.duesCardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  min-height: var(--tap-min, 44px);
+  cursor: pointer;
+  list-style: none;
+}
+.duesCardHead::-webkit-details-marker { display: none; }
+.duesCardTwist { color: var(--home-dim, rgba(255,255,255,0.4)); flex-shrink: 0; transition: transform 0.15s; }
+.duesCard[open] .duesCardTwist { transform: rotate(90deg); }
+.duesCardName { font-weight: 700; font-size: 0.92rem; flex: 1; color: var(--home-ink, rgba(255,255,255,0.9)); }
+.duesCardSum { text-align: right; }
+.duesCardDue { display: block; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.95rem; }
+.duesCardCap { display: block; font-size: 0.7rem; color: var(--home-dim, rgba(255,255,255,0.5)); }
+.duesCardCap[data-tone='warn'] { color: var(--warning); font-weight: 600; }
+.duesCardCap[data-tone='good'] { color: var(--success-light); }
+.duesCardBody { border-top: 1px solid var(--home-line, rgba(255,255,255,0.08)); }
+.duesCardRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
+}
+.duesCardRowLab {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+  white-space: nowrap;
+}
+.duesCardRowVal { text-align: right; }
+.duesCardFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  background: var(--home-fill, rgba(255,255,255,0.05));
+  font-size: 0.78rem;
+  color: var(--home-dim, rgba(255,255,255,0.5));
+}
+.duesCardFootLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--home-olive, var(--logic-lime));
+  min-height: var(--tap-min, 44px);
+  padding: 0.2rem 0;
 }

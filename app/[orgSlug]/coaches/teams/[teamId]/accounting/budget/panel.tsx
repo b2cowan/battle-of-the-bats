@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft, Upload, AlertTriangle } from 'lucide-react';
+import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, ArrowLeft, Upload, AlertTriangle } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -13,6 +13,7 @@ import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
@@ -48,6 +49,10 @@ import { tournamentToday } from '@/lib/timezone';
 
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function r2(n: number) {
+  return Math.round(n * 100) / 100;
 }
 
 function today() {
@@ -118,17 +123,25 @@ function fmtCell(n: number | undefined): string {
   return fmtCompact(n)?.replace('-', '−') ?? '—';
 }
 
+/** Money-in cells read POSITIVE (owner 2026-08-13): the green row and its section name say the
+ *  direction, and a minus sign made readers re-check arithmetic. The VIEW stays signed — the
+ *  grid's totals row is a real subtraction — so the abs happens at the last moment, per cell. */
+function fundingCell(kind: BudgetLineKind, n: number | undefined): number | undefined {
+  return kind === 'funding' && n != null ? Math.abs(n) : n;
+}
+
 /**
  * One line of the plan, with its period breakdown underneath.
  *
- * ONE renderer for both kinds. The funding section started as a copy of this markup with a minus
- * sign and a colour class swapped in, which is two places to remember for every future change to a
- * row — a new action, an a11y fix, another field in the period detail. The only thing a funding
- * line does differently is how its money reads, so that is the only thing the `funding` flag
- * touches: amounts are stored positive for both kinds and the KIND carries the sign.
+ * ONE renderer for both kinds. The funding section started as a copy of this markup with a colour
+ * class swapped in, which is two places to remember for every future change to a row — a new
+ * action, an a11y fix, another field in the period detail. The only thing a funding line does
+ * differently is its COLOUR (green = money in): amounts are stored and shown positive for both
+ * kinds — the minus sign is gone (owner 2026-08-13: "expenses minus the funding" is intuitive;
+ * the section label says the direction, and a sign made readers re-check arithmetic).
  */
 function BudgetLineRow({
-  line, expanded, funding, canWrite, onToggle, onEdit, onDelete,
+  line, expanded, funding, canWrite, onToggle, onEdit,
 }: {
   line: RepBudgetLineWithPeriods;
   expanded: boolean;
@@ -136,9 +149,7 @@ function BudgetLineRow({
   canWrite: boolean;
   onToggle: () => void;
   onEdit: () => void;
-  onDelete: () => void;
 }) {
-  const money = (n: number) => (funding ? `−${fmt(n)}` : fmt(n));
   const moneyClass = funding ? styles.fundingAmount : '';
 
   /* A line and its expanded periods are siblings inside the category frame — the shared
@@ -146,7 +157,17 @@ function BudgetLineRow({
      (and a wrapper here would sit between the frame and its rows for no reason). */
   return (
     <>
-      <div className={shared.ledgerRow}>
+      {/* The whole row opens the editor for a write coach (owner 2026-08-13) — the pencil stays
+          the SEMANTIC control (keyboard, screen reader, and the visible desktop door); the row
+          is the pointer/touch shortcut, and on a phone the only visible one. The chevron stops
+          propagation so expanding a split line never also opens its form. Delete lives in the
+          edit modal now, behind the same confirm as always — one door, full capability inside. */}
+      <div
+        className={`${shared.ledgerRow} ${canWrite ? styles.rowTappable : ''}`}
+        // Selecting text to copy an amount must not open the form — a click that ends a
+        // selection is a copy gesture, not a tap (review finding).
+        onClick={canWrite ? () => { if (window.getSelection()?.toString()) return; onEdit(); } : undefined}
+      >
         <div className={shared.ledgerCell}>
           {line.periods.length > 0
             ? (
@@ -155,7 +176,7 @@ function BudgetLineRow({
                 className={shared.ledgerExpand}
                 aria-expanded={expanded}
                 aria-label={expanded ? `Hide ${line.description}'s payment periods` : `Show ${line.description}'s payment periods`}
-                onClick={onToggle}
+                onClick={e => { e.stopPropagation(); onToggle(); }}
               >
                 {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
@@ -168,26 +189,22 @@ function BudgetLineRow({
           </span>
         </div>
 
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{money(line.totalAmount)}</span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{fmt(line.totalAmount)}</span>
 
-        {/* Always rendered so every row keeps the same three tracks; the cell collapses to
-            nothing for a read-only money coach because its `auto` track has no content. */}
+        {/* Always rendered so every row keeps the same three tracks. For a write coach the track
+            is fixed (.linesCanWrite) so the money column holds still; read-only rows have no
+            button and the auto track collapses uniformly instead. */}
         <span className={shared.ledgerActions}>
           {canWrite && (
-            <>
-              <button type="button" className={styles.actionBtn} title="Edit line" aria-label={`Edit ${line.description}`} onClick={onEdit}>
-                <Pencil size={13} />
-              </button>
-              <button
-                type="button"
-                className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                title="Delete line"
-                aria-label={`Delete ${line.description}`}
-                onClick={onDelete}
-              >
-                <Trash2 size={13} />
-              </button>
-            </>
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${styles.editBtn}`}
+              title="Edit line"
+              aria-label={`Edit ${line.description}`}
+              onClick={e => { e.stopPropagation(); onEdit(); }}
+            >
+              <Pencil size={13} />
+            </button>
           )}
         </span>
       </div>
@@ -206,7 +223,7 @@ function BudgetLineRow({
                   </span>
                 )}
               </span>
-              <span className={`${shared.ledgerNum} ${moneyClass}`}>{money(p.amount)}</span>
+              <span className={`${shared.ledgerNum} ${moneyClass}`}>{fmt(p.amount)}</span>
               <span />
             </div>
           ))}
@@ -298,14 +315,14 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
                       <span className={shared.wrap640}>{group.name}</span>
                     </button>
                   </th>
-                  {view.columns.map(col => <td key={col.key}>{fmtCell(group.cells[col.key])}</td>)}
-                  <td>{fmtCell(group.total)}</td>
+                  {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
+                  <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
                 </tr>
                 {open && group.rows.map(row => (
                   <tr key={row.id} className={group.lineKind === 'funding' ? styles.periodGridFunding : ''}>
                     <th scope="row" className={shared.moneyGridLead}>{row.description}</th>
-                    {view.columns.map(col => <td key={col.key}>{fmtCell(row.cells[col.key])}</td>)}
-                    <td>{fmtCell(row.total)}</td>
+                    {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
+                    <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
                   </tr>
                 ))}
               </Fragment>
@@ -313,7 +330,10 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
             })}
             <tr className={shared.moneyGridTotal}>
               <th scope="row">
-                {view.groups.some(g => g.lineKind === 'funding') ? 'Funded by players' : 'Total planned budget'}
+                {/* NOT "Player installments" (review finding): this grid spreads the PLAN —
+                    itemized costs less fundraising, estimate-blind — and borrowing the card's
+                    label would put one name on two different numbers. */}
+                {view.groups.some(g => g.lineKind === 'funding') ? 'Costs less fundraising' : 'Total planned budget'}
               </th>
               {view.columns.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
               <td>{fmtCell(view.totals.total)}</td>
@@ -411,6 +431,11 @@ export function BudgetPlanPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [plan,       setPlan]       = useState<RepBudgetPlan | null>(null);
+  // Σ of this season's dues schedules — the Dues tab's "assessed" total, echoed here so the plan
+  // can show players' side of the funding and read as a complete budget. Display-only: it is never
+  // a budget line and never enters computeBudgetTotals (dues are DERIVED from the plan — feeding
+  // them back in as funding would be circular).
+  const [duesAssessed, setDuesAssessed] = useState(0);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
@@ -643,6 +668,7 @@ export function BudgetPlanPanel({
       const catData  = await catRes.json();
       if (!planRes.ok) throw new Error(planData.error ?? 'Failed to load plan');
       setPlan(planData.plan);
+      setDuesAssessed(planData.duesAssessed ?? 0);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
       if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
@@ -1001,7 +1027,13 @@ export function BudgetPlanPanel({
   function collectProblems(): FormProblem[] {
     const out: FormProblem[] = [];
 
-    if (!(form.description.trim() || form.itemName.trim())) {
+    // A funding line's description IS its name — no item-name fallback (review finding: a
+    // legacy funding line's hidden item name silently stood in for a cleared field, saving
+    // the old name instead of raising the error the asterisk promises).
+    const named = form.lineKind === 'funding'
+      ? form.description.trim()
+      : form.description.trim() || form.itemName.trim();
+    if (!named) {
       out.push({ id: 'desc', message: 'Give this line a description.', focusId: FOCUS_DESC });
     }
     const total = parseFloat(form.totalAmount);
@@ -1064,7 +1096,10 @@ export function BudgetPlanPanel({
       return;
     }
 
-    const description = form.description.trim() || form.itemName.trim();
+    // Same rule as collectProblems: funding lines save the description alone.
+    const description = form.lineKind === 'funding'
+      ? form.description.trim()
+      : form.description.trim() || form.itemName.trim();
     const totalAmount = parseFloat(form.totalAmount);
 
     setSaving(true);
@@ -1080,8 +1115,10 @@ export function BudgetPlanPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description,
-          categoryId:  form.categoryId || null,
-          itemId:      form.itemId,
+          // Funding lines never store a category/item — including legacy ones saved before the
+          // picker became cost-only, which shed theirs on the next edit.
+          categoryId:  form.lineKind === 'funding' ? null : form.categoryId || null,
+          itemId:      form.lineKind === 'funding' ? null : form.itemId,
           totalAmount,
           lineKind:    form.lineKind,
           notes:       form.notes.trim() || null,
@@ -1139,6 +1176,9 @@ export function BudgetPlanPanel({
         throw new Error(data.error ?? 'Failed to delete');
       }
       setDeletingId(null);
+      // The edit modal is this dialog's only door now — the deleted line's form must not
+      // survive its line. A no-op when the modal wasn't open.
+      setModalOpen(false);
       await load();
     } catch (e: unknown) {
       setDeleteError(e instanceof Error ? e.message : "Couldn't delete this line. Try again in a moment.");
@@ -1180,13 +1220,18 @@ export function BudgetPlanPanel({
     estimatedTotal: seasonTotal,
     rosterCount: plan?.rosterCount ?? 0,
   });
-  const effectiveTotal = totals.totalPlanned;  // what dues and headroom are measured against
+  // The plan minus everything already answering for it — funding lines and scheduled dues.
+  // Signed on purpose: negative means players are scheduled to pay more than the plan now needs.
+  const leftToFund = r2(totals.totalPlanned - totals.expectedFunding - duesAssessed);
   // The genuinely-blank first visit: no lines AND no estimate. The $0 summary is suppressed so the
   // first-run surface leads; it returns the moment anything exists. ⚠ The summary is also the only
   // UI that SETS an estimate, so "set an estimated total instead" (a first-run door) flips
   // editingSeason and the summary comes back — an estimate-only budget must stay reachable from a
   // cold start (review finding).
-  const trueEmpty      = allLines.length === 0 && seasonTotal == null && !editingSeason;
+  // ⚠ Dues count as "something exists" (review finding): a team whose dues were set by hand
+  // before any budget has real scheduled money, and hiding the card would hide it — the same
+  // rule the list already applies to funding-only plans.
+  const trueEmpty      = allLines.length === 0 && seasonTotal == null && !editingSeason && duesAssessed === 0;
 
   // Page-level action ruling 2026-08-13: "Add Line" acts on the BUDGET, and the nearest chrome
   // that names the budget is the plan's own control row — not the Money hub header above it,
@@ -1260,82 +1305,120 @@ export function BudgetPlanPanel({
       ) : (
         <>
           {/*
-            THE SUMMARY LADDER (binding mockup 30812492, owner ruling 2026-08-12).
-            Six figures that are one sum worked downward, not six statistics side by side. The
-            tile row this replaces presented them as peers and then needed a caption under each
-            explaining its relationship to its neighbour. Here, position IS the explanation:
-              line items + the un-itemized part of the estimate = total planned
-              − expected funding = funded by players ÷ roster = per player.
-            Every row that would say nothing is simply not rendered, so a plain team sees three.
+            THE PLAN CARD (owner-approved mockup, artifact d37d62e3 round 3, 2026-08-13 —
+            supersedes the summary ladder of mockup 30812492). Three categories side by side, no
+            operators: Planned costs · Expected fundraising · Player installments. The third
+            figure carries the season's story — CALCULATED and tagged "Estimated" until dues
+            schedules exist, then it IS the official scheduled figure. A deliberate over-schedule
+            is a BUFFER, stated in ordinary caption ink — a coach who planned it must not meet a
+            red flag on every visit (owner ruling). Coming up SHORT of the plan is the one
+            cautionary state, in amber, with the re-run door beside it. Per player appears only
+            beside the ESTIMATE: once real installments exist they are the number, and a computed
+            per-player alongside them is exactly the stale figure this card exists to retire.
           */}
           {!trueEmpty && (
-          <div className={styles.ladder}>
-            <span className={styles.ladderCap}>The plan</span>
-
-            {/* With nothing to add to them, the line items ARE the total and are labelled that
-                way — no ladder ever prints the same number twice. */}
-            <span className={`${styles.ladderKey} ${!totals.hasDifference ? styles.ladderHead : ''}`}>
-              {totals.hasDifference ? 'Line items' : 'Total planned budget'}
-              {totals.costLineCount > 0 && (
-                <span className={styles.ladderCount}>
-                  {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}
-                </span>
+          <div className={styles.plan}>
+            <div className={styles.planHead}>
+              <span className={styles.planCap}>The plan</span>
+              {/* The estimate door lives here only until an estimate exists; after that, its
+                  Edit link rides the Planned costs caption below. */}
+              {seasonTotal == null && !editingSeason && moneyCanWrite && (
+                <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
+                  Set an estimated total
+                </button>
               )}
-            </span>
-            <span className={`${styles.ladderValue} ${!totals.hasDifference ? styles.ladderHead : ''}`}>
-              {fmt(totals.itemized)}
-            </span>
+            </div>
 
-            {/* The estimate's un-itemized part — calculated, never typed, so "it shrinks as you
-                itemize and the total holds" happens on its own. Negative when the lines have
-                outgrown the estimate: shown in red, never blocked and never overridden. */}
-            {totals.hasDifference && (
-              <>
-                <span className={`${styles.ladderKey} ${styles.ladderSub}`}>
-                  {totals.overPlanned
-                    ? `Over your ${fmt(totals.estimatedTotal ?? 0)} estimate`
-                    : `Not itemized yet — from your ${fmt(totals.estimatedTotal ?? 0)} estimate`}
-                  {moneyCanWrite && !editingSeason && (
-                    <>
-                      {' '}
-                      <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
-                      {' · '}
-                      <button type="button" className={styles.ladderLink} disabled={seasonSaving} onClick={() => saveSeasonTotal(true)}>Clear</button>
-                    </>
+            <div className={styles.planRow}>
+              <div className={styles.planTerm}>
+                <span className={styles.planKey}>
+                  Planned costs
+                  {seasonTotal == null && totals.costLineCount > 0 && (
+                    <span className={styles.planCount}>
+                      {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}
+                    </span>
                   )}
                 </span>
-                <span className={`${styles.ladderValue} ${styles.ladderSub} ${totals.overPlanned ? styles.ladderBad : ''}`}>
-                  {totals.overPlanned ? '−' : ''}{fmt(totals.difference)}
-                </span>
-              </>
-            )}
+                <span className={styles.planVal}>{fmt(totals.totalPlanned)}</span>
+                {/* The estimate wins whenever one is set (ruling 2026-08-12) — so it IS the
+                    figure above, and this caption states its relationship to the lines. Lines
+                    outgrowing the estimate turn the caption red: as informative as the old
+                    ladder row, one line shorter. Clear lives inside the editor. */}
+                {seasonTotal != null && (
+                  <span className={`${styles.planCapNote} ${totals.overPlanned ? styles.planCapBad : ''}`}>
+                    {totals.overPlanned
+                      ? <>Your estimate — {fmt(totals.itemized)} itemized is {fmt(totals.difference)} over</>
+                      : <>Your estimate · {fmt(totals.itemized)} itemized in {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
+                    {moneyCanWrite && !editingSeason && (
+                      <>
+                        {' · '}
+                        <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
 
-            {/* An estimate that exactly matches the lines still needs its controls somewhere. */}
-            {seasonTotal != null && !totals.hasDifference && !editingSeason && moneyCanWrite && (
-              <>
-                <span className={`${styles.ladderKey} ${styles.ladderSub}`}>
-                  Matches your {fmt(seasonTotal)} estimate{' '}
-                  <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
-                  {' · '}
-                  <button type="button" className={styles.ladderLink} disabled={seasonSaving} onClick={() => saveSeasonTotal(true)}>Clear</button>
-                </span>
-                <span className={`${styles.ladderValue} ${styles.ladderSub}`} />
-              </>
-            )}
+              {/* A team with no fundraising lines simply has no middle category. */}
+              {totals.fundingLineCount > 0 && (
+                <div className={styles.planTerm}>
+                  <span className={styles.planKey}>
+                    {LINE_KIND_SECTION.funding}
+                    <span className={styles.planCount}>
+                      {totals.fundingLineCount} line{totals.fundingLineCount === 1 ? '' : 's'}
+                    </span>
+                  </span>
+                  <span className={`${styles.planVal} ${styles.planValGood}`}>{fmt(totals.expectedFunding)}</span>
+                </div>
+              )}
 
-            {/* The door in, when no estimate exists. One short sentence — the only explanation
-                left on the page, and it sits exactly where the thing it explains is set. */}
-            {seasonTotal == null && !editingSeason && moneyCanWrite && (
-              <>
-                <span className={`${styles.ladderKey} ${styles.ladderSub}`}>
-                  <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
-                    Set an estimated total
-                  </button>
-                  {' '}— plan to a number before every cost is known
+              <div className={styles.planTerm}>
+                <span className={styles.planKey}>
+                  Player installments{' '}
+                  <span className={duesAssessed > 0 ? styles.planBadgeOff : styles.planBadgeEst}>
+                    {duesAssessed > 0 ? 'Scheduled' : 'Estimated'}
+                  </span>
                 </span>
-                <span className={`${styles.ladderValue} ${styles.ladderSub}`} />
-              </>
-            )}
+                <span className={`${styles.planVal} ${duesAssessed > 0 ? '' : styles.planValEst}`}>
+                  {fmt(duesAssessed > 0 ? duesAssessed : totals.fundedByPlayers)}
+                </span>
+                {duesAssessed > 0 ? (
+                  // "Above the plan" needs a plan to be above — a dues-only team gets the bare
+                  // Scheduled figure, not a caption calling the whole schedule a buffer.
+                  leftToFund < -0.005 && totals.totalPlanned > 0 ? (
+                    <span className={styles.planCapNote}>
+                      Includes a {fmt(leftToFund)} buffer above the plan
+                    </span>
+                  ) : leftToFund > 0.005 ? (
+                    <span className={`${styles.planCapNote} ${styles.planCapWarn}`}>
+                      {fmt(leftToFund)} short of covering the plan
+                      {moneyCanWrite && (
+                        <>
+                          {' · '}
+                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                            Set dues for all players
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  ) : null
+                ) : (
+                  (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) && (
+                    <span className={styles.planCapNote}>
+                      {totals.perPlayer != null && <>≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
+                      {moneyCanWrite && allLines.length > 0 && (
+                        <>
+                          {totals.perPlayer != null && ' · '}
+                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                            Generate installments
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
 
             {editingSeason && (
               <div className={styles.ladderEditor}>
@@ -1372,41 +1455,6 @@ export function BudgetPlanPanel({
               </div>
             )}
 
-            {totals.hasDifference && (
-              <>
-                <span className={styles.ladderRule} />
-                <span className={`${styles.ladderKey} ${styles.ladderHead}`}>Total planned budget</span>
-                <span className={`${styles.ladderValue} ${styles.ladderHead}`}>{fmt(totals.totalPlanned)}</span>
-              </>
-            )}
-
-            {totals.fundingLineCount > 0 && (
-              <>
-                <span className={styles.ladderKey}>
-                  {LINE_KIND_SECTION.funding}{' '}
-                  <span className={styles.ladderCount}>
-                    {totals.fundingLineCount} line{totals.fundingLineCount === 1 ? '' : 's'}
-                  </span>
-                </span>
-                <span className={`${styles.ladderValue} ${styles.ladderGood}`}>−{fmt(totals.expectedFunding)}</span>
-              </>
-            )}
-
-            {totals.perPlayer != null && (
-              <>
-                <span className={styles.ladderRule} />
-                <div className={styles.ladderPay}>
-                  <span>
-                    <span className={styles.ladderBig}>{fmt(totals.perPlayer)}</span>
-                    <span className={styles.ladderSay}> per player</span>
-                  </span>
-                  <span className={styles.ladderSay}>
-                    {totals.fundingLineCount > 0 && `${fmt(totals.fundedByPlayers)} funded by players `}
-                    ÷ {totals.rosterCount} on the roster
-                  </span>
-                </div>
-              </>
-            )}
           </div>
           )}
 
@@ -1488,7 +1536,7 @@ export function BudgetPlanPanel({
           ) : viewMode === 'period' ? (
             <PeriodGrid view={buildPeriodView(allLines, granularity)} />
           ) : (
-            <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+            <div className={`${shared.ledgerList} ${styles.linesContainer} ${moneyCanWrite ? styles.linesCanWrite : ''}`}>
               {/* The column headings the plan never had. They sit in the same track rhythm as the
                   category frames below, which is what makes "Planned" name the column rather than
                   hover over it — and is how Budget vs. Actual next door already reads. */}
@@ -1533,7 +1581,6 @@ export function BudgetPlanPanel({
                       canWrite={moneyCanWrite}
                       onToggle={() => toggleLineExpanded(line.id)}
                       onEdit={() => openEdit(line)}
-                      onDelete={() => setDeletingId(line.id)}
                     />
                   ))}
                 </div>
@@ -1593,8 +1640,14 @@ export function BudgetPlanPanel({
                 </div>
               )}
 
-              {/* Expected funding — one section, always after the costs, shown negative so the
-                  arithmetic reads down the column. It appears only once something is budgeted. */}
+              {/* Expected fundraising — one section, always after the costs, shown POSITIVE in
+                  green (owner 2026-08-13: the label says the direction; a minus sign made readers
+                  re-check arithmetic). It appears only once something is budgeted.
+                  ⚠ FUNDING LINES ONLY. This section's total must equal the ladder's "Expected
+                  funding" row — same words, same number. Player dues sat inside it briefly and
+                  made the section total −$8,000 while the ladder said −$180 (owner catch,
+                  2026-08-13); dues are the ANSWER to the plan, not an input, so they close the
+                  list below instead. */}
               {fundingLines.length > 0 && (
                 <div className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
                   <button
@@ -1612,7 +1665,7 @@ export function BudgetPlanPanel({
                       <span className={shared.ledgerName}>{LINE_KIND_SECTION.funding}</span>
                     </span>
                     <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
-                      −{fmt(totals.expectedFunding)}
+                      {fmt(totals.expectedFunding)}
                     </span>
                     <span />
                   </button>
@@ -1625,26 +1678,69 @@ export function BudgetPlanPanel({
                       canWrite={moneyCanWrite}
                       onToggle={() => toggleLineExpanded(line.id)}
                       onEdit={() => openEdit(line)}
-                      onDelete={() => setDeletingId(line.id)}
                     />
                   ))}
                 </div>
               )}
 
-              {/* ONE closing row. The working is stated once, in the ladder at the top; repeating
-                  it here would put the same number on the page twice. */}
-              <div className={shared.ledgerTotal}>
-                <span>{totals.fundingLineCount > 0 ? 'Funded by players' : 'Total planned budget'}</span>
-                <span className={shared.ledgerTotalNum}>
-                  {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
-                </span>
-                <span />
-              </div>
+              {/* Player installments — the players' side of the plan, once schedules exist. Its
+                  own quiet frame between the fundraising inputs and the close: the figure is the
+                  Dues tab's assessed total, display-only, never a budget line and never inside
+                  Expected fundraising (see the note above). No View-dues link — the hub's Dues
+                  tab is two inches up, the same reason the BvA foot link went (owner 08-12). */}
+              {duesAssessed > 0 && (
+                <div className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
+                  <div className={shared.ledgerRow}>
+                    <div className={shared.ledgerCell}>
+                      <span className={shared.ledgerExpandSpacer} />
+                      <span className={styles.lineInfo}>
+                        <span className={shared.ledgerDesc}>Player installments</span>
+                        <span className={`${shared.ledgerNote} ${shared.wrap640}`}>
+                          What players are scheduled to pay
+                        </span>
+                      </span>
+                    </div>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
+                      {fmt(duesAssessed)}
+                    </span>
+                    <span className={shared.ledgerActions} />
+                  </div>
+                </div>
+              )}
+
+              {/* ONE closing row, in the plan card's vocabulary. Before dues: what the plan asks
+                  of players (estimated), or the plain total when nothing offsets it. After dues:
+                  the residual — a planned buffer in ordinary ink, a shortfall in amber, and NO
+                  row at all when the schedules match the plan (a $0.00 close says nothing). */}
+              {duesAssessed > 0 ? (
+                Math.abs(leftToFund) >= 0.005 && (
+                  <div className={shared.ledgerTotal}>
+                    <span>{leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan'}</span>
+                    <span className={`${shared.ledgerTotalNum} ${leftToFund > 0 ? styles.closeWarn : ''}`}>
+                      {fmt(leftToFund)}
+                    </span>
+                    <span />
+                  </div>
+                )
+              ) : (
+                <div className={shared.ledgerTotal}>
+                  <span>
+                    {totals.fundingLineCount > 0 ? 'Player installments (estimated)' : 'Total planned budget'}
+                  </span>
+                  <span className={shared.ledgerTotalNum}>
+                    {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
+                  </span>
+                  <span />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Generate Installments CTA */}
-          {moneyCanWrite && plan && plan.lines.length > 0 && !plan.hasInstallments && (
+          {/* Generate Installments CTA. ⚠ duesAssessed too, not just hasInstallments (review
+              finding): hand-set schedules never set the budget_generated flag, and this band
+              claiming no dues exist under a card saying "Scheduled" was a page disagreeing
+              with itself. */}
+          {moneyCanWrite && plan && plan.lines.length > 0 && !plan.hasInstallments && duesAssessed === 0 && (
             <div className={styles.generateSection}>
               <div>
                 <p className={styles.generateTitle}>Ready to assign dues to players?</p>
@@ -1659,24 +1755,10 @@ export function BudgetPlanPanel({
             </div>
           )}
 
-          {plan?.hasInstallments && (
-            <div className={styles.installmentsExist}>
-              ✓ Player installments have been generated.{' '}
-              <Link href={`${base}/accounting/dues`} className={styles.inlineLink}>View dues →</Link>
-            </div>
-          )}
-
-          {effectiveTotal > 0 && (
-            <div className={styles.quietLinks}>
-              {/* The "View Budget vs. Actual →" link that used to sit here is GONE (owner,
-                  2026-08-12): the Money hub's tab bar carries Budget vs. Actual two inches above
-                  it. The sample stays — it is a PERMANENT quiet reference (D6) and the only route
-                  back to the worked example once a plan exists. */}
-              <button type="button" className={styles.sampleLink} onClick={() => setSampleOpen(true)}>
-                See a sample budget
-              </button>
-            </div>
-          )}
+          {/* The "✓ installments generated / View dues" banner and the quiet "See a sample budget"
+              link both used to close the page here. The banner's fact now lives IN the plan (the
+              Player dues row above); the sample is a getting-started aid and stays on the empty
+              states only (owner ruling 2026-08-13, superseding D6's "permanent quiet reference"). */}
         </>
       )}
 
@@ -1704,7 +1786,16 @@ export function BudgetPlanPanel({
                     type="button"
                     className={styles.kindOption}
                     aria-pressed={form.lineKind === kind}
-                    onClick={() => setForm(f => ({ ...f, lineKind: kind }))}
+                    // Flipping to funding drops any category/item pick: funding lines carry no
+                    // category (the picker below is cost-only), and keeping a stale "Tournaments"
+                    // pick in form state would silently ride along to the save.
+                    onClick={() => setForm(f => (f.lineKind === kind ? f : {
+                      ...f,
+                      lineKind: kind,
+                      ...(kind === 'funding'
+                        ? { categoryId: '', itemId: null, categoryName: '', itemName: '' }
+                        : {}),
+                    }))}
                   >
                     {LINE_KIND_LABEL[kind]}
                     <small>{LINE_KIND_HINT[kind]}</small>
@@ -1713,14 +1804,20 @@ export function BudgetPlanPanel({
               </div>
               {form.lineKind === 'funding' && (
                 <p className={styles.kindHint}>
-                  Expected funding lowers what players are asked to pay. Enter what you expect
-                  the <strong>team</strong> to keep — if a campaign pays part of what a player raises
-                  back to that player, that already lowers their dues and shouldn&apos;t be counted here.
+                  Expected fundraising lowers what players are asked to pay — a campaign, a
+                  sponsor, a club grant. Enter what you expect the <strong>team</strong> to keep — if a
+                  campaign pays part of what a player raises back to that player, that already
+                  lowers their dues and shouldn&apos;t be counted here.
                 </p>
               )}
             </div>
 
-            {/* Item picker */}
+            {/* Item picker — COSTS ONLY. A category on a funding line is never used anywhere (the
+                plan lists funding flat in one section, and Budget vs. Actual deliberately keeps
+                funding out of category matching), and the picker offered a SPENDING taxonomy for
+                money coming in — "Sponsorship" filed under "Tournaments". Owner ruling 2026-08-13:
+                a funding line is named by its description alone. */}
+            {form.lineKind === 'cost' && (
             <div className={styles.field}>
               <label className={styles.label}>Category &amp; Item</label>
               <BudgetItemPicker
@@ -1747,17 +1844,23 @@ export function BudgetPlanPanel({
                 allowCreateCategory
               />
             </div>
+            )}
 
-            {/* Description override */}
+            {/* Description override — for a funding line it IS the name, so it's marked required
+                there (a cost line can fall back to its item name). */}
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={FOCUS_DESC}>Description</label>
+              <label className={styles.label} htmlFor={FOCUS_DESC}>
+                Description{form.lineKind === 'funding' && <> <span className={styles.labelRequired}>*</span></>}
+              </label>
               <input
                 id={FOCUS_DESC}
                 className={`${styles.input} ${flagged('desc') ? styles.inputBad : ''}`}
                 type="text"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value.slice(0, 200) }))}
-                placeholder={form.itemName || 'e.g. May tournament entry fee'}
+                placeholder={form.lineKind === 'funding'
+                  ? 'e.g. Bottle drive, sponsorship, club grant'
+                  : form.itemName || 'e.g. May tournament entry fee'}
                 maxLength={200}
               />
             </div>
@@ -2067,6 +2170,19 @@ export function BudgetPlanPanel({
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
             <div className={shared.modalFooter}>
+              {/* Deleting lives HERE now (owner 2026-08-13) — the rows outside carry only the
+                  edit door, so the modal is where a line's full powers are. Opens the same
+                  confirm dialog the trash icon used to; a successful delete closes this form
+                  too (its line no longer exists). */}
+              {editingLine && (
+                <button
+                  type="button"
+                  className={styles.deleteLineBtn}
+                  onClick={() => setDeletingId(editingLine.id)}
+                >
+                  Delete line
+                </button>
+              )}
               {/* The footer is sticky, so this counter is the one piece of the verdict that is
                   visible however far the form is scrolled — the gap the old bottom-of-the-body
                   message fell through. Clicking it goes back to the first thing at fault. */}
@@ -2124,8 +2240,11 @@ export function BudgetPlanPanel({
           orgSlug={orgSlug}
           teamId={teamId}
           seasonQuery={seasonQuery}
-          budgetHref={`${base}/accounting?section=budget`}
-          duesHref={`${base}/accounting/dues`}
+          budgetHref={moneySectionHref(base, 'budget', undefined, seasonQuery)}
+          // ⚠ The HUB tab, not the standalone page one directory down. Those legacy routes still
+          // resolve and render without the hub's tab bar, so following this link dropped a coach
+          // out of the Money hub onto a page with no way back into it but the browser button.
+          duesHref={moneySectionHref(base, 'dues', undefined, seasonQuery)}
           // Must travel with the modal: the hub keeps this panel mounted behind another tab, and
           // a dirty form that can't be seen must not intercept clicks. See the prop's own note.
           tabActive={tabActive}

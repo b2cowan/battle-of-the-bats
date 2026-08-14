@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-08-13 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-08-14 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-08-13
+# DB Schema Reference — 2026-08-14
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -134,7 +134,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_document_templates_org_idx
 
 ### rep_dues_credits
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount (numeric) NOT NULL, description NOT NULL, credit_date, credit_type, notes, created_by (uuid), created_at, fundraiser_entry_id (uuid) → rep_fundraiser_entries.id
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount (numeric) NOT NULL, description NOT NULL, credit_date, credit_type, notes, created_by (uuid), created_at, fundraiser_entry_id (uuid) → rep_fundraiser_entries.id, payment_id (uuid) → rep_dues_payments.id
+
+### rep_dues_payments
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, amount (numeric) NOT NULL, received_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
+- Indexes: idx_rep_dues_payments_year_player
 
 ### rep_fundraiser_entries
 id (uuid), fundraiser_id (uuid) → rep_fundraisers.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount_raised (numeric) NOT NULL, rebate_percent (numeric), rebate_amount (numeric), accounting_entry_id (uuid) → accounting_entries.id, credit_id (uuid) → rep_dues_credits.id, notes, created_at, updated_at
@@ -149,7 +153,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.team_id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -653,11 +657,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **159 tables** across 10 modules.
+Total: **160 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 53 tables
+- Rep Teams: 54 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

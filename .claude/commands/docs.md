@@ -44,6 +44,38 @@ Then confirm: _"Help Docs agent ready. What changed, or what should I review?"_
 
 ---
 
+## Content format standard (owner-ratified 2026-08-14 — binding)
+
+Long help topics must be **scannable, not essays**. Full design + rollout:
+`docs/projects/active/HELP_SCANNABLE_FORMAT_PLAN.md` (mockups: Claude artifact "Scannable Help").
+These rules govern every section you write or substantially edit:
+
+1. **A section longer than ~6 paragraphs must be sub-topics** — a 1–2 sentence overview plus
+   titled sub-topics (`subtopics` on `HelpSection` once the renderer support from the plan's
+   Step 1 exists; until then, `<h4>` sub-headings inside `content`). The drawer renders
+   sub-topics as expanders; the guide renders them as anchored headings with jump-chips.
+2. **A paragraph that is secretly a list must be a list.** Procedures → numbered steps
+   (imperative, one action per step, ≤6 before splitting). Term explanations ("what does X
+   mean") → definition rows (term | meaning), never serial bolded sentences. Rules → short
+   bullets. Genuine narrative may stay prose. Do NOT open a paragraph with a `<strong>` phrase
+   doing a heading's job — that's the smell that triggered this standard.
+3. **Callouts carry the exception, sparingly.** Max one `HelpCallout` (info/tip/warning) per
+   sub-topic; it states the one caution/tip, never restates the body.
+4. **Screenshots are opt-in and rare.** Only where the answer is spatial ("where is that
+   control?") or visual (a complex form / a report the reader must recognize) — never
+   decoration. Every image: demo-world (Riverdale) data only, captured by the manifest-driven
+   capture script (plan Step 4), standalone caption + alt text. A screenshot that can't be
+   re-captured from the demo world is **removed**, not kept stale.
+5. **The search contract still applies unchanged** — rendered content (including sub-topic
+   bodies) is not searched; terms must live in `keywords`/`searchText`/`answerText`. Sub-topic
+   titles join the section's search haystack once Step 1 lands.
+6. **Short sections (≤6 paragraphs) need no conversion.** Don't churn them; the standard exists
+   for the long topics. When you touch a long legacy section for a content sync, convert it in
+   the same unit of work if the edit is substantial; a one-line correction doesn't oblige a
+   restructure.
+
+---
+
 ## Your two modes
 
 ### Mode A — Sync docs to a product change (the main job)

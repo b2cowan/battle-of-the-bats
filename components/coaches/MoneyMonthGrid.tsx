@@ -8,6 +8,7 @@ import {
   type MonthGrid, type MonthKey, type MoneyLens, type CashFlowRow,
 } from '@/lib/coach-budget-months';
 import { fmtCompact } from '@/lib/coach-money-summary';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import { toggleKey } from '@/lib/toggle-key';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './MoneyMonthGrid.module.css';
@@ -74,12 +75,16 @@ export default function MoneyMonthGrid({
   lens,
   base,
   canWrite,
+  seasonQuery = '',
 }: {
   data: MonthGridPayload;
   lens: MoneyLens;
   /** `/{orgSlug}/coaches/teams/{teamId}` — drill-ins link back into the pages that own the forms. */
   base: string;
   canWrite: boolean;
+  /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
+   *  season must stay in that season, not teleport the reader to the live one. */
+  seasonQuery?: string;
 }) {
   const { monthGrid: grid, cellDetails, moneyIn, todayMonth, priorSeasonLabel } = data;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -109,7 +114,9 @@ export default function MoneyMonthGrid({
     setDetail({
       title: `${kind === 'actual' ? 'Paid in' : 'Due in'} ${formatMonthLong(month)} · ${categoryName}`,
       items,
-      href: kind === 'actual' ? `${base}/accounting/expenses` : `${base}/accounting/expenses?tab=schedule`,
+      href: kind === 'actual'
+        ? moneySectionHref(base, 'expenses', undefined, seasonQuery)
+        : moneySectionHref(base, 'expenses', { tab: 'schedule' }, seasonQuery),
       hrefLabel: kind === 'actual' ? 'Open Expenses' : 'Open the payment schedule',
     });
   }
@@ -215,7 +222,7 @@ export default function MoneyMonthGrid({
                         <td className={`${styles.num} ${styles.undated}`}>
                           {cellNode(undatedLive && line.undatedBudget > 0.005 ? line.undatedBudget : null, {
                             href: canWrite && undatedLive && line.undatedBudget > 0.005
-                              ? `${base}/accounting/budget?line=${line.id}&periods=1`
+                              ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }, seasonQuery)
                               : undefined,
                             title: canWrite ? 'Give this money a date' : undefined,
                           })}
@@ -230,7 +237,7 @@ export default function MoneyMonthGrid({
                         return (
                           <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
                             {cellNode(v, {
-                              href: canEdit ? `${base}/accounting/budget?line=${line.id}&periods=1` : undefined,
+                              href: canEdit ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }, seasonQuery) : undefined,
                               title: canEdit ? 'Edit this line’s payment dates' : undefined,
                             })}
                           </td>

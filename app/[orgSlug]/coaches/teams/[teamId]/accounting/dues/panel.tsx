@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowLeft, DollarSign } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -11,14 +11,20 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
+import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
 import styles from '../../../../coaches.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
+import { duesReminderEmail } from '@/lib/dues-reminder-email';
 import { fmt } from '@/lib/coach-money-summary';
+import { moneySectionHref } from '@/lib/coach-money-links';
+import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
 import type {
   RepRosterPlayer,
   RepPlayerDuesSchedule,
   RepPlayerDuesInstallment,
+  RepDuesPayment,
+  DuesPaymentMethod,
   DuesCredit,
   DuesCreditType,
   SeasonRefundRow,
@@ -28,6 +34,10 @@ interface PlayerWithDues {
   player: RepRosterPlayer;
   schedule: RepPlayerDuesSchedule | null;
   installments: RepPlayerDuesInstallment[];
+  /** Payment FACTS (mig 232) — each row is a receipt with its own date, method and ledger line. */
+  payments: RepDuesPayment[];
+  /** Per-installment coverage derived from payments — the "$200.00 of $300.00" chips. */
+  coverage: InstallmentCoverage[];
   paidAmount: number;
   outstanding: number;
   credits: DuesCredit[];
@@ -51,16 +61,9 @@ function fmtDate(s: string) {
   return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-/** ⚠ A SETTLED BALANCE IS QUIET, NOT GREEN (Money-hub table pass 2026-08-13, approved render
- *  `14181bd3`). Zero used to be drawn in the same success green as a credit, so a roster where
- *  everyone had paid was a full column of green — the loudest thing on the screen saying nothing.
- *  Colour in this table now means "there is something here": green a credit, amber an amount still
- *  owed, muted a nil. The two that matter keep the colour they always had. */
-function balanceColor(b: number): string {
-  if (b < -0.005) return 'var(--success-light)'; // in credit (good)
-  if (b > 0.005)  return 'var(--warning)'; // still owes
-  return 'var(--home-dim, rgba(255,255,255,0.35))'; // fully clear — nothing to flag
-}
+/* `balanceColor` (settled-is-quiet ruling) now lives with the By-installment lens in
+   InstallmentBreakdown.tsx and is imported above — ONE definition, so the two views of this
+   list can never colour the same balance differently. */
 
 /** The colour each dues status is drawn in. The WORD comes from the shared list so this table
  *  and the Money hub's "Player dues" export can never call the same player two different
@@ -85,6 +88,13 @@ const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
   other:        'Other',
 };
 
+const PAYMENT_METHOD_LABELS: Record<DuesPaymentMethod, string> = {
+  etransfer: 'E-transfer',
+  cash:      'Cash',
+  cheque:    'Cheque',
+  other:     'Other',
+};
+
 interface InstallmentRow {
   installmentNumber: number;
   amount: string;
@@ -99,6 +109,13 @@ const BLANK_CREDIT_FORM = {
   creditType: 'contribution' as DuesCreditType,
   creditDate: tournamentToday(),
   notes:      '',
+};
+
+const BLANK_PAYMENT_FORM = {
+  amount:       '',
+  receivedDate: tournamentToday(),
+  method:       'etransfer' as DuesPaymentMethod,
+  note:         '',
 };
 
 // ⚠ The columns and the row mapping are NOT declared here. They live in `lib/coach-money-exports`
@@ -144,16 +161,27 @@ export function PlayerDuesPanel({
   const [creditError, setCreditError] = useState('');
   const [deletingCreditId, setDeletingCreditId] = useState<string | null>(null);
 
+  // Payments (mig 232 — the receipt book)
+  const [recordingPayment, setRecordingPayment] = useState(false);
+  const [payForm, setPayForm] = useState(BLANK_PAYMENT_FORM);
+  const [paySaving, setPaySaving] = useState(false);
+  const [payError, setPayError] = useState('');
+  const [payNotice, setPayNotice] = useState('');
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+
   // Set dues for all players. It opens the SAME generator the Budget Plan tab uses (owner ruling
   // 2026-08-13) — this screen used to carry a second, cruder bulk form of its own: type a total,
   // type installments, no preview of what any player would actually owe, and a save path that
   // deleted paid installments along with the rest. One door, and the safe one.
   const [applyAllOpen, setApplyAllOpen] = useState(false);
 
-  // Reminders (proximity — installments due soon)
+  // Reminders (installments past due or due soon)
   const [sendingReminders, setSendingReminders] = useState(false);
   const [reminderResult, setReminderResult] = useState<{ emailsSent: number; installmentsTagged: number } | null>(null);
   const [reminderError, setReminderError] = useState('');
+  // Emails to real families is the one click on this toolbar that can't be un-clicked — it
+  // confirms first, and the confirm states the scope (owner call 2026-08-14).
+  const [confirmRemindersOpen, setConfirmRemindersOpen] = useState(false);
 
   // "Haven't paid anything yet" nudges (never-paid players)
   const [remindingAll, setRemindingAll] = useState(false);
@@ -178,8 +206,25 @@ export function PlayerDuesPanel({
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
+  // ── View lens: Season totals (default, the existing table) vs By installment ──────────────
+  // The choice rides the URL (owner-approved mockup d7162867) so a bookmarked or shared link
+  // opens the same view; `replace` rather than `push` so toggling doesn't stack history entries.
+  // Every other param (section, year) is preserved — this page is addressed by `?section=`.
+  const router = useRouter();
+  const pathname = usePathname();
+  const wantsInstallments = seasonSearchParams.get('duesView') === 'installments';
+  function setDuesView(next: 'totals' | 'installments') {
+    const sp = new URLSearchParams(seasonSearchParams.toString());
+    if (next === 'installments') sp.set('duesView', 'installments');
+    else sp.delete('duesView');
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
   useOverlayOpen(!!selected);
   // The bulk-dues generator registers its own overlay — a second one here would double-count.
+  // The two reminder modals register BELOW (one call — they are mutually exclusive); without it
+  // the phone bottom nav stayed tappable under the confirm dialog (/review 2026-08-14).
 
   // PDF branding and its plan gate both live in MoneyExportButton now — one place for every
   // Money tab, and the branding is fetched on the first PDF export rather than on every mount.
@@ -187,6 +232,10 @@ export function PlayerDuesPanel({
   // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with dues).
   const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
   const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
+  // "See an example" — what the reminder email says and when it goes out. Read-only, so it
+  // carries no unsaved-changes guard and needs none of the tabActive plumbing.
+  const [reminderPreviewOpen, setReminderPreviewOpen] = useState(false);
+  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -387,6 +436,66 @@ export function PlayerDuesPanel({
     }
   }
 
+  async function savePayment() {
+    if (!selected) return;
+    setPayError('');
+    setPayNotice('');
+    setPaySaving(true);
+    try {
+      const amount = parseFloat(payForm.amount);
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid payment amount');
+      if (!payForm.receivedDate) throw new Error('Date received is required');
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            receivedDate: payForm.receivedDate,
+            method:       payForm.method,
+            note:         payForm.note.trim() || null,
+          }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Failed to record payment');
+      setRecordingPayment(false);
+      setPayForm(BLANK_PAYMENT_FORM);
+      // The automatic overpayment credit (owner ruling 2026-08-13) is stated, never silent —
+      // the coach must see that $50 of what they just typed became a credit, not dues.
+      if (data.overpaymentCredit > 0.005) {
+        setPayNotice(`${fmt(data.overpaymentCredit)} was more than this player's schedule — saved as an overpayment credit.`);
+      }
+      await load();
+    } catch (e: unknown) {
+      setPayError(e instanceof Error ? e.message : 'Failed to record payment');
+    } finally {
+      setPaySaving(false);
+    }
+  }
+
+  async function deletePayment(paymentId: string) {
+    if (!selected) return;
+    setDeletingPaymentId(paymentId);
+    setPayNotice('');
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payments/${paymentId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Failed to remove payment');
+      }
+      await load();
+    } catch (e: unknown) {
+      setPayError(e instanceof Error ? e.message : 'Failed to remove payment');
+    } finally {
+      setDeletingPaymentId(null);
+    }
+  }
+
   async function saveSurplus() {
     setSurplusError('');
     setSurplusSaving(true);
@@ -469,17 +578,22 @@ export function PlayerDuesPanel({
   // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
   const neverPaid = players.filter(isNeverPaidPlayer);
 
-  // ── Season totals rail (Option C, owner-ratified 2026-08-02) ──────────────────────────────
-  // Every figure is summed from `players`, which this page already has — the rail exists because
-  // on a fifteen-player table these numbers are off-screen exactly while you read the rows they
-  // summarise, not because anything new needed computing. Overdue reuses the SHARED installment
-  // predicate, so the rail can't disagree with the ⚠ flags on the rows beneath it.
-  const railTotals = (() => {
+  // ── Season totals (owner ruling 2026-08-13, mockup artifact `c19d8500`) ────────────────────
+  // Every figure is summed from `players`, which this page already has — nothing new is computed
+  // or fetched. These used to live in a 300px reference rail beside the table (Option C rails,
+  // 2026-08-02); they now sit in the table's own <tfoot>, under the column each one totals.
+  // Overdue reuses the SHARED installment predicate, so the footer can't disagree with the ⚠
+  // flags on the rows above it.
+  const seasonTotals = (() => {
+    let assessed = 0;
+    let credits = 0;
     let collected = 0;
     let outstanding = 0;
     let overduePlayers = 0;
     let nextDue: string | null = null;
     for (const p of players) {
+      if (p.schedule) assessed += p.schedule.totalAmount;
+      credits += p.totalCredits;
       collected += p.paidAmount;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
       let hasOverdue = false;
@@ -492,10 +606,20 @@ export function PlayerDuesPanel({
       }
       if (hasOverdue) overduePlayers += 1;
     }
-    return { collected, outstanding, overduePlayers, nextDue };
+    return { assessed, credits, collected, outstanding, overduePlayers, nextDue };
   })();
   /** Is anyone ACTUALLY late? Distinct from "hasn't paid" — see the chase card below. */
-  const anyoneLate = railTotals.overduePlayers > 0;
+  const anyoneLate = seasonTotals.overduePlayers > 0;
+  // ⚠ NOTHING SET YET MEANS NO FOOTER, not a row of $0.00. On a roster whose dues haven't been
+  // built, every figure here is zero and a totals row would total nothing — the same reason the
+  // overdue line hides itself when nobody is behind (owner ruling 2026-08-13).
+  // Asks whether a SCHEDULE exists, not whether `assessed > 0`: a real schedule totalling zero is
+  // a decision a coach made, and its footer should say zero rather than vanish.
+  const showSeasonTotals = players.some(p => p.schedule);
+  // The By-installment lens needs at least one schedule for the same reason the footer does —
+  // with none, its band and grid would be a page of dashes. The toggle hides with it, and a
+  // bookmarked ?duesView=installments URL quietly falls back to the totals table.
+  const installmentView = wantsInstallments && showSeasonTotals;
 
   // Page-level action ruling 2026-08-13, decision 2 — "PLAYER DUES RESOLVES ITSELF": its two
   // bulk actions act on the DUES LIST, not on Money, so they come down into the list's own
@@ -521,25 +645,49 @@ export function PlayerDuesPanel({
   // smuggled in by a layout move.
   const duesToolbar = (
     <div className={styles.panelToolbar}>
+      {/* The view lens sits on the toolbar's left — exactly the slot the panel-toolbar ruling
+          reserved for "a view switch, a status filter, a lens picker". Desktop-only: phones
+          have one view (the cards), so a toggle there would be two buttons that do nothing. */}
+      {showSeasonTotals && (
+        <div className={`${styles.segChoice} ${styles.duesViewSeg} ${styles.duesDesktopOnly}`} role="group" aria-label="Dues view">
+          <button
+            type="button"
+            className={`${styles.segBtn} ${!installmentView ? styles.segBtnActive : ''}`}
+            onClick={() => setDuesView('totals')}
+          >
+            Season totals
+          </button>
+          <button
+            type="button"
+            className={`${styles.segBtn} ${installmentView ? styles.segBtnActive : ''}`}
+            onClick={() => setDuesView('installments')}
+          >
+            By installment
+          </button>
+        </div>
+      )}
       <div className={styles.panelToolbarActions}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {duesExport}
             {moneyCanWrite && (
             <>
-            <button className={styles.btnSecondary} onClick={() => setApplyAllOpen(true)}>
-              <DollarSign size={14} aria-hidden /> Set dues for all players
+            {/* Secondaries go icon-only on phones (`.headerBtnLabel` — the page-header
+                ruling's mechanism, same reason: three worded buttons stacked three rows
+                deep before the list began). aria-labels carry the words. */}
+            <button className={styles.btnSecondary} onClick={() => setApplyAllOpen(true)} aria-label="Set dues for all players">
+              <DollarSign size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Set dues for all players</span>
             </button>
             <button
               className={styles.btnSecondary}
-              onClick={sendReminders}
+              onClick={() => setConfirmRemindersOpen(true)}
               disabled={sendingReminders}
               style={{ opacity: sendingReminders ? 0.6 : 1 }}
               /* Tracks the visible ternary — a static label would tell AT "Send due
                  reminders" while sighted users watch "Sending…" (/review finding). */
               aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
             >
-              <Bell size={14} aria-hidden /> {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
+              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send Due Reminders'}</span>
             </button>
             </>
             )}
@@ -551,7 +699,7 @@ export function PlayerDuesPanel({
           )}
           {reminderResult && reminderResult.emailsSent === 0 && (
             <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-              No reminders needed — no installments due within 3 days.
+              No reminders needed — nothing is past due or due within 3 days.
             </span>
           )}
           {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
@@ -615,14 +763,14 @@ export function PlayerDuesPanel({
                   <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--home-ink, #f0f0f0)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     {anyoneLate && <AlertTriangle size={15} style={{ color: 'var(--warning)' }} />}
                     {anyoneLate
-                      ? `${railTotals.overduePlayers} past their due date`
+                      ? `${seasonTotals.overduePlayers} past their due date`
                       : `${neverPaid.length} ${neverPaid.length !== 1 ? 'players have' : 'player has'} not paid yet`}
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                     {anyoneLate
                       ? `${neverPaid.length} ${neverPaid.length !== 1 ? 'players owe' : 'player owes'} dues with no payment recorded.`
-                      : railTotals.nextDue
-                        ? `Nothing is late — the first payment is due ${fmtDate(railTotals.nextDue)}.`
+                      : seasonTotals.nextDue
+                        ? `Nothing is late — the first payment is due ${fmtDate(seasonTotals.nextDue)}.`
                         : 'Nothing is late.'}
                   </p>
                 </div>
@@ -658,8 +806,26 @@ export function PlayerDuesPanel({
           {/* The dues list's own toolbar — the bulk actions sit with the list they act on. */}
           {duesToolbar}
 
-          <div className={styles.railCols}>
-          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+          {/* Two lenses on ONE list — on DESKTOP. Phones carry no toggle (owner call
+              2026-08-14): the collapsible cards answer both questions, so below 640 the
+              breakdown (band + cards) always renders and the totals table stands down.
+              On desktop, By-installment shows the breakdown and Season totals shows the
+              table below, byte-for-byte what it was before the lens existed. Opening a
+              player lands in the same drawer from everywhere. */}
+          {showSeasonTotals && (
+            <InstallmentBreakdown
+              players={players}
+              desktopActive={installmentView}
+              onOpenPlayer={id => {
+                const p = players.find(x => x.player.id === id);
+                if (!p) return;
+                setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError('');
+                setRecordingPayment(false); setPayError(''); setPayNotice('');
+              }}
+            />
+          )}
+          {!installmentView && (
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}${showSeasonTotals ? ` ${styles.duesDesktopOnly}` : ''}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -680,7 +846,7 @@ export function PlayerDuesPanel({
                       key={p.player.id}
                       className={styles.tr}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
+                      onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); setRecordingPayment(false); setPayError(''); setPayNotice(''); }}
                     >
                       <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
@@ -707,51 +873,83 @@ export function PlayerDuesPanel({
                   );
                 })}
               </tbody>
+
+              {/* Season totals, each under the column it totals (owner ruling 2026-08-13, chosen
+                  from a four-option mockup — artifact `c19d8500`). This replaces the reference rail
+                  that stood to the right of this table; the trade the owner accepted is that these
+                  now scroll with the roster, on the grounds that a dues list runs 12–20 rows.
+
+                  Read-only, as the rail was: "Remind all" stays with the chase card it belongs to,
+                  because a send button beside a total invites nudging people you haven't looked at.
+
+                  ⚠ `data-label` on every cell is what makes this work at 640, where the table
+                  becomes cards and this row becomes the last card in the list. */}
+              {showSeasonTotals && (
+                <tfoot className={styles.tableFoot}>
+                  <tr>
+                    {/* `footLeadCell` keeps this caption visible in card mode — the cell is named
+                        rather than reached for by position, matching `cardActionCell` at the other
+                        end of the row. */}
+                    <td className={`${styles.td} ${styles.footLeadCell}`}>
+                      <span className={styles.footLabel}>Season</span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Assessed">
+                      <span className={styles.footLabel}>Assessed</span>
+                      <span className={styles.footValue}>{fmt(seasonTotals.assessed)}</span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits">
+                      <span className={styles.footLabel}>Credits</span>
+                      <span className={styles.footValue}>
+                        {seasonTotals.credits > 0.005 ? `-${fmt(seasonTotals.credits)}` : '—'}
+                      </span>
+                    </td>
+                    {/* The Paid column totals to COLLECTED; the Balance column totals under its
+                        OWN name. This cell used to say "Outstanding" — but it sums positive
+                        ROLLING balances (credits subtracted), and "Outstanding" is the credits-
+                        EXCLUDED figure the digest and Ask quote. Same word, two numbers, drifting
+                        by exactly the credited amount (inventory row 2, fixed Pass 2). */}
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Collected">
+                      <span className={styles.footLabel}>Collected</span>
+                      <span className={styles.footValue}>{fmt(seasonTotals.collected)}</span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance owing">
+                      <span className={styles.footLabel}>Balance owing</span>
+                      <span className={styles.footValue} data-warn={seasonTotals.outstanding > 0.005 ? 'true' : undefined}>
+                        {fmt(seasonTotals.outstanding)}
+                      </span>
+                    </td>
+                    {/* Next due, plus the overdue headcount when there is one. Overdue has no
+                        column of its own to sit under, and the Status column is where the per-row
+                        version of exactly this fact lives. Absent when nobody is behind — a zero
+                        here would read as a score (the 2026-08-03 ruling, carried over intact). */}
+                    {/* ⚠ `cardStackCell` ONLY WHEN THE SECOND LINE EXISTS. At ≤640 a card cell is a
+                        single-row flex (label ::before | value, space-between), so a cell carrying
+                        BOTH a value and the overdue note would print all three on one line instead
+                        of the note sitting under the figure. `cardStackCell` is this file's own
+                        answer for a cell too big for one label/value line — applied conditionally
+                        because with no overdue note this cell is exactly one line and should read
+                        like its five siblings. */}
+                    <td
+                      className={`${styles.td}${seasonTotals.overduePlayers > 0 ? ` ${styles.cardStackCell}` : ''}`}
+                      data-label="Next due"
+                    >
+                      <span className={styles.footLabel}>Next due</span>
+                      <span className={styles.footValue} style={{ fontSize: '0.82rem' }}>
+                        {seasonTotals.nextDue ? fmtDate(seasonTotals.nextDue) : '—'}
+                      </span>
+                      {seasonTotals.overduePlayers > 0 && (
+                        <span className={styles.footNote} data-warn="true">
+                          {seasonTotals.overduePlayers} overdue
+                        </span>
+                      )}
+                    </td>
+                    <td className={styles.td}></td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
-
-          {/* Season totals — the numbers the table is made of, kept beside the rows instead of
-              scrolling away above them. Read-only by design: "Remind all" stays with the list it
-              acts on, because a send button beside a total invites nudging people you haven't
-              looked at. Moves below the table on a phone (no rail there). */}
-          <aside className={styles.rail}>
-            <div className={styles.railGroup}>
-              <span className={styles.railLabel}>Season totals</span>
-              <div className={styles.railRow}>
-                <span className={styles.railRowName}>Collected</span>
-                <span className={`${styles.railValue} ${styles.railValueBig}`}>{fmt(railTotals.collected)}</span>
-              </div>
-              <div className={styles.railRow}>
-                <span className={styles.railRowName}>Outstanding</span>
-                <span className={`${styles.railValue} ${styles.railValueBig}`} data-warn={railTotals.outstanding > 0.005 ? 'true' : undefined}>
-                  {fmt(railTotals.outstanding)}
-                </span>
-              </div>
-              {railTotals.nextDue && (
-                <div className={styles.railRow}>
-                  <span className={styles.railRowName}>Next due</span>
-                  <span className={styles.railValue}>{fmtDate(railTotals.nextDue)}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Overdue ONLY. "Paid nothing yet" was here and was removed (owner, 2026-08-03): the
-                "Haven't paid anything yet" card sits a few hundred pixels above this, and it is
-                strictly better — it NAMES the families and carries the Remind-all button, where
-                this could only repeat its count. Overdue stays because nothing else on the page
-                totals it; it appears only as a ⚠ against individual installments.
-                Absent entirely when nobody is overdue — a zero here would read as a score. */}
-            {railTotals.overduePlayers > 0 && (
-              <div className={styles.railGroup}>
-                <span className={styles.railLabel}>Needs a nudge</span>
-                <div className={styles.railRow}>
-                  <span className={styles.railRowName}>Overdue</span>
-                  <span className={styles.railValue} data-warn="true">{railTotals.overduePlayers}</span>
-                </div>
-              </div>
-            )}
-          </aside>
-          </div>
+          )}
 
           {/* Season Refund Calculator */}
           <div style={{
@@ -888,24 +1086,33 @@ export function PlayerDuesPanel({
             )}
           </div>
 
-          {/* Automatic Dues Reminders — team-level toggle (moved from the Money hub). */}
+          {/* Automatic Dues Reminders — ONE compact row (owner, 2026-08-13: the old card spent
+              ~200px saying one sentence). Title, a short status, "See an example" (opens the
+              schedule + a rendered sample of the REAL email), and the toggle. */}
           {autoReminders !== null && (
-            <div className={styles.detailSection} style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <Bell size={20} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0 }}>Automatic Dues Reminders</p>
-                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>
-                  {autoReminders
-                    ? 'On — guardians receive email reminders at 30 days and 7 days before each installment due date.'
-                    : 'Off — no automatic reminder emails will be sent for this team.'}
-                </p>
+            <div className={styles.detailSection} style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.6rem 1rem' }}>
+              <Bell size={15} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Automatic Dues Reminders</span>
+                <span className={styles.muted} style={{ fontSize: '0.78rem' }}>
+                  {autoReminders ? '30 and 7 days before each due date' : 'Off — no automatic emails'}
+                </span>
               </div>
+              <button
+                className={styles.btnGhost}
+                /* Quiet by type size, NOT by tap size — 44px is the portal's floor and the
+                   mouse-only exception was already rejected once (money-rail pass). */
+                style={{ flexShrink: 0, fontSize: '0.75rem', padding: '0.2rem 0.55rem', minHeight: 44 }}
+                onClick={() => setReminderPreviewOpen(true)}
+              >
+                See an example
+              </button>
               {moneyCanWrite && (
                 <button
                   className={autoReminders ? styles.btnPrimary : styles.btnGhost}
                   disabled={autoRemindersSaving}
                   onClick={() => toggleAutoReminders(!autoReminders)}
-                  style={{ flexShrink: 0, fontSize: '0.8rem', padding: '0.35rem 0.9rem' }}
+                  style={{ flexShrink: 0, fontSize: '0.8rem', padding: '0.25rem 0.8rem' }}
                 >
                   {autoRemindersSaving ? '…' : autoReminders ? 'Enabled' : 'Disabled'}
                 </button>
@@ -987,7 +1194,110 @@ export function PlayerDuesPanel({
                       <button className={styles.btnGhost} onClick={() => openEdit(selected)} style={{ fontSize: '0.78rem' }}>
                         Edit schedule
                       </button>
+                      {moneyCanWrite && !recordingPayment && (
+                        <button
+                          className={styles.btnPrimary}
+                          onClick={() => { setRecordingPayment(true); setPayForm(BLANK_PAYMENT_FORM); setPayError(''); setPayNotice(''); }}
+                          style={{ fontSize: '0.78rem' }}
+                        >
+                          Record payment
+                        </button>
+                      )}
                     </div>
+
+                    {/* Record a payment — three facts (how much, when it arrived, how) and a
+                        statement of where it lands BEFORE saving. Amounts spread oldest-first;
+                        the coach never allocates by hand. */}
+                    {recordingPayment && (
+                      <div style={{
+                        padding: '0.85rem', marginBottom: '1rem',
+                        background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
+                        border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <label className={styles.label}>Amount received <span className={styles.labelRequired}>*</span></label>
+                            <input
+                              className={styles.input}
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              placeholder="e.g. 100"
+                              value={payForm.amount}
+                              onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <label className={styles.label}>Date received <span className={styles.labelRequired}>*</span></label>
+                            <input
+                              className={styles.input}
+                              type="date"
+                              value={payForm.receivedDate}
+                              onChange={e => setPayForm(f => ({ ...f, receivedDate: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <label className={styles.label}>Method</label>
+                            <select
+                              className={styles.input}
+                              value={payForm.method}
+                              onChange={e => setPayForm(f => ({ ...f, method: e.target.value as DuesPaymentMethod }))}
+                            >
+                              {(Object.entries(PAYMENT_METHOD_LABELS) as [DuesPaymentMethod, string][]).map(([v, l]) => (
+                                <option key={v} value={v}>{l}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={styles.label}>Note</label>
+                            <input
+                              className={styles.input}
+                              /* Neutral example on purpose (owner ruling 2026-08-13, thread 3A):
+                                 the old "from Dana's account" TAUGHT coaches to put guardian
+                                 names where money-view assistants without the family-privacy
+                                 grant can read them. */
+                              placeholder="e.g. paid at practice"
+                              value={payForm.note}
+                              onChange={e => setPayForm(f => ({ ...f, note: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                        {(() => {
+                          const amt = parseFloat(payForm.amount);
+                          if (isNaN(amt) || amt <= 0 || !selected.schedule) return null;
+                          const paymentsTotal = selected.payments.reduce((s, p) => s + p.amount, 0);
+                          // The SAME cents-safe helper the server's write path uses — a preview
+                          // that does its own arithmetic is a preview that can disagree with
+                          // the credit actually created.
+                          const excess = overpaymentExcess(selected.schedule.totalAmount, paymentsTotal, amt);
+                          return (
+                            <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                              Posts {fmt(amt)} income to the team ledger, dated {fmtDate(payForm.receivedDate || tournamentToday())} — the day it arrived.
+                              {excess > 0.005 && (
+                                <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.2rem' }}>
+                                  {fmt(excess)} is more than what&apos;s left on this schedule — it will be saved as an overpayment credit.
+                                </span>
+                              )}
+                            </p>
+                          );
+                        })()}
+                        {payError && <p className={styles.errorText}>{payError}</p>}
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button className={styles.btnGhost} onClick={() => { setRecordingPayment(false); setPayError(''); }} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                          <button className={styles.btnPrimary} disabled={paySaving} onClick={savePayment} style={{ fontSize: '0.8rem' }}>
+                            {paySaving ? 'Recording…' : 'Record Payment'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {payNotice && (
+                      <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', color: 'var(--warning)' }}>{payNotice}</p>
+                    )}
+                    {!recordingPayment && payError && (
+                      <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', color: 'var(--danger-light)' }}>{payError}</p>
+                    )}
                     {/* The reminder's own result, beside the button that sent it. */}
                     {(unpaidError || unpaidResult) && remindingId === null && (
                       <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', textAlign: 'right', color: unpaidError ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
@@ -1018,6 +1328,13 @@ export function PlayerDuesPanel({
                           <tbody>
                             {selected.installments.map(inst => {
                               const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
+                              // Coverage comes from recorded payments (mig 232). A part-covered
+                              // installment says HOW FAR it has got — "$200.00 of $300.00" was
+                              // this project's reason to exist; "Unpaid" beside two faithful
+                              // transfers was the defect.
+                              const cov = selected.coverage.find(c => c.installmentId === inst.id);
+                              const allocated = cov?.allocated ?? 0;
+                              const partial = !inst.paidAt && allocated > 0.005;
                               return (
                                 <tr key={inst.id} className={styles.tr}>
                                   <td className={styles.td} data-label="Instalment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
@@ -1031,6 +1348,10 @@ export function PlayerDuesPanel({
                                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                                         <CheckCircle2 size={12} /> Paid {fmtDate(inst.paidAt)}
                                       </span>
+                                    ) : partial ? (
+                                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--warning)', fontVariantNumeric: 'tabular-nums' }}>
+                                        {fmt(allocated)} of {fmt(inst.amount)}
+                                      </span>
                                     ) : (
                                       <span className={`${styles.badge} ${overdue ? styles.badgeCompleted : styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>
                                         {overdue ? 'Overdue' : 'Unpaid'}
@@ -1038,13 +1359,16 @@ export function PlayerDuesPanel({
                                     )}
                                   </td>
                                   <td className={`${styles.td} ${styles.cardActionCell}`}>
-                                    {!inst.paidAt && (
+                                    {!inst.paidAt && moneyCanWrite && (
                                       <button
                                         className={`${styles.btnSecondary} ${styles.compactAction}`}
                                         disabled={!!marking[inst.id]}
                                         onClick={() => markPaid(selected, inst)}
+                                        /* One tap records a payment for what's still UNCOVERED
+                                           on this installment, dated today — it can never
+                                           double-charge a part-paid row. */
                                       >
-                                        {marking[inst.id] ? '…' : 'Mark Paid'}
+                                        {marking[inst.id] ? '…' : partial ? 'Mark rest paid' : 'Mark Paid'}
                                       </button>
                                     )}
                                   </td>
@@ -1056,11 +1380,53 @@ export function PlayerDuesPanel({
                       </div>
                     )}
 
+                    {/* Payments — the receipt book (mig 232). Each row is a FACT with its own
+                        date, method and ledger line; removing one voids that ledger entry and
+                        takes any auto-created overpayment credit with it. */}
+                    {selected.payments.length > 0 && (
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
+                          Payments — {fmt(selected.payments.reduce((s, p) => s + p.amount, 0))} received
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {selected.payments.map(pm => (
+                            <div key={pm.id} style={{
+                              display: 'flex', alignItems: 'center', gap: '0.6rem',
+                              padding: '0.5rem 0.65rem', borderRadius: 7,
+                              background: 'var(--home-card, rgba(255,255,255,0.03))',
+                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                              fontSize: '0.83rem',
+                            }}>
+                              <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                                {fmt(pm.amount)}
+                              </span>
+                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {PAYMENT_METHOD_LABELS[pm.method]}{pm.note ? ` · ${pm.note}` : ''}
+                              </span>
+                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
+                                {fmtDate(pm.receivedDate)}
+                              </span>
+                              {moneyCanWrite && (
+                                <button
+                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  disabled={deletingPaymentId === pm.id}
+                                  onClick={() => deletePayment(pm.id)}
+                                  title="Remove payment (voids its ledger entry)"
+                                >
+                                  {deletingPaymentId === pm.id ? '…' : <Trash2 size={13} />}
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Credits section */}
                     <div style={{
                       borderTop: '1px solid var(--home-line, rgba(255,255,255,0.07))',
                       paddingTop: '1rem',
-                      marginTop: selected.installments.length > 0 ? 0 : '0.5rem',
+                      marginTop: selected.installments.length > 0 || selected.payments.length > 0 ? 0 : '0.5rem',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
@@ -1172,14 +1538,23 @@ export function PlayerDuesPanel({
                               <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
                                 {CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}
                               </span>
-                              <button
-                                style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-                                disabled={deletingCreditId === c.id}
-                                onClick={() => deleteCredit(c.id)}
-                                title="Remove credit"
-                              >
-                                {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
-                              </button>
+                              {/* An auto-created overpayment credit rides its payment (DB
+                                  CASCADE) — deleting it alone would un-balance the books, so
+                                  the delete lives on the payment row instead. */}
+                              {c.paymentId ? (
+                                <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
+                                  auto
+                                </span>
+                              ) : (
+                                <button
+                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  disabled={deletingCreditId === c.id}
+                                  onClick={() => deleteCredit(c.id)}
+                                  title="Remove credit"
+                                >
+                                  {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1227,12 +1602,107 @@ export function PlayerDuesPanel({
           orgSlug={orgSlug}
           teamId={teamId}
           seasonQuery={seasonQuery}
-          budgetHref={`${base}/accounting?section=budget`}
+          budgetHref={moneySectionHref(base, 'budget', undefined, seasonQuery)}
           tabActive={tabActive}
           onClose={() => setApplyAllOpen(false)}
           onGenerated={load}
         />
       )}
+
+      {/* "See an example" — the reminder schedule and a rendered sample of the email. The sample
+          is built by the SAME template every sender uses (lib/dues-reminder-email.ts), so what a
+          coach reads here is what a family receives — a hand-written sample would drift the
+          first time the wording changed. Sample rows show both cases: untouched, and part-paid
+          with the thank-you. */}
+      {/* Confirm before emailing families (owner call 2026-08-14). The one toolbar click that
+          can't be un-clicked states its whole scope up front: past due + the next 3 days,
+          remainders only, one email per family, and the 7-day no-repeat guard. */}
+      {confirmRemindersOpen && (
+        <div className={styles.modalOverlay} onClick={() => setConfirmRemindersOpen(false)}>
+          <div className={styles.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Send due reminders?</span>
+              <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setConfirmRemindersOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' }}>
+              <p style={{ margin: 0 }}>
+                This emails every family with an installment that is <strong>past due</strong> or{' '}
+                <strong>due within the next 3 days</strong> — one email per family, asking only for
+                what&apos;s still owing.
+              </p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                A family already reminded in the last 7 days isn&apos;t emailed again. Fully paid and
+                up-to-date families never receive one.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button className={styles.btnGhost} onClick={() => setConfirmRemindersOpen(false)}>Cancel</button>
+              <button
+                className={styles.btnPrimary}
+                onClick={() => { setConfirmRemindersOpen(false); sendReminders(); }}
+              >
+                <Bell size={14} aria-hidden /> Send reminders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reminderPreviewOpen && (() => {
+        const sampleDue = addCalendarDays(tournamentToday(), 30);
+        const sample = duesReminderEmail({
+          teamName: assignment?.teamName ?? 'your team',
+          window: 30,
+          guardianFirst: 'Jordan',
+          items: [
+            { playerFirstName: 'Alex', playerLastName: 'Rivera', amount: 300, remainingAmount: 300, dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
+            { playerFirstName: 'Sam', playerLastName: 'Rivera', amount: 300, remainingAmount: 100, dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
+          ],
+        });
+        return (
+          <div className={styles.modalOverlay} onClick={() => setReminderPreviewOpen(false)}>
+            <div className={styles.modal} style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Dues reminder emails</span>
+                <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setReminderPreviewOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
+                <p style={{ margin: 0 }}>
+                  <strong>When they go out:</strong> with Automatic Dues Reminders on, each family is emailed
+                  about an unpaid installment <strong>30 days</strong> before its due date and again
+                  <strong> 7 days</strong> before — one email per family per wave, never twice in the same week.
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong>Send Due Reminders</strong> (above the table) emails right now about anything past
+                  due or due in the next 3 days. The <strong>Remind all</strong> button on the chase card is
+                  separate — it only ever writes to families with no payment recorded at all.
+                </p>
+                <p style={{ margin: 0 }}>
+                  Emails ask only for <strong>what&apos;s still owing</strong> — a family part-way through paying
+                  is thanked for what&apos;s arrived, never billed the full amount again.
+                </p>
+              </div>
+
+              <div style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid var(--home-line, rgba(255,255,255,0.12))', background: 'white' }}>
+                <div style={{ padding: '0.5rem 0.9rem', borderBottom: '1px solid var(--home-line, rgba(0,0,0,0.08))', fontSize: '0.75rem', color: 'black', opacity: 0.55 }}>
+                  Subject: {sample.subject}
+                </div>
+                {/* The template's own inline styles carry the email's look; colours here only
+                    ground it on the white "email client" card. */}
+                <div style={{ color: 'black', fontSize: '0.85rem' }} dangerouslySetInnerHTML={{ __html: sample.html }} />
+              </div>
+              <p className={styles.muted} style={{ fontSize: '0.72rem', margin: '0.5rem 0 0' }}>
+                Sample family and amounts — real emails use your roster&apos;s names, figures and due dates.
+              </p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

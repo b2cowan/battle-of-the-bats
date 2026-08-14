@@ -270,6 +270,20 @@ export function parseDateOnlyParts(value: string | null | undefined): { y: numbe
 }
 
 /**
+ * "2026-09-30" → "30 Sep". Day first, and no year — for a narrow column heading where the season
+ * already supplies the year and every character costs a phone some width.
+ *
+ * Lives HERE, beside the other date formatters, rather than in the one screen that wanted it: the
+ * caller's own instinct was to hand-roll the month array and re-split the string, which is exactly
+ * the duplication `parseDateOnlyParts` was extracted to end.
+ */
+export function formatDayMonth(value: string | null | undefined): string {
+  const p = parseDateOnlyParts(value);
+  if (!p) return value ?? '';
+  return `${p.d} ${SHORT_MONTHS[p.m - 1]}`;
+}
+
+/**
  * "Aug 14–16" / "Aug 30 – Sep 1" / single-day "Aug 14" (+ ", 2026" when `withYear`).
  * A range crossing a year boundary always shows BOTH years ("Dec 30, 2026 – Jan 2, 2027")
  * so the start year is never silently dropped.

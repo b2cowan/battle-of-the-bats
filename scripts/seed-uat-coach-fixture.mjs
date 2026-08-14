@@ -510,6 +510,17 @@ if (!existingDues?.length) {
     }));
     const ii = await db.from('rep_player_dues_installments').insert(insts);
     if (ii.error) { console.error('✗ dues instalments insert', ii.error.message); process.exit(1); }
+    // Paid stamps are a coverage projection since mig 232 — the dollars the dues readers show
+    // live in rep_dues_payments; one payment per stamped instalment keeps the fixture coherent.
+    if (plan.paid > 0) {
+      const pays = [1, 2].filter((n) => n <= plan.paid).map((n) => ({
+        program_year_id: py.id, player_id: ids[i], org_id: org.id, team_id: team.id,
+        amount: 625, received_date: new Date().toISOString().slice(0, 10),
+        method: 'etransfer', source: 'recorded',
+      }));
+      const pp = await db.from('rep_dues_payments').insert(pays);
+      if (pp.error) { console.error('✗ dues payments insert', pp.error.message); process.exit(1); }
+    }
     money.dues++;
   }
   ok(`dues seeded (${money.dues} players — paid, part paid, and overdue)`);

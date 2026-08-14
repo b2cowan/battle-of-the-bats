@@ -1,0 +1,1555 @@
+<title>Fundraising Pays the Bill</title>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     MOCKUP CHROME — deliberately NOT the product palette, so the
+     annotation layer can never be mistaken for product UI.
+     Same chrome as The Receipt Book / basis-picker / budget-totals
+     mockups: this page is the next spec in that series.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #E9ECEF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F4F6F8;
+    --ink:         #1B1F24;
+    --ink-2:       #4B545E;
+    --ink-3:       #78828D;
+    --rule:        rgba(27, 31, 36, 0.13);
+    --rule-soft:   rgba(27, 31, 36, 0.07);
+    --accent:      #2F5D8A;
+    --accent-soft: rgba(47, 93, 138, 0.10);
+    --on-accent:   #FFFFFF;
+    --new:         #0E6E64;
+    --new-bg:      rgba(14, 110, 100, 0.10);
+    --restyled:    #8A5410;
+    --restyled-bg: rgba(138, 84, 16, 0.11);
+    --same:        #5C6773;
+    --same-bg:     rgba(92, 103, 115, 0.10);
+    --gone:        #A03434;
+    --gone-bg:     rgba(160, 52, 52, 0.10);
+    --shadow:      0 1px 2px rgba(16,22,28,.06), 0 8px 28px rgba(16,22,28,.09);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --f-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono:    ui-monospace, "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15181C;
+      --surface:     #1D2126;
+      --surface-2:   #24292F;
+      --ink:         #E7EBEF;
+      --ink-2:       #B2BBC4;
+      --ink-3:       #87929C;
+      --rule:        rgba(231, 235, 239, 0.16);
+      --rule-soft:   rgba(231, 235, 239, 0.08);
+      --accent:      #85B4DF;
+      --accent-soft: rgba(133, 180, 223, 0.13);
+      --on-accent:   #10141A;
+      --new:         #5FCFC2;
+      --new-bg:      rgba(95, 207, 194, 0.13);
+      --restyled:    #E3A85C;
+      --restyled-bg: rgba(227, 168, 92, 0.13);
+      --same:        #9AA5B1;
+      --same-bg:     rgba(154, 165, 177, 0.12);
+      --gone:        #EE8A8A;
+      --gone-bg:     rgba(238, 138, 138, 0.13);
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #15181C;
+    --surface:     #1D2126;
+    --surface-2:   #24292F;
+    --ink:         #E7EBEF;
+    --ink-2:       #B2BBC4;
+    --ink-3:       #87929C;
+    --rule:        rgba(231, 235, 239, 0.16);
+    --rule-soft:   rgba(231, 235, 239, 0.08);
+    --accent:      #85B4DF;
+    --accent-soft: rgba(133, 180, 223, 0.13);
+    --on-accent:   #10141A;
+    --new:         #5FCFC2;
+    --new-bg:      rgba(95, 207, 194, 0.13);
+    --restyled:    #E3A85C;
+    --restyled-bg: rgba(227, 168, 92, 0.13);
+    --same:        #9AA5B1;
+    --same-bg:     rgba(154, 165, 177, 0.12);
+    --gone:        #EE8A8A;
+    --gone-bg:     rgba(238, 138, 138, 0.13);
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 32px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin: 0 0 0.35rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 1.03rem;
+    margin: 0 0 1.4rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin: 0 0 2.4rem; }
+  .tag {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.14rem 0.46rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag.new      { color: var(--new);      background: var(--new-bg); }
+  .tag.restyled { color: var(--restyled); background: var(--restyled-bg); }
+  .tag.same     { color: var(--same);     background: var(--same-bg); }
+  .tag.gone     { color: var(--gone);     background: var(--gone-bg); }
+  .tag.call     { color: var(--accent);   background: var(--accent-soft); }
+
+  .sect { margin: 0 0 3.4rem; }
+  .sect-head { display: flex; align-items: baseline; gap: 0.7rem; margin: 0 0 0.5rem; flex-wrap: wrap; }
+  .sect-num {
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sect > p, .sect > ul { max-width: 70ch; color: var(--ink-2); margin: 0 0 1.1rem; }
+  .sect > p strong, .sect > ul strong { color: var(--ink); font-weight: 600; }
+  ul { padding-left: 1.1rem; }
+  li { margin: 0 0 0.4rem; }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    margin: 1.1rem 0;
+    max-width: 70ch;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note.warn { border-left-color: var(--gone); }
+
+  .stage {
+    border-radius: 14px;
+    padding: 1.4rem;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(0deg, var(--rule-soft) 1px, transparent 1px) 0 0 / 100% 26px,
+      var(--surface-2);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+  .stage + .stage { margin-top: 0.9rem; }
+  .caption {
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    margin: 0.5rem 0 0;
+    max-width: 74ch;
+  }
+  .caption b { color: var(--ink-2); }
+
+  /* ── The defect strip ── */
+  .defect {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.9rem;
+    margin: 1.3rem 0 0.6rem;
+  }
+  .dcell {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+  }
+  .dcell.bad { border-color: var(--gone); }
+  .dlabel {
+    font-family: var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ink-3);
+    margin: 0 0 0.25rem;
+  }
+  .dval {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .dcell.bad .dval { color: var(--gone); }
+  .dsub { font-size: 0.78rem; color: var(--ink-3); margin-top: 0.15rem; }
+
+  /* ── Decisions awaiting the owner ── */
+  .mark.call { color: var(--accent); background: var(--accent-soft); }
+  .calls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2.8rem;
+  }
+  .call {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .call-n {
+    font-family: var(--f-mono);
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+    display: block; margin-bottom: 0.15rem;
+  }
+  .call.ruled { border-left-color: var(--new); }
+  .call.ruled .call-n { color: var(--new); }
+  .call h4 { margin: 0 0 0.25rem; font-size: 0.92rem; font-weight: 700; text-wrap: balance; }
+  .call p { margin: 0; font-size: 0.81rem; color: var(--ink-3); }
+  .call p b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── Before / after comparison ── */
+  .vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 1.1rem; width: 100%; }
+  .vsitem { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+  .vslab {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .vslab.now  { color: var(--same); }
+  .vslab.next { color: var(--new); }
+  .stage.vsstage { display: block; }
+
+  /* ── Closing checklist ── */
+  .keeps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.7rem; margin-top: 1rem; }
+  .keep {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .keep h4 { margin: 0 0 0.2rem; font-size: 0.9rem; font-weight: 700; }
+  .keep p { margin: 0; font-size: 0.82rem; color: var(--ink-3); }
+
+  /* ── The two-directions diagram ── */
+  .flow { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 0.55rem; }
+  .flowlabels { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.78rem; font-weight: 700; }
+  .flowlabels .cash { color: var(--ink-2); }
+  .flowlabels .earn { color: var(--new); text-align: right; }
+  .flowrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+  .fcell {
+    border: 1px solid var(--rule); border-radius: 9px;
+    background: var(--surface);
+    padding: 0.5rem 0.65rem;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .fcell .fn { font-family: var(--f-mono); font-size: 0.68rem; font-weight: 700; color: var(--ink-3); display: block; }
+  .fcell .fa { font-weight: 800; font-size: 0.95rem; }
+  .fcell .fs { display: block; font-size: 0.7rem; color: var(--ink-3); }
+  .fcell.done { border-color: var(--same); background: var(--same-bg); }
+  .fcell.earned { border-color: var(--new); background: var(--new-bg); }
+  .fcell.earned .fs { color: var(--new); font-weight: 700; }
+
+  /* ─────────────────────────────────────────────────────────────
+     PRODUCT SKIN — the real coaches-portal tokens (warm portal).
+     ───────────────────────────────────────────────────────────── */
+  .skin {
+    --p-card:        #FFFFFF;
+    --p-inset:       #FCFBF8;
+    --p-ground:      #F5F1E8;
+    --p-ink:         #241E15;
+    --p-ink-soft:    #4A4235;
+    --p-dim:         #6A635C;
+    --p-line:        rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-field:       #FFFFFF;
+    --p-lime:        #D9F99D;
+    --p-olive:       #57651E;
+    --p-olive-soft:  rgba(87, 101, 30, 0.10);
+    --p-danger:      #C2410C;
+    --p-danger-soft: rgba(194, 65, 12, 0.09);
+    --p-warn:        #92600A;
+    --p-warn-soft:   rgba(146, 96, 10, 0.10);
+    --p-good:        #2F6B3C;
+    --p-good-soft:   rgba(47, 107, 60, 0.10);
+    --p-link:        #1D4ED8;
+    --p-on-olive:    #24310A;
+    width: 100%;
+    max-width: 560px;
+    font-family: var(--f-body);
+    color: var(--p-ink);
+  }
+  .skin.wide { max-width: 700px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .skin {
+      --p-card:        #111827;
+      --p-inset:       rgba(255,255,255,0.03);
+      --p-ground:      #0C111B;
+      --p-ink:         rgba(255,255,255,0.9);
+      --p-ink-soft:    rgba(255,255,255,0.7);
+      --p-dim:         rgba(255,255,255,0.45);
+      --p-line:        rgba(255,255,255,0.12);
+      --p-line-strong: rgba(255,255,255,0.2);
+      --p-field:       rgba(255,255,255,0.05);
+      --p-olive:       #A3B546;
+      --p-olive-soft:  rgba(255,255,255,0.10);
+      --p-danger:      #F87171;
+      --p-danger-soft: rgba(248, 113, 113, 0.12);
+      --p-warn:        #E3B061;
+      --p-warn-soft:   rgba(227, 176, 97, 0.13);
+      --p-good:        #6EE7A8;
+      --p-good-soft:   rgba(110, 231, 168, 0.12);
+      --p-link:        #93B4FF;
+      --p-on-olive:    #0A0A0A;
+    }
+  }
+  :root[data-theme="dark"] .skin {
+    --p-card:        #111827;
+    --p-inset:       rgba(255,255,255,0.03);
+    --p-ground:      #0C111B;
+    --p-ink:         rgba(255,255,255,0.9);
+    --p-ink-soft:    rgba(255,255,255,0.7);
+    --p-dim:         rgba(255,255,255,0.45);
+    --p-line:        rgba(255,255,255,0.12);
+    --p-line-strong: rgba(255,255,255,0.2);
+    --p-field:       rgba(255,255,255,0.05);
+    --p-olive:       #A3B546;
+    --p-olive-soft:  rgba(255,255,255,0.10);
+    --p-danger:      #F87171;
+    --p-danger-soft: rgba(248, 113, 113, 0.12);
+    --p-warn:        #E3B061;
+    --p-warn-soft:   rgba(227, 176, 97, 0.13);
+    --p-good:        #6EE7A8;
+    --p-good-soft:   rgba(110, 231, 168, 0.12);
+    --p-link:        #93B4FF;
+    --p-on-olive:    #0A0A0A;
+  }
+
+  /* ── The sheet ── */
+  .modal {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.9rem 1.1rem 0.75rem;
+  }
+  .modal-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+  .x { color: var(--p-dim); font-size: 0.95rem; }
+  .modal-body { padding: 0 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.95rem; }
+  .modal-foot {
+    display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--p-line);
+    background: var(--p-inset);
+  }
+  .lede { font-size: 0.86rem; color: var(--p-ink-soft); margin: 0; }
+  .lede b { font-weight: 700; color: var(--p-ink); }
+
+  .btn {
+    font: inherit; font-size: 0.84rem; font-weight: 600;
+    padding: 0.42rem 0.85rem; border-radius: 7px;
+    border: 1px solid transparent; background: transparent; color: var(--p-ink-soft);
+    cursor: default;
+  }
+  .btn.ghost { color: var(--p-dim); }
+  .btn.secondary { border-color: var(--p-line-strong); background: var(--p-card); color: var(--p-ink); }
+  .btn.primary { background: var(--p-lime); color: var(--p-on-olive); font-weight: 700; }
+
+  /* ── Form fields ── */
+  .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+  .ifield { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .ifield.full { grid-column: 1 / -1; }
+  .flabel { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; color: var(--p-dim); }
+  .fbox {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
+    border: 1px solid var(--p-line-strong); border-radius: 7px;
+    background: var(--p-field);
+    padding: 0.36rem 0.55rem;
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+  .fbox .cal { color: var(--p-dim); font-size: 0.85rem; }
+  .fbox .sel { color: var(--p-dim); font-size: 0.7rem; }
+  .fbox .caret { width: 1px; height: 15px; background: var(--p-ink); }
+  .fbox .ph { color: var(--p-dim); }
+
+  /* ── Reconciliation strip ── */
+  .recon {
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    border-radius: 9px; padding: 0.6rem 0.8rem;
+    font-size: 0.82rem; line-height: 1.45;
+  }
+  .recon .mk { font-weight: 800; flex: 0 0 auto; }
+  .recon b { font-weight: 700; }
+  .recon.short { background: var(--p-warn-soft); color: var(--p-warn); }
+  .recon.over  { background: var(--p-danger-soft); color: var(--p-danger); }
+  .recon.match { background: var(--p-good-soft); color: var(--p-good); }
+  .recon.plain { background: var(--p-inset); color: var(--p-ink-soft); border: 1px dashed var(--p-line-strong); }
+  .recon .body { color: inherit; }
+  .recon .body .quiet { color: inherit; opacity: 0.85; display: block; font-size: 0.76rem; margin-top: 0.1rem; }
+
+  /* ── "Where it lands" preview ── */
+  .alloc { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .alloc-head {
+    padding: 0.5rem 0.8rem;
+    background: var(--p-inset);
+    border-bottom: 1px solid var(--p-line);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+    display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  }
+  .arow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.8rem;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .arow + .arow { border-top: 1px solid var(--p-line); }
+  .arow .aname { font-weight: 600; }
+  .arow .aamt { text-align: right; font-weight: 700; }
+  .arow .asub { grid-column: 1 / -1; font-size: 0.76rem; color: var(--p-dim); }
+
+  /* ── Drawer: schedule + payments + credits ── */
+  .drawer {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--p-line);
+  }
+  .drawer-title { font-size: 1rem; font-weight: 700; }
+  .drawer-body { padding: 1rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
+  .statgrid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 0.6rem;
+  }
+  .stat {
+    background: var(--p-inset); border: 1px solid var(--p-line); border-radius: 9px;
+    padding: 0.5rem 0.7rem;
+  }
+  .stat .sl { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--p-dim); display: block; }
+  .stat .sv { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+
+  .subhead {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    font-weight: 700; color: var(--p-dim);
+    display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  }
+
+  .inst { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .irow2 {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.15rem 0.7rem;
+    padding: 0.55rem 0.8rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .irow2 + .irow2 { border-top: 1px solid var(--p-line); }
+  .inum { font-size: 0.76rem; font-weight: 700; color: var(--p-dim); }
+  .iname { font-weight: 600; }
+  .isub { grid-column: 2 / -1; font-size: 0.75rem; color: var(--p-dim); }
+  .ichip {
+    font-size: 0.66rem; font-weight: 700;
+    padding: 0.1rem 0.42rem; border-radius: 999px;
+    justify-self: end;
+    white-space: nowrap;
+  }
+  .ichip.done { color: var(--p-good); background: var(--p-good-soft); }
+  .ichip.part { color: var(--p-warn); background: var(--p-warn-soft); }
+  .ichip.open { color: var(--p-dim); background: var(--p-inset); border: 1px solid var(--p-line); }
+  .ichip.earned { color: var(--p-good); background: var(--p-good-soft); }
+
+  .paylist { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; }
+  .payrow {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.1rem 0.7rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    align-items: baseline;
+  }
+  .payrow + .payrow { border-top: 1px solid var(--p-line); }
+  .paydate { font-size: 0.76rem; color: var(--p-dim); white-space: nowrap; }
+  .paywhat { font-weight: 600; }
+  .payamt { text-align: right; font-weight: 700; }
+  .paysub { grid-column: 2 / -1; font-size: 0.74rem; color: var(--p-dim); }
+
+  /* ── Email snippet ── */
+  .mail {
+    background: var(--p-card);
+    border: 1px solid var(--p-line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-size: 0.85rem;
+  }
+  .mail-head {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--p-line);
+    background: var(--p-inset);
+    display: flex; flex-direction: column; gap: 0.1rem;
+  }
+  .mail-head .ml { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--p-dim); }
+  .mail-head .ms { font-weight: 700; }
+  .mail-body { padding: 0.75rem 0.9rem 0.9rem; color: var(--p-ink-soft); }
+  .mail-body p { margin: 0 0 0.55rem; max-width: none; }
+  .mail-body p:last-child { margin-bottom: 0; }
+  .mail-body .li {
+    background: var(--p-inset); border: 1px solid var(--p-line); border-radius: 7px;
+    padding: 0.45rem 0.65rem; margin: 0.45rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .mail-body b { color: var(--p-ink); }
+  .mail-body .strike { color: var(--p-danger); }
+
+  /* ── Season-end table (the U15 world) ── */
+  .duestbl { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; background: var(--p-card); box-shadow: var(--shadow); }
+  .drow {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.4fr) 100px 110px 100px;
+    gap: 0.5rem;
+    padding: 0.44rem 0.8rem;
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    align-items: center;
+  }
+  .drow span:not(:first-child) { text-align: right; }
+  .drow + .drow { border-top: 1px solid var(--p-line); }
+  .drow.head {
+    background: var(--p-inset);
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .drow.hot { background: var(--p-olive-soft); }
+  .drow.foot { background: var(--p-inset); font-weight: 700; }
+  .muted { color: var(--p-dim); }
+  .goodnum { color: var(--p-good); font-weight: 700; }
+
+  /* ── The refund sheet ── */
+  .rtbl { border: 1px solid var(--p-line); border-radius: 9px; overflow: hidden; background: var(--p-card); box-shadow: var(--shadow); }
+  .rrow {
+    display: grid;
+    grid-template-columns: minmax(110px, 1.3fr) 92px 92px 100px 88px;
+    gap: 0.5rem;
+    padding: 0.44rem 0.8rem;
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    align-items: center;
+  }
+  .rrow span:not(:first-child) { text-align: right; }
+  .rrow + .rrow { border-top: 1px solid var(--p-line); }
+  .rrow.head {
+    background: var(--p-inset);
+    font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.07em;
+    font-weight: 700; color: var(--p-dim);
+  }
+  .rrow.foot { background: var(--p-inset); font-weight: 800; border-top: 2px solid var(--p-line-strong); }
+  .rrow.hot { background: var(--p-olive-soft); }
+  .rrow .tot { font-weight: 800; }
+  .rrow .sub { grid-column: 1 / -1; text-align: left; font-size: 0.74rem; color: var(--p-dim); }
+  .lnk { color: var(--p-link); font-weight: 600; font-size: 0.78rem; }
+  .breakout {
+    border-top: 1px solid var(--p-line);
+    background: var(--p-inset);
+    padding: 0.6rem 0.8rem 0.7rem;
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .bo-head {
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--p-dim); margin-bottom: 0.15rem;
+  }
+  .borow {
+    display: flex; justify-content: space-between; gap: 1rem;
+    font-size: 0.8rem; font-variant-numeric: tabular-nums;
+    color: var(--p-ink-soft);
+  }
+  .borow.tot {
+    border-top: 1px solid var(--p-line); padding-top: 0.3rem; margin-top: 0.15rem;
+    font-weight: 800; color: var(--p-ink);
+  }
+  .fam {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background: var(--p-inset);
+    border-top: 1px solid var(--p-line);
+    font-size: 0.7rem; font-weight: 700; color: var(--p-dim);
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+
+  /* ── The derived pot ── */
+  .pot { border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); box-shadow: var(--shadow); overflow: hidden; width: 100%; }
+  .pot-head {
+    padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--p-line); background: var(--p-inset);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; color: var(--p-dim);
+  }
+  .pot-body { padding: 0.7rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .prow { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .prow .pl { color: var(--p-ink-soft); }
+  .prow .pv { font-weight: 700; }
+  .prow.quiet .pl, .prow.quiet .pv { color: var(--p-dim); font-weight: 600; font-size: 0.8rem; }
+  .prow.rule { border-top: 1px solid var(--p-line); padding-top: 0.4rem; margin-top: 0.15rem; }
+  .prow.big .pl { font-weight: 700; color: var(--p-ink); }
+  .prow.big .pv { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.015em; }
+  .prow.owed .pv { color: var(--p-good); }
+
+  /* ── Inline annotation marker inside product frames ── */
+  .mark {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.66rem; font-weight: 700;
+    padding: 0.1rem 0.36rem; border-radius: 3px;
+    vertical-align: middle;
+  }
+  .mark.new { color: var(--new); background: var(--new-bg); }
+  .mark.restyled { color: var(--restyled); background: var(--restyled-bg); }
+
+  @media (max-width: 680px) {
+    .frow { grid-template-columns: 1fr; }
+    .drow { grid-template-columns: minmax(96px, 1.3fr) 76px 90px 80px; font-size: 0.76rem; }
+    .rrow { grid-template-columns: minmax(88px, 1.2fr) 72px 72px 80px 68px; font-size: 0.74rem; }
+    .flowrow { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches · Money · Player Dues &amp; Fundraisers</p>
+  <h1>Fundraising Pays the Bill</h1>
+  <p class="standfirst">
+    A fundraising credit today lowers a player's <em>total</em> balance — but no installment knows
+    it. The plan keeps asking for the full amount, reminders chase the gross figure, and the credit
+    does its work off to one side where only the balance column can see it. The owner's model fixes
+    the altitude: <strong>a credit lands on real installments, last bill first, and the amount a
+    family is asked to send drops the moment the money is earned.</strong> It also hands season's
+    end its missing distinction — a credit that lowered a bill has been <em>spent</em>; one that
+    never got the chance is <em>money still owed back</em>. From there the season-end refund stops
+    being a calculator and becomes a settlement sheet that is true all year (§7).
+  </p>
+  <div class="legend">
+    <span class="tag new">New</span>
+    <span class="tag restyled">Restyled</span>
+    <span class="tag same">Unchanged</span>
+    <span class="tag gone">Removed</span>
+    <span class="tag call">Needs your call</span>
+    <span style="font-size:0.82rem;color:var(--ink-3);">— every element in the frames below carries one.</span>
+  </div>
+
+  <div class="calls">
+    <div class="call">
+      <span class="call-n">Call 1</span>
+      <h4>Cover the bill, or rewrite it?</h4>
+      <p>Everything below <b>covers</b> the installment (its face amount survives; the credit is
+        shown paying it down). The alternative — editing the installment's amount — is argued
+        against under §1.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 2</span>
+      <h4>Three ways credits can meet the bills — who chooses?</h4>
+      <p>One team-wide setting in Money settings, three options: <b>last payment first</b> (drawn
+        as default) · <b>next payment first</b> · <b>keep separate</b> — credits never touch
+        installments and settle at season's end. Under §2.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 3</span>
+      <h4>Do hand-entered credits behave the same?</h4>
+      <p>Proposed: <b>yes — one rule for every credit</b> (fundraiser, contribution, other).
+        Overpayment credits need no rule: they only exist once everything is covered, so there is
+        never a bill left for them to lower.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 4</span>
+      <h4>Does the family hear about it?</h4>
+      <p>Drawn in <b>§4</b>: reminders quote the lowered amount and say why — the fundraising
+        earned it. The alternative is a quietly smaller number with no story.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 5</span>
+      <h4>Is a parent's out-of-pocket expense a credit?</h4>
+      <p>Drawn in <b>§5</b>: an expense marked "a family paid out of pocket" counts in the budget
+        as usual, moves no team cash, and creates a <b>reimbursement credit</b> — one mechanism,
+        not a parallel system.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 6</span>
+      <h4>Does money-out ride with this build?</h4>
+      <p>You asked whether to cover it here. Proposed: <b>yes — design it now, build it in the
+        same passes</b>. A payout is the receipt book's mirror image, and the season-end refund is
+        just the final, bulk payout — it can't be designed without this.</p>
+    </div>
+    <div class="call ruled">
+      <span class="call-n">Call 7 · RULED</span>
+      <h4>Does a family that still owes get a share?</h4>
+      <p><b>Yes — and the money they owe counts as coming in.</b> The pot grows by the debt,
+        everyone's share rises, and their share cancels most of what they owe. Worked in §7.</p>
+    </div>
+    <div class="call ruled">
+      <span class="call-n">Call 8 · RULED</span>
+      <h4>Who is counted in the even split?</h4>
+      <p><b>Owed-back follows whoever earned it</b> (active or departed — it's their money);
+        <b>the even share goes to the season's-end roster</b>. Anyone left out raises everyone
+        else's share.</p>
+    </div>
+    <div class="call ruled">
+      <span class="call-n">Call 9 · RULED</span>
+      <h4>What if the team can't cover what it owes?</h4>
+      <p><b>Say so plainly, share nothing, pro-rate nothing.</b> Today's screen promises the money
+        anyway. Under §7.</p>
+    </div>
+    <div class="call">
+      <span class="call-n">Call 10</span>
+      <h4>Forgiving a balance, and setting an amount by hand</h4>
+      <p>You asked for both. Proposed: <b>one rule serves them</b> — a forgiven balance is money
+        that family <em>already received</em>, and a hand-set refund is a fixed amount off the
+        top. Everything left splits among the rest. Under §8.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>The gap, measured on your example</h2></div>
+    <p>
+      Riley raises <strong>$1,000</strong> in the bottle drive; the team's rebate rate turns that
+      into a <strong>$500 credit</strong>. Two $800 installments are still to come. Here is what
+      each side of the product says today:
+    </p>
+    <div class="defect">
+      <div class="dcell">
+        <p class="dlabel">The balance column says</p>
+        <div class="dval">$1,100.00</div>
+        <p class="dsub">Correct — it subtracts the credit</p>
+      </div>
+      <div class="dcell bad">
+        <p class="dlabel">The schedule still asks</p>
+        <div class="dval">$1,600.00</div>
+        <p class="dsub">Two × $800 — no installment knows the credit exists</p>
+      </div>
+      <div class="dcell bad">
+        <p class="dlabel">So the reminder chases</p>
+        <div class="dval">$800.00</div>
+        <p class="dsub">The full bill, sent to the family that just earned $500 of it</p>
+      </div>
+    </div>
+    <p>
+      The total was never wrong. <strong>Where the reduction lives</strong> was — a family can't pay
+      a balance column; they pay bills.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">1</span><h2>The model: cash from the front, fundraising from the back</h2></div>
+    <p>
+      The receipt book already settled half of this: <strong>payments fill installments
+      oldest-first</strong>. Credits take the other end — <strong>newest-first</strong> — so the two
+      never fight over the same dollar. Cash keeps the season on schedule; fundraising eats the bills
+      at the far end, exactly the way you described it.
+    </p>
+
+    <div class="stage">
+      <div class="flow">
+        <div class="flowlabels">
+          <span class="cash">Cash fills from the front →</span>
+          <span class="earn">← Fundraising fills from the back</span>
+        </div>
+        <div class="flowrow">
+          <div class="fcell done"><span class="fn">#1 · Sep 30</span><span class="fa">$800</span><span class="fs">paid — cash</span></div>
+          <div class="fcell done"><span class="fn">#2 · Nov 30</span><span class="fa">$800</span><span class="fs">paid — cash</span></div>
+          <div class="fcell"><span class="fn">#3 · Jan 31</span><span class="fa">$800</span><span class="fs">to send: $800</span></div>
+          <div class="fcell earned"><span class="fn">#4 · Mar 31</span><span class="fa">$800</span><span class="fs">$500 earned · to send: $300</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Your worked example, exactly: $500 of fundraising lands on the last bill, which now asks for
+      <b>$300</b>. Nothing about #3 changes. If Riley's family later pays everything in cash anyway,
+      the derivation simply re-runs — cash claims first, the credit finds nothing left to lower, and
+      the $500 becomes money owed back (§5). Nothing is ever locked in.
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="drawer">
+          <div class="drawer-head">
+            <span class="drawer-title">Ledger, Riley — Dues</span>
+            <button class="btn secondary" type="button">Record payment</button>
+          </div>
+          <div class="drawer-body">
+            <div class="statgrid">
+              <div class="stat"><span class="sl">Total dues</span><span class="sv">$3,200.00</span></div>
+              <div class="stat"><span class="sl">Paid</span><span class="sv">$1,600.00</span></div>
+              <div class="stat"><span class="sl">Credits</span><span class="sv">$500.00</span></div>
+              <div class="stat"><span class="sl">Left to send <span class="mark new">New</span></span><span class="sv">$1,100.00</span></div>
+            </div>
+
+            <div>
+              <div class="subhead" style="margin-bottom:0.4rem;"><span>Schedule — 4 installments</span></div>
+              <div class="inst">
+                <div class="irow2">
+                  <span class="inum">#1</span>
+                  <span class="iname">$800.00 · due Sep 30</span>
+                  <span class="ichip done">Paid</span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#2</span>
+                  <span class="iname">$800.00 · due Nov 30</span>
+                  <span class="ichip done">Paid</span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#3</span>
+                  <span class="iname">$800.00 · due Jan 31</span>
+                  <span class="ichip open">$800.00 to send</span>
+                </div>
+                <div class="irow2">
+                  <span class="inum">#4</span>
+                  <span class="iname">$800.00 · due Mar 31</span>
+                  <span class="ichip earned">$300.00 to send <span class="mark new">New</span></span>
+                  <span class="isub">$500.00 covered by fundraising — Bottle Drive</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the "to send" language on open installments (an installment can now be partly
+      earned, so "Unpaid" stopped being the whole truth), the fundraising line under #4, and the
+      <b>Left to send</b> stat — dues minus cash minus credits, the number a family can actually
+      act on. <b>Unchanged:</b> the stat grid shape, the Paid definition (cash only — recorded
+      payments), the Payments section below (not drawn, identical to the receipt book).
+    </p>
+
+    <div class="note">
+      <b>Call 1, argued.</b> The credit could instead <em>rewrite</em> the installment — edit $800
+      down to $300. That reads simpler and fails three ways: delete or resize the credit and the
+      product has forgotten what the bill was; regenerate the schedule and the edit is silently
+      lost or double-applied; and the books can no longer answer "what were the dues, and how were
+      they met?" — which is the exact question season's end is about to ask. Covering keeps the
+      plan a plan and the credit a fact, the same separation the receipt book just paid for.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">2</span><h2>The moment a credit is born</h2></div>
+    <p>
+      Nothing new for the coach to operate. Recording a fundraiser entry already creates the rebate
+      credit; the sheet simply gains the same <strong>"Where it lands"</strong> preview the payment
+      sheet has, so the coach sees the bills drop before saving. The two sheets now speak one
+      language: money in shows where it lands, whichever door it came through.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Record fundraiser results — Ledger, Riley</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="frow">
+              <span class="ifield">
+                <span class="flabel">Amount raised</span>
+                <span class="fbox">$1,000.00</span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Player rebate (50%)</span>
+                <span class="fbox">$500.00</span>
+              </span>
+            </div>
+
+            <div class="alloc">
+              <div class="alloc-head"><span>Where it lands <span class="mark new">New</span></span></div>
+              <div class="arow">
+                <span class="aname">Installment #4 — due Mar 31</span>
+                <span class="aamt">−$500.00</span>
+                <span class="asub">was $800.00 to send — now $300.00</span>
+              </div>
+            </div>
+
+            <div class="recon plain">
+              <span class="mk">↳</span>
+              <span class="body">
+                Riley's dues reminders will now ask for the lowered amounts.
+                <span class="quiet">The team keeps $500.00 — already in the books as fundraising income. Unchanged.</span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Record results</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the preview block and the plain-language consequence strip. <b>Unchanged:</b> the
+      entry form itself, the rebate arithmetic, the team-share ledger posting, and the standing
+      ruling — a rebate lowers <em>that player's</em> dues and is never team income.
+    </p>
+
+    <div class="note">
+      <b>Call 2, argued.</b> One team-wide choice in Money settings — "Credits reduce: <b>the last
+      payment first</b> · <b>the next payment first</b> · <b>they don't — settle at season's
+      end</b>" — applied to every credit alike. Last-first is the drawn default: it protects the
+      season's cash rhythm (near-term installments keep their dates and amounts; the far end
+      shrinks). Next-first gives relief now to the family that needs it now. <b>Keep separate</b>
+      is for teams that want dues to be dues: bills never move, reminders chase face amounts, and
+      every credit dollar arrives at season's end as owed-back (§6) — today's behavior, made
+      honest. A per-credit picker was considered and dropped — it turns every fundraiser entry
+      into a decision, and two credits pointing different ways on one player is a story no one can
+      retell.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">3</span><h2>When the credit outgrows the last bill</h2></div>
+    <p>
+      A big drive can earn more than the final installment. The credit simply keeps walking
+      forward: it finishes the last bill, then starts on the one before it. Same rule, no special
+      case.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="alloc" style="box-shadow: var(--shadow);">
+          <div class="alloc-head"><span>Where it lands — $900.00 earned</span></div>
+          <div class="arow">
+            <span class="aname">Installment #4 — due Mar 31</span>
+            <span class="aamt">−$800.00</span>
+            <span class="asub">fully covered by fundraising — nothing to send</span>
+          </div>
+          <div class="arow">
+            <span class="aname">Installment #3 — due Jan 31</span>
+            <span class="aamt">−$100.00</span>
+            <span class="asub">was $800.00 to send — now $700.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the cascade. An installment fully covered by fundraising reads
+      <b>"Covered by fundraising"</b>, deliberately not "Paid" — Paid stays cash, so the books can
+      always say which was which. If the credits ever cover <em>everything</em> still open, the
+      player's row reads Settled and reminders stop entirely.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">4</span><h2>What the family is asked for</h2></div>
+    <p>
+      Reminders are the only dues figure a family ever sees. Once a bill can be partly earned, the
+      reminder quotes what's genuinely left to send — and says where the reduction came from, which
+      is the best sentence a fundraising program can put in front of a family.
+    </p>
+
+    <div class="stage vsstage">
+      <div class="vs">
+        <div class="vsitem">
+          <span class="vslab now">Today — the credit is invisible</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="mail">
+              <div class="mail-head">
+                <span class="ml">To the Ledger family</span>
+                <span class="ms">Dues reminder — QA Season End U15</span>
+              </div>
+              <div class="mail-body">
+                <p>This is a friendly reminder that the following dues installments are coming due:</p>
+                <div class="li"><b>$800.00</b> due Mar 31 (Installment 4 of 4)</div>
+                <p class="strike">…sent to the family whose bottle drive already earned $500 of it.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="vsitem">
+          <span class="vslab next">Proposed — the earning shows up where it counts</span>
+          <div class="skin" style="max-width:100%;">
+            <div class="mail">
+              <div class="mail-head">
+                <span class="ml">To the Ledger family</span>
+                <span class="ms">Dues reminder — QA Season End U15</span>
+              </div>
+              <div class="mail-body">
+                <p>Riley's fundraising has earned <b>$500.00</b> toward dues — thank you. One
+                  installment still has a balance:</p>
+                <div class="li"><b>$300.00 to send</b> of the $800.00 due Mar 31 — $500.00 covered by fundraising <span class="mark new">New</span></div>
+                <p>If you've already sent this, it may not be recorded yet — just reply to your coach.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the earned line and the net figure, in all three reminder paths (send-now,
+      30-day, 7-day) — riding the remainder machinery the receipt book just built, so part-paid and
+      partly-earned compose: a bill can read "$100.00 to send of $800.00 — $200.00 received,
+      $500.00 covered by fundraising." <b>Removed:</b> a fully-covered installment can no longer
+      be chased at all — it has a $0 remainder, and $0 remainders are never candidates.
+      <b>Call 4:</b> whether the reminder names the fundraiser or just shows the lower number.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">5</span><h2>Money going the other way</h2></div>
+    <p>
+      A credit is really <strong>money the team owes a family</strong> — and lowering their bills
+      is only one way to pay a debt. Two more doors, both drawn here: the coach hands the money
+      over in cash, or the debt is born from a family covering a team cost out of pocket. Same
+      concept in every case; only the settlement differs.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Pay out — Ledger, Riley <span class="mark new">New</span></span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <p class="lede">Riley's family is owed <b>$500.00</b> (Bottle Drive rebate).</p>
+            <div class="frow">
+              <span class="ifield">
+                <span class="flabel">Amount paid out</span>
+                <span class="fbox">$500.00 <span class="caret"></span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Date paid</span>
+                <span class="fbox">2026-11-04 <span class="cal">▤</span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Method</span>
+                <span class="fbox">E-transfer <span class="sel">▾</span></span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Note (optional)</span>
+                <span class="fbox"><span class="ph">e.g. sent to Dana</span></span>
+              </span>
+            </div>
+            <div class="recon plain">
+              <span class="mk">↳</span>
+              <span class="body">
+                Posts <b>$500.00 money out</b> to the team ledger, dated Nov 4 — and Riley's bills
+                go back up: <b>Installment #4 returns to $800.00 to send.</b>
+                <span class="quiet">The credit is settled in cash instead of against dues. Reminders go back to the full amounts.</span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Pay out $500.00</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the payout sheet — the receipt book's mirror image (amount · date the money
+      left · method), opened from the player's drawer or the credit row. A payout can be partial;
+      whatever remains keeps covering bills (or keeps waiting, under "keep separate"). Remove a
+      payout and everything re-derives, same as removing a payment.
+    </p>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Record expense — Team pizza night</span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="frow">
+              <span class="ifield">
+                <span class="flabel">Amount</span>
+                <span class="fbox">$120.00</span>
+              </span>
+              <span class="ifield">
+                <span class="flabel">Category</span>
+                <span class="fbox">Team events <span class="sel">▾</span></span>
+              </span>
+              <span class="ifield full">
+                <span class="flabel">Paid by <span class="mark new">New</span></span>
+                <span class="fbox">A family, out of pocket — Ledger, Tia <span class="sel">▾</span></span>
+              </span>
+            </div>
+            <div class="recon plain">
+              <span class="mk">↳</span>
+              <span class="body">
+                Counts in the budget as usual. <b>No cash leaves the team</b> — instead the team
+                owes the Ledger family <b>$120.00</b>.
+                <span class="quiet">Tia's last bill drops $800.00 → $680.00 (your credits setting) — or pay it out in cash any time.</span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Record expense</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the "Paid by" choice on an expense (Team stays the default) and the reimbursement
+      credit it creates. <b>Unchanged:</b> everything else about expenses — the category joins
+      Budget&nbsp;vs.&nbsp;Actual exactly as if the team had paid, because the cost is real either
+      way. What changes is only the cash story: nothing left the team's account, so the books stop
+      pretending it did. <b>Call 5:</b> the reimbursement is an ordinary credit (new provenance,
+      same lifecycle) — it follows the team's credits setting, can be paid out, and lands in
+      season's end if still open. No parallel system.
+    </p>
+
+    <div class="note">
+      <b>Why this belongs in this build (Call 6, argued).</b> Once credits can lower bills, "the
+      coach paid the rebate out in cash" <em>must</em> exist — otherwise the product's only story
+      for that everyday act is a wrong one (bills stay lowered while the family also holds the
+      cash). And the season-end refund is exactly this payout sheet run for every family at once:
+      designing the refund without it would re-invent it badly. Proposed sequencing: credits-on-bills
+      first, payouts + out-of-pocket second, season's end third — three passes, one model.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">6</span><h2>What this hands season's end</h2></div>
+    <p>
+      Your sentence is the whole basis: <strong>"if a credit lowers a payment it has effectively
+      been earned already."</strong> Once credits live on bills, every credit dollar is in exactly
+      one of two states, and the product can finally tell them apart without a coach typing
+      anything:
+    </p>
+    <ul>
+      <li><strong>Applied</strong> — it lowered a bill; the family sent less cash. Spent. It owes
+        nobody anything at season's end.</li>
+      <li><strong>Paid out</strong> — the coach settled it in cash along the way (§5). Also spent,
+        with a ledger line to prove it.</li>
+      <li><strong>Owed back</strong> — it never found a bill to lower and was never paid out (the
+        family had already paid, or the team holds credits separate). The books are holding this
+        family's money.</li>
+    </ul>
+    <p>
+      On the review team — where every family paid in full <em>before</em> the Cookie Dough Drive
+      closed — the derivation puts every dollar in the second column:
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="duestbl">
+          <div class="drow head">
+            <span>Player</span><span>Credits</span><span>Applied to bills</span><span>Owed back</span>
+          </div>
+          <div class="drow"><span>Ledger, Noor</span><span class="muted">—</span><span class="muted">—</span><span class="muted">—</span></div>
+          <div class="drow"><span>Ledger, Owen</span><span class="muted">—</span><span class="muted">—</span><span class="muted">—</span></div>
+          <div class="drow"><span>Ledger, Pax</span><span>$15.00</span><span class="muted">$0.00</span><span class="goodnum">$15.00</span></div>
+          <div class="drow"><span>Ledger, Quil</span><span>$30.00</span><span class="muted">$0.00</span><span class="goodnum">$30.00</span></div>
+          <div class="drow"><span>Ledger, Rhea</span><span>$45.00</span><span class="muted">$0.00</span><span class="goodnum">$45.00</span></div>
+          <div class="drow"><span>Ledger, Sef</span><span>$60.00</span><span class="muted">$0.00</span><span class="goodnum">$60.00</span></div>
+          <div class="drow"><span>Ledger, Tia</span><span>$75.00</span><span class="muted">$0.00</span><span class="goodnum">$75.00</span></div>
+          <div class="drow hot"><span>Ledger, Umar</span><span>$155.00</span><span class="muted">$0.00</span><span class="goodnum">$155.00</span></div>
+          <div class="drow"><span>Ledger, Vera</span><span>$125.00</span><span class="muted">$0.00</span><span class="goodnum">$125.00</span></div>
+          <div class="drow"><span>Ledger, Wynn</span><span>$170.00</span><span class="muted">$0.00</span><span class="goodnum">$170.00</span></div>
+          <div class="drow foot"><span>Team</span><span>$675.00</span><span class="muted">$0.00</span><span class="goodnum">$675.00</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the applied / owed-back split — derived, never typed. Umar's row is his $105
+      fundraising plus the $50 his family over-sent in cash; both are money the books hold. On a
+      team where the drive closed <em>mid-season</em>, the applied column fills instead and those
+      families simply send less — nothing reaches season's end at all.
+    </p>
+
+    <div class="note">
+      <b>What this hands the next section.</b> Two derived facts instead of one typed number:
+      <b>$675.00 owed back</b> (no judgement involved — it's these families' money) and the
+      team's genuine surplus after it. §7 turns those into what each family gets.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">7</span><h2>The refund sheet — no calculator, no button</h2></div>
+    <p>
+      The Calculate button goes away, and with it the typed pot. What replaces it is a section at
+      the foot of <strong>Player Dues</strong> that simply shows, at all times, what the team owes
+      each family — <strong>and it is honest year-round</strong>, not just in April. A family
+      holding an unapplied rebate in October is owed that money in October.
+    </p>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">First: where the pot comes from</h3>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="pot">
+          <div class="pot-head">The team's money — QA Season End U15 <span class="mark new">New</span></div>
+          <div class="pot-body">
+            <div class="prow"><span class="pl">Dues received</span><span class="pv">$6,050.00</span></div>
+            <div class="prow"><span class="pl">Fundraising raised</span><span class="pv">$2,500.00</span></div>
+            <div class="prow"><span class="pl">Spent</span><span class="pv">−$6,350.00</span></div>
+            <div class="prow rule big"><span class="pl">Cash the team holds</span><span class="pv">$2,200.00</span></div>
+            <div class="prow owed"><span class="pl">Owed to families (credits)</span><span class="pv">−$675.00</span></div>
+            <div class="prow rule big"><span class="pl">Surplus to share</span><span class="pv">$1,525.00</span></div>
+            <div class="prow quiet rule"><span class="pl">Hold back for next season</span><span class="pv">$0.00 · Change</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the whole card — the pot is <b>derived and shown working</b>, never typed.
+      <b>Removed:</b> the "Total Remaining Funds" input and the Calculate button. The only control
+      left is <b>hold back</b> — stating an intention ("keep $500 for next year's equipment")
+      rather than re-doing arithmetic. Hold-back can only ever come out of the surplus: a coach
+      cannot hold back money the team owes families, and the field is capped at $1,525.00 with
+      that reason given.
+    </p>
+
+    <div class="note warn">
+      <b>A real trap this replaces — and it is the reason the pot must be derived.</b> The figure
+      in circulation for this team was <b>$1,575</b>, reached as dues + <em>the team's 75% share</em>
+      of fundraising − spending. But the books receive <b>the full $2,500 raised</b>; the players'
+      $625 is a credit, not a deduction from income. So $1,575 had the rebates <em>already</em>
+      removed — and today's calculator then subtracts all credits <em>again</em>, taking the same
+      $625 out twice and understating every family's refund. Cash held is <b>$2,200</b>. A number
+      a human types is a number that can be wrong in a way no screen can see; a derived one shows
+      its work, which is what the card above does.
+    </div>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">Then: your model, on the ten families</h3>
+
+    <p>
+      Owed-back credits come off the top and go to the family that earned them; whatever is left
+      splits evenly, one share per player. <strong>$1,525 ÷ 10 = $152.50 each.</strong>
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="rtbl">
+          <div class="rrow head">
+            <span>Player</span><span>Owed back</span><span>Even share</span><span>Refund</span><span></span>
+          </div>
+          <div class="fam">Okafor family — one payout, two shares</div>
+          <div class="rrow">
+            <span>Ledger, Noor</span><span class="muted">—</span><span>$152.50</span><span class="tot">$152.50</span><span class="lnk">Pay out</span>
+          </div>
+          <div class="rrow">
+            <span>Ledger, Owen</span><span class="muted">—</span><span>$152.50</span><span class="tot">$152.50</span><span class="lnk">Pay out</span>
+          </div>
+          <div class="fam">Other families</div>
+          <div class="rrow"><span>Ledger, Pax</span><span class="goodnum">$15.00</span><span>$152.50</span><span class="tot">$167.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span>Ledger, Quil</span><span class="goodnum">$30.00</span><span>$152.50</span><span class="tot">$182.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span>Ledger, Rhea</span><span class="goodnum">$45.00</span><span>$152.50</span><span class="tot">$197.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span>Ledger, Sef</span><span class="goodnum">$60.00</span><span>$152.50</span><span class="tot">$212.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span>Ledger, Tia</span><span class="goodnum">$75.00</span><span>$152.50</span><span class="tot">$227.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow hot">
+            <span>Ledger, Umar</span><span class="goodnum">$155.00</span><span>$152.50</span><span class="tot">$307.50</span><span class="lnk">Pay out</span>
+          </div>
+          <div class="breakout">
+            <div class="bo-head">Umar's $307.50 <span class="mark new">New</span></div>
+            <div class="borow"><span>Cookie Dough Drive rebate</span><span>$105.00</span></div>
+            <div class="borow"><span>Overpaid dues — Jul 12</span><span>$50.00</span></div>
+            <div class="borow"><span>Even share — one of ten</span><span>$152.50</span></div>
+            <div class="borow tot"><span>Refund</span><span>$307.50</span></div>
+          </div>
+          <div class="rrow"><span>Ledger, Vera</span><span class="goodnum">$125.00</span><span>$152.50</span><span class="tot">$277.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span>Ledger, Wynn</span><span class="goodnum">$170.00</span><span>$152.50</span><span class="tot">$322.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow foot">
+            <span>10 players</span><span class="goodnum">$675.00</span><span>$1,525.00</span><span class="tot">$2,200.00</span><span class="lnk">Pay all</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the sheet; <b>the row opens</b> to show where its number came from (drawn on
+      Umar — nothing is explained in the table itself, which stays four clean columns); and
+      <b>every row is payable from here</b> — "Pay out" opens §5's sheet pre-filled, "Pay all"
+      records the lot in one pass, grouped one payout per family. That is what makes it a
+      settlement screen rather than a calculator: the numbers stop being an opinion the moment
+      they're paid, and a paid row shows the date it went out. <b>Unchanged:</b> the shared money
+      column and table recipe from the consistency pass. <b>The total re-adds to the pot
+      exactly</b> — $675 + $1,525 = $2,200 — which the old sheet could not promise; where a split
+      leaves stray pennies the last row carries the remainder, the rule installments already use.
+    </p>
+
+    <div class="note">
+      <b>Why "owed back" leads and the share follows.</b> They are different kinds of money and
+      the sheet should never blur them: the first column is <em>the family's own money, held by
+      the team</em> — no judgement, no policy, payable whether or not anyone declares a surplus.
+      The second is <em>a distribution decision</em>. Keeping them in separate columns is also
+      what lets the screen exist all season: in October the share column is simply empty, and the
+      sheet reads "the team is holding $675 of families' money" — true, and actionable.
+    </div>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">A family that still owes — Call 7, as you ruled it</h3>
+
+    <p>
+      Money still owed is <strong>money coming in</strong>, so it joins the pot before the split.
+      Same team, but say the Zeb family still owes <strong>$200</strong>: the surplus to share
+      becomes $1,525 + $200 = <strong>$1,725</strong>, every share rises to
+      <strong>$172.50</strong>, and the Zebs' share cancels most of their debt — leaving
+      <strong>$27.50</strong>.
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="rtbl">
+          <div class="rrow head">
+            <span>Player</span><span>Owed back</span><span>Even share</span><span>Refund</span><span></span>
+          </div>
+          <div class="rrow"><span>Ledger, Wynn</span><span class="goodnum">$170.00</span><span>$172.50</span><span class="tot">$342.50</span><span class="lnk">Pay out</span></div>
+          <div class="rrow"><span class="muted">…eight more</span><span class="muted"></span><span class="muted">$172.50</span><span class="muted"></span><span></span></div>
+          <div class="rrow hot">
+            <span>Ledger, Zeb</span><span class="muted">—</span><span>$172.50</span><span class="tot" style="color:var(--p-warn);">−$27.50</span><span class="muted" style="font-size:0.74rem;">Still owes</span>
+          </div>
+          <div class="breakout">
+            <div class="bo-head">Zeb's row</div>
+            <div class="borow"><span>Unpaid dues</span><span>−$200.00</span></div>
+            <div class="borow"><span>Even share — one of ten</span><span>$172.50</span></div>
+            <div class="borow tot"><span>Still owes</span><span>$27.50</span></div>
+          </div>
+          <div class="rrow foot">
+            <span>10 players</span><span class="goodnum">$675.00</span><span>$1,725.00</span><span class="tot">$2,400.00</span><span class="lnk">Pay all</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="recon short" style="border:1px solid var(--p-line);">
+          <span class="mk">!</span>
+          <span class="body">
+            <b>Paying everyone needs $27.50 still to arrive</b> from the Zeb family.
+            <span class="quiet">Nine payouts come to $1,552.50 and the team is holding $1,525.00 of surplus. Pay out now and one family waits — or collect the $27.50 first.</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the debt joining the pot, and the honesty strip underneath. That strip is the
+      one consequence worth naming out loud: <b>a forward-looking split spends money that hasn't
+      arrived yet.</b> The arithmetic is right — it balances the moment the Zebs pay — but the
+      cheques can't all be written until then, so the screen says which family's money the others
+      are waiting on. <b>Call 8 rides here too:</b> anyone not taking a share simply isn't in the
+      divisor, which raises everyone else's — never a stranded share sitting unpaid.
+    </p>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">When the team can't cover what it owes — Call 9</h3>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="recon over" style="border:1px solid var(--p-line);">
+          <span class="mk">!</span>
+          <span class="body">
+            <b>The team is $300.00 short of what it owes families.</b>
+            <span class="quiet">Cash held $375.00 · owed to families $675.00. There is no surplus to share — this is a debt, not a refund. Nothing is reduced automatically; you decide who is paid from what's left.</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      Reachable in real life: rebates are earned, the team spends against them, the season ends
+      short. Today's screen hides it — credits are promised in full regardless and only the even
+      pool floors at zero. Drawn instead as <b>state it, share nothing, pro-rate nothing</b>:
+      quietly shrinking a family's earned rebate by a hidden percentage is not a decision software
+      should make on a coach's behalf.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><span class="sect-num">8</span><h2>Forgiving a balance, and setting an amount by hand</h2></div>
+    <p>
+      You asked for two controls. They turn out to be <strong>one rule</strong>: some amounts are
+      settled before the split, and <strong>whatever is left divides among the families still
+      taking a share</strong>. That keeps the promise the whole sheet rests on — the rows always
+      re-add to the pot, exactly.
+    </p>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">Forgive a balance</h3>
+
+    <p>
+      A family isn't going to pay the rest. Forgiving writes it off — and because the team has
+      genuinely given them that money, <strong>the forgiven amount counts as their share, already
+      received</strong>. One rule, and it behaves sensibly at both ends:
+    </p>
+
+    <div class="stage">
+      <div class="skin wide">
+        <div class="rtbl">
+          <div class="rrow head">
+            <span>Forgiven</span><span>Their benefit</span><span>Cash to them</span><span>Everyone else</span><span></span>
+          </div>
+          <div class="rrow">
+            <span>$20.00</span><span>$154.50</span><span class="tot">$134.50</span><span>$154.50</span><span class="muted" style="font-size:0.74rem;">10 shares</span>
+          </div>
+          <div class="rrow hot">
+            <span>$200.00</span><span>$200.00</span><span class="tot">$0.00</span><span>$169.44</span><span class="muted" style="font-size:0.74rem;">9 shares</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>Forgive a little</b> and they still get a cheque, just a smaller one — the $20 is part of
+      their $154.50. <b>Forgive more than a share</b> and they take no cash at all; the $1,525
+      then divides among the remaining nine at <b>$169.44</b>, which is exactly the outcome you
+      described. Nothing special-cased: the same sentence produces both. The pennies that don't
+      divide land on the last row so the total still reads $1,525.00.
+    </p>
+
+    <h3 style="font-family:var(--f-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.82rem;font-weight:600;color:var(--ink-3);margin:1.9rem 0 0.6rem;">Set an amount by hand</h3>
+
+    <div class="stage">
+      <div class="skin">
+        <div class="modal">
+          <div class="modal-head">
+            <span class="modal-title">Set refund — Ledger, Vera <span class="mark new">New</span></span>
+            <span class="x">✕</span>
+          </div>
+          <div class="modal-body">
+            <div class="choice">
+              <div class="ccard on">
+                <span class="cdot"></span>
+                <span class="cname">An even share</span>
+                <span class="csub">$277.50 — $125.00 owed back plus one of ten shares</span>
+              </div>
+              <div class="ccard">
+                <span class="cdot"></span>
+                <span class="cname">A set amount</span>
+                <span class="csub">Their owed-back money is paid either way; this replaces the share</span>
+              </div>
+              <div class="ccard">
+                <span class="cdot"></span>
+                <span class="cname">No share — leave it to the team</span>
+                <span class="csub">Vera's family declines; the rest goes to the other nine</span>
+              </div>
+            </div>
+            <div class="recon plain">
+              <span class="mk">↳</span>
+              <span class="body">
+                Choosing "no share" raises every other family from <b>$152.50 to $169.44</b>.
+                <span class="quiet">Owed-back money is never touched by this choice — it isn't the team's to redirect.</span>
+              </span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" type="button">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">
+      <b>New:</b> the whole sheet, opened from the row. <b>The deliberate limit:</b> a hand-set
+      amount replaces a family's <em>share</em> and never their <em>owed-back</em> money — that is
+      theirs, not a distribution the coach can redirect. And whatever a set amount frees up
+      redistributes immediately, so the sheet cannot be left holding an unallocated remainder.
+      <b>Why not a free-text override on the refund total:</b> it would let the rows stop adding
+      up to the pot — the exact defect deriving the pot just removed. Every control here is
+      bounded so the total is always true.
+    </p>
+
+    <div class="note">
+      <b>One phrase covers all of it.</b> <em>Owed-back money is paid to whoever earned it.
+      Amounts already settled — forgiven or handed over — count as that family's share. Whatever
+      is left divides evenly among the families still taking one.</em> Debt joining the pot
+      (Call 7), a departed player stepping out (Call 8), forgiveness and set amounts (Call 10) are
+      all that same sentence, which is why the sheet can always show its work and always balance.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="sect">
+    <div class="sect-head"><h2>What this deliberately leaves alone</h2></div>
+    <div class="keeps">
+      <div class="keep">
+        <h4>Totals don't move</h4>
+        <p>The rolling balance already subtracted credits; this changes <em>where</em> the
+          reduction lives, not how much it is. Every roster total reads the same before and after.</p>
+      </div>
+      <div class="keep">
+        <h4>Credits still aren't income</h4>
+        <p>A rebate lowers that player's dues; the team's share was income the day the drive
+          closed. The standing double-count ruling holds untouched.</p>
+      </div>
+      <div class="keep">
+        <h4>One credit mechanism</h4>
+        <p>No new credit types, no second overpayment path. Automatic overpayment credits keep
+          their existing life; they simply show up in the owed-back column, where they always
+          belonged.</p>
+      </div>
+      <div class="keep">
+        <h4>The receipt book's rules</h4>
+        <p>Payments are still facts, still fill oldest-first, still post to the ledger dated the
+          day they arrived. Cash always claims a bill before a credit does.</p>
+      </div>
+      <div class="keep">
+        <h4>Everything re-derives</h4>
+        <p>Change the dues, remove a payment, resize a credit, undo a payout — where credits land
+          is recomputed the same way payment coverage already is. Nothing is stamped, so nothing
+          goes stale.</p>
+      </div>
+      <div class="keep">
+        <h4>Live seasons only</h4>
+        <p>Credits move money. Nothing here opens in an archived season, and the archive
+          allow-lists are not touched.</p>
+      </div>
+      <div class="keep">
+        <h4>The dues screen keeps its shape</h4>
+        <p>The refund sheet is a section at the foot of Player Dues, not a new tab. Every roster
+          column above it keeps its current meaning.</p>
+      </div>
+    </div>
+  </div>
+
+</div>

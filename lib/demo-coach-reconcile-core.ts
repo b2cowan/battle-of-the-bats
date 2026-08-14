@@ -306,10 +306,19 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     .select('id, due_date, paid_at').eq('team_id', teamId);
   if (duesError) throw new Error(duesError.message);
 
+  // Payment FACTS ride the clock too (mig 232): a paid stamp is only a coverage projection now,
+  // and the dollars behind it live in rep_dues_payments with their own received_date. Shifting
+  // the stamps without the payments would strand the demo's cash a re-anchor behind its books
+  // (the month-grid Actual reads received_date).
+  const { data: duesPayments, error: payError } = await db.from('rep_dues_payments')
+    .select('id, received_date').eq('team_id', teamId);
+  if (payError) throw new Error(payError.message);
+
   // The client is deliberately untyped (`CoachDemoDb`), so name the row shapes here — otherwise
   // `shiftRows` infers T from the filter callbacks and the guard column stops typechecking.
   type EventRow = { id: string; starts_at: string; ends_at: string | null };
   type InstallmentRow = { id: string; due_date: string; paid_at: string | null };
+  type PaymentRow = { id: string; received_date: string };
   const allEvents = (events ?? []) as EventRow[];
   const siblings = allEvents.filter(e => e.id !== anchorEventId);
   const anchor = allEvents.filter(e => e.id === anchorEventId);
@@ -328,6 +337,9 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
         due_date: addCalendarDays(i.due_date, days),
         paid_at: i.paid_at ? shiftIsoDays(i.paid_at, days) : null,
       }))
+  ) + (
+    await shiftRows(db, 'rep_dues_payments', (duesPayments ?? []) as PaymentRow[], 'received_date',
+      p => ({ received_date: addCalendarDays(p.received_date, days) }))
   );
 }
 

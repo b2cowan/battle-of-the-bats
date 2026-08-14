@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
 import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
@@ -147,13 +148,17 @@ export default async function OrgLayout({
       {/* Sets vars on :root so globally-mounted components (Navbar, ConsumerNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
       {demoOrg && (
-        <SandboxChrome
-          kind={demoOrg.kind}
-          slug={demoOrg.slug}
-          landingPath={demoOrg.landingPath}
-          cycleMinutes={DEMO_CYCLE_MINUTES}
-          isDemoOrganizer={isDemoOrganizer}
-        />
+        /* Suspense: the chrome reads useSearchParams (Money-hub tabs are query-addressed), which
+           Next requires a boundary for if this tree is ever statically prerendered. */
+        <Suspense fallback={null}>
+          <SandboxChrome
+            kind={demoOrg.kind}
+            slug={demoOrg.slug}
+            landingPath={demoOrg.landingPath}
+            cycleMinutes={DEMO_CYCLE_MINUTES}
+            isDemoOrganizer={isDemoOrganizer}
+          />
+        </Suspense>
       )}
       {/* Stage F — the org's own section nav. Mounted here because which sections exist is SERVER
           data; the component itself decides WHERE to render, because this layout also wraps

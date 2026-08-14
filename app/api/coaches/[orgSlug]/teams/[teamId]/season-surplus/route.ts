@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers, getRepDuesPaymentsByProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { outstandingForSchedule } from '@/lib/dues-status';
+import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -48,11 +50,10 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
     .select('id, player_id, total_amount')
     .eq('program_year_id', programYearId);
 
-  // Load paid installments
-  const { data: paidInst } = await supabaseAdmin
-    .from('rep_player_dues_installments')
-    .select('schedule_id, amount')
-    .not('paid_at', 'is', null);
+  // Paid = recorded payment FACTS (mig 232), same as every other dues reader. This block used to
+  // be the fourth hand-copy of the outstanding/rolling arithmetic (and it summed paid STAMPS,
+  // which read a part-paid family as having paid nothing on the way into their refund).
+  const seasonPayments = await getRepDuesPaymentsByProgramYear(programYearId);
 
   // Build schedule map
   const scheduleMap = new Map<string, { totalAmount: number; scheduleId: string }>();
@@ -60,11 +61,7 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
     scheduleMap.set(s.player_id, { totalAmount: s.total_amount, scheduleId: s.id });
   }
 
-  // Build paid map: scheduleId → total paid
-  const paidMap = new Map<string, number>();
-  for (const inst of (paidInst ?? []) as Array<{ schedule_id: string; amount: number }>) {
-    paidMap.set(inst.schedule_id, (paidMap.get(inst.schedule_id) ?? 0) + inst.amount);
-  }
+  const paidMap = paymentsTotalByPlayer(seasonPayments);
 
   // Build credits map per player
   const creditMap = new Map<string, number>();
@@ -81,12 +78,12 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
   const evenPool = Math.max(0, Math.round((totalSurplus - totalAllCredits) * 100) / 100);
   const evenShare = playerCount > 0 ? Math.round((evenPool / playerCount) * 100) / 100 : 0;
 
-  // Build per-player breakdown
+  // Build per-player breakdown — the SHARED definitions, not a local re-derivation.
   const breakdown = activePlayers.map(p => {
     const sched = scheduleMap.get(p.id);
-    const paid  = sched ? (paidMap.get(sched.scheduleId) ?? 0) : 0;
+    const paid  = sched ? duesPaidAmount(paidMap.get(p.id) ?? 0, sched.totalAmount) : 0;
     const credits = creditMap.get(p.id) ?? 0;
-    const outstanding = sched ? sched.totalAmount - paid : 0;
+    const outstanding = outstandingForSchedule(sched ? { totalAmount: sched.totalAmount } : null, paid);
     const rollingBalance = Math.round((outstanding - credits) * 100) / 100;
 
     return {

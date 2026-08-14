@@ -9,6 +9,7 @@ import {
   getRepTeamSeasonLineups,
   getRepPlayerDuesSchedules,
   getRepDuesInstallmentsBySchedules,
+  getRepDuesPaymentsByProgramYear,
   getRepTeamPracticeAttendance,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -18,6 +19,7 @@ import { playerName, playerDisplayName } from '@/lib/coach-roster-name';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
+import { duesPaidAmount, paymentsTotalByPlayer, allocateDuesPayments } from '@/lib/dues-payments';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 import { computePositionRecency, rankPositionsByStaleness, type PositionRecencyGame } from '@/lib/coach-position-recency';
@@ -188,9 +190,10 @@ export const GET = withObservability(async (req: Request,
 
   // ── Money questions ───────────────────────────────────────────────────────
   if (question.id === 'family_dues' || question.id === 'never_paid') {
-    const [roster, schedules] = await Promise.all([
+    const [roster, schedules, seasonPayments] = await Promise.all([
       getRepRosterPlayers(programYear.id),
       getRepPlayerDuesSchedules(programYear.id),
+      getRepDuesPaymentsByProgramYear(programYear.id),
     ]);
     const installments = await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id));
     const bySchedule = new Map<string, typeof installments>();
@@ -200,13 +203,26 @@ export const GET = withObservability(async (req: Request,
       bySchedule.set(i.scheduleId, arr);
     }
     const scheduleByPlayer = new Map(schedules.map(s => [s.playerId, s]));
+    const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
 
     const rows = roster.map(p => {
       const schedule = scheduleByPlayer.get(p.id) ?? null;
       const insts = schedule ? (bySchedule.get(schedule.id) ?? []) : [];
+      // Paid = payment FACTS capped at the schedule total (mig 232) — the same figure the dues
+      // route serves, so a family two part-payments into an installment is no longer "owing
+      // everything, nothing recorded" here while the Money page shows their $200.
+      const paymentsTotal = paymentsByPlayer.get(p.id) ?? 0;
+      const paidAmount = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
       // ONE shared definition (lib/dues-status.ts), also used by the dues route and the weekly
       // digest — so the answer and the Money page cannot quote different numbers.
-      const outstanding = outstandingForSchedule(schedule, insts);
+      const outstanding = outstandingForSchedule(schedule, paidAmount);
+      // Per-installment remainders so the family answer quotes what's MISSING, not face values
+      // (same synthetic-total allocation the digest uses — coverage depends only on dollars).
+      const { coverage } = allocateDuesPayments(
+        insts.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
+        paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
+      );
+      const remainingById = new Map(coverage.map(c => [c.installmentId, c.remaining]));
       // Money access and guardian PII are independent grants. The GROUPING key is the guardian
       // email, computed here on the server; the redacted row decides only what may be NAMED.
       const visible = redactRosterPlayer(p, caps);
@@ -216,7 +232,13 @@ export const GET = withObservability(async (req: Request,
         guardianKey: normalizeGuardianEmail(p.guardianEmail),
         guardianLastName: visible.guardianLastName ?? null,
         outstanding,
-        installments: insts.map(i => ({ dueDate: i.dueDate, amount: i.amount, paidAt: i.paidAt })),
+        paidAmount,
+        installments: insts.map(i => ({
+          dueDate: i.dueDate,
+          amount: i.amount,
+          paidAt: i.paidAt,
+          remainingAmount: remainingById.get(i.id) ?? i.amount,
+        })),
       };
     });
 

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -7,8 +7,11 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { computeBudgetTotals } from '@/lib/coach-budget-totals';
-import { tournamentToday } from '@/lib/timezone';
+import {
+  computeBudgetTotals, describeInstallmentBases, splitPerPlayer,
+  type InstallmentBasis,
+} from '@/lib/coach-budget-totals';
+import { tournamentToday, formatDayMonth } from '@/lib/timezone';
 import type { RepBudgetPlan, RepInstallmentPreviewRow } from '@/lib/types';
 import DateField from './DateField';
 import styles from './budget/budget.module.css';
@@ -21,12 +24,21 @@ function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+const BASIS_LABEL: Record<Exclude<InstallmentBasis, 'manual'>, string> = {
+  budget:   'Split the budget evenly',
+  estimate: 'Split the season estimate evenly',
+};
+
 interface InstallmentRow { date: string; amount: string }
 const DEFAULT_INSTALLMENT: InstallmentRow = { date: '', amount: '' };
 
 interface GenerateResult {
   playersProcessed: number;
-  playersSkipped: number;
+  /** Players whose recorded payments were kept and re-applied to the new schedule (mig 232 —
+   *  nothing is skipped any more; money and plan are separate records). */
+  playersWithPaymentsKept: number;
+  /** Dollars of payments beyond a player's NEW total, auto-saved as overpayment credits. */
+  overpaymentCreditsCreated: number;
   /** Players whose dues could NOT be written. Named, because the coach has to go fix them by
    *  hand and a bare count would leave them checking the whole roster. */
   playersFailed: string[];
@@ -46,8 +58,10 @@ interface GenerateResult {
  *     plan itself and computes the basis with the same shared helper the preview API uses. One
  *     source of truth beats two callers prop-drilling their own idea of the total.
  *  2. **A re-run never destroys money.** The old "Set dues for all players" deleted every
- *     installment for a player — paid ones, with their accounting entries, included. Replacing
- *     here SKIPS any player who has paid something and says so afterwards.
+ *     installment for a player — paid ones, with their accounting entries, included. Since
+ *     mig 232 the receipts live in their own table: replacing rewrites every player's PLAN,
+ *     recorded payments are kept and re-applied to it, and anything paid beyond a player's new
+ *     total becomes an overpayment credit — all said out loud in the success state.
  */
 export default function GenerateInstallmentsModal({
   orgSlug, teamId, seasonQuery, budgetHref, duesHref, tabActive = true, onClose, onGenerated,
@@ -82,6 +96,8 @@ export default function GenerateInstallmentsModal({
   const [previewError,   setPreviewError]   = useState('');
   const [generating,     setGenerating]     = useState(false);
   const [generateError,  setGenerateError]  = useState('');
+  /** The sandbox's own answer — an invitation, not a failure. See `handleGenerate`. */
+  const [sandboxNote,    setSandboxNote]    = useState('');
   const [result,         setResult]         = useState<GenerateResult | null>(null);
   /** Set when the server reports a schedule already exists — the coach is asked to confirm a
    *  replace instead of being handed the raw refusal. See `handleGenerate`. */
@@ -130,46 +146,142 @@ export default function GenerateInstallmentsModal({
   /** Already-generated (or hand-set) schedules exist — this run replaces rather than creates. */
   const replacing = !!plan?.hasInstallments;
 
-  /** Why there is nothing to divide up — the reason has to name the RIGHT one, or a coach told
-   *  "your funding covers the budget" goes looking for a fundraiser that doesn't exist. Mirrors
-   *  the preview API's own three cases so the modal never contradicts the server. */
-  const blocker: { title: string; body: string; cta: boolean } | null =
+  const bases = useMemo(() => describeInstallmentBases(totals), [totals]);
+
+  /**
+   * ⚠ NO `useEffect` HERE, DELIBERATELY. Defaulting the basis in an effect would re-run whenever
+   * the budget re-read and quietly move the coach off a choice they had made. `null` means
+   * "hasn't chosen", and the default is computed from the same data every render.
+   */
+  const [pickedBasis, setPickedBasis] = useState<InstallmentBasis | null>(null);
+  const basis: InstallmentBasis =
+    pickedBasis
+    ?? (!bases.budget.unavailable ? 'budget' : !bases.estimate.unavailable ? 'estimate' : 'manual');
+
+  /**
+   * ⚠ ONE REMAINING HARD BLOCKER, down from four (owner ruling 2026-08-13).
+   *
+   * "No budget", "funding covers the season" and "a $0 estimate" all used to end this sheet. Each
+   * says only that there is no number to DIVIDE — which stops a split, not a coach typing $400.
+   * They now travel as reasons on the split cards while manual stays live. An empty roster is
+   * different in kind: there is nobody to charge, so there is nothing to write in any mode.
+   */
+  const blocker: { title: string; body: string } | null =
     loading || loadError ? null
     : rosterCount === 0
       ? { title: 'Add players to the roster first',
-          body: 'Dues are split across your active roster, so there has to be one before a schedule can be built.',
-          cta: false }
-    : totals.fundedByPlayers > 0 ? null
-    : totals.expectedFunding > 0 && totals.expectedFunding >= totals.totalPlanned
-      ? { title: 'Your funding already covers the season',
-          body: 'Expected funding matches or exceeds the whole budget, so there is nothing left for players to fund. Lower it, or add more cost lines, to charge dues.',
-          cta: true }
-    : totals.estimatedTotal != null && totals.totalPlanned <= 0
-      ? { title: 'Your season estimate is $0',
-          body: 'There is nothing for players to fund. Raise the estimate, or clear it to use your line items instead.',
-          cta: true }
-      : { title: 'Start with your Season Budget Plan',
-          body: 'Dues come from the budget: add what the season costs and this can build every player’s installment schedule in one step — same dates and amounts for the whole roster.',
-          cta: true };
+          body: 'Dues are split across your active roster, so there has to be one before a schedule can be built.' }
+      : null;
 
-  const validRows = installments.filter(i => i.date && parseFloat(i.amount) > 0);
+  /**
+   * In a split mode the amounts are a CONSEQUENCE, not an input: the basis divided by the roster
+   * and then by however many dates are on screen. Adding a date re-cuts every row, which is the
+   * "split between players and periods" the owner asked for.
+   */
+  const splitAmounts = useMemo(() => {
+    if (basis === 'manual') return null;
+    const option = bases[basis];
+    if (option.unavailable || option.perPlayer == null) return null;
+    return splitPerPlayer(option.perPlayer, installments.length);
+  }, [basis, bases, installments.length]);
+
+  /** What each row is worth ON THE FORM — for the boxes and the running comparison only. The
+   *  amounts that get WRITTEN come back from the preview the coach approved; see `handleGenerate`. */
+  const rowAmounts = installments.map((inst, i) =>
+    splitAmounts ? splitAmounts[i] : parseFloat(inst.amount));
+
+  /** ⚠ A row without a date is INCOMPLETE, not ignorable. It used to be silently dropped, which
+   *  was survivable while the server re-derived everything — but the split divides by the number
+   *  of rows, so a dropped row would show a three-way split and create a two-way one. */
+  const missingDate   = installments.some(i => !i.date);
+  const missingAmount = basis === 'manual' && rowAmounts.some(a => !(a > 0));
+  const basisUnusable = basis !== 'manual' && splitAmounts == null;
+  /** The form is complete enough to WRITE. `loadPreview` re-checks the three flags separately so
+   *  it can name the one that is missing; this is the belt on the confirm path. */
+  const canGenerate   = !missingDate && !missingAmount && !basisUnusable;
+
+  /** What this schedule collects, and how it compares to what players have to fund. Never a
+   *  barrier — a deposit-only schedule is a legitimate thing to build on purpose. */
+  const perPlayerScheduled = rowAmounts.reduce((s, a) => s + (Number.isFinite(a) ? a : 0), 0);
+  const teamScheduled      = Math.round(perPlayerScheduled * rosterCount * 100) / 100;
+  const yardstick          = totals.fundedByPlayers;
+  const gap                = Math.round((yardstick - teamScheduled) * 100) / 100;
+  /** Silent when there is no budget to measure against — see the manual-with-no-budget case. */
+  const reconcile: 'short' | 'over' | 'match' | null =
+    yardstick <= 0 || perPlayerScheduled <= 0 ? null
+    : Math.abs(gap) < 0.005 ? 'match'
+    : gap > 0 ? 'short' : 'over';
+
+  /**
+   * The comparison line, drawn on the form and again on the confirm step.
+   *
+   * ONE function, because it is one sentence. Written out twice it had already drifted apart in
+   * wording within a single change — and the reason it appears twice is precisely that a coach
+   * must not lose sight of a shortfall between typing it and committing it, which only works if
+   * both copies say the same thing. `compact` drops the reassurances and the all-clear: the
+   * confirm step is not where a coach needs to be told everything is fine.
+   */
+  function reconcileLine(compact: boolean) {
+    if (!reconcile || (compact && reconcile === 'match')) return null;
+    const tone = reconcile === 'short' ? styles.reconShort
+      : reconcile === 'over' ? styles.reconOver
+      : styles.reconMatch;
+    return (
+      <p className={`${styles.reconStrip} ${tone}`}>
+        <span aria-hidden className={styles.reconMark}>{reconcile === 'match' ? '✓' : '!'}</span>
+        <span>
+          Collecting <strong>{fmt(perPlayerScheduled)}</strong> per player —{' '}
+          <strong>{fmt(teamScheduled)}</strong> across the roster.
+          {reconcile === 'match'
+            ? <> <strong>Matches what players need to fund.</strong></>
+            : reconcile === 'short'
+              ? <> That&apos;s <strong>{fmt(gap)} short</strong> of what players need to fund.</>
+              : <> That&apos;s <strong>{fmt(gap)} more</strong> than players need to fund.</>}
+          {!compact && reconcile === 'short' && (
+            <span className={styles.reconAside}>
+              You can still generate this. Add more installments later if you need to.
+            </span>
+          )}
+          {!compact && reconcile === 'over' && (
+            <span className={styles.reconAside}>Families will be billed the higher amount.</span>
+          )}
+        </span>
+      </p>
+    );
+  }
 
   /** Drop the preview AND retire any preview request still in flight. Both halves matter:
    *  clearing the table without advancing the token lets a slow response restore it. */
   function invalidatePreview() {
     previewToken.current += 1;
     setPreview(null);
+    /**
+     * ⚠ AND CLEAR THE SPINNER, or the Preview button never comes back.
+     *
+     * `loadPreview`'s `finally` only lowers the flag when its own token is still current — correct
+     * for the data, wrong for the button. Edit anything while a preview is in flight and the
+     * response lands superseded, the `finally` skips, and `previewLoading` stays true forever with
+     * `disabled={previewLoading}` on the only way forward; the sole escape is closing the sheet
+     * through the discard prompt and starting again. Invalidating means no request in flight is
+     * relevant any more, so the flag drops here. (A fresh `loadPreview` raises it again on entry.)
+     */
+    setPreviewLoading(false);
   }
 
   async function loadPreview() {
-    if (validRows.length === 0) { setPreviewError('Add at least one installment with a date and amount'); return; }
+    if (missingDate)   { setPreviewError('Every installment needs a due date.'); return; }
+    if (missingAmount) { setPreviewError('Every installment needs an amount greater than zero.'); return; }
+    if (basisUnusable) { setPreviewError('Pick a different way to set the amounts.'); return; }
     const token = ++previewToken.current;
     setPreviewLoading(true);
     setPreviewError('');
     setPreview(null);
 
-    const qs = new URLSearchParams({ installmentCount: String(validRows.length) });
-    validRows.forEach(i => qs.append('dates[]', i.date));
+    const qs = new URLSearchParams({ installmentCount: String(installments.length), basis });
+    installments.forEach(i => qs.append('dates[]', i.date));
+    // Only manual sends amounts — a split is the server's own arithmetic, run from the same shared
+    // helper this form filled its boxes with, so the two cannot drift.
+    if (basis === 'manual') rowAmounts.forEach(a => qs.append('amounts[]', String(a)));
 
     try {
       const res  = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/installment-preview?${qs}`);
@@ -202,7 +314,20 @@ export default function GenerateInstallmentsModal({
    * question the coach can answer, in place, without losing what they typed.
    */
   async function handleGenerate(replace = false) {
-    if (!preview || validRows.length === 0) return;
+    /**
+     * ⚠ THE PREVIEW IS THE PAYLOAD. Every player gets the same schedule, so the first previewed
+     * row IS the schedule, and it is sent back verbatim.
+     *
+     * This is the whole point of the change and it has to be true by DATA FLOW, not by good
+     * intentions. Rebuilding the amounts here from local state would leave two computations of
+     * the same figure — the server's, which the coach read and approved, and the client's, run
+     * against a budget snapshot taken once at mount. Those agree right up until the budget or the
+     * roster moves in another tab, at which point the table says one thing and the write does
+     * another. That is the identical defect this sheet was rebuilt to close, relocated one layer
+     * down rather than removed.
+     */
+    const confirmed = preview?.[0]?.installments ?? [];
+    if (confirmed.length === 0 || !canGenerate) return;
     if (generatingRef.current) return;
     generatingRef.current = true;
     setGenerating(true);
@@ -213,22 +338,45 @@ export default function GenerateInstallmentsModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           replace,
-          installments: validRows.map((inst, i) => ({
-            installmentNumber: i + 1,
-            dueDate:           inst.date,
-            amount:            parseFloat(inst.amount),
+          // Which of the three answers produced these amounts. The write path does not recompute
+          // from it — it records it, so "why is this player being charged $340?" has an answer.
+          basis,
+          installments: confirmed.map(inst => ({
+            installmentNumber: inst.installmentNumber,
+            dueDate:           inst.dueDate,
+            amount:            inst.amount,
           })),
         }),
       });
       const data = await res.json().catch(() => null);
+
+      /**
+       * ⚠ THE SANDBOX SAYING NO IS THE DEMO WORKING, NOT BREAKING.
+       *
+       * Both demo orgs refuse every write at the request layer, so a prospect who builds a schedule
+       * here and presses Confirm always lands on a 403. Without this branch they read the literal
+       * string "SandboxReadOnly" — an internal code name, on a marketing surface, at the exact
+       * moment they have decided they want the feature. The guard already ships the sentence that
+       * belongs there ("Nothing is saved here. To keep your changes, start your own team — it's
+       * free."); this shows it, in its own voice rather than in red.
+       *
+       * The header is the contract, checked the same way the two admin screens check it — the body
+       * flag is belt to its braces.
+       */
+      if (res.headers.get('X-Sandbox-Blocked') === '1' || (res.status === 403 && data?.sandbox)) {
+        setSandboxNote(data?.message ?? 'Nothing is saved here. To keep your changes, start your own team — it\'s free.');
+        return;
+      }
+
       // The roster already has dues. Ask rather than refuse — the coach keeps their form and
       // answers one question. Only THEIR yes sends replace.
       if (res.status === 409 && data?.code === 'ALREADY_HAS_DUES') { setConfirmReplace(true); return; }
       if (!res.ok || !data) throw new Error(data?.error ?? 'Generation failed');
       setResult({
-        playersProcessed: data.playersProcessed ?? 0,
-        playersSkipped:   data.playersSkipped ?? 0,
-        playersFailed:    Array.isArray(data.playersFailed) ? data.playersFailed : [],
+        playersProcessed:          data.playersProcessed ?? 0,
+        playersWithPaymentsKept:   data.playersWithPaymentsKept ?? 0,
+        overpaymentCreditsCreated: data.overpaymentCreditsCreated ?? 0,
+        playersFailed:             Array.isArray(data.playersFailed) ? data.playersFailed : [],
       });
       await onGenerated();
     } catch (e: unknown) {
@@ -263,13 +411,17 @@ export default function GenerateInstallmentsModal({
         ) : result ? (
           <div className={styles.successState}>
             <p>✓ Dues set for {result.playersProcessed} {result.playersProcessed === 1 ? 'player' : 'players'}.</p>
-            {/* The skip is the whole point of the safe replace — it must be said out loud, or a
-                coach believes a player they already collected from is on the new schedule. */}
-            {result.playersSkipped > 0 && (
+            {/* Money kept across a replace must be said out loud (mig 232) — a coach who just
+                rewrote the season's dues needs to hear that the dollars already collected came
+                along, and where any excess went. */}
+            {result.playersWithPaymentsKept > 0 && (
               <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
-                {result.playersSkipped} {result.playersSkipped === 1 ? 'player has' : 'players have'} already paid
-                something, so their existing schedule was left as it is.
-                Adjust {result.playersSkipped === 1 ? 'it' : 'those'} from the player’s own row.
+                {result.playersWithPaymentsKept} {result.playersWithPaymentsKept === 1 ? 'player' : 'players'} had
+                payments recorded — every payment was kept and now counts toward the new schedule.
+                {result.overpaymentCreditsCreated > 0.005 && (
+                  <> Payments beyond a player&apos;s new total ({fmt(result.overpaymentCreditsCreated)} across the
+                  roster) were saved as overpayment credits.</>
+                )}
               </p>
             )}
             {/* ⚠ NAMED, and drawn as an error rather than a footnote. These players have no
@@ -295,8 +447,10 @@ export default function GenerateInstallmentsModal({
             <p style={{ fontWeight: 700 }}>This roster already has dues</p>
             <p className={styles.muted} style={{ marginTop: '0.4rem' }}>
               Generating now <strong>replaces</strong> the existing schedule with the one you just previewed.
-              Anyone who has already paid something is left exactly as they are, so no recorded payment is lost.
+              Recorded payments are kept — money already collected counts toward the new schedule, and anything
+              beyond a player&apos;s new total becomes an overpayment credit.
             </p>
+            {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
             {generateError && <p className={styles.errorText} style={{ marginTop: '0.6rem' }}>{generateError}</p>}
             <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={() => { setConfirmReplace(false); setGenerateError(''); }}>
@@ -311,36 +465,22 @@ export default function GenerateInstallmentsModal({
           <div className={styles.successState}>
             <p style={{ fontWeight: 700 }}>{blocker.title}</p>
             <p className={styles.muted} style={{ marginTop: '0.4rem' }}>{blocker.body}</p>
-            {blocker.cta && (
-              <Link href={budgetHref} className={shared.btnPrimary} style={{ marginTop: '1rem' }}>
-                Open Budget Plan →
-              </Link>
-            )}
           </div>
         ) : (
           <>
+            {/* ⚠ TRIMMED (owner call 3, 2026-08-13). This paragraph used to carry the whole
+                funded-by-players sum — which the basis cards below now print on the card that
+                actually uses it. Three stacked paragraphs before the first field meant a phone
+                reached the picker with one card visible; it now reaches it with two. */}
             <p className={styles.genInstructions}>
-              Set due dates and amounts for each installment. Every active roster player will receive the same schedule.
-              {/* The basis is what players FUND, not what the season costs — the whole point of
-                  budgeting expected funding is that dues come down by it. */}
-              {totals.fundingLineCount > 0 ? (
-                <>
-                  {' '}Funded by players: <strong>{fmt(totals.fundedByPlayers)}</strong>{' '}
-                  ({fmt(totals.totalPlanned)} less {fmt(totals.expectedFunding)} expected funding)
-                  {' '}÷ {rosterCount} players = <strong>{totals.perPlayer != null ? fmt(totals.perPlayer) : '—'}</strong> each.
-                </>
-              ) : (
-                <>
-                  {' '}Total budget: <strong>{fmt(totals.totalPlanned)}</strong> ÷ {rosterCount} players.
-                </>
-              )}
+              Every active roster player receives the same schedule.
             </p>
             {/* Over-planned: dues follow the estimate (owner ruling), so the shortfall is
                 stated HERE too — this is the moment it turns into real money owed. */}
             {totals.overPlanned && (
               <p className={styles.errorText} style={{ fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
-                Your line items are {fmt(Math.abs(totals.difference))} above your {fmt(totals.estimatedTotal ?? 0)} estimate.
-                Dues generated now are based on the estimate, so they won&apos;t cover everything you&apos;ve planned.
+                Your line items are {fmt(Math.abs(totals.difference))} above your {fmt(totals.estimatedTotal ?? 0)} estimate
+                — dues follow the estimate.
               </p>
             )}
             {/* Said before the coach types, not after — "this replaces what's there" is the kind
@@ -350,9 +490,76 @@ export default function GenerateInstallmentsModal({
                 from the server — which is why nothing about the write path reads this. */}
             {replacing && (
               <p className={styles.muted} style={{ fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
-                This roster already has a dues schedule. Generating replaces it — except for players
-                who have already paid something, who are left exactly as they are.
+                This roster already has dues. Generating replaces the schedule; payments already
+                recorded are kept and count toward the new one.
               </p>
+            )}
+
+            {/* ── How the amounts are set (owner ruling 2026-08-13) ─────────────────────────
+                Each card shows what it works out to BEFORE it is chosen, so all three answers
+                are comparable without committing to one. A basis with no number to offer is
+                never drawn as "$0.00" — it carries the reason and cannot be selected. */}
+            <fieldset className={styles.basisSection}>
+              <legend className={styles.label}>How amounts are set</legend>
+
+              {(['budget', 'estimate'] as const).map(key => {
+                const option = bases[key];
+                const disabled = !!option.unavailable;
+                return (
+                  <label
+                    key={key}
+                    className={`${styles.basisCard} ${basis === key ? styles.basisCardOn : ''} ${disabled ? styles.basisCardOff : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="installment-basis"
+                      className={styles.basisRadio}
+                      checked={basis === key}
+                      disabled={disabled}
+                      onChange={() => { setPickedBasis(key); invalidatePreview(); }}
+                    />
+                    <span className={styles.basisName}>{BASIS_LABEL[key]}</span>
+                    <span className={styles.basisValue}>
+                      {option.unavailable
+                        ? <span className={styles.basisValueMuted}>{option.amount == null ? 'Not set' : 'Nothing owing'}</span>
+                        : <>{fmt(option.perPlayer ?? 0)}<small>per player</small></>}
+                    </span>
+                    <span className={`${styles.basisMath} ${disabled ? styles.basisMathStop : ''}`}>
+                      {option.unavailable ?? (
+                        key === 'budget'
+                          ? `${fmt(totals.itemized)} line items${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} expected fundraising` : ''} ÷ ${rosterCount} players`
+                          : `${fmt(totals.estimatedTotal ?? 0)} estimate${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} expected fundraising` : ''} ÷ ${rosterCount} players`
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+
+              <label className={`${styles.basisCard} ${basis === 'manual' ? styles.basisCardOn : ''}`}>
+                <input
+                  type="radio"
+                  name="installment-basis"
+                  className={styles.basisRadio}
+                  checked={basis === 'manual'}
+                  onChange={() => { setPickedBasis('manual'); invalidatePreview(); }}
+                />
+                <span className={styles.basisName}>Set the amounts myself</span>
+                <span className={styles.basisValue}><span className={styles.basisValueMuted}>You decide</span></span>
+                <span className={styles.basisMath}>
+                  {yardstick > 0
+                    ? `Type each installment. We'll show how it compares to the ${fmt(yardstick)} players need to fund.`
+                    : 'Type each installment. Nothing to compare against until you have a budget.'}
+                </span>
+              </label>
+            </fieldset>
+
+            {/* ⚠ The budget nudge SURVIVES as a link rather than a wall (owner call 1). A coach
+                reaching this sheet from Player Dues with no budget is no longer turned away —
+                but the offer that used to block them is still the first thing under the picker. */}
+            {bases.budget.unavailable && bases.estimate.unavailable && (
+              <Link href={budgetHref} className={styles.basisNudge}>
+                Build a Season Budget Plan first →
+              </Link>
             )}
 
             <div className={styles.genInstallmentsSection}>
@@ -392,15 +599,25 @@ export default function GenerateInstallmentsModal({
                   </label>
                   <label className={styles.periodFieldLabel}>
                     <span className={styles.periodFieldLabelText}>Amount per player ($)</span>
-                    <input
-                      className={styles.input}
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      placeholder="Amount per player ($)"
-                      value={inst.amount}
-                      onChange={e => { setInstallments(p => { const n=[...p]; n[i]={...n[i],amount:e.target.value}; return n; }); invalidatePreview(); }}
-                    />
+                    {/* In a split mode this is an OUTPUT. Drawn as one — dashed, muted, badged
+                        "Auto" — rather than as a live box that silently ignores typing, which is
+                        precisely the lie this whole change exists to end. */}
+                    {splitAmounts ? (
+                      <output className={styles.amountAuto}>
+                        {fmt(splitAmounts[i] ?? 0)}
+                        <span className={styles.autoChip}>Auto</span>
+                      </output>
+                    ) : (
+                      <input
+                        className={styles.input}
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Amount per player ($)"
+                        value={inst.amount}
+                        onChange={e => { setInstallments(p => { const n=[...p]; n[i]={...n[i],amount:e.target.value}; return n; }); invalidatePreview(); }}
+                      />
+                    )}
                   </label>
                   {installments.length > 1 && (
                     <button
@@ -416,6 +633,13 @@ export default function GenerateInstallmentsModal({
               ))}
             </div>
 
+            {/* ── What this collects, against what players have to fund ────────────────────
+                A SENTENCE, NEVER A BARRIER (owner ruling 2026-08-13). Over-collecting takes the
+                sharper colour: it is the one that charges families money they do not owe. An
+                exact match is stated rather than left silent, so a coach who did the arithmetic
+                themselves sees it confirmed. */}
+            {reconcileLine(false)}
+
             {previewError && <p className={styles.errorText}>{previewError}</p>}
 
             {!preview ? (
@@ -427,34 +651,67 @@ export default function GenerateInstallmentsModal({
               </div>
             ) : (
               <>
+                {/* The comparison travels WITH the coach to the step where they commit. It used
+                    to be left behind on the form, so the last thing read before charging ten
+                    families said nothing about a shortfall. */}
+                {reconcileLine(true)}
+
                 <div className={styles.previewSection}>
                   <div className={styles.label} style={{ marginBottom: '0.6rem' }}>Preview — {preview.length} players</div>
-                  {/* Player × installment is a genuine 2-D grid with fixed 90px money
-                      columns, so four installments overflow a phone sheet. It scrolls
-                      with the player name pinned rather than crushing the amounts. */}
+                  {/* Player × installment is a genuine 2-D grid with fixed money columns, so four
+                      installments overflow a phone sheet. It scrolls with the player name pinned
+                      rather than crushing the amounts.
+
+                      ⚠ `--cols` counts the installments PLUS the total. It used to go unset,
+                      leaving the 3-column default, so a one-installment schedule drew two phantom
+                      money columns. */}
                   <CoachScrollX sticky frame={false} hint="Swipe to see every installment">
-                    <div className={styles.previewTable}>
+                    <div
+                      className={styles.previewTable}
+                      style={{ '--cols': (preview[0]?.installments.length ?? 1) + 1 } as CSSProperties}
+                    >
                       <div className={styles.previewHeader}>
                         <span className={shared.scrollXStickyCell}>Player</span>
-                        {preview[0]?.installments.map((_, i) => (
-                          <span key={i} style={{ textAlign: 'right' }}>#{i + 1}</span>
+                        {/* The due date alone. `#1 / #2` was dropped (owner, 2026-08-13): the date
+                            already says which payment this is, and the number cost a column's
+                            worth of width on a phone to repeat what the row order shows. */}
+                        {preview[0]?.installments.map((inst, i) => (
+                          <span key={i} className={shared.thNum}>{inst.dueDate ? formatDayMonth(inst.dueDate) : `#${i + 1}`}</span>
                         ))}
+                        <span className={shared.thNum}>Total</span>
                       </div>
                       {preview.slice(0, 10).map(row => (
                         <div key={row.playerId} className={styles.previewRow}>
                           <span className={shared.scrollXStickyCell}>{[row.playerLastName, row.playerFirstName].filter(Boolean).join(', ')}</span>
                           {row.installments.map((inst, i) => (
-                            <span key={i} style={{ textAlign: 'right' }}>{fmt(inst.amount)}</span>
+                            <span key={i} className={shared.tdNum}>{fmt(inst.amount)}</span>
                           ))}
+                          <span className={`${shared.tdNum} ${styles.previewTotalCell}`}>
+                            {fmt(row.installments.reduce((s, inst) => s + inst.amount, 0))}
+                          </span>
                         </div>
                       ))}
                       {preview.length > 10 && (
                         <div className={styles.previewMore}>+{preview.length - 10} more players</div>
                       )}
+                      {/* What the team is actually asking families for, in total — the number a
+                          coach is really approving, and it was nowhere on this screen. */}
+                      <div className={`${styles.previewRow} ${styles.previewFootRow}`}>
+                        <span className={shared.scrollXStickyCell}>Team total</span>
+                        {(preview[0]?.installments ?? []).map((_, i) => (
+                          <span key={i} className={shared.tdNum}>
+                            {fmt(preview.reduce((s, row) => s + (row.installments[i]?.amount ?? 0), 0))}
+                          </span>
+                        ))}
+                        <span className={`${shared.tdNum} ${styles.previewTotalCell}`}>
+                          {fmt(preview.reduce((s, row) => s + row.installments.reduce((t, inst) => t + inst.amount, 0), 0))}
+                        </span>
+                      </div>
                     </div>
                   </CoachScrollX>
                 </div>
 
+                {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
                 {generateError && <p className={styles.errorText}>{generateError}</p>}
 
                 <div className={shared.modalFooter}>

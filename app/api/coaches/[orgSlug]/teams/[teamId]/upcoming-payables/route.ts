@@ -9,6 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
+import { allocateDuesPayments } from '@/lib/dues-payments';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -75,16 +76,46 @@ export const GET = withObservability(async (req: Request,
 
   let duesItems: any[] = [];
   if (scheduleIds.length > 0) {
-    let duesQuery = supabaseAdmin
-      .from('rep_player_dues_installments')
-      .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
-      .in('schedule_id', scheduleIds)
-      .lte('due_date', cutoffStr)
-      .order('due_date', { ascending: true });
-    if (!includePaid) duesQuery = duesQuery.is('paid_at', null);
-    const { data: installments } = await duesQuery;
+    // ALL installments, not just the window: coverage (mig 232) is derived per player across the
+    // whole schedule, so a windowed subset can't be allocated correctly. Window-filter after.
+    const [{ data: installments }, { data: payRows }] = await Promise.all([
+      supabaseAdmin
+        .from('rep_player_dues_installments')
+        .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
+        .in('schedule_id', scheduleIds)
+        .order('due_date', { ascending: true }),
+      supabaseAdmin
+        .from('rep_dues_payments')
+        .select('id, player_id, amount, received_date, created_at')
+        .eq('program_year_id', programYear.id),
+    ]);
 
-    const playerIds = [...new Set((installments ?? []).map((i: any) => i.player_id).filter(Boolean))];
+    // Per-player allocation → how much of each unpaid installment is already covered.
+    const instsByPlayer = new Map<string, any[]>();
+    for (const i of installments ?? []) {
+      const pid = i.player_id ?? schedulePlayerMap.get(i.schedule_id);
+      if (!pid) continue;
+      if (!instsByPlayer.has(pid)) instsByPlayer.set(pid, []);
+      instsByPlayer.get(pid)!.push(i);
+    }
+    const paysByPlayer = new Map<string, any[]>();
+    for (const p of payRows ?? []) {
+      if (!paysByPlayer.has(p.player_id)) paysByPlayer.set(p.player_id, []);
+      paysByPlayer.get(p.player_id)!.push(p);
+    }
+    const remainingById = new Map<string, number>();
+    for (const [pid, insts] of instsByPlayer) {
+      const { coverage } = allocateDuesPayments(
+        insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+        (paysByPlayer.get(pid) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
+      );
+      for (const c of coverage) remainingById.set(c.installmentId, c.remaining);
+    }
+
+    const windowed = (installments ?? []).filter((i: any) =>
+      (i.due_date ?? '') <= cutoffStr && (includePaid || !i.paid_at));
+
+    const playerIds = [...new Set(windowed.map((i: any) => i.player_id).filter(Boolean))];
     const nameMap = new Map<string, string>();
 
     if (playerIds.length > 0) {
@@ -97,25 +128,33 @@ export const GET = withObservability(async (req: Request,
       }
     }
 
-    duesItems = (installments ?? []).map((i: any) => {
+    duesItems = windowed.map((i: any) => {
       const pid = i.player_id ?? schedulePlayerMap.get(i.schedule_id);
       const d = daysUntil(i.due_date);
+      // An open installment owes its REMAINDER, not its face value — a family $200 into a $300
+      // installment has $100 coming due, and quoting $300 here was inventory row 12. A paid row
+      // (includePaid) keeps its face value: that money was collected.
+      const remaining = i.paid_at
+        ? Number(i.amount)
+        : (remainingById.get(i.id) ?? Number(i.amount));
       // ⚠ description/dueDate/amount double as a MERGE KEY: the Money Overview
       // ledger (MoneyNextThirtyDays) collapses dues rows that share all three
       // into one "Installment #N — X players" line. Personalizing description
       // per player (a discount note, a partial-payment marker) silently turns
-      // that grouping into one-row-per-player again.
+      // that grouping into one-row-per-player again. A PART-PAID row leaving the
+      // group via its smaller amount is deliberate — it genuinely differs, and it
+      // keeps the player's name so the coach sees whose remainder it is.
       return {
         id:          i.id,
         description: `Installment #${i.installment_number}`,
-        amount:      Number(i.amount),
+        amount:      remaining,
         dueDate:     i.due_date,
         daysUntilDue: d,
         overdue:     !i.paid_at && d < 0,
         paid:        !!i.paid_at,
         label:       pid ? (nameMap.get(pid) ?? null) : null,
       };
-    });
+    }).filter((i: any) => i.paid || i.amount > 0.005);
   }
 
   // ── Lane 2: team expenses (deposit + balance due dates) ──────────────────

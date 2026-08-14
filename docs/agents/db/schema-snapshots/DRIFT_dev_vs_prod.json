@@ -1,16 +1,28 @@
 {
-  "generated": "2026-08-13",
-  "total": 28,
+  "generated": "2026-08-14",
+  "total": 56,
   "counts": {
-    "tables": 1,
-    "columns": 16,
-    "indexes": 2,
-    "constraints": 5,
-    "rls": 4
+    "tables": 2,
+    "columns": 30,
+    "indexes": 4,
+    "constraints": 13,
+    "rls": 7
   },
   "items": [
     {
       "key": "check:only-dev:rep_budget_lines.rep_budget_lines_line_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payments.rep_dues_payments_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payments.rep_dues_payments_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payments.rep_dues_payments_source_check",
       "sig": ""
     },
     {
@@ -27,6 +39,62 @@
     },
     {
       "key": "column:only-dev:rep_budget_lines.line_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_credits.payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.accounting_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.received_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payments.team_id",
       "sig": ""
     },
     {
@@ -90,6 +158,38 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_dues_credits.rep_dues_credits_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_accounting_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payments.rep_dues_payments_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_created_by",
       "sig": ""
     },
@@ -110,11 +210,23 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_dues_payments_year_player",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:idx_rep_team_import_events_season",
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_dues_payments_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_import_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_dues_payments",
       "sig": ""
     },
     {

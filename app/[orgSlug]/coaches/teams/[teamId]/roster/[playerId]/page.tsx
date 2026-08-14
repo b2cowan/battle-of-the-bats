@@ -23,6 +23,7 @@ import {
   BATS_LABELS, THROWS_LABELS, JERSEY_SIZE_LABELS,
 } from '@/lib/rep-roster-options';
 import { formatInOrgZone } from '@/lib/timezone';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamGameMoment } from '@/lib/types';
 import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary, RepPlayerAwardsSummary } from '@/lib/db';
@@ -327,11 +328,12 @@ export default function PlayerDetailPage({
         </button>
       </div>
 
-      {/* Two-column profile (D3, owner-ratified 2026-08-01): the long/working sections carry
-          the main column as deep-linkable collapsible cards; the rail holds compact quick-facts
-          that stay visible while scrolling (sticky below the pinned header). */}
-      <div className={styles.railCols}>
-      <div>
+      {/* ⚠ THIS PAGE WAS TWO COLUMNS UNTIL 2026-08-13 (D3, 2026-08-01): a main column of collapsible
+          sections plus a 300px quick-facts rail. The rail is gone at owner ruling — on a 960px
+          reading measure it was taking 300 of them, so the form it sat beside was being squeezed
+          into ~635px to make room for fields that then had to be squeezed again to fit the rail.
+          Everything it held MOVED here; nothing was dropped. See the guardian/safety sections
+          directly below and the Dues section at the foot of the page. */}
       {/* Player info */}
       <CoachCollapseSection sectionId="player" title="Player">
         <div className={styles.formGrid}>
@@ -453,6 +455,91 @@ export default function PlayerDetailPage({
               onChange={e => setForm(f => f ? { ...f, notes: e.target.value } : f)}
               placeholder="Private notes for your coaching staff — not visible to families"
               maxLength={1000} />
+          </div>
+        </div>
+      </CoachCollapseSection>
+
+      {/* ── Relocated from the rail, 2026-08-13 ─────────────────────────────────────────────
+          Owner ruling: TWO sections, not one combined card and not folded into Player. Safety is
+          the reason — allergies and an emergency number are what someone opens this page for in a
+          hurry, and burying them one level inside a larger card costs exactly the seconds that
+          matter. Both sections write into the SAME form state and save through the SAME Save bar
+          as everything else on this page; this was a move within one form, never a new save path.
+
+          ⚠ DO NOT MERGE WITH THE "Guardians" SECTION BELOW. That card is the family members who
+          can log in (Chunk D). It rides the roster-PII capability and renders nothing at all while
+          the guardian tier is off. These fields are the contact details on the ROSTER RECORD and
+          are not behind that gate — folding them together would hide editable contact fields from
+          coaches who can legitimately edit them today. */}
+      <CoachCollapseSection sectionId="guardian" title="Guardian contact">
+        {/* Says what this is without pointing at the Guardians section, which may not render. */}
+        <p className={styles.detailPlaceholder} style={{ marginTop: 0, marginBottom: '0.9rem' }}>
+          The contact on this player&apos;s roster record — where dues reminders and team emails go.
+        </p>
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="gfn">First Name</label>
+            <input id="gfn" className={styles.input} type="text"
+              value={form.guardianFirstName}
+              onChange={e => setForm(f => f ? { ...f, guardianFirstName: e.target.value } : f)}
+              maxLength={60} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="gln">Last Name</label>
+            <input id="gln" className={styles.input} type="text"
+              value={form.guardianLastName}
+              onChange={e => setForm(f => f ? { ...f, guardianLastName: e.target.value } : f)}
+              maxLength={60} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="gem">Email</label>
+            <input id="gem" className={styles.input} type="email"
+              value={form.guardianEmail}
+              onChange={e => setForm(f => f ? { ...f, guardianEmail: e.target.value } : f)}
+              maxLength={120} />
+            {form.guardianEmail.trim() && (
+              <a className={styles.contactLink} href={`mailto:${form.guardianEmail.trim()}`}>Email guardian</a>
+            )}
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="gph">Phone</label>
+            <input id="gph" className={styles.input} type="tel"
+              value={form.guardianPhone}
+              onChange={e => setForm(f => f ? { ...f, guardianPhone: e.target.value } : f)}
+              maxLength={20} />
+            {form.guardianPhone.trim() && (
+              <a className={styles.contactLink} href={`tel:${form.guardianPhone.replace(/[^\d+]/g, '')}`}>Call or text</a>
+            )}
+          </div>
+        </div>
+      </CoachCollapseSection>
+
+      <CoachCollapseSection sectionId="safety" title="Safety">
+        <div className={styles.formGrid}>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label} htmlFor="medical">Allergies / medical notes</label>
+            <textarea id="medical" className={styles.textarea} rows={3}
+              value={form.medicalNotes}
+              onChange={e => setForm(f => f ? { ...f, medicalNotes: e.target.value } : f)}
+              placeholder="Allergies, conditions, medications — visible to coaching staff"
+              maxLength={1000} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="ecn">Emergency contact name</label>
+            <input id="ecn" className={styles.input} type="text"
+              value={form.emergencyContactName}
+              onChange={e => setForm(f => f ? { ...f, emergencyContactName: e.target.value } : f)}
+              maxLength={80} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="ecp">Emergency contact phone</label>
+            <input id="ecp" className={styles.input} type="tel"
+              value={form.emergencyContactPhone}
+              onChange={e => setForm(f => f ? { ...f, emergencyContactPhone: e.target.value } : f)}
+              maxLength={20} />
+            {form.emergencyContactPhone.trim() && (
+              <a className={styles.contactLink} href={`tel:${form.emergencyContactPhone.replace(/[^\d+]/g, '')}`}>Call</a>
+            )}
           </div>
         </div>
       </CoachCollapseSection>
@@ -606,88 +693,16 @@ export default function PlayerDetailPage({
           </>
         )}
       </CoachCollapseSection>
-      </div>
 
-      <aside className={styles.rail}>
-      {/* Guardian info */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Guardian</p>
-        <div className={styles.formGrid}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="gfn">First Name</label>
-            <input id="gfn" className={styles.input} type="text"
-              value={form.guardianFirstName}
-              onChange={e => setForm(f => f ? { ...f, guardianFirstName: e.target.value } : f)}
-              maxLength={60} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="gln">Last Name</label>
-            <input id="gln" className={styles.input} type="text"
-              value={form.guardianLastName}
-              onChange={e => setForm(f => f ? { ...f, guardianLastName: e.target.value } : f)}
-              maxLength={60} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="gem">Email</label>
-            <input id="gem" className={styles.input} type="email"
-              value={form.guardianEmail}
-              onChange={e => setForm(f => f ? { ...f, guardianEmail: e.target.value } : f)}
-              maxLength={120} />
-            {form.guardianEmail.trim() && (
-              <a className={styles.contactLink} href={`mailto:${form.guardianEmail.trim()}`}>Email guardian</a>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="gph">Phone</label>
-            <input id="gph" className={styles.input} type="tel"
-              value={form.guardianPhone}
-              onChange={e => setForm(f => f ? { ...f, guardianPhone: e.target.value } : f)}
-              maxLength={20} />
-            {form.guardianPhone.trim() && (
-              <a className={styles.contactLink} href={`tel:${form.guardianPhone.replace(/[^\d+]/g, '')}`}>Call or text</a>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Safety */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Safety</p>
-        <div className={styles.formGrid}>
-          <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label} htmlFor="medical">Allergies / medical notes</label>
-            <textarea id="medical" className={styles.textarea} rows={2}
-              value={form.medicalNotes}
-              onChange={e => setForm(f => f ? { ...f, medicalNotes: e.target.value } : f)}
-              placeholder="Allergies, conditions, medications — visible to coaching staff"
-              maxLength={1000} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ecn">Emergency contact name</label>
-            <input id="ecn" className={styles.input} type="text"
-              value={form.emergencyContactName}
-              onChange={e => setForm(f => f ? { ...f, emergencyContactName: e.target.value } : f)}
-              maxLength={80} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ecp">Emergency contact phone</label>
-            <input id="ecp" className={styles.input} type="tel"
-              value={form.emergencyContactPhone}
-              onChange={e => setForm(f => f ? { ...f, emergencyContactPhone: e.target.value } : f)}
-              maxLength={20} />
-            {form.emergencyContactPhone.trim() && (
-              <a className={styles.contactLink} href={`tel:${form.emergencyContactPhone.replace(/[^\d+]/g, '')}`}>Call</a>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Dues */}
-      <div className={styles.detailSection}>
-        <div className={styles.sectionHeadRow}>
-          <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Dues</p>
-          <Link href={`${base}/accounting/dues`} className={styles.contactLink} style={{ marginTop: 0 }}>Manage dues →</Link>
-        </div>
+      {/* Dues — relocated from the rail, 2026-08-13. The one group here that was already read-only,
+          so it lands at the foot of the page with Attendance and Awards: all three answer "how is
+          this player tracking?", and none of them is what you opened the profile to edit.
+          "Manage dues →" stays the door to the surface that actually owns the editing. */}
+      <CoachCollapseSection
+        sectionId="dues"
+        title="Dues"
+        meta={dues && dues.hasSchedule ? money(dues.balance) : undefined}
+      >
         {!dues || !dues.hasSchedule ? (
           <p className={styles.detailPlaceholder}>No dues set for this player this season.</p>
         ) : (
@@ -709,9 +724,8 @@ export default function PlayerDetailPage({
             </p>
           </>
         )}
-      </div>
-      </aside>
-      </div>
+        <Link href={moneySectionHref(base, 'dues', undefined, seasonQuery)} className={styles.contactLink}>Manage dues →</Link>
+      </CoachCollapseSection>
 
       {/* Save bar — viewport-pinned while there are unsaved changes, no matter where you scroll.
           The spacer reserves scroll room so the bar never covers the last card. */}

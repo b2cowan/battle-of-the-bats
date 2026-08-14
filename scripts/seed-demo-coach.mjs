@@ -25,12 +25,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes, createHash } from 'crypto';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
+import { moneySectionHref } from '../lib/coach-money-links.ts';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
-  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_BUDGET_LINES,
+  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
@@ -242,6 +243,9 @@ async function wipeProgramYearChildren(teamId, pyId) {
   // Money
   const scheduleIds = ((await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', pyId)).data ?? []).map(s => s.id);
   if (scheduleIds.length) await del('rep_player_dues_installments', q => q.in('schedule_id', scheduleIds));
+  // Payment FACTS (mig 232) — season-scoped like credits, so the installment delete above never
+  // touches them; left behind they would re-cover the NEXT seed's installments at random.
+  await del('rep_dues_payments', q => q.eq('program_year_id', pyId));
   await del('rep_player_dues_schedules', q => q.eq('program_year_id', pyId));
   const lineIds = ((await db.from('rep_budget_lines').select('id').eq('program_year_id', pyId)).data ?? []).map(l => l.id);
   if (lineIds.length) await del('rep_budget_periods', q => q.in('budget_line_id', lineIds));
@@ -293,8 +297,12 @@ async function wipeProgramYearChildren(teamId, pyId) {
  * money actually arrived (a few days early). A team that pays on the nose can pass the same array
  * twice.
  */
-async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount, dueDates, paidDates, isPaid }) {
+async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount, dueDates, paidDates, isPaid, partPaid }) {
   for (let i = 0; i < playerIds.length; i++) {
+    // The part-paid family's target instalment must NOT be stamped — its dollars arrive as
+    // partial payments below, and the whole point is the "$90 of $120" chip.
+    const paidHere = (n) =>
+      partPaid && i === partPaid.rosterIndex && n === partPaid.installmentIndex ? false : isPaid(i, n);
     const scheduleId = randomUUID();
     die(`insert dues schedule ${team.slug}`, (await db.from('rep_player_dues_schedules').insert({
       id: scheduleId, program_year_id: pyId, player_id: playerIds[i],
@@ -303,9 +311,35 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
     await insertAll('rep_player_dues_installments', dueDates.map((dueDate, n) => ({
       schedule_id: scheduleId, player_id: playerIds[i], installment_number: n + 1,
       amount: installmentAmount, due_date: dueDate,
-      paid_at: isPaid(i, n) ? `${paidDates[n]}T17:00:00.000Z` : null,
+      paid_at: paidHere(n) ? `${paidDates[n]}T17:00:00.000Z` : null,
       org_id: org.id, team_id: team.id, source: 'manual',
     })));
+    // A paid stamp is only a coverage PROJECTION since mig 232 — the dollars live in
+    // rep_dues_payments, and every dues reader (Paid column, Collections tile, month-grid
+    // Actual, never-paid chase) reads THEM. One e-transfer per stamped installment, received
+    // the day the world says it was paid, keeps the demo's story and its books identical.
+    const paidRows = [...dueDates.keys()].filter(n => paidHere(n));
+    if (paidRows.length) {
+      await insertAll('rep_dues_payments', paidRows.map(n => ({
+        program_year_id: pyId, player_id: playerIds[i],
+        org_id: org.id, team_id: team.id,
+        amount: installmentAmount, received_date: paidDates[n],
+        method: 'etransfer', source: 'recorded',
+        created_at: `${paidDates[n]}T17:00:00.000Z`,
+      })));
+    }
+    // The part-paid family's small e-transfers — money that sums UNDER the target instalment,
+    // so its row reads "$X of $Y" and stays that way through re-anchors (received_date rides
+    // the nightly shift like every other payment).
+    if (partPaid && i === partPaid.rosterIndex) {
+      await insertAll('rep_dues_payments', partPaid.splits.map((amt, k) => ({
+        program_year_id: pyId, player_id: playerIds[i],
+        org_id: org.id, team_id: team.id,
+        amount: amt, received_date: partPaid.splitDates[k],
+        method: 'etransfer', source: 'recorded',
+        created_at: `${partPaid.splitDates[k]}T17:00:00.000Z`,
+      })));
+    }
   }
 }
 
@@ -734,7 +768,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   const pyId = await ensureProgramYear(team, state.year, state.yearName, {
     status: 'active', tryout_open: false,
     lineup_settings: MIDSEASON_LINEUP_SETTINGS,
-    budget_amount: MIDSEASON_BUDGET_LINES.reduce((s, l) => s + l.total, 0),
+    // ⚠ NOT the sum of the lines — see MIDSEASON_SEASON_ESTIMATE for why this one team differs.
+    budget_amount: MIDSEASON_SEASON_ESTIMATE,
   });
   await ensureHeadCoach(team, pyId);
   await wipeProgramYearChildren(team.id, pyId);
@@ -770,6 +805,12 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     // The final instalment is future for everyone; the overdue pair also missed #3.
     isPaid: (i, n) => dueOffsets[n] < 0
       && !(n === 3 || (n === 2 && MIDSEASON_DUES.overdueRosterIndexes.includes(i))),
+    // The payment-record showcase (owner ruling 2026-08-13): one family's instalment #3 sits at
+    // $90 of $120 across three small e-transfers — a third money story beside current + overdue.
+    partPaid: {
+      ...MIDSEASON_DUES.partPaid,
+      splitDates: MIDSEASON_DUES.partPaid.splitOffsets.map(offset => orgDateWithOffset(now, offset)),
+    },
   });
 
   // The plan, on real platform categories — without them budget-vs-actual has nothing to match a
@@ -905,7 +946,7 @@ console.log(`\n✅ Seeded the Coach Sandbox — ${DEMO_COACH_ORG_NAME}`);
 console.log(`   Org: ${demoOrg.slug} · plan club · role coach · not public, not discoverable`);
 console.log(`   Coach: ${demoOrg.organizerEmail} (${DEMO_COACH_DISPLAY_NAME})`);
 console.log(`   Tryout day:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
-console.log(`   Off-season:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}/accounting/budget-vs-actual`);
+console.log(`   Off-season:  ${moneySectionHref(`/${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}`, 'budget-vs-actual')}`);
 console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
 console.log(`   Mid-season:  ${demoOrg.landingPath}`);
 console.log(`   Season's End: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonsEnd.id}/season-end`);

@@ -68,19 +68,29 @@ export const GET = withObservability(async (req: Request,
   // hand-rolled reduce here would be exactly the drift it was written to stop.
   const totalBudget = computeBudgetTotals({ lines, estimatedTotal: null }).itemized;
 
+  // Player dues schedules for this year. Their ids gate the "already generated?" check, and their
+  // sum is the Player dues figure the plan shows beside expected funding. Σ schedule totals — the
+  // same figure the Dues tab's totals row calls "assessed" — NOT Σ installments or payments, so
+  // credits and partial payments never move the plan.
+  const { data: schedulesData } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('id, total_amount')
+    .eq('program_year_id', programYear.id);
+  const schedules = (schedulesData ?? []) as Array<{ id: string; total_amount: number }>;
+  // Number() belt, matching every other total_amount read in lib/db.ts — a numeric column
+  // must never reach arithmetic as a string, whatever the driver does.
+  const duesAssessed = Math.round(schedules.reduce((s, r) => s + Number(r.total_amount ?? 0), 0) * 100) / 100;
+
   // Check whether any budget-generated installments already exist for this year
-  const { count: installmentCount } = await supabaseAdmin
-    .from('rep_player_dues_installments')
-    .select('id', { count: 'exact', head: true })
-    .eq('source', 'budget_generated')
-    .in(
-      'schedule_id',
-      (await supabaseAdmin
-        .from('rep_player_dues_schedules')
-        .select('id')
-        .eq('program_year_id', programYear.id)
-        .then(r => (r.data ?? []).map((s: { id: string }) => s.id)))
-    );
+  let installmentCount = 0;
+  if (schedules.length > 0) {
+    const { count } = await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .select('id', { count: 'exact', head: true })
+      .eq('source', 'budget_generated')
+      .in('schedule_id', schedules.map(s => s.id));
+    installmentCount = count ?? 0;
+  }
 
   // Active roster count
   const { count: rosterCount } = await supabaseAdmin
@@ -92,7 +102,7 @@ export const GET = withObservability(async (req: Request,
   const plan: RepBudgetPlan = {
     lines,
     totalBudget,
-    hasInstallments: (installmentCount ?? 0) > 0,
+    hasInstallments: installmentCount > 0,
     rosterCount:     rosterCount ?? 0,
   };
 
@@ -103,6 +113,7 @@ export const GET = withObservability(async (req: Request,
   // the same anchor the server's file path already has, or the two would disagree.
   return NextResponse.json({
     plan,
+    duesAssessed,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,
   });

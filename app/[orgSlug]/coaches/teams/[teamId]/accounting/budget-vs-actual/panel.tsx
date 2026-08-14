@@ -14,6 +14,7 @@ import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coac
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
 import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
+import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import type { ExportColumnDef } from '@/lib/export';
 import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
@@ -504,7 +505,7 @@ export function BudgetVsActualPanel({
             eyebrow="Budget vs. actual"
             headline="No budget plan yet"
             description="Create a budget plan to start tracking estimated spend against your actual ledger."
-            primaryAction={{ label: 'Create a budget plan', href: `${base}/accounting/budget` }}
+            primaryAction={{ label: 'Create a budget plan', href: moneySectionHref(base, 'budget', undefined, seasonQuery) }}
             secondaryAction={{ label: 'See a finished example', onClick: () => setSampleOpen(true) }}
           />
           {sampleOpen && <SampleBudgetSheet initialTab="bva" onClose={() => setSampleOpen(false)} />}
@@ -674,6 +675,7 @@ export function BudgetVsActualPanel({
               lens={lens}
               base={base}
               canWrite={moneyCanWrite}
+              seasonQuery={seasonQuery}
             />
           ) : (
           <>
@@ -835,10 +837,12 @@ export function BudgetVsActualPanel({
                   <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
                     <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
                       <span className={styles.expandIcon} />
-                      <span className={shared.ledgerName}>Expected funding</span>
+                      <span className={shared.ledgerName}>Expected fundraising</span>
                     </span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>−{fmt(data.funding.budget)}</span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>−{fmt(data.funding.actual)}</span>
+                    {/* Positive, like the plan page (owner 2026-08-13): the row's name says the
+                        direction; the variance beside them stays a real signed comparison. */}
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.funding.budget)}</span>
+                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.funding.actual)}</span>
                     <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceColor(data.funding.actual - data.funding.budget) }}>
                       {fmtVariance(data.funding.actual - data.funding.budget)}
                     </span>
@@ -879,7 +883,7 @@ export function BudgetVsActualPanel({
              </CoachScrollX>
              {data.funding && (
                <p className={styles.fundingNote}>
-                 Expected funding&apos;s actual is your team&apos;s share — everything raised, less
+                 Expected fundraising&apos;s actual is your team&apos;s share — everything raised, less
                  anything paid back to the player who raised it (that already lowers their own dues).
                </p>
              )}

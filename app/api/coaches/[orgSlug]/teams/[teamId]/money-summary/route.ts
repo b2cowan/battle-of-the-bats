@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import {
   getRepPlayerDuesSchedules,
   getRepPlayerDuesInstallments,
+  getRepDuesPaymentsByProgramYear,
   getRepTeamExpenses,
 } from '@/lib/db';
+import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
+import { allocateDuesPayments, duesPaidAmount } from '@/lib/dues-payments';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
@@ -49,7 +52,6 @@ export const GET = withObservability(async (req: Request,
     expenses,
     linesRes,
     rosterRes,
-    creditsRes,
     fundraisersRes,
     splitsRes,
     requestsRes,
@@ -66,10 +68,6 @@ export const GET = withObservability(async (req: Request,
       .eq('program_year_id', programYear.id)
       .eq('status', 'active'),
     supabaseAdmin
-      .from('rep_dues_credits')
-      .select('player_id, amount')
-      .eq('program_year_id', programYear.id),
-    supabaseAdmin
       .from('rep_fundraisers')
       .select('id, is_active')
       .eq('program_year_id', programYear.id),
@@ -85,10 +83,14 @@ export const GET = withObservability(async (req: Request,
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
-  const installmentLists = await Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id)));
-  const creditsByPlayer = new Map<string, number>();
-  for (const c of (creditsRes.data ?? []) as Array<{ player_id: string; amount: number }>) {
-    creditsByPlayer.set(c.player_id, (creditsByPlayer.get(c.player_id) ?? 0) + (c.amount ?? 0));
+  const [installmentLists, seasonPayments] = await Promise.all([
+    Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id))),
+    getRepDuesPaymentsByProgramYear(programYear.id),
+  ]);
+  const paymentsByPlayer = new Map<string, typeof seasonPayments>();
+  for (const p of seasonPayments) {
+    if (!paymentsByPlayer.has(p.playerId)) paymentsByPlayer.set(p.playerId, []);
+    paymentsByPlayer.get(p.playerId)!.push(p);
   }
 
   let duesExpected = 0;
@@ -100,20 +102,32 @@ export const GET = withObservability(async (req: Request,
   schedules.forEach((schedule, idx) => {
     const insts = installmentLists[idx] ?? [];
     duesExpected += schedule.totalAmount ?? 0;
-    const paid = insts.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+    // Paid = payment FACTS (mig 232), capped at the schedule total — same figure as the dues
+    // route, the digest and Ask, so the Collections tile can never disagree with the table.
+    const payments = paymentsByPlayer.get(schedule.playerId) ?? [];
+    const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
+    const paid = duesPaidAmount(paymentsTotal, schedule.totalAmount ?? 0);
     duesCollected += paid;
+    // Overdue counts what is still MISSING on a late installment, not its face value — a family
+    // $200 into a late $300 installment is $100 overdue, not $300 (and not current, either).
+    const { coverage } = allocateDuesPayments(insts, payments);
+    const remainingById = new Map(coverage.map(c => [c.installmentId, c.remaining]));
     for (const inst of insts) {
       if (!inst.paidAt && inst.dueDate && inst.dueDate < today) {
-        overdueAmount += inst.amount;
-        overduePlayers.add(schedule.playerId);
+        const remaining = remainingById.get(inst.id) ?? inst.amount;
+        if (remaining > 0.005) {
+          overdueAmount += remaining;
+          overduePlayers.add(schedule.playerId);
+        }
       }
     }
-    // Mirror lib/dues-status isNeverPaidPlayer: owes dues (installments exist or a
-    // positive outstanding balance after credits) with zero recorded payments.
-    const credits = creditsByPlayer.get(schedule.playerId) ?? 0;
-    const outstanding = (schedule.totalAmount ?? 0) - paid - credits;
-    const hasDues = insts.length > 0 || outstanding > 0;
-    if (hasDues && paid <= 0) neverPaidCount += 1;
+    // The SHARED predicate at last (it used to be hand-mirrored here — and the mirror had
+    // drifted: it subtracted credits from "has dues" where the real one deliberately doesn't).
+    if (isNeverPaidPlayer({
+      outstanding: outstandingForSchedule(schedule, paid),
+      paidAmount: paymentsTotal,
+      installments: insts,
+    })) neverPaidCount += 1;
   });
 
   // ── Expenses (paid-only semantics identical to budget-vs-actual) ─────────

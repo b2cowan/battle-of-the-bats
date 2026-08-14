@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
 import type { DemoLiveBeat } from '@/lib/demo-tournament';
 import { useScrollCollapsed } from '@/lib/use-scroll-collapsed';
@@ -246,11 +246,30 @@ function writeTourState(storageKey: string, state: TourState): void {
  * `exact` is opted into per step (see `SandboxTourStep.exactPath`): a prefix match is right when a
  * step owns a section, and wrong when a visitor can reach a page BELOW the step's destination on
  * their own — there, "you're already here" is a lie that makes the button do nothing.
+ *
+ * A destination may carry a query string (the Money hub addresses its tabs as `?section=…`, so
+ * step 4 and the off-season chip are query-addressed since the standalone Money pages became
+ * redirects). The pathname must match as before AND every param the destination names must hold
+ * its value — standing in the hub on the WRONG tab is not "already here": the panel the sentence
+ * describes is hidden, and delivering in place would ring an anchor the visitor cannot see.
+ * Params the destination does NOT name are ignored, so season-read or stray params don't block.
  */
-function isOnStepPage(pathname: string | null, href: string, exact = false): boolean {
+function isOnStepPage(
+  pathname: string | null,
+  search: URLSearchParams | null,
+  href: string,
+  exact = false,
+): boolean {
   if (!pathname) return false;
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const [hrefPath, hrefQuery] = href.split('?');
+  const pathOk = exact
+    ? pathname === hrefPath
+    : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`);
+  if (!pathOk || !hrefQuery) return pathOk;
+  for (const [key, value] of new URLSearchParams(hrefQuery)) {
+    if (search?.get(key) !== value) return false;
+  }
+  return true;
 }
 
 /** `m:ss` since the score last moved. Unpadded — this is prose ("1:31 ago"), not a scoreboard. */
@@ -274,6 +293,10 @@ export default function SandboxChrome({
   isDemoOrganizer: boolean;
 }) {
   const pathname = usePathname();
+  // Reactive, unlike window.location: a query-only navigation (a Money-hub tab switch) changes no
+  // pathname, and arrival at a query-addressed destination must still settle. Requires a Suspense
+  // boundary above (the org layout provides one around this component).
+  const searchParams = useSearchParams();
   const router = useRouter();
   const chromeRef = useRef<HTMLDivElement | null>(null);
 
@@ -631,7 +654,7 @@ export default function SandboxChrome({
    * admin pathname serving the wrong tournament has not delivered.
    */
   const arrivedAt = (href: string, slug: string | null, exact = false) =>
-    isOnStepPage(pathname, href, exact) && (slug === null || currentAdminSlug() === slug);
+    isOnStepPage(pathname, searchParams, href, exact) && (slug === null || currentAdminSlug() === slug);
 
   // Load progress, and settle a press that was mid-navigation when we left the last page — but
   // ONLY if we actually arrived where it was sending us.
@@ -661,9 +684,9 @@ export default function SandboxChrome({
     }
 
     setTour(stored);
-    // arrivedAt closes over pathname, which is already a dependency.
+    // arrivedAt closes over pathname and searchParams, which are already dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, deliver, update, ringAnchor, steps, tourStorageKey]);
+  }, [pathname, searchParams, deliver, update, ringAnchor, steps, tourStorageKey]);
 
   // `pathname` (via settleArrivals) is the trigger: first mount and every route arrival.
   // Session storage is an external system that exists only on the client, so it cannot be read in
@@ -702,9 +725,9 @@ export default function SandboxChrome({
     }
     update({ ...tour, pendingNav: { kind: 'step', n: step.n, href: step.href, slug } });
     goToOperatorScreen(step.href, slug);
-    // arrivedAt closes over pathname, which is already a dependency.
+    // arrivedAt closes over pathname and searchParams, which are already dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, tour, deliver, update, ringAnchor, goToOperatorScreen]);
+  }, [pathname, searchParams, tour, deliver, update, ringAnchor, goToOperatorScreen]);
 
   /**
    * The invitation's press: travel to the SEASON'S start and deliver no step (owner calls,
@@ -727,13 +750,15 @@ export default function SandboxChrome({
     const first = moments[0];
     if (!first) { update({ ...armed, strip: null, pendingNav: null }); return; }
     const target = side === 'operator' ? first.operatorPath : first.fanPath;
-    if (pathname === target) {
+    // exact=true + query-aware: a destination may be a hub TAB (`?section=…`), where the raw
+    // pathname comparison is always false and the press becomes a silent no-op (caught in review).
+    if (isOnStepPage(pathname, searchParams, target, true)) {
       update({ ...armed, strip: { kind: 'moment', key: first.key }, pendingNav: null });
       return;
     }
     update({ ...armed, strip: null, pendingNav: { kind: 'moment', key: first.key, href: target, slug: null } });
     goToOperatorScreen(target, null);
-  }, [pathname, tour, moments, side, update, goToOperatorScreen]);
+  }, [pathname, searchParams, tour, moments, side, update, goToOperatorScreen]);
 
   /** A dock press: same jumps as tour steps 5–6, wearing the self-serve handle. */
   const onMoment = useCallback((moment: SandboxMoment) => {
@@ -746,14 +771,18 @@ export default function SandboxChrome({
     // matching here made "Game day" a silent no-op from the Classic's own subpages: a visitor on
     // /standings was told "Back to game day" while nothing moved, which is precisely the false
     // claim this chrome exists to remove (caught in review). A subpage press navigates home.
-    const here = pathname === target && (navSlug === null || currentAdminSlug() === navSlug);
+    // Query-aware (exact=true) because a destination may be a hub TAB (`?section=…`) — a raw
+    // pathname comparison is always false there, making the chip press the same silent no-op
+    // from the OTHER direction (caught in review, 2026-08-13).
+    const here = isOnStepPage(pathname, searchParams, target, true)
+      && (navSlug === null || currentAdminSlug() === navSlug);
     if (here) {
       update({ ...tour, strip: { kind: 'moment', key: moment.key }, pendingNav: null });
       return;
     }
     update({ ...tour, pendingNav: { kind: 'moment', key: moment.key, href: target, slug: navSlug } });
     goToOperatorScreen(target, navSlug);
-  }, [tour, side, slug, pathname, update, goToOperatorScreen]);
+  }, [tour, side, slug, pathname, searchParams, update, goToOperatorScreen]);
 
   const jumpTo = useCallback((n: number) => {
     if (!tour) return;
@@ -826,7 +855,7 @@ export default function SandboxChrome({
   // Cut (owner call 2026-08-10); the sentence's ✕ and the season dock are the coach demo's ways
   // onward.
   const showBack = kind === 'tournament'
-    && (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, landingPath);
+    && (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, searchParams, landingPath);
 
   /**
    * Which of the tour's three states we are in, decided ONCE.

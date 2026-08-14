@@ -412,6 +412,20 @@ export const MIDSEASON_DUES = {
   installmentAmount: 120,
   /** Roster indexes whose LAST installment is unpaid and past due. */
   overdueRosterIndexes: [6, 10] as const, // Dmitri Kovac, Imani Brooks
+  /** The part-paid family (owner ruling 2026-08-13, payment-record showcase): the FUTURE
+   *  instalment #4 sits at $90 of $120, sent ahead as three small e-transfers — the row a
+   *  prospect should meet. Deliberately the future one: on a past-due instalment this family
+   *  would read as a THIRD overdue household and break the "two families behind" story the
+   *  tour narrates and the demo checker pins ($240 across exactly two). */
+  partPaid: {
+    rosterIndex: 3,
+    /** Zero-based instalment the partial lands on (its stamp stays null). */
+    installmentIndex: 3,
+    /** The e-transfers, oldest first, summing under one instalment. */
+    splits: [40, 30, 20] as const,
+    /** Received, relative to the anchored clock (days). */
+    splitOffsets: [-24, -14, -6] as const,
+  },
 } as const;
 
 /**
@@ -434,6 +448,22 @@ export const MIDSEASON_BUDGET_LINES = [
   { description: 'Umpires',            category: 'Officials',   total: 1100 },
   { description: 'Balls, screens and practice gear', category: 'Training', total: 900 },
 ] as const;
+
+/**
+ * The 12U's SEASON ESTIMATE — deliberately **not** the sum of the lines above ($9,400).
+ *
+ * ⚠ DO NOT "FIX" THIS BY RE-DERIVING IT FROM `MIDSEASON_BUDGET_LINES`. Every other demo team sets
+ * its estimate to exactly its itemized total, which is tidy and, on this one team, would hide the
+ * feature it is here to show. The Generate Player Installments sheet offers a coach three ways to
+ * price a season — split the itemized lines, split the estimate, or type the amounts — and the
+ * first two are the SAME subtraction against two different tops. Where the tops are equal, two of
+ * the three cards print an identical figure and the choice reads as decoration.
+ *
+ * $800 of headroom is also the honest shape of a mid-season team: a coach who estimated the year at
+ * $10,200 and has itemized $9,400 of it so far, with the rest still to be pinned down. It lights up
+ * the "not itemized yet" rung of the budget ladder on the same screen.
+ */
+export const MIDSEASON_SEASON_ESTIMATE = 10_200;
 
 /** Everyone but Wes (index 2) has a signed waiver on file — the "1 unsigned" beat. */
 export const MIDSEASON_UNSIGNED_WAIVER_INDEX = 2;

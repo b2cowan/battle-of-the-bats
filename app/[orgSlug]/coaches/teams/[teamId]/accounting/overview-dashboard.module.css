@@ -126,8 +126,6 @@
     rgba(var(--danger-rgb), 0.55) 4px 8px
   );
 }
-.segSpent { background: var(--blueprint-blue); border-radius: 6px 0 0 6px; }
-.segSpentOver { background: var(--home-live, var(--danger)); border-radius: 6px 0 0 6px; }
 
 .legend {
   display: flex;
@@ -154,7 +152,121 @@
   );
 }
 .dotTrack { background: var(--home-line, var(--white-10)); }
-.dotSpent { background: var(--blueprint-blue); }
+
+/* ── Budget card: plan-vs-actual rows (approved mockup 64d49b0e) ──────────
+   Three rows — Spending / Player dues / Fundraising — each an actual filling
+   inside its planned track, ALL on one shared dollar scale (widths are % of
+   the card off the same max). Overruns sit past the track's end with a 2px
+   gap: striped danger when bad, plain fill when good (a beaten fundraising
+   goal). The stripe + chip + words rule exists because this olive and the
+   danger red are near-identical under deutan vision — colour never carries
+   the verdict alone. */
+.planLegend {
+  display: flex;
+  gap: 0.85rem;
+  justify-content: flex-end;
+  font-size: 0.62rem;
+  color: var(--home-dim, var(--white-45));
+}
+.planSwatch {
+  display: inline-block;
+  width: 12px;
+  height: 7px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+}
+.planSwatchActual { background: var(--home-olive, var(--success)); }
+.planSwatchPlanned { background: var(--home-line, var(--white-10)); }
+
+.planRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.planRowHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.7rem;
+  margin-bottom: 0.25rem;
+}
+.planRowLabel {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--white-90);
+}
+.planRowNums {
+  margin-left: auto;
+  font-size: 0.7rem;
+  text-align: right;
+  color: var(--home-dim, var(--white-45));
+  font-variant-numeric: tabular-nums;
+}
+.planRowNums b { color: var(--white-80); font-weight: 650; }
+.planDelta { color: var(--home-dim, var(--white-45)); }
+.planDeltaBad { color: var(--home-live, var(--danger)); font-weight: 700; }
+.planDeltaGood { color: var(--home-olive, var(--success)); font-weight: 700; }
+
+.planBar { position: relative; height: 10px; }
+.planTrack {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 5px;
+  background: var(--home-line, var(--white-10));
+}
+/* Dues before any installments exist: a dashed ghost of what dues would
+   cover, never a filled bar pretending to be real money. */
+.planTrackEmpty {
+  background: none;
+  border: 1.5px dashed var(--home-line, var(--white-25));
+}
+.planFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 5px 4px 4px 5px;
+  background: var(--home-olive, var(--success));
+}
+.planOver {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  /* Same hatch idiom as .segOverdue, and for the same reason. */
+  background: repeating-linear-gradient(
+    135deg,
+    var(--home-live, var(--danger)) 0 4px,
+    rgba(var(--danger-rgb), 0.55) 4px 8px
+  );
+}
+.planOverGood { background: var(--home-olive, var(--success)); }
+
+/* Flex, not inline flow: the 44px-floor link inside it would otherwise inflate
+   the line box and leave the sentence riding an odd baseline (review finding).
+   As a flex row the text centres against the tall link instead. */
+.planEmptyNote {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 0.3rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  color: var(--home-dim, var(--white-45));
+}
+.planGenLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* same tap floor as every other quiet link on this screen */
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--home-olive, var(--primary-light));
+  text-decoration: none;
+}
+.planGenLink:hover { text-decoration: underline; }
 
 /* ── Cash in/out mini-bars ── */
 .flow { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.1rem; }

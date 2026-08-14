@@ -29,6 +29,7 @@ import {
   type InsightsDigestTeam,
 } from './db';
 import type { RepDueReminderCandidate } from './types';
+import { duesReminderEmail } from './dues-reminder-email';
 import { sendEmail } from './email';
 import { excludeDemoOrgTeams } from './demo-org';
 
@@ -79,39 +80,9 @@ export interface DuesRemindersSweepResult {
   previews?: DuesReminderPreview[];
 }
 
-function fmtDate(s: string) {
-  return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', {
-    month: 'long', day: 'numeric', year: 'numeric',
-  });
-}
-
-function fmt(n: number) {
-  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-/** The org-admin wave route's email, byte-for-byte (one copy review covers both surfaces).
- *  No proximity phrase in the sentence — the exact due date + installment n-of-m are on each
- *  row below, so the intro is window-agnostic (owner copy call 2026-07-13). */
-function reminderEmail(teamName: string, window: 30 | 7, guardianFirst: string, items: RepDueReminderCandidate[]) {
-  const rows = items
-    .map(
-      i =>
-        `<li style="margin-bottom:0.5rem;">
-              <strong>${[i.playerFirstName, i.playerLastName].filter(Boolean).join(' ')}</strong> — ${fmt(i.amount)} due ${fmtDate(i.dueDate)}
-              (Installment ${i.installmentNumber} of ${i.totalInstallments})
-            </li>`,
-    )
-    .join('');
-  const html = `
-<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
-  <p>Hi ${guardianFirst},</p>
-  <p>This is a friendly reminder that the following dues installments are coming due for your player(s) on <strong>${teamName}</strong>:</p>
-  <ul style="padding-left:1.25rem;">${rows}</ul>
-  <p>To view your full payment schedule or if you have already submitted payment, please contact your coach directly.</p>
-  <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>
-</div>`;
-  return { subject: `Upcoming dues reminder (${window} days) — ${teamName}`, html };
-}
+// The email itself lives in lib/dues-reminder-email.ts — ONE template shared by this sweep,
+// both send routes, and the on-screen "See an example" preview, so the sample a coach reads and
+// the email a family receives can never drift apart.
 
 async function sweepTeamWave(
   team: InsightsDigestTeam,
@@ -144,7 +115,7 @@ async function sweepTeamWave(
         email,
         players: [...new Set(items.map(i => [i.playerFirstName, i.playerLastName].filter(Boolean).join(' ')))],
         installments: items.length,
-        total: Math.round(items.reduce((s, i) => s + i.amount, 0) * 100) / 100,
+        total: Math.round(items.reduce((s, i) => s + i.remainingAmount, 0) * 100) / 100,
       })),
     });
     return;
@@ -153,7 +124,7 @@ async function sweepTeamWave(
   const taggedIds: string[] = [];
   for (const [email, items] of byGuardian) {
     const guardianFirst = items[0].guardianFirstName ?? 'there';
-    const { subject, html } = reminderEmail(team.teamName, wave.window, guardianFirst, items);
+    const { subject, html } = duesReminderEmail({ teamName: team.teamName, window: wave.window, guardianFirst, items });
     // sendEmail's fetch is unguarded and CAN throw (DNS/reset/timeout), distinct from its
     // 'provider_error' return. Contain it per-guardian: one family's network blip must not
     // abort the batch — that would skip the stamp for families ALREADY emailed above and

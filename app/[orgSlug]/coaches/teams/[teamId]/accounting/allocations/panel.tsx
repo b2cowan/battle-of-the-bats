@@ -11,6 +11,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { ALLOCATION_COLUMNS, allocationRows } from '@/lib/coach-money-exports';
+import { moneySectionHref } from '@/lib/coach-money-links';
 
 interface SplitWithInstallments {
   id: string;
@@ -308,7 +309,7 @@ export function OrgAllocationsPanel({
       {!loading && !error && (
         <p className={styles.muted} style={{ fontSize: '0.8rem', marginTop: '1.25rem' }}>
           Paying the org back, or claiming a reimbursement?{' '}
-          <Link href={`${base}/accounting/payment-requests`} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
+          <Link href={moneySectionHref(base, 'payment-requests')} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
             Open Payment Requests <ArrowRight size={12} aria-hidden />
           </Link>
         </p>

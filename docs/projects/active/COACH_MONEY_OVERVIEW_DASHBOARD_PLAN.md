@@ -94,10 +94,16 @@ becomes, **when `summary.stage === 'operate'`**, a one-screen dashboard:
    (dues tab).
 3. **Budget** (merges Headroom tile + Season Budget Plan card + Budget vs. Actual
    card). Headline `$headroom headroom` + chip `on plan` / `over budget`;
-   spent-vs-planned bar (blueprint blue fill); legend `$spent / $planned /
-   $perPlayer per player`; footers **Budget plan →** and **Budget vs. Actual →**.
+   footers **Budget plan →** and **Budget vs. Actual →**.
    Null state (`headroom == null` while operating): em-dash headline, "no budget
    yet", single **Set up your budget →** footer.
+   ⚠ **Reworked 2026-08-14 (approved mockup artifact `64d49b0e`, QA ledger §16),
+   superseding this card's original body:** the single spent-vs-planned bar and
+   the `$perPlayer` legend (a computed even split that went stale once real
+   installments existed) were replaced by three plan-vs-actual bars on one shared
+   dollar scale — Spending / Player dues (collected vs **scheduled**) /
+   Fundraising (raised vs budgeted) — each with a plain-words delta; bad overruns
+   are striped + worded, a beaten fundraising goal gets a ✓.
 
 **Row 2 — ledger (2fr) + rail (1fr):**
 

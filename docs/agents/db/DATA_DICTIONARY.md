@@ -3334,7 +3334,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — total dues owed for the season (gotcha 3).
 
 <!-- dict:col:rep_player_dues_schedules.notes -->
-**`notes`** (text, nullable) — free text; the generator hardcodes "Generated from budget plan".
+**`notes`** (text, nullable) — free text. The bulk generator writes one of **three** fixed strings, chosen by which basis the coach picked in the Generate Player Installments sheet (2026-08-13): `Generated from budget plan` (split the cost lines), `Generated from the season estimate` (split the estimate), or `Set by the coach` (typed amounts). It was a single hardcoded string until manual amounts existed, at which point "Generated from budget plan" became untrue for two of the three paths — and for the Player Dues caller, where there may be no budget plan at all. Nothing reads it; it is display/provenance only.
 
 <!-- dict:col:rep_player_dues_schedules.budget_line_id -->
 **`budget_line_id`** (FK → `rep_budget_lines.id` ON DELETE SET NULL, nullable) — intended trace to the originating team budget line; **dead — never written** (gotcha 2).
@@ -3345,7 +3345,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Purpose:** the dated payment chunks of a dues schedule — what a player pays and when. The index `(due_date) WHERE paid_at IS NULL` powers the "upcoming/overdue unpaid" scans.
 
 **Gotchas (read first):**
-1. **`paid_at` is the source of truth for "paid", not `accounting_entry_id`.** Mark-paid sets `paid_at` (and links `accounting_entry_id` to the team-ledger income entry created at the same time); all balance/unpaid logic keys on `paid_at`.
+1. **`paid_at` is a PROJECTION as of mig 232 (2026-08-13), no longer an input.** Payments live in `rep_dues_payments`; the app derives coverage (already-stamped installments first, then by `installment_number`) and writes `paid_at` when an installment becomes fully covered / clears it when a removed payment un-covers it (`lib/dues-payments.ts` + `syncDuesPaidProjection` in `lib/db.ts`). SQL readers keying on `paid_at` (reminders, BvA, upcoming-payables, money-summary) still work, but a part-paid installment reads as UNPAID here — its dollars are only visible in `rep_dues_payments`. `accounting_entry_id` was never the paid flag and still isn't; post-232 income entries hang off payments, not installments.
 2. **THREE reminder columns — all live, different cadences:** `reminder_sent_at` = original/ad-hoc "send reminders now" (no window); `reminder_30_sent_at` = the 30-day wave; `reminder_7_sent_at` = the 7-day wave. The candidate query checks the window-specific column (falls back to `reminder_sent_at`) and treats a reminder as "already sent" only within the last 7 days. (Contrast: `rep_allocation_installments` has only ONE `reminder_sent_at`.)
 3. **`source` CHECK `manual|budget_generated`** (default `manual`). Regeneration is **all-or-nothing per season**: the generator 409s if ANY `budget_generated` installment already exists for the year (the coach must delete them first) — no selective preserve-manual/replace-generated merge, so the two sources don't coexist on the happy path.
 4. **`org_id` is NOT NULL with no default and no trigger.** Historically both insert paths omitted it (`replaceRepDuesInstallments`; the generator route) → NN violation — **✓ FIXED 2026-06-09** (both now populate `org_id` + the denormalized `team_id`). `team_id` is still nullable by design (denormalized copy; `team_idx`).
@@ -3367,10 +3367,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`due_date`** (date, NOT NULL) — drives overdue/upcoming; compared as `YYYY-MM-DD` strings.
 
 <!-- dict:col:rep_player_dues_installments.paid_at -->
-**`paid_at`** (timestamptz, nullable) — the authoritative paid flag (gotcha 1).
+**`paid_at`** (timestamptz, nullable) — the projected fully-covered flag (gotcha 1; app-maintained from `rep_dues_payments` since mig 232).
 
 <!-- dict:col:rep_player_dues_installments.accounting_entry_id -->
-**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting domain**) — back-link to the team-ledger income entry created on mark-paid; not the paid flag.
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting domain**) — legacy back-link to the income entry the pre-232 mark-paid flow created; not the paid flag. Post-232 entries link from `rep_dues_payments.accounting_entry_id` instead; this column is read-only history.
 
 <!-- dict:col:rep_player_dues_installments.source -->
 **`source`** (text, NOT NULL, default `manual`; CHECK `manual|budget_generated`) — origin (gotcha 3).
@@ -3392,9 +3392,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Gotchas (read first):**
 1. **CIRCULAR FK with `rep_fundraiser_entries`; the authoritative direction is `fundraiser_entry_id → rep_fundraiser_entries.id`.** Both FKs exist (`rep_dues_credits.fundraiser_entry_id` and `rep_fundraiser_entries.credit_id`). On a fundraiser entry the credit is inserted **with `fundraiser_entry_id` set first**, then the entry's `credit_id` is back-filled — so `fundraiser_entry_id` is the durable link, `credit_id` the convenience reverse pointer. Only `credit_type='fundraiser'` credits have it set; manual credits leave it NULL.
 2. **`credit_type` CHECK `contribution|fundraiser|overpayment|other`** (default `contribution`). Only `fundraiser` is system-generated (by the fundraiser flow); the other three come from the manual dues-credits POST.
-3. **Balance formula & a clamping inconsistency:** a player's balance = `schedule.total_amount − Σ(paid installments) − Σ(credits)`. Whether negatives (overpaid/over-credited) surface depends on the reader — the dues GET and season-surplus do **not** clamp (can go negative); the fundraiser-entries GET clamps at 0. ⚠️ Worth normalizing.
+3. **Balance formula & a clamping inconsistency:** a player's balance = `schedule.total_amount − paid − Σ(credits)`, where **paid = Σ(`rep_dues_payments`) capped at `total_amount`** since mig 232 (pre-232 it was Σ(paid installments)). Whether negatives (overpaid/over-credited) surface depends on the reader — the dues GET and season-surplus do **not** clamp (can go negative); the fundraiser-entries GET clamps at 0. ⚠️ Worth normalizing.
 4. **`created_at` is NULLABLE** (default `now()`) — asymmetric vs the schedule/installment `created_at` (NN). No `org_id`/`team_id`/`schedule_id` — scoped by `program_year_id` + `player_id` only.
 5. **CHECK `amount > 0`**; `credit_date` defaults `CURRENT_DATE`.
+6. **`payment_id` (mig 232) marks an AUTO-CREATED overpayment credit** — set only when recording a dues payment larger than what was left on the schedule (owner ruling 2026-08-13: automatic, no prompt). **ON DELETE CASCADE from `rep_dues_payments`:** removing the payment removes the credit with it. Manual credits: NULL.
 
 **Fields** (boilerplate `id` omitted; `created_at` nullable — gotcha 4):
 
@@ -3422,6 +3423,55 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_dues_credits.fundraiser_entry_id -->
 **`fundraiser_entry_id`** (FK → `rep_fundraiser_entries.id`, nullable) — the authoritative half of the circular FK (gotcha 1); set only for `fundraiser`-type credits.
+
+<!-- dict:col:rep_dues_credits.payment_id -->
+**`payment_id`** (FK → `rep_dues_payments.id`, nullable, **ON DELETE CASCADE**) — set only on auto-created `overpayment` credits (gotcha 6); the payment's removal removes the credit.
+
+### `rep_dues_payments`
+<!-- dict:table:rep_dues_payments -->
+
+**Purpose:** a dues payment **FACT** — what arrived, when, how much — for coach rep dues (mig 232, 2026-08-13; COACH_DUES_PAYMENT_RECORD_PLAN.md). Installments are the *plan*; this table is the *receipt book*. Coverage of installments is derived (stamped-first, then by number) and projected onto `rep_player_dues_installments.paid_at`.
+
+**Gotchas (read first):**
+1. **One team-ledger income entry per payment, dated `received_date`** (the day the money arrived, coach-typed) — NOT the day it was recorded. `accounting_entry_id` is `ON DELETE SET NULL`; the app's remove-payment path VOIDS the entry first (soft-void, `accounting_entries` gotcha 3), then deletes the row — the receipt never silently outlives or orphans its ledger line.
+2. **`source='migrated_mark_paid'` rows are the one-time ruling-2 backfill:** one synthetic payment per installment stamped paid before this table existed — full installment amount, `received_date` = the stamp's America/Toronto day, `created_at` = the stamp instant, **adopting the installment's existing ledger entry**. Never written by the app post-232. Dev backfill verified 159 stamps → 159 payments, sums equal to the cent.
+3. **Payments are (program_year, player)-scoped like credits — NOT schedule-scoped.** A bulk dues re-run can rewrite the schedule without touching receipts; coverage re-derives against whatever installments exist afterwards.
+4. **Overpayment beyond the whole schedule auto-creates an `overpayment` credit** carrying `rep_dues_credits.payment_id` (CASCADE — see that table's gotcha 6). The payment row keeps its FULL amount (the ledger got the full amount); balance math caps paid at the schedule total so the excess isn't double-counted.
+5. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|other`; RLS enabled with NO policies** (service-role only — migs 225/228/231 treatment; deliberately unlike `rep_dues_credits`' legacy auth policies).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:rep_dues_payments.program_year_id -->
+<!-- dict:col:rep_dues_payments.player_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — scope + who paid; index `(program_year_id, player_id)`.
+
+<!-- dict:col:rep_dues_payments.org_id -->
+<!-- dict:col:rep_dues_payments.team_id -->
+**`org_id`** (FK → `organizations.id`, **NOT NULL from birth** — the installments-table lesson) / **`team_id`** (FK → `rep_teams.id`, nullable) — denormalized scope.
+
+<!-- dict:col:rep_dues_payments.amount -->
+**`amount`** (numeric(10,2), NOT NULL, CHECK `> 0`) — dollars received. Full amount even when part became an overpayment credit (gotcha 4).
+
+<!-- dict:col:rep_dues_payments.received_date -->
+**`received_date`** (date, NOT NULL) — the day the money ARRIVED (org-timezone date, coach-typed, UI defaults to today). The ledger entry takes this date (gotcha 1).
+
+<!-- dict:col:rep_dues_payments.method -->
+**`method`** (text, NOT NULL, default `other`; CHECK `etransfer|cash|cheque|other`).
+
+<!-- dict:col:rep_dues_payments.note -->
+**`note`** (text, nullable) — free text ("from Dana's account").
+
+<!-- dict:col:rep_dues_payments.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL) — the payment's income entry (gotcha 1); migrated rows adopt the pre-232 mark-paid entry (gotcha 2).
+
+<!-- dict:col:rep_dues_payments.source -->
+**`source`** (text, NOT NULL, default `recorded`; CHECK `recorded|migrated_mark_paid`) — provenance (gotcha 2).
+
+<!-- dict:col:rep_dues_payments.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable, ON DELETE SET NULL) — NULL on migrated rows.
+
+<!-- dict:col:rep_dues_payments.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default `now()`) — when it was TYPED IN; `received_date` is when the money moved. Migrated rows preserve the original stamp instant.
 
 ### `rep_fundraisers`
 <!-- dict:table:rep_fundraisers -->

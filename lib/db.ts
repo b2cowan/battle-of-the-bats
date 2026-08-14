@@ -2247,12 +2247,23 @@ export async function getOrCreateRepTeamLedger(
     .eq('entity_id', teamId)
     .maybeSingle();
   if (existing) return mapLedger(existing);
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('accounting_ledgers')
     .insert({ org_id: orgId, entity_type: 'team', entity_id: teamId, name: teamName })
     .select()
     .single();
-  return mapLedger(data!);
+  if (data) return mapLedger(data);
+  // Two first-ever writes racing: UNIQUE(org_id, entity_type, entity_id) makes the loser's
+  // insert fail — re-select the winner's row instead of crashing on a null (review 2026-08-13).
+  const { data: raced, error: reErr } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'team')
+    .eq('entity_id', teamId)
+    .maybeSingle();
+  if (raced) return mapLedger(raced);
+  throw (error ?? reErr ?? new Error('Failed to create team ledger'));
 }
 
 export async function getLedgerEntries(
@@ -2324,11 +2335,15 @@ export async function updateEntry(
 }
 
 export async function voidEntry(entryId: string, ledgerId: string): Promise<void> {
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from('accounting_entries')
     .update({ status: 'void', updated_at: new Date().toISOString() })
     .eq('id', entryId)
     .eq('ledger_id', ledgerId);
+  // A silently-failed void let its caller proceed as if the books were corrected — the delete
+  // that follows in the payment-removal path would then erase the receipt while the income
+  // entry stayed posted (review 2026-08-13).
+  if (error) throw error;
 }
 
 export async function getLedgerSummary(
@@ -5480,22 +5495,29 @@ export interface RepPlayerDuesSummary {
   paidInstallmentCount: number;
 }
 
-/** Dues summary for ONE player this season. Mirrors the team dues route's balance math. */
+/** Dues summary for ONE player this season. Same balance math as the team dues route: paid is
+ *  recorded payment FACTS capped at the schedule total (mig 232), never a sum of paid stamps —
+ *  a stamp-sum reads a part-paid family as having paid nothing. */
 export async function getRepPlayerDuesSummary(
   playerId: string, programYearId: string,
 ): Promise<RepPlayerDuesSummary> {
   const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
-  const installments = schedule ? await getRepPlayerDuesInstallments(schedule.id) : [];
-  const { data: creditRows, error } = await supabaseAdmin
-    .from('rep_dues_credits')
-    .select('amount')
-    .eq('player_id', playerId)
-    .eq('program_year_id', programYearId);
-  if (error) throw error;
+  const [installments, payments, creditsRes] = await Promise.all([
+    schedule ? getRepPlayerDuesInstallments(schedule.id) : Promise.resolve([]),
+    getRepDuesPaymentsForPlayer(programYearId, playerId),
+    supabaseAdmin
+      .from('rep_dues_credits')
+      .select('amount')
+      .eq('player_id', playerId)
+      .eq('program_year_id', programYearId),
+  ]);
+  if (creditsRes.error) throw creditsRes.error;
+  const creditRows = creditsRes.data;
 
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const totalAssessed = schedule?.totalAmount ?? 0;
-  const totalPaid = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+  const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
+  const totalPaid = schedule ? duesPaidAmount(paymentsTotal, totalAssessed) : 0;
   const totalCredits = (creditRows ?? []).reduce((s, c: any) => s + Number(c.amount), 0);
   const today = tournamentToday();
   return {
@@ -8771,6 +8793,346 @@ export async function markRepPlayerDuesInstallmentPaid(
   return mapRepPlayerDuesInstallment(data);
 }
 
+// Player Dues Payments (mig 232 — the receipt book; installments are the plan)
+
+import type { RepDuesPayment, DuesPaymentMethod } from './types';
+import { allocateDuesPayments, duesPaidAmount, strandedExcess } from './dues-payments';
+
+function mapRepDuesPayment(r: any): RepDuesPayment {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    playerId: r.player_id,
+    amount: Number(r.amount),
+    receivedDate: r.received_date,
+    method: r.method,
+    note: r.note ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+    source: r.source,
+    createdAt: r.created_at,
+  };
+}
+
+/** A season's payments in one query (the dues GET's shape — group by player in the app). */
+export async function getRepDuesPaymentsByProgramYear(programYearId: string): Promise<RepDuesPayment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('received_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesPayment);
+}
+
+export async function getRepDuesPaymentsForPlayer(
+  programYearId: string,
+  playerId: string,
+): Promise<RepDuesPayment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('player_id', playerId)
+    .order('received_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesPayment);
+}
+
+export async function getRepDuesPayment(paymentId: string): Promise<RepDuesPayment | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .select('*')
+    .eq('id', paymentId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepDuesPayment(data) : null;
+}
+
+/** The rows the projection needs, when the caller already holds them — a schedule rewrite or a
+ *  mark-paid click fetched these moments ago; re-reading them per player turned a full-roster
+ *  dues re-run into hundreds of sequential round-trips before this existed. */
+export interface DuesProjectionRows {
+  installments: ReadonlyArray<{ id: string; installmentNumber: number; amount: number; paidAt: string | null }>;
+  payments: ReadonlyArray<{ id: string; amount: number; receivedDate: string; createdAt?: string | null }>;
+}
+
+/** Allocate and write the projection — batched: one UPDATE per distinct completing date for new
+ *  stamps (payments usually complete adjacent installments on one date), one UPDATE for clears. */
+async function applyDuesPaidProjection(rows: DuesProjectionRows): Promise<void> {
+  const { coverage } = allocateDuesPayments(rows.installments, rows.payments);
+  const byId = new Map(coverage.map(c => [c.installmentId, c]));
+  const stampIdsByInstant = new Map<string, string[]>();
+  const clears: string[] = [];
+  for (const inst of rows.installments) {
+    const c = byId.get(inst.id);
+    if (!c) continue;
+    if (c.covered && !inst.paidAt) {
+      const instant = `${c.completedOn}T12:00:00Z`;
+      if (!stampIdsByInstant.has(instant)) stampIdsByInstant.set(instant, []);
+      stampIdsByInstant.get(instant)!.push(inst.id);
+    } else if (!c.covered && inst.paidAt) {
+      clears.push(inst.id);
+    }
+  }
+  for (const [instant, ids] of stampIdsByInstant) {
+    const { error } = await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .update({ paid_at: instant })
+      .in('id', ids);
+    if (error) throw error;
+  }
+  if (clears.length) {
+    const { error } = await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .update({ paid_at: null })
+      .in('id', clears);
+    if (error) throw error;
+  }
+}
+
+/**
+ * Re-derive installment coverage from recorded payments and project it onto `paid_at`
+ * (dictionary: rep_player_dues_installments gotcha 1 — paid_at is a PROJECTION since mig 232).
+ *
+ * - Newly covered installment → paid_at = noon UTC of the completing payment's received day
+ *   (noon so the DATE survives any ±12h timezone read — midnight UTC would read as the previous
+ *   evening in Toronto, the org clock everything else uses).
+ * - No longer covered (a payment was removed) → paid_at cleared. `accounting_entry_id` is never
+ *   touched in either direction: it is read-only history of the pre-232 mark-paid flow.
+ *
+ * Pass `preloaded` when the caller already holds the player's installments + payments (fresh
+ * writes included) — the projection then does zero reads.
+ */
+export async function syncDuesPaidProjection(
+  programYearId: string,
+  playerId: string,
+  preloaded?: DuesProjectionRows,
+): Promise<void> {
+  if (preloaded) return applyDuesPaidProjection(preloaded);
+  const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
+  if (!schedule) return;
+  const [installments, payments] = await Promise.all([
+    getRepPlayerDuesInstallments(schedule.id),
+    getRepDuesPaymentsForPlayer(programYearId, playerId),
+  ]);
+  await applyDuesPaidProjection({ installments, payments });
+}
+
+/**
+ * Record a dues payment — the ONE write path (the route and the mark-paid shortcut both land
+ * here). Posts the income entry FIRST (dated the day the money arrived — owner ruling 3), then
+ * the payment row carrying the entry link, then the automatic overpayment credit when the
+ * amount runs past everything left on the schedule (ruling 5 — no prompt), then re-projects
+ * paid_at. Ordered so a failure can never leave money recorded without its ledger line.
+ */
+export async function recordRepDuesPayment(opts: {
+  team: { id: string; orgId: string; name: string };
+  programYearId: string;
+  playerId: string;
+  playerName: string;
+  amount: number;
+  receivedDate: string;
+  method: DuesPaymentMethod;
+  note?: string | null;
+  createdBy: string;
+  /** The player's installments, when the caller already fetched them (the mark-paid shortcut
+   *  did, moments ago) — lets the final projection run with zero extra reads. */
+  preloadedInstallments?: RepPlayerDuesInstallment[];
+  /** The player's existing payments, same idea. */
+  preloadedPayments?: RepDuesPayment[];
+}): Promise<{ payment: RepDuesPayment; overpaymentCredit: number }> {
+  // Three independent reads — parallel. (On the NO_SCHEDULE error path this may have created
+  // the team's empty ledger a moment early; get-or-create is idempotent and the ledger is
+  // wanted the first time anything real is written, so that is harmless.)
+  const [schedule, existing, ledger] = await Promise.all([
+    getRepPlayerDuesSchedule(opts.playerId, opts.programYearId),
+    opts.preloadedPayments
+      ? Promise.resolve(opts.preloadedPayments)
+      : getRepDuesPaymentsForPlayer(opts.programYearId, opts.playerId),
+    getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name),
+  ]);
+  if (!schedule) {
+    throw new Error('NO_SCHEDULE');
+  }
+  const existingTotal = Math.round(existing.reduce((s, p) => s + Math.round(p.amount * 100), 0)) / 100;
+
+  const entry = await createEntry(
+    ledger.id,
+    {
+      entryDate: opts.receivedDate,
+      description: `Player dues — ${opts.playerName}`,
+      amount: opts.amount,
+      entryType: 'income',
+      status: 'posted',
+      category: 'Player Dues',
+      paymentMethod: opts.method,
+      notes: opts.note ?? null,
+    },
+    opts.createdBy,
+  );
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .insert({
+      program_year_id: opts.programYearId,
+      player_id: opts.playerId,
+      org_id: opts.team.orgId,
+      team_id: opts.team.id,
+      amount: Math.round(opts.amount * 100) / 100,
+      received_date: opts.receivedDate,
+      method: opts.method,
+      note: opts.note?.trim() || null,
+      accounting_entry_id: entry.id,
+      source: 'recorded',
+      created_by: opts.createdBy,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  const payment = mapRepDuesPayment(data);
+
+  // ONE crediting mechanism (see reconcileOverpaymentCredits) — it reconciles to the TRUE
+  // post-write state instead of trusting this request's pre-write read, so a concurrent second
+  // payment can no longer leave the excess under-credited (review 2026-08-13, finding 2a).
+  const { created: overpaymentCredit } = await reconcileOverpaymentCredits({
+    programYearId: opts.programYearId,
+    playerId: opts.playerId,
+    scheduleTotal: schedule.totalAmount,
+    paymentsTotal: Math.round((existingTotal + opts.amount) * 100) / 100,
+    creditDate: opts.receivedDate,
+    createdBy: opts.createdBy,
+    paymentId: payment.id,
+  });
+
+  if (opts.preloadedInstallments) {
+    await syncDuesPaidProjection(opts.programYearId, opts.playerId, {
+      installments: opts.preloadedInstallments,
+      payments: [...existing, payment],
+    });
+  } else {
+    await syncDuesPaidProjection(opts.programYearId, opts.playerId);
+  }
+  return { payment, overpaymentCredit };
+}
+
+/**
+ * THE automatic overpayment credit, made symmetric (owner ruling 5 + review 2026-08-13 Criticals
+ * 1–2): whenever money-received and the schedule total change relative to each other, the
+ * payment-LINKED credits are reconciled to `max(0, paymentsTotal − scheduleTotal)` —
+ * created/topped-up when dues drop below what a family sent, SHRUNK OR REMOVED when dues rise
+ * back past it (a stale credit is a dollar subtracted twice: it labels money already inside
+ * paymentsTotal). Only `payment_id`-carrying credits are ever touched — manual, fundraiser and
+ * contribution credits are the owner's "credits stay credits" ruling and are never adjusted.
+ *
+ * Every path that moves either side calls this: recording a payment, removing one, the bulk
+ * dues re-run, and the per-player schedule edit.
+ */
+export async function reconcileOverpaymentCredits(opts: {
+  programYearId: string;
+  playerId: string;
+  scheduleTotal: number;
+  paymentsTotal: number;
+  creditDate: string;
+  createdBy: string | null;
+  /** The payment a NEWLY created credit rides (record-time); null on schedule-change/delete
+   *  reconciles — those credits are standalone and manually deletable. */
+  paymentId?: string | null;
+}): Promise<{ created: number; reduced: number }> {
+  const { data: linkedRows, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('id, amount')
+    .eq('program_year_id', opts.programYearId)
+    .eq('player_id', opts.playerId)
+    .not('payment_id', 'is', null)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const linkedTotal = Math.round((linkedRows ?? []).reduce((s, c: any) => s + Math.round(Number(c.amount) * 100), 0)) / 100;
+  const trueExcess = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, 0);
+  const createAmt = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, linkedTotal);
+  const reduceAmt = Math.max(0, Math.round((linkedTotal - trueExcess) * 100) / 100);
+
+  if (createAmt > 0.005) {
+    const { error: cErr } = await supabaseAdmin
+      .from('rep_dues_credits')
+      .insert({
+        program_year_id: opts.programYearId,
+        player_id: opts.playerId,
+        amount: createAmt,
+        description: opts.paymentId ? 'Overpayment' : 'Overpayment (dues changed)',
+        credit_type: 'overpayment',
+        credit_date: opts.creditDate,
+        payment_id: opts.paymentId ?? null,
+        created_by: opts.createdBy,
+      });
+    if (cErr) throw cErr;
+    return { created: createAmt, reduced: 0 };
+  }
+
+  if (reduceAmt > 0.005) {
+    // Shrink newest-first until the stale amount is gone — delete a credit the reduction
+    // swallows whole, trim the one it only partly reaches.
+    let leftC = Math.round(reduceAmt * 100);
+    for (const row of (linkedRows ?? []) as Array<{ id: string; amount: number }>) {
+      if (leftC <= 0) break;
+      const amtC = Math.round(Number(row.amount) * 100);
+      if (amtC <= leftC) {
+        const { error: dErr } = await supabaseAdmin.from('rep_dues_credits').delete().eq('id', row.id);
+        if (dErr) throw dErr;
+        leftC -= amtC;
+      } else {
+        const { error: uErr } = await supabaseAdmin
+          .from('rep_dues_credits')
+          .update({ amount: (amtC - leftC) / 100 })
+          .eq('id', row.id);
+        if (uErr) throw uErr;
+        leftC = 0;
+      }
+    }
+    return { created: 0, reduced: reduceAmt };
+  }
+
+  return { created: 0, reduced: 0 };
+}
+
+/**
+ * Remove a payment: VOID its ledger entry first (soft-void — the books only ever grow), then
+ * delete the row (the auto-overpayment credit goes with it via DB CASCADE), then re-project.
+ * The migrated backfill rows delete the same way — their adopted entry is voided like any other,
+ * which IS the undo the old mark-paid flow never had.
+ */
+export async function removeRepDuesPayment(
+  payment: RepDuesPayment,
+  team: { id: string; orgId: string; name: string },
+): Promise<void> {
+  if (payment.accountingEntryId) {
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    await voidEntry(payment.accountingEntryId, ledger.id);
+  }
+  const { error } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .delete()
+    .eq('id', payment.id);
+  if (error) throw error;
+  await syncDuesPaidProjection(payment.programYearId, payment.playerId);
+  // Removing money can leave OTHER payments' credits stale (overshoot recorded, then an earlier
+  // payment deleted → the excess shrank or vanished). Reconcile to the true remaining state.
+  const schedule = await getRepPlayerDuesSchedule(payment.playerId, payment.programYearId);
+  if (schedule) {
+    const remaining = await getRepDuesPaymentsForPlayer(payment.programYearId, payment.playerId);
+    await reconcileOverpaymentCredits({
+      programYearId: payment.programYearId,
+      playerId: payment.playerId,
+      scheduleTotal: schedule.totalAmount,
+      paymentsTotal: Math.round(remaining.reduce((s, p) => s + Math.round(p.amount * 100), 0)) / 100,
+      creditDate: payment.receivedDate,
+      createdBy: null,
+      paymentId: null,
+    });
+  }
+}
+
 // Team Expenses
 
 function mapRepTeamExpense(r: any): RepTeamExpense {
@@ -9120,6 +9482,36 @@ export async function getDueReminderCandidates(
     totalBySchedule[i.schedule_id] = (totalBySchedule[i.schedule_id] ?? 0) + 1;
   }
 
+  // Coverage from recorded payments (mig 232) — a reminder chases what is still MISSING on an
+  // installment, never its face value (owner ruling 6). Allocation runs over each player's WHOLE
+  // schedule, then the window filter below picks which remainders get chased.
+  const { data: payRows, error: payErr } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .select('id, player_id, amount, received_date, created_at')
+    .eq('program_year_id', programYear.id);
+  if (payErr) throw payErr;
+  const paysByPlayer = new Map<string, any[]>();
+  for (const p of payRows ?? []) {
+    if (!paysByPlayer.has(p.player_id)) paysByPlayer.set(p.player_id, []);
+    paysByPlayer.get(p.player_id)!.push(p);
+  }
+  const instsBySchedule = new Map<string, any[]>();
+  for (const i of allInstallments) {
+    if (!instsBySchedule.has(i.schedule_id)) instsBySchedule.set(i.schedule_id, []);
+    instsBySchedule.get(i.schedule_id)!.push(i);
+  }
+  const remainingById = new Map<string, number>();
+  for (const s of schedules as any[]) {
+    const insts = instsBySchedule.get(s.id) ?? [];
+    if (!insts.length) continue;
+    const { coverage } = allocateDuesPayments(
+      insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+      (paysByPlayer.get(s.player_id) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
+    );
+    for (const c of coverage) remainingById.set(c.installmentId, c.remaining);
+  }
+  const remainingOf = (i: any) => remainingById.get(i.id) ?? Number(i.amount);
+
   const today = new Date();
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() + daysAhead);
@@ -9132,7 +9524,15 @@ export async function getDueReminderCandidates(
 
   const candidates = allInstallments.filter(i => {
     if (i.paid_at) return false;
-    if (i.due_date < todayStr || i.due_date > cutoffStr) return false;
+    // Fully covered but the projection hasn't stamped yet (or a zero-remainder edge): nothing
+    // to chase — a reminder for $0.00 tells a family the books are wrong.
+    if (remainingOf(i) <= 0.005) return false;
+    if (i.due_date > cutoffStr) return false;
+    // Past-due installments belong to the coach's AD-HOC send only (owner call 2026-08-14):
+    // a coach pressing the button means "chase everything owed now". The automated 30/7 waves
+    // stay forward-looking — they are proximity notices, and folding past-due into them would
+    // re-dun every behind family on the sweep's schedule instead of the coach's.
+    if (window !== undefined && i.due_date < todayStr) return false;
     // Check window-specific sent column, fall back to legacy reminder_sent_at
     if (window === 30) {
       if (i.reminder_30_sent_at && new Date(i.reminder_30_sent_at) >= sevenDaysAgo) return false;
@@ -9172,7 +9572,9 @@ export async function getDueReminderCandidates(
       installmentNumber: i.installment_number,
       totalInstallments: totalBySchedule[i.schedule_id] ?? 1,
       amount: Number(i.amount),
+      remainingAmount: remainingOf(i),
       dueDate: i.due_date,
+      overdue: i.due_date < todayStr,
     };
   });
 }
@@ -9219,9 +9621,20 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
     if (i.paid_at) anyPaidBySchedule[i.schedule_id] = true;
   }
 
+  // Payment FACTS (mig 232): a family two part-payments into an installment has every paid_at
+  // still null — the stamp is only a full-coverage projection. Without this, "Remind all" would
+  // email "no dues payments yet" to a paying family, and its count would disagree with the
+  // panel's isNeverPaidPlayer banner (which reads paidAmount).
+  const { data: payRows, error: payErr } = await supabaseAdmin
+    .from('rep_dues_payments')
+    .select('player_id')
+    .eq('program_year_id', programYear.id);
+  if (payErr) throw payErr;
+  const paidPlayerIds = new Set((payRows ?? []).map((p: any) => p.player_id));
+
   const neverPaid = schedules.filter((s: any) => {
     const hasDues = (countBySchedule[s.id] ?? 0) > 0 || Number(s.total_amount) > 0;
-    return hasDues && !anyPaidBySchedule[s.id];
+    return hasDues && !anyPaidBySchedule[s.id] && !paidPlayerIds.has(s.player_id);
   });
   if (!neverPaid.length) return [];
 
