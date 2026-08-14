@@ -44,6 +44,44 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-14',
+    title: 'Team Money keeps the whole record',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Every dues payment is now a record — date, method, and a note if you need one. The season\'s totals add themselves up from those payments, so there\'s no running total to keep by hand any more.',
+      },
+      {
+        category: 'new',
+        text: 'Player Dues can now be read one installment at a time — see who\'s paid each installment across the whole team, and what\'s due next.',
+      },
+      {
+        category: 'new',
+        text: 'Fundraising money now comes off a family\'s actual installment, so the next thing you ask them for is already reduced.',
+      },
+      {
+        category: 'new',
+        text: 'Money that goes back out is now part of the record too — a credit handed back in cash, or a parent repaid after overpaying. At season\'s end, a single sheet shows every family\'s refund and how it was worked out.',
+      },
+      {
+        category: 'new',
+        text: 'The budget card on your team Overview now shows what you planned beside what you\'ve actually spent.',
+      },
+      {
+        category: 'new',
+        text: 'Help now opens on the page you\'re already on, and long topics are a short menu of answers instead of one long page — with pictures of the screen being described.',
+      },
+      {
+        category: 'improved',
+        text: 'The tables across Team Money now all read and behave the same way, whichever one you\'re on.',
+      },
+      {
+        category: 'fixed',
+        text: 'The game-day card on your team Overview no longer asks you to finish something you\'ve already done.',
+      },
+    ],
+  },
+  {
     date: '2026-08-12',
     title: 'The coach portal gets easier to find your way around',
     highlights: [
