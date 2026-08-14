@@ -2733,9 +2733,15 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    it still genuinely guards is the two RELATIONSHIPS a variable cannot express — that a category
    reads LARGER than its own lines, and that neither family reverts to small caps.
 
-   Declared on :root rather than on each family's container because the two families share no
-   common ancestor class, and a per-family declaration would be the duplication all over again. */
-:global(:root) {
+   Declared on the portal SHELL rather than on each family's container because the two families
+   share no common ancestor class, and a per-family declaration would be the duplication all over
+   again. ⚠ NOT `:global(:root)` — a rule with no local class is legal to the dev server
+   (LightningCSS) and FAILS the production webpack build as "not pure", which is exactly how it
+   escaped: written 2026-08-13, first built 2026-08-14, Amplify dev job 255 red. Every consumer of
+   these five (both families plus `.footValue`) renders inside the shell, and none is portalled out
+   of it, so the shell is the nearest ancestor they all share. `scripts/check-css-module-purity.mjs`
+   now catches the next one locally. */
+.coachesShell {
   --money-cat-size:    0.92rem;
   --money-cat-weight:  800;
   --money-line-size:   0.84rem;
