@@ -5,7 +5,7 @@ import { HelpNote } from '@/components/help/HelpBlocks';
 const exportsHelp: HelpPageContent = {
   title: 'Exports & Downloads',
   role: 'Admin, Owner, Staff, Treasurer, Coach',
-  searchPlaceholder: 'Search export help...',
+  searchPlaceholder: 'Search export help',
   intro:
     'Exports let you take data from FieldLogicHQ and use it in other tools — a spreadsheet, a calendar app, a printed document, or an email attachment. Every export works the same way: find the table you want, click its Export button, and choose a format. The default is always Excel.',
   sections: [

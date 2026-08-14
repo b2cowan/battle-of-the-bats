@@ -280,7 +280,7 @@ export default function HelpPageLayout({
                   type="search"
                   value={query}
                   onChange={event => setQuery(event.target.value)}
-                  placeholder={searchPlaceholder ?? 'Search this guide...'}
+                  placeholder={searchPlaceholder ?? 'Search this guide'}
                   className={styles.helpSearchInput}
                   aria-label="Search this guide"
                 />

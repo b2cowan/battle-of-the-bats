@@ -4,7 +4,7 @@ import type { HelpPageContent } from './index';
 const platformAdminHelp: HelpPageContent = {
   title: 'Platform Admin Operations',
   role: 'Platform Admin',
-  searchPlaceholder: 'Search platform admin SOPs...',
+  searchPlaceholder: 'Search platform admin SOPs',
   intro:
     'Employee-only workflows for supporting FieldLogicHQ customers. Use this guide when you need to reset access, explain customer-facing docs, apply temporary billing or module exceptions, investigate account history, or manage platform staff access.',
   sections: [

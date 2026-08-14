@@ -4,7 +4,7 @@ import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBl
 const tournamentsHelp: HelpPageContent = {
   title: 'Tournaments',
   role: 'Admin, Owner',
-  searchPlaceholder: 'Search tournament help...',
+  searchPlaceholder: 'Search tournament help',
   intro: 'Use this guide to set up, publish, operate, and close out tournaments in FieldLogicHQ. It follows the same workflow you use in the tournament admin menu.',
   sections: [
     // ── SET UP YOUR EVENT ──────────────────────────────────────────────────

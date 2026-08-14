@@ -5,7 +5,7 @@ const houseLeagueHelp: HelpPageContent = {
   title: 'House League',
   role: 'League Admin, Admin',
   intro: 'House League manages the full seasonal workflow for recreational leagues — from opening registration to recording final scores. Each season runs independently with its own registrations, teams, schedule, and standings. The free League plan runs one capped season; League Plus and Club remove the caps and add exports.',
-  searchPlaceholder: 'Search House League help — seasons, registration, teams, schedule…',
+  searchPlaceholder: 'Search House League help',
   sections: [
     {
       id: 'lifecycle',

@@ -7,7 +7,11 @@ const coachesHelp: HelpPageContent = {
   role: 'Coach',
   intro:
     'The Coaches Portal is your free home base for the teams you coach — your roster, schedule, team fees, and parent announcements in one place, year-round and between tournaments. Turn on only the tools you need. Premium Coaches Portal adds the serious-operator extras on top.',
-  searchPlaceholder: 'Search coach help — roster, schedule, fees, announcements…',
+  // Placeholders name the guide and stop. The examples that used to trail this one
+  // ("— roster, schedule, fees…") were cut off mid-word in the 272px search column,
+  // which reads as a bug rather than as a hint. The guide's own contents list sits
+  // directly beneath the box and does that job properly.
+  searchPlaceholder: 'Search coach help',
   sections: [
     {
       id: 'overview',
