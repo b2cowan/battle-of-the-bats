@@ -593,6 +593,80 @@ body:has([data-chat-fullbleed]) {
    Token→--home-* mapping mirrors the ratified ChatPanel .panelWarm recipe — E3 rule: raw lime
    never renders as text on paper, it darkens to olive. Literal lime FILLS (segmented controls,
    CTAs) are restored to true lime per-surface in their own stages; chrome uses no lime fill. */
+/* ── DARK SNAPSHOTS, for surfaces that must not follow the theme ─────────────
+   Each of these resolves HERE, at :root, where the palette is still dark — a custom
+   property containing var() is substituted at the element that DECLARES it, so a later
+   theme remap of the source token cannot reach back and change the snapshot.
+
+   They exist so the HELP READING SURFACE can restore the dark palette by REFERENCE
+   instead of by copying 24 literal values into a second place. That distinction is the
+   whole point: this portal has already shipped a bug where a hand-copied token drifted
+   from its ramp (the --white-75 incident, help body copy at ~1.1:1 on the warm ground).
+   Nothing here holds a value of its own, so nothing here can go stale.
+
+   ⚠ The list is exactly the tokens components/help/help.module.css consumes AND the warm
+   block remaps. If help starts using another themed token, add it here and below. */
+:root {
+  --dk-border: var(--border);
+  --dk-border-2: var(--border-2);
+  --dk-data-gray: var(--data-gray);
+  --dk-fl-text: var(--fl-text);
+  --dk-hud-surface: var(--hud-surface);
+  --dk-info: var(--info);
+  --dk-logic-lime: var(--logic-lime);
+  --dk-logic-lime-rgb: var(--logic-lime-rgb);
+  --dk-pitch-black: var(--pitch-black);
+  --dk-primary-light: var(--primary-light);
+  --dk-success-light: var(--success-light);
+  --dk-warning: var(--warning);
+  --dk-warning-rgb: var(--warning-rgb);
+  --dk-white-03: var(--white-03);
+  --dk-white-35: var(--white-35);
+  --dk-white-40: var(--white-40);
+  --dk-white-45: var(--white-45);
+  --dk-white-50: var(--white-50);
+  --dk-white-55: var(--white-55);
+  --dk-white-60: var(--white-60);
+  --dk-white-70: var(--white-70);
+  --dk-white-75: var(--white-75);
+  --dk-white-85: var(--white-85);
+  --dk-white-90: var(--white-90);
+}
+
+/* The help guide: one fixed dark reading surface, whatever the account theme (owner ruling
+   2026-08-14). Restores the snapshots above for its own subtree. This is INHERITANCE, not a
+   specificity fight — the nearest ancestor that declares a custom property wins, and this
+   element sits far below the shell marker, so no !important is involved and the warm block
+   is untouched. The "?" drawer already renders dark for a different reason (it portals to
+   <body>, escaping the marker entirely), so this makes the two halves of help agree. */
+[data-help-surface] {
+  --border: var(--dk-border);
+  --border-2: var(--dk-border-2);
+  --data-gray: var(--dk-data-gray);
+  --fl-text: var(--dk-fl-text);
+  --hud-surface: var(--dk-hud-surface);
+  --info: var(--dk-info);
+  --logic-lime: var(--dk-logic-lime);
+  --logic-lime-rgb: var(--dk-logic-lime-rgb);
+  --pitch-black: var(--dk-pitch-black);
+  --primary-light: var(--dk-primary-light);
+  --success-light: var(--dk-success-light);
+  --warning: var(--dk-warning);
+  --warning-rgb: var(--dk-warning-rgb);
+  --white-03: var(--dk-white-03);
+  --white-35: var(--dk-white-35);
+  --white-40: var(--dk-white-40);
+  --white-45: var(--dk-white-45);
+  --white-50: var(--dk-white-50);
+  --white-55: var(--dk-white-55);
+  --white-60: var(--dk-white-60);
+  --white-70: var(--dk-white-70);
+  --white-75: var(--dk-white-75);
+  --white-85: var(--dk-white-85);
+  --white-90: var(--dk-white-90);
+  color-scheme: dark;
+}
+
 html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* Warm palette — mirrors warmTheme.module.css .warmVars (Round-1 ratified values). */
   --home-paper:       #F8F4ED;
@@ -803,7 +877,22 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
    html[data-user-theme="dark"] .topbarWarmTab/.bottomNavWarmTab block). Core canvas tokens are
    deliberately NOT remapped here: under Dark they are already correct at :root. Only the
    --home-* layer needs a dark definition. */
-html[data-user-theme="dark"] [data-coach-warm-enabled] {
+/* `[data-help-surface]` joins this selector so the HELP GUIDE always renders dark,
+   whatever the account's theme (owner ruling 2026-08-14: help is one reading surface,
+   not a themed app screen).
+
+   This is a re-declaration, not a specificity fight: custom properties inherit from the
+   NEAREST declaring ancestor, and the help surface sits far below the shell's
+   [data-coach-warm-enabled] marker, so its own declarations win in a warm portal
+   without !important and without touching the warm block.
+
+   It is also not a new opinion. The "?" drawer portals to <body>, which puts it OUTSIDE
+   the marker element entirely — custom properties inherit through the DOM, not the React
+   tree — so the drawer has ALWAYS rendered dark, including inside a warm portal. Help
+   therefore already had one fixed look in the panel and a theme-following look in the
+   guide; this makes the two agree, deliberately, on the one the panel already used. */
+html[data-user-theme="dark"] [data-coach-warm-enabled],
+[data-help-surface] {
   /* Paper/ink → the dark canvas the shell already paints. */
   --home-paper:       var(--bg);
   --home-card:        var(--bg-card);

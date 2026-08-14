@@ -496,7 +496,10 @@
 }
 
 .helpBreadcrumbSep {
-  color: var(--white-40);
+  /* --white-40 fails AA on the guide's near-black ground (rendered check, 2026-08-14).
+     It was invisible debt while the guide inherited the warm portal's lighter paper; the
+     focused dark surface exposed it. --white-55 is the ramp's first step that clears. */
+  color: var(--white-55);
 }
 
 .helpBreadcrumbCurrent {
@@ -867,6 +870,16 @@
     left: 0;
     right: 0;
     z-index: 30;
+  }
+
+  /* Inside the coaches' focused reading surface a fixed "back to your portal" bar already
+     owns top:0, so this one starts below it. Everywhere else (admin help, the platform-admin
+     mirror) there is no such bar and top:0 stays correct. */
+  :global([data-help-surface]) .helpTocBar {
+    top: var(--chrome-bar-h);
+  }
+
+  .helpTocBar {
     padding: 0.7rem 1rem;
     background: #080c14; /* token-exempt: mobile TOC bar bg, no central token */
     border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
@@ -1498,7 +1511,11 @@
 .helpJumpChip {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
+  /* The 44px floor applies at EVERY width, not just touch — the rendered sweep measures
+     desktop too, and it caught 84 of these the moment the help screen entered the sweep
+     (it had never been in a --changed set before). Set on the control, not the copy, so a
+     short sub-topic title cannot drop it back under. */
+  min-height: 44px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--help-accent);
@@ -1521,10 +1538,16 @@
   outline-offset: 2px;
 }
 
-/* Tap floor: chips are real controls on touch screens (learned the hard way on
-   the Money-hub tab row — the rendered check fails anything under 44px). */
 @media (max-width: 640px), (pointer: coarse) {
-  .helpJumpChip { min-height: 44px; padding: 4px 14px; }
+  .helpJumpChip {
+    padding: 6px 14px;
+    /* Sub-topic titles are sentences, and the longest ones are wider than a 361px
+       column — nowrap pushed the whole guide sideways by 13px (rendered check). A jump
+       menu must stay fully visible, so the chip wraps rather than the page scrolling or
+       the label being clipped. */
+    white-space: normal;
+    max-width: 100%;
+  }
 }
 
 /* Guide: one sub-topic = ruled block with an anchored heading */
@@ -1545,13 +1568,29 @@
   line-height: 1.35;
 }
 
+/* The permalink affordance beside a sub-heading. It is a MOUSE gesture — invisible until
+   the pointer is over its heading — so it earns its 44px hit area rather than its 44px
+   box: inline-flex + a min size, with the extra height absorbed by a negative margin so
+   the heading's baseline does not move. On coarse pointers it is removed entirely: a
+   permanently-invisible control is not a touch target, and leaving it would put an
+   unreachable 44px hole in every sub-heading on a phone. */
 .helpSubtopicAnchor {
-  color: var(--white-35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -14px 0;
+  color: var(--white-55);
   font-weight: 400;
   font-size: 0.85rem;
   text-decoration: none;
   opacity: 0;
   transition: opacity 0.12s;
+}
+
+@media (pointer: coarse) {
+  .helpSubtopicAnchor { display: none; }
 }
 
 .helpSubtopicHeading:hover .helpSubtopicAnchor,

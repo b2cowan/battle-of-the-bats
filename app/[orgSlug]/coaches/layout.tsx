@@ -19,8 +19,10 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { SEE_IT_LIVE_COACHES_PATH } from '@/lib/sandbox-door';
-import CoachesSidebar from '@/components/coaches/CoachesSidebar';
-import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
+// The main shell (sidebar + bottom nav + strip) now lives in CoachesChrome, which owns the
+// focused-surface decision. CoachTopStrip is still imported here for the "not assigned"
+// fallback shells below, which render their own minimal frame.
+import CoachesChrome from '@/components/coaches/CoachesChrome';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import CoachWallSignOut from '@/components/coaches/CoachWallSignOut';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
@@ -267,27 +269,11 @@ export default async function CoachesLayout({
                   sidebar and the bottom nav so useOverlayOpen()/useAnyOverlayOpen() reach every
                   team page and the nav that needs to hide under them. */}
               <CoachesOverlayProvider>
-                <div className={styles.coachesShell}>
-                  {/* Stage H.1 (Nav Unification, D2 ratified 2026-07-31): the operator
-                      frame strip — desktop-only fixed top bar (wordmark → Home, account ·
-                      Workspaces) in the portal's own warm/dark skin. NO chat door and no
-                      bell: chat is a section of the work for an operator, and the coach
-                      sidebar keeps the bell (binding rulings 2026-07-31; this comment still
-                      listed the removed chat door until the 2026-08-01 top-nav audit). Mounted
-                      INSIDE the shell so it reads the shell's --coach-topstrip-h (custom
-                      properties don't reach siblings); position:fixed keeps it out of the
-                      flex flow. The shell pads down by the same var (coaches.module.css). */}
-                  <CoachTopStrip />
-                  <CoachesSidebar orgSlug={orgSlug} />
-                  {/* The pinned team MASTHEAD (D2 Option A) is mounted by the TEAM layout, not
-                      here — that is the first place `teamId` exists server-side, so its record +
-                      status feed (A2) can ride down with the page instead of being fetched after
-                      paint. It still renders as the first child of this <main>: that layout
-                      returns a fragment, which the masthead's sticky pin + padding-cancelling
-                      negative margins depend on. */}
-                  <main className={styles.coachesMain}>{children}</main>
-                </div>
-                <CoachesBottomNav />
+                {/* The shell, and the ONE place that decides whether a route wears it. The
+                    help guide is a focused reading surface (no sidebar, no strip, no bottom
+                    nav, pinned dark) — the same line the admin side has drawn since Stage C.
+                    See components/coaches/CoachesChrome.tsx. */}
+                <CoachesChrome orgSlug={orgSlug}>{children}</CoachesChrome>
               </CoachesOverlayProvider>
             </ConfirmProvider>
             <InstallAppPrompt
