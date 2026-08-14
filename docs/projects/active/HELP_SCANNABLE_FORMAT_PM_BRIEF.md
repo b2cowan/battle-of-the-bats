@@ -48,13 +48,30 @@ platform-admin help mirror updates automatically because both read the same sour
 
 ## Rollout & how to test
 
-Four independently shippable steps: (1) the machinery, invisible; (2) Money converted — open
-"?" on any Money page and see the menu; (3) remaining long topics by size; (4) the first
-screenshots. QA per step lands in the Owner QA Ledger as it ships.
+**All four steps are built (2026-08-14).** (1) the machinery; (2) Money converted; (3) every
+other long topic — swept to completion rather than left half-done, because the "?" is one
+control and had to behave the same everywhere; (4) the screenshot pipeline with its first two
+pictures. QA is the Owner QA Ledger's §18, in five batches.
 
-## Success criteria
+## Where it landed
 
-- "?" on a Money page shows a scannable summary + sub-topic list, not 4,700 words.
-- Every long topic's sub-answers are individually linkable.
-- No change to search behaviour, existing anchors, or short topics.
-- New help content written after this ships arrives already in the scannable format.
+- **21 topics** now open as a menu of answers, **109 sub-answers** in total.
+- **Zero** long topics left in the old paragraph-wall form, anywhere in the product.
+- Pictures are possible where words struggle — rare by policy, demo-data-only by mechanism.
+
+## Success criteria — all met, pending your QA
+
+- "?" on a Money page shows a scannable summary + sub-topic list, not 4,700 words. ✅
+- Every long topic's sub-answers are individually linkable. ✅
+- The "?" behaves identically on every page in the product. ✅
+- No change to search behaviour, existing anchors, or short topics. ✅
+- New help content arrives already in the scannable format (the standard is binding in the
+  docs agent's instructions). ✅
+
+## The one thing to keep an eye on
+
+Screenshots are the only part of this that can rot silently. The mitigation is a one-command
+re-capture and a rule in the docs agent's instructions to re-take pictures whenever the screen
+they show changes. There is deliberately **no automated freshness check** — proving an image is
+*current* would need pixel baselines, and the demo world's dates move nightly, so that check
+would cry wolf every morning. If a stale picture ever does ship, that's the moment to revisit.

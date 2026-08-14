@@ -1,5 +1,6 @@
 import type { HelpPageContent } from './index';
 import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
+import HelpScreenshot from '@/components/help/HelpScreenshot';
 
 const coachesHelp: HelpPageContent = {
   title: 'Coaches Portal',
@@ -1437,6 +1438,7 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Record the money families send exactly as it arrives</strong> — any amount, on the day it arrived. A family paying $100 a month against $300 installments is recorded exactly as it happens:</p>
+              <HelpScreenshot id="money-record-payment" />
               <HelpSteps>
                 <li>Open the player on <strong>Player Dues</strong> and tap <strong>Record payment</strong>.</li>
                 <li>Enter how much, the day it arrived (it starts on today; the team&apos;s books use <em>this</em> date, so catching up on a month of e-transfers keeps each one in its real month), how it arrived (e-transfer, cash, cheque, other) and an optional note.</li>
@@ -1478,6 +1480,7 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Budget vs. Actual</strong> has two views, and it remembers which one you prefer. <strong>Categories</strong> is the report you already know. <strong>Months</strong> lays the same season out the way a spreadsheet does — your budget lines down the side, the season&apos;s months across the top, totals both ways. One toggle changes what every cell shows:</p>
+              <HelpScreenshot id="money-budget-vs-actual-months" />
               <HelpDefs>
                 <HelpDef term="Budget">What you planned for that month.</HelpDef>
                 <HelpDef term="Scheduled">What you&apos;ve actually committed to pay, by its due date. Budget and Scheduled stay separate on purpose, so a commitment never quietly becomes part of your estimate and nothing gets counted twice.</HelpDef>

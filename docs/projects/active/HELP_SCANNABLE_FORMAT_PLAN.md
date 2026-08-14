@@ -1,6 +1,11 @@
 # Help Docs — Scannable Format (Plan)
 
-**Status:** Owner-approved 2026-08-14 (direction + format standard ratified; mockups artifact
+**Status: ALL FOUR STEPS BUILT on dev 2026-08-14 — the project is complete.** Owner QA §18
+batches 1–5. Coverage: **21 of 147 sections carry sub-topics (109 sub-topics), zero sections
+over the six-paragraph standard**, and the screenshot pipeline is live with its first two
+pictures. Archive this plan pair once §18 passes end to end.
+
+Owner-approved 2026-08-14 (direction + format standard ratified; mockups artifact
 `2499e60b-f83c-4ee8-97c9-b0ce9cd9bb48` "Scannable Help"). **Steps 1+2 BUILT on dev
 2026-08-14** — sub-topic contract + shared renderer (guide chips/headings, drawer expanders,
 deep links, searchable titles, HelpSteps/HelpDefs/HelpNote primitives) and the Money topic
@@ -166,7 +171,40 @@ in the chip, the heading and the drawer row. Use the real character. (Caught twi
 sub-topics with the page's own first question first, or set `subtopicId` on the caller. Batch 1
 needed no `subtopicId`: the practice pages' first sub-topic is already their answer.
 
-### 4.4 Step 4 — screenshot pipeline + first images
+### 4.4 Step 4 — screenshot pipeline + first images ✅ BUILT 2026-08-14
+
+**What shipped** (QA = ledger §18 batch 5):
+- `lib/help-shots.ts` — the manifest, read by BOTH the renderer and the capture script so a
+  picture and its capture instructions cannot drift. Carries path, readiness selector,
+  optional `prepare` clicks, optional `clip`, alt, caption, and the rendered `size` (written
+  back by the script so the guide reserves the space and never jumps as images load).
+- `components/help/HelpScreenshot.tsx` — framed figure, caption, tap-to-enlarge via native
+  `<dialog>`, lazy-loaded, optional highlight ring. **Unknown id renders nothing** — a picture
+  is always supplementary, so a missing one must not leave a hole.
+- `scripts/capture-help-shots.mjs` — `npm run capture:help-shots` (re-take), `--only=`,
+  `--list`, and `npm run check:help-shots` (every declared picture exists with alt, caption
+  and size).
+
+**Three traps found while building it — all cost a run to diagnose, all now guarded in code:**
+1. **The demo door is rate-limited** (10 presses / 10 min per IP — it is a public door). Press
+   it ONCE per run per world and reuse the context; a per-shot press throttles mid-run and the
+   remaining captures land on `/for-coaches` instead, which fails *silently* because the door
+   redirects rather than erroring.
+2. **`visible=true` on every selector is load-bearing.** The Money hub keeps visited panels
+   mounted-but-hidden, so the first `table` in the DOM is invisible and a plain
+   `waitForSelector` waits for *that* one forever.
+3. **The demo's own chrome must be suppressed before capture** (`[data-sandbox-banner]`, and
+   `--sandbox-chrome-h: 0`). ~200px of "LIVE DEMO" banner, phase dock and guided-tour bar is
+   furniture a real coach has never seen — in documentation it is misleading, not just untidy.
+   Suppressed rather than cropped because the dock's height moves with the tour state.
+
+**Deliberately NOT built:** a freshness gate. `check:help-shots` proves a picture *exists*; it
+cannot know whether it is *current*. Detecting staleness needs either pixel baselines (which
+would fail on every demo re-anchor, since the demo's dates move nightly) or a route→picture
+dependency the docs agent already carries as a rule. Revisit only if a stale image actually
+ships.
+
+#### Original design (for reference)
 
 - `components/help/HelpScreenshot.tsx`: `figure` — image (lazy, `alt` required), caption bar,
   tap-to-enlarge via native `<dialog>`; optional highlight-ring overlay positioned by the manifest

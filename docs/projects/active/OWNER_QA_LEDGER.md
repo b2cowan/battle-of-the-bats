@@ -1554,6 +1554,26 @@ took 2–4 grouped sub-topics deliberately, never one-per-paragraph.
 - [ ] Nothing reads as over-split — no topic is a list of one-line accordions you must open to
       read a single sentence.
 
+**Batch 5 (2026-08-14 — screenshots; the scannable-help project is COMPLETE):** help guides can
+now carry pictures, and the first two are in the Money topic — the **Player Dues table** (where
+Record payment lives) and **Budget vs. Actual's month grid**. Each is a framed figure with a
+caption that stands on its own, and **tapping it opens it full-size**. Images are captured by
+script from the **Riverdale demo world only** — enforced, not remembered: the script refuses the
+whole run if a manifest path points anywhere else, because the alternative is a real family's
+name in the product's own documentation. The demo's own "LIVE DEMO" banner and tour bar are
+suppressed before capture, so the pictures show the product a coach actually sees.
+- [ ] Coaches guide → Money → "Player dues & recording payments": a framed screenshot sits
+      under the opening line, with a caption beneath it and a "Tap to enlarge" affordance.
+- [ ] Tap it: the picture opens large and centred over a dimmed page; **Escape closes it**, so
+      does clicking the dark area, so does the Close button.
+- [ ] The picture shows **Riverdale Ridge 12U** (fictional) — and **no "LIVE DEMO" banner, no
+      phase dock, no guided-tour bar**. If any demo furniture is visible, the capture is wrong.
+- [ ] Same check on the Budget vs. Actual month-grid picture, in the month-view sub-topic.
+- [ ] Phone width: the figure scales to the column, the caption wraps, nothing scrolls sideways;
+      the enlarged view still fits.
+- [ ] Warm theme: the frame and caption are legible on the cream ground.
+- [ ] The "?" drawer shows the same figures at drawer width without overflowing.
+
 ### 19 🖥📱 Fundraising pays the bill — **ON DEV** (built 2026-08-14) · ⚠ carries migration **233** (dev only)
 
 **What changed:** a credit is now **money the team owes a family**, and it lands on their real

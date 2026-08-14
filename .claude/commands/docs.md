@@ -63,9 +63,19 @@ These rules govern every section you write or substantially edit:
    sub-topic; it states the one caution/tip, never restates the body.
 4. **Screenshots are opt-in and rare.** Only where the answer is spatial ("where is that
    control?") or visual (a complex form / a report the reader must recognize) — never
-   decoration. Every image: demo-world (Riverdale) data only, captured by the manifest-driven
-   capture script (plan Step 4), standalone caption + alt text. A screenshot that can't be
-   re-captured from the demo world is **removed**, not kept stale.
+   decoration, never a picture of a sentence. A screenshot that can't be re-captured from the
+   demo world is **removed**, not kept stale — a stale picture is worse than none, because the
+   reader believes it.
+   - **How to add one:** append an entry to `lib/help-shots.ts` (the manifest — it carries the
+     path, the readiness selector, alt text and caption), run `npm run capture:help-shots`,
+     then place `<HelpScreenshot id="…" />` in the content. Nothing else.
+   - **Demo world only, and it is enforced:** every path must sit in a `riverdale-*` org; the
+     capture script refuses the whole run otherwise. Real orgs hold real families and real
+     money.
+   - **When a screen changes, re-take its picture in the same unit of work** — grep the
+     manifest for the route. `npm run check:help-shots` proves every declared picture exists
+     with alt text, caption and dimensions; it does NOT know whether the image is current.
+     That judgement is yours, and it is the same reflex the demo sandboxes need.
 5. **The search contract still applies unchanged** — rendered content (including sub-topic
    bodies) is not searched; terms must live in `keywords`/`searchText`/`answerText`. Sub-topic
    titles join the section's search haystack once Step 1 lands.

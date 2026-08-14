@@ -1695,3 +1695,108 @@
 .helpNoteBody p:last-child {
   margin-bottom: 0;
 }
+
+/* ── Help screenshots (HelpScreenshot.tsx) ───────────────────────────────────
+   Rare by policy — see the manifest header in lib/help-shots.ts. Sized in
+   relative units because the same figure renders in the wide guide column AND
+   in the narrow "?" drawer. */
+
+.helpShot {
+  margin: 0.75rem 0 1rem;
+}
+
+.helpShotFrame {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px 8px 0 0;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  cursor: zoom-in;
+  position: relative;
+  line-height: 0;
+}
+
+.helpShotFrame:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
+
+.helpShotImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Optional ring over the one control the text is talking about. */
+.helpShotRing {
+  position: absolute;
+  border: 2px solid var(--warning);
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.helpShotCaption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--white-55, rgba(255, 255, 255, 0.55));
+}
+
+.helpShotZoom {
+  color: var(--help-accent);
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+/* The enlarged view. `:modal` centres it; the backdrop is the dialog's own. */
+.helpShotDialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow: visible;
+}
+
+.helpShotDialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.helpShotDialogImg {
+  display: block;
+  max-width: 96vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+}
+
+.helpShotClose {
+  display: block;
+  margin: 10px auto 0;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff; /* token-exempt: sits on the dialog's own dimmed backdrop, not a themed surface */
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  /* The zoom affordance is the whole frame on touch; the label would crowd the caption. */
+  .helpShotZoom { display: none; }
+}
