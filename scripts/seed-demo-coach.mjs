@@ -246,6 +246,9 @@ async function wipeProgramYearChildren(teamId, pyId) {
   // Payment FACTS (mig 232) — season-scoped like credits, so the installment delete above never
   // touches them; left behind they would re-cover the NEXT seed's installments at random.
   await del('rep_dues_payments', q => q.eq('program_year_id', pyId));
+  // Payouts (mig 234) — same shape, same reason: a payout left behind would go on suppressing
+  // the next seed's credits, quietly putting a demo family's bills back up.
+  await del('rep_dues_payouts', q => q.eq('program_year_id', pyId));
   await del('rep_player_dues_schedules', q => q.eq('program_year_id', pyId));
   const lineIds = ((await db.from('rep_budget_lines').select('id').eq('program_year_id', pyId)).data ?? []).map(l => l.id);
   if (lineIds.length) await del('rep_budget_periods', q => q.in('budget_line_id', lineIds));

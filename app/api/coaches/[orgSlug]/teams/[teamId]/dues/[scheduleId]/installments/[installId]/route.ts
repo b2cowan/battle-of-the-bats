@@ -7,13 +7,14 @@ import {
   getRepPlayerDuesInstallments,
   getRepDuesPaymentsForPlayer,
   getRepDuesCreditsForPlayer,
+  getRepDuesPayoutsForPlayer,
   recordRepDuesPayment,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
-import { deriveDuesPosition } from '@/lib/dues-credits';
+import { deriveDuesPosition, amountsTotal } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -96,14 +97,16 @@ export const PATCH = withObservability(async (_req: Request,
   // credits land on this installment (owner model 2026-08-14). Deriving before the claim left
   // a window where a concurrent Record-payment made the pre-claim figure stale and this click
   // double-recorded it (/review 2026-08-14).
-  const [payments, credits] = await Promise.all([
+  const [payments, credits, payouts] = await Promise.all([
     getRepDuesPaymentsForPlayer(programYear.id, installment.playerId),
     getRepDuesCreditsForPlayer(programYear.id, installment.playerId),
+    getRepDuesPayoutsForPlayer(programYear.id, installment.playerId),
   ]);
   const { toSendById } = deriveDuesPosition({
     installments,
     payments,
     credits,
+    paidOut: amountsTotal(payouts),
     mode: programYear.creditApplication,
   });
   const toSend = toSendById.get(installId) ?? installment.amount;

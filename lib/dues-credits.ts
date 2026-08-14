@@ -55,26 +55,32 @@ export function normalizeCreditApplicationMode(value: unknown): CreditApplicatio
     : 'last_first';
 }
 
-/** Cents-safe total of a credit list — 0.1 + 0.2 !== 0.3 in a treasurer's favour or anyone's. */
-export function creditsTotal(credits: readonly { amount: number }[]): number {
-  return toDollars(credits.reduce((s, c) => s + toCents(c.amount), 0));
+/** Cents-safe total of any money-row list — credits, and equally payouts (both are {amount}
+ *  rows and both need the same sum). 0.1 + 0.2 !== 0.3 in a treasurer's favour or anyone's. */
+export function amountsTotal(rows: readonly { amount: number }[]): number {
+  return toDollars(rows.reduce((s, r) => s + toCents(r.amount), 0));
 }
 
-/** Per-player credit-dollar totals — the grouping every season-wide credit reader starts from.
- *  The exact mirror of paymentsTotalByPlayer (lib/dues-payments.ts), for the same reason: five
+/** The credit-domain name for the same sum — kept because every credit reader reads better with
+ *  it, and because the definition guard's rule points at it. */
+export const creditsTotal = amountsTotal;
+
+/** Per-player dollar totals, cents-safe — the grouping every season-wide reader starts from,
+ *  for credits AND for payouts (both are {playerId, amount} rows and both need the same sum).
+ *  The mirror of paymentsTotalByPlayer (lib/dues-payments.ts), for the same reason: five
  *  hand-copied reduce loops preceded it. */
-export function creditsTotalByPlayer(
-  credits: readonly { playerId: string; amount: number }[],
+export function totalsByPlayer(
+  rows: readonly { playerId: string; amount: number }[],
 ): Map<string, number> {
   const totals = new Map<string, number>();
-  for (const c of credits) {
-    totals.set(c.playerId, (totals.get(c.playerId) ?? 0) + toCents(c.amount));
+  for (const r of rows) {
+    totals.set(r.playerId, (totals.get(r.playerId) ?? 0) + toCents(r.amount));
   }
   for (const [k, v] of totals) totals.set(k, toDollars(v));
   return totals;
 }
 
-/** Per-player credit LISTS — the sibling of creditsTotalByPlayer for readers that need the rows,
+/** Per-player LISTS — the sibling of totalsByPlayer for readers that need the rows,
  *  not just the total. Six hand-written grouping loops appeared in one day before this existed
  *  (the /simplify pass caught them) — the same regrowth pattern the sums had. */
 export function groupByPlayer<T extends { playerId: string }>(
@@ -86,6 +92,25 @@ export function groupByPlayer<T extends { playerId: string }>(
     if (list) list.push(c); else byPlayer.set(c.playerId, [c]);
   }
   return byPlayer;
+}
+
+/**
+ * The most a family may be handed in cash right now: credits issued MINUS what already went out.
+ *
+ * ⚠ Forgiveness is excluded, and that exclusion is the rule the whole model rests on — a forgiven
+ * balance is debt relief the team GAVE, never money it HOLDS, so paying it out would invent a
+ * debt and hand a family cash twice. Lives here, with the identity it protects, so the write path
+ * and the screen that offers the button cannot disagree about the ceiling.
+ */
+export function payoutCeiling(
+  credits: readonly { amount: number; creditType: string }[],
+  payouts: readonly { amount: number }[],
+): number {
+  const issuedC = credits
+    .filter(c => c.creditType !== 'forgiven')
+    .reduce((s, c) => s + toCents(c.amount), 0);
+  const paidOutC = payouts.reduce((s, p) => s + toCents(p.amount), 0);
+  return toDollars(Math.max(0, issuedC - paidOutC));
 }
 
 export interface ApplicableCredit {

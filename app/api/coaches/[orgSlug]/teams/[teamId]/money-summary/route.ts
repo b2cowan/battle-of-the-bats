@@ -4,11 +4,12 @@ import {
   getRepPlayerDuesInstallments,
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
   getRepTeamExpenses,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
-import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
+import { deriveDuesPosition, groupByPlayer, totalsByPlayer, amountsTotal } from '@/lib/dues-credits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
@@ -85,11 +86,13 @@ export const GET = withObservability(async (req: Request,
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
-  const [installmentLists, seasonPayments, seasonCredits] = await Promise.all([
+  const [installmentLists, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
     Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id))),
     getRepDuesPaymentsByProgramYear(programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
+  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
   const paymentsByPlayer = new Map<string, typeof seasonPayments>();
   for (const p of seasonPayments) {
     if (!paymentsByPlayer.has(p.playerId)) paymentsByPlayer.set(p.playerId, []);
@@ -119,6 +122,7 @@ export const GET = withObservability(async (req: Request,
       installments: insts,
       payments,
       credits: creditsByPlayer.get(schedule.playerId) ?? [],
+      paidOut: paidOutByPlayer.get(schedule.playerId) ?? 0,
       mode: programYear.creditApplication,
     });
     for (const inst of insts) {
@@ -141,23 +145,34 @@ export const GET = withObservability(async (req: Request,
   });
 
   // ── Expenses (paid-only semantics identical to budget-vs-actual) ─────────
+  // ⚠ TWO figures, deliberately different (owner Call 5, plan §4.3). `expensesPaid` is what the
+  // SEASON COST and is what Budget vs. Actual compares against — an out-of-pocket cost is real
+  // spending and belongs in it. `expensesCashPaid` is what actually LEFT THE TEAM'S ACCOUNT, and
+  // excludes anything a family covered directly: no team cash moved, so counting it in the cash
+  // line would subtract money the team is still holding.
   let expensesPaid = 0;
+  let expensesCashPaid = 0;
   let expensesUnpaidCount = 0;
   let upcomingDueCount = 0;
   for (const e of expenses) {
     if (e.expenseType === 'tournament_payable') {
-      if (e.depositPaidAt) expensesPaid += e.depositAmount ?? 0;
-      if (e.balancePaidAt) expensesPaid += e.balanceAmount ?? 0;
+      // A payable is billed to the team by a third party; there is no out-of-pocket leg.
+      if (e.depositPaidAt) { expensesPaid += e.depositAmount ?? 0; expensesCashPaid += e.depositAmount ?? 0; }
+      if (e.balancePaidAt) { expensesPaid += e.balanceAmount ?? 0; expensesCashPaid += e.balanceAmount ?? 0; }
       if (!e.depositPaidAt || !e.balancePaidAt) expensesUnpaidCount += 1;
       // "Due soon" = inside the next 30 days only — already-overdue legs are the
       // UpcomingPayablesPanel's overdue lane, not a "soon" count.
       if (!e.depositPaidAt && e.depositDueDate && e.depositDueDate >= today && e.depositDueDate <= in30) upcomingDueCount += 1;
       if (!e.balancePaidAt && e.balanceDueDate && e.balanceDueDate >= today && e.balanceDueDate <= in30) upcomingDueCount += 1;
     } else {
-      if (e.expensePaidAt) expensesPaid += e.amount;
-      else expensesUnpaidCount += 1;
+      if (e.expensePaidAt) {
+        expensesPaid += e.amount;
+        if (!e.paidByPlayerId) expensesCashPaid += e.amount;
+      } else expensesUnpaidCount += 1;
     }
   }
+  // Money handed back to families is real money out (mig 234).
+  const payoutsTotal = amountsTotal(seasonPayouts);
 
   // ── Fundraisers ──────────────────────────────────────────────────────────
   const fundraisers = (fundraisersRes.data ?? []) as Array<{ id: string; is_active: boolean }>;
@@ -227,7 +242,9 @@ export const GET = withObservability(async (req: Request,
 
   // ── Totals + stage ───────────────────────────────────────────────────────
   const moneyInTotal = duesCollected + fundraisingRaised + orgFunding;
-  const moneyOutTotal = expensesPaid + allocationsPaid + orgPayments;
+  // Money OUT is a CASH question — out-of-pocket costs never left the team's account, and money
+  // handed back to families did. Headroom stays a BUDGET question, so it keeps the full spend.
+  const moneyOutTotal = expensesCashPaid + allocationsPaid + orgPayments + payoutsTotal;
   const headroom = effectiveTotal > 0 ? effectiveTotal - expensesPaid : null;
 
   const stage: 'plan' | 'collect' | 'operate' =
@@ -245,7 +262,9 @@ export const GET = withObservability(async (req: Request,
       total: r2(moneyInTotal),
     },
     moneyOut: {
-      expensesPaid: r2(expensesPaid),
+      // The cash figure, matching the total beside it (the budget's own spend is `expenses.paidTotal`).
+      expensesPaid: r2(expensesCashPaid),
+      duesPaidOut: r2(payoutsTotal),
       allocationsPaid: r2(allocationsPaid),
       orgPayments: r2(orgPayments),
       total: r2(moneyOutTotal),

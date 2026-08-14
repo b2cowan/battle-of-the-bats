@@ -365,6 +365,68 @@ re-seeded and re-narrated once rather than twice.
 **Definition of done:** paying a rebate out in cash puts that family's bills back up, in the same
 session, with the books balancing.
 
+### Pass 2 build log (2026-08-14) — BUILT on dev
+
+**Migration 234** (dev): `rep_dues_payouts` (the outbox — the mirror of `rep_dues_payments`,
+RLS-enabled-no-policies), `rep_team_expenses.paid_by_player_id`, and — added during `/simplify` —
+`rep_dues_credits.expense_id` (CASCADE), so a reimbursement credit can never outlive the cost it
+was repaying. Dictionary + snapshots in the same unit of work.
+
+**Delivered:** a **Pay out** sheet on the player's record (amount · the day the money LEFT · method
+· note) posting one money-out ledger line dated that day; a payouts receipt list with per-row
+remove that **voids** the entry and returns the money to being owed; **Paid by** on an expense
+(Team ▾ / a family, out of pocket) creating a `reimbursement` credit and **no cash entry**; and
+`paidOut` threaded through the single shared assembly, so every reader learned the third state at
+once.
+
+⚠ **Paying out puts the bills back up** — and the sheet is offered whenever a family has credit
+left, *including* credit currently sitting on a bill (binding mockup §5). Gating it on owed-back
+hid the button in exactly the case the mockup draws; caught in review.
+
+**Gates:** typecheck ✓ · 1,773 tests ✓ · rendered `check:layout` (dues/expenses/overview × 4
+widths) no new findings ✓ · `check:demos` ✓ · dictionary ✓ · 0 lint errors. Schema parity fails
+only on the known dev-ahead migrations (230–234).
+
+**`/simplify` (4 lenses):** `amountsTotal` as the neutral sum with `creditsTotal` as its
+credit-domain alias (payout totals stopped reading as credit sums), `creditsTotalByPlayer` →
+`totalsByPlayer` (it serves both), the payout sheet's derived values declared once instead of
+three divergent copies, a typed `PayoutExceedsOwedError` carrying its ceiling (no second
+round-trip on the refusal path), the roster fetch made lazy to match the panel's own convention,
+and `createOutOfPocketExpense` as the one door that writes the expense and its debt together.
+
+**`/review` (high-risk, 5 lenses) earned its keep — 2 Critical + 3 High, all fixed:**
+- **Critical — a payout double-spend race.** Two Pay out clicks could each pass the ceiling check
+  against the same pre-write snapshot and both go through, handing a family more cash than the
+  team owed. The payment path had learned this exact lesson in the 2026-08-13 review; the payout
+  path had no equivalent. Now the write **re-checks against the true post-write state** and the
+  loser undoes itself (voids its entry, deletes its row, refuses).
+- **Critical — the season-end sheet could overpay across families.** Each row clamped at zero
+  while the pool total was built from unclamped figures, so one family's over-payout silently
+  cancelled another family's real credit. The per-player figure is now the definition and the
+  total is its sum — one operation — and forgiveness is excluded from both.
+- **High — an out-of-pocket expense marked paid posted a phantom cash entry.** The normal workflow
+  would have booked money out of an account it never left, putting the coach's cash on hand at
+  odds with the org ledger. Out-of-pocket expenses are now created **already settled**, and the
+  Mark-paid action refuses them with a plain reason.
+- **High — the Credits and Balance columns (and the dues export) still showed money already handed
+  back**, telling a coach a family's dues were lowered by cash they had already received.
+- **High — a credit could be deleted after being paid out**, leaving the books owing a family less
+  than they had received (and inflating everyone else's season-end share). The delete now refuses
+  with the reason and points at the payout.
+- Also fixed: the refund card's "Individual credits" label (the figure had quietly become *credits
+  still owed*), a silent orphan if the out-of-pocket credit write failed (the expense now undoes
+  itself), and a stale symbol name in the guard test's message.
+- **Verified safe:** RLS posture on the new table, capability gating and active-year-only
+  resolution on both new routes, cross-team player validation, amount validation, and the
+  derived-read model (no stamped state to go stale).
+
+**⚠ A seeder bug found and fixed while re-seeding, worth recording:** marking the departed player
+inactive shifted every roster index on the *second* run, because the roster helper returns active
+players only — the fixture crashed on the eighth player and had quietly deactivated two others
+first. The block now reads the whole roster in its own order and **asserts who is inactive both
+ways**, so a half-finished run repairs itself. A seeder that applies a delta to whatever it finds
+is not a seeder.
+
 ### Pass 3 — The refund sheet
 
 1. **Delete** the Calculate button, the typed pot, and the collapsible's current body.

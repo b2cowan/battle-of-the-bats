@@ -18,9 +18,11 @@ import { allocateDuesPayments, type AllocatableInstallment, type AllocatablePaym
 import {
   applyCreditsToBills,
   creditsTotal,
-  creditsTotalByPlayer,
+  totalsByPlayer,
   normalizeCreditApplicationMode,
   sortCreditsForApplication,
+  payoutCeiling,
+  deriveDuesPosition,
   type ApplicableCredit,
 } from '../../lib/dues-credits';
 
@@ -48,13 +50,13 @@ function rileyCoverage(payments = [pay(800, '2025-09-30'), pay(800, '2025-11-30'
   return allocateDuesPayments(installments, payments).coverage;
 }
 
-describe('creditsTotal / creditsTotalByPlayer', () => {
+describe('creditsTotal / totalsByPlayer', () => {
   it('sums in cents, never floats', () => {
     assert.equal(creditsTotal([{ amount: 0.1 }, { amount: 0.2 }]), 0.3);
   });
 
   it('groups by player like paymentsTotalByPlayer', () => {
-    const m = creditsTotalByPlayer([
+    const m = totalsByPlayer([
       { playerId: 'a', amount: 10.1 },
       { playerId: 'a', amount: 0.2 },
       { playerId: 'b', amount: 5 },
@@ -239,6 +241,113 @@ describe('applyCreditsToBills — the mockup walkthroughs', () => {
     assert.deepEqual(i4.sources.map(s => s.creditId), ['older', 'newer']);
     assert.equal(i4.sources[0].amount, 300);
     assert.equal(i4.sources[1].amount, 300);
+  });
+});
+
+describe('deriveDuesPosition — the assembly seam Pass 2 wires payouts into', () => {
+  const schedule = [inst(1, 800), inst(2, 800), inst(3, 800), inst(4, 800)];
+
+  it('paying out a rebate puts the bill back up, end to end', () => {
+    const before = deriveDuesPosition({
+      installments: schedule,
+      payments: [pay(800, '2025-09-30'), pay(800, '2025-11-30')],
+      credits: [credit(500)],
+      mode: 'last_first',
+    });
+    assert.equal(before.toSendById.get('i4'), 300);
+
+    const after = deriveDuesPosition({
+      installments: schedule,
+      payments: [pay(800, '2025-09-30'), pay(800, '2025-11-30')],
+      credits: [credit(500)],
+      paidOut: 500,
+      mode: 'last_first',
+    });
+    assert.equal(after.toSendById.get('i4'), 800);
+    assert.equal(after.position.owedBack, 0);
+    assert.equal(after.position.paidOut, 500);
+  });
+
+  it('a PARTIAL payout leaves the remainder covering bills', () => {
+    const { toSendById, position } = deriveDuesPosition({
+      installments: schedule,
+      payments: [pay(800, '2025-09-30'), pay(800, '2025-11-30')],
+      credits: [credit(500)],
+      paidOut: 200,
+      mode: 'last_first',
+    });
+    assert.equal(toSendById.get('i4'), 500);
+    assert.equal(position.applied, 300);
+    assert.equal(position.paidOut, 200);
+    assert.equal(position.owedBack, 0);
+  });
+
+  it('the identity still holds once money has gone out', () => {
+    const { position } = deriveDuesPosition({
+      installments: schedule,
+      payments: [pay(3200, '2026-03-01')],
+      credits: [credit(500)],
+      paidOut: 175,
+      mode: 'last_first',
+    });
+    assert.equal(
+      Math.round((position.applied + position.paidOut + position.owedBack) * 100) / 100,
+      500,
+    );
+    assert.equal(position.owedBack, 325);
+  });
+});
+
+describe('payoutCeiling — what may be handed back right now', () => {
+  it('is credits issued minus what already went out', () => {
+    assert.equal(
+      payoutCeiling([{ amount: 500, creditType: 'fundraiser' }], [{ amount: 200 }]),
+      300,
+    );
+  });
+
+  it('EXCLUDES forgiveness — debt relief is never the family\'s money to be handed', () => {
+    // The rule the whole model rests on: paying out a forgiven balance would hand a family
+    // cash for a debt the team already cancelled.
+    assert.equal(
+      payoutCeiling([{ amount: 600, creditType: 'forgiven' }], []),
+      0,
+    );
+    assert.equal(
+      payoutCeiling(
+        [{ amount: 600, creditType: 'forgiven' }, { amount: 125, creditType: 'fundraiser' }],
+        [],
+      ),
+      125,
+    );
+  });
+
+  it('never goes negative when payouts somehow exceed credits', () => {
+    assert.equal(payoutCeiling([{ amount: 100, creditType: 'other' }], [{ amount: 250 }]), 0);
+  });
+
+  it('sums in cents', () => {
+    assert.equal(
+      payoutCeiling([{ amount: 0.1, creditType: 'other' }, { amount: 0.2, creditType: 'other' }], []),
+      0.3,
+    );
+  });
+
+  it('is the ONE definition the refund sheet sums — per player, then totalled', () => {
+    // The /review 2026-08-14 Critical: the season-end sheet clamped each ROW at zero but built
+    // its TOTAL from unclamped figures, so one family's over-payout silently cancelled another
+    // family's real credit inside the shared pool. Summing the per-player definition is the fix,
+    // and this pins the property that makes it safe: the total can never be less than any part.
+    const world = [
+      { credits: [{ amount: 500, creditType: 'fundraiser' }], payouts: [{ amount: 500 }] }, // fully paid out
+      { credits: [{ amount: 500, creditType: 'fundraiser' }], payouts: [] },                // still owed
+      { credits: [{ amount: 600, creditType: 'forgiven' }], payouts: [] },                   // never owed
+      { credits: [], payouts: [{ amount: 500 }] },                                            // credit deleted under a payout
+    ];
+    const perPlayer = world.map(w => payoutCeiling(w.credits, w.payouts));
+    assert.deepEqual(perPlayer, [0, 500, 0, 0]);
+    const total = perPlayer.reduce((s, v) => s + v, 0);
+    assert.equal(total, 500, 'only the one genuinely-unsettled credit counts toward the pool');
   });
 });
 

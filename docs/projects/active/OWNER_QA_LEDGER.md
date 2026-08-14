@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) · **§20 ON DEV, mig 234 dev-only** (money goes out) |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1643,6 +1643,60 @@ fundraising · **Drew** has paid nothing but earned a rebate · **Em**'s balance
 applies migrations first). ⚠ **The coach demo does not yet show any of this** — it has no
 fundraiser at all; that is a known absence, deliberately deferred to Pass 3 so the demo world is
 re-seeded and re-narrated once. Full build + review log in the plan's Pass 1 section.
+
+### 20 🖥📱 Money goes out — **ON DEV** (built 2026-08-14) · ⚠ carries migration **234** (dev only)
+
+**What changed:** the books gain an **outbox**. Until now a credit could only ever lower a family's
+bills; now the coach can hand it back in cash, and a family who pays for something out of pocket
+is properly owed for it. Three things to try:
+
+- **Pay out.** On a player's record, beside the line saying what the team is holding, a **Pay out**
+  button opens the mirror of Record payment — how much, **the day the money left**, how it went,
+  an optional note. It posts one **money out** line to the team's books dated that day, and each
+  payout sits in the record as its own receipt with a remove that **voids** the books entry.
+- **Paying out puts their bills back up.** If that money was lowering an installment, handing it
+  over in cash means it can't do both jobs — the bill returns to its full amount and reminders go
+  back to asking for it. The sheet says so before you save. This is why the button appears even
+  when a family's credit is currently *on* a bill.
+- **Paid by.** An expense now asks who paid: the team (as always), or **a family, out of pocket**.
+  Choose a family and the cost counts in the budget exactly as before, **no cash leaves the team**,
+  and that family is owed the money as an ordinary credit.
+
+**Where:** Money → **Player Dues** → open a player (the Pay out strip, the sheet, the Paid out
+list) · Money → **Expenses & Payables** → **Add Expense** → **Paid by**.
+
+**Fixture:** the same `QA Mid Season U14` as §19 (`qa-money-head@dev.local` / `devpass123`), re-seed
+with `node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs money`. It now ships **Ash** with
+half their rebate already paid out ($75 of $150), and **Gio's family** having covered a $120 pizza
+night out of pocket.
+
+- [ ] **Ash's receipt.** Open Ash: the Paid out list shows −$75.00 with its date and method, and
+      the strip above says what's still held. The team ledger has a matching money-out line dated
+      the day it left (not the day it was typed).
+- [ ] **Pay out the rest**, then check Ash's bills and the reminder figures — nothing should still
+      be counting that money as a credit against their dues.
+- [ ] **Remove a payout** (trash icon on the row): the money goes back to being owed, the bills
+      drop again, and the books entry is **voided**, never deleted — check the team ledger shows
+      the void rather than a vanished row.
+- [ ] **Pay out a credit that is currently on a bill.** Open **Blair** (whose rebate is lowering
+      their last installment): the Pay out button must be offered, and paying out must put that
+      installment back to its full amount.
+- [ ] ⚠ **The ceiling.** Try to pay out more than a family has in credit — refused, with the real
+      figure in the message. Try to pay out against **Em** (whose balance was *forgiven*): there
+      should be nothing payable, because forgiveness was never the family's money.
+- [ ] **Gio's pizza.** Money → Expenses: the $120 "Team pizza night" is there, **already settled**
+      (no Mark paid to press), and Gio's family now holds a $120 credit. Budget vs. Actual counts
+      the $120 as spending; the Money Overview's **cash out / cash on hand** must NOT — that money
+      never left the team's account.
+- [ ] **Add your own out-of-pocket expense** from Add Expense → Paid by → a family: the note under
+      the picker states the consequence before you save.
+- [ ] ⚠ **Deleting a credit that's been paid out** is refused with a reason pointing at the payout
+      (try it on Ash) — the books must never owe a family less than they've already received.
+- [ ] 📱 Phone: the Pay out sheet, the Paid out list and the Paid by picker at 390px.
+
+⚠ **Migration 234 is dev-only** — it must reach prod before this ships. ⚠ This is **Pass 2 of 3**;
+the season-end settlement sheet (Pass 3) is where all of this is put to work. Full build + review
+log in the plan.
 
 ---
 

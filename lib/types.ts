@@ -2222,6 +2222,26 @@ export interface RepDuesPayment {
   createdAt: string;
 }
 
+/**
+ * The OUTBOX (mig 234) — cash handed back to a family against their credits. Deliberately the
+ * mirror of RepDuesPayment: a credit is money the team owes a family, and this is one of the
+ * three ways it settles. WHICH credits a payout settles is derived at read time, never stored.
+ */
+export interface RepDuesPayout {
+  id: string;
+  programYearId: string;
+  playerId: string;
+  amount: number;
+  /** The day the money LEFT (org-timezone date) — also the ledger entry's date. */
+  paidDate: string;
+  method: DuesPaymentMethod;
+  note: string | null;
+  accountingEntryId: string | null;
+  /** 'recorded' = the Pay out sheet; 'season_settlement' = the season's bulk settlement. */
+  source: 'recorded' | 'season_settlement';
+  createdAt: string;
+}
+
 export interface RepDueReminderCandidate {
   installmentId: string;
   scheduleId: string;
@@ -2307,6 +2327,10 @@ export interface RepTeamExpense {
   paymentMethod: string | null;
   payeeId: string | null;
   payeePayer: string | null;
+  /** Out-of-pocket (mig 234, owner Call 5): a family covered this cost directly. Counts in the
+   *  budget exactly as a team-paid expense; NO team cash left, so cash figures exclude it; and
+   *  the team owes that family, carried as an ordinary `reimbursement` credit. */
+  paidByPlayerId: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;

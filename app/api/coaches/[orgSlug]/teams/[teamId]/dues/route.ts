@@ -8,6 +8,7 @@ import {
   getRepPlayerDuesSchedules,
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
   getRepDuesPaymentsForPlayer,
   upsertRepPlayerDuesSchedule,
   syncDuesPaidProjection,
@@ -18,7 +19,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
-import { creditsTotal, deriveDuesPosition } from '@/lib/dues-credits';
+import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { tournamentToday } from '@/lib/timezone';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
@@ -53,11 +54,15 @@ export const GET = withObservability(async (req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const [rosterPlayers, schedules, allPayments] = await Promise.all([
+  const [rosterPlayers, schedules, allPayments, allPayouts] = await Promise.all([
     getRepRosterPlayers(programYear.id),
     getRepPlayerDuesSchedules(programYear.id),
     getRepDuesPaymentsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
+  // Cash already handed back (mig 234): those dollars are settled, so they stop lowering bills.
+  // One grouping; each player's total comes off their own rows at the point of use.
+  const payoutsByPlayer = groupByPlayer(allPayouts);
 
   const scheduleMap = new Map(schedules.map(s => [s.playerId, s]));
 
@@ -122,8 +127,7 @@ export const GET = withObservability(async (req: Request,
         createdAt:   c.created_at,
       }));
       // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.
-      const totalCredits  = creditsTotal(credits.map(c => ({ amount: c.amount as number })));
-      const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
+      const creditsIssuedTotal = creditsTotal(credits.map(c => ({ amount: c.amount as number })));
 
       // Credits land on bills (owner model 2026-08-14): derived over the CASH remainders, in the
       // team's chosen direction. Cash always claims a bill before a credit does — recompute after
@@ -139,9 +143,17 @@ export const GET = withObservability(async (req: Request,
           createdAt: (c.createdAt as string | null) ?? null,
           description: (c.description as string | null) ?? null,
         })),
+        paidOut: amountsTotal(payoutsByPlayer.get(p.id) ?? []),
         mode: programYear.creditApplication,
       });
       const creditCoverageById = new Map(position.perInstallment.map(c => [c.installmentId, c]));
+
+      // ⚠ A CREDIT HANDED BACK IN CASH NO LONGER REDUCES WHAT THIS FAMILY OWES. The Credits
+      // column, the Balance column, the drawer stat, the season-totals footer and the dues export
+      // all read these two figures, and showing the GROSS credit after a payout tells a coach a
+      // family's dues are lowered by money they have already been given (/review 2026-08-14).
+      const totalCredits = Math.max(0, Math.round((creditsIssuedTotal - position.paidOut) * 100) / 100);
+      const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
 
       // ⚠ `remainingAmount` is the NET figure since Pass 1 of the credit model — the cash
       // remainder MINUS credits applied: what the family is actually asked to send. Every
@@ -178,6 +190,17 @@ export const GET = withObservability(async (req: Request,
         leftToSend: position.leftToSend,
         creditApplied: Math.round((position.applied + position.forgivenApplied) * 100) / 100,
         owedBack: position.owedBack,
+        // The outbox (mig 234): what has been handed back, and what still could be.
+        payouts: payoutsByPlayer.get(p.id) ?? [],
+        paidOut: position.paidOut,
+        // ⚠ PAYABLE ≠ OWED-BACK. A credit sitting ON a bill can still be handed over in cash —
+        // the bill simply goes back up (binding mockup §5: Riley's $500 is applied to #4 and the
+        // sheet still pays it out). Gating the button on owedBack would hide it in exactly the
+        // case the mockup draws. Forgiveness is excluded: never the family's money.
+        payableNow: payoutCeiling(
+          credits.map(c => ({ amount: c.amount as number, creditType: c.creditType as string })),
+          payoutsByPlayer.get(p.id) ?? [],
+        ),
       };
     }),
   );

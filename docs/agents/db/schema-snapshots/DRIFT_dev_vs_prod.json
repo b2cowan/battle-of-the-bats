@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-14",
-  "total": 58,
+  "total": 88,
   "counts": {
-    "tables": 2,
-    "columns": 31,
-    "indexes": 4,
-    "constraints": 13,
-    "rls": 8
+    "tables": 3,
+    "columns": 46,
+    "indexes": 6,
+    "constraints": 22,
+    "rls": 11
   },
   "items": [
     {
@@ -23,6 +23,18 @@
     },
     {
       "key": "check:only-dev:rep_dues_payments.rep_dues_payments_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payouts.rep_dues_payouts_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payouts.rep_dues_payouts_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_dues_payouts.rep_dues_payouts_source_check",
       "sig": ""
     },
     {
@@ -43,6 +55,10 @@
     },
     {
       "key": "column:only-dev:rep_budget_lines.line_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_credits.expense_id",
       "sig": ""
     },
     {
@@ -102,7 +118,63 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_dues_payouts.accounting_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.paid_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payouts.team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_program_years.credit_application",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_expenses.paid_by_player_id",
       "sig": ""
     },
     {
@@ -166,6 +238,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_dues_credits.rep_dues_credits_expense_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_dues_credits.rep_dues_credits_payment_id_fkey",
       "sig": ""
     },
@@ -198,6 +274,38 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_accounting_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payouts.rep_dues_payouts_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_paid_by_player_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_import_events.fk_rep_team_import_events_created_by",
       "sig": ""
     },
@@ -222,6 +330,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_dues_payouts_year_player",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:idx_rep_team_import_events_season",
       "sig": ""
     },
@@ -230,11 +342,19 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_dues_payouts_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_import_events_pkey",
       "sig": ""
     },
     {
       "key": "table:only-dev:rep_dues_payments",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_dues_payouts",
       "sig": ""
     },
     {

@@ -8801,9 +8801,9 @@ export async function markRepPlayerDuesInstallmentPaid(
 
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
-import type { RepDuesPayment, DuesPaymentMethod, DuesCredit } from './types';
+import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
 import { allocateDuesPayments, duesPaidAmount, strandedExcess } from './dues-payments';
-import { creditsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer } from './dues-credits';
+import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {
   return {
@@ -9068,6 +9068,265 @@ export async function recordRepDuesPayment(opts: {
 }
 
 /**
+ * The debt an out-of-pocket expense creates (owner Call 5, mig 234): a family covered a team cost
+ * directly, so the team owes them — carried as an ordinary `reimbursement` credit with the same
+ * three-way lifecycle as any other (it can lower their bills, be paid out, or reach season's end).
+ *
+ * ⚠ NOTHING IS POSTED TO THE CASH LEDGER, deliberately. No team money moved. The alternative —
+ * an income entry from the family plus an expense — nets to zero but invents money-in from a
+ * family that sent none, and the cash line would then claim dollars the team never held. The
+ * expense itself still counts in the budget and in Budget vs. Actual exactly as if the team paid.
+ */
+async function createReimbursementCreditForExpense(opts: {
+  programYearId: string;
+  playerId: string;
+  expenseId: string;
+  amount: number;
+  description: string;
+  creditDate: string;
+  createdBy: string | null;
+}): Promise<DuesCredit | null> {
+  if (opts.amount <= 0.005) return null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .insert({
+      program_year_id: opts.programYearId,
+      player_id: opts.playerId,
+      // The link back (mig 234) — deleting the expense deletes the debt it created.
+      expense_id: opts.expenseId,
+      amount: Math.round(opts.amount * 100) / 100,
+      description: opts.description,
+      credit_type: 'reimbursement',
+      credit_date: opts.creditDate,
+      created_by: opts.createdBy,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepDuesCredit(data);
+}
+
+/**
+ * THE out-of-pocket door: the expense AND the debt it creates, written together.
+ *
+ * ⚠ Deliberately the only way to set `paid_by_player_id`. Leaving the two writes to each caller
+ * made "remember to create the credit" a convention in a docstring — an import, a seeder or a
+ * later PATCH could produce an out-of-pocket expense with no credit behind it, silently, and the
+ * family would simply never be repaid. Here it cannot happen: one function, both rows.
+ */
+export async function createOutOfPocketExpense(opts: {
+  expense: Parameters<typeof createRepTeamExpense>[0];
+  playerId: string;
+  creditDate: string;
+}): Promise<{ expense: RepTeamExpense; reimbursementCredit: DuesCredit | null }> {
+  // ⚠ CREATED ALREADY PAID, deliberately: the family has settled it, so the cost is real and
+  // must count in the budget and Budget vs. Actual from this moment (both gate on expense_paid_at).
+  // The alternative — leaving it unpaid for the coach to Mark paid — is the trap: that action
+  // posts a CASH entry, and no team cash ever moves for an out-of-pocket cost.
+  const expense = await createRepTeamExpense({
+    ...opts.expense,
+    paidByPlayerId: opts.playerId,
+    expensePaidAt: opts.creditDate,
+  });
+  try {
+    const reimbursementCredit = await createReimbursementCreditForExpense({
+      programYearId: opts.expense.programYearId,
+      playerId: opts.playerId,
+      expenseId: expense.id,
+      amount: opts.expense.amount,
+      description: `Paid out of pocket — ${opts.expense.description}`,
+      creditDate: opts.creditDate,
+      createdBy: opts.expense.createdBy ?? null,
+    });
+    return { expense, reimbursementCredit };
+  } catch (e) {
+    // ⚠ WITHOUT THIS the guarantee above is only a wish: an expense marked "a family paid this"
+    // with no debt behind it is INVISIBLE — it looks like an ordinary out-of-pocket cost while
+    // the family is simply never repaid. There is no transaction available here, so the first
+    // write undoes itself and the coach sees a plain failure they can retry.
+    await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expense.id);
+    throw e;
+  }
+}
+
+// Player Dues Payouts (mig 234 — the OUTBOX; the mirror of the receipt book above)
+
+function mapRepDuesPayout(r: any): RepDuesPayout {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    playerId: r.player_id,
+    amount: Number(r.amount),
+    paidDate: r.paid_date,
+    method: r.method,
+    note: r.note ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+    source: r.source,
+    createdAt: r.created_at,
+  };
+}
+
+/** A season's payouts in one query — the shape every credit reader needs for `paidOut`. */
+export async function getRepDuesPayoutsByProgramYear(programYearId: string): Promise<RepDuesPayout[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payouts')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('paid_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesPayout);
+}
+
+export async function getRepDuesPayoutsForPlayer(
+  programYearId: string,
+  playerId: string,
+): Promise<RepDuesPayout[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payouts')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('player_id', playerId)
+    .order('paid_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesPayout);
+}
+
+export async function getRepDuesPayout(payoutId: string): Promise<RepDuesPayout | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payouts')
+    .select('*')
+    .eq('id', payoutId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepDuesPayout(data) : null;
+}
+
+/** Refused because the amount exceeds what the family still has in credit. Carries the true
+ *  ceiling so the caller can say so without asking the database twice. */
+export class PayoutExceedsOwedError extends Error {
+  constructor(public readonly owedBack: number) {
+    super('PAYOUT_EXCEEDS_OWED');
+    this.name = 'PayoutExceedsOwedError';
+  }
+}
+
+/**
+ * Hand a family their money back — the mirror of `recordRepDuesPayment`, and the same order for
+ * the same reason: the LEDGER ENTRY FIRST (dated the day the money left), then the row that
+ * points at it. A payout row with no entry would be money that left the books' sight; an entry
+ * with no row is a visible, correctable overstatement.
+ *
+ * ⚠ THE CEILING IS THE FAMILY'S OWED-BACK MONEY, and it is computed here rather than trusted from
+ * the client: credits issued (excluding `forgiven` — debt relief is never the family's money and
+ * can never be paid out) minus what already went out. Paying out beyond it would invent a debt.
+ *
+ * Nothing about WHICH credit is settled is stored — `lib/dues-credits.ts` derives that on read,
+ * which is also why paying out automatically puts the family's bills back up: those dollars are
+ * settled in cash now, so they stop lowering installments.
+ */
+export async function recordRepDuesPayout(opts: {
+  team: { id: string; orgId: string; name: string };
+  programYearId: string;
+  playerId: string;
+  playerName: string;
+  amount: number;
+  paidDate: string;
+  method: DuesPaymentMethod;
+  note?: string | null;
+  createdBy: string;
+  source?: 'recorded' | 'season_settlement';
+}): Promise<{ payout: RepDuesPayout }> {
+  const [credits, existingPayouts, ledger] = await Promise.all([
+    getRepDuesCreditsForPlayer(opts.programYearId, opts.playerId),
+    getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId),
+    getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name),
+  ]);
+
+  const owedBackCeiling = payoutCeiling(credits, existingPayouts);
+  if (Math.round(opts.amount * 100) > Math.round(owedBackCeiling * 100)) {
+    // Carry the ceiling ON the error — the route needs it for the message, and re-fetching the
+    // same two queries to recompute a number this scope already holds is pure waste.
+    throw new PayoutExceedsOwedError(owedBackCeiling);
+  }
+
+  const entry = await createEntry(
+    ledger.id,
+    {
+      entryDate: opts.paidDate,
+      description: `Dues credit paid out — ${opts.playerName}`,
+      amount: opts.amount,
+      entryType: 'expense',
+      status: 'posted',
+      category: 'Player Dues',
+      paymentMethod: opts.method,
+      notes: opts.note ?? null,
+    },
+    opts.createdBy,
+  );
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payouts')
+    .insert({
+      program_year_id: opts.programYearId,
+      player_id: opts.playerId,
+      org_id: opts.team.orgId,
+      team_id: opts.team.id,
+      amount: Math.round(opts.amount * 100) / 100,
+      paid_date: opts.paidDate,
+      method: opts.method,
+      note: opts.note?.trim() || null,
+      accounting_entry_id: entry.id,
+      source: opts.source ?? 'recorded',
+      created_by: opts.createdBy,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  const payout = mapRepDuesPayout(data);
+
+  // ⚠ RE-CHECK AGAINST THE TRUE POST-WRITE STATE — the ceiling above was read before this insert,
+  // and two concurrent Pay out clicks would each have passed it against the same stale snapshot,
+  // between them handing a family more cash than the team owes. This is the same lesson the
+  // payment path learned in the 2026-08-13 review (`reconcileOverpaymentCredits` reconciles to
+  // the true state rather than trusting a pre-write read); the payout path is irreversible cash,
+  // so it gets the same treatment. The loser of the race undoes ITSELF: void the entry, delete
+  // the row, refuse — leaving the winner's payout and the books intact.
+  const allPayouts = await getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId);
+  const trueCeiling = payoutCeiling(credits, []);
+  if (amountsTotal(allPayouts) > trueCeiling + 0.005) {
+    await removeRepDuesPayout(payout, opts.team);
+    throw new PayoutExceedsOwedError(payoutCeiling(credits, allPayouts.filter(p => p.id !== payout.id)));
+  }
+
+  // Bills go back up: the paid-out dollars stop covering installments, so the paid_at projection
+  // (cash-only) is unaffected — but a credit-covered row may now be open again, and every reader
+  // re-derives on its next read. Nothing to stamp here; that is the point of deriving.
+  return { payout };
+}
+
+/**
+ * Remove a payout: VOID its ledger entry first (soft-void — the books only ever grow), then
+ * delete the row. Exactly the shape of `removeRepDuesPayment`, and the undo it gives: the money
+ * goes back to being owed, and the family's bills drop again on the next read.
+ */
+export async function removeRepDuesPayout(
+  payout: RepDuesPayout,
+  team: { id: string; orgId: string; name: string },
+): Promise<void> {
+  if (payout.accountingEntryId) {
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    await voidEntry(payout.accountingEntryId, ledger.id);
+  }
+  const { error } = await supabaseAdmin
+    .from('rep_dues_payouts')
+    .delete()
+    .eq('id', payout.id);
+  if (error) throw error;
+}
+
+/**
  * THE automatic overpayment credit, made symmetric (owner ruling 5 + review 2026-08-13 Criticals
  * 1–2): whenever money-received and the schedule total change relative to each other, the
  * payment-LINKED credits are reconciled to `max(0, paymentsTotal − scheduleTotal)` —
@@ -9207,6 +9466,7 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     paymentMethod: r.payment_method ?? null,
     payeeId: r.payee_id ?? null,
     payeePayer: r.payee_payer ?? null,
+    paidByPlayerId: r.paid_by_player_id ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -9250,6 +9510,12 @@ export async function createRepTeamExpense(fields: {
   paymentMethod?: string | null;
   payeeId?: string | null;
   payeePayer?: string | null;
+  /** Out-of-pocket (mig 234): a family covered this cost directly. Written only through
+   *  `createOutOfPocketExpense`, which pairs it with the debt it creates. */
+  paidByPlayerId?: string | null;
+  /** Settled on creation — used by the out-of-pocket door, where the cost is already paid (by
+   *  the family) and must count in the budget immediately without any cash entry. */
+  expensePaidAt?: string | null;
   createdBy?: string | null;
 }): Promise<RepTeamExpense> {
   const { data, error } = await supabaseAdmin
@@ -9271,6 +9537,8 @@ export async function createRepTeamExpense(fields: {
       payment_method:   fields.paymentMethod ?? null,
       payee_id:         fields.payeeId ?? null,
       payee_payer:      fields.payeePayer ?? null,
+      paid_by_player_id: fields.paidByPlayerId ?? null,
+      expense_paid_at:  fields.expensePaidAt ?? null,
       created_by:       fields.createdBy ?? null,
     })
     .select()
@@ -9536,14 +9804,16 @@ export async function getDueReminderCandidates(
   // 2026-08-14) — a reminder chases what the family is actually asked to SEND: never a face
   // value, and never a dollar their fundraising already covered. Allocation runs over each
   // player's WHOLE schedule, then the window filter below picks which remainders get chased.
-  const [{ data: payRows, error: payErr }, seasonCredits] = await Promise.all([
+  const [{ data: payRows, error: payErr }, seasonCredits, seasonPayouts] = await Promise.all([
     supabaseAdmin
       .from('rep_dues_payments')
       .select('id, player_id, amount, received_date, created_at')
       .eq('program_year_id', programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
   if (payErr) throw payErr;
+  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
   const paysByPlayer = new Map<string, any[]>();
   for (const p of payRows ?? []) {
     if (!paysByPlayer.has(p.player_id)) paysByPlayer.set(p.player_id, []);
@@ -9565,6 +9835,7 @@ export async function getDueReminderCandidates(
       installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
       payments: (paysByPlayer.get(s.player_id) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
       credits: creditsByPlayer.get(s.player_id) ?? [],
+      paidOut: paidOutByPlayer.get(s.player_id) ?? 0,
       mode: programYear.creditApplication,
     });
     for (const c of position.perInstallment) {
@@ -9696,16 +9967,18 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
   // still null — the stamp is only a full-coverage projection. Without this, "Remind all" would
   // email "no dues payments yet" to a paying family, and its count would disagree with the
   // panel's isNeverPaidPlayer banner (which reads paidAmount).
-  const [{ data: payRows, error: payErr }, seasonCredits] = await Promise.all([
+  const [{ data: payRows, error: payErr }, seasonCredits, seasonPayouts] = await Promise.all([
     supabaseAdmin
       .from('rep_dues_payments')
       .select('player_id')
       .eq('program_year_id', programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
   if (payErr) throw payErr;
   const paidPlayerIds = new Set((payRows ?? []).map((p: any) => p.player_id));
   const creditsByPlayer = groupByPlayer(seasonCredits);
+  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
 
   // What each never-paid family is still asked to SEND: their whole schedule (no payments by
   // definition) minus whatever their credits cover in the team's application mode.
@@ -9717,6 +9990,7 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
       installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
       payments: [],
       credits: creditsByPlayer.get(s.player_id) ?? [],
+      paidOut: paidOutByPlayer.get(s.player_id) ?? 0,
       mode: programYear.creditApplication,
     });
     leftToSendBySchedule.set(s.id, position.leftToSend);

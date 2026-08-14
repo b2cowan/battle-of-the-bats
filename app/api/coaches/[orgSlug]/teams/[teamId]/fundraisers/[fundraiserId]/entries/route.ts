@@ -7,13 +7,14 @@ import {
   getOrCreateRepTeamLedger,
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
   createEntry,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
-import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
+import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -96,14 +97,16 @@ export const GET = withObservability(async (_req: Request,
   // as having paid nothing) and clamped a credits-subtracted figure it called "outstanding" — a
   // different number wearing the shared definition's word.
   const rosterIds = (roster ?? []).map(p => p.id);
-  const [{ data: allInstallments }, seasonPayments, seasonCredits] = await Promise.all([
+  const [{ data: allInstallments }, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
     supabaseAdmin
       .from('rep_player_dues_installments')
       .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
       .in('player_id', rosterIds),
     getRepDuesPaymentsByProgramYear(programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
+  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
 
   const instsByPlayer = new Map<string, any[]>();
   for (const i of (allInstallments ?? []) as any[]) {
@@ -122,6 +125,7 @@ export const GET = withObservability(async (_req: Request,
       installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
       payments: paysByPlayer.get(p.id) ?? [],
       credits: creditsByPlayer.get(p.id) ?? [],
+      paidOut: paidOutByPlayer.get(p.id) ?? 0,
       mode: programYear.creditApplication,
     });
     const instById = new Map(insts.map((i: any) => [i.id as string, i]));

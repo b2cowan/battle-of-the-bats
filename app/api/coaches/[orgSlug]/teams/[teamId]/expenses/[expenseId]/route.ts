@@ -85,6 +85,17 @@ export const PATCH = withObservability(async (req: Request,
     if (expense.expensePaidAt) {
       return NextResponse.json({ error: 'Expense already marked paid' }, { status: 409 });
     }
+    // ⚠ AN OUT-OF-POCKET COST IS ALREADY SETTLED — a family paid it, and no team cash ever moves
+    // for it (owner Call 5, mig 234). Such an expense is created already-paid, so reaching this
+    // action at all means something is out of step; posting a cash-out entry here would invent an
+    // outflow the account never had and put the coach's "Cash on hand" at odds with the org
+    // ledger for exactly that amount (/review 2026-08-14).
+    if (expense.paidByPlayerId) {
+      return NextResponse.json(
+        { error: 'A family paid this out of pocket, so it is already settled — no team money leaves the account for it.' },
+        { status: 409 },
+      );
+    }
     const entry = await createEntry(
       ledger.id,
       {

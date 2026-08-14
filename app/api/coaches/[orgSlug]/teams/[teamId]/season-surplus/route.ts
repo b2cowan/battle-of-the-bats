@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers, getRepDuesPaymentsByProgramYear } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers, getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { creditsTotal, creditsTotalByPlayer } from '@/lib/dues-credits';
+import { groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -42,7 +42,7 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
   // Load all credits for this program year
   const { data: allCredits } = await supabaseAdmin
     .from('rep_dues_credits')
-    .select('player_id, amount')
+    .select('player_id, amount, credit_type')
     .eq('program_year_id', programYearId);
 
   // Load dues schedules for rolling balance calculation
@@ -64,21 +64,39 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
 
   const paidMap = paymentsTotalByPlayer(seasonPayments);
 
-  // ONE credit definition (lib/dues-credits.ts) — this was one of five hand-copied credit sums.
-  const creditRows = ((allCredits ?? []) as Array<{ player_id: string; amount: number }>)
-    .map(c => ({ playerId: c.player_id, amount: Number(c.amount) }));
-  const creditMap = creditsTotalByPlayer(creditRows);
-  const totalAllCredits = creditsTotal(creditRows);
+  // ⚠ MONEY ALREADY HANDED BACK IS NOT STILL OWED, and FORGIVENESS WAS NEVER OWED (migs 233/234).
+  // Without the first, a family paid $75 in cash during the season was scheduled to be refunded
+  // that same $75 again at season's end — the double-payout this whole project exists to kill.
+  // Pass 3 replaces this function outright; until then it must not promise money that has already
+  // gone out, nor money the team never held.
+  const seasonPayouts = await getRepDuesPayoutsByProgramYear(programYearId);
+  const payoutsByPlayer = groupByPlayer(seasonPayouts);
+  const creditsByPlayer = groupByPlayer(
+    ((allCredits ?? []) as Array<{ player_id: string; amount: number; credit_type: string }>)
+      .map(c => ({ playerId: c.player_id, amount: Number(c.amount), creditType: c.credit_type })),
+  );
 
-  // Even pool = surplus minus the portion already accounted for by individual credits
-  const evenPool = Math.max(0, Math.round((totalSurplus - totalAllCredits) * 100) / 100);
+  // ⚠ ONE operation for the row and the total: what each family is still owed, summed. Computing
+  // the total from unclamped figures while each ROW clamped at zero let one family's over-payout
+  // silently cancel another family's real credit inside the pool — an overpay across players
+  // (/review 2026-08-14). The per-player figure IS the definition; the total is its sum.
+  const owedByPlayer = new Map<string, number>();
+  for (const p of activePlayers) {
+    owedByPlayer.set(p.id, payoutCeiling(creditsByPlayer.get(p.id) ?? [], payoutsByPlayer.get(p.id) ?? []));
+  }
+  const creditsStillOwed = Math.round([...owedByPlayer.values()].reduce((s, v) => s + v * 100, 0)) / 100;
+
+  // Even pool = surplus minus the portion still owed as individual credits (what has already
+  // been handed back in cash is neither owed nor available to share).
+  const evenPool = Math.max(0, Math.round((totalSurplus - creditsStillOwed) * 100) / 100);
   const evenShare = playerCount > 0 ? Math.round((evenPool / playerCount) * 100) / 100 : 0;
 
   // Build per-player breakdown — the SHARED definitions, not a local re-derivation.
   const breakdown = activePlayers.map(p => {
     const sched = scheduleMap.get(p.id);
     const paid  = sched ? duesPaidAmount(paidMap.get(p.id) ?? 0, sched.totalAmount) : 0;
-    const credits = creditMap.get(p.id) ?? 0;
+    // What this family is still owed — the same definition the total above sums.
+    const credits = owedByPlayer.get(p.id) ?? 0;
     const outstanding = outstandingForSchedule(sched ? { totalAmount: sched.totalAmount } : null, paid);
     const rollingBalance = Math.round((outstanding - credits) * 100) / 100;
 
@@ -93,7 +111,7 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
     };
   });
 
-  return { breakdown, totalAllCredits, evenPool, playerCount };
+  return { breakdown, totalAllCredits: creditsStillOwed, evenPool, playerCount };
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/season-surplus

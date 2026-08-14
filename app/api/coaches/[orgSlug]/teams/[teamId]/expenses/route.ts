@@ -6,11 +6,14 @@ import {
   getActiveRepProgramYear,
   getRepTeamExpenses,
   createRepTeamExpense,
+  createOutOfPocketExpense,
   getRepTeamTagLibrary,
   getRepTeamExpenseTagsMap,
   setRepTeamExpenseTags,
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
@@ -80,6 +83,7 @@ export const POST = withObservability(async (req: Request,
     paymentMethod = null,
     payeeId = null,
     payeePayer = null,
+    paidByPlayerId = null,
   } = body;
 
   if (!expenseType || !['expense', 'tournament_payable'].includes(expenseType)) {
@@ -90,6 +94,31 @@ export const POST = withObservability(async (req: Request,
   }
   if (typeof amount !== 'number' || amount <= 0) {
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
+  }
+
+  // Out-of-pocket (owner Call 5): a family covered this cost directly. Validate the player is on
+  // THIS season's roster before anything is written — the credit it creates is real money owed.
+  let paidByPlayer: { id: string; name: string } | null = null;
+  if (paidByPlayerId) {
+    if (expenseType !== 'expense') {
+      return NextResponse.json(
+        { error: 'A payable is billed to the team — only a plain expense can be paid out of pocket.' },
+        { status: 400 },
+      );
+    }
+    const { data: row } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('id, player_first_name, player_last_name')
+      .eq('id', paidByPlayerId)
+      .eq('program_year_id', programYear.id)
+      .single();
+    if (!row) {
+      return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });
+    }
+    paidByPlayer = {
+      id: row.id,
+      name: [row.player_first_name, row.player_last_name].filter(Boolean).join(' ') || 'player',
+    };
   }
 
   // Optional money tags — validated against this team's expense-tag library (own + org-shared)
@@ -103,7 +132,7 @@ export const POST = withObservability(async (req: Request,
     tagIds = resolvedTags;
   }
 
-  const expense = await createRepTeamExpense({
+  const expenseFields = {
     programYearId:  programYear.id,
     teamId:         team.id,
     orgId:          team.orgId,
@@ -121,11 +150,22 @@ export const POST = withObservability(async (req: Request,
     payeeId:        payeeId || null,
     payeePayer:     payeePayer?.trim() || null,
     createdBy:      ctx!.user.id,
-  });
+  };
+
+  // Out-of-pocket goes through the ONE door that writes the expense and the debt it creates
+  // together — a team-paid expense takes the ordinary path. No cash ledger entry either way
+  // here: the team's account only moves when a payable/expense is marked paid.
+  const { expense, reimbursementCredit } = paidByPlayer
+    ? await createOutOfPocketExpense({
+        expense: expenseFields,
+        playerId: paidByPlayer.id,
+        creditDate: tournamentToday(),
+      })
+    : { expense: await createRepTeamExpense(expenseFields), reimbursementCredit: null };
 
   if (tagIds.length > 0) {
     await setRepTeamExpenseTags(expense.id, tagIds);
   }
 
-  return NextResponse.json({ expense, tagIds }, { status: 201 });
+  return NextResponse.json({ expense, tagIds, reimbursementCredit }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses' });

@@ -1425,6 +1425,16 @@
     "indexdef": "CREATE UNIQUE INDEX rep_dues_payments_pkey ON public.rep_dues_payments USING btree (id)"
   },
   {
+    "tablename": "rep_dues_payouts",
+    "indexname": "idx_rep_dues_payouts_year_player",
+    "indexdef": "CREATE INDEX idx_rep_dues_payouts_year_player ON public.rep_dues_payouts USING btree (program_year_id, player_id)"
+  },
+  {
+    "tablename": "rep_dues_payouts",
+    "indexname": "rep_dues_payouts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_dues_payouts_pkey ON public.rep_dues_payouts USING btree (id)"
+  },
+  {
     "tablename": "rep_fundraiser_entries",
     "indexname": "rep_fundraiser_entries_fundraiser_id_player_id_key",
     "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_fundraiser_id_player_id_key ON public.rep_fundraiser_entries USING btree (fundraiser_id, player_id)"

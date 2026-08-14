@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
+import {
+  getCoachingAssignmentsForUser,
+  getRepTeam,
+  getActiveRepProgramYear,
+  getRepDuesCreditsForPlayer,
+  getRepDuesPayoutsForPlayer,
+} from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { amountsTotal, payoutCeiling } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -36,6 +43,27 @@ export const DELETE = withObservability(async (_req: Request,
   const { assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
+
+  // ⚠ A CREDIT THAT HAS ALREADY BEEN PAID OUT CANNOT SIMPLY VANISH (mig 234). Removing it would
+  // leave the family holding cash the books no longer say they were owed — and, at season's end,
+  // that missing credit silently inflated everyone else's share of the pool (/review 2026-08-14).
+  // Remove the payout first; that is the undo, and it voids the ledger line honestly.
+  const [credits, payouts] = await Promise.all([
+    getRepDuesCreditsForPlayer(programYear.id, playerId),
+    getRepDuesPayoutsForPlayer(programYear.id, playerId),
+  ]);
+  // The rule, stated once: whatever credits remain must still cover what has gone out.
+  const paidOut = amountsTotal(payouts);
+  const creditsAfterDelete = payoutCeiling(credits.filter(c => c.id !== creditId), []);
+  if (paidOut > creditsAfterDelete + 0.005) {
+    return NextResponse.json(
+      {
+        error: `$${paidOut.toFixed(2)} has already been paid out to this family — removing this credit would leave the books owing them less than they have received. Remove the payout first.`,
+        code: 'CREDIT_HAS_PAYOUT',
+      },
+      { status: 409 },
+    );
+  }
 
   const { error } = await supabaseAdmin
     .from('rep_dues_credits')

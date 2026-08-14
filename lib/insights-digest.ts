@@ -41,6 +41,7 @@ import {
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
   getRepTeamAttendanceReliability,
   type InsightsDigestTeam,
 } from './db';
@@ -61,7 +62,7 @@ import {
 import { resolveCoachCapabilities, canViewMoney } from './coach-capabilities';
 import { outstandingForSchedule } from './dues-status';
 import { duesPaidAmount, paymentsTotalByPlayer } from './dues-payments';
-import { deriveDuesPosition, groupByPlayer } from './dues-credits';
+import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from './dues-credits';
 import type { RepTeamEvent } from './types';
 
 /** One digest per team per window — just under a week so a Sunday job never
@@ -149,7 +150,7 @@ async function digestTeam(
   };
   if (coaches.length === 0) return { sent: 0, preview };
 
-  const [events, players, lineups, templates, schedules, reliability, seasonPayments, seasonCredits] = await Promise.all([
+  const [events, players, lineups, templates, schedules, reliability, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
     getRepTeamEvents(team.programYearId),
     getRepRosterPlayers(team.programYearId),
     getRepTeamSeasonLineups(team.programYearId),
@@ -158,6 +159,7 @@ async function digestTeam(
     getRepTeamAttendanceReliability(team.programYearId),
     getRepDuesPaymentsByProgramYear(team.programYearId),
     getRepDuesCreditsByProgramYear(team.programYearId),
+    getRepDuesPayoutsByProgramYear(team.programYearId),
   ]);
 
   // Dues rows — same per-player math as the dues route (credits excluded, like the
@@ -171,6 +173,7 @@ async function digestTeam(
   }
   const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
   const creditsByPlayer = groupByPlayer(seasonCredits);
+  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
   const duesRows: FindingsDuesRow[] = players.map(p => {
     const schedule = scheduleMap.get(p.id) ?? null;
     const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
@@ -186,6 +189,7 @@ async function digestTeam(
       installments: installments.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
       payments: paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
       credits: creditsByPlayer.get(p.id) ?? [],
+      paidOut: paidOutByPlayer.get(p.id) ?? 0,
       mode: team.creditApplication,
     });
     return {

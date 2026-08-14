@@ -11,6 +11,7 @@ import {
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
   getRepTeamPracticeAttendance,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -21,7 +22,7 @@ import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
+import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 import { computePositionRecency, rankPositionsByStaleness, type PositionRecencyGame } from '@/lib/coach-position-recency';
@@ -192,13 +193,15 @@ export const GET = withObservability(async (req: Request,
 
   // ── Money questions ───────────────────────────────────────────────────────
   if (question.id === 'family_dues' || question.id === 'never_paid') {
-    const [roster, schedules, seasonPayments, seasonCredits] = await Promise.all([
+    const [roster, schedules, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
       getRepRosterPlayers(programYear.id),
       getRepPlayerDuesSchedules(programYear.id),
       getRepDuesPaymentsByProgramYear(programYear.id),
       getRepDuesCreditsByProgramYear(programYear.id),
+      getRepDuesPayoutsByProgramYear(programYear.id),
     ]);
     const creditsByPlayer = groupByPlayer(seasonCredits);
+    const paidOutByPlayer = totalsByPlayer(seasonPayouts);
     const installments = await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id));
     const bySchedule = new Map<string, typeof installments>();
     for (const i of installments) {
@@ -227,6 +230,7 @@ export const GET = withObservability(async (req: Request,
         installments: insts.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
         payments: paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
         credits: creditsByPlayer.get(p.id) ?? [],
+        paidOut: paidOutByPlayer.get(p.id) ?? 0,
         mode: programYear.creditApplication,
       });
       // Money access and guardian PII are independent grants. The GROUPING key is the guardian

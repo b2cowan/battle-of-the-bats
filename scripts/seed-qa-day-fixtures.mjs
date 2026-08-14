@@ -1270,15 +1270,27 @@ async function seedMoneyLab() {
   const u14 = await makeTeam('QA Mid Season U14', 'qa-mid-season-u14', 'U14');
   const curD = await makeYear(u14, yr, 'active');
   await assignStaff(u14, curD);
-  const rosterD = await makeRoster(u14, curD, ['Ash', 'Blair', 'Cam', 'Drew', 'Em', 'Fin', 'Gio', 'Hal']);
+  await makeRoster(u14, curD, ['Ash', 'Blair', 'Cam', 'Drew', 'Em', 'Fin', 'Gio', 'Hal']);
+  // ⚠ RE-READ INCLUDING INACTIVE PLAYERS. `makeRoster` returns only ACTIVE ones, and this team
+  // deliberately has a departed player — so on the second run the list came back one short and
+  // every index after it pointed at the wrong family (the seeder crashed on the eighth). The
+  // cast list below is index-addressed, so it must read the whole roster, in its own order.
+  const rosterD = (await db.from('rep_roster_players').select('id, player_first_name')
+    .eq('program_year_id', curD.id).order('display_order')).data ?? [];
 
   const { data: haveD } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', curD.id).limit(1);
   if (!haveD?.length) {
-    // Fin departed — after the roster exists so re-seeds are stable. ⚠ The DB CHECK allows only
-    // active|inactive ('released' exists in the TS union but not in the constraint — drift,
-    // recorded in the plan; do not "fix" it from a seeder).
+    // Fin departed — and ONLY Fin. Asserted both ways rather than just flipping one row, so a
+    // half-finished earlier run can never leave extra players inactive: the seeder's contract is
+    // to return the team to a known world, not to apply a delta to whatever it finds.
+    // ⚠ The DB CHECK allows only active|inactive ('released' exists in the TS union but not in
+    // the constraint — drift, recorded in the plan; do not "fix" it from a seeder).
     die('D depart Fin', (await db.from('rep_roster_players')
       .update({ status: 'inactive' }).eq('id', rosterD[5].id)).error);
+    die('D restore the rest', (await db.from('rep_roster_players')
+      .update({ status: 'active' })
+      .eq('program_year_id', curD.id)
+      .neq('id', rosterD[5].id)).error);
 
     // A modest budget + some paid spending so the Money screens have ground under them.
     for (const [i, l] of [
@@ -1373,7 +1385,36 @@ async function seedMoneyLab() {
       die('D entry credit link', (await db.from('rep_fundraiser_entries')
         .update({ credit_id: credit.data.id }).eq('id', entry.data.id)).error);
     }
-    ok('MID SEASON U14 seeded — applied/owed-back/forgiven/departed all live (last_first default)');
+    // ── Pass 2: money going the other way ──────────────────────────────────────────────────
+    // Ash paid the whole season in cash before the drive closed, so their $150 rebate found no
+    // bill to lower — the ideal candidate to hand back. HALF of it goes out, deliberately: a
+    // partial payout is the case where "the remainder keeps covering bills" is visible, and it
+    // leaves owed-back money on the row so the Pay out button is still offered.
+    const ashPayout = await db.from('rep_dues_payouts').insert({
+      program_year_id: curD.id, player_id: rosterD[0].id, org_id: org.id, team_id: u14.id,
+      amount: 75, paid_date: dayIn(0, 3), method: 'etransfer',
+      note: 'Half the bottle-drive rebate, by request', source: 'recorded',
+    });
+    die('D payout', ashPayout.error);
+
+    // Gio's family bought the team pizza: the cost counts in the budget, NO team cash moved,
+    // and the team now owes them $120 as a reimbursement credit.
+    // ⚠ Created ALREADY PAID and linked to its credit, exactly as the app writes it: the family
+    // settled it (so it counts in the budget at once, with no cash entry), and the credit carries
+    // expense_id so removing the expense removes the debt it created.
+    const pizza = await db.from('rep_team_expenses').insert({
+      program_year_id: curD.id, team_id: u14.id, org_id: org.id,
+      expense_type: 'expense', description: 'Team pizza night', category: 'Events',
+      amount: 120, expense_paid_at: dayIn(0, 6), paid_by_player_id: rosterD[6].id,
+    }).select('id').single();
+    die('D out-of-pocket expense', pizza.error);
+    die('D reimbursement credit', (await db.from('rep_dues_credits').insert({
+      program_year_id: curD.id, player_id: rosterD[6].id, expense_id: pizza.data.id,
+      amount: 120, description: 'Paid out of pocket — Team pizza night',
+      credit_type: 'reimbursement', credit_date: dayIn(0, 6),
+    })).error);
+
+    ok('MID SEASON U14 seeded — applied/owed-back/forgiven/departed/paid-out/out-of-pocket all live');
   } else note('mid-season team already present');
 
   console.log('');

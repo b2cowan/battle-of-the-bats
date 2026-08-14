@@ -5,12 +5,13 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
-import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
+import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -79,7 +80,7 @@ export const GET = withObservability(async (req: Request,
   if (scheduleIds.length > 0) {
     // ALL installments, not just the window: coverage (mig 232) is derived per player across the
     // whole schedule, so a windowed subset can't be allocated correctly. Window-filter after.
-    const [{ data: installments }, { data: payRows }, seasonCredits] = await Promise.all([
+    const [{ data: installments }, { data: payRows }, seasonCredits, seasonPayouts] = await Promise.all([
       supabaseAdmin
         .from('rep_player_dues_installments')
         .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
@@ -90,7 +91,9 @@ export const GET = withObservability(async (req: Request,
         .select('id, player_id, amount, received_date, created_at')
         .eq('program_year_id', programYear.id),
       getRepDuesCreditsByProgramYear(programYear.id),
+      getRepDuesPayoutsByProgramYear(programYear.id),
     ]);
+    const paidOutByPlayer = totalsByPlayer(seasonPayouts);
 
     // Per-player derivation → how much of each unpaid installment is already covered — by cash
     // AND by credits (owner model 2026-08-14): a bill fundraising covered is not coming due for
@@ -114,6 +117,7 @@ export const GET = withObservability(async (req: Request,
         installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
         payments: (paysByPlayer.get(pid) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
         credits: creditsByPlayer.get(pid) ?? [],
+        paidOut: paidOutByPlayer.get(pid) ?? 0,
         mode: programYear.creditApplication,
       });
       for (const [id, toSend] of toSendById) remainingById.set(id, toSend);

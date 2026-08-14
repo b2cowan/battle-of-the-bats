@@ -27,7 +27,7 @@ import {
   SCHEDULE_COLUMNS, scheduleRows as scheduleExportRows,
 } from '@/lib/coach-money-exports';
 import styles from '../../../../coaches.module.css';
-import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
+import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 
@@ -90,6 +90,8 @@ const BLANK_EXPENSE = {
   amount: '',
   notes: '',
   paymentMethod: '',
+  /** Out-of-pocket (owner Call 5, mig 234) — '' = the team paid, the usual case. */
+  paidByPlayerId: '',
 };
 
 const BLANK_PAYABLE = {
@@ -149,6 +151,9 @@ export function ExpensesPayablesPanel({
   const [expenseTags, setExpenseTags] = useState<RepTeamTag[]>([]);
   const [tagsByExpenseId, setTagsByExpenseId] = useState<Record<string, string[]>>({});
   const [expenseFormTags, setExpenseFormTags] = useState<string[]>([]);
+  /** The roster, for the "Paid by" choice. Fetched once — the picker is the only reader, and an
+   *  expense form on a team with no players simply offers nothing but "The team". */
+  const [roster, setRoster] = useState<Pick<RepRosterPlayer, 'id' | 'playerFirstName' | 'playerLastName'>[]>([]);
   const [payableFormTags, setPayableFormTags] = useState<string[]>([]);
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
@@ -250,6 +255,21 @@ export function ExpensesPayablesPanel({
   const moneyRevision = useMoneyRevision();
   useEffect(() => { load(); }, [load, moneyRevision]);
 
+  // The roster behind "Paid by" — fetched the first time the Add Expense form opens, not on
+  // every mount (the same lazy rule this panel already applies to the schedule tab, and the
+  // payee picker to its own search). Best-effort: a failure just means the picker offers only
+  // "The team", never a broken form.
+  useEffect(() => {
+    if (!showAddExpense || roster.length > 0) return;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const players = Array.isArray(d?.players) ? d.players : [];
+        setRoster(players.filter((p: { status?: string }) => !p.status || p.status === 'active'));
+      })
+      .catch(() => {});
+  }, [showAddExpense, roster.length, orgSlug, teamId]);
+
   // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
   // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
   const loadSchedule = useCallback(async () => {
@@ -326,6 +346,7 @@ export function ExpensesPayablesPanel({
           paymentMethod: expenseForm.paymentMethod.trim() || null,
           payeeId:       expensePayee?.payeeId ?? null,
           payeePayer:    expensePayee?.displayName ?? null,
+          paidByPlayerId: expenseForm.paidByPlayerId || null,
           tagIds:        expenseFormTags,
         }),
       });
@@ -1051,6 +1072,31 @@ export function ExpensesPayablesPanel({
                   onChange={setExpensePayee}
                   saveScope="team"
                 />
+              </div>
+              {/* Paid by (owner Call 5, mig 234). Team is the default and the usual case; the
+                  other answer is a parent who bought the pizza. The consequence is stated below
+                  rather than discovered on the books afterwards. */}
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>Paid by</label>
+                <select
+                  className={styles.input}
+                  value={expenseForm.paidByPlayerId}
+                  onChange={e => setExpenseForm(f => ({ ...f, paidByPlayerId: e.target.value }))}
+                >
+                  <option value="">The team</option>
+                  {roster.map(p => (
+                    <option key={p.id} value={p.id}>
+                      A family, out of pocket — {[p.playerLastName, p.playerFirstName].filter(Boolean).join(', ')}
+                    </option>
+                  ))}
+                </select>
+                {expenseForm.paidByPlayerId && (
+                  <p className={styles.muted} style={{ margin: '0.35rem 0 0', fontSize: '0.78rem' }}>
+                    Counts in the budget as usual. <strong>No cash leaves the team</strong> — instead the
+                    team owes this family {expenseForm.amount ? fmt(Number(expenseForm.amount) || 0) : 'the amount'},
+                    saved as a credit you can put against their dues or pay out any time.
+                  </p>
+                )}
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Notes</label>

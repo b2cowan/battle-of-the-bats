@@ -131,7 +131,7 @@ describe('dues definitions have one home', () => {
     assert.deepEqual(
       offenders,
       [],
-      `hand-rolled credit sum found outside lib/dues-credits — use creditsTotal / creditsTotalByPlayer instead:\n  ${offenders.join('\n  ')}`,
+      `hand-rolled credit sum found outside lib/dues-credits — use creditsTotal / totalsByPlayer instead:\n  ${offenders.join('\n  ')}`,
     );
   });
 

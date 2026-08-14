@@ -26,6 +26,7 @@ import type {
   RepPlayerDuesSchedule,
   RepPlayerDuesInstallment,
   RepDuesPayment,
+  RepDuesPayout,
   DuesPaymentMethod,
   DuesCredit,
   DuesCreditType,
@@ -67,6 +68,12 @@ interface PlayerWithDues {
   leftToSend: number;
   creditApplied: number;
   owedBack: number;
+  /** The outbox (mig 234): cash already handed back, and the receipts for it. */
+  payouts: RepDuesPayout[];
+  paidOut: number;
+  /** The most that may be handed over in cash right now — credits not yet paid out, INCLUDING
+   *  any currently sitting on a bill (paying those out simply puts the bill back up). */
+  payableNow: number;
 }
 
 interface SeasonSurplusData {
@@ -153,6 +160,13 @@ const BLANK_CREDIT_FORM = {
   creditType: 'contribution' as DuesCreditType,
   creditDate: tournamentToday(),
   notes:      '',
+};
+
+const BLANK_PAYOUT_FORM = {
+  amount:   '',
+  paidDate: tournamentToday(),
+  method:   'etransfer' as DuesPaymentMethod,
+  note:     '',
 };
 
 const BLANK_PAYMENT_FORM = {
@@ -279,6 +293,12 @@ export function PlayerDuesPanel({
   // The team-wide credits setting (owner Call 2, mig 233) — how credits meet bills.
   const [creditMode, setCreditMode] = useState<CreditApplicationMode | null>(null);
   const [creditModeSaving, setCreditModeSaving] = useState(false);
+  // Paying a credit out in cash (mig 234) — the mirror of Record payment.
+  const [payingOut, setPayingOut] = useState(false);
+  const [payoutForm, setPayoutForm] = useState(BLANK_PAYOUT_FORM);
+  const [payoutSaving, setPayoutSaving] = useState(false);
+  const [payoutError, setPayoutError] = useState('');
+  const [deletingPayoutId, setDeletingPayoutId] = useState<string | null>(null);
   // "See an example" — what the reminder email says and when it goes out. Read-only, so it
   // carries no unsaved-changes guard and needs none of the tabActive plumbing.
   const [reminderPreviewOpen, setReminderPreviewOpen] = useState(false);
@@ -313,6 +333,62 @@ export function PlayerDuesPanel({
       })
       .catch(() => {});
   }, [orgSlug, teamId, seasonQuery]);
+
+  /** Hand a family their credit back in cash. Their bills go back up — those dollars are settled
+   *  now — which is why this reloads rather than patching state locally. */
+  async function savePayout() {
+    if (!selected) return;
+    setPayoutError('');
+    setPayoutSaving(true);
+    try {
+      const amount = parseFloat(payoutForm.amount);
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter an amount to pay out');
+      // The ceiling itself is the SERVER's call (it re-derives from the database and owns the
+      // refusal wording); this is only the local guard that keeps the button honest.
+      if (amount > selected.payableNow + 0.005) throw new Error(payoutOverMessage);
+      if (!payoutForm.paidDate) throw new Error('Enter the day the money left');
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payouts`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            paidDate: payoutForm.paidDate,
+            method: payoutForm.method,
+            note: payoutForm.note.trim() || null,
+          }),
+        },
+      );
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to record the payout');
+      setPayingOut(false);
+      setPayoutForm(BLANK_PAYOUT_FORM);
+      await load();
+    } catch (e) {
+      setPayoutError(e instanceof Error ? e.message : 'Failed to record the payout');
+    } finally {
+      setPayoutSaving(false);
+    }
+  }
+
+  /** The undo: voids the books entry and the money goes back to being owed. */
+  async function deletePayout(payoutId: string) {
+    if (!selected) return;
+    setDeletingPayoutId(payoutId);
+    setPayoutError('');
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payouts/${payoutId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to remove the payout');
+      await load();
+    } catch (e) {
+      setPayoutError(e instanceof Error ? e.message : 'Failed to remove the payout');
+    } finally {
+      setDeletingPayoutId(null);
+    }
+  }
 
   async function saveCreditMode(mode: CreditApplicationMode) {
     const previous = creditMode;
@@ -651,6 +727,20 @@ export function PlayerDuesPanel({
   // Reminders (both proximity + never-paid) require money = write. Read-only money coaches
   // see the list but no send buttons.
   const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
+
+  // ── The Pay out sheet's derived values, in ONE place ─────────────────────────────────────
+  // The amount, whether it clears the ceiling, and the one sentence that says so — declared
+  // once so the preview line, the submit button and the save guard cannot disagree about any
+  // of the three (they were three independent copies of the same arithmetic and wording).
+  const payoutAmount = parseFloat(payoutForm.amount) || 0;
+  const payoutOverCeiling = !!selected && payoutAmount > selected.payableNow + 0.005;
+  const payoutOverMessage = selected
+    ? `This family has ${fmt(selected.payableNow)} left in credit — you can't pay out more than that.`
+    : '';
+  /** One rendering of the payout error, used inside the sheet and beside the strip. */
+  const payoutErrorNote = payoutError
+    ? <p className={styles.errorText} style={{ margin: '0 0 0.6rem', fontSize: '0.78rem' }}>{payoutError}</p>
+    : null;
   // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
   const neverPaid = players.filter(isNeverPaidPlayer);
 
@@ -1111,7 +1201,9 @@ export function PlayerDuesPanel({
                             Total: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.surplus.totalSurplus)}</strong>
                           </span>
                           <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                            Individual credits: <strong style={{ color: 'var(--success-light)' }}>-{fmt(surplusData.totalAllCredits)}</strong>
+                            {/* Net of anything already handed back in cash — the label says so,
+                                because the figure quietly changed meaning (/review 2026-08-14). */}
+                            Credits still owed: <strong style={{ color: 'var(--success-light)' }}>-{fmt(surplusData.totalAllCredits)}</strong>
                           </span>
                           <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
                             Even pool: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.evenPool)}</strong>
@@ -1289,16 +1381,119 @@ export function PlayerDuesPanel({
                         the model's own fact — the team is holding this family's money — and is
                         mode-safe, where a keep_separate team's negative rolling balance used to
                         claim "in their favour" beside bills still owed in full. */}
-                    {selected.owedBack > 0.005 && (
+                    {/* Offered whenever there is credit left to hand over — including credit
+                        currently lowering a bill, which paying out simply puts back up (binding
+                        mockup §5). The sentence changes with the state; the door doesn't. */}
+                    {selected.payableNow > 0.005 && (
                       <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
                         padding: '0.6rem 0.85rem', marginBottom: '1rem', borderRadius: 7,
                         background: 'color-mix(in srgb, var(--success-light) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--success-light) 20%, transparent)',
                         fontSize: '0.82rem', color: 'var(--success-light)',
                       }}>
-                        The team is holding {fmt(selected.owedBack)} of this family&apos;s money
-                        {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their bills.` : '.'}
+                        <span style={{ flex: 1, minWidth: 200 }}>
+                          {selected.owedBack > 0.005
+                            ? <>The team is holding {fmt(selected.owedBack)} of this family&apos;s money
+                                {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their bills.` : '.'}</>
+                            : <>This family&apos;s {fmt(selected.payableNow)} is lowering their bills. You can hand it over in cash instead — their bills go back up.</>}
+                        </span>
+                        {moneyCanWrite && !payingOut && (
+                          <button
+                            className={styles.btnSecondary}
+                            style={{ fontSize: '0.78rem', flexShrink: 0 }}
+                            onClick={() => {
+                              setPayingOut(true);
+                              setPayoutForm({ ...BLANK_PAYOUT_FORM, amount: String(selected.payableNow) });
+                              setPayoutError('');
+                            }}
+                          >
+                            Pay out
+                          </button>
+                        )}
                       </div>
                     )}
+
+                    {/* Pay out — the mirror of Record payment: how much, the day it LEFT, how. */}
+                    {payingOut && (
+                      <div style={{
+                        padding: '0.85rem', marginBottom: '1rem',
+                        background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
+                        border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <label className={styles.label}>Amount paid out <span className={styles.labelRequired}>*</span></label>
+                            <input
+                              className={styles.input}
+                              type="number" min={0} step="0.01"
+                              value={payoutForm.amount}
+                              onChange={e => setPayoutForm(f => ({ ...f, amount: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <label className={styles.label}>Date paid <span className={styles.labelRequired}>*</span></label>
+                            <input
+                              className={styles.input}
+                              type="date"
+                              value={payoutForm.paidDate}
+                              onChange={e => setPayoutForm(f => ({ ...f, paidDate: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <label className={styles.label}>Method</label>
+                            <select
+                              className={styles.input}
+                              value={payoutForm.method}
+                              onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value as DuesPaymentMethod }))}
+                            >
+                              {(Object.entries(PAYMENT_METHOD_LABELS) as [DuesPaymentMethod, string][]).map(([v, l]) => (
+                                <option key={v} value={v}>{l}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={styles.label}>Note (optional)</label>
+                            <input
+                              className={styles.input}
+                              type="text"
+                              placeholder="e.g. sent to Dana"
+                              value={payoutForm.note}
+                              onChange={e => setPayoutForm(f => ({ ...f, note: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                        {/* What it does to the family's bills, BEFORE saving — the consequence a
+                            coach would otherwise discover on the dues table afterwards. */}
+                        {payoutAmount > 0 && (
+                          <p style={{
+                            margin: '0 0 0.6rem', fontSize: '0.78rem',
+                            color: payoutOverCeiling ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.55))',
+                          }}>
+                            {payoutOverCeiling
+                              ? payoutOverMessage
+                              : `Posts ${fmt(payoutAmount)} money out to the team ledger, dated ${fmtDate(payoutForm.paidDate)}${
+                                  selected.creditApplied > 0.005
+                                    ? ' — and their bills go back up by whatever this money was covering.'
+                                    : '.'}`}
+                          </p>
+                        )}
+                        {payoutErrorNote}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <button className={styles.btnGhost} onClick={() => { setPayingOut(false); setPayoutError(''); }} style={{ fontSize: '0.78rem' }}>
+                            Cancel
+                          </button>
+                          <button
+                            className={styles.btnPrimary}
+                            disabled={payoutSaving || payoutOverCeiling || payoutAmount <= 0}
+                            onClick={savePayout}
+                            style={{ fontSize: '0.78rem' }}
+                          >
+                            {payoutSaving ? 'Recording…' : 'Pay out'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {!payingOut && payoutErrorNote}
 
                     {/* Per-player actions. "Remind" lives HERE now (owner ruling 2026-08-03) rather
                         than on a duplicated chase list above the table — this is where the coach is
@@ -1571,6 +1766,48 @@ export function PlayerDuesPanel({
                                   title="Remove payment (voids its ledger entry)"
                                 >
                                   {deletingPaymentId === pm.id ? '…' : <Trash2 size={13} />}
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Paid out — the outbox's receipts (mig 234), the mirror of Payments above.
+                        Removing one voids its books entry and the money goes back to being owed. */}
+                    {selected.payouts.length > 0 && (
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
+                          Paid out — {fmt(selected.paidOut)} handed back
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {selected.payouts.map(po => (
+                            <div key={po.id} style={{
+                              display: 'flex', alignItems: 'center', gap: '0.6rem',
+                              padding: '0.5rem 0.65rem', borderRadius: 7,
+                              background: 'var(--home-card, rgba(255,255,255,0.03))',
+                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                              fontSize: '0.83rem',
+                            }}>
+                              {/* Money OUT — the minus is the arithmetic, not an alarm. */}
+                              <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                                −{fmt(po.amount)}
+                              </span>
+                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {PAYMENT_METHOD_LABELS[po.method]}{po.note ? ` · ${po.note}` : ''}
+                              </span>
+                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
+                                {fmtDate(po.paidDate)}
+                              </span>
+                              {moneyCanWrite && (
+                                <button
+                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  disabled={deletingPayoutId === po.id}
+                                  onClick={() => deletePayout(po.id)}
+                                  title="Remove payout (voids its ledger entry; the money goes back to being owed)"
+                                >
+                                  {deletingPayoutId === po.id ? '…' : <Trash2 size={13} />}
                                 </button>
                               )}
                             </div>

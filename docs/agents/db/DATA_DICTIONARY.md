@@ -3430,6 +3430,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_dues_credits.payment_id -->
 **`payment_id`** (FK → `rep_dues_payments.id`, nullable, **ON DELETE CASCADE**) — set only on auto-created `overpayment` credits (gotcha 6); the payment's removal removes the credit.
 
+<!-- dict:col:rep_dues_credits.expense_id -->
+**`expense_id`** (FK → `rep_team_expenses.id`, nullable, **ON DELETE CASCADE**; mig 234) — set only on `reimbursement` credits, pointing at the out-of-pocket expense that created them. Exactly the `payment_id` treatment: removing the expense removes the debt it created, so a credit can never outlive the cost it was repaying. Written only by `createOutOfPocketExpense` (lib/db.ts), which is the one door that writes the expense and its credit together — the pairing is structural, not a convention.
+
 ### `rep_dues_payments`
 <!-- dict:table:rep_dues_payments -->
 
@@ -3475,6 +3478,53 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_dues_payments.created_at -->
 **`created_at`** (timestamptz, NOT NULL, default `now()`) — when it was TYPED IN; `received_date` is when the money moved. Migrated rows preserve the original stamp instant.
+
+### `rep_dues_payouts`
+<!-- dict:table:rep_dues_payouts -->
+
+**Purpose:** the OUTBOX — cash paid back to a family against their credits (mig 234, 2026-08-14; COACH_SEASON_REFUND_REVAMP_PLAN.md Pass 2). Deliberately the mirror of `rep_dues_payments`: a credit is money the team owes a family, and this is one of the three ways it settles (the others being applied-to-bills, derived, and owed-back, the remainder).
+
+**Gotchas (read first):**
+1. **WHICH credits a payout settles is DERIVED at read time** (`lib/dues-credits.ts`, the `paidOut` input), never stored — the same discipline as credit application and payment coverage, for the same reason: a stored allocation goes stale the moment a credit resizes or a payment lands. There is no `credit_id` on this table and there must never be one.
+2. **One team-ledger EXPENSE entry per payout, dated `paid_date`** (the day the money left, coach-typed) — the mirror of `rep_dues_payments` gotcha 1. Removal VOIDS the entry first (soft-void), then deletes the row.
+3. **Paying out puts the family's bills BACK UP.** A paid-out dollar is settled, so it stops lowering installments — the drawer, reminders and the payables lane all re-derive on the next read. This is the model working, not a defect.
+4. **Payouts are (program_year, player)-scoped like payments and credits** — not credit-scoped, not schedule-scoped.
+5. **Forgiveness can never be paid out** (`rep_dues_credits.credit_type='forgiven'` is debt relief, not the family's money) — enforced in the app's payout ceiling, which reads non-forgiven credits only.
+6. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|other`; RLS enabled with NO policies** (service-role only — the `rep_dues_payments` treatment exactly).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:rep_dues_payouts.program_year_id -->
+<!-- dict:col:rep_dues_payouts.player_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — scope + who was paid; index `(program_year_id, player_id)`.
+
+<!-- dict:col:rep_dues_payouts.org_id -->
+<!-- dict:col:rep_dues_payouts.team_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) — denormalized scope.
+
+<!-- dict:col:rep_dues_payouts.amount -->
+**`amount`** (numeric(10,2), NOT NULL, CHECK `> 0`) — dollars handed back. Partial payouts are ordinary; the remainder keeps covering bills (gotcha 3).
+
+<!-- dict:col:rep_dues_payouts.paid_date -->
+**`paid_date`** (date, NOT NULL) — the day the money LEFT (org-timezone date, coach-typed, UI defaults to today). The ledger entry takes this date (gotcha 2).
+
+<!-- dict:col:rep_dues_payouts.method -->
+**`method`** (text, NOT NULL, default `etransfer`; CHECK `etransfer|cash|cheque|other`).
+
+<!-- dict:col:rep_dues_payouts.note -->
+**`note`** (text, nullable) — free text ("sent to Dana").
+
+<!-- dict:col:rep_dues_payouts.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable) — the payout's money-out entry (gotcha 2).
+
+<!-- dict:col:rep_dues_payouts.source -->
+**`source`** (text, NOT NULL, default `recorded`; CHECK `recorded|season_settlement`) — `recorded` = the Pay out sheet; `season_settlement` = Pass 3's bulk settlement.
+
+<!-- dict:col:rep_dues_payouts.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable, ON DELETE SET NULL).
+
+<!-- dict:col:rep_dues_payouts.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default `now()`) — when it was TYPED IN; `paid_date` is when the money moved.
 
 ### `rep_fundraisers`
 <!-- dict:table:rep_fundraisers -->
@@ -3711,6 +3761,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_expenses.payee_id -->
 <!-- dict:col:rep_team_expenses.payee_payer -->
 **`payee_id`** (FK → `org_payees.id`, nullable; **org Accounting**) / **`payee_payer`** (text, nullable) — structured-vs-freetext payee, mutually exclusive (gotcha 5).
+
+<!-- dict:col:rep_team_expenses.paid_by_player_id -->
+**`paid_by_player_id`** (FK → `rep_roster_players.id`, nullable, ON DELETE SET NULL; mig 234) — **out-of-pocket**: a family covered this cost directly (owner Call 5, 2026-08-14). NULL = the team paid. When set, three things hold at once and must not be conflated: the cost **counts in the budget and in Budget vs. Actual exactly as a team-paid expense** (it is a real cost either way); **no cash left the team's account**, so every CASH figure excludes it (`money-summary` money-out, the Pass 3 pot); and the team now **owes that family**, carried as an ordinary `reimbursement` credit in `rep_dues_credits` with the same three-way lifecycle as any other credit. ⚠ The alternative design — posting an income entry from the family plus an expense — nets to zero but invents money-in from a family that sent none; deliberately rejected.
 
 <!-- dict:col:rep_team_expenses.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap).
