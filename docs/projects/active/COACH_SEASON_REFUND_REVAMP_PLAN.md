@@ -1,7 +1,10 @@
 # Coach Money — credits meet the bills, money goes out, and the refund sheet derives
 
 **Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 committed `8fb37066` 2026-08-14**
-(`/simplify` + `/review` + `/docs` all run; mig 233 applied to dev) · **Passes 2–3 open**
+(mig 233 on dev) · **PASS 2 committed `cfb3a5f7` 2026-08-14** (mig 234 on dev) · **PASS 3 built on
+dev 2026-08-14** (mig 235 on dev; owner QA §21) — **all three passes complete**
+⚠ **Migrations 233, 234 and 235 are on dev; every one of them must reach production before this
+code ships** (they join 230–232 in that queue).
 
 ⚠ **The `/docs` help edits are NOT in `8fb37066`.** A concurrent session was mid-flight in the
 same guide file, so committing it would have swept up work that was not this project's to commit
@@ -442,6 +445,169 @@ is not a seeder.
 
 **Definition of done:** no typed input anywhere; rows always re-add to the pot; every number
 explicable by opening one row.
+
+### Pass 3 build log (2026-08-14) — BUILT on dev
+
+**The arithmetic has one home, and it is pure.** `lib/season-settlement.ts` (sibling of
+`dues-payments` / `dues-credits`, integer cents, no database): `deriveSettlement`, the
+water-filling `solveEvenLevel`, `expenseTotals`, and the sheet's shapes. `lib/coach-season-
+settlement.ts` is the one assembly — it fetches, hands the pure module figures the shared credit
+model derived, and is what BOTH the screen and every write path read. A settlement payout's
+ceiling and the number the coach read on screen come from the same call, by construction.
+
+**The promise, stated once and pinned by property test:**
+
+```
+Σ every row's refund  +  what stays with the team  +  hold-back  =  the cash the team holds
+```
+
+**⚠ The design problem the plan did not anticipate, and how it is solved.** Paying one family
+takes cash out of the team's hands, so a pot read naively from the balance would shrink every
+remaining share the moment the first cheque was written — the numbers would be an opinion that
+changed while the coach worked down the list. So the pot is measured as it stood BEFORE
+distribution: the SHARE portion of money already handed back (`sharePaid` — the part of a payout
+beyond that family's credits) is added back to the pot and subtracted again from that family's own
+row. Owed-back payouts need no such treatment; they lower the cash and the debt by the same
+dollar. Verified end-to-end against the live fixture: paying a family their whole $213.33 left
+every other row at $213.33 and the surplus at $2,560.00, while cash held fell by exactly $213.33
+and the rows still re-added to it.
+
+**Migration 235** (dev): `rep_season_surplus.hold_back_amount`, and
+`rep_season_refund_adjustments` (`fixed` | `no_share`, UNIQUE per player, RLS-on-no-policies).
+`total_surplus` is now **legacy, read by nothing** — a new guard-test rule fails the build if any
+file reads it, and that rule was **verified by finding three real offenders** (the route, the
+panel and `lib/types.ts`), all removed. Dictionary + `refresh:snapshots` same unit of work.
+⚠ `distribution_state` from §5.1 was **deliberately not built** — nothing reads it, and §5.2's own
+warning about a live column nothing reads applies to a new one just as much as an old one.
+
+**Delivered, to the binding mockups §7–§8:** the derived pot card showing its work, with the
+hold-back as the only control (capped at the surplus and refused against owed-back money, with the
+reason); the four-column settlement table (Player · Owed back · Even share · Refund) where a row
+**opens** to a line-by-line breakdown that sums to its own number; families grouped so siblings are
+one heading and one cheque; **every row payable from there** through the *same* Pay out sheet the
+drawer uses (extracted to `components/coaches/DuesPayoutSheet`), plus **Pay all**; the row menu (an
+even share / a set amount / no share / forgive the balance owing); the shortfall state (say it,
+share nothing, pro-rate nothing) and the cash-timing strip that **names the families the others are
+waiting on**. A paid row reads "Paid — Aug 14" and stops asking.
+
+**Two judgement calls, recorded rather than buried:**
+1. **The footer's Refund total is the SUM OF THE ROWS**, not the sum of the two columns above it.
+   Where a family still owes, those differ — the mockup's second table adds the columns and lands
+   $200 high. Rows re-adding to the cash on hand is the promise the sheet rests on, so the rows win.
+2. **A season still spending is not a season with a surplus.** The arithmetic is untouched (the
+   owner's $1,525 stands), but where planned costs remain unspent a quiet line under the pot says
+   so and points at hold-back — otherwise October's sheet invites a coach to share money the season
+   still needs.
+
+**Also built, because the sweep would otherwise have proved nothing:** the sheet's open state rides
+the URL (`?settlement=open`), exactly as the By-installment lens does — so a coach can send the
+settlement sheet rather than the page it is folded into, and `check:layout` can address it open.
+A `coach-dues-settlement` screen joined the sweep; its first run found **new tap-floor findings on
+every control this pass added**, all fixed to the 44px floor rather than baselined (only the
+screen's inherited product-wide nav/toolbar debt was baselined, 38 entries, nothing lost).
+
+**Gates:** typecheck ✓ · **1,800** unit tests ✓ (+27: the owner's five §4.4 scenarios on his own
+numbers, debt joining the pot, a departed player, the shortfall, hold-back clamping, hand-set
+amounts redistributing, paying-one-moves-nobody, degenerates, and a 500-run randomised property
+test of the identity above) · focused lint 0 errors · **rendered** `check:layout` on
+dues + dues-settlement × 4 widths, on a restarted server against a fixture with real data, real
+exit code 0 ✓ · `check:demos` ✓ · dictionary ✓ · `verify:changed` green except the known
+schema-parity failure (prod behind on migs 230–235).
+
+**End-to-end smoke against the live fixture** (written, then undone, leaving it as found): the
+hold-back refuses above the cap with its reason and reshapes every row when set; a hand-set amount
+redistributes immediately with nothing unallocated; "no share" raises the others rather than
+stranding one; a payout beyond a row is refused naming the row's true figure; a real payout settles
+its row, moves nobody else, and its removal **voids** the ledger entry (confirmed `status: void`)
+and restores the sheet exactly.
+
+**`/simplify` (4 lenses) — and it found a MONEY BUG while the fixes were being re-verified.**
+Applied: the settlement `<tfoot>` was missing `.tableFoot`, so the totals row rendered without the
+divider every other Money-hub footer has (a half-reused recipe); `expenseTotals` claimed in its own
+docstring that the Money hub read it — it did not, so **money-summary and the budget summary were
+moved onto it** (the budget copy had no notion of an out-of-pocket cost at all — the copies had
+already begun to differ); the payout path collapsed from **four full derivations per click to two**
+by giving the module the whole request (who is paid and how much are one question) and returning
+the post-write sheet it already computed; the assembly's second wave of queries now runs as one
+`Promise.all` instead of three sequential awaits; a bulk settle resolves the team ledger **once**
+instead of per cheque; the per-player position and payout total are derived once instead of twice;
+the settlement row became its own component (`components/coaches/SettlementRow.tsx`) instead of 170
+lines at ten levels of indentation; and the guard's importer list grew to cover both new write
+routes.
+
+⚠ **The bug, found by settling a WHOLE team and re-reading** — something no earlier test did.
+Paying everyone can take more cash out than the team is holding (a forward-looking split spends
+money families still owe — the sheet says so). The shortfall question was asked of the raw bank
+balance, so it flipped to "the team is short of what it owes families", collapsed **every** share
+to zero under Call 9, and turned all ten families the coach had just paid into families who
+suddenly owed the money back. **The pot is measured before distribution, so the shortfall test must
+be too.** Fixed and pinned by a new test that settles the whole team and asserts every row lands
+square.
+
+Skipped, with reasons: parallelising the payout writes (irreversible cash, and the post-write check
+reads the settled state of the whole batch — a little latency is worth the clearer failure story);
+the hold-back save's two derivations (inherent — it needs the post-write truth); folding the
+Set-refund modal's two state fields into one object (cosmetic); the per-route `resolveCoachContext`
+duplication (the established convention in ~52 coach routes).
+
+**`/review` (high-risk, 5 lenses) earned its keep — 1 Critical + 1 High + 5 lesser, all fixed:**
+
+- **Critical — the pot counted club money that belongs to no season.** `rep_team_payment_requests`
+  carries a team but **no program year**, so approved club funding and payments to the club were
+  summed TEAM-LIFETIME into a single season's pot. The Money hub has always done this and says so
+  in a comment — a fair trade for a live-season dashboard. It is not fair here, for two reasons
+  this sheet has and the hub does not: the figure sets a **cash payout ceiling** (a team in its
+  third season could hand families money an earlier season received), and this sheet is **readable
+  in a finished season**, so approving a request next year would silently rewrite last year's
+  settled pot. Now **excluded from the pot and stated on the card** when non-zero, rather than
+  swallowed. ⚠ **OPEN OWNER QUESTION:** how should club funding be attributed to a season?
+  Answering it properly needs a program year on that table — a migration and a backfill, beyond
+  this pass.
+- **High — the guardian's email address shipped to the browser as the family grouping key.** Money
+  access and the guardian-PII grant are independent, so a treasurer with money-but-no-contacts read
+  every family's real email in the settlement payload — the gate the rest of the product enforces,
+  defeated by a field nobody thought of as PII. The key is now derived from the address, never the
+  address: siblings still group, unrelated families still can't collide, and the coach learns
+  nothing they could not already see.
+- **Medium — the post-write safety check asked the wrong question.** It undid a just-written cheque
+  whenever a family's refund went negative — but that also happens when something UNRELATED lands
+  in the same window (another coach invoicing that family). A perfectly good payout would be
+  reversed, and the coach told they had double-paid when they had not. It now asks the question it
+  actually means: **did more money go out to this family than this batch meant to send?**
+- **Medium — forgiving a balance had no re-check**, the one money write in this feature built
+  without the safety net its siblings carry; two clicks left a duplicate forgiveness in a family's
+  permanent record (harmless to the arithmetic — the extra evaporates — but a real audit-trail
+  defect). The loser now deletes itself.
+- **Also fixed:** a failed *undo* was reported as a generic 500, leaving an uncoverable payout
+  standing with nothing saying so — it now has its own error naming the amounts to remove by hand;
+  a partial bulk failure left the screen showing pre-click totals, inviting the coach to pay
+  already-paid families twice (the sheet now re-reads on failure); "Pay all" and a single row's
+  payout sheet could both be in flight at once; `settled` read true on a row that had gone into
+  debt after being paid; a de-minimis pot handed its stray cents to whoever sorted last on the
+  roster; and this module's `toCents` would have silently zeroed a `numeric` column arriving as a
+  string, where its sibling coerces.
+- **Refuted (dropped):** a claimed race in which the player drawer's credit-only ceiling undoes a
+  legitimate payout — traced through, the settlement payout in that interleaving already contains
+  the drawer's amount, so the total genuinely IS an overpay and the self-undo is correct.
+- **Verified safe:** org/team scoping on all three routes (a player id from another team cannot
+  produce a row); capability gates (no path lets money:read write); active-year-only resolution on
+  every write; the forgiven amount is server-derived, never client-supplied; "undo forgiveness"
+  cannot touch a family's earned rebate; the new table's RLS posture matches its siblings; the
+  migration is idempotent and its constraints match the upserts; `expenseTotals` is
+  behaviour-identical for both routes it now serves (including that the budget route always counted
+  out-of-pocket costs and still does); and no consumer of the deleted types or the old payload
+  shape survives anywhere in the tree.
+
+**The demo obligation, now paid.** The coach sandbox gains the **Bottle Drive** on the 12U:
+closed, 50% back, five families, and one rebate that covers a whole $120 instalment so the demo
+finally shows a bill reading "covered by fundraising". The nightly re-anchor now shifts fundraiser
+dates and credit dates with the bills they lower — without it the demo's credits would stand still
+while its schedule walked forward. `check-demo-coach` pins three things: the drive is closed and
+behind today, one rebate covers a whole instalment, and **no rebate reaches an overdue family** —
+the entry list excludes Dmitri and Imani precisely so a credit cannot clear the "$240 across
+exactly two families" story from the side, and the part-paid family is excluded so the "$90 of
+$120" showcase survives. The guided tour's money beat gained the sentence; the seven-beat spine is
+unchanged (it is owner-approved and pinned by test).
 
 ---
 

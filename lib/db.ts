@@ -9226,8 +9226,13 @@ export class PayoutExceedsOwedError extends Error {
  * which is also why paying out automatically puts the family's bills back up: those dollars are
  * settled in cash now, so they stop lowering installments.
  */
-export async function recordRepDuesPayout(opts: {
+export interface RepDuesPayoutWrite {
   team: { id: string; orgId: string; name: string };
+  /** The team's ledger, when the caller already resolved it. A bulk settlement writes many
+   *  payouts against the SAME team, and looking the ledger up per cheque was one near-identical
+   *  round trip per family. Omit it and this resolves the ledger itself, as the single-payout
+   *  path does. */
+  ledgerId?: string;
   programYearId: string;
   playerId: string;
   playerName: string;
@@ -9237,22 +9242,24 @@ export async function recordRepDuesPayout(opts: {
   note?: string | null;
   createdBy: string;
   source?: 'recorded' | 'season_settlement';
-}): Promise<{ payout: RepDuesPayout }> {
-  const [credits, existingPayouts, ledger] = await Promise.all([
-    getRepDuesCreditsForPlayer(opts.programYearId, opts.playerId),
-    getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId),
-    getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name),
-  ]);
+}
 
-  const owedBackCeiling = payoutCeiling(credits, existingPayouts);
-  if (Math.round(opts.amount * 100) > Math.round(owedBackCeiling * 100)) {
-    // Carry the ceiling ON the error — the route needs it for the message, and re-fetching the
-    // same two queries to recompute a number this scope already holds is pure waste.
-    throw new PayoutExceedsOwedError(owedBackCeiling);
-  }
-
+/**
+ * The write itself, shared by both doors that hand a family cash (the Pay out sheet and the
+ * season settlement's per-row/bulk payouts): the LEDGER ENTRY FIRST, dated the day the money
+ * left, then the row that points at it.
+ *
+ * ⚠ IT CHECKS NO CEILING — each caller owns its own, because they are genuinely different
+ * questions: the drawer may hand back a family's CREDITS, while the settlement may also hand
+ * over their share of the season's surplus, which is not a credit at all. What must never differ
+ * is the WRITE, which is why it is one function: two copies of "entry, then row, then undo on
+ * refusal" is how a payout ends up in the books with no money behind it.
+ */
+export async function writeRepDuesPayout(opts: RepDuesPayoutWrite): Promise<RepDuesPayout> {
+  const ledgerId = opts.ledgerId
+    ?? (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
   const entry = await createEntry(
-    ledger.id,
+    ledgerId,
     {
       entryDate: opts.paidDate,
       description: `Dues credit paid out — ${opts.playerName}`,
@@ -9284,7 +9291,23 @@ export async function recordRepDuesPayout(opts: {
     .select()
     .single();
   if (error) throw error;
-  const payout = mapRepDuesPayout(data);
+  return mapRepDuesPayout(data);
+}
+
+export async function recordRepDuesPayout(opts: RepDuesPayoutWrite): Promise<{ payout: RepDuesPayout }> {
+  const [credits, existingPayouts] = await Promise.all([
+    getRepDuesCreditsForPlayer(opts.programYearId, opts.playerId),
+    getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId),
+  ]);
+
+  const owedBackCeiling = payoutCeiling(credits, existingPayouts);
+  if (Math.round(opts.amount * 100) > Math.round(owedBackCeiling * 100)) {
+    // Carry the ceiling ON the error — the route needs it for the message, and re-fetching the
+    // same two queries to recompute a number this scope already holds is pure waste.
+    throw new PayoutExceedsOwedError(owedBackCeiling);
+  }
+
+  const payout = await writeRepDuesPayout(opts);
 
   // ⚠ RE-CHECK AGAINST THE TRUE POST-WRITE STATE — the ceiling above was read before this insert,
   // and two concurrent Pay out clicks would each have passed it against the same stale snapshot,

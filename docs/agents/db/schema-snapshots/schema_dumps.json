@@ -11108,6 +11108,105 @@
         "column_default": null
       },
       {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 3,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 6,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 8,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_season_surplus",
         "pos": 1,
         "column_name": "id",
@@ -11169,6 +11268,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_season_surplus",
+        "pos": 8,
+        "column_name": "hold_back_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_team_announcements",
@@ -18320,28 +18428,28 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -18418,14 +18526,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -18607,21 +18715,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -18629,6 +18730,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -18721,6 +18829,41 @@
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_roster_players_tryout_registration_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_season_refund_adjustments_created_by_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_org_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_player_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_team_id_fkey"
       },
       {
         "table_name": "rep_season_surplus",
@@ -21682,6 +21825,21 @@
         "indexdef": "CREATE INDEX rep_roster_players_year_idx ON public.rep_roster_players USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "idx_rep_season_refund_adjustments_year",
+        "indexdef": "CREATE INDEX idx_rep_season_refund_adjustments_year ON public.rep_season_refund_adjustments USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_pkey ON public.rep_season_refund_adjustments USING btree (id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_program_year_id_player_id_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_program_year_id_player_id_key ON public.rep_season_refund_adjustments USING btree (program_year_id, player_id)"
+      },
+      {
         "tablename": "rep_season_surplus",
         "indexname": "rep_season_surplus_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_pkey ON public.rep_season_surplus USING btree (id)"
@@ -24069,6 +24227,30 @@
         "table_name": "rep_roster_players",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "rep_season_refund_adjustments_amount_check",
+        "check_clause": "(amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "rep_season_refund_adjustments_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['fixed'::text, 'no_share'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_surplus",
+        "detail": "rep_season_surplus_hold_back_amount_check",
+        "check_clause": "(hold_back_amount >= (0)::numeric)"
       },
       {
         "kind": "CHECK",

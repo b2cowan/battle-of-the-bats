@@ -3291,14 +3291,15 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ### `rep_season_surplus`
 <!-- dict:table:rep_season_surplus -->
 
-**Purpose:** the end-of-season surplus figure for a program year — the input to a refund/distribution breakdown. One row per season.
+**Purpose:** since mig 235 (2026-08-14, Pass 3) this holds the season's **settlement settings** — the hold-back, and notes. It no longer holds the pot: **the pot derives** (`lib/season-settlement.ts`) from uncapped dues receipts + fundraising raised + org funding − cash out − what the team owes families. One row per season.
 
 **Gotchas (read first):**
-1. **`total_surplus` is a coach-ENTERED number, not a computed rollup** — written verbatim (rounded to 2dp) from the request; no code derives it from budget-vs-actual or expenses. (The downstream refund **breakdown** is recomputed live from this number + roster/credits/dues, but the surplus itself is manual input.)
-2. **CHECK `total_surplus >= 0`** (`rep_season_surplus_total_surplus_check`) — **a deficit cannot be stored** (a team that ran a loss stores 0). Note this is `>= 0`, not `> 0`.
+1. ⚠ **`total_surplus` is LEGACY and READ BY NOTHING** since mig 235. It held the number a coach typed into the old Season Refund Calculator — a figure that double-subtracted fundraising rebates (the flow posts the FULL amount raised to the books; the player's rebate is a credit, never a deduction from income), understating every family's refund. **Retained, not dropped**, because dropping loses history on both databases. A live column nothing reads is itself a drift smell; that is why this entry says so. **Do not read it; do not write it.**
+2. **CHECK `total_surplus >= 0`** (`rep_season_surplus_total_surplus_check`) — a deficit cannot be stored. Historical only (gotcha 1).
 3. **UNIQUE on `program_year_id`** (`rep_season_surplus_program_year_id_key`) — one row per season; writes `upsert(onConflict: 'program_year_id')`, so PUT is idempotent.
 4. **No `team_id`/`org_id`** — scoped only via `program_year_id` → `rep_program_years` (which carries the team); the route gates by resolving the team's active program year first.
 5. **`created_at` AND `updated_at` are NULLABLE** here (unusual vs the rest of the domain; both default `now()`). `created_by` is set on every upsert, so it reflects the **last editor**, not strictly the creator.
+6. **A season with no row settles perfectly well** — absence means "no hold-back, no notes". The sheet renders from derived money alone, so nothing forces a write before a coach can read what the team owes.
 
 **Fields** (boilerplate `id` omitted; `created_at`/`updated_at` nullable — gotcha 5):
 
@@ -3306,13 +3307,51 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, UNIQUE) — the season key; the only scope column.
 
 <!-- dict:col:rep_season_surplus.total_surplus -->
-**`total_surplus`** (numeric, NOT NULL, default 0, CHECK `>= 0`) — coach-entered season surplus in dollars (gotchas 1–2).
+**`total_surplus`** (numeric, NOT NULL, default 0, CHECK `>= 0`) — ⚠ **LEGACY, read by nothing** (gotchas 1–2).
+
+<!-- dict:col:rep_season_surplus.hold_back_amount -->
+**`hold_back_amount`** (numeric(10,2), NOT NULL, default 0, CHECK `>= 0`) — what the coach intends to keep for next season (mig 235). **The only control left on the pot card**, and deliberately an intention rather than an arithmetic input. Comes out of the SURPLUS only: capped there on write and again on read, and refused against owed-back money — a coach may not hold back what the team owes families.
 
 <!-- dict:col:rep_season_surplus.notes -->
 **`notes`** (text, nullable) — free text.
 
 <!-- dict:col:rep_season_surplus.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; snapshot shows `foreign_table: null` — cross-schema gap) — last editor (gotcha 5).
+
+### `rep_season_refund_adjustments`
+<!-- dict:table:rep_season_refund_adjustments -->
+
+**Purpose:** a family taking something other than an even share of the season surplus (mig 235, owner Call 10, 2026-08-14). Absence of a row **is** the default — an even share.
+
+**Gotchas (read first):**
+1. **Two kinds only, and neither can break the sheet's promise.** `fixed` replaces that family's **share** with `amount`; `no_share` removes them from the divisor, which **raises everyone else's share** rather than stranding one. Both are bounded, deliberately: a free-text override of a refund TOTAL would let the rows stop adding up to the pot, which is the exact defect deriving the pot removed.
+2. ⚠ **Never touches owed-back money.** A family's credits are their own money, not a distribution the coach can redirect — a hand-set amount of $0 still pays their owed-back in full.
+3. **`amount` is clamped to the surplus on read** (`lib/season-settlement.ts`), in row order, so the rows can never promise more than the pot holds. The stored number is the coach's intent; the clamp is the truth.
+4. **Choosing "an even share" DELETES the row** rather than storing a third kind — a stored default is a fact that can go stale against a rule that later changes.
+5. **Forgiveness is NOT here.** It is a credit (`rep_dues_credits.credit_type='forgiven'`, mig 233) because it genuinely reduces what a family owes; it lowers bills like any credit and is excluded from owed-back by type. One credit mechanism, no parallel systems.
+6. **UNIQUE `(program_year_id, player_id)`**; **RLS enabled with NO policies** (service-role only — the `rep_dues_payments`/`rep_dues_payouts` treatment).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_season_refund_adjustments.program_year_id -->
+<!-- dict:col:rep_season_refund_adjustments.player_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — scope + whose choice; UNIQUE together (gotcha 6), index on `program_year_id`.
+
+<!-- dict:col:rep_season_refund_adjustments.org_id -->
+<!-- dict:col:rep_season_refund_adjustments.team_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) — denormalized scope.
+
+<!-- dict:col:rep_season_refund_adjustments.kind -->
+**`kind`** (text, NOT NULL, CHECK `fixed|no_share`) — gotcha 1.
+
+<!-- dict:col:rep_season_refund_adjustments.amount -->
+**`amount`** (numeric(10,2), NOT NULL, default 0, CHECK `>= 0`) — dollars, meaningful only when `kind = 'fixed'` (gotcha 3).
+
+<!-- dict:col:rep_season_refund_adjustments.note -->
+**`note`** (text, nullable) — why, in the coach's words.
+
+<!-- dict:col:rep_season_refund_adjustments.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable) — last editor.
 
 ### `rep_player_dues_schedules`
 <!-- dict:table:rep_player_dues_schedules -->

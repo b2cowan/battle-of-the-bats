@@ -10,6 +10,7 @@ import {
   getRepTeamExpenses,
 } from '@/lib/db';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
+import { expenseTotals } from '@/lib/season-settlement';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
@@ -60,17 +61,11 @@ export const GET = withObservability(async (req: Request,
   // to sum face values — logging a $1,600 payable you hadn't paid yet flashed the Overview tile
   // "over budget" while the Money hub correctly showed the cash unmoved, two screens apart.
   // Same settled-legs semantics as money-summary and Budget vs. Actual.
+  // ONE definition of what a season has spent (lib/season-settlement.ts `expenseTotals`) — this
+  // was the third hand-copy of the payable-legs branch, and the copies had already begun to
+  // differ: this one had no notion of an out-of-pocket cost at all.
   const expenses = await getRepTeamExpenses(programYear.id);
-  let totalExpenses = 0;
-  for (const e of expenses) {
-    if (e.expenseType === 'tournament_payable') {
-      if (e.depositPaidAt) totalExpenses += e.depositAmount ?? 0;
-      if (e.balancePaidAt) totalExpenses += e.balanceAmount ?? 0;
-    } else if (e.expensePaidAt) {
-      totalExpenses += e.amount;
-    }
-  }
-  totalExpenses = Math.round(totalExpenses * 100) / 100;
+  const totalExpenses = expenseTotals(expenses).paid;
 
   return NextResponse.json({
     budgetAmount: programYear.budgetAmount ?? null,

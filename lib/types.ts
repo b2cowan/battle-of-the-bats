@@ -2440,24 +2440,11 @@ export interface DuesCredit {
   createdAt: string;
 }
 
-export interface SeasonSurplus {
-  id: string;
-  programYearId: string;
-  totalSurplus: number;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SeasonRefundRow {
-  playerId: string;
-  playerFirstName: string;
-  playerLastName: string;
-  creditPortion: number;
-  evenShare: number;
-  totalRefund: number;
-  rollingBalance: number;
-}
+/* The season settlement's shapes live with its arithmetic (lib/season-settlement.ts) and its
+   assembly (lib/coach-season-settlement.ts) — SettlementSheet, SettlementSheetRow,
+   SettlementFamily. The old `SeasonSurplus` (a hand-typed pot) and `SeasonRefundRow` (a
+   four-number breakdown that could not re-add to it) were deleted with the calculator they
+   described, 2026-08-14. */
 
 // ── Platform (FieldLogicHQ company) users ────────────────────────────────────
 

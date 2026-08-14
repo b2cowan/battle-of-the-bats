@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   computeFamilyDues,
+  familyLabel,
   familyPlural,
   type FamilyDuesPlayer,
 } from '../../lib/coach-family-dues.ts';
@@ -42,6 +43,34 @@ describe('familyPlural', () => {
   });
   it('does NOT apply the y→ies rule to surnames', () => {
     assert.equal(familyPlural('Kelly'), 'Kellys');
+  });
+});
+
+/* The naming rule has TWO callers now — the "who owes" answer and the season settlement sheet's
+   family list — so it is tested directly rather than only through the rollup that used to own it. */
+describe('familyLabel', () => {
+  it('one recorded surname names the family', () => {
+    const l = familyLabel(['March'], ['Maya March', 'Sam March']);
+    assert.equal(l.label, 'the Marches');
+    assert.equal(l.receiptLabel, 'March family');
+    assert.equal(l.labelledByPlayer, false);
+  });
+
+  it('TWO surnames under one household fall back to the players — naming a family something nobody in it is called is worse than using first names', () => {
+    const l = familyLabel(['March', 'Okari'], ['Maya March', 'Dev Okari']);
+    assert.equal(l.label, "Maya and Dev's family");
+    assert.equal(l.receiptLabel, 'Maya and Dev');
+    assert.equal(l.labelledByPlayer, true);
+  });
+
+  it('NO surname — a caller with no guardian-PII grant passes none — reads as the players', () => {
+    const l = familyLabel([], ['#7 Maya March']);
+    assert.equal(l.receiptLabel, 'Maya', 'the jersey number is not part of a name');
+    assert.equal(l.labelledByPlayer, true);
+  });
+
+  it('blank and duplicate surnames do not defeat the single-surname rule', () => {
+    assert.equal(familyLabel(['March', ' March ', ''], ['Maya March']).receiptLabel, 'March family');
   });
 });
 

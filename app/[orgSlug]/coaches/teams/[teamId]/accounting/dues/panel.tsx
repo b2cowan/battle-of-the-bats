@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowLeft, DollarSign } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
@@ -10,6 +10,8 @@ import { isNeverPaidPlayer, duesStatusLabel } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import DuesPayoutSheet from '@/components/coaches/DuesPayoutSheet';
+import SettlementRow, { ROW_ACTION } from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
 import { installmentToSend } from '@/lib/dues-installment-view';
@@ -21,6 +23,7 @@ import { fmt } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
 import { creditsTotal, normalizeCreditApplicationMode, CREDIT_APPLICATION_MODES, type CreditApplicationMode } from '@/lib/dues-credits';
+import type { SettlementSheet, SettlementSheetRow } from '@/lib/season-settlement';
 import type {
   RepRosterPlayer,
   RepPlayerDuesSchedule,
@@ -30,7 +33,6 @@ import type {
   DuesPaymentMethod,
   DuesCredit,
   DuesCreditType,
-  SeasonRefundRow,
 } from '@/lib/types';
 
 /** One credit's landing on one installment — "covered by fundraising — Bottle Drive". */
@@ -76,13 +78,9 @@ interface PlayerWithDues {
   payableNow: number;
 }
 
-interface SeasonSurplusData {
-  surplus: { id: string; totalSurplus: number; notes: string | null } | null;
-  breakdown: SeasonRefundRow[];
-  totalAllCredits: number;
-  evenPool: number;
-  playerCount: number;
-}
+/* The settlement sheet's shape is the SERVER's (lib/season-settlement.ts `SettlementSheet`) —
+   this panel renders what it is given and derives none of it. The local shape that stood here
+   described the old calculator's four typed-pot figures, and went with it. */
 
 /* (`fmt` is the shared one — this file's local copy was byte-for-byte the same behaviour. The other
    Money panels' local `fmt`s are NOT duplicates: several deliberately strip the sign because their
@@ -126,6 +124,20 @@ const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
   forgiven:      'Forgiven',
   reimbursement: 'Reimbursement',
 };
+
+/** The settlement sheet's two honesty strips — same shape, two temperatures. Amber for "you are
+ *  waiting on someone", danger for "the team is short". ⚠ Never colour alone: both carry the
+ *  sentence, because the olive↔danger pair is 1.0 ΔE apart for a deutan reader. */
+function stripStyle(tone: 'warning' | 'danger'): React.CSSProperties {
+  const token = tone === 'danger' ? 'var(--danger-light)' : 'var(--warning)';
+  return {
+    display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
+    padding: '0.65rem 0.85rem', marginTop: '0.9rem', borderRadius: 7,
+    background: `color-mix(in srgb, ${token} 8%, transparent)`,
+    border: `1px solid color-mix(in srgb, ${token} 25%, transparent)`,
+    fontSize: '0.82rem', color: token, lineHeight: 1.45,
+  };
+}
 
 const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
   last_first:    'The last payment first',
@@ -247,14 +259,28 @@ export function PlayerDuesPanel({
   const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersReminded: number; playersMissingEmail: number } | null>(null);
   const [unpaidError, setUnpaidError] = useState('');
 
-  // Season refund
-  const [refundOpen, setRefundOpen] = useState(false);
-  const [surplusData, setSurplusData] = useState<SeasonSurplusData | null>(null);
-  const [surplusLoading, setSurplusLoading] = useState(false);
-  const [surplusInput, setSurplusInput] = useState('');
-  const [surplusNotes, setSurplusNotes] = useState('');
-  const [surplusSaving, setSurplusSaving] = useState(false);
-  const [surplusError, setSurplusError] = useState('');
+  // ── The season settlement sheet (Pass 3, 2026-08-14) ─────────────────────────────────────
+  // Everything below is DERIVED by the server (lib/coach-season-settlement.ts) and rendered as
+  // given. There is no typed pot and no Calculate button: the one figure a coach may state is
+  // the hold-back, and even that is capped at the surplus.
+  const [settlement, setSettlement] = useState<SettlementSheet | null>(null);
+  const [settlementLoading, setSettlementLoading] = useState(false);
+  const [settlementError, setSettlementError] = useState('');
+  /** Which row is open to its own breakdown — nothing is explained in the table itself. */
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const [holdBackEditing, setHoldBackEditing] = useState(false);
+  const [holdBackInput, setHoldBackInput] = useState('');
+  const [holdBackSaving, setHoldBackSaving] = useState(false);
+  /** The row (or family) currently being paid, and the sheet's own form. */
+  const [payingRow, setPayingRow] = useState<{ playerIds: string[]; label: string; max: number } | null>(null);
+  const [rowPayoutForm, setRowPayoutForm] = useState(BLANK_PAYOUT_FORM);
+  const [rowPayoutSaving, setRowPayoutSaving] = useState(false);
+  const [payAllBusy, setPayAllBusy] = useState(false);
+  /** The Set-refund sheet: an even share / a set amount / no share / forgive the balance. */
+  const [choiceFor, setChoiceFor] = useState<SettlementSheetRow | null>(null);
+  const [choiceKind, setChoiceKind] = useState<'even' | 'fixed' | 'no_share'>('even');
+  const [choiceAmount, setChoiceAmount] = useState('');
+  const [choiceSaving, setChoiceSaving] = useState(false);
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
@@ -272,9 +298,22 @@ export function PlayerDuesPanel({
   const pathname = usePathname();
   const wantsInstallments = seasonSearchParams.get('duesView') === 'installments';
   function setDuesView(next: 'totals' | 'installments') {
+    setUrlParam('duesView', next === 'installments' ? 'installments' : null);
+  }
+
+  /** The settlement sheet's open state rides the URL for the same reason the view lens does: a
+   *  coach who sends "here's what we owe everyone" should be sending the sheet, not the page it
+   *  is folded into. `replace` rather than `push`, so opening and closing doesn't stack history. */
+  const refundOpen = seasonSearchParams.get('settlement') === 'open';
+  function setRefundOpen(next: boolean) {
+    setUrlParam('settlement', next ? 'open' : null);
+  }
+
+  /** One writer for every param this screen owns — each of them must preserve `section`, `year`
+   *  and the others, and three hand-copies of that dance is three chances to drop one. */
+  function setUrlParam(key: string, value: string | null) {
     const sp = new URLSearchParams(seasonSearchParams.toString());
-    if (next === 'installments') sp.set('duesView', 'installments');
-    else sp.delete('duesView');
+    if (value === null) sp.delete(key); else sp.set(key, value);
     const qs = sp.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
@@ -302,7 +341,10 @@ export function PlayerDuesPanel({
   // "See an example" — what the reminder email says and when it goes out. Read-only, so it
   // carries no unsaved-changes guard and needs none of the tabActive plumbing.
   const [reminderPreviewOpen, setReminderPreviewOpen] = useState(false);
-  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen);
+  // ⚠ Every overlay this panel opens registers here — without it the phone's bottom nav stays
+  // tappable underneath (/review 2026-08-14). The Set-refund sheet joins the same call: they are
+  // mutually exclusive, so one registration covers them.
+  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -458,16 +500,113 @@ export function PlayerDuesPanel({
     if (updated) setSelected(updated);
   }, [players]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function loadSurplus() {
-    setSurplusLoading(true);
+  const applySettlement = useCallback((data: SettlementSheet) => {
+    setSettlement(data);
+    setHoldBackInput(data.pot.holdBack > 0 ? String(data.pot.holdBack) : '');
+  }, []);
+
+  const loadSettlement = useCallback(async () => {
+    setSettlementLoading(true);
+    setSettlementError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus${seasonQuery}`);
-      const data = await res.json();
-      setSurplusData(data);
-      setSurplusInput(data.surplus ? String(data.surplus.totalSurplus) : '');
-      setSurplusNotes(data.surplus?.notes ?? '');
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
+      applySettlement(await res.json());
+    } catch (e) {
+      setSettlementError(e instanceof Error ? e.message : 'Failed to load the settlement sheet.');
     } finally {
-      setSurplusLoading(false);
+      setSettlementLoading(false);
+    }
+  }, [orgSlug, teamId, seasonQuery, applySettlement]);
+
+  // Fetch the sheet the first time it is opened — including on a link that arrives with it
+  // ALREADY open (`?settlement=open`), which is the state a shared link and the layout sweep
+  // both land in. Loading it on mount instead would put a dozen queries behind every dues page.
+  useEffect(() => {
+    if (refundOpen && !settlement && !settlementLoading) loadSettlement();
+  }, [refundOpen, settlement, settlementLoading, loadSettlement]);
+
+  /** The one figure a coach may state. Refused above the surplus — server-side, with the reason. */
+  async function saveHoldBack() {
+    setHoldBackSaving(true);
+    setSettlementError('');
+    try {
+      const holdBackAmount = holdBackInput.trim() === '' ? 0 : parseFloat(holdBackInput);
+      if (isNaN(holdBackAmount) || holdBackAmount < 0) throw new Error('Enter an amount to hold back (0 or more).');
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holdBackAmount, notes: settlement?.notes ?? null }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
+      applySettlement(await res.json());
+      setHoldBackEditing(false);
+    } catch (e) {
+      setSettlementError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setHoldBackSaving(false);
+    }
+  }
+
+  /** An even share / a set amount / no share / forgive the balance — one door, four choices. */
+  async function saveRowChoice(playerId: string, kind: 'even' | 'fixed' | 'no_share' | 'forgive' | 'unforgive', amount = 0) {
+    setChoiceSaving(true);
+    setSettlementError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus/adjustments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId, kind, amount }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
+      applySettlement(await res.json());
+      setChoiceFor(null);
+      // Forgiveness changes what the family owes, so the dues table above must catch up too.
+      if (kind === 'forgive' || kind === 'unforgive') await load();
+    } catch (e) {
+      setSettlementError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setChoiceSaving(false);
+    }
+  }
+
+  /**
+   * Settle in cash — one row, one family, or the lot. The amount is the sheet's own figure
+   * unless the coach typed a smaller one; either way the SERVER re-derives and re-checks it,
+   * so a stale screen can never hand a family money twice.
+   */
+  async function paySettlement(playerIds: string[] | null, amount: number | null) {
+    const bulk = playerIds === null;
+    if (bulk) setPayAllBusy(true); else setRowPayoutSaving(true);
+    setSettlementError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus/payouts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerIds,
+          amount,
+          paidDate: bulk ? tournamentToday() : rowPayoutForm.paidDate,
+          method: bulk ? 'etransfer' : rowPayoutForm.method,
+          note: bulk ? null : (rowPayoutForm.note.trim() || null),
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to record the payout');
+      applySettlement(await res.json());
+      setPayingRow(null);
+      // Paying out puts bills back up and moves the Credits column — reload the table with it.
+      await load();
+    } catch (e) {
+      setSettlementError(e instanceof Error ? e.message : 'Failed to record the payout');
+      // ⚠ RE-READ ON FAILURE. A bulk settle writes one cheque at a time, so a failure partway
+      // through leaves some families genuinely paid — and leaving the old totals on screen would
+      // tell the coach nothing happened and invite them to pay those families a second time. The
+      // server is the truth; go and get it.
+      await loadSettlement();
+      await load();
+    } finally {
+      setPayAllBusy(false);
+      setRowPayoutSaving(false);
     }
   }
 
@@ -648,27 +787,6 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function saveSurplus() {
-    setSurplusError('');
-    setSurplusSaving(true);
-    try {
-      const totalSurplus = parseFloat(surplusInput);
-      if (isNaN(totalSurplus) || totalSurplus < 0) throw new Error('Enter a valid surplus amount (0 or more)');
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ totalSurplus, notes: surplusNotes.trim() || null }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
-      const data = await res.json();
-      setSurplusData(data);
-    } catch (e: unknown) {
-      setSurplusError(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setSurplusSaving(false);
-    }
-  }
-
   async function sendReminders() {
     setSendingReminders(true);
     setReminderError('');
@@ -728,12 +846,10 @@ export function PlayerDuesPanel({
   // see the list but no send buttons.
   const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
 
-  // ── The Pay out sheet's derived values, in ONE place ─────────────────────────────────────
-  // The amount, whether it clears the ceiling, and the one sentence that says so — declared
-  // once so the preview line, the submit button and the save guard cannot disagree about any
-  // of the three (they were three independent copies of the same arithmetic and wording).
-  const payoutAmount = parseFloat(payoutForm.amount) || 0;
-  const payoutOverCeiling = !!selected && payoutAmount > selected.payableNow + 0.005;
+  // The one sentence the Pay out sheet says when the coach types more than the family has left
+  // in credit. The amount and the over-ceiling test now live inside the shared sheet
+  // (components/coaches/DuesPayoutSheet) — they were three independent copies of the same
+  // arithmetic and wording before, and the save guard below still reads this same message.
   const payoutOverMessage = selected
     ? `This family has ${fmt(selected.payableNow)} left in credit — you can't pay out more than that.`
     : '';
@@ -743,6 +859,50 @@ export function PlayerDuesPanel({
     : null;
   // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
   const neverPaid = players.filter(isNeverPaidPlayer);
+
+  // ── The settlement section's own derived values ──────────────────────────────────────────
+  // The closed-state headline comes from figures THIS PAGE ALREADY HOLDS, so a coach learns the
+  // team is holding families' money without the sheet being fetched at all.
+  const owedBackTotal = Math.round(players.reduce((s, p) => s + (p.owedBack ?? 0) * 100, 0)) / 100;
+
+  /** Rows in family order: households with siblings first, each under one heading, because they
+   *  are one conversation and one cheque. Everyone else follows in roster order. */
+  const settlementGroups = (() => {
+    if (!settlement) return [];
+    const byKey = new Map<string, SettlementSheetRow[]>();
+    for (const r of settlement.rows) {
+      const list = byKey.get(r.familyKey);
+      if (list) list.push(r); else byKey.set(r.familyKey, [r]);
+    }
+    const multi = [...byKey.entries()].filter(([, rows]) => rows.length > 1);
+    const single = [...byKey.entries()].filter(([, rows]) => rows.length === 1);
+    const dress = ([key, rows]: [string, SettlementSheetRow[]], showHeader: boolean) => {
+      const family = settlement.families.find(f => f.key === key);
+      return {
+        key, rows, showHeader,
+        label: family?.label ?? '',
+        playerIds: rows.map(r => r.playerId),
+        payable: family?.payable ?? 0,
+      };
+    };
+    return [
+      ...multi.map(e => dress(e, true)),
+      ...single.map(e => dress(e, false)),
+    ];
+  })();
+
+  function openSettlementPayout(playerIds: string[], label: string, max: number) {
+    setPayingRow({ playerIds, label, max });
+    setRowPayoutForm({ ...BLANK_PAYOUT_FORM, amount: String(max) });
+    setSettlementError('');
+  }
+
+  function openRowChoice(row: SettlementSheetRow) {
+    setChoiceFor(row);
+    setChoiceKind(row.choice === 'fixed' ? 'fixed' : row.choice === 'none' ? 'no_share' : 'even');
+    setChoiceAmount(row.choice === 'fixed' ? String(row.cashShare) : '');
+    setSettlementError('');
+  }
 
   // ── Season totals (owner ruling 2026-08-13, mockup artifact `c19d8500`) ────────────────────
   // Every figure is summed from `players`, which this page already has — nothing new is computed
@@ -1121,7 +1281,14 @@ export function PlayerDuesPanel({
           </div>
           )}
 
-          {/* Season Refund Calculator */}
+          {/* ══ The season settlement sheet (owner model 2026-08-14, mockup §7–§8) ═══════════
+              The Calculate button, the typed pot and the old five-column table are GONE. What
+              stands here is a settlement screen: what the team owes each family, what there is
+              to share, and every row payable from where it is read.
+
+              ⚠ IT IS HONEST YEAR-ROUND, not gated on season end. A family holding an unapplied
+              rebate in October is owed that money in October — so the header says so before the
+              section is even opened, from figures this page already holds. */}
           <div style={{
             marginTop: '2rem',
             borderRadius: 10,
@@ -1130,126 +1297,319 @@ export function PlayerDuesPanel({
           }}>
             <button
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
                 width: '100%', padding: '0.85rem 1.25rem', background: 'var(--home-card, rgba(255,255,255,0.03))',
                 border: 'none', cursor: 'pointer', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))',
+                textAlign: 'left',
               }}
-              onClick={() => {
-                const next = !refundOpen;
-                setRefundOpen(next);
-                if (next && !surplusData) loadSurplus();
-              }}
+              aria-expanded={refundOpen}
+              onClick={() => setRefundOpen(!refundOpen)}
             >
-              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Season Refund Calculator</span>
+              <span style={{ fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>Season settlement</span>
+              <span className={styles.muted} style={{ fontSize: '0.78rem', flex: 1 }}>
+                {owedBackTotal > 0.005
+                  ? `The team is holding ${fmt(owedBackTotal)} of families’ money`
+                  : 'What the team owes each family, and what’s left to share'}
+              </span>
               {refundOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
 
             {refundOpen && (
               <div style={{ padding: '1.25rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
-                <p style={{ fontSize: '0.83rem', color: 'var(--home-dim, rgba(255,255,255,0.5))', margin: '0 0 1rem' }}>
-                  Enter the total remaining team funds at season end. Each player&apos;s individual credits come off the top, then the remainder is divided evenly.
-                </p>
-
-                {surplusLoading ? (
+                {settlementError && <p className={styles.errorText} style={{ marginTop: 0 }}>{settlementError}</p>}
+                {settlementLoading && !settlement ? (
                   <p className={styles.muted}>Loading…</p>
-                ) : (
+                ) : !settlement ? null : (
                   <>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                      <div>
-                        <label className={styles.label}>Total Remaining Funds</label>
-                        <input
-                          className={styles.input}
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          placeholder="e.g. 10500"
-                          value={surplusInput}
-                          onChange={e => setSurplusInput(e.target.value)}
-                          style={{ width: '160px' }}
-                        />
+                    {/* ── Where the pot comes from — derived, and showing its work ──────────── */}
+                    <div style={{
+                      borderRadius: 9, border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                      background: 'var(--home-card, rgba(255,255,255,0.02))',
+                      padding: '0.9rem 1.1rem', marginBottom: '1.25rem', maxWidth: 460,
+                      fontSize: '0.84rem',
+                    }}>
+                      <div style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', marginBottom: '0.55rem' }}>
+                        The team&apos;s money{assignment?.teamName ? ` — ${assignment.teamName}` : ''}
                       </div>
-                      <div style={{ flex: 1, minWidth: '200px' }}>
-                        <label className={styles.label}>Notes</label>
-                        <input
-                          className={styles.input}
-                          placeholder="e.g. End of 2025 season"
-                          value={surplusNotes}
-                          onChange={e => setSurplusNotes(e.target.value)}
-                        />
-                      </div>
-                      <button
-                        className={styles.btnPrimary}
-                        disabled={surplusSaving}
-                        onClick={saveSurplus}
-                        style={{ whiteSpace: 'nowrap' }}
-                      >
-                        {surplusSaving ? 'Saving…' : 'Calculate'}
-                      </button>
-                    </div>
-                    {surplusError && <p className={styles.errorText}>{surplusError}</p>}
-
-                    {surplusData && surplusData.surplus && surplusData.breakdown.length > 0 && (
-                      <>
-                        <div style={{
-                          display: 'flex', gap: '1.5rem', flexWrap: 'wrap',
-                          padding: '0.75rem 1rem', borderRadius: 8,
-                          background: 'color-mix(in srgb, var(--success-light) 5%, transparent)',
-                          border: '1px solid color-mix(in srgb, var(--success-light) 15%, transparent)',
-                          marginBottom: '1rem', fontSize: '0.82rem',
+                      {([
+                        ['Dues received', settlement.pot.duesReceived, false],
+                        ['Fundraising raised', settlement.pot.fundraisingRaised, false],
+                        ['Spent', -settlement.pot.cashOut, false],
+                        ...(settlement.pot.payoutsTotal > 0.005 ? [['Paid back to families', -settlement.pot.payoutsTotal, false] as const] : []),
+                        ['Cash the team holds', settlement.pot.cashHeld, true],
+                        ['Owed to families (credits)', -settlement.pot.owedBack, false],
+                        ...(settlement.pot.sharePaid > 0.005 ? [['Refunds already shared out', settlement.pot.sharePaid, false] as const] : []),
+                        ...(settlement.pot.expectedIn > 0.005 ? [['Still to come from families', settlement.pot.expectedIn, false] as const] : []),
+                      ] as Array<readonly [string, number, boolean]>).map(([label, value, strong], i) => (
+                        <div key={`${label}-${i}`} style={{
+                          display: 'flex', justifyContent: 'space-between', gap: '1rem',
+                          padding: '0.24rem 0',
+                          borderTop: strong ? '1px solid var(--home-line, rgba(255,255,255,0.12))' : undefined,
+                          marginTop: strong ? '0.35rem' : undefined,
+                          paddingTop: strong ? '0.45rem' : undefined,
+                          fontWeight: strong ? 700 : 400,
+                          color: strong ? 'var(--home-ink, rgba(255,255,255,0.92))' : 'var(--home-ink-soft, rgba(255,255,255,0.68))',
                         }}>
-                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                            Total: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.surplus.totalSurplus)}</strong>
-                          </span>
-                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                            {/* Net of anything already handed back in cash — the label says so,
-                                because the figure quietly changed meaning (/review 2026-08-14). */}
-                            Credits still owed: <strong style={{ color: 'var(--success-light)' }}>-{fmt(surplusData.totalAllCredits)}</strong>
-                          </span>
-                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                            Even pool: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.evenPool)}</strong>
-                          </span>
-                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                            Per player (base): <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>
-                              {fmt(surplusData.evenPool / (surplusData.playerCount || 1))}
-                            </strong>
+                          <span>{label}</span>
+                          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {value < 0 ? `−${fmt(Math.abs(value))}` : fmt(value)}
                           </span>
                         </div>
+                      ))}
+                      {/* The bottom line — or, in a shortfall, the fact that there isn't one. */}
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', gap: '1rem',
+                        borderTop: '1px solid var(--home-line, rgba(255,255,255,0.12))',
+                        marginTop: '0.35rem', paddingTop: '0.45rem', fontWeight: 700,
+                        color: 'var(--home-ink, rgba(255,255,255,0.92))',
+                      }}>
+                        <span>Surplus to share</span>
+                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(settlement.pot.surplus)}</span>
+                      </div>
+                      {/* Hold back — the ONE control left. Stating an intention, never re-doing
+                          arithmetic, and it can only ever come out of the surplus. */}
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center',
+                        flexWrap: 'wrap', marginTop: '0.5rem', paddingTop: '0.4rem',
+                        borderTop: '1px dashed var(--home-line, rgba(255,255,255,0.08))',
+                        color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.8rem',
+                      }}>
+                        <span>Hold back for next season</span>
+                        {holdBackEditing ? (
+                          <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                            <input
+                              className={styles.input}
+                              type="number" min={0} max={settlement.pot.holdBackCap} step="0.01"
+                              aria-label="Amount to hold back for next season"
+                              value={holdBackInput}
+                              onChange={e => setHoldBackInput(e.target.value)}
+                              style={{ width: 110, fontSize: '0.8rem' }}
+                            />
+                            <button className={styles.btnPrimary} disabled={holdBackSaving} onClick={saveHoldBack} style={{ fontSize: '0.75rem', minHeight: 44 }}>
+                              {holdBackSaving ? '…' : 'Save'}
+                            </button>
+                            <button className={styles.btnGhost} onClick={() => { setHoldBackEditing(false); setHoldBackInput(settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : ''); }} style={{ fontSize: '0.75rem', minHeight: 44 }}>
+                              Cancel
+                            </button>
+                          </span>
+                        ) : (
+                          <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(settlement.pot.holdBack)}</span>
+                            {moneyCanWrite && (
+                              <button className={styles.btnGhost} onClick={() => setHoldBackEditing(true)} style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', minHeight: 44 }}>
+                                Change
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                      {holdBackEditing && (
+                        <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
+                          At most {fmt(settlement.pot.holdBackCap)} — the rest is money the team owes families.
+                        </p>
+                      )}
+                    </div>
 
-                        {/* ⚠ `tableAsCards` added 2026-08-13 (Money-hub table pass). This frame carried
-                            `.tableWrap` alone, whose `overflow-x: auto` let a five-column refund
-                            table scroll sideways on a phone with NOTHING saying it could — the
-                            silent sideways scroll every other table in the hub already avoids.
-                            One record per row makes it a list, so it stacks; it does not scroll. */}
+                    {/* ⚠ Money the pot cannot honestly claim. Club funding and payments to the
+                        club carry no season of their own, so they cannot be attributed to THIS
+                        one — counting them would let a team in its third season share money an
+                        earlier season received. Said out loud rather than silently dropped. */}
+                    {settlement.clubMoneyUncounted > 0.005 && (
+                      <p className={styles.muted} style={{ fontSize: '0.78rem', margin: '-0.75rem 0 1rem' }}>
+                        {fmt(settlement.clubMoneyUncounted)} of club funding and payments to the club
+                        isn&apos;t counted here — those aren&apos;t recorded against a single season, so
+                        the sheet can&apos;t tell how much of it belongs to this one.
+                      </p>
+                    )}
+
+                    {/* ⚠ A season still spending is not a season with a surplus. The arithmetic is
+                        untouched (cash held, minus what is owed); this line simply stops the sheet
+                        inviting a coach to share money the season itself still needs. */}
+                    {settlement.unspentPlan > 0.005 && settlement.pot.surplus > 0.005 && (
+                      <p className={styles.muted} style={{ fontSize: '0.78rem', margin: '-0.75rem 0 1rem' }}>
+                        The season still plans to spend {fmt(settlement.unspentPlan)}. Hold that back before
+                        sharing anything.
+                      </p>
+                    )}
+
+                    {/* ── When the team can't cover what it owes (owner Call 9) ─────────────── */}
+                    {settlement.pot.shortfall > 0.005 && (
+                      <div style={stripStyle('danger')}>
+                        <AlertTriangle size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span>
+                          <strong>The team is {fmt(settlement.pot.shortfall)} short of what it owes families.</strong>{' '}
+                          <span className={styles.muted}>
+                            Cash held {fmt(settlement.pot.cashHeld)} · owed to families {fmt(settlement.pot.owedBack)}.
+                            There is no surplus to share — this is a debt, not a refund. Nothing is reduced
+                            automatically; you decide who is paid from what&apos;s left.
+                          </span>
+                        </span>
+                      </div>
+                    )}
+
+                    {settlement.rows.length === 0 ? (
+                      <p className={styles.muted}>No families are owed anything yet.</p>
+                    ) : (
+                      <>
+                        {/* One record per row, so on a phone it stacks rather than scrolling
+                            sideways in silence (the Money-hub table ruling, 2026-08-13). */}
                         <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
                           <table className={styles.table}>
                             <thead>
                               <tr>
                                 <th className={styles.th}>Player</th>
-                                <th className={`${styles.th} ${styles.thNum}`}>Rolling Balance</th>
-                                <th className={`${styles.th} ${styles.thNum}`}>Credit Portion</th>
-                                <th className={`${styles.th} ${styles.thNum}`}>Even Share</th>
-                                <th className={`${styles.th} ${styles.thNum}`}>Total Refund</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Owed back</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Even share</th>
+                                <th className={`${styles.th} ${styles.thNum}`}>Refund</th>
+                                <th className={styles.th}></th>
                               </tr>
                             </thead>
                             <tbody>
-                              {surplusData.breakdown.map(row => (
-                                <tr key={row.playerId} className={styles.tr}>
-                                  <td className={styles.td} data-label="Player">{[row.playerFirstName, row.playerLastName].filter(Boolean).join(' ')}</td>
-                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Rolling balance" style={{ color: balanceColor(row.rollingBalance) }}>
-                                    {fmt(row.rollingBalance)}
-                                  </td>
-                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Credit portion" style={{ color: row.creditPortion > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                                    {row.creditPortion > 0 ? fmt(row.creditPortion) : '—'}
-                                  </td>
-                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Even share">{fmt(row.evenShare)}</td>
-                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Total refund" style={{ color: 'var(--success-light)', fontWeight: 700 }}>
-                                    {fmt(row.totalRefund)}
-                                  </td>
-                                </tr>
+                              {settlementGroups.map(group => (
+                                <Fragment key={group.key}>
+                                  {group.showHeader && (
+                                    <tr className={styles.tr}>
+                                      <td className={styles.td} colSpan={5} style={{ background: 'var(--home-card, rgba(255,255,255,0.03))', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>
+                                        <span style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                          <span>
+                                            {group.label} — one payout, {group.playerIds.length} shares
+                                          </span>
+                                          {moneyCanWrite && !settlement.readOnly && group.payable > 0.005 && (
+                                            <button
+                                              className={styles.btnGhost}
+                                              style={ROW_ACTION}
+                                              onClick={() => openSettlementPayout(group.playerIds, group.label, group.payable)}
+                                            >
+                                              Pay {fmt(group.payable)} in one
+                                            </button>
+                                          )}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  )}
+                                  {group.rows.map(row => {
+                                    const name = [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ');
+                                    return (
+                                      <SettlementRow
+                                        key={row.playerId}
+                                        row={row}
+                                        name={name}
+                                        isOpen={openRow === row.playerId}
+                                        onToggle={() => setOpenRow(openRow === row.playerId ? null : row.playerId)}
+                                        canWrite={moneyCanWrite && !settlement.readOnly}
+                                        onPayOut={() => openSettlementPayout([row.playerId], name, row.payableNow)}
+                                        onChangeChoice={() => openRowChoice(row)}
+                                        fmtDate={fmtDate}
+                                      />
+                                    );
+                                  })}
+                                </Fragment>
                               ))}
                             </tbody>
+                            {/* `.tableFoot` is what gives a totals row its divider and ground —
+                                the shared Option-C recipe every Money-hub footer uses, including
+                                the Season totals footer 300 lines above. Without the class the
+                                row renders as an ordinary row wearing footer labels. */}
+                            <tfoot className={styles.tableFoot}>
+                              <tr className={styles.tr}>
+                                <td className={styles.td} data-label="">
+                                  <span className={styles.footLabel}>Team</span>
+                                  <span className={styles.footValue}>
+                                    {settlement.rows.length} player{settlement.rows.length !== 1 ? 's' : ''}
+                                  </span>
+                                </td>
+                                <td className={`${styles.td} ${styles.tdNum}`} data-label="Owed back">
+                                  <span className={styles.footLabel}>Owed back</span>
+                                  <span className={styles.footValue} style={{ color: 'var(--success-light)' }}>{fmt(settlement.totals.owedBack)}</span>
+                                </td>
+                                <td className={`${styles.td} ${styles.tdNum}`} data-label="Even share">
+                                  <span className={styles.footLabel}>Shares</span>
+                                  <span className={styles.footValue}>{fmt(settlement.totals.cashShare)}</span>
+                                </td>
+                                {/* ⚠ The SUM OF THE ROWS, not the sum of the two columns beside it.
+                                    Where a family still owes, those differ — and the rows are what
+                                    will actually be paid. Rows re-adding to the cash on hand is the
+                                    promise this whole sheet rests on. */}
+                                <td className={`${styles.td} ${styles.tdNum}`} data-label="Refund">
+                                  <span className={styles.footLabel}>Refunds</span>
+                                  <span className={styles.footValue} style={{ color: 'var(--success-light)' }}>{fmt(settlement.totals.refund)}</span>
+                                </td>
+                                <td className={styles.td} data-label="">
+                                  {moneyCanWrite && !settlement.readOnly && settlement.totals.payable > 0.005 && (
+                                    <button
+                                      className={styles.btnPrimary}
+                                      style={{ fontSize: '0.76rem', minHeight: 44 }}
+                                      /* ⚠ Also disabled while a single row's payout sheet is
+                                         open: two settle requests in flight at once is a race the
+                                         server catches, but a coach should never be able to start
+                                         it from two buttons on one screen. */
+                                      disabled={payAllBusy || rowPayoutSaving || !!payingRow}
+                                      onClick={() => paySettlement(null, null)}
+                                    >
+                                      {payAllBusy ? 'Recording…'
+                                        : payingRow ? 'Finish the open payout first'
+                                        : `Pay all ${fmt(settlement.totals.payable)}`}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
+
+                        {/* ⚠ A forward-looking split spends money that has not arrived. The sheet
+                            says WHOSE, rather than letting a coach discover it at the bank. */}
+                        {settlement.awaitingCash > 0.005 && settlement.awaitingFrom.length > 0 && (
+                          <div style={stripStyle('warning')}>
+                            <AlertTriangle size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span>
+                              <strong>
+                                Paying everyone needs {fmt(settlement.awaitingCash)} still to arrive
+                                {' '}from {settlement.awaitingFrom.slice(0, 2).map(a => a.label).join(' and ')}
+                                {settlement.awaitingFrom.length > 2 ? ` and ${settlement.awaitingFrom.length - 2} more` : ''}.
+                              </strong>{' '}
+                              <span className={styles.muted}>
+                                The payouts come to {fmt(settlement.totals.payable)} and the team is holding{' '}
+                                {fmt(Math.max(0, settlement.pot.cashHeld - settlement.pot.holdBack))}. Pay out now and one
+                                family waits — or collect what&apos;s owing first.
+                              </span>
+                            </span>
+                          </div>
+                        )}
+
+                        {settlement.unallocated > 0.005 && (
+                          <p className={styles.muted} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
+                            {fmt(settlement.unallocated)} of the surplus stays with the team — nobody is taking it.
+                          </p>
+                        )}
+
+                        {/* The Pay out sheet, pre-filled — the SAME sheet the player drawer uses. */}
+                        {payingRow && (
+                          <div style={{ maxWidth: 460, marginTop: '1rem' }}>
+                            <p style={{ fontSize: '0.82rem', margin: '0 0 0.5rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+                              Paying <strong>{payingRow.label}</strong>
+                              {payingRow.playerIds.length > 1 ? ` — ${payingRow.playerIds.length} players, one payment` : ''}
+                            </p>
+                            <DuesPayoutSheet
+                              form={rowPayoutForm}
+                              onChange={setRowPayoutForm}
+                              ceiling={payingRow.max}
+                              overCeilingMessage={`The sheet owes ${payingRow.label} ${fmt(payingRow.max)} — you can’t pay out more than that.`}
+                              consequence={amt =>
+                                payingRow.playerIds.length > 1
+                                  ? `Records ${fmt(payingRow.max)} across ${payingRow.playerIds.length} players and posts it to the team ledger, dated ${fmtDate(rowPayoutForm.paidDate)}.`
+                                  : `Posts ${fmt(amt)} money out to the team ledger, dated ${fmtDate(rowPayoutForm.paidDate)}.`}
+                              saving={rowPayoutSaving}
+                              onCancel={() => setPayingRow(null)}
+                              onSubmit={() => paySettlement(
+                                payingRow.playerIds,
+                                // Siblings are paid what their OWN rows say; a typed amount only
+                                // makes sense for a single row, and the route refuses otherwise.
+                                payingRow.playerIds.length === 1 ? (parseFloat(rowPayoutForm.amount) || 0) : null,
+                              )}
+                            />
+                          </div>
+                        )}
                       </>
                     )}
                   </>
@@ -1413,85 +1773,25 @@ export function PlayerDuesPanel({
                       </div>
                     )}
 
-                    {/* Pay out — the mirror of Record payment: how much, the day it LEFT, how. */}
+                    {/* Pay out — the ONE sheet (components/coaches/DuesPayoutSheet), shared with
+                        the season settlement's rows. Here the ceiling is the family's remaining
+                        CREDIT; there it is what the settlement says they are owed. */}
                     {payingOut && (
-                      <div style={{
-                        padding: '0.85rem', marginBottom: '1rem',
-                        background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
-                        border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-                      }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                          <div>
-                            <label className={styles.label}>Amount paid out <span className={styles.labelRequired}>*</span></label>
-                            <input
-                              className={styles.input}
-                              type="number" min={0} step="0.01"
-                              value={payoutForm.amount}
-                              onChange={e => setPayoutForm(f => ({ ...f, amount: e.target.value }))}
-                            />
-                          </div>
-                          <div>
-                            <label className={styles.label}>Date paid <span className={styles.labelRequired}>*</span></label>
-                            <input
-                              className={styles.input}
-                              type="date"
-                              value={payoutForm.paidDate}
-                              onChange={e => setPayoutForm(f => ({ ...f, paidDate: e.target.value }))}
-                            />
-                          </div>
-                          <div>
-                            <label className={styles.label}>Method</label>
-                            <select
-                              className={styles.input}
-                              value={payoutForm.method}
-                              onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value as DuesPaymentMethod }))}
-                            >
-                              {(Object.entries(PAYMENT_METHOD_LABELS) as [DuesPaymentMethod, string][]).map(([v, l]) => (
-                                <option key={v} value={v}>{l}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className={styles.label}>Note (optional)</label>
-                            <input
-                              className={styles.input}
-                              type="text"
-                              placeholder="e.g. sent to Dana"
-                              value={payoutForm.note}
-                              onChange={e => setPayoutForm(f => ({ ...f, note: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-                        {/* What it does to the family's bills, BEFORE saving — the consequence a
-                            coach would otherwise discover on the dues table afterwards. */}
-                        {payoutAmount > 0 && (
-                          <p style={{
-                            margin: '0 0 0.6rem', fontSize: '0.78rem',
-                            color: payoutOverCeiling ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.55))',
-                          }}>
-                            {payoutOverCeiling
-                              ? payoutOverMessage
-                              : `Posts ${fmt(payoutAmount)} money out to the team ledger, dated ${fmtDate(payoutForm.paidDate)}${
-                                  selected.creditApplied > 0.005
-                                    ? ' — and their bills go back up by whatever this money was covering.'
-                                    : '.'}`}
-                          </p>
-                        )}
-                        {payoutErrorNote}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          <button className={styles.btnGhost} onClick={() => { setPayingOut(false); setPayoutError(''); }} style={{ fontSize: '0.78rem' }}>
-                            Cancel
-                          </button>
-                          <button
-                            className={styles.btnPrimary}
-                            disabled={payoutSaving || payoutOverCeiling || payoutAmount <= 0}
-                            onClick={savePayout}
-                            style={{ fontSize: '0.78rem' }}
-                          >
-                            {payoutSaving ? 'Recording…' : 'Pay out'}
-                          </button>
-                        </div>
-                      </div>
+                      <DuesPayoutSheet
+                        form={payoutForm}
+                        onChange={setPayoutForm}
+                        ceiling={selected.payableNow}
+                        overCeilingMessage={payoutOverMessage}
+                        consequence={amt =>
+                          `Posts ${fmt(amt)} money out to the team ledger, dated ${fmtDate(payoutForm.paidDate)}${
+                            selected.creditApplied > 0.005
+                              ? ' — and their bills go back up by whatever this money was covering.'
+                              : '.'}`}
+                        error={payoutError}
+                        saving={payoutSaving}
+                        onCancel={() => { setPayingOut(false); setPayoutError(''); }}
+                        onSubmit={savePayout}
+                      />
                     )}
                     {!payingOut && payoutErrorNote}
 
@@ -2011,6 +2311,114 @@ export function PlayerDuesPanel({
       {/* Confirm before emailing families (owner call 2026-08-14). The one toolbar click that
           can't be un-clicked states its whole scope up front: past due + the next 3 days,
           remainders only, one email per family, and the 7-day no-repeat guard. */}
+      {/* ── Set refund — one family's choice (owner Call 10) ────────────────────────────────
+          Four options, all BOUNDED. There is deliberately no free-text override of a refund
+          TOTAL: that would let the rows stop adding up to the pot, which is the exact defect
+          deriving the pot removed. A hand-set amount replaces a family's SHARE and never their
+          owed-back money — that is theirs, not a distribution the coach can redirect. */}
+      {choiceFor && settlement && (() => {
+        const row = settlement.rows.find(r => r.playerId === choiceFor.playerId) ?? choiceFor;
+        const name = [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ');
+        const evenTakers = settlement.rows.filter(r => r.choice === 'even').length;
+        return (
+          <div className={styles.modalOverlay} onClick={() => setChoiceFor(null)}>
+            <div className={styles.modal} style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Set refund — {name}</span>
+                <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setChoiceFor(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                {([
+                  ['even', 'An even share', row.choice === 'even'
+                    ? `${fmt(row.refund)} — ${fmt(row.owedBack)} owed back plus one of ${evenTakers} shares`
+                    : `Puts ${name} back in the split with everyone else`],
+                  ['fixed', 'A set amount', 'Their owed-back money is paid either way; this replaces the share'],
+                  ['no_share', 'No share — leave it to the team', 'The rest goes to the other families, raising every other share'],
+                ] as Array<[typeof choiceKind, string, string]>).map(([value, title, sub]) => (
+                  <button
+                    key={value}
+                    onClick={() => setChoiceKind(value)}
+                    style={{
+                      textAlign: 'left', padding: '0.6rem 0.8rem', borderRadius: 8, cursor: 'pointer',
+                      background: choiceKind === value ? 'color-mix(in srgb, var(--success-light) 8%, transparent)' : 'var(--home-card, rgba(255,255,255,0.03))',
+                      border: `1px solid ${choiceKind === value ? 'color-mix(in srgb, var(--success-light) 35%, transparent)' : 'var(--home-line, rgba(255,255,255,0.08))'}`,
+                    }}
+                  >
+                    <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.88))' }}>{title}</span>
+                    <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{sub}</span>
+                  </button>
+                ))}
+                {choiceKind === 'fixed' && (
+                  <div>
+                    <label className={styles.label}>Their share</label>
+                    <input
+                      className={styles.input}
+                      type="number" min={0} step="0.01"
+                      value={choiceAmount}
+                      onChange={e => setChoiceAmount(e.target.value)}
+                      style={{ maxWidth: 160 }}
+                    />
+                    <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.3rem 0 0' }}>
+                      Whatever this frees up goes straight to the other families — the sheet is never
+                      left holding a remainder.
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* Forgiving a balance is NOT one of the three above: it is a credit, and it changes
+                  what the family owes rather than what they take. It sits here because this is
+                  where a coach decides it. */}
+              {row.leftToSend > 0.005 && (
+                <div style={{ borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))', paddingTop: '0.7rem', marginBottom: '0.9rem' }}>
+                  <p style={{ fontSize: '0.8rem', margin: '0 0 0.45rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+                    {name} still has <strong>{fmt(row.leftToSend)}</strong> to send.
+                  </p>
+                  <button
+                    className={styles.btnSecondary}
+                    disabled={choiceSaving}
+                    style={{ fontSize: '0.78rem' }}
+                    onClick={() => saveRowChoice(row.playerId, 'forgive')}
+                  >
+                    Forgive the {fmt(row.leftToSend)} balance
+                  </button>
+                  <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
+                    The team has genuinely given them that money, so it counts as their share, already
+                    received — and their bills stop being chased.
+                  </p>
+                </div>
+              )}
+              {row.forgiven > 0.005 && (
+                <div style={{ borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))', paddingTop: '0.7rem', marginBottom: '0.9rem' }}>
+                  <p style={{ fontSize: '0.8rem', margin: '0 0 0.45rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+                    {fmt(row.forgiven)} of this family&apos;s balance was forgiven.
+                  </p>
+                  <button
+                    className={styles.btnGhost}
+                    disabled={choiceSaving}
+                    style={{ fontSize: '0.78rem' }}
+                    onClick={() => saveRowChoice(row.playerId, 'unforgive')}
+                  >
+                    Undo the forgiveness
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button className={styles.btnGhost} onClick={() => setChoiceFor(null)}>Cancel</button>
+                <button
+                  className={styles.btnPrimary}
+                  disabled={choiceSaving}
+                  onClick={() => saveRowChoice(row.playerId, choiceKind, parseFloat(choiceAmount) || 0)}
+                >
+                  {choiceSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {confirmRemindersOpen && (
         <div className={styles.modalOverlay} onClick={() => setConfirmRemindersOpen(false)}>
           <div className={styles.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>

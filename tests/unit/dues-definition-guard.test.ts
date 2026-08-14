@@ -27,14 +27,30 @@ const REQUIRED_IMPORTERS = [
   'app/api/coaches/[orgSlug]/teams/[teamId]/money-summary/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/route.ts',
+  // The settlement's two write doors. Both quote money figures (what a row is owed, what may be
+  // held back, what is left to forgive) and both must take them from the shared assembly — the
+  // list has to grow with the surface it describes, or it quietly stops describing it.
+  'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/adjustments/route.ts',
+  'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/payouts/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/ask/route.ts',
   'lib/insights-digest.ts',
   'lib/insight-findings.ts',
+  // The season settlement's assembly — every figure the sheet quotes starts in the shared model.
+  'lib/coach-season-settlement.ts',
 ];
 
 /** The only modules allowed to define the arithmetic. */
-const DEFINITION_HOMES = new Set(['lib/dues-status.ts', 'lib/dues-payments.ts', 'lib/dues-credits.ts']);
+const DEFINITION_HOMES = new Set([
+  'lib/dues-status.ts',
+  'lib/dues-payments.ts',
+  'lib/dues-credits.ts',
+  // Pass 3: the season pot and the even-share solver. It derives no credit figure of its own —
+  // it is handed the three-state position — but it IS where "what cash does the team hold"
+  // lives, and the settlement assembly beside it is the one place the sheet is built.
+  'lib/season-settlement.ts',
+  'lib/coach-season-settlement.ts',
+]);
 
 /** ORG-ALLOCATION surfaces — a DIFFERENT money domain (rep_allocation_installments). Allocations
  *  have no payment record; their paid stamp is still the input, so a stamp-sum there is correct
@@ -77,10 +93,40 @@ describe('dues definitions have one home', () => {
     for (const f of REQUIRED_IMPORTERS) {
       const src = readFileSync(join(ROOT, f), 'utf8');
       assert.ok(
-        /from '@?\.?\.?\/?.*dues-(status|payments|credits)/.test(src),
-        `${f} quotes a dues figure but imports none of lib/dues-status, lib/dues-payments, lib/dues-credits`,
+        // `coach-season-settlement` counts because it is itself a definition home that reads the
+        // credit model — the season-surplus route quotes only what that assembly hands it, which
+        // is the whole point of Pass 3 (the route it replaced hand-built its own breakdown, and
+        // was twice the place the money went wrong).
+        /from '@?\.?\.?\/?.*(dues-(status|payments|credits)|coach-season-settlement)/.test(src),
+        `${f} quotes a dues figure but imports none of lib/dues-status, lib/dues-payments, lib/dues-credits, lib/coach-season-settlement`,
       );
     }
+  });
+
+  /**
+   * The typed season pot is DEAD (mig 235). `rep_season_surplus.total_surplus` survives as
+   * history and must stay unread: it was a number a human typed, it double-subtracted
+   * fundraising rebates, and nothing on screen could see that it was wrong. The pot derives now.
+   *
+   * ⚠ A live column that nothing reads is a drift smell in its own right — this rule is what
+   * stops a future session "restoring" it because it looked like a convenient total.
+   */
+  it('nothing reads the legacy typed pot', () => {
+    const files = [
+      ...walk(join(ROOT, 'app')),
+      ...walk(join(ROOT, 'lib')),
+    ];
+    const offenders: string[] = [];
+    for (const p of files) {
+      const src = readFileSync(p, 'utf8');
+      if (/total_surplus|totalSurplus/.test(src)) offenders.push(rel(p));
+    }
+    assert.deepEqual(
+      offenders,
+      [],
+      'the hand-typed season pot (rep_season_surplus.total_surplus) is legacy and read by nothing '
+      + 'since Pass 3 — the pot DERIVES (lib/season-settlement.ts):\n  ' + offenders.join('\n  '),
+    );
   });
 
   it('no unsanctioned file WRITES the paid stamp directly (it is a projection, not an input)', () => {

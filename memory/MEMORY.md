@@ -22,3 +22,4 @@
 - [Standalone Team workspace](standalone-team-workspace.md)
 - [Coaches Portal unified product](coaches-portal-unified-product.md)
 - [Free Tier strategy project](project_free_tier_strategy.md)
+- [Dev database schema](reference_db_schema.md) — every table and column, regenerated from the LIVE dev database by `npm run refresh:snapshots`; never hand-edited, and never a substitute for the snapshots when deciding whether a column exists

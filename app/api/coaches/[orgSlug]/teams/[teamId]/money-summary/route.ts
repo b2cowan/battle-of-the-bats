@@ -10,6 +10,7 @@ import {
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
 import { deriveDuesPosition, groupByPlayer, totalsByPlayer, amountsTotal } from '@/lib/dues-credits';
+import { expenseTotals } from '@/lib/season-settlement';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
@@ -150,25 +151,22 @@ export const GET = withObservability(async (req: Request,
   // spending and belongs in it. `expensesCashPaid` is what actually LEFT THE TEAM'S ACCOUNT, and
   // excludes anything a family covered directly: no team cash moved, so counting it in the cash
   // line would subtract money the team is still holding.
-  let expensesPaid = 0;
-  let expensesCashPaid = 0;
+  // ⚠ THE TWO MONEY FIGURES COME FROM THE SHARED HELPER (lib/season-settlement.ts
+  // `expenseTotals`) — the settlement pot reads the same one, so the hub's cash line and the
+  // season's pot cannot disagree about what left the team's account. This loop keeps only the
+  // COUNTS, which are this screen's own question and nobody else's.
+  const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses);
   let expensesUnpaidCount = 0;
   let upcomingDueCount = 0;
   for (const e of expenses) {
     if (e.expenseType === 'tournament_payable') {
-      // A payable is billed to the team by a third party; there is no out-of-pocket leg.
-      if (e.depositPaidAt) { expensesPaid += e.depositAmount ?? 0; expensesCashPaid += e.depositAmount ?? 0; }
-      if (e.balancePaidAt) { expensesPaid += e.balanceAmount ?? 0; expensesCashPaid += e.balanceAmount ?? 0; }
       if (!e.depositPaidAt || !e.balancePaidAt) expensesUnpaidCount += 1;
       // "Due soon" = inside the next 30 days only — already-overdue legs are the
       // UpcomingPayablesPanel's overdue lane, not a "soon" count.
       if (!e.depositPaidAt && e.depositDueDate && e.depositDueDate >= today && e.depositDueDate <= in30) upcomingDueCount += 1;
       if (!e.balancePaidAt && e.balanceDueDate && e.balanceDueDate >= today && e.balanceDueDate <= in30) upcomingDueCount += 1;
-    } else {
-      if (e.expensePaidAt) {
-        expensesPaid += e.amount;
-        if (!e.paidByPlayerId) expensesCashPaid += e.amount;
-      } else expensesUnpaidCount += 1;
+    } else if (!e.expensePaidAt) {
+      expensesUnpaidCount += 1;
     }
   }
   // Money handed back to families is real money out (mig 234).

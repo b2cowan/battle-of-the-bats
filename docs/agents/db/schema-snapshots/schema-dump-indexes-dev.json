@@ -1690,6 +1690,21 @@
     "indexdef": "CREATE INDEX rep_roster_players_year_idx ON public.rep_roster_players USING btree (program_year_id)"
   },
   {
+    "tablename": "rep_season_refund_adjustments",
+    "indexname": "idx_rep_season_refund_adjustments_year",
+    "indexdef": "CREATE INDEX idx_rep_season_refund_adjustments_year ON public.rep_season_refund_adjustments USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_season_refund_adjustments",
+    "indexname": "rep_season_refund_adjustments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_pkey ON public.rep_season_refund_adjustments USING btree (id)"
+  },
+  {
+    "tablename": "rep_season_refund_adjustments",
+    "indexname": "rep_season_refund_adjustments_program_year_id_player_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_program_year_id_player_id_key ON public.rep_season_refund_adjustments USING btree (program_year_id, player_id)"
+  },
+  {
     "tablename": "rep_season_surplus",
     "indexname": "rep_season_surplus_pkey",
     "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_pkey ON public.rep_season_surplus USING btree (id)"

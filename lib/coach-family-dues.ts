@@ -105,6 +105,31 @@ function firstNameOf(displayName: string): string {
   return withoutJersey.split(/\s+/)[0] || withoutJersey;
 }
 
+/**
+ * How a family is NAMED, given the surnames on record and the players in it — the one rule, so
+ * the "who owes" answer and the season settlement sheet can never call the same household two
+ * different things.
+ *
+ * ONE recorded surname ⇒ name the family. Two different surnames under one guardian email is a
+ * real household (blended families, different last names), and picking one would be naming a
+ * family something nobody in it is called — so those fall back to the players' own first names,
+ * exactly as a caller with no guardian-PII grant does (it passes no surnames at all).
+ */
+export function familyLabel(surnames: readonly string[], playerNames: readonly string[]): {
+  /** How a SENTENCE names them: "the Marches" / "Maya and Sam's family". */
+  label: string;
+  /** How a RECEIPT LINE names them: "March family" / "Maya and Sam". */
+  receiptLabel: string;
+  labelledByPlayer: boolean;
+} {
+  const unique = [...new Set(surnames.map(s => s.trim()).filter(Boolean))];
+  if (unique.length === 1) {
+    return { label: `the ${familyPlural(unique[0])}`, receiptLabel: `${unique[0]} family`, labelledByPlayer: false };
+  }
+  const names = joinNames(playerNames.map(firstNameOf));
+  return { label: `${names}'s family`, receiptLabel: names, labelledByPlayer: true };
+}
+
 export interface FamilyDuesInput {
   players: FamilyDuesPlayer[];
   /** Today, `YYYY-MM-DD`, in the org's zone — midnight-truncated, so an installment due today is
@@ -164,20 +189,8 @@ export function computeFamilyDues(input: FamilyDuesInput): FamilyDuesRollup {
     g.outstanding = Math.round(g.outstanding * 100) / 100;
     g.unpaid.sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.playerName.localeCompare(b.playerName));
 
-    // ONE recorded surname for the whole group ⇒ name the family. Two different surnames under one
-    // guardian email is a real household (blended families, different last names), and picking one
-    // would be naming a family something nobody in it is called — so those fall back to players too.
-    const surname = g.surnames.size === 1 ? [...g.surnames][0] : null;
-    if (surname) {
-      g.label = `the ${familyPlural(surname)}`;
-      g.receiptLabel = `${surname} family`;
-      g.labelledByPlayer = false;
-    } else {
-      const names = joinNames(g.playerNames.map(firstNameOf));
-      g.label = `${names}'s family`;
-      g.receiptLabel = names;
-      g.labelledByPlayer = true;
-    }
+    // The naming rule has ONE home (`familyLabel` above) — the settlement sheet reads it too.
+    Object.assign(g, familyLabel([...g.surnames], g.playerNames));
   }
 
   // Rebuilt field by field rather than spread-minus-`surnames`: the working set is internal

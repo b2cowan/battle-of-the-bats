@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) · **§20 ON DEV, mig 234 dev-only** (money goes out) |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) · **§20 ON DEV, mig 234 dev-only** (money goes out) · **§21 ON DEV, mig 235 dev-only** (the season settlement sheet — the typed pot is gone) |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1602,6 +1602,35 @@ So help stops being an app screen that changes colour and becomes documentation.
 surface fixed contrast failures the warm theme was causing on this page, and dropping the
 portal chrome removed its tap-floor debt from the help screen.
 
+**Batch 7 (2026-08-14 — the eight topics the sweep couldn't see):** the standard that drove
+batches 1–6 counted paragraphs, so it was blind to lists. "How to run tryout day" is the longest
+topic in the product — **1,386 words** — but it is three paragraphs plus one 16-item list, so it
+scored 3 and was never touched. The standard now measures **words of body copy, list items
+included** (`npm run measure:help`), and the eight sections it caught are now menus of answers
+like the rest. **No copy was rewritten** — the same sentences, re-set into titled sub-topics.
+- [ ] **Coaches guide → "How to run tryout day"**: eight sub-topics, from *Before the day* through
+      *Turning the tryout into each player's starting point*. Read the whole thing — the steps must
+      still describe the tryout in the order it happens, with nothing dropped between sub-topics.
+      (The old step 3 pointed at "step 8" for revealing names, which was already the wrong number;
+      it now names the sub-topic instead.)
+- [ ] **Coaches → "Getting around your Premium portal"**: six sub-topics. The sidebar tour is now a
+      term/meaning list — check Squad, Season, Money, Communication and Team admin all still read
+      correctly, and that Money still says it was called Accounting.
+- [ ] **Coaches → "How to chat with your tournament organizer"**: five sub-topics.
+- [ ] **Tournaments → "Build and adjust the tournament schedule"**: five sub-topics, including the
+      rain-delay tool and who gets notified when a published game moves.
+- [ ] **Tournaments → "Build a playoff bracket"**: four sub-topics.
+- [ ] **Org Admin → "Your public organization page"**: four sub-topics.
+- [ ] **Rep Teams → "Shared library"**: three sub-topics; the Club-plan opponent-book switch is now
+      its own answer.
+- [ ] **Platform Admin → "How to cancel a customer subscription"**: the 10-step SOP is now two
+      five-step halves — *get to the control*, then *confirm and record*. Read them back to back and
+      confirm no step was lost at the seam.
+- [ ] In the **"?" panel** on any page above, the same topics open as expander lists (not walls).
+- [ ] Every existing help link still lands where it did — the section anchors did not change.
+✅ Rendered sweep on the coach help screen: **0 new layout findings** (jump chips on the new
+sub-topics clear the tap floor and wrap at phone width).
+
 ### 19 🖥📱 Fundraising pays the bill — **ON DEV** (built 2026-08-14) · ⚠ carries migration **233** (dev only)
 
 **What changed:** a credit is now **money the team owes a family**, and it lands on their real
@@ -1725,6 +1754,84 @@ night out of pocket.
 ⚠ **Migration 234 is dev-only** — it must reach prod before this ships. ⚠ This is **Pass 2 of 3**;
 the season-end settlement sheet (Pass 3) is where all of this is put to work. Full build + review
 log in the plan.
+
+---
+
+### 21 🖥📱 The season settlement sheet — **ON DEV** (built 2026-08-14) · ⚠ carries migration **235** (dev only)
+
+**What changed:** the **Season Refund Calculator is gone** — the box you typed the pot into, and
+the Calculate button. In its place, at the foot of Player Dues, is a **settlement sheet** that is
+true all year: what the team owes each family, what there is left to share, and every row payable
+from where you read it.
+
+The number you used to type was wrong in a way no screen could see. Fundraising posts the **full**
+amount raised to the books and the player's rebate is a credit — so the figure in circulation for
+the review team ($1,575) had the rebates taken out once, and the calculator then took them out
+again. The pot now derives, and **shows its work**: dues received, fundraising raised, spent →
+cash the team holds → minus what it owes families → **surplus to share**.
+
+**The only control left is hold back** — an intention ("keep $500 for next year's equipment"),
+capped at the surplus, and refused against money the team owes families with that reason on screen.
+
+**Where:** Money → **Player Dues** → scroll to **Season settlement** (the header says what the team
+is holding before you even open it). The open sheet has its own link — `?settlement=open` — so you
+can send someone the sheet rather than the page.
+
+**Fixture:** `qa-money-head@dev.local` / `devpass123`, re-seed with
+`node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs money`. **`QA Season End U15`** is the
+subject — ten families, dues settled, $675 owed back, $2,200 cash held, **$1,525 to share =
+$152.50 each**. Use **`QA Mid Season U14`** to prove the sheet is honest *before* season end.
+
+- [ ] **The pot adds up in front of you.** Open the section on U15: $6,050 + $2,500 − $6,350 =
+      **$2,200 held**, less **$675 owed** = **$1,525 to share**. Not $90, and not $1,525 minus the
+      rebates a second time.
+- [ ] **The table.** Ten rows, four columns. Owed back totals **$675.00**, shares total
+      **$1,525.00**, refunds total **$2,200.00** — the rows re-add to the cash on hand exactly.
+- [ ] **Open a row** (click it). Umar's $307.50 breaks into his Cookie Dough rebate, the $50 his
+      family over-sent, and one of ten shares. Every row explains itself this way; nothing is
+      explained in the table.
+- [ ] ⚠ **Pay one family and watch nobody else move.** Pay out a row in full: it reads
+      **Paid — <date>** and stops asking, the cash-held line drops by exactly that much, and
+      **every other family's share is unchanged**. This is the thing the sheet exists to promise.
+- [ ] **Remove that payout** from the player's record (§20's trash icon): the row comes back
+      exactly as it was, and the books entry is **voided**, never deleted.
+- [ ] **Change what one family takes** (the *Change* button on a row): **a set amount** →
+      whatever it frees up moves to the others immediately, and the total never changes;
+      **no share** → their share is shared out among the rest, and **they still receive their own
+      owed-back money** — that is theirs, not yours to redirect.
+- [ ] **Forgive a balance.** On U14, open **Cam** (behind on dues) → Change → *Forgive the balance*.
+      Their bills stop being chased, and the forgiven amount counts as their share already
+      received — forgive a little and they still get a smaller cheque; forgive more than a share
+      and they take no cash while everyone else's rises. Undo is on the same sheet.
+- [ ] ⚠ **The hold-back.** Set it to $500 → every share drops and the totals still add up. Try to
+      set it above the surplus → refused, naming the most you can hold back and why.
+- [ ] ⚠ **The waiting-on strip.** On U14 (families still owe), the sheet says **whose money the
+      others are waiting on** and what the payouts come to against what the team is holding. A
+      family who nets negative reads **Still owes** in amber — with the words, never the colour
+      alone.
+- [ ] **Year-round honesty.** U14 is mid-season: the section still renders and still says what the
+      team is holding. Where the season has planned spending left, a line under the pot says so.
+- [ ] ⚠ **A finished season is a record.** Open a completed season's Money → Player Dues: the sheet
+      renders with **no Pay out, no Pay all, no hold-back, no Change**.
+- [ ] ⚠ **Read-only money coach.** Sign in as `qa-money-read@dev.local`: the whole sheet is
+      readable and not one control is offered.
+- [ ] 📱 Phone at 390px: the pot card, the table (it stacks into cards, it does not scroll
+      sideways), an opened row, and the Pay out sheet.
+
+- [ ] ⚠ **Club money, if this team has any.** Where a team has approved club funding or payments to
+      the club, a line under the pot says that money **isn't counted** and why. This is a real
+      limitation, not a bug: those records aren't filed against a season, so the sheet can't tell
+      how much belongs to this one. **A decision is owed here** — see the note below.
+
+⚠ **Migration 235 is dev-only** — it, and 230–234 before it, must reach prod before this ships.
+This completes the three-pass money model; full build log in the plan.
+
+⚠ **ONE OPEN QUESTION FOR YOU, surfaced by the review:** money a club pays a team (or a team pays
+its club) is recorded against the **team**, never a season. The Money hub has always summed it
+team-lifetime — fine for a live dashboard. It is **not** fine on this sheet, which sets a cash
+payout ceiling and can be opened for a finished season, so the settlement deliberately **leaves it
+out and says so**. The alternative is to start recording those requests against a season, which
+means a migration and a backfill. Worth deciding before a club-linked team settles a season.
 
 ---
 

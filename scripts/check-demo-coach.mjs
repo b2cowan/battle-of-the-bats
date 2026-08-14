@@ -34,7 +34,7 @@ import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
-  MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, resolveMidSeasonState,
+  MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_DUES, resolveMidSeasonState,
   SEASON_START_BUDGET_LINES,
 } from '../lib/demo-coach.ts';
 
@@ -428,6 +428,46 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     const overdueTotal = overdue.reduce((s, i) => s + Number(i.amount), 0);
     check(overdueTotal === 240 && new Set(overdue.map(i => i.player_id)).size === 2,
       '$240 overdue across exactly two families', `$${overdueTotal} across ${new Set(overdue.map(i => i.player_id)).size}`);
+
+    /* ── The Bottle Drive: fundraising lowering a family's bill ────────────────────────────────
+       Added 2026-08-14 with the season settlement sheet. Three things are pinned, and each is a
+       way the story could rot without a single page failing to render:
+
+         1. the drive is CLOSED and dated behind today — an OPEN drive has issued nothing, so the
+            dues screen would show no credit at all and the tour's sentence would be about a thing
+            that hasn't happened yet. It is also what the nightly re-anchor is now shifting;
+         2. one family's last instalment is covered OUTRIGHT — "Covered by fundraising" is the
+            single screen this whole moment exists to show, and it needs a rebate that exactly
+            equals a bill;
+         3. NO rebate reaches an overdue family. A credit landing on Dmitri's or Imani's open bill
+            would clear it from the side and take the $240 story down with it — which is precisely
+            why the entry list excludes them, and why that exclusion is asserted rather than
+            trusted. */
+    const { data: drives } = await db.from('rep_fundraisers')
+      .select('id, name, end_date, is_active, player_rebate_percent').eq('program_year_id', py.id);
+    const drive = (drives ?? []).find(f => f.name === MIDSEASON_FUNDRAISER.name);
+    check(!!drive && !drive.is_active && drive.end_date < today,
+      `the ${MIDSEASON_FUNDRAISER.name} is closed and behind us — so its rebates are real credits`,
+      drive ? `end ${drive.end_date}, active ${drive.is_active}` : 'no drive found');
+
+    if (drive) {
+      const { data: entries } = await db.from('rep_fundraiser_entries')
+        .select('player_id, amount_raised, rebate_amount, credit_id').eq('fundraiser_id', drive.id);
+      const { data: credits } = await db.from('rep_dues_credits')
+        .select('player_id, amount, credit_type, credit_date').eq('program_year_id', py.id);
+      check((entries ?? []).length === MIDSEASON_FUNDRAISER.entries.length
+        && (entries ?? []).every(e => e.credit_id),
+        `${MIDSEASON_FUNDRAISER.entries.length} families raised, each with its rebate credit linked`,
+        `${(entries ?? []).length} entries, ${(entries ?? []).filter(e => e.credit_id).length} linked`);
+      check((credits ?? []).every(c => c.credit_date <= today),
+        'every rebate credit is dated on or before today (the re-anchor moves them with the bills)');
+      const covered = (entries ?? []).some(e => Number(e.rebate_amount) === MIDSEASON_DUES.installmentAmount);
+      check(covered,
+        `one family's rebate covers a whole $${MIDSEASON_DUES.installmentAmount} instalment — the "Covered by fundraising" row`);
+      const overdueIds = new Set(overdue.map(i => i.player_id));
+      check(!(entries ?? []).some(e => overdueIds.has(e.player_id)),
+        'no rebate lands on an overdue family — the $240 story is not cleared from the side');
+    }
 
     const { data: roster } = await db.from('rep_roster_players')
       .select('id, guardian_email').eq('program_year_id', py.id).eq('status', 'active');

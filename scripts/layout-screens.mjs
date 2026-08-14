@@ -109,6 +109,12 @@ export const SCREENS = [
   { id: 'coach-budget-vs-actual',  session: 'coach', path: (c) => `${team(c)}/accounting?section=budget-vs-actual`, ready: 'h1' },
   { id: 'coach-expenses',          session: 'coach', path: (c) => `${team(c)}/accounting?section=expenses`,         ready: 'h1' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
+  /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
+     card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.
+     That is precisely the "green sweep over an empty screen proves nothing" trap this project
+     has hit twice. `?settlement=open` is the same URL a coach gets when they open it, so this
+     entry sweeps the real thing rather than a fixture-only mode. */
+  { id: 'coach-dues-settlement',   session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&settlement=open`, ready: 'h1' },
   { id: 'coach-fundraisers',       session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers`,      ready: 'h1' },
   { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting?section=payment-requests`, ready: 'h1' },
   { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting?section=allocations`,      ready: 'h1' },

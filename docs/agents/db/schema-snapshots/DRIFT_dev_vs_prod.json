@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-14",
-  "total": 88,
+  "total": 114,
   "counts": {
-    "tables": 3,
-    "columns": 46,
-    "indexes": 6,
-    "constraints": 22,
-    "rls": 11
+    "tables": 4,
+    "columns": 58,
+    "indexes": 9,
+    "constraints": 29,
+    "rls": 14
   },
   "items": [
     {
@@ -39,6 +39,18 @@
     },
     {
       "key": "check:only-dev:rep_program_years.rep_program_years_credit_application_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_season_surplus.rep_season_surplus_hold_back_amount_check",
       "sig": ""
     },
     {
@@ -174,6 +186,54 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_season_refund_adjustments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_refund_adjustments.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_season_surplus.hold_back_amount",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_expenses.paid_by_player_id",
       "sig": ""
     },
@@ -302,6 +362,34 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_program_year_id_player_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_season_refund_adjustments.rep_season_refund_adjustments_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_paid_by_player_id_fkey",
       "sig": ""
     },
@@ -334,6 +422,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_season_refund_adjustments_year",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:idx_rep_team_import_events_season",
       "sig": ""
     },
@@ -346,6 +438,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_season_refund_adjustments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_season_refund_adjustments_program_year_id_player_id_key",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_import_events_pkey",
       "sig": ""
     },
@@ -355,6 +455,10 @@
     },
     {
       "key": "table:only-dev:rep_dues_payouts",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_season_refund_adjustments",
       "sig": ""
     },
     {

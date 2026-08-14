@@ -314,11 +314,30 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     .select('id, received_date').eq('team_id', teamId);
   if (payError) throw new Error(payError.message);
 
+  // The Bottle Drive rides the clock too. A rebate is money the team owes a family, dated the day
+  // the drive closed — leave it unshifted and the demo's credits stand still while the bills they
+  // are lowering walk forward, until "closed last month" quietly becomes "closed last year".
+  const { data: fundraisers, error: fundError } = await db.from('rep_fundraisers')
+    .select('id, start_date, end_date').eq('team_id', teamId).not('end_date', 'is', null);
+  if (fundError) throw new Error(fundError.message);
+
+  // Credits are season-scoped (no team_id of their own), so they come via the roster.
+  const { data: rosterIds, error: rosterError } = await db.from('rep_roster_players')
+    .select('id').eq('team_id', teamId);
+  if (rosterError) throw new Error(rosterError.message);
+  const playerIds = (rosterIds ?? []).map((r: { id: string }) => r.id);
+  const { data: duesCredits, error: creditError } = playerIds.length
+    ? await db.from('rep_dues_credits').select('id, credit_date').in('player_id', playerIds)
+    : { data: [], error: null };
+  if (creditError) throw new Error(creditError.message);
+
   // The client is deliberately untyped (`CoachDemoDb`), so name the row shapes here — otherwise
   // `shiftRows` infers T from the filter callbacks and the guard column stops typechecking.
   type EventRow = { id: string; starts_at: string; ends_at: string | null };
   type InstallmentRow = { id: string; due_date: string; paid_at: string | null };
   type PaymentRow = { id: string; received_date: string };
+  type FundraiserRow = { id: string; start_date: string | null; end_date: string | null };
+  type CreditRow = { id: string; credit_date: string };
   const allEvents = (events ?? []) as EventRow[];
   const siblings = allEvents.filter(e => e.id !== anchorEventId);
   const anchor = allEvents.filter(e => e.id === anchorEventId);
@@ -340,6 +359,15 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   ) + (
     await shiftRows(db, 'rep_dues_payments', (duesPayments ?? []) as PaymentRow[], 'received_date',
       p => ({ received_date: addCalendarDays(p.received_date, days) }))
+  ) + (
+    await shiftRows(db, 'rep_fundraisers', (fundraisers ?? []) as FundraiserRow[], 'end_date',
+      f => ({
+        start_date: f.start_date ? addCalendarDays(f.start_date, days) : null,
+        end_date: f.end_date ? addCalendarDays(f.end_date, days) : null,
+      }))
+  ) + (
+    await shiftRows(db, 'rep_dues_credits', (duesCredits ?? []) as CreditRow[], 'credit_date',
+      c => ({ credit_date: addCalendarDays(c.credit_date, days) }))
   );
 }
 

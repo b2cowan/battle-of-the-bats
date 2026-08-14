@@ -429,6 +429,41 @@ export const MIDSEASON_DUES = {
 } as const;
 
 /**
+ * The Bottle Drive — the demo's answer to "what does fundraising actually DO for a family?"
+ *
+ * Until 2026-08-14 the coach sandbox had no fundraiser at all, so the most sympathetic thing this
+ * product does — a family's bill going DOWN because their kid sold bottles — was a thing a
+ * prospect could not see. The drive is CLOSED, so its rebates are credits, and with the team on
+ * the default `last_first` setting they land on the final instalment: Wes Calloway's is covered
+ * outright and reads "Covered by fundraising", the other four ask for less than $120.
+ *
+ * ⚠ THREE PINS THIS MUST NOT BREAK, and the reason every number here is what it is:
+ *   1. **$240 overdue across exactly two families.** Dmitri (6) and Imani (10) are deliberately
+ *      NOT on this list: a rebate would land on their open bills and quietly clear the debt the
+ *      guided tour narrates by name.
+ *   2. **Every rebate is ≤ the $120 instalment**, so no credit can cascade backwards off the last
+ *      bill into instalment #3 and clear an overdue one from the side.
+ *   3. **Priya (3) is not on the list either** — her instalment #4 is the "$90 of $120" part-paid
+ *      showcase, and a credit settling the remaining $30 would take that row off the screen.
+ */
+export const MIDSEASON_FUNDRAISER = {
+  name: 'Bottle Drive',
+  description: 'Spring bottle drive — half of what each player raises comes straight off their dues.',
+  rebatePercent: 50,
+  /** Opened / closed, relative to the anchored clock (days). Closed, so the credits are real. */
+  startOffset: -56,
+  endOffset: -21,
+  /** rosterIndex → raised. Rebate is half, and never more than one instalment (pin 2). */
+  entries: [
+    { rosterIndex: 0,  raised: 160 }, // Theo Marsh      → $80
+    { rosterIndex: 1,  raised: 90  }, // Nadia Osei      → $45
+    { rosterIndex: 2,  raised: 240 }, // Wes Calloway    → $120, covers the last bill exactly
+    { rosterIndex: 4,  raised: 60  }, // Marco Reyes     → $30
+    { rosterIndex: 5,  raised: 120 }, // June Whitfield  → $60
+  ],
+} as const;
+
+/**
  * The 12U's plan, built in the spring — and, since Phase 3, actually spent against.
  *
  * ⚠ **The categories are not decoration.** Budget-vs-actual matches a logged expense to a line by

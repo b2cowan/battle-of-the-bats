@@ -1,14 +1,28 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers, getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { outstandingForSchedule } from '@/lib/dues-status';
-import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
+import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { fmt } from '@/lib/coach-money-summary';
 
+/**
+ * The season settlement sheet.
+ *
+ * ⚠ NOTHING HERE COMPUTES ANYTHING. Every figure comes from `loadSeasonSettlement`, which is
+ * also what the payout writes are refused against — so the ceiling and the number on screen can
+ * never be two different opinions. The route that stood here before Pass 3 hand-assembled its
+ * own breakdown and was, twice, the place the money went wrong.
+ *
+ * ⚠ The typed pot is GONE. Its column survives in the table as legacy history, read by nothing
+ * (pinned by the definition guard); the only thing a coach may write here is the hold-back and
+ * a note.
+ */
+
+// ⚠ WRITES RESOLVE THE ACTIVE YEAR ONLY (plan §10). Money moves; an archived season renders this
+// sheet as a record, with no hold-back field, no row menu and no payout controls.
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
@@ -31,123 +45,21 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-async function buildRefundBreakdown(programYearId: string, totalSurplus: number) {
-  // Load active roster players
-  const rosterPlayers = await getRepRosterPlayers(programYearId);
-  const activePlayers = rosterPlayers.filter(p => p.status === 'active');
-  const playerCount = activePlayers.length;
-
-  if (playerCount === 0) return { breakdown: [], totalAllCredits: 0, evenPool: totalSurplus, playerCount: 0 };
-
-  // Load all credits for this program year
-  const { data: allCredits } = await supabaseAdmin
-    .from('rep_dues_credits')
-    .select('player_id, amount, credit_type')
-    .eq('program_year_id', programYearId);
-
-  // Load dues schedules for rolling balance calculation
-  const { data: schedules } = await supabaseAdmin
-    .from('rep_player_dues_schedules')
-    .select('id, player_id, total_amount')
-    .eq('program_year_id', programYearId);
-
-  // Paid = recorded payment FACTS (mig 232), same as every other dues reader. This block used to
-  // be the fourth hand-copy of the outstanding/rolling arithmetic (and it summed paid STAMPS,
-  // which read a part-paid family as having paid nothing on the way into their refund).
-  const seasonPayments = await getRepDuesPaymentsByProgramYear(programYearId);
-
-  // Build schedule map
-  const scheduleMap = new Map<string, { totalAmount: number; scheduleId: string }>();
-  for (const s of (schedules ?? []) as Array<{ id: string; player_id: string; total_amount: number }>) {
-    scheduleMap.set(s.player_id, { totalAmount: s.total_amount, scheduleId: s.id });
-  }
-
-  const paidMap = paymentsTotalByPlayer(seasonPayments);
-
-  // ⚠ MONEY ALREADY HANDED BACK IS NOT STILL OWED, and FORGIVENESS WAS NEVER OWED (migs 233/234).
-  // Without the first, a family paid $75 in cash during the season was scheduled to be refunded
-  // that same $75 again at season's end — the double-payout this whole project exists to kill.
-  // Pass 3 replaces this function outright; until then it must not promise money that has already
-  // gone out, nor money the team never held.
-  const seasonPayouts = await getRepDuesPayoutsByProgramYear(programYearId);
-  const payoutsByPlayer = groupByPlayer(seasonPayouts);
-  const creditsByPlayer = groupByPlayer(
-    ((allCredits ?? []) as Array<{ player_id: string; amount: number; credit_type: string }>)
-      .map(c => ({ playerId: c.player_id, amount: Number(c.amount), creditType: c.credit_type })),
-  );
-
-  // ⚠ ONE operation for the row and the total: what each family is still owed, summed. Computing
-  // the total from unclamped figures while each ROW clamped at zero let one family's over-payout
-  // silently cancel another family's real credit inside the pool — an overpay across players
-  // (/review 2026-08-14). The per-player figure IS the definition; the total is its sum.
-  const owedByPlayer = new Map<string, number>();
-  for (const p of activePlayers) {
-    owedByPlayer.set(p.id, payoutCeiling(creditsByPlayer.get(p.id) ?? [], payoutsByPlayer.get(p.id) ?? []));
-  }
-  const creditsStillOwed = Math.round([...owedByPlayer.values()].reduce((s, v) => s + v * 100, 0)) / 100;
-
-  // Even pool = surplus minus the portion still owed as individual credits (what has already
-  // been handed back in cash is neither owed nor available to share).
-  const evenPool = Math.max(0, Math.round((totalSurplus - creditsStillOwed) * 100) / 100);
-  const evenShare = playerCount > 0 ? Math.round((evenPool / playerCount) * 100) / 100 : 0;
-
-  // Build per-player breakdown — the SHARED definitions, not a local re-derivation.
-  const breakdown = activePlayers.map(p => {
-    const sched = scheduleMap.get(p.id);
-    const paid  = sched ? duesPaidAmount(paidMap.get(p.id) ?? 0, sched.totalAmount) : 0;
-    // What this family is still owed — the same definition the total above sums.
-    const credits = owedByPlayer.get(p.id) ?? 0;
-    const outstanding = outstandingForSchedule(sched ? { totalAmount: sched.totalAmount } : null, paid);
-    const rollingBalance = Math.round((outstanding - credits) * 100) / 100;
-
-    return {
-      playerId:        p.id,
-      playerFirstName: p.playerFirstName,
-      playerLastName:  p.playerLastName,
-      creditPortion:   Math.round(credits * 100) / 100,
-      evenShare,
-      totalRefund:     Math.round((credits + evenShare) * 100) / 100,
-      rollingBalance,
-    };
-  });
-
-  return { breakdown, totalAllCredits: creditsStillOwed, evenPool, playerCount };
-}
-
 // GET /api/coaches/[orgSlug]/teams/[teamId]/season-surplus
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
-  const { capabilities, programYear } = resolved;
+  const { capabilities, programYear, isReadOnly } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const { data: surplusRow } = await supabaseAdmin
-    .from('rep_season_surplus')
-    .select('*')
-    .eq('program_year_id', programYear.id)
-    .maybeSingle();
-
-  const totalSurplus = surplusRow ? (surplusRow.total_surplus as number) : 0;
-  const surplus = surplusRow
-    ? {
-        id:            surplusRow.id,
-        totalSurplus,
-        notes:         surplusRow.notes ?? null,
-        createdAt:     surplusRow.created_at,
-        updatedAt:     surplusRow.updated_at,
-      }
-    : null;
-
-  const { breakdown, totalAllCredits, evenPool, playerCount } =
-    await buildRefundBreakdown(programYear.id, totalSurplus);
-
-  return NextResponse.json({ surplus, breakdown, totalAllCredits, evenPool, playerCount });
+  const sheet = await loadSeasonSettlement({ programYear, capabilities });
+  return NextResponse.json({ ...sheet, readOnly: isReadOnly });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-surplus' });
 
-// PUT /api/coaches/[orgSlug]/teams/[teamId]/season-surplus
+// PUT /api/coaches/[orgSlug]/teams/[teamId]/season-surplus — the hold-back, and a note.
 export const PUT = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -158,43 +70,44 @@ export const PUT = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
-  const { totalSurplus, notes = null } = body;
+  const { holdBackAmount = 0, notes = null } = body;
 
-  if (typeof totalSurplus !== 'number' || totalSurplus < 0) {
-    return NextResponse.json({ error: 'totalSurplus must be a non-negative number' }, { status: 400 });
+  if (typeof holdBackAmount !== 'number' || !Number.isFinite(holdBackAmount) || holdBackAmount < 0) {
+    return NextResponse.json({ error: 'Enter an amount to hold back (0 or more).' }, { status: 400 });
+  }
+  if (holdBackAmount > 9999999.99) {
+    return NextResponse.json({ error: 'That is more than this team could hold back.' }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin
+  // ⚠ THE CAP IS THE SURPLUS, and it is checked HERE rather than trusted from the browser: a
+  // coach may not hold back money the team owes families. The reader clamps too — this refusal
+  // exists so the coach is told, rather than silently given a smaller hold-back than they typed.
+  const sheet = await loadSeasonSettlement({ programYear, capabilities: assignment.capabilities });
+  if (Math.round(holdBackAmount * 100) > Math.round(sheet.pot.holdBackCap * 100)) {
+    return NextResponse.json({
+      // Same formatter the screen uses — a refusal that spells money differently from the card
+      // it refused against reads like a different system talking.
+      error: sheet.pot.holdBackCap > 0.005
+        ? `You can hold back at most ${fmt(sheet.pot.holdBackCap)} — the rest is money the team owes families.`
+        : 'There is no surplus to hold back — every dollar the team is holding is owed to families.',
+      code: 'HOLD_BACK_EXCEEDS_SURPLUS',
+      holdBackCap: sheet.pot.holdBackCap,
+    }, { status: 409 });
+  }
+
+  const { error } = await supabaseAdmin
     .from('rep_season_surplus')
     .upsert(
       {
-        program_year_id: programYear.id,
-        total_surplus:   Math.round(totalSurplus * 100) / 100,
-        notes:           notes?.trim() || null,
-        created_by:      ctx.user.id,
-        updated_at:      new Date().toISOString(),
+        program_year_id:  programYear.id,
+        hold_back_amount: Math.round(holdBackAmount * 100) / 100,
+        notes:            typeof notes === 'string' ? (notes.trim() || null) : null,
+        created_by:       ctx.user.id,
+        updated_at:       new Date().toISOString(),
       },
       { onConflict: 'program_year_id' },
-    )
-    .select()
-    .single();
-
+    );
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { breakdown, totalAllCredits, evenPool, playerCount } =
-    await buildRefundBreakdown(programYear.id, data.total_surplus as number);
-
-  return NextResponse.json({
-    surplus: {
-      id:           data.id,
-      totalSurplus: data.total_surplus,
-      notes:        data.notes ?? null,
-      createdAt:    data.created_at,
-      updatedAt:    data.updated_at,
-    },
-    breakdown,
-    totalAllCredits,
-    evenPool,
-    playerCount,
-  });
+  return NextResponse.json(await loadSeasonSettlement({ programYear, capabilities: assignment.capabilities }));
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-surplus' });

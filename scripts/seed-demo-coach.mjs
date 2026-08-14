@@ -31,7 +31,7 @@ import {
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
-  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
+  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
@@ -815,6 +815,43 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       splitDates: MIDSEASON_DUES.partPaid.splitOffsets.map(offset => orgDateWithOffset(now, offset)),
     },
   });
+
+  // The Bottle Drive — CLOSED, so its rebates are real credits sitting on real bills. This is the
+  // demo's one showing of fundraising lowering a family's dues, which is the most sympathetic
+  // thing this product does and which the sandbox could not show at all before 2026-08-14.
+  // ⚠ Written the authoritative direction (entry first, credit carrying fundraiser_entry_id, then
+  // the entry's credit_id back-filled) so the leaderboard and the dues screen agree.
+  {
+    const fundraiserId = randomUUID();
+    die('insert 12U fundraiser', (await db.from('rep_fundraisers').insert({
+      id: fundraiserId, org_id: org.id, team_id: team.id, program_year_id: pyId,
+      name: MIDSEASON_FUNDRAISER.name, description: MIDSEASON_FUNDRAISER.description,
+      player_rebate_percent: MIDSEASON_FUNDRAISER.rebatePercent,
+      start_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.startOffset),
+      end_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.endOffset),
+      is_active: false,
+    })).error);
+    for (const entry of MIDSEASON_FUNDRAISER.entries) {
+      const rebate = Math.round(entry.raised * MIDSEASON_FUNDRAISER.rebatePercent) / 100;
+      const entryId = randomUUID();
+      die('insert 12U fundraiser entry', (await db.from('rep_fundraiser_entries').insert({
+        id: entryId, fundraiser_id: fundraiserId, org_id: org.id, team_id: team.id,
+        player_id: playerIds[entry.rosterIndex],
+        amount_raised: entry.raised, rebate_percent: MIDSEASON_FUNDRAISER.rebatePercent,
+        rebate_amount: rebate,
+      })).error);
+      const creditId = randomUUID();
+      die('insert 12U fundraiser credit', (await db.from('rep_dues_credits').insert({
+        id: creditId, program_year_id: pyId, player_id: playerIds[entry.rosterIndex],
+        amount: rebate, description: `Fundraiser rebate — ${MIDSEASON_FUNDRAISER.name}`,
+        credit_type: 'fundraiser',
+        credit_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.endOffset),
+        fundraiser_entry_id: entryId,
+      })).error);
+      die('link 12U entry credit', (await db.from('rep_fundraiser_entries')
+        .update({ credit_id: creditId }).eq('id', entryId)).error);
+    }
+  }
 
   // The plan, on real platform categories — without them budget-vs-actual has nothing to match a
   // logged expense to, and files the whole season as unbudgeted (the state this moment shipped in

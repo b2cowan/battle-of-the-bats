@@ -77,8 +77,8 @@ export const HELP_SHOTS: HelpShot[] = [
     ready: 'table, [class*="cardList"]',
     width: 1280,
     size: { w: 1280, h: 1000 },
-    alt: 'The Player Dues table, with each family’s assessed, paid and balance figures, and the Record payment control on a player’s row.',
-    caption: 'Player Dues — a family’s row opens to Record payment, where any amount and the day it arrived go in.',
+    alt: 'The Player Dues table: each family’s total dues, fundraising credits, what they have paid and what is left, with statuses reading Partial and — where credits finished the job — Settled.',
+    caption: 'Player Dues — credits lower the bill in the Credits column, and a family whose fundraising finished the job reads Settled rather than Paid. A row opens to Record payment.',
   },
   {
     id: 'money-budget-vs-actual-months',
