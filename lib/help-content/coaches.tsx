@@ -534,30 +534,73 @@ const coachesHelp: HelpPageContent = {
       searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted four zones sections status and payment your registration your games roster and coach news and resources from the organizer your team zone quick jump row jump links hop between sections what happens next checklist gone payment how to pay entry fee deposit due date instructions pay the organizer e-transfer schedule published announcements rules tournament home resource links premium tournaments sidebar section live status today scores full record inside portal never leave free portal score alerts own team push notification get alerts for your team highlight my team automatic pin public schedule scorebug fan view public site flip pill top right corner coaches portal back to coach view same tab after the tournament ends event over event complete final record won lost tied wins losses ties result card view final standings share your team share result what happens after my tournament wrap up standalone team register anywhere same account email appears automatically org-owned rep team organization links a registration to your team ask your org admin nothing here yet registered but nothing yet why do not my tournaments show up browse public tournaments discover public tournament directory find a tournament to enter question mark help button page header in-context help open this guide schedule change game moved my game moved organizer moved my game game time changed game cancelled cancelled game field changed diamond changed venue changed schedule updated amber bar was 2:00 pm at diamond 2 notified when the schedule changes alert when a game moves rain delay notification event news switch followed teams card account notifications no separate schedule switch one message not one per game batched few minutes imminent game sent straight away already played no alert free event does not send phone alerts knowing is free push is the paid part families get the same message parents told automatically already following your own team',
       content: (
         <>
-          <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule.</p>
-          <p><strong>On Premium Coaches Portal</strong>, Tournaments is its own item in your sidebar: a list of your events with live status — an event that&apos;s underway shows <strong>Live</strong> or <strong>Today</strong>, otherwise it shows where your registration stands. Open one and the <strong>full record opens right inside your Premium portal</strong> — the same four sections described below, live schedule and scores included. You don&apos;t leave your portal to follow a tournament, and the tournament experience is identical on both tiers: Premium adds season tools, not a different event day. A <strong>?</strong> help button in the page header opens this guide right where you&apos;re looking.</p>
-          <p>What fills this list depends on how your team is set up. A <strong>standalone team</strong> registers directly on any organization&apos;s public tournament page — enter with the same account email you sign in with, and it appears here on its own, no linking step needed; while the list is empty, a <strong>Browse public tournaments</strong> link takes you to the platform&apos;s public tournament directory (<strong>/discover</strong>) to find one to enter. An <strong>org-owned team</strong> works differently: entries show up once your organization registers the team for an event and links that registration to it — if you know your team is in a tournament but it isn&apos;t listed here yet, ask your org admin to link it rather than trying to add it yourself. Either way, if you&apos;ve registered and still see nothing, the record just hasn&apos;t arrived yet — it appears as soon as the organizer processes your entry.</p>
-          <p>Open a tournament record to see where your team stands and when it plays. The organizer running that tournament controls its schedule, brackets, and standings; your portal shows you the live view.</p>
-          <p><strong>Every tournament record reads the same way — four labelled sections, always in this order:</strong></p>
-          <ul>
-            <li><strong>Status &amp; Payment</strong> — where your registration stands, and the money in one place: the entry fee, its due date, the organizer&apos;s <strong>How to pay</strong> instructions, and one contact address if you have a question. While you&apos;re still awaiting a decision it shows a fee preview instead, so you know the cost before you&apos;re committed.</li>
-            <li><strong>Schedule</strong> — your team&apos;s games. Before the organizer publishes, it says so; on game day it turns into your live schedule with scores.</li>
-            <li><strong>Your Team</strong> — your roster submission, your head-coach contact details, and the facts of your entry (division, when you registered) together in one card.</li>
-            <li><strong>From the Organizer</strong> — their announcements, plus quick links to the tournament&apos;s public home, schedule, and rules.</li>
-          </ul>
-          <p>In the free portal on a phone, a small row of <strong>jump links</strong> sits just under the tabs so you can hop straight to any of the four without scrolling. The record adapts as your event progresses — an accepted team picks up roster status, your check-in state appears once the event starts, and game day leads with your next game — but the four sections stay put, so what you learned before the event still applies during it. (A team the organizer couldn&apos;t fit in keeps a shorter record: your status and a note from the organizer.)</p>
-          <p>Everything you need is stated <strong>once</strong>: the fee only in Status &amp; Payment, your games only in Schedule. Your games appear automatically once the organizer publishes the schedule; you don&apos;t have to dig back through your acceptance email for payment details.</p>
-          <p><strong>If the organizer moves or cancels one of your games, you&apos;re told.</strong> Two things happen, and you don&apos;t set up either one:</p>
-          <ul>
-            <li><strong>In the app, on every plan.</strong> While your event is under way, your Schedule raises an amber <strong>Schedule updated</strong> bar naming what changed — &ldquo;Your 2:00 p.m. vs Northside Thunder moved to 3:15 p.m. at Diamond 4&rdquo; — and the affected game keeps a <strong>was 2:00 p.m. at Diamond 2</strong> line underneath it. Tap the bar to dismiss it; the line on the game stays, because that&apos;s the bit you&apos;ll want to check twice. If more than one game changed, the bar gives you the count and marks the rows.</li>
-            <li><strong>On your phone, when the organizer&apos;s event is on Tournament Plus.</strong> A notification names the change the same way. Several changes in one sitting arrive as <strong>one</strong> message with a count rather than a string of buzzes, and a cancellation is always called out. Tapping it opens that game.</li>
-          </ul>
-          <p>You don&apos;t have to follow your own team to get this — <strong>coaches are followed to their own team automatically</strong>, from the moment the organizer accepts your entry. That means you&apos;re covered for the run-up too, when schedules are published and times get shuffled, not just on game day. The switch that controls it is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card, where your own team is named), and it&apos;s on unless you turn it off. There is no separate schedule-alerts switch to find.</p>
-          <p><strong>On a free event, nothing buzzes your phone</strong> — phone alerts are a Tournament Plus feature the organizer chooses. The change still reaches you: your Schedule updates, and the <strong>Schedule updated</strong> bar still appears during the event. Knowing your game moved is never the paid part.</p>
-          <p><strong>Once the event is over</strong>, the top of the record becomes a single result card: <strong>Event complete</strong> with the tournament dates, your <strong>final record</strong> (wins&ndash;losses&ndash;ties from the games that were scored), a link to the <strong>final standings</strong> on the public site, and a <strong>Share your team</strong> button that sends a link anyone can open. If no scores were recorded for your team, it says so rather than showing a made-up 0&ndash;0. The four sections stay exactly where they were, so you can still look back at what you paid, who you played, and what the organizer told you. This is the same on both tiers.</p>
-          <p>Every tournament record carries a <strong>⇄ Public site</strong> pill in its top-right corner — one tap flips to that event&apos;s public site in the same tab, and the public page&apos;s own pill then reads <strong>⇄ Coaches Portal</strong> so the return trip is one tap too. <strong>If you also help run this event</strong> — you&apos;re on the organizer&apos;s staff, or you scorekeep — that pill reads <strong>Roles</strong> instead and opens a short list: the public site, plus a row for each of your other roles on this event. One tap takes you straight to your admin screens without going out through the public site first. If you only coach, nothing changes. A quiet <strong>⇄ Fan view</strong> link on each list entry (and on your team Overview while an event is live) makes the same jump to the event&apos;s public site.</p>
+          <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule. Open a tournament record to see where your team stands and when it plays: the organizer running that tournament controls its schedule, brackets, and standings, and your portal shows you the live view.</p>
+          <p><strong>On Premium Coaches Portal</strong>, Tournaments is its own item in your sidebar: a list of your events with live status — an event that&apos;s underway shows <strong>Live</strong> or <strong>Today</strong>, otherwise it shows where your registration stands. Open one and the <strong>full record opens right inside your Premium portal</strong>, live schedule and scores included. You don&apos;t leave your portal to follow a tournament, and the tournament experience is identical on both tiers: Premium adds season tools, not a different event day. A <strong>?</strong> help button in the page header opens this guide right where you&apos;re looking.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'tournament-records-appear',
+          title: 'How a tournament gets into this list',
+          content: (
+            <>
+              <p>It depends on how your team is set up:</p>
+              <HelpDefs>
+                <HelpDef term="A standalone team">Registers directly on any organization&apos;s public tournament page — enter with the same account email you sign in with, and it appears here on its own, no linking step needed. While the list is empty, a <strong>Browse public tournaments</strong> link takes you to the platform&apos;s public tournament directory (<strong>/discover</strong>) to find one to enter.</HelpDef>
+                <HelpDef term="An org-owned team">Entries show up once your organization registers the team for an event and links that registration to it. If you know your team is in a tournament but it isn&apos;t listed here yet, ask your org admin to link it rather than trying to add it yourself.</HelpDef>
+              </HelpDefs>
+              <p>Either way, if you&apos;ve registered and still see nothing, the record just hasn&apos;t arrived yet — it appears as soon as the organizer processes your entry.</p>
+            </>
+          ),
+        },
+        {
+          id: 'tournament-records-sections',
+          title: 'The four sections, always in this order',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Status &amp; Payment">Where your registration stands, and the money in one place: the entry fee, its due date, the organizer&apos;s <strong>How to pay</strong> instructions, and one contact address if you have a question. While you&apos;re still awaiting a decision it shows a fee preview instead, so you know the cost before you&apos;re committed.</HelpDef>
+                <HelpDef term="Schedule">Your team&apos;s games. Before the organizer publishes, it says so; on game day it turns into your live schedule with scores.</HelpDef>
+                <HelpDef term="Your Team">Your roster submission, your head-coach contact details, and the facts of your entry (division, when you registered) together in one card.</HelpDef>
+                <HelpDef term="From the Organizer">Their announcements, plus quick links to the tournament&apos;s public home, schedule, and rules.</HelpDef>
+              </HelpDefs>
+              <p>In the free portal on a phone, a small row of <strong>jump links</strong> sits just under the tabs so you can hop straight to any of the four without scrolling. The record adapts as your event progresses — an accepted team picks up roster status, your check-in state appears once the event starts, and game day leads with your next game — but the four sections stay put, so what you learned before the event still applies during it. (A team the organizer couldn&apos;t fit in keeps a shorter record: your status and a note from the organizer.)</p>
+              <p>Everything you need is stated <strong>once</strong>: the fee only in Status &amp; Payment, your games only in Schedule. Your games appear automatically once the organizer publishes the schedule; you don&apos;t have to dig back through your acceptance email for payment details.</p>
+            </>
+          ),
+        },
+        {
+          id: 'tournament-records-changes',
+          title: 'If the organizer moves or cancels one of your games',
+          content: (
+            <>
+              <p>Two things happen, and you don&apos;t set up either one:</p>
+              <HelpDefs>
+                <HelpDef term="In the app, on every plan">While your event is under way, your Schedule raises an amber <strong>Schedule updated</strong> bar naming what changed — &ldquo;Your 2:00 p.m. vs Northside Thunder moved to 3:15 p.m. at Diamond 4&rdquo; — and the affected game keeps a <strong>was 2:00 p.m. at Diamond 2</strong> line underneath it. Tap the bar to dismiss it; the line on the game stays, because that&apos;s the bit you&apos;ll want to check twice. If more than one game changed, the bar gives you the count and marks the rows.</HelpDef>
+                <HelpDef term="On your phone (Tournament Plus events)">A notification names the change the same way. Several changes in one sitting arrive as <strong>one</strong> message with a count rather than a string of buzzes, and a cancellation is always called out. Tapping it opens that game.</HelpDef>
+              </HelpDefs>
+              <p>You don&apos;t have to follow your own team to get this — <strong>coaches are followed to their own team automatically</strong>, from the moment the organizer accepts your entry. That means you&apos;re covered for the run-up too, when schedules are published and times get shuffled, not just on game day. The switch that controls it is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card, where your own team is named), and it&apos;s on unless you turn it off. There is no separate schedule-alerts switch to find.</p>
+              <HelpNote variant="info" title="Knowing your game moved is never the paid part">
+                <p>On a free event, nothing buzzes your phone — phone alerts are a Tournament Plus feature the organizer chooses. The change still reaches you: your Schedule updates, and the <strong>Schedule updated</strong> bar still appears during the event.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'tournament-records-after',
+          title: 'Once the event is over',
+          content: (
+            <p>The top of the record becomes a single result card: <strong>Event complete</strong> with the tournament dates, your <strong>final record</strong> (wins&ndash;losses&ndash;ties from the games that were scored), a link to the <strong>final standings</strong> on the public site, and a <strong>Share your team</strong> button that sends a link anyone can open. If no scores were recorded for your team, it says so rather than showing a made-up 0&ndash;0. The four sections stay exactly where they were, so you can still look back at what you paid, who you played, and what the organizer told you. This is the same on both tiers.</p>
+          ),
+        },
+        {
+          id: 'tournament-records-flip',
+          title: 'Hopping to the public site (and back)',
+          content: (
+            <p>Every tournament record carries a <strong>⇄ Public site</strong> pill in its top-right corner — one tap flips to that event&apos;s public site in the same tab, and the public page&apos;s own pill then reads <strong>⇄ Coaches Portal</strong> so the return trip is one tap too. <strong>If you also help run this event</strong> — you&apos;re on the organizer&apos;s staff, or you scorekeep — that pill reads <strong>Roles</strong> instead and opens a short list: the public site, plus a row for each of your other roles on this event. One tap takes you straight to your admin screens without going out through the public site first. If you only coach, nothing changes. A quiet <strong>⇄ Fan view</strong> link on each list entry (and on your team Overview while an event is live) makes the same jump to the event&apos;s public site.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-coach-own-team-alerts',
@@ -974,20 +1017,59 @@ const coachesHelp: HelpPageContent = {
         'who can see season wrapped', 'season review access'],
       searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record closing the season hands families their player season recap family season recaps line how many connected families opened theirs count never which families needs family contact access hidden when no families were connected seasons end is for coaches head coach and assistant coaches reach it helpers do not helper sees this season has finished thanks for helping out nothing else to open not about names a whole season story is not theirs share button puts a child first name on a picture make a helper an assistant coach to give them the full picture',
       content: (
-        <>
-          <p>When your season is marked complete, your team doesn&apos;t disappear — it moves to its <strong>Season&apos;s End</strong> page. You&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>Season complete</strong> — and if it&apos;s your only team, the portal opens straight onto it.</p>
-          <p><strong>Season Wrapped</strong> leads the page: your final record, longest win streak, closest game, attendance rate, top award-winner, and a standout lineup fact — built from the season you actually ran. If you used the <strong>Note</strong> button at the bench during the year, the card also carries <strong>one of your own lines</strong> — the most recent, with a count of how many you logged. <strong>Share your season</strong> turns it into a picture and opens your phone&apos;s share sheet, so it goes wherever you choose (the family group chat is the usual first stop) — and the picture deliberately leaves your bench notes out, so sharing the card can never pass one along. A short season simply gets a smaller card — no padded stats, and no quote at all if you never logged one.</p>
-          <p><strong>The whole season is still there.</strong> Roster, schedule and results, attendance, lineups, money records, documents, development and tryouts all stay open, exactly as they were — you just can&apos;t change them, because the season is over. Open any of them from the menu, the same way you did during the season.</p>
-          <p><strong>Closing the season is also what hands each family their player&apos;s season recap.</strong> Once it has, a <strong>Family season recaps</strong> line appears here telling you how many of your connected families have opened theirs — a count only, never <em>which</em> families. It shows up only if families were connected to that season, so a team that hadn&apos;t started sharing isn&apos;t shown a zero to interpret. Reading it needs family-contact access.</p>
-          <p><strong>Season&apos;s End is for coaches.</strong> Your head coach and assistant coaches all reach it exactly as described above. <strong>Helpers don&apos;t</strong> — a parent who came in to run a station sees a short note saying the season has finished and thanking them, with nothing else to open. It isn&apos;t about names (a helper reads their group&apos;s names on the practice plan all season): a whole season&apos;s story simply isn&apos;t theirs to receive, and the Wrapped card carries a share button that puts a child&apos;s first name on a picture. If you&apos;d like a helper to keep the full picture, make them an assistant coach from your <strong>Staff</strong> page.</p>
-          <p><strong>Moving between seasons:</strong> pick a season from the switcher under your team name (on a phone it&apos;s in <strong>More</strong>, under <em>This team&apos;s seasons</em>). It keeps you where you are — if you&apos;re on Roster, you get last season&apos;s Roster. A page from a finished season is marked <strong>Complete</strong> beside its title; on a phone, tapping that marker is also the quickest way back to the current season. This works even while a new season is running, so you can look up last year mid-season without leaving what you&apos;re doing.</p>
-          <p><strong>It goes all the way down.</strong> Open Money and you can still read that season&apos;s dues, expenses, budget, budget-vs-actual and fundraiser results. Open Roster and you can open a player to see their attendance, dues and awards for that season. Open Lineups and you can open a game and see the order you actually batted. Everything is marked <strong>Complete</strong> and nothing offers to be edited.</p>
-          <p><strong>What isn&apos;t in a finished season, and why:</strong> anything that <em>does</em> something rather than records it. You can&apos;t send an email to families, start a chat, request a payment, log a new org allocation, or run a tryout for a season that has already happened. Those are live-season tools; the archive is the record.</p>
-          <p>What you can see in a past season is what you could see <em>at the time</em>. If you were an assistant who wasn&apos;t given access to team money last year, the archive doesn&apos;t give it to you now — and if you were, it&apos;s still there.</p>
-          <p><strong>Getting to next season:</strong> on a standalone Premium team, the head coach starts it from Season&apos;s End (or Settings) — the roster and coaching staff carry forward. On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically.</p>
-          <p>And before any of that: once games stop and nothing new is scheduled for a couple of quiet weeks, your Overview asks a gentle <strong>Season check</strong> — <em>is the season over?</em> — so it never just… stops. It always offers <strong>Add an event instead</strong> beside the answer, in case you&apos;re not done after all, and <strong>Not yet</strong> keeps it quiet for the rest of the season. If closing seasons isn&apos;t yours to do, you get the same heads-up without the button: your club closes it, and your Season Wrapped appears when they do.</p>
-        </>
+        <p>When your season is marked complete, your team doesn&apos;t disappear — it moves to its <strong>Season&apos;s End</strong> page. You&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>Season complete</strong> — and if it&apos;s your only team, the portal opens straight onto it.</p>
       ),
+      subtopics: [
+        {
+          id: 'season-end-wrapped',
+          title: 'Season Wrapped, and the recaps families get',
+          content: (
+            <>
+              <p><strong>Season Wrapped</strong> leads the page: your final record, longest win streak, closest game, attendance rate, top award-winner, and a standout lineup fact — built from the season you actually ran. If you used the <strong>Note</strong> button at the bench during the year, the card also carries <strong>one of your own lines</strong> — the most recent, with a count of how many you logged.</p>
+              <p><strong>Share your season</strong> turns it into a picture and opens your phone&apos;s share sheet, so it goes wherever you choose (the family group chat is the usual first stop) — and the picture deliberately leaves your bench notes out, so sharing the card can never pass one along. A short season simply gets a smaller card — no padded stats, and no quote at all if you never logged one.</p>
+              <p><strong>Closing the season is also what hands each family their player&apos;s season recap.</strong> Once it has, a <strong>Family season recaps</strong> line appears here telling you how many of your connected families have opened theirs — a count only, never <em>which</em> families. It shows up only if families were connected to that season, so a team that hadn&apos;t started sharing isn&apos;t shown a zero to interpret. Reading it needs family-contact access.</p>
+            </>
+          ),
+        },
+        {
+          id: 'season-end-whats-there',
+          title: 'The whole season is still there',
+          content: (
+            <>
+              <p>Roster, schedule and results, attendance, lineups, money records, documents, development and tryouts all stay open, exactly as they were — you just can&apos;t change them, because the season is over. Open any of them from the menu, the same way you did during the season.</p>
+              <p><strong>It goes all the way down.</strong> Open Money and you can still read that season&apos;s dues, expenses, budget, budget-vs-actual and fundraiser results. Open Roster and you can open a player to see their attendance, dues and awards for that season. Open Lineups and you can open a game and see the order you actually batted. Everything is marked <strong>Complete</strong> and nothing offers to be edited.</p>
+              <HelpNote variant="info" title="What isn’t in a finished season, and why">
+                <p>Anything that <em>does</em> something rather than records it. You can&apos;t send an email to families, start a chat, request a payment, log a new org allocation, or run a tryout for a season that has already happened. Those are live-season tools; the archive is the record.</p>
+              </HelpNote>
+              <p>What you can see in a past season is what you could see <em>at the time</em>. If you were an assistant who wasn&apos;t given access to team money last year, the archive doesn&apos;t give it to you now — and if you were, it&apos;s still there.</p>
+            </>
+          ),
+        },
+        {
+          id: 'season-end-moving',
+          title: 'Moving between seasons',
+          content: (
+            <p>Pick a season from the switcher under your team name (on a phone it&apos;s in <strong>More</strong>, under <em>This team&apos;s seasons</em>). It keeps you where you are — if you&apos;re on Roster, you get last season&apos;s Roster. A page from a finished season is marked <strong>Complete</strong> beside its title; on a phone, tapping that marker is also the quickest way back to the current season. This works even while a new season is running, so you can look up last year mid-season without leaving what you&apos;re doing.</p>
+          ),
+        },
+        {
+          id: 'season-end-who',
+          title: 'Season’s End is for coaches',
+          content: (
+            <p>Your head coach and assistant coaches all reach it exactly as described above. <strong>Helpers don&apos;t</strong> — a parent who came in to run a station sees a short note saying the season has finished and thanking them, with nothing else to open. It isn&apos;t about names (a helper reads their group&apos;s names on the practice plan all season): a whole season&apos;s story simply isn&apos;t theirs to receive, and the Wrapped card carries a share button that puts a child&apos;s first name on a picture. If you&apos;d like a helper to keep the full picture, make them an assistant coach from your <strong>Staff</strong> page.</p>
+          ),
+        },
+        {
+          id: 'season-end-next',
+          title: 'Getting to next season',
+          content: (
+            <>
+              <p>On a standalone Premium team, the head coach starts it from Season&apos;s End (or Settings) — the roster and coaching staff carry forward. On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically.</p>
+              <p>And before any of that: once games stop and nothing new is scheduled for a couple of quiet weeks, your Overview asks a gentle <strong>Season check</strong> — <em>is the season over?</em> — so it never just… stops. It always offers <strong>Add an event instead</strong> beside the answer, in case you&apos;re not done after all, and <strong>Not yet</strong> keeps it quiet for the rest of the season. If closing seasons isn&apos;t yours to do, you get the same heads-up without the button: your club closes it, and your Season Wrapped appears when they do.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-season-end-what-carries',
@@ -2589,20 +2671,60 @@ const coachesHelp: HelpPageContent = {
       keywords: ['template', 'templates', 'plan template', 'plan templates', 'practice template', 'save as template', 'save a practice', 'reuse a practice', 'standard practice', 'standard tuesday', 'start this plan from', 'start from a template', 'use a template', 'copy a practice', 'rename a template', 'retire a template', 'restore a template', 'started 8 plans', 'add from a past season', 'import a practice', 'template tags', 'edit a template'],
       searchText: 'plan templates template practice template save as template save a practice you would run again standard tuesday standard practice reuse start this plan from a template or a previous practice one picker two sources use it started 8 plans not started a plan yet never used how many times rename retire restore retired dims plans keep reading new template build one from scratch empty room blocks stations full editor no players no staff no just for tonight the practice supplies the people april twelve july nine tags several tags per template filter chips no tags flat list not groups add from a past season import old practices bring forward team not season rollover nothing to move head coach only schedule access assistant read only started from provenance edit anything changes will not change the template drill inside stays read only',
       content: (
-        <>
-          <p>You have a Tuesday you&rsquo;d run again. <strong>Plan templates</strong> is where you keep it — and after that, next Tuesday starts from it instead of an empty page.</p>
-          <p>You&rsquo;ll find it in <strong>Development → Plan templates</strong>.</p>
-          <p><strong>Two ways to make one.</strong> On any practice plan, <strong>Save as template…</strong> keeps the practice as it is now — it asks for a name and, optionally, tags, and nothing else. Or build one from scratch in the room with <strong>New template</strong>, which gives you the same blocks-and-stations editor the practice uses.</p>
-          <p><strong>What a template holds is the shape and the teaching.</strong> Blocks, timings, stations, coaching points, setup, equipment — and, if a station came from your drills, it stays a drill. <strong>What it never holds is people</strong>: no players, no staff, no &ldquo;just for tonight&rdquo; notes. Those belong to a particular practice, which is what lets one template work in April with twelve players and July with nine.</p>
-          <p><strong>Using one:</strong> on the practice, <strong>Start this plan from…</strong> offers a template <em>or</em> a previous practice — one control, two ways in. Pick a template and the plan appears with a line at the top saying where it came from.</p>
-          <p><strong>Once it&rsquo;s loaded, it&rsquo;s yours — edit anything.</strong> Changing tonight&rsquo;s practice never changes the template, and editing the template later never changes a practice already written from it. (The one thing that stays read-only inside it is a station that came from <em>your drills</em>, for the same reason it always does.)</p>
-          <p><strong>Tags are your own words</strong>, shared with your drills and your players&rsquo; focus areas — so tagging a template &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere. A template can carry several, and the chips at the top of the room narrow the list by them. <strong>No tags</strong> is always offered, so a template can never get lost by not having any.</p>
-          <p><strong>&ldquo;Started 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a template produced and nothing more. One that hasn&rsquo;t been used yet simply says so, in words.</p>
-          <p><strong>Retiring, not deleting.</strong> A retired template leaves the list you pick from and dims in place; every plan already started from it is untouched. You can restore it any time and reuse the name.</p>
-          <p><strong>Your templates stay with your team from season to season</strong> — there&rsquo;s nothing to move across when a new season starts. The room itself isn&rsquo;t browsable while you&rsquo;re looking at a finished season, because it&rsquo;s a tool you use now rather than a record of a year. <strong>Add from a past season</strong> reads the practices you ran in previous years and offers them as templates; adding one copies it forward and changes nothing in the old practice.</p>
-          <p><strong>Who can do what:</strong> <strong>managing</strong> templates — creating, editing, renaming, retiring, importing — is head-coach only. Any coach with <strong>schedule</strong> access can see the room and start a plan from a template. An assistant sees no Rename, Retire or New buttons at all, rather than buttons that refuse.</p>
-        </>
+        <p>You have a Tuesday you&rsquo;d run again. <strong>Plan templates</strong> is where you keep it — and after that, next Tuesday starts from it instead of an empty page. You&rsquo;ll find it in <strong>Development → Plan templates</strong>.</p>
       ),
+      subtopics: [
+        {
+          id: 'premium-templates-making',
+          title: 'Two ways to make one',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Save as template…">On any practice plan — keeps the practice as it is now. It asks for a name and, optionally, tags, and nothing else.</HelpDef>
+                <HelpDef term="New template">Builds one from scratch in the room, with the same blocks-and-stations editor the practice uses.</HelpDef>
+              </HelpDefs>
+              <p><strong>What a template holds is the shape and the teaching.</strong> Blocks, timings, stations, coaching points, setup, equipment — and, if a station came from your drills, it stays a drill. <strong>What it never holds is people</strong>: no players, no staff, no &ldquo;just for tonight&rdquo; notes. Those belong to a particular practice, which is what lets one template work in April with twelve players and July with nine.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-templates-using',
+          title: 'Using one',
+          content: (
+            <>
+              <p>On the practice, <strong>Start this plan from…</strong> offers a template <em>or</em> a previous practice — one control, two ways in. Pick a template and the plan appears with a line at the top saying where it came from.</p>
+              <p><strong>Once it&rsquo;s loaded, it&rsquo;s yours — edit anything.</strong> Changing tonight&rsquo;s practice never changes the template, and editing the template later never changes a practice already written from it. (The one thing that stays read-only inside it is a station that came from <em>your drills</em>, for the same reason it always does.)</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-templates-tags',
+          title: 'Tags, and what the counts mean',
+          content: (
+            <>
+              <p><strong>Tags are your own words</strong>, shared with your drills and your players&rsquo; focus areas — so tagging a template &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere. A template can carry several, and the chips at the top of the room narrow the list by them. <strong>No tags</strong> is always offered, so a template can never get lost by not having any.</p>
+              <p><strong>&ldquo;Started 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a template produced and nothing more. One that hasn&rsquo;t been used yet simply says so, in words.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-templates-seasons',
+          title: 'Retiring, and carrying templates across seasons',
+          content: (
+            <>
+              <p><strong>Retiring, not deleting.</strong> A retired template leaves the list you pick from and dims in place; every plan already started from it is untouched. You can restore it any time and reuse the name.</p>
+              <p><strong>Your templates stay with your team from season to season</strong> — there&rsquo;s nothing to move across when a new season starts. The room itself isn&rsquo;t browsable while you&rsquo;re looking at a finished season, because it&rsquo;s a tool you use now rather than a record of a year. <strong>Add from a past season</strong> reads the practices you ran in previous years and offers them as templates; adding one copies it forward and changes nothing in the old practice.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-templates-access',
+          title: 'Who can do what',
+          content: (
+            <p><strong>Managing</strong> templates — creating, editing, renaming, retiring, importing — is head-coach only. Any coach with <strong>schedule</strong> access can see the room and start a plan from a template. An assistant sees no Rename, Retire or New buttons at all, rather than buttons that refuse.</p>
+          ),
+        },
+      ],
       links: [
         { label: 'Writing the plan', href: '#premium-practice-plans' },
         { label: 'Your drills', href: '#premium-drill-library' },
@@ -2736,23 +2858,67 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p><strong>Development</strong> is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
-          <ul>
-            <li><strong>Focus areas</strong> — the one or two things a player is currently working on, in your words.</li>
-            <li><strong>Tests</strong> — the repeatable measurements you take. <strong>Your test list</strong> defines them, and you decide what&rsquo;s on it.</li>
-          </ul>
+          <HelpDefs>
+            <HelpDef term="Focus areas">The one or two things a player is currently working on, in your words.</HelpDef>
+            <HelpDef term="Tests">The repeatable measurements you take. <strong>Your test list</strong> defines them, and you decide what&rsquo;s on it.</HelpDef>
+          </HelpDefs>
           <p>An <strong>evaluation session</strong> runs your tests across the whole roster in one go, at a practice. A few sessions a season is what turns single readings into a trend you can actually coach from.</p>
-          <p><strong>How the page is laid out.</strong> Top to bottom: your <strong>evaluation sessions</strong> and the button to start a new one, then — under <em>&ldquo;Then go look&rdquo;</em> — two doors out to the <strong>team board</strong> and the coverage report in <strong>Insights</strong>, and last, <strong>your test list</strong>. A door fades when there&rsquo;s nothing behind it yet, so you can tell at a glance whether it&rsquo;s worth opening.</p>
-          <p><strong>Starting from scratch.</strong> A session can only record what&rsquo;s on your test list, so until you have at least one test the page puts <strong>your test list first</strong> and marks it <em>Start here</em>. <strong>New session</strong> stays switched off, with a line saying what turns it on. Add one test and the page reorders itself into its everyday shape.</p>
-          <p><strong>Retiring tests.</strong> Retiring a test keeps every reading already logged against it — it just leaves the picker. If you retire your <em>last</em> active test, new sessions switch off again until you add or restore one, but <strong>every session you&rsquo;ve already run stays right where it was</strong> and stays open.</p>
-          <p><strong>When the readings were taken, and where.</strong> A session opens dated today, but you can <strong>change the date</strong> — for the common case of writing numbers on the back of your hand on Tuesday and typing them in on Thursday. You can also say which event they were <strong>taken at</strong>; pick the practice and the date fills itself in. ⚠ <strong>Moving a session&rsquo;s date moves every reading already entered in it</strong>, so the session never disagrees with its own contents — you&rsquo;re asked first, and told exactly how many readings will move. Linking a practice only <em>fills in</em> the date; if that practice is later rescheduled, your session stays on the day the testing actually happened. The practice itself gains a <strong>Recorded here</strong> line pointing back at the session.</p>
-          <p><strong>What it feeds.</strong> The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
-          <p><strong>That report also reads your practice plans.</strong> An <strong>In a plan</strong> column shows a quiet tick, or <em>&ldquo;not in a plan yet&rdquo;</em> for anyone whose name hasn&rsquo;t appeared in one — no counts and no scores, because it&rsquo;s a note about where your attention has gone, not a mark against a child. It only appears once you&rsquo;ve written a few plans <em>and</em> named players in at least one of them; naming players is optional, so until you do the question can&rsquo;t honestly be answered and the column stays away.</p>
-          <p><strong>Underneath it</strong> you&rsquo;ll find the focus-area <strong>tags</strong> no practice has been about yet, and <strong>Practices you&rsquo;ve run</strong> — filter to &ldquo;Hitting&rdquo; and you get every hitting practice, what was in it, and what you wrote afterwards. <strong>Open the plan</strong> works on a finished season too, read-only, so &ldquo;what did we do last spring?&rdquo; has an answer.</p>
-          <p><strong>Two different kinds of truth sit on that page, and they&rsquo;re kept apart on purpose.</strong> The coverage table says what was <em>planned</em>. Only <em>Practices you&rsquo;ve run</em> describes what happened — and it earns that because you sat down afterwards and wrote it.</p>
-          <p><strong>Where the season started.</strong> If a player came through your tryout and you ran <em>Start development from tryouts</em> on the Build team tab, their development page opens with a <strong>Tryout snapshot</strong> card — their category ratings and overall from tryout day, dated, with how many evaluators scored them. It&rsquo;s drawn deliberately apart from your measurables, with a dashed edge, because it is <strong>context, not a measurement</strong>: a tryout rating is a panel&rsquo;s judgment on one day, not a timed drill, so it <strong>never joins a trend line and never counts as a measurable</strong>. It&rsquo;s frozen the moment you set it — editing your scorecard afterwards doesn&rsquo;t rewrite it — and like every tryout evaluation it is <strong>coach-eyes-only</strong>: families never see it, and only coaches with tryouts access see it at all.</p>
-          <p><strong>Who can do what:</strong> every coach with player access can read the board. <strong>Writing</strong> — starting sessions, recording readings, editing the test list and focus areas — is head-coach only, because it&rsquo;s coach judgment written about a minor.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'premium-development-layout',
+          title: 'How the page is laid out — and starting from scratch',
+          content: (
+            <>
+              <p>Top to bottom: your <strong>evaluation sessions</strong> and the button to start a new one, then — under <em>&ldquo;Then go look&rdquo;</em> — two doors out to the <strong>team board</strong> and the coverage report in <strong>Insights</strong>, and last, <strong>your test list</strong>. A door fades when there&rsquo;s nothing behind it yet, so you can tell at a glance whether it&rsquo;s worth opening.</p>
+              <p><strong>Starting from scratch.</strong> A session can only record what&rsquo;s on your test list, so until you have at least one test the page puts <strong>your test list first</strong> and marks it <em>Start here</em>. <strong>New session</strong> stays switched off, with a line saying what turns it on. Add one test and the page reorders itself into its everyday shape.</p>
+              <p><strong>Retiring tests.</strong> Retiring a test keeps every reading already logged against it — it just leaves the picker. If you retire your <em>last</em> active test, new sessions switch off again until you add or restore one, but <strong>every session you&rsquo;ve already run stays right where it was</strong> and stays open.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-development-dates',
+          title: 'When the readings were taken, and where',
+          content: (
+            <>
+              <p>A session opens dated today, but you can <strong>change the date</strong> — for the common case of writing numbers on the back of your hand on Tuesday and typing them in on Thursday. You can also say which event they were <strong>taken at</strong>; pick the practice and the date fills itself in.</p>
+              <HelpNote variant="warning" title="Moving a session’s date moves every reading in it">
+                <p>So the session never disagrees with its own contents — you&rsquo;re asked first, and told exactly how many readings will move.</p>
+              </HelpNote>
+              <p>Linking a practice only <em>fills in</em> the date; if that practice is later rescheduled, your session stays on the day the testing actually happened. The practice itself gains a <strong>Recorded here</strong> line pointing back at the session.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-development-feeds',
+          title: 'What it feeds: the board and the coverage report',
+          content: (
+            <>
+              <p>The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
+              <p><strong>That report also reads your practice plans.</strong> An <strong>In a plan</strong> column shows a quiet tick, or <em>&ldquo;not in a plan yet&rdquo;</em> for anyone whose name hasn&rsquo;t appeared in one — no counts and no scores, because it&rsquo;s a note about where your attention has gone, not a mark against a child. It only appears once you&rsquo;ve written a few plans <em>and</em> named players in at least one of them; naming players is optional, so until you do the question can&rsquo;t honestly be answered and the column stays away.</p>
+              <p><strong>Underneath it</strong> you&rsquo;ll find the focus-area <strong>tags</strong> no practice has been about yet, and <strong>Practices you&rsquo;ve run</strong> — filter to &ldquo;Hitting&rdquo; and you get every hitting practice, what was in it, and what you wrote afterwards. <strong>Open the plan</strong> works on a finished season too, read-only, so &ldquo;what did we do last spring?&rdquo; has an answer.</p>
+              <HelpNote variant="info" title="Two different kinds of truth, kept apart on purpose">
+                <p>The coverage table says what was <em>planned</em>. Only <em>Practices you&rsquo;ve run</em> describes what happened — and it earns that because you sat down afterwards and wrote it.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-development-tryout',
+          title: 'Where the season started: the tryout snapshot',
+          content: (
+            <p>If a player came through your tryout and you ran <em>Start development from tryouts</em> on the Build team tab, their development page opens with a <strong>Tryout snapshot</strong> card — their category ratings and overall from tryout day, dated, with how many evaluators scored them. It&rsquo;s drawn deliberately apart from your measurables, with a dashed edge, because it is <strong>context, not a measurement</strong>: a tryout rating is a panel&rsquo;s judgment on one day, not a timed drill, so it <strong>never joins a trend line and never counts as a measurable</strong>. It&rsquo;s frozen the moment you set it — editing your scorecard afterwards doesn&rsquo;t rewrite it — and like every tryout evaluation it is <strong>coach-eyes-only</strong>: families never see it, and only coaches with tryouts access see it at all.</p>
+          ),
+        },
+        {
+          id: 'premium-development-access',
+          title: 'Who can do what',
+          content: (
+            <p>Every coach with player access can read the board. <strong>Writing</strong> — starting sessions, recording readings, editing the test list and focus areas — is head-coach only, because it&rsquo;s coach judgment written about a minor.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-development-new-session-off',
@@ -2973,25 +3139,73 @@ const coachesHelp: HelpPageContent = {
         'stop sharing', 'why can I see another team', 'club plan scouting'],
       searchText: 'scouting book opponent book opponents who are we up against record against them last meeting tendencies notes on other teams rival scouting tab add to the book observation log book line head coach remove observation helper assistant contribute jersey number not names merge duplicate spelling same team as un-merge also answers to scrimmage not counted exhibition record rule archived season no scouting numbers vs them home away split this season all time average biggest win worst loss from n games what worked lineup share to staff chat game plan snapshot brief staff you play reminder masthead nudge dismiss tag filter chips add another several observations one sitting their tournament so far opponent results this weekend other games same tournament pool standing runs for against refreshed automatic no capture forfeit not counted external tournament missing why no block practice plan panel you play saturday the book while building practice full book link from your club club shared book share our book with the club other teams in my club can see my notes who can read my scouting see another team observations read only cannot edit another team note records per team never averaged all n from team club has more observations on this opponent marker on the opponents list two switches club admin turns it on head coach opts in notes access stop sharing disappears immediately reciprocity see theirs while you share yours never leaves the club another organization cannot see our book club plan only no switch in team settings archived season no club layer',
       content: (
-        <>
-          <p>The <strong>opponent book</strong> keeps what you know about the teams you play — in the portal instead of a notes app on your phone. Open <strong>Insights → &ldquo;Who are we up against?&rdquo;</strong> for the list: every opponent you&rsquo;ve ever named on a game, your all-time record against them (across seasons), when you last met, and an amber dot wherever something&rsquo;s written.</p>
-          <p>Each opponent has a page with three layers:</p>
-          <ul>
-            <li><strong>The numbers</strong> — record, runs for and against, streak, and every past meeting season by season. Scrimmages are listed with an <strong>EXH</strong> badge but never counted, so the record here always matches Season Wrapped and Insights.</li>
-            <li><strong>The book line</strong> — one distilled sentence (<em>&ldquo;Beatable when we run early&rdquo;</em>), written by the head coach (or an assistant granted notes access). It leads every scouting surface.</li>
-            <li><strong>Observations</strong> — one-line notes logged after games (<em>&ldquo;their shortstop cheats up with runners on&rdquo;</em>), each dated, tagged, and signed by whoever wrote it. Tag chips above the log filter it — on the opponent page and on the game&rsquo;s Scouting tab alike.</li>
-          </ul>
-          <p><strong>The book writes some lines itself.</strong> Once you&rsquo;ve met a team three times, <strong>&ldquo;The numbers vs them&rdquo;</strong> appears on their page: home/away split, this season vs all-time, average score, biggest win and worst loss — and with a couple of saved lineups against them, patterns like <em>&ldquo;In both wins, Sam started at pitcher; in the loss they didn&rsquo;t.&rdquo;</em> Every line says how many games it&rsquo;s drawn from, and a line that hasn&rsquo;t earned its evidence simply doesn&rsquo;t appear.</p>
-          <p><strong>At a tournament, the book fills itself between games.</strong> When your game is part of a tournament that runs on FieldLogicHQ, its Scouting tab adds <strong>&ldquo;Their tournament so far&rdquo;</strong> — the opponent&rsquo;s other results this weekend, their pool standing, and their runs for and against, assembled automatically from the tournament&rsquo;s own live results and refreshed every time you open the tab. Sunday&rsquo;s semifinal opponent arrives with Saturday&rsquo;s scores already in the book, and nobody on your bench typed a thing. It&rsquo;s the same public information the tournament&rsquo;s standings page shows — results and standings from <em>that</em> tournament only, team names and scores, never anyone&rsquo;s roster. A game against a team that forfeited shows the scoreline with a small <em>forfeit</em> marker, and those invented runs stay out of the totals. This only exists where the tournament itself runs on the platform — a league game, or a tournament you entered by hand, simply doesn&rsquo;t have it to offer.</p>
-          <p><strong>Saturday&rsquo;s intelligence meets Tuesday&rsquo;s plan.</strong> When you build a practice plan in a week with a booked game against a team whose book has content, one quiet line appears above the plan — <em>&ldquo;You play Thunder Saturday — the book:&rdquo;</em> — with your book line, the freshest observation, and a <strong>Full book</strong> link. <em>&ldquo;They bunt the first strike&rdquo;</em> becomes this week&rsquo;s bunt-defense station without anyone going looking. No game that week, or nothing in the book, and the planner looks exactly as it always has.</p>
-          <p><strong>Writing happens right after the score.</strong> When you save a final score, a quiet <strong>&ldquo;Add to the book&rdquo;</strong> link appears beside it — it opens the game&rsquo;s <strong>Scouting</strong> tab, where you can log several observations in one sitting (each save confirms and invites another). That tab is also where the book resurfaces before you play them again: your record shows on the schedule row, the tab holds the book line and freshest notes, and in game week the team bar adds one quiet reminder — <em>&ldquo;You play Thunder Saturday — 6 observations in the book&rdquo;</em> — that jumps straight there. Dismiss it and it stays gone for that game.</p>
-          <p><strong>Brief the bench in one tap.</strong> <strong>Share to staff chat</strong> — on the opponent page or the Scouting tab — posts a game-plan snapshot (record, book line, the numbers, recent observations) into your team&rsquo;s staff room. It&rsquo;s a snapshot: edits you make to the book afterwards don&rsquo;t rewrite what was posted.</p>
-          <p><strong>The whole bench can scout.</strong> Assistants and helpers can log observations too — every entry shows who wrote it, and the head coach can remove any entry (writers can remove their own). One house rule: refer to opposing players by <strong>jersey number or position, never by name</strong> — they&rsquo;re someone else&rsquo;s kids.</p>
-          <p><strong>Your club can pool what it knows (Club plan).</strong> The 12U A team&rsquo;s hard-won read on a rival helps nobody while it sits in one coach&rsquo;s book. If your club turns sharing on and you switch your own team in, an opponent&rsquo;s page grows a <strong>&ldquo;From your club&rdquo;</strong> section under your own timeline: one block per club team that has faced them, with <em>their</em> record, <em>their</em> book line, and their observations — each one signed with the writer and the team, like <em>&ldquo;— Coach Dana · 12U A&rdquo;</em>. &ldquo;All 8 from 12U A&rdquo; opens the rest. Records stay side by side, one per team, and are never blended into a single number: what the A team is 3&ndash;1 against, your team may be 0&ndash;2 against, and both are true. Where the club knows something, the opponents list marks the row and a game&rsquo;s Scouting tab adds one quiet line — <em>&ldquo;Your club has 8 more observations on Thunder&rdquo;</em> — that jumps to the section.</p>
-          <p><strong>What sharing does and doesn&rsquo;t do.</strong> Everything in the club layer is <strong>read-only across team lines</strong>: you can&rsquo;t edit or erase another team&rsquo;s note, and no other coach can touch yours. Each head coach still curates exactly one book — their own. Sharing is <strong>two switches</strong>: your club admin turns it on for the organization, then each head coach opts their own team in under <strong>Team settings → &ldquo;Share our book with the club&rdquo;</strong> (it needs notes access). You <strong>see the club&rsquo;s books while you share yours</strong> — stop sharing and your book disappears from their pages, and theirs from yours, straight away. Nothing was ever copied. And sharing stops at your club&rsquo;s walls: another organization&rsquo;s books are never visible to you, and yours are never visible to them.</p>
-          <p><strong>Past seasons:</strong> the book remembers every season&rsquo;s games, but it serves the season you&rsquo;re coaching now — an archived season doesn&rsquo;t show scouting screens, the club layer included.</p>
-        </>
+        <p>The <strong>opponent book</strong> keeps what you know about the teams you play — in the portal instead of a notes app on your phone. Open <strong>Insights → &ldquo;Who are we up against?&rdquo;</strong> for the list: every opponent you&rsquo;ve ever named on a game, your all-time record against them (across seasons), when you last met, and an amber dot wherever something&rsquo;s written.</p>
       ),
+      subtopics: [
+        {
+          id: 'premium-opponent-layers',
+          title: 'What an opponent’s page holds',
+          content: (
+            <>
+              <p>Three layers:</p>
+              <HelpDefs>
+                <HelpDef term="The numbers">Record, runs for and against, streak, and every past meeting season by season. Scrimmages are listed with an <strong>EXH</strong> badge but never counted, so the record here always matches Season Wrapped and Insights.</HelpDef>
+                <HelpDef term="The book line">One distilled sentence (<em>&ldquo;Beatable when we run early&rdquo;</em>), written by the head coach (or an assistant granted notes access). It leads every scouting surface.</HelpDef>
+                <HelpDef term="Observations">One-line notes logged after games (<em>&ldquo;their shortstop cheats up with runners on&rdquo;</em>), each dated, tagged, and signed by whoever wrote it. Tag chips above the log filter it — on the opponent page and on the game&rsquo;s Scouting tab alike.</HelpDef>
+              </HelpDefs>
+              <p><strong>The book writes some lines itself.</strong> Once you&rsquo;ve met a team three times, <strong>&ldquo;The numbers vs them&rdquo;</strong> appears on their page: home/away split, this season vs all-time, average score, biggest win and worst loss — and with a couple of saved lineups against them, patterns like <em>&ldquo;In both wins, Sam started at pitcher; in the loss they didn&rsquo;t.&rdquo;</em> Every line says how many games it&rsquo;s drawn from, and a line that hasn&rsquo;t earned its evidence simply doesn&rsquo;t appear.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-opponent-writing',
+          title: 'Writing happens right after the score',
+          content: (
+            <>
+              <p>When you save a final score, a quiet <strong>&ldquo;Add to the book&rdquo;</strong> link appears beside it — it opens the game&rsquo;s <strong>Scouting</strong> tab, where you can log several observations in one sitting (each save confirms and invites another).</p>
+              <p>That tab is also where the book resurfaces before you play them again: your record shows on the schedule row, the tab holds the book line and freshest notes, and in game week the team bar adds one quiet reminder — <em>&ldquo;You play Thunder Saturday — 6 observations in the book&rdquo;</em> — that jumps straight there. Dismiss it and it stays gone for that game.</p>
+              <HelpNote variant="warning" title="One house rule">
+                <p>The whole bench can scout — assistants and helpers can log observations too, every entry shows who wrote it, and the head coach can remove any entry (writers can remove their own). Refer to opposing players by <strong>jersey number or position, never by name</strong> — they&rsquo;re someone else&rsquo;s kids.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-opponent-tournament',
+          title: 'At a tournament, the book fills itself between games',
+          content: (
+            <p>When your game is part of a tournament that runs on FieldLogicHQ, its Scouting tab adds <strong>&ldquo;Their tournament so far&rdquo;</strong> — the opponent&rsquo;s other results this weekend, their pool standing, and their runs for and against, assembled automatically from the tournament&rsquo;s own live results and refreshed every time you open the tab. Sunday&rsquo;s semifinal opponent arrives with Saturday&rsquo;s scores already in the book, and nobody on your bench typed a thing. It&rsquo;s the same public information the tournament&rsquo;s standings page shows — results and standings from <em>that</em> tournament only, team names and scores, never anyone&rsquo;s roster. A game against a team that forfeited shows the scoreline with a small <em>forfeit</em> marker, and those invented runs stay out of the totals. This only exists where the tournament itself runs on the platform — a league game, or a tournament you entered by hand, simply doesn&rsquo;t have it to offer.</p>
+          ),
+        },
+        {
+          id: 'premium-opponent-practice',
+          title: 'Saturday’s intelligence meets Tuesday’s plan',
+          content: (
+            <>
+              <p>When you build a practice plan in a week with a booked game against a team whose book has content, one quiet line appears above the plan — <em>&ldquo;You play Thunder Saturday — the book:&rdquo;</em> — with your book line, the freshest observation, and a <strong>Full book</strong> link. <em>&ldquo;They bunt the first strike&rdquo;</em> becomes this week&rsquo;s bunt-defense station without anyone going looking. No game that week, or nothing in the book, and the planner looks exactly as it always has.</p>
+              <p><strong>Brief the bench in one tap.</strong> <strong>Share to staff chat</strong> — on the opponent page or the Scouting tab — posts a game-plan snapshot (record, book line, the numbers, recent observations) into your team&rsquo;s staff room. It&rsquo;s a snapshot: edits you make to the book afterwards don&rsquo;t rewrite what was posted.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-opponent-club',
+          title: 'Your club can pool what it knows (Club plan)',
+          content: (
+            <>
+              <p>The 12U A team&rsquo;s hard-won read on a rival helps nobody while it sits in one coach&rsquo;s book. If your club turns sharing on and you switch your own team in, an opponent&rsquo;s page grows a <strong>&ldquo;From your club&rdquo;</strong> section under your own timeline: one block per club team that has faced them, with <em>their</em> record, <em>their</em> book line, and their observations — each one signed with the writer and the team, like <em>&ldquo;— Coach Dana · 12U A&rdquo;</em>. &ldquo;All 8 from 12U A&rdquo; opens the rest.</p>
+              <p><strong>Records stay side by side, one per team, and are never blended</strong> into a single number: what the A team is 3&ndash;1 against, your team may be 0&ndash;2 against, and both are true. Where the club knows something, the opponents list marks the row and a game&rsquo;s Scouting tab adds one quiet line — <em>&ldquo;Your club has 8 more observations on Thunder&rdquo;</em> — that jumps to the section.</p>
+              <p><strong>What sharing does and doesn&rsquo;t do.</strong> Everything in the club layer is <strong>read-only across team lines</strong>: you can&rsquo;t edit or erase another team&rsquo;s note, and no other coach can touch yours. Each head coach still curates exactly one book — their own. Sharing is <strong>two switches</strong>: your club admin turns it on for the organization, then each head coach opts their own team in under <strong>Team settings → &ldquo;Share our book with the club&rdquo;</strong> (it needs notes access). You <strong>see the club&rsquo;s books while you share yours</strong> — stop sharing and your book disappears from their pages, and theirs from yours, straight away. Nothing was ever copied. And sharing stops at your club&rsquo;s walls: another organization&rsquo;s books are never visible to you, and yours are never visible to them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-opponent-past',
+          title: 'Past seasons',
+          content: (
+            <p>The book remembers every season&rsquo;s games, but it serves the season you&rsquo;re coaching now — an archived season doesn&rsquo;t show scouting screens, the club layer included.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-opponent-book-who-writes',
@@ -3109,17 +3323,69 @@ const coachesHelp: HelpPageContent = {
         <>
           <p><strong>Staff</strong> is where you give someone else their own sign-in to this team. They get their own account — you never share a password — and they see the team through whatever access you grant.</p>
           <p><strong>You choose which kind before you type the email,</strong> because it changes everything underneath it.</p>
-          <p><strong>An assistant coach</strong> is staff. They start with the least access that is still useful — seeing and changing the schedule, attendance, lineups, and the blank team forms — and they&rsquo;re in your staff chat. Everything sensitive is off until you switch it on: guardian contacts and dates of birth, private player notes, team money, sending announcements to families, and tryouts.</p>
-          <p><strong>Players&rsquo; names, numbers and positions are not a switch.</strong> Anyone you give access to a team can see them — every assistant, and every helper. There used to be a <em>Roster: Hidden</em> control here and it has been retired, because it only worked on some screens: an assistant with the roster &ldquo;hidden&rdquo; still saw every full name in the lineup builder, the playing-time report, the dues page and awards. It promised something the portal couldn&rsquo;t keep. <strong>The switch that does the real protecting is <em>Contacts &amp; birthdates</em></strong> — guardian names, emails and phone numbers, dates of birth, medical notes and emergency contacts — and it is untouched, still off by default, and still asks you to confirm before you grant it.</p>
-          <p><strong>Which sections an assistant can open follows the duties you give them.</strong> Attendance, lineups, player notes, team money, documents or tryouts each open their own area, and holding any of them also opens the roster page, the development board and Insights. An assistant you leave on the defaults is unchanged. One practical upshot: an assistant you&rsquo;ve given <strong>team money</strong> now sees players&rsquo; <strong>names</strong> beside the amounts on the dues page, instead of &ldquo;Player #12&rdquo; and a phone call to you.</p>
-          <p><strong>A helper</strong> is the parent or outside instructor who turns up to run a station on a Tuesday. They see your practice schedule, the plan for each practice, and the names, numbers and positions of the players at their station. That is the whole list. They can&rsquo;t change anything — not the plan, not the schedule, not one game — and they are <strong>never in your staff chat</strong>. No roster page, no notes, no contacts, no money, no tryouts, no attendance, no lineups.</p>
-          <p><strong>Why bother with either.</strong> An assistant with schedule access can add the games you&rsquo;re both chasing; one with lineup access can build the lineup while you run the practice. A helper saves you printing a sheet with ten children&rsquo;s names on it and handing it to someone who then takes it home — and you can take their access back the moment the season, or your mind, changes.</p>
-          <p><strong>Changed your mind about a helper?</strong> Their card has <strong>Make assistant coach</strong>. Same person, same sign-in, no new invitation — they simply get everything an assistant starts with, and you can grant more from there.</p>
-          <p><strong>Two things on the grid are worth knowing.</strong> <strong>Schedule</strong> is now two switches: seeing the schedule and practice plans, and <em>changing</em> the schedule — adding, editing and cancelling events. Every assistant you invited before has both, exactly as they always did. And <strong>Staff chat</strong> is a switch too; it used to come automatically with being on the staff. It&rsquo;s still on for every assistant, and it&rsquo;s the one thing a helper can never be given without making them an assistant coach.</p>
-          <p><strong>Only the head coach</strong> can invite, adjust, or remove anyone. Assistants never receive roster editing in this version — adding and editing players stays with you.</p>
-          <p><strong>A finished season keeps its own staff list,</strong> and you still control who can open it. Switch to a past season and Staff shows who was on it and what each of them could see at the time. Two things work differently there: you can <strong>remove someone&rsquo;s access</strong> to that season&rsquo;s records, which takes effect straight away and doesn&rsquo;t touch your current team; and you <strong>can&rsquo;t change what anyone could see</strong>, because that&rsquo;s part of the record of what happened. Nobody can be added to a season that&rsquo;s already over.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'premium-staff-kinds',
+          title: 'Assistant coach, or helper?',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="An assistant coach">Staff. They start with the least access that is still useful — seeing and changing the schedule, attendance, lineups, and the blank team forms — and they&rsquo;re in your staff chat. Everything sensitive is off until you switch it on.</HelpDef>
+                <HelpDef term="A helper">The parent or outside instructor who turns up to run a station on a Tuesday. They see your practice schedule, the plan for each practice, and the names, numbers and positions of the players at their station. That is the whole list.</HelpDef>
+              </HelpDefs>
+              <p>A helper <strong>can&rsquo;t change anything</strong> — not the plan, not the schedule, not one game — and they are <strong>never in your staff chat</strong>. No roster page, no notes, no contacts, no money, no tryouts, no attendance, no lineups.</p>
+              <p><strong>Why bother with either.</strong> An assistant with schedule access can add the games you&rsquo;re both chasing; one with lineup access can build the lineup while you run the practice. A helper saves you printing a sheet with ten children&rsquo;s names on it and handing it to someone who then takes it home — and you can take their access back the moment the season, or your mind, changes.</p>
+              <p><strong>Changed your mind about a helper?</strong> Their card has <strong>Make assistant coach</strong>. Same person, same sign-in, no new invitation — they simply get everything an assistant starts with, and you can grant more from there.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-staff-names',
+          title: 'Players’ names are not a switch',
+          content: (
+            <>
+              <p>Anyone you give access to a team can see players&rsquo; <strong>names, numbers and positions</strong> — every assistant, and every helper. There used to be a <em>Roster: Hidden</em> control here and it has been retired, because it only worked on some screens: an assistant with the roster &ldquo;hidden&rdquo; still saw every full name in the lineup builder, the playing-time report, the dues page and awards. It promised something the portal couldn&rsquo;t keep.</p>
+              <HelpNote variant="warning" title="The switch that does the real protecting is Contacts &amp; birthdates">
+                <p>Guardian names, emails and phone numbers, dates of birth, medical notes and emergency contacts — it is untouched, still off by default, and still asks you to confirm before you grant it.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-staff-duties',
+          title: 'What each duty opens',
+          content: (
+            <>
+              <p><strong>Which sections an assistant can open follows the duties you give them.</strong> Attendance, lineups, player notes, team money, documents or tryouts each open their own area, and holding any of them also opens the roster page, the development board and Insights. An assistant you leave on the defaults is unchanged.</p>
+              <p>One practical upshot: an assistant you&rsquo;ve given <strong>team money</strong> now sees players&rsquo; <strong>names</strong> beside the amounts on the dues page, instead of &ldquo;Player #12&rdquo; and a phone call to you.</p>
+              <p><strong>Two things on the grid are worth knowing.</strong> <strong>Schedule</strong> is two switches: seeing the schedule and practice plans, and <em>changing</em> the schedule — adding, editing and cancelling events. Every assistant you invited before has both, exactly as they always did. And <strong>Staff chat</strong> is a switch too; it used to come automatically with being on the staff. It&rsquo;s still on for every assistant, and it&rsquo;s the one thing a helper can never be given without making them an assistant coach.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-staff-head-coach',
+          title: 'What stays with the head coach',
+          content: (
+            <p><strong>Only the head coach</strong> can invite, adjust, or remove anyone. Assistants never receive roster editing in this version — adding and editing players stays with you.</p>
+          ),
+        },
+        {
+          id: 'premium-staff-past-season',
+          title: 'Staff on a finished season',
+          content: (
+            <>
+              <p><strong>A finished season keeps its own staff list,</strong> and you still control who can open it. Switch to a past season and Staff shows who was on it and what each of them could see at the time. Two things work differently there:</p>
+              <ul>
+                <li>You <strong>can</strong> remove someone&rsquo;s access to that season&rsquo;s records — it takes effect straight away and doesn&rsquo;t touch your current team.</li>
+                <li>You <strong>can&rsquo;t</strong> change what anyone could see, because that&rsquo;s part of the record of what happened.</li>
+              </ul>
+              <p>Nobody can be added to a season that&rsquo;s already over.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-remove-staff-family-access',

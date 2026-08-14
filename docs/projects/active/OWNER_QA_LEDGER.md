@@ -1517,6 +1517,26 @@ the six-paragraph standard went **20 → 15**, and nothing above 12 paragraphs r
 - [ ] Spot-check one UNCONVERTED long topic (e.g. Player Development) — still renders as plain
       paragraphs, no chips, no layout shift.
 
+**Batch 3 (2026-08-14, same day — step 3 finished at the substantial end):** the seven
+remaining 11–12-paragraph topics converted — **Your tournament records**, **Player
+Development**, **Export formats**, **Season's End**, **Plan templates**, **The opponent book**,
+and **Adding assistant coaches and helpers**. Export formats' own `<h3>` headings became its
+sub-topics (the exports guide is the third to use the primitives). **13 of 147 sections now
+carry sub-topics; 8 remain over the standard, all at 7–9 paragraphs** — ruled convert-on-touch
+rather than swept, since at that length the bolded lead-ins still work.
+- [ ] Coaches guide: Assistant coaches, Player Development, Opponent book, Plan templates,
+      Season's End and Your tournament records each open with a jump-chip row; chips land on
+      their sub-heading.
+- [ ] The two safety-shaped notes read as notes, not buried sentences: **Contacts &
+      birthdates is the switch that protects** (assistant coaches) and **moving a session's
+      date moves every reading in it** (Player Development).
+- [ ] Exports guide → Export formats: four sub-topics (Excel · CSV · Calendar · PDF), and the
+      **PDF needs Tournament Plus** gate reads as an amber note.
+- [ ] "?" on a coaches page that maps to a converted topic opens on a sensible first
+      sub-topic (none of these needed per-page targeting — check one anyway).
+⚠ A pre-existing lint warning sits in the exports guide's PDF-privacy paragraph (untouched by
+this work, flagged only because the whole file was linted) — left alone deliberately.
+
 ---
 
 ## Group 1D · The opponent book, and the club that shares it

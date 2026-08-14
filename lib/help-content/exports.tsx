@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
+import { HelpNote } from '@/components/help/HelpBlocks';
 
 const exportsHelp: HelpPageContent = {
   title: 'Exports & Downloads',
@@ -17,74 +18,97 @@ const exportsHelp: HelpPageContent = {
       searchText:
         'xlsx csv excel spreadsheet google sheets apple numbers calendar ics ical pdf report print format choose download',
       content: (
-        <>
-          <h3>Excel (.xlsx) — the default for almost everything</h3>
-          <p>
-            Excel is the right choice when you need to sort, filter, calculate totals, or share
-            data with someone who will work in a spreadsheet. The file opens directly in Google
-            Sheets (no conversion required), Microsoft Excel, Apple Numbers, and most other
-            spreadsheet tools.
-          </p>
-          <p>
-            When you click <strong>Export</strong> on any table in FieldLogicHQ, you get an Excel
-            file automatically. If you're not sure which format to use, use Excel.
-          </p>
-          <p>
-            <strong>Common uses:</strong> registration check-in lists, results summaries for the
-            board, team rosters for insurance submissions, ledger data for accounting review.
-          </p>
-
-          <h3>CSV — for importing into other software</h3>
-          <p>
-            CSV is a plain-text format that every tool can read. Use it when you need to import
-            data into another system — a custom database, a form tool, or software that doesn't
-            accept xlsx files. CSV doesn't preserve formatting or formulas, but it is universally
-            compatible.
-          </p>
-          <p>
-            CSV is always available as the second option in the Export dropdown.
-          </p>
-          <p>
-            <strong>Common uses:</strong> importing registrations into another platform, feeding
-            data to a reporting script, compatibility with legacy systems.
-          </p>
-
-          <h3>Calendar (.ics) — for adding games to any calendar app</h3>
-          <p>
-            The Calendar export creates a file that any calendar app can read. When you open it,
-            every game or event in the export is added to your calendar as a separate entry — with
-            the correct date, time, location, and opponent. Works with Google Calendar, Apple
-            Calendar, Microsoft Outlook, and any other app that supports the standard iCal format.
-          </p>
-          <p>
-            Calendar export is available on the schedule pages that support it — the house league
-            season schedule and the team schedule in the Coaches Portal. (The tournament schedule
-            exports to Excel, CSV, and PDF, not calendar.)
-          </p>
-          <p>
-            <strong>Common uses:</strong> coaches adding a full season schedule to their phone's
-            calendar, parents importing tournament game times, officials confirming assigned times.
-          </p>
-
-          <h3>PDF — for printing, sharing, or submitting documents</h3>
-          <p>
-            A PDF export produces a formatted, ready-to-share document. Use it when the output is
-            going to a printer, a parent's inbox, an insurance body, or the board. PDF exports use
-            your organization's branding — your logo and colours in the header, your name, and
-            optional footer text.
-          </p>
-          <p>
-            PDF exports require <strong>Tournament Plus or above</strong> (Tournament Plus, League
-            Plus, and Club). The free Tournament plan does not include PDF exports — on the free
-            plan the PDF option is disabled. Where a PDF is available, it uses your organization's
-            branding (logo and colours in the header, your name, and optional footer text).
-          </p>
-          <p>
-            <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
-            association submissions, budget vs. actual for the board, dues statements for parents.
-          </p>
-        </>
+        <p>
+          Four formats, and the choice comes down to what happens to the file next. When you
+          click <strong>Export</strong> on any table you get Excel unless you pick otherwise —
+          if you're not sure, that's the right answer.
+        </p>
       ),
+      subtopics: [
+        {
+          id: 'export-format-excel',
+          title: 'Excel (.xlsx) — the default for almost everything',
+          content: (
+            <>
+              <p>
+                Excel is the right choice when you need to sort, filter, calculate totals, or share
+                data with someone who will work in a spreadsheet. The file opens directly in Google
+                Sheets (no conversion required), Microsoft Excel, Apple Numbers, and most other
+                spreadsheet tools.
+              </p>
+              <p>
+                <strong>Common uses:</strong> registration check-in lists, results summaries for the
+                board, team rosters for insurance submissions, ledger data for accounting review.
+              </p>
+            </>
+          ),
+        },
+        {
+          id: 'export-format-csv',
+          title: 'CSV — for importing into other software',
+          content: (
+            <>
+              <p>
+                CSV is a plain-text format that every tool can read. Use it when you need to import
+                data into another system — a custom database, a form tool, or software that doesn't
+                accept xlsx files. CSV doesn't preserve formatting or formulas, but it is universally
+                compatible. It is always available as the second option in the Export dropdown.
+              </p>
+              <p>
+                <strong>Common uses:</strong> importing registrations into another platform, feeding
+                data to a reporting script, compatibility with legacy systems.
+              </p>
+            </>
+          ),
+        },
+        {
+          id: 'export-format-calendar',
+          title: 'Calendar (.ics) — for adding games to any calendar app',
+          content: (
+            <>
+              <p>
+                The Calendar export creates a file that any calendar app can read. When you open it,
+                every game or event in the export is added to your calendar as a separate entry — with
+                the correct date, time, location, and opponent. Works with Google Calendar, Apple
+                Calendar, Microsoft Outlook, and any other app that supports the standard iCal format.
+              </p>
+              <p>
+                Calendar export is available on the schedule pages that support it — the house league
+                season schedule and the team schedule in the Coaches Portal. (The tournament schedule
+                exports to Excel, CSV, and PDF, not calendar.)
+              </p>
+              <p>
+                <strong>Common uses:</strong> coaches adding a full season schedule to their phone's
+                calendar, parents importing tournament game times, officials confirming assigned times.
+              </p>
+            </>
+          ),
+        },
+        {
+          id: 'export-format-pdf',
+          title: 'PDF — for printing, sharing, or submitting documents',
+          content: (
+            <>
+              <p>
+                A PDF export produces a formatted, ready-to-share document. Use it when the output is
+                going to a printer, a parent's inbox, an insurance body, or the board. PDF exports use
+                your organization's branding — your logo and colours in the header, your name, and
+                optional footer text.
+              </p>
+              <HelpNote variant="warning" title="PDF needs Tournament Plus or above">
+                <p>
+                  Tournament Plus, League Plus, and Club include it. The free Tournament plan does
+                  not — on the free plan the PDF option is disabled.
+                </p>
+              </HelpNote>
+              <p>
+                <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
+                association submissions, budget vs. actual for the board, dues statements for parents.
+              </p>
+            </>
+          ),
+        },
+      ],
     },
 
     // ── Section 2: Availability table ───────────────────────────────────────

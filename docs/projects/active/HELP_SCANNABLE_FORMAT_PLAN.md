@@ -134,9 +134,24 @@ diff; short sections are left alone.
 HelpBlocks import. Coverage measured by the paragraph-count script in §1: **20 → 15 sections
 over standard; nothing above 12¶ remains.**
 
-**Batch 2 (open), by count:** Your tournament records (12) · Player Development (12) · Export
-formats (12) · Season's End (11) · Plan templates (11) · Opponent book (11) · Assistant coaches
-(11) · Chat with your coaches (9) · then the 7–8¶ tail.
+**Batch 2 DONE 2026-08-14** (the seven substantial remainders), QA = ledger §18 batch 3:
+Your tournament records 12¶→5 · Player Development 12→5 · Export formats 12→4 (its `<h3>`s
+became the sub-topics; `exports.tsx` gained the HelpNote import) · Season's End 11→5 ·
+Plan templates 11→5 · Opponent book 11→6 · Assistant coaches & helpers 11→5.
+
+**Coverage now: 13 of 147 sections carry sub-topics; 8 sections remain over the standard, all
+at 7–9¶** — Chat with your coaches (9) · What the Coaches Portal is (8) · Running a practice at
+the field (8) · Create/edit/launch a tournament (8) · How to turn on the tools you need (7) ·
+How to message your team (7) · Game-day details (7) · Building lineups (7).
+
+**Ruling on that tail: convert-on-touch, not a sweep.** At 7–9 paragraphs a reader can still
+scan the bolded lead-ins; the standard already requires conversion when a substantial edit
+lands in one, so they arrive over time without a dedicated pass.
+
+⚠ **Measuring coverage: count paragraphs between a section's `content: (` and its closing
+`      ),` — do NOT split the section text on `links:`/`faqs:`, because `links` sometimes
+precedes `content` (tournaments' public-site section does), which silently reports those
+sections as 0¶. That artifact undercounted the remaining tail by 2 on 2026-08-14.
 
 ⚠ **Sub-topic `title` is PLAIN TEXT, not JSX** — an HTML entity (`&rsquo;`) renders literally
 in the chip, the heading and the drawer row. Use the real character. (Caught twice in batch 1.)
