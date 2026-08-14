@@ -725,7 +725,7 @@ export function PlayerDuesPanel({
         season={page.season}
         teamBase={page.teamBase}
         helpLabel="Player Dues"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-dues', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {loading ? (

@@ -1,7 +1,28 @@
 # Help Docs — Scannable Format (Plan)
 
 **Status:** Owner-approved 2026-08-14 (direction + format standard ratified; mockups artifact
-`2499e60b-f83c-4ee8-97c9-b0ce9cd9bb48` "Scannable Help"). Rollout runs in the four steps below.
+`2499e60b-f83c-4ee8-97c9-b0ce9cd9bb48` "Scannable Help"). **Steps 1+2 BUILT on dev
+2026-08-14** — sub-topic contract + shared renderer (guide chips/headings, drawer expanders,
+deep links, searchable titles, HelpSteps/HelpDefs/HelpNote primitives) and the Money topic
+converted to overview + 10 sub-topics. Owner QA = ledger **§18**. Typecheck + focused lint +
+unit tests (help-subtopics) + token guardrail all green; renderer is a no-op for every
+unconverted section. ⚠ `HelpBlocks` carries a load-bearing `'use client'` — the help page
+shells are server components, and guide prose crosses that seam only as client-module
+references (see the component's header comment). **Owner QA §18 PASSED 2026-08-14; /simplify +
+/review run same day post-QA — 5 confirmed findings fixed:** per-page `subtopicId` drawer
+targeting on all 9 Money screens (`HelpRequest.subtopicId` → `defaultOpenSubtopicId`); the
+drawer closes on pathname change (render-time reset in HelpDrawerProvider — query changes like
+the Money hub's `?section=` tab switches deliberately keep it open); jump chips and `#` anchors
+use the shared `followHashLink` contract (`components/help/help-scroll.ts` — no history push,
+no double smooth-scroll); `resolveSubtopicId` always folds the index into fallback anchors so
+same-slug titles can't collide (fallback shape `-t-<slug>-<n>`, explicit ids unaffected,
+pinned by tests); the $100/$300 worked example restored to the dues sub-topic. `/simplify` had
+collapsed the drawer expanders onto the FAQ accordion chrome (shared `HelpAccordionItem`,
+three consumers) and unified the three deep-link lookups into one `hashTargets` table.
+Advisories logged, not fixed: search hits on a sub-topic title land at the section top (the
+jump chips make the hunt short — revisit if it generates noise); `--help-accent` is scoped to
+`.helpPage`/`.helpDrawer` only (documented in the CSS). Steps 3 (remaining long topics) and 4
+(screenshot pipeline) below remain to build.
 **PM brief:** `HELP_SCANNABLE_FORMAT_PM_BRIEF.md`
 **Owning agent:** `/docs` (format standard is encoded in `.claude/commands/docs.md` §"Content format standard")
 
@@ -78,8 +99,11 @@ Encoded in `.claude/commands/docs.md`; summarized here as the canonical statemen
   steps list (`ol` with numbered discs), definition rows (`dl` grid), all per the approved mockups.
 - **No content converted in this step** — renderer must be a no-op for every existing section
   (all current sections have no `subtopics`). That property is the step's acceptance test.
-- Tests: unit tests for `resolveSubtopicId` stability/uniqueness + a render test that a
-  subtopic-less section renders byte-identical to today's output.
+- Tests: unit tests for `resolveSubtopicId` stability/uniqueness (built:
+  `tests/unit/help-subtopics.test.ts`). The promised render-parity test was **not built** —
+  the node-test runner can't import the component (CSS-module + next/link imports); the no-op
+  property is instead covered by owner QA §18's "unconverted guide renders exactly as before"
+  step and by no other section declaring `subtopics`. Revisit if a JSX-capable test rig lands.
 
 ### 4.2 Step 2 — convert the Money topic end-to-end
 

@@ -129,7 +129,7 @@ export function OrgAllocationsPanel({
         icon={Building2}
         title="Org Allocations"
         helpLabel="Org Allocations"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-navigation', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* Allocations is READ-ONLY and had no control row at all — it gains one for this, and

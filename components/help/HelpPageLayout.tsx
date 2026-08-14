@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, X, List } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
-import { resolveSectionId, resolveFaqId } from '@/lib/help-content';
-import HelpSectionBlock from './HelpSectionBlock';
+import { resolveSectionId, resolveFaqId, resolveSubtopicId } from '@/lib/help-content';
+import HelpSectionBlock, { HelpAccordionItem } from './HelpSectionBlock';
+import { revealAndScroll } from './help-scroll';
 import WhatsNewHelpLink from '@/components/whats-new/WhatsNewHelpLink';
 import styles from './help.module.css';
 
@@ -43,16 +44,6 @@ function searchable(value: Array<string | string[] | undefined>) {
 function matchesQuery(haystack: string, query: string) {
   if (!query) return true;
   return haystack.includes(query);
-}
-
-// Scroll to a section/FAQ by id. For an FAQ, open its <details> imperatively —
-// the <details> is otherwise uncontrolled so the reader can freely toggle it
-// without a re-render snapping it shut.
-function revealAndScroll(id: string, opts?: { faq?: boolean }) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (opts?.faq && el instanceof HTMLDetailsElement) el.open = true;
-  el.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 // Stable empty-array default. Guides without page-level FAQs would otherwise get a
@@ -120,6 +111,22 @@ export default function HelpPageLayout({
     return [...sectionFaqs, ...pageFaqs];
   }, [faqs, indexedSections]);
 
+  // Everything a hash can point at, in one lookup — sections, sub-topics, FAQs,
+  // in that precedence order (matching the branch order this table replaced).
+  // The id resolvers keep the three families collision-free, so one find() is
+  // enough, and a future anchor kind joins this table instead of growing the
+  // applyHash effect below.
+  const hashTargets = useMemo<Array<{ resolvedId: string; sectionId?: string; isFaq?: boolean }>>(() => ([
+    ...indexedSections.map(({ id }) => ({ resolvedId: id, sectionId: id })),
+    ...indexedSections.flatMap(({ section, id }) => (
+      (section.subtopics ?? []).map((subtopic, subtopicIndex) => ({
+        resolvedId: resolveSubtopicId(id, subtopic, subtopicIndex),
+        sectionId: id,
+      }))
+    )),
+    ...indexedFaqs.map(faq => ({ resolvedId: faq.resolvedId, sectionId: faq.sectionId, isFaq: true })),
+  ]), [indexedSections, indexedFaqs]);
+
   const faqMatches = useMemo(() => {
     return indexedFaqs.filter(faq => matchesQuery(searchable([
       faq.question,
@@ -141,6 +148,9 @@ export default function HelpPageLayout({
         section.subgroup,
         section.searchText,
         section.keywords,
+        // Sub-topic titles are searchable; their bodies (like all rendered
+        // content) are not — terms still belong in keywords/searchText.
+        section.subtopics?.map(subtopic => subtopic.title),
       ]), normalizedQuery);
       const hasFaqMatch = faqMatches.some(faq => faq.sectionId === id);
       return sectionMatch || hasFaqMatch;
@@ -178,26 +188,17 @@ export default function HelpPageLayout({
       // Already honoured this hash — don't fight the reader's own scrolling.
       if (hash === lastAppliedHashRef.current) return;
 
-      const targetSection = indexedSections.find(item => item.id === hash);
-      if (targetSection) {
-        lastAppliedHashRef.current = hash;
-        setActiveSectionId(targetSection.id);
-        requestAnimationFrame(() => revealAndScroll(targetSection.id));
-        return;
-      }
-
-      const targetFaq = indexedFaqs.find(faq => faq.resolvedId === hash);
-      if (targetFaq) {
-        lastAppliedHashRef.current = hash;
-        if (targetFaq.sectionId) setActiveSectionId(targetFaq.sectionId);
-        requestAnimationFrame(() => revealAndScroll(targetFaq.resolvedId, { faq: true }));
-      }
+      const target = hashTargets.find(candidate => candidate.resolvedId === hash);
+      if (!target) return;
+      lastAppliedHashRef.current = hash;
+      if (target.sectionId) setActiveSectionId(target.sectionId);
+      requestAnimationFrame(() => revealAndScroll(target.resolvedId, { faq: target.isFaq }));
     }
 
     applyHash();
     window.addEventListener('hashchange', applyHash);
     return () => window.removeEventListener('hashchange', applyHash);
-  }, [indexedSections, indexedFaqs]);
+  }, [hashTargets]);
 
   // IntersectionObserver scroll-spy: auto-focus the TOC group the reader is in
   // and highlight the active section link. Re-connect when sections or search changes.
@@ -518,16 +519,14 @@ export default function HelpPageLayout({
                   {faqs.map((faq, i) => {
                     const resolvedId = faq.id ?? `faq-${i + 1}`;
                     return (
-                      <details
+                      <HelpAccordionItem
                         key={resolvedId}
                         id={resolvedId}
-                        className={styles.helpFaqItem}
+                        title={faq.question}
+                        bodyClassName={styles.helpFaqAnswer}
                       >
-                        <summary>
-                          <span>{faq.question}</span>
-                        </summary>
-                        <div className={styles.helpFaqAnswer}>{faq.answer}</div>
-                      </details>
+                        {faq.answer}
+                      </HelpAccordionItem>
                     );
                   })}
                 </div>

@@ -173,7 +173,7 @@ export function FundraisersPanel({
         season={page.season}
         teamBase={page.teamBase}
         helpLabel="Fundraisers"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-budget', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {fundraisers.length > 0 && (

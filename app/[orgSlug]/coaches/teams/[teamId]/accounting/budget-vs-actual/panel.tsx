@@ -491,7 +491,7 @@ export function BudgetVsActualPanel({
         season={page.season}
         teamBase={page.teamBase}
         helpLabel="Budget vs. Actual"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-months', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {loading ? (

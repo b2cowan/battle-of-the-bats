@@ -18,6 +18,10 @@ export interface HelpRequest {
   module: HelpModuleKey;
   /** Section anchor id(s) this page maps to, shown in order. */
   sectionIds: string[];
+  /** Sub-topic anchor id to open pre-expanded — set it when the page maps to a
+   *  section with sub-topics, so the drawer opens on THIS page's answer instead
+   *  of the section's first sub-topic. */
+  subtopicId?: string;
   /** Label shown in the drawer header (defaults to the work-page name). */
   label?: string;
   /** Optional href to the full guide section for the "Open full guide" footer link. */

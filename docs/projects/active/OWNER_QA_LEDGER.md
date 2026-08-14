@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1431,6 +1431,70 @@ opens it). Toggle buttons met the 44px floor; same-day installments now sum in D
 (suite 1,727). Full log in DUES_BY_INSTALLMENT_PLAN.md. ⚠ The rendered sweep also carries 4
 tap-floor findings on overview/team-hub/schedule/history — NOT this project's (other
 uncommitted work; their owners' sessions should clear them before release).
+
+### 18 🖥📱 Help reads as a menu of answers — ✅ **OWNER QA PASSED 2026-08-14** · **ON DEV** · no migration
+
+**What changed:** the scannable-format standard's first shipment (plan:
+`HELP_SCANNABLE_FORMAT_PLAN.md`, steps 1+2). The help system gained **sub-topics**: a long
+guide section is now a short overview plus titled sub-answers. The "?" drawer renders them as
+an **"In this topic" expander list** (the FAQ accordion pattern; the first one starts open when
+the drawer shows a single section); the full guide renders them as **anchored sub-headings
+with a jump-chip row** at the top of the section. New content primitives — numbered steps,
+term|meaning definition rows, and an inline tip/caution note — render identically in both.
+**The Money topic is the first conversion**: its 28-paragraph wall is now an overview + 10
+sub-topics in the treasurer's order (dashboard cards → getting around → budget → periods →
+dues → payables → month view → import/export → tags → assistants). Same facts, re-set — no
+prose invented, no fact dropped. Every other section in every guide is untouched (nothing else
+declares sub-topics yet), and search metadata, section anchors, FAQs and the page→section
+drawer mapping are all unchanged.
+
+**The walk (~4 min, any premium team + the coaches help guide):**
+- [ ] "?" on any Money screen (hub or a tab): the drawer shows the Money summary, then
+      "In this topic" with 10 titled expanders — the first (dashboard cards) already open,
+      showing definition rows for Collections / Cash on hand / Budget and a green tip note.
+      Tapping others opens them; the "Open the full guide" door still sits at the foot.
+- [ ] Expander toggles survive scrolling and reopening other rows (uncontrolled, like FAQs).
+- [ ] Coaches help guide → Money section: a row of jump chips sits above the intro; tapping
+      one scrolls to that sub-heading; hovering a sub-heading reveals a **#** you can copy.
+- [ ] Deep links: `…/coaches/help#premium-money-dues` lands on the dues sub-topic;
+      `#premium-money` still lands on the section top; an FAQ deep link still opens its
+      accordion.
+- [ ] Search inside the guide: "record payment" still finds the Money topic and its FAQs;
+      "payables" matches (sub-topic titles are searchable).
+- [ ] The new shapes read right: numbered step discs on "recording payments", term|meaning
+      rows (term column, meaning beside it), amber warning note on overpayments.
+- [ ] Phone: definition rows stack (term above meaning), jump chips clear the 44px tap floor,
+      the drawer's expander rows too; nothing scrolls sideways.
+- [ ] Warm theme (the portal default): bolded phrases, definition terms and note titles all
+      legible on the cream ground — this is the surface the `--white-75` ramp-token lesson
+      lives on.
+- [ ] A guide with NO converted sections (e.g. Tournaments admin guide) renders exactly as
+      before — no chips, no expanders, no layout shift.
+
+✅ **/simplify (4 lenses) + /review (high-risk tier, 4 lenses) RUN 2026-08-14, post-QA — 5
+confirmed findings FIXED, all verified green after.** Sharpest: the "?" drawer opened every
+Money page on the *dashboard cards* sub-topic regardless of which page the coach was on — each
+of the nine Money screens now opens the drawer on **its own** sub-topic (Dues → recording
+payments, Budget vs. Actual → month view, etc.). Also fixed: the drawer now **closes on
+navigation** instead of lingering over the next page (this also removes a duplicate-anchor
+exposure when the full guide rendered under an open drawer — a pre-existing gap this change
+had enlarged); jump chips and sub-heading `#` anchors follow the guide's own hash contract
+(no history-entry per click, no double smooth-scroll); the sub-topic anchor resolver can no
+longer mint colliding anchors for same-titled sub-topics (pinned by 2 new tests; suite 1,753);
+and the dropped "$100 a month against $300 installments" worked example is back in the dues
+sub-topic. `/simplify` had earlier collapsed the drawer expanders onto the FAQ accordion's own
+chrome (one shared component, three consumers) and unified the three deep-link lookups.
+**Post-review spot-checks (~2 min):**
+- [ ] "?" on Player Dues opens with "Player dues & recording payments" already expanded (not
+      the dashboard cards); "?" on Budget vs. Actual opens the month-view sub-topic; the
+      Money hub Overview still opens the dashboard-cards sub-topic.
+- [ ] With the drawer open, navigate anywhere (e.g. tap into a player) — the drawer closes.
+      Switching Money tabs (same page, different tab) keeps it open by design.
+- [ ] In the full guide, click three jump chips then press Back ONCE — you leave the help
+      page (no stepping back through each chip click).
+⚠ Found during the review's gate, NOT this project's: a type error in the team-workspace
+provisioning module (a rep-program-year type gained `creditApplication` mid-flight) — belongs
+to the dues-payment-record session's open Pass 3 work; left untouched.
 
 ---
 

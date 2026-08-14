@@ -1472,3 +1472,226 @@
 @media (max-width: 640px) {
   .helpDrawer { width: 100vw; }
 }
+
+/* ── Sub-topics (scannable-format standard, 2026-08-14) ──────────────────────
+   Long sections break into titled sub-answers. Guide = jump chips + anchored
+   sub-headings; drawer = "In this topic" expanders, which reuse .helpFaqItem
+   WHOLESALE via the shared <HelpAccordionItem> in HelpSectionBlock.tsx — no
+   second accordion ruleset exists on purpose (a chrome or tap-floor fix must
+   land once). */
+
+/* The help accent's one home inside the help surfaces (guide page + drawer).
+   HelpCallout, embedded on work pages OUTSIDE these roots, keeps its own
+   literal. HelpBlocks primitives only render inside these roots. */
+.helpPage,
+.helpDrawer {
+  --help-accent: #4fa3e0; /* token-exempt: help-accent blue, no central token yet */
+}
+
+.helpJumpChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 14px;
+}
+
+.helpJumpChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--help-accent);
+  border: 1px solid rgba(79, 163, 224, 0.3);
+  background: rgba(79, 163, 224, 0.07);
+  border-radius: 999px;
+  padding: 4px 11px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.helpJumpChip:hover {
+  background: rgba(79, 163, 224, 0.14);
+  border-color: rgba(79, 163, 224, 0.45);
+}
+
+.helpJumpChip:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
+
+/* Tap floor: chips are real controls on touch screens (learned the hard way on
+   the Money-hub tab row — the rendered check fails anything under 44px). */
+@media (max-width: 640px), (pointer: coarse) {
+  .helpJumpChip { min-height: 44px; padding: 4px 14px; }
+}
+
+/* Guide: one sub-topic = ruled block with an anchored heading */
+.helpSubtopicBlock {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.helpSubtopicHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--fl-text, rgba(255, 255, 255, 0.88));
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.helpSubtopicAnchor {
+  color: var(--white-35);
+  font-weight: 400;
+  font-size: 0.85rem;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.helpSubtopicHeading:hover .helpSubtopicAnchor,
+.helpSubtopicAnchor:focus-visible {
+  opacity: 1;
+}
+
+.helpSubtopicAnchor:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
+
+/* Drawer: "In this topic" expander list. The <details> rows themselves are
+   .helpFaqItem (shared via HelpAccordionItem) — only the caption and the body
+   spacing are sub-topic-specific. */
+.helpSubtopicLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-35);
+  margin: 14px 0 6px;
+}
+
+.helpSubtopicList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.helpSubtopicBody {
+  padding: 0 0 12px;
+}
+
+/* ── Scannable-format primitives (HelpBlocks.tsx) ────────────────────────────
+   Steps = numbered procedure; Defs = term|meaning rows; Note = the one inline
+   tip/caution of a sub-topic. NOTE: .helpNote is deliberately NOT .callout —
+   the callout hides its body text on phones (title+CTA only), which would
+   swallow guide prose. */
+
+.helpSectionContent ol.helpSteps {
+  list-style: none;
+  counter-reset: helpstep;
+  padding-left: 0;
+  margin: 0.4rem 0 0.75rem;
+}
+
+.helpSteps li {
+  counter-increment: helpstep;
+  position: relative;
+  padding: 0 0 8px 30px;
+  margin: 0;
+}
+
+.helpSteps li::before {
+  content: counter(helpstep);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(79, 163, 224, 0.12);
+  border: 1px solid rgba(79, 163, 224, 0.35);
+  color: var(--help-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.helpDefs {
+  margin: 0.4rem 0 0.75rem;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.helpDefRow {
+  display: grid;
+  grid-template-columns: minmax(96px, 9.5rem) 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.helpDefRow dt {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--white-75);
+  margin: 0;
+}
+
+.helpDefRow dd {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .helpDefRow {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+.helpNote {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-left-width: 3px;
+  border-radius: 0 8px 8px 0;
+  padding: 9px 12px;
+  margin: 0.6rem 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.helpNoteTip {
+  border-color: rgba(74, 222, 128, 0.2);
+  border-left-color: var(--success-light);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.helpNoteInfo {
+  border-color: rgba(79, 163, 224, 0.2);
+  border-left-color: var(--help-accent);
+  background: rgba(79, 163, 224, 0.06);
+}
+
+.helpNoteWarning {
+  border-color: rgba(var(--warning-rgb), 0.2);
+  border-left-color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.07);
+}
+
+.helpNoteTitle {
+  font-weight: 600;
+  color: var(--white-75);
+  margin: 0 0 2px;
+}
+
+.helpNoteBody p {
+  margin: 0 0 0.4rem;
+}
+
+.helpNoteBody p:last-child {
+  margin-bottom: 0;
+}

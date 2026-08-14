@@ -255,7 +255,7 @@ export default function FundraiserDetailPage({
           </button>
         )}
         helpLabel="Fundraisers"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-budget', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
       {fundraiser && (
         <p className={styles.muted} style={{ margin: '-1.25rem 0 1.5rem' }}>

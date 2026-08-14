@@ -278,7 +278,7 @@ export default function CoachesAccountingPage({
         ) : undefined}
         actionsPhoneHidden
         helpLabel="Money"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-cards', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* What the header's data menus have to say — an import result, or why an export couldn't be

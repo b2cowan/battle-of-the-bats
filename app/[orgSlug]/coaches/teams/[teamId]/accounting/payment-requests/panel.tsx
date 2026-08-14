@@ -231,7 +231,7 @@ export function PaymentRequestsPanel({
         icon={ArrowUpRight}
         title="Payment Requests"
         helpLabel="Payment Requests"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-navigation', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* Cross-link (review f4-7) — the other half of the org-money pair. */}

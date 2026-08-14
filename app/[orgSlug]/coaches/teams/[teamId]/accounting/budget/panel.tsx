@@ -1291,7 +1291,7 @@ export function BudgetPlanPanel({
         teamBase={page.teamBase}
         actions={headerActions}
         helpLabel="Budget Plan"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-budget', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {importMessage && (
