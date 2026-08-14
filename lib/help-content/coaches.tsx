@@ -2024,22 +2024,100 @@ const coachesHelp: HelpPageContent = {
       keywords: ['game day', 'game-day', 'bench console', 'run the game', 'live game', 'substitution', 'substitute', 'sub', 'swap players', 'who is on the field', 'bench', 'running score', 'keep score', 'score the game', 'plus one', 'end game', 'final score', 'notify families', 'one notification', 'who covers', 'skip lineup', 'everyone plays', 'game recap', 'playing time tonight', 'scored by the tournament', 'your coach runs the bench', 'note', 'notes', 'moment', 'moments', 'jot something down', 'remember this', 'first triple', 'write a note about a player', 'tag a player', 'longest sitting first', 'bench order', 'who has been sitting longest', 'bench sorted', 'why did the bench reorder', 'innings pitched', 'innings pitched chip', 'pitch count', 'pitching cap', 'arm care', 'max innings', 'season default cap', 'no innings pitched showing', 'screen staying on', 'keep the screen on', 'screen keeps turning off', 'phone keeps sleeping', 'screen timeout', 'stay awake'],
       searchText: 'game day button schedule row lineups masthead overview card open game day fourth door bench console phone at the field on the field bench right now current inning tap to substitute sub swap from this inning on this inning only saves into the lineup playing time report player recap running score plus one run families not notified per run one notification final score end game win loss tie decided who is here in late out no reply mark absent who covers no lineup start from a template everyone plays skip lineup just score and attendance read only recap playing time tonight season report opponent name scouting book their tournament so far add to the book tournament game scored by the tournament organizer archived season no button helper read only your coach runs the bench note button moment moments capture a line jot it down something worth remembering first triple tag a player optional tag saved add another one sitting 280 characters tonight moments end game wrap remove a moment cannot edit retype delete a mistake private to you and your staff families never see moments no notification for a note player profile moments you logged season wrapped from the bench quoted line share image does not include moments bench sorted longest sitting first order settles when you move the inning holds still nothing shuffles under your thumb benched mid inning joins the bottom of the list second straight inning sitting chip three of four innings pitched turns red at the cap where the pitching number comes from max innings per game on the player profile game override in the builder season default team settings lineup rules no cap set nothing shown never invents an arm care limit screen staying on chip keeps the phone awake tap to switch it off only while the game is live only the coach running the bench lets go when you end the game or pocket the phone phone that cannot do it no chip screen keeps turning off between pitches',
       content: (
-        <>
-          <p><strong>On game day, the game itself grows a door.</strong> From about two hours before first pitch (or your arrival time, whichever is earlier) until a few hours after the end, the game&rsquo;s row on the <strong>Schedule</strong> and in <strong>Lineups</strong> wears a <strong>Game day</strong> pill, the team masthead&rsquo;s &ldquo;Game day&rdquo; line becomes a link, and — once your lineup and attendance are both done — the card at the top of your <strong>Overview</strong> offers <strong>Open game day</strong> as its button. No setup, no &ldquo;start game&rdquo; ceremony — the door appears when it&rsquo;s useful and retires when it isn&rsquo;t. A finished season never shows it.</p>
-          <p><strong>The console is one phone screen:</strong> the matchup and score up top with an inning stepper, then your roster split <strong>On the field / Bench</strong> for the inning you&rsquo;re in. Tap a bench player, tap who they go in for, and choose <strong>from this inning on</strong> or <strong>this inning only</strong>. Every change saves into <strong>the same lineup you built before the game</strong> — so the playing-time report and each player&rsquo;s season recap reflect what actually happened, not just the plan. If you stop tapping mid-game, nothing breaks: the plan simply stands in for the rest, exactly as if you&rsquo;d never opened the screen.</p>
-          <p><strong>The board sorts itself so the right name is on top.</strong> The <strong>Bench</strong> list leads with whoever has been sitting longest, and the order <strong>settles when you move the inning and then holds still</strong> — so nothing shuffles between the moment you look and the moment your thumb lands. Bench someone mid-inning and they join the bottom of the list rather than pushing everyone down. Beside the names, the same two cues the season reports use: a red <strong>&ldquo;2nd straight inning sitting&rdquo;</strong> chip, and, for whoever is on the mound, <strong>&ldquo;3 of 4 innings pitched&rdquo;</strong>, which turns red at the cap.</p>
-          <p><strong>Where that pitching number comes from:</strong> the player&rsquo;s own <strong>max innings per game</strong> if you set one on their profile, otherwise this game&rsquo;s cap if you overrode it in the builder, otherwise your team&rsquo;s <strong>season default</strong> from <strong>Team settings &rarr; lineup rules</strong>. Set nothing anywhere and the console says nothing — it will never invent an arm-care limit you didn&rsquo;t choose.</p>
-          <p><strong>The score is two big +1 buttons</strong> (tap the score to open them). Families are <strong>not</strong> pinged run-by-run — they get <strong>exactly one notification, the final score, when you tap End game</strong>. That&rsquo;s also the moment the win/loss/tie is decided and your season record updates. Until then the running score just quietly keeps itself saved.</p>
-          <p><strong>Who&rsquo;s here</strong> opens the attendance sheet — the same four words as the schedule tab (<strong>In &middot; Late &middot; Out &middot; No reply</strong>), one tap each. Mark a player who&rsquo;s on the field as <strong>Out</strong> and the board immediately asks who covers their position.</p>
-          <p><strong>Your screen stays on while the game does.</strong> A <strong>Screen staying on</strong> chip sits with the field and uniform chips in the header, on from the start so you aren&rsquo;t waking the phone between pitches. Tap it to switch it off. It only applies while the game is live and only for the coach running the bench, it lets go the moment you end the game or put the phone in your pocket, and on a phone that can&rsquo;t do it the chip simply isn&rsquo;t there.</p>
-          <p><strong>No lineup saved yet?</strong> The console offers three doors: <strong>Start from a template</strong> (opens the builder), <strong>Everyone plays</strong> (auto-fills an even rotation on the spot), or <strong>Skip lineup</strong> — the screen then runs as score-and-attendance only for the night.</p>
-          <p><strong>Scouting at the bench:</strong> the opponent&rsquo;s name in the header opens your book on them — and on a platform tournament game it includes <strong>Their tournament so far</strong>, their other results this weekend. After the game, the recap offers a quiet <em>add to the book</em> line while it&rsquo;s fresh.</p>
-          <p><strong>Note</strong> is for the part nobody writes down. Tap it, type one line — <em>&ldquo;first triple, never slowed down at second&rdquo;</em> — optionally tap a player&rsquo;s name to file it under them, and save. The sheet stays open saying <strong>Saved &mdash; add another?</strong> with the keyboard up, so a second thought costs nothing. These are called <strong>moments</strong>, and they are yours: <strong>families never see them and nothing about a moment is ever notified to anyone.</strong> They read back in the End game wrap, on that player&rsquo;s profile, and as one quoted line on your <strong>Season Wrapped</strong> card at the end of the year. A moment can&rsquo;t be edited after saving — remove a mistyped one with the &times; and type it again — so what a line says is always what you wrote at the time. Log none all season and nothing anywhere looks emptier for it.</p>
-          <p><strong>After End game</strong> (or any time outside the live window) the same link is a <strong>read-only recap</strong>: innings on the field per player from the lineup you actually ran, tonight&rsquo;s moments if you logged any, and a door to the <strong>Playing time</strong> season report.</p>
-          <p><strong>Tournament games run by an organizer</strong> keep their score with the tournament — the score area says so and steps back, and there&rsquo;s no End game (the organizer&rsquo;s result is the record). Substitutions, attendance and the book all still work.</p>
-          <p><strong>Who can do what:</strong> substitutions need <strong>lineups</strong> access, Who&rsquo;s here needs <strong>attendance</strong>, and the score and End game need <strong>schedule</strong> (manage) access — the same permissions as everywhere else. <strong>Note</strong> goes with running the bench: anyone holding any one of those three can log a moment. A schedule-only helper who opens the console sees the matchup and score with <em>&ldquo;Your coach runs the bench.&rdquo;</em> — no lineup board, because the lineup itself follows lineup access, and no Note button either.</p>
-        </>
+        <p><strong>On game day, the game itself grows a door.</strong> From about two hours before first pitch (or your arrival time, whichever is earlier) until a few hours after the end, the game&rsquo;s row on the <strong>Schedule</strong> and in <strong>Lineups</strong> wears a <strong>Game day</strong> pill, the team masthead&rsquo;s &ldquo;Game day&rdquo; line becomes a link, and — once your lineup and attendance are both done — the card at the top of your <strong>Overview</strong> offers <strong>Open game day</strong> as its button. No setup, no &ldquo;start game&rdquo; ceremony — the door appears when it&rsquo;s useful and retires when it isn&rsquo;t. A finished season never shows it.</p>
       ),
+      subtopics: [
+        {
+          id: 'premium-gameday-subs',
+          title: 'The bench board: making a substitution',
+          content: (
+            <>
+              <p><strong>The console is one phone screen:</strong> the matchup and score up top with an inning stepper, then your roster split <strong>On the field / Bench</strong> for the inning you&rsquo;re in. Tap a bench player, tap who they go in for, and choose <strong>from this inning on</strong> or <strong>this inning only</strong>.</p>
+              <p>Every change saves into <strong>the same lineup you built before the game</strong> — so the playing-time report and each player&rsquo;s season recap reflect what actually happened, not just the plan. If you stop tapping mid-game, nothing breaks: the plan simply stands in for the rest, exactly as if you&rsquo;d never opened the screen.</p>
+              <p><strong>The board sorts itself so the right name is on top.</strong> The <strong>Bench</strong> list leads with whoever has been sitting longest, and the order <strong>settles when you move the inning and then holds still</strong> — so nothing shuffles between the moment you look and the moment your thumb lands. Bench someone mid-inning and they join the bottom of the list rather than pushing everyone down. Beside the names, the same two cues the season reports use: a red <strong>&ldquo;2nd straight inning sitting&rdquo;</strong> chip, and, for whoever is on the mound, <strong>&ldquo;3 of 4 innings pitched&rdquo;</strong>, which turns red at the cap.</p>
+              <HelpNote variant="info" title="Where that pitching number comes from">
+                <p>The player&rsquo;s own <strong>max innings per game</strong> if you set one on their profile, otherwise this game&rsquo;s cap if you overrode it in the builder, otherwise your team&rsquo;s <strong>season default</strong> from <strong>Team settings &rarr; lineup rules</strong>. Set nothing anywhere and the console says nothing — it will never invent an arm-care limit you didn&rsquo;t choose.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-gameday-score',
+          title: 'The score, and the one notification families get',
+          content: (
+            <p><strong>The score is two big +1 buttons</strong> (tap the score to open them). Families are <strong>not</strong> pinged run-by-run — they get <strong>exactly one notification, the final score, when you tap End game</strong>. That&rsquo;s also the moment the win/loss/tie is decided and your season record updates. Until then the running score just quietly keeps itself saved.</p>
+          ),
+        },
+        {
+          id: 'premium-gameday-attendance',
+          title: 'Who’s here, and keeping the screen awake',
+          content: (
+            <>
+              <p><strong>Who&rsquo;s here</strong> opens the attendance sheet — the same four words as the schedule tab (<strong>In &middot; Late &middot; Out &middot; No reply</strong>), one tap each. Mark a player who&rsquo;s on the field as <strong>Out</strong> and the board immediately asks who covers their position.</p>
+              <p><strong>Your screen stays on while the game does.</strong> A <strong>Screen staying on</strong> chip sits with the field and uniform chips in the header, on from the start so you aren&rsquo;t waking the phone between pitches. Tap it to switch it off. It only applies while the game is live and only for the coach running the bench, it lets go the moment you end the game or put the phone in your pocket, and on a phone that can&rsquo;t do it the chip simply isn&rsquo;t there.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-gameday-no-lineup',
+          title: 'No lineup saved yet?',
+          content: (
+            <>
+              <p>The console offers three doors:</p>
+              <HelpDefs>
+                <HelpDef term="Start from a template">Opens the builder.</HelpDef>
+                <HelpDef term="Everyone plays">Auto-fills an even rotation on the spot.</HelpDef>
+                <HelpDef term="Skip lineup">The screen runs as score-and-attendance only for the night.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'premium-gameday-moments',
+          title: 'Moments: the part nobody writes down',
+          content: (
+            <>
+              <p><strong>Note</strong> is for exactly that. Tap it, type one line — <em>&ldquo;first triple, never slowed down at second&rdquo;</em> — optionally tap a player&rsquo;s name to file it under them, and save. The sheet stays open saying <strong>Saved &mdash; add another?</strong> with the keyboard up, so a second thought costs nothing.</p>
+              <HelpNote variant="tip" title="Moments are yours">
+                <p><strong>Families never see them and nothing about a moment is ever notified to anyone.</strong> They read back in the End game wrap, on that player&rsquo;s profile, and as one quoted line on your <strong>Season Wrapped</strong> card at the end of the year.</p>
+              </HelpNote>
+              <p>A moment can&rsquo;t be edited after saving — remove a mistyped one with the &times; and type it again — so what a line says is always what you wrote at the time. Log none all season and nothing anywhere looks emptier for it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-gameday-scouting',
+          title: 'Scouting at the bench',
+          content: (
+            <p>The opponent&rsquo;s name in the header opens your book on them — and on a platform tournament game it includes <strong>Their tournament so far</strong>, their other results this weekend. After the game, the recap offers a quiet <em>add to the book</em> line while it&rsquo;s fresh.</p>
+          ),
+        },
+        {
+          id: 'premium-gameday-after',
+          title: 'After the game, and tournament games',
+          content: (
+            <>
+              <p><strong>After End game</strong> (or any time outside the live window) the same link is a <strong>read-only recap</strong>: innings on the field per player from the lineup you actually ran, tonight&rsquo;s moments if you logged any, and a door to the <strong>Playing time</strong> season report.</p>
+              <p><strong>Tournament games run by an organizer</strong> keep their score with the tournament — the score area says so and steps back, and there&rsquo;s no End game (the organizer&rsquo;s result is the record). Substitutions, attendance and the book all still work.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-gameday-access',
+          title: 'Who can do what',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Substitutions">Needs <strong>lineups</strong> access.</HelpDef>
+                <HelpDef term="Who’s here">Needs <strong>attendance</strong> access.</HelpDef>
+                <HelpDef term="Score &amp; End game">Need <strong>schedule</strong> (manage) access.</HelpDef>
+                <HelpDef term="Note">Goes with running the bench — anyone holding any one of those three can log a moment.</HelpDef>
+              </HelpDefs>
+              <p>A schedule-only helper who opens the console sees the matchup and score with <em>&ldquo;Your coach runs the bench.&rdquo;</em> — no lineup board, because the lineup itself follows lineup access, and no Note button either.</p>
+            </>
+          ),
+        },
+      ],
       links: [
         { label: 'Building the lineup', href: '#premium-lineups' },
         { label: 'Attendance', href: '#recipe-attendance' },
@@ -2151,26 +2229,102 @@ const coachesHelp: HelpPageContent = {
       keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'blocks', 'add a block', 'stations', 'rotation', 'rotations', 'carousel', 'rotate toggle', 'stop rotating', 'stations side by side', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'start this plan from', 'rest of practice', 'kit', 'equipment', 'who runs it', 'players moved', 'where did my players go', 'run practice', 'how it went', 'practice notes', 'write up a practice', 'after the practice', 'what this practice is about', 'kind of practice', 'practice tags'],
       searchText: 'practice plan plans plan a practice tuesday night blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done run practice at the field',
       content: (
-        <>
-          <p>A <strong>practice plan</strong> lives on the practice itself. Open the practice on your <strong>Schedule</strong> and use <strong>Plan this practice</strong> — there&rsquo;s no separate calendar and nothing new to set up.</p>
-          <p><strong>Start with the shape of the night.</strong> Give the practice a goal and an <strong>Equipment</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block is a number of minutes, or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
-          <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>coaching points</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
-          <p><strong>Stations</strong> sit inside a block: what the station is, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the coaching points, the equipment, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
-          <p><strong>You don&rsquo;t have to type a station twice.</strong> When you add a block or a station you can <strong>pick from your drills</strong> instead, and it arrives already written — see <em>Your drills</em> below.</p>
-          <p><strong>People live in one place at a time.</strong> A block with no stations holds its own list of players. Add a station and that list moves down to the stations — because that&rsquo;s now where people actually stand. Turn on rotating and they move again, into the groups. You&rsquo;ll see the names move when you do it; nothing is lost, and it means a station can never give you two different answers to &ldquo;who&rsquo;s here?&rdquo;</p>
-          <p><strong>Rotations are the part a shared document can&rsquo;t do.</strong> There&rsquo;s no separate kind of block to add — <strong>put two or more stations in a block and it rotates by default</strong>. (A single station isn&rsquo;t a rotation, it&rsquo;s a queue, so the choice only appears once there are two.) If your stations run side by side instead, switch <strong>rotate</strong> off inside the block and each keeps its own players.</p>
-          <p>Say how long the block runs and how often groups move, and the plan works out <em>who is at which station in every round</em> and shows you the grid. Leave &ldquo;rotate every&rdquo; blank and it gives everyone exactly one turn at each station. It tells you the truth when the numbers don&rsquo;t divide neatly: <em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em>, <em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em>, <em>&ldquo;Groups A and D share a station in round 2&rdquo;</em>. It will never quietly invent a round or drop a station to make the arithmetic tidy.</p>
-          <p><strong>Groups</strong> can be picked by hand or <strong>drawn at random</strong> — choose how many groups, or how many players per group, and press <strong>Draw again</strong> as often as you like. Only players who&rsquo;ve replied that they&rsquo;re coming go into the draw, and anyone left out is named rather than quietly dropped. The draw is deliberately simple: it shuffles and deals. <strong>It never sorts anyone by ability.</strong></p>
-          <p><strong>Beside the plan sits the roster and what each player is currently working on</strong>, in roster order — so putting three players on a station is a glance, not a memory test. Tap <strong>Choose players</strong> anywhere in the plan and you get the same list, with their focus areas beside them.</p>
-          <p><strong>Say what the practice is about.</strong> The tags at the top are your own words, shared with your drills and your players&rsquo; focus areas — so tagging tonight &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere. They&rsquo;re what softens the focus areas that aren&rsquo;t about tonight, and what lets you pull up every hitting practice you&rsquo;ve run later.</p>
-          <p><strong>If last week worked, start from it.</strong> <strong>Start this plan from…</strong> offers a <strong>template</strong> or a <strong>previous practice</strong> — one control, two ways in. Either way it copies onto tonight and leaves the original exactly as it was, so you change the one block that needs changing. See <em>Plan templates</em> below.</p>
-          <p><strong>Afterwards, say how it went.</strong> <strong>How it went</strong> sits under the plan — one note, written at home, about the <em>practice</em>: <em>&ldquo;tees were too crowded, run four next time&rdquo;</em>. It&rsquo;s for you and your staff; families never see it. It&rsquo;s deliberately about the practice and never about a player, and it&rsquo;s the thing that makes looking back at what you ran worth doing.</p>
-          <p><strong>Print the sheet</strong> gives you a one-page PDF, rotation grid and all, to hand to whoever&rsquo;s running a station. It&rsquo;s a download you carry, never a link you share.</p>
-          <p><strong>Then run it.</strong> When the plan&rsquo;s written, <strong>Run practice</strong> takes it to the field — see <em>Running a practice at the field</em> below.</p>
-          <p><strong>A plan is what you intend to do.</strong> Nothing here records what actually happened on the night — that&rsquo;s deliberate, so the plan never quietly turns into a claim about your players.</p>
-          <p><strong>Who can do what:</strong> <strong>writing</strong> the plan is head-coach only. Any coach with <strong>schedule</strong> access can open it and print it, which is what makes it useful to hand an assistant a station. Seeing <em>what players are working on</em> needs <strong>player notes</strong> access, and the attendance markers in the player list need <strong>attendance</strong> access.</p>
-        </>
+        <p>A <strong>practice plan</strong> lives on the practice itself. Open the practice on your <strong>Schedule</strong> and use <strong>Plan this practice</strong> — there&rsquo;s no separate calendar and nothing new to set up.</p>
       ),
+      subtopics: [
+        {
+          id: 'premium-practice-blocks',
+          title: 'The shape of the night: blocks',
+          content: (
+            <>
+              <p><strong>Start with the shape of the night.</strong> Give the practice a goal and an <strong>Equipment</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block is a number of minutes, or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
+              <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>coaching points</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-stations',
+          title: 'Stations, and who stands where',
+          content: (
+            <>
+              <p><strong>Stations</strong> sit inside a block: what the station is, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the coaching points, the equipment, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
+              <p><strong>You don&rsquo;t have to type a station twice.</strong> When you add a block or a station you can <strong>pick from your drills</strong> instead, and it arrives already written — see <em>Your drills</em> below.</p>
+              <HelpNote variant="info" title="People live in one place at a time">
+                <p>A block with no stations holds its own list of players. Add a station and that list moves down to the stations — because that&rsquo;s now where people actually stand. Turn on rotating and they move again, into the groups. You&rsquo;ll see the names move when you do it; nothing is lost, and it means a station can never give you two different answers to &ldquo;who&rsquo;s here?&rdquo;</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-rotations',
+          title: 'Rotations — the part a shared document can’t do',
+          content: (
+            <>
+              <p>There&rsquo;s no separate kind of block to add — <strong>put two or more stations in a block and it rotates by default</strong>. (A single station isn&rsquo;t a rotation, it&rsquo;s a queue, so the choice only appears once there are two.) If your stations run side by side instead, switch <strong>rotate</strong> off inside the block and each keeps its own players.</p>
+              <p>Say how long the block runs and how often groups move, and the plan works out <em>who is at which station in every round</em> and shows you the grid. Leave &ldquo;rotate every&rdquo; blank and it gives everyone exactly one turn at each station.</p>
+              <p><strong>It tells you the truth when the numbers don&rsquo;t divide neatly</strong>, rather than tidying the arithmetic up for you:</p>
+              <ul>
+                <li><em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em></li>
+                <li><em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em></li>
+                <li><em>&ldquo;Groups A and D share a station in round 2&rdquo;</em></li>
+              </ul>
+              <p>It will never quietly invent a round or drop a station to make the numbers work.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-groups',
+          title: 'Groups, drawn or chosen',
+          content: (
+            <>
+              <p><strong>Groups</strong> can be picked by hand or <strong>drawn at random</strong> — choose how many groups, or how many players per group, and press <strong>Draw again</strong> as often as you like. Only players who&rsquo;ve replied that they&rsquo;re coming go into the draw, and anyone left out is named rather than quietly dropped. The draw is deliberately simple: it shuffles and deals. <strong>It never sorts anyone by ability.</strong></p>
+              <p><strong>Beside the plan sits the roster and what each player is currently working on</strong>, in roster order — so putting three players on a station is a glance, not a memory test. Tap <strong>Choose players</strong> anywhere in the plan and you get the same list, with their focus areas beside them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-tags',
+          title: 'Saying what the practice is about',
+          content: (
+            <p>The tags at the top are your own words, shared with your drills and your players&rsquo; focus areas — so tagging tonight &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere. They&rsquo;re what softens the focus areas that aren&rsquo;t about tonight, and what lets you pull up every hitting practice you&rsquo;ve run later.</p>
+          ),
+        },
+        {
+          id: 'premium-practice-reuse',
+          title: 'If last week worked, start from it',
+          content: (
+            <p><strong>Start this plan from…</strong> offers a <strong>template</strong> or a <strong>previous practice</strong> — one control, two ways in. Either way it copies onto tonight and leaves the original exactly as it was, so you change the one block that needs changing. See <em>Plan templates</em> below.</p>
+          ),
+        },
+        {
+          id: 'premium-practice-after',
+          title: 'Print it, run it, then say how it went',
+          content: (
+            <>
+              <p><strong>Print the sheet</strong> gives you a one-page PDF, rotation grid and all, to hand to whoever&rsquo;s running a station. It&rsquo;s a download you carry, never a link you share.</p>
+              <p><strong>Then run it.</strong> When the plan&rsquo;s written, <strong>Run practice</strong> takes it to the field — see <em>Running a practice at the field</em> below.</p>
+              <p><strong>Afterwards, say how it went.</strong> <strong>How it went</strong> sits under the plan — one note, written at home, about the <em>practice</em>: <em>&ldquo;tees were too crowded, run four next time&rdquo;</em>. It&rsquo;s for you and your staff; families never see it. It&rsquo;s deliberately about the practice and never about a player, and it&rsquo;s the thing that makes looking back at what you ran worth doing.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-access',
+          title: 'What a plan is — and who can write one',
+          content: (
+            <>
+              <HelpNote variant="info" title="A plan is what you intend to do">
+                <p>Nothing here records what actually happened on the night — that&rsquo;s deliberate, so the plan never quietly turns into a claim about your players.</p>
+              </HelpNote>
+              <HelpDefs>
+                <HelpDef term="Writing the plan">Head coach only.</HelpDef>
+                <HelpDef term="Opening &amp; printing">Any coach with <strong>schedule</strong> access — which is what makes it useful to hand an assistant a station.</HelpDef>
+                <HelpDef term="Seeing focus areas">Needs <strong>player notes</strong> access.</HelpDef>
+                <HelpDef term="Attendance markers">The markers in the player list need <strong>attendance</strong> access.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
       links: [
         { label: 'Running it at the field', href: '#premium-practice-run' },
         { label: 'Plan templates', href: '#premium-plan-templates' },
@@ -2271,24 +2425,86 @@ const coachesHelp: HelpPageContent = {
       searchText: 'drills drill library my drills your drills in development save a drill once write it once four taps reuse stop retyping the same warm up every tuesday pick from your drills write one preview before adding category categories coach typed not a fixed list hitting fielding your own words usual minutes how long it usually runs what you are doing what you are watching for coaching points setup equipment no people no players no coaches empty of people read only cannot edit why is it greyed out locked edit just for this practice detach make it a one off swap drill change the drill save to my drills promote a station retire a drill restore hide from the picker keeps old plans delete club shared drills organisation wide every team can use admin manages them add from a past season import last season bring forward old practices in 8 plans not in a plan yet head coach only schedule access rotation two stations',
       content: (
         <>
-          <p>You run the same warm-up most Tuesdays. <strong>Your drills</strong> is where you write it down once — and after that, putting it in a practice is a few taps instead of retyping it.</p>
-          <p>You&rsquo;ll find it in <strong>Development → Your drills</strong>.</p>
-          <p><strong>What a drill holds:</strong> its name, what kind of drill it is, roughly how long it runs, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the <strong>coaching points</strong>, the setup, and the equipment. That&rsquo;s the shape of the drill and the teaching that goes with it.</p>
-          <p><strong>What a drill never holds is people.</strong> No coaches, no players, no groups — those belong to a particular practice. That&rsquo;s what lets the same drill work in April with twelve players and July with nine, and it&rsquo;s why your library doesn&rsquo;t go stale when the roster changes.</p>
-          <p><strong>Using one:</strong> when you add a block or a station, choose <strong>From your drills</strong>, search or filter, and <strong>Preview</strong> it before you commit. The station arrives already named, kitted, set up and taught — asking only to be staffed.</p>
-          <p><strong>Two drills in one block is how you build a rotation.</strong> Pick one and you&rsquo;ve got a block with that activity in it. Pick a second into the same block and you now have two stations — which is exactly when the rotation switch appears.</p>
-          <p><strong>A drill you&rsquo;ve added reads as text, not as boxes you can type in — and that&rsquo;s on purpose.</strong> A drill is a claim that you ran <em>that</em> drill, so if the words could be rewritten every time, &ldquo;in 8 plans&rdquo; would stop meaning anything. What stays editable is everything the <em>practice</em> owns: who runs it, who&rsquo;s at it, how long the block is, and <strong>Just for tonight</strong> — which covers most one-off changes on its own.</p>
-          <p><strong>Need it different tonight anyway?</strong> Tap <strong>Edit just for this practice</strong>. Every word is kept and everything unlocks — it simply stops being that drill from your library, and stops counting towards it. <strong>Swap drill</strong> replaces it with a different one. Neither touches your library.</p>
-          <p><strong>Wrote something good in the plan instead?</strong> Use <strong>Save to my drills…</strong> on that station. It asks one question — the tags — and even that&rsquo;s optional. It copies: tonight&rsquo;s practice is left exactly as it is, and the drill is there for next time. Nothing is ever saved to your library automatically, so it doesn&rsquo;t fill up with five near-identical warm-ups.</p>
-          <p><strong>Tags are your words, not ours.</strong> Nothing is supplied and nothing is pre-loaded — you type what makes sense for your sport, and a new one is only created when you say so, so the list grows by decision rather than by typo. One list runs across your drills, your plan templates, your practices and your players&rsquo; focus areas, which is what lets the plan show whose focus areas match tonight. Two spellings of the same word can&rsquo;t both exist, and if you end up with two near-duplicates you can <strong>merge</strong> them — every drill, template, practice and focus area that used one comes along.</p>
-          <p><strong>Retiring, not deleting.</strong> A retired drill disappears from the picker and every practice that already used it is untouched — those plans keep reading exactly as they did. You can restore it any time, and you can reuse the name.</p>
-          <p><strong>Club drills.</strong> If your organisation shares a set of drills, they appear in your picker beside your own, marked <em>Club</em>. You can use them; renaming and retiring them stays with your club&rsquo;s administrator.</p>
-          <p><strong>Starting from what you&rsquo;ve already done.</strong> <strong>Add from a past season</strong> reads the practices you ran in previous years and offers what you wrote in them as drills. Adding one copies it into your library — the old practice is not changed. Anything already in your library is shown greyed out, so you can see why it isn&rsquo;t offered.</p>
-          <p><strong>Your drills stay with your team from season to season.</strong> There&rsquo;s nothing to move across when a new season starts. The library itself isn&rsquo;t browsable while you&rsquo;re looking at a finished season — it&rsquo;s a tool you use now, not a record of a year — but nothing in it is lost.</p>
-          <p><strong>&ldquo;In 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a drill appears in and nothing more.</p>
-          <p><strong>Who can do what:</strong> <strong>managing</strong> drills — writing, editing, retiring, importing — is head-coach only. Any coach with <strong>schedule</strong> access can see the library and pick from it, which is what lets an assistant build a practice from the drills you&rsquo;ve written.</p>
+          <p>You run the same warm-up most Tuesdays. <strong>Your drills</strong> is where you write it down once — and after that, putting it in a practice is a few taps instead of retyping it. You&rsquo;ll find it in <strong>Development → Your drills</strong>.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'premium-drills-what',
+          title: 'What a drill holds — and what it never holds',
+          content: (
+            <>
+              <p><strong>What a drill holds:</strong> its name, what kind of drill it is, roughly how long it runs, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the <strong>coaching points</strong>, the setup, and the equipment. That&rsquo;s the shape of the drill and the teaching that goes with it.</p>
+              <HelpNote variant="info" title="What a drill never holds is people">
+                <p>No coaches, no players, no groups — those belong to a particular practice. That&rsquo;s what lets the same drill work in April with twelve players and July with nine, and it&rsquo;s why your library doesn&rsquo;t go stale when the roster changes.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-drills-using',
+          title: 'Using one in a practice',
+          content: (
+            <>
+              <p>When you add a block or a station, choose <strong>From your drills</strong>, search or filter, and <strong>Preview</strong> it before you commit. The station arrives already named, kitted, set up and taught — asking only to be staffed.</p>
+              <p><strong>Two drills in one block is how you build a rotation.</strong> Pick one and you&rsquo;ve got a block with that activity in it. Pick a second into the same block and you now have two stations — which is exactly when the rotation switch appears.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-drills-editing',
+          title: 'Why an added drill reads as text, not boxes',
+          content: (
+            <>
+              <p><strong>That&rsquo;s on purpose.</strong> A drill is a claim that you ran <em>that</em> drill, so if the words could be rewritten every time, &ldquo;in 8 plans&rdquo; would stop meaning anything. What stays editable is everything the <em>practice</em> owns: who runs it, who&rsquo;s at it, how long the block is, and <strong>Just for tonight</strong> — which covers most one-off changes on its own.</p>
+              <p><strong>Need it different tonight anyway?</strong> Two doors, and neither touches your library:</p>
+              <HelpDefs>
+                <HelpDef term="Edit just for this practice">Every word is kept and everything unlocks — it simply stops being that drill from your library, and stops counting towards it.</HelpDef>
+                <HelpDef term="Swap drill">Replaces it with a different one.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'premium-drills-saving',
+          title: 'Wrote something good in the plan instead?',
+          content: (
+            <p>Use <strong>Save to my drills…</strong> on that station. It asks one question — the tags — and even that&rsquo;s optional. It copies: tonight&rsquo;s practice is left exactly as it is, and the drill is there for next time. Nothing is ever saved to your library automatically, so it doesn&rsquo;t fill up with five near-identical warm-ups.</p>
+          ),
+        },
+        {
+          id: 'premium-drills-tags',
+          title: 'Tags are your words, not ours',
+          content: (
+            <p>Nothing is supplied and nothing is pre-loaded — you type what makes sense for your sport, and a new one is only created when you say so, so the list grows by decision rather than by typo. One list runs across your drills, your plan templates, your practices and your players&rsquo; focus areas, which is what lets the plan show whose focus areas match tonight. Two spellings of the same word can&rsquo;t both exist, and if you end up with two near-duplicates you can <strong>merge</strong> them — every drill, template, practice and focus area that used one comes along.</p>
+          ),
+        },
+        {
+          id: 'premium-drills-retire',
+          title: 'Retiring, club drills, and past seasons',
+          content: (
+            <>
+              <p><strong>Retiring, not deleting.</strong> A retired drill disappears from the picker and every practice that already used it is untouched — those plans keep reading exactly as they did. You can restore it any time, and you can reuse the name.</p>
+              <p><strong>Club drills.</strong> If your organisation shares a set of drills, they appear in your picker beside your own, marked <em>Club</em>. You can use them; renaming and retiring them stays with your club&rsquo;s administrator.</p>
+              <p><strong>Starting from what you&rsquo;ve already done.</strong> <strong>Add from a past season</strong> reads the practices you ran in previous years and offers what you wrote in them as drills. Adding one copies it into your library — the old practice is not changed. Anything already in your library is shown greyed out, so you can see why it isn&rsquo;t offered.</p>
+              <p><strong>Your drills stay with your team from season to season.</strong> There&rsquo;s nothing to move across when a new season starts. The library itself isn&rsquo;t browsable while you&rsquo;re looking at a finished season — it&rsquo;s a tool you use now, not a record of a year — but nothing in it is lost.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-drills-access',
+          title: 'What the counts mean, and who can do what',
+          content: (
+            <>
+              <p><strong>&ldquo;In 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a drill appears in and nothing more.</p>
+              <HelpDefs>
+                <HelpDef term="Managing drills">Writing, editing, retiring, importing — head coach only.</HelpDef>
+                <HelpDef term="Seeing &amp; picking">Any coach with <strong>schedule</strong> access, which is what lets an assistant build a practice from the drills you&rsquo;ve written.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
       links: [
         { label: 'Writing the plan', href: '#premium-practice-plans' },
         { label: 'Plan templates', href: '#premium-plan-templates' },
@@ -3003,48 +3219,87 @@ const coachesHelp: HelpPageContent = {
         'release recap', 'when do families get the recap'],
       searchText: 'family access team family link share link with families grandparents relatives follow team schedule results approve decline requests waiting queue remove follower revoke reset link new link old link stops working schedule visibility staff only families public link who can see games practices calendar subscription ics feed family gets alerts when a game moves final score guardian parent tier not open yet privacy review premium coaches portal roster page family access card no roster shown to requester family season recap preview what the parent sees attendance worked on focus areas test readings first to latest awards playing time fair play band typical range nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button keepsake card first name and jersey saved to their phone no public link family list and staff list are separate in both directions removing a follower does not remove coaching access removing someone from staff does not stop them following the team to end both do both same person two connections',
       content: (
-        <>
-          <p>Families can follow your team without you sending anything out by hand. You share <strong>one link</strong>, they ask to follow, and you approve. It sits on your <strong>Roster</strong> page in the <strong>Team family access</strong> card.</p>
-
-          <h4>Sharing the link</h4>
-          <ol>
-            <li>Open <strong>Roster</strong> and find <strong>Team family access</strong>.</li>
-            <li>Choose <strong>Create link</strong> — it copies to your clipboard.</li>
-            <li>Paste it wherever your team already talks: the group chat, an email, a season-start message.</li>
-          </ol>
-          <p>The link is the only way in. There is <strong>no way to search for your team or a player</strong> — someone has to be given the link, and then you still have to approve them.</p>
-
-          <h4>Deciding who sees the schedule</h4>
-          <p><strong>Schedule visibility</strong> has three settings, and it applies to games and practices together:</p>
-          <ul>
-            <li><strong>Staff only</strong> — nobody outside your coaching staff sees the schedule. Families who are already connected get a short &ldquo;not available right now&rdquo; message rather than an error, and their connection stays intact for when you switch it back.</li>
-            <li><strong>Families</strong> (the default) — the people you have approved see the full schedule.</li>
-            <li><strong>Public link</strong> — additionally, your team&apos;s public page shows the schedule to anyone who visits it.</li>
-          </ul>
-          <p>This is enforced on our side, not just hidden. Setting it to Staff only genuinely removes the schedule everywhere, including from any calendar a family already subscribed to.</p>
-
-          <h4>Approving people</h4>
-          <p>Requests wait quietly on this same card as a <strong>&ldquo;waiting&rdquo;</strong> count — nothing chases you, and you deal with them when you are already on the page. Each row shows the email address and whatever they said about themselves (&ldquo;Grandparent&rdquo;). Choose <strong>Approve</strong> or <strong>Decline</strong>. Declining is not permanent — if you decline the wrong person, they can ask again.</p>
-          <p>Use <strong>Manage</strong> to see everyone currently following and <strong>Remove</strong> anyone. Removing takes effect immediately, including any calendar they had subscribed.</p>
-          <p>⚠ <strong>This list and your Staff list are separate, in both directions.</strong> Removing someone here ends their family connection and nothing else — if they&rsquo;re also an assistant coach or a helper, they keep every bit of that coaching access until you remove them from <strong>Staff</strong> too. It works the same way the other way round, which is the one that catches people out: taking someone off Staff does <em>not</em> stop them following the team. To end both, do both.</p>
-
-          <h4>What a follower actually sees</h4>
-          <p>Games and practices in one list, results once you enter them, and any game page you have shared. They can add the schedule to their own phone calendar, where it keeps itself current. They get a notice when you move a game, cancel one, or post a final score.</p>
-          <p><strong>What they never see:</strong> your roster, any player&apos;s name, contact details, fees, attendance, or anything else from your portal. A follower is connected to the <em>team</em>, not to a child.</p>
-
-          <h4>If you need a link back</h4>
-          <p><strong>Reset link</strong> creates a new one and stops the old one working everywhere it has been shared — the right move if a link travelled further than you meant it to. People you have already approved are unaffected.</p>
-
-          <p><strong>Connecting a player&apos;s own parent or guardian is not open yet.</strong> That part of the family experience is waiting on a privacy review covering a child&apos;s information. A parent who opens your link is told so plainly and offered the follow option instead, so nobody is left guessing.</p>
-
-          <h4>The season recap you can already look at</h4>
-          <p>Open any player from your <strong>Roster</strong> and you&apos;ll find <strong>Family season recap</strong> with a <strong>Preview</strong> control. It shows exactly what that player&apos;s parent or guardian will read once your season closes — you&apos;re looking at their screen, not a summary of it.</p>
-          <p>It&apos;s built entirely from things you already record: <strong>attendance</strong>, what you <strong>worked on</strong> with them (their focus areas, and each test&apos;s first and latest reading), their <strong>awards</strong>, and how their <strong>playing time</strong> sat against your team&apos;s typical range — plus your team&apos;s season record. There is nothing extra to write.</p>
-          <p><strong>Anything you didn&apos;t record simply isn&apos;t there.</strong> A team that never logged a test has no &ldquo;worked on&rdquo; section — not an empty one, not a prompt. Nothing is invented, and nothing tells a family a section is missing. A recap built from one feature you used all season is a short, true recap.</p>
-          <p>Two things it deliberately does <em>not</em> do: it never calls a test reading an improvement (only you know whether faster or higher is better for your own test), and it never compares one player to another.</p>
-          <p><strong>Closing your season is what hands recaps to families</strong> — there&apos;s no separate publish step. That&apos;s why the preview lives here during the season: it&apos;s while the season is open that you can still log a last reading or hand out an award. Preview needs player-notes access.</p>
-        </>
+        <p>Families can follow your team without you sending anything out by hand. You share <strong>one link</strong>, they ask to follow, and you approve. It sits on your <strong>Roster</strong> page in the <strong>Team family access</strong> card.</p>
       ),
+      subtopics: [
+        {
+          id: 'premium-family-link',
+          title: 'Sharing the link',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Open <strong>Roster</strong> and find <strong>Team family access</strong>.</li>
+                <li>Choose <strong>Create link</strong> — it copies to your clipboard.</li>
+                <li>Paste it wherever your team already talks: the group chat, an email, a season-start message.</li>
+              </HelpSteps>
+              <p>The link is the only way in. There is <strong>no way to search for your team or a player</strong> — someone has to be given the link, and then you still have to approve them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-visibility',
+          title: 'Deciding who sees the schedule',
+          content: (
+            <>
+              <p><strong>Schedule visibility</strong> has three settings, and it applies to games and practices together:</p>
+              <HelpDefs>
+                <HelpDef term="Staff only">Nobody outside your coaching staff sees the schedule. Families who are already connected get a short &ldquo;not available right now&rdquo; message rather than an error, and their connection stays intact for when you switch it back.</HelpDef>
+                <HelpDef term="Families">The default — the people you have approved see the full schedule.</HelpDef>
+                <HelpDef term="Public link">Additionally, your team&apos;s public page shows the schedule to anyone who visits it.</HelpDef>
+              </HelpDefs>
+              <p>This is enforced on our side, not just hidden. Setting it to Staff only genuinely removes the schedule everywhere, including from any calendar a family already subscribed to.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-approving',
+          title: 'Approving and removing people',
+          content: (
+            <>
+              <p>Requests wait quietly on this same card as a <strong>&ldquo;waiting&rdquo;</strong> count — nothing chases you, and you deal with them when you are already on the page. Each row shows the email address and whatever they said about themselves (&ldquo;Grandparent&rdquo;). Choose <strong>Approve</strong> or <strong>Decline</strong>. Declining is not permanent — if you decline the wrong person, they can ask again.</p>
+              <p>Use <strong>Manage</strong> to see everyone currently following and <strong>Remove</strong> anyone. Removing takes effect immediately, including any calendar they had subscribed.</p>
+              <HelpNote variant="warning" title="This list and your Staff list are separate, in both directions">
+                <p>Removing someone here ends their family connection and nothing else — if they&rsquo;re also an assistant coach or a helper, they keep every bit of that coaching access until you remove them from <strong>Staff</strong> too. It works the same way the other way round, which is the one that catches people out: taking someone off Staff does <em>not</em> stop them following the team. To end both, do both.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-sees',
+          title: 'What a follower actually sees',
+          content: (
+            <>
+              <p>Games and practices in one list, results once you enter them, and any game page you have shared. They can add the schedule to their own phone calendar, where it keeps itself current. They get a notice when you move a game, cancel one, or post a final score.</p>
+              <p><strong>What they never see:</strong> your roster, any player&apos;s name, contact details, fees, attendance, or anything else from your portal. A follower is connected to the <em>team</em>, not to a child.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-reset',
+          title: 'If you need a link back',
+          content: (
+            <>
+              <p><strong>Reset link</strong> creates a new one and stops the old one working everywhere it has been shared — the right move if a link travelled further than you meant it to. People you have already approved are unaffected.</p>
+              <p><strong>Connecting a player&apos;s own parent or guardian is not open yet.</strong> That part of the family experience is waiting on a privacy review covering a child&apos;s information. A parent who opens your link is told so plainly and offered the follow option instead, so nobody is left guessing.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-recap',
+          title: 'The season recap you can already look at',
+          content: (
+            <>
+              <p>Open any player from your <strong>Roster</strong> and you&apos;ll find <strong>Family season recap</strong> with a <strong>Preview</strong> control. It shows exactly what that player&apos;s parent or guardian will read once your season closes — you&apos;re looking at their screen, not a summary of it.</p>
+              <p>It&apos;s built entirely from things you already record: <strong>attendance</strong>, what you <strong>worked on</strong> with them (their focus areas, and each test&apos;s first and latest reading), their <strong>awards</strong>, and how their <strong>playing time</strong> sat against your team&apos;s typical range — plus your team&apos;s season record. There is nothing extra to write.</p>
+              <p><strong>Anything you didn&apos;t record simply isn&apos;t there.</strong> A team that never logged a test has no &ldquo;worked on&rdquo; section — not an empty one, not a prompt. Nothing is invented, and nothing tells a family a section is missing. A recap built from one feature you used all season is a short, true recap.</p>
+              <p>Two things it deliberately does <em>not</em> do: it never calls a test reading an improvement (only you know whether faster or higher is better for your own test), and it never compares one player to another.</p>
+              <HelpNote variant="tip" title="Closing your season is what hands recaps to families">
+                <p>There&apos;s no separate publish step. That&apos;s why the preview lives here during the season: it&apos;s while the season is open that you can still log a last reading or hand out an award. Preview needs player-notes access.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-family-who-sees-roster',

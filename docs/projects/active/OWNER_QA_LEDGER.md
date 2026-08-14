@@ -1496,6 +1496,27 @@ chrome (one shared component, three consumers) and unified the three deep-link l
 provisioning module (a rep-program-year type gained `creditApplication` mid-flight) — belongs
 to the dues-payment-record session's open Pass 3 work; left untouched.
 
+**Batch 2 (2026-08-14, same day — step 3 of the plan):** the four next-worst coach topics and
+the worst tournament topic converted to sub-topics, on the machinery QA'd above. **Practice
+plans** (17 paragraphs → 8 sub-topics), **Your drills** (16 → 7), **Letting families follow
+your team** (16 → 6 — its hand-written sub-headings became real anchors), **Game day on the
+bench** (13 → 8), and **the public tournament site** (16 → 9, including two paragraphs that had
+grown past 400 words each). Same discipline as Money: prose re-set, not rewritten; every
+section's id, keywords, searchText, links and FAQs untouched. Measured coverage: sections over
+the six-paragraph standard went **20 → 15**, and nothing above 12 paragraphs remains anywhere.
+- [ ] "?" on the practice-plan editor opens the plan topic as an expander menu, first one open
+      ("The shape of the night: blocks") — and the numbered steps read as numbered steps.
+- [ ] Coaches guide → Practice plans / Your drills / Letting families follow: each has a
+      jump-chip row; chips scroll to their sub-heading; the family topic's old sub-headings are
+      now the sub-topic titles (no duplicated heading left behind).
+- [ ] Game day topic: the arm-care "where that pitching number comes from" note and the
+      "moments are yours" note read as notes, not buried sentences.
+- [ ] Tournaments guide → the public site topic: 9 chips; the follow/navigation sub-topics that
+      were single giant paragraphs now read as several, with term|meaning rows for phone vs.
+      computer navigation.
+- [ ] Spot-check one UNCONVERTED long topic (e.g. Player Development) — still renders as plain
+      paragraphs, no chips, no layout shift.
+
 ---
 
 ## Group 1D · The opponent book, and the club that shares it

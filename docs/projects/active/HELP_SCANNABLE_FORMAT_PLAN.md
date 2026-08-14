@@ -124,9 +124,25 @@ Encoded in `.claude/commands/docs.md`; summarized here as the canonical statemen
 
 ### 4.3 Step 3 — remaining long topics, by size
 
-Priority order = paragraph count within one section: remaining `coaches.tsx` giants (game-day,
-staff/assistants, tryouts), then `tournaments.tsx`, then `platform-admin.tsx`/`org.tsx`. Each
-conversion is a small, reviewable diff; short sections are left alone.
+Priority order = paragraph count within one section. Each conversion is a small, reviewable
+diff; short sections are left alone.
+
+**Batch 1 DONE 2026-08-14** (the five worst after Money), QA = ledger §18 batch 2:
+`premium-practice-plans` 17¶→8 subtopics · `premium-drills` 16→7 ·
+`premium-family-access` 16→6 (its hand-written `<h4>`s became real anchors) ·
+`premium-game-day` 13→8 · tournaments `public-site` 16→9. `tournaments.tsx` gained the
+HelpBlocks import. Coverage measured by the paragraph-count script in §1: **20 → 15 sections
+over standard; nothing above 12¶ remains.**
+
+**Batch 2 (open), by count:** Your tournament records (12) · Player Development (12) · Export
+formats (12) · Season's End (11) · Plan templates (11) · Opponent book (11) · Assistant coaches
+(11) · Chat with your coaches (9) · then the 7–8¶ tail.
+
+⚠ **Sub-topic `title` is PLAIN TEXT, not JSX** — an HTML entity (`&rsquo;`) renders literally
+in the chip, the heading and the drawer row. Use the real character. (Caught twice in batch 1.)
+⚠ A page whose drawer maps to ONE section opens that section's first sub-topic — so order
+sub-topics with the page's own first question first, or set `subtopicId` on the caller. Batch 1
+needed no `subtopicId`: the practice pages' first sub-topic is already their answer.
 
 ### 4.4 Step 4 — screenshot pipeline + first images
 
