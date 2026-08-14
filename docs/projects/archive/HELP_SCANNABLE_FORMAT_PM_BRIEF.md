@@ -1,7 +1,12 @@
 # Help Docs — Scannable Format (PM Brief)
 
-**Owner-approved 2026-08-14.** Mockups: Claude artifact "Scannable Help"
-(`2499e60b-f83c-4ee8-97c9-b0ce9cd9bb48`). Plan: `HELP_SCANNABLE_FORMAT_PLAN.md`.
+**COMPLETE — owner QA passed on all eight batches, 2026-08-14.** Steps 1–4 are live on
+production; steps 5–6 (the corrected length standard, and the guide becoming one article at a
+time) are on dev awaiting a release.
+
+Owner-approved 2026-08-14. Mockups: Claude artifacts "Scannable Help"
+(`2499e60b-f83c-4ee8-97c9-b0ce9cd9bb48`) and "Help Guide, One Topic at a Time"
+(`32dfac02-8337-48bc-933c-4067a5964ab1`). Plan: `HELP_SCANNABLE_FORMAT_PLAN.md`.
 
 ## What changes for the user
 

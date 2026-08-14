@@ -1,9 +1,18 @@
 # Help Docs — Scannable Format (Plan)
 
-**Status: ALL SIX STEPS BUILT on dev 2026-08-14.** Owner QA §18 batches 1–8. Coverage:
-**29 of 147 sections carry sub-topics**, zero sections over the corrected standard, the
-screenshot pipeline is live, and **the full guide is now one article at a time** — the coaches
-guide's single 22,131-word page became 129 articles plus 20 topic pages (§4.6).
+**Status: COMPLETE — all six steps built, owner QA §18 PASSED on all eight batches 2026-08-14.**
+Steps 1–4 are on production (job 256); **steps 5–6 are on dev, committed `978ed7f1`, awaiting a
+release.** Coverage: **29 of 147 sections carry sub-topics**, zero sections over the corrected
+standard, the screenshot pipeline is live, and **the full guide is one article at a time** — the
+coaches guide's single 22,131-word page became 129 articles plus 20 topic pages (§4.6).
+
+**Two things this project deliberately did NOT do**, carried forward rather than lost:
+1. **Topic pages list their answers by title only.** The one-line description per answer — ~150
+   lines across the product — was never written; the card layout already reserves the room, so it
+   is a content-only follow-up.
+2. **No "Start here" row** on a guide's contents page (it needs per-guide curation).
+Neither blocks the release. Both are noted in `.claude/commands/docs.md`'s format standard as
+optional, so the next `/docs` pass can pick them up.
 
 ⚠ **CORRECTION 2026-08-14 — this plan's "zero sections over the standard" claim was true only
 under a broken yardstick.** The standard counted paragraphs, so it could not see a list: "How to

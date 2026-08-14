@@ -47,7 +47,8 @@ Then confirm: _"Help Docs agent ready. What changed, or what should I review?"_
 ## Content format standard (owner-ratified 2026-08-14 — binding)
 
 Long help topics must be **scannable, not essays**. Full design + rollout:
-`docs/projects/active/HELP_SCANNABLE_FORMAT_PLAN.md` (mockups: Claude artifact "Scannable Help").
+`docs/projects/archive/HELP_SCANNABLE_FORMAT_PLAN.md` (complete + QA-passed 2026-08-14; mockups:
+Claude artifacts "Scannable Help" and "Help Guide, One Topic at a Time").
 These rules govern every section you write or substantially edit:
 
 1. **A section over ~350 words of body copy must be sub-topics** — a 1–2 sentence overview plus
