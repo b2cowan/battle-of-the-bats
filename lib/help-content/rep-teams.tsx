@@ -236,7 +236,7 @@ const repTeamsHelp: HelpPageContent = {
           id: 'shared-library-coach-view',
           title: 'What coaches see, and what they can change',
           content: (
-            <p>Whatever you add here appears in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend). Coaches can <strong>apply</strong> shared tags and hand out shared awards, but they can&apos;t rename or remove them — that stays with you. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
+            <p>A shared tag or award type reaches every coach in the organization the moment you create it. It appears in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend). Coaches can <strong>apply</strong> shared tags and hand out shared awards, but they can&apos;t rename or remove them — that stays with you. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
           ),
         },
         {

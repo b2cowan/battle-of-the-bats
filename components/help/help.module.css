@@ -246,10 +246,15 @@
   line-height: 1.55;
 }
 
-/* ── HelpPageLayout — single-scroll guide ─────────────────────────────────
-   Layout: 272px sticky TOC + 1fr scrolling main. The TOC is collapsible per
-   group and auto-focuses the group the reader is in (scroll-spy). Search
-   reveals all groups. FAQs render inline under each topic (details/summary).
+/* ── HelpPageLayout — the guide, one article at a time ────────────────────
+   Layout: a 272px sticky contents menu + the reading pane. The menu carries two
+   levels — topic, and (for the open topic only) its answers — and ONE article
+   fills the pane: an answer, a topic's overview plus its answers, or a section
+   that has none. FAQs render on the topic page they belong to.
+
+   Until 2026-08-14 this rendered every topic on one page with a scroll-spy;
+   `.helpGroupBlock`, `.helpSubGroupHeading` and friends below are what remains
+   of that and are still used by the landing page's grouped card list.
    ──────────────────────────────────────────────────────────────────────────── */
 
 .helpPage {
@@ -305,15 +310,6 @@
 .helpSearchRow .helpSearchBox {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-/* Mobile-only affordances — hidden on desktop, switched on in the media query. */
-.helpTocToggle {
-  display: none;
-}
-
-.helpTocDrawerHead {
-  display: none;
 }
 
 .helpSearchBox {
@@ -404,6 +400,10 @@
   letter-spacing: 0.13em;
   text-transform: uppercase;
   padding: 7px 6px 7px 4px;
+  /* The contents menu is the guide's primary control now (on a phone it is the
+     whole first screen), so every row clears the 44px tap floor at EVERY width
+     — the rendered sweep measures desktop too. */
+  min-height: 44px;
   cursor: pointer;
   opacity: 0.9;
 }
@@ -444,7 +444,11 @@
 
 /* TOC section link */
 .helpTocLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  /* 44px tap floor at every width — see the note on .helpTocGroupHead. */
+  min-height: 44px;
   color: var(--white-55, rgba(255, 255, 255, 0.7));
   font-size: 0.84rem;
   padding: 4px 10px 4px 14px;
@@ -458,6 +462,107 @@
 /* Extra indent for links under a sub-group label */
 .helpTocLinkSub {
   padding-left: 22px;
+}
+
+/* ── The contents tree (article model, 2026-08-14) ────────────────────────
+   The menu carries the whole map — guide → topic → answer — in one column,
+   so there is no second "in this topic" column and no jump-chip row. Only
+   the OPEN topic reveals its answers; revealing them all would make the
+   coaches guide's rail ~150 rows.                                          */
+
+/* "<Guide> — all topics": the way back to the landing page from any article. */
+.helpTocHome {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 10px 6px 14px;
+  margin-bottom: 10px;
+  border-radius: 7px;
+  border-left: 2px solid transparent;
+  color: var(--white-55, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.helpTocHome:hover {
+  color: var(--fl-text, rgba(255, 255, 255, 0.95));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.helpTocHomeActive {
+  color: var(--primary-light);
+  border-left-color: var(--primary-light);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  font-weight: 600;
+}
+
+/* How many topics a closed group holds — the rail stays short without
+   hiding how big the guide is. */
+.helpTocGroupCount {
+  margin-left: auto;
+  font-size: 0.68rem;
+  /* --white-40 fails AA on this near-black ground (3.8:1) — same finding the
+     breadcrumb separator carries above. */
+  color: var(--white-55);
+  font-weight: 600;
+}
+
+/* A topic row with answers under it flexes so the caret sits beside the label
+   rather than indenting the wrapped lines. */
+.helpTocCaret {
+  flex: 0 0 auto;
+  width: 10px;
+  font-size: 0.6rem;
+  line-height: 1.9;
+  color: var(--white-55);
+}
+
+/* Any topic that HAS answers, open or not — the caret needs a column of its own
+   so a wrapped title lines up under itself instead of under the arrow. */
+.helpTocLinkParent {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.helpTocLinkOpen {
+  color: var(--fl-text, rgba(255, 255, 255, 0.95));
+  font-weight: 600;
+}
+
+.helpTocLinkOpen .helpTocCaret {
+  color: var(--primary-light);
+}
+
+.helpTocAnswers {
+  margin: 2px 0 8px 20px;
+  padding-left: 9px;
+  border-left: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+}
+
+.helpTocAnswer {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: var(--white-55, rgba(255, 255, 255, 0.65));
+  font-size: 0.79rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.helpTocAnswer:hover {
+  color: var(--fl-text, rgba(255, 255, 255, 0.95));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.helpTocAnswerActive {
+  color: var(--primary-light);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  font-weight: 600;
 }
 
 .helpTocLink:hover {
@@ -480,9 +585,19 @@
 .helpBreadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* The trail carries every level the menu shows — guide, group, sub-group,
+     topic, and the article itself — so on a narrow column it MUST wrap rather
+     than push the page sideways. */
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
   font-size: 0.78rem;
+  line-height: 1.4;
   margin-bottom: 0.6rem;
+}
+
+/* The article you are on: the last step of the trail, and not a link to itself. */
+.helpBreadcrumbCurrent {
+  color: var(--white-55);
 }
 
 .helpBreadcrumb a {
@@ -499,10 +614,6 @@
   /* --white-40 fails AA on the guide's near-black ground (rendered check, 2026-08-14).
      It was invisible debt while the guide inherited the warm portal's lighter paper; the
      focused dark surface exposed it. --white-55 is the ramp's first step that clears. */
-  color: var(--white-55);
-}
-
-.helpBreadcrumbCurrent {
   color: var(--white-55);
 }
 
@@ -534,8 +645,210 @@
 }
 
 /* ── Single-scroll body ──────────────────────────────────────────────────── */
-.helpScrollBody {
-  margin-top: 1.5rem;
+/* ── One article (article model, 2026-08-14) ──────────────────────────────
+   The reading pane holds exactly one article: an answer, a topic page, or a
+   section that has no answers under it. Its title is the h1 — the guide's own
+   title moved into the breadcrumb.                                          */
+.helpArticle {
+  max-width: 68ch;
+}
+
+.helpArticleTitle {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 0 0 6px;
+  color: var(--fl-text);
+  text-wrap: balance;
+}
+
+/* "5 of 11 in Managing your team's money" — where this answer sits, and the
+   way up to its topic on every screen size. */
+.helpArticleMeta {
+  font-size: 0.8rem;
+  color: var(--white-55);
+  margin: 0 0 18px;
+}
+
+.helpArticleMeta a {
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+}
+
+.helpArticleMeta a:hover {
+  color: var(--primary-light);
+}
+
+/* A topic's own page: its overview, then its answers. Without this list a
+   section-level link would land on a two-sentence page, and "what's in Money?"
+   would have no answer at all. */
+.helpAnswerIndex {
+  margin-top: 26px;
+}
+
+.helpAnswerIndexHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  font-weight: 700;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  margin: 0 0 8px;
+}
+
+.helpAnswerIndexHead span + span {
+  letter-spacing: 0.04em;
+  color: var(--white-55);
+  font-weight: 600;
+}
+
+.helpAnswerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  /* 44px tap floor at EVERY width, not just touch — the rendered sweep measures
+     desktop too, and this list is the guide's main control. */
+  min-height: 44px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--fl-text, rgba(255, 255, 255, 0.92));
+  font-size: 0.9rem;
+  font-weight: 550;
+  text-decoration: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.helpAnswerCard:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.helpAnswerCard svg {
+  flex: 0 0 auto;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+}
+
+/* Previous / Next — how a reader goes through a topic, or on to the next one,
+   without returning to the menu. */
+.helpPager {
+  display: flex;
+  gap: 10px;
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.helpPagerLink {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  border-radius: 9px;
+  text-decoration: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.helpPagerLink:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.helpPagerNext {
+  text-align: right;
+}
+
+.helpPagerLink small {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--white-55);
+  margin-bottom: 3px;
+  font-weight: 700;
+}
+
+.helpPagerLink strong {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--fl-text, rgba(255, 255, 255, 0.92));
+  line-height: 1.35;
+}
+
+/* The phone's way back: to the topic from an answer, to the contents from a
+   topic. Desktop has the tree on screen and needs neither. */
+.helpMobileBack {
+  display: none;
+}
+
+/* ── The landing page: what is in this guide ──────────────────────────────── */
+.helpLandingGroup {
+  margin-bottom: 30px;
+}
+
+.helpLandingCards {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) {
+  .helpLandingCards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.helpLandingCard {
+  display: block;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  text-decoration: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.helpLandingCard:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.helpLandingCard strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--fl-text, rgba(255, 255, 255, 0.92));
+  line-height: 1.35;
+}
+
+.helpLandingCard em {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--white-55, rgba(255, 255, 255, 0.6));
+}
+
+.helpLandingCount {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--white-55);
 }
 
 /* Group block: h2 + topic sections */
@@ -755,7 +1068,7 @@
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.07));
 }
 
-.helpResultHeader h2 {
+.helpResultHeader h1 {
   margin: 0;
   color: var(--fl-text, rgba(255, 255, 255, 0.86));
   font-size: 1rem;
@@ -849,113 +1162,69 @@
 /* helpSectionHeader / helpSectionGroup / helpSectionHeading — kept for any
    content that still references them directly; harmless if unused.          */
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────────────────────
+   On a phone the contents TREE is hidden, because the guide's own pages
+   already are the contents: the landing page lists every topic, and a topic
+   page lists its answers. Keeping the tree as well would put two navigation
+   systems on one narrow screen, and the reader would still reach an answer in
+   the same two taps. Search stays above the article, where the old fixed bar
+   put it. (This replaced a full-screen "Sections" drawer — under the article
+   model the contents are a page, so the drawer had nothing left to do.)      */
 @media (max-width: 860px) {
   .helpPage {
     grid-template-columns: 1fr;
     gap: 0;
   }
 
-  /* The bar is fixed to the top of the screen; its wrapper goes inert so it no
-     longer reserves space in the (now single-column) flow. */
   .helpTocSticky {
     position: static;
     max-height: none;
     overflow: visible;
   }
 
-  .helpTocBar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 30;
-    padding: 0.7rem 1rem;
-    background: #080c14; /* token-exempt: mobile TOC bar bg, no central token */
-    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
-  }
-
-  /* Clear the fixed bar. Its height is measured into --help-bar-h; the fallback
-     covers the first paint before measurement. */
-  .helpMain {
-    padding-top: calc(var(--help-bar-h, 92px) + 0.5rem);
-  }
-
   .helpSideWhatsNew {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
   }
 
-  .helpSearchPanel {
-    margin-bottom: 0;
-  }
-
-  /* The "Sections" button that opens the drawer, next to the search box. */
-  .helpTocToggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-shrink: 0;
-    padding: 0 0.8rem;
-    font-family: var(--font-data);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--logic-lime);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
-    border-radius: 2px;
-    cursor: pointer;
-  }
-
-  /* Section selector: hidden until opened, then a full-screen drawer. */
   .helpTocGroups {
     display: none;
   }
 
-  .helpTocGroupsOpen {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    overflow-y: auto;
-    padding: 0 1.25rem 2rem;
-    background: var(--pitch-black);
-  }
-
-  .helpTocGroupsOpen .helpTocDrawerHead {
+  /* The way back, in the same place on every article. Sticky so it survives a
+     long read without a scroll to the top.
+     ⚠ Deliberately NOT full-bleed. An earlier version pulled itself past the
+     page padding with `width: calc(100% + 2rem)` and negative margins, which is
+     only flush if every shell that hosts a guide pads by exactly 1rem at this
+     width — three different shells host them, and the guide sliding sideways is
+     the exact defect this surface has shipped before. */
+  .helpMobileBack {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     position: sticky;
     top: 0;
-    padding: 0.9rem 0;
-    margin-bottom: 0.4rem;
-    background: var(--pitch-black);
-    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
-    font-family: var(--font-data);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--logic-lime);
-  }
-
-  .helpTocDrawerClose {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: none;
-    border: none;
-    color: var(--white-40, rgba(255, 255, 255, 0.5));
+    z-index: 5;
+    width: 100%;
+    margin: 0 0 0.9rem;
+    padding: 0;
+    min-height: 44px;
+    background: var(--bg);
+    border: 0;
+    border-bottom: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+    color: var(--primary-light);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: left;
     cursor: pointer;
   }
 
   .helpTocGroupCollapsed .helpTocChildren {
-    /* On mobile all groups stay revealed (no auto-collapse from scroll-spy) */
+    /* Contents is a whole screen here, so every group stays revealed. */
     display: block;
+  }
+
+  .helpTocGroupCollapsed .helpTocGroupCaret {
+    transform: none;
   }
 }
 
@@ -1491,107 +1760,10 @@
   --help-accent: #4fa3e0; /* token-exempt: help-accent blue, no central token yet */
 }
 
-.helpJumpChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 2px 0 14px;
-}
-
-.helpJumpChip {
-  display: inline-flex;
-  align-items: center;
-  /* The 44px floor applies at EVERY width, not just touch — the rendered sweep measures
-     desktop too, and it caught 84 of these the moment the help screen entered the sweep
-     (it had never been in a --changed set before). Set on the control, not the copy, so a
-     short sub-topic title cannot drop it back under. */
-  min-height: 44px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--help-accent);
-  border: 1px solid rgba(79, 163, 224, 0.3);
-  background: rgba(79, 163, 224, 0.07);
-  border-radius: 999px;
-  padding: 4px 11px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s;
-}
-
-.helpJumpChip:hover {
-  background: rgba(79, 163, 224, 0.14);
-  border-color: rgba(79, 163, 224, 0.45);
-}
-
-.helpJumpChip:focus-visible {
-  outline: 2px solid var(--primary-light);
-  outline-offset: 2px;
-}
-
-@media (max-width: 640px), (pointer: coarse) {
-  .helpJumpChip {
-    padding: 6px 14px;
-    /* Sub-topic titles are sentences, and the longest ones are wider than a 361px
-       column — nowrap pushed the whole guide sideways by 13px (rendered check). A jump
-       menu must stay fully visible, so the chip wraps rather than the page scrolling or
-       the label being clipped. */
-    white-space: normal;
-    max-width: 100%;
-  }
-}
-
-/* Guide: one sub-topic = ruled block with an anchored heading */
-.helpSubtopicBlock {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-}
-
-.helpSubtopicHeading {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--fl-text, rgba(255, 255, 255, 0.88));
-  margin: 0 0 8px;
-  line-height: 1.35;
-}
-
-/* The permalink affordance beside a sub-heading. It is a MOUSE gesture — invisible until
-   the pointer is over its heading — so it earns its 44px hit area rather than its 44px
-   box: inline-flex + a min size, with the extra height absorbed by a negative margin so
-   the heading's baseline does not move. On coarse pointers it is removed entirely: a
-   permanently-invisible control is not a touch target, and leaving it would put an
-   unreachable 44px hole in every sub-heading on a phone. */
-.helpSubtopicAnchor {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  margin: -14px 0;
-  color: var(--white-55);
-  font-weight: 400;
-  font-size: 0.85rem;
-  text-decoration: none;
-  opacity: 0;
-  transition: opacity 0.12s;
-}
-
-@media (pointer: coarse) {
-  .helpSubtopicAnchor { display: none; }
-}
-
-.helpSubtopicHeading:hover .helpSubtopicAnchor,
-.helpSubtopicAnchor:focus-visible {
-  opacity: 1;
-}
-
-.helpSubtopicAnchor:focus-visible {
-  outline: 2px solid var(--primary-light);
-  outline-offset: 2px;
-}
+/* The guide's jump-chip row and anchored sub-topic headings lived here until the
+   article model (2026-08-14) replaced both: the contents tree is the jump surface
+   now, and an answer is its own page with its own address, so there is nothing to
+   permalink WITHIN a page. The drawer keeps its expander list below. */
 
 /* Drawer: "In this topic" expander list. The <details> rows themselves are
    .helpFaqItem (shared via HelpAccordionItem) — only the caption and the body

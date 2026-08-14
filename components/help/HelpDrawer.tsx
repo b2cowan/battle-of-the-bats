@@ -166,7 +166,6 @@ export default function HelpDrawer({
                   section={section}
                   sectionId={id}
                   headingLevel={3}
-                  presentation="drawer"
                   defaultOpenFirstSubtopic={sections.length === 1}
                   defaultOpenSubtopicId={request.subtopicId}
                 />

@@ -1,9 +1,9 @@
 # Help Docs — Scannable Format (Plan)
 
-**Status: Steps 1–5 BUILT on dev 2026-08-14. Step 6 (the article view) is NOT built — it is
-gated on owner sign-off of the published mockups (§4.6).** Owner QA §18 batches 1–7. Coverage:
-**29 of 147 sections carry sub-topics**, zero sections over the corrected standard, and the
-screenshot pipeline is live with its first two pictures.
+**Status: ALL SIX STEPS BUILT on dev 2026-08-14.** Owner QA §18 batches 1–8. Coverage:
+**29 of 147 sections carry sub-topics**, zero sections over the corrected standard, the
+screenshot pipeline is live, and **the full guide is now one article at a time** — the coaches
+guide's single 22,131-word page became 129 articles plus 20 topic pages (§4.6).
 
 ⚠ **CORRECTION 2026-08-14 — this plan's "zero sections over the standard" claim was true only
 under a broken yardstick.** The standard counted paragraphs, so it could not see a list: "How to
@@ -278,14 +278,84 @@ expander/heading, and the Money topic already carries the maximum useful number 
 (10). Splitting further would deepen the tree rather than shorten the read. Revisit only if the
 article view (§6, Job 3) makes a single sub-topic the whole screen.
 
-### 4.6 Step 6 — the guide becomes an article (NOT BUILT — awaiting owner sign-off)
+### 4.6 Step 6 — the guide becomes an article ✅ BUILT on dev 2026-08-14 (QA §18 batch 8)
 
 Today every guide renders **every topic on one page** (the coaches guide: 40 topics, 22,131 words),
 with a contents list that scrolls the reader around inside it. Sub-topics made each topic scannable;
 the page is still enormous. The owner wants the full guide to read the way the "?" drawer does:
 **pick a topic, read that topic, nothing else on screen.**
 
-**⛔ BLOCKING GATE — mockups first, and they are published:** Claude artifact
+**What shipped (owner ruled Option C, and ruled that the SUB-TOPIC IS THE ARTICLE):**
+- `lib/help-content/articles.ts` — the article model, pure and unit-tested
+  (`tests/unit/help-articles.test.ts`, 8 tests). `buildHelpArticles` flattens a guide into
+  articles in reading order; `buildHelpHashIndex` maps EVERY id the single-scroll guide answered
+  to (section · sub-topic · FAQ) onto the article that shows it; `findNeighbours` gives
+  Previous/Next with a `sameTopic` flag so the label reads "in this topic" or "topic".
+- `HelpPageLayout.tsx` rewritten: two-level contents menu (only the open topic reveals its
+  answers), one article in the pane, landing page = grouped topic cards, search results select an
+  article (and now list matching **answers** as their own results). Scroll-spy deleted.
+- An answer page carries a breadcrumb naming its topic, "N of M in <topic>", and Prev/Next.
+  A topic page carries its overview, an **In this topic** list of its answers, and its FAQs.
+- **Phone: the contents TREE is hidden**, because the landing page and topic pages already ARE
+  the contents — two navigation systems on one narrow screen, with the same tap count. A sticky
+  back bar names the parent ("← Managing your team's money"). This is the one deviation from the
+  approved mockups, which showed the tree expanding in place on a phone as well.
+- **Retired:** jump chips, sub-topic `#` permalinks (an answer has its own address now),
+  `followHashLink`, `HelpSectionBlock`'s `presentation` prop, and ~103 lines of orphaned CSS.
+  `HelpSectionBlock` is now purely the drawer's renderer.
+- **Copy:** three answers that opened with a back-reference got a first sentence (Money hub,
+  rep-teams shared library, practice-plan rotations). Measured, not guessed — 8 of 142 open with
+  one, 5 of those read fine under their own title.
+- **NOT built, and it is a real gap:** the one-line gloss per answer on topic pages (150 lines).
+  The list is titles only. Deliberate — it is new copy to maintain forever and the owner had not
+  chosen; the card layout already reserves the room, so adding them later is content-only.
+- **Also not built:** a "Start here" row on the landing page (needs per-guide curation).
+
+**`/review` (high-risk tier, 4 lenses) found 12 real defects in the first cut — all fixed, all
+re-verified in a browser.** The ones worth remembering:
+- **A second question in the same topic silently failed to open.** The settle step (scroll / open
+  the question / move focus) hung off a `[articleId]` effect, and two questions in one topic
+  resolve to the SAME article — so `setArticleId` was a no-op and the effect never re-ran. Settling
+  is now driven by the navigation itself, which happens once per move whether or not the article
+  changed. ⚠ **Any "after navigating" work in this component must hang off the navigation, not off
+  article identity.**
+- **Collapsing the open contents group expanded every group instead** — `null` was doing double
+  duty as both "no group open" and "all groups open". Two states, two sentinels now.
+- **Page-level questions lost their address entirely** (three in the platform-admin guide): the
+  hash index only walked sections, so a bookmarked or emailed link landed on the contents page with
+  the question shut. Page FAQs are indexed to the landing page now.
+- **The deep-link guard desynced**: it was only updated by hashchange, never by in-page navigation,
+  so a later genuine hashchange to a previously-visited address was swallowed and the page looked
+  frozen. Every navigation now keeps it in step.
+- **`hideFromContents` was being applied twice.** It means "keep out of the table of contents", and
+  the single-scroll guide still rendered such a section in the body — the tournaments guide's
+  "Tournament workflow at a glance" was reachable by search alone. The menu is the TOC's successor
+  and still honours the flag; the landing page is the body's successor and lists them.
+- **The tournaments guide's four sub-group labels had vanished** from both the menu and the landing
+  page. Restored in both.
+- Returning to Contents kept the previous scroll position; a client-side article swap moved no
+  focus (keyboard/screen-reader readers were stranded on the link they'd just used); a question
+  opened from search put the topic, not the question, in the address bar; the phone back bar
+  full-bled with negative margins that assumed every hosting shell pads by exactly 1rem.
+- **Guarded rather than fixed:** ids are hand-authored and nothing stopped a later FAQ reusing an
+  earlier section's id. The hash index is now **first-write-wins** (a Map's last-write-wins would
+  silently re-point a published support link), and a test fails the build if any guide declares a
+  duplicate id at all.
+
+**Logged, deliberately not fixed:** an answer's body headings sit at `h4` directly under the
+article's `h1`, skipping two levels — the same nodes render in the drawer *under* an `h3`, so
+demoting them fixes one surface by breaking the other; the contents tree uses divs and anchors
+rather than list semantics (the pattern predates this change and belongs in its own pass); and a
+deep link paints the contents page for one frame before the hash resolves, because the server
+cannot see a hash.
+
+**Verification:** typecheck · focused lint · 1,820 unit tests · token + CSS-purity guardrails ·
+rendered layout sweep (0 new findings, and **61 baseline entries stopped reproducing**) ·
+**a 22-check browser walk** of the guide, **all 102 anchored links + 9 drawer sub-topic targets
+statically resolved**, **14 sampled deep links walked in a real browser across 4 guides and 3
+roles** (topic, answer, FAQ), and a 6-check pass proving the "?" drawer is untouched.
+
+**⛔ The blocking gate, for the record:** Claude artifact
 **"Help Guide, One Topic at a Time"** (`32dfac02-8337-48bc-933c-4067a5964ab1`), 2026-08-14. Two
 options at full density on the longest topic in the product, desktop + phone, every element tagged
 NEW/RESTYLED/UNCHANGED:
@@ -295,16 +365,27 @@ NEW/RESTYLED/UNCHANGED:
 - **Option B — split view.** A middle "In this topic" column; one sub-answer at a time; phone drills
   three levels. Purer, but it charges the reader eleven selections to read one topic, breaks on
   2–3-sub-topic sections, and requires sub-answers to stand alone (several currently don't).
-- **Option C — one menu that opens up (OWNER-PROPOSED 2026-08-14, and now the recommendation).**
-  No second column: the contents list grows a level, so opening a topic reveals its sub-topics
-  indented beneath it in the same rail while the topic fills the pane. The rail tracks BOTH the open
-  topic and the sub-topic the reader has reached; only one topic is open at a time (else the rail is
-  ~400 rows). Jump chips are retired — the tree does that job and stays on screen. Phone: the tree
-  expands in place on the contents screen, and an "In this topic ▾" sheet from the bar replaces the
-  pinned chips. **Open sub-decision:** tapping a sub-topic should *scroll within the topic*
-  (recommended — keeps the topic one article and preserves answers that build on each other) rather
-  than replace the pane (which inherits B's cost of turning a 1–2 sentence overview into a landing
-  page and requiring every answer to stand alone).
+- **Option C — one menu that opens up, and THE SUB-TOPIC IS THE ARTICLE (owner-proposed and
+  owner-ruled 2026-08-14 — this is the model to build).** No second column: the contents rail grows
+  a level, so opening a topic reveals its sub-topics indented beneath it; selecting one renders
+  **that sub-topic alone** as the page, with its title as the H1 and its own address. Only one topic
+  is open at a time (else the rail is ~400 rows). Jump chips are retired — the tree does that job and
+  stays on screen. Phone: the tree expands in place on the contents screen; the answer is the next
+  screen (two levels, not three).
+  - **A topic's own page** = its 1–2 sentence overview + its sub-topics as a short contents list
+    (recommended). This is what existing section-level links land on, and it is the only thing that
+    can answer "what's in Money?" — a single sub-answer cannot. Open question: gloss line per
+    sub-topic (150 across the product) or titles only.
+  - **Previous / Next in this topic** on every answer, rolling on to the next topic at the end —
+    this is what preserves reading a topic end to end.
+  - ⚠ I argued against sub-topic-as-page on the grounds that answers assume the one above them.
+    **Measured instead of assumed: 8 of 142 sub-topics open with a back-reference, and only 3
+    genuinely need a new first sentence** ("Getting around the Money hub", rep-teams' "What coaches
+    see, and what they can change", practice plans' "Rotations"). The objection did not survive the
+    measurement; the ruling stands and the copy fix is part of the build.
+  - In the coaches guide this yields **129 articles** (109 sub-answers + 20 childless topics) plus
+    20 topic pages, replacing one 22,131-word page. Childless topics (20 of 40) keep no caret and
+    open straight to the article.
 - **Landing state** (a real decision, presented with a recommendation): a contents page with a short
   "Start here" row, versus opening on the first topic.
 

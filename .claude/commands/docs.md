@@ -51,8 +51,18 @@ Long help topics must be **scannable, not essays**. Full design + rollout:
 These rules govern every section you write or substantially edit:
 
 1. **A section over ~350 words of body copy must be sub-topics** — a 1–2 sentence overview plus
-   titled sub-topics (`subtopics` on `HelpSection`). The drawer renders sub-topics as expanders;
-   the guide renders them as anchored headings with jump-chips.
+   titled sub-topics (`subtopics` on `HelpSection`).
+
+   ⚠ **A sub-topic is a PAGE now** (article model, owner ruling 2026-08-14). In the full guide,
+   selecting an answer renders **that answer alone**, with its title as the H1; the section's
+   `content` becomes the topic's own landing page, above a list of its answers. The "?" drawer
+   still renders the whole section as an expander list. Two things follow when you write one:
+   - **Each sub-topic must read from its own first sentence.** Don't open with "Under the guide
+     card…", "Below them…", "Once two teams are sharing…" — that reads fine as the fourth heading
+     of a long topic and broken as its own page. (Measured 2026-08-14: 8 of 142 did; 3 were fixed.)
+   - **The section `content` is a real landing page**, not a throat-clear: 1–2 sentences that say
+     what the topic covers, because a reader arriving from a section-level link sees only that
+     plus the list of answers.
 
    **Measure it, don't eyeball it: `npm run measure:help`** (add `--all` to see every section,
    `--module=coaches` to narrow). The counting method, which the script is the executable copy of:

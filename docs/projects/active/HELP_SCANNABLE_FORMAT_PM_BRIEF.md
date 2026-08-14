@@ -48,11 +48,11 @@ platform-admin help mirror updates automatically because both read the same sour
 
 ## Rollout & how to test
 
-**Five steps are built (2026-08-14).** (1) the machinery; (2) Money converted; (3) every
+**All six steps are built (2026-08-14).** (1) the machinery; (2) Money converted; (3) every
 other long topic — swept to completion rather than left half-done, because the "?" is one
 control and had to behave the same everywhere; (4) the screenshot pipeline with its first two
-pictures; (5) the eight topics the original yardstick could not see. QA is the Owner QA
-Ledger's §18, in seven batches.
+pictures; (5) the eight topics the original yardstick could not see; (6) the guide itself, which
+now shows one article at a time. QA is the Owner QA Ledger's §18, in eight batches.
 
 **Step 5 — why there was more to do after "complete".** The rule for "this topic is too long"
 counted paragraphs. A topic that is three paragraphs plus one sixteen-item list scored a 3 and
@@ -62,13 +62,24 @@ there is to read**, list items included, and one command reports it (`npm run me
 so the next person measures the same way. Eight topics missed the old rule; all eight are now
 menus of answers, with no sentence rewritten.
 
-**Step 6 — the guide becomes an article. Not built: it is waiting on you.** Even with every
-topic scannable, opening the full guide still hands a coach all forty topics on one page —
-22,131 words. The proposal is to make it work the way the "?" panel already does: pick a topic,
-read that topic, nothing else on screen. Mockups are published (the Claude artifact **"Help
-Guide, One Topic at a Time"**) with two options at real density on the longest topic, on desktop
-and phone, plus the landing-state decision. Nothing will be built until you pick one — the change
-alters how every help link in the product behaves.
+**Step 6 — the guide is now one article at a time. BUILT (dev, 2026-08-14).** Opening the full
+guide used to hand a coach all forty topics on one page — 22,131 words. After mockups (the Claude
+artifact **"Help Guide, One Topic at a Time"**) you ruled: **one menu that opens up, and the
+answer at the bottom of it is the article.**
+
+What a coach sees now: the guide opens on a **contents page** — every topic as a card, grouped,
+with a count of the answers inside. Pick a topic and it **opens in the menu** to reveal its
+answers, while the page shows what that topic covers and lists them. Pick an answer and **that
+answer is the page** — its own title, its own address, nothing else on screen. **Previous / Next
+in this topic** walks the answers in order and then rolls on to the next topic, so nothing is
+harder to read straight through than it was. On a phone it's two taps to any answer, with a back
+bar naming the topic you're inside.
+
+The coaches' guide is now **129 articles plus 20 topic pages** instead of one enormous page.
+
+Two things deliberately did not change: the **"?" panel** on work pages (it was already the right
+shape), and **every existing help link** — the roughly 102 links across the product that point at
+a specific spot in a guide now open the article that owns it, and all of them were checked.
 
 ## Where it landed
 

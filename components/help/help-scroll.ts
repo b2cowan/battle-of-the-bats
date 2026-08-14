@@ -1,27 +1,22 @@
 'use client';
 
 /**
- * Scroll to a help anchor (section, sub-topic, or FAQ) by id. For an FAQ, open
- * its <details> imperatively — the <details> is otherwise uncontrolled so the
- * reader can freely toggle it without a re-render snapping it shut.
+ * Scroll to a help FAQ by id and open it — the <details> is otherwise
+ * uncontrolled so the reader can freely toggle it without a re-render snapping
+ * it shut.
  *
- * Shared by HelpPageLayout (TOC, search results, hash deep-links) and
- * HelpSectionBlock (jump chips, sub-heading anchors) so every in-guide hash
- * control follows the same contract: intercept the click, replaceState the
- * hash (never push — Back should leave the page, not replay every jump), and
- * drive ONE smooth scroll from here rather than racing the browser's native
- * anchor scroll.
+ * Used by HelpPageLayout when a deep link or a search result names a question:
+ * the guide selects the article that owns it, then this brings the question into
+ * view already open.
+ *
+ * (Until 2026-08-14 this also drove the guide's jump chips and sub-heading
+ * anchors, which is what `followHashLink` existed for. Under the article model a
+ * hash SELECTS an article rather than scrolling within a long page, so there is
+ * nothing left to intercept and the helper went with the chips.)
  */
 export function revealAndScroll(id: string, opts?: { faq?: boolean }) {
   const el = document.getElementById(id);
   if (!el) return;
   if (opts?.faq && el instanceof HTMLDetailsElement) el.open = true;
   el.scrollIntoView({ block: 'start', behavior: 'smooth' });
-}
-
-/** The shared click handler for an in-page `<a href="#id">` hash control. */
-export function followHashLink(event: { preventDefault: () => void }, id: string, opts?: { faq?: boolean }) {
-  event.preventDefault();
-  window.history.replaceState(null, '', `#${id}`);
-  revealAndScroll(id, opts);
 }
