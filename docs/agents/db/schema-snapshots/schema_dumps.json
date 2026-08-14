@@ -34061,6 +34061,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_budget_lines",
+        "pos": 13,
+        "column_name": "line_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'cost'::text"
+      },
+      {
         "table_name": "rep_budget_periods",
         "pos": 1,
         "column_name": "id",
@@ -34392,6 +34401,258 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_dues_credits",
+        "pos": 12,
+        "column_name": "payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_credits",
+        "pos": 13,
+        "column_name": "expense_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 3,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 7,
+        "column_name": "received_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 8,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'other'::text"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 9,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 10,
+        "column_name": "accounting_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 11,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'recorded'::text"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 12,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 3,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 7,
+        "column_name": "paid_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 8,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'etransfer'::text"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 9,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 10,
+        "column_name": "accounting_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 11,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'recorded'::text"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 12,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "rep_fundraiser_entries",
@@ -35609,6 +35870,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_program_years",
+        "pos": 14,
+        "column_name": "credit_application",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'last_first'::text"
+      },
+      {
         "table_name": "rep_roster_players",
         "pos": 1,
         "column_name": "id",
@@ -35879,6 +36149,105 @@
         "column_default": null
       },
       {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 3,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 6,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 8,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_season_surplus",
         "pos": 1,
         "column_name": "id",
@@ -35940,6 +36309,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_season_surplus",
+        "pos": 8,
+        "column_name": "hold_back_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_team_announcements",
@@ -37148,6 +37526,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_expenses",
+        "pos": 25,
+        "column_name": "paid_by_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_game_moments",
         "pos": 1,
         "column_name": "id",
@@ -37285,6 +37672,141 @@
       {
         "table_name": "rep_team_groups",
         "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 5,
+        "column_name": "dataset",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 6,
+        "column_name": "shape",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 7,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 8,
+        "column_name": "source_filename",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 9,
+        "column_name": "rows_created",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 10,
+        "column_name": "rows_updated",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 11,
+        "column_name": "rows_skipped",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 12,
+        "column_name": "rows_failed",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 13,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 14,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "pos": 15,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -42700,10 +43222,24 @@
       },
       {
         "table_name": "rep_dues_credits",
+        "column_name": "expense_id",
+        "foreign_table": "rep_team_expenses",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_credits_expense_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_credits",
         "column_name": "fundraiser_entry_id",
         "foreign_table": "rep_fundraiser_entries",
         "foreign_column": "id",
         "constraint_name": "rep_dues_credits_fundraiser_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_credits",
+        "column_name": "payment_id",
+        "foreign_table": "rep_dues_payments",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_credits_payment_id_fkey"
       },
       {
         "table_name": "rep_dues_credits",
@@ -42718,6 +43254,90 @@
         "foreign_table": "rep_program_years",
         "foreign_column": "id",
         "constraint_name": "rep_dues_credits_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "accounting_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payments_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_dues_payments_created_by_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payments_org_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payments_player_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payments_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payments_team_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "accounting_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payouts_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_dues_payouts_created_by_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payouts_org_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payouts_player_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payouts_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payouts",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payouts_team_id_fkey"
       },
       {
         "table_name": "rep_fundraiser_entries",
@@ -42849,14 +43469,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -42877,14 +43497,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -42933,20 +43553,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
@@ -42955,6 +43568,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -43136,20 +43756,13 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
@@ -43158,6 +43771,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -43250,6 +43870,41 @@
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_roster_players_tryout_registration_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_season_refund_adjustments_created_by_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_org_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_player_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_season_refund_adjustments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_season_refund_adjustments_team_id_fkey"
       },
       {
         "table_name": "rep_season_surplus",
@@ -43547,6 +44202,13 @@
       },
       {
         "table_name": "rep_team_expenses",
+        "column_name": "paid_by_player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_paid_by_player_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
         "column_name": "payee_id",
         "foreign_table": "org_payees",
         "foreign_column": "id",
@@ -43614,6 +44276,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_team_groups_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fk_rep_team_import_events_created_by"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_org"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_team"
+      },
+      {
+        "table_name": "rep_team_import_events",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_import_events_year"
       },
       {
         "table_name": "rep_team_lineup_entries",
@@ -45901,6 +46591,26 @@
         "indexdef": "CREATE UNIQUE INDEX rep_dues_credits_pkey ON public.rep_dues_credits USING btree (id)"
       },
       {
+        "tablename": "rep_dues_payments",
+        "indexname": "idx_rep_dues_payments_year_player",
+        "indexdef": "CREATE INDEX idx_rep_dues_payments_year_player ON public.rep_dues_payments USING btree (program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_dues_payments",
+        "indexname": "rep_dues_payments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_dues_payments_pkey ON public.rep_dues_payments USING btree (id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
+        "indexname": "idx_rep_dues_payouts_year_player",
+        "indexdef": "CREATE INDEX idx_rep_dues_payouts_year_player ON public.rep_dues_payouts USING btree (program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
+        "indexname": "rep_dues_payouts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_dues_payouts_pkey ON public.rep_dues_payouts USING btree (id)"
+      },
+      {
         "tablename": "rep_fundraiser_entries",
         "indexname": "rep_fundraiser_entries_fundraiser_id_player_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_fundraiser_id_player_id_key ON public.rep_fundraiser_entries USING btree (fundraiser_id, player_id)"
@@ -46156,6 +46866,21 @@
         "indexdef": "CREATE INDEX rep_roster_players_year_idx ON public.rep_roster_players USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "idx_rep_season_refund_adjustments_year",
+        "indexdef": "CREATE INDEX idx_rep_season_refund_adjustments_year ON public.rep_season_refund_adjustments USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_pkey ON public.rep_season_refund_adjustments USING btree (id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_program_year_id_player_id_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_program_year_id_player_id_key ON public.rep_season_refund_adjustments USING btree (program_year_id, player_id)"
+      },
+      {
         "tablename": "rep_season_surplus",
         "indexname": "rep_season_surplus_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_pkey ON public.rep_season_surplus USING btree (id)"
@@ -46394,6 +47119,16 @@
         "tablename": "rep_team_groups",
         "indexname": "rep_team_groups_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_groups_pkey ON public.rep_team_groups USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_import_events",
+        "indexname": "idx_rep_team_import_events_season",
+        "indexdef": "CREATE INDEX idx_rep_team_import_events_season ON public.rep_team_import_events USING btree (team_id, program_year_id, created_at DESC)"
+      },
+      {
+        "tablename": "rep_team_import_events",
+        "indexname": "rep_team_import_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_import_events_pkey ON public.rep_team_import_events USING btree (id)"
       },
       {
         "tablename": "rep_team_lineup_entries",
@@ -48201,6 +48936,12 @@
       {
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
+        "detail": "rep_budget_lines_line_kind_check",
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_total_amount_check",
         "check_clause": "(total_amount > (0)::numeric)"
       },
@@ -48256,11 +48997,59 @@
         "kind": "CHECK",
         "table_name": "rep_dues_credits",
         "detail": "rep_dues_credits_credit_type_check",
-        "check_clause": "(credit_type = ANY (ARRAY['contribution'::text, 'fundraiser'::text, 'overpayment'::text, 'other'::text]))"
+        "check_clause": "(credit_type = ANY (ARRAY['contribution'::text, 'fundraiser'::text, 'overpayment'::text, 'other'::text, 'forgiven'::text, 'reimbursement'::text]))"
       },
       {
         "kind": "RLS",
         "table_name": "rep_dues_credits",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payments",
+        "detail": "rep_dues_payments_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payments",
+        "detail": "rep_dues_payments_method_check",
+        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payments",
+        "detail": "rep_dues_payments_source_check",
+        "check_clause": "(source = ANY (ARRAY['recorded'::text, 'migrated_mark_paid'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_dues_payments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payouts",
+        "detail": "rep_dues_payouts_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payouts",
+        "detail": "rep_dues_payouts_method_check",
+        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payouts",
+        "detail": "rep_dues_payouts_source_check",
+        "check_clause": "(source = ANY (ARRAY['recorded'::text, 'season_settlement'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_dues_payouts",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -48447,6 +49236,12 @@
       {
         "kind": "CHECK",
         "table_name": "rep_program_years",
+        "detail": "rep_program_years_credit_application_check",
+        "check_clause": "(credit_application = ANY (ARRAY['last_first'::text, 'next_first'::text, 'keep_separate'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_program_years",
         "detail": "rep_program_years_status_check",
         "check_clause": "(status = ANY (ARRAY['draft'::text, 'active'::text, 'completed'::text, 'archived'::text]))"
       },
@@ -48473,6 +49268,30 @@
         "table_name": "rep_roster_players",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "rep_season_refund_adjustments_amount_check",
+        "check_clause": "(amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "rep_season_refund_adjustments_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['fixed'::text, 'no_share'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_season_refund_adjustments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_season_surplus",
+        "detail": "rep_season_surplus_hold_back_amount_check",
+        "check_clause": "(hold_back_amount >= (0)::numeric)"
       },
       {
         "kind": "CHECK",
@@ -48729,6 +49548,30 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_dataset_check",
+        "check_clause": "(dataset = ANY (ARRAY['budget_lines'::text, 'payables'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_shape_check",
+        "check_clause": "(shape = ANY (ARRAY['month-grid'::text, 'list'::text, 'payables'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_import_events",
+        "detail": "rep_team_import_events_source_check",
+        "check_clause": "(source = ANY (ARRAY['paste'::text, 'file'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_import_events",
         "detail": "ENABLED",
         "check_clause": null
       },
