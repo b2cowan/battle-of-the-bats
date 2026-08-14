@@ -5,6 +5,12 @@
 dev 2026-08-14** (mig 235 on dev; owner QA §21) — **all three passes complete**
 ⚠ **Migrations 233, 234 and 235 are on dev; every one of them must reach production before this
 code ships** (they join 230–232 in that queue).
+⚠ **The Pass 3 `/docs` help edits are NOT in `735c9ae2`** — the same situation Pass 1 hit, for the
+same reason: a concurrent session was mid-flight in the coaches guide, so committing it would have
+swept up work that was not this project's to commit. The new **Season settlement** sub-topic, its
+popular FAQ, its search terms and the re-captured Player Dues screenshot's alt/caption sit on disk
+and ride that session's next commit. (The screenshot itself, and the manifest entry, ARE in this
+commit — only the guide prose is held back.)
 
 ⚠ **The `/docs` help edits are NOT in `8fb37066`.** A concurrent session was mid-flight in the
 same guide file, so committing it would have swept up work that was not this project's to commit
