@@ -20,8 +20,14 @@ export interface DuesReminderEmailItem {
   playerLastName: string;
   /** The installment's face value. */
   amount: number;
-  /** What is still missing on it after recorded payments — the figure the email asks for. */
+  /** What the family is asked to SEND — cash remainder minus credits applied (owner model
+   *  2026-08-14) — the figure the email asks for. */
   remainingAmount: number;
+  /** Credit dollars applied to this installment. The email says the fundraising earned it
+   *  (owner Call 4) — a quietly smaller number with no story is the alternative we rejected. */
+  creditApplied?: number;
+  /** Where the credit came from ("Bottle Drive"), when one source can be named. */
+  creditNote?: string | null;
   dueDate: string;
   installmentNumber: number;
   totalInstallments: number;
@@ -55,20 +61,36 @@ export function duesReminderEmail(opts: {
   const { teamName, window, guardianFirst, items } = opts;
   const rows = items
     .map(i => {
-      const received = Math.round((i.amount - i.remainingAmount) * 100) / 100;
+      const credit = i.creditApplied ?? 0;
+      // Cash received = face − credit − still-to-send: the thank-you line stays a CASH sentence
+      // (credit dollars were never "received", they were earned).
+      const received = Math.max(0, Math.round((i.amount - credit - i.remainingAmount) * 100) / 100);
       const partial = received > 0.005
-        ? ` — thank you, ${fmt(received)} of ${fmt(i.amount)} has been received`
+        ? ` — thank you, ${fmt(received)} has been received`
         : '';
+      const earned = credit > 0.005
+        ? ` — ${fmt(credit)} covered by fundraising${i.creditNote ? ` (${esc(i.creditNote)})` : ''}`
+        : '';
+      const figure = credit > 0.005
+        ? `${fmt(i.remainingAmount)} to send of the ${fmt(i.amount)}`
+        : fmt(i.remainingAmount);
       return `<li style="margin-bottom:0.5rem;">
-              <strong>${esc([i.playerFirstName, i.playerLastName].filter(Boolean).join(' '))}</strong> — ${fmt(i.remainingAmount)} ${i.overdue ? `was due ${fmtDate(i.dueDate)}` : `due ${fmtDate(i.dueDate)}`}
-              (Installment ${i.installmentNumber} of ${i.totalInstallments})${partial}
+              <strong>${esc([i.playerFirstName, i.playerLastName].filter(Boolean).join(' '))}</strong> — ${figure} ${i.overdue ? `was due ${fmtDate(i.dueDate)}` : `due ${fmtDate(i.dueDate)}`}
+              (Installment ${i.installmentNumber} of ${i.totalInstallments})${earned}${partial}
             </li>`;
     })
     .join('');
   const anyOverdue = items.some(i => i.overdue);
+  // The best sentence a fundraising program can put in front of a family (owner Call 4): when
+  // credits lowered these bills, the email opens with the earning, not the ask.
+  const totalEarned = Math.round(items.reduce((s, i) => s + (i.creditApplied ?? 0) * 100, 0)) / 100;
+  const earnedIntro = totalEarned > 0.005
+    ? `<p>Your family's fundraising has earned <strong>${fmt(totalEarned)}</strong> toward dues — thank you. The amounts below are what is still left to send.</p>`
+    : '';
   const html = `
 <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
   <p>Hi ${esc(guardianFirst)},</p>
+  ${earnedIntro}
   <p>This is a friendly reminder that the following dues installments are ${anyOverdue ? 'due' : 'coming due'} for your player(s) on <strong>${esc(teamName)}</strong>:</p>
   <ul style="padding-left:1.25rem;">${rows}</ul>
   <p>If you've already sent a payment, it may not be recorded yet — just let your coach know. To view your full payment schedule, contact your coach directly.</p>

@@ -1,6 +1,8 @@
 # Coach Money — credits meet the bills, money goes out, and the refund sheet derives
 
-**Status:** approved from mockups 2026-08-14 (owner) · **NOT STARTED**
+**Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 BUILT on dev 2026-08-14**
+(`/simplify` + `/review` + `/docs` all run; mig 233 dev-only) · **Passes 2–3 open**
+(mig 234 drafted, not applied — see §6)
 **PM brief:** [COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md](COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md)
 **Binding mockups:** `claude.ai/code/artifact/eae663d0-56e5-46e9-a2e2-9f7220468be2`
 (source `COACH_CREDIT_APPLICATION_MOCKUP.html` — tagged NEW/RESTYLED/UNCHANGED; the mockups ARE
@@ -219,13 +221,22 @@ Migrations are **dev-first**; prod ordering rides the release runbook. Dictionar
 - **Out-of-pocket posts nothing to the cash ledger.** The alternative (post an income entry from
   the family *and* an expense) nets to zero but invents money-in from a family that sent none.
 
-### ⚠ 5.3 OPEN QUESTION 1 — the default for existing teams
+### 5.3 The default — RESOLVED (owner, 2026-08-14)
 
-Setting `credit_application` to `last_first` on existing seasons **changes live customers' reminder
-amounts overnight**. Recommended: the column defaults `last_first` for **new** program years, and
-the migration **backfills every existing row to `keep_separate`** (today's behaviour), so nothing
-moves under a coach without them choosing it. A one-time in-product nudge offering the switch is
-proposed but not scoped here. **Needs an owner call before the migration is written.**
+The concern was that switching existing seasons to `last_first` would change live customers'
+reminder amounts overnight. **Owner: there are no teams on production, so choose what makes most
+sense.** Accordingly:
+
+**`credit_application` defaults to `last_first` for every season, new and existing. No
+split-default, no staged backfill, no one-time nudge** — all of which existed only to protect
+customers who do not exist. The simplest migration is now also the correct one, and every team
+starts on the behaviour the product wants to demonstrate.
+
+⚠ Two consequences to carry: the **demo and QA seasons on dev will pick this up**, which is
+desirable (the demos should show fundraising lowering a bill) but means their narration and
+`check:demos` must be re-read in the same pass; and `keep_separate` is now a **choice a coach
+makes**, never a state anyone is silently left in — so its first real exercise is a test, not a
+customer.
 
 ---
 
@@ -252,6 +263,89 @@ Each pass is independently shippable and ends green. `/simplify` then `/review` 
 
 **Definition of done:** the identity in §4.2 holds across the seeded world; a family whose credit
 covers a bill is never chased for the gross amount anywhere.
+
+### Pass 1 build log (2026-08-14) — BUILT on dev
+
+**Step 0, the refactor, first as specified.** `lib/dues-credits.ts` is the credit half of the
+model (sibling of `lib/dues-payments.ts`, integer cents, no database): `creditsTotal`,
+`creditsTotalByPlayer`, `groupByPlayer`, `applyCreditsToBills`, `deriveDuesPosition`,
+`normalizeCreditApplicationMode`. All five hand-copied credit sums (§7.1) moved onto it.
+
+**Migration 233** (dev): `rep_program_years.credit_application` (CHECK
+`last_first|next_first|keep_separate`, default `last_first` for every season — §5.3) and
+`rep_dues_credits.credit_type` CHECK widened with `forgiven` + `reimbursement`. Dictionary +
+`refresh:snapshots` in the same unit of work; `check:dictionary` green.
+
+**The derivation reaches every reader** — dues route (payload gains `remainingAmount` as the NET
+figure, `creditApplied`, `creditSettled`, `creditSources`, `leftToSend`, `owedBack`), mark-paid
+shortcut (records the NET ask), money-summary, upcoming-payables, Ask, the weekly digest,
+`getDueReminderCandidates`, `getUnpaidDuesReminderTargets`, the fundraiser entries route,
+InstallmentBreakdown, the dues panel. All six server sites go through **one** assembly
+(`deriveDuesPosition`) — that seam is where Pass 2 wires `paidOut`.
+
+**UI, to the binding mockups:** "$X to send" and "Covered by fundraising" (never Paid — Paid
+stays cash), the covered-by line naming the earning, **Left to send** replacing Balance in the
+drawer stat grid, an owed-back strip ("the team is holding $X of this family's money"), the
+three-way **Credits reduce** setting at the foot of Player Dues, and the fundraiser sheet's
+**Where it lands** preview (built from the real `applyCreditsToBills`, never a re-derivation).
+`duesStatusLabel` gains **Settled** (credits did part of the work) beside **Fully paid** (cash).
+Reminder emails open with the earning and quote the net ask; a family whose credits settled
+everything is never a candidate.
+
+**Fixtures (§9.1 closed):** the money lab gains **QA Mid Season U14** — the drive-closed-mid-season
+world, one player per rule (paid-in-full-first so their rebate is owed back; last-bill-first
+application + cascade; part-paid and behind; earned-but-paid-nothing; a forgiven balance; a
+departed player). The UAT sweep fixture gained a fundraiser credit, without which every new
+element had zero geometry.
+
+**Gates:** typecheck ✓ · 1,765 unit tests ✓ (new: 17 credit-module tests incl. a 500-run
+randomised property test pinning `issued = applied + paidOut + owedBack` in every mode, plus
+cash-claims-first, the mode-aware status label, and the net-remainder lens) · guard test extended
+with a credit-sum rule and **verified by breaking it** (both offender shapes) · focused lint 0
+errors · rendered `check:layout` on dues/fundraisers/overview × 4 widths, no new findings, run on
+a restarted server against a fixture with real data ✓ · `check:demos` ✓ · `verify:changed` green
+except the known schema-parity failure (prod behind on migs 230–233).
+
+**`/simplify` (4 lenses):** the assembly seam + `groupByPlayer` (eight hand-written groupings and
+six hand-composed allocate→apply→map sequences collapsed), `installmentToSend` exported as the one
+remainder rule, `creditSettled` served by the server instead of re-derived in the client, the
+credits-mode option list driven from `CREDIT_APPLICATION_MODES`, two dead fallbacks dropped, and a
+credits fetch folded into an existing `Promise.all`.
+
+**`/review` (high-risk, 5 lenses) earned its keep — 1 Critical + 3 High, all fixed:**
+- **Critical — `duesStatusLabel` was mode-blind.** On a `keep_separate` team an unapplied credit
+  made `rollingBalance` zero, so the row read **Settled** (and, past the balance, "in credit —
+  in their favour") beside bills the family still owed in full. The label is now mode-aware from
+  the derived figures, with the legacy branch kept only for pre-model callers; six new tests pin it.
+- **High — the Ask "who owes" answer mixed arithmetics**: the family headline summed the
+  credit-blind figure while its own receipt lines quoted the net one, so a credit-settled family
+  could be told they "owe $X" with no receipts to show for it. `computeFamilyDues` now takes
+  `leftToSend`.
+- **High — the digest's "$X outstanding across the team"** was gross beside a credit-aware count;
+  now net.
+- **High — a mark-paid race**: `toSend` was derived *before* the atomic claim, so a concurrent
+  Record-payment could make it stale and the click double-record. The claim now comes first and
+  the money is read after it (and one `claimStamp` serves both the claim and its revert — the two
+  separate `new Date()` calls meant the failure revert could never match its own row).
+- Also fixed: the overdue count on both the Overview tile and the panel counted credit-covered
+  bills as late; the Overview dues tile quoted the gross ask; a superseded credit-mode failure
+  could stomp a newer choice; `paidOut: NaN` could poison the reported totals.
+- **Refuted/verified-safe:** email escaping (every interpolation goes through `esc`), the
+  capability/tenant scoping on the new and reworked routes, the migration's CHECK widening
+  (strict superset) and default, cents rounding, and the `remainingDues → leftToSend` rename
+  (no live consumer of the old name).
+
+**Report-only residual for the owner:** `rep_dues_credits.description`/`notes` are coach-entered
+free text visible to a money-view coach without the roster-PII grant — **pre-existing**, not
+introduced here, and the same open question the payment-note fence raised on 2026-08-13.
+
+**Demos — the judgment the rule asks for, recorded rather than skipped.** The coach sandbox has
+**no fundraiser rows at all**, so Pass 1 falsifies nothing in its narration (`check:demos` green).
+The gap is absence, not breakage: the demo cannot yet show fundraising lowering a bill — the most
+sympathetic thing this product does. Building it means a seeded fundraiser + credit whose date
+shifts with the nightly re-anchor, a `check-demo-coach` pin, and a tour sentence; **deliberately
+deferred to Pass 3**, where the Season's End demo story is rebuilt anyway, so the demo world is
+re-seeded and re-narrated once rather than twice.
 
 ### Pass 2 — Money out
 

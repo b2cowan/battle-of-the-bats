@@ -40,6 +40,7 @@ import {
   getRepPlayerDuesSchedules,
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
+  getRepDuesCreditsByProgramYear,
   getRepTeamAttendanceReliability,
   type InsightsDigestTeam,
 } from './db';
@@ -59,7 +60,8 @@ import {
 } from './insight-findings';
 import { resolveCoachCapabilities, canViewMoney } from './coach-capabilities';
 import { outstandingForSchedule } from './dues-status';
-import { duesPaidAmount, allocateDuesPayments, paymentsTotalByPlayer } from './dues-payments';
+import { duesPaidAmount, paymentsTotalByPlayer } from './dues-payments';
+import { deriveDuesPosition, groupByPlayer } from './dues-credits';
 import type { RepTeamEvent } from './types';
 
 /** One digest per team per window — just under a week so a Sunday job never
@@ -147,7 +149,7 @@ async function digestTeam(
   };
   if (coaches.length === 0) return { sent: 0, preview };
 
-  const [events, players, lineups, templates, schedules, reliability, seasonPayments] = await Promise.all([
+  const [events, players, lineups, templates, schedules, reliability, seasonPayments, seasonCredits] = await Promise.all([
     getRepTeamEvents(team.programYearId),
     getRepRosterPlayers(team.programYearId),
     getRepTeamSeasonLineups(team.programYearId),
@@ -155,6 +157,7 @@ async function digestTeam(
     getRepPlayerDuesSchedules(team.programYearId),
     getRepTeamAttendanceReliability(team.programYearId),
     getRepDuesPaymentsByProgramYear(team.programYearId),
+    getRepDuesCreditsByProgramYear(team.programYearId),
   ]);
 
   // Dues rows — same per-player math as the dues route (credits excluded, like the
@@ -167,6 +170,7 @@ async function digestTeam(
     if (list) list.push(i); else installmentsBySchedule.set(i.scheduleId, [i]);
   }
   const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
+  const creditsByPlayer = groupByPlayer(seasonCredits);
   const duesRows: FindingsDuesRow[] = players.map(p => {
     const schedule = scheduleMap.get(p.id) ?? null;
     const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
@@ -174,23 +178,26 @@ async function digestTeam(
     // serves, so the digest's sentence and the Money page cannot disagree about one family.
     const paymentsTotal = paymentsByPlayer.get(p.id) ?? 0;
     const paidAmount = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
-    // Per-installment remainders so the proximity sentence quotes what's MISSING at the due
-    // date. Allocation only needs the dollar total here (dates decide nothing about coverage),
-    // so one synthetic payment stands in for the list.
-    const { coverage } = allocateDuesPayments(
-      installments.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
-      paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
-    );
-    const remainingById = new Map(coverage.map(c => [c.installmentId, c.remaining]));
+    // Per-installment remainders so the proximity sentence quotes what the family is asked to
+    // SEND — cash then credits, the shared assembly (deriveDuesPosition). Allocation only needs
+    // the dollar total here (dates decide nothing about coverage), so one synthetic payment
+    // stands in for the list.
+    const { position, toSendById } = deriveDuesPosition({
+      installments: installments.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
+      payments: paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
+      credits: creditsByPlayer.get(p.id) ?? [],
+      mode: team.creditApplication,
+    });
     return {
       // ONE shared definition (lib/dues-status.ts), matching the dues route and the Ask answers.
       outstanding: outstandingForSchedule(schedule, paidAmount),
       paidAmount,
+      leftToSend: position.leftToSend,
       installments: installments.map(i => ({
         paidAt: i.paidAt,
         dueDate: i.dueDate,
         amount: i.amount,
-        remainingAmount: remainingById.get(i.id) ?? i.amount,
+        remainingAmount: toSendById.get(i.id) ?? i.amount,
       })),
     };
   });

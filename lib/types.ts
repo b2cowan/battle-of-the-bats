@@ -1147,6 +1147,8 @@ export interface RepProgramYear {
   tryoutDescription: string | null;
   budgetAmount: number | null;
   autoRemindersEnabled: boolean;
+  /** How this team's dues credits meet its bills (mig 233, owner Call 2 2026-08-14). */
+  creditApplication: import('./dues-credits').CreditApplicationMode;
   lineupSettings: LineupSettings | null; // P3 season-default caps (mig 172)
   createdAt: string;
   updatedAt: string;
@@ -2235,9 +2237,14 @@ export interface RepDueReminderCandidate {
   totalInstallments: number;
   /** The installment's face value. */
   amount: number;
-  /** What is still MISSING on it after recorded payments (mig 232) — the figure the reminder
-   *  email quotes (owner ruling 6: chase the remainder, acknowledge what's arrived). */
+  /** What the family is asked to SEND — cash remainder minus credits applied to this
+   *  installment (owner model 2026-08-14; before credits landed on bills this was the cash
+   *  remainder alone). The reminder email quotes exactly this figure. */
   remainingAmount: number;
+  /** Credit dollars applied to this installment — the email names the earning (owner Call 4). */
+  creditApplied: number;
+  /** Where the credit came from ("Bottle Drive"), when one source can be named. */
+  creditNote: string | null;
   dueDate: string;
   /** Already past its due date (org-timezone calendar). Only the coach's ad-hoc send produces
    *  these — the automated 30/7 waves look forward by construction. */
@@ -2389,7 +2396,10 @@ export interface RepInstallmentPreviewRow {
   installments: { installmentNumber: number; dueDate: string; amount: number }[];
 }
 
-export type DuesCreditType = 'contribution' | 'fundraiser' | 'overpayment' | 'other';
+/** 'forgiven' and 'reimbursement' joined in mig 233 (owner model 2026-08-14): forgiveness is
+ *  debt relief — lowers bills, never owed back, never paid out; a reimbursement is born from an
+ *  out-of-pocket expense. One credit mechanism for every kind. */
+export type DuesCreditType = 'contribution' | 'fundraiser' | 'overpayment' | 'other' | 'forgiven' | 'reimbursement';
 
 export interface DuesCredit {
   id: string;

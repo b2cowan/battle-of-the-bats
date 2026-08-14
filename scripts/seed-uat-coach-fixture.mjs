@@ -528,6 +528,26 @@ if (!existingDues?.length) {
   ok('dues already present');
 }
 
+/* Credits meet the bills (owner model 2026-08-14): the part-paid player carries a fundraiser
+   credit that lands on their OPEN instalment, so the sweep renders the credit-era states —
+   "$X to send", the covered-by sub-line, and the Credits column with something in it. Without
+   this row every new element has ZERO GEOMETRY and a green sweep proves nothing (the
+   empty-fixture lesson, again). Guarded separately from the dues block above so existing
+   fixtures gain it on re-run. */
+const { data: existingCredit } = await db.from('rep_dues_credits')
+  .select('id').eq('program_year_id', py.id).limit(1);
+if (!existingCredit?.length && ids.length >= 2) {
+  const cc = await db.from('rep_dues_credits').insert({
+    program_year_id: py.id, player_id: ids[1],
+    amount: 150, description: 'Fundraiser rebate — Bottle Drive',
+    credit_type: 'fundraiser', credit_date: new Date().toISOString().slice(0, 10),
+  });
+  if (cc.error) { console.error('✗ dues credit insert', cc.error.message); process.exit(1); }
+  ok('fundraiser credit seeded (part-paid player — the "to send" states now render)');
+} else {
+  ok('dues credit already present (or roster too small)');
+}
+
 // Expenses AND payables live in the same table, told apart by `expense_type`. Both sub-tabs need
 // a row or half the Expenses screen is still an empty state.
 const { data: existingExp } = await db.from('rep_team_expenses')

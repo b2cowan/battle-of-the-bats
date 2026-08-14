@@ -11,14 +11,16 @@
  *
  *  2. DUE NEXT — "what does this family owe me right now?" Past-due remainders plus what is
  *     still uncovered on the next upcoming installment — deliberately NOT the season balance,
- *     which folds in installments months away. Credits are deliberately excluded: they sit
- *     against the season balance (rollingBalance), and folding them in here would make this
- *     figure disagree with the remainder the reminder emails chase.
+ *     which folds in installments months away. Since credits landed on bills (owner model
+ *     2026-08-14) the remainder here is the NET "to send" figure — cash remainder minus credits
+ *     applied to that installment — because this figure's one invariant is that it equals the
+ *     remainder the reminder emails chase, and reminders now chase the net.
  *
- * All remainders come from InstallmentCoverage.remaining (lib/dues-payments.ts) — THE remainder,
- * never re-derived here (guard: tests/unit/dues-definition-guard.test.ts). "Past due" uses the
- * same calendar rule as isInstallmentOverdue: strictly before today, in the org's timezone —
- * callers pass `today` from tournamentToday(), never a raw UTC date.
+ * Remainders come from the installment's `toSend` (dues payload, derived by lib/dues-credits.ts
+ * over InstallmentCoverage.remaining) with the raw cash remainder as fallback for callers that
+ * predate credits — never re-derived here (guard: tests/unit/dues-definition-guard.test.ts).
+ * "Past due" uses the same calendar rule as isInstallmentOverdue: strictly before today, in the
+ * org's timezone — callers pass `today` from tournamentToday(), never a raw UTC date.
  *
  * ⚠ All arithmetic is integer cents, as in lib/dues-payments.ts.
  */
@@ -31,7 +33,27 @@ export interface ViewableInstallment {
   amount: number;
   dueDate: string;
   paidAt: string | null;
+  /** NET remainder — cash remainder minus credits applied here (the dues payload field of the
+   *  same name). Optional so pre-credit callers fall back to the cash remainder. */
+  remainingAmount?: number;
+  /** Credit dollars applied to this installment (0 when credits sit off-bill). */
+  creditApplied?: number;
 }
+
+/** The one remainder rule, in dollars — what the family is asked to SEND on this installment:
+ *  the payload's net figure when present, else the cash remainder. EXPORTED so the dues panel
+ *  and the By-installment lens read the same rule instead of each re-deriving the fallback
+ *  chain (the /simplify pass found two local copies the day it was written). */
+export function installmentToSend(
+  inst: Pick<ViewableInstallment, 'amount' | 'remainingAmount'>,
+  cov: InstallmentCoverage | undefined,
+): number {
+  if (inst.remainingAmount != null) return inst.remainingAmount;
+  return cov ? cov.remaining : inst.amount;
+}
+
+const remainderCents = (inst: ViewableInstallment, cov: InstallmentCoverage | undefined) =>
+  toCents(installmentToSend(inst, cov));
 
 export interface PlayerScheduleLike {
   installments: ViewableInstallment[];
@@ -48,8 +70,10 @@ export interface InstallmentColumn {
   assessed: number;
   /** Payment dollars allocated to this installment across the team. */
   collected: number;
-  /** Dollars still missing on it — the figure reminders chase. */
+  /** Dollars still to SEND on it — net of credits applied, the figure reminders chase. */
   remaining: number;
+  /** Credit dollars applied to this installment across the team (fundraising et al.). */
+  creditApplied: number;
   /** Players who have this installment on their schedule. */
   playerCount: number;
   /** Players whose installment is fully covered. */
@@ -82,6 +106,7 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
     let assessed = 0;
     let collected = 0;
     let remaining = 0;
+    let creditApplied = 0;
     let paidCount = 0;
     let behindCount = 0;
     const dateTally = new Map<string, number>();
@@ -89,11 +114,15 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
       assessed += toCents(inst.amount);
       // A missing coverage row means no payments have reached this installment.
       const allocated = toCents(cov?.allocated ?? 0);
-      const rem = cov ? toCents(cov.remaining) : toCents(inst.amount);
+      const rem = remainderCents(inst, cov);
       collected += allocated;
       remaining += rem;
+      creditApplied += toCents(inst.creditApplied ?? 0);
+      // "Paid" stays CASH-covered; an installment settled by credits counts toward nothing
+      // left to send (remaining) without joining paidCount — Paid stays cash, everywhere.
       if (cov?.covered) paidCount += 1;
-      // Past-due by the player's OWN date — the header's common date is presentation.
+      // Past-due by the player's OWN date — the header's common date is presentation. A bill
+      // fundraising has fully covered is not past due for anyone.
       if (rem > 0 && inst.dueDate < today) behindCount += 1;
       dateTally.set(inst.dueDate, (dateTally.get(inst.dueDate) ?? 0) + 1);
     }
@@ -109,6 +138,7 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
       assessed: toDollars(assessed),
       collected: toDollars(collected),
       remaining: toDollars(remaining),
+      creditApplied: toDollars(creditApplied),
       playerCount: rows.length,
       paidCount,
       behindCount,
@@ -143,7 +173,7 @@ export function dueNextForPlayer(
   let totalRemaining = 0;
   for (const inst of [...installments].sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.installmentNumber - b.installmentNumber)) {
     const cov = coverage.find(c => c.installmentId === inst.id);
-    const rem = toCents(cov ? cov.remaining : inst.amount);
+    const rem = remainderCents(inst, cov);
     if (rem <= 0) continue;
     totalRemaining += rem;
     if (inst.dueDate < today) {

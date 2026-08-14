@@ -17,7 +17,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
-import { allocateDuesPayments, duesPaidAmount } from '@/lib/dues-payments';
+import { duesPaidAmount } from '@/lib/dues-payments';
+import { creditsTotal, deriveDuesPosition } from '@/lib/dues-credits';
 import { tournamentToday } from '@/lib/timezone';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
@@ -103,15 +104,9 @@ export const GET = withObservability(async (req: Request,
       // digest and by an Ask the Front Office answer, and three hand-copies each promised in a
       // comment that they matched, with nothing enforcing it.
       const outstanding = outstandingForSchedule(schedule, paidAmount);
-      // Per-installment coverage for the drawer's "$200.00 of $300.00" chips — and each
-      // installment carries its own remainder so downstream shapings (the Insights dues line)
-      // quote what's MISSING at a due date, not face values.
-      const coverage = schedule ? allocateDuesPayments(installments, payments).coverage : [];
-      const coverageById = new Map(coverage.map(c => [c.installmentId, c]));
-      const installmentsOut = installments.map(i => ({
-        ...i,
-        remainingAmount: coverageById.get(i.id)?.remaining ?? i.amount,
-      }));
+      // Per-installment coverage for the drawer's "$200.00 of $300.00" chips, plus the credit
+      // position over the remainders — ONE assembly (lib/dues-credits.ts deriveDuesPosition),
+      // shared with every other dues reader so they cannot drift.
 
       const rawCredits = creditsMap.get(p.id) ?? [];
       const credits = rawCredits.map(c => ({
@@ -126,8 +121,45 @@ export const GET = withObservability(async (req: Request,
         paymentId:   c.payment_id ?? null,
         createdAt:   c.created_at,
       }));
-      const totalCredits  = credits.reduce((s, c) => s + (c.amount as number), 0);
+      // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.
+      const totalCredits  = creditsTotal(credits.map(c => ({ amount: c.amount as number })));
       const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
+
+      // Credits land on bills (owner model 2026-08-14): derived over the CASH remainders, in the
+      // team's chosen direction. Cash always claims a bill before a credit does — recompute after
+      // any payment/credit/schedule change and the answer is simply true again.
+      const { coverage, position } = deriveDuesPosition({
+        installments: schedule ? installments : [],
+        payments,
+        credits: credits.map(c => ({
+          id: c.id as string,
+          amount: c.amount as number,
+          creditType: c.creditType as string,
+          creditDate: c.creditDate as string,
+          createdAt: (c.createdAt as string | null) ?? null,
+          description: (c.description as string | null) ?? null,
+        })),
+        mode: programYear.creditApplication,
+      });
+      const creditCoverageById = new Map(position.perInstallment.map(c => [c.installmentId, c]));
+
+      // ⚠ `remainingAmount` is the NET figure since Pass 1 of the credit model — the cash
+      // remainder MINUS credits applied: what the family is actually asked to send. Every
+      // downstream quoting surface (Insights dues line, digest, By-installment lens) reads this
+      // field precisely so "the figure reminders chase" changes in one place. The raw cash
+      // remainder stays available per installment in `coverage`.
+      const installmentsOut = installments.map(i => {
+        const cc = creditCoverageById.get(i.id);
+        return {
+          ...i,
+          remainingAmount: cc?.toSend ?? i.amount,
+          creditApplied: cc?.creditApplied ?? 0,
+          // Settled by the server's own definition — the UI must never re-derive this predicate
+          // (it branches the status pill; a client-side threshold would silently drift).
+          creditSettled: cc?.settled ?? false,
+          creditSources: cc?.sources ?? [],
+        };
+      });
 
       return {
         // Money access and guardian-PII access are independent grants — redact PII/notes for a
@@ -142,11 +174,15 @@ export const GET = withObservability(async (req: Request,
         credits,
         totalCredits: Math.round(totalCredits * 100) / 100,
         rollingBalance,
+        // The three-state position (owner model 2026-08-14): what credits did, per player.
+        leftToSend: position.leftToSend,
+        creditApplied: Math.round((position.applied + position.forgivenApplied) * 100) / 100,
+        owedBack: position.owedBack,
       };
     }),
   );
 
-  return NextResponse.json({ players: playersWithDues });
+  return NextResponse.json({ players: playersWithDues, creditApplication: programYear.creditApplication });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/dues' });
 
 export const POST = withObservability(async (req: Request,

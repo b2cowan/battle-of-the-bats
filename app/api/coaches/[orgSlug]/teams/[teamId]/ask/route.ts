@@ -10,6 +10,7 @@ import {
   getRepPlayerDuesSchedules,
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
+  getRepDuesCreditsByProgramYear,
   getRepTeamPracticeAttendance,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -19,7 +20,8 @@ import { playerName, playerDisplayName } from '@/lib/coach-roster-name';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
-import { duesPaidAmount, paymentsTotalByPlayer, allocateDuesPayments } from '@/lib/dues-payments';
+import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
+import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 import { computePositionRecency, rankPositionsByStaleness, type PositionRecencyGame } from '@/lib/coach-position-recency';
@@ -190,11 +192,13 @@ export const GET = withObservability(async (req: Request,
 
   // ── Money questions ───────────────────────────────────────────────────────
   if (question.id === 'family_dues' || question.id === 'never_paid') {
-    const [roster, schedules, seasonPayments] = await Promise.all([
+    const [roster, schedules, seasonPayments, seasonCredits] = await Promise.all([
       getRepRosterPlayers(programYear.id),
       getRepPlayerDuesSchedules(programYear.id),
       getRepDuesPaymentsByProgramYear(programYear.id),
+      getRepDuesCreditsByProgramYear(programYear.id),
     ]);
+    const creditsByPlayer = groupByPlayer(seasonCredits);
     const installments = await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id));
     const bySchedule = new Map<string, typeof installments>();
     for (const i of installments) {
@@ -216,13 +220,15 @@ export const GET = withObservability(async (req: Request,
       // ONE shared definition (lib/dues-status.ts), also used by the dues route and the weekly
       // digest — so the answer and the Money page cannot quote different numbers.
       const outstanding = outstandingForSchedule(schedule, paidAmount);
-      // Per-installment remainders so the family answer quotes what's MISSING, not face values
-      // (same synthetic-total allocation the digest uses — coverage depends only on dollars).
-      const { coverage } = allocateDuesPayments(
-        insts.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
-        paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
-      );
-      const remainingById = new Map(coverage.map(c => [c.installmentId, c.remaining]));
+      // Per-installment remainders so the family answer quotes what the family is asked to SEND
+      // — cash remainder minus credits applied (owner model 2026-08-14; same synthetic-total
+      // allocation the digest uses — coverage depends only on dollars).
+      const { position, toSendById } = deriveDuesPosition({
+        installments: insts.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
+        payments: paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
+        credits: creditsByPlayer.get(p.id) ?? [],
+        mode: programYear.creditApplication,
+      });
       // Money access and guardian PII are independent grants. The GROUPING key is the guardian
       // email, computed here on the server; the redacted row decides only what may be NAMED.
       const visible = redactRosterPlayer(p, caps);
@@ -233,11 +239,12 @@ export const GET = withObservability(async (req: Request,
         guardianLastName: visible.guardianLastName ?? null,
         outstanding,
         paidAmount,
+        leftToSend: position.leftToSend,
         installments: insts.map(i => ({
           dueDate: i.dueDate,
           amount: i.amount,
           paidAt: i.paidAt,
-          remainingAmount: remainingById.get(i.id) ?? i.amount,
+          remainingAmount: toSendById.get(i.id) ?? i.amount,
         })),
       };
     });
@@ -249,7 +256,9 @@ export const GET = withObservability(async (req: Request,
       const unpaid = billed.filter(isNeverPaidPlayer);
       inputs.neverPaid = {
         names: unpaid.map(r => r.playerName),
-        outstanding: Math.round(unpaid.reduce((s, r) => s + r.outstanding, 0)),
+        // What these families are actually asked to SEND — a credit-lowered figure, so the
+        // answer never asks for a dollar fundraising already covered (owner model 2026-08-14).
+        outstanding: Math.round(unpaid.reduce((s, r) => s + r.leftToSend, 0)),
         billedCount: billed.length,
       };
     }

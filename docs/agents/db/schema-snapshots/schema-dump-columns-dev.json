@@ -10701,6 +10701,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_program_years",
+    "column_name": "credit_application",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'last_first'::text",
+    "ordinal_position": 14
+  },
+  {
     "table_name": "rep_roster_players",
     "column_name": "id",
     "data_type": "uuid",

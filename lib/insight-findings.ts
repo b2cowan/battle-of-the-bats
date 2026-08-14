@@ -399,9 +399,14 @@ export interface FindingsDuesRow {
    *  that is two part-payments into an installment (every paidAt still null). Required, matching
    *  `PlayerDuesLike`: a row built without it is the silent-regression path this project closed. */
   paidAmount: number;
-  /** `remainingAmount` (when present) is what is still MISSING on the installment after
-   *  recorded payments — the proximity sentence quotes it instead of the face value, so a
-   *  family $200 into a $300 installment inflates "N unpaid ($X)" by $100, not $300. */
+  /** What the family is still asked to SEND across the season (dues − cash − credits applied;
+   *  owner model 2026-08-14). A family whose fundraising settled everything stops counting as
+   *  "never paid" — the predicate reads this when present. */
+  leftToSend?: number;
+  /** `remainingAmount` (when present) is what the family is asked to SEND on the installment —
+   *  cash remainder minus credits applied — the proximity sentence quotes it instead of the
+   *  face value, so a family $200 into a $300 installment inflates "N unpaid ($X)" by $100,
+   *  not $300, and a bill fundraising covered inflates it by nothing. */
   installments?: { paidAt: string | null; dueDate: string; amount?: number; remainingAmount?: number }[] | null;
 }
 
@@ -425,7 +430,10 @@ export function summarizeDuesForFindings(rows: FindingsDuesRow[], todayISO: stri
     ? atMinDue.reduce((s, p) => s + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate === minDue).reduce((x, i) => x + (i.remainingAmount ?? i.amount ?? 0), 0), 0)
     : 0;
   return {
-    outstandingTotal: Math.round(rows.reduce((s, p) => s + (p.outstanding ?? 0), 0)),
+    // What families are actually ASKED TO SEND (net of credits applied) when the rows carry it —
+    // the gross figure beside a credit-aware neverPaidCount was an internally contradictory
+    // summary (/review 2026-08-14).
+    outstandingTotal: Math.round(rows.reduce((s, p) => s + (p.leftToSend ?? p.outstanding ?? 0), 0)),
     overdueCount: rows.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate < todayISO).length, 0),
     neverPaidCount: rows.filter(isNeverPaidPlayer).length,
     nextDue: minDue ? { dueDateISO: minDue, unpaidCount: atMinDue.length, unpaidTotal: minDueTotal > 0 ? Math.round(minDueTotal) : null } : null,

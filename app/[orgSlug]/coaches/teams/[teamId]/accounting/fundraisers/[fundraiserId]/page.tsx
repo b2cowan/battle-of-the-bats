@@ -10,6 +10,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import { applyCreditsToBills, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 
 interface FundraiserDetail {
   id: string;
@@ -33,10 +34,22 @@ interface FundraiserEntry {
   notes: string | null;
 }
 
+/** One open bill for the "Where it lands" preview — served in schedule order by the entries
+ *  route; the preview walks them in the team's credit-application direction. */
+interface OpenBill {
+  installmentNumber: number;
+  dueDate: string | null;
+  amount: number;
+  toSend: number;
+}
+
 interface PlayerRow {
   playerId: string;
   playerName: string;
-  remainingDues: number;
+  /** What the family is still asked to SEND (dues − cash − credits applied) — the honest name
+   *  for the figure this page used to call remainingDues. */
+  leftToSend: number;
+  openBills: OpenBill[];
   entry: FundraiserEntry | null;
 }
 
@@ -51,6 +64,40 @@ function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/**
+ * The "Where it lands" preview — THE shared application arithmetic (lib/dues-credits.ts) run
+ * over the open bills the entries route served, with the not-yet-saved rebate as the one
+ * credit. Never a local re-derivation: the preview must show exactly what saving will do.
+ */
+function previewCreditLanding(openBills: OpenBill[], rebate: number, mode: CreditApplicationMode) {
+  const position = applyCreditsToBills({
+    coverage: openBills.map(b => ({
+      installmentId: String(b.installmentNumber),
+      installmentNumber: b.installmentNumber,
+      allocated: 0,
+      remaining: b.toSend,
+      covered: false,
+      completedOn: null,
+    })),
+    credits: [{ id: 'preview', amount: rebate, creditType: 'fundraiser', creditDate: '9999-01-01' }],
+    mode,
+  });
+  const byNumber = new Map(position.perInstallment.map(c => [c.installmentNumber, c]));
+  const rows = openBills
+    .map(b => {
+      const after = byNumber.get(b.installmentNumber);
+      if (!after || after.creditApplied <= 0.005) return null;
+      return {
+        installmentNumber: b.installmentNumber,
+        dueDate: b.dueDate,
+        wasToSend: b.toSend,
+        newToSend: after.toSend,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+  return { rows, leftover: position.owedBack };
+}
+
 export default function FundraiserDetailPage({
   params: paramsPromise,
 }: {
@@ -63,6 +110,9 @@ export default function FundraiserDetailPage({
   const [fundraiser, setFundraiser]   = useState<FundraiserDetail | null>(null);
   const [summary, setSummary]         = useState<Summary | null>(null);
   const [players, setPlayers]         = useState<PlayerRow[]>([]);
+  // Normalized at the fetch boundary (mirror of the server's mapper), so everything below
+  // trusts the state as a real mode.
+  const [creditApplication, setCreditApplication] = useState<CreditApplicationMode>('last_first');
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
 
@@ -118,6 +168,7 @@ export default function FundraiserDetailPage({
       setFundraiser(data.fundraiser);
       setSummary(data.summary);
       setPlayers(data.players);
+      setCreditApplication(normalizeCreditApplicationMode(data.creditApplication));
     } catch (e: any) {
       setError(e.message ?? 'Failed to load fundraiser.');
     } finally {
@@ -317,7 +368,10 @@ export default function FundraiserDetailPage({
                     <th className={styles.th}>Player</th>
                     <th className={styles.th} style={{ textAlign: 'right' }}>Amount Raised</th>
                     <th className={styles.th} style={{ textAlign: 'right' }}>Rebate Earned</th>
-                    <th className={styles.th} style={{ textAlign: 'right' }}>Remaining Dues</th>
+                    {/* "Left to send" — dues minus cash minus credits applied: what this family
+                        is actually asked for (the old "Remaining Dues" silently clamped a
+                        different formula — plan §7.6). */}
+                    <th className={styles.th} style={{ textAlign: 'right' }}>Left to Send</th>
                     <th className={styles.th}></th>
                   </tr>
                 </thead>
@@ -347,9 +401,9 @@ export default function FundraiserDetailPage({
                             <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                           )}
                         </td>
-                        <td className={styles.td} data-label="Dues left" style={{ textAlign: 'right' }}>
-                          <span style={{ color: player.remainingDues > 0 ? 'var(--home-amber, #f97316)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-                            {player.remainingDues > 0 ? fmt(player.remainingDues) : '—'}
+                        <td className={styles.td} data-label="Left to send" style={{ textAlign: 'right' }}>
+                          <span style={{ color: player.leftToSend > 0 ? 'var(--home-amber, #f97316)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>
+                            {player.leftToSend > 0 ? fmt(player.leftToSend) : '—'}
                           </span>
                         </td>
                         <td
@@ -380,6 +434,48 @@ export default function FundraiserDetailPage({
                                 aria-label="Notes"
                               />
                               {logError && <p className={styles.errorText} style={{ margin: 0, fontSize: '0.78rem' }}>{logError}</p>}
+                              {/* "Where it lands" (binding mockup §2) — the bills this rebate
+                                  will lower, shown BEFORE saving. New entries only: an edit's
+                                  preview would need the delta against the credit already
+                                  applied, and the screen re-derives on save either way. */}
+                              {!player.entry && (() => {
+                                const raised = parseFloat(logAmount);
+                                const pct = fundraiser?.playerRebatePercent ?? 0;
+                                if (isNaN(raised) || raised <= 0 || pct <= 0) return null;
+                                const rebate = Math.round(raised * pct) / 100;
+                                if (rebate <= 0.005) return null;
+                                const landing = previewCreditLanding(player.openBills, rebate, creditApplication);
+                                return (
+                                  <div style={{ flexBasis: '100%', whiteSpace: 'normal', border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 7, overflow: 'hidden', marginTop: '0.2rem' }}>
+                                    <div style={{ padding: '0.3rem 0.6rem', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: 'var(--home-dim, rgba(255,255,255,0.45))', borderBottom: '1px solid var(--home-line, rgba(255,255,255,0.08))', background: 'var(--home-card, rgba(255,255,255,0.03))' }}>
+                                      Where it lands — {fmt(rebate)} credit ({pct}% of {fmt(raised)})
+                                    </div>
+                                    {landing.rows.length === 0 ? (
+                                      <p className={styles.muted} style={{ margin: 0, padding: '0.45rem 0.6rem', fontSize: '0.75rem' }}>
+                                        {creditApplication === 'keep_separate'
+                                          ? 'Credits are kept separate on this team — bills don’t move; the amount is owed back at season’s end.'
+                                          : 'No open bills — the credit becomes money owed back to this family.'}
+                                      </p>
+                                    ) : (
+                                      landing.rows.map(r => (
+                                        <div key={r.installmentNumber} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', padding: '0.35rem 0.6rem', fontSize: '0.76rem', fontVariantNumeric: 'tabular-nums', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
+                                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))' }}>
+                                            Installment #{r.installmentNumber}{r.dueDate ? ` — due ${r.dueDate}` : ''}
+                                          </span>
+                                          <span style={{ color: 'var(--success-light)', fontWeight: 600 }}>
+                                            {r.newToSend <= 0.005 ? 'covered — nothing to send' : `was ${fmt(r.wasToSend)} to send — now ${fmt(r.newToSend)}`}
+                                          </span>
+                                        </div>
+                                      ))
+                                    )}
+                                    {landing.leftover > 0.005 && creditApplication !== 'keep_separate' && (
+                                      <p className={styles.muted} style={{ margin: 0, padding: '0.35rem 0.6rem', fontSize: '0.72rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
+                                        {fmt(landing.leftover)} more than the open bills — owed back to this family.
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {/* Named rather than icon-only: these were a bare tick and cross
                                   with only a title attribute, which reads as nothing on a phone
                                   and nothing to a screen reader. Full width once the row stacks. */}

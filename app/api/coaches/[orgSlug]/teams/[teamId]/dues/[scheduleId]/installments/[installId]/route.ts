@@ -6,13 +6,14 @@ import {
   getActiveRepProgramYear,
   getRepPlayerDuesInstallments,
   getRepDuesPaymentsForPlayer,
+  getRepDuesCreditsForPlayer,
   recordRepDuesPayment,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
-import { allocateDuesPayments } from '@/lib/dues-payments';
+import { deriveDuesPosition } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -74,25 +75,46 @@ export const PATCH = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Installment not found' }, { status: 404 });
   }
 
-  const payments = await getRepDuesPaymentsForPlayer(programYear.id, installment.playerId);
-  const { coverage } = allocateDuesPayments(installments, payments);
-  const remaining = coverage.find(cov => cov.installmentId === installId)?.remaining ?? installment.amount;
-  if (remaining <= 0.005) {
-    return NextResponse.json({ error: 'Installment already covered by recorded payments' }, { status: 409 });
-  }
-
-  // CLAIM the installment atomically (paid_at IS NULL → stamp) so two concurrent Mark Paid
-  // clicks can't both record the remainder — the loser lands here and gets the same 409 the
-  // old stamp-based flow gave it. The stamp this writes is the correct end state (the payment
-  // below covers the installment); if recording fails, the claim is reverted in the catch.
+  // CLAIM the installment atomically FIRST (paid_at IS NULL → stamp) so two concurrent Mark
+  // Paid clicks can't both record — the loser 409s like the old stamp-based flow. ⚠ ONE
+  // claimStamp serves the claim write AND the failure revert below: they were two separate
+  // new Date() calls once, which meant the revert's paid_at match could never hit the row it
+  // was reverting (found reading this hunk in the 2026-08-14 review).
+  const claimStamp = new Date().toISOString();
   const { data: claimed } = await supabaseAdmin
     .from('rep_player_dues_installments')
-    .update({ paid_at: new Date().toISOString() })
+    .update({ paid_at: claimStamp })
     .eq('id', installId)
     .is('paid_at', null)
     .select('id');
   if (!claimed || claimed.length === 0) {
     return NextResponse.json({ error: 'Installment already covered by recorded payments' }, { status: 409 });
+  }
+
+  // Fetch the money AFTER the claim, so the figure recorded is as fresh as it can be: the
+  // one-tap shortcut records what the family is actually ASKED FOR — the NET remainder after
+  // credits land on this installment (owner model 2026-08-14). Deriving before the claim left
+  // a window where a concurrent Record-payment made the pre-claim figure stale and this click
+  // double-recorded it (/review 2026-08-14).
+  const [payments, credits] = await Promise.all([
+    getRepDuesPaymentsForPlayer(programYear.id, installment.playerId),
+    getRepDuesCreditsForPlayer(programYear.id, installment.playerId),
+  ]);
+  const { toSendById } = deriveDuesPosition({
+    installments,
+    payments,
+    credits,
+    mode: programYear.creditApplication,
+  });
+  const toSend = toSendById.get(installId) ?? installment.amount;
+  if (toSend <= 0.005) {
+    // Nothing left to ask the family for — release the claim and say so.
+    await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .update({ paid_at: null })
+      .eq('id', installId)
+      .eq('paid_at', claimStamp);
+    return NextResponse.json({ error: 'Installment already covered by recorded payments or credits' }, { status: 409 });
   }
 
   const { data: playerRow } = await supabaseAdmin
@@ -102,12 +124,12 @@ export const PATCH = withObservability(async (_req: Request,
     .single();
   const playerName = [playerRow?.player_first_name, playerRow?.player_last_name].filter(Boolean).join(' ') || 'player';
 
-  // The preloaded rows carry the claim, which does two load-bearing things: (1) stamped-first
-  // allocation now sends the new dollars to THE CLICKED installment — what the button promises —
-  // instead of an earlier part-paid one; (2) if the dollars end up not covering it after all,
-  // the projection sees stamped-but-uncovered and CLEARS the claim rather than leaving a false
-  // paid mark.
-  const claimStamp = new Date().toISOString();
+  // The preloaded rows carry the claim, which sends the new dollars to THE CLICKED installment
+  // (stamped-first allocation) — what the button promises. ⚠ On a partly-credit-covered
+  // installment the recorded cash is deliberately LESS than the face value, so the projection
+  // will see stamped-but-not-cash-covered and clear the stamp again — that is ROUTINE under the
+  // credit model, not a failure: the row then reads "Covered by fundraising" (credits settle the
+  // rest), and Paid stays a cash word.
   const claimedInstallments = installments.map(i =>
     i.id === installId ? { ...i, paidAt: claimStamp } : i);
 
@@ -117,7 +139,7 @@ export const PATCH = withObservability(async (_req: Request,
       programYearId: programYear.id,
       playerId: installment.playerId,
       playerName,
-      amount: remaining,
+      amount: toSend,
       receivedDate: tournamentToday(),
       method: 'other',
       note: `Marked paid (installment #${installment.installmentNumber})`,

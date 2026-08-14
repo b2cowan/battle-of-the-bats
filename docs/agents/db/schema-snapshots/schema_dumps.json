@@ -10703,6 +10703,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_program_years",
+        "pos": 14,
+        "column_name": "credit_application",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'last_first'::text"
+      },
+      {
         "table_name": "rep_roster_players",
         "pos": 1,
         "column_name": "id",
@@ -23588,7 +23597,7 @@
         "kind": "CHECK",
         "table_name": "rep_dues_credits",
         "detail": "rep_dues_credits_credit_type_check",
-        "check_clause": "(credit_type = ANY (ARRAY['contribution'::text, 'fundraiser'::text, 'overpayment'::text, 'other'::text]))"
+        "check_clause": "(credit_type = ANY (ARRAY['contribution'::text, 'fundraiser'::text, 'overpayment'::text, 'other'::text, 'forgiven'::text, 'reimbursement'::text]))"
       },
       {
         "kind": "RLS",
@@ -23799,6 +23808,12 @@
         "table_name": "rep_player_tryout_baselines",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_program_years",
+        "detail": "rep_program_years_credit_application_check",
+        "check_clause": "(credit_application = ANY (ARRAY['last_first'::text, 'next_first'::text, 'keep_separate'::text]))"
       },
       {
         "kind": "CHECK",

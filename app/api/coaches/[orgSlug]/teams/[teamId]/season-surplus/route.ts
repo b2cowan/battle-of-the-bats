@@ -6,6 +6,7 @@ import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
+import { creditsTotal, creditsTotalByPlayer } from '@/lib/dues-credits';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -63,16 +64,11 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
 
   const paidMap = paymentsTotalByPlayer(seasonPayments);
 
-  // Build credits map per player
-  const creditMap = new Map<string, number>();
-  for (const c of (allCredits ?? []) as Array<{ player_id: string; amount: number }>) {
-    creditMap.set(c.player_id, (creditMap.get(c.player_id) ?? 0) + c.amount);
-  }
-
-  // Total individual credits (sum of all player credits)
-  const totalAllCredits = Math.round(
-    [...creditMap.values()].reduce((s, v) => s + v, 0) * 100,
-  ) / 100;
+  // ONE credit definition (lib/dues-credits.ts) — this was one of five hand-copied credit sums.
+  const creditRows = ((allCredits ?? []) as Array<{ player_id: string; amount: number }>)
+    .map(c => ({ playerId: c.player_id, amount: Number(c.amount) }));
+  const creditMap = creditsTotalByPlayer(creditRows);
+  const totalAllCredits = creditsTotal(creditRows);
 
   // Even pool = surplus minus the portion already accounted for by individual credits
   const evenPool = Math.max(0, Math.round((totalSurplus - totalAllCredits) * 100) / 100);

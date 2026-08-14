@@ -405,13 +405,20 @@ export default function TeamOverviewPage({
         // `paidAmount` is declared here on purpose: `isNeverPaidPlayer` REQUIRES payment dollars
         // (mig 232 — the stamps are only a coverage projection), and this local shape is what
         // turns "the payload happened to carry the field" into a compiler-checked contract.
-        const duesData: { players?: Array<{ outstanding?: number; paidAmount: number; installments?: Array<{ paidAt: string | null; dueDate: string }> }> } = await duesRes.json();
+        // `paidAmount` and `leftToSend` are declared here on purpose (mig 232 / credit model
+        // 2026-08-14) — the local shape turns "the payload happened to carry the field" into a
+        // compiler-checked contract, so a payload rename cannot silently revert this badge to
+        // credit-blind counting.
+        const duesData: { players?: Array<{ outstanding?: number; paidAmount: number; leftToSend: number; installments?: Array<{ paidAt: string | null; dueDate: string; remainingAmount?: number; amount?: number }> }> } = await duesRes.json();
         const players = duesData.players ?? [];
-        const totalOutstanding = players.reduce((s, p) => s + (p.outstanding ?? 0), 0);
+        // The tile quotes what families are actually ASKED TO SEND — net of credits applied.
+        const totalOutstanding = players.reduce((s, p) => s + (p.leftToSend ?? p.outstanding ?? 0), 0);
         // Overdue is a CALENDAR question in the org's timezone — comparing date strings avoids
-        // the device-zone skew that flagged dues late the evening before they were due.
+        // the device-zone skew that flagged dues late the evening before they were due. A row
+        // with nothing left to send (remainingAmount is the NET figure) is not late for anyone.
         const orgToday = tournamentToday();
-        const overdue = players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate < orgToday).length, 0);
+        const overdue = players.reduce((n, p) => n + (p.installments ?? []).filter(i =>
+          !i.paidAt && i.dueDate < orgToday && (i.remainingAmount ?? i.amount ?? 1) > 0.005).length, 0);
         // "Who's paid nothing" — a player who owes dues but has zero payments recorded.
         // Distinct from "overdue" (a specific installment past its due date): a coach wants
         // to know who hasn't started paying at all, not just which instalments slipped.

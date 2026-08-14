@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-14",
-  "total": 56,
+  "total": 58,
   "counts": {
     "tables": 2,
-    "columns": 30,
+    "columns": 31,
     "indexes": 4,
     "constraints": 13,
-    "rls": 7
+    "rls": 8
   },
   "items": [
     {
@@ -23,6 +23,10 @@
     },
     {
       "key": "check:only-dev:rep_dues_payments.rep_dues_payments_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_program_years.rep_program_years_credit_application_check",
       "sig": ""
     },
     {
@@ -95,6 +99,10 @@
     },
     {
       "key": "column:only-dev:rep_dues_payments.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.credit_application",
       "sig": ""
     },
     {

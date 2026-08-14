@@ -89,6 +89,12 @@ export type DuesExportPlayer = {
   paidAmount: number;
   totalCredits: number;
   rollingBalance: number;
+  /** Mode-aware derived figures (owner model 2026-08-14) — REQUIRED so the export's status word
+   *  takes duesStatusLabel's mode-aware path; without them a keep_separate team's spreadsheet
+   *  would read "Settled" beside a family still owing cash (the /review Critical). */
+  leftToSend: number;
+  owedBack: number;
+  outstanding: number;
 };
 
 export function duesExportRows(players: DuesExportPlayer[]): ExportRow[] {

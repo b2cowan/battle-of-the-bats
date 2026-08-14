@@ -40,35 +40,67 @@ export interface PlayerDuesLike {
    *  part-paying family as "never paid" — this project's founding defect — with no compiler or
    *  test signal. Making the field mandatory turns that mistake into a type error. */
   paidAmount: number;
+  /** What the family is still asked to SEND (dues − cash − credits applied; owner model
+   *  2026-08-14). When supplied, a family with nothing left to send is never a chase target —
+   *  their fundraising settled the season, and "you haven't paid anything yet" would be both
+   *  rude and wrong. Optional so pre-credit callers keep their behaviour. */
+  leftToSend?: number;
   installments?: DuesInstallmentLike[] | null;
 }
 
-/** True when the player owes dues but has recorded zero payments. */
+/** True when the player owes dues, has recorded zero payments, and still has something to send. */
 export function isNeverPaidPlayer(p: PlayerDuesLike): boolean {
   const insts = p.installments ?? [];
   const hasDues = insts.length > 0 || (p.outstanding ?? 0) > 0;
-  return hasDues && p.paidAmount <= 0.005;
+  return hasDues && p.paidAmount <= 0.005 && (p.leftToSend === undefined || p.leftToSend > 0.005);
 }
 
 /**
- * The word a coach reads for one player's dues position — "Unpaid", "Partial", "Fully paid",
- * "In credit", or "Not set" when no schedule exists.
+ * The word a coach reads for one player's dues position — "Unpaid", "Partial", "Settled",
+ * "Fully paid", "In credit", or "Not set" when no schedule exists.
  *
  * Shared because it is now read in two places that must agree: the Player Dues table on screen,
  * and the Player dues export offered from the Money hub's Export menu. A coach who exports a
  * spreadsheet and finds a different status beside a name than the one the table showed has been
  * told two things by one product. The colour each status is drawn in stays with the table — that
  * is presentation, and a spreadsheet has no use for it.
+ *
+ * "Settled" vs "Fully paid" (owner model 2026-08-14): PAID STAYS CASH. A balance cleared with
+ * credits doing part of the work reads Settled, never Fully paid — the pre-model export row
+ * reading "Paid $0.00 · Status Fully paid" is the exact embarrassment this distinction retires.
+ *
+ * ⚠ MODE-AWARE when the derived fields are supplied (leftToSend / owedBack / outstanding — the
+ * dues payload carries all three): the label follows what the BILLS say, in the team's own
+ * credit-application mode. Without them (rollingBalance alone) a keep_separate team's unapplied
+ * credit read as "Settled" while the family still owed every cash dollar — the /review pass's
+ * one Critical. The legacy branch survives only for callers that predate the derived fields.
  */
 export function duesStatusLabel(p: {
   schedule: unknown | null;
   rollingBalance: number;
   paidAmount: number;
   totalCredits: number;
-}): 'Not set' | 'In credit' | 'Fully paid' | 'Partial' | 'Unpaid' {
+  /** Dues − cash − credits APPLIED (mode-aware). */
+  leftToSend?: number;
+  /** The family's money the team is holding (never includes forgiveness). */
+  owedBack?: number;
+  /** Schedule total − cash paid (credit-blind, the shared definition). */
+  outstanding?: number;
+}): 'Not set' | 'In credit' | 'Settled' | 'Fully paid' | 'Partial' | 'Unpaid' {
   if (!p.schedule) return 'Not set';
+  if (p.leftToSend !== undefined && p.owedBack !== undefined && p.outstanding !== undefined) {
+    if (p.leftToSend > 0.005) {
+      // Progress = cash received, or credits genuinely applied to bills (outstanding − leftToSend).
+      const progress = p.paidAmount > 0.005 || p.outstanding - p.leftToSend > 0.005;
+      return progress ? 'Partial' : 'Unpaid';
+    }
+    // Nothing left to send. "In credit" = the team holds this family's money.
+    if (p.owedBack > 0.005) return 'In credit';
+    return p.outstanding <= 0.005 ? 'Fully paid' : 'Settled';
+  }
+  // Legacy (mode-blind) fallback — pre-credit-model callers only.
   if (p.rollingBalance < -0.005) return 'In credit';
-  if (p.rollingBalance <= 0.005) return 'Fully paid';
+  if (p.rollingBalance <= 0.005) return p.totalCredits > 0.005 ? 'Settled' : 'Fully paid';
   if (p.paidAmount > 0 || p.totalCredits > 0) return 'Partial';
   return 'Unpaid';
 }

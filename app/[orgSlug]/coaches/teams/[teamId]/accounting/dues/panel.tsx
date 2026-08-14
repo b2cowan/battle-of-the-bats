@@ -12,6 +12,7 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
+import { installmentToSend } from '@/lib/dues-installment-view';
 import styles from '../../../../coaches.module.css';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -19,6 +20,7 @@ import { duesReminderEmail } from '@/lib/dues-reminder-email';
 import { fmt } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
+import { creditsTotal, normalizeCreditApplicationMode, CREDIT_APPLICATION_MODES, type CreditApplicationMode } from '@/lib/dues-credits';
 import type {
   RepRosterPlayer,
   RepPlayerDuesSchedule,
@@ -30,19 +32,41 @@ import type {
   SeasonRefundRow,
 } from '@/lib/types';
 
+/** One credit's landing on one installment — "covered by fundraising — Bottle Drive". */
+interface CreditSource {
+  creditId: string;
+  creditType: string;
+  description: string | null;
+  amount: number;
+}
+
+/** The dues payload's installment rows. ⚠ `remainingAmount` is the NET figure since the credit
+ *  model (2026-08-14): cash remainder − credits applied — what the family is asked to SEND. */
+type InstallmentWithCredit = RepPlayerDuesInstallment & {
+  remainingAmount?: number;
+  creditApplied?: number;
+  /** Settled by the SERVER's definition (lib/dues-credits.ts) — never re-derive client-side. */
+  creditSettled?: boolean;
+  creditSources?: CreditSource[];
+};
+
 interface PlayerWithDues {
   player: RepRosterPlayer;
   schedule: RepPlayerDuesSchedule | null;
-  installments: RepPlayerDuesInstallment[];
+  installments: InstallmentWithCredit[];
   /** Payment FACTS (mig 232) — each row is a receipt with its own date, method and ledger line. */
   payments: RepDuesPayment[];
-  /** Per-installment coverage derived from payments — the "$200.00 of $300.00" chips. */
+  /** Per-installment CASH coverage derived from payments — the "$200.00 of $300.00" chips. */
   coverage: InstallmentCoverage[];
   paidAmount: number;
   outstanding: number;
   credits: DuesCredit[];
   totalCredits: number;
   rollingBalance: number;
+  /** The three-state position (owner model 2026-08-14): dues − cash − credits applied. */
+  leftToSend: number;
+  creditApplied: number;
+  owedBack: number;
 }
 
 interface SeasonSurplusData {
@@ -71,6 +95,9 @@ function fmtDate(s: string) {
 const DUES_STATUS_COLOR: Record<ReturnType<typeof duesStatusLabel>, string> = {
   'Not set':    'var(--home-dim, rgba(255,255,255,0.3))',
   'In credit':  'var(--success-light)',
+  // Settled = the balance cleared with credits doing part of the work (Paid stays cash — owner
+  // model 2026-08-14). Same good green as Fully paid: the family owes nothing either way.
+  Settled:      'var(--success-light)',
   'Fully paid': 'var(--success-light)',
   Partial:      'var(--warning)',
   Unpaid:       'var(--home-dim, rgba(255,255,255,0.4))',
@@ -82,10 +109,27 @@ function statusLabel(p: PlayerWithDues) {
 }
 
 const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
-  contribution: 'Contribution',
-  fundraiser:   'Fundraiser',
-  overpayment:  'Overpayment',
-  other:        'Other',
+  contribution:  'Contribution',
+  fundraiser:    'Fundraiser',
+  overpayment:   'Overpayment',
+  other:         'Other',
+  // New kinds (mig 233). Neither is offered by the manual Add-credit picker: forgiveness is
+  // granted from the settlement sheet (Pass 3) and reimbursements ride out-of-pocket expenses
+  // (Pass 2) — one door each, so the story of a credit is always traceable to its act.
+  forgiven:      'Forgiven',
+  reimbursement: 'Reimbursement',
+};
+
+const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
+  last_first:    'The last payment first',
+  next_first:    'The next payment first',
+  keep_separate: "They don't — settle at season's end",
+};
+
+const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
+  last_first:    'Fundraising shrinks the far end of the schedule; near-term amounts keep their dates',
+  next_first:    'Relief lands on the next bill due',
+  keep_separate: 'Bills never move — every credit waits for season’s end',
 };
 
 const PAYMENT_METHOD_LABELS: Record<DuesPaymentMethod, string> = {
@@ -232,6 +276,9 @@ export function PlayerDuesPanel({
   // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with dues).
   const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
   const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
+  // The team-wide credits setting (owner Call 2, mig 233) — how credits meet bills.
+  const [creditMode, setCreditMode] = useState<CreditApplicationMode | null>(null);
+  const [creditModeSaving, setCreditModeSaving] = useState(false);
   // "See an example" — what the reminder email says and when it goes out. Read-only, so it
   // carries no unsaved-changes guard and needs none of the tabActive plumbing.
   const [reminderPreviewOpen, setReminderPreviewOpen] = useState(false);
@@ -257,9 +304,38 @@ export function PlayerDuesPanel({
   useEffect(() => {
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings${seasonQuery}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setAutoReminders(d.autoRemindersEnabled ?? true); })
+      .then(d => {
+        if (!d) return;
+        setAutoReminders(d.autoRemindersEnabled ?? true);
+        // Normalize at the fetch boundary (mirror of the server's mapper) so everything below
+        // trusts the state as a real mode.
+        setCreditMode(normalizeCreditApplicationMode(d.creditApplication));
+      })
       .catch(() => {});
   }, [orgSlug, teamId, seasonQuery]);
+
+  async function saveCreditMode(mode: CreditApplicationMode) {
+    const previous = creditMode;
+    setCreditMode(mode); // optimistic — the hint line explains the choice immediately
+    setCreditModeSaving(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creditApplication: mode }),
+      });
+      if (!res.ok) throw new Error();
+      // The setting changes every "to send" figure on this screen — reload so the table,
+      // drawer and lens all tell the new story at once.
+      await load();
+    } catch {
+      // Revert only if a NEWER choice hasn't superseded this one — an old failure must never
+      // stomp a selection the coach has already moved past (/review 2026-08-14).
+      setCreditMode(current => (current === mode ? previous : current));
+    } finally {
+      setCreditModeSaving(false);
+    }
+  }
 
   async function toggleAutoReminders(enabled: boolean) {
     setAutoRemindersSaving(true);
@@ -586,19 +662,23 @@ export function PlayerDuesPanel({
   // flags on the rows above it.
   const seasonTotals = (() => {
     let assessed = 0;
-    let credits = 0;
+    // ONE credit definition (lib/dues-credits.ts) — this was the fifth hand-copied credit sum,
+    // the only client-side one, accumulating floats across the roster.
+    const credits = creditsTotal(players.map(p => ({ amount: p.totalCredits })));
     let collected = 0;
     let outstanding = 0;
     let overduePlayers = 0;
     let nextDue: string | null = null;
     for (const p of players) {
       if (p.schedule) assessed += p.schedule.totalAmount;
-      credits += p.totalCredits;
       collected += p.paidAmount;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
       let hasOverdue = false;
       for (const inst of p.installments) {
         if (inst.paidAt) continue;
+        // A bill with nothing left to SEND is not late for anyone — credits settled it, and
+        // paid_at deliberately never stamps on credit-covered rows (Paid stays cash).
+        if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) <= 0.005) continue;
         if (isInstallmentOverdue(inst.dueDate, inst.paidAt)) { hasOverdue = true; continue; }
         // "Next due" is the soonest date still AHEAD — an overdue date is not a plan, it's a debt,
         // and it is already reported on its own line.
@@ -1119,6 +1199,42 @@ export function PlayerDuesPanel({
               )}
             </div>
           )}
+
+          {/* Credits reduce — the ONE team-wide credits setting (owner Call 2, 2026-08-14).
+              A per-credit picker was considered and dropped: it turns every fundraiser entry
+              into a decision, and two credits pointing different ways on one player is a story
+              no one can retell. Same compact-row recipe as the reminders row above. */}
+          {creditMode !== null && (
+            <div className={styles.detailSection} style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.6rem 1rem' }}>
+              <DollarSign size={15} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Credits reduce</span>
+                <span className={styles.muted} style={{ fontSize: '0.78rem' }}>
+                  {CREDIT_MODE_HINTS[creditMode]}
+                </span>
+              </div>
+              {moneyCanWrite ? (
+                <select
+                  className={styles.input}
+                  aria-label="How credits reduce dues"
+                  value={creditMode}
+                  disabled={creditModeSaving}
+                  onChange={e => saveCreditMode(e.target.value as CreditApplicationMode)}
+                  style={{ flexShrink: 0, width: 'auto', fontSize: '0.8rem', minHeight: 44 }}
+                >
+                  {/* One source for the three sentences — the read-only label and the picker
+                      can never drift. */}
+                  {CREDIT_APPLICATION_MODES.map(m => (
+                    <option key={m} value={m}>{CREDIT_MODE_LABELS[m]}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className={styles.muted} style={{ fontSize: '0.8rem', flexShrink: 0 }}>
+                  {CREDIT_MODE_LABELS[creditMode]}
+                </span>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -1149,11 +1265,14 @@ export function PlayerDuesPanel({
                       background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
                       border: '1px solid var(--home-line, rgba(255,255,255,0.06))',
                     }}>
+                      {/* "Left to send" replaced Balance here (binding mockup §1, 2026-08-14):
+                          dues − cash − credits applied — the number a family can actually act
+                          on. The in-credit strip below still reports a negative balance. */}
                       {[
                         { label: 'Total Dues', value: fmt(selected.schedule.totalAmount), color: undefined },
-                        { label: 'Credits', value: selected.totalCredits > 0 ? `-${fmt(selected.totalCredits)}` : '—', color: selected.totalCredits > 0 ? 'var(--success-light)' : undefined },
                         { label: 'Paid', value: fmt(selected.paidAmount), color: 'var(--success-light)' },
-                        { label: 'Balance', value: fmt(selected.rollingBalance), color: balanceColor(selected.rollingBalance) },
+                        { label: 'Credits', value: selected.totalCredits > 0 ? `-${fmt(selected.totalCredits)}` : '—', color: selected.totalCredits > 0 ? 'var(--success-light)' : undefined },
+                        { label: 'Left to send', value: fmt(selected.leftToSend), color: balanceColor(selected.leftToSend) },
                       ].map(stat => (
                         <div key={stat.label}>
                           <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--home-dim, rgba(255,255,255,0.35))', marginBottom: '0.15rem' }}>
@@ -1166,13 +1285,18 @@ export function PlayerDuesPanel({
                       ))}
                     </div>
 
-                    {selected.rollingBalance < -0.005 && (
+                    {/* Owed-back, not rolling balance (owner model 2026-08-14): the strip states
+                        the model's own fact — the team is holding this family's money — and is
+                        mode-safe, where a keep_separate team's negative rolling balance used to
+                        claim "in their favour" beside bills still owed in full. */}
+                    {selected.owedBack > 0.005 && (
                       <div style={{
                         padding: '0.6rem 0.85rem', marginBottom: '1rem', borderRadius: 7,
                         background: 'color-mix(in srgb, var(--success-light) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--success-light) 20%, transparent)',
                         fontSize: '0.82rem', color: 'var(--success-light)',
                       }}>
-                        This player is in credit — their balance is {fmt(Math.abs(selected.rollingBalance))} in their favour.
+                        The team is holding {fmt(selected.owedBack)} of this family&apos;s money
+                        {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their bills.` : '.'}
                       </div>
                     )}
 
@@ -1327,7 +1451,6 @@ export function PlayerDuesPanel({
                           </thead>
                           <tbody>
                             {selected.installments.map(inst => {
-                              const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                               // Coverage comes from recorded payments (mig 232). A part-covered
                               // installment says HOW FAR it has got — "$200.00 of $300.00" was
                               // this project's reason to exist; "Unpaid" beside two faithful
@@ -1335,6 +1458,23 @@ export function PlayerDuesPanel({
                               const cov = selected.coverage.find(c => c.installmentId === inst.id);
                               const allocated = cov?.allocated ?? 0;
                               const partial = !inst.paidAt && allocated > 0.005;
+                              // Credits meet the bills (2026-08-14): what the family is actually
+                              // asked to SEND, net of credits applied here — with the earning
+                              // named, because "your bill dropped and here is why" is the best
+                              // sentence a fundraising program can show.
+                              const creditApplied = inst.creditApplied ?? 0;
+                              const toSend = installmentToSend(inst, cov);
+                              // A row credits settled is never late — nothing is being asked for.
+                              const overdue = toSend > 0.005 && isInstallmentOverdue(inst.dueDate, inst.paidAt);
+                              // Settled is the SERVER's call (payload creditSettled) — a local
+                              // threshold here would silently drift from applyCreditsToBills.
+                              const coveredByCredit = !inst.paidAt && creditApplied > 0.005 && (inst.creditSettled ?? false);
+                              const coveredLabel = (inst.creditSources ?? []).every(s => s.creditType === 'fundraiser')
+                                ? 'Covered by fundraising' : 'Covered by credit';
+                              const sourceNote = (inst.creditSources ?? [])
+                                .map(s => s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
+                                .filter((v, i, a) => a.indexOf(v) === i)
+                                .join(' · ');
                               return (
                                 <tr key={inst.id} className={styles.tr}>
                                   <td className={styles.td} data-label="Instalment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
@@ -1348,18 +1488,35 @@ export function PlayerDuesPanel({
                                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                                         <CheckCircle2 size={12} /> Paid {fmtDate(inst.paidAt)}
                                       </span>
-                                    ) : partial ? (
-                                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--warning)', fontVariantNumeric: 'tabular-nums' }}>
-                                        {fmt(allocated)} of {fmt(inst.amount)}
+                                    ) : coveredByCredit ? (
+                                      /* Deliberately NOT "Paid" — Paid stays cash, so the books
+                                         can always say which was which (owner Call 1). */
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
+                                        <CheckCircle2 size={12} /> {coveredLabel}
+                                      </span>
+                                    ) : partial || creditApplied > 0.005 ? (
+                                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: creditApplied > 0.005 ? 'var(--success-light)' : 'var(--warning)', fontVariantNumeric: 'tabular-nums' }}>
+                                        {fmt(toSend)} to send
                                       </span>
                                     ) : (
                                       <span className={`${styles.badge} ${overdue ? styles.badgeCompleted : styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>
-                                        {overdue ? 'Overdue' : 'Unpaid'}
+                                        {overdue ? 'Overdue' : `${fmt(toSend)} to send`}
+                                      </span>
+                                    )}
+                                    {!inst.paidAt && creditApplied > 0.005 && (
+                                      <span style={{ display: 'block', marginTop: '0.15rem', fontSize: '0.7rem', color: 'var(--home-dim, rgba(255,255,255,0.45))' }}>
+                                        {partial ? `${fmt(allocated)} received · ` : ''}
+                                        {fmt(creditApplied)} covered{sourceNote ? ` — ${sourceNote}` : ''}
                                       </span>
                                     )}
                                   </td>
                                   <td className={`${styles.td} ${styles.cardActionCell}`}>
-                                    {!inst.paidAt && moneyCanWrite && (
+                                    {/* Hidden once credits leave nothing to ask the family for —
+                                        a one-tap charge on a "Covered by fundraising" row is an
+                                        invitation to double-collect. Real cash arriving anyway
+                                        goes through Record payment (and frees the credit back
+                                        to owed-back — the self-correcting rule). */}
+                                    {!inst.paidAt && moneyCanWrite && toSend > 0.005 && (
                                       <button
                                         className={`${styles.btnSecondary} ${styles.compactAction}`}
                                         disabled={!!marking[inst.id]}
@@ -1658,7 +1815,9 @@ export function PlayerDuesPanel({
           guardianFirst: 'Jordan',
           items: [
             { playerFirstName: 'Alex', playerLastName: 'Rivera', amount: 300, remainingAmount: 300, dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
-            { playerFirstName: 'Sam', playerLastName: 'Rivera', amount: 300, remainingAmount: 100, dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
+            // One row shows the part-payment thank-you, the other the fundraising line — the
+            // two sentences this template exists to get right.
+            { playerFirstName: 'Sam', playerLastName: 'Rivera', amount: 300, remainingAmount: 100, creditApplied: 120, creditNote: 'Bottle Drive', dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
           ],
         });
         return (

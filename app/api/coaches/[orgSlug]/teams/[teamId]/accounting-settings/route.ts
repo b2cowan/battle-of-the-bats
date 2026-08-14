@@ -5,9 +5,11 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   setAutoRemindersEnabled,
+  setCreditApplicationMode,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { CREDIT_APPLICATION_MODES, type CreditApplicationMode } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -40,7 +42,10 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  return NextResponse.json({ autoRemindersEnabled: programYear.autoRemindersEnabled });
+  return NextResponse.json({
+    autoRemindersEnabled: programYear.autoRemindersEnabled,
+    creditApplication: programYear.creditApplication,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/accounting-settings' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -54,10 +59,21 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json().catch(() => ({}));
 
-  if (typeof body.autoRemindersEnabled === 'boolean') {
-    await setAutoRemindersEnabled(programYear.id, body.autoRemindersEnabled);
-  } else {
+  const hasReminders = typeof body.autoRemindersEnabled === 'boolean';
+  const hasCreditMode = typeof body.creditApplication === 'string';
+  if (!hasReminders && !hasCreditMode) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+  if (hasReminders) {
+    await setAutoRemindersEnabled(programYear.id, body.autoRemindersEnabled);
+  }
+  if (hasCreditMode) {
+    // Strict, not normalized: a typo from a future client must be a 400, not a silent
+    // fall-back to last_first that changes every family's reminder amounts.
+    if (!CREDIT_APPLICATION_MODES.includes(body.creditApplication as CreditApplicationMode)) {
+      return NextResponse.json({ error: 'Invalid credit application mode' }, { status: 400 });
+    }
+    await setCreditApplicationMode(programYear.id, body.creditApplication as CreditApplicationMode);
   }
 
   return NextResponse.json({ ok: true });

@@ -30,8 +30,14 @@ export interface FamilyDuesPlayer {
   guardianKey: string | null;
   /** Guardian surname, or null when absent OR when the caller may not see it. */
   guardianLastName: string | null;
-  /** Schedule total minus paid installments, as the dues route computes it. */
+  /** Schedule total minus paid installments, as the dues route computes it (credit-blind). */
   outstanding: number;
+  /** What the family is actually asked to SEND (dues − cash − credits applied; owner model
+   *  2026-08-14). When present, the family totals and the "who owes" gate read THIS — the
+   *  headline dollar and the per-installment receipt lines must come from the same arithmetic,
+   *  or a credit-settled family gets told they "owe $X" with zero receipts to show for it
+   *  (/review 2026-08-14). */
+  leftToSend?: number;
   installments: { dueDate: string; amount: number; paidAt: string | null; remainingAmount?: number }[];
 }
 
@@ -128,7 +134,8 @@ export function computeFamilyDues(input: FamilyDuesInput): FamilyDuesRollup {
       groups.set(key, g);
     }
     g.playerNames.push(p.playerName);
-    g.outstanding += p.outstanding ?? 0;
+    // The net ask when the caller supplies it — same figure the receipt lines below quote.
+    g.outstanding += p.leftToSend ?? p.outstanding ?? 0;
     if (p.guardianLastName) g.surnames.add(p.guardianLastName.trim());
 
     // Position each installment inside that player's OWN schedule — "2 of 3" is a fact about the

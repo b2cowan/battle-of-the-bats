@@ -3466,6 +3466,7 @@ function mapRepProgramYear(r: any): RepProgramYear {
     tryoutDescription: r.tryout_description,
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
     autoRemindersEnabled: r.auto_reminders_enabled ?? true,
+    creditApplication: normalizeCreditApplicationMode(r.credit_application),
     lineupSettings: (r.lineup_settings ?? null) as LineupSettings | null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -3577,6 +3578,9 @@ export interface InsightsDigestTeam {
   /** Per-program-year coach toggle (rep_program_years.auto_reminders_enabled). The dues
    *  sweep honors it; the Insights digest deliberately ignores it (different consent). */
   autoRemindersEnabled: boolean;
+  /** How the team's credits meet its bills (mig 233) — both sweeps derive the "to send"
+   *  figures they quote, so they need the same direction the dues route uses. */
+  creditApplication: import('./dues-credits').CreditApplicationMode;
 }
 
 /**
@@ -3595,7 +3599,7 @@ export interface InsightsDigestTeam {
 export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?: string }): Promise<InsightsDigestTeam[]> {
   let yearQuery = supabaseAdmin
     .from('rep_program_years')
-    .select('id, team_id, lineup_settings, created_at, auto_reminders_enabled')
+    .select('id, team_id, lineup_settings, created_at, auto_reminders_enabled, credit_application')
     .in('status', ['draft', 'active']);
   if (filter?.teamId) yearQuery = yearQuery.eq('team_id', filter.teamId);
   const { data: allYears, error } = await yearQuery;
@@ -3653,6 +3657,7 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
       // Same null-coercion as mapRepProgramYear so the sweep and the org-admin wave
       // route can never disagree about whether a team's toggle is on.
       autoRemindersEnabled: (y.auto_reminders_enabled as boolean | null) ?? true,
+      creditApplication: normalizeCreditApplicationMode(y.credit_application),
     });
   }
   return out;
@@ -5518,7 +5523,8 @@ export async function getRepPlayerDuesSummary(
   const totalAssessed = schedule?.totalAmount ?? 0;
   const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
   const totalPaid = schedule ? duesPaidAmount(paymentsTotal, totalAssessed) : 0;
-  const totalCredits = (creditRows ?? []).reduce((s, c: any) => s + Number(c.amount), 0);
+  // ONE credit definition (lib/dues-credits.ts) — this was one of five hand-copied credit sums.
+  const totalCredits = creditsTotal((creditRows ?? []).map((c: any) => ({ amount: Number(c.amount) })));
   const today = tournamentToday();
   return {
     hasSchedule: !!schedule,
@@ -8795,8 +8801,9 @@ export async function markRepPlayerDuesInstallmentPaid(
 
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
-import type { RepDuesPayment, DuesPaymentMethod } from './types';
+import type { RepDuesPayment, DuesPaymentMethod, DuesCredit } from './types';
 import { allocateDuesPayments, duesPaidAmount, strandedExcess } from './dues-payments';
+import { creditsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {
   return {
@@ -8838,6 +8845,49 @@ export async function getRepDuesPaymentsForPlayer(
     .order('created_at');
   if (error) throw error;
   return (data ?? []).map(mapRepDuesPayment);
+}
+
+function mapRepDuesCredit(r: any): DuesCredit {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    playerId: r.player_id,
+    amount: Number(r.amount),
+    description: r.description,
+    creditDate: r.credit_date,
+    creditType: r.credit_type,
+    notes: r.notes ?? null,
+    paymentId: r.payment_id ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+/** A season's credits in one query — the shared fetch every credit reader starts from (the sums
+ *  and the bill application both live in lib/dues-credits.ts, not here). */
+export async function getRepDuesCreditsByProgramYear(programYearId: string): Promise<DuesCredit[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('credit_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesCredit);
+}
+
+export async function getRepDuesCreditsForPlayer(
+  programYearId: string,
+  playerId: string,
+): Promise<DuesCredit[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('player_id', playerId)
+    .order('credit_date')
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDuesCredit);
 }
 
 export async function getRepDuesPayment(paymentId: string): Promise<RepDuesPayment | null> {
@@ -9048,7 +9098,7 @@ export async function reconcileOverpaymentCredits(opts: {
     .not('payment_id', 'is', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  const linkedTotal = Math.round((linkedRows ?? []).reduce((s, c: any) => s + Math.round(Number(c.amount) * 100), 0)) / 100;
+  const linkedTotal = creditsTotal((linkedRows ?? []).map((c: any) => ({ amount: Number(c.amount) })));
   const trueExcess = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, 0);
   const createAmt = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, linkedTotal);
   const reduceAmt = Math.max(0, Math.round((linkedTotal - trueExcess) * 100) / 100);
@@ -9482,35 +9532,49 @@ export async function getDueReminderCandidates(
     totalBySchedule[i.schedule_id] = (totalBySchedule[i.schedule_id] ?? 0) + 1;
   }
 
-  // Coverage from recorded payments (mig 232) — a reminder chases what is still MISSING on an
-  // installment, never its face value (owner ruling 6). Allocation runs over each player's WHOLE
-  // schedule, then the window filter below picks which remainders get chased.
-  const { data: payRows, error: payErr } = await supabaseAdmin
-    .from('rep_dues_payments')
-    .select('id, player_id, amount, received_date, created_at')
-    .eq('program_year_id', programYear.id);
+  // Coverage from recorded payments (mig 232), then credits over the remainders (owner model
+  // 2026-08-14) — a reminder chases what the family is actually asked to SEND: never a face
+  // value, and never a dollar their fundraising already covered. Allocation runs over each
+  // player's WHOLE schedule, then the window filter below picks which remainders get chased.
+  const [{ data: payRows, error: payErr }, seasonCredits] = await Promise.all([
+    supabaseAdmin
+      .from('rep_dues_payments')
+      .select('id, player_id, amount, received_date, created_at')
+      .eq('program_year_id', programYear.id),
+    getRepDuesCreditsByProgramYear(programYear.id),
+  ]);
   if (payErr) throw payErr;
   const paysByPlayer = new Map<string, any[]>();
   for (const p of payRows ?? []) {
     if (!paysByPlayer.has(p.player_id)) paysByPlayer.set(p.player_id, []);
     paysByPlayer.get(p.player_id)!.push(p);
   }
+  const creditsByPlayer = groupByPlayer(seasonCredits);
   const instsBySchedule = new Map<string, any[]>();
   for (const i of allInstallments) {
     if (!instsBySchedule.has(i.schedule_id)) instsBySchedule.set(i.schedule_id, []);
     instsBySchedule.get(i.schedule_id)!.push(i);
   }
-  const remainingById = new Map<string, number>();
+  const toSendById = new Map<string, number>();
+  const creditAppliedById = new Map<string, number>();
+  const creditNoteById = new Map<string, string | null>();
   for (const s of schedules as any[]) {
     const insts = instsBySchedule.get(s.id) ?? [];
     if (!insts.length) continue;
-    const { coverage } = allocateDuesPayments(
-      insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
-      (paysByPlayer.get(s.player_id) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
-    );
-    for (const c of coverage) remainingById.set(c.installmentId, c.remaining);
+    const { position } = deriveDuesPosition({
+      installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+      payments: (paysByPlayer.get(s.player_id) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
+      credits: creditsByPlayer.get(s.player_id) ?? [],
+      mode: programYear.creditApplication,
+    });
+    for (const c of position.perInstallment) {
+      toSendById.set(c.installmentId, c.toSend);
+      creditAppliedById.set(c.installmentId, c.creditApplied);
+      const notes = [...new Set(c.sources.map(src => src.description).filter(Boolean))] as string[];
+      creditNoteById.set(c.installmentId, notes.length === 1 ? notes[0] : null);
+    }
   }
-  const remainingOf = (i: any) => remainingById.get(i.id) ?? Number(i.amount);
+  const remainingOf = (i: any) => toSendById.get(i.id) ?? Number(i.amount);
 
   const today = new Date();
   const cutoff = new Date(today);
@@ -9573,6 +9637,8 @@ export async function getDueReminderCandidates(
       totalInstallments: totalBySchedule[i.schedule_id] ?? 1,
       amount: Number(i.amount),
       remainingAmount: remainingOf(i),
+      creditApplied: creditAppliedById.get(i.id) ?? 0,
+      creditNote: creditNoteById.get(i.id) ?? null,
       dueDate: i.due_date,
       overdue: i.due_date < todayStr,
     };
@@ -9593,8 +9659,10 @@ export interface UnpaidDuesReminderTarget {
 /**
  * Players on the team's active program year who OWE dues but have recorded ZERO payments
  * (a schedule exists / balance is owed, and no installment is marked paid). Mirrors the
- * `isNeverPaidPlayer` predicate the portal shows so "Remind all" targets exactly the list.
- * Since nothing is paid, each target's `outstanding` equals the full schedule amount.
+ * `isNeverPaidPlayer` predicate the portal shows so "Remind all" targets exactly the list —
+ * including its credit rule (owner model 2026-08-14): a family whose fundraising settled the
+ * season has nothing left to send and is never nudged, and each target's `outstanding` is the
+ * NET figure (schedule minus credits applied), not the face amount.
  */
 export async function getUnpaidDuesReminderTargets(teamId: string): Promise<UnpaidDuesReminderTarget[]> {
   const programYear = await getActiveRepProgramYear(teamId);
@@ -9610,31 +9678,56 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
   const scheduleIds = schedules.map((s: any) => s.id);
   const { data: allInst, error: iErr } = await supabaseAdmin
     .from('rep_player_dues_installments')
-    .select('schedule_id, paid_at')
+    .select('id, schedule_id, installment_number, amount, paid_at')
     .in('schedule_id', scheduleIds);
   if (iErr) throw iErr;
 
   const countBySchedule: Record<string, number> = {};
   const anyPaidBySchedule: Record<string, boolean> = {};
+  const instsBySchedule = new Map<string, any[]>();
   for (const i of (allInst ?? []) as any[]) {
     countBySchedule[i.schedule_id] = (countBySchedule[i.schedule_id] ?? 0) + 1;
     if (i.paid_at) anyPaidBySchedule[i.schedule_id] = true;
+    if (!instsBySchedule.has(i.schedule_id)) instsBySchedule.set(i.schedule_id, []);
+    instsBySchedule.get(i.schedule_id)!.push(i);
   }
 
   // Payment FACTS (mig 232): a family two part-payments into an installment has every paid_at
   // still null — the stamp is only a full-coverage projection. Without this, "Remind all" would
   // email "no dues payments yet" to a paying family, and its count would disagree with the
   // panel's isNeverPaidPlayer banner (which reads paidAmount).
-  const { data: payRows, error: payErr } = await supabaseAdmin
-    .from('rep_dues_payments')
-    .select('player_id')
-    .eq('program_year_id', programYear.id);
+  const [{ data: payRows, error: payErr }, seasonCredits] = await Promise.all([
+    supabaseAdmin
+      .from('rep_dues_payments')
+      .select('player_id')
+      .eq('program_year_id', programYear.id),
+    getRepDuesCreditsByProgramYear(programYear.id),
+  ]);
   if (payErr) throw payErr;
   const paidPlayerIds = new Set((payRows ?? []).map((p: any) => p.player_id));
+  const creditsByPlayer = groupByPlayer(seasonCredits);
+
+  // What each never-paid family is still asked to SEND: their whole schedule (no payments by
+  // definition) minus whatever their credits cover in the team's application mode.
+  const leftToSendBySchedule = new Map<string, number>();
+  for (const s of schedules as any[]) {
+    const insts = instsBySchedule.get(s.id) ?? [];
+    if (!insts.length) continue;
+    const { position } = deriveDuesPosition({
+      installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+      payments: [],
+      credits: creditsByPlayer.get(s.player_id) ?? [],
+      mode: programYear.creditApplication,
+    });
+    leftToSendBySchedule.set(s.id, position.leftToSend);
+  }
+  const leftToSendOf = (s: any) =>
+    leftToSendBySchedule.get(s.id) ?? Math.round(Number(s.total_amount) * 100) / 100;
 
   const neverPaid = schedules.filter((s: any) => {
     const hasDues = (countBySchedule[s.id] ?? 0) > 0 || Number(s.total_amount) > 0;
-    return hasDues && !anyPaidBySchedule[s.id] && !paidPlayerIds.has(s.player_id);
+    return hasDues && !anyPaidBySchedule[s.id] && !paidPlayerIds.has(s.player_id)
+      && leftToSendOf(s) > 0.005;
   });
   if (!neverPaid.length) return [];
 
@@ -9659,7 +9752,7 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
         guardianFirstName: p.guardian_first_name ?? null,
         guardianEmail: p.guardian_email ?? null,
         teamName: team?.name ?? '',
-        outstanding: Math.round(Number(s.total_amount) * 100) / 100,
+        outstanding: leftToSendOf(s),
       };
     })
     .filter((t): t is UnpaidDuesReminderTarget => t !== null);
@@ -9689,6 +9782,18 @@ export async function markInstallments7ReminderSent(installmentIds: string[]): P
     .from('rep_player_dues_installments')
     .update({ reminder_7_sent_at: new Date().toISOString() })
     .in('id', installmentIds);
+  if (error) throw error;
+}
+
+/** The team-wide credits setting (owner Call 2, mig 233) — how credits meet bills. */
+export async function setCreditApplicationMode(
+  programYearId: string,
+  mode: import('./dues-credits').CreditApplicationMode,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ credit_application: mode })
+    .eq('id', programYearId);
   if (error) throw error;
 }
 

@@ -104,13 +104,61 @@ describe('buildInstallmentColumns', () => {
     assert.equal(cols.length, 2);
     assert.deepEqual(cols[0], {
       installmentNumber: 1, commonDueDate: '2026-06-01', dueDateVaries: false,
-      assessed: 400, collected: 320, remaining: 80, playerCount: 2, paidCount: 1, behindCount: 1,
+      assessed: 400, collected: 320, remaining: 80, creditApplied: 0, playerCount: 2, paidCount: 1, behindCount: 1,
     });
     // Player one's $400 covers BOTH their installments — the future column already holds $200.
     assert.deepEqual(cols[1], {
       installmentNumber: 2, commonDueDate: '2026-09-01', dueDateVaries: false,
-      assessed: 400, collected: 200, remaining: 200, playerCount: 2, paidCount: 1, behindCount: 0,
+      assessed: 400, collected: 200, remaining: 200, creditApplied: 0, playerCount: 2, paidCount: 1, behindCount: 0,
     });
+  });
+
+  it('credits meet the bills: net remainders drive the column, and paid stays cash', () => {
+    // A $200 bill with $150 of fundraising applied: remaining is the NET $50 (the reminder
+    // figure), creditApplied surfaces the earning, and paidCount does NOT move — Paid is cash.
+    const s = [inst(1, 200, '2026-06-01')];
+    const cols = buildInstallmentColumns(
+      [{
+        installments: s.map(i => ({ ...i, remainingAmount: 50, creditApplied: 150 })),
+        coverage: covered(s, 0),
+      }],
+      TODAY,
+    );
+    assert.deepEqual(
+      [cols[0].remaining, cols[0].creditApplied, cols[0].collected, cols[0].paidCount, cols[0].behindCount],
+      [50, 150, 0, 0, 1],
+    );
+    // Fully covered by fundraising: nothing remains, nobody is behind, still zero paidCount.
+    const cols2 = buildInstallmentColumns(
+      [{
+        installments: s.map(i => ({ ...i, remainingAmount: 0, creditApplied: 200 })),
+        coverage: covered(s, 0),
+      }],
+      TODAY,
+    );
+    assert.deepEqual(
+      [cols2[0].remaining, cols2[0].creditApplied, cols2[0].paidCount, cols2[0].behindCount],
+      [0, 200, 0, 0],
+    );
+  });
+
+  it('dueNext reads the net remainder when the installment carries one', () => {
+    const s = [inst(1, 200, '2026-06-01'), inst(2, 200, '2026-09-01')];
+    const d = dueNextForPlayer(
+      s.map((i, idx) => ({ ...i, remainingAmount: idx === 0 ? 200 : 50, creditApplied: idx === 0 ? 0 : 150 })),
+      covered(s, 0),
+      TODAY,
+    )!;
+    // #1 past due at its full $200; #2 upcoming asks only the net $50.
+    assert.deepEqual([d.pastDue, d.nextAmount, d.amount], [200, 50, 250]);
+    // A schedule fully settled by credits reads allSettled — reminders and chase cards stop.
+    const settled = dueNextForPlayer(
+      s.map(i => ({ ...i, remainingAmount: 0, creditApplied: 200 })),
+      covered(s, 0),
+      TODAY,
+    )!;
+    assert.equal(settled.allSettled, true);
+    assert.equal(settled.amount, 0);
   });
 
   it('ragged schedules: columns run to the widest schedule, playerCount tells the truth', () => {

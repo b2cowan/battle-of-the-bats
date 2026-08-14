@@ -4,12 +4,13 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getActiveRepProgramYear,
+  getRepDuesCreditsByProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
-import { allocateDuesPayments } from '@/lib/dues-payments';
+import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -78,7 +79,7 @@ export const GET = withObservability(async (req: Request,
   if (scheduleIds.length > 0) {
     // ALL installments, not just the window: coverage (mig 232) is derived per player across the
     // whole schedule, so a windowed subset can't be allocated correctly. Window-filter after.
-    const [{ data: installments }, { data: payRows }] = await Promise.all([
+    const [{ data: installments }, { data: payRows }, seasonCredits] = await Promise.all([
       supabaseAdmin
         .from('rep_player_dues_installments')
         .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
@@ -88,9 +89,13 @@ export const GET = withObservability(async (req: Request,
         .from('rep_dues_payments')
         .select('id, player_id, amount, received_date, created_at')
         .eq('program_year_id', programYear.id),
+      getRepDuesCreditsByProgramYear(programYear.id),
     ]);
 
-    // Per-player allocation → how much of each unpaid installment is already covered.
+    // Per-player derivation → how much of each unpaid installment is already covered — by cash
+    // AND by credits (owner model 2026-08-14): a bill fundraising covered is not coming due for
+    // anyone, and a partly-earned one quotes only what is left to send.
+    const creditsByPlayer = groupByPlayer(seasonCredits);
     const instsByPlayer = new Map<string, any[]>();
     for (const i of installments ?? []) {
       const pid = i.player_id ?? schedulePlayerMap.get(i.schedule_id);
@@ -105,11 +110,13 @@ export const GET = withObservability(async (req: Request,
     }
     const remainingById = new Map<string, number>();
     for (const [pid, insts] of instsByPlayer) {
-      const { coverage } = allocateDuesPayments(
-        insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
-        (paysByPlayer.get(pid) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
-      );
-      for (const c of coverage) remainingById.set(c.installmentId, c.remaining);
+      const { toSendById } = deriveDuesPosition({
+        installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+        payments: (paysByPlayer.get(pid) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
+        credits: creditsByPlayer.get(pid) ?? [],
+        mode: programYear.creditApplication,
+      });
+      for (const [id, toSend] of toSendById) remainingById.set(id, toSend);
     }
 
     const windowed = (installments ?? []).filter((i: any) =>

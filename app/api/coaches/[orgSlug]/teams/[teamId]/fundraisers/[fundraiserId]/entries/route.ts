@@ -5,12 +5,15 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getOrCreateRepTeamLedger,
+  getRepDuesPaymentsByProgramYear,
+  getRepDuesCreditsByProgramYear,
   createEntry,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -87,52 +90,60 @@ export const GET = withObservability(async (_req: Request,
       .eq('status', 'active'),
   ]);
 
-  // Build a map of player dues balance (outstanding - credits) for each player
+  // Each player's dues position, derived the ONE way every dues surface derives it (owner model
+  // 2026-08-14): payments allocate to installments, credits land on the cash remainders in the
+  // team's application mode. The previous version summed paid STAMPS (reading a part-paid family
+  // as having paid nothing) and clamped a credits-subtracted figure it called "outstanding" — a
+  // different number wearing the shared definition's word.
   const rosterIds = (roster ?? []).map(p => p.id);
-  const { data: allCredits } = await supabaseAdmin
-    .from('rep_dues_credits')
-    .select('player_id, amount')
-    .eq('program_year_id', programYear.id)
-    .in('player_id', rosterIds);
+  const [{ data: allInstallments }, seasonPayments, seasonCredits] = await Promise.all([
+    supabaseAdmin
+      .from('rep_player_dues_installments')
+      .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
+      .in('player_id', rosterIds),
+    getRepDuesPaymentsByProgramYear(programYear.id),
+    getRepDuesCreditsByProgramYear(programYear.id),
+  ]);
 
-  const { data: allSchedules } = await supabaseAdmin
-    .from('rep_player_dues_schedules')
-    .select('player_id, total_amount')
-    .eq('program_year_id', programYear.id)
-    .in('player_id', rosterIds);
-
-  const { data: allInstallments } = await supabaseAdmin
-    .from('rep_player_dues_installments')
-    .select('player_id, amount, paid_at')
-    .in('player_id', rosterIds);
-
-  const scheduleMap = new Map<string, number>();
-  for (const s of allSchedules ?? []) scheduleMap.set(s.player_id, Number(s.total_amount));
-
-  const paidMap = new Map<string, number>();
-  for (const i of allInstallments ?? []) {
-    if (i.paid_at) paidMap.set(i.player_id, (paidMap.get(i.player_id) ?? 0) + Number(i.amount));
+  const instsByPlayer = new Map<string, any[]>();
+  for (const i of (allInstallments ?? []) as any[]) {
+    if (!instsByPlayer.has(i.player_id)) instsByPlayer.set(i.player_id, []);
+    instsByPlayer.get(i.player_id)!.push(i);
   }
-
-  const creditMap = new Map<string, number>();
-  for (const c of allCredits ?? []) {
-    creditMap.set(c.player_id, (creditMap.get(c.player_id) ?? 0) + Number(c.amount));
-  }
+  const paysByPlayer = groupByPlayer(seasonPayments); // generic {playerId} grouper
+  const creditsByPlayer = groupByPlayer(seasonCredits);
 
   const entryMap = new Map<string, Record<string, unknown>>();
   for (const e of entries ?? []) entryMap.set(e.player_id as string, e as Record<string, unknown>);
 
   const playerRows = (roster ?? []).map(p => {
-    const totalDues  = scheduleMap.get(p.id) ?? 0;
-    const paid       = paidMap.get(p.id)     ?? 0;
-    const credits    = creditMap.get(p.id)   ?? 0;
-    const outstanding = Math.max(0, totalDues - paid - credits);
+    const insts = instsByPlayer.get(p.id) ?? [];
+    const { position } = deriveDuesPosition({
+      installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
+      payments: paysByPlayer.get(p.id) ?? [],
+      credits: creditsByPlayer.get(p.id) ?? [],
+      mode: programYear.creditApplication,
+    });
+    const instById = new Map(insts.map((i: any) => [i.id as string, i]));
     const entry = entryMap.get(p.id);
 
     return {
       playerId:       p.id,
       playerName:     [p.player_first_name, p.player_last_name].filter(Boolean).join(' '),
-      remainingDues:  Math.round(outstanding * 100) / 100,
+      // What this family is still asked to SEND — the honest name for the figure the old
+      // payload called remainingDues (plan §7.6).
+      leftToSend:     position.leftToSend,
+      // The open bills, for the "Where it lands" preview: the sheet shows which bills a new
+      // rebate would lower BEFORE the coach saves (mockup §2).
+      openBills: position.perInstallment
+        .filter(b => b.toSend > 0.005)
+        .map(b => ({
+          installmentNumber: b.installmentNumber,
+          dueDate: (instById.get(b.installmentId)?.due_date as string | undefined) ?? null,
+          // Same insts list built both maps — the id is always present.
+          amount: Number(instById.get(b.installmentId)!.amount),
+          toSend: b.toSend,
+        })),
       entry:          entry ? mapEntry(entry) : null,
     };
   });
@@ -162,9 +173,13 @@ export const GET = withObservability(async (_req: Request,
     summary: {
       totalRaised:  Math.round(totalRaised  * 100) / 100,
       teamNet:      Math.round((totalRaised - totalRebates) * 100) / 100,
+      // What THIS DRIVE awarded (Σ rebate_amount) — deliberately not a credits-table read: a
+      // credit can later be applied, paid out or forgiven while the award stands (plan §7.5).
       totalCredits: Math.round(totalRebates * 100) / 100,
       playerCount:  allEntries.length,
     },
+    // The team's credits setting — the "Where it lands" preview walks bills in this direction.
+    creditApplication: programYear.creditApplication,
     players: playerRows,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });

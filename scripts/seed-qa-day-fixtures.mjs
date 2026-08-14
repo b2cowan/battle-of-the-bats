@@ -1249,6 +1249,133 @@ async function seedMoneyLab() {
     ok('SEASON END U15 seeded — dues settled ($6,050 in incl. one $50 overpay), $6,350 of $7,000 spent, fundraiser credits $0–$170');
   } else note('season-end team already present');
 
+  // ═══ TEAM D — MID-season: credits meet the bills (plan §9.1) ═══════════════════════════════
+  // The U15 fixture cannot tell the new credit model from the old one — every family there paid
+  // in full BEFORE the drive closed, so all $675 lands in owed-back and nothing exercises the
+  // applied / paid-out distinction. This team is the drive-closed-MID-season world, one player
+  // per rule the model has to get right:
+  //   · Ash   — paid the WHOLE season in cash before the drive closed; their $150 rebate finds
+  //             no bill to lower and is owed back (cash-claims-first, the self-correcting rule);
+  //   · Blair — on schedule in cash; $250 rebate: #4 reads "Covered by fundraising", #3 asks
+  //             $150 to send (last_first application + the cascade);
+  //   · Cam   — $100 into instalment #1, behind, no fundraising (part-paid + overdue stays
+  //             honest beside the credit rows);
+  //   · Drew  — has paid NOTHING but earned an $80 rebate: still a chase target, and every
+  //             reminder must ask for the LOWERED amounts, never the gross;
+  //   · Em    — paid #1 then stopped; the balance was FORGIVEN (credit_type 'forgiven', $600):
+  //             bills read covered, reminders stop, and season's end owes them nothing;
+  //   · Fin   — DEPARTED (status 'released') after paying #1–#2, with a $120 rebate: their
+  //             owed-back money follows them out (owner Call 8 — it is their money);
+  //   · Gio, Hal — plain on-schedule rows, so the ordinary case stays visible.
+  const u14 = await makeTeam('QA Mid Season U14', 'qa-mid-season-u14', 'U14');
+  const curD = await makeYear(u14, yr, 'active');
+  await assignStaff(u14, curD);
+  const rosterD = await makeRoster(u14, curD, ['Ash', 'Blair', 'Cam', 'Drew', 'Em', 'Fin', 'Gio', 'Hal']);
+
+  const { data: haveD } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', curD.id).limit(1);
+  if (!haveD?.length) {
+    // Fin departed — after the roster exists so re-seeds are stable. ⚠ The DB CHECK allows only
+    // active|inactive ('released' exists in the TS union but not in the constraint — drift,
+    // recorded in the plan; do not "fix" it from a seeder).
+    die('D depart Fin', (await db.from('rep_roster_players')
+      .update({ status: 'inactive' }).eq('id', rosterD[5].id)).error);
+
+    // A modest budget + some paid spending so the Money screens have ground under them.
+    for (const [i, l] of [
+      { cat: 'Tournaments', desc: 'Tournament entry fees', total: 2600 },
+      { cat: 'Facilities',  desc: 'Diamond time',          total: 1400 },
+      { cat: 'Team Gear',   desc: 'Uniforms',              total: 1000 },
+    ].entries()) {
+      die('D budget line', (await db.from('rep_budget_lines').insert({
+        org_id: org.id, team_id: u14.id, program_year_id: curD.id,
+        category_id: catBy[l.cat] ?? null, description: l.desc, total_amount: l.total, sort_order: i,
+      })).error);
+    }
+    die('D expenses', (await db.from('rep_team_expenses').insert([
+      { desc: 'Spring tournament entries', cat: 'Tournaments', amount: 1300, paid: dayIn(-3, 8) },
+      { desc: 'Diamond time — spring',     cat: 'Facilities',  amount: 700,  paid: dayIn(-2, 14) },
+      { desc: 'Uniforms',                  cat: 'Team Gear',   amount: 950,  paid: dayIn(-4, 20) },
+    ].map(e => ({
+      program_year_id: curD.id, team_id: u14.id, org_id: org.id,
+      expense_type: 'expense', description: e.desc, category: e.cat,
+      amount: e.amount, expense_paid_at: e.paid,
+    })))).error);
+
+    // Dues — $800 in four $200 instalments: #1–#2 past due, #3–#4 still AHEAD, so credits have
+    // real future bills to land on. Cash per the cast above; stamps only where cash covers.
+    const dueD  = [dayIn(-3, 15), dayIn(-2, 15), dayIn(1, 15), dayIn(2, 15)];
+    const recvD = [dayIn(-3, 12), dayIn(-2, 12)];
+    // [player index] → cash payments as [amount, receivedDate][]
+    const CASH_D = [
+      [[800, recvD[0]]],                        // Ash — whole season, early
+      [[200, recvD[0]], [200, recvD[1]]],       // Blair
+      [[100, recvD[0]]],                        // Cam — part of #1, then silence
+      [],                                       // Drew — nothing
+      [[200, recvD[0]]],                        // Em — #1 then stopped (rest forgiven below)
+      [[200, recvD[0]], [200, recvD[1]]],       // Fin — paid to departure
+      [[200, recvD[0]], [200, recvD[1]]],       // Gio
+      [[200, recvD[0]], [200, recvD[1]]],       // Hal
+    ];
+    for (const [i, p] of rosterD.entries()) {
+      const sched = await db.from('rep_player_dues_schedules').insert({
+        program_year_id: curD.id, player_id: p.id, team_id: u14.id, org_id: org.id, total_amount: 800,
+      }).select('id').single();
+      die('D dues schedule', sched.error);
+      const cashTotal = CASH_D[i].reduce((s, [a]) => s + a, 0);
+      die('D dues installments', (await db.from('rep_player_dues_installments').insert(
+        [0, 1, 2, 3].map(n => ({
+          schedule_id: sched.data.id, player_id: p.id, installment_number: n + 1,
+          amount: 200, due_date: dueD[n],
+          // Stamp = full-coverage projection over CASH (mig 232): oldest-first at $200 each.
+          paid_at: cashTotal >= (n + 1) * 200 ? `${(CASH_D[i][CASH_D[i].length - 1] ?? [null, recvD[0]])[1]}T17:00:00.000Z` : null,
+          org_id: org.id, team_id: u14.id,
+        })),
+      )).error);
+      if (CASH_D[i].length) {
+        die('D dues payments', (await db.from('rep_dues_payments').insert(
+          CASH_D[i].map(([amount, received]) => ({
+            program_year_id: curD.id, player_id: p.id, org_id: org.id, team_id: u14.id,
+            amount, received_date: received, method: 'etransfer', source: 'recorded',
+          })),
+        )).error);
+      }
+    }
+
+    // Em's forgiveness — debt relief, never owed back, never paid out (mig 233).
+    die('D forgiveness', (await db.from('rep_dues_credits').insert({
+      program_year_id: curD.id, player_id: rosterD[4].id,
+      amount: 600, description: 'Balance forgiven', credit_type: 'forgiven', credit_date: dayIn(-1, 5),
+    })).error);
+
+    // Bottle Drive — closed LAST month at 50% back, so its credits land on the open bills.
+    const RAISED_D = [300, 500, 0, 160, 0, 240, 0, 0];
+    const fd = await db.from('rep_fundraisers').insert({
+      org_id: org.id, team_id: u14.id, program_year_id: curD.id,
+      name: 'Bottle Drive', description: 'Spring fundraiser — 50% back to the player.',
+      player_rebate_percent: 50, start_date: monthStart(-3), end_date: monthStart(-1), is_active: false,
+    }).select('id').single();
+    die('D fundraiser', fd.error);
+    for (const [i, p] of rosterD.entries()) {
+      if (RAISED_D[i] <= 0) continue;
+      const rebate = Math.round(RAISED_D[i] * 50) / 100;
+      const entry = await db.from('rep_fundraiser_entries').insert({
+        fundraiser_id: fd.data.id, org_id: org.id, team_id: u14.id, player_id: p.id,
+        amount_raised: RAISED_D[i], rebate_percent: 50, rebate_amount: rebate,
+      }).select('id').single();
+      die('D fundraiser entry', entry.error);
+      const credit = await db.from('rep_dues_credits').insert({
+        program_year_id: curD.id, player_id: p.id,
+        amount: rebate, description: 'Fundraiser rebate — Bottle Drive',
+        credit_type: 'fundraiser', credit_date: monthStart(-1),
+        fundraiser_entry_id: entry.data.id,
+      }).select('id').single();
+      die('D fundraiser credit', credit.error);
+      die('D entry credit link', (await db.from('rep_fundraiser_entries')
+        .update({ credit_id: credit.data.id }).eq('id', entry.data.id)).error);
+    }
+    ok('MID SEASON U14 seeded — applied/owed-back/forgiven/departed all live (last_first default)');
+  } else note('mid-season team already present');
+
   console.log('');
   console.log(`  Org            /${MONEY.slug}`);
   for (const u of users) {
@@ -1260,6 +1387,7 @@ async function seedMoneyLab() {
   console.log(`  Data-rich team  QA Money U13  → /${MONEY.slug}/coaches/teams/${u13.id}`);
   console.log(`  Empty team      QA Money U11  → /${MONEY.slug}/coaches/teams/${u11.id}`);
   console.log(`  Season's end    QA Season End U15 → /${MONEY.slug}/coaches/teams/${u15.id}  (refund review)`);
+  console.log(`  Mid-season      QA Mid Season U14 → /${MONEY.slug}/coaches/teams/${u14.id}  (credits meet bills)`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════

@@ -34,7 +34,7 @@ const REQUIRED_IMPORTERS = [
 ];
 
 /** The only modules allowed to define the arithmetic. */
-const DEFINITION_HOMES = new Set(['lib/dues-status.ts', 'lib/dues-payments.ts']);
+const DEFINITION_HOMES = new Set(['lib/dues-status.ts', 'lib/dues-payments.ts', 'lib/dues-credits.ts']);
 
 /** ORG-ALLOCATION surfaces — a DIFFERENT money domain (rep_allocation_installments). Allocations
  *  have no payment record; their paid stamp is still the input, so a stamp-sum there is correct
@@ -50,6 +50,15 @@ const STAMP_SUM = /\.filter\(\s*(\w+)\s*=>\s*\1\.(paidAt|paid_at)\s*\)[\s\S]{0,1
 
 /** A comment claiming to mirror the shared predicate instead of importing it. */
 const MIRROR_COMMENT = /Mirror lib\/dues-status/;
+
+/** A hand-rolled credit sum — a reduce-accumulate or map-accumulate over a credit-named
+ *  collection's amounts. Summing rep_dues_credits was re-implemented independently FIVE times
+ *  (four routes + the dues panel) before lib/dues-credits.ts existed, with zero tests on any of
+ *  them; this is the same treatment that stopped stamp-sum copy five. Listing rows, inserting,
+ *  or deleting credits is fine — it is DERIVING A CREDIT TOTAL outside the module that is
+ *  banned. */
+const CREDIT_SUM = /\b\w*[Cc]redit\w*\.reduce\(\s*\(\s*\w+\s*,\s*\w+(?:\s*:\s*\w+)?\s*\)\s*=>\s*\w+\s*\+/;
+const CREDIT_MAP_ACCUM = /\b\w*[Cc]redit\w*\.set\(\s*[^,]+,\s*\(\s*\w*[Cc]redit\w*\.get\([^)]*\)\s*\?\?\s*0\s*\)\s*\+/;
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -68,8 +77,8 @@ describe('dues definitions have one home', () => {
     for (const f of REQUIRED_IMPORTERS) {
       const src = readFileSync(join(ROOT, f), 'utf8');
       assert.ok(
-        /from '@?\.?\.?\/?.*dues-(status|payments)/.test(src),
-        `${f} quotes a dues figure but imports neither lib/dues-status nor lib/dues-payments`,
+        /from '@?\.?\.?\/?.*dues-(status|payments|credits)/.test(src),
+        `${f} quotes a dues figure but imports none of lib/dues-status, lib/dues-payments, lib/dues-credits`,
       );
     }
   });
@@ -103,6 +112,26 @@ describe('dues definitions have one home', () => {
       offenders,
       [],
       `direct paid_at write on rep_player_dues_installments outside the sanctioned writers — route the money through recordRepDuesPayment (or pair the stamp with its payment):\n  ${offenders.join('\n  ')}`,
+    );
+  });
+
+  it('no file outside the definition homes sums credits by hand', () => {
+    const files = [
+      ...walk(join(ROOT, 'app', 'api', 'coaches')),
+      ...walk(join(ROOT, 'app', '[orgSlug]', 'coaches')),
+      ...walk(join(ROOT, 'lib')),
+    ];
+    const offenders: string[] = [];
+    for (const p of files) {
+      const r = rel(p);
+      if (DEFINITION_HOMES.has(r)) continue;
+      const src = readFileSync(p, 'utf8');
+      if (CREDIT_SUM.test(src) || CREDIT_MAP_ACCUM.test(src)) offenders.push(r);
+    }
+    assert.deepEqual(
+      offenders,
+      [],
+      `hand-rolled credit sum found outside lib/dues-credits — use creditsTotal / creditsTotalByPlayer instead:\n  ${offenders.join('\n  ')}`,
     );
   });
 

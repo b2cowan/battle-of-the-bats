@@ -3,10 +3,12 @@ import {
   getRepPlayerDuesSchedules,
   getRepPlayerDuesInstallments,
   getRepDuesPaymentsByProgramYear,
+  getRepDuesCreditsByProgramYear,
   getRepTeamExpenses,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
-import { allocateDuesPayments, duesPaidAmount } from '@/lib/dues-payments';
+import { duesPaidAmount } from '@/lib/dues-payments';
+import { deriveDuesPosition, groupByPlayer } from '@/lib/dues-credits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
@@ -83,15 +85,17 @@ export const GET = withObservability(async (req: Request,
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
-  const [installmentLists, seasonPayments] = await Promise.all([
+  const [installmentLists, seasonPayments, seasonCredits] = await Promise.all([
     Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id))),
     getRepDuesPaymentsByProgramYear(programYear.id),
+    getRepDuesCreditsByProgramYear(programYear.id),
   ]);
   const paymentsByPlayer = new Map<string, typeof seasonPayments>();
   for (const p of seasonPayments) {
     if (!paymentsByPlayer.has(p.playerId)) paymentsByPlayer.set(p.playerId, []);
     paymentsByPlayer.get(p.playerId)!.push(p);
   }
+  const creditsByPlayer = groupByPlayer(seasonCredits);
 
   let duesExpected = 0;
   let duesCollected = 0;
@@ -108,13 +112,18 @@ export const GET = withObservability(async (req: Request,
     const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
     const paid = duesPaidAmount(paymentsTotal, schedule.totalAmount ?? 0);
     duesCollected += paid;
-    // Overdue counts what is still MISSING on a late installment, not its face value — a family
-    // $200 into a late $300 installment is $100 overdue, not $300 (and not current, either).
-    const { coverage } = allocateDuesPayments(insts, payments);
-    const remainingById = new Map(coverage.map(c => [c.installmentId, c.remaining]));
+    // Overdue counts what is still left to SEND on a late installment — cash remainder minus
+    // credits applied (owner model 2026-08-14) — never a face value, and never a dollar
+    // fundraising already covered. A family $200 into a late $300 installment is $100 overdue.
+    const { position, toSendById } = deriveDuesPosition({
+      installments: insts,
+      payments,
+      credits: creditsByPlayer.get(schedule.playerId) ?? [],
+      mode: programYear.creditApplication,
+    });
     for (const inst of insts) {
       if (!inst.paidAt && inst.dueDate && inst.dueDate < today) {
-        const remaining = remainingById.get(inst.id) ?? inst.amount;
+        const remaining = toSendById.get(inst.id) ?? inst.amount;
         if (remaining > 0.005) {
           overdueAmount += remaining;
           overduePlayers.add(schedule.playerId);
@@ -126,6 +135,7 @@ export const GET = withObservability(async (req: Request,
     if (isNeverPaidPlayer({
       outstanding: outstandingForSchedule(schedule, paid),
       paidAmount: paymentsTotal,
+      leftToSend: position.leftToSend,
       installments: insts,
     })) neverPaidCount += 1;
   });

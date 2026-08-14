@@ -12,6 +12,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { findBasicCoachTeamIdForTournamentRegistration } from './basic-coach-teams';
 import { migrateBasicTeamIntoWorkspace } from './coach-upgrade-migration';
 import { DEFAULT_SPORT } from './sports';
+import { normalizeCreditApplicationMode } from './dues-credits';
 import type {
   AccountingLedger,
   Organization,
@@ -94,6 +95,7 @@ type RepProgramYearRow = {
   tryout_description: string | null;
   budget_amount: number | string | null;
   auto_reminders_enabled: boolean | null;
+  credit_application?: string | null;
   lineup_settings: RepProgramYear['lineupSettings'] | null;
   created_at: string;
   updated_at: string;
@@ -135,6 +137,8 @@ function mapProgramYear(row: RepProgramYearRow): RepProgramYear {
     tryoutDescription: row.tryout_description,
     budgetAmount: row.budget_amount != null ? Number(row.budget_amount) : null,
     autoRemindersEnabled: row.auto_reminders_enabled ?? true,
+    // Same normalization as mapRepProgramYear (lib/db.ts) — the two mappers must agree.
+    creditApplication: normalizeCreditApplicationMode(row.credit_application),
     lineupSettings: row.lineup_settings ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

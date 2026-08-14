@@ -27,6 +27,7 @@ import {
   buildInstallmentColumns,
   dueNextForPlayer,
   daysUntil,
+  installmentToSend,
   type InstallmentColumn,
   type DueNextSummary,
 } from '@/lib/dues-installment-view';
@@ -44,6 +45,9 @@ export interface BreakdownPlayer {
     amount: number;
     dueDate: string;
     paidAt: string | null;
+    /** NET remainder (cash − credits applied) — the dues payload field of the same name. */
+    remainingAmount?: number;
+    creditApplied?: number;
   }[];
   coverage: InstallmentCoverage[];
   rollingBalance: number;
@@ -87,7 +91,13 @@ function dueNextCaption(d: DueNextSummary): { text: string; tone: 'warn' | 'dim'
  *  installment nobody has paid yet is a plan, not a problem (the chase-card ruling, 2026-08-03). */
 function columnNote(col: InstallmentColumn, today: string): { text: string; tone: 'good' | 'warn' | 'dim' } {
   if (col.assessed > 0.005 && col.remaining <= 0.005) {
-    return { text: `Fully collected — ${col.paidCount} of ${col.playerCount} paid`, tone: 'good' };
+    // "Covered" when fundraising did part of the work — collected stays a cash word.
+    return {
+      text: col.creditApplied > 0.005
+        ? `Fully covered — ${col.paidCount} of ${col.playerCount} paid, rest by fundraising`
+        : `Fully collected — ${col.paidCount} of ${col.playerCount} paid`,
+      tone: 'good',
+    };
   }
   if (col.behindCount > 0) {
     return {
@@ -143,6 +153,8 @@ export default function InstallmentBreakdown({
     }
     const cov = p.coverage.find(c => c.installmentId === inst.id);
     const allocated = cov?.allocated ?? 0;
+    const creditApplied = inst.creditApplied ?? 0;
+    const toSend = installmentToSend(inst, cov);
     // A date shown in-cell only when it differs from the column header's — the header speaks
     // for the team's common date; a hand-edited schedule keeps its own date visible.
     const ownDate = inst.dueDate !== col.commonDueDate ? fmtShort(inst.dueDate) : null;
@@ -150,7 +162,20 @@ export default function InstallmentBreakdown({
       const on = cov.completedOn ?? inst.paidAt;
       return { amount: fmt(inst.amount), status: on ? `paid ${fmtShort(on)}` : 'paid', tone: 'paid' as const, icon: 'check' as const };
     }
+    // Settled by credits — deliberately NOT "paid": Paid stays cash (owner model 2026-08-14).
+    if (toSend <= 0.005 && creditApplied > 0.005) {
+      return { amount: fmt(inst.amount), status: 'covered by fundraising', tone: 'paid' as const, icon: 'check' as const };
+    }
     const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
+    // Partly earned and/or partly paid — quote what is left to SEND, the reminder figure.
+    if (creditApplied > 0.005) {
+      return {
+        amount: fmt(inst.amount),
+        status: `${fmt(toSend)} to send`,
+        tone: overdue ? ('over' as const) : ('part' as const),
+        icon: overdue ? ('warn' as const) : null,
+      };
+    }
     if (allocated > 0.005) {
       return {
         amount: fmt(inst.amount),
@@ -199,7 +224,10 @@ export default function InstallmentBreakdown({
         <div className={styles.duesBandRow}>
           {columns.map(col => {
             const note = columnNote(col, today);
-            const pct = col.assessed > 0 ? Math.min(100, Math.round((col.collected / col.assessed) * 100)) : 0;
+            // Progress = how much of the term no longer needs to arrive (cash collected +
+            // credits applied) — a term fully covered by fundraising reads 100%, not stuck
+            // where the cash stopped.
+            const pct = col.assessed > 0 ? Math.min(100, Math.round(((col.assessed - col.remaining) / col.assessed) * 100)) : 0;
             return (
               <div key={col.installmentNumber} className={styles.duesTerm}>
                 <span className={styles.duesTermKey}>

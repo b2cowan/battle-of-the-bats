@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1536,6 +1536,76 @@ rather than swept, since at that length the bolded lead-ins still work.
       sub-topic (none of these needed per-page targeting — check one anyway).
 ⚠ A pre-existing lint warning sits in the exports guide's PDF-privacy paragraph (untouched by
 this work, flagged only because the whole file was linted) — left alone deliberately.
+
+### 19 🖥📱 Fundraising pays the bill — **ON DEV** (built 2026-08-14) · ⚠ carries migration **233** (dev only)
+
+**What changed:** a credit is now **money the team owes a family**, and it lands on their real
+installments instead of only lowering a balance column. An $800 installment with $500 of
+fundraising against it reads **"$300.00 to send"** with the earning named underneath; cover the
+whole bill and it reads **Covered by fundraising** — deliberately *not* "Paid", because Paid
+stays cash. The player drawer's Balance stat became **Left to send** (dues − cash − credits), and
+when the team is holding a family's money the drawer says so in words. A new team-wide setting at
+the foot of Player Dues — **Credits reduce: the last payment first** (default) · *the next payment
+first* · *they don't — settle at season's end* — decides which bill a credit meets. Reminder
+emails open with the earning ("your family's fundraising has earned $500.00 toward dues — thank
+you") and ask only for the rest; a family whose credits settled everything is never chased at all.
+Logging a fundraiser result now previews **Where it lands** before saving. This is **Pass 1 of 3**
+(plan: `COACH_SEASON_REFUND_REVAMP_PLAN.md`) — money-out and the derived refund sheet follow.
+
+**Where:** Money → **Player Dues** (table, drawer, the settings row at the foot) · Money →
+**Fundraisers** → open a fundraiser → **Log amount** · the Money **Overview** tiles · the reminder
+email preview (**See an example** beside Automatic Dues Reminders).
+
+**Fixture:** `qa-money-lab` → **QA Mid Season U14** (`qa-money-head@dev.local` / `devpass123`) —
+built for exactly this: a drive that closed mid-season, so the applied / owed-back distinction is
+actually visible. Re-seed with `node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs money`.
+The cast, one player per rule: **Ash** paid the whole season in cash before the drive closed ·
+**Blair** is on schedule and has the biggest rebate · **Cam** is part-paid and behind, with no
+fundraising · **Drew** has paid nothing but earned a rebate · **Em**'s balance was forgiven ·
+**Fin** has left the team holding their rebate · **Gio/Hal** are the ordinary case.
+
+- [ ] **Blair's bills tell the story.** Open Blair on Player Dues: their last installment reads
+      **Covered by fundraising** (not "Paid"), the one before it asks for a reduced amount, and
+      the line underneath names the **Bottle Drive**. The stat grid reads Total dues · Paid ·
+      Credits · **Left to send**.
+- [ ] **Ash is the self-correcting rule.** Ash paid everything in cash before the drive closed, so
+      their rebate found no bill to lower: no installment shows a credit, and the drawer says
+      **the team is holding $X of this family's money**. (This is the money Pass 3 hands back.)
+- [ ] **Drew is the one that matters most.** Drew has paid nothing at all but earned a rebate.
+      Their installments must ask for the **lowered** amounts — never the gross — and they should
+      still appear in the chase list for what's genuinely left.
+- [ ] **Em was forgiven.** Em's bills read as covered and Em is not chased. Nothing about Em says
+      the team owes them money (forgiveness is debt relief, not their money).
+- [ ] **Change the setting and watch the bills move.** At the foot of Player Dues set **Credits
+      reduce** to *the next payment first* — Blair's relief should jump to their next bill instead
+      of the last. Set it to *they don't — settle at season's end*: every bill goes back to its
+      full amount and the credits become money owed back. Set it back to **the last payment first**.
+- [ ] ⚠ **The one the review caught.** While on *settle at season's end*, check the status word on
+      a family with a big unapplied credit: it must **not** say "Settled" or "in credit — in their
+      favour" while they still owe cash. (It said exactly that before the fix.)
+- [ ] **Status words.** Across the table: **Fully paid** = cash covered it · **Settled** = credits
+      did part of the work · **In credit** = the team holds money that's theirs · **Partial** /
+      **Unpaid** as before.
+- [ ] **The email.** Open **See an example** beside Automatic Dues Reminders: the sample opens with
+      the fundraising thank-you and one row reads "$X to send of the $Y … — $Z covered by
+      fundraising (Bottle Drive)". Then send yourself a real one from a player with a credit.
+- [ ] **Where it lands.** Money → Fundraisers → open the Bottle Drive → **Log amount** on a player
+      with open bills: typing an amount previews exactly which bills drop and by how much, *before*
+      saving. Save it and the dues screen agrees with what the preview promised. The roster column
+      reads **Left to Send**.
+- [ ] **Nobody is chased for a covered bill.** A bill fundraising has fully covered must not show
+      as overdue anywhere — not the red date in the drawer, not the "N past their due date" line,
+      not the Overview's overdue count.
+- [ ] **The season-end team still reads true.** On **QA Season End U15** (every family paid in full
+      *before* the drive closed) nothing should have been applied to a bill — every credit dollar
+      is money owed back. That team is Pass 3's subject.
+- [ ] 📱 Phone: the same rows on a 390px screen — the drawer, the settings row, and the
+      By-installment cards all read without sideways scroll.
+
+⚠ **Migration 233 is dev-only** — it must reach prod before this code ships (the release runbook
+applies migrations first). ⚠ **The coach demo does not yet show any of this** — it has no
+fundraiser at all; that is a known absence, deliberately deferred to Pass 3 so the demo world is
+re-seeded and re-narrated once. Full build + review log in the plan's Pass 1 section.
 
 ---
 
