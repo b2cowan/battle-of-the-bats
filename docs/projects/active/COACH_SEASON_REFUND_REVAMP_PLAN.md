@@ -1,21 +1,21 @@
 # Coach Money — credits meet the bills, money goes out, and the refund sheet derives
 
-**Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 committed `8fb37066` 2026-08-14**
-(mig 233 on dev) · **PASS 2 committed `cfb3a5f7` 2026-08-14** (mig 234 on dev) · **PASS 3 built on
-dev 2026-08-14** (mig 235 on dev; owner QA §21) — **all three passes complete**
-⚠ **Migrations 233, 234 and 235 are on dev; every one of them must reach production before this
-code ships** (they join 230–232 in that queue).
-⚠ **The Pass 3 `/docs` help edits are NOT in `735c9ae2`** — the same situation Pass 1 hit, for the
-same reason: a concurrent session was mid-flight in the coaches guide, so committing it would have
-swept up work that was not this project's to commit. The new **Season settlement** sub-topic, its
-popular FAQ, its search terms and the re-captured Player Dues screenshot's alt/caption sit on disk
-and ride that session's next commit. (The screenshot itself, and the manifest entry, ARE in this
-commit — only the guide prose is held back.)
+**Status:** approved from mockups 2026-08-14 (owner) · **PASS 1 committed `8fb37066`** · **PASS 2
+committed `cfb3a5f7`** · **PASS 3 committed `735c9ae2`**, all 2026-08-14 · **ON PRODUCTION 2026-08-14 (job 256,
+prod HEAD `8fe59ded`)** — **all three passes complete and shipped.**
+**Owner QA §21 is still to run** — the code is live; the walkthrough has not been done.
+**Migrations 230–235 applied to production 2026-08-14** (verified against the live prod database:
+`rep_season_surplus.hold_back_amount` and `rep_season_refund_adjustments` both present;
+`check-prod-migration-drift` reports prod in sync with dev).
+**The Pass 3 help copy reached master in the help session's own commit `8de8d350`** — it was
+deliberately held out of `735c9ae2` because that session was mid-flight in the same guide file.
+The Season settlement sub-topic and its FAQ are live.
 
-⚠ **The `/docs` help edits are NOT in `8fb37066`.** A concurrent session was mid-flight in the
-same guide file, so committing it would have swept up work that was not this project's to commit
-(it did, once — caught by the post-commit stat check, unwound, re-committed without it). The
-Money-guide copy sits on disk and rides that session's next commit.
+Note on the help copy, kept because the lesson is durable: **twice** (Passes 1 and 3) a concurrent
+session was mid-flight in the same guide file, so the `/docs` edits were deliberately held out of
+this project's commits and rode that session's instead — once it went wrong the other way and was
+caught by the post-commit stat check, unwound, and re-committed clean. **Both passes' guide copy is
+on master.** Stage explicit pathspecs and check `git show --stat HEAD` every time.
 **PM brief:** [COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md](COACH_SEASON_REFUND_REVAMP_PM_BRIEF.md)
 **Binding mockups:** `claude.ai/code/artifact/eae663d0-56e5-46e9-a2e2-9f7220468be2`
 (source `COACH_CREDIT_APPLICATION_MOCKUP.html` — tagged NEW/RESTYLED/UNCHANGED; the mockups ARE
@@ -317,7 +317,7 @@ cash-claims-first, the mode-aware status label, and the net-remainder lens) · g
 with a credit-sum rule and **verified by breaking it** (both offender shapes) · focused lint 0
 errors · rendered `check:layout` on dues/fundraisers/overview × 4 widths, no new findings, run on
 a restarted server against a fixture with real data ✓ · `check:demos` ✓ · `verify:changed` green
-except the known schema-parity failure (prod behind on migs 230–233).
+except the schema-parity failure that stood while prod was behind on migs 230–233 (resolved — all applied to prod 2026-08-14).
 
 **`/simplify` (4 lenses):** the assembly seam + `groupByPlayer` (eight hand-written groupings and
 six hand-composed allocate→apply→map sequences collapsed), `installmentToSend` exported as the one
@@ -518,7 +518,7 @@ amounts redistributing, paying-one-moves-nobody, degenerates, and a 500-run rand
 test of the identity above) · focused lint 0 errors · **rendered** `check:layout` on
 dues + dues-settlement × 4 widths, on a restarted server against a fixture with real data, real
 exit code 0 ✓ · `check:demos` ✓ · dictionary ✓ · `verify:changed` green except the known
-schema-parity failure (prod behind on migs 230–235).
+schema-parity failure that stood while prod was behind on migs 230–235 (resolved — all applied to prod 2026-08-14).
 
 **End-to-end smoke against the live fixture** (written, then undone, leaving it as found): the
 hold-back refuses above the cap with its reason and reshapes every row when set; a hand-set amount
