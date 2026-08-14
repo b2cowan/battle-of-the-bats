@@ -1,6 +1,6 @@
 # PM Brief — Player Dues "By installment" lens
 
-**Status: built on dev 2026-08-14, awaiting owner QA (ledger §17). No migration.**
+**Status: on prod 2026-08-14 (job 256), owner QA still owed (ledger §17). No migration.**
 
 ## What the coach sees and does differently
 

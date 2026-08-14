@@ -1,6 +1,6 @@
 # Coach Portal — Money Hub Table Consistency
 
-**Status:** **BUILT on dev 2026-08-13 — all four passes, owner-approved in full.** Owner QA pending
+**Status:** **Built 2026-08-13 — all four passes, owner-approved in full · ON PROD 2026-08-14 (Amplify job 256).** Owner QA pending
 (`OWNER_QA_LEDGER.md` §12, Group 1C).
 **Binding visual spec (once approved):** `claude.ai/code/artifact/14181bd3-93b2-4cb6-bb11-5f5eb28b14be`
 (source: `docs/projects/active/COACH_MONEY_TABLE_CONSISTENCY_MOCKUP.html`)

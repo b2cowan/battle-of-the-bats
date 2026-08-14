@@ -1,6 +1,6 @@
 # Coach Dues Payment Record — Plan
 
-**Status: ALL THREE PASSES + /simplify + /review BUILT AND RUN ON DEV 2026-08-13 (one day:
+**Status: ALL THREE PASSES + /simplify + /review BUILT AND RUN 2026-08-13 · ON PROD 2026-08-14 (Amplify job 256, mig 232 applied to prod) (one day:
 Phase A inventory → Phase B mockups → six owner rulings → Passes 1/2/3 → reminders-row follow-up
 → /simplify (8 fixes) → /review high-risk (5 lenses; 2 Critical + 1 High + 5 Medium confirmed
 AND FIXED)) — mig 232 dev-only · owner QA = ledger §13 · awaiting commit approval · refund

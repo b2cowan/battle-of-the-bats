@@ -1,6 +1,6 @@
 # Coach Money Hub — Tabbed Navigation
 
-**Status:** ✅ BUILT + owner QA PASSED (2026-08-11), committed on `dev` — not yet released to prod.
+**Status:** ✅ BUILT + owner QA PASSED (2026-08-11) · **on prod 2026-08-12 (Amplify job 253).**
 **Origin:** owner request in-chat — mockup comparison, Option A ("Dashboard tab") selected 2026-08-10.
 A second mockup round (2026-08-11) chose **Option C** for the tab bar's own layout after the owner
 found it truncating on a real screen — see "Layout follow-up" at the foot of this file.

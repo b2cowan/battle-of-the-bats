@@ -1,6 +1,6 @@
 # Coach Money Overview — One-Screen Dashboard
 
-**Status:** ✅ COMMITTED `dev` `09b2ddc3` 2026-08-11 (post /simplify + /review) — awaiting owner browser QA (see §Owner QA states)
+**Status:** ✅ `09b2ddc3` 2026-08-11 (post /simplify + /review) · **on prod 2026-08-12 (Amplify job 253)** — owner browser QA still owed (see §Owner QA states)
 **Build notes (2026-08-11):** implemented as planned with one deviation — the new styles live in
 a component-scoped `overview-dashboard.module.css` beside the two new components
 (`OverviewDashboard.tsx`, `MoneyNextThirtyDays.tsx`, colocated in the accounting folder),

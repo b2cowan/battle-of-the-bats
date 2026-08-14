@@ -1,6 +1,6 @@
 # Player Dues — "By installment" lens
 
-**Status: BUILT on dev 2026-08-14 · no migration · owner QA = ledger §17.**
+**Status: ON PROD 2026-08-14 (Amplify job 256) · no migration · owner QA = ledger §17, still owed.**
 Owner-approved mockup: artifact `d7162867` (two rounds — round 2 added the collapsible phone
 cards and the "due next" headline at the owner's request). PM brief:
 `DUES_BY_INSTALLMENT_PM_BRIEF.md`.

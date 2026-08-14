@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12**, on dev — 5 post-review checks owed (see §11 note) · **§12 ON DEV, mig 231 dev-only** · **§13 ON DEV, mig 232 dev-only** · **§14 ON DEV, no migration** · **§15 ON DEV, no migration** · **§16 ON DEV, no migration** · **§17 ON DEV, no migration** · **§18 ON DEV, no migration** (help sub-topics) · **§19 ON DEV, mig 233 dev-only** (fundraising pays the bill) · **§20 ON DEV, mig 234 dev-only** (money goes out) · **§21 ON DEV, mig 235 dev-only** (the season settlement sheet — the typed pot is gone) |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1066,7 +1066,7 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 - [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
 - [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
 
-### 12 🖥📱 Every button in Money moved — **ON DEV** (built 2026-08-13) · ⚠ carries migration **231** (dev only)
+### 12 🖥📱 Every button in Money moved — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **231** ✅ on prod
 *Page-level action ruling 2026-08-13 (Phase 1). The hub header gains constant `Import ▾ / Export ▾`;
 every tab's create drops into that tab's own control row; three exports that never existed were
 written; the tab bar becomes navigation only.* Plan:
@@ -1151,7 +1151,7 @@ rather than hand you an empty sheet (that message is itself worth seeing once).
 
 ---
 
-### 13 🖥📱 A dues payment is a record — Pass 1, the receipt book — **ON DEV** (built 2026-08-13) · ⚠ carries migration **232** (dev only)
+### 13 🖥📱 A dues payment is a record — Pass 1, the receipt book — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **232** ✅ on prod
 
 **What changed:** a payment is now its own record. Player Dues gains a **Record payment** button in
 each player's drawer (amount · date received · method · note); the sheet states where the money
@@ -1229,7 +1229,7 @@ books-safety hardening). Two review checks join the walk:
 - [ ] **Read-only money assistant**: sees Payments list, no Record payment, no trash cans, no
       Mark Paid (that button was reachable read-only before this pass; the server always refused).
 
-### 14 🖥📱 The Money hub's old doors close — **ON DEV** (built 2026-08-13) · no migration
+### 14 🖥📱 The Money hub's old doors close — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the seven standalone Money pages the tabbed hub replaced (the ones with no tab
 bar — you hit one from "view player dues") no longer exist as destinations. Every old URL forwards
@@ -1268,7 +1268,7 @@ changed. Admin-side accounting is deliberately untouched (it was never made a hu
 
 ---
 
-### 15 🖥📱 The Budget Plan reads as three figures — **ON DEV** (built 2026-08-13) · no migration
+### 15 🖥📱 The Budget Plan reads as three figures — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the budget page's tall summary ladder became a two-line **plan card**: Planned
 costs · Expected fundraising · Player installments, side by side. The third figure is tagged
@@ -1310,7 +1310,7 @@ findings all fixed, 16 old layout-baseline defects retired.
 
 ---
 
-### 16 🖥📱 The Overview's Budget card shows plan vs. actual — **ON DEV** (built 2026-08-14) · no migration
+### 16 🖥📱 The Overview's Budget card shows plan vs. actual — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the Money Overview's Budget card stopped quoting a computed **$/player** — an
 even split of the plan that no family was actually billed (it read $700 while every schedule said
@@ -1342,7 +1342,7 @@ keeps the ordinary fill and gets "✓ $X past goal" instead.
       "nothing scheduled" state it must show **no** "Generate installments" door there (live
       seasons keep it).
 
-### 17 🖥📱 Player Dues gains a "By installment" lens — **ON DEV** (built 2026-08-14) · no migration
+### 17 🖥📱 Player Dues gains a "By installment" lens — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the Player Dues tab now has a view toggle on its toolbar — **Season totals**
 (the existing table, untouched, still the default) and **By installment**. The new lens opens
@@ -1432,7 +1432,7 @@ opens it). Toggle buttons met the 44px floor; same-day installments now sum in D
 tap-floor findings on overview/team-hub/schedule/history — NOT this project's (other
 uncommitted work; their owners' sessions should clear them before release).
 
-### 18 🖥📱 Help reads as a menu of answers — ✅ **OWNER QA PASSED 2026-08-14** · **ON DEV** · no migration
+### 18 🖥📱 Help reads as a menu of answers — ✅ **OWNER QA PASSED 2026-08-14** · **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the scannable-format standard's first shipment (plan:
 `HELP_SCANNABLE_FORMAT_PLAN.md`, steps 1+2). The help system gained **sub-topics**: a long
@@ -1631,7 +1631,7 @@ like the rest. **No copy was rewritten** — the same sentences, re-set into tit
 ✅ Rendered sweep on the coach help screen: **0 new layout findings** (jump chips on the new
 sub-topics clear the tap floor and wrap at phone width).
 
-### 19 🖥📱 Fundraising pays the bill — **ON DEV** (built 2026-08-14) · ⚠ carries migration **233** (dev only)
+### 19 🖥📱 Fundraising pays the bill — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **233** ✅ on prod
 
 **What changed:** a credit is now **money the team owes a family**, and it lands on their real
 installments instead of only lowering a balance column. An $800 installment with $500 of
@@ -1696,12 +1696,12 @@ fundraising · **Drew** has paid nothing but earned a rebate · **Em**'s balance
 - [ ] 📱 Phone: the same rows on a 390px screen — the drawer, the settings row, and the
       By-installment cards all read without sideways scroll.
 
-⚠ **Migration 233 is dev-only** — it must reach prod before this code ships (the release runbook
-applies migrations first). ⚠ **The coach demo does not yet show any of this** — it has no
-fundraiser at all; that is a known absence, deliberately deferred to Pass 3 so the demo world is
-re-seeded and re-narrated once. Full build + review log in the plan's Pass 1 section.
+Migration **233** applied to prod 2026-08-14 (job 256). ⚠ **The coach demo shows this on DEV only** —
+Pass 3 seeded the Bottle Drive into the sandbox, but a seed change does not travel with a code
+release, so the PRODUCTION demo still has no fundraiser (see §21's note). Full build + review log
+in the plan's Pass 1 section.
 
-### 20 🖥📱 Money goes out — **ON DEV** (built 2026-08-14) · ⚠ carries migration **234** (dev only)
+### 20 🖥📱 Money goes out — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **234** ✅ on prod
 
 **What changed:** the books gain an **outbox**. Until now a credit could only ever lower a family's
 bills; now the coach can hand it back in cash, and a family who pays for something out of pocket
@@ -1751,13 +1751,13 @@ night out of pocket.
       (try it on Ash) — the books must never owe a family less than they've already received.
 - [ ] 📱 Phone: the Pay out sheet, the Paid out list and the Paid by picker at 390px.
 
-⚠ **Migration 234 is dev-only** — it must reach prod before this ships. ⚠ This is **Pass 2 of 3**;
+**On production 2026-08-14** (mig 234 applied to prod). This is **Pass 2 of 3**;
 the season-end settlement sheet (Pass 3) is where all of this is put to work. Full build + review
 log in the plan.
 
 ---
 
-### 21 🖥📱 The season settlement sheet — **ON DEV** (built 2026-08-14) · ⚠ carries migration **235** (dev only)
+### 21 🖥📱 The season settlement sheet — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **235** ✅ on prod
 
 **What changed:** the **Season Refund Calculator is gone** — the box you typed the pot into, and
 the Calculate button. In its place, at the foot of Player Dues, is a **settlement sheet** that is
@@ -1823,8 +1823,31 @@ $152.50 each**. Use **`QA Mid Season U14`** to prove the sheet is honest *before
       limitation, not a bug: those records aren't filed against a season, so the sheet can't tell
       how much belongs to this one. **A decision is owed here** — see the note below.
 
-⚠ **Migration 235 is dev-only** — it, and 230–234 before it, must reach prod before this ships.
+**On production 2026-08-14** (job 256; migrations 230–235 applied to prod; prod HEAD `8fe59ded`).
 This completes the three-pass money model; full build log in the plan.
+
+### ⚠ ONE LIVE DEFECT ON THE PRODUCTION SHOP WINDOW — needs an owner decision
+
+**The guided tour on the production coach sandbox now describes a fundraiser that isn't there.**
+Pass 3's money beat gained the sentence *"One family owes nothing at all on their last bill: their
+player sold $240 of bottles… the row reads 'covered by fundraising'"*. That copy is CODE, so it
+shipped with job 256. The Bottle Drive itself is **seed data**, and a seed change does not travel
+with a code release — verified against the live prod database: the `riverdale-ridge` org has **zero
+fundraisers and zero credits**. A prospect taking the tour reads a sentence about a screen that
+does not exist.
+
+This is the exact drift class the demo rule in `CLAUDE.md` exists to catch: the product changed, the
+story over the top of it did not follow. `check:demos` self-heals on dev only and never writes to
+prod, and the nightly re-anchor shifts rows that exist — it cannot create a fundraiser.
+
+**Two ways out, owner's call:**
+1. **Re-seed the prod coach demo** (`scripts/seed-demo-coach.mjs --allow-prod`). ⚠ It WIPES and
+   rebuilds the demo season's children. It is the intended repair and the demo is fictional, but it
+   is a destructive write to a **public, live** marketing surface and must not be run casually.
+2. **Revert the tour sentence** until the prod demo is re-seeded, so nothing on prod claims
+   something untrue.
+
+Doing neither leaves a false sentence in front of prospects.
 
 ⚠ **ONE OPEN QUESTION FOR YOU, surfaced by the review:** money a club pays a team (or a team pays
 its club) is recorded against the **team**, never a season. The Money hub has always summed it
@@ -2456,7 +2479,7 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's 
 - [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
 - Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
 
-### 1.1b 🖥📱 The game-day card stops contradicting itself — **BUILT 2026-08-12** · no migration
+### 1.1b 🖥📱 The game-day card stops contradicting itself — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 *Owner-reported: the card showed "✓ Lineup ready" and a "Build lineup" button at the same time,
 offered "Take attendance" beside a headcount proving attendance was taken, and named the venue
 "1". Mockup + diagnosis: Claude artifact `137039b5` (option B). Deployment state lives in the

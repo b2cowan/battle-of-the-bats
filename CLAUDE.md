@@ -69,10 +69,11 @@ variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `
 roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
 marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
 both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `396bd7cc` (2026-08-12** — two promotes that day: the
-morning feature release, job 253, then the **Next 16.3.0 framework upgrade**, job 254 SUCCEED
-13:42 ET; both doors 307ing into their worlds and both demo icon routes 200 image/png re-verified
-live post-254). The three-part go-public decision (`BUSINESS_DECISIONS.md`
+into their worlds. **Prod HEAD is now `8fe59ded` (2026-08-14, Amplify job 256 SUCCEED 18:01 ET —
+the Money quarter + the help guide's menu-of-answers format; migrations 230–235 applied to prod
+that day; both doors re-verified 307ing into their worlds post-256).** The preceding prod HEAD was
+`396bd7cc` (2026-08-12 — two promotes that day: the morning feature release, job 253, then the
+**Next 16.3.0 framework upgrade**, job 254). The three-part go-public decision (`BUSINESS_DECISIONS.md`
 2026-08-07) is fully executed and **the coach door is no longer route-only**. `npm run
 tick:demos` remains the manual repair on dev; `check:demos` self-heals on dev only and **never
 writes to prod** — production freshness rides the cron alone, so a reconcile bug fixed on dev is

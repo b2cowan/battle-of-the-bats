@@ -2,7 +2,7 @@
 
 **Plan:** `COACH_MONEY_TABLE_CONSISTENCY_PLAN.md` · **Mockup:**
 `claude.ai/code/artifact/14181bd3-93b2-4cb6-bb11-5f5eb28b14be`
-**Status:** **built on dev 2026-08-13**, owner QA pending · **Priority:** medium — polish, not a
+**Status:** **on prod 2026-08-14 (job 256; built 08-13)**, owner QA pending · **Priority:** medium — polish, not a
 blocker
 
 ---
