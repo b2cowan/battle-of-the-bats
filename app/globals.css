@@ -906,7 +906,16 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   /* Accent: olive is the WARM darkening of lime (E3 — raw lime never renders as text on paper).
      On a dark ground that rule does not apply, so olive resolves back to true accent lime. */
   --home-olive:       var(--primary-light);
-  --home-olive-soft:  rgba(var(--primary-rgb), 0.18);
+  /* ⚠ --platform-primary-rgb, NOT --primary-rgb (corrected 2026-08-15). TH-3a (2026-07-21) pins
+     operator chrome to the platform blue precisely so a club's brand override cannot bleed into
+     the tools staff operate — and this selector IS operator chrome (the coaches shell marker and
+     the help reading surface). Keyed to --primary-rgb it was an org-following tint painting row
+     hover, chip fills and every stacked table card in the portal: a club with a red or amber brand
+     got a red portal. Invisible in review because every org measured used the platform default —
+     an override is required to see it at all, which is what let it survive. Sister instance NOT
+     changed here: ConsumerShell.module.css's dark nav gate carries the same line on a
+     consumer-facing surface, where org colour may well be intended — that one needs its own call. */
+  --home-olive-soft:  rgba(var(--platform-primary-rgb), 0.18);
   --home-olive-rgb:   var(--logic-lime-rgb);
 
   /* Status hues → the semantic tokens (already dark-tuned at :root). */

@@ -2242,6 +2242,63 @@ for a season that must refuse. Re-seed with
 
 ---
 
+### 26 🖥📱 Table column headings stop being the faintest words on the screen — **ON DEV 2026-08-15**, not yet released · no migration
+
+**What changed, in one line:** the heading row on every coaches-portal table — DESCRIPTION, CATEGORY,
+AMOUNT — sat on a tinted band that made it the brightest strip on the page while carrying the
+faintest text on it. The tint is gone and the words are a step stronger, so a heading now reads as a
+label for the rows beneath it rather than a bar you look past.
+
+**Why it happened:** the heading passed every accessibility check, and still does — it was never
+below a threshold. What made it hard to read is that it was **2.4× fainter than the data rows it
+labelled** while sitting on a louder surface than they did. Nothing automated measures that
+relationship, which is why five gates stayed green through it.
+
+**Worth knowing:** this was raised as a dark-mode problem and was not one — the light/warm portal was
+measurably worse. Both are fixed.
+
+**Where:** anywhere in the coaches portal with a table. Money → **Expenses & Payables** is the screen
+it was reported on; **Player Dues**, **Fundraising**, **Payments** and **Allocations** all carry the
+same tables.
+
+**The main thing to look at**
+- [ ] Money → **Expenses & Payables**: the heading row no longer sits on a blue band. It reads as a
+      quiet panel, and the words DESCRIPTION / CATEGORY / AMOUNT / STATUS are clearly legible without
+      leaning in.
+- [ ] The headings no longer draw your eye *before* the rows do — the money figures should be the
+      loudest thing in the table.
+- [ ] Move through **Player Dues**, **Fundraising**, **Payments**, **Allocations**: every table's
+      heading looks the same as every other. No screen still shows the old tinted band.
+- [ ] Open **Budget Plan** and **Budget vs. Actual** beside them: their headings and the list tables'
+      headings now look like one family. (Matching these was half-done in the 14 Aug pass — this
+      finishes it.)
+
+**Both skins — this is the half that is easy to skip**
+- [ ] Switch your account theme to the **light/warm** portal and repeat the first two checks. The
+      olive wash should be gone and the headings should read strongly on white.
+- [ ] Switch back to **dark** and confirm nothing regressed.
+
+**⚠ The one part with no automated cover — please look at it directly**
+- [ ] **Insights** (team → Insights, with enough games logged to draw a table): its headings were the
+      faintest in the whole portal and moved the furthest. Confirm they are legible, that the columns
+      still line up, and that the table is not newly cut off or forced to scroll sideways on a phone.
+      *(The test fixture renders no insights table, so this change was reasoned from the shared rule
+      rather than measured — it is the only step here without evidence behind it.)*
+- [ ] **Practice plan** builder: same check on its grid. Headings a touch larger; confirm nothing is
+      clipped at phone width.
+
+**A separate fix riding along — club branding**
+- [ ] Nothing to see on a normal club, and that is the expected result. A club whose brand colour is
+      **not** the platform blue should no longer see that colour tinting table headings, row
+      highlights or chips inside the coaches portal — staff tools stay platform-blue regardless of
+      club branding, which is what the July ruling already required. If you have a red- or
+      orange-branded club to hand, that portal is the place to confirm it.
+
+**Nothing else moved.** No data, permissions, totals or behaviour changed anywhere — this is
+presentation only.
+
+---
+
 ## Group 1D · The opponent book, and the club that shares it
 
 Four phases of one project, best read in order — P1 builds the book, P2 merges spellings and writes the

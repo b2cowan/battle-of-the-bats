@@ -1731,7 +1731,11 @@
 .insightsTagSummaryRuns { font-size: 0.78rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
 .insightsTableWrap { overflow-x: auto; }
 .insightsTable { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-.insightsTable th { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
+/* ⚠ ONE COLUMN-HEADING RECIPE FOR THE PORTAL (2026-08-15) — 0.78rem / 700 / 0.05em / --white-70,
+   the values `.th` and `.moneyGrid thead th` carry. This heading had drifted furthest of the four:
+   0.65rem at --white-35, i.e. the faintest text in the portal labelling columns of --white-90 data.
+   Padding stays tight and the wrapper still scrolls, so the wider heading costs no page overflow. */
+.insightsTable th { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--white-70); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
 .insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--white-90); }
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
@@ -2663,7 +2667,28 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    headers read so much smaller than their own data rows. Two heading recipes for one portal
    was residual drift of exactly the species the 2026-08-13 table pass closed elsewhere; the
    list heading now matches the grid heading, so the two jobs open the same way. (Phone is
-   unaffected: `.tableAsCards` hides the header row below 640.) */
+   unaffected: `.tableAsCards` hides the header row below 640.)
+
+   ⚠ AND THE GROUND IS TOO (owner call 2026-08-15) — the half the call above left behind. Size
+   and ink matched; the GROUNDS did not. The grid heading sat on a plain `--card-bg`, this one on
+   `--home-olive-soft`, and that tint is not the quiet wash its name suggests on a dark ground:
+   it resolves to the accent at 18% and stacks on the navy `--surface-2` that globals.css paints
+   on every `thead tr`, composited #121D3B. So the list heading was the BRIGHTEST, most saturated
+   surface on the page carrying its FAINTEST ink.
+
+   ⚠ THE DEFECT IS A RELATIONSHIP, NOT A THRESHOLD — which is why nothing automated caught it and
+   why the fix is a ground change, not just an ink one. Measured on the served page, composited
+   through the full paint stack (the tint is translucent over two further layers, so declared
+   values prove nothing here): the heading was **6.70:1** — a comfortable AA pass — beside data
+   rows at **15.94:1** in the same table. A heading 2.4× fainter than the rows it labels reads as
+   unreadable however well it scores. Warm was worse at 2.9× (5.13 vs 15.06), so this was never
+   the dark-mode-only defect it was reported as. Now ~9:1 in both skins, gap 1.7× / 1.5×.
+
+   ⚠ THE TINT TOKEN WAS THE LEVER NOT TO PULL. `--home-olive-soft` also paints row hover, active
+   chip fills and — via `.tableAsCards` — the ground of every table on a phone: 198 uses across 54
+   files, four unrelated jobs. Moving the token to fix this heading would have repainted all four.
+   The 2026-08-03 "a tinted surface is not a hairline" lesson, one job further on: when a shared
+   token is overloaded, change the RECIPE that consumes it, never the token. */
 .th {
   text-align: left;
   padding: 0.6rem 1rem;
@@ -2671,8 +2696,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--white-60);
-  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  color: var(--white-70);
+  background: var(--card-bg);
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
   white-space: nowrap;
 }
@@ -3175,7 +3200,10 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .moneyGrid th:first-child,
 .moneyGrid td:first-child { text-align: left; }
 
-/* Column headings — the row a coach scans across. Sticky, so a long grid keeps them on screen. */
+/* Column headings — the row a coach scans across. Sticky, so a long grid keeps them on screen.
+   ⚠ INK MOVES IN LOCKSTEP WITH `.th` (2026-08-15). Keeping the two heading recipes identical IS
+   the 2026-08-14 ruling; lifting only the list heading would have re-opened the drift it closed
+   from the other side. This grid's ground was already `--card-bg` — that is what `.th` moved TO. */
 .moneyGrid thead th {
   position: sticky;
   top: 0;
@@ -3185,7 +3213,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-60);
+  color: var(--white-70);
   border-bottom: 1px solid var(--home-line-strong, var(--border-2));
 }
 /* The pinned first column outranks the sticky heading row, or the scrolled money columns slide
@@ -7265,9 +7293,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .ppGrid th, .ppGrid td {
   border: 1px solid var(--white-8); padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap;
 }
+/* The shared column-heading recipe (see `.insightsTable th`) — the fourth and last of the four
+   that had drifted apart. `.ppGridScroll` already scrolls, so the wider heading stays contained. */
 .ppGrid thead th {
-  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--white-45); font-weight: 700;
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--white-70); font-weight: 700;
 }
 .ppGrid tbody th {
   color: var(--white-90); font-weight: 700; font-variant-numeric: tabular-nums;

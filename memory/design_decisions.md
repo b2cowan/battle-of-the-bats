@@ -4,6 +4,87 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-15 — A COLUMN HEADING IS NEVER THE FAINTEST TEXT IN ITS OWN TABLE; and an overloaded token is not the lever
+
+**Trigger:** owner, on the Money hub's Expenses tab — *"can we look at our dark mode styling rules for
+this blue? it is hard to read. I hope this is centralized so if we make a change it permiates across
+the app and doesn't leave any straglers."* Mockup (approved, binding, all recommendations):
+`claude.ai/code/artifact/c0eb7e26-ead7-44ac-9340-936c335680b0`.
+
+⚠ **THE DEFECT WAS A RELATIONSHIP, NOT A THRESHOLD — WHICH IS WHY EVERY GATE WAS GREEN.** Measured on
+the served page (computed styles, composited through the full paint stack — the heading's own tint is
+translucent over two further layers, so declared values prove nothing here): the heading read
+**6.70:1**, a comfortable AA pass, beside data rows at **15.94:1** in the same table. A heading **2.4×
+fainter than the rows it labels**, sitting on the brightest and most saturated surface on the page, is
+unreadable however well it scores. `check:contrast` and `check:text-contrast` both passed before and
+after — they hold each token to a floor, and no floor was ever breached. **Standing test for any
+heading, label or caption: state its ratio AND the ratio of the content it introduces. The gap is the
+finding.** Now ~9:1 in both skins; gap 1.75× dark, 1.52× warm.
+
+⚠ **IT WAS REPORTED AS A DARK-MODE BUG AND WAS NOT ONE.** Warm measured **worse** — 5.13:1 against
+15.06:1, a **2.9×** gap. Fixing only the branch the owner was looking at would have left the larger
+half in place. **A themed portal has two answers to every colour question; measure both before scoping
+the fix**, even when the report names one.
+
+⚠ **THE GROUND WAS THE HALF THE 2026-08-14 CALL LEFT BEHIND.** That ruling matched `.th` to
+`.moneyGrid thead th` on size and ink. The GROUNDS still differed: the grid heading sat on plain
+`--card-bg`, the list heading on `--home-olive-soft` — which is not the quiet wash its name suggests
+on a dark ground (accent at 18%, stacking on the navy `--surface-2` that globals.css paints on every
+`thead tr`, composited **#121D3B**). `.th` now takes `--card-bg` too. **When unifying two recipes,
+enumerate ground, ink, size and face — matching three of four leaves a visible difference and the
+appearance of a closed issue.**
+
+⚠⚠ **AN OVERLOADED TOKEN IS NEVER THE LEVER — CHANGE THE RECIPE THAT CONSUMES IT.** `--home-olive-soft`
+looked perfectly centralised (one definition per skin) and was the obvious fix. It is also row hover,
+active chip fills, and — via `.tableAsCards` — the ground of every table on a phone: **198 uses across
+54 files, four unrelated jobs.** Moving it would have repainted all four to fix one. This is the
+2026-08-03 "a tinted surface is not a hairline" lesson one job further on. **Centralised and safe-to-
+change are different properties; count the jobs before pulling.**
+
+⚠ **THE STRAGGLERS WERE THE OTHER HEADINGS, NOT THE TOKEN.** Four column-heading recipes had drifted
+apart — `.th` and `.moneyGrid thead th` (0.78rem/--white-60), `.ppGrid thead th` (0.68/--white-45) and
+`.insightsTable th` (**0.65rem/--white-35**, the faintest text in the portal labelling columns of
+--white-90 data). All four now carry **0.78rem / 700 / 0.05em / uppercase / --white-70**. Both folded
+grids sit in `overflow-x:auto` wrappers; an A/B on one server (new state, then old sizes restored by
+in-page override) measured **zero** page-level overflow introduced and **zero** tables newly needing
+their scroller at 361/390/768/1440.
+
+⚠ **TH-3a WAS SILENTLY OPEN, AND ONLY AN ORG OVERRIDE COULD SHOW IT.** The dark gate defined the tint
+as `rgba(var(--primary-rgb), 0.18)` — the **org-overridable** token — inside a selector that is
+operator chrome (the coaches shell marker + the help reading surface). TH-3a (2026-07-21) pins
+operator chrome to `--platform-primary` precisely so a club's brand cannot bleed in. A club with a red
+brand got a red portal: row hover, chip fills, every stacked table card. **Invisible in every review
+because every org ever measured uses the platform default** — proved by injecting a red override and
+confirming the tint no longer follows. Now `--platform-primary-rgb`. **A token wired to the wrong
+source is untestable on default data; assert it by overriding the source, not by reading the value.**
+**Sister instance deliberately NOT changed:** `ConsumerShell.module.css`'s dark nav gate carries the
+same line on a consumer-facing surface where org colour may be intended — it needs its own call.
+
+**Status:** design ruling + binding mockup, 2026-08-15. **BUILT on dev the same day**, verified by
+reading computed styles on the served page rather than screenshots.
+
+⚠ **A NEAR-MISS WORTH THE PARAGRAPH — THE 2026-08-08 SWEEP HAPPENED AGAIN, THEN UNDID ITSELF.** This
+session staged its hunks; a concurrent agent ran `git commit` in the window before they were verified
+and swept them into `630b965c`, a docs commit ("two plans for the money forms") saying nothing about
+them. That agent then **amended** its own commit (`630b965c` → `edc451e0`), which silently took the
+swept CSS back OUT of history while leaving it in the working tree — so the change was briefly
+committed under someone else's message, then briefly committed nowhere at all, with no signal either
+time. It is committed properly here only because the reference was re-checked rather than trusted.
+**Three lessons, all cheap:** staging explicit pathspecs does not close the window and cannot — the
+hazard is the gap between staging and committing, so do both in ONE step; a commit hash written into
+a doc is a claim that expires the moment a neighbour amends, so **verify a hash is still an ancestor
+before publishing it** (this entry cited `630b965c` for several minutes and was wrong); and
+`git status` showing a file as clean means it matches HEAD, **not** that your change is safely in
+history — after an amend upstream those are different statements.
+
+Gates green: `check:contrast`,
+`check:text-contrast`, `check:tokens` (all 6 scopes), `check:css-purity`. ⚠ **`.insightsTable` was NOT
+measured** — the UAT fixture renders no insights table, so its fold is reasoned from the shared recipe
+and is the one part of this change owner QA must look at directly. Owner QA still owed.
+[[design-system]] [[design-principles]]
+
+---
+
 ### 2026-08-13 (placement, final) — IMPORT is hub-wide; EXPORT never is. If the answer changes with what the coach is looking at, the button belongs beside what they are looking at
 
 **Trigger:** owner, on Budget vs. Actual: *"we have 2 exports in budget vs actual, how do you propose
