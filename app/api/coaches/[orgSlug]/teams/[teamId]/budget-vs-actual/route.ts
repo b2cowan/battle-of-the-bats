@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
+  getRealisedFundraiserEntries,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -10,15 +11,17 @@ import {
   buildMonthGrid, monthKeyOf,
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
-import { computeBudgetTotals } from '@/lib/coach-budget-totals';
+import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
+import { buildLinePeriodActuals, lineActualsKnowable } from '@/lib/coach-budget-line-actuals';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
 // Returns a full budget-vs-actual report for the active program year.
-// Actuals are matched to budget categories by expense.category name (case-insensitive).
-// Period actuals are assigned by comparing expense.expense_paid_at to period_date ranges.
+// Actuals are matched to budget categories by expense.category name (case-insensitive) — a
+// CATEGORY is the finest grain an expense records, so a per-LINE actual exists only where the
+// category holds one line (see §5 and lib/coach-budget-line-actuals.ts).
 // Unbudgeted actuals are expenses whose category doesn't match any budget category name.
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -45,8 +48,11 @@ export const GET = withObservability(async (req: Request,
   // report matches actual expenses to a line by category NAME, so a funding line filed under
   // "Fundraising" would sit waiting to absorb a real expense that happened to carry that word —
   // and would inflate the budget it is supposed to offset. They get their own block (§8b).
-  const lines = allLines.filter(l => l.line_kind !== 'funding');
-  const fundingLines = allLines.filter(l => l.line_kind === 'funding');
+  // ⚠ BOTH MONEY-IN KINDS. Fundraising and sponsorship differ only in how they REPORT — a filter
+  // naming one would leave the other in the COST bucket, where it would be matched against real
+  // expenses and inflate the very budget it exists to offset (2026-08-15).
+  const lines = allLines.filter(l => !isFundingKind(l.line_kind as string | null));
+  const fundingLines = allLines.filter(l => isFundingKind(l.line_kind as string | null));
 
   // ── 2. Load expenses (paid and unpaid) ───────────────────────────────────
   const { data: expensesRaw } = await supabaseAdmin
@@ -126,71 +132,43 @@ export const GET = withObservability(async (req: Request,
     }
   }
 
-  // ── 5. Build period actuals ────────────────────────────────────────────
-  // For each category, assign paid expenses to periods using period_date ranges.
-  // Periods are sorted ascending; each period owns expenses paid up to its period_date.
-  function buildPeriodActuals(
-    catKey: string,
-    periods: Array<{ period_date: string | null; period_label: string; amount: number; sort_order: number }>,
-  ): number[] {
-    // Expenses in this category, with paid dates
-    const catExpenses = expenses
-      .filter(e => ((e.category as string | null) ?? '').toLowerCase() === catKey && paidAmount(e) > 0)
-      .map(e => ({ date: paidDate(e), amount: paidAmount(e) }));
-
-    if (periods.length === 0 || catExpenses.length === 0) return periods.map(() => 0);
-
-    // Sort periods by date (nulls last)
-    const sorted = [...periods].sort((a, b) => {
-      if (!a.period_date && !b.period_date) return a.sort_order - b.sort_order;
-      if (!a.period_date) return 1;
-      if (!b.period_date) return -1;
-      return a.period_date.localeCompare(b.period_date);
-    });
-
-    const actuals = new Array(sorted.length).fill(0);
-
-    for (const exp of catExpenses) {
-      if (!exp.date) { actuals[actuals.length - 1] += exp.amount; continue; }
-      // Find the first period whose date >= expense date
-      let assigned = false;
-      for (let i = 0; i < sorted.length; i++) {
-        if (!sorted[i].period_date || sorted[i].period_date! >= exp.date) {
-          actuals[i] += exp.amount;
-          assigned = true;
-          break;
-        }
-      }
-      if (!assigned) actuals[actuals.length - 1] += exp.amount;
-    }
-
-    // Map back to original order
-    const originalIndexMap = periods.map(p =>
-      sorted.findIndex(s => s.period_label === p.period_label && s.period_date === p.period_date)
-    );
-    return originalIndexMap.map(i => actuals[i] ?? 0);
-  }
-
-  // ── 6. Build category result objects ────────────────────────────────────
+  // ── 5. Build category result objects ────────────────────────────────────
+  // ⚠ A LINE'S OWN SPENDING IS USUALLY NOT KNOWABLE. An expense names a CATEGORY and nothing
+  // finer, so only a category holding exactly one line can report a per-line figure — the rule,
+  // and the placing of spending into periods, live in lib/coach-budget-line-actuals.ts. Every
+  // line in a multi-line category used to be handed the whole category's spending mapped onto its
+  // own periods, which reported the same dollar once per line (fixed 2026-08-15).
   const categoryResults = [...categoryLines.entries()].map(([key, catLines]) => {
     const categoryName     = categoryNameMap.get(key) ?? key;
     const categoryActual   = Math.round((categoryActuals.get(key) ?? 0) * 100) / 100;
     const categoryEstimated = catLines.reduce((s, l) => s + (l.total_amount as number), 0);
     const categoryVariance  = Math.round((categoryEstimated - categoryActual) * 100) / 100;
+    const lineActualsKnown  = lineActualsKnowable(catLines.length);
 
-    const lineResults = catLines.map(line => {
-      const rawPeriods = ((line.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
-        .sort((a, b) => (a.sort_order as number) - (b.sort_order as number));
+    // Each line's periods in display order, held once: the actuals are computed across the whole
+    // category and the rows are then built from the same arrays.
+    const linePeriods = catLines.map(line =>
+      ((line.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
+        .sort((a, b) => (a.sort_order as number) - (b.sort_order as number)));
 
-      const periodActuals = buildPeriodActuals(
-        key,
-        rawPeriods.map(p => ({
-          period_date:  p.period_date as string | null,
-          period_label: p.period_label as string,
-          amount:       p.amount as number,
-          sort_order:   p.sort_order as number,
-        })),
-      );
+    // This category's paid spending — gathered once per category rather than once per line.
+    const categoryEvents = lineActualsKnown
+      ? expenses
+        .filter(e => ((e.category as string | null) ?? '').toLowerCase() === key && paidAmount(e) > 0)
+        .map(e => ({ date: paidDate(e), amount: paidAmount(e) }))
+      : [];
+
+    const actualsByLine = buildLinePeriodActuals(
+      linePeriods.map(ps => ps.map(p => ({
+        periodDate: p.period_date as string | null,
+        sortOrder:  p.sort_order as number,
+      }))),
+      categoryEvents,
+    );
+
+    const lineResults = catLines.map((line, li) => {
+      const rawPeriods = linePeriods[li];
+      const periodActuals = actualsByLine[li];
 
       return {
         budgetLineId:   line.id as string,
@@ -201,7 +179,8 @@ export const GET = withObservability(async (req: Request,
           label:      p.period_label as string,
           periodDate: p.period_date as string | null,
           estimated:  p.amount as number,
-          actual:     Math.round(periodActuals[i] * 100) / 100,
+          /** ⚠ null = nobody can say (see above). A real 0 means nothing was spent. */
+          actual:     periodActuals ? Math.round(periodActuals[i] * 100) / 100 : null,
         })),
       };
     });
@@ -211,11 +190,14 @@ export const GET = withObservability(async (req: Request,
       categoryEstimated: Math.round(categoryEstimated * 100) / 100,
       categoryActual,
       categoryVariance,
+      /** False when the category holds more than one line — the screen says so rather than
+       *  leaving a bare dash to look like a bug. */
+      lineActualsKnown,
       lines: lineResults,
     };
   });
 
-  // ── 7. Dues collection summary ────────────────────────────────────────
+  // ── 6. Dues collection summary ────────────────────────────────────────
   const { data: schedules } = await supabaseAdmin
     .from('rep_player_dues_schedules')
     .select('id, player_id, total_amount')
@@ -255,7 +237,7 @@ export const GET = withObservability(async (req: Request,
     outstanding: Math.round((expectedDues - collectedDues) * 100) / 100,
   };
 
-  // ── 8. Monthly chart data ─────────────────────────────────────────────
+  // ── 7. Monthly chart data ─────────────────────────────────────────────
   // Collect all relevant months from period_dates and paid expense dates
   const monthSet = new Set<string>();
 
@@ -311,7 +293,7 @@ export const GET = withObservability(async (req: Request,
     return { month, budgetedForMonth: b, actualForMonth: a, cumBudget, cumActual };
   });
 
-  // ── 8b. The month grid (chunk H) ───────────────────────────────────────
+  // ── 8. The month grid (chunk H) ────────────────────────────────────────
   // Rows = category → line, columns = the season's months, one payload serving all four lenses
   // (Budget · Scheduled · Actual · Difference) so flipping a lens never refetches. The arithmetic
   // lives in lib/coach-budget-months.ts and is unit-tested; this block is the assembly half.
@@ -410,7 +392,7 @@ export const GET = withObservability(async (req: Request,
   const budgetTotals = computeBudgetTotals({
     lines: allLines.map(l => ({
       totalAmount: (l.total_amount as number) ?? 0,
-      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+      lineKind: normalizeBudgetLineKind(l.line_kind as string | null),
     })),
     estimatedTotal: programYear.budgetAmount ?? null,
   });
@@ -430,21 +412,21 @@ export const GET = withObservability(async (req: Request,
     bufferAmount: buffer,
   });
 
-  // ── 8b. Expected funding vs what the team actually kept ──────────────────
+  // ── 9. Expected funding vs what the team actually kept ───────────────────
   // Owner ruling 2026-08-12: the actual against an expected-funding line is the TEAM'S SHARE —
   // everything raised, less whatever was rebated to the player who raised it. A rebate lowers
   // that player's own dues, so counting it here would lower the same dues twice.
   // ONE round trip, not two: the entries are read through their parent fundraiser rather than
   // fetching the campaign ids first and then filtering by them. This route already runs a long
   // serial chain of awaits; a second hop at the tail of it buys nothing.
+  // ⚠ RECEIPTS ONLY. A pledged sponsor's entry exists the moment it is recorded, but nothing has
+  // arrived — counting it here reported a $2,000 pledge as $2,000 of actual sponsorship against
+  // the plan, which is a report telling a coach they hit a number they have not (review,
+  // 2026-08-15). Migration 237 states this rule; the shared reader is where it is enforced.
   let fundingActual = 0;
   if (fundingLines.length > 0) {
-    const { data: entries } = await supabaseAdmin
-      .from('rep_fundraiser_entries')
-      .select('amount_raised, rebate_amount, rep_fundraisers!inner(program_year_id)')
-      .eq('rep_fundraisers.program_year_id', programYear.id);
-    for (const en of (entries ?? []) as Array<{ amount_raised: number; rebate_amount: number }>) {
-      fundingActual += (en.amount_raised ?? 0) - (en.rebate_amount ?? 0);
+    for (const en of await getRealisedFundraiserEntries(programYear.id)) {
+      fundingActual += en.amountRaised - en.rebateAmount;
     }
   }
   const funding = fundingLines.length === 0 ? null : {
@@ -480,7 +462,7 @@ export const GET = withObservability(async (req: Request,
     if (m) duesInActual[m] = Math.round(((duesInActual[m] ?? 0) + amt) * 100) / 100;
   }
 
-  // ── 9. Headroom ───────────────────────────────────────────────────────
+  // ── 10. Headroom ──────────────────────────────────────────────────────
   // Measured against the EFFECTIVE budget (see above, where it is reconciled) so this report,
   // the Money hub, and the budget planner always agree.
   const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.categoryActual, 0) * 100) / 100;

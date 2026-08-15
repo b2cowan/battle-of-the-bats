@@ -187,12 +187,12 @@
     "hex": 4,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/[fundraiserId]/page.tsx": {
-    "hex": 3,
+  "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx": {
+    "hex": 4,
     "rgba": 0
   },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx": {
-    "hex": 1,
+    "hex": 2,
     "rgba": 0
   },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx": {

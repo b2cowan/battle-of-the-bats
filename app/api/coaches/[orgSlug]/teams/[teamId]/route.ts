@@ -12,7 +12,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteScoutingSummary } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteScoutingSummary, canViewMoney } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -86,6 +86,29 @@ export const GET = withObservability(async (_req: Request,
       sharing: clubAccess.teamSharing,
       canEdit: canWriteScoutingSummary(assignment.capabilities),
     },
+    /**
+     * The Money group's two settings, for the Settings page.
+     *
+     * ⚠ Served from HERE rather than by a second request to the accounting-settings route: that
+     * route re-resolves the auth context, the team, the assignments and the active program year —
+     * all four of which this handler has already done — purely to read two fields off the
+     * `programYear` sitting in scope right now. Two round trips and eight queries where one and
+     * four will do.
+     *
+     * ⚠ NULL for a coach without money access — the two figures never leave the server for
+     * someone who may not see team finances. The client keys the whole group off the same
+     * capability rather than off this being present, so the two cannot disagree. Writes still go
+     * to the accounting-settings route, which gates them on money WRITE independently.
+     */
+    money: canViewMoney(assignment.capabilities)
+      ? {
+          autoRemindersEnabled: programYear.autoRemindersEnabled,
+          creditApplication: programYear.creditApplication,
+          // The team's standard split (mig 237). It pre-fills the new-fundraiser and new-sponsor
+          // forms and NOTHING else — it is never applied to a record that already exists.
+          defaultPlayerCreditPercent: programYear.defaultPlayerCreditPercent ?? 0,
+        }
+      : null,
     // Assistant Coaches: the caller's effective capability set + their role, so the client can
     // hide/disable ungranted areas (defense-in-depth — the routes also enforce server-side).
     coachRole: assignment.coachRole,

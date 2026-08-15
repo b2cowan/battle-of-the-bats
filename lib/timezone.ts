@@ -258,6 +258,8 @@ export function daysBetweenDateStrings(from: string, to: string): number {
 }
 
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** For the surfaces a FAMILY reads rather than a coach — the dues reminder email spells it out. */
+const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /** Split a `YYYY-MM-DD` (or the date half of a timestamp) into calendar parts.
  *  MANUAL parse on purpose — `new Date('2026-07-16')` is UTC midnight, and rendering that
@@ -281,6 +283,35 @@ export function formatDayMonth(value: string | null | undefined): string {
   const p = parseDateOnlyParts(value);
   if (!p) return value ?? '';
   return `${p.d} ${SHORT_MONTHS[p.m - 1]}`;
+}
+
+/**
+ * "May 15, 2026" — the ONE formatter for a date a coach or admin reads out of a money record,
+ * and it takes BOTH shapes the database stores, because the caller usually cannot tell them apart.
+ *
+ * ⚠ THIS EXISTS BECAUSE THREE SCREENS HAND-ROLLED IT AND ALL THREE WERE WRONG (2026-08-14), each
+ * in the way its own local shortcut invited:
+ *   • `new Date(s + 'T00:00:00')` — correct for a `date` column, but a **timestamptz** already
+ *     carries a time, so the concatenation produced a doubled string and printed the literal
+ *     words **"Invalid Date"** on every paid row of the player ledger and the By-installment grid.
+ *   • `new Date(s)` — correct for a timestamp, but a bare `YYYY-MM-DD` parses as UTC midnight and
+ *     renders the PREVIOUS day in every zone behind UTC (the admin allocations schedule showed
+ *     every due date one day early).
+ * Neither hand-roll is safe on the other's input, and money tables mix the two freely: `due_date`
+ * is a date, `paid_at` is a timestamp — often in the SAME ROW.
+ *
+ * A timestamp resolves through the ORG zone, never a raw slice: a payment recorded after 8 PM
+ * Eastern is stored on the next UTC day and would otherwise be reported as arriving tomorrow.
+ */
+export function formatStoredDate(
+  value: string | null | undefined,
+  opts: { withYear?: boolean; longMonth?: boolean } = {},
+): string {
+  if (!value) return '—';
+  const parts = parseDateOnlyParts(value.length > 10 ? orgDayKey(value) : value);
+  if (!parts) return '—';
+  const month = opts.longMonth ? LONG_MONTHS[parts.m - 1] : SHORT_MONTHS[parts.m - 1];
+  return `${month} ${parts.d}${opts.withYear === false ? '' : `, ${parts.y}`}`;
 }
 
 /**

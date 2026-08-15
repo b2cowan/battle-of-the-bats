@@ -353,7 +353,7 @@ test.describe('Money on a phone @360x740', () => {
       ['Expenses', `${base()}/accounting?section=expenses`],
       ['Player Dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
-      ['Fundraiser detail', `${base()}/accounting/fundraisers/${fundraiserId}`],
+      ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ];
@@ -517,7 +517,7 @@ test.describe('Money on a phone @360x740', () => {
       ['Expenses', `${base()}/accounting?section=expenses`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
-      ['Fundraiser detail', `${base()}/accounting/fundraisers/${fundraiserId}`],
+      ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ] as Array<[string, string]>) {
       await open(page, url);

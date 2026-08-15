@@ -83,6 +83,17 @@ export const POST = withObservability(async (req: Request,
   const defaultInstallments: InstallmentInput[] = body.installments ?? [];
   const overrides: PlayerOverride[]             = body.overrides    ?? [];
   const replace: boolean                        = body.replace === true;
+  /**
+   * Players to leave completely alone — the coach chose "keep the ones I set by hand".
+   *
+   * ⚠ THIS IS THE ONLY NON-DESTRUCTIVE ANSWER THE RE-RUN HAS. Before it, every run was
+   * all-or-nothing: a coach who needed to fix the team's dates mid-season had to accept losing
+   * a hardship arrangement, or not fix the dates. Skipped players are not upserted, not
+   * deleted from, and not counted as processed — nothing in their season moves.
+   */
+  const skipPlayerIds = new Set<string>(
+    Array.isArray(body.skipPlayerIds) ? (body.skipPlayerIds as unknown[]).filter((v): v is string => typeof v === 'string') : [],
+  );
 
   // Which of the three answers produced these amounts. NOT re-derived from — the numbers arrive
   // already agreed, straight from the preview the coach approved. It is recorded so the schedule
@@ -108,13 +119,66 @@ export const POST = withObservability(async (req: Request,
   const scheduleIds   = scheduleRows.map(s => s.id);
   const scheduleByPlayer = new Map(scheduleRows.map(s => [s.player_id, s.id]));
   let existingInstallmentCount = 0;
+  /** Players whose schedule is NOT the one the rest of the roster shares — a per-player arrangement. */
+  const handSetPlayerIds = new Set<string>();
+  /** Players whose existing due dates are not the ones this run would write. */
+  const dateChangePlayerIds = new Set<string>();
 
   if (scheduleIds.length > 0) {
     const { data: instRows } = await supabaseAdmin
       .from('rep_player_dues_installments')
-      .select('player_id')
+      .select('player_id, installment_number, amount, due_date')
       .in('schedule_id', scheduleIds);
-    existingInstallmentCount = (instRows ?? []).length;
+    const rows = (instRows ?? []) as { player_id: string; installment_number: number; amount: number; due_date: string }[];
+    existingInstallmentCount = rows.length;
+
+    /* ⚠ "HAND-SET" IS DECIDED BY COMPARING PLAYERS TO EACH OTHER, **NEVER** BY `source`.
+     *
+     * `source` looks like the answer and is not (/review 2026-08-14, Critical). The column
+     * DEFAULTS to `manual`, and `replaceRepDuesInstallments` — which never sets it — is called by
+     * two automated paths as well as the per-player editor:
+     *   • SEASON ROLLOVER's carry-fees step, which is **on by default**, and
+     *   • the free→Premium upgrade migration.
+     * So the morning after a routine rollover, every player on the roster reads `manual` though
+     * nobody edited anything. This screen would have named the WHOLE ROSTER as "schedules you set
+     * by hand" and offered to skip them all — one click and the coach's team-wide date fix would
+     * have applied to nobody. Worse, a coach who learns the list is usually noise stops reading
+     * it, which is precisely when it finally names a real hardship arrangement.
+     *
+     * The shape comparison needs no column, no migration and no backfill, and it models the thing
+     * actually at risk: a player whose amounts/dates differ from what everyone else has is the one
+     * a team-wide run would flatten. A uniform roster — carried forward, migrated, or generated —
+     * flags nobody, which is the correct answer for all three.
+     */
+    const shapeOf = new Map<string, string[]>();
+    for (const r of rows) {
+      if (!shapeOf.has(r.player_id)) shapeOf.set(r.player_id, []);
+      shapeOf.get(r.player_id)!.push(`${r.installment_number}:${Number(r.amount).toFixed(2)}:${r.due_date}`);
+    }
+    const shapeByPlayer = new Map<string, string>();
+    const shapeCounts = new Map<string, number>();
+    for (const [playerId, parts] of shapeOf) {
+      const shape = parts.sort().join('|');
+      shapeByPlayer.set(playerId, shape);
+      shapeCounts.set(shape, (shapeCounts.get(shape) ?? 0) + 1);
+    }
+    // The roster's common schedule = the shape the most players share. Ties break on the shape
+    // string so the answer is stable across runs rather than depending on row order.
+    let commonShape: string | null = null;
+    let commonCount = 0;
+    for (const [shape, count] of [...shapeCounts].sort((a, b) => a[0].localeCompare(b[0]))) {
+      if (count > commonCount) { commonShape = shape; commonCount = count; }
+    }
+    for (const [playerId, shape] of shapeByPlayer) {
+      if (shape !== commonShape) handSetPlayerIds.add(playerId);
+    }
+
+    const newDates = new Set(defaultInstallments.map(i => i.dueDate));
+    for (const r of rows) {
+      // Guarded on a non-empty proposal: an empty one (rejected below) would otherwise match
+      // nothing and report every family's dates as moving.
+      if (defaultInstallments.length > 0 && !newDates.has(r.due_date)) dateChangePlayerIds.add(r.player_id);
+    }
   }
 
   // Recorded payments per player (mig 232) — kept across a replace, re-applied to the new plan.
@@ -140,12 +204,32 @@ export const POST = withObservability(async (req: Request,
   // dues and bulk dues sit on the same page. The code lets the modal turn this into "replace
   // what's there?" with the coach's form still intact.
   if (existingInstallmentCount > 0 && !replace) {
+    // ⚠ THE REFUSAL NAMES WHAT IT IS ABOUT TO DESTROY. Money is genuinely safe across a replace
+    // (payments are their own records since mig 232, and they re-allocate to the new plan), and
+    // the old copy said so — which made the screen sound safer than it was. What a replace DOES
+    // destroy is every per-player arrangement, and a coach cannot weigh that against a count of
+    // "players with dues". So the question now arrives with their names on it.
+    const handSetPlayers = handSetPlayerIds.size > 0
+      ? ((await supabaseAdmin
+          .from('rep_roster_players')
+          .select('id, player_first_name, player_last_name')
+          .in('id', [...handSetPlayerIds])).data ?? [])
+          .map(p => ({
+            id: p.id as string,
+            name: [p.player_first_name, p.player_last_name].filter(Boolean).join(' ').trim() || 'Unnamed player',
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+      : [];
     return NextResponse.json(
       {
         error: 'This roster already has a dues schedule.',
         code: 'ALREADY_HAS_DUES',
         playersWithDues:     new Set(scheduleRows.map(s => s.player_id)).size,
         playersWithPayments: paidPlayerIds.size,
+        /** Per-player arrangements a plain replace would flatten — named, so they can be kept. */
+        handSetPlayers,
+        /** How many families would be told a different due date than they already have. */
+        playersWithDateChange: dateChangePlayerIds.size,
       },
       { status: 409 },
     );
@@ -200,10 +284,16 @@ export const POST = withObservability(async (req: Request,
   let overpaymentCreditsCreated = 0;
   /** Players whose dues could not be written. NAMED, not counted — see the response note. */
   const playersFailed: string[] = [];
+  /** Players deliberately left alone (their hand-set schedule was kept). */
+  let playersSkipped = 0;
   const nameOf = (p: { player_first_name: string | null; player_last_name: string | null }) =>
     [p.player_first_name, p.player_last_name].filter(Boolean).join(' ').trim() || 'Unnamed player';
 
   for (const player of players) {
+    // Kept exactly as they are — no upsert, no delete, no re-projection. A skipped player's
+    // season is untouched by this run, which is the whole promise of the option.
+    if (skipPlayerIds.has(player.id)) { playersSkipped += 1; continue; }
+
     const playerInstallments = overrideMap.get(player.id) ?? defaultInstallments;
     const playerTotal = playerInstallments.reduce((s, i) => s + i.amount, 0);
 
@@ -310,13 +400,17 @@ export const POST = withObservability(async (req: Request,
     playersProcessed += 1;
   }
 
-  // playersProcessed + playersFailed.length === players.length, always. The client states each
-  // bucket; a roster that silently didn't add up was the defect being fixed. `playersSkipped` is
-  // kept at 0 for older clients of this response — nothing is skipped since mig 232.
+  // playersProcessed + playersSkipped + playersFailed.length === players.length, always. The
+  // client states each bucket; a roster that silently didn't add up was the defect being fixed.
+  //
+  // ⚠ `playersSkipped` IS A REAL FIGURE AGAIN (2026-08-14). It sat hard-coded at 0 from mig 232,
+  // when the last reason to skip anybody disappeared — and that made it easy to believe a re-run
+  // touching every player was a property of the system rather than a choice. It is now the count
+  // of hand-set schedules the coach chose to keep, and the success screen says so by name.
   return NextResponse.json({
     created: true,
     playersProcessed,
-    playersSkipped: 0,
+    playersSkipped,
     playersWithPaymentsKept,
     overpaymentCreditsCreated,
     playersFailed,

@@ -1,5 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
+import { isFundingKind } from './coach-budget-totals';
+import { getRealisedFundraiserEntries } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import {
   getRepRosterPlayers,
@@ -100,9 +102,13 @@ export async function loadSeasonSettlement(opts: {
   const splitIds = (splitsRes.data ?? []).map((s: { id: string }) => s.id);
   const [installments, entriesRes, allocInstallsRes] = await Promise.all([
     getRepDuesInstallmentsBySchedules(schedules.map(s => s.id)),
-    fundraiserIds.length
-      ? supabaseAdmin.from('rep_fundraiser_entries').select('amount_raised').in('fundraiser_id', fundraiserIds)
-      : Promise.resolve({ data: [] as Array<{ amount_raised: number }> }),
+    // ⚠ REALISED ONLY — the pot is money the team is HOLDING. A pledged sponsor's entry exists
+    // but nothing has arrived, and this pot is what families are paid out of: counting a promise
+    // here could have funded a real refund of money the team never received (review, 2026-08-15).
+    // Called unconditionally: it already returns [] for a season with no fundraisers, and the
+    // `fundraiserIds.length` ternary it replaced made the surrounding Promise.all infer one union
+    // type across all three results instead of a tuple.
+    getRealisedFundraiserEntries(pyId),
     splitIds.length
       ? supabaseAdmin.from('rep_allocation_installments').select('amount, paid_at').in('split_id', splitIds)
       : Promise.resolve({ data: [] as Array<{ amount: number; paid_at: string | null }> }),
@@ -120,7 +126,7 @@ export async function loadSeasonSettlement(opts: {
   // player's rebate is a separate credit — so subtracting the players' share here would remove
   // it a second time. That double-subtraction is the defect this whole sheet replaces.
   const fundraisingRaised = amountsTotal(
-    ((entriesRes.data ?? []) as Array<{ amount_raised: number }>).map(e => ({ amount: e.amount_raised ?? 0 })));
+    (entriesRes as Array<{ amountRaised: number }>).map(e => ({ amount: e.amountRaised ?? 0 })));
 
   // ⚠ CLUB PAYMENT REQUESTS ARE DELIBERATELY OUT OF THE POT, and this is the one place in the
   // sheet where a real figure is knowingly excluded rather than derived.
@@ -334,7 +340,7 @@ export async function loadSeasonSettlement(opts: {
   // them to share it.
   const plannedCost = amountsTotal(
     ((linesRes.data ?? []) as Array<{ total_amount: number; line_kind?: string | null }>)
-      .filter(l => l.line_kind !== 'funding')
+      .filter(l => !isFundingKind(l.line_kind))
       .map(l => ({ amount: l.total_amount ?? 0 })));
   const plan = Math.max(plannedCost, programYear.budgetAmount ?? 0);
 

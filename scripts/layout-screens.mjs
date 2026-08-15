@@ -116,6 +116,11 @@ export const SCREENS = [
      entry sweeps the real thing rather than a fixture-only mode. */
   { id: 'coach-dues-settlement',   session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&settlement=open`, ready: 'h1' },
   { id: 'coach-fundraisers',       session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers`,      ready: 'h1' },
+  /* ⚠ THE DRILL-IN IS ITS OWN SHAPE, and it was never swept while it was a page of its own: a
+     six-column leaderboard with an inline edit form in the trailing cell, under a NESTED header
+     (h2 + smaller icon tile) that exists nowhere else in the portal. `coach-fundraisers` above
+     measures the list and would stay green through anything that happened one level in. */
+  { id: 'coach-fundraiser',        session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.fundraiserId}`, ready: 'h1' },
   { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting?section=payment-requests`, ready: 'h1' },
   { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting?section=allocations`,      ready: 'h1' },
 
@@ -124,6 +129,17 @@ export const SCREENS = [
   { id: 'coach-documents',     session: 'coach', path: (c) => `${team(c)}/documents`,     ready: 'h1' },
   { id: 'coach-staff',         session: 'coach', path: (c) => `${team(c)}/staff`,         ready: 'h1' },
   { id: 'coach-settings',      session: 'coach', path: (c) => `${team(c)}/settings`,      ready: 'h1' },
+  /* ⚠ TEAM SETTINGS IS SIX CLOSED GROUPS, so the entry above measures the page chrome and
+     nothing else — every control lives inside a shut <details> with zero geometry, and the
+     sweep skips zero-size elements rather than flagging them. A green `coach-settings` would
+     therefore prove only that the page still has an <h1>: the same "green sweep over an empty
+     screen" trap the settlement sheet above documents, arriving here the day the page learned
+     to collapse. `?section=` is the real arrival URL a coach gets from the dues page and the
+     depth chart, so these sweep the genuine open state, not a fixture-only mode.
+     Two entries, not six: `money` carries the new row grammar and `lineup-rules` the numeric
+     inputs and the save row — between them every widget shape on the page is measured. */
+  { id: 'coach-settings-money',   session: 'coach', path: (c) => `${team(c)}/settings?section=money`,        ready: 'h1' },
+  { id: 'coach-settings-lineups', session: 'coach', path: (c) => `${team(c)}/settings?section=lineup-rules`, ready: 'h1' },
   { id: 'coach-tryouts',       session: 'coach', path: (c) => `${team(c)}/tryouts`,       ready: 'h1' },
 
   // ── The archive (Chunk F — opt-in by ruling; these are the approved doors) ───

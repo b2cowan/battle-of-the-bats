@@ -7,7 +7,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from '../../rep-teams.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 
 interface Installment {
@@ -43,11 +43,11 @@ function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function fmtDate(s: string) {
-  if (!s) return '—';
-  const d = new Date(s);
-  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
+/* ⚠ Shared, because this page prints BOTH a `date` (`dueDate`) and timestamps (`paidAt`,
+   `createdAt`). The local `new Date(s)` was right for the timestamps and read a bare
+   `2026-05-15` as UTC midnight — which renders as May 14 in Toronto, so every due date on
+   the allocation schedule was reported one day early. */
+const fmtDate = formatStoredDate;
 
 // Resolve team names from the teams API (cached in-component)
 async function fetchTeamName(teamId: string, orgQuery: string): Promise<string> {

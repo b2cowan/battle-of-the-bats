@@ -6,6 +6,7 @@ import {
   getActiveRepProgramYear,
   setAutoRemindersEnabled,
   setCreditApplicationMode,
+  setDefaultPlayerCreditPercent,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -45,6 +46,7 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     autoRemindersEnabled: programYear.autoRemindersEnabled,
     creditApplication: programYear.creditApplication,
+    defaultPlayerCreditPercent: programYear.defaultPlayerCreditPercent,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/accounting-settings' });
 
@@ -61,8 +63,19 @@ export const PATCH = withObservability(async (req: Request,
 
   const hasReminders = typeof body.autoRemindersEnabled === 'boolean';
   const hasCreditMode = typeof body.creditApplication === 'string';
-  if (!hasReminders && !hasCreditMode) {
+  const hasDefaultCredit = body.defaultPlayerCreditPercent !== undefined;
+  if (!hasReminders && !hasCreditMode && !hasDefaultCredit) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+  if (hasDefaultCredit) {
+    const pct = Number(body.defaultPlayerCreditPercent);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      return NextResponse.json({ error: 'Default player credit must be between 0 and 100.' }, { status: 400 });
+    }
+    // ⚠ Forward-looking ONLY. This seeds the next new-fundraiser/new-sponsor form; nothing already
+    // recorded is touched, because every logged entry snapshots its own rate. A write that reached
+    // back would change what families had already been told they owe.
+    await setDefaultPlayerCreditPercent(programYear.id, pct);
   }
   if (hasReminders) {
     await setAutoRemindersEnabled(programYear.id, body.autoRemindersEnabled);

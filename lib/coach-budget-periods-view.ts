@@ -26,7 +26,10 @@
 // Relative, with the extension, so `node --test` can load this module directly — the unit suite's
 // resolver handles these but not the bundler's `@/` alias (see tests/ts-resolver.mjs).
 import { monthKeyOf, addMonths, monthSpan, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
-import { LINE_KIND_SECTION, type BudgetLineKind } from './coach-budget-totals.ts';
+import {
+  LINE_KIND_SECTION, BUDGET_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
+  type BudgetLineKind,
+} from './coach-budget-totals.ts';
 
 export type PeriodGranularity = 'months' | 'quarters';
 
@@ -224,8 +227,11 @@ export function buildPeriodView(
   let hasUnscheduled = false;
 
   for (const line of lines) {
-    const lineKind: BudgetLineKind = line.lineKind === 'funding' ? 'funding' : 'cost';
-    const sign = lineKind === 'funding' ? -1 : 1;
+    const lineKind: BudgetLineKind = normalizeBudgetLineKind(line.lineKind);
+    // ⚠ Both money-in kinds carry the MINUS. A sponsorship treated as a cost would be added to
+    // the month it lands in rather than subtracted from it, and the running balance below would
+    // then be wrong by twice its amount (2026-08-15).
+    const sign = isFundingKind(lineKind) ? -1 : 1;
 
     const cells: Record<string, number> = {};
     if (line.periods.length === 0) {
@@ -243,12 +249,14 @@ export function buildPeriodView(
     // Funding is one group regardless of the categories its lines carry: it is subtracted as a
     // whole, and splitting it by cost category would put money coming IN under a heading that
     // names something the team spends on.
-    const groupKey = lineKind === 'funding' ? 'funding' : (line.categoryName ?? 'Uncategorized');
+    // Each money-in kind is ONE group, keyed by the kind itself — so fundraising and sponsorship
+    // read as two headings rather than merging back into one the grid cannot tell apart.
+    const groupKey = isFundingKind(lineKind) ? lineKind : (line.categoryName ?? 'Uncategorized');
     let group = groupsByKey.get(groupKey);
     if (!group) {
       group = {
         key: groupKey,
-        name: lineKind === 'funding' ? LINE_KIND_SECTION.funding : groupKey,
+        name: isFundingKind(lineKind) ? LINE_KIND_SECTION[lineKind] : groupKey,
         lineKind,
         rows: [],
         cells: {},
@@ -266,7 +274,9 @@ export function buildPeriodView(
   }
 
   const groups = [...groupsByKey.values()]
-    .sort((a, b) => (a.lineKind === b.lineKind ? 0 : a.lineKind === 'funding' ? 1 : -1));
+    // Costs first, then the money-in groups — and among those, fundraising before sponsorship so
+    // the order is the same everywhere the two appear.
+    .sort((a, b) => BUDGET_LINE_KINDS.indexOf(a.lineKind) - BUDGET_LINE_KINDS.indexOf(b.lineKind));
 
   const columns: PeriodColumn[] = [...dateColumns];
   if (hasUnscheduled) {

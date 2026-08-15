@@ -1,0 +1,1799 @@
+<title>Expenses &amp; Payables Fixes</title>
+
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     DOCUMENT CHROME — cool slate, deliberately NOT the product.
+     Light palette lives on bare :root so the un-stamped (system) state resolves.
+     ══════════════════════════════════════════════════════════════════════════ */
+  :root {
+    --doc-ground:   #E4E8F0;
+    --doc-panel:    #F5F7FB;
+    --doc-panel-2:  #EDF0F6;
+    --doc-ink:      #141A28;
+    --doc-ink-2:    #3A4358;
+    --doc-dim:      #5E6878;
+    --doc-rule:     rgba(20, 26, 40, 0.14);
+    --doc-rule-2:   rgba(20, 26, 40, 0.08);
+    --doc-accent:   #1E3A8A;
+    --doc-accent-2: rgba(30, 58, 138, 0.10);
+    --doc-defect:   #A32B3F;
+    --doc-defect-2: rgba(163, 43, 63, 0.10);
+    --doc-keep:     #2F6B44;
+    --doc-amber:    #8A5A00;
+    --doc-amber-2:  rgba(138, 90, 0, 0.12);
+    --doc-shadow-sm:0 1px 2px rgba(20,26,40,.06);
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-ground:   #0F1420;
+      --doc-panel:    #171D2C;
+      --doc-panel-2:  #1E2637;
+      --doc-ink:      #E9EDF6;
+      --doc-ink-2:    #B7C0D2;
+      --doc-dim:      #8B95A9;
+      --doc-rule:     rgba(233, 237, 246, 0.16);
+      --doc-rule-2:   rgba(233, 237, 246, 0.09);
+      --doc-accent:   #8FA9F2;
+      --doc-accent-2: rgba(143, 169, 242, 0.14);
+      --doc-defect:   #F0899A;
+      --doc-defect-2: rgba(240, 137, 154, 0.13);
+      --doc-keep:     #7BC496;
+      --doc-amber:    #E0B25C;
+      --doc-amber-2:  rgba(224, 178, 92, 0.14);
+      --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --doc-ground:   #0F1420;
+    --doc-panel:    #171D2C;
+    --doc-panel-2:  #1E2637;
+    --doc-ink:      #E9EDF6;
+    --doc-ink-2:    #B7C0D2;
+    --doc-dim:      #8B95A9;
+    --doc-rule:     rgba(233, 237, 246, 0.16);
+    --doc-rule-2:   rgba(233, 237, 246, 0.09);
+    --doc-accent:   #8FA9F2;
+    --doc-accent-2: rgba(143, 169, 242, 0.14);
+    --doc-defect:   #F0899A;
+    --doc-defect-2: rgba(240, 137, 154, 0.13);
+    --doc-keep:     #7BC496;
+    --doc-amber:    #E0B25C;
+    --doc-amber-2:  rgba(224, 178, 92, 0.14);
+    --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--doc-ground);
+    color: var(--doc-ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  a { color: var(--doc-accent); }
+  :focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .mast { padding: 64px 0 30px; border-bottom: 2px solid var(--doc-ink); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--doc-dim);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 54px);
+    line-height: 1.02;
+    letter-spacing: -0.028em;
+    font-weight: 800;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--doc-ink-2);
+    margin: 0;
+    max-width: 60ch;
+  }
+  .mast-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 30px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    color: var(--doc-dim);
+  }
+  .mast-meta b { color: var(--doc-ink); font-weight: 600; }
+
+  /* ── Contents ─────────────────────────────────────────────────────── */
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--doc-rule-2);
+    border: 1px solid var(--doc-rule-2);
+    margin: 26px 0 0;
+  }
+  .toc a {
+    display: block;
+    background: var(--doc-ground);
+    padding: 13px 15px;
+    text-decoration: none;
+    color: var(--doc-ink);
+  }
+  .toc a:hover { background: var(--doc-panel); }
+  .toc .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    color: var(--doc-dim); display: block; margin-bottom: 3px;
+  }
+  .toc .t { font-size: 13.5px; line-height: 1.35; display: block; }
+  .toc .new { color: var(--doc-accent); font-weight: 700; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 24px 0 0; }
+
+  /* ── Tags ─────────────────────────────────────────────────────────── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 3px;
+    border: 1px solid var(--doc-rule); color: var(--doc-dim); white-space: nowrap;
+  }
+  .tag--new       { color: var(--doc-accent); border-color: var(--doc-accent); background: var(--doc-accent-2); }
+  .tag--restyled  { color: var(--doc-amber);  border-color: var(--doc-amber);  background: var(--doc-amber-2); }
+  .tag--removed   { color: var(--doc-defect); border-color: var(--doc-defect); background: var(--doc-defect-2); }
+  .tag--unchanged { color: var(--doc-dim); }
+  .tag--defect    { color: var(--doc-defect); border-color: var(--doc-defect); background: var(--doc-defect-2); }
+
+  /* ── Finding block ────────────────────────────────────────────────── */
+  .finding { padding: 58px 0 8px; border-bottom: 1px solid var(--doc-rule); scroll-margin-top: 20px; }
+  .finding:last-of-type { border-bottom: none; }
+
+  .fhead { display: flex; gap: 20px; align-items: baseline; margin-bottom: 6px; }
+  .fkey {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--doc-accent); padding-top: 8px; flex-shrink: 0; white-space: nowrap;
+  }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 31px); line-height: 1.18; letter-spacing: -0.018em;
+    font-weight: 750; margin: 0; text-wrap: balance;
+  }
+  .fquote {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: var(--doc-dim);
+    border-left: 2px solid var(--doc-rule); padding: 2px 0 2px 14px;
+    margin: 16px 0 22px 32px; max-width: 62ch;
+  }
+  .finding p { margin: 0 0 16px; max-width: 68ch; }
+  .finding p.indent, .finding ul.indent { margin-left: 32px; }
+  .finding ul { margin: 0 0 16px 32px; padding-left: 20px; max-width: 64ch; }
+  .finding li { margin-bottom: 9px; }
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    margin: 0 0 18px 32px;
+  }
+  .verdict--bug  { color: var(--doc-defect); }
+  .verdict--gap  { color: var(--doc-amber); }
+  .verdict--none { color: var(--doc-accent); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* ── Specimen plate ───────────────────────────────────────────────── */
+  .plate { margin: 26px 0 0 32px; }
+  .plate-head {
+    display: flex; align-items: center; gap: 10px; font-family: var(--mono);
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 9px;
+  }
+  .plate-head--today { color: var(--doc-defect); }
+  .plate-head--prop  { color: var(--doc-accent); }
+  .plate-head--ref   { color: var(--doc-dim); }
+  .plate-head .rule { flex: 1; height: 1px; background: var(--doc-rule-2); }
+
+  .well {
+    overflow-x: auto; background: var(--doc-panel-2);
+    border: 1px solid var(--doc-rule-2); border-radius: 4px; padding: 22px;
+  }
+  .caption {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-top: 11px; font-size: 13.5px; color: var(--doc-dim); line-height: 1.5;
+  }
+  .caption .txt { max-width: 60ch; }
+
+  /* ── Annotation pins ──────────────────────────────────────────────── */
+  .anchor { position: relative; }
+  .pin {
+    position: absolute; z-index: 5; top: 0; left: 0;
+    transform: translate(-52%, -52%); width: 19px; height: 19px; border-radius: 50%;
+    background: #A32B3F; color: #FFFFFF; font-family: var(--mono);
+    font-size: 11px; font-weight: 700; line-height: 19px; text-align: center;
+    box-shadow: 0 0 0 2.5px #F8F4ED, 0 1px 4px rgba(0,0,0,.35);
+  }
+  .pin--r { left: auto; right: 0; transform: translate(52%, -52%); }
+  .pin--good { background: #1E3A8A; }
+
+  /* ── Panels ───────────────────────────────────────────────────────── */
+  .panel {
+    background: var(--doc-panel); border: 1px solid var(--doc-rule);
+    border-radius: 5px; padding: 26px 28px; margin: 30px 0 0 32px;
+    box-shadow: var(--doc-shadow-sm);
+  }
+  .panel h3 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--doc-dim); margin: 0 0 16px; font-weight: 700;
+  }
+  .panel p { max-width: 64ch; }
+  .panel p:last-child { margin-bottom: 0; }
+  .panel--flag { border-left: 3px solid var(--doc-amber); }
+
+  .matrix { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .matrix th, .matrix td {
+    text-align: left; padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--doc-rule-2); vertical-align: top;
+  }
+  .matrix thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--doc-dim); font-weight: 700;
+    border-bottom: 1px solid var(--doc-rule);
+  }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix td.state { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .yes  { color: var(--doc-keep); }
+  .lock { color: var(--doc-defect); }
+  .matrix .why { color: var(--doc-dim); font-size: 13px; line-height: 1.45; }
+
+  .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  .opt {
+    border: 1px solid var(--doc-rule); border-radius: 4px;
+    padding: 18px 20px; background: var(--doc-ground);
+  }
+  .opt--rec { border-color: var(--doc-accent); box-shadow: inset 3px 0 0 var(--doc-accent); }
+  .opt h4 { margin: 0 0 8px; font-size: 15.5px; font-weight: 700; }
+  .opt p { margin: 0; font-size: 14px; color: var(--doc-ink-2); line-height: 1.5; max-width: none; }
+  .opt .flag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--doc-accent); display: block;
+    margin-bottom: 7px; font-weight: 700;
+  }
+
+  .seq { counter-reset: seq; list-style: none; padding: 0; margin: 18px 0 0 !important; max-width: 66ch; }
+  .seq li {
+    counter-increment: seq; position: relative; padding-left: 42px;
+    margin-bottom: 16px; line-height: 1.55;
+  }
+  .seq li::before {
+    content: counter(seq); position: absolute; left: 0; top: 1px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    width: 24px; height: 24px; line-height: 23px; text-align: center;
+    border: 1px solid var(--doc-rule); border-radius: 50%; color: var(--doc-dim);
+  }
+  .seq li.later::before { border-style: dashed; }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     PRODUCT FRAMES — colour-locked to the real warm coaches portal palette.
+     Specimens stay cream in both document themes: the portal is a cream world
+     regardless of the reader's browser theme, so every value here is a literal.
+     ══════════════════════════════════════════════════════════════════════════ */
+  .fl {
+    --paper: #F8F4ED;
+    --card:  #FFFFFF;
+    --ink:   #241E15;
+    --ink-s: #4A4235;
+    --dim:   #6A635C;
+    --line:  rgba(70, 55, 30, 0.12);
+    --line-s:rgba(70, 55, 30, 0.20);
+    --fill:  rgba(70, 55, 30, 0.08);
+    --olive: #57651E;
+    --olive-s: rgba(87, 101, 30, 0.10);
+    --lime:  #D9F99D;
+    --amber: #835006;
+    --blue:  #134FD3;
+    --win:   #34662A;
+    --live:  #B03A22;
+
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 8px;
+    border: 1px solid var(--line-s);
+    box-shadow: 0 1px 3px rgba(70,55,30,.10), 0 10px 30px rgba(70,55,30,.10);
+    min-width: 640px;
+    overflow: hidden;
+  }
+  .fl--modal { min-width: 430px; max-width: 470px; background: var(--card); overflow: visible; }
+  .fl--wide-modal { min-width: 560px; max-width: 620px; background: var(--card); }
+
+  .fl-pad { padding: 18px 22px 22px; }
+
+  .fl-head { display: flex; align-items: center; gap: 12px; padding: 18px 22px 14px; }
+  .fl-tile {
+    width: 38px; height: 38px; border-radius: 9px;
+    background: var(--olive-s); border: 1px solid rgba(87,101,30,.22);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px; color: var(--olive); flex-shrink: 0;
+  }
+  .fl-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+  .fl-head-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .fl-tabs {
+    display: flex; gap: 22px; padding: 0 22px; border-bottom: 1px solid var(--line);
+    font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600; color: var(--dim); overflow: hidden;
+  }
+  .fl-tabs span { padding: 9px 0; white-space: nowrap; }
+  .fl-tabs span.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--olive); }
+
+  .fl-sub { display: inline-flex; gap: 3px; padding: 3px; background: var(--fill); border-radius: 9px; }
+  .fl-sub button {
+    font: inherit; font-size: 12px; font-weight: 500; border: none; background: none;
+    color: var(--dim); padding: 6px 13px; border-radius: 7px; cursor: default; white-space: nowrap;
+  }
+  .fl-sub button.on { background: rgba(87,101,30,.16); color: var(--ink); font-weight: 600; }
+
+  .fl-subrow--old { display: flex; }
+  .fl-toolbar--old { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  .fl-subrow--new { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .fl-subrow--new .fl-acts { margin-left: auto; display: flex; gap: 8px; }
+
+  /* The sub-tab caption — Q7 */
+  .fl-caption {
+    margin: 9px 0 0; font-size: 12px; color: var(--dim); line-height: 1.45;
+  }
+  .fl-caption b { color: var(--ink-s); font-weight: 600; }
+
+  .fl-btn {
+    font: inherit; font-size: 12px; font-weight: 600; display: inline-flex;
+    align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px; cursor: default;
+    border: 1px solid var(--line-s); background: var(--card); color: var(--ink); white-space: nowrap;
+  }
+  .fl-btn--lime { background: var(--lime); border-color: rgba(87,101,30,.35); color: #241E15; }
+  .fl-btn--ghost { background: transparent; border-color: transparent; color: var(--ink-s); }
+  .fl-btn--sm { font-size: 11px; padding: 5px 10px; border-radius: 7px; }
+  .fl-btn--danger { color: #FFFFFF; background: var(--live); border-color: var(--live); }
+  .fl-ico { font-size: 12px; line-height: 1; }
+  .fl-kebab { width: 28px; height: 26px; padding: 0; justify-content: center; font-size: 15px; letter-spacing: 1px; line-height: 1; }
+
+  .fl-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  .fl-table th {
+    text-align: left; font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--dim); font-weight: 700; padding: 9px 12px; background: var(--fill);
+  }
+  .fl-table th:first-child { border-radius: 7px 0 0 7px; }
+  .fl-table th:last-child  { border-radius: 0 7px 7px 0; }
+  .fl-table td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .fl-table tr:last-child td { border-bottom: none; }
+  .fl-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .fl-cat { color: var(--dim); }
+  .fl-desc { font-weight: 500; display: block; }
+  .fl-paid { color: var(--win); white-space: nowrap; font-size: 12px; }
+  .fl-unpaid, .fl-sched {
+    display: inline-block; font-size: 10.5px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--fill); color: var(--dim); border: 1px solid var(--line-s);
+  }
+  .fl-part { background: rgba(131,80,6,.10); color: var(--amber); border-color: rgba(131,80,6,.30); }
+
+  /* Tag chips — read-only on the row */
+  .fl-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .fl-chip {
+    font-size: 10px; padding: 2px 7px; border-radius: 999px;
+    background: rgba(87,101,30,.13); color: #3F4A16; border: 1px solid rgba(87,101,30,.28);
+  }
+  .fl-chip--org { background: rgba(19,79,211,.10); color: #10399A; border-color: rgba(19,79,211,.26); }
+
+  /* Old inline tag link — kept only to draw the "today" frame */
+  .fl-taglink { color: var(--blue); font-size: 11px; display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; }
+
+  /* Modal internals */
+  .fl-modal-head { display: flex; align-items: flex-start; padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
+  .fl-modal-head h4 { margin: 0; font-size: 16px; font-weight: 750; }
+  .fl-modal-head .sub { margin: 3px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.45; max-width: 44ch; }
+  .fl-modal-head .x { margin-left: auto; color: var(--dim); font-size: 15px; padding-left: 12px; }
+  .fl-form { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 13px 14px; }
+  .fl-form .full { grid-column: 1 / -1; }
+  .fl-label { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--ink-s); margin-bottom: 5px; }
+  .fl-input {
+    border: 1px solid var(--line-s); background: var(--paper);
+    border-radius: 9px; padding: 8px 11px; font-size: 12.5px; color: var(--dim);
+  }
+  .fl-input--val { color: var(--ink); }
+  .fl-input--focus { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(87,101,30,.14); background: var(--card); color: var(--ink); }
+  .fl-select::after { content: "⌄"; float: right; color: var(--dim); margin-top: -3px; }
+  .fl-ta { min-height: 46px; }
+  .fl-hint { font-size: 11px; color: var(--amber); margin: 5px 0 0; display: flex; gap: 5px; align-items: flex-start; line-height: 1.4; }
+  .fl-hint--calm { color: var(--dim); }
+  .fl-disclosure {
+    border: 1px dashed var(--line-s); border-radius: 10px; padding: 11px 14px;
+    color: var(--olive); font-weight: 600; font-size: 12.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fl-disclosure .meta {
+    margin-left: auto; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--dim); font-weight: 700;
+  }
+  .fl-open {
+    border: 1px solid var(--line-s); border-radius: 10px; background: var(--paper);
+    padding: 13px 14px;
+  }
+  .fl-open > .hdr {
+    display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12.5px;
+    color: var(--ink); margin-bottom: 11px;
+  }
+  .fl-open > .hdr .meta { margin-left: auto; font-size: 11px; color: var(--dim); font-weight: 600; }
+  .fl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; }
+  .fl-modal-foot {
+    display: flex; justify-content: flex-end; gap: 10px; align-items: center;
+    padding: 14px 20px; border-top: 1px solid var(--line); background: var(--paper);
+  }
+  .fl-modal-foot .left { margin-right: auto; font-size: 11.5px; color: var(--dim); }
+  .fl-scroll-cue { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); padding: 6px 0 0; }
+  .fl-clip { position: relative; max-height: 232px; overflow: hidden; }
+  .fl-clip::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 46px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), #FFFFFF);
+  }
+
+  /* Combobox dropdown (Q5) */
+  .fl-combo { position: relative; }
+  .fl-drop {
+    position: absolute; left: 0; right: 0; top: calc(100% + 5px); z-index: 6;
+    background: var(--card); border: 1px solid var(--line-s); border-radius: 10px;
+    box-shadow: 0 8px 26px rgba(70,55,30,.20); padding: 5px; overflow: hidden;
+  }
+  .fl-drop .grp {
+    font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+    font-weight: 700; padding: 7px 10px 4px;
+  }
+  .fl-drop .it { padding: 7px 10px; border-radius: 7px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+  .fl-drop .it.hot { background: var(--fill); }
+  .fl-drop .it .ct { margin-left: auto; font-size: 10.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .fl-drop .it.mk { color: var(--olive); font-weight: 600; border-top: 1px solid var(--line); border-radius: 0; margin-top: 4px; padding-top: 9px; }
+
+  /* Row action menu (Q4) */
+  .fl-menu-wrap { position: relative; display: inline-block; }
+  .fl-menu {
+    position: absolute; right: 0; top: 30px; z-index: 4; background: var(--card);
+    border: 1px solid var(--line-s); border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(70,55,30,.20); padding: 5px; min-width: 176px; text-align: left;
+  }
+  .fl-menu div { padding: 7px 11px; border-radius: 7px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .fl-menu div.hot { background: var(--fill); }
+  .fl-menu div.danger { color: var(--live); }
+  .fl-menu .note {
+    display: block; padding: 6px 11px 4px; font-size: 10.5px; color: var(--dim);
+    line-height: 1.4; white-space: normal; border-top: 1px solid var(--line); margin-top: 4px;
+  }
+
+  .fl-dialog-body { padding: 6px 20px 16px; font-size: 12.5px; color: var(--ink-s); line-height: 1.55; }
+  .fl-callout {
+    background: rgba(176,58,34,.07); border: 1px solid rgba(176,58,34,.25);
+    border-radius: 9px; padding: 10px 12px; margin-top: 12px; color: var(--ink);
+    font-size: 12px; line-height: 1.5;
+  }
+  .fl-callout--calm { background: rgba(87,101,30,.07); border-color: rgba(87,101,30,.25); }
+
+  .fl-preview { max-height: 216px; overflow-y: auto; border: 1px solid var(--line); border-radius: 9px; }
+  .fl-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .fl-preview th {
+    position: sticky; top: 0; background: var(--paper); text-align: left;
+    font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--dim);
+    font-weight: 700; padding: 8px 11px; border-bottom: 1px solid var(--line);
+  }
+  .fl-preview td { padding: 7px 11px; border-bottom: 1px solid var(--line); }
+  .fl-preview tr:last-child td { border-bottom: none; }
+  .fl-preview .drop { color: var(--dim); text-decoration: line-through; }
+  .fl-preview .x { color: var(--dim); font-size: 13px; }
+
+  .fl-empty-note { color: var(--dim); font-size: 11.5px; font-style: italic; }
+
+  /* Type switch (Q8) — the segmented Expense / Payable control at the top of one Add form */
+  .fl-switch {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding: 5px; background: var(--fill); border-radius: 11px;
+  }
+  .fl-switch > div {
+    border-radius: 8px; padding: 9px 12px; border: 1px solid transparent; text-align: left;
+  }
+  .fl-switch > div.on {
+    background: var(--card); border-color: rgba(87,101,30,.35);
+    box-shadow: 0 1px 3px rgba(70,55,30,.14);
+  }
+  .fl-switch .nm { font-size: 12.5px; font-weight: 700; display: block; color: var(--dim); }
+  .fl-switch > div.on .nm { color: var(--ink); }
+  .fl-switch .sub { font-size: 10.5px; line-height: 1.35; display: block; margin-top: 2px; color: var(--dim); }
+  .fl-switch-egs {
+    margin: 7px 2px 0; font-size: 10.5px; line-height: 1.45; color: var(--dim);
+  }
+  .fl-locked {
+    border: 1px dashed var(--line-s); background: var(--fill);
+    border-radius: 9px; padding: 8px 11px; font-size: 12.5px; color: var(--dim);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .fl-locked .why { margin-left: auto; font-size: 10px; letter-spacing: .07em; text-transform: uppercase; font-weight: 700; }
+
+  /* Empty state (Q7) */
+  .fl-empty { text-align: center; padding: 30px 22px 26px; }
+  .fl-empty .ic {
+    width: 46px; height: 46px; border-radius: 12px; margin: 0 auto 13px;
+    background: var(--olive-s); border: 1px solid rgba(87,101,30,.22);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+  }
+  .fl-empty h5 { margin: 0 0 6px; font-size: 15px; font-weight: 750; }
+  .fl-empty > p { margin: 0 auto 16px; font-size: 12.5px; color: var(--dim); max-width: 42ch; line-height: 1.5; }
+  .fl-empty .acts { display: flex; gap: 8px; justify-content: center; }
+
+  /* Side-by-side "which one" cards (Q7) */
+  .fl-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fl-pick > div {
+    border: 1px solid var(--line-s); border-radius: 10px; padding: 13px 15px; background: var(--paper);
+  }
+  .fl-pick h5 { margin: 0 0 6px; font-size: 13px; font-weight: 750; }
+  .fl-pick p { margin: 0 0 8px; font-size: 12px; color: var(--ink-s); line-height: 1.5; }
+  .fl-pick .egs { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+
+  @media (max-width: 760px) {
+    .choice, .fl-pick { grid-template-columns: 1fr; }
+    .fquote, .verdict, .plate, .panel, .finding p.indent, .finding ul, .finding ul.indent { margin-left: 0; }
+    .fhead { flex-direction: column; gap: 4px; }
+    .fkey { padding-top: 0; }
+    .well { padding: 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- ═══════════════════ MASTHEAD ═══════════════════ -->
+  <header class="mast">
+    <p class="eyebrow">FieldLogicHQ · Coaches portal · Money hub</p>
+    <h1>Expenses &amp; Payables</h1>
+    <p class="standfirst">
+      Seven questions about this screen, answered against the live build — with a proposed fix for
+      each, drawn as it would ship.
+    </p>
+    <div class="mast-meta">
+      <span>Round <b>5</b></span>
+      <span>Findings <b>3 defects · 5 gaps</b></span>
+      <span>Shipped <b>Q1–Q5 · Q7 · Q8</b></span>
+      <span>Frames are <b>live CSS, not screenshots</b></span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#q1"><span class="k">Q1</span><span class="t">Two forms, two depths</span></a>
+    <a href="#q23"><span class="k">Q2 · Q3</span><span class="t">Three bands of chrome</span></a>
+    <a href="#q4"><span class="k">Q4</span><span class="t">Edit &amp; delete a record</span></a>
+    <a href="#q5"><span class="k">Q5 <span class="new">new</span></span><span class="t">Payment method spellings</span></a>
+    <a href="#q6"><span class="k">Q6 <span class="new">new</span></span><span class="t">Recurring payables</span></a>
+    <a href="#q7"><span class="k">Q7</span><span class="t">Expense vs. payable</span></a>
+    <a href="#q8"><span class="k">Q8 <span class="new">new</span></span><span class="t">One Add button</span></a>
+  </nav>
+
+  <div class="legend">
+    <span class="tag tag--new">New</span>
+    <span class="tag tag--restyled">Restyled</span>
+    <span class="tag tag--removed">Removed</span>
+    <span class="tag tag--unchanged">Unchanged</span>
+    <span class="tag tag--defect">① Defect pin</span>
+  </div>
+
+
+  <!-- ═══════════════════ Q1 ═══════════════════ -->
+  <section class="finding" id="q1">
+    <div class="fhead">
+      <span class="fkey">Q1</span>
+      <h2>Two forms, one screen, two different depths</h2>
+    </div>
+    <p class="fquote">
+      “Why are payee, notes, tags optional in a hidden dropdown for payables but in the main modal
+      for expenses?”
+    </p>
+    <p class="verdict verdict--gap"><span class="dot"></span>No principle behind it — half a pass</p>
+
+    <p class="indent">
+      The payable form had eleven fields, so an earlier pass folded it into “what it’s for / how
+      much” up top with the rest tucked into groups. The expense form never got the same treatment.
+      The same four fields now sit at two different depths on two buttons that live side by side.
+    </p>
+    <p class="indent">
+      Your own screenshots make the case: the <b>expense</b> modal is the one that scrolls — its
+      Description field is cut off above the fold — while the payable modal fits.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--today"><span class="dot"></span>Today<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head"><div><h4>Add Expense</h4></div><span class="x">✕</span></div>
+          <div class="fl-clip">
+            <div class="fl-scroll-cue">▲ scrolled — “Description” is above the fold</div>
+            <div class="fl-form">
+              <div>
+                <span class="fl-label">Category</span>
+                <div class="fl-input fl-select">— No category —</div>
+                <p class="fl-hint"><span>⚠</span><span>Uncategorized spending shows as Unbudgeted in Budget vs. Actual.</span></p>
+              </div>
+              <div>
+                <span class="fl-label">Amount *</span>
+                <div class="fl-input">0.00</div>
+              </div>
+              <div class="anchor">
+                <span class="pin">1</span>
+                <span class="fl-label">Payment Method</span>
+                <div class="fl-input">e.g. E-transfer, Cash</div>
+              </div>
+              <div>
+                <span class="fl-label">Payee</span>
+                <div class="fl-input fl-select">Search or enter payee…</div>
+              </div>
+              <div class="full">
+                <span class="fl-label">Paid by</span>
+                <div class="fl-input fl-input--val fl-select">The team</div>
+              </div>
+              <div class="full">
+                <span class="fl-label">Notes</span>
+                <div class="fl-input fl-ta"></div>
+              </div>
+              <div class="full">
+                <span class="fl-label">Tags</span>
+                <div class="fl-input">Type to find or create a money tag…</div>
+              </div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Expense</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--defect">①</span>
+        <span class="txt">Payment method, Payee, Notes and Tags all at top level — eight fields, deep enough to scroll.</span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Expense</h4>
+              <p class="sub">Money the team has already spent.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input">e.g. Diamond rental</div>
+            </div>
+            <div>
+              <span class="fl-label">Category</span>
+              <div class="fl-input fl-select">— No category —</div>
+            </div>
+            <div>
+              <span class="fl-label">Amount *</span>
+              <div class="fl-input">0.00</div>
+            </div>
+            <div class="full anchor">
+              <span class="pin pin--good">✓</span>
+              <span class="fl-label">Paid by</span>
+              <div class="fl-input fl-input--val fl-select">The team</div>
+            </div>
+            <div class="full">
+              <div class="fl-disclosure">
+                <span class="fl-ico">＋</span> Add details (optional)
+                <span class="meta">4 fields</span>
+              </div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Expense</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">
+          Payment method, Payee, Notes and Tags move into the same “Add details (optional)” group the
+          payable already uses — and the form stops scrolling.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">The one-line subtitle under the title — see <a href="#q7">Q7</a>.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>The one field that does <em>not</em> hide</h3>
+      <p style="margin-bottom:0">
+        <b>Paid by</b> stays at top level. It doesn’t describe the expense, it changes what the record
+        <em>means</em>: choosing a family turns the entry into money the team now owes them, saved as
+        a credit against their dues. A field with a consequence that size can’t be discovered behind
+        a disclosure.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q2 + Q3 ═══════════════════ -->
+  <section class="finding" id="q23">
+    <div class="fhead">
+      <span class="fkey">Q2 · Q3</span>
+      <h2>Three bands of chrome before the first row of money</h2>
+    </div>
+    <p class="fquote">
+      “The buttons sit under the expenses/payables tabs… there is no space between ‘Add tags’ and the
+      description.”
+    </p>
+    <p class="verdict verdict--bug"><span class="dot"></span>Both confirmed — and Q3 now resolves by deletion</p>
+
+    <p class="indent">
+      Both questions are about the same screen, so they share a frame. You cross <b>three stacked
+      bands</b> before any data: hub tabs, sub-tabs, then a full-width strip holding Export and the
+      two Add buttons — a strip carrying nothing on its left when the team has no tags.
+    </p>
+    <p class="indent">
+      The tag link was a second, smaller bug: it’s meant to sit on its own line, and does once a row
+      has tags, because the chips push it down. With none, nothing pushes it. <b>Since you’ve chosen
+      to remove it</b> (tags move into the edit form), that bug now disappears rather than gets
+      fixed — and the chips stay, read-only, where they always were.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--today"><span class="dot"></span>Today<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-head">
+            <div class="fl-tile">$</div>
+            <h3 class="fl-title">Money</h3>
+            <div class="fl-head-actions">
+              <span class="fl-btn"><span class="fl-ico">⤒</span> Import ⌄</span>
+              <span class="fl-btn fl-kebab">?</span>
+            </div>
+          </div>
+          <div class="fl-tabs">
+            <span>Overview</span><span>Budget plan</span><span>Player dues</span><span>Fundraisers</span>
+            <span class="on">Expenses &amp; payables</span><span>Allocations</span><span>Payments</span>
+          </div>
+          <div class="fl-pad">
+            <div class="fl-subrow--old anchor">
+              <span class="pin">2</span>
+              <div class="fl-sub">
+                <button class="on">Expenses (4)</button>
+                <button>Payables (0)</button>
+                <button>Payment schedule</button>
+              </div>
+            </div>
+            <div class="fl-toolbar--old">
+              <span class="fl-btn"><span class="fl-ico">⤓</span> Export</span>
+              <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Expense</span>
+              <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Payable</span>
+            </div>
+            <table class="fl-table">
+              <thead>
+                <tr><th>Description</th><th>Category</th><th class="fl-num">Amount</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="anchor" style="display:inline-block"><span class="pin pin--r">3</span></span>
+                    <span style="font-weight:500">Team pizza night</span><span class="fl-taglink">🏷 Add tags</span>
+                  </td>
+                  <td class="fl-cat">Events</td>
+                  <td class="fl-num">$120.00</td>
+                  <td class="fl-paid">✓ Paid Aug 5, 2026</td>
+                </tr>
+                <tr>
+                  <td><span style="font-weight:500">Spring tournament entries</span><span class="fl-taglink">🏷 Add tags</span></td>
+                  <td class="fl-cat">Tournaments</td>
+                  <td class="fl-num">$1,300.00</td>
+                  <td class="fl-paid">✓ Paid May 7, 2026</td>
+                </tr>
+                <tr>
+                  <td><span style="font-weight:500">Diamond time — spring</span><span class="fl-taglink">🏷 Add tags</span></td>
+                  <td class="fl-cat">Facilities</td>
+                  <td class="fl-num">$700.00</td>
+                  <td class="fl-paid">✓ Paid Jun 13, 2026</td>
+                </tr>
+                <tr>
+                  <td><span style="font-weight:500">Uniforms</span><span class="fl-taglink">🏷 Add tags</span></td>
+                  <td class="fl-cat">Team Gear</td>
+                  <td class="fl-num">$950.00</td>
+                  <td class="fl-paid">✓ Paid Apr 19, 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--defect">②</span>
+        <span class="txt">Sub-tabs on one line, actions on the next — a whole band spent on three right-aligned buttons.</span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--defect">③</span>
+        <span class="txt">“Add tags” glued to the description: <b>Team pizza night🏷Add tags</b>, on every row.</span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-head">
+            <div class="fl-tile">$</div>
+            <h3 class="fl-title">Money</h3>
+            <div class="fl-head-actions">
+              <span class="fl-btn"><span class="fl-ico">⤒</span> Import ⌄</span>
+              <span class="fl-btn fl-kebab">?</span>
+            </div>
+          </div>
+          <div class="fl-tabs">
+            <span>Overview</span><span>Budget plan</span><span>Player dues</span><span>Fundraisers</span>
+            <span class="on">Expenses &amp; payables</span><span>Allocations</span><span>Payments</span>
+          </div>
+          <div class="fl-pad">
+            <div class="fl-subrow--new anchor">
+              <span class="pin pin--good">✓</span>
+              <div class="fl-sub">
+                <button class="on">Expenses (4)</button>
+                <button>Payables (3)</button>
+                <button>Payment schedule</button>
+              </div>
+              <div class="fl-acts">
+                <span class="fl-btn"><span class="fl-ico">⤓</span> Export</span>
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Expense</span>
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Payable</span>
+              </div>
+            </div>
+            <table class="fl-table">
+              <thead>
+                <tr><th>Description</th><th>Category</th><th class="fl-num">Amount</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="fl-desc">Team pizza night</span>
+                    <span class="fl-chips"><span class="fl-chip">Social</span></span>
+                  </td>
+                  <td class="fl-cat">Events</td>
+                  <td class="fl-num">$120.00</td>
+                  <td class="fl-paid">✓ Paid Aug 5, 2026</td>
+                  <td class="fl-num"><span class="fl-btn fl-btn--sm fl-kebab">⋯</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="fl-desc">Spring tournament entries</span>
+                    <span class="fl-chips"><span class="fl-chip">Travel</span><span class="fl-chip fl-chip--org">Club-funded</span></span>
+                  </td>
+                  <td class="fl-cat">Tournaments</td>
+                  <td class="fl-num">$1,300.00</td>
+                  <td class="fl-paid">✓ Paid May 7, 2026</td>
+                  <td class="fl-num"><span class="fl-btn fl-btn--sm fl-kebab">⋯</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fl-desc">Diamond time — spring</span></td>
+                  <td class="fl-cat">Facilities</td>
+                  <td class="fl-num">$700.00</td>
+                  <td class="fl-paid">✓ Paid Jun 13, 2026</td>
+                  <td class="fl-num"><span class="fl-btn fl-btn--sm fl-kebab">⋯</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fl-desc">Uniforms</span></td>
+                  <td class="fl-cat">Team Gear</td>
+                  <td class="fl-num">$950.00</td>
+                  <td class="fl-paid">✓ Paid Apr 19, 2026</td>
+                  <td class="fl-num"><span class="fl-btn fl-btn--sm fl-kebab">⋯</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">Actions move up onto the sub-tab row, pinned right — one band deleted, the table starts higher.</span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--removed">Removed</span>
+        <span class="txt">The per-row “Add tags” link is gone. Tag chips stay, read-only — they only take space on rows that have them.</span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          Hub tabs, page header, Import menu and the table columns are untouched. The Add buttons stay
+          <em>down here</em> with the list they act on — that earlier call was right; they just landed
+          on their own line instead of sharing one.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Why no Tags column</h3>
+      <p>
+        Tags are sparse by design — most rows will never have one, so a column would sit blank four
+        rows in five, on a table that already carries five columns and folds into cards on a phone.
+      </p>
+      <p>
+        More importantly, <b>Category already owns that slot.</b> It’s the structured one, tied to
+        your budget plan, and it’s what drives Budget vs. Actual. A Tags column immediately beside it
+        would invite “which of these two do I fill in?” on every entry — two fields competing
+        visually while meaning different things. Chips under the description stay out of that fight,
+        and cost nothing on rows without them.
+      </p>
+      <p style="margin-bottom:0">
+        Two real gaps do get closed: <b>payable rows show their chips too</b> (today you must expand
+        Payment details to see them), and <b>tags join the export</b> — today you can filter the list
+        by tag, export it, and the tag is missing from the spreadsheet.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q4 ═══════════════════ -->
+  <section class="finding" id="q4">
+    <div class="fhead">
+      <span class="fkey">Q4</span>
+      <h2>A typo in an expense is permanent</h2>
+    </div>
+    <p class="fquote">“Why can’t I edit the expense, I can only add tags?”</p>
+    <p class="verdict verdict--bug"><span class="dot"></span>Never built — and there is no delete either</p>
+
+    <p class="indent">
+      Expenses are the only money record in the coaches portal without a delete. Dues payments, dues
+      credits, payouts, payment requests and budget lines all have one. A coach who types $1,300
+      instead of $130 has that number on the books permanently.
+    </p>
+    <p class="indent">
+      It stalled on a real judgement call: <b>marking an expense paid writes an entry to the team’s
+      ledger.</b> Editing the amount afterwards, or deleting the record, would leave the ledger
+      disagreeing with the list.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Built — row actions, on both sub-tabs<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-pad">
+            <table class="fl-table" style="margin-top:0">
+              <thead>
+                <tr><th>Description</th><th>Category</th><th class="fl-num">Amount</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="fl-desc">Fall dome block</span>
+                    <span class="fl-chips"><span class="fl-chip">Winter</span></span>
+                  </td>
+                  <td class="fl-cat">Facilities</td>
+                  <td class="fl-num">$480.00</td>
+                  <td><span class="fl-sched">Scheduled</span></td>
+                  <td class="fl-num">
+                    <span class="fl-btn fl-btn--sm">⌄ Payment details</span>
+                    <span class="fl-btn fl-btn--sm fl-kebab">✎</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="fl-desc">Spring tournament entries</span></td>
+                  <td class="fl-cat">Tournaments</td>
+                  <td class="fl-num">$1,300.00</td>
+                  <td><span class="fl-sched fl-part">Part paid</span></td>
+                  <td class="fl-num anchor">
+                    <span class="pin pin--good">1</span>
+                    <span class="fl-btn fl-btn--sm">⌄ Payment details</span>
+                    <span class="fl-btn fl-btn--sm fl-kebab">✎</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="5" class="fl-empty-note" style="border-bottom:none">…remaining rows unchanged — the whole row is also the edit door</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">①</span>
+        <span class="txt">
+          A <b>pencil</b>, plus the row itself — the affordance Budget Plan already used, adopted here
+          rather than inventing a new one. On <b>payables as well as expenses</b>.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          “Payment details” keeps its chevron — expanding in place is a different intent from editing,
+          and it stops the click so opening the pair never also opens the form. Mark Paid keeps its
+          own labelled button on unpaid rows.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Why no “⋯” menu — the correction that produced a rule</h3>
+      <p>
+        The first draft of this put a kebab on every row. Surveying the Money hub showed that would
+        have been the <b>sixth</b> idiom for the same job, not the third: pencil + row click (Budget
+        Plan), a bare chevron with the row clickable (Dues roster), chevron + label (Payables,
+        Payment requests), a plain text button (Mark Paid, Recategorize), and an icon-only pencil
+        beside an unstyled trash (Dues drawer). No coach surface has ever used an overflow menu.
+      </p>
+      <p>
+        Sorted by <em>what the action does</em>, three rules fall out and nothing new is needed:
+        <b>open this record</b> → pencil + row; <b>show more of this row here</b> → chevron;
+        <b>do one specific thing</b> → a labelled button.
+      </p>
+      <p style="margin-bottom:0">
+        The kebab only existed to hold two items. Once <b>Delete moved into the edit form’s footer</b>
+        — which Budget Plan had already established — one action was left, and one action doesn’t need
+        a menu. Now recorded as a binding design decision, so a seventh idiom can’t appear.
+      </p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — deleting something already paid<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head"><div><h4>Delete this expense?</h4></div><span class="x">✕</span></div>
+          <div class="fl-dialog-body">
+            <b>Spring tournament entries — $1,300.00</b>, marked paid on May 7, 2026.
+            <div class="fl-callout">
+              This expense already posted $1,300.00 out of the team’s books. Deleting it will
+              <b>reverse that entry</b>, so cash on hand goes back up by $1,300.00.
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--danger">Delete and reverse</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          The money consequence is stated in dollars before confirming — never a bare “Are you sure?”.
+          Something unpaid deletes with a plain confirmation and no ledger language.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What’s editable, and when</h3>
+      <table class="matrix">
+        <thead>
+          <tr><th>Field</th><th>While unpaid</th><th>Once paid</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Description, Category, Notes, Tags</td>
+            <td class="state yes">Edit</td>
+            <td class="state yes">Edit</td>
+            <td class="why">Descriptive only — no effect on the books.</td>
+          </tr>
+          <tr>
+            <td>Payment method, Payee</td>
+            <td class="state yes">Edit</td>
+            <td class="state yes">Edit</td>
+            <td class="why">Record-keeping detail, not an amount.</td>
+          </tr>
+          <tr>
+            <td>Amount</td>
+            <td class="state yes">Edit</td>
+            <td class="state lock">Locked</td>
+            <td class="why">The paid amount is already posted to the ledger. To change it, delete and re-enter.</td>
+          </tr>
+          <tr>
+            <td>Paid by</td>
+            <td class="state yes">Edit</td>
+            <td class="state lock">Locked</td>
+            <td class="why">An out-of-pocket expense carries a credit owed to that family; moving it would strand the credit.</td>
+          </tr>
+          <tr>
+            <td>Deposit / balance <span style="color:var(--doc-dim)">(payables)</span></td>
+            <td class="state yes">Edit</td>
+            <td class="state lock">Per half</td>
+            <td class="why">Each half posts separately, so a paid deposit locks while an open balance stays editable.</td>
+          </tr>
+          <tr>
+            <td>Delete</td>
+            <td class="state yes">Delete</td>
+            <td class="state yes">Delete + reverse</td>
+            <td class="why">Always possible — a paid one states the dollar consequence first.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — editing something already paid<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head"><div><h4>Edit expense</h4></div><span class="x">✕</span></div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input fl-input--val">Spring tournament entries</div>
+            </div>
+            <div>
+              <span class="fl-label">Category</span>
+              <div class="fl-input fl-input--val fl-select">Tournaments</div>
+            </div>
+            <div class="anchor">
+              <span class="pin">1</span>
+              <span class="fl-label">Amount</span>
+              <div class="fl-locked">
+                <span>$1,300.00</span>
+                <span class="why">Locked</span>
+              </div>
+            </div>
+            <div class="full">
+              <p class="fl-hint"><span>⚠</span><span>Paid May 7, 2026 — the amount is already on the team&apos;s books. To change it, delete this and enter it again.</span></p>
+            </div>
+            <div class="full">
+              <div class="fl-disclosure"><span class="fl-ico">−</span> Details<span class="meta">Set</span></div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="left" style="color:var(--live)">🗑 Delete</span>
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Save changes</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">①</span>
+        <span class="txt">
+          A locked field is <b>shown with its value and a reason</b>, never hidden or greyed into
+          silence — a coach must be able to see the amount they can&apos;t change, and be told the way out.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          Delete sits in the footer of the edit form as well as in the row menu — it&apos;s where you end
+          up once you&apos;ve discovered the amount is locked.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Decided 2026-08-15</h3>
+      <p>
+        <b>Descriptive edits stay open on a paid record</b> — rename, recategorise, re-note, re-tag.
+        Amount and Paid by lock. Delete always works and reverses the ledger entry, stating the
+        dollar consequence first.
+      </p>
+      <p style="margin-bottom:0">
+        <b>Type is set at creation.</b> A saved record never switches between expense and payable —
+        see <a href="#q8">Q8</a>.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>What this uncovered</h3>
+      <p>
+        <b>Marking something paid doesn’t record which ledger entry it created.</b> The link is
+        discarded at the moment it’s made, so “delete reverses the entry” currently has nothing to
+        reverse against. Recording it is a small database change, and therefore a deploy step.
+      </p>
+      <p style="margin-bottom:0">
+        Records paid <em>before</em> that change are still safe: the entry can be identified by
+        matching it, which is reliable precisely because no edit feature existed to change the
+        description out from under it. Where two identical paid expenses make a match ambiguous, the
+        delete <b>refuses and says so</b> rather than voiding the wrong one.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>One trade this creates</h3>
+      <p style="margin-bottom:0">
+        Tagging gets slower. Today it’s two clicks in place; afterwards it’s open the row, edit, save.
+        For a coach tagging a whole season of past expenses in one sitting, that’s a real cost. I
+        think it’s the right trade — tagging mostly happens at entry time, in the Add form — but it
+        is a trade, not a free win.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q5 ═══════════════════ -->
+  <section class="finding" id="q5">
+    <div class="fhead">
+      <span class="fkey">Q5</span>
+      <h2>“E-transfer”, “etransfer”, “e transfer”</h2>
+    </div>
+    <p class="fquote">
+      “Should payment method be treated like tags — free text but selectable from past ones — so you
+      don’t have three spellings of the same method, in case we want downstream reporting later?”
+    </p>
+    <p class="verdict verdict--gap"><span class="dot"></span>Yes — and it’s already the odd one out</p>
+
+    <p class="indent">
+      Payment method is raw free text everywhere it appears: coach expenses, payables, payment
+      requests, and the club-level ledger. Nothing dedupes it, nothing suggests a past value. Your
+      three spellings are exactly what happens.
+    </p>
+    <p class="indent">
+      It’s also <b>the only free-text field left in its own form.</b> Sitting beside it: Category is a
+      structured picker, Payee is a search-past-or-add combobox, Tags is a search-past-or-create
+      combobox. Payment method is the one that never learned.
+    </p>
+    <p class="indent">
+      And the reporting concern is live today, not hypothetical — payment method already flows into
+      the payment-requests export and the club ledger, so downstream reporting is <em>already</em>
+      reading a dirty field.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal" style="padding-bottom:150px">
+          <div class="fl-modal-head"><div><h4>Add Expense</h4></div><span class="x">✕</span></div>
+          <div class="fl-form">
+            <div class="full">
+              <div class="fl-open">
+                <div class="hdr"><span class="fl-ico">−</span> Details <span class="meta">Open</span></div>
+                <div class="fl-grid2">
+                  <div class="fl-combo">
+                    <span class="fl-label">Payment method</span>
+                    <div class="fl-input fl-input--focus">e-tran<span style="color:var(--dim)">|</span></div>
+                    <div class="fl-drop">
+                      <div class="grp">Used by this team</div>
+                      <div class="it hot">E-transfer <span class="ct">14</span></div>
+                      <div class="grp">Used elsewhere in your club</div>
+                      <div class="it">E-transfer (club account) <span class="ct">6</span></div>
+                      <div class="it mk"><span class="fl-ico">＋</span> Use “e-tran” as a new method</div>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="fl-label">Payee</span>
+                    <div class="fl-input">Search or enter payee…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">
+          Same combobox behaviour as Payee and Tags: type to filter what’s been used before, pick one,
+          or commit a genuinely new method deliberately. Counts show which is the established spelling.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>The part that decides whether this actually works</h3>
+      <p>
+        A learn-only list <b>canonicalises on whatever the first person typed.</b> If the first coach
+        types “etransfer”, that becomes the entry every other coach then picks from — and you’ve
+        cleanly standardised on the wrong spelling.
+      </p>
+      <p>
+        So the list ships <b>seeded</b>, not empty: E-transfer, Cash, Cheque, Credit card, Debit,
+        Bank transfer, Other. Free text still works and still adds to the list — but the common cases
+        are already correct on day one, and the club’s own additions accumulate on top.
+      </p>
+      <p style="margin-bottom:0">
+        I’d scope the learned list to the <b>club</b>, not the team, for the same reason: reporting
+        that spans teams needs one vocabulary, and a coach joining a second team shouldn’t start from
+        an empty list.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>Worth knowing before you commit</h3>
+      <p style="margin-bottom:0">
+        This tidies methods entered <em>from now on</em>. Existing entries keep whatever was typed —
+        so if you want clean historical reporting, someone eventually needs to merge the old
+        spellings. The tag manager already does exactly that job (rename, merge, delete) and the same
+        pattern would apply here. <b>I’d leave that out of the first cut</b> and add it only if the
+        mess proves big enough to be worth a screen.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q6 ═══════════════════ -->
+  <section class="finding" id="q6">
+    <div class="fhead">
+      <span class="fkey">Q6</span>
+      <h2>Recurring payables don’t exist</h2>
+    </div>
+    <p class="fquote">“How do we set up recurring payables?”</p>
+    <p class="verdict verdict--none"><span class="dot"></span>You don’t — there is no such feature today</p>
+
+    <p class="indent">
+      Right now the answer is: add twelve payables one at a time, or paste a list into the importer.
+      The portal <em>does</em> have recurrence — the schedule has a proper “repeat weekly” with a
+      preview — but nothing in Money uses it.
+    </p>
+    <p class="indent">
+      The good news is the shape is already settled by that schedule feature: a recurring series is
+      treated as <b>a set of proposed rows you review before anything is created</b>, which is
+      precisely how the payables importer already behaves. So this reuses two proven pieces rather
+      than inventing a third pattern.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — in the Add Payable form<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--wide-modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Payable</h4>
+              <p class="sub">Money you’ve committed to but haven’t paid yet.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input fl-input--val">Winter dome block</div>
+            </div>
+            <div>
+              <span class="fl-label">Category</span>
+              <div class="fl-input fl-input--val fl-select">Facilities</div>
+            </div>
+            <div>
+              <span class="fl-label">Amount *</span>
+              <div class="fl-input fl-input--val">340.00</div>
+            </div>
+            <div class="full">
+              <div class="fl-open">
+                <div class="hdr"><span class="fl-ico">−</span> Repeats <span class="meta">Monthly · 6 dates</span></div>
+                <div class="fl-grid2">
+                  <div>
+                    <span class="fl-label">How often</span>
+                    <div class="fl-input fl-input--val fl-select">Monthly</div>
+                  </div>
+                  <div>
+                    <span class="fl-label">Day of month</span>
+                    <div class="fl-input fl-input--val fl-select">1st</div>
+                  </div>
+                  <div>
+                    <span class="fl-label">First due date</span>
+                    <div class="fl-input fl-input--val">2026-11-01</div>
+                  </div>
+                  <div>
+                    <span class="fl-label">Until</span>
+                    <div class="fl-input fl-input--val">2027-04-01</div>
+                  </div>
+                </div>
+                <p class="fl-hint fl-hint--calm" style="margin-top:11px"><span>◷</span><span>Uncheck any date you don’t owe — a rink closure, a month off.</span></p>
+                <div class="fl-preview" style="margin-top:9px">
+                  <table>
+                    <thead><tr><th style="width:26px"></th><th>Due</th><th>What</th><th class="fl-num">Amount</th></tr></thead>
+                    <tbody>
+                      <tr><td class="x">☑</td><td>Nov 1, 2026</td><td>Winter dome block</td><td class="fl-num">$340.00</td></tr>
+                      <tr><td class="x">☑</td><td>Dec 1, 2026</td><td>Winter dome block</td><td class="fl-num">$340.00</td></tr>
+                      <tr><td class="x">☐</td><td class="drop">Jan 1, 2027</td><td class="drop">Winter dome block</td><td class="fl-num drop">$340.00</td></tr>
+                      <tr><td class="x">☑</td><td>Feb 1, 2027</td><td>Winter dome block</td><td class="fl-num">$340.00</td></tr>
+                      <tr><td class="x">☑</td><td>Mar 1, 2027</td><td>Winter dome block</td><td class="fl-num">$340.00</td></tr>
+                      <tr><td class="x">☑</td><td>Apr 1, 2027</td><td>Winter dome block</td><td class="fl-num">$340.00</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="fl-callout fl-callout--calm">
+                  Creates <b>5 payables totalling $1,700.00</b>, each with its own due date and its own
+                  Mark paid. They’ll appear on the Payment schedule straight away.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="left">5 of 6 dates selected</span>
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add 5 payables</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          Nothing is created until you’ve seen the dates. The button counts what it will actually make,
+          so a fat-fingered end date is caught before it becomes 40 rows to clean up.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What I’d deliberately leave out of v1</h3>
+      <p>
+        <b>No linked series.</b> Each occurrence is created as an ordinary, independent payable. That
+        means no “edit this one / this and future / all occurrences” question, no series delete, no
+        rule stored anywhere — and every one of them can be edited or deleted with the plain Q4
+        controls the moment they exist.
+      </p>
+      <p>
+        Skipping the series link is what makes this small. A true linked series is the expensive half
+        of the schedule’s recurrence feature, and payables don’t obviously need it: a dome block that
+        changes price mid-season is edited once, on the month it changes, not across a series.
+      </p>
+      <p style="margin-bottom:0">
+        <b>Monthly is the cadence that matters</b> — dome and field blocks, insurance, equipment
+        financing. The schedule’s existing engine is weekly-only, so the date maths here is new even
+        though the review-before-commit pattern isn’t.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>Scope flag</h3>
+      <p style="margin-bottom:0">
+        This one is a <b>new feature, not a fix</b> — the other six items are corrections to things
+        already built. It deserves its own plan and its own sign-off, and it shouldn’t hold up
+        anything else on this sheet.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q7 ═══════════════════ -->
+  <section class="finding" id="q7">
+    <div class="fhead">
+      <span class="fkey">Q7</span>
+      <h2>Nobody tells you which button to press</h2>
+    </div>
+    <p class="fquote">
+      “How do we differentiate and explain to the user the difference between a payable and an
+      expense?”
+    </p>
+    <p class="verdict verdict--gap"><span class="dot"></span>The explanation exists — just never where the decision happens</p>
+
+    <p class="indent">
+      The help guide covers it well (“A payable is any commitment, not just a tournament”), and both
+      empty states say it in plain words. But the empty state <b>only shows when the list is
+      empty</b> — the moment you have four expenses, the distinction vanishes from the screen. And
+      the help is behind the “?” in the corner.
+    </p>
+    <p class="indent">
+      So the explanation is present exactly when you don’t need it, and one click away when you do.
+      Standing in front of two lime buttons, there’s nothing.
+    </p>
+    <p class="indent">
+      <b>Your call on round 2 was to leave the list alone</b> and let the empty states carry it — which
+      is right, and consistent with Q2: a permanent caption line under the sub-tabs would have quietly
+      given back part of the band we just saved. So this lands in two places instead of three, and the
+      list stays clean.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — the empty state does the teaching<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-pad">
+            <div class="fl-subrow--new">
+              <div class="fl-sub">
+                <button>Expenses (4)</button>
+                <button class="on">Payables (0)</button>
+                <button>Payment schedule</button>
+              </div>
+              <div class="fl-acts">
+                <span class="fl-btn"><span class="fl-ico">⤓</span> Export</span>
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Expense</span>
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Payable</span>
+              </div>
+            </div>
+            <div class="fl-empty">
+              <div class="ic">🧾</div>
+              <h5>No payables yet</h5>
+              <p>
+                Record something you’ve agreed to pay — or bring a whole season’s commitments in from
+                a schedule your club already keeps.
+              </p>
+              <div class="acts">
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add Payable</span>
+                <span class="fl-btn"><span class="fl-ico">⤒</span> Import a schedule</span>
+              </div>
+            </div>
+            <div class="fl-pick anchor">
+              <span class="pin pin--good">1</span>
+              <div>
+                <h5>Expense</h5>
+                <p>Money that has <b>already left</b> the team — you’re recording what happened.</p>
+                <p class="egs">Pizza night · a diamond you rented last week · uniforms you bought</p>
+              </div>
+              <div>
+                <h5>Payable</h5>
+                <p>Money you’ve <b>promised but not paid</b> — you’re scheduling what’s coming.</p>
+                <p class="egs">A tournament entry due in March · a dome block · an umpire invoice</p>
+              </div>
+            </div>
+            <p class="fl-caption" style="text-align:center; margin-top:12px">
+              <b>The quick test:</b> if it has a due date, it’s a payable. Payables appear on your
+              Payment schedule; expenses don’t.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">①</span>
+        <span class="txt">
+          The side-by-side comparison joins both empty states, under the wording that’s already there —
+          with real examples, since “commitment” means nothing until you see one.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          The empty state’s own headline, description and both buttons are exactly as they ship today.
+          The list view gains nothing at all.
+        </span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — and one line at the decision itself<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Payable</h4>
+              <p class="sub anchor">
+                <span class="pin pin--good">2</span>
+                Money you’ve committed to but haven’t paid yet.
+              </p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input">e.g. Spring tournament entry</div>
+            </div>
+            <div>
+              <span class="fl-label">Category</span>
+              <div class="fl-input fl-select">— No category —</div>
+            </div>
+            <div>
+              <span class="fl-label">Total Amount *</span>
+              <div class="fl-input">0.00</div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Payable</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">②</span>
+        <span class="txt">
+          One line under each Add modal’s title — the last possible moment to catch a wrong choice,
+          and the only one that shows up whether the list is empty or full.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What this covers, and the one moment it doesn’t</h3>
+      <p>
+        <b>Never used it before</b> → the empty state teaches the distinction, with examples.
+        <b>About to create one</b> → the modal subtitle names it, on every entry forever.
+        <b>Confused later</b> → the help guide, which already covers it well.
+      </p>
+      <p style="margin-bottom:0">
+        The gap is a coach browsing a list that already has rows, who won’t see a definition anywhere
+        on screen. I don’t think that moment needs one — nobody reads a definition while scanning a
+        list they’ve already built — and the modal catches them the instant it actually matters.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>The honest complication — worth knowing, not worth acting on yet</h3>
+      <p>
+        The boundary is genuinely blurrier than the copy admits. An expense you haven’t marked paid
+        is, functionally, a payable without a due date. That overlap is structural, and no amount of
+        wording makes it disappear.
+      </p>
+      <p>
+        Which is why the copy above leans on the one distinction that <b>is</b> always true and always
+        visible: <b>a payable has a due date and appears on the Payment schedule.</b> That’s testable
+        by the coach, and it stays true regardless of how the two records are stored.
+      </p>
+      <p style="margin-bottom:0">
+        Merging the two concepts would be a much larger conversation — one that touches the Payment
+        schedule, Budget vs. Actual and the importer. <b>I’m not proposing it</b>, only flagging that
+        if coaches keep picking wrong after this copy lands, the concepts are the problem, not the
+        words.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ Q8 ═══════════════════ -->
+  <section class="finding" id="q8">
+    <div class="fhead">
+      <span class="fkey">Q8</span>
+      <h2>One Add button, and the choice moves inside</h2>
+    </div>
+    <p class="fquote">
+      “Can we also just have 1 add button where in the modal we select between expense or payable?”
+    </p>
+    <p class="verdict verdict--none"><span class="dot"></span>Yes — and it supersedes the subtitle just shipped</p>
+
+    <p class="indent">
+      With one refinement: <b>the type is pre-selected from the sub-tab you’re on.</b> On Expenses,
+      Add opens as an Expense; on Payables or Payment schedule, as a Payable. The common case stays
+      one click and a form — the switch only matters when you’re on the “wrong” tab.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — the toolbar<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-pad">
+            <div class="fl-subrow--new">
+              <div class="fl-sub">
+                <button class="on">Expenses (4)</button>
+                <button>Payables (3)</button>
+                <button>Payment schedule</button>
+              </div>
+              <div class="fl-acts anchor">
+                <span class="pin pin--good">✓</span>
+                <span class="fl-btn"><span class="fl-ico">⤓</span> Export</span>
+                <span class="fl-btn fl-btn--lime"><span class="fl-ico">＋</span> Add</span>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <p class="fl-empty-note">…the list, unchanged</p>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">Two lime buttons become one. Export and Manage tags are untouched.</span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — the form, opened from the Expenses tab<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head"><div><h4>Add</h4></div><span class="x">✕</span></div>
+          <div class="fl-form">
+            <div class="full anchor">
+              <span class="pin pin--good">1</span>
+              <div class="fl-switch">
+                <div class="on">
+                  <span class="nm">Expense</span>
+                  <span class="sub">Already paid — recording what happened</span>
+                </div>
+                <div>
+                  <span class="nm">Payable</span>
+                  <span class="sub">Promised but not paid — scheduling what’s coming</span>
+                </div>
+              </div>
+              <p class="fl-switch-egs">
+                Pizza night, a diamond you rented last week · vs · a tournament entry due in March, a
+                dome block
+              </p>
+            </div>
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input fl-input--val">Team pizza night</div>
+            </div>
+            <div>
+              <span class="fl-label">Category</span>
+              <div class="fl-input fl-input--val fl-select">Events</div>
+            </div>
+            <div>
+              <span class="fl-label">Amount *</span>
+              <div class="fl-input fl-input--val">120.00</div>
+            </div>
+            <div class="full">
+              <span class="fl-label">Paid by</span>
+              <div class="fl-input fl-input--val fl-select">The team</div>
+            </div>
+            <div class="full">
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Add details (optional)<span class="meta">4 fields</span></div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Expense</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">①</span>
+        <span class="txt">
+          The switch carries the explanation, so the comparison is seen on every entry rather than
+          only on an empty list. <b>Flipping it keeps what you’ve typed</b> — Description, Category
+          and Amount are common to both — so a wrong choice is fixed in place, not restarted.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--removed">Removed</span>
+        <span class="txt">
+          The one-line subtitle under the modal title, shipped two days ago. This is the stronger
+          version of the same idea: a control, not a label describing a choice you already made.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          Both forms keep every field they have today, including the payable’s deposit/balance split.
+          The save button names what it will create, so it reads <b>Add Expense</b> or <b>Add Payable</b>
+          — never a bare “Save”.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Where the switch does <em>not</em> appear</h3>
+      <p style="margin-bottom:0">
+        <b>Editing a saved record.</b> Type is set at creation (your call, 2026-08-15). An unpaid
+        expense really is a payable without a due date, so converting is tempting — but it means
+        due-date and deposit fields materialising on an already-saved record, and a payable
+        converting the other way silently dropping a schedule it may already appear on. Now that
+        Delete exists, the wrong type is cheap to fix by deleting and re-adding. The edit form
+        states the type as a fact instead.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ SEQUENCE ═══════════════════ -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fkey">Next</span>
+      <h2>How I’d ship it</h2>
+    </div>
+    <ol class="seq">
+      <li>
+        <b>Shipped, batch 1</b> — the toolbar merge (Q2), the tag-link spacing (Q3), the expense
+        form’s details group (Q1), the payment-method combobox (Q5), and the expense/payable
+        comparison on both empty states (Q7). Tags also joined the export.
+      </li>
+      <li>
+        <b>Shipped, batch 2</b> — Edit and Delete on both sub-tabs (Q4) and the single Add button
+        with its type switch (Q8), together, because both reshape the same two forms. Carries the
+        database change that records which ledger entry a payment created.
+      </li>
+      <li>
+        <b>Also in batch 2</b> — the row-action convention recorded as a binding design decision, and
+        the Dues drawer’s three unlabelled delete buttons given the shared styling and screen-reader
+        names their neighbouring pencils already had.
+      </li>
+      <li class="later">
+        <b>Recurring payables</b> (Q6) — planned separately, on its own timeline. Nothing above waits
+        for it.
+      </li>
+    </ol>
+    <div class="panel panel--flag">
+      <h3>Before this reaches families</h3>
+      <p style="margin-bottom:0">
+        Batch 2 carries a <b>database change</b>, so it is not a code-only release: the migration has
+        to reach production <em>before</em> the code that reads it. Until then production keeps the
+        behaviour it has today. Everything on this sheet is on the dev database and awaiting owner QA.
+      </p>
+    </div>
+  </section>
+
+</div>

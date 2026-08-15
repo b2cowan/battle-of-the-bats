@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 | 🖥📱 | LIVE · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 | 🖥📱 | LIVE · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -2116,6 +2116,63 @@ season's fundraiser used to be shown beside **this** season's players, with the 
 - [ ] Sign in as an assistant with money **View only**: they can open a drive and read every figure,
       and there is no Settings button and no way to log an amount. Reading was never the issue.
 
+### 24 🖥📱 Sponsors sit beside fundraisers, and the budget can tell them apart — **ON DEV 2026-08-15**, not yet released · migration **237** (dev only)
+
+A bottle drive and a sponsor cheque are both money in, and the portal had one shape for them — the
+drive's. Recording a $500 sponsor meant inventing a "fundraiser" and logging it against one player
+while the rest of the roster sat at "—". The tab is now **Fundraising** and holds both.
+
+**Part A — the list**
+
+- [ ] 🖥 **Money → Fundraising.** Each row is **one line**: name, a kind chip, three figures, status
+      and a chevron. The settings, dates and notes are inside the record, not on the row.
+- [ ] The figures above the list split into **Raised — fundraisers** and **Raised — sponsors**, with
+      pledged money called out separately. **All / Fundraisers / Sponsors** filters the list; the
+      figures above do **not** move when you filter — they describe the season, not the filter.
+- [ ] The **Status** column hugs its chips on the left, lining up with the money columns to its left
+      and the chevron to its right.
+
+**Part B — recording a sponsor**
+
+- [ ] **＋ New** asks which kind first. Pick **Sponsor**: the form changes to a business name, an
+      amount, a status, who brought it in, and their credit.
+- [ ] Set the credit as a **percentage** and confirm the line underneath states the dollars
+      ("= $125.00 off …"). Switch to **$** and confirm it states the percentage instead.
+- [ ] Choose **Nobody in particular** for "brought in by" — the credit field should disappear
+      entirely. There is nobody to credit.
+- [ ] Save a **Received** sponsor with a family and a credit. Open **Player Dues** and confirm that
+      family's bill dropped by exactly that amount, named after the sponsor.
+- [ ] ⚠ Save a **Pledged** sponsor. It must appear in the list and in the pledged figure, and must
+      **not** appear as money in on the books or as a credit on anyone's dues.
+- [ ] Open the pledged one and change it to **Received** — now the money posts and the credit lands.
+      Change it back to **Pledged** and confirm both are removed again.
+- [ ] Open a sponsor: it shows **one row** (who brought it in, the amount, what they kept) — never a
+      roster of dashes.
+
+**Part C — the team default**
+
+- [ ] 🖥 **Team settings → Money.** Set **Default player credit** to 50 and leave the field. Its
+      collapsed header line should now mention it.
+- [ ] Create a new fundraiser AND a new sponsor — both should open pre-filled at 50%.
+- [ ] ⚠ Change the default to 25 and re-open an **existing** fundraiser. Its rate must be unchanged.
+      The default fills in new records only; it never reaches back.
+
+**Part D — the budget** ⚠ *this is the half that could go wrong quietly*
+
+- [ ] 🖥 **Budget Plan → add a line.** There are now three kinds: a cost, expected fundraising, and
+      **expected sponsorship**. Add one of each.
+- [ ] The plan shows **two separate money-in sections**, each with its own total.
+- [ ] ⚠ **Check the arithmetic.** Note the per-player figure, then add a $1,000 **expected
+      sponsorship** line. Per player must go **DOWN**, by $1,000 ÷ your roster. If it goes UP, stop
+      — a sponsorship is being counted as a cost and every family is being over-billed.
+- [ ] **Budget vs. Actual** shows fundraising and sponsorship as separate comparisons.
+- [ ] Export the Fundraising list — the spreadsheet has a **Kind** and a **Status** column.
+
+**Part E — a finished season**
+
+- [ ] Open a completed season's Fundraising tab: sponsors and drives both read as records, with no
+      way to add or edit either.
+
 ### ⚠ ONE LIVE DEFECT ON THE PRODUCTION SHOP WINDOW — needs an owner decision
 
 **The guided tour on the production coach sandbox now describes a fundraiser that isn't there.**
@@ -2239,6 +2296,70 @@ for a season that must refuse. Re-seed with
   next money is due and how much is already late. Decide whether it goes.
 - **Closing the season does not lock the books.** It pays everyone; further edits stay possible. A
   lock is a separate decision (assumed, stated, not ruled).
+
+---
+
+### 25 🖥📱 A budget line stops reporting the whole category's spending — **ON DEV 2026-08-15**, not yet released · no migration
+
+**What changed, in one line:** on Budget vs. Actual, expanding a budget line showed money spent
+against its payment periods — and that money was the whole **category's**, copied onto every line
+in it. A Facilities category holding *Dome rental*, *Field rental* and *Storage* reported the same
+$340 dome invoice **three times**, including against lines with no spending at all.
+
+**Why it happened:** an expense records a **category** and nothing finer — there is no field saying
+which budget line it pays for. The line row above the periods already said so honestly, printing
+`—` for its actual and variance; only the expanded periods invented a figure.
+
+**What it does now:**
+- A category holding **one** line keeps its period figures. There is nothing else that spending
+  could belong to, so the number is correct and worth having.
+- A category holding **two or more** lines shows `—` for each period's actual and variance,
+  matching the line row above.
+- Those categories carry one quiet sentence under their lines: *"Facilities has 3 budget lines, so
+  spending is matched to the category, not to a line."*
+
+**Nothing else moved.** Category totals, the report total, headroom, the Dues Collection card, the
+Months view, and all three export formats are unchanged — none of them ever claimed a per-line
+figure. This is a display correction only; the real per-line actual arrives with
+`COACH_BUDGET_LINE_ALIGNMENT_PLAN.md`, which needs a migration.
+
+**Where:** Money → **Budget vs. Actual** → **Categories** view. Expand a category, then expand a
+line inside it (only lines with a payment schedule expand).
+
+**Fixture:** any team whose budget plan has a category with **more than one line**, at least one of
+them split into payment periods, and one **paid** expense filed under that category.
+
+**⚠ The case that matters — the multi-line category**
+- [ ] A category with **3 lines** and one paid expense in it: the category header still shows the
+      full amount under **Actual**, with its variance.
+- [ ] Expand it, then expand each line's periods: **no period on any line reports money.** Actual
+      and Variance read `—` throughout. (Before this, one of them showed the money — and so did the
+      other two.)
+- [ ] The sentence under the lines names the category and its line count, and reads as an
+      explanation rather than an error.
+- [ ] The **Total** row at the foot is the same figure it was before.
+
+**The case that must NOT have been lost**
+- [ ] A category with exactly **one** line: expand it — its periods **still show real money in
+      green with a variance**, and those figures still add up to the category's Actual.
+- [ ] A period in that category with genuinely nothing spent still reads `—`, not `$0.00`.
+
+**Everywhere else — confirm nothing changed**
+- [ ] Switch **View** to **Months** and read the **Actual** lens: category rows carry figures, line
+      rows read `—`, and the note under the grid still explains why. (Unchanged — it never had
+      this bug.)
+- [ ] **Export** from both views (xlsx and PDF): line rows still have blank Actual and Variance,
+      and every total matches the screen.
+- [ ] The Money hub **Overview** and its budget card are unchanged.
+- [ ] **Phone:** expand a multi-line category and swipe the table sideways — the sentence stays
+      pinned at the left edge while the money columns scroll, so the explanation is still readable
+      beside the dashes it explains. *(No automated check covers this — the rendered sweep never
+      expands a category, so this step is the only proof the pinning works.)*
+
+**Help**
+- [ ] Coaches help → search **"dash under actual"** or **"budget line shows nothing"**: the answer
+      *"Why does a budget line show '—' under Actual?"* comes back, and what it says matches the
+      screen.
 
 ---
 
@@ -4444,6 +4565,125 @@ Screens: `/qa-cancel-lab/scorekeeper` · `/qa-cancel-lab/check-in`
       bar shipped with, and the sweep that would normally catch it does not run here.
 
 ---
+
+---
+
+## §27 · Correcting a money record — edit, delete, and one Add door
+
+**Built on dev 2026-08-15 · not on production · ⚠ carries migration 236, which must reach prod
+BEFORE this code does.** Plan: `COACH_EXPENSES_EDIT_DELETE_PLAN.md`. Mockups: artifact `d693ab01`.
+
+**Why this section exists:** expenses were the only money record in the portal that could not be
+edited or deleted. A mistyped amount was permanent. This adds both — and deleting something already
+paid **moves money on the team's books**, which is why the walk-through below spends most of its
+time on that one action.
+
+**Fixture:** the coach money lab — sign in as the money head coach on a team with at least one
+**paid** expense, one **unpaid** expense, and one payable whose **deposit is paid and balance is
+not**. Money → Expenses & Payables.
+
+---
+
+### A · The pencil, and the row
+
+- [ ] Every row shows a **pencil** at its right. Clicking it opens the record.
+- [ ] Clicking **anywhere else on the row** opens the same record.
+- [ ] **Select some text in a row** (drag across a description) and release. It must **not** open
+      the form — a click that ends a text selection is a copy gesture, not a tap.
+- [ ] **Mark Paid** on an unpaid expense still marks it paid, and does **not** also open the form.
+- [ ] On a payable, **Payment details** still expands the deposit/balance pair in place, and does
+      **not** also open the form.
+- [ ] Sign in as a **read-only money assistant**: no pencil, no Add, no Delete anywhere. The rows
+      must not be clickable either.
+
+### B · Editing something NOT yet paid
+
+- [ ] Open an unpaid expense. Change the description, category and amount. Save. All three stick.
+- [ ] Open it again — the form shows what you saved, and the details group opens by itself because
+      it holds values.
+- [ ] Close a form you have changed **without** saving: you are asked before it is discarded.
+- [ ] Open a record and close it **untouched**: no discard prompt. (A prompt here would be the
+      guard crying wolf until it is ignored.)
+
+### C · ⚠ Editing something already PAID — the lock
+
+- [ ] Open a **paid** expense. The amount is shown as a **locked** field with its value visible,
+      the date it was paid, and the sentence telling you to delete and re-enter. It is not greyed
+      into silence, and it is not hidden.
+- [ ] Change its **description** and save. It saves.
+- [ ] Change its **category, notes and tags** and save. They save.
+- [ ] Open the **part-paid payable**. The **paid half** is locked and shows its figure; the **open
+      half is still fully editable**. Change the open half's amount and due date — they save.
+      ⚠ If the whole row is frozen, that is the defect this rule exists to prevent.
+
+### D · ⚠⚠ Deleting — the money consequence
+
+- [ ] Delete an **unpaid** expense. The confirmation says plainly that no money moves. It deletes.
+- [ ] Before deleting a **paid** expense, note the team's **cash on hand** (Money → Overview).
+- [ ] Delete that paid expense. The confirmation must state the **dollar amount** coming back —
+      *"already posted $X out of the team's books … cash on hand goes back up by $X"* — before you
+      can confirm.
+- [ ] Confirm. Then re-check **cash on hand**: it must have moved by **exactly that amount**.
+      ⚠ If the figure quoted and the figure moved disagree, stop and report it — the dialog and the
+      reversal are supposed to read the same source.
+- [ ] Delete a **part-paid payable**. The amount quoted must be the **paid half only**, not the
+      total.
+- [ ] Delete an expense a **family paid out of pocket**. The dialog must say **no money moves** AND
+      that the credit the team owed that family goes with it. Afterwards, check that family's dues
+      record — the credit is gone.
+
+### E · ⚠ The rename-then-delete case (the subtle one)
+
+This is the hole migration 236 predicted. It only shows on records paid **before** this release, so
+it needs a record that already existed on dev.
+
+- [ ] Find an expense that was **already paid before today**. **Rename it**, and save.
+- [ ] Now **delete** it. The reversal must still happen and cash on hand must still move by the
+      right amount.
+      ⚠ The failure to watch for: it deletes quietly, tells you money came back, and the team's
+      cash on hand **does not change**. That is a posted entry left behind with nothing explaining
+      it — report immediately if seen.
+
+### F · One Add button
+
+- [ ] On the **Expenses** sub-tab, press **Add**. The form opens with **Expense** already selected.
+- [ ] On the **Payables** sub-tab, press **Add**. It opens with **Payable** already selected.
+- [ ] Type a description and an amount, then **switch the type**. What you typed is still there.
+- [ ] The save button names what it will create — **Add Expense** / **Add Payable**, never "Save".
+- [ ] Payable-only fields (deposit/balance split) appear only on the Payable side; **Paid by**
+      appears only on the Expense side.
+- [ ] Open an **existing** record: there is **no type switch** — it states which kind it is and
+      tells you to delete and re-add if it is wrong.
+
+### G · Payment method
+
+- [ ] In the details group, click **Payment method**. Suggestions appear — common methods, plus
+      anything your teams have used, most-used first with a count.
+- [ ] Type a partial match: the list filters.
+- [ ] Type something new entirely: it tells you the spelling is new to your club, and still saves.
+- [ ] Save a record with a method, then open a new form — that method now appears in the list.
+
+### H · Tags, and the empty states
+
+- [ ] Tag chips show on **expense rows and payable rows** (payables previously hid them one click
+      in). There is **no** per-row "Add tags" link any more — tags are edited in the record's form.
+- [ ] Filter by a tag, then **Export**. Open the file: there is a **Tags** column.
+- [ ] Switch to a sub-tab with **nothing in it**. The Expense-vs-Payable comparison appears under
+      the empty state, with real examples.
+
+### I · Phone (390px) and the layout
+
+- [ ] Rows become cards. The pencil becomes a **full-width "Edit" button** at the foot of each card.
+- [ ] **The page does not scroll sideways.** ⚠ This is the exact defect found and fixed during the
+      review; if the page slides horizontally at all, report it.
+- [ ] Budget Plan on a phone is **unchanged** — its pencil still leaves the layout and the row is
+      the door. (Budget moved onto the shared control; it should look and behave exactly as before.)
+- [ ] Tab to the rows with a **keyboard**: the pencil is reachable and announces what it edits.
+
+---
+
+**If Part D or Part E fails, treat it as blocking** — everything else here is a correction to how a
+screen reads, but those two are the books being wrong.
 
 ## Not in this ledger (why)
 

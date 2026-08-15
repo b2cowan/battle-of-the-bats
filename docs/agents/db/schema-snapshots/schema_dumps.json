@@ -9655,7 +9655,7 @@
         "column_name": "player_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -9837,6 +9837,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 13,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'fundraiser'::text"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 14,
+        "column_name": "sponsor_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_player_awards",
@@ -10836,6 +10854,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'last_first'::text"
+      },
+      {
+        "table_name": "rep_program_years",
+        "pos": 15,
+        "column_name": "default_player_credit_percent",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_roster_players",
@@ -12488,6 +12515,24 @@
         "table_name": "rep_team_expenses",
         "pos": 25,
         "column_name": "paid_by_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 26,
+        "column_name": "deposit_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 27,
+        "column_name": "balance_entry_id",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -18442,20 +18487,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
@@ -18464,6 +18502,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -18498,28 +18543,28 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -18715,14 +18760,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19140,10 +19185,24 @@
       },
       {
         "table_name": "rep_team_expenses",
+        "column_name": "balance_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_balance_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_expenses_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "column_name": "deposit_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_deposit_entry_id_fkey"
       },
       {
         "table_name": "rep_team_expenses",
@@ -22046,6 +22105,16 @@
       },
       {
         "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_balance_entry",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_balance_entry ON public.rep_team_expenses USING btree (balance_entry_id) WHERE (balance_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_deposit_entry",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
         "indexname": "rep_team_expenses_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_expenses_pkey ON public.rep_team_expenses USING btree (id)"
       },
@@ -23896,7 +23965,7 @@
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_line_kind_check",
-        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text]))"
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
       },
       {
         "kind": "CHECK",
@@ -24027,8 +24096,20 @@
       {
         "kind": "CHECK",
         "table_name": "rep_fundraisers",
+        "detail": "rep_fundraisers_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['fundraiser'::text, 'sponsor'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_fundraisers",
         "detail": "rep_fundraisers_player_rebate_percent_check",
         "check_clause": "((player_rebate_percent >= (0)::numeric) AND (player_rebate_percent <= (100)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_fundraisers",
+        "detail": "rep_fundraisers_sponsor_status_check",
+        "check_clause": "(((kind = 'sponsor'::text) AND (sponsor_status = ANY (ARRAY['pledged'::text, 'received'::text]))) OR ((kind = 'fundraiser'::text) AND (sponsor_status IS NULL)))"
       },
       {
         "kind": "RLS",
@@ -24197,6 +24278,12 @@
         "table_name": "rep_program_years",
         "detail": "rep_program_years_credit_application_check",
         "check_clause": "(credit_application = ANY (ARRAY['last_first'::text, 'next_first'::text, 'keep_separate'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_program_years",
+        "detail": "rep_program_years_default_credit_check",
+        "check_clause": "((default_player_credit_percent >= (0)::numeric) AND (default_player_credit_percent <= (100)::numeric))"
       },
       {
         "kind": "CHECK",

@@ -1847,6 +1847,14 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_program_years.credit_application -->
 **`credit_application`** (text, NOT NULL, default `last_first`; CHECK `last_first|next_first|keep_separate`; mig 233) — how this team's dues credits meet its bills (owner Call 2, 2026-08-14): `last_first` (default, every season new and existing — no staged backfill, owner-ruled) eats the schedule from the far end; `next_first` lands relief on the next bill due; `keep_separate` keeps credits off bills entirely (forgiveness excepted) until season's end. Application itself is **derived at read time** (`lib/dues-credits.ts`) — this column stores only the direction.
 
+<!-- dict:col:rep_program_years.default_player_credit_percent -->
+**`default_player_credit_percent`** (numeric, NOT NULL, default 0, CHECK 0–100; mig 237) — the
+team's standard share of what a player raises or brings in, kept **per season** because a team's
+standard can change year to year and a finished season must keep the one it ran on. ⚠ **It
+pre-fills, it does not govern:** it seeds the new-fundraiser and new-sponsor forms only, every
+record can differ, and changing it is **never** applied retroactively — the same rule
+`rep_fundraisers.player_rebate_percent` already follows (gotcha 2 on that table).
+
 <!-- dict:col:rep_program_years.lineup_settings -->
 **`lineup_settings`** (jsonb, nullable; mig 172) — Lineup Intelligence P3 **season-default innings caps** for the game-day auto-fill, set on the coach team Settings page. **App-enforced shape (`lib/lineup-caps.ts`, NO DB CHECK)**: `{ maxInningsPerPosition: int|null (rotation cap — max innings any one player at a single field position), pitcherMaxInningsDefault: int|null (team default arm-care ceiling), minInningsPerPlayer: int|null (min-play floor) }`. A null column or missing key = that rule is OFF. Effective cap at generation = per-game `rep_team_lineups.rules_override` ?? this default; the per-player `lineup_profile.pitcher.maxInnings` (mig 171) still applies on top (stricter wins). See docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md.
 
@@ -3251,7 +3259,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — estimated dollars, always POSITIVE whatever the kind; if periods exist they must sum to it (±$0.02, see `rep_budget_periods`).
 
 <!-- dict:col:rep_budget_lines.line_kind -->
-**`line_kind`** (text, NOT NULL, default `'cost'`, CHECK `in ('cost','funding')`) — `cost` = money the team spends (what every row written before migration 230 is); `funding` = money it expects to bring in (fundraising, sponsorship, a grant). Funding lines never count toward what the season costs, only toward what players don't have to fund, and are excluded from actual-expense matching (gotcha 2).
+**`line_kind`** (text, NOT NULL, default `'cost'`, CHECK `in ('cost','funding','sponsorship')`) — `cost` = money the team spends (what every row written before migration 230 is); `funding` = expected **fundraising** (the team selling something); `sponsorship` = expected **sponsorship or a grant** (money given directly, **migration 237**). Neither money-in kind counts toward what the season costs, only toward what players don't have to fund, and both are excluded from actual-expense matching (gotcha 2).
+
+⚠ **`funding` and `sponsorship` differ ONLY in reporting — the maths is identical.** Both subtract from what the season costs, so per-player dues and the installment generator treat them the same; any code that sums "money in" must include both or it silently under-counts. The split exists because migration 230's `funding` was deliberately written to cover sponsors and grants, which meant sponsorship money sat in every plan invisibly and *"did our sponsorship hit the number?"* could not be answered (owner ruling 2026-08-15, knowingly reopening the 2026-08-13 naming ruling).
 
 <!-- dict:col:rep_budget_lines.notes -->
 **`notes`** (text, nullable) — free text.
@@ -3597,6 +3607,21 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_fundraisers.end_date -->
 **`start_date`** / **`end_date`** (date, nullable) — informational window, not enforced (gotcha 4).
 
+<!-- dict:col:rep_fundraisers.kind -->
+**`kind`** (text, NOT NULL, default `'fundraiser'`, CHECK `fundraiser|sponsor`) — **migration 237**.
+`fundraiser` = the whole team takes part; its rows are roster players. `sponsor` = one business /
+grant / arrival; the record **is** the row and carries **exactly one** `rep_fundraiser_entries`
+row. ⚠ **Create-time only** — a drive's rows are players and a sponsor is a single arrival, so
+switching afterwards has nothing sensible to do with what is already recorded; nothing in the DB
+enforces that, the write path does.
+
+<!-- dict:col:rep_fundraisers.sponsor_status -->
+**`sponsor_status`** (text, nullable, CHECK: `pledged|received` when `kind='sponsor'`, NULL when
+`kind='fundraiser'`) — **migration 237**. ⚠ **`pledged` means NO money yet:** the entry exists (it
+records the arrangement) but **no `accounting_entries` income row and no `rep_dues_credits` row are
+written** until it flips to `received`. Budget vs. Actual counts receipts only. A drive uses
+`is_active` for the same job, which is why this is NULL there.
+
 <!-- dict:col:rep_fundraisers.is_active -->
 **`is_active`** (bool, NOT NULL, default true) — soft open/closed; gates new entries (gotcha 4).
 
@@ -3619,7 +3644,13 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_fundraiser_entries.org_id -->
 <!-- dict:col:rep_fundraiser_entries.team_id -->
 <!-- dict:col:rep_fundraiser_entries.player_id -->
-**`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — parent campaign + scope + the player; UNIQUE `(fundraiser_id, player_id)`; indexes `fundraiser_idx`, `player_idx`.
+**`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, **NULLABLE since migration 237**) — parent campaign + scope + the player; UNIQUE `(fundraiser_id, player_id)`; indexes `fundraiser_idx`, `player_idx`.
+
+⚠ **`player_id` IS NULLABLE AND THAT REACHES ~20 READERS (mig 237).** A club-wide **sponsor**
+belongs to no family, so the entry recording it has no player. A **fundraiser's** entry always names
+one — nothing in the DB enforces that split, because the constraint would have to reach across to
+the parent's `kind` on every insert; the write path that creates them is the single place that
+knows. **A null player means no dues credit is possible: there is nobody to credit.**
 
 <!-- dict:col:rep_fundraiser_entries.amount_raised -->
 **`amount_raised`** (numeric, NOT NULL, CHECK `>= 0`) — dollars raised by this player (gotcha 5).
@@ -3804,8 +3835,19 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_expenses.paid_by_player_id -->
 **`paid_by_player_id`** (FK → `rep_roster_players.id`, nullable, ON DELETE SET NULL; mig 234) — **out-of-pocket**: a family covered this cost directly (owner Call 5, 2026-08-14). NULL = the team paid. When set, three things hold at once and must not be conflated: the cost **counts in the budget and in Budget vs. Actual exactly as a team-paid expense** (it is a real cost either way); **no cash left the team's account**, so every CASH figure excludes it (`money-summary` money-out, the Pass 3 pot); and the team now **owes that family**, carried as an ordinary `reimbursement` credit in `rep_dues_credits` with the same three-way lifecycle as any other credit. ⚠ The alternative design — posting an income entry from the family plus an expense — nets to zero but invents money-in from a family that sent none; deliberately rejected.
 
+<!-- dict:col:rep_team_expenses.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL) — the ledger entry created when a **lump expense** was marked paid, so deleting the expense can void it. ⚠ **The column pre-dates mig 236 but was never written until it** — `markExpensePaid` created the entry and discarded the id (`void entry`) under a comment claiming the table had no such column, which sent readers away from the fix for months. NULL on payables (they use the two half-columns below) and NULL on anything paid before 2026-08-15. **A NULL here does NOT mean unpaid** — `expense_paid_at` answers that; it means the reversal has to find the entry by matching instead (see gotcha 6).
+
+<!-- dict:col:rep_team_expenses.deposit_entry_id -->
+**`deposit_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL; mig 236) — the ledger entry created when a **payable's deposit** was marked paid. Separate from `balance_entry_id` because the two halves post independently, often months apart, and either may need reversing on its own — which is precisely why one `accounting_entry_id` could not serve a payable. NULL while the deposit is unpaid, or if it was paid before 2026-08-15. Partial index `idx_rep_team_expenses_deposit_entry`.
+
+<!-- dict:col:rep_team_expenses.balance_entry_id -->
+**`balance_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL; mig 236) — same rule as `deposit_entry_id`, other half. Partial index `idx_rep_team_expenses_balance_entry`.
+
 <!-- dict:col:rep_team_expenses.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap).
+
+**Gotcha 6 — deleting an expense reverses its ledger entries, and pre-mig-236 rows are found by MATCHING.** `deleteRepTeamExpense` (lib/db.ts) voids every entry the record posted, reading `lib/expense-ledger.ts` for what counts as posted. Where the link column is NULL (anything paid before 2026-08-15) it falls back to matching on ledger + `description` + `amount` + `entry_type='expense'`. That fallback is sound for **exactly** that set, because no Edit feature existed before then, so a historic row still carries the description its entry was written with — a guarantee that ends for anything edited after 2026-08-15, which is why new rows store the id. **An ambiguous match (two identical paid expenses) REFUSES with a 409 rather than voiding an arbitrary one**; zero matches returns quietly, since an already-void entry means there is nothing to give back. ⚠ An **out-of-pocket** expense (`paid_by_player_id` set) has **no entry to reverse at all** — no team cash ever moved — but deleting it does remove the family's reimbursement credit by FK cascade from `rep_dues_credits.expense_id`.
 
 ### `rep_team_payment_requests`
 <!-- dict:table:rep_team_payment_requests -->

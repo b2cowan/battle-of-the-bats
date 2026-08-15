@@ -7,6 +7,7 @@ import type { MonthKey } from '@/lib/coach-budget-months';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { isFundingKind } from '@/lib/coach-budget-totals';
 import {
   CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator,
 } from '@/components/coaches/CoachToolbarMenu';
@@ -217,7 +218,7 @@ export default function MoneyImportMenu({
           // spreadsheet overwrite the money the team plans to RAISE.
           existingLines={importTarget === 'budget'
             ? (importPrep.plan?.lines ?? [])
-                .filter(l => l.lineKind !== 'funding')
+                .filter(l => !isFundingKind(l.lineKind))
                 .map(l => ({ id: l.id, description: l.description, categoryName: l.categoryName, totalAmount: l.totalAmount }))
             : []}
           existingPayableDescriptions={importTarget === 'payables' ? importPrep.payableDescriptions : []}

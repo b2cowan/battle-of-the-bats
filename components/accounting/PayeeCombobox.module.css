@@ -131,6 +131,38 @@
   font-style: italic;
 }
 
+/* ── Shared with PaymentMethodCombobox ────────────────────────────────────────
+   That component imports THIS stylesheet rather than owning a near-identical copy: the two sit
+   side by side in the same Details group on the expense and payable forms, so any drift between
+   them is drift a coach sees in one glance. Only the pieces below are its own — the input,
+   dropdown, sections and options above are shared verbatim. */
+
+/* An option that carries a usage count: name left, count right. */
+.optionWithCount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.optionCount {
+  font-size: 0.72rem;
+  color: var(--home-dim, rgba(255,255,255,0.35));
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* A STATEMENT, not a control — "this spelling is new to your club". It must not look pressable:
+   the typed value is already what will save, so offering a button to "commit" it would invent a
+   step that does nothing. */
+.optionNote {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+  padding: 0.4rem 0.85rem 0.5rem;
+  margin: 0;
+}
+.optionNote strong { color: var(--home-ink-soft, rgba(255,255,255,0.7)); font-weight: 600; }
+
 .optionSave {
   color: var(--blueprint-blue);
   font-weight: 600;

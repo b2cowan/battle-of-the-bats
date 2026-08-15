@@ -1,4 +1,4 @@
-import { hasRecordAccess, type CoachCapabilities } from './coach-capabilities';
+import { hasRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilities } from './coach-capabilities';
 
 /**
  * The CLOSED-season nav set. Batch 3 shipped this as exactly two doors — everything else a
@@ -114,8 +114,19 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      */
     case "Season's End": return hasRecordAccess(caps);
     case 'Chat':          return caps.staffChat;
-    case 'Settings':
-    case 'Tournaments':   return caps.isHeadCoach || caps.scheduleManage;
+    case 'Tournaments':   return canConfigureTeam(caps);
+    /**
+     * ⚠ Settings used to share the Tournaments gate exactly. It cannot any more: the two dues
+     * settings (automatic reminders, how credits reduce) moved onto this page, and money is a
+     * SEPARATE grant from managing the schedule. A head coach who set an assistant up as the
+     * team's treasurer — money write, nothing else — would otherwise watch both controls
+     * disappear from the product entirely the day they moved.
+     *
+     * This is a door widening, so the PAGE narrows to match: each group renders only for the
+     * grant that owns it, and a money-only coach finds a settings page containing Money and
+     * nothing else. Every write is still refused server-side by its own route.
+     */
+    case 'Settings':      return canConfigureTeam(caps) || canWriteMoney(caps);
     default:              return true;
   }
 }

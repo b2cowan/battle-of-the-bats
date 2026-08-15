@@ -2685,10 +2685,12 @@ export function PlayerDuesPanel({
                               )}
                               {moneyCanWrite && (
                                 <button
-                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingPaymentId === pm.id}
                                   onClick={() => deletePayment(pm.id)}
                                   title="Remove payment (voids its ledger entry)"
+                                  // An icon-only button has no visible name, so this IS its name.
+                                  aria-label={`Remove the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} — this voids its ledger entry`}
                                 >
                                   {deletingPaymentId === pm.id ? '…' : <Trash2 size={13} />}
                                 </button>
@@ -2727,10 +2729,11 @@ export function PlayerDuesPanel({
                               </span>
                               {moneyCanWrite && (
                                 <button
-                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingPayoutId === po.id}
                                   onClick={() => deletePayout(po.id)}
                                   title="Remove payout (voids its ledger entry; the money goes back to being owed)"
+                                  aria-label={`Remove the ${fmt(po.amount)} payout paid ${fmtDate(po.paidDate)} — the money goes back to being owed`}
                                 >
                                   {deletingPayoutId === po.id ? '…' : <Trash2 size={13} />}
                                 </button>
@@ -2904,10 +2907,11 @@ export function PlayerDuesPanel({
                                 </span>
                               ) : (
                                 <button
-                                  style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingCreditId === c.id}
                                   onClick={() => deleteCredit(c.id)}
                                   title="Remove credit"
+                                  aria-label={`Remove the ${fmt(c.amount)} credit, ${c.description}`}
                                 >
                                   {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
                                 </button>

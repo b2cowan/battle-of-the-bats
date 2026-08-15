@@ -44,15 +44,49 @@ export const PATCH = withObservability(async (req: Request,
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const { data: entry } = await supabaseAdmin
+  // ⚠ THE PARENT DECIDES THE SEASON, AND THE ENTRY ROW CANNOT: `rep_fundraiser_entries` carries a
+  // team but no program year, so `id + fundraiser + team` matched a finished season's entry
+  // perfectly and let an archived Money hub rewrite what a family raised two years ago. The ACTIVE
+  // year, always — the write side never reads `?year=`.
+  //
+  // Joined rather than fetched first: this is the "log an amount" path, and a separate existence
+  // check would put a second sequential round trip in front of the screen's primary action for a
+  // row this query already has to reach. `!inner` makes the parent's season a condition of the
+  // entry matching at all, so a past season's entry comes back as "not found" in one hop.
+  const { data: entry, error: entryError } = await supabaseAdmin
     .from('rep_fundraiser_entries')
-    .select('*')
+    .select('*, rep_fundraisers!inner(program_year_id, kind)')
     .eq('id', entryId)
     .eq('fundraiser_id', fundraiserId)
     .eq('team_id', team.id)
+    .eq('rep_fundraisers.program_year_id', programYear.id)
     .single();
 
+  // ⚠ A QUERY FAILURE IS NOT A MISSING ROW, and this lookup now has something to fail at: a join
+  // whose relationship name resolves at RUNTIME. Swallowing the error would make a genuine outage
+  // (a second FK between these tables making the embed ambiguous, a renamed relationship) read as
+  // the ordinary, expected "this entry belongs to a finished season" refusal — indistinguishable
+  // in the logs from working correctly. PGRST116 is the no-rows case `.single()` raises, which IS
+  // the 404 below.
+  if (entryError && entryError.code !== 'PGRST116') {
+    console.error('[fundraiser-entry] lookup failed', { entryId, fundraiserId, error: entryError });
+    return NextResponse.json({ error: 'Could not load this entry. Try again.' }, { status: 500 });
+  }
   if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+  /**
+   * ⚠ A SPONSOR IS NOT EDITED HERE (review, 2026-08-15). This is the DRIVE's per-player edit and
+   * knows nothing of `sponsor_status`: pointed at a still-PLEDGED sponsor's entry it re-derives a
+   * rebate from the stamped percent and, finding no credit yet, takes the "no credit existed but
+   * now one is needed" branch below — writing a real dues credit against a family for money
+   * nobody has received, with no income posted anywhere. A sponsor's amount, status and family
+   * share are decided together on its own record, which is the only place that keeps the three
+   * consistent.
+   */
+  if ((entry as any).rep_fundraisers?.kind === 'sponsor') {
+    return NextResponse.json({
+      error: 'Edit a sponsor on the sponsor itself — its amount, status and family share are set together.',
+    }, { status: 400 });
+  }
 
   const body = await req.json();
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };

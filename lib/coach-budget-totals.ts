@@ -31,31 +31,63 @@
 
 /** The kind of thing a budget line is. Stored on the line; the amount is always positive and the
  *  kind carries the sign (migration 230). */
-export type BudgetLineKind = 'cost' | 'funding';
+export type BudgetLineKind = 'cost' | 'funding' | 'sponsorship';
 
-export const BUDGET_LINE_KINDS: BudgetLineKind[] = ['cost', 'funding'];
+export const BUDGET_LINE_KINDS: BudgetLineKind[] = ['cost', 'funding', 'sponsorship'];
+
+/**
+ * The two money-IN kinds, for any reader that must treat them together.
+ *
+ * ⚠ THEY DIFFER ONLY IN REPORTING. Both subtract from what the season costs, identically, so
+ * per-player dues and the installment generator must count BOTH or silently under-count what
+ * families are being asked for. Anywhere that used to test `kind === 'funding'` to mean "money in"
+ * is a place this list belongs instead.
+ */
+export const FUNDING_LINE_KINDS: BudgetLineKind[] = ['funding', 'sponsorship'];
+export function isFundingKind(kind: string | null | undefined): boolean {
+  return kind === 'funding' || kind === 'sponsorship';
+}
+
+/**
+ * A raw `line_kind` from the database, narrowed — the ONE place that decision is made.
+ *
+ * ⚠ THIS EXISTS BECAUSE THE OBVIOUS SHORTHAND IS DANGEROUS. Nineteen readers were written as
+ * `row.line_kind === 'funding' ? 'funding' : 'cost'`, which was correct while there were exactly
+ * two kinds and became silently wrong the moment `sponsorship` existed: it lands every sponsorship
+ * line in the COST bucket, so instead of reducing what families fund it would ADD to it and
+ * inflate every player's dues. TypeScript cannot see it — both sides are strings. Anything
+ * reading the column goes through here.
+ */
+export function normalizeBudgetLineKind(raw: string | null | undefined): BudgetLineKind {
+  return raw === 'funding' || raw === 'sponsorship' ? raw : 'cost';
+}
 
 /** Coach-facing names. `funding` is deliberately "expected FUNDRAISING", never "income" and no
  *  longer "funding" (owner ruling 2026-08-13: player dues are also funding, so the generic word
- *  made the section read as if dues belonged in it). Still covers sponsors and grants — the hint
- *  and the help docs say so — and still "expected": nothing has arrived, and Budget vs. Actual is
+ *  made the section read as if dues belonged in it). It USED to cover sponsors and grants too —
+ *  which is exactly why `sponsorship` was split out on 2026-08-15: a plan that folded them
+ *  together could not answer "did our sponsorship hit the number?", because sponsorship money was
+ *  in every budget invisibly. Both stay "expected": nothing has arrived, and Budget vs. Actual is
  *  where expectation meets what was really raised. */
 export const LINE_KIND_LABEL: Record<BudgetLineKind, string> = {
-  cost:    'A cost',
-  funding: 'Expected fundraising',
+  cost:        'A cost',
+  funding:     'Expected fundraising',
+  sponsorship: 'Expected sponsorship',
 };
 
 export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
-  cost:    'Money the team spends',
-  funding: 'Money coming in',
+  cost:        'Money the team spends',
+  funding:     'Money the team raises',
+  sponsorship: 'A sponsor or grant, given directly',
 };
 
 /** The heading its section carries — in the plan list, in the summary ladder, in the period grid
  *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected fundraising" is
  *  four places to miss on a rename. */
 export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
-  cost:    'Costs',
-  funding: 'Expected fundraising',
+  cost:        'Costs',
+  funding:     'Expected fundraising',
+  sponsorship: 'Expected sponsorship',
 };
 
 /** Anything with an amount and a kind — the plan's line shape, narrowed to what the maths needs,
@@ -125,7 +157,10 @@ export function computeBudgetTotals({
   for (const line of lines) {
     // A line with no kind is a cost: every row written before migration 230 is one, and the
     // column defaults to 'cost' for the same reason.
-    if (line.lineKind === 'funding') {
+    // ⚠ BOTH money-in kinds subtract, identically — sponsorship differs from fundraising only in
+    // reporting, so testing for 'funding' alone would count a sponsor's money as a COST and
+    // inflate every player's dues by its amount (2026-08-15).
+    if (isFundingKind(line.lineKind)) {
       expectedFunding += line.totalAmount;
       fundingLineCount += 1;
     } else {

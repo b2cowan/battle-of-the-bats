@@ -405,6 +405,29 @@ export function midseasonPitcherProfile(rosterIndex: number): object | null {
   return null;
 }
 
+/**
+ * The two team-wide dues settings, for every demo team — stated, not inherited.
+ *
+ * ⚠ THE DEMO'S MOST SYMPATHETIC MOMENT DEPENDS ON THE SECOND OF THESE. The guided tour's money
+ * step narrates a family whose bill reads "covered by fundraising" because half a bottle drive
+ * came off their dues — which only happens while credits are applied to bills at all. Until
+ * 2026-08-14 the seed never set the column, so that whole sentence was riding a database default:
+ * a future default of `keep_separate` would have left the tour describing a screen that no longer
+ * said it, with every page still rendering perfectly. That is exactly the silent demo drift the
+ * repo's drift rule exists to catch, and a default is not a decision.
+ *
+ * `last_first` is also the product's own default, so this pins the demo to today's behaviour
+ * rather than dressing it up: a prospect sees what a real new team would get.
+ *
+ * Reminders stay ON because the moments dock and the money step both talk about families being
+ * chased — and because a demo that quietly disabled the emails would be showing a tidier product
+ * than the one we sell. Nothing can actually send: the sandbox blocks every write.
+ */
+export const DEMO_DUES_SETTINGS = {
+  auto_reminders_enabled: true,
+  credit_application: 'last_first',
+} as const;
+
 /** Dues: $480/player in 4 × $120. Two families each sit on one overdue $120 → $240 outstanding. */
 export const MIDSEASON_DUES = {
   totalAmount: 480,

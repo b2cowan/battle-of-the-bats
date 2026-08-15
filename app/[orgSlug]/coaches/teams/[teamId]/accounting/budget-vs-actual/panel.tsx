@@ -25,7 +25,10 @@ interface PeriodResult {
   label: string;
   periodDate: string | null;
   estimated: number;
-  actual: number;
+  /** ⚠ NULL MEANS NOBODY CAN SAY, and it is not the same fact as 0 (nothing spent). An expense
+   *  records a CATEGORY and nothing finer, so a period's own actual exists only where the
+   *  category holds a single line — see the route's §5. */
+  actual: number | null;
 }
 
 interface LineResult {
@@ -41,6 +44,9 @@ interface CategoryResult {
   categoryEstimated: number;
   categoryActual: number;
   categoryVariance: number;
+  /** False when the category holds more than one line — its periods then report nothing, and the
+   *  category says why rather than leaving a bare dash to read as a missing number. */
+  lineActualsKnown: boolean;
   lines: LineResult[];
 }
 
@@ -485,7 +491,7 @@ export function BudgetVsActualPanel({
       )}
       {/* Page-header ruling 2026-08-11: one shape, actions right, "?" in its fixed corner. */}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={TrendingUp}
         title="Budget vs. Actual"
         season={page.season}
@@ -718,11 +724,19 @@ export function BudgetVsActualPanel({
               </div>
 
               <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                {data.categories.map(cat => (
+                {data.categories.map((cat, ci) => {
+                  // The explanation for this category's dashes, tied to the button that opens
+                  // them. Sighted readers meet the sentence as a footnote under the lines;
+                  // a screen reader would otherwise meet a column of bare em-dashes with
+                  // nothing saying why, so the description rides the header instead of DOM
+                  // order (/review, 2026-08-15).
+                  const noteId = cat.lineActualsKnown ? undefined : `bva-cat-note-${ci}`;
+                  return (
                   <div key={cat.categoryName} className={shared.ledgerGroup}>
                     <button
                       className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader}`}
                       aria-expanded={expandedCats.has(cat.categoryName)}
+                      aria-describedby={expandedCats.has(cat.categoryName) ? noteId : undefined}
                       onClick={() => toggleCat(cat.categoryName)}
                     >
                       <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
@@ -775,7 +789,12 @@ export function BudgetVsActualPanel({
                             {line.hasPeriods && expandedLines.has(line.budgetLineId) && (
                               <div className={shared.ledgerSubRows}>
                                 {line.periods.map((p, pi) => {
-                                  const variance = p.estimated - p.actual;
+                                  // ⚠ `p.actual > 0` WOULD BE TRUE OF null IN NEITHER DIRECTION but
+                                  // reads as if it handled it. A null is "nobody can say"; a 0 is
+                                  // "nothing was spent". Both print "—" — the sentence under the
+                                  // category is what tells the two apart.
+                                  const spent = p.actual !== null && p.actual > 0;
+                                  const variance = p.estimated - (p.actual ?? 0);
                                   return (
                                     <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
                                       <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
@@ -788,16 +807,16 @@ export function BudgetVsActualPanel({
                                       </span>
                                       <span className={shared.ledgerNum}>{fmt(p.estimated)}</span>
                                       <span
-                                        className={`${shared.ledgerNum} ${p.actual > 0 ? '' : shared.ledgerNumMuted}`}
-                                        style={p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
+                                        className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
+                                        style={spent ? { color: 'var(--success-light)' } : undefined}
                                       >
-                                        {p.actual > 0 ? fmt(p.actual) : '—'}
+                                        {spent ? fmt(p.actual!) : '—'}
                                       </span>
                                       <span
-                                        className={`${shared.ledgerNum} ${p.actual > 0 ? '' : shared.ledgerNumMuted}`}
-                                        style={p.actual > 0 ? { color: varianceColor(variance) } : undefined}
+                                        className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
+                                        style={spent ? { color: varianceColor(variance) } : undefined}
                                       >
-                                        {p.actual > 0 ? fmtVariance(variance) : '—'}
+                                        {spent ? fmtVariance(variance) : '—'}
                                       </span>
                                     </div>
                                   );
@@ -806,10 +825,23 @@ export function BudgetVsActualPanel({
                             )}
                           </Fragment>
                         ))}
+                        {/* Why every line here reads "—" under Actual. A dash with nothing to
+                            explain it reads as a number the product lost — and this one is a
+                            deliberate refusal to guess: spending records a category and nothing
+                            finer, so with more than one line in the category no line can claim a
+                            share of it. Shown only where it applies; a single-line category CAN
+                            report its own spending and does. */}
+                        {!cat.lineActualsKnown && (
+                          <p id={noteId} className={styles.lineActualsNote}>
+                            {cat.categoryName} has {cat.lines.length} budget lines, so spending is
+                            matched to the category, not to a line.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* The part of the estimated total not yet covered by lines. Positive only — an

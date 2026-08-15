@@ -96,6 +96,7 @@ type RepProgramYearRow = {
   budget_amount: number | string | null;
   auto_reminders_enabled: boolean | null;
   credit_application?: string | null;
+  default_player_credit_percent?: number | string | null;
   lineup_settings: RepProgramYear['lineupSettings'] | null;
   created_at: string;
   updated_at: string;
@@ -139,6 +140,7 @@ function mapProgramYear(row: RepProgramYearRow): RepProgramYear {
     autoRemindersEnabled: row.auto_reminders_enabled ?? true,
     // Same normalization as mapRepProgramYear (lib/db.ts) — the two mappers must agree.
     creditApplication: normalizeCreditApplicationMode(row.credit_application),
+    defaultPlayerCreditPercent: Number(row.default_player_credit_percent ?? 0),
     lineupSettings: row.lineup_settings ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

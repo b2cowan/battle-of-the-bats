@@ -3505,7 +3505,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3515,16 +3515,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_roster_players",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
@@ -3536,6 +3526,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3595,7 +3595,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3605,17 +3605,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "prior_roster_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3626,6 +3616,16 @@
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "prior_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3995,7 +3995,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -4005,7 +4005,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -4911,12 +4911,32 @@
   },
   {
     "table_name": "rep_team_expenses",
+    "constraint_name": "rep_team_expenses_balance_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "balance_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_expenses",
     "constraint_name": "rep_team_expenses_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "created_by",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "constraint_name": "rep_team_expenses_deposit_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deposit_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

@@ -227,7 +227,7 @@ export function PaymentRequestsPanel({
           "Money". This tab had no control row and gains a thin one. The write gate stands — a
           read-only assistant is never offered a form the server would refuse. */}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={ArrowUpRight}
         title="Payment Requests"
         helpLabel="Payment Requests"

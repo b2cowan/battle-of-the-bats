@@ -6,6 +6,7 @@ import {
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepTeamExpenses,
+  getRealisedFundraiserEntries,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
@@ -16,7 +17,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
-import { computeBudgetTotals } from '@/lib/coach-budget-totals';
+import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -177,13 +178,12 @@ export const GET = withObservability(async (req: Request,
   let fundraisingRaised = 0;
   let creditsIssued = 0;
   if (fundraisers.length > 0) {
-    const { data: entries } = await supabaseAdmin
-      .from('rep_fundraiser_entries')
-      .select('amount_raised, rebate_amount')
-      .in('fundraiser_id', fundraisers.map(f => f.id));
-    for (const en of (entries ?? []) as Array<{ amount_raised: number; rebate_amount: number }>) {
-      fundraisingRaised += en.amount_raised ?? 0;
-      creditsIssued += en.rebate_amount ?? 0;
+    // ⚠ REALISED ONLY. A pledged sponsor's entry exists (it records the arrangement) but nothing
+    // has posted — counting it here put promised money in the hub's headline "Money in" figure
+    // (review, 2026-08-15).
+    for (const en of await getRealisedFundraiserEntries(programYear.id)) {
+      fundraisingRaised += en.amountRaised;
+      creditsIssued += en.rebateAmount;
     }
   }
 
@@ -221,7 +221,7 @@ export const GET = withObservability(async (req: Request,
   const totals = computeBudgetTotals({
     lines: lines.map(l => ({
       totalAmount: l.total_amount ?? 0,
-      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+      lineKind: normalizeBudgetLineKind(l.line_kind),
     })),
     estimatedTotal: programYear.budgetAmount ?? null,
     rosterCount,

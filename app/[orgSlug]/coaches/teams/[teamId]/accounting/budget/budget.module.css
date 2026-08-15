@@ -211,28 +211,21 @@
    money sits at the edge — aligned either way, no dead gutter. */
 .linesCanWrite { --ledger-cols: minmax(0, 1fr) 130px 40px; }
 
-/* The row as the edit door (write coaches; the pencil is the semantic control, this is the
-   pointer/touch shortcut — and on a phone, the only visible door). */
-.rowTappable { cursor: pointer; }
+/* ⚠ `.rowTappable`, `.actionBtn` and `.editBtn` MOVED OUT on 2026-08-15 — they were the portal's
+   only copy of the row-edit affordance, and this screen was where the convention was first settled
+   ("the pencil is the semantic control, the row is the pointer/touch shortcut"). A survey found
+   five different idioms doing that same job across the Money hub, so the pencil is now the shared
+   `RowEditButton` component and `.rowTappable` / `.rowEditBtn` / `.rowEditBtnClip` live in
+   coaches.module.css. This screen's own phone behaviour is unchanged — it passes `onPhone="clip"`,
+   which is the treatment lifted verbatim from the `.editBtn` rule that used to sit at the bottom of
+   this file. A component rather than a class on purpose: a class stops the STYLING drifting and did
+   nothing to stop the markup drifting, and markup is where this control actually failed (row
+   buttons elsewhere shipped with no accessible name at all). */
 
 
 /* The leading cell's stacked name + note. Everything else a line row used to need — its own
    frame, chevron, amount and action rail — now comes from the shared ledger. */
 .lineInfo { flex: 1; min-width: 0; }
-
-
-.actionBtn {
-  background: none;
-  border: 1px solid var(--home-line, rgba(255,255,255,0.1));
-  border-radius: 6px;
-  padding: 0.28rem 0.4rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: color 0.12s, border-color 0.12s;
-}
-.actionBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); border-color: var(--home-line, rgba(255,255,255,0.25)); }
 
 /* Deleting a line moved INTO the edit modal (owner 2026-08-13): a quiet danger link in the
    footer, opposite Save, in front of the same confirm dialog as before. One control per row
@@ -1033,6 +1026,23 @@
   font-size: 0.95rem;
 }
 
+/* The named per-player arrangements a bulk re-run would flatten (2026-08-14 re-run guard).
+   Warning-toned, not danger: nothing has happened yet and the coach may well mean to do it —
+   this is the fact they were never given, drawn loudly enough to be read before they answer.
+   Left-aligned inside the centred `.successState`, because it is a LIST of names and a centred
+   list of names is unreadable at four or more. */
+.replaceHandSet {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  background: color-mix(in srgb, var(--warning) 9%, transparent);
+  color: var(--home-ink, var(--white-85));
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 /* ── Chunk G — checklist strip + sample doors (first-run card = shared CoachEmptyState) ──────────────
    Reflow comes entirely from the shared primitives (.stack640/.block640 on the
    elements) — no page-level @640 rules were needed, per the primitives header. */
@@ -1260,35 +1270,13 @@
   .linesContainer,
   .linesCanWrite { --ledger-cols: minmax(0, 1fr) 88px auto; }
 
-  /* ≤640 the ROW is the edit door (owner ruling, mockup d37d62e3 round 4): the pencil leaves
-     the layout so rows read clean and the money reaches the edge — but it stays FOCUSABLE
-     (clip pattern, not display:none), so a keyboard or screen reader in a narrow window keeps
-     a real, labelled edit control on every line. With no visible button in any row, the `auto`
-     actions track collapses uniformly and the amounts stay one column. */
-  .editBtn {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-  }
-  /* …and it un-clips ON FOCUS (review finding): a keyboard user tabbing the rows must never
-     land on a control with zero visible size — the standard skip-link behavior. */
-  .editBtn:focus-visible {
-    position: static;
-    width: auto;
-    height: auto;
-    margin: 0;
-    padding: 0.28rem 0.4rem;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-    border: 1px solid var(--home-line, rgba(255,255,255,0.25));
-  }
+  /* ⚠ `.editBtn` LIVES IN coaches.module.css NOW as `.rowEditBtnClip` (2026-08-15) — the ruling it
+     encodes is unchanged and still this screen's: at ≤640 the ROW is the edit door, the pencil
+     leaves the layout so rows read clean and the money reaches the edge, and with no visible button
+     in any row the `auto` actions track collapses uniformly so the amounts stay one column. The
+     panel opts in with `onPhone="clip"` on the shared button. Read the note beside that class before
+     changing it — it is one of two phone treatments, and applying it in a card table caused a real
+     page-overflow defect the same day. */
 
   /* The "generate installments" CTA stacks its copy above its button. */
   .generateSection { gap: 0.85rem; }

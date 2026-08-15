@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
+import { isFundingKind } from '@/lib/coach-budget-totals';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue,
   MAX_IMPORT_ROWS,
@@ -19,16 +20,16 @@ import {
  *
  * Contracts this route keeps, all of them hard-won elsewhere in the portal:
  *
- *  • **Preview first, never all-or-nothing.** Rows are written one at a time and a failure does
+ *  â¢ **Preview first, never all-or-nothing.** Rows are written one at a time and a failure does
  *    NOT abort the rest; the response names what landed and what didn't. A coach importing forty
  *    lines with one bad row gets thirty-nine lines plus an honest error.
- *  • **Never dress a total failure as success.** Zero writes returns an error, not "0 imported".
- *  • **The sheet's order is the budget's order.** `sort_order` is written explicitly, continuing
- *    from the plan's current end — display order has no other tiebreaker.
- *  • **The server reviews independently.** The client's preview may be stale if another coach
+ *  â¢ **Never dress a total failure as success.** Zero writes returns an error, not "0 imported".
+ *  â¢ **The sheet's order is the budget's order.** `sort_order` is written explicitly, continuing
+ *    from the plan's current end â display order has no other tiebreaker.
+ *  â¢ **The server reviews independently.** The client's preview may be stale if another coach
  *    edited the plan while the sheet was open, so the outcome is recomputed here against live data
  *    and a row the client called an "add" can become an "update" (or be refused) at this point.
- *  • **Taxonomy ownership is checked**, exactly as the single-line POST does: a category or item
+ *  â¢ **Taxonomy ownership is checked**, exactly as the single-line POST does: a category or item
  *    must be a platform default or belong to THIS org.
  */
 
@@ -105,7 +106,7 @@ export const POST = withObservability(async (req: Request,
   const shape = body?.shape === 'payables' ? 'payables' : 'budget';
   const incoming: unknown[] = Array.isArray(body?.rows) ? body.rows : [];
 
-  // Receipt fields (migration 231) — description of the ACT, never of the write. They are
+  // Receipt fields (migration 231) â description of the ACT, never of the write. They are
   // normalized to the values the CHECK constraints allow and are used nowhere else, so a client
   // sending nonsense degrades the history line and cannot touch what lands in the budget.
   const sheetShape: 'month-grid' | 'list' | 'payables' =
@@ -130,7 +131,7 @@ export const POST = withObservability(async (req: Request,
     .from('budget_categories')
     .select('id, name, budget_items(id, name)')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-    // Team-visible categories only — the same filter the coach's own picker applies, so an
+    // Team-visible categories only â the same filter the coach's own picker applies, so an
     // imported sheet can never link a team budget to an org-admin-only category.
     .in('scope', ['team', 'both']);
 
@@ -149,7 +150,7 @@ export const POST = withObservability(async (req: Request,
   const skipped: Array<{ rowNumber: number; name: string; reason: string }> = [];
 
   if (shape === 'payables') {
-    // ── payables ─────────────────────────────────────────────────────────
+    // ââ payables âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     const { data: existingRows } = await supabaseAdmin
       .from('rep_team_expenses')
       .select('description')
@@ -169,13 +170,13 @@ export const POST = withObservability(async (req: Request,
       const deposit = moneyValue(row.depositAmount);
       const balance = moneyValue(row.balanceAmount);
       try {
-        // The SAME writer the Add Payable form uses — so an imported payable carries its payee
+        // The SAME writer the Add Payable form uses â so an imported payable carries its payee
         // and its author in the columns that hold them, rather than a second shape of the row.
         await createRepTeamExpense({
           orgId: ctx!.org.id,
           teamId: team.id,
           programYearId: programYear.id,
-          // The stored type is unchanged — chunk H generalised the WORDS, not the data.
+          // The stored type is unchanged â chunk H generalised the WORDS, not the data.
           expenseType: 'tournament_payable',
           description: row.description,
           category: row.categoryName || null,
@@ -197,9 +198,9 @@ export const POST = withObservability(async (req: Request,
       }
     }
   } else {
-    // ── budget lines ─────────────────────────────────────────────────────
-    // ⚠ COST lines only. An imported sheet row is a cost by definition (the sheet has no column
-    // for a kind), and matching is by DESCRIPTION — so without this filter a row called
+    // ââ budget lines âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+    // â  COST lines only. An imported sheet row is a cost by definition (the sheet has no column
+    // for a kind), and matching is by DESCRIPTION â so without this filter a row called
     // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
     // and category, turning money coming in into money going out.
     const { data: lineRows } = await supabaseAdmin
@@ -208,12 +209,12 @@ export const POST = withObservability(async (req: Request,
       .eq('program_year_id', programYear.id)
       .order('sort_order');
 
-    // ⚠ COST lines only for MATCHING. An imported sheet row is a cost by definition (the sheet has
-    // no column for a kind), and matching is by DESCRIPTION — so without this filter a row called
+    // â  COST lines only for MATCHING. An imported sheet row is a cost by definition (the sheet has
+    // no column for a kind), and matching is by DESCRIPTION â so without this filter a row called
     // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
     // and category, turning money coming in into money going out.
     const existing: ExistingBudgetLine[] = (lineRows ?? [])
-      .filter((l: Record<string, unknown>) => l.line_kind !== 'funding')
+      .filter((l: Record<string, unknown>) => !isFundingKind(l.line_kind as string | null))
       .map((l: Record<string, unknown>) => ({
         id: l.id as string,
         description: l.description as string,
@@ -221,9 +222,9 @@ export const POST = withObservability(async (req: Request,
         totalAmount: (l.total_amount as number) ?? 0,
       }));
 
-    // Continue the plan's existing order rather than restarting at 0 — write order IS display
+    // Continue the plan's existing order rather than restarting at 0 â write order IS display
     // order, and an import must land after what the coach already has, in sheet order.
-    // ⚠ Measured over EVERY line, funding included: ordering is a property of the whole plan, and
+    // â  Measured over EVERY line, funding included: ordering is a property of the whole plan, and
     // taking the maximum over the cost-only subset lets an imported line collide with the
     // sort_order of a funding line that already holds it.
     let nextSortOrder = (lineRows ?? []).reduce(
@@ -262,9 +263,10 @@ export const POST = withObservability(async (req: Request,
           .eq('id', lineId)
           .eq('program_year_id', programYear.id)
           // Belt and braces with the cost-only read above: the matched id came from a payload the
-          // client sends back, so the write refuses a funding line even if that payload is stale
-          // or crafted.
-          .neq('line_kind', 'funding');
+          // client sends back, so the write refuses a MONEY-IN line of either kind even if that
+          // payload is stale or crafted. ⚠ Both kinds are named â this guard listed only
+          // 'funding' until 2026-08-15, so its own comment had stopped being true for sponsorship.
+          .not('line_kind', 'in', '(funding,sponsorship)');
         if (error) { failed.push({ rowNumber: row.rowNumber, name: label, error: error.message }); continue; }
         updated.push({ rowNumber: row.rowNumber, name: label });
       } else {
@@ -298,14 +300,14 @@ export const POST = withObservability(async (req: Request,
 
       if (periods.length === 0) continue;
       const periodSum = Math.round(periods.reduce((s, p) => s + p.amount, 0) * 100) / 100;
-      // Periods must sum to the line total (±2¢) or the DB's own invariant is broken. The review
+      // Periods must sum to the line total (Â±2Â¢) or the DB's own invariant is broken. The review
       // computes the total FROM the periods, so this only fires if a client edited one and not
-      // the other — in which case the line still lands, without a schedule it can't honour.
+      // the other â in which case the line still lands, without a schedule it can't honour.
       if (Math.abs(periodSum - row.total) > 0.02) {
         skipped.push({
           rowNumber: row.rowNumber,
           name: label,
-          reason: 'Saved as a single amount — its month figures didn’t add up to the total.',
+          reason: 'Saved as a single amount â its month figures didnât add up to the total.',
         });
         continue;
       }
@@ -314,9 +316,9 @@ export const POST = withObservability(async (req: Request,
       const { error: perErr } = await supabaseAdmin.from('rep_budget_periods').insert(
         periods.map((p, i) => ({
           budget_line_id: lineId,
-          // What the coach will actually read on the line form — "Mar '26", not a month key.
+          // What the coach will actually read on the line form â "Mar '26", not a month key.
           period_label: formatMonthLabel(p.month),
-          // A month column means "this is due in this month" — the 1st is the only honest day to
+          // A month column means "this is due in this month" â the 1st is the only honest day to
           // pick, and the coach can move it on the line's own form.
           period_date: `${p.month}-01`,
           amount: p.amount,
@@ -330,7 +332,7 @@ export const POST = withObservability(async (req: Request,
   }
 
   if (created.length === 0 && updated.length === 0) {
-    // Every row failed. The request succeeded but the coach got nothing — never dress that up.
+    // Every row failed. The request succeeded but the coach got nothing â never dress that up.
     const first = failed[0]?.error ?? skipped[0]?.reason;
     return NextResponse.json(
       { error: first ? `Nothing was imported. ${first}` : 'Nothing could be imported.', created, updated, failed, skipped },
@@ -338,14 +340,14 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  // The receipt — written only once something actually landed, and only AFTER the early return
+  // The receipt â written only once something actually landed, and only AFTER the early return
   // above, so "Recent imports" can never list an import that imported nothing. Best-effort by
   // contract: `recordRepTeamImport` never throws, because a lost history line must not cost a
   // coach the rows they just successfully imported.
   //
-  // ⚠ The attribution name comes from ONE indexed membership lookup, not from the season's staff
+  // â  The attribution name comes from ONE indexed membership lookup, not from the season's staff
   // list. Resolving it through `getRepTeamStaffForYear` would query every coach on the team and
-  // then call the Supabase Auth admin API once per coach — an N+1 on the request path of every
+  // then call the Supabase Auth admin API once per coach â an N+1 on the request path of every
   // import, to learn the display name of the one person who is already authenticated here.
   const createdByName = await getOrgMemberDisplayName(ctx!.org.id, ctx!.user.id).catch(() => null);
   await recordRepTeamImport({

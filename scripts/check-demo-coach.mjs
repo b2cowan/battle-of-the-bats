@@ -196,8 +196,10 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     // Costs and expected funding are separate kinds and separate assertions: a funding line
     // carries no category ON PURPOSE, so lumping them together would either weaken the
     // category rule below or fail on a line that is exactly right.
-    const lines = (allLines ?? []).filter(l => l.line_kind !== 'funding');
-    const fundingLines = (allLines ?? []).filter(l => l.line_kind === 'funding');
+    // Both money-in kinds — a sponsorship line is money in, not a cost (mig 237).
+    const isFunding = (k) => k === 'funding' || k === 'sponsorship';
+    const lines = (allLines ?? []).filter(l => !isFunding(l.line_kind));
+    const fundingLines = (allLines ?? []).filter(l => isFunding(l.line_kind));
     check(lines.length === OFFSEASON_BUDGET_LINES.length && lines.every(l => l.category_id),
       `${lines.length} cost lines, every one on a real category (budget-vs-actual matches by category NAME)`);
     // Org-only categories are invisible to the coach's own budget planner and refused by its write

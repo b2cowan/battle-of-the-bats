@@ -48,6 +48,43 @@ export type CreditApplicationMode = 'last_first' | 'next_first' | 'keep_separate
 export const CREDIT_APPLICATION_MODES: readonly CreditApplicationMode[] =
   ['last_first', 'next_first', 'keep_separate'];
 
+/**
+ * The three sentences the product says about credit application, in ONE place.
+ *
+ * Three surfaces now say them: the Money group in Team settings (the picker), the dues
+ * page's policy line (read-only, under the table), and the dues setup block before any
+ * schedule exists. They were module-local to the dues panel while it was the only screen
+ * that spoke; a second copy is how a picker and the sentence beside it start disagreeing
+ * about what the team actually chose.
+ */
+export const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
+  last_first:    'The last payment first',
+  next_first:    'The next payment first',
+  keep_separate: "They don't — settle at season's end",
+};
+
+export const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
+  last_first:    'Fundraising shrinks the far end of the schedule; near-term amounts keep their dates',
+  next_first:    'Relief lands on the next bill due',
+  keep_separate: 'Bills never move — every credit waits for season’s end',
+};
+
+/**
+ * The mode as a COMPLETE SENTENCE, for the two places that state the policy in prose: the Money
+ * group's collapsed header and the Player Dues policy line under the table.
+ *
+ * ⚠ These exist because the LABELS are answers to a picker's question, not sentence fragments.
+ * `keep_separate` reads "They don't — settle at season's end", so composing
+ * `"Credits reduce " + label.toLowerCase()` produced **"Credits reduce they don't — settle at
+ * season's end"** on every visit for any team using that mode. A label and a sentence are
+ * different jobs; giving them one string made the third mode ungrammatical.
+ */
+export const CREDIT_MODE_SENTENCES: Record<CreditApplicationMode, string> = {
+  last_first:    'Credits reduce the last payment first',
+  next_first:    'Credits reduce the next payment first',
+  keep_separate: 'Credits don’t reduce bills — settled at season’s end',
+};
+
 /** The DB column is free text to the compiler — normalize unknowns to the default. */
 export function normalizeCreditApplicationMode(value: unknown): CreditApplicationMode {
   return CREDIT_APPLICATION_MODES.includes(value as CreditApplicationMode)

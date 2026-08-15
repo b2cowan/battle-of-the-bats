@@ -16,6 +16,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  */
 export default function CoachModalHeader({
   title,
+  subtitle,
   onClose,
   children,
   titleTag: TitleTag = 'h3',
@@ -23,6 +24,12 @@ export default function CoachModalHeader({
   closeAriaLabel,
 }: {
   title: ReactNode;
+  /**
+   * One short line under the title saying what this form records. For the modal PAIRS a coach
+   * picks between (Add Expense vs Add Payable) — not a general description slot; a modal that
+   * needs a paragraph puts it in the form body.
+   */
+  subtitle?: ReactNode;
   onClose: () => void;
   children?: ReactNode;
   titleTag?: 'h2' | 'h3';
@@ -30,9 +37,18 @@ export default function CoachModalHeader({
   closeAriaLabel?: string;
 }) {
   return (
-    <div className={styles.modalHeader}>
+    <div className={`${styles.modalHeader} ${subtitle ? styles.modalHeaderStacked : ''}`}>
       <button className={styles.modalBackBtn} aria-label="Back" onClick={onClose}><ArrowLeft size={20} /></button>
-      <TitleTag className={styles.modalTitle}>{title}</TitleTag>
+      {/* The title keeps its own element when there is no subtitle, so every existing caller's
+          markup is byte-identical to before; only the two-line form gets a wrapper. */}
+      {subtitle ? (
+        <div>
+          <TitleTag className={styles.modalTitle}>{title}</TitleTag>
+          <p className={styles.modalSubtitle}>{subtitle}</p>
+        </div>
+      ) : (
+        <TitleTag className={styles.modalTitle}>{title}</TitleTag>
+      )}
       {children}
       <button className={styles.modalCloseBtn} aria-label={closeAriaLabel} onClick={onClose}><X size={closeIconSize} /></button>
     </div>

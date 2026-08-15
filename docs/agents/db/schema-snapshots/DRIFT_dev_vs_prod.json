@@ -1,12 +1,65 @@
 {
-  "generated": "2026-08-14",
-  "total": 0,
+  "generated": "2026-08-15",
+  "total": 13,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "columns": 6,
+    "indexes": 2,
+    "constraints": 2,
+    "rls": 3
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_fundraisers.rep_fundraisers_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_fundraisers.rep_fundraisers_sponsor_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_program_years.rep_program_years_default_credit_check",
+      "sig": ""
+    },
+    {
+      "key": "column:changed:rep_fundraiser_entries.player_id",
+      "sig": "uuid|uuid|YES| :: uuid|uuid|NO|"
+    },
+    {
+      "key": "column:only-dev:rep_fundraisers.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraisers.sponsor_status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.default_player_credit_percent",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_expenses.balance_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_expenses.deposit_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_balance_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_deposit_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_expenses_balance_entry",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_expenses_deposit_entry",
+      "sig": ""
+    }
+  ]
 }

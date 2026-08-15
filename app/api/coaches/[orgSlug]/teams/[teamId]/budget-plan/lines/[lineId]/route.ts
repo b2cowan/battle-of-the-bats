@@ -4,6 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -74,8 +75,8 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   if ('lineKind' in body) {
-    if (body.lineKind !== 'cost' && body.lineKind !== 'funding') {
-      return NextResponse.json({ error: 'lineKind must be "cost" or "funding"' }, { status: 400 });
+    if (!BUDGET_LINE_KINDS.includes(body.lineKind as BudgetLineKind)) {
+      return NextResponse.json({ error: 'lineKind must be one of: cost, funding, sponsorship' }, { status: 400 });
     }
     // Switching kind is deliberately allowed and needs no other change: the amount is positive
     // either way and any period split still reconciles to it. A coach who filed sponsorship as a

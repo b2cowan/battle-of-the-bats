@@ -6,6 +6,8 @@ import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
+import { isRealisedRecord } from './coach-fundraising';
+import { paidLedgerLegs, type ExpenseLedgerLeg } from './expense-ledger';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -3467,6 +3469,7 @@ function mapRepProgramYear(r: any): RepProgramYear {
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
     autoRemindersEnabled: r.auto_reminders_enabled ?? true,
     creditApplication: normalizeCreditApplicationMode(r.credit_application),
+    defaultPlayerCreditPercent: Number(r.default_player_credit_percent ?? 0),
     lineupSettings: (r.lineup_settings ?? null) as LineupSettings | null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -8858,6 +8861,10 @@ function mapRepDuesCredit(r: any): DuesCredit {
     creditType: r.credit_type,
     notes: r.notes ?? null,
     paymentId: r.payment_id ?? null,
+    // The other two provenance links, carried for the same reason `payment_id` always was: a
+    // credit BORN of another record is not the ledger drawer's to rewrite (2026-08-14).
+    fundraiserEntryId: r.fundraiser_entry_id ?? null,
+    expenseId: r.expense_id ?? null,
     createdAt: r.created_at,
   };
 }
@@ -8873,6 +8880,84 @@ export async function getRepDuesCreditsByProgramYear(programYearId: string): Pro
     .order('created_at');
   if (error) throw error;
   return (data ?? []).map(mapRepDuesCredit);
+}
+
+/**
+ * ONE fundraiser, scoped to the SEASON that owns it — the only lookup any fundraiser route may
+ * use (2026-08-14).
+ *
+ * ⚠ THE PROGRAM YEAR IS NOT OPTIONAL, and that is the whole reason this helper exists. Every
+ * fundraiser route used to select on `id + team_id` alone, which reads as tight (the team is
+ * checked!) but is not: `rep_fundraisers` is keyed by program year, so a 2025 fundraiser's id
+ * matched perfectly against a 2026 request. The consequences were one level apart and both
+ * silent — the detail READ paired last season's drive with THIS season's roster, and Settings /
+ * log-amount would happily write into a finished season. Passing the caller's own resolved year
+ * makes both impossible: a GET on the season-read rail passes the season it is showing, and a
+ * write handler passes the ACTIVE one, so a past fundraiser simply 404s on write.
+ *
+ * Returns the raw row (the routes map their own shapes) or null.
+ */
+export async function getRepFundraiser(
+  fundraiserId: string,
+  teamId: string,
+  programYearId: string,
+): Promise<Record<string, any> | null> {
+  const { data } = await supabaseAdmin
+    .from('rep_fundraisers')
+    .select('*')
+    .eq('id', fundraiserId)
+    .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
+    .maybeSingle();
+  return data ?? null;
+}
+
+/**
+ * A season's fundraising entries whose money has ACTUALLY LANDED — the only sum any "how much did
+ * we raise?" figure may be built from.
+ *
+ * ⚠⚠ A PLEDGE IS RECORDED BUT IS NOT MONEY, AND THREE READERS DID NOT KNOW THAT (found in review,
+ * 2026-08-15). A sponsor's entry is written the moment the sponsor is recorded — it holds the
+ * arrangement: the amount, the family, the agreed share — but while its parent is `pledged` no
+ * income has posted and no dues credit exists. Every reader that summed `amount_raised` across the
+ * season therefore counted promised money as banked:
+ *
+ *   · the Money hub's headline "Money in" and its fundraising card;
+ *   · Budget vs. Actual's funding ACTUAL, so a team that budgeted $2,000 of sponsorship and logged
+ *     one $2,000 pledge read as 100% collected;
+ *   · the season settlement pot — the worst of the three, because that pot is what families are
+ *     paid out of, so a pledge could have funded a real refund of money the team never received.
+ *
+ * Migration 237's own comment states the rule ("a pledge that counted as actual would flatter the
+ * season"); this is the rule made executable, in ONE place, so the fourth reader inherits it.
+ *
+ * A FUNDRAISER's entries are always realised — a drive's row only exists once a player has raised
+ * something — so only sponsors are filtered.
+ */
+export async function getRealisedFundraiserEntries(
+  programYearId: string,
+): Promise<Array<{ id: string; fundraiserId: string; playerId: string | null; amountRaised: number; rebateAmount: number }>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_fundraiser_entries')
+    .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, rep_fundraisers!inner(program_year_id, kind, sponsor_status)')
+    .eq('rep_fundraisers.program_year_id', programYearId);
+  if (error) throw error;
+  return (data ?? [])
+    .filter((r: any) => {
+      const parent = r.rep_fundraisers;
+      // Belt: a to-one embed is an object, but a shape change must not silently pass everything.
+      if (!parent) return false;
+      // THE rule, from lib/coach-fundraising.ts — not a second copy of it here, so a change to
+      // what "realised" means reaches this query and the client rollup together.
+      return isRealisedRecord({ kind: parent.kind, sponsorStatus: parent.sponsor_status });
+    })
+    .map((r: any) => ({
+      id: r.id,
+      fundraiserId: r.fundraiser_id,
+      playerId: r.player_id ?? null,
+      amountRaised: Number(r.amount_raised ?? 0),
+      rebateAmount: Number(r.rebate_amount ?? 0),
+    }));
 }
 
 export async function getRepDuesCreditsForPlayer(
@@ -9434,19 +9519,31 @@ export async function reconcileOverpaymentCredits(opts: {
  * The migrated backfill rows delete the same way — their adopted entry is voided like any other,
  * which IS the undo the old mark-paid flow never had.
  */
+/**
+ * @returns whether THIS call is the one that removed the row.
+ *
+ * ⚠ THE DELETE IS THE ONLY ATOMIC POINT, so it is the only honest claim. Two requests racing to
+ * correct the same receipt both read it, both reach here, and Postgres hands the row to exactly
+ * one of them — the loser deletes nothing. The delete door ignores the answer (removing an
+ * already-removed payment is a fine no-op); the CORRECTION door must not, or the loser would
+ * cheerfully record a replacement for a receipt it never removed, leaving two payments and two
+ * ledger entries where the coach meant one (/review 2026-08-14, High).
+ */
 export async function removeRepDuesPayment(
   payment: RepDuesPayment,
   team: { id: string; orgId: string; name: string },
-): Promise<void> {
+): Promise<boolean> {
   if (payment.accountingEntryId) {
     const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
     await voidEntry(payment.accountingEntryId, ledger.id);
   }
-  const { error } = await supabaseAdmin
+  const { data: deleted, error } = await supabaseAdmin
     .from('rep_dues_payments')
     .delete()
-    .eq('id', payment.id);
+    .eq('id', payment.id)
+    .select('id');
   if (error) throw error;
+  const removedByUs = (deleted ?? []).length > 0;
   await syncDuesPaidProjection(payment.programYearId, payment.playerId);
   // Removing money can leave OTHER payments' credits stale (overshoot recorded, then an earlier
   // payment deleted → the excess shrank or vanished). Reconcile to the true remaining state.
@@ -9463,6 +9560,7 @@ export async function removeRepDuesPayment(
       paymentId: null,
     });
   }
+  return removedByUs;
 }
 
 // Team Expenses
@@ -9490,6 +9588,9 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     payeeId: r.payee_id ?? null,
     payeePayer: r.payee_payer ?? null,
     paidByPlayerId: r.paid_by_player_id ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+    depositEntryId: r.deposit_entry_id ?? null,
+    balanceEntryId: r.balance_entry_id ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -9574,17 +9675,39 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   description?: string;
   category?: string | null;
   notes?: string | null;
+  amount?: number;
+  paymentMethod?: string | null;
+  payeeId?: string | null;
+  payeePayer?: string | null;
+  depositAmount?: number | null;
+  depositDueDate?: string | null;
+  balanceAmount?: number | null;
+  balanceDueDate?: string | null;
   expensePaidAt?: string | null;
   depositPaidAt?: string | null;
   balancePaidAt?: string | null;
+  accountingEntryId?: string | null;
+  depositEntryId?: string | null;
+  balanceEntryId?: string | null;
 }): Promise<RepTeamExpense> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.category !== undefined) patch.category = fields.category;
   if (fields.notes !== undefined) patch.notes = fields.notes;
+  if (fields.amount !== undefined) patch.amount = fields.amount;
+  if (fields.paymentMethod !== undefined) patch.payment_method = fields.paymentMethod;
+  if (fields.payeeId !== undefined) patch.payee_id = fields.payeeId;
+  if (fields.payeePayer !== undefined) patch.payee_payer = fields.payeePayer;
+  if (fields.depositAmount !== undefined) patch.deposit_amount = fields.depositAmount;
+  if (fields.depositDueDate !== undefined) patch.deposit_due_date = fields.depositDueDate;
+  if (fields.balanceAmount !== undefined) patch.balance_amount = fields.balanceAmount;
+  if (fields.balanceDueDate !== undefined) patch.balance_due_date = fields.balanceDueDate;
   if (fields.expensePaidAt !== undefined) patch.expense_paid_at = fields.expensePaidAt;
   if (fields.depositPaidAt !== undefined) patch.deposit_paid_at = fields.depositPaidAt;
   if (fields.balancePaidAt !== undefined) patch.balance_paid_at = fields.balancePaidAt;
+  if (fields.accountingEntryId !== undefined) patch.accounting_entry_id = fields.accountingEntryId;
+  if (fields.depositEntryId !== undefined) patch.deposit_entry_id = fields.depositEntryId;
+  if (fields.balanceEntryId !== undefined) patch.balance_entry_id = fields.balanceEntryId;
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .update(patch)
@@ -9593,6 +9716,140 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
     .single();
   if (error) throw error;
   return mapRepTeamExpense(data);
+}
+
+/**
+ * Void the ledger entries an expense posted, so deleting it gives the money back.
+ *
+ * Two ways to find an entry, in strict order of trust:
+ *   1. **The recorded id** (mig 236). Exact, and the only path for anything paid from 2026-08-15.
+ *   2. **A match** on ledger + description + amount + type, for rows paid before that migration,
+ *      where nothing recorded the id. Trustworthy for that set alone: there was no Edit feature
+ *      before now, so a historic expense still carries the description its entry was written with.
+ *
+ * ⚠ AN AMBIGUOUS MATCH IS A REFUSAL, NOT A GUESS. Two identical paid expenses produce two identical
+ * entries, and voiding "one of them" would be arbitrary — the team's books would still be wrong by
+ * the same amount, just somewhere else. Throws, so the caller can tell the coach what to do rather
+ * than silently corrupting a ledger. Same for zero matches, which mean the entry has already been
+ * voided or was never posted — in which case there is nothing to give back and deleting is safe, so
+ * that case returns quietly instead.
+ */
+/**
+ * Find the posted ledger entry for one leg of a record paid BEFORE mig 236 recorded the link.
+ *
+ * Matches on the fields the entry was written from. Returns null when nothing matches — already
+ * void, or never posted — and THROWS when more than one matches, because picking arbitrarily
+ * between two identical entries leaves the books wrong by the same amount somewhere else.
+ */
+async function matchLegacyLedgerEntry(
+  leg: ExpenseLedgerLeg,
+  ledgerId: string,
+): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('accounting_entries')
+    .select('id')
+    .eq('ledger_id', ledgerId)
+    .eq('entry_type', 'expense')
+    .eq('description', leg.entryDescription)
+    .eq('amount', leg.amount)
+    .neq('status', 'void');
+  if (error) throw error;
+  const hits = data ?? [];
+  if (hits.length > 1) {
+    throw new Error(
+      `This ${leg.half === 'expense' ? 'expense' : `payable's ${leg.half}`} was paid before we started `
+      + 'recording which ledger entry it created, and more than one entry matches it exactly. '
+      + 'Void the right one in the club ledger first, then delete this.',
+    );
+  }
+  return hits.length === 1 ? (hits[0].id as string) : null;
+}
+
+/**
+ * Claim the ledger links for a pre-mig-236 record BEFORE anything makes them unfindable.
+ *
+ * ⚠ THIS CLOSES A HOLE MIGRATION 236 ITSELF PREDICTED AND DID NOT HANDLE. Its own comment says the
+ * description-matching fallback is trustworthy "for exactly this set and no other… there was no Edit
+ * feature before now, so a historic expense's description is guaranteed to be the one its ledger
+ * entry was written with. The moment Edit ships, that guarantee dies for anything edited afterwards."
+ * Edit shipped in the same change. So: rename a pre-236 paid expense, then delete it, and the match
+ * finds nothing, the delete treats that as "already void", the row goes — and a posted entry is left
+ * in the club's ledger with nothing left to explain it. The coach is told money came back that did
+ * not. Caught by the concurrency lens, 2026-08-15.
+ *
+ * Adopting the link at the moment of the rename fixes it permanently and for free: the record stops
+ * depending on its description the first time someone changes it. Records nobody edits keep working
+ * through the fallback exactly as before.
+ *
+ * Throws on an ambiguous match — the caller must refuse the rename rather than let the link go.
+ * Returns the fields to merge into the update, or {} when there is nothing to adopt.
+ */
+export async function adoptLedgerLinksForExpense(
+  expense: RepTeamExpense,
+  team: { id: string; orgId: string; name: string },
+): Promise<Partial<Pick<RepTeamExpense, 'accountingEntryId' | 'depositEntryId' | 'balanceEntryId'>>> {
+  const unlinked = paidLedgerLegs(expense).filter(l => !l.entryId);
+  if (unlinked.length === 0) return {};
+
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const adopted: Record<string, string> = {};
+  for (const leg of unlinked) {
+    const entryId = await matchLegacyLedgerEntry(leg, ledger.id);
+    if (!entryId) continue; // nothing posted to lose track of
+    if (leg.half === 'expense') adopted.accountingEntryId = entryId;
+    if (leg.half === 'deposit') adopted.depositEntryId = entryId;
+    if (leg.half === 'balance') adopted.balanceEntryId = entryId;
+  }
+  return adopted;
+}
+
+async function reverseLedgerEntriesForExpense(
+  expense: RepTeamExpense,
+  team: { id: string; orgId: string; name: string },
+): Promise<{ reversed: number; total: number }> {
+  const legs = paidLedgerLegs(expense);
+  if (legs.length === 0) return { reversed: 0, total: 0 };
+
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  let reversed = 0;
+  let total = 0;
+
+  for (const leg of legs) {
+    const entryId = leg.entryId ?? await matchLegacyLedgerEntry(leg, ledger.id);
+    if (!entryId) continue; // already void, or never posted — nothing to give back
+
+    await voidEntry(entryId, ledger.id);
+    reversed += 1;
+    total = Math.round((total + leg.amount) * 100) / 100;
+  }
+
+  return { reversed, total };
+}
+
+/**
+ * Delete an expense or payable, giving back any money it had posted.
+ *
+ * Order matters: the ledger is reversed FIRST. If that throws — an ambiguous historic match — the
+ * expense row survives and the coach still has something to act on. Deleting first and failing to
+ * reverse would leave a posted entry with no record explaining it, which is the strictly worse
+ * half to get wrong.
+ *
+ * ⚠ A REIMBURSEMENT CREDIT GOES WITH IT. An out-of-pocket expense carries a credit owed to that
+ * family, and the database removes it by cascade when this row goes. That is correct — the debt
+ * existed only because the expense did — but it means deleting one of these silently changes what
+ * a family owes, so the caller MUST have said so before confirming.
+ */
+export async function deleteRepTeamExpense(
+  expense: RepTeamExpense,
+  team: { id: string; orgId: string; name: string },
+): Promise<{ reversedAmount: number }> {
+  const { total } = await reverseLedgerEntriesForExpense(expense, team);
+  const { error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .delete()
+    .eq('id', expense.id);
+  if (error) throw error;
+  return { reversedAmount: total };
 }
 
 // ── Org Payees ────────────────────────────────────────────────────────────────
@@ -9608,6 +9865,55 @@ function mapOrgPayee(r: any): OrgPayee {
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
   };
+}
+
+/**
+ * Payment methods already used on the given teams' expenses and payables, with how often.
+ *
+ * ⚠ THERE IS NO PAYMENT-METHOD TABLE, and deliberately so (owner review 2026-08-15, Q5). The list a
+ * coach picks from is DERIVED from what has actually been recorded, so using a method is the only
+ * way to "save" one — no library to curate, no migration, and no second place for the same fact to
+ * drift out of step with the records themselves. The seeded common methods are merged on top by
+ * `mergePaymentMethods` in lib/payment-methods.ts; this function knows only about usage.
+ *
+ * ⚠ SCOPED TO NAMED TEAMS, NOT TO THE WHOLE ORG — the caller passes the teams the coach is actually
+ * assigned to. An earlier draft took only `orgId`, on the reasoning that a club wants one shared
+ * vocabulary. That reasoning was right but the mechanism was wrong: `payment_method` is FREE TEXT
+ * up to 100 characters, so an org-wide read hands a coach on one team the exact strings coaches on
+ * every other team typed — cheque numbers, account references, whatever someone put there. Caught
+ * by the security lens, 2026-08-15. Cross-team sharing in this product is opt-in and sanitised (see
+ * the Club Shared Book); a suggestions dropdown had quietly become neither.
+ *
+ * The shared vocabulary comes from the SEED LIST instead, which is the part that was actually doing
+ * that job: every club starts from the same canonical spellings, and each coach's own history
+ * personalises on top. Nothing of value was lost by narrowing this.
+ *
+ * ⚠ The 2000-row ceiling is a cost guard, not a correctness one: it caps how much a very large club
+ * reads to populate one dropdown. It biases toward whatever Postgres returns first, which is fine
+ * for suggestions but would NOT be fine if this ever backed a report.
+ */
+export async function listPaymentMethodUsage(
+  orgId: string,
+  teamIds: string[],
+): Promise<{ name: string; count: number }[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .select('payment_method')
+    .eq('org_id', orgId)
+    .in('team_id', teamIds)
+    .not('payment_method', 'is', null)
+    .limit(2000);
+  if (error) throw error;
+
+  // Exact-string counts. Case-folding is the caller's business.
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as { payment_method: string | null }[]) {
+    const name = row.payment_method?.trim();
+    if (!name) continue;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(([name, count]) => ({ name, count }));
 }
 
 export async function searchOrgPayees(orgId: string, q: string, teamId?: string | null): Promise<OrgPayee[]> {
@@ -10090,6 +10396,22 @@ export async function setCreditApplicationMode(
   const { error } = await supabaseAdmin
     .from('rep_program_years')
     .update({ credit_application: mode })
+    .eq('id', programYearId);
+  if (error) throw error;
+}
+
+/**
+ * The team's standard share a player keeps of what they raise or bring in (mig 237).
+ *
+ * ⚠ FORWARD-LOOKING ONLY. This value seeds the new-fundraiser and new-sponsor forms and reaches
+ * nothing that already exists — every logged entry snapshots the rate it was logged at, which is
+ * what stops a settings change from silently revaluing a credit already sitting on a family's
+ * bill. There is deliberately no backfill here and there must never be one.
+ */
+export async function setDefaultPlayerCreditPercent(programYearId: string, percent: number): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ default_player_credit_percent: percent })
     .eq('id', programYearId);
   if (error) throw error;
 }

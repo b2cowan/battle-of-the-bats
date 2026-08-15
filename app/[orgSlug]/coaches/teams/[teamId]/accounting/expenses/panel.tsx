@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
+import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
@@ -18,6 +19,8 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import RowEditButton from '@/components/coaches/RowEditButton';
+import { ledgerReversalPreview, lockedFields } from '@/lib/expense-ledger';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -33,6 +36,43 @@ import { useMoneyRevision } from '@/lib/coach-money-refresh';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Expense or payable? — the comparison that sits under BOTH empty states (owner review
+ * 2026-08-15, Q7).
+ *
+ * The portal already explained this well in the help guide and in each empty state's own
+ * description, but a coach only ever meets those before they have any rows: the empty state
+ * disappears the moment the list fills, and the help is behind the "?" in the page header. So
+ * the explanation was present exactly when it wasn't needed.
+ *
+ * ⚠ EXAMPLES ARE THE POINT, not the definitions. "A commitment you've agreed to pay" is the
+ * wording that was already shipping and did not land; "a tournament entry due in March" is what
+ * a coach recognises. Keep both columns' examples concrete and keep them plural — one example
+ * reads as the only case that qualifies.
+ */
+function KindCompare() {
+  return (
+    <>
+      <div className={styles.moneyKindCompare}>
+        <div className={styles.moneyKindCard}>
+          <h4>Expense</h4>
+          <p>Money that has <strong>already left</strong> the team — you&apos;re recording what happened.</p>
+          <p className={styles.moneyKindEgs}>Pizza night · a diamond you rented last week · uniforms you bought</p>
+        </div>
+        <div className={styles.moneyKindCard}>
+          <h4>Payable</h4>
+          <p>Money you&apos;ve <strong>promised but not paid</strong> — you&apos;re scheduling what&apos;s coming.</p>
+          <p className={styles.moneyKindEgs}>A tournament entry due in March · a dome block · an umpire invoice</p>
+        </div>
+      </div>
+      <p className={styles.moneyKindTest}>
+        <strong>The quick test:</strong> if it has a due date, it&apos;s a payable. Payables appear on your
+        Payment schedule; expenses don&apos;t.
+      </p>
+    </>
+  );
 }
 
 function fmtDate(s: string | null) {
@@ -84,27 +124,63 @@ type ScheduleFilter = 'unpaid' | 'paid' | 'all';
  *  came from. Reuses `PayableItem` so the hub panel and this tab can't drift apart. */
 type ScheduleRow = PayableItem & { source: 'team' | 'org' };
 
-const BLANK_EXPENSE = {
+/**
+ * ONE form behind both kinds of record (owner review 2026-08-15, Q8).
+ *
+ * There used to be two blanks and two modals, opened from two lime buttons sitting side by side.
+ * That made the expense-or-payable decision irreversible at the moment it was least informed — a
+ * coach who picked wrong had to cancel, lose what they'd typed, and start again in the other form.
+ * With one shape, the type becomes a control INSIDE the form: flipping it keeps description,
+ * category and amount, which are the three fields both kinds share and the three most likely to
+ * already be filled in when the coach realises.
+ *
+ * ⚠ The payable-only fields stay in this object when the kind is 'expense'. They are simply not
+ * rendered and not sent — clearing them on every flip would delete a deposit schedule a coach had
+ * entered, purely because they glanced at the other tab.
+ */
+const BLANK_RECORD = {
   description: '',
   category: '',
   amount: '',
   notes: '',
   paymentMethod: '',
-  /** Out-of-pocket (owner Call 5, mig 234) — '' = the team paid, the usual case. */
+  /** Out-of-pocket (owner Call 5, mig 234) — '' = the team paid, the usual case. Expense-only. */
   paidByPlayerId: '',
-};
-
-const BLANK_PAYABLE = {
-  description: '',
-  category: '',
-  amount: '',
+  /** Payable-only, all four. */
   depositAmount: '',
   depositDueDate: '',
   balanceAmount: '',
   balanceDueDate: '',
-  notes: '',
-  paymentMethod: '',
 };
+
+type RecordKind = 'expense' | 'payable';
+
+/** The sub-tab a coach is standing on decides which kind the form opens as. */
+function kindForTab(tab: ExpenseTab): RecordKind {
+  return tab === 'expenses' ? 'expense' : 'payable';
+}
+
+/** Turn a saved record back into form strings, for Edit. */
+function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
+  const num = (v: number | null) => (v == null ? '' : String(v));
+  return {
+    description: e.description,
+    category: e.category ?? '',
+    amount: String(e.amount),
+    notes: e.notes ?? '',
+    paymentMethod: e.paymentMethod ?? '',
+    paidByPlayerId: e.paidByPlayerId ?? '',
+    depositAmount: num(e.depositAmount),
+    depositDueDate: e.depositDueDate ?? '',
+    balanceAmount: num(e.balanceAmount),
+    balanceDueDate: e.balanceDueDate ?? '',
+  };
+}
+
+/* Which figures on a saved record can no longer change comes from `lockedFields`
+   (lib/expense-ledger.ts) — the same function the API refuses with, so the lock a coach SEES and
+   the lock the server ENFORCES cannot drift. This panel reads it twice: to render the lock with
+   its reason, and to leave locked fields out of the save entirely. */
 
 export function ExpensesPayablesPanel({
   params: paramsPromise,
@@ -136,12 +212,15 @@ export function ExpensesPayablesPanel({
      list with every row expanded is the card list this replaced. */
   const [expandedPayable, setExpandedPayable] = useState<string | null>(null);
 
-  const [showAddExpense, setShowAddExpense] = useState(false);
-  const [showAddPayable, setShowAddPayable] = useState(false);
-  const [expenseForm, setExpenseForm] = useState(BLANK_EXPENSE);
-  const [payableForm, setPayableForm] = useState(BLANK_PAYABLE);
-  const [expensePayee, setExpensePayee] = useState<PayeeSelection | null>(null);
-  const [payablePayee, setPayablePayee] = useState<PayeeSelection | null>(null);
+  // One form, two kinds, two modes (add / edit) — see BLANK_RECORD.
+  const [formOpen, setFormOpen] = useState(false);
+  const [formKind, setFormKind] = useState<RecordKind>('expense');
+  /** The record being edited, or null when adding. Held whole so the locks can read its paid state. */
+  const [editing, setEditing] = useState<RepTeamExpense | null>(null);
+  const [form, setForm] = useState(BLANK_RECORD);
+  const [formPayee, setFormPayee] = useState<PayeeSelection | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [marking, setMarking] = useState<Record<string, boolean>>({});
@@ -150,25 +229,35 @@ export function ExpensesPayablesPanel({
   // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
   const [expenseTags, setExpenseTags] = useState<RepTeamTag[]>([]);
   const [tagsByExpenseId, setTagsByExpenseId] = useState<Record<string, string[]>>({});
-  const [expenseFormTags, setExpenseFormTags] = useState<string[]>([]);
+  const [formTags, setFormTags] = useState<string[]>([]);
   /** The roster, for the "Paid by" choice. Fetched once — the picker is the only reader, and an
    *  expense form on a team with no players simply offers nothing but "The team". */
   const [roster, setRoster] = useState<Pick<RepRosterPlayer, 'id' | 'playerFirstName' | 'playerLastName'>[]>([]);
-  const [payableFormTags, setPayableFormTags] = useState<string[]>([]);
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
-  // Drives the two "Add Payable" disclosures (Batch 2, P0 #8). Read on mount by the group, so a
-  // payable form pre-filled with a schedule or bookkeeping detail opens that group by itself.
-  const payableScheduleSet = Boolean(
-    payableForm.depositAmount || payableForm.depositDueDate || payableForm.balanceAmount || payableForm.balanceDueDate,
+  // Drives the form's two disclosures (Batch 2, P0 #8). Read on mount by each group, so a form
+  // pre-filled with a schedule or a bookkeeping detail — an EDIT, most often — opens it by itself
+  // rather than hiding what the coach came to change.
+  const scheduleSet = Boolean(
+    form.depositAmount || form.depositDueDate || form.balanceAmount || form.balanceDueDate,
   );
-  const payableDetailsSet = Boolean(
-    payableForm.paymentMethod || payableForm.notes || payablePayee || payableFormTags.length,
+  const detailsSet = Boolean(
+    form.paymentMethod || form.notes || formPayee || formTags.length,
   );
-  const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
-  const [editTagIds, setEditTagIds] = useState<string[]>([]);
-  const [savingTags, setSavingTags] = useState(false);
+  const locks = lockedFields(editing);
+  /* ⚠ THE SAVED RECORD WINS when there is one. The switch is hidden while editing, so `formKind`
+     could only ever go stale there — deriving from the record instead means the form cannot render
+     a payable's fields for an expense (or vice versa) because a state setter was forgotten. In add
+     mode `formKind` is the coach's actual choice and is authoritative. */
+  const isPayableForm = editing
+    ? editing.expenseType === 'tournament_payable'
+    : formKind === 'payable';
+  /* What the coach is told before confirming a delete. Reads the same function the server reverses
+     with (lib/expense-ledger.ts), so the sentence and the outcome cannot drift apart. */
+  const deletePreview = editing
+    ? ledgerReversalPreview(editing)
+    : { amount: 0, legs: 0, owesFamily: false };
 
   // Chunk H — the payment schedule: every money-OUT commitment in one list, by due date.
   // Player dues stay on the Dues page, where the reminders that chase them live.
@@ -182,24 +271,57 @@ export function ExpensesPayablesPanel({
   const [importMessage, setImportMessage] = useState('');
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
 
-  // Nav-hide + body-scroll-lock registration for the two Add modals (mobile sheet default).
-  useOverlayOpen(showAddExpense);
-  useOverlayOpen(showAddPayable);
+  // Nav-hide + body-scroll-lock registration for the record modal (mobile sheet default).
+  useOverlayOpen(formOpen);
 
-  // Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to
-  // bin it silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
-  const expenseDirty = touched(expenseForm, BLANK_EXPENSE) || !!expensePayee || expenseFormTags.length > 0;
-  const payableDirty = touched(payableForm, BLANK_PAYABLE) || !!payablePayee || payableFormTags.length > 0;
-  const closeAddExpense = useDiscardGuard({
-    dirty: expenseDirty,
-    close: () => setShowAddExpense(false),
-    noun: 'expense',
+  /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
+     silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
+
+     ⚠ WHEN EDITING, "dirty" IS MEASURED AGAINST THE SAVED RECORD, not against blank. Comparing an
+     edit form to BLANK_RECORD would call every edit dirty the instant it opened — including one the
+     coach opened to read and closed untouched — and the guard would cry wolf until it was ignored. */
+  const formBaseline = editing ? formFromExpense(editing) : BLANK_RECORD;
+  const baselineTags = editing ? (tagsByExpenseId[editing.id] ?? []) : [];
+  const formDirty = touched(form, formBaseline)
+    || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
+    || formTags.length !== baselineTags.length
+    || formTags.some(id => !baselineTags.includes(id));
+  const closeForm = useDiscardGuard({
+    dirty: formDirty,
+    close: () => { setFormOpen(false); resetForm(); },
+    noun: isPayableForm ? 'payable' : 'expense',
   });
-  const closeAddPayable = useDiscardGuard({
-    dirty: payableDirty,
-    close: () => setShowAddPayable(false),
-    noun: 'payable',
-  });
+
+  /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
+     the shape where a fifth form field gets added to two of them and quietly persists into the next
+     record opened at the third. */
+  function resetForm() {
+    setEditing(null);
+    setForm(BLANK_RECORD);
+    setFormTags([]);
+    setFormPayee(null);
+    setConfirmDelete(false);
+  }
+
+  /** Open the form to ADD, as whichever kind the current sub-tab is about (Q8). */
+  function openAdd(kind: RecordKind = kindForTab(tab)) {
+    resetForm();
+    setFormKind(kind);
+    setSaveError('');
+    setFormOpen(true);
+  }
+
+  /** Open the form to EDIT a saved record. Type is stated, never switchable (owner ruling) — which
+   *  is why `formKind` is not set here: `isPayableForm` derives it from the record itself. */
+  function openEdit(e: RepTeamExpense) {
+    resetForm();
+    setEditing(e);
+    setForm(formFromExpense(e));
+    setFormTags(tagsByExpenseId[e.id] ?? []);
+    setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
+    setSaveError('');
+    setFormOpen(true);
+  }
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
@@ -260,7 +382,7 @@ export function ExpensesPayablesPanel({
   // payee picker to its own search). Best-effort: a failure just means the picker offers only
   // "The team", never a broken form.
   useEffect(() => {
-    if (!showAddExpense || roster.length > 0) return;
+    if (!formOpen || formKind !== 'expense' || roster.length > 0) return;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -268,7 +390,7 @@ export function ExpensesPayablesPanel({
         setRoster(players.filter((p: { status?: string }) => !p.status || p.status === 'active'));
       })
       .catch(() => {});
-  }, [showAddExpense, roster.length, orgSlug, teamId]);
+  }, [formOpen, formKind, roster.length, orgSlug, teamId]);
 
   // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
   // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
@@ -327,35 +449,86 @@ export function ExpensesPayablesPanel({
     }
   }
 
-  async function addExpense() {
+  /**
+   * Save the form — a create or an update, both kinds, one path.
+   *
+   * ⚠ AN EDIT SENDS ONLY WHAT THE COACH COULD ACTUALLY CHANGE. A locked figure is left out of the
+   * request entirely rather than sent back unchanged: the server refuses any locked field it is
+   * given, so echoing the current amount on a paid record would turn "I renamed it" into a 409.
+   */
+  async function saveRecord() {
     setSaveError('');
     setSaving(true);
     try {
-      const amount = parseFloat(expenseForm.amount);
-      if (!expenseForm.description.trim()) throw new Error('Description is required');
-      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expenseType:   'expense',
-          description:   expenseForm.description.trim(),
-          category:      expenseForm.category.trim() || null,
-          amount,
-          notes:         expenseForm.notes.trim() || null,
-          paymentMethod: expenseForm.paymentMethod.trim() || null,
-          payeeId:       expensePayee?.payeeId ?? null,
-          payeePayer:    expensePayee?.displayName ?? null,
-          paidByPlayerId: expenseForm.paidByPlayerId || null,
-          tagIds:        expenseFormTags,
-        }),
-      });
+      /* ⚠ `isPayableForm`, NEVER `formKind`, AND THE DISTINCTION IS NOT COSMETIC. `formKind` is only
+         written when ADDING; an edit derives its kind from the record. Reading the raw state here
+         meant that opening the screen fresh and going straight to a pencil on a PAYABLE saved as
+         though it were an expense — the deposit and balance were silently dropped from the request,
+         the server saw no such fields, and the save returned 200 with the figures unchanged. The
+         form rendered correctly the whole time, because the JSX had always used the derived value.
+         Caught by the correctness lens, 2026-08-15; introduced by the cleanup pass that made
+         `isPayableForm` derived without following it here. */
+      const isPayable = isPayableForm;
+      const amount = parseFloat(form.amount);
+      if (!form.description.trim()) throw new Error('Description is required');
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error(isPayable ? 'Enter a valid total amount' : 'Enter a valid amount');
+      }
+
+      const common = {
+        description:   form.description.trim(),
+        category:      form.category.trim() || null,
+        notes:         form.notes.trim() || null,
+        paymentMethod: form.paymentMethod.trim() || null,
+        payeeId:       formPayee?.payeeId ?? null,
+        payeePayer:    formPayee?.displayName ?? null,
+        tagIds:        formTags,
+      };
+      const num = (v: string) => (v ? parseFloat(v) : null);
+
+      /* An edit sends only what the coach could actually change. A locked figure is OMITTED rather
+         than echoed back unchanged: the server refuses any locked field it is given, so resending
+         the current amount would turn "I fixed a typo in the description" into a rejection. */
+      const edits: Record<string, unknown> = { ...common };
+      if (!locks.amount) edits.amount = amount;
+      if (isPayable && !locks.deposit) {
+        edits.depositAmount = num(form.depositAmount);
+        edits.depositDueDate = form.depositDueDate || null;
+      }
+      if (isPayable && !locks.balance) {
+        edits.balanceAmount = num(form.balanceAmount);
+        edits.balanceDueDate = form.balanceDueDate || null;
+      }
+
+      const res = editing
+        ? await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${editing.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(edits),
+          })
+        : await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              expenseType: isPayable ? 'tournament_payable' : 'expense',
+              ...common,
+              amount,
+              ...(isPayable
+                ? {
+                    depositAmount:  num(form.depositAmount),
+                    depositDueDate: form.depositDueDate || null,
+                    balanceAmount:  num(form.balanceAmount),
+                    balanceDueDate: form.balanceDueDate || null,
+                  }
+                : { paidByPlayerId: form.paidByPlayerId || null }),
+            }),
+          });
+
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
-      setShowAddExpense(false);
-      setExpenseForm(BLANK_EXPENSE);
-      setExpenseFormTags([]);
-      setExpensePayee(null);
+      setFormOpen(false);
+      resetForm();
       await load();
+      if (tab === 'schedule') await loadSchedule();
     } catch (e: any) {
       setSaveError(e.message);
     } finally {
@@ -363,42 +536,31 @@ export function ExpensesPayablesPanel({
     }
   }
 
-  async function addPayable() {
+  /**
+   * Delete the record being edited, reversing whatever it posted.
+   *
+   * The consequence is stated in the confirmation before this runs — see `deletePreview`. A refusal
+   * (a pre-2026-08-15 payment whose ledger entry can't be identified uniquely) comes back as a
+   * sentence written for the coach, so it is shown as-is and the form stays open.
+   */
+  async function deleteRecord() {
+    if (!editing) return;
+    setDeleting(true);
     setSaveError('');
-    setSaving(true);
     try {
-      const amount = parseFloat(payableForm.amount);
-      if (!payableForm.description.trim()) throw new Error('Description is required');
-      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid total amount');
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expenseType:    'tournament_payable',
-          description:    payableForm.description.trim(),
-          category:       payableForm.category.trim() || null,
-          amount,
-          depositAmount:  payableForm.depositAmount ? parseFloat(payableForm.depositAmount) : null,
-          depositDueDate: payableForm.depositDueDate || null,
-          balanceAmount:  payableForm.balanceAmount ? parseFloat(payableForm.balanceAmount) : null,
-          balanceDueDate: payableForm.balanceDueDate || null,
-          notes:          payableForm.notes.trim() || null,
-          paymentMethod:  payableForm.paymentMethod.trim() || null,
-          payeeId:        payablePayee?.payeeId ?? null,
-          payeePayer:     payablePayee?.displayName ?? null,
-          tagIds:         payableFormTags,
-        }),
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${editing.id}`, {
+        method: 'DELETE',
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
-      setShowAddPayable(false);
-      setPayableForm(BLANK_PAYABLE);
-      setPayableFormTags([]);
-      setPayablePayee(null);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete');
+      setFormOpen(false);
+      resetForm();
       await load();
+      if (tab === 'schedule') await loadSchedule();
     } catch (e: any) {
       setSaveError(e.message);
+      setConfirmDelete(false);
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   }
 
@@ -422,29 +584,10 @@ export function ExpensesPayablesPanel({
     }
   }
 
-  function startEditTags(expenseId: string) {
-    setEditingTagsFor(expenseId);
-    setEditTagIds(tagsByExpenseId[expenseId] ?? []);
-  }
-
-  async function saveExpenseTags(expenseId: string) {
-    setSavingTags(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expenseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tagIds: editTagIds }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save tags');
-      setTagsByExpenseId(prev => ({ ...prev, [expenseId]: editTagIds }));
-      setEditingTagsFor(null);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSavingTags(false);
-    }
-  }
+  /* The per-row tag editor that used to live here is gone (owner review 2026-08-15). Tags are a
+     field on the record's own form now, so a row offers ONE door to a record rather than a general
+     one and a narrower one to the same thing. Tagging costs a click more than it did; that trade
+     was made deliberately, because tagging mostly happens at entry time in the Add form. */
 
   // Read-only chip row for an expense's tags (colour distinguishes org-shared from team-own).
   function tagChips(expenseId: string) {
@@ -461,6 +604,63 @@ export function ExpensesPayablesPanel({
             </span>
           );
         })}
+      </div>
+    );
+  }
+
+  /**
+   * "Paid by" — the out-of-pocket choice, which only an EXPENSE has and only at creation.
+   *
+   * ⚠ STAYS ABOVE THE DETAILS DISCLOSURE (Q1). It is the one field on this form that does not
+   * DESCRIBE the record but changes what it MEANS: naming a family turns the entry into money the
+   * team now owes them, saved as a credit against their dues. A consequence that size cannot be
+   * discovered behind an "(optional)" toggle.
+   *
+   * ⚠ CREATION ONLY. Changing it later would move a debt to a different household without touching
+   * the credit, so an edit shows it as a stated fact — and only when there is something to state.
+   * A team-paid expense says nothing, because "Paid by: the team" is the absence of news.
+   *
+   * Extracted from the JSX because as an inline expression it was three nested ternaries deep, which
+   * is the point at which a reader counts brackets instead of reading branches.
+   */
+  function renderPaidBy() {
+    if (isPayableForm) return null;
+
+    if (editing) {
+      if (!form.paidByPlayerId) return null;
+      return (
+        <div className={`${styles.field} ${styles.formGridFull}`}>
+          <label className={styles.label}>Paid by</label>
+          <div className={styles.lockedField}>
+            <span>A family, out of pocket</span>
+            <span className={styles.lockedTag}>Set at creation</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`${styles.field} ${styles.formGridFull}`}>
+        <label className={styles.label}>Paid by</label>
+        <select
+          className={styles.input}
+          value={form.paidByPlayerId}
+          onChange={e => setForm(f => ({ ...f, paidByPlayerId: e.target.value }))}
+        >
+          <option value="">The team</option>
+          {roster.map(p => (
+            <option key={p.id} value={p.id}>
+              A family, out of pocket — {[p.playerLastName, p.playerFirstName].filter(Boolean).join(', ')}
+            </option>
+          ))}
+        </select>
+        {form.paidByPlayerId && (
+          <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
+            Counts in the budget as usual. <strong>No cash leaves the team</strong> — instead the
+            team owes this family {form.amount ? fmt(Number(form.amount) || 0) : 'the amount'},
+            saved as a credit you can put against their dues or pay out any time.
+          </p>
+        )}
       </div>
     );
   }
@@ -539,11 +739,13 @@ export function ExpensesPayablesPanel({
   // otherwise open a sheet only the server would refuse.
   const expenseToolbarActions = canWriteMoney ? (
     <>
-      <button className={styles.btnPrimary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
-        <Plus size={14} aria-hidden /> Add Expense
-      </button>
-      <button className={styles.btnPrimary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
-        <Plus size={14} aria-hidden /> Add Payable
+      {/* ⚠ ONE ADD BUTTON (owner review 2026-08-15, Q8). Two lime buttons side by side forced the
+          expense-or-payable decision at the moment it was least informed, with no way back except
+          cancelling and retyping. The choice now lives at the top of the form, pre-selected from
+          the sub-tab, and flipping it keeps what has been entered. The button stays a plain "Add"
+          because it no longer names one outcome — the SAVE button names it instead. */}
+      <button className={styles.btnPrimary} onClick={() => openAdd()}>
+        <Plus size={14} aria-hidden /> Add
       </button>
       {ownMoneyTags.length > 0 && (
         <button className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
@@ -575,7 +777,7 @@ export function ExpensesPayablesPanel({
           ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
           door the server would refuse. "Tournament" stays retired from the title (D-H9). */}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={Receipt}
         title={<>Expenses &amp; Payables</>}
         season={page.season}
@@ -589,80 +791,85 @@ export function ExpensesPayablesPanel({
         <p className={styles.moneyTagSummary} role="status" style={{ marginBottom: '1rem' }}>{importMessage}</p>
       )}
 
-      {/* Tab toggle */}
-      <div className={styles.viewToggle} style={{ marginBottom: '1.5rem' }}>
-        <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('expenses')}>
-          Expenses ({allIndependent.length})
-        </button>
-        <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
-          Payables ({allPayables.length})
-        </button>
-        <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('schedule')}>
-          Payment schedule
-        </button>
-      </div>
+      {/* ⚠ SUB-TABS AND ACTIONS SHARE ONE ROW (owner review 2026-08-15, Q2). They used to be two
+          stacked bands, so a coach crossed THREE strips of chrome — hub tabs, sub-tabs, then a
+          full-width toolbar — before the first row of money. That third strip carried nothing on
+          its left whenever the team had no money tags, spending a whole band on three right-aligned
+          buttons. Merging them is the whole fix: `.panelToolbarActions` already pins itself right
+          with `margin-left: auto`, so the sub-tabs simply become the row's left-hand content.
 
-      {/* The tab's own toolbar (ruling 2026-08-13, decision 2): the money-tag filter it already
-          had on the left, its actions pinned right. The filter self-hides when the current tab
-          has no tagged expenses — and the row still renders, because the ACTIONS are what must
-          survive every empty state (rule 7), not the filter. The schedule tab is a due-date
-          list across two sources, so a tag filter has nothing to narrow there. */}
-      {/* Always rendered now: Export lives here on every sub-tab, so the row can no longer
-          disappear with the filter or the write gate. */}
-      {(
-        <div className={styles.panelToolbar}>
-          {showTagFilter && (
-            <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
-              <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-              {usedTagIds.map(t => {
-                const isOrg = t.teamId === null;
-                const active = filterTagId === t.id;
-                const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
-                return (
-                  <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
-                    {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <div className={styles.panelToolbarActions}>
-            {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
-                the whole argument for Export living down here. A hub-wide menu could only ever
-                have offered "expenses and payables" as one undifferentiated lump. */}
-            <MoneyExportButton
-              label={tab === 'schedule' ? 'Payment schedule' : tab === 'payables' ? 'Payables' : 'Expenses'}
-              formats={['xlsx', 'csv']}
-              build={() => (tab === 'schedule'
-                ? {
-                    dataset: 'payment-schedule',
-                    title: 'Payment Schedule',
-                    columns: SCHEDULE_COLUMNS,
-                    rows: scheduleExportRows(scheduleRows),
-                    scopeLabel: assignment?.programYearName ?? '',
-                    teamName: assignment?.teamName ?? '',
-                    emptyMessage: 'There is nothing on the payment schedule yet.',
-                  }
-                : {
-                    dataset: tab === 'payables' ? 'payables' : 'expenses',
-                    title: tab === 'payables' ? 'Payables' : 'Expenses',
-                    columns: EXPENSE_COLUMNS,
-                    rows: expenseRows(filteredActive),
-                    scopeLabel: assignment?.programYearName ?? '',
-                    teamName: assignment?.teamName ?? '',
-                    emptyMessage: tab === 'payables'
-                      ? 'No payables have been logged yet.'
-                      : 'No expenses have been logged yet.',
-                  })}
-              // Matches every sibling tab. Without it, an Export with nothing behind it reads as
-              // available right up until you press it — the dialog would still explain itself,
-              // but the button should not have invited the click.
-              disabled={tab === 'schedule' ? scheduleRows.length === 0 : filteredActive.length === 0}
-            />
-            {expenseToolbarActions}
-          </div>
+          The tag filter joins the SAME row rather than reclaiming its own — `.panelToolbar` wraps,
+          so it shares the line when it fits and drops below when it doesn't. It self-hides when the
+          current tab has no tagged rows; the row itself always renders, because the ACTIONS are
+          what must survive every empty state (rule 7), not the filter. The schedule tab is a
+          due-date list across two sources, so a tag filter has nothing to narrow there. */}
+      {/* Export lives here on every sub-tab, so the row can no longer disappear with the filter
+          or the write gate. */}
+      <div className={styles.panelToolbar}>
+        {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
+            content — see the note on that class. */}
+        <div className={`${styles.viewToggle} ${styles.panelToolbarTabs}`}>
+          <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('expenses')}>
+            Expenses ({allIndependent.length})
+          </button>
+          <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
+            Payables ({allPayables.length})
+          </button>
+          <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('schedule')}>
+            Payment schedule
+          </button>
         </div>
-      )}
+        {showTagFilter && (
+          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
+            <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+            {usedTagIds.map(t => {
+              const isOrg = t.teamId === null;
+              const active = filterTagId === t.id;
+              const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
+              return (
+                <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
+                  {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div className={styles.panelToolbarActions}>
+          {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
+              the whole argument for Export living down here. A hub-wide menu could only ever
+              have offered "expenses and payables" as one undifferentiated lump. */}
+          <MoneyExportButton
+            label={tab === 'schedule' ? 'Payment schedule' : tab === 'payables' ? 'Payables' : 'Expenses'}
+            formats={['xlsx', 'csv']}
+            build={() => (tab === 'schedule'
+              ? {
+                  dataset: 'payment-schedule',
+                  title: 'Payment Schedule',
+                  columns: SCHEDULE_COLUMNS,
+                  rows: scheduleExportRows(scheduleRows),
+                  scopeLabel: assignment?.programYearName ?? '',
+                  teamName: assignment?.teamName ?? '',
+                  emptyMessage: 'There is nothing on the payment schedule yet.',
+                }
+              : {
+                  dataset: tab === 'payables' ? 'payables' : 'expenses',
+                  title: tab === 'payables' ? 'Payables' : 'Expenses',
+                  columns: EXPENSE_COLUMNS,
+                  rows: expenseRows(filteredActive, tagsByExpenseId, tagById),
+                  scopeLabel: assignment?.programYearName ?? '',
+                  teamName: assignment?.teamName ?? '',
+                  emptyMessage: tab === 'payables'
+                    ? 'No payables have been logged yet.'
+                    : 'No expenses have been logged yet.',
+                })}
+            // Matches every sibling tab. Without it, an Export with nothing behind it reads as
+            // available right up until you press it — the dialog would still explain itself,
+            // but the button should not have invited the click.
+            disabled={tab === 'schedule' ? scheduleRows.length === 0 : filteredActive.length === 0}
+          />
+          {expenseToolbarActions}
+        </div>
+      </div>
       {showTagFilter && (
         <div className={styles.tagComboLegend} style={{ margin: '-0.5rem 0 0.7rem' }}>
           <span className={styles.tagComboLegendItem}>
@@ -685,16 +892,21 @@ export function ExpensesPayablesPanel({
         <p className={styles.errorText}>{error}</p>
       ) : tab === 'expenses' ? (
         independentExpenses.length === 0 ? (
-          <CoachEmptyState
-            icon={<Receipt size={22} aria-hidden />}
-            headline="No expenses yet"
-            description="Log what the team has actually spent, one at a time."
-            primaryAction={canWriteMoney ? {
-              label: 'Add Expense',
-              icon: <Plus size={15} aria-hidden />,
-              onClick: () => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); },
-            } : undefined}
-          />
+          <>
+            <CoachEmptyState
+              icon={<Receipt size={22} aria-hidden />}
+              headline="No expenses yet"
+              description="Log what the team has actually spent, one at a time."
+              primaryAction={canWriteMoney ? {
+                label: 'Add Expense',
+                icon: <Plus size={15} aria-hidden />,
+                // Names the outcome even though the toolbar button doesn't: an empty state is
+                // teaching, and "Add" alone would answer none of the question it just posed.
+                onClick: () => openAdd('expense'),
+              } : undefined}
+            />
+            <KindCompare />
+          </>
         ) : (
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
@@ -709,30 +921,23 @@ export function ExpensesPayablesPanel({
               </thead>
               <tbody>
                 {independentExpenses.map(e => (
-                  <tr key={e.id} className={styles.tr}>
+                  /* The whole row opens the editor for a write coach — the portal's row-edit
+                     convention (owner ruling 2026-08-15): the pencil is the SEMANTIC control, the
+                     row is the pointer/touch shortcut, and once this stacks into cards the row is
+                     the only visible door. A click that ends a text selection is someone copying
+                     an amount, not tapping a row, so it is ignored. */
+                  <tr
+                    key={e.id}
+                    className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
+                    onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEdit(e); } : undefined}
+                  >
                     <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">
                       {e.description}
-                      {editingTagsFor === e.id ? (
-                        <div style={{ marginTop: '0.45rem', maxWidth: 340 }}>
-                          <TagSearchCombobox library={expenseTags} selectedIds={editTagIds} onChange={setEditTagIds} onCreate={createMoneyTag} showLegend={false} placeholder="Add money tags…" />
-                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                            <button className={styles.btnSecondary} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
-                            <button className={styles.btnGhost} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          {tagChips(e.id)}
-                          {canWriteMoney && (
-                            <button
-                              onClick={() => startEditTags(e.id)}
-                              style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
-                            >
-                              <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
-                            </button>
-                          )}
-                        </>
-                      )}
+                      {/* ⚠ THE PER-ROW TAG EDITOR IS GONE (owner review 2026-08-15). Tags are edited
+                          in the record's own form now, so a row no longer offers a second, narrower
+                          door to the same record. The chips stay, read-only — they cost nothing on
+                          rows without them, which is also why Tags never became a column. */}
+                      {tagChips(e.id)}
                     </td>
                     <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
                     <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
@@ -746,18 +951,19 @@ export function ExpensesPayablesPanel({
                       )}
                     </td>
                     {/* Trailing action cell. Left unlabelled and always present so the table
-                        keeps square rows; card mode drops it when it renders nothing (a paid
-                        expense, or a read-only money coach) rather than drawing a blank line. */}
+                        keeps square rows; card mode drops it when it renders nothing (a
+                        read-only money coach) rather than drawing a blank line. */}
                     <td className={`${styles.td} ${styles.cardActionCell}`}>
                       {!e.expensePaidAt && canWriteMoney && (
                         <button
                           className={`${styles.btnSecondary} ${styles.compactAction}`}
                           disabled={!!marking[e.id + 'markExpensePaid']}
-                          onClick={() => doAction(e.id, 'markExpensePaid')}
+                          onClick={ev => { ev.stopPropagation(); doAction(e.id, 'markExpensePaid'); }}
                         >
                           {marking[e.id + 'markExpensePaid'] ? '…' : 'Mark Paid'}
                         </button>
                       )}
+                      {canWriteMoney && <RowEditButton label={`Edit ${e.description}`} onClick={() => openEdit(e)} />}
                     </td>
                   </tr>
                 ))}
@@ -773,21 +979,24 @@ export function ExpensesPayablesPanel({
              accept an import must keep offering one AT EVERY WIDTH. This door had no equivalent
              before this pass; without it, hiding the header menu would make a shipped feature
              unreachable at 390px. Do not remove it without reopening the rule. */
-          <CoachEmptyState
-            icon={<Receipt size={22} aria-hidden />}
-            headline="No payables yet"
-            description="Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."
-            primaryAction={canWriteMoney ? {
-              label: 'Add Payable',
-              icon: <Plus size={15} aria-hidden />,
-              onClick: () => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); },
-            } : undefined}
-            secondaryAction={canWriteMoney ? {
-              label: 'Import a schedule',
-              icon: <Upload size={15} aria-hidden />,
-              onClick: () => setImportOpen(true),
-            } : undefined}
-          />
+          <>
+            <CoachEmptyState
+              icon={<Receipt size={22} aria-hidden />}
+              headline="No payables yet"
+              description="Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."
+              primaryAction={canWriteMoney ? {
+                label: 'Add Payable',
+                icon: <Plus size={15} aria-hidden />,
+                onClick: () => openAdd('payable'),
+              } : undefined}
+              secondaryAction={canWriteMoney ? {
+                label: 'Import a schedule',
+                icon: <Upload size={15} aria-hidden />,
+                onClick: () => setImportOpen(true),
+              } : undefined}
+            />
+            <KindCompare />
+          </>
         ) : (
           /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency). It
              carried no shared class at all — every border, size and colour was written at this
@@ -820,8 +1029,20 @@ export function ExpensesPayablesPanel({
               const status = payableStatus(e, { deposit: depositOverdue, balance: balanceOverdue });
               return (
                 <Fragment key={e.id}>
-                <tr className={styles.tr}>
-                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">{e.description}</td>
+                {/* Same row-edit convention as the Expenses tab beside it: row opens the editor,
+                    pencil is the semantic control. The chevron keeps its own job — it EXPANDS the
+                    deposit/balance pair in place, which is a different intent from editing, and
+                    stops propagation so opening the pair never also opens the form. */}
+                <tr
+                  className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
+                  onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEdit(e); } : undefined}
+                >
+                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">
+                    {e.description}
+                    {/* Chips on the ROW now, not only inside the drawer — a payable's tags used to
+                        be invisible until you expanded it, while an expense showed its own. */}
+                    {tagChips(e.id)}
+                  </td>
                   <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
                   <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
                   <td className={styles.td} data-label="Status">
@@ -838,15 +1059,19 @@ export function ExpensesPayablesPanel({
                          would announce with NO NAME AT ALL. Caught in review 2026-08-13; the
                          identical control on Payment requests had it and this one did not. */
                       aria-label={open ? `Hide ${e.description}'s payment details` : `Show ${e.description}'s payment details`}
-                      onClick={() => setExpandedPayable(open ? null : e.id)}
+                      onClick={ev => { ev.stopPropagation(); setExpandedPayable(open ? null : e.id); }}
                     >
                       {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
                       <span className={styles.cardActionLabel}>{open ? 'Hide details' : 'Payment details'}</span>
                     </button>
+                    {canWriteMoney && <RowEditButton label={`Edit ${e.description}`} onClick={() => openEdit(e)} />}
                   </td>
                 </tr>
                 {open && (
-                <tr className={styles.tr}>
+                /* The detail row is NOT tappable-to-edit — it holds its own buttons, and a stray
+                   tap between them opening a form would be the accidental-edit complaint the row
+                   convention is otherwise careful to avoid. */
+                <tr className={styles.tr} onClick={ev => ev.stopPropagation()}>
                   <td className={`${styles.td} ${styles.cardStackCell}`} colSpan={5}>
 
                   {/* Deposit + balance share a row on a desktop and stack on a phone. Two
@@ -878,7 +1103,7 @@ export function ExpensesPayablesPanel({
                             </button>
                           )}
                         </>
-                      ) : <p className={styles.muted} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
+                      ) : <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
                     </div>
 
                     {/* Balance */}
@@ -906,33 +1131,13 @@ export function ExpensesPayablesPanel({
                             </button>
                           )}
                         </>
-                      ) : <p className={styles.muted} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
+                      ) : <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
                     </div>
                   </div>
 
-                  {e.notes && <p className={styles.muted} style={{ margin: '0.75rem 0 0', fontSize: '0.78rem' }}>{e.notes}</p>}
-
-                  {editingTagsFor === e.id ? (
-                    <div style={{ marginTop: '0.6rem', maxWidth: 360 }}>
-                      <TagSearchCombobox library={expenseTags} selectedIds={editTagIds} onChange={setEditTagIds} onCreate={createMoneyTag} showLegend={false} placeholder="Add money tags…" />
-                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                        <button className={`${styles.btnSecondary} ${styles.compactAction}`} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
-                        <button className={`${styles.btnGhost} ${styles.compactAction}`} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: '0.6rem' }}>
-                      {tagChips(e.id)}
-                      {canWriteMoney && (
-                        <button
-                          onClick={() => startEditTags(e.id)}
-                          style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
-                        >
-                          <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  {/* Notes and tags are shown here but no longer EDITED here — both live in the
+                      record's form, reached by the pencil or the row. */}
+                  {e.notes && <p className={styles.mutedInline} style={{ margin: '0.75rem 0 0', fontSize: '0.78rem' }}>{e.notes}</p>}
                   </td>
                 </tr>
                 )}
@@ -993,7 +1198,7 @@ export function ExpensesPayablesPanel({
                         <td className={styles.td} data-label="Due">{fmtDate(row.dueDate)}</td>
                         <td className={styles.td} data-label="What">
                           {row.description}
-                          {row.label && <span className={styles.muted} style={{ display: 'block', fontSize: '0.75rem' }}>{row.label}</span>}
+                          {row.label && <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>{row.label}</span>}
                         </td>
                         <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                           {row.source === 'org' ? 'Org allocation' : (row.category ?? '—')}
@@ -1009,7 +1214,7 @@ export function ExpensesPayablesPanel({
                               <AlertTriangle size={12} /> {Math.abs(row.daysUntilDue ?? 0)} days overdue
                             </span>
                           ) : (
-                            <span className={styles.muted} style={{ fontSize: '0.8rem' }}>
+                            <span className={styles.mutedInline} style={{ fontSize: '0.8rem' }}>
                               {row.daysUntilDue === 0 ? 'Due today' : `In ${row.daysUntilDue} days`}
                             </span>
                           )}
@@ -1036,7 +1241,7 @@ export function ExpensesPayablesPanel({
                 </table>
               </div>
             )}
-            <p className={styles.muted} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
+            <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
               Money going out only — payable deposits and balances{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
               <Link href={moneySectionHref(base, 'dues', undefined, seasonQuery)} className={styles.linkBtn}>Player Dues</Link>.
@@ -1045,162 +1250,278 @@ export function ExpensesPayablesPanel({
         )
       )}
 
-      {/* Add Expense modal */}
-      {showAddExpense && (
-        <div className={styles.modalOverlay} onClick={closeAddExpense}>
+      {/* ── The record form — one modal for both kinds, add and edit (Q4 + Q8) ─────────────────
+          Replaces the two "Add Expense" / "Add Payable" modals that used to sit here. The type is
+          a control at the top when ADDING, and a stated fact when EDITING (owner ruling: type is
+          set at creation — see the note beside the switch). */}
+      {formOpen && (
+        <div className={styles.modalOverlay} onClick={closeForm}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Expense" onClose={closeAddExpense} />
+            <CoachModalHeader
+              title={editing
+                ? (isPayableForm ? 'Edit payable' : 'Edit expense')
+                : 'Add'}
+              subtitle={editing ? undefined : 'Record something the team spent, or something it owes.'}
+              onClose={closeForm}
+            />
             <div className={styles.formGrid}>
+              {/* ── What kind of record is this? ──────────────────────────────────────────────
+                  ⚠ ONLY WHEN ADDING. A saved record never switches type: converting would mean
+                  due-date and deposit fields materialising on an existing row, and a payable
+                  converting the other way silently dropping a schedule it may already appear on
+                  in the Payment schedule. With Delete available, the wrong type is cheap to fix
+                  by deleting and re-adding, which is the honest correction rather than a
+                  half-migration. */}
+              {!editing ? (
+                <div className={styles.formGridFull}>
+                  <div className={styles.kindSwitch} role="radiogroup" aria-label="What kind of record is this?">
+                    {(['expense', 'payable'] as const).map(k => (
+                      <button
+                        key={k}
+                        type="button"
+                        role="radio"
+                        aria-checked={formKind === k}
+                        className={`${styles.kindSwitchOption} ${formKind === k ? styles.kindSwitchOptionOn : ''}`}
+                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Description, category and amount
+                           are common to both kinds and are exactly the fields already filled in
+                           when a coach realises they picked wrong — clearing them would make the
+                           switch as expensive as cancelling, which is what it exists to replace. */
+                        onClick={() => setFormKind(k)}
+                      >
+                        <span className={styles.kindName}>{k === 'expense' ? 'Expense' : 'Payable'}</span>
+                        <span className={styles.kindSub}>
+                          {k === 'expense'
+                            ? 'Already paid — recording what happened'
+                            : 'Promised but not paid — scheduling what’s coming'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className={styles.kindEgs}>
+                    {isPayableForm
+                      ? 'A tournament entry due in March · a dome block · an umpire invoice'
+                      : 'Pizza night · a diamond you rented last week · uniforms you bought'}
+                  </p>
+                </div>
+              ) : (
+                <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
+                  {isPayableForm
+                    ? 'A payable — money committed but not yet paid.'
+                    : 'An expense — money the team has already spent.'}
+                  {' '}Wrong kind? Delete this and add it again.
+                </p>
+              )}
+
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
-                <input className={styles.input} value={expenseForm.description} onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Diamond rental" />
-              </div>
-              {categoryField(expenseForm.category, v => setExpenseForm(f => ({ ...f, category: v })))}
-              <div className={styles.field}>
-                <label className={styles.label}>Amount *</label>
-                <input className={styles.input} type="number" min={0} step="0.01" value={expenseForm.amount} onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Payment Method</label>
-                <input className={styles.input} value={expenseForm.paymentMethod} onChange={e => setExpenseForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Payee</label>
-                <PayeeCombobox
-                  payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
-                  value={expensePayee}
-                  onChange={setExpensePayee}
-                  saveScope="team"
+                <input
+                  className={styles.input}
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder={isPayableForm ? 'e.g. Spring tournament entry, summer dome block' : 'e.g. Diamond rental'}
                 />
               </div>
-              {/* Paid by (owner Call 5, mig 234). Team is the default and the usual case; the
-                  other answer is a parent who bought the pizza. The consequence is stated below
-                  rather than discovered on the books afterwards. */}
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Paid by</label>
-                <select
-                  className={styles.input}
-                  value={expenseForm.paidByPlayerId}
-                  onChange={e => setExpenseForm(f => ({ ...f, paidByPlayerId: e.target.value }))}
-                >
-                  <option value="">The team</option>
-                  {roster.map(p => (
-                    <option key={p.id} value={p.id}>
-                      A family, out of pocket — {[p.playerLastName, p.playerFirstName].filter(Boolean).join(', ')}
-                    </option>
-                  ))}
-                </select>
-                {expenseForm.paidByPlayerId && (
-                  <p className={styles.muted} style={{ margin: '0.35rem 0 0', fontSize: '0.78rem' }}>
-                    Counts in the budget as usual. <strong>No cash leaves the team</strong> — instead the
-                    team owes this family {expenseForm.amount ? fmt(Number(expenseForm.amount) || 0) : 'the amount'},
-                    saved as a credit you can put against their dues or pay out any time.
-                  </p>
-                )}
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Notes</label>
-                <textarea className={styles.textarea} rows={2} value={expenseForm.notes} onChange={e => setExpenseForm(f => ({ ...f, notes: e.target.value }))} />
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Tags</label>
-                <TagSearchCombobox library={expenseTags} selectedIds={expenseFormTags} onChange={setExpenseFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
-              </div>
-            </div>
-            {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
-            <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={closeAddExpense}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={saving} onClick={addExpense}>{saving ? 'Saving…' : 'Add Expense'}</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Add Payable modal */}
-      {showAddPayable && (
-        <div className={styles.modalOverlay} onClick={closeAddPayable}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Payable" onClose={closeAddPayable} />
-            <div className={styles.formGrid}>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Description *</label>
-                <input className={styles.input} value={payableForm.description} onChange={e => setPayableForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Spring tournament entry, summer dome block" />
-              </div>
-              {categoryField(payableForm.category, v => setPayableForm(f => ({ ...f, category: v })))}
-              <div className={styles.field}>
-                <label className={styles.label}>Total Amount *</label>
-                <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.amount} onChange={e => setPayableForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
-              </div>
+              {categoryField(form.category, v => setForm(f => ({ ...f, category: v })))}
 
-              {/* The eleven-field payable (readiness review #8) opens as three: what it's for,
-                  what kind, and how much. The deposit/balance split and the bookkeeping fields
-                  open on demand; both groups open by themselves when they already hold a value. */}
-              <div className={styles.formGridFull}>
-                <CoachFormDisclosure
-                  label="Split into a deposit and a balance"
-                  title="Payment schedule"
-                  note="Big-ticket costs are often billed as a deposit now and a balance later — tournament entries, dome blocks, uniform orders. Leave this closed to record one amount due on one date."
-                  meta={payableScheduleSet ? 'Set' : undefined}
-                  defaultOpen={payableScheduleSet}
-                >
-                  <div className={styles.formSectionGrid}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Deposit Amount</label>
-                      <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.depositAmount} onChange={e => setPayableForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Deposit Due Date</label>
-                      <input className={styles.input} type="date" value={payableForm.depositDueDate} onChange={e => setPayableForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Balance Amount</label>
-                      <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.balanceAmount} onChange={e => setPayableForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Balance Due Date</label>
-                      <input className={styles.input} type="date" value={payableForm.balanceDueDate} onChange={e => setPayableForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
-                    </div>
+              {/* ⚠ A LOCKED FIGURE IS SHOWN WITH ITS VALUE AND ITS REASON, never greyed into
+                  silence (owner ruling 2026-08-15). A coach has to be able to read the amount they
+                  cannot change AND be told the way out, or the only remaining move is a support
+                  question. The server enforces the same rule — this is the explanation, not the
+                  guard. */}
+              {locks.amount ? (
+                <div className={styles.field}>
+                  <label className={styles.label}>{isPayableForm ? 'Total Amount' : 'Amount'}</label>
+                  <div className={styles.lockedField}>
+                    <span>{fmt(Number(form.amount) || 0)}</span>
+                    <span className={styles.lockedTag}>Locked</span>
                   </div>
-                </CoachFormDisclosure>
-              </div>
+                  <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
+                    Paid {locks.paidOn ? fmtDate(locks.paidOn) : ''} — this amount is already on the
+                    team’s books. <strong>To change it, delete this and enter it again.</strong>
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.field}>
+                  <label className={styles.label}>{isPayableForm ? 'Total Amount *' : 'Amount *'}</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.amount}
+                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
 
+              {/* ── Expense-only: who actually paid ─────────────────────────────────────────
+                  ⚠ STAYS ABOVE THE DISCLOSURE (Q1). It is the one field here that does not
+                  DESCRIBE the expense but changes what the record MEANS: naming a family turns the
+                  entry into money the team now owes them, saved as a credit against their dues. A
+                  consequence that size cannot be discovered behind an "(optional)" toggle.
+                  ⚠ CREATION ONLY. Changing it later would move a debt to a different household
+                  without touching the credit — the server refuses it outright. */}
+              {renderPaidBy()}
+
+              {/* ── Payable-only: the deposit / balance split ───────────────────────────────
+                  The eleven-field payable (readiness review #8) opens as three: what it's for,
+                  what kind, and how much. Each half locks on its own once IT has posted — a paid
+                  deposit must never freeze a balance the coach still has to manage. */}
+              {isPayableForm && (
+                <div className={styles.formGridFull}>
+                  <CoachFormDisclosure
+                    label="Split into a deposit and a balance"
+                    title="Payment schedule"
+                    note="Big-ticket costs are often billed as a deposit now and a balance later — tournament entries, dome blocks, uniform orders. Leave this closed to record one amount due on one date."
+                    meta={scheduleSet ? 'Set' : undefined}
+                    defaultOpen={scheduleSet}
+                  >
+                    <div className={styles.formSectionGrid}>
+                      {locks.deposit ? (
+                        <div className={`${styles.field} ${styles.formSectionFull}`}>
+                          <label className={styles.label}>Deposit</label>
+                          <div className={styles.lockedField}>
+                            <span>{fmt(Number(form.depositAmount) || 0)}{form.depositDueDate ? ` · due ${fmtDate(form.depositDueDate)}` : ''}</span>
+                            <span className={styles.lockedTag}>Paid</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.field}>
+                            <label className={styles.label}>Deposit Amount</label>
+                            <input className={styles.input} type="number" min={0} step="0.01" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
+                          </div>
+                          <div className={styles.field}>
+                            <label className={styles.label}>Deposit Due Date</label>
+                            <input className={styles.input} type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
+                          </div>
+                        </>
+                      )}
+                      {locks.balance ? (
+                        <div className={`${styles.field} ${styles.formSectionFull}`}>
+                          <label className={styles.label}>Balance</label>
+                          <div className={styles.lockedField}>
+                            <span>{fmt(Number(form.balanceAmount) || 0)}{form.balanceDueDate ? ` · due ${fmtDate(form.balanceDueDate)}` : ''}</span>
+                            <span className={styles.lockedTag}>Paid</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.field}>
+                            <label className={styles.label}>Balance Amount</label>
+                            <input className={styles.input} type="number" min={0} step="0.01" value={form.balanceAmount} onChange={e => setForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
+                          </div>
+                          <div className={styles.field}>
+                            <label className={styles.label}>Balance Due Date</label>
+                            <input className={styles.input} type="date" value={form.balanceDueDate} onChange={e => setForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CoachFormDisclosure>
+                </div>
+              )}
+
+              {/* ── Shared bookkeeping detail, folded away on both kinds (Q1) ─────────────── */}
               <div className={styles.formGridFull}>
                 <CoachFormDisclosure
                   label="Add details (optional)"
                   title="Details"
-                  meta={payableDetailsSet ? 'Set' : undefined}
-                  defaultOpen={payableDetailsSet}
+                  meta={detailsSet ? 'Set' : undefined}
+                  defaultOpen={detailsSet}
                 >
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
                       <label className={styles.label}>Payment Method</label>
-                      <input className={styles.input} value={payableForm.paymentMethod} onChange={e => setPayableForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
+                      <PaymentMethodCombobox
+                        methodsApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payment-methods`}
+                        value={form.paymentMethod}
+                        onChange={v => setForm(f => ({ ...f, paymentMethod: v }))}
+                      />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Payee</label>
                       <PayeeCombobox
                         payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
-                        value={payablePayee}
-                        onChange={setPayablePayee}
+                        value={formPayee}
+                        onChange={setFormPayee}
                         saveScope="team"
                       />
                     </div>
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Notes</label>
-                    <textarea className={styles.textarea} rows={2} value={payableForm.notes} onChange={e => setPayableForm(f => ({ ...f, notes: e.target.value }))} />
+                    <textarea className={styles.textarea} rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Tags</label>
-                    <TagSearchCombobox library={expenseTags} selectedIds={payableFormTags} onChange={setPayableFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+                    <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
                   </div>
                 </CoachFormDisclosure>
               </div>
             </div>
+
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
+
+            {/* ── Delete, in front of a confirmation that states the money consequence ────────
+                ⚠ THE DIALOG NAMES DOLLARS, never a bare "Are you sure?". Deleting something
+                already paid reverses what it posted, and a coach must be told the size of that
+                before they can consent to it. `ledgerReversalPreview` is the SAME function the
+                server reverses with, so the sentence and the outcome cannot drift apart. */}
+            {confirmDelete && editing && (
+              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                <p className={styles.dangerConfirmTitle}>
+                  Delete “{editing.description}”?
+                </p>
+                {deletePreview.amount > 0 && (
+                  <p className={styles.dangerConfirmBody}>
+                    This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
+                    books{deletePreview.legs > 1 ? ' across two payments' : ''}. Deleting it will
+                    reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
+                  </p>
+                )}
+                {deletePreview.owesFamily && (
+                  <p className={styles.dangerConfirmBody}>
+                    A family paid this out of pocket. <strong>The credit the team owes them will be
+                    removed too</strong> — no team cash moves either way.
+                  </p>
+                )}
+                {deletePreview.amount === 0 && !deletePreview.owesFamily && (
+                  <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
+                )}
+                <div className={styles.dangerConfirmActions}>
+                  <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                  <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                    {deleting ? 'Deleting…' : deletePreview.amount > 0 ? 'Delete and reverse' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={closeAddPayable}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={saving} onClick={addPayable}>{saving ? 'Saving…' : 'Add Payable'}</button>
+              {/* Delete lives in the FORM's footer, not on the row — the pattern Budget Plan set,
+                  and the reason a row needs only one control (owner ruling 2026-08-15). */}
+              {editing && canWriteMoney && !confirmDelete && (
+                <button
+                  className={styles.deleteRecordBtn}
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={saving || deleting}
+                >
+                  <Trash2 size={13} aria-hidden /> Delete
+                </button>
+              )}
+              <button className={styles.btnGhost} onClick={closeForm}>Cancel</button>
+              <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
+                {saving
+                  ? 'Saving…'
+                  : editing
+                    ? 'Save changes'
+                    /* The SAVE button names the outcome, which is what lets the toolbar button be
+                       a plain "Add" (Q8). */
+                    : isPayableForm ? 'Add Payable' : 'Add Expense'}
+              </button>
             </div>
           </div>
         </div>
@@ -1245,8 +1566,8 @@ export function ExpensesPayablesPanel({
       {/* The discard guard covers dismissing the sheet; this covers walking away from it —
           a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
       <UnsavedChangesGuard
-        active={(showAddExpense && expenseDirty) || (showAddPayable && payableDirty)}
-        interceptClicks={((showAddExpense && expenseDirty) || (showAddPayable && payableDirty)) && tabActive}
+        active={formOpen && formDirty}
+        interceptClicks={formOpen && formDirty && tabActive}
         message="You haven't saved what you entered on this form. Leave without saving it?"
       />
     </div>

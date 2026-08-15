@@ -125,7 +125,7 @@ export function OrgAllocationsPanel({
       {/* Page-header ruling 2026-08-11: title + help, nothing under the title (embedded mode
           renders nothing here — no actions, and the hub's own header is already on screen). */}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={Building2}
         title="Org Allocations"
         helpLabel="Org Allocations"

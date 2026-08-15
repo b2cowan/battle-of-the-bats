@@ -245,9 +245,12 @@
 | `app/[orgSlug]/check-in/layout.tsx:74` | `#D9F99D` | `--primary-light` / `--logic-lime` |
 | `app/[orgSlug]/check-in/layout.tsx:78` | `#94A3B8` | `--data-gray` |
 | `app/[orgSlug]/check-in/layout.tsx:89` | `#D9F99D` | `--primary-light` / `--logic-lime` |
-| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/[fundraiserId]/page.tsx:265` | `#a855f7` | `--evt-practice` |
-| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/[fundraiserId]/page.tsx:317` | `#a855f7` | `--evt-practice` |
-| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/[fundraiserId]/page.tsx:323` | `#f97316` | `--evt-external-tournament` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx:422` | `#a855f7` | `--evt-practice` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx:461` | `#a855f7` | `--evt-practice` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx:513` | `#a855f7` | `--evt-practice` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx:519` | `#f97316` | `--evt-external-tournament` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx:457` | `#a855f7` | `--evt-practice` |
+| `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx:515` | `#a855f7` | `--evt-practice` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/page.tsx:195` | `#a855f7` | `--evt-practice` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx:355` | `#a855f7` | `--evt-practice` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx:406` | `#f97316` | `--evt-external-tournament` |

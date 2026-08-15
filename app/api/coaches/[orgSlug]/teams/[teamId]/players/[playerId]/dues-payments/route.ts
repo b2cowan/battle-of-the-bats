@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { DUES_PAYMENT_METHODS } from '@/lib/types';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -28,7 +29,8 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-const METHODS = ['etransfer', 'cash', 'cheque', 'other'] as const;
+/** ONE list, shared with the correct-a-receipt door (PATCH) — see lib/types.ts. */
+const METHODS = DUES_PAYMENT_METHODS;
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-payments
 // Record a dues payment FACT (mig 232): what arrived, when, how much. Posts one income entry to

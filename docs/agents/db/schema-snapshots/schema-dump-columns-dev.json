@@ -9652,7 +9652,7 @@
     "column_name": "player_id",
     "data_type": "uuid",
     "udt_name": "uuid",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 5
   },
@@ -9835,6 +9835,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_fundraisers",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'fundraiser'::text",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_fundraisers",
+    "column_name": "sponsor_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
   },
   {
     "table_name": "rep_player_awards",
@@ -10834,6 +10852,15 @@
     "is_nullable": "NO",
     "column_default": "'last_first'::text",
     "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_program_years",
+    "column_name": "default_player_credit_percent",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 15
   },
   {
     "table_name": "rep_roster_players",
@@ -12490,6 +12517,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 25
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "column_name": "deposit_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "column_name": "balance_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
   },
   {
     "table_name": "rep_team_game_moments",

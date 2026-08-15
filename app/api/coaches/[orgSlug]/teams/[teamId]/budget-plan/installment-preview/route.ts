@@ -8,6 +8,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import {
   computeBudgetTotals, describeInstallmentBases, splitPerPlayer,
   type InstallmentBasis,
+  normalizeBudgetLineKind,
 } from '@/lib/coach-budget-totals';
 
 /** Cents, for a refusal a coach has to be able to act on. */
@@ -122,7 +123,7 @@ export const GET = withObservability(async (req: Request,
   const totals = computeBudgetTotals({
     lines: (linesData ?? []).map((l: { total_amount: number; line_kind?: string | null }) => ({
       totalAmount: l.total_amount ?? 0,
-      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+      lineKind: normalizeBudgetLineKind(l.line_kind),
     })),
     estimatedTotal: programYear.budgetAmount ?? null,
     rosterCount: players.length,

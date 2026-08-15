@@ -1911,6 +1911,16 @@
   },
   {
     "tablename": "rep_team_expenses",
+    "indexname": "idx_rep_team_expenses_balance_entry",
+    "indexdef": "CREATE INDEX idx_rep_team_expenses_balance_entry ON public.rep_team_expenses USING btree (balance_entry_id) WHERE (balance_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_expenses",
+    "indexname": "idx_rep_team_expenses_deposit_entry",
+    "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_expenses",
     "indexname": "rep_team_expenses_pkey",
     "indexdef": "CREATE UNIQUE INDEX rep_team_expenses_pkey ON public.rep_team_expenses USING btree (id)"
   },

@@ -12,8 +12,10 @@
  * ruling 6, mig 232), and a part-payment is acknowledged with thanks on the same row.
  *
  * Pure string-building on purpose: the client-side preview imports this, so nothing server-only
- * (db, email transport) may ever be imported here.
+ * (db, email transport) may ever be imported here. (`lib/timezone.ts` is pure date math over
+ * `Intl` — no db, no transport — so it is safe on both sides of that line.)
  */
+import { formatStoredDate } from './timezone';
 
 export interface DuesReminderEmailItem {
   playerFirstName: string;
@@ -40,8 +42,12 @@ export interface DuesReminderEmailItem {
 const fmt = (n: number) =>
   `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const fmtDate = (s: string) =>
-  new Date(s + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
+/* ⚠ THE SHARED FORMATTER, on the one dues surface a FAMILY reads. The local
+   `new Date(s + 'T00:00:00')` was correct for `dueDate` (a date column) and would have printed the
+   literal words "Invalid Date" the first time anyone put a timestamp through it — which is exactly
+   how the same hand-roll reached production on three coach screens in 2026-08-14. Same output as
+   before ("August 14, 2026"); it simply can no longer be handed the shape it cannot read. */
+const fmtDate = (s: string) => formatStoredDate(s, { longMonth: true });
 
 /** Names and team titles are people-entered text landing in a third party's inbox (and in the
  *  on-screen preview's dangerouslySetInnerHTML) — escape them, always. */

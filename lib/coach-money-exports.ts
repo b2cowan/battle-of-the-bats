@@ -22,6 +22,8 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
+import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals';
+import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 
 export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
@@ -63,7 +65,7 @@ export function budgetLineRows(lines: RepBudgetLineWithPeriods[]): ExportRow[] {
   return lines.map(l => ({
     category: l.categoryName ?? '',
     line: l.description,
-    kind: l.lineKind === 'funding' ? 'Expected fundraising' : 'Cost',
+    kind: LINE_KIND_LABEL[normalizeBudgetLineKind(l.lineKind)],
     amount: l.totalAmount,
     // The month split flattened into one readable cell. A column per month would make the
     // sheet's width depend on the season — that is the Budget-vs-Actual month grid's job.
@@ -95,6 +97,11 @@ export type DuesExportPlayer = {
   leftToSend: number;
   owedBack: number;
   outstanding: number;
+  /** ⚠ REQUIRED so the spreadsheet can say "Past due" where the screen does. The status word is a
+   *  question about TIME since 2026-08-14, and a file that graded season completion while the
+   *  table beside it flagged who was behind would be the same one-product-two-answers defect the
+   *  shared word list exists to prevent. */
+  installments: Array<{ dueDate: string | null; paidAt: string | null; remainingAmount?: number; amount?: number }>;
 };
 
 export function duesExportRows(players: DuesExportPlayer[]): ExportRow[] {
@@ -135,9 +142,24 @@ export const EXPENSE_COLUMNS: ExportColumnDef[] = [
   { label: 'Balance',      key: 'balance',     format: 'currency' },
   { label: 'Balance due',  key: 'balanceDue',  format: 'date' },
   { label: 'Payee',        key: 'payee',       format: 'text' },
+  // ⚠ TAGS BELONG HERE BECAUSE THE FILTER SITS ON THE SAME TOOLBAR AS EXPORT. A coach could
+  // narrow the list to one money tag, export it, and open a spreadsheet with no column saying
+  // which tag they had picked — the one fact that made the export worth taking (owner review
+  // 2026-08-15, Q on the Tags column). Unlike notes above, a tag is a chosen label from a
+  // managed library, never free text a coach may have put anything into.
+  { label: 'Tags',         key: 'tags',        format: 'text' },
 ];
 
-export function expenseRows(expenses: RepTeamExpense[]): ExportRow[] {
+/**
+ * @param tagsByExpenseId which money tags each expense carries, as the list panel holds them.
+ * @param tagById         the loaded tag library, for turning those ids into names.
+ * Both optional: a caller without the tag library still gets every other column, with Tags blank.
+ */
+export function expenseRows(
+  expenses: RepTeamExpense[],
+  tagsByExpenseId: Record<string, string[]> = {},
+  tagById: Map<string, { name: string }> = new Map(),
+): ExportRow[] {
   return expenses.map(e => ({
     description: e.description,
     category: e.category ?? '',
@@ -152,6 +174,12 @@ export function expenseRows(expenses: RepTeamExpense[]): ExportRow[] {
     balance: e.balanceAmount ?? '',
     balanceDue: e.balanceDueDate ?? '',
     payee: e.payeePayer ?? '',
+    // Names, not ids, and joined the way the row shows them. A tag the library no longer holds
+    // is dropped rather than exported as a bare id.
+    tags: (tagsByExpenseId[e.id] ?? [])
+      .map(id => tagById.get(id)?.name)
+      .filter((n): n is string => !!n)
+      .join(', '),
   }));
 }
 
@@ -181,7 +209,12 @@ export function scheduleRows(
 // money they raised and stays on the fundraiser's own page.
 
 export const FUNDRAISER_COLUMNS: ExportColumnDef[] = [
-  { label: 'Fundraiser',     key: 'name',     format: 'text' },
+  { label: 'Name',           key: 'name',     format: 'text' },
+  // ⚠ The KIND leads, so the two total separately in a spreadsheet. A treasurer's question is how
+  // much of the season came from families selling things versus from sponsors, and a single
+  // undifferentiated list cannot be pivoted to answer it (2026-08-15).
+  { label: 'Kind',           key: 'kind',     format: 'text' },
+  { label: 'Status',         key: 'status',   format: 'text' },
   { label: 'Rebate %',       key: 'rebate',   format: 'number' },
   { label: 'Starts',         key: 'starts',   format: 'date' },
   { label: 'Ends',           key: 'ends',     format: 'date' },
@@ -195,10 +228,18 @@ export function fundraiserRows(
   list: Array<{
     name: string; playerRebatePercent: number; startDate: string | null; endDate: string | null;
     totalRaised: number; totalCredits: number; teamNet: number; playerCount: number;
+    kind?: 'fundraiser' | 'sponsor'; sponsorStatus?: 'pledged' | 'received' | null;
+    isActive?: boolean;
   }>,
 ): ExportRow[] {
   return list.map(f => ({
     name: f.name,
+    kind: KIND_LABEL[f.kind ?? 'fundraiser'],
+    // A drive is running or it isn't; a sponsor has arrived or it hasn't. The column carries
+    // whichever question applies, because a spreadsheet cannot ask which kind it is looking at.
+    status: f.kind === 'sponsor'
+      ? SPONSOR_STATUS_LABEL[f.sponsorStatus ?? 'received']
+      : (f.isActive === false ? 'Closed' : 'Active'),
     rebate: f.playerRebatePercent,
     starts: f.startDate ?? '',
     ends: f.endDate ?? '',

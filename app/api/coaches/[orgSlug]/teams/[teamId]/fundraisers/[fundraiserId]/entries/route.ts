@@ -8,10 +8,12 @@ import {
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
+  getRepFundraiser,
   createEntry,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
@@ -38,16 +40,6 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-async function getFundraiser(fundraiserId: string, teamId: string) {
-  const { data } = await supabaseAdmin
-    .from('rep_fundraisers')
-    .select('*')
-    .eq('id', fundraiserId)
-    .eq('team_id', teamId)
-    .single();
-  return data;
-}
-
 function mapEntry(e: Record<string, unknown>) {
   return {
     id:                 e.id,
@@ -66,16 +58,25 @@ function mapEntry(e: Record<string, unknown>) {
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries
 // Returns per-player entries joined with player names, plus a summary.
-export const GET = withObservability(async (_req: Request,
+//
+// ⚠ ON THE SEASON-READ RAIL (2026-08-14, approved in the write-guard test's list). The
+// fundraisers LIST has served `?year=` since Chunk F, so an archived Money hub correctly lists
+// that season's drives — but opening one landed here, which resolved the ACTIVE year and paired
+// a 2025 fundraiser with the 2026 roster. The archive door was already open; only its last room
+// was furnished from the wrong season. Capabilities come from the RESOLVED season's assignment
+// row (governing rule 1), so an assistant granted money in 2025 and not since still reads 2025.
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
-  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  const { capabilities, programYear } = resolved;
+  const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const fundraiser = await getFundraiser(fundraiserId, teamId);
+  // Year-scoped: a fundraiser id from another season is a 404 here, not a page rendered from
+  // whichever season the reader happens to be standing in.
+  const fundraiser = await getRepFundraiser(fundraiserId, teamId, programYear.id);
   if (!fundraiser) return NextResponse.json({ error: 'Fundraiser not found' }, { status: 404 });
 
   const [{ data: entries }, { data: roster }] = await Promise.all([
@@ -167,6 +168,11 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     fundraiser: {
       id:                  fundraiser.id,
+      // The kind decides what this screen IS — a leaderboard for a drive, a single record for a
+      // sponsor. Without it the client would draw a roster of fifteen "—" rows against one
+      // sponsor, which is the exact shape sponsorships were added to stop.
+      kind:                fundraiser.kind ?? 'fundraiser',
+      sponsorStatus:       fundraiser.sponsor_status ?? null,
       name:                fundraiser.name,
       description:         fundraiser.description ?? null,
       playerRebatePercent: Number(fundraiser.player_rebate_percent),
@@ -201,8 +207,28 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const fundraiser = await getFundraiser(fundraiserId, teamId);
+  // The ACTIVE year, always — the write side never reads `?year=`, so a finished season's
+  // fundraiser is not addressable from here at all (write-guard rule).
+  const fundraiser = await getRepFundraiser(fundraiserId, team.id, programYear.id);
   if (!fundraiser) return NextResponse.json({ error: 'Fundraiser not found' }, { status: 404 });
+  /**
+   * ⚠ A SPONSOR IS NOT A DRIVE, AND THIS IS THE DRIVE'S DOOR.
+   *
+   * This route predates sponsors and enforces a drive's rules only: it checks `is_active` (which
+   * a sponsor carries as `true` by column default and never uses) and knows nothing of
+   * `sponsor_status`. Left open it would let a caller holding legitimate money-write add a SECOND
+   * entry to a sponsor — breaking the one-record-one-entry invariant every sponsor read depends
+   * on — and post real income plus a real dues credit for a sponsorship still marked PLEDGED,
+   * which is the precise thing the pledged/received split exists to prevent.
+   *
+   * A sponsor's amount is edited through its own record, where status and credit are decided
+   * together (review, 2026-08-15).
+   */
+  if (fundraiser.kind === 'sponsor') {
+    return NextResponse.json({
+      error: 'A sponsor is recorded as one amount on the sponsor itself, not logged per player.',
+    }, { status: 400 });
+  }
   if (!fundraiser.is_active) return NextResponse.json({ error: 'Fundraiser is closed' }, { status: 400 });
 
   const body = await req.json();

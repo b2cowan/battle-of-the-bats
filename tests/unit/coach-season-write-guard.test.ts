@@ -310,7 +310,29 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
      * completed season exactly as slice 1b ruled (§11.1). The new door is narrow and one-way.
      */
     'events/[eventId]/practice-plan/read',
-    'expense-tags', 'expenses', 'fundraisers', 'history',
+    'expense-tags', 'expenses', 'fundraisers',
+    /**
+     * ⚠ **ONE FUNDRAISER'S PER-PLAYER SHEET — ruled with the drill-in build** (2026-08-14,
+     * `docs/projects/active/COACH_FUNDRAISER_DRILL_IN_PLAN.md`). Its parent `fundraisers` has
+     * served a past season since Chunk F, so an archived Money hub already LISTED that season's
+     * drives; this is the room behind that door, and it was being furnished from the live season.
+     *
+     * The three questions this list demands, answered:
+     *   1. **RECORD or INSTRUMENT?** A finished drive's per-player totals are a RECORD of money
+     *      that was raised. The instruments that act on it — logging an amount, editing one,
+     *      changing the fundraiser's settings — are the write verbs in this same file and its
+     *      siblings, and every one of them still resolves the ACTIVE year and cannot address a
+     *      past season at all.
+     *   2. **Does the whole subtree carry the season?** Yes, and the subtree is now SHALLOWER
+     *      than it was: the fundraiser is no longer a page of its own but a state of the Money
+     *      hub's Fundraisers tab, so it inherits the hub's `?year=` rather than needing its own
+     *      copy of it. Its one outbound link is back to the list, in the same season.
+     *   3. **Does it show what the coach could see AT THE TIME?** Yes — and this is the defect it
+     *      was built to close. The roster comes from the RESOLVED season, so 2025's drive lists
+     *      2025's players; capabilities come from that season's assignment row (rule 1).
+     */
+    'fundraisers/[fundraiserId]/entries',
+    'history',
     'lineup-templates', 'milestones', 'money-summary', 'roster', 'roster/[playerId]',
     'season-surplus', 'staff', 'staff/[coachId]', 'tags',
     /**

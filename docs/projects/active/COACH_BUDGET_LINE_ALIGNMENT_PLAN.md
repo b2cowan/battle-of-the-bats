@@ -31,11 +31,12 @@ Category-level totals are correct. Everything finer than a category is either bl
 
 ## 2. ⚠ The defect this surfaced — per-line period actuals were the whole category's
 
-**The display half is BUILT on `dev` 2026-08-15**, ahead of and independent of this plan. ⚠ It is
-in the working copy and **not yet in a commit** — verified against `git log`, which has no entry for
-any of its files; replace this line with `committed <hash> <date>` the moment it lands, per the
-status-wording rule. What follows records what was wrong, what the fix does, and what is still owed
-here.
+**The display half is BUILT on `dev` 2026-08-15**, ahead of and independent of this plan. Its rule
+module + tests are **committed `ee41a269`**; the two screens that call it (the report route and its
+panel) are still in the working copy, because those same two files carry another chat's in-flight
+`CoachPageHeader` variant change and a money-in filter change, and neither could be separated
+without breaking the commit or sweeping up work that is not this one's. They land with that chat.
+What follows records what was wrong, what the fix does, and what is still owed here.
 
 ### What was wrong
 

@@ -372,6 +372,202 @@ lint 0 errors · guard test's new rule verified against the tree.
   first seed attempt failed exactly that check and was corrected). Tour step 4's narration gains
   the sentence; `check:demos` green; demo re-seeded on dev.
 
+## Pass 4 build log (2026-08-14) — the ledger says where the money went, and the re-run stops flattening people
+
+Owner-approved mockup (binding): `claude.ai/code/artifact/e73e9842-300d-484c-808e-f3c76bacf780`
+(source `COACH_PLAYER_LEDGER_COLUMNS_MOCKUP.html`). Triggered by an owner screenshot sent about
+row height, which also carried a live production defect (below).
+
+**1 — Four money columns per installment.** `installment − credit applied = after fundraising`;
+`after fundraising − cash = owing`. Derived ONCE (`ledgerRowFor`) and handed to both renderers, so
+the desktop table and the phone cards cannot disagree about what a family owes. `owing` stays the
+SERVER's net remainder — never re-derived here, because credit allocation across installments is
+the server's model.
+
+⚠ **THE FOUR TILES ARE THE FOUR COLUMNS TOTALLED, WHICH IS WHY THERE IS NO TOTALS ROW.** The table
+carries none: it would be the same four figures a second time, forty millimetres down. The tiles
+won over the row because the phone collapses every installment — the season answer must stay at
+the top, not sit under eight closed cards.
+
+⚠ **`Credits −$250` became `After fundraising $550`** — the RESULT, not the deduction. A negative
+in a row of positives was the one tile a treasurer had to decode; as a result every neighbouring
+pair relates ($800 → $550 → $400 → $150). The credit is still named by the strip below, with its
+payout door.
+
+**2 — The Note column.** "Paid May 20" and "$50.00 covered — Bottle Drive" are the same kind of
+thing (both explain the row rather than measure it) and a row is almost never both, so one column
+carries whichever applies. That is what lets every row stay a single line at eight columns. Dollars
+stay on a PART-covered row and go on a FULLY covered one, where `After fundraising $0.00` already
+states the figure and only the source is left to say.
+
+**3 — Phone: one collapsible card per installment**, closed on `date + owing / Paid / Covered`.
+Reuses the By-installment lens's `.duesCard*` idiom — one collapsible-card language in this hub.
+⚠ `tableAsCards` was REMOVED from this frame: right for four columns, catastrophic at eight (a
+12-installment season became ~100 stacked lines). Hiding the table under 640 is only safe BECAUSE
+the collapsible list exists. Drawer widened to `.slideOverLedger` (1040px) — 720 sideways-scrolled
+the eight columns at every width.
+
+**4 — "Mark Paid" → "Record as paid" / "Record rest as paid"** (dues only; expenses, payables and
+allocations keep theirs — those really are flags with no receipt book behind them). Owner asked why
+both existed: they are the same act, and the old word described the pre-232 world where it stamped
+a row rather than writing a receipt.
+
+**5 — The re-run guard (the real defect in the set).** `Set dues for all players` gave EVERY player
+the identical schedule, flattening every per-player arrangement in silence — a hardship plan, a
+deposit-then-balance schedule, a mid-season joiner's prorated dates. The confirm screen said
+"payments are kept", which is true and was the ONLY consequence named, so it read as "nothing of
+value is at risk". Money was never what was at risk.
+- `source = 'manual'` is the only record that a human chose a schedule for one family (it defaults
+  to `manual`; only the generator writes `budget_generated`). The 409 now returns those players
+  **by name**, plus a count of families whose **due dates would move**.
+- New `skipPlayerIds` leaves them completely alone — no upsert, no delete, no re-projection.
+- **"Keep the N I set by hand" is the PRIMARY button; "Apply to everyone" is the quieter one.**
+  The destructive answer is one click away for the coach who means it, and is no longer the default.
+- `playersSkipped` is a real figure again (hard-coded 0 since mig 232) and the success screen
+  reports the kept arrangements, so "dues set for 12 players" on a 15-player roster never reads as
+  three failures.
+
+⚠ **Deliberately NOT a mid-season lock** (the owner's own question). Re-running mid-season is
+legitimate and common, the help guide promises it works, and a date-based lock would block the
+honest case while missing the damaging one — the damage lands the first time anyone re-runs after
+hand-adjusting a family, which can happen in week one.
+
+**6 — A live PRODUCTION defect, found in the same screenshot and fixed.** Paid rows read the literal
+words **"Paid Invalid Date"**. `paid_at` is a timestamp and the drawer's date formatter was written
+for a date-only column. Three screens had hand-rolled a formatter and all three were wrong: the
+ledger drawer and the By-installment grid printed "Invalid Date"; the admin rep-team allocation
+schedule read a bare date as UTC midnight and showed every due date **one day early**. One shared
+`formatStoredDate()` now takes both shapes, resolves timestamps through the org zone, and returns
+`—` rather than ever emitting "Invalid Date". Regression tests join the date-correctness suite.
+
+**7 — The record control became a 28px tick, and then grew a confirm** (owner, same day). Filled
+three-word button → banknote icon; the glyph is deliberately NOT a checkmark, because the Note
+column beside it uses ✓ for *settled* and the same mark in a button reads as a state. Icon-only
+obliges a real name: `aria-label` + `title` both quote the amount. Phone keeps the words and keeps
+the control **inside the open card, never on the collapsed bar** — that bar is itself the toggle
+target, and the two mis-taps cost wildly different things (open a card vs. record a payment).
+⚠ **The confirm is what makes an icon-only money button honest**: it states how much, what day, and
+that the receipt can be edited or removed. It costs a click on the hub's fastest path, deliberately.
+
+**8 — Payments and credits stopped being dead ends** (owner: *"add edit buttons… so we don't only
+have the delete option"*).
+- **Payment edit = `PATCH` that REMOVES and RE-RECORDS.** A posted ledger entry is never rewritten
+  here (the trap carried from kickoff), so an edit voids the old entry and posts a fresh one; the
+  coach experiences an edit, the books keep the correction trail. ⚠ **Order is remove-then-record,
+  chosen on which failure is safer**: record-then-remove fails into a DUPLICATE (books overstate
+  cash, and nothing says which row is real); remove-then-record fails into a MISSING receipt (books
+  understate, the row visibly vanishes, and the coach still holds every value in the form). The
+  failure message says outright that the original has already gone.
+- The overpayment PREVIEW subtracts the row being replaced from the running total first — otherwise
+  it counts the old receipt and the new one together and warns about an overpayment that cannot
+  happen.
+- **Credit edit is COACH-AUTHORED ONLY.** `DuesCredit` now carries `fundraiserEntryId` and
+  `expenseId` alongside `paymentId` (all three were already columns; only `payment_id` was mapped).
+  A credit with any of the three set was CREATED BY another record which states its amount —
+  editing it here would leave two disagreeing numbers and the next reconcile would overwrite the
+  coach's fix. Those rows now say *from fundraiser* / *from expense* / *auto* instead of offering a
+  pencil. ⚠ **Credit TYPE is locked while editing** — it is provenance, not a label.
+- ⚠ **The credit PATCH repeats the DELETE's payout guard**: lowering a credit below what has
+  already been handed to the family is refused with the same `CREDIT_HAS_PAYOUT` 409. Same hazard,
+  same rule — a lowered credit strands paid-out cash exactly as a deleted one does.
+
+**9 — The status column learned to see time** (owner: *"I don't like partial… those that are past
+due should clearly say so instead of just '3 overdue' at the bottom"*).
+
+⚠ **THE LABEL GRADED SEASON COMPLETION WHILE THE COACH WAS ASKING ABOUT LATENESS.** A family paying
+every installment on the day it fell due read `Partial`; so did a family a month behind. One word
+for the model family and the delinquent one, with the only lateness signal being a nameless
+"3 overdue" footer count.
+
+`Partial` and `Unpaid` retired. Six labels, each answering *does this family owe us anything right
+now?* — `Not set` · `In credit` · `Fully paid` · `Settled` · **`Past due`** · **`Up to date`**.
+- ⚠ **`Up to date` deliberately covers a family who has paid NOTHING** when their first bill has not
+  come due. They owe nothing today; "Unpaid" cried wolf on families who had done nothing wrong.
+  Progress through the season is the Paid/Balance columns' job.
+- ⚠ **The column is quiet except where action is needed**: `Up to date` takes ordinary ink, not
+  green — a mostly-green column has no colour left for the row that matters. `Past due` is danger
+  + a ⚠ glyph (colour never carries a verdict alone).
+- ⚠ **`hasPastDueInstallment` is ONE predicate** shared by the row's word and the footer's count.
+  They were two calculations; the footer counted late players while the status column could not see
+  time at all.
+- ⚠ Lateness judged on the REMAINDER, never the paid stamp — credits settle bills and `paid_at`
+  never stamps a credit-covered row.
+- **The mode-blind fallback branch was REMOVED** (it graded off `rollingBalance` alone and once read
+  a keep_separate team's unapplied credit as "Settled" — a /review Critical). The derived figures
+  are required now; a compile error is the right answer for any caller that cannot supply them.
+- The export takes `installments` so the spreadsheet says `Past due` wherever the screen does.
+
+Help docs updated in the same unit of work (the re-run FAQ, the record-control paragraph, the
+credit walk-through, a "Fixing a credit" note, and a plain-language **"What each status means"**
+list). No migration. `verify:changed` green; 111 dues + date unit tests pass.
+
+## /simplify + /review log (2026-08-14, Pass 4)
+
+**`/simplify` — 4 lenses, 6 applied, 2 skipped.** The one that mattered was a real disagreement:
+`lib/insight-findings.ts` counted a bill past its date **even when credits had settled it**, so
+Insights could say "2 dues installments overdue" while Player Dues showed one Past due row. Now on
+the shared `pastDueInstallments`. Also: `DUES_PAYMENT_METHODS` promoted to `lib/types.ts` (the two
+doors each had a copy, with a comment promising parity and nothing enforcing it); the credit
+PATCH/DELETE payout guard extracted to one `payoutCeilingRefusal`; `dues-reminder-email.ts`'s
+hand-rolled `fmtDate` converted to `formatStoredDate` (**byte-identical output**, verified — it is
+the one dues surface a FAMILY reads); `ledgerRowFor` hoisted into one `useMemo` (both renderers are
+always in the DOM, so it ran twice per render); a dead `? 'them' : 'them'` ternary; two response
+fields the modal stored and never showed.
+- **Skipped:** threading `preloaded*` through remove→record (halves the round-trips on a rare
+  action, but widens a shared money function's contract and a stale payment set fed into a
+  projection is a real bug); extracting a shared icon-button CSS base (three per-feature variants
+  already exist — a fourth is in-pattern; unifying touches three unrelated features).
+
+**`/review` — high-risk tier, 5 lenses. 2 Criticals + 2 Highs + 1 Medium, ALL FIXED.**
+
+⚠ **CRITICAL 1 — `source = 'manual'` IS NOT PROVENANCE, and the re-run guard was reading it.**
+The column DEFAULTS to `manual`, and `replaceRepDuesInstallments` (which never sets it) is called by
+**two automated paths** as well as the per-player editor: **season rollover's carry-fees step, which
+is ON BY DEFAULT**, and the free→Premium upgrade migration. So the morning after a routine rollover
+every player reads `manual`, the confirm screen would have named the WHOLE ROSTER as "schedules you
+set by hand", and one click of "Keep the N I set by hand" would have applied the coach's team-wide
+fix to **nobody** — the exact all-or-nothing failure Pass 4 existed to end, inverted. Worse, a list
+that is usually noise stops being read, which is when it finally names a real hardship arrangement.
+**Fix: hand-set is decided by comparing players to EACH OTHER** — a player whose amounts/dates
+differ from the roster's most common shape. No column, no migration, no backfill; works on existing
+data; a uniform roster (carried forward, migrated or generated) correctly flags nobody.
+
+⚠ **CRITICAL 2 — a stale edit target could silently destroy a receipt.** The payment sheet is shared
+between add and edit (a boolean opens it, an id points it at a row). The payment **Add** button
+cleared the boolean and not the id — the credit one cleared both, and that asymmetry is what gave it
+away — and no drawer-close path cleared either. Pencil a payment → close the drawer with X → reopen
+→ "Record payment" → fill in what you believe is a second payment → save: it sent a PATCH and
+replaced the family's original receipt, the only tell being the footer button reading "Save
+correction". **Fix: one `closeMoneySheets()` through which every entry and exit passes** — no caller
+is trusted to remember two pieces of state.
+
+⚠ **HIGH — the correction door was not idempotent.** `removeRepDuesPayment` is a deliberate no-op on
+an already-removed row (right for delete, fatal here): the LOSER of two racing corrections removed
+nothing and recorded anyway, leaving two payments and two ledger entries for one correction.
+**Fix: the DELETE is the only atomic point, so it is the claim** — `removeRepDuesPayment` now returns
+whether *it* removed the row, and only the winner may write a replacement (409 otherwise).
+
+⚠ **HIGH — the credit edit had no post-write re-check.** Its sibling `recordRepDuesPayout` has one
+precisely because a pre-write ceiling read races; lowering a credit is the same hazard from the other
+side. **Fix: re-read credits+payouts after the update and self-undo the loser**, restoring the
+original amount.
+
+⚠ **MEDIUM — an error message that could manufacture a duplicate.** `recordRepDuesPayment` commits
+the payment row and only *then* reconciles credits and re-projects, so a throw from those last steps
+means the replacement **already exists** — while the copy said "re-enter it to restore the record".
+**Fix: never instruct a re-entry.** The message now states only what is certain and sends the coach
+to LOOK at the Payments list before recording anything.
+
+**Residual, reported not fixed (owner call):** `recordRepDuesPayout`'s own post-write re-check
+recomputes its ceiling from the **stale** `credits` snapshot it read at the top, so a credit lowered
+concurrently is still invisible to it. Pre-existing, outside this diff; the credit side of that race
+is now closed, which is the direction Pass 4 opened.
+
+Security lens: **clean** — both new PATCH doors prove org/team/program-year ownership before writing,
+carry `canWriteMoney`, and `skipPlayerIds` cannot address another team's roster. Regression lens:
+**clean** — 1827/1827 tests, no consumer of the retired `Partial`/`Unpaid`/`Mark Paid` strings
+anywhere (UAT specs, demo checkers, seeders all verified). Rendered layout check: **no new findings**.
+
 ## Traps carried forward (from kickoff + inventory)
 
 - Never delete/rewrite a posted ledger entry; corrections void + re-post.

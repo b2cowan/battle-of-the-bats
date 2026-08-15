@@ -21,7 +21,7 @@
 import type { SeasonLineupAnalytics } from './lineup-season-analytics';
 // Relative WITH .ts extension so `node --test` can resolve it (allowImportingTsExtensions;
 // same convention as lineup-season-analytics.ts → lineup-analysis.ts).
-import { isNeverPaidPlayer } from './dues-status.ts';
+import { isNeverPaidPlayer, pastDueInstallments } from './dues-status.ts';
 
 export type InsightTier = 'safety' | 'money' | 'attendance' | 'fairness' | 'development' | 'good-news';
 export type InsightTone = 'warn' | 'info' | 'good';
@@ -434,7 +434,12 @@ export function summarizeDuesForFindings(rows: FindingsDuesRow[], todayISO: stri
     // the gross figure beside a credit-aware neverPaidCount was an internally contradictory
     // summary (/review 2026-08-14).
     outstandingTotal: Math.round(rows.reduce((s, p) => s + (p.leftToSend ?? p.outstanding ?? 0), 0)),
-    overdueCount: rows.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate < todayISO).length, 0),
+    // ⚠ THE SHARED PREDICATE (lib/dues-status.ts), not a local filter. This counted a bill past
+    // its date EVEN WHEN CREDITS HAD SETTLED IT — so Insights could say "2 dues installments
+    // overdue" while Player Dues, which excludes them, showed one row marked Past due. Credits
+    // settle bills and `paid_at` deliberately never stamps a credit-covered row (Paid stays
+    // cash), so lateness is judged on the REMAINDER. `todayISO` is still the caller's day.
+    overdueCount: rows.reduce((n, p) => n + pastDueInstallments(p.installments, todayISO).length, 0),
     neverPaidCount: rows.filter(isNeverPaidPlayer).length,
     nextDue: minDue ? { dueDateISO: minDue, unpaidCount: atMinDue.length, unpaidTotal: minDueTotal > 0 ? Math.round(minDueTotal) : null } : null,
   };

@@ -119,6 +119,15 @@ export async function resolveUatContext() {
     console.log('  · probe game re-anchored to now (it had drifted out of its live window)');
   }
 
+  // One fundraiser on the live season — the Money hub's Fundraisers tab drills into it
+  // (`?section=fundraisers&fundraiser=`), and a drill-in with no id to open would sweep the LIST
+  // twice and report green on a screen nobody looked at.
+  const fr = await db.from('rep_fundraisers')
+    .select('id').eq('program_year_id', py.data.id)
+    .order('created_at').limit(1).maybeSingle();
+  if (fr.error) throw new FixtureError(`rep_fundraisers lookup failed: ${fr.error.message}`);
+  if (!fr.data) throw new FixtureError('No fundraiser on the active program year.');
+
   return {
     orgSlug: org.data.slug,
     orgId: org.data.id,
@@ -126,6 +135,7 @@ export async function resolveUatContext() {
     programYearId: py.data.id,
     practiceEventId: ev.data.id,
     gameEventId: game.data.id,
+    fundraiserId: fr.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

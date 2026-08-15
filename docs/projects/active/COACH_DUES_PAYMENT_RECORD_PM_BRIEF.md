@@ -53,6 +53,34 @@ high-risk `/review` (2 Criticals + 1 High found and fixed — the review log in 
 reading). Awaiting: owner browser QA (ledger §13), commit approval, and prod migration at the
 next release. Refund credit provenance deliberately descoped to an owner discussion.
 
+## Pass 4 (2026-08-14) — "where did this family's money go?", and a re-run that stops flattening people
+
+Three things a coach gets, all from one owner review of the player ledger:
+
+1. **The ledger answers the whole question, not a quarter of it.** Each installment now shows what
+   was billed, what fundraising took off, what has arrived, and what is still owed — and the four
+   season figures at the top of the record are literally those four columns added up, so it reads
+   left to right as one sentence instead of four unrelated facts. The "Credits −$250" tile became
+   "After fundraising $550": the result rather than the deduction, because a negative among
+   positives was the one figure people had to stop and decode.
+2. **On a phone, an installment is one line until you tap it** — its date and what's owing (or
+   *Paid*, or *Covered*). A twelve-payment season now fits on one screen, and the only rows wearing
+   a number are the ones that need attention.
+3. **Re-running the team's dues no longer silently destroys per-player arrangements.** This was the
+   real find. "Set dues for all players" gave everyone the identical schedule — a hardship plan, a
+   deposit-then-balance arrangement, a mid-season joiner's prorated dates, all flattened without a
+   word. The confirmation now **names those families** and offers **"Keep the ones I set by hand"**
+   as the default answer, with "Apply to everyone" still one click away. It also says when due
+   dates families already have are about to move, since the reminder emails will start quoting the
+   new ones. **We deliberately did not lock the schedule mid-season** — re-running is a legitimate,
+   common need, and a lock would have blocked the honest case while missing the damaging one.
+
+Also: the per-installment **"Mark paid"** button is now **"Record as paid"** — it always did write a
+real receipt, and the old name made coaches reasonably ask what the difference was from Record
+payment. And a **live production defect** was found in the same screenshot: paid rows had been
+showing the words "Paid Invalid Date", and the same family of bug was showing every due date one day
+early on the admin allocation screen. Both fixed.
+
 ## Success criteria
 
 - A coach can record any amount on any date and the books show it that day, for that amount.

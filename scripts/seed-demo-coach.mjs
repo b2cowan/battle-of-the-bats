@@ -28,6 +28,7 @@ import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
+  DEMO_DUES_SETTINGS,
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
@@ -170,6 +171,10 @@ async function upsertTeam(def) {
  * label rolls over every January, and stale siblings would confuse the active-year resolver.
  */
 async function ensureProgramYear(team, year, name, fields) {
+  // The two team-wide dues settings ride EVERY demo year, so the Money group in Team settings
+  // shows a stated choice on whichever moment a prospect lands in — and so no caller can forget
+  // them. A caller may still override by passing its own value in `fields`.
+  fields = { ...DEMO_DUES_SETTINGS, ...fields };
   const all = (await db.from('rep_program_years').select('id, year').eq('team_id', team.id)).data ?? [];
   let keeper = all.find(py => py.year === year) ?? null;
   for (const py of all) {

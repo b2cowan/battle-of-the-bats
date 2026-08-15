@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepBudgetLineWithPeriods, RepBudgetPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
-import { computeBudgetTotals } from '@/lib/coach-budget-totals';
+import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
@@ -30,7 +30,7 @@ function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
     totalAmount:    row.total_amount as number,
     // Anything unrecognised reads as a cost — that is the column default, and a row written
     // before migration 230 IS a cost. Never guess a line is money coming in.
-    lineKind:       row.line_kind === 'funding' ? 'funding' : 'cost',
+    lineKind:       normalizeBudgetLineKind(row.line_kind as string | null),
     notes:          row.notes as string | null,
     sortOrder:      row.sort_order as number,
     createdAt:      row.created_at as string,

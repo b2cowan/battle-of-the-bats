@@ -1,7 +1,7 @@
 # Coach Money — recurring payables (monthly)
 
-**Status:** planned 2026-08-15 · **§6.1 + §6.5 built 2026-08-15 (the engine only)** · the screen,
-routes and migration are still awaiting owner approval of §4 and §5
+**Status:** planned 2026-08-15 · **§6.1 + §6.5 committed `c404bd4b` 2026-08-15 (the engine only)** ·
+the screen, routes and migration are still awaiting owner approval of §4 and §5
 **Engine ready:** `lib/coach-monthly-recurrence.ts` + `tests/unit/coach-monthly-recurrence.test.ts`
 exist and pass (22 cases). It has **no callers yet, deliberately** — the chat that picks up §6.2/§6.3
 can build the preview against a proven generator instead of inventing the month maths inside a form.

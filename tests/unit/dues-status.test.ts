@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isNeverPaidPlayer, duesStatusLabel } from '../../lib/dues-status.ts';
+import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '../../lib/dues-status.ts';
 
 /**
  * Since mig 232 the predicate reads PAYMENT DOLLARS, never installment stamps — a family two
@@ -63,74 +63,38 @@ describe('isNeverPaidPlayer', () => {
   });
 });
 
-describe('duesStatusLabel — Settled vs Fully paid (Paid stays cash)', () => {
+/* The dates the timing tests reason about. `tournamentToday()` is the org's calendar day, so a
+   test that hard-coded "2026-01-01" would flip the day this file is run in a different month. */
+const PAST   = '2020-01-01';
+const FUTURE = '2099-01-01';
+
+describe('duesStatusLabel — the terminal states (Paid stays cash)', () => {
   it('a balance cleared with credits doing part of the work reads Settled, never Fully paid', () => {
     // The pre-model embarrassment: export row "Paid $0.00 · Status Fully paid".
     assert.equal(
-      duesStatusLabel({ schedule: {}, rollingBalance: 0, paidAmount: 0, totalCredits: 600 }),
+      duesStatusLabel({
+        schedule: {}, paidAmount: 0, totalCredits: 600,
+        leftToSend: 0, owedBack: 0, outstanding: 600,
+      }),
       'Settled',
     );
   });
   it('cash covering everything stays Fully paid', () => {
     assert.equal(
-      duesStatusLabel({ schedule: {}, rollingBalance: 0, paidAmount: 600, totalCredits: 0 }),
-      'Fully paid',
-    );
-  });
-  it('cash + credits overshooting reads In credit, as before', () => {
-    assert.equal(
-      duesStatusLabel({ schedule: {}, rollingBalance: -50, paidAmount: 600, totalCredits: 50 }),
-      'In credit',
-    );
-  });
-});
-
-describe('duesStatusLabel — mode-aware path (the /review Critical)', () => {
-  // keep_separate: an $800 credit sits OFF the bills. rollingBalance is 0, but the family
-  // still owes every cash dollar — the mode-blind branch called this "Settled".
-  it('keep_separate: unapplied credit does NOT read Settled while cash is still owed', () => {
-    assert.equal(
       duesStatusLabel({
-        schedule: {}, rollingBalance: 0, paidAmount: 0, totalCredits: 800,
-        leftToSend: 800, owedBack: 800, outstanding: 800,
-      }),
-      'Unpaid',
-    );
-  });
-  it('credits genuinely applied and nothing left to send reads Settled', () => {
-    assert.equal(
-      duesStatusLabel({
-        schedule: {}, rollingBalance: 0, paidAmount: 0, totalCredits: 800,
-        leftToSend: 0, owedBack: 0, outstanding: 800,
-      }),
-      'Settled',
-    );
-  });
-  it('cash covered everything and the team holds their rebate: In credit', () => {
-    assert.equal(
-      duesStatusLabel({
-        schedule: {}, rollingBalance: -125, paidAmount: 600, totalCredits: 125,
-        leftToSend: 0, owedBack: 125, outstanding: 0,
-      }),
-      'In credit',
-    );
-  });
-  it('cash covered everything, no credits: Fully paid', () => {
-    assert.equal(
-      duesStatusLabel({
-        schedule: {}, rollingBalance: 0, paidAmount: 600, totalCredits: 0,
+        schedule: {}, paidAmount: 600, totalCredits: 0,
         leftToSend: 0, owedBack: 0, outstanding: 0,
       }),
       'Fully paid',
     );
   });
-  it('partly applied credits with a remainder to send reads Partial', () => {
+  it('cash covered everything and the team holds their rebate: In credit', () => {
     assert.equal(
       duesStatusLabel({
-        schedule: {}, rollingBalance: 300, paidAmount: 0, totalCredits: 500,
-        leftToSend: 300, owedBack: 0, outstanding: 800,
+        schedule: {}, paidAmount: 600, totalCredits: 125,
+        leftToSend: 0, owedBack: 125, outstanding: 0,
       }),
-      'Partial',
+      'In credit',
     );
   });
   it('a forgiveness larger than the debt evaporates — never In credit', () => {
@@ -138,10 +102,127 @@ describe('duesStatusLabel — mode-aware path (the /review Critical)', () => {
     // family's money), outstanding still 600 (credit-blind) → Settled, not In credit.
     assert.equal(
       duesStatusLabel({
-        schedule: {}, rollingBalance: -200, paidAmount: 0, totalCredits: 800,
+        schedule: {}, paidAmount: 0, totalCredits: 800,
         leftToSend: 0, owedBack: 0, outstanding: 600,
       }),
       'Settled',
     );
+  });
+  it('a terminal state is never late, even with a long-past due date on the schedule', () => {
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 600, totalCredits: 0,
+        leftToSend: 0, owedBack: 0, outstanding: 0,
+        installments: [{ dueDate: PAST, paidAt: '2020-02-01T12:00:00Z', remainingAmount: 0 }],
+      }),
+      'Fully paid',
+    );
+  });
+});
+
+/**
+ * ⚠ THE DEFECT THIS SET EXISTS FOR (owner, 2026-08-14): the label graded SEASON COMPLETION, so a
+ * family paying every installment on the day it fell due and a family a month late both read
+ * "Partial". The status column could not see time at all; the only hint that anyone was behind
+ * was a "3 overdue" line under the whole table.
+ */
+describe('duesStatusLabel — is this family BEHIND? (the question every label now answers)', () => {
+  const owing = {
+    schedule: {}, paidAmount: 400, totalCredits: 0,
+    leftToSend: 400, owedBack: 0, outstanding: 400,
+  };
+
+  it('paid everything that has fallen due, more to come: Up to date — NOT Partial', () => {
+    assert.equal(
+      duesStatusLabel({
+        ...owing,
+        installments: [
+          { dueDate: PAST,   paidAt: '2020-01-02T12:00:00Z', remainingAmount: 0 },
+          { dueDate: FUTURE, paidAt: null, remainingAmount: 400 },
+        ],
+      }),
+      'Up to date',
+    );
+  });
+
+  it('nothing paid but nothing due yet: Up to date — "Unpaid" cried wolf on a family owing nothing today', () => {
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 0, totalCredits: 0,
+        leftToSend: 800, owedBack: 0, outstanding: 800,
+        installments: [{ dueDate: FUTURE, paidAt: null, remainingAmount: 800 }],
+      }),
+      'Up to date',
+    );
+  });
+
+  it('a bill past its date with money still asked for: Past due', () => {
+    assert.equal(
+      duesStatusLabel({
+        ...owing,
+        installments: [
+          { dueDate: PAST,   paidAt: null, remainingAmount: 400 },
+          { dueDate: FUTURE, paidAt: null, remainingAmount: 400 },
+        ],
+      }),
+      'Past due',
+    );
+  });
+
+  it('⚠ a LATE bill that credits settled is not late for anyone', () => {
+    // Credits settle bills and paid_at deliberately never stamps a credit-covered row (Paid stays
+    // cash) — so lateness must be judged on the REMAINDER, never the stamp.
+    assert.equal(
+      duesStatusLabel({
+        ...owing,
+        installments: [
+          { dueDate: PAST,   paidAt: null, remainingAmount: 0 },
+          { dueDate: FUTURE, paidAt: null, remainingAmount: 400 },
+        ],
+      }),
+      'Up to date',
+    );
+  });
+
+  it('keep_separate: an unapplied credit still leaves them behind on a late bill', () => {
+    // The /review Critical, re-pinned: rollingBalance is 0 but every cash dollar is still owed.
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 0, totalCredits: 800,
+        leftToSend: 800, owedBack: 800, outstanding: 800,
+        installments: [{ dueDate: PAST, paidAt: null, remainingAmount: 800 }],
+      }),
+      'Past due',
+    );
+  });
+
+  it('a schedule with no dated bills cannot be late', () => {
+    assert.equal(duesStatusLabel({ ...owing, installments: [] }), 'Up to date');
+    assert.equal(duesStatusLabel({ ...owing }), 'Up to date');
+  });
+
+  it('no schedule at all is Not set, whatever the figures say', () => {
+    assert.equal(
+      duesStatusLabel({ ...owing, schedule: null, installments: [{ dueDate: PAST, paidAt: null, remainingAmount: 400 }] }),
+      'Not set',
+    );
+  });
+});
+
+describe('hasPastDueInstallment — the ONE predicate the status word and the footer count share', () => {
+  it('is false for an empty or missing list', () => {
+    assert.equal(hasPastDueInstallment([]), false);
+    assert.equal(hasPastDueInstallment(null), false);
+    assert.equal(hasPastDueInstallment(undefined), false);
+  });
+  it('ignores a paid bill however old', () => {
+    assert.equal(hasPastDueInstallment([{ dueDate: PAST, paidAt: '2020-06-01T12:00:00Z' }]), false);
+  });
+  it('falls back to the face amount when no remainder is supplied', () => {
+    assert.equal(hasPastDueInstallment([{ dueDate: PAST, paidAt: null, amount: 200 }]), true);
+    assert.equal(hasPastDueInstallment([{ dueDate: PAST, paidAt: null, amount: 0 }]), false);
+  });
+  it('a bill with no due date is never late', () => {
+    assert.equal(hasPastDueInstallment([{ dueDate: null, paidAt: null, remainingAmount: 200 }]), false);
   });
 });

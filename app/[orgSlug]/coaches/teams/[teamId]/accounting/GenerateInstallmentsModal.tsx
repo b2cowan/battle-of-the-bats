@@ -42,6 +42,23 @@ interface GenerateResult {
   /** Players whose dues could NOT be written. Named, because the coach has to go fix them by
    *  hand and a bare count would leave them checking the whole roster. */
   playersFailed: string[];
+  /** Hand-set schedules the coach chose to keep — left completely untouched by the run. */
+  playersSkipped: number;
+}
+
+/** A per-player arrangement a plain replace would flatten. Named, so it can be kept. */
+interface HandSetPlayer { id: string; name: string }
+
+/**
+ * What the confirm step needs from the ALREADY_HAS_DUES 409 — the two things it actually says out
+ * loud. The response also carries `playersWithDues` / `playersWithPayments`, which the old
+ * count-based copy used and this screen no longer does; they are deliberately NOT stored, because
+ * state the screen never reads is state the next reader has to chase down before believing it is
+ * inert.
+ */
+interface ReplaceFacts {
+  handSetPlayers: HandSetPlayer[];
+  playersWithDateChange: number;
 }
 
 /**
@@ -100,8 +117,10 @@ export default function GenerateInstallmentsModal({
   const [sandboxNote,    setSandboxNote]    = useState('');
   const [result,         setResult]         = useState<GenerateResult | null>(null);
   /** Set when the server reports a schedule already exists — the coach is asked to confirm a
-   *  replace instead of being handed the raw refusal. See `handleGenerate`. */
-  const [confirmReplace, setConfirmReplace] = useState(false);
+   *  replace instead of being handed the raw refusal. Carries WHAT is at stake, including the
+   *  names of any hand-set schedules, so the question can be answered rather than guessed at.
+   *  See `handleGenerate`. */
+  const [replaceFacts, setReplaceFacts] = useState<ReplaceFacts | null>(null);
 
   // Only the LATEST preview request may write to state. Editing a row clears the preview, but a
   // slow response from before the edit would otherwise land afterwards and restore a table that
@@ -313,7 +332,7 @@ export default function GenerateInstallmentsModal({
    * So the server is now the authority: it refuses with a code, and that refusal becomes a
    * question the coach can answer, in place, without losing what they typed.
    */
-  async function handleGenerate(replace = false) {
+  async function handleGenerate(replace = false, skipPlayerIds: string[] = []) {
     /**
      * ⚠ THE PREVIEW IS THE PAYLOAD. Every player gets the same schedule, so the first previewed
      * row IS the schedule, and it is sent back verbatim.
@@ -338,6 +357,9 @@ export default function GenerateInstallmentsModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           replace,
+          // Empty on a first attempt and on "apply to everyone" — only the coach's explicit
+          // "keep the ones I set by hand" fills it.
+          skipPlayerIds,
           // Which of the three answers produced these amounts. The write path does not recompute
           // from it — it records it, so "why is this player being charged $340?" has an answer.
           basis,
@@ -369,14 +391,21 @@ export default function GenerateInstallmentsModal({
       }
 
       // The roster already has dues. Ask rather than refuse — the coach keeps their form and
-      // answers one question. Only THEIR yes sends replace.
-      if (res.status === 409 && data?.code === 'ALREADY_HAS_DUES') { setConfirmReplace(true); return; }
+      // answers one question, now with the facts attached. Only THEIR yes sends replace.
+      if (res.status === 409 && data?.code === 'ALREADY_HAS_DUES') {
+        setReplaceFacts({
+          handSetPlayers:        Array.isArray(data.handSetPlayers) ? data.handSetPlayers : [],
+          playersWithDateChange: data.playersWithDateChange ?? 0,
+        });
+        return;
+      }
       if (!res.ok || !data) throw new Error(data?.error ?? 'Generation failed');
       setResult({
         playersProcessed:          data.playersProcessed ?? 0,
         playersWithPaymentsKept:   data.playersWithPaymentsKept ?? 0,
         overpaymentCreditsCreated: data.overpaymentCreditsCreated ?? 0,
         playersFailed:             Array.isArray(data.playersFailed) ? data.playersFailed : [],
+        playersSkipped:            data.playersSkipped ?? 0,
       });
       await onGenerated();
     } catch (e: unknown) {
@@ -411,6 +440,16 @@ export default function GenerateInstallmentsModal({
         ) : result ? (
           <div className={styles.successState}>
             <p>✓ Dues set for {result.playersProcessed} {result.playersProcessed === 1 ? 'player' : 'players'}.</p>
+            {/* The kept arrangements, confirmed back. A coach who chose to protect three families
+                needs to be told it happened — "dues set for 12 players" on a 15-player roster
+                otherwise reads as three failures. */}
+            {result.playersSkipped > 0 && (
+              <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
+                {result.playersSkipped === 1
+                  ? 'One player kept the schedule you set by hand — nothing of theirs changed.'
+                  : `${result.playersSkipped} players kept the schedules you set by hand — nothing of theirs changed.`}
+              </p>
+            )}
             {/* Money kept across a replace must be said out loud (mig 232) — a coach who just
                 rewrote the season's dues needs to hear that the dollars already collected came
                 along, and where any excess went. */}
@@ -440,9 +479,16 @@ export default function GenerateInstallmentsModal({
               ? <Link href={duesHref} className={shared.btnPrimary} style={{ marginTop: '1rem' }}>View Player Dues →</Link>
               : <button type="button" className={shared.btnPrimary} style={{ marginTop: '1rem' }} onClick={onClose}>Done</button>}
           </div>
-        ) : confirmReplace ? (
+        ) : replaceFacts ? (
           /* The server said dues already exist. This is the coach's decision, asked once, with
-             their form still intact behind it — Back returns to it unchanged. */
+             their form still intact behind it — Back returns to it unchanged.
+
+             ⚠ THE COPY USED TO BE REASSURING AND INCOMPLETE. "Recorded payments are kept" is
+             true and stayed, but it was the ONLY consequence named — so the screen read as
+             "nothing of value is at risk" while the run was about to flatten every per-player
+             arrangement on the roster: a hardship plan, a deposit-then-balance schedule, a
+             mid-season joiner's prorated dates. Money was never the thing at risk here.
+             Now the screen names what is, by name, and offers to keep it. */
           <div className={styles.successState}>
             <p style={{ fontWeight: 700 }}>This roster already has dues</p>
             <p className={styles.muted} style={{ marginTop: '0.4rem' }}>
@@ -450,15 +496,65 @@ export default function GenerateInstallmentsModal({
               Recorded payments are kept — money already collected counts toward the new schedule, and anything
               beyond a player&apos;s new total becomes an overpayment credit.
             </p>
+            {/* Due dates families may already have been told. Stated whenever they move, because
+                the reminder emails will start quoting the new ones without further ceremony. */}
+            {replaceFacts.playersWithDateChange > 0 && (
+              <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
+                <strong>Due dates change</strong> for {replaceFacts.playersWithDateChange === 1
+                  ? 'one player'
+                  : `${replaceFacts.playersWithDateChange} players`}. Reminder emails will quote the new dates.
+              </p>
+            )}
+            {replaceFacts.handSetPlayers.length > 0 && (
+              <div className={styles.replaceHandSet}>
+                <p style={{ fontWeight: 700, margin: 0 }}>
+                  {replaceFacts.handSetPlayers.length === 1
+                    ? 'One player has a schedule you set by hand'
+                    : `${replaceFacts.handSetPlayers.length} players have a schedule you set by hand`}
+                </p>
+                <p style={{ margin: '0.3rem 0 0' }}>
+                  {replaceFacts.handSetPlayers.map(p => p.name).join(', ')}
+                </p>
+                <p className={styles.muted} style={{ margin: '0.35rem 0 0' }}>
+                  Applying to everyone gives them the same schedule as the rest of the roster.
+                </p>
+              </div>
+            )}
             {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
             {generateError && <p className={styles.errorText} style={{ marginTop: '0.6rem' }}>{generateError}</p>}
             <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => { setConfirmReplace(false); setGenerateError(''); }}>
+              <button type="button" className={shared.btnGhost} onClick={() => { setReplaceFacts(null); setGenerateError(''); }}>
                 Back
               </button>
-              <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(true)} disabled={generating}>
-                {generating ? 'Replacing…' : 'Replace the dues schedule'}
-              </button>
+              {/* ⚠ KEEPING THE HAND-SET SCHEDULES IS THE PRIMARY, and "everyone" the quieter
+                  button. The destructive answer is still one click away for the coach who means
+                  it — it is simply no longer the only one, and no longer the default. */}
+              {replaceFacts.handSetPlayers.length > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    className={shared.btnSecondary}
+                    onClick={() => handleGenerate(true)}
+                    disabled={generating}
+                  >
+                    {generating ? 'Working…' : 'Apply to everyone'}
+                  </button>
+                  <button
+                    type="button"
+                    className={shared.btnPrimary}
+                    onClick={() => handleGenerate(true, replaceFacts.handSetPlayers.map(p => p.id))}
+                    disabled={generating}
+                  >
+                    {generating
+                      ? 'Working…'
+                      : `Keep the ${replaceFacts.handSetPlayers.length} I set by hand`}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(true)} disabled={generating}>
+                  {generating ? 'Replacing…' : 'Replace the dues schedule'}
+                </button>
+              )}
             </div>
           </div>
         ) : blocker ? (
@@ -717,7 +813,7 @@ export default function GenerateInstallmentsModal({
                 <div className={shared.modalFooter}>
                   <button type="button" className={shared.btnGhost} onClick={() => invalidatePreview()}>Back</button>
                   {/* Never sends replace. If dues already exist the server says so and the coach
-                      is asked — see `confirmReplace`. An onClick of `handleGenerate` alone would
+                      is asked — see `replaceFacts`. An onClick of `handleGenerate` alone would
                       pass React's event object as the `replace` argument, which is truthy. */}
                   <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(false)} disabled={generating}>
                     {generating

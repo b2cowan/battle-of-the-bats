@@ -73,6 +73,7 @@ let liveYearId = '';
 /** The CLOSED season — the archive under test. */
 let pastYearId = '';
 let pastPlayerId = '';
+let pastFundraiserId = '';
 let revokedCoachRowId = '';
 
 const LIVE_YEAR = new Date().getFullYear() + 1;
@@ -88,6 +89,13 @@ async function cleanup() {
     const { data: years } = await admin.from('rep_program_years').select('id').eq('team_id', t.id);
     for (const y of years ?? []) {
       await admin.from('rep_team_events').delete().eq('program_year_id', y.id);
+      // ⚠ Entries, then fundraisers, then players — an entry references BOTH, so deleting the
+      // roster first leaves a row pointing at a player who is gone and the year delete below
+      // fails silently, which surfaces later as the afterAll "teams left behind" assertion
+      // rather than as anything to do with fundraisers.
+      const { data: frs } = await admin.from('rep_fundraisers').select('id').eq('program_year_id', y.id);
+      for (const f of frs ?? []) await admin.from('rep_fundraiser_entries').delete().eq('fundraiser_id', f.id);
+      await admin.from('rep_fundraisers').delete().eq('program_year_id', y.id);
       await admin.from('rep_roster_players').delete().eq('program_year_id', y.id);
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
     }
@@ -190,6 +198,39 @@ test.beforeAll(async () => {
   }).select('id').single();
   if (playerErr) throw playerErr;
   pastPlayerId = player!.id;
+
+  /**
+   * ── The WRONG-SEASON-ROSTER fixture (2026-08-14) ──
+   *
+   * A player who exists only in the LIVE season, and a fundraiser that exists only in the PAST
+   * one. Together they are a trap that a single boolean cannot pass by accident: a screen showing
+   * the archived drive must name the archived player and must NOT name the live one.
+   *
+   * ⚠ This is the shape of the defect the fundraiser drill-in was built to close. The Fundraisers
+   * LIST had served `?year=` since Chunk F, so the archive listed the right drives — but opening
+   * one landed on a page with no season rail, which paired the 2025 fundraiser with the 2026
+   * roster. Every other assertion in this file would have stayed green through that, because the
+   * page really did render and really did lack write controls. Only the NAMES gave it away.
+   */
+  const { error: liveePlayerErr } = await admin.from('rep_roster_players').insert({
+    program_year_id: liveYearId, team_id: repTeamId, org_id: orgId,
+    player_first_name: `${MARK}Live`, player_last_name: 'Player',
+    status: 'active', source: 'admin_manual',
+  });
+  if (liveePlayerErr) throw liveePlayerErr;
+
+  const { data: pastFr, error: frErr } = await admin.from('rep_fundraisers').insert({
+    org_id: orgId, team_id: repTeamId, program_year_id: pastYearId,
+    name: `${MARK} Archived drive`, player_rebate_percent: 40, is_active: false,
+  }).select('id').single();
+  if (frErr) throw frErr;
+  pastFundraiserId = pastFr!.id;
+
+  const { error: feErr } = await admin.from('rep_fundraiser_entries').insert({
+    fundraiser_id: pastFundraiserId, org_id: orgId, team_id: repTeamId, player_id: pastPlayerId,
+    amount_raised: 250, rebate_percent: 40, rebate_amount: 100,
+  });
+  if (feErr) throw feErr;
 });
 
 test.afterAll(async () => {
@@ -437,6 +478,34 @@ test.describe('no write control survives anywhere in the archive', () => {
       }
     });
   }
+
+  /**
+   * ⚠ THE ROSTER IS THE ASSERTION HERE, not the absence of buttons.
+   *
+   * Opening a fundraiser used to leave the hub for a page with no season rail, which showed the
+   * archived drive beside the LIVE roster — wrong data, presented confidently, on a screen that
+   * otherwise passed every read-only check in this file. So this test names names: the player who
+   * existed only that year must be listed, and the one who exists only now must not.
+   */
+  test('a fundraiser opened from the archived list shows THAT season’s roster', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    await open(page, `${base()}/accounting?section=fundraisers&year=${pastYearId}`);
+    await main(page).getByRole('link', { name: new RegExp(`${MARK} Archived drive`) }).first().click();
+
+    await expect(main(page).getByText(/Complete/).first(),
+      'the drill-in must stay in the archived season — the hub above it carries the chip')
+      .toBeVisible({ timeout: 30_000 });
+    await expect(main(page).getByText(`${MARK}Archived Player`),
+      'the archived season’s own player must be on the leaderboard').toBeVisible();
+    await expect(main(page).getByText(`${MARK}Live Player`),
+      'a player who joined AFTER this season ended is being listed against it — the drill-in '
+      + 'resolved the live year').toHaveCount(0);
+
+    for (const name of [/^Settings$/i, /log amount/i, /edit amount/i]) {
+      await expect(main(page).getByRole('button', { name }),
+        'a finished season’s fundraiser is offering a write control').toHaveCount(0);
+    }
+  });
 
   test('a player opened from the archived roster is a record, not a dead end', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);

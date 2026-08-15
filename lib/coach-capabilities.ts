@@ -301,6 +301,18 @@ export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
  * mean** — a GET wants `canViewSchedule`, anything that mutates wants this.
  */
 export const canManageSchedule = (c: CoachCapabilities) => c.scheduleManage;
+/**
+ * Configure the TEAM itself — its division, its season, its lineup rules, its book sharing, its
+ * link to a club. The five original Team settings groups.
+ *
+ * ⚠ Deliberately NOT the whole Settings page. When the two dues settings moved onto that page
+ * (2026-08-14) its nav door had to widen to money editors, or a head coach's "team treasurer"
+ * would have lost both controls entirely. The door is therefore the UNION of this and money
+ * write, while each group on the page gates on the grant that owns it — so a money-only coach
+ * finds Money and nothing else. Keep those two ideas separate: widening the door must never
+ * widen this.
+ */
+export const canConfigureTeam = (c: CoachCapabilities) => c.isHeadCoach || c.scheduleManage;
 /** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
 export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
 /**

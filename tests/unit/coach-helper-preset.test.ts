@@ -133,6 +133,43 @@ describe('a helper meets exactly one door in the portal', () => {
     assert.equal(isCoachNavItemVisible(caps, 'Tryouts'), false); // ungranted by default, unchanged
   });
 
+  /**
+   * ⚠ The treasurer. Team settings gained a Money group when the two dues settings (automatic
+   * reminders, how credits reduce) moved off the dues page — and money is a SEPARATE grant from
+   * managing the schedule, which is what used to decide this door. A head coach who set an
+   * assistant up as the team's treasurer and nothing else would otherwise have watched both
+   * controls vanish from the product the day they moved.
+   *
+   * The door opens; the PAGE stays narrow — it renders only the groups the coach's own grants
+   * own, so this persona finds Money and nothing else. That half is asserted by the page, not
+   * here; what this locks is that the door exists at all.
+   */
+  it('opens Settings for a money-only treasurer, and nothing else new', () => {
+    const treasurer = assistant(sanitizeAssistantGrants({
+      money: 'write', scheduleManage: false, schedule: false, attendance: false,
+      lineups: false, staffChat: false, documents: 'off', rosterPii: false,
+      notes: false, announcementsSend: false, tryouts: false,
+    }));
+    assert.equal(isCoachNavItemVisible(treasurer, 'Settings'), true);
+    assert.equal(isCoachNavItemVisible(treasurer, 'Money'), true);
+    // Tournaments shared this gate verbatim until now and must NOT have come along.
+    assert.equal(isCoachNavItemVisible(treasurer, 'Tournaments'), false);
+    assert.equal(isCoachNavItemVisible(treasurer, 'Staff'), false);
+    assert.equal(isCoachNavItemVisible(treasurer, 'Schedule'), false);
+  });
+
+  it('keeps Settings shut for a read-only money coach', () => {
+    // Settings is where things CHANGE. A coach who may only read the books has nothing to do
+    // there, so the door that opened for the treasurer stays closed for them.
+    const bookkeeper = assistant(sanitizeAssistantGrants({
+      money: 'read', scheduleManage: false, schedule: false, attendance: false,
+      lineups: false, staffChat: false, documents: 'off', rosterPii: false,
+      notes: false, announcementsSend: false, tryouts: false,
+    }));
+    assert.equal(isCoachNavItemVisible(bookkeeper, 'Money'), true);
+    assert.equal(isCoachNavItemVisible(bookkeeper, 'Settings'), false);
+  });
+
   it('leaves a head coach untouched', () => {
     const caps = head();
     for (const door of ['Schedule', ...DOORS]) {

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, ArrowLeft, Upload, AlertTriangle } from 'lucide-react';
+import { BarChart3, Plus, X, ChevronDown, ChevronRight, ArrowLeft, Upload, AlertTriangle } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -10,6 +10,7 @@ import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
@@ -19,6 +20,7 @@ import { fmtCompact } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
 import {
   computeBudgetTotals, LINE_KIND_LABEL, LINE_KIND_HINT, LINE_KIND_SECTION, BUDGET_LINE_KINDS,
+  isFundingKind, normalizeBudgetLineKind, FUNDING_LINE_KINDS,
   type BudgetLineKind,
 } from '@/lib/coach-budget-totals';
 import {
@@ -127,7 +129,7 @@ function fmtCell(n: number | undefined): string {
  *  direction, and a minus sign made readers re-check arithmetic. The VIEW stays signed — the
  *  grid's totals row is a real subtraction — so the abs happens at the last moment, per cell. */
 function fundingCell(kind: BudgetLineKind, n: number | undefined): number | undefined {
-  return kind === 'funding' && n != null ? Math.abs(n) : n;
+  return isFundingKind(kind) && n != null ? Math.abs(n) : n;
 }
 
 /**
@@ -163,7 +165,7 @@ function BudgetLineRow({
           propagation so expanding a split line never also opens its form. Delete lives in the
           edit modal now, behind the same confirm as always — one door, full capability inside. */}
       <div
-        className={`${shared.ledgerRow} ${canWrite ? styles.rowTappable : ''}`}
+        className={`${shared.ledgerRow} ${canWrite ? shared.rowTappable : ''}`}
         // Selecting text to copy an amount must not open the form — a click that ends a
         // selection is a copy gesture, not a tap (review finding).
         onClick={canWrite ? () => { if (window.getSelection()?.toString()) return; onEdit(); } : undefined}
@@ -195,16 +197,18 @@ function BudgetLineRow({
             is fixed (.linesCanWrite) so the money column holds still; read-only rows have no
             button and the auto track collapses uniformly instead. */}
         <span className={shared.ledgerActions}>
+          {/* The shared row-edit control (2026-08-15). This screen had the portal's only copy of
+              the pencil; the component now carries the markup — crucially the required accessible
+              name, which is what a shared CLASS could never enforce. `onPhone="clip"` keeps this
+              screen's own ruling: a ledger grid doesn't stack into cards, so the pencil leaves the
+              layout at ≤640 and the row is the door. */}
           {canWrite && (
-            <button
-              type="button"
-              className={`${styles.actionBtn} ${styles.editBtn}`}
+            <RowEditButton
+              label={`Edit ${line.description}`}
               title="Edit line"
-              aria-label={`Edit ${line.description}`}
-              onClick={e => { e.stopPropagation(); onEdit(); }}
-            >
-              <Pencil size={13} />
-            </button>
+              onClick={onEdit}
+              onPhone="clip"
+            />
           )}
         </span>
       </div>
@@ -298,7 +302,7 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
               const open = !closed.has(group.key);
               return (
               <Fragment key={group.key}>
-                <tr className={`${shared.moneyGridCat} ${group.lineKind === 'funding' ? styles.periodGridFunding : ''}`}>
+                <tr className={`${shared.moneyGridCat} ${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}`}>
                   <th scope="rowgroup">
                     <button
                       type="button"
@@ -319,7 +323,7 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
                   <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
                 </tr>
                 {open && group.rows.map(row => (
-                  <tr key={row.id} className={group.lineKind === 'funding' ? styles.periodGridFunding : ''}>
+                  <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
                     <th scope="row" className={shared.moneyGridLead}>{row.description}</th>
                     {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
                     <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
@@ -333,7 +337,7 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
                 {/* NOT "Player installments" (review finding): this grid spreads the PLAN —
                     itemized costs less fundraising, estimate-blind — and borrowing the card's
                     label would put one name on two different numbers. */}
-                {view.groups.some(g => g.lineKind === 'funding') ? 'Costs less fundraising' : 'Total planned budget'}
+                {view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less fundraising' : 'Total planned budget'}
               </th>
               {view.columns.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
               <td>{fmtCell(view.totals.total)}</td>
@@ -382,7 +386,7 @@ function formFromLine(
     categoryName: line.categoryName ?? '',
     itemName:     line.itemName    ?? line.description,
     totalAmount:  String(line.totalAmount),
-    lineKind:     line.lineKind === 'funding' ? 'funding' : 'cost',
+    lineKind:     normalizeBudgetLineKind(line.lineKind),
     notes:        line.notes ?? '',
     usePeriods:   line.periods.length > 0,
     periodMode:   'amount', // stored periods are always dollars
@@ -466,7 +470,10 @@ export function BudgetPlanPanel({
      collapse it too — one Set, two meanings. Caught in review 2026-08-13. */
   const [closedSections, setClosedSections] = useState<Set<string>>(new Set());
   const catKey = (name: string) => `cat:${name}`;
-  const FUNDING_KEY = 'kind:funding';
+  // One key per money-in KIND (`kind:funding`, `kind:sponsorship`) — built at the render site now
+  // that there are two sections. The `kind:` prefix is what keeps a cost category literally named
+  // "Expected funding" from sharing a key with the section and collapsing it too (review
+  // 2026-08-13, and the reason the prefix exists at all).
   const isClosed = (key: string) => closedSections.has(key);
   const toggleSectionClosed = (key: string) => setClosedSections(prev => toggleKey(prev, key));
 
@@ -1030,7 +1037,7 @@ export function BudgetPlanPanel({
     // A funding line's description IS its name — no item-name fallback (review finding: a
     // legacy funding line's hidden item name silently stood in for a cleared field, saving
     // the old name instead of raising the error the asterisk promises).
-    const named = form.lineKind === 'funding'
+    const named = isFundingKind(form.lineKind)
       ? form.description.trim()
       : form.description.trim() || form.itemName.trim();
     if (!named) {
@@ -1097,7 +1104,7 @@ export function BudgetPlanPanel({
     }
 
     // Same rule as collectProblems: funding lines save the description alone.
-    const description = form.lineKind === 'funding'
+    const description = isFundingKind(form.lineKind)
       ? form.description.trim()
       : form.description.trim() || form.itemName.trim();
     const totalAmount = parseFloat(form.totalAmount);
@@ -1117,8 +1124,8 @@ export function BudgetPlanPanel({
           description,
           // Funding lines never store a category/item — including legacy ones saved before the
           // picker became cost-only, which shed theirs on the next edit.
-          categoryId:  form.lineKind === 'funding' ? null : form.categoryId || null,
-          itemId:      form.lineKind === 'funding' ? null : form.itemId,
+          categoryId:  isFundingKind(form.lineKind) ? null : form.categoryId || null,
+          itemId:      isFundingKind(form.lineKind) ? null : form.itemId,
           totalAmount,
           lineKind:    form.lineKind,
           notes:       form.notes.trim() || null,
@@ -1193,7 +1200,7 @@ export function BudgetPlanPanel({
   function groupLines(lines: RepBudgetLineWithPeriods[]) {
     const grouped: Map<string, RepBudgetLineWithPeriods[]> = new Map();
     for (const line of lines) {
-      if (line.lineKind === 'funding') continue;
+      if (isFundingKind(line.lineKind)) continue;
       const key = line.categoryName ?? 'Uncategorized';
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(line);
@@ -1206,7 +1213,7 @@ export function BudgetPlanPanel({
 
   const allLines    = plan?.lines ?? [];
   const groups      = groupLines(allLines);
-  const fundingLines = allLines.filter(l => l.lineKind === 'funding');
+  const fundingLines = allLines.filter(l => isFundingKind(l.lineKind));
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
   const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
@@ -1284,7 +1291,7 @@ export function BudgetPlanPanel({
         </Link>
       )}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={BarChart3}
         title="Season Budget Plan"
         season={page.season}
@@ -1648,40 +1655,51 @@ export function BudgetPlanPanel({
                   made the section total −$8,000 while the ladder said −$180 (owner catch,
                   2026-08-13); dues are the ANSWER to the plan, not an input, so they close the
                   list below instead. */}
-              {fundingLines.length > 0 && (
-                <div className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
-                  <button
-                    type="button"
-                    className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn}`}
-                    aria-expanded={!isClosed(FUNDING_KEY)}
-                    onClick={() => toggleSectionClosed(FUNDING_KEY)}
-                  >
-                    <span className={shared.ledgerCell}>
-                      <span className={shared.ledgerExpandSpacer}>
-                        {isClosed(FUNDING_KEY)
-                          ? <ChevronRight size={14} aria-hidden />
-                          : <ChevronDown size={14} aria-hidden />}
+              {/* ⚠ ONE SECTION PER MONEY-IN KIND (2026-08-15). Fundraising and sponsorship count
+                  identically — both subtract — but a single merged section could not answer the
+                  question the split was made for: "did our sponsorship hit the number?" Each
+                  section shows only what it holds, and a team using just one sees exactly what it
+                  saw before. */}
+              {FUNDING_LINE_KINDS.map(kind => {
+                const kindLines = fundingLines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
+                if (kindLines.length === 0) return null;
+                const sectionKey = `kind:${kind}`;
+                const sectionTotal = kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0);
+                return (
+                  <div key={kind} className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
+                    <button
+                      type="button"
+                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn}`}
+                      aria-expanded={!isClosed(sectionKey)}
+                      onClick={() => toggleSectionClosed(sectionKey)}
+                    >
+                      <span className={shared.ledgerCell}>
+                        <span className={shared.ledgerExpandSpacer}>
+                          {isClosed(sectionKey)
+                            ? <ChevronRight size={14} aria-hidden />
+                            : <ChevronDown size={14} aria-hidden />}
+                        </span>
+                        <span className={shared.ledgerName}>{LINE_KIND_SECTION[kind]}</span>
                       </span>
-                      <span className={shared.ledgerName}>{LINE_KIND_SECTION.funding}</span>
-                    </span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
-                      {fmt(totals.expectedFunding)}
-                    </span>
-                    <span />
-                  </button>
-                  {!isClosed(FUNDING_KEY) && fundingLines.map(line => (
-                    <BudgetLineRow
-                      key={line.id}
-                      line={line}
-                      funding
-                      expanded={expandedLines.has(line.id)}
-                      canWrite={moneyCanWrite}
-                      onToggle={() => toggleLineExpanded(line.id)}
-                      onEdit={() => openEdit(line)}
-                    />
-                  ))}
-                </div>
-              )}
+                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
+                        {fmt(Math.round(sectionTotal * 100) / 100)}
+                      </span>
+                      <span />
+                    </button>
+                    {!isClosed(sectionKey) && kindLines.map(line => (
+                      <BudgetLineRow
+                        key={line.id}
+                        line={line}
+                        funding
+                        expanded={expandedLines.has(line.id)}
+                        canWrite={moneyCanWrite}
+                        onToggle={() => toggleLineExpanded(line.id)}
+                        onEdit={() => openEdit(line)}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
 
               {/* Player installments — the players' side of the plan, once schedules exist. Its
                   own quiet frame between the fundraising inputs and the close: the figure is the
@@ -1792,7 +1810,7 @@ export function BudgetPlanPanel({
                     onClick={() => setForm(f => (f.lineKind === kind ? f : {
                       ...f,
                       lineKind: kind,
-                      ...(kind === 'funding'
+                      ...(isFundingKind(kind)
                         ? { categoryId: '', itemId: null, categoryName: '', itemName: '' }
                         : {}),
                     }))}
@@ -1802,12 +1820,17 @@ export function BudgetPlanPanel({
                   </button>
                 ))}
               </div>
-              {form.lineKind === 'funding' && (
+              {isFundingKind(form.lineKind) && (
                 <p className={styles.kindHint}>
-                  Expected fundraising lowers what players are asked to pay — a campaign, a
-                  sponsor, a club grant. Enter what you expect the <strong>team</strong> to keep — if a
-                  campaign pays part of what a player raises back to that player, that already
-                  lowers their dues and shouldn&apos;t be counted here.
+                  {form.lineKind === 'sponsorship'
+                    ? <>Expected sponsorship lowers what players are asked to pay — a business sponsor,
+                        a grant, anything given directly rather than raised by selling. It is budgeted
+                        apart from fundraising so <strong>Budget vs. Actual</strong> can tell you whether
+                        each hit its number.</>
+                    : <>Expected fundraising lowers what players are asked to pay — a bottle drive, a
+                        chocolate sale, anything the team raises by selling. Enter what you expect the{' '}
+                        <strong>team</strong> to keep: if a campaign pays part of what a player raises back
+                        to that player, that already lowers their dues and shouldn&apos;t be counted here.</>}
                 </p>
               )}
             </div>
@@ -1850,7 +1873,7 @@ export function BudgetPlanPanel({
                 there (a cost line can fall back to its item name). */}
             <div className={styles.field}>
               <label className={styles.label} htmlFor={FOCUS_DESC}>
-                Description{form.lineKind === 'funding' && <> <span className={styles.labelRequired}>*</span></>}
+                Description{isFundingKind(form.lineKind) && <> <span className={styles.labelRequired}>*</span></>}
               </label>
               <input
                 id={FOCUS_DESC}
@@ -1858,7 +1881,7 @@ export function BudgetPlanPanel({
                 type="text"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value.slice(0, 200) }))}
-                placeholder={form.lineKind === 'funding'
+                placeholder={isFundingKind(form.lineKind)
                   ? 'e.g. Bottle drive, sponsorship, club grant'
                   : form.itemName || 'e.g. May tournament entry fee'}
                 maxLength={200}
@@ -2277,7 +2300,7 @@ export function BudgetPlanPanel({
           // COST lines only — the same rule the import's write path enforces. A sheet row has no
           // kind, so it is always a cost; offering an expected-funding line as a match target
           // would let "Fundraising" in a spreadsheet overwrite the money the team plans to raise.
-          existingLines={(plan?.lines ?? []).filter(l => l.lineKind !== 'funding').map(l => ({
+          existingLines={(plan?.lines ?? []).filter(l => !isFundingKind(l.lineKind)).map(l => ({
             id: l.id, description: l.description, categoryName: l.categoryName, totalAmount: l.totalAmount,
           }))}
           existingPayableDescriptions={[]}

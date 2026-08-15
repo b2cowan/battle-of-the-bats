@@ -10,7 +10,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { tournamentToday, addCalendarDays, daysBetweenDateStrings, calendarDaysBetween } from '../../lib/timezone.ts';
+import { tournamentToday, addCalendarDays, daysBetweenDateStrings, calendarDaysBetween, formatStoredDate } from '../../lib/timezone.ts';
 import { deriveCoachTournamentPhase } from '../../lib/coach-tournament-phase.ts';
 
 /** 2026-07-25, 8:30 PM in Toronto (EDT, UTC−4) — i.e. already 2026-07-26 in UTC. */
@@ -73,6 +73,41 @@ describe('coach tournament phase — must not end an event that is still running
       deriveCoachTournamentPhase({ ...base, today: tournamentToday(new Date('2026-07-26T14:00:00Z')) }),
       'result',
     );
+  });
+});
+
+/**
+ * A money table mixes the two stored shapes freely — `due_date` is a `date`, `paid_at` is a
+ * `timestamptz`, and they sit in the SAME ROW. Three screens hand-rolled a formatter for one
+ * shape and were handed the other (2026-08-14): the player ledger and the By-installment grid
+ * printed the literal words "Invalid Date" on every paid row, and the admin allocation schedule
+ * showed every due date a day early. One formatter, both shapes, or it happens a fourth time.
+ */
+describe('formatStoredDate — one formatter for a date column AND a timestamp column', () => {
+  it('prints a date-only column as its own calendar day, never a zone-shifted one', () => {
+    // `new Date('2026-05-15')` is UTC midnight — May 14 in Toronto. This must not do that.
+    assert.equal(formatStoredDate('2026-05-15'), 'May 15, 2026');
+    assert.equal(formatStoredDate('2026-01-01'), 'Jan 1, 2026');
+  });
+
+  it('prints a timestamp as the day it fell on IN THE ORG ZONE', () => {
+    // 8:30 PM May 15 in Toronto, stored as May 16 UTC. The coach recorded it on the 15th.
+    assert.equal(formatStoredDate('2026-05-16T00:30:00Z'), 'May 15, 2026');
+    assert.equal(formatStoredDate('2026-05-15T14:00:00Z'), 'May 15, 2026');
+  });
+
+  it('never emits "Invalid Date" — the defect that started this', () => {
+    for (const bad of ['', 'not-a-date', '2026-13-99xx']) {
+      const out = formatStoredDate(bad);
+      assert.equal(out, '—', `expected a dash for ${JSON.stringify(bad)}, got ${out}`);
+    }
+    assert.equal(formatStoredDate(null), '—');
+    assert.equal(formatStoredDate(undefined), '—');
+  });
+
+  it('drops the year on request, for a column whose heading already carries the season', () => {
+    assert.equal(formatStoredDate('2026-05-15', { withYear: false }), 'May 15');
+    assert.equal(formatStoredDate('2026-05-16T00:30:00Z', { withYear: false }), 'May 15');
   });
 });
 

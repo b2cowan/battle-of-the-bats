@@ -264,7 +264,10 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
         {capBits.length
           ? capBits.map((b, i) => <span key={i} style={{ display: 'inline-flex', gap: 10 }}>{i > 0 && <span className={styles.dot}>·</span>}{b}</span>)
           : <span className={styles.capsNone}>No lineup rules set</span>}
-        <Link href={`${base}/settings#lineup-rules-title`} className={styles.editlink}>Edit in Settings →</Link>
+        {/* ⚠ `?section=`, not a `#hash`. Settings groups are collapsed by default now — a hash
+            scrolls to a shut card and leaves the coach to guess which one to open, whereas the
+            query param opens it, scrolls to it and flashes it once. */}
+        <Link href={`${base}/settings?section=lineup-rules`} className={styles.editlink}>Edit in Settings →</Link>
       </div>
 
       {players.length === 0 ? (

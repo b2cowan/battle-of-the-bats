@@ -201,6 +201,27 @@
   --ledger-sub-cols: 1fr 100px 110px 110px 110px;
 }
 
+/* The one quiet sentence under a category whose lines cannot report their own spending.
+   ⚠ STICKY TO THE SCROLLER'S LEFT EDGE. It lives inside <CoachScrollX>, whose content is wider
+   than a phone; without this the explanation for the dashes would slide away exactly as the coach
+   swipes across to look at them. `fit-content` keeps it from widening the scroll area it sits in. */
+.lineActualsNote {
+  position: sticky;
+  left: 0;
+  width: fit-content;
+  max-width: min(100%, 34rem);
+  margin: 0;
+  padding: 0.4rem 0.9rem 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  /* ⚠ `--white-45`, NOT `--white-40` — the floor the ink ladder is capped at (see .summaryHint
+     above). `--home-dim` resolves inside the portal in both themes, so the fallback only fires
+     for an account with no theme attribute set at all — which is exactly the path nothing
+     measures. It was `--white-40` here for one draft: 3.8:1 on the card, under the 4.5:1 floor,
+     while `.chartNote` twelve rules up had already got this right (/review, 2026-08-15). */
+  color: var(--home-dim, var(--white-45));
+}
+
 .expandIcon {
   color: var(--white-40, rgba(255,255,255,0.4));
   display: flex;

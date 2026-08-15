@@ -107,6 +107,9 @@
      read-only money coach, whose every action cell is empty. The table keeps square rows
      (the <td> is always present); the card just doesn't draw the empty ones. */
   .tableAsCards td:empty { display: none; }
+  /* tdShrink stands down: a card is a full-width block, so a column sized to its content is a
+     column too narrow to hold it, and nowrap turns the overflow sideways instead of down. */
+  .tableAsCards td.tdShrink { width: auto; white-space: normal; }
   /* cardActionCell — the trailing action cell becomes a full-width button row at the
      foot of the card it belongs to. Its control is styled by the shared .block640 rule
      below (same treatment, one declaration block) so an author doesn't have to remember
@@ -2595,6 +2598,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .badgeArchived  { background: var(--white-05); color: var(--home-dim, rgba(255,255,255,0.3)); border: 1px solid var(--border-2); }
 .badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+/* A SPONSOR, in the Fundraising list. Blue against the drives' green, because the split the tab
+   exists to show is fundraiser-vs-sponsor and colour is the fastest way to read a mixed list.
+   ⚠ Its own class rather than reusing `.badgeTryout`, which happens to be the same blue: a
+   sponsor is not a tryout, and a rename of one must not silently restyle the other. */
+.badgeSponsor   { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 .badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
 .badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 .badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
@@ -2767,6 +2775,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   justify-content: center;
   width: 28px;
   height: 28px;
+  /* ⚠ Every sibling in these rows opts out of shrinking, so a flex item that does NOT is the one
+     thing that gives way when the row runs out of width — the button compresses below its tap size
+     instead of the long text beside it truncating, which is exactly backwards. The pencils carried
+     this inline; the trash buttons lost it when they moved onto this shared class (2026-08-15). */
+  flex-shrink: 0;
   padding: 0;
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 7px;
@@ -2787,6 +2800,17 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .rowIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
 
+/* The destructive twin of `.rowIconBtn`, for a trash beside a pencil (owner review 2026-08-15).
+   ⚠ THE DUES DRAWER'S DELETE BUTTONS HAD NO SHARED CLASS AT ALL — three copies of the same inline
+   style, sitting next to pencils that DID use `.rowIconBtn`, so the pair grew a border on one side
+   only and neither reached the coarse-pointer tap size. Compose: `${rowIconBtn} ${rowIconBtnDanger}`.
+   The size, border and 44px touch floor come from the base class; only the hue is overridden. */
+.rowIconBtnDanger:hover:not(:disabled) {
+  color: var(--danger-light, var(--danger));
+  border-color: var(--danger-light, var(--danger));
+  background: rgba(var(--danger-rgb), 0.10);
+}
+
 /* ── The date column (owner call 2026-08-14, player ledger) ─────────────────────────────────
    A date is ONE token and must never break into two lines. `.td` inherits normal wrapping, so
    in any table where a neighbouring column has long text — a credit source, an expense note —
@@ -2804,6 +2828,83 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
+}
+
+/* ── A column that takes only the width its content needs ─────────────────────────────────────
+   `width: 1%` is the shrink-to-fit trick: a table hands a 1% cell the minimum its content allows
+   and gives the slack to the flexible columns beside it. Used for a rank number and for the
+   trailing action cell of a list table.
+
+   ⚠ IT EXISTS AS A CLASS SO IT CAN STAND DOWN IN CARD MODE, which is the whole point and the
+   defect it was written for (rendered sweep, 2026-08-14). The fundraiser leaderboard set the same
+   two declarations INLINE, and an inline style outranks the `.tableAsCards td { width: auto }`
+   rule that reflows a table into cards — so at 361px the 1% width and the nowrap survived into the
+   card, and the action row spilled 43px sideways out of a card with no scroller to catch it. This
+   is the cascade-collision shape this file has been bitten by before: the losing rule was correct,
+   it just could never reach an inline declaration. Anything that must yield at a breakpoint has to
+   be a class. */
+.tdShrink { width: 1%; white-space: nowrap; }
+
+/* ── The kind picker: two cards, not a dropdown ──────────────────────────────────────────────
+   A fundraiser and a sponsor are different enough that each needs a sentence, and this is the one
+   choice on the form that CANNOT be changed afterwards (a drive's rows are players, a sponsor is a
+   single arrival — a switch has nothing sensible to do with what is already recorded). A select
+   would hide both facts behind a closed control. */
+.kindPick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.kindOption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+  background: var(--home-card, rgba(255, 255, 255, 0.03));
+  cursor: pointer;
+  /* The whole card is the target, so it clears the phone tap floor by construction rather than
+     by a min-height that would have to be remembered. */
+  min-height: var(--tap-min, 44px);
+}
+.kindOptionOn {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.06));
+  box-shadow: inset 0 0 0 1px var(--home-olive, var(--logic-lime));
+}
+.kindOptionName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--white-90);
+}
+.kindOptionOn .kindOptionName { color: var(--home-olive, var(--logic-lime)); }
+.kindOptionHint { font-size: 0.74rem; color: var(--white-45); line-height: 1.35; }
+@media (max-width: 640px) { .kindPick { grid-template-columns: 1fr; } }
+
+/* ── A number with a unit switch ($ | %) ─────────────────────────────────────────────────────
+   A sponsor's family credit is entered either way (owner ruling 2026-08-15) — a coach who agreed
+   "half" and one who agreed "$125" are both right. The field stores DOLLARS whichever was typed;
+   the caption under it states the other in plain words, because nobody should have to trust a
+   percentage they cannot see the dollars of. */
+.unitField { display: flex; align-items: stretch; }
+.unitField > .input { border-radius: var(--radius-sm, 7px) 0 0 var(--radius-sm, 7px); flex: 1; min-width: 0; }
+.unitPick { display: inline-flex; }
+.unitBtn {
+  min-width: 2.4rem;
+  padding: 0 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--white-45);
+  background: var(--home-card, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  border-left: none;
+  cursor: pointer;
+}
+.unitBtn:last-child { border-radius: 0 var(--radius-sm, 7px) var(--radius-sm, 7px) 0; }
+.unitBtnOn {
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.08));
+  color: var(--home-olive, var(--logic-lime));
 }
 
 /* ── The totals row (owner ruling 2026-08-13, "Option C" from mockup artifact `c19d8500`) ────
@@ -3554,6 +3655,23 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   margin: 0;
 }
 
+/* modalSubtitle — one line under a modal's title saying WHAT THIS FORM RECORDS, for the pairs of
+   modals a coach chooses between rather than arrives at (Add Expense vs Add Payable, owner review
+   2026-08-15 Q7). The distinction between the two is explained on the empty states and in help,
+   but a coach with a full list never sees either; the subtitle is the only placement that shows up
+   on every entry forever, at the exact moment the wrong button is still recoverable.
+   Deliberately NOT a general-purpose modal description slot: if a modal needs a paragraph, that is
+   body copy inside the form, not header chrome. */
+.modalHeaderStacked { align-items: flex-start; }
+.modalSubtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--home-dim, var(--white-50));
+  max-width: 44ch;
+}
+
 .modalCloseBtn {
   background: none;
   border: none;
@@ -3622,8 +3740,41 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    behind the sticky action bar. Scoped modifier — other modals keep their default layout. */
 .modalScrollBody { display: flex; flex-direction: column; overflow: hidden; }
 .modalScrollBody > .modalHeader { flex-shrink: 0; }
-.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+/* The scroll body ends 0.75rem BELOW its last field. Without it the final control's bottom border
+   lands exactly on the clip line at max scroll, which reads as "tucked under the action bar" even
+   though the footer is static and nothing overlaps — and it shaves the focus ring off the last
+   input. A scroll container needs a visible end, not just a reachable one. */
+.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
 .modalScrollBody > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
+/* ⚠ A MODAL MAY KEEP ITS <form>, and until 2026-08-15 this primitive silently did not cover that
+   shape. The rules above are direct-child selectors, so a modal whose fields sit inside a
+   `<form onSubmit=…>` — which is what buys Enter-to-submit and native `required` validation —
+   matched none of them: the footer stayed `position: sticky` with its -1.5rem bottom bleed, and
+   the last ~24px of the form could never be scrolled clear of it. The owner hit exactly that on
+   New Fundraiser, where the casualty was the date row.
+
+   The fix generalizes the primitive rather than asking those modals to drop their form (which is
+   how the already-fixed ones avoided it, at the cost of the form's own behaviour). The <form>
+   becomes the flex column, and its children take the same treatment one level down. */
+/* ⚠ NO `overflow: hidden` ON THE FORM, and that omission is the whole fix. The footer keeps a
+   -1.5rem BOTTOM margin so its background bleeds through the modal's own 1.5rem padding and
+   reaches the modal's edge. A clipping context on this wrapper — which has no padding of its own
+   to bleed into — cut that 24px straight off, taking the bottom of the Cancel/Create buttons with
+   it (found on screen 2026-08-15, minutes after the first fix). The modal above is still the
+   clipping context, and there the negative margin lands the footer exactly on the border. The
+   scroll belongs to `.formGrid` below, never to this wrapper; `min-height: 0` is what lets it
+   shrink so that scroll actually engages. */
+.modalScrollBody > form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.modalScrollBody > form > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
+
+/* ⚠ NO FADE CUE HERE, AND THAT WAS A DELIBERATE REVERSAL. A mask fading the scroller's last few
+   pixels was added to make a clipped field read as "more below" rather than as damage — then
+   removed once the real cause was found and fixed (the sponsor form was simply too tall and now
+   fits without scrolling at all). The mask could not tell a scrolling form from a short one, so it
+   would have dimmed the last field of every modal in the portal to solve a problem none of them
+   had. If a genuinely unavoidable tall form appears later, the cue belongs on that form's
+   container, conditional on it actually overflowing — not on the shared primitive. */
+.modalScrollBody > form > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 
 /* Recurring-series save scope chooser — replaces the footer when editing a repeating event. */
 .editScope {
@@ -3940,6 +4091,13 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 
 .formHint { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
+/* formHintConsequence — a hint that STATES WHAT THE FORM IS ABOUT TO DO rather than labelling a
+   field ("no cash leaves the team — the team owes this family instead"). It is a sentence or more,
+   usually with the outcome bolded, and the coach has to actually read it, so it takes one step more
+   size and ink than the microcopy `.formHint` is sized for. Compose: `${formHint} ${formHintConsequence}`.
+   Spacing comes from `.field`'s own 0.35rem gap — never give one of these its own padding. */
+.formHintConsequence { font-size: 0.78rem; color: var(--white-55); }
+.formHintConsequence strong { color: var(--white-90); }
 .formCheck {
   display: inline-flex;
   align-items: center;
@@ -4347,6 +4505,16 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .viewToggleBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.06)); color: var(--home-ink, rgba(255,255,255,0.8)); }
 .viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
+/* ⚠ THE PHONE TAP FLOOR, WHICH THIS CONTROL NEVER HAD (2026-08-15). At 27px these were the
+   smallest tap targets in Money, and the baseline entries covering them carried a reason that
+   contradicted itself — "the phone breakpoint is where the 44px floor is enforced, and these clear
+   it there", recorded against findings AT the phone breakpoint, where they plainly did not. Found
+   when the new Fundraising kind filter inherited the same 27px and the rendered sweep flagged it.
+   Desktop keeps the portal's grandfathered compact heights; ≤640 is where a finger is involved and
+   the floor is real. Fixed on the shared class, so every view toggle in the portal gains it. */
+@media (max-width: 640px) {
+  .viewToggleBtn { min-height: var(--tap-min, 44px); }
+}
 
 .addEventWrap { position: relative; }
 .addEventMenu {
@@ -6193,6 +6361,30 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   gap: 0.5rem;
   margin-left: auto;
 }
+
+/* ⚠ A SEGMENTED TOGGLE PLACED INTO THIS TOOLBAR MUST BE ALLOWED TO SHRINK. `.viewToggle` is a
+   nowrap flex row with `overflow: hidden`. As a standalone BLOCK it was capped at its parent's
+   width and simply clipped whatever did not fit; the moment it became a flex ITEM of
+   `.panelToolbar` (the 2026-08-15 sub-tabs+actions merge) it started sizing to its CONTENT instead
+   — flex items default to `min-width: auto` — and three sub-tab labels are wider than a 361px
+   phone. `min-width: 0` lets it shrink back into the row; `flex-wrap: wrap` is what stops that
+   shrinking from re-clipping the last tab out of reach, which is what the old block was quietly
+   doing.
+
+   ⚠ REMOVING THIS CLASS REPRODUCES 30px OF SIDEWAYS PAGE SCROLL on coach-expenses at 361 —
+   verified both ways on a freshly restarted dev server. The rendered check accepts sideways scroll
+   on no screen and had never recorded it before this row existed.
+
+   ⚠⚠ AND THE MEASUREMENT ONLY MEANS THAT ON A HEALTHY SERVER. An earlier attempt to find the cause
+   rendered the screen with this whole toolbar `display: none` and still saw the overflow, which
+   "proved" the cause lay elsewhere. It proved nothing: that run followed a hard-killed dev-server
+   child, so the browser was being served a stale compiled bundle and the experiment never tested
+   the code it appeared to. Restarting the server reversed the result. If a layout finding here ever
+   contradicts the source you are reading, restart the server before you believe it. */
+.panelToolbarTabs {
+  min-width: 0;
+  flex-wrap: wrap;
+}
 /* The portal's one tap floor, at the phone breakpoint only — matching the page header's rule
    rather than inventing a second convention. Desktop keeps the portal's compact control
    heights, which are a grandfathered portal-wide decision this pass does not reopen. */
@@ -6346,6 +6538,280 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 
 /* Filter chip row shared by the expense list + Budget vs. Actual (money tags). */
+/* ── The record form: kind switch, locked figures, delete confirm (owner review 2026-08-15) ───
+   All three belong to the ONE form behind Add Expense and Add Payable (Q4 + Q8). */
+
+/* The Expense / Payable choice, at the top of the form when ADDING only. Segmented rather than a
+   <select> because both options have to be READ to be chosen between — the sub-line under each
+   name is the whole reason this replaced two buttons. */
+.kindSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  background: var(--home-fill, var(--white-5));
+  border-radius: var(--home-radius, 12px);
+}
+/* ⚠ NAMED `kindSwitch*`, NOT `kind*` — THE SHORTER NAMES WERE ALREADY TAKEN, ~3,600 LINES UP.
+   `.kindOption` / `.kindOptionOn` belong to the fundraiser/sponsor picker (`.kindPick`, above).
+   CSS Modules scope per FILE, not per block: two rules with the same class name in one module
+   compile to the SAME generated class, so the two pickers' declarations would have merged and the
+   later one silently won every property they shared — border, background, padding, transition.
+   Neither feature would have looked broken in isolation; both would have been subtly wrong.
+   Caught by the reuse pass, 2026-08-15. See memory/reference_cascade_collisions_coach_budget.md —
+   the same class of defect, where an outranked rule reads as a no-op rather than as a conflict. */
+.kindSwitchOption {
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--home-radius-sm, 9px);
+  background: none;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+.kindSwitchOption:hover { background: var(--home-card, var(--white-5)); }
+.kindSwitchOptionOn {
+  background: var(--home-card, var(--white-8));
+  border-color: var(--home-olive, rgba(var(--logic-lime-rgb), 0.5));
+}
+.kindName {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--home-dim, var(--white-50));
+}
+.kindSwitchOptionOn .kindName { color: var(--home-ink, var(--white-90)); }
+.kindSub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--home-dim, var(--white-40));
+}
+.kindEgs {
+  margin: 0.45rem 0.15rem 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--home-dim, var(--white-40));
+}
+
+/* ⚠ A LOCKED FIGURE SHOWS ITS VALUE AND ITS REASON — it is never a greyed-out input or an absence.
+   A coach has to be able to read the amount they cannot change; hiding it turns "why can't I edit
+   this?" into a support question, and a disabled <input> answers the question no better. The way
+   out (delete and re-enter) is stated beside it in a `.formHintConsequence`. */
+.lockedField {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px dashed var(--home-line-strong, var(--border-2));
+  background: var(--home-fill, var(--white-5));
+  border-radius: var(--home-radius-sm, 9px);
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--home-ink-soft, var(--white-70));
+  min-height: 2.1rem;
+}
+.lockedTag {
+  margin-left: auto;
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--home-dim, var(--white-45));
+  flex-shrink: 0;
+}
+
+/* The delete confirmation, inline in the form rather than a second stacked dialog — a sheet on top
+   of a sheet is the phone's worst modal shape, and the record being deleted is already on screen. */
+.dangerConfirm {
+  margin-top: 0.9rem;
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+  background: rgba(var(--danger-rgb), 0.07);
+  border-radius: var(--home-radius, 12px);
+  padding: 0.85rem 1rem;
+}
+.dangerConfirmTitle {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--home-ink, var(--white-90));
+}
+.dangerConfirmBody {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft, var(--white-70));
+}
+.dangerConfirmBody strong { color: var(--home-ink, var(--white-90)); }
+.dangerConfirmActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.7rem;
+}
+
+/* Delete in the form footer, pushed away from Save so the two are never adjacent (Budget Plan's
+   pattern — the quiet danger link opposite the primary action). */
+.deleteRecordBtn {
+  margin-right: auto;
+  background: none;
+  border: none;
+  padding: 0.3rem 0;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--danger-light, var(--danger));
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.deleteRecordBtn:hover { text-decoration: underline; }
+.deleteRecordBtn:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+
+/* A field inside `.formSectionGrid` that must span both of its columns — a locked half's summary
+   line, which reads as one sentence and would break oddly in a half-width cell. */
+.formSectionFull { grid-column: 1 / -1; }
+
+/* ── The row-edit convention (owner ruling 2026-08-15) ────────────────────────────────────────
+   ONE affordance means "open this record to edit it", portal-wide: a pencil in the trailing cell,
+   with the row itself as a pointer/touch shortcut on top of it.
+
+   The survey that produced this ruling found FIVE different idioms across the Money hub — pencil,
+   bare chevron, chevron+label, plain text button, and icon-only pencil beside an unstyled trash —
+   and no recorded rule to pick between them. The three that survive, by what the action DOES:
+     · open this record to edit   → `.rowEditBtn` + `.rowTappable` (this block)
+     · show more of this row here → a chevron with aria-expanded (unchanged, e.g. Payment details)
+     · do one specific thing now  → a labelled text button (unchanged, e.g. Mark Paid)
+   A "⋯" overflow menu is NOT one of them: no Money surface has ever used one, and DELETE lives in
+   the edit form's footer (the pattern Budget Plan already set), so a row never needs a second item.
+
+   Lifted from budget.module.css, which had the only copy. Read that file's `.editBtn` history
+   before changing the ≤640 behaviour — it is a deliberate clip-not-hide so the control keeps an
+   accessible name on a phone where only the row is visibly tappable. */
+.rowTappable { cursor: pointer; }
+.rowEditBtn {
+  background: none;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.1));
+  border-radius: 6px;
+  padding: 0.28rem 0.4rem;
+  color: var(--home-dim, var(--white-40));
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.12s, border-color 0.12s;
+}
+.rowEditBtn:hover {
+  color: var(--home-ink, var(--white-80));
+  border-color: var(--home-line-strong, rgba(255,255,255,0.25));
+}
+/* ⚠ ON A PHONE THE PENCIL BECOMES A LABELLED BUTTON — it is NOT hidden, and an earlier draft that
+   hid it caused a real defect worth remembering.
+
+   Budget Plan's original pencil clips itself to zero size at ≤640 (visually-hidden but focusable),
+   because its rows are the LEDGER GRID and the row itself is the only visible door. Copying that
+   into a `.tableAsCards` list looked equivalent and was not: the shared card rule
+   (`.tableAsCards td.cardActionCell > button`, further up this file) gives every trailing control
+   `width: 100%` so it becomes a real touch target once the row stacks. A `position: absolute`
+   button has no positioned ancestor here, so that 100% resolved against the PAGE rather than the
+   card — a 361px-wide invisible button starting at the card's inset, pushing the document 30px
+   sideways. That is the whole of the coach-expenses page-overflow finding; it survived two wrong
+   diagnoses because a stale dev-server bundle made the experiments disagree with the source.
+
+   So the card idiom wins where the card idiom applies: the button keeps its `.cardActionLabel`
+   span, exactly like "Payment details" beside it — icon-only on a desktop, icon + "Edit" on a
+   phone. No clip trick, no invisible control, and the accessible name is now also visible.
+
+   The LEDGER GRID keeps the other treatment — see `.rowEditBtnClip` below. */
+
+/* The LEDGER-GRID phone treatment (`RowEditButton onPhone="clip"`), lifted from budget.module.css
+   when Budget Plan adopted the shared button — 2026-08-15, so one component serves both idioms.
+
+   ⚠ CLIPPED, NOT HIDDEN, and the distinction is the whole point. A ledger grid does not stack into
+   cards, so at ≤640 the pencil leaves the LAYOUT to let rows read clean and the money column reach
+   the edge (owner ruling, Budget Plan mockup d37d62e3 round 4) — but a card-wide or row-wide
+   `onClick` is invisible to a keyboard and to a screen reader, so the control must still be
+   reachable and named. Standard skip-link shape: zero-size until focused, full size on focus.
+   `display: none` here would silently remove the only accessible way to edit on a phone.
+
+   ⚠ NEVER apply this inside `.tableAsCards` — see the `.rowEditBtn` note above for the 30px
+   sideways-scroll defect that produced. */
+@media (max-width: 640px) {
+  .rowEditBtnClip {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .rowEditBtnClip:focus-visible {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.28rem 0.4rem;
+    overflow: visible;
+    clip: auto;
+    border: 1px solid var(--home-line-strong, rgba(255,255,255,0.25));
+  }
+}
+
+/* ── "Which one do I use?" — expense vs payable (owner review 2026-08-15, Q7) ──────────────────
+   The distinction was only ever stated in two places a coach may never reach: the help guide
+   behind the "?" and the empty-state description, which by definition disappears the moment the
+   list has anything in it. This block sits UNDER the empty state on both sub-tabs and carries the
+   comparison with real examples, because "a commitment" means nothing until you have seen one.
+
+   ⚠ It is deliberately NOT rendered above the list. A permanent caption line under the sub-tabs
+   was drawn and rejected in the same review: it would have given back part of the vertical band
+   the Q2 toolbar merge had just recovered, to explain something a coach browsing their own list
+   does not need re-explained. The Add-modal subtitle covers that case instead. */
+.moneyKindCompare {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.moneyKindCard {
+  flex: 1;
+  min-width: 0;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: var(--home-radius, 10px);
+  padding: 0.85rem 1rem;
+}
+.moneyKindCard h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--home-ink, var(--white-90));
+}
+.moneyKindCard p { margin: 0 0 0.5rem; font-size: 0.8rem; line-height: 1.5; color: var(--home-ink-soft, var(--white-70)); }
+.moneyKindCard strong { color: var(--home-ink, var(--white-90)); font-weight: 700; }
+.moneyKindEgs {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--home-dim, var(--white-45));
+}
+/* The one test a coach can actually apply, and the only distinction that stays true regardless of
+   how the two records are stored: a payable has a due date and shows on the Payment schedule. */
+.moneyKindTest {
+  margin: 0.7rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--home-dim, var(--white-45));
+}
+.moneyKindTest strong { color: var(--home-ink-soft, var(--white-70)); }
+@media (max-width: 640px) {
+  .moneyKindCompare { flex-direction: column; }
+  .moneyKindTest { text-align: left; }
+}
+
 .moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
 .moneyFilterChip {
   background: var(--white-8); border: 1px solid var(--border-2); color: var(--white-55);

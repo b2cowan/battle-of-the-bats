@@ -1149,6 +1149,10 @@ export interface RepProgramYear {
   autoRemindersEnabled: boolean;
   /** How this team's dues credits meet its bills (mig 233, owner Call 2 2026-08-14). */
   creditApplication: import('./dues-credits').CreditApplicationMode;
+  /** The team's standard share (0-100) a player keeps of what they raise or bring in (mig 237).
+   *  ⚠ It PRE-FILLS the new-fundraiser and new-sponsor forms and nothing else — never applied to
+   *  a record that already exists, the same rule `player_rebate_percent` follows per entry. */
+  defaultPlayerCreditPercent: number;
   lineupSettings: LineupSettings | null; // P3 season-default caps (mig 172)
   createdAt: string;
   updatedAt: string;
@@ -2205,6 +2209,13 @@ export interface RepPlayerDuesInstallment {
 }
 
 export type DuesPaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'other';
+/**
+ * The accepted methods, as a value — so the record door and the correct-a-receipt door validate
+ * against ONE list. They each carried their own copy, with a comment on the second promising it
+ * mirrored the first and nothing enforcing it; a fifth method added to one and not the other
+ * would have been accepted by one door and refused by the other, silently.
+ */
+export const DUES_PAYMENT_METHODS: readonly DuesPaymentMethod[] = ['etransfer', 'cash', 'cheque', 'other'];
 
 /** A dues payment FACT (mig 232): what arrived, when, how much. Installments are the plan;
  *  coverage is derived (lib/dues-payments.ts) and projected onto installment paidAt. */
@@ -2331,6 +2342,14 @@ export interface RepTeamExpense {
    *  budget exactly as a team-paid expense; NO team cash left, so cash figures exclude it; and
    *  the team owes that family, carried as an ordinary `reimbursement` credit. */
   paidByPlayerId: string | null;
+  /** The ledger entry a LUMP expense's payment created, so a delete can void it (mig 236).
+   *  Null on payables, and null on anything paid before 2026-08-15 — a null here does NOT mean
+   *  unpaid; `expensePaidAt` answers that. */
+  accountingEntryId: string | null;
+  /** Same, for a payable's deposit half. The two halves post months apart, so each needs its own. */
+  depositEntryId: string | null;
+  /** Same, for a payable's balance half. */
+  balanceEntryId: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2437,6 +2456,16 @@ export interface DuesCredit {
   /** Set only on overpayment credits auto-created by recording a payment (mig 232) — the credit
    *  is removed with its payment (DB CASCADE), so the UI hides its delete button. */
   paymentId?: string | null;
+  /**
+   * The other two provenance links. **A credit with ANY of these three set was created by another
+   * record, and that record states its amount** — a fundraiser rebate is the entry's raised × rate,
+   * a reimbursement is the out-of-pocket expense, an overpayment is the payment's excess. Editing
+   * such a credit directly would leave two disagreeing numbers with no way to tell which is true,
+   * and the next reconcile would quietly overwrite whichever the coach had just corrected. The
+   * ledger drawer offers Edit only when all three are null.
+   */
+  fundraiserEntryId?: string | null;
+  expenseId?: string | null;
   createdAt: string;
 }
 

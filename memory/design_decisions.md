@@ -85,6 +85,441 @@ and is the one part of this change owner QA must look at directly. Owner QA stil
 
 ---
 
+### 2026-08-15 — A row's trailing cell has THREE affordances, chosen by what the action does — and "edit" is a pencil plus the row
+
+**Trigger:** owner, on a proposed "⋯" menu for Edit/Delete on the expenses rows: *"looking at how our
+tables act in budget and player dues, I don't want to add a third edit option. I want consistency
+here — budget has pencil, payables has chevron, you are proposing a full text button."*
+
+**A survey of every Money-hub table found FIVE idioms doing the same job, and no recorded rule.**
+Pencil + whole-row click (Budget Plan → edit modal). A bare decorative chevron with the row clickable
+(Player Dues roster → drawer). Chevron + hidden label (Payables, Payment requests → expand in place).
+A plain text button (Mark Paid, Recategorize, Cancel). Icon-only pencil beside an unstyled trash with
+no shared class and no accessible name (Dues drawer payments/credits). The proposed kebab would have
+been a **sixth** — and no coach surface has ever used one.
+
+**DECISION — three affordances, chosen by INTENT, not by table:**
+
+| The action means | Affordance |
+|---|---|
+| *Open this record to edit it* | **`RowEditButton`** (pencil, icon-only, required `label`) **+ `.rowTappable` on the row** |
+| *Show me more of this row, here* | a **chevron** with `aria-expanded` (unchanged — Payment details, Details) |
+| *Do this one specific thing, now* | a **labelled text button** (unchanged — Mark Paid, Recategorize) |
+| *Go somewhere else* | the **name is the link** (unchanged — Fundraisers; never a row-level onClick) |
+
+**Riders, all binding:**
+
+1. **DELETE IS NOT A ROW ACTION.** It lives in the edit form's footer, opposite Save, behind a
+   confirmation — the pattern Budget Plan set in 2026-08-13. This is *why* a row needs only one
+   control, and therefore why no overflow menu is required. **A "⋯" kebab is not an approved
+   affordance in the coaches portal.**
+2. **The pencil is the SEMANTIC control; the row is the pointer/touch shortcut.** Ignore a click that
+   ends a text selection — copying an amount is not tapping a row.
+3. **≤640 the pencil becomes a LABELLED button — it is never hidden.** Give it a `.cardActionLabel`
+   span ("Edit"), exactly like "Payment details": icon-only on a desktop, icon + word once the row
+   stacks into a card. The row stays a shortcut on top of it.
+
+   ⚠ **Do NOT copy Budget Plan's clip-to-zero treatment into a `.tableAsCards` list.** Budget's rows
+   are the ledger grid, which the card rules never touch. In a card table,
+   `.tableAsCards td.cardActionCell > button` sets `width: 100%` to make trailing controls real
+   touch targets — and a `position: absolute` button has no positioned ancestor there, so that 100%
+   resolves against the PAGE. The result was a 361px-wide invisible button pushing the document 30px
+   sideways: the coach-expenses page-overflow finding, 2026-08-15. **Two idioms, two treatments; the
+   fact that both are "a pencil" is not enough to share a rule.**
+
+   ⚠⚠ **It took three attempts because a stale bundle lied.** Two experiments "proved" the cause lay
+   elsewhere — both ran after a dev-server child had been hard-killed, so the browser was served old
+   CSS and never tested the code being edited. **When a rendered finding contradicts the source you
+   are reading, restart the dev server before believing either.** The measurement is only evidence on
+   a healthy server.
+4. **An icon-only control's `aria-label` IS its name.** `RowEditButton` is a component rather than a
+   class precisely because a shared class stops STYLE drifting and does nothing about MARKUP — and
+   markup is where this control actually failed (three Dues trash buttons shipped with no name at
+   all). The prop is required; there is no way to render one without it.
+5. **A chevron means "expand in place" and nothing else.** Where a chevron opens a drawer or
+   navigates (the Dues roster), that is tolerated legacy, not a pattern to copy.
+
+**Why the pencil won over the kebab:** these tables carry one or two row actions, not four or five. A
+menu would cost a click on every edit and introduce an idiom the portal has never used, to hold a
+single item. Consistency was available for free — Budget Plan was already right, one tab away.
+
+**Still to adopt:** Budget Plan keeps its own local copy of the pencil (`budget.module.css`
+`.actionBtn`/`.editBtn`); it is behaviourally identical and should move to `RowEditButton` on the
+next pass through that file.
+
+---
+
+### 2026-08-14 — A hint that explains a CONSEQUENCE is content, not chrome — and a scroll container needs a visible end, not just a reachable one
+
+**Trigger:** owner, on the Add Expense modal: *"the padding around this 'counts as…' message is too
+much and the tags are slightly hidden behind the bottom nav."*
+
+**BOTH SYMPTOMS WERE ALREADY WRITTEN DOWN — ONE AS A WARNING, ONE AS A FIX APPLIED ONE LEVEL TOO
+SHALLOW.** That is the durable part of this entry.
+
+⚠ **`.muted` CLAIMED ANOTHER FOUR.** The class is an EMPTY-STATE BLOCK carrying `padding: 2rem`, and
+its name advertises a colour. `coaches.module.css` has carried a ⚠⚠ banner about this since three
+earlier bugs traced back to it — and the Expenses panel alone still held **seven** callers using it
+to grey inline text, six of them invisible in review because 32px of air reads as "generous
+spacing" rather than as a bug. The Paid-by hint was the one that finally looked wrong, because its
+32px LEFT padding broke alignment with the select it belongs to. *A documented trap is not a closed
+trap; the warning stops the next author, never the existing callers.* All seven are now
+`.mutedInline` or the form-hint pair.
+
+**DECISION — `.formHintConsequence`, a second rung on the form-hint ladder.** `.formHint`
+(0.72rem / `--white-45`) is sized for microcopy — *"optional"*, *"max 200 characters"*. A sentence
+that states **what the form is about to do** ("no cash leaves the team — the team owes this family
+instead") is the coach's reason for choosing that option at all, and demoting it to microcopy while
+fixing the padding would have traded one defect for a quieter one. The modifier takes 0.78rem /
+`--white-55`, with the bolded outcome at `--white-90`. **Fixing a spacing bug is not licence to
+also shrink the thing you were unindenting.**
+
+⚠ **THE SCROLL BODY NOW ENDS 0.75rem BELOW ITS LAST FIELD.** `.modalScrollBody` already made the
+footer static so nothing overlaps — the earlier fix was correct and the Tags field genuinely was
+*not* behind anything. But at maximum scroll the input's bottom border landed **exactly on the clip
+line**, which the eye reads as tucked-under regardless of what the box model says, and which really
+does shave the focus ring off the last control. *A user reporting "hidden behind the nav" may be
+reporting a boundary with no margin, not an overlap — check before re-fixing an overlap that isn't
+there.*
+
+**Applies to:** `.formHint` / `.formHintConsequence` / `.modalScrollBody` (portal-wide),
+Add Expense + Add Payable modals, Expenses panel. Built on dev 2026-08-14.
+[[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-14 — A status that grades COMPLETION cannot answer "who do I chase?" — every label must answer one question, and it has to be the coach's
+
+**Trigger:** owner, on the Player Dues table: *"can we make these statuses more clear? I don't like
+partial, I prefer if parents are paid to-date then it should say 'paid' or 'up-to-date'… those that
+are 'past due' should clearly say so instead of just '3 overdue' at the bottom."*
+
+⚠ **THE DEFECT, AND IT IS A CLASS OF DEFECT: THE STATUS COULD NOT SEE TIME.** It graded SEASON
+COMPLETION — how much of the year's dues had arrived — while the coach reading it was asking
+something entirely different: *is this family behind?* So a family paying every installment on the
+day it fell due read **"Partial"**, and a family who had paid nothing with a bill a month late read
+**"Partial"** too. **One word for the model family and the delinquent one.** The only hint that
+anybody was behind was a *"3 overdue"* line under the whole table — a count with no names, which
+makes a coach re-scan every row to find them.
+
+**DECISION — six labels, and every one answers "does this family owe us anything RIGHT NOW?"**
+`Not set` · `In credit` · `Fully paid` · `Settled` · **`Past due`** · **`Up to date`**.
+`Partial` and `Unpaid` are retired.
+
+⚠ **"UP TO DATE" DELIBERATELY COVERS A FAMILY WHO HAS PAID NOTHING**, when their first bill has not
+come due. They owe nothing today; calling that "Unpaid" cried wolf on families who had done nothing
+wrong, and a status column that cries wolf gets ignored — the same reasoning that quieted the
+never-paid alarm in 2026-08-03. *How far through the season a family is* is what the Paid and
+Balance columns are for; *who needs chasing* is what the status column is for. One column, one job.
+
+⚠ **THE COLUMN IS QUIET EXCEPT WHERE ACTION IS NEEDED.** "Up to date" is the commonest state on a
+healthy roster, so it takes ORDINARY INK, not green: **a column that is mostly green has no colour
+left to spend on the row that matters.** Green stays with the season's finished states; danger is
+spent only on `Past due`, which also carries a ⚠ glyph — colour never states a verdict alone.
+
+⚠ **ONE PREDICATE FOR THE ROW AND THE FOOTER.** The table's "N overdue" count and the row's "Past
+due" are answers to the same question, and it WAS answered twice — the footer hand-rolled a loop
+while the status column knew nothing about time. `hasPastDueInstallment` is now the single
+definition both read. *A screen that answers one question two ways is a screen nobody trusts.*
+
+⚠ **LATENESS IS JUDGED ON THE REMAINDER, NEVER THE PAID STAMP.** Credits settle bills and `paid_at`
+deliberately never stamps a credit-covered row (Paid stays cash), so a bill fundraising has covered
+is not late for anyone.
+
+**Also removed: the mode-blind fallback branch**, which graded off `rollingBalance` alone and once
+read a keep_separate team's unapplied credit as "Settled" while the family still owed every cash
+dollar (a /review Critical). The derived figures are now required — a compile error is the right
+answer for any caller that cannot supply them.
+
+**Status:** design ruling + built on dev, 2026-08-14. The export reads the same word list, so the
+spreadsheet says "Past due" wherever the screen does. Help guide gained a plain-language
+"What each status means" list. [[design-principles]]
+
+---
+
+### 2026-08-14 — A row whose only correction is Delete forces destruction to fix a typo
+
+**Trigger:** owner, on the built ledger: *"can you just add a confirmation modal after clicking it?
+also, can we add edit buttons to the payments and fundraising so we don't only have the delete
+option?"*
+
+**THE DEAD END.** A payment row offered one correction: remove it. Fixing a wrong amount therefore
+meant destroying a receipt and re-typing all four fields — amount, arrival date, method, note —
+with the real arrival date and the note the likeliest casualties. *Delete-as-the-only-correction
+is not a safety feature; it is a data-loss feature wearing one.*
+
+**DECISION — Edit is a UI affordance over a void-and-re-post.** The binding accounting rule stands
+untouched (**a posted ledger entry is NEVER rewritten; corrections void and re-post**). An edit
+voids the old entry and posts a fresh one. **The coach experiences an edit; the books keep the
+correction trail.** The two are not in conflict once you stop treating "edit" as a database verb.
+
+⚠ **THE ORDER IS CHOSEN ON WHICH FAILURE IS SAFER, not on which reads better.** With no transaction
+available, one of these happens on a mid-flight failure:
+- *record-then-remove* → a **duplicate**: the books overstate cash received and nothing on screen
+  says which row is real.
+- *remove-then-record* → a **missing** receipt: the books understate, the row visibly disappears,
+  and the coach still has every value in the form.
+**Understating cash is the safer error and the visible one**, so removal goes first and the failure
+message says outright that the original has already gone.
+
+⚠ **EDIT ONLY WHAT THE USER AUTHORED.** A credit created BY another record — a fundraiser rebate
+(raised × rate), an overpayment (a payment's excess), a reimbursement (an out-of-pocket expense) —
+has its amount stated by that record. Typing over it here leaves two disagreeing numbers with no
+way to tell which is true, and the next reconcile silently overwrites the correction. Those rows
+now say **where they came from** (*from fundraiser* / *from expense* / *auto*) instead of offering a
+pencil. **Provenance is not a label to be retyped**, so the credit's TYPE is locked while editing
+too: a contribution that becomes a fundraiser rebate by retyping is a credit whose story matches no
+record anywhere.
+
+⚠ **AN EDIT INHERITS ITS DELETE'S HAZARDS.** Lowering a credit strands paid-out cash exactly as
+deleting it does, so the edit door repeats the delete door's refusal verbatim. *When you add an
+edit path beside a delete path, re-read every guard the delete has and ask which of them the edit
+has just walked around.*
+
+**And the confirmation dialog is what makes an icon-only money button honest.** The same pass shrank
+the record control to a 28px tick; a tick that writes a payment the instant it is touched asks the
+coach to trust a glyph. The dialog is where the three facts the button no longer has room for get
+stated — how much, what day, and that it can be undone. It costs a click on the hub's fastest path,
+deliberately. *Shrinking a control's chrome moves its explanation somewhere else; it does not
+remove the need for one.*
+
+**Status:** design ruling + built on dev, 2026-08-14; help guide updated in the same unit of work.
+[[design-principles]]
+
+---
+
+### 2026-08-14 — Two controls whose mis-taps cost wildly different things must not share a target
+
+**Trigger:** owner, on the built ledger: *"can we make the button smaller and nicer looking? any ideas
+on a way to mark it paid without this big 'record as paid' button?"* — then, choosing option B from
+the four drawn at real size: *"I like the quiet tick. on mobile, should we include it on the main bar
+or still only when it is open?"* Mockup (binding):
+`claude.ai/code/artifact/e73e9842-300d-484c-808e-f3c76bacf780#button`.
+
+**DESKTOP — a 28px icon button replaces the three-word filled one.** It had wrapped to two lines in
+its column and was drawn on every row that owed something — up to twelve times in one schedule.
+Same rule as the export-menu chips: **anything drawn beside every item in a list is drawn as many
+times as the list is long**, and collectively it out-shouted the numbers it decorated.
+
+⚠ **THE GLYPH IS NEVER A CHECKMARK ON A ROW THAT ALSO REPORTS STATUS.** The Note column beside it
+uses ✓ to mean *settled*; the same mark inside a button forty millimetres away reads as a state
+rather than an action — an expensive confusion on a control that writes money. A banknote says
+"money in" without borrowing the status vocabulary.
+
+⚠ **ICON-ONLY OBLIGES A REAL NAME, AND IT QUOTES THE AMOUNT** — "Record as paid: $150.00, dated
+today". An icon button with no accessible name is not a button to a screen reader; one that doesn't
+say what it is about to record is a leap of faith.
+
+**PHONE — the words stay, and the control lives INSIDE THE OPEN CARD, never on the collapsed bar.**
+That was the owner's question, and the answer generalises:
+
+⚠ **THE COLLAPSED BAR IS ALREADY A TAP TARGET — IT TOGGLES THE CARD.** Nesting a money-WRITING
+control inside a harmless one, at the right edge where thumbs land, makes the two compete, and
+**the costs of missing are wildly unequal**: miss the small one and a card opens (nothing
+happened); miss the big one and a payment is recorded. *Two controls whose mis-taps cost that
+differently must not share a target.*
+
+**And the second tap is a feature, not a toll:** opening the card is the confirmation a desktop
+doesn't need — it shows the $150.00 about to be recorded before the tap that records it. A phone is
+used for one family at practice, not a reconciliation session.
+
+**A hover-reveal was drawn and rejected on sight** (option D), for the reason this repo has already
+caught once: a hover-only control is unreachable by keyboard, invisible to a screen reader, and
+does not exist at all on a phone.
+
+**Status:** design ruling + built on dev, 2026-08-14. Touch pointers get the 44px floor via
+`@media (pointer: coarse)`; a mouse does not, and the row does not grow for nothing.
+[[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-14 (build) — When a summary and a totals row are the same four figures, the one that survives a collapse is the one that stays
+
+**Trigger:** owner, on the player ledger: *"it would also be nice if we saw 4 columns… for mobile,
+make this a collapsable card… can the note be in another column? … the labels in the totals at the
+bottom are unnecessary."* Binding mockup: `claude.ai/code/artifact/e73e9842-300d-484c-808e-f3c76bacf780`
+(source `COACH_PLAYER_LEDGER_COLUMNS_MOCKUP.html`). Built on dev the same day.
+
+**THE SHAPE — four money columns per installment, each totalling to a tile at the head of the
+drawer:** `installment − credit = after fundraising`, `after fundraising − paid = owing`. The summary
+stops being four unrelated facts and becomes one sentence read left to right.
+
+⚠ **THE TABLE CARRIES NO TOTALS ROW, AND THAT WAS DECIDED BY THE PHONE.** Removing the captions
+(as asked) exposed that the footer and the four tiles were the same four figures — one had to go.
+The tiles won because **every installment collapses on a phone**: a totals row under eight closed
+cards is the same answer, further away, while the tiles stay where the eye lands. *Generalises: when
+two summaries of one dataset compete, keep the one that survives the most collapsed state of the
+view.*
+
+⚠ **`Credits −$250` BECAME `After fundraising $550` — the RESULT, not the deduction.** A negative in
+a row of positives is the one tile a treasurer has to stop and decode; stating the result makes
+every neighbouring pair relate. The credit is not lost: the strip below still names it and offers
+the payout.
+
+**THE NOTE COLUMN — "Paid ⟨date⟩" and "$50 covered — ⟨effort⟩" are the same kind of thing.** Both
+EXPLAIN the row rather than measure it, and a row is almost never both (cash settled it, or
+fundraising did). One column carries whichever applies — **which is the entire reason eight columns
+still fit on one line each**. The money columns then hold nothing but money.
+
+**PHONE — ONE COLLAPSIBLE CARD PER INSTALLMENT**, closed on a date and one value: the amount owing,
+or *Paid*, or *Covered* (never "Paid" for fundraising — that stays a cash word). Reuses the
+By-installment lens's card idiom; one collapsible-card language in this hub, not two.
+
+⚠ **`tableAsCards` HAD TO BE REMOVED FROM THIS FRAME, AND THIS IS THE DURABLE LESSON.** Reflowing a
+table into stacked label/value cards is correct at four columns and *catastrophic* at eight — a
+twelve-installment season became ~100 stacked lines. **The reflow idiom does not scale with column
+count; past about five columns a phone needs a DIFFERENT view, not the same one stacked.** Hiding
+the table under 640 is only safe because that purpose-built list exists.
+
+⚠ **DERIVED ONCE, RENDERED TWICE.** The desktop table and the phone cards read one derivation. Two
+renderers each doing their own arithmetic off the same payload is the shape of every "the phone said
+something different" defect this hub has had.
+
+Also: the drawer widened to a third size (1040px) — eight columns sideways-scrolled at the standard
+720, which is the defect the Money-hub table pass closed everywhere else. [[design-principles]]
+[[design-system]]
+
+---
+
+### 2026-08-14 — A confirmation that names only the consequence which ISN'T at risk reads as "nothing is at risk"
+
+**Trigger:** owner, on the bulk dues re-run: *"do these manual modifications get overwritten if I
+redo the full team payment schedule? should we lock updating the team payments schedules at a
+certain point as it seems like it might break things if a user does this mid season, thoughts?"*
+Verified against the running product: **yes, silently.**
+
+**THE DEFECT.** "Set dues for all players" gave every player the identical schedule, flattening
+every per-player arrangement on the roster — a hardship plan, a deposit-then-balance schedule, a
+mid-season joiner's prorated dates. The confirmation screen said *"Recorded payments are kept"*,
+which is TRUE and was the ONLY consequence it named. **Money was never the thing at risk.** So a
+screen that was factually accurate read as a reassurance about the wrong subject, and the coach was
+told nothing about the thing they were about to lose.
+
+⚠ **THE GENERAL RULE: A CONFIRMATION MUST NAME WHAT IT DESTROYS, NOT WHAT IT PRESERVES.** Listing
+preserved things is comfort; the coach can only weigh the decision against the losses. And a count
+does not weigh — *"3 players have dues"* is arithmetic, *"Priya, Sam and Alex have a schedule you
+set by hand"* is a decision.
+
+**DECISION — name them, then offer to keep them.** The refusal returns the affected players **by
+name**, plus a count of families whose **due dates would move** (reminders start quoting the new
+ones). **"Keep the 3 I set by hand" is the PRIMARY button; "Apply to everyone" is the quieter
+one** — the destructive answer stays one click away for the coach who means it, and stops being the
+only one *and* the default.
+
+⚠ **DELIBERATELY NOT A MID-SEASON LOCK, which is what the owner proposed.** Re-running mid-season is
+legitimate and common (the budget changed, a tournament was added, the fees were wrong) and the help
+guide promises it works. A date-based lock would block the honest case while missing the damaging
+one: the damage lands on the FIRST re-run after any hand-edit, which can happen in week one. *When a
+destructive action is also a necessary one, the answer is a better question, not a locked door.*
+
+**Status:** design ruling + built on dev, 2026-08-14; help guide updated in the same unit of work.
+[[design-principles]]
+
+---
+
+### 2026-08-14 — A date is ONE token and never breaks. A column of them starves when the column beside it is prose
+
+**Trigger:** owner, on the player ledger modal (Player Dues → a player): *"the rows are high due to
+the date spilling over, can we make better use of this space?"*
+
+**The mechanism, and it generalises to every table in the portal:** auto table layout distributes
+width by content demand, so a column of long prose — a credit source, an expense note, a
+description — takes its width from whatever is least able to argue. The date column loses, `Sep 15,
+2026` folds after the comma, and **every row in the table then stands at two lines' height to
+accommodate a value that is always the same width.** Three of the four rows in the owner's
+screenshot were tall for no reason at all.
+
+**DECISION — `.tdDate` (nowrap + tabular figures) on any date cell in a list table.** The date is
+the one column whose content is fixed-width, so it is the one column that can be pinned without
+cost, and pinning it hands the freed width to the prose that actually wanted it.
+
+⚠ **NOWRAP IS SAFE HERE ONLY BECAUSE THE CONTENT IS FIXED-WIDTH.** Do not reach for it on a name or
+a note — there it buys row height by truncating meaning, and a cut name stops naming anyone (that
+is what `.wrap640` exists to undo).
+
+**Two other things went with it, both applications of the wordiness ruling below:**
+- **A fully-credit-covered installment's note lost its dollars.** The row already prints the amount
+  in its own column and "Covered by fundraising" beside it, so `$200.00 covered — Bottle Drive`
+  stated both again; it now names only the SOURCE. A **part**-covered row keeps its figure — the
+  split between covered and still-to-send is the one fact nothing else on the row carries.
+- **The status cell stacks on a phone only when it has a note** (the conditional `cardStackCell`
+  the totals row already uses); three items in one flex line was the alternative.
+
+**Status:** design ruling, 2026-08-14, **BUILT on dev the same day.** Found and fixed in the same
+pass: the modal was rendering the literal words **"Paid Invalid Date"** — see the entry below.
+[[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-14 (correctness, surfaced by a design review) — One formatter, both stored shapes: a money row mixes a `date` column and a `timestamptz` column and the caller cannot tell them apart
+
+**Trigger:** the owner's ledger screenshot, sent about row height, also showed **"Paid Invalid
+Date"** on both paid rows.
+
+**Not a one-off — three screens, three hand-rolled formatters, three wrong,** each in the way its
+own local shortcut invited:
+- `new Date(s + 'T00:00:00')` — right for a `date` column, but a **timestamp already carries a
+  time**, so the concatenation produced a doubled string and printed the words "Invalid Date". This
+  hit the **player ledger** and the **By-installment grid** (`completedOn ?? paidAt` — correct
+  until it fell back).
+- `new Date(s)` — right for a timestamp, but a bare `YYYY-MM-DD` parses as **UTC midnight** and
+  renders the PREVIOUS day in any zone behind UTC. The **admin allocation schedule** was showing
+  every due date one day early.
+
+⚠ **THE TRAP IS THAT BOTH SHAPES APPEAR IN THE SAME ROW.** `due_date` is a `date`; `paid_at` is a
+`timestamptz` (and a PROJECTION since mig 232). A formatter written while looking at one column is
+handed the other by the next feature, silently.
+
+**DECISION — `formatStoredDate()` in `lib/timezone.ts` is the ONE formatter for a stored date a
+user reads.** It takes both shapes, resolves a timestamp through the **org zone** (never a raw
+slice — a payment recorded after 8 PM Eastern is stored on the next UTC day), returns `—` rather
+than ever emitting "Invalid Date", and drops the year on request for a column whose heading already
+carries the season. Regression tests live with the date-correctness guardrail suite, which was at
+zero and is back at zero.
+
+**Status:** shipped on dev 2026-08-14 with the ledger layout pass; all three call sites converted.
+[[design-principles]]
+
+---
+
+### 2026-08-14 — A card headline is the subtraction. A row that repeats it is the longest phrase on the card saying the least
+
+**Trigger:** owner, on the Money Overview Budget card: *"this card is too wordy, we don't need the
+1930 left or 3700 still out, don't need the word 'scheduled' (2700 of 6400 is sufficient)."*
+
+⚠ **THIS AMENDS THE 2026-08-14 BUDGET-CARD RULING**, which specified that each plan-vs-actual row
+*"states its delta in words"* (`$650.00 left` / `$1,200.00 still out` / `✓ $250.00 past goal`). The
+bars, the shared dollar scale, the headroom headline, the chip, the stripe-not-colour rule and the
+empty states are all untouched.
+
+**The defect the render exposed:** the Spending row's delta was **the headroom headline verbatim,
+one line down** — `$1,930.00 headroom` above, `· $1,930.00 left` below. Every row then had to
+carry a third clause to match, so the widest, most-punctuated text on the card was the part that
+added nothing. **A delta between two numbers printed side by side is arithmetic the card is doing
+out loud.**
+
+**DECISION — a plan-vs-actual row states TWO figures, `actual of planned`, and nothing else.** No
+remaining-amount, no "still out", no "to go", and no noun after the second figure (`$2,700.00 of
+$6,400.00` — "scheduled" was labelling a number whose label is already the row's own name).
+
+**Three exceptions, all of them verdicts rather than arithmetic:**
+- **`▲ over plan` on an overrun — a word, never the amount** (the amount is in the headline). The
+  striped segment still must not carry that verdict on colour alone (measured ΔE 1.0 deutan), and
+  this is what keeps that guard standing.
+- **`✓ all in` / `✓ goal met` / `✓ past goal`** — good news a reader will not infer from two
+  numbers that happen to be equal. The dollars beside `past goal` went; the ✓ stayed.
+- **`no goal set` / `no installments yet`** — these explain why the SECOND figure is missing.
+  Absent is not derivable.
+
+**Generalises past this card:** *when a headline is a difference, the rows beneath it are the
+operands.* Any row restating the headline's own number is decoration wearing a number's clothes.
+
+**Status:** design ruling, 2026-08-14, **BUILT on dev the same day**; the in-app Money guide's
+Budget-card sentence was corrected in the same unit of work (it promised "what's left, still out,
+or to go"). [[design-principles]] [[design-system]]
+
+---
+
 ### 2026-08-13 (placement, final) — IMPORT is hub-wide; EXPORT never is. If the answer changes with what the coach is looking at, the button belongs beside what they are looking at
 
 **Trigger:** owner, on Budget vs. Actual: *"we have 2 exports in budget vs actual, how do you propose

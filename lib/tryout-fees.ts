@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
-import { computeBudgetTotals } from './coach-budget-totals';
+import { computeBudgetTotals, normalizeBudgetLineKind } from './coach-budget-totals';
 import type { TryoutAcceptDues } from './db';
 
 /**
@@ -101,7 +101,7 @@ export async function deriveStandardDuesSchedule(programYearId: string): Promise
   const budgetTotals = computeBudgetTotals({
     lines: (lines ?? []).map((l: { total_amount: number | null; line_kind?: string | null }) => ({
       totalAmount: Number(l.total_amount ?? 0),
-      lineKind: l.line_kind === 'funding' ? 'funding' : 'cost',
+      lineKind: normalizeBudgetLineKind(l.line_kind),
     })),
     estimatedTotal: (py as { budget_amount?: number | null } | null)?.budget_amount ?? null,
   });

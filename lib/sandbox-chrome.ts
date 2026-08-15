@@ -515,11 +515,17 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'budget-vs-actual'),
       exactPath: true,
       anchor: '[data-sandbox-tour="budget-variance"]',
-      // ⚠ The last clause is the Bottle Drive (seeded 2026-08-14 with the season settlement
-      // sheet). Fundraising lowering a family's bill is the most sympathetic thing this product
-      // does, and until that seed the demo could not show it at all. If the drive is ever
-      // un-seeded, this sentence goes with it — `check-demo-coach` pins the world it describes.
-      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it.',
+      // ⚠ The Bottle Drive clause (seeded 2026-08-14 with the season settlement sheet).
+      // Fundraising lowering a family's bill is the most sympathetic thing this product does, and
+      // until that seed the demo could not show it at all. If the drive is ever un-seeded, this
+      // sentence goes with it — `check-demo-coach` pins the world it describes.
+      //
+      // ⚠ The closing clause was added 2026-08-14 when the two team-wide dues settings moved to
+      // Team settings → Money. It is the demo's only mention of them, and deliberately so: WHERE
+      // credits land is the reason the row above reads the way it does, so a prospect who has just
+      // been shown the effect is the one prospect who cares that it is a choice. The seed states
+      // both settings (DEMO_DUES_SETTINGS) rather than inheriting them, so this stays true.
+      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it. Which bill that lands on is your call, set once — Player Dues prints the answer under the table, and Team settings is where it changes.',
       nextLabel: 'Next: playing time',
     },
     {

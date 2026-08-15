@@ -4,6 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -57,8 +58,8 @@ export const POST = withObservability(async (req: Request,
     // the sign lives in one place (the kind) and never in the data.
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
   }
-  if (lineKind !== 'cost' && lineKind !== 'funding') {
-    return NextResponse.json({ error: 'lineKind must be "cost" or "funding"' }, { status: 400 });
+  if (!BUDGET_LINE_KINDS.includes(lineKind as BudgetLineKind)) {
+    return NextResponse.json({ error: 'lineKind must be one of: cost, funding, sponsorship' }, { status: 400 });
   }
 
   // The FK payload must belong to this org's taxonomy (platform defaults are org_id

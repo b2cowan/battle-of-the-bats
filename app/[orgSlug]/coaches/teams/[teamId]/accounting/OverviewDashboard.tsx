@@ -212,15 +212,17 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                 <span><span className={`${styles.planSwatch} ${styles.planSwatchPlanned}`} />planned</span>
               </div>
               <div className={styles.planRows}>
-                {/* Spending: actual stays UNDER its bar — the headline is this row's delta. */}
+                {/* Spending: two numbers only. The remaining-headroom dollars are the
+                    card's own headline three lines up — restating them here made the
+                    row's longest phrase the one thing already answered. The over-plan
+                    case keeps a WORD (never the amount, also in the headline) because
+                    the striped segment must not carry that verdict on colour alone. */}
                 <div>
                   <div className={styles.planRowHead}>
                     <span className={styles.planRowLabel}>Spending</span>
                     <span className={styles.planRowNums}>
-                      <b>{fmt(spent)}</b> of {fmt(budget.effectiveTotal)}{' · '}
-                      {overBudget
-                        ? <span className={styles.planDeltaBad}>▲ {fmt(spent - budget.effectiveTotal)} over</span>
-                        : <span className={styles.planDelta}>{fmt(budget.effectiveTotal - spent)} left</span>}
+                      <b>{fmt(spent)}</b> of {fmt(budget.effectiveTotal)}
+                      {overBudget && <> · <span className={styles.planDeltaBad}>▲ over plan</span></>}
                     </span>
                   </div>
                   <PlanBar actual={spent} target={budget.effectiveTotal} scaleMax={scaleMax} />
@@ -228,17 +230,17 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
 
                 {/* Player dues: collected climbs TO what is actually SCHEDULED — the real
                     figure, never a computed even split of the plan (the retired $/player
-                    projection went stale the moment real installments existed). */}
+                    projection went stale the moment real installments existed). The word
+                    "scheduled" is dropped from the row: "$2,700 of $6,400" needs no help,
+                    and the empty state below says outright when nothing is scheduled. */}
                 <div>
                   <div className={styles.planRowHead}>
                     <span className={styles.planRowLabel}>Player dues</span>
                     <span className={styles.planRowNums}>
                       {duesScheduled ? (
                         <>
-                          <b>{fmt(dues.collected)}</b> of {fmt(dues.expected)} scheduled{' · '}
-                          {dues.outstanding <= 0.005
-                            ? <span className={styles.planDeltaGood}>✓ all in</span>
-                            : <span className={styles.planDelta}>{fmt(dues.outstanding)} still out</span>}
+                          <b>{fmt(dues.collected)}</b> of {fmt(dues.expected)}
+                          {dues.outstanding <= 0.005 && <> · <span className={styles.planDeltaGood}>✓ all in</span></>}
                         </>
                       ) : (
                         <span className={styles.planDelta}>nothing scheduled</span>
@@ -280,14 +282,20 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                     <div className={styles.planRowHead}>
                       <span className={styles.planRowLabel}>Fundraising</span>
                       <span className={styles.planRowNums}>
-                        <b>{fmt(raised)}</b> raised{fundGoal > 0.005 && <> of {fmt(fundGoal)}</>}{' · '}
-                        {fundGoal <= 0.005
-                          ? <span className={styles.planDelta}>no goal set</span>
-                          : raised < fundGoal - 0.005
-                            ? <span className={styles.planDelta}>{fmt(fundGoal - raised)} to go</span>
-                            : raised > fundGoal + 0.005
-                              ? <span className={styles.planDeltaGood}>✓ {fmt(raised - fundGoal)} past goal</span>
-                              : <span className={styles.planDeltaGood}>✓ goal met</span>}
+                        {fundGoal > 0.005 ? (
+                          <>
+                            <b>{fmt(raised)}</b> of {fmt(fundGoal)}
+                            {raised > fundGoal - 0.005 && (
+                              <> · <span className={styles.planDeltaGood}>
+                                ✓ {raised > fundGoal + 0.005 ? 'past goal' : 'goal met'}
+                              </span></>
+                            )}
+                          </>
+                        ) : (
+                          /* No goal to count against, so the second number would be
+                             missing rather than derivable — say why it is absent. */
+                          <><b>{fmt(raised)}</b> raised · <span className={styles.planDelta}>no goal set</span></>
+                        )}
                       </span>
                     </div>
                     <PlanBar actual={raised} target={fundGoal} scaleMax={scaleMax} overGood />

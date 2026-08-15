@@ -260,7 +260,7 @@ const accountingHelp: HelpPageContent = {
             <li><strong>Org Budget</strong> — plan the season&apos;s budget by category and line, and allocate costs to teams.</li>
             <li><strong>Budget vs. Actual</strong> — track allocation and team collection status (see below).</li>
           </ul>
-          <p><strong>Dues Reminders</strong> now go out <strong>automatically</strong>. Each day, guardians of players with an upcoming installment receive a reminder email — one about a week ahead and one about a month ahead — for any team whose <strong>Automatic Dues Reminders</strong> toggle is on (each coach controls their own team&apos;s toggle on the Player Dues page). A guardian is never emailed twice in the same week for the same installment, and quiet days send nothing. You don&apos;t have to do anything to keep this running.</p>
+          <p><strong>Dues Reminders</strong> now go out <strong>automatically</strong>. Each day, guardians of players with an upcoming installment receive a reminder email — one about a week ahead and one about a month ahead — for any team whose <strong>Automatic Dues Reminders</strong> switch is on (each coach controls their own team&apos;s switch under Team settings → Money). A guardian is never emailed twice in the same week for the same installment, and quiet days send nothing. You don&apos;t have to do anything to keep this running.</p>
           <p><strong>Manual actions</strong> (owners and treasurers only) — for when you want to act now rather than wait for the daily send:</p>
           <ul>
             <li><strong>Dues Reminders — Send now</strong> — fire a 30-day or 7-day wave immediately to every team that has the toggle on. Same emails as the automatic send.</li>

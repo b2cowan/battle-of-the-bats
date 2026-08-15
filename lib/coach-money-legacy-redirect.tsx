@@ -23,3 +23,32 @@ export function moneyLegacyRedirectPage(section: CoachMoneySection) {
     permanentRedirect(moneyLegacyRedirectHref(orgSlug, teamId, section, await searchParams));
   };
 }
+
+/**
+ * The same hop for a legacy route that named ONE RECORD rather than a tab — today only
+ * `accounting/fundraisers/[fundraiserId]`, whose drive became a sub-view of the Fundraisers tab
+ * (2026-08-14). The id moves from the path into the tab's sub-view query key, so a bookmark or an
+ * emailed link to a specific fundraiser opens THAT fundraiser rather than the list; incoming query
+ * (a season `?year=`) is carried exactly as the tab hop carries it.
+ *
+ * ⚠ The route params are typed CONCRETELY (`fundraiserId`), not as a string map. An earlier
+ * version took the two key names as arguments to look general — with one caller that bought
+ * nothing and cost the type check: a mistyped id key still compiled and silently redirected to
+ * `?fundraiser=undefined`. Generalize the day a second standalone record route retires, and let
+ * that route's own segment name appear here when it does.
+ */
+export function moneyLegacyFundraiserRedirectPage() {
+  return async function MoneyLegacyFundraiserRedirect({
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }>;
+    searchParams: Promise<SearchParamsRecord>;
+  }) {
+    const { orgSlug, teamId, fundraiserId } = await params;
+    permanentRedirect(moneyLegacyRedirectHref(orgSlug, teamId, 'fundraisers', {
+      ...(await searchParams),
+      fundraiser: fundraiserId,
+    }));
+  };
+}

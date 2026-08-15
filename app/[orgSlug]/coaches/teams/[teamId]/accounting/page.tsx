@@ -139,7 +139,10 @@ export default function CoachesAccountingPage({
   // `duesView` is the Dues tab's lens, not a one-shot trigger — but the SAME rule applies:
   // it means nothing off its own tab, so other tabs' hrefs must not carry it (/review
   // 2026-08-14: it was riding every subsequent tab URL and bookmark in the session).
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView'];
+  // `fundraiser` is the Fundraisers tab's SUB-VIEW (one drive open, 2026-08-14). Same rule, and
+  // the consequence of missing it is louder than a stale lens: the id would ride to Expenses and
+  // then back into Fundraisers, silently reopening a drive the coach had left.
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -207,7 +210,7 @@ export default function CoachesAccountingPage({
     { id: 'overview', label: 'Overview' },
     { id: 'budget', label: 'Budget Plan' },
     { id: 'dues', label: 'Player Dues' },
-    { id: 'fundraisers', label: 'Fundraisers' },
+    { id: 'fundraisers', label: 'Fundraising' },
     { id: 'expenses', label: 'Expenses & Payables' },
     // Trimmed from "Org Allocations"/"Payment Requests": inside Money the shorter words are
     // unambiguous, and the two longest labels were what pushed the row past the column.
