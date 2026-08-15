@@ -133,12 +133,118 @@ All nineteen now go through `normalizeBudgetLineKind` / `isFundingKind`, and
 a $2,000 sponsorship must take per-player dues from $800 to $600. **Verified by breaking it:**
 reverting the predicate to `=== 'funding'` fails 5 of its 6 assertions.
 
+## 6b. `/review` — high-risk funnel, what it found
+
+Four lenses (correctness · money-integrity · security/tenancy · regression). **Nine confirmed
+findings, all fixed.** Two classes, and both are the same mistake in different clothes: *a new
+state was enforced where the data is WRITTEN and not where it is READ.*
+
+### ⚠⚠ A PLEDGE COUNTED AS MONEY IN THREE PLACES (Critical ×3)
+
+Two lenses found this independently. A sponsor's entry is written the moment the sponsor is
+recorded — it holds the arrangement — but while `pledged`, no income has posted and no credit
+exists. Three season-wide readers summed entries without asking:
+
+- the **Money hub's headline "Money in"** and its fundraising card;
+- **Budget vs. Actual's funding ACTUAL**, so a $2,000 pledge read as 100% of a $2,000 sponsorship
+  target already collected;
+- ⚠ **the season settlement pot** — the one families are PAID OUT OF. A promise could have funded a
+  real refund of money the team never received.
+
+Migration 237's own comment states the rule ("a pledge that counted as actual would flatter the
+season"). It was never wired into the readers. Now one predicate (`isRealisedRecord`) and one query
+(`getRealisedFundraiserEntries`) carry it, with the rule pinned as a test.
+
+### ⚠ THE OLD DRIVE ENDPOINTS DID NOT REFUSE A SPONSOR (High ×2)
+
+Also found by two lenses. The per-player "log an amount" and "edit an amount" routes predate
+sponsors and enforce a drive's rules only. Pointed at a sponsor by a coach who already holds
+money-write, they would **post real income and write a real dues credit for a sponsorship still
+marked pledged**, and add a second entry to a record every sponsor read assumes has exactly one.
+Both now refuse a sponsor and say where to edit it instead.
+
+### THREE MORE MISSED `=== 'funding'` READERS (High ×2, Low ×1)
+
+⚠ **And a lesson about how I missed them:** my own sweep for this pattern was truncated at 20
+results and I read it as complete. The money lens found the tail — the budget **import preview**
+(both entry points) told a coach it would *update* a sponsorship line while the server, correctly
+filtered, inserted a duplicate **cost** line instead: previewed $550/player, actual $850/player.
+Plus a stale `.neq('line_kind','funding')` write guard whose own comment had stopped being true.
+The demo-world check script had it too.
+
+### Also fixed
+
+Non-atomic sponsor create (income posted, entry insert fails → real money on the books belonging to
+a record no screen can explain — now rolled back); a swallowed credit-insert failure that left the
+screen and the export both claiming a family had been credited while their dues were untouched.
+
+### Verified clean rather than assumed
+
+Org/team/season scoping on every new write; the archive write-guard contract; capability gating on
+every new field; the roster fetch behind the "brought in by" picker; season rollover carrying the
+line kind; the installment generator and dues preview; every `RepProgramYear` literal; every caller
+of the accounting-settings helpers; the export column contract.
+
+### Noted, not fixed
+
+`budget-line-kind-guard.test.ts` proves every reader *mentions* the kind column, not that it handles
+every VALUE — which is why it passed while five readers were wrong. Strengthening it is its own
+piece of work; the one file it failed to catch is fixed.
+
 ## 7. Owner QA
 
 Ledger §24.
 
-## 8. Not built
+## 8. Not built — the seven follow-ups
 
-- **Money tags on a fundraiser or sponsor.** The mockup showed them and the owner cut the tag
-  *filter*; the tag field itself is still to come. Nothing depends on it.
-- **The demo world** has no sponsor seeded, so the coach sandbox shows the tab with drives only.
+**Owner-reviewed and approved 2026-08-15**, proposal + mockups:
+https://claude.ai/code/artifact/50fe3e42-0071-41e3-bbde-a2064f854608
+None is a correction to what shipped; all seven sit on top of it, and none blocks QA §23/§24.
+
+**What a coach would notice**
+
+1. **Two labels still say "Fundraisers"** — the Money hub's own list of screens, and one help
+   passage walking the tab bar. The tab was renamed; these were missed, so the product disagrees
+   with itself one click apart. (The kind FILTER's "Fundraisers" chip is correct and stays — it
+   names a kind, not the tab.)
+2. **Money tags were never built.** The owner cut the tag *filter*; the *field* was in the approved
+   mockup and does not exist, so nothing can be tagged and the money-tag report still has no
+   money-in side. ⚠ **OPEN QUESTION** — confirm the field was wanted, since the cut may have been
+   read too broadly.
+3. **The Money overview gets TWO rows, not one** (owner ruling 2026-08-15, revising the single
+   combined row first proposed). One for Fundraisers, one for Sponsorships, each opening the tab
+   **already filtered to its kind** — which is what earns a second row, since a rail row is a door
+   and two doors to an identical view would be a second navigation system.
+   - ⚠ **This forces the kind filter into the ADDRESS** rather than component state — a bonus, not
+     a cost: the filtered view becomes shareable and Back works across it, matching `section` and
+     `fundraiser`. It must join the hub's `ONE_SHOT_KEYS` or it will ride to other tabs.
+   - The Sponsorships row **shows at zero** ("None yet · add one"), the way the drives row already
+     introduces itself. Blue dot for sponsorships, green for drives, matching the tab's chips.
+4. **No sponsor in the demo world.** ⚠ **The demo fundraiser carries three pins the guided tour
+   narrates BY NAME** — $240 overdue across exactly two families, no rebate able to cascade
+   backwards, one deliberately part-paid instalment. **A sponsor attributed to a family would
+   credit their dues and could clear a debt the tour talks about.** So the demo sponsor is
+   **club-wide, credited to nobody**: it adds money to the team and touches no family's bill, and
+   all three pins survive by construction. One sentence joins the money tour step; the demo health
+   check gains the sponsor so a reseed cannot drop it.
+
+**What stops the next defect** — take these FIRST (this project produced two defects of exactly the
+kind they would have caught, and a human reading a report caught both)
+
+5. **Nothing automated ever opens a sponsor.** The rendered sweep opens a *fundraiser*; a sponsor
+   draws a different screen. Add it as its own swept screen, and add an end-to-end test that walks
+   the MONEY, not the markup: create a **pledged** sponsor → assert it adds nothing to the hub's
+   money-in, nothing to Budget vs. Actual's actual, nothing to any family's dues → flip to
+   **received** → assert all three move → flip back → assert they unwind. **That test is the one
+   that would have caught the review's worst finding before a human looked.**
+6. **The budget-line guard does not prove what it claims** (§6b). It checks whether a file
+   *mentions* the kind column, so it stayed green while five readers were wrong. Replace the
+   substring check with one that flags **the banned shape** — a line kind compared to a literal
+   anywhere outside the shared reader. That catches all five, and makes a fourth kind safe to add
+   later.
+7. **Three siblings share the wrong-season assumption** — tryout evaluations, lineup templates and
+   the practice recap still look a record up by id + team on season-scoped data. Narrower exposure
+   (all live-season-only, no archive door hands out a past id), but it is the same reasoning that
+   already failed once. Move them to a season-scoped lookup and add a guard for the shape. **Its
+   own unit of work** — three unrelated features, and a shared fix that breaks one is worse than
+   the hole.
