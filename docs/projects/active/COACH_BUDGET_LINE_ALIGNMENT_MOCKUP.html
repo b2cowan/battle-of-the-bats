@@ -1,0 +1,641 @@
+<title>What Is This Against</title>
+
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     Same spec-sheet chrome as the Expenses & Payables sheets this belongs beside.
+     Light palette on bare :root so the un-stamped (system) state resolves.
+     ══════════════════════════════════════════════════════════════════════════ */
+  :root {
+    --doc-ground:   #E4E8F0;
+    --doc-panel:    #F5F7FB;
+    --doc-panel-2:  #EDF0F6;
+    --doc-ink:      #141A28;
+    --doc-ink-2:    #3A4358;
+    --doc-dim:      #5E6878;
+    --doc-rule:     rgba(20, 26, 40, 0.14);
+    --doc-rule-2:   rgba(20, 26, 40, 0.08);
+    --doc-accent:   #1E3A8A;
+    --doc-accent-2: rgba(30, 58, 138, 0.10);
+    --doc-defect:   #A32B3F;
+    --doc-defect-2: rgba(163, 43, 63, 0.10);
+    --doc-keep:     #2F6B44;
+    --doc-amber:    #8A5A00;
+    --doc-amber-2:  rgba(138, 90, 0, 0.12);
+    --doc-shadow-sm:0 1px 2px rgba(20,26,40,.06);
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-ground:   #0F1420;
+      --doc-panel:    #171D2C;
+      --doc-panel-2:  #1E2637;
+      --doc-ink:      #E9EDF6;
+      --doc-ink-2:    #B7C0D2;
+      --doc-dim:      #8B95A9;
+      --doc-rule:     rgba(233, 237, 246, 0.16);
+      --doc-rule-2:   rgba(233, 237, 246, 0.09);
+      --doc-accent:   #8FA9F2;
+      --doc-accent-2: rgba(143, 169, 242, 0.14);
+      --doc-defect:   #F0899A;
+      --doc-defect-2: rgba(240, 137, 154, 0.13);
+      --doc-keep:     #7BC496;
+      --doc-amber:    #E0B25C;
+      --doc-amber-2:  rgba(224, 178, 92, 0.14);
+      --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --doc-ground:   #0F1420;
+    --doc-panel:    #171D2C;
+    --doc-panel-2:  #1E2637;
+    --doc-ink:      #E9EDF6;
+    --doc-ink-2:    #B7C0D2;
+    --doc-dim:      #8B95A9;
+    --doc-rule:     rgba(233, 237, 246, 0.16);
+    --doc-rule-2:   rgba(233, 237, 246, 0.09);
+    --doc-accent:   #8FA9F2;
+    --doc-accent-2: rgba(143, 169, 242, 0.14);
+    --doc-defect:   #F0899A;
+    --doc-defect-2: rgba(240, 137, 154, 0.13);
+    --doc-keep:     #7BC496;
+    --doc-amber:    #E0B25C;
+    --doc-amber-2:  rgba(224, 178, 92, 0.14);
+    --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--doc-ground);
+    color: var(--doc-ink);
+    font-family: var(--sans);
+    font-size: 16px; line-height: 1.6; margin: 0; padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  a { color: var(--doc-accent); }
+  :focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 3px; border-radius: 3px; }
+
+  .mast { padding: 64px 0 30px; border-bottom: 2px solid var(--doc-ink); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--doc-dim); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 54px); line-height: 1.02; letter-spacing: -0.028em;
+    font-weight: 800; margin: 0 0 18px; text-wrap: balance;
+  }
+  .standfirst { font-size: 19px; line-height: 1.55; color: var(--doc-ink-2); margin: 0; max-width: 60ch; }
+  .mast-meta {
+    display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 30px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.05em; color: var(--doc-dim);
+  }
+  .mast-meta b { color: var(--doc-ink); font-weight: 600; }
+
+  .toc {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px; background: var(--doc-rule-2); border: 1px solid var(--doc-rule-2); margin: 26px 0 0;
+  }
+  .toc a { display: block; background: var(--doc-ground); padding: 13px 15px; text-decoration: none; color: var(--doc-ink); }
+  .toc a:hover { background: var(--doc-panel); }
+  .toc .k { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--doc-dim); display: block; margin-bottom: 3px; }
+  .toc .t { font-size: 13.5px; line-height: 1.35; display: block; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 24px 0 0; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 3px;
+    border: 1px solid var(--doc-rule); color: var(--doc-dim); white-space: nowrap;
+  }
+  .tag--new       { color: var(--doc-accent); border-color: var(--doc-accent); background: var(--doc-accent-2); }
+  .tag--restyled  { color: var(--doc-amber);  border-color: var(--doc-amber);  background: var(--doc-amber-2); }
+  .tag--unchanged { color: var(--doc-dim); }
+  .tag--defect    { color: var(--doc-defect); border-color: var(--doc-defect); background: var(--doc-defect-2); }
+
+  .finding { padding: 58px 0 8px; border-bottom: 1px solid var(--doc-rule); scroll-margin-top: 20px; }
+  .finding:last-of-type { border-bottom: none; }
+  .fhead { display: flex; gap: 20px; align-items: baseline; margin-bottom: 6px; }
+  .fkey {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--doc-accent); padding-top: 8px; flex-shrink: 0; white-space: nowrap;
+  }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 31px); line-height: 1.18; letter-spacing: -0.018em;
+    font-weight: 750; margin: 0; text-wrap: balance;
+  }
+  .fquote {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: var(--doc-dim);
+    border-left: 2px solid var(--doc-rule); padding: 2px 0 2px 14px;
+    margin: 16px 0 22px 32px; max-width: 62ch;
+  }
+  .finding p { margin: 0 0 16px; max-width: 68ch; }
+  .finding p.indent { margin-left: 32px; }
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    margin: 0 0 18px 32px;
+  }
+  .verdict--bug { color: var(--doc-defect); }
+  .verdict--gap { color: var(--doc-amber); }
+  .verdict--new { color: var(--doc-accent); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  .plate { margin: 26px 0 0 32px; }
+  .plate-head {
+    display: flex; align-items: center; gap: 10px; font-family: var(--mono);
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 9px;
+  }
+  .plate-head--today { color: var(--doc-defect); }
+  .plate-head--prop  { color: var(--doc-accent); }
+  .plate-head .rule { flex: 1; height: 1px; background: var(--doc-rule-2); }
+
+  .well {
+    overflow-x: auto; background: var(--doc-panel-2);
+    border: 1px solid var(--doc-rule-2); border-radius: 4px; padding: 22px;
+  }
+  .caption {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-top: 11px; font-size: 13.5px; color: var(--doc-dim); line-height: 1.5;
+  }
+  .caption .txt { max-width: 60ch; }
+
+  .anchor { position: relative; }
+  .pin {
+    position: absolute; z-index: 5; top: 0; left: 0;
+    transform: translate(-52%, -52%); width: 19px; height: 19px; border-radius: 50%;
+    background: #A32B3F; color: #FFFFFF; font-family: var(--mono);
+    font-size: 11px; font-weight: 700; line-height: 19px; text-align: center;
+    box-shadow: 0 0 0 2.5px #F8F4ED, 0 1px 4px rgba(0,0,0,.35);
+  }
+  .pin--good { background: #1E3A8A; }
+  .pin--r { left: auto; right: 0; transform: translate(52%, -52%); }
+
+  .panel {
+    background: var(--doc-panel); border: 1px solid var(--doc-rule);
+    border-radius: 5px; padding: 26px 28px; margin: 30px 0 0 32px;
+    box-shadow: var(--doc-shadow-sm);
+  }
+  .panel h3 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--doc-dim); margin: 0 0 16px; font-weight: 700;
+  }
+  .panel p { max-width: 64ch; }
+  .panel p:last-child { margin-bottom: 0; }
+  .panel--defect { border-left: 3px solid var(--doc-defect); }
+  .panel--flag { border-left: 3px solid var(--doc-amber); }
+
+  .matrix { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .matrix th, .matrix td {
+    text-align: left; padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--doc-rule-2); vertical-align: top;
+  }
+  .matrix thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--doc-dim); font-weight: 700;
+    border-bottom: 1px solid var(--doc-rule);
+  }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix td.state { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .yes { color: var(--doc-keep); }
+  .no  { color: var(--doc-defect); }
+  .matrix .why { color: var(--doc-dim); font-size: 13px; line-height: 1.45; }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     PRODUCT FRAMES — warm coaches-portal palette at fixed literals.
+     ══════════════════════════════════════════════════════════════════════════ */
+  .fl {
+    --paper: #F8F4ED;
+    --card:  #FFFFFF;
+    --ink:   #241E15;
+    --ink-s: #4A4235;
+    --dim:   #6A635C;
+    --line:  rgba(70, 55, 30, 0.12);
+    --line-s:rgba(70, 55, 30, 0.20);
+    --fill:  rgba(70, 55, 30, 0.08);
+    --olive: #57651E;
+    --olive-s: rgba(87, 101, 30, 0.10);
+    --lime:  #D9F99D;
+    --amber: #835006;
+    --blue:  #134FD3;
+    --win:   #34662A;
+    --live:  #B03A22;
+
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 13px; line-height: 1.5;
+    border-radius: 8px; border: 1px solid var(--line-s);
+    box-shadow: 0 1px 3px rgba(70,55,30,.10), 0 10px 30px rgba(70,55,30,.10);
+    min-width: 560px; overflow: hidden;
+  }
+  .fl--modal { min-width: 430px; max-width: 480px; background: var(--card); overflow: visible; }
+
+  .fl-modal-head { display: flex; align-items: flex-start; padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
+  .fl-modal-head h4 { margin: 0; font-size: 16px; font-weight: 750; }
+  .fl-modal-head .sub { margin: 3px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.45; max-width: 44ch; }
+  .fl-modal-head .x { margin-left: auto; color: var(--dim); font-size: 15px; padding-left: 12px; }
+
+  .fl-form { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 13px 14px; }
+  .fl-form .full { grid-column: 1 / -1; }
+  .fl-label { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--ink-s); margin-bottom: 5px; }
+  .fl-input {
+    border: 1px solid var(--line-s); background: var(--paper);
+    border-radius: 9px; padding: 8px 11px; font-size: 12.5px; color: var(--dim);
+  }
+  .fl-input--val { color: var(--ink); }
+  .fl-input--focus { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(87,101,30,.14); background: var(--card); color: var(--ink); }
+  .fl-select::after { content: "⌄"; float: right; color: var(--dim); margin-top: -3px; }
+  .fl-hint { font-size: 11px; color: var(--amber); margin: 5px 0 0; display: flex; gap: 5px; align-items: flex-start; line-height: 1.4; }
+  .fl-hint--calm { color: var(--dim); }
+  .fl-disclosure {
+    border: 1px dashed var(--line-s); border-radius: 10px; padding: 11px 14px;
+    color: var(--olive); font-weight: 600; font-size: 12.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fl-modal-foot {
+    display: flex; justify-content: flex-end; gap: 10px; align-items: center;
+    padding: 14px 20px; border-top: 1px solid var(--line); background: var(--paper);
+  }
+  .fl-btn {
+    font: inherit; font-size: 12px; font-weight: 600; display: inline-flex;
+    align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px; cursor: default;
+    border: 1px solid var(--line-s); background: var(--card); color: var(--ink); white-space: nowrap;
+  }
+  .fl-btn--lime { background: var(--lime); border-color: rgba(87,101,30,.35); color: #241E15; }
+  .fl-btn--ghost { background: transparent; border-color: transparent; color: var(--ink-s); }
+  .fl-ico { font-size: 12px; line-height: 1; }
+
+  /* The picker dropdown */
+  .fl-combo { position: relative; }
+  .fl-drop {
+    position: absolute; left: 0; right: 0; top: calc(100% + 5px); z-index: 6;
+    background: var(--card); border: 1px solid var(--line-s); border-radius: 10px;
+    box-shadow: 0 8px 26px rgba(70,55,30,.20); padding: 5px; overflow: hidden;
+  }
+  .fl-drop .grp {
+    font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+    font-weight: 700; padding: 8px 10px 4px;
+  }
+  .fl-drop .it { padding: 7px 10px; border-radius: 7px; font-size: 12.5px; display: flex; align-items: baseline; gap: 8px; }
+  .fl-drop .it.hot { background: var(--fill); }
+  .fl-drop .it .left { flex: 1; }
+  .fl-drop .it .ct { font-size: 10.5px; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fl-drop .it .ct b { color: var(--win); font-weight: 700; }
+  .fl-drop .it .ct b.spent { color: var(--live); }
+  .fl-drop .it.mk { color: var(--olive); font-weight: 600; border-top: 1px solid var(--line); border-radius: 0; margin-top: 4px; padding-top: 9px; }
+
+  /* Budget-vs-actual specimen */
+  .fl-pad { padding: 16px 18px 18px; }
+  .bva { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .bva th {
+    text-align: left; font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--dim); font-weight: 700; padding: 8px 11px; border-bottom: 1px solid var(--line);
+  }
+  .bva td { padding: 8px 11px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .bva tr:last-child td { border-bottom: none; }
+  .bva .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bva .cat td { background: var(--fill); font-weight: 700; }
+  .bva .lin td:first-child { padding-left: 26px; }
+  .bva .per td:first-child { padding-left: 44px; color: var(--dim); }
+  .bva .good { color: var(--win); }
+  .bva .bad  { color: var(--live); }
+  .bva .mut  { color: var(--dim); }
+
+  @media (max-width: 760px) {
+    .fquote, .verdict, .plate, .panel, .finding p.indent { margin-left: 0; }
+    .fhead { flex-direction: column; gap: 4px; }
+    .fkey { padding-top: 0; }
+    .well { padding: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">FieldLogicHQ · Coaches portal · Money hub · Budget &amp; spending</p>
+    <h1>What Is This Against?</h1>
+    <p class="standfirst">
+      The budget is written line by line. Spending is only recorded by category — so the two can
+      never quite meet. One question, asked at the moment money is recorded, closes the gap and fixes
+      a number that is wrong today.
+    </p>
+    <div class="mast-meta">
+      <span>Raised by <b>Owner, 2026-08-15</b></span>
+      <span>Found <b>1 defect · 1 gap</b></span>
+      <span>Database <b>Two link columns</b></span>
+      <span>Status <b>Awaiting approval</b></span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#q"><span class="k">1</span><span class="t">The asymmetry</span></a>
+    <a href="#bug"><span class="k">2</span><span class="t">The wrong number</span></a>
+    <a href="#fix"><span class="k">3</span><span class="t">One field, both forms</span></a>
+    <a href="#after"><span class="k">4</span><span class="t">What the report becomes</span></a>
+    <a href="#edge"><span class="k">5</span><span class="t">The cases that decide it</span></a>
+  </nav>
+
+  <div class="legend">
+    <span class="tag tag--new">New</span>
+    <span class="tag tag--restyled">Restyled</span>
+    <span class="tag tag--unchanged">Unchanged</span>
+    <span class="tag tag--defect">① Defect pin</span>
+  </div>
+
+
+  <!-- ═══════════════════ 1 ═══════════════════ -->
+  <section class="finding" id="q">
+    <div class="fhead">
+      <span class="fkey">1</span>
+      <h2>The budget says category <em>and</em> item. Spending says category.</h2>
+    </div>
+    <p class="fquote">
+      "In the create expense/payable, it looks like we can only select a category but not an item —
+      don't we need the item to align with the budget?"
+    </p>
+    <p class="verdict verdict--gap"><span class="dot"></span>Correct — and the gap is one level below the form</p>
+
+    <p class="indent">
+      Building a budget line asks for a category <b>and</b> an item: <i>Facilities / Dome rental</i>.
+      Recording the money that pays for it asks only for a category — as free text, chosen from the
+      whole organisation's list rather than from the team's own plan. The report downstream then
+      matches spending to budget <b>by category name</b>.
+    </p>
+    <p class="indent">
+      Category totals come out right. Everything finer than a category is either blank — or, in one
+      place, wrong.
+    </p>
+  </section>
+
+
+  <!-- ═══════════════════ 2 ═══════════════════ -->
+  <section class="finding" id="bug">
+    <div class="fhead">
+      <span class="fkey">2</span>
+      <h2>Expand a budget line and you see the whole category's money</h2>
+    </div>
+    <p class="verdict verdict--bug"><span class="dot"></span>Confirmed defect — every line in a category is shown the same spending</p>
+
+    <p class="indent">
+      Facilities holds two lines. A single <b>$340 dome invoice</b> is paid in November. The line
+      rows themselves are honest — they show a dash, because no per-line actual exists. But open a
+      line's months and the actuals appear, in green, with a favourable variance.
+    </p>
+    <p class="indent">
+      <b>Both lines show the same $340.</b> Field rental has had no spending at all.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--today"><span class="dot"></span>Today — Budget vs. actual, both lines expanded<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-pad">
+            <table class="bva">
+              <thead>
+                <tr><th>Line</th><th class="num">Planned</th><th class="num">Actual</th><th class="num">Variance</th></tr>
+              </thead>
+              <tbody>
+                <tr class="cat"><td>Facilities</td><td class="num">$5,200.00</td><td class="num">$340.00</td><td class="num good">$4,860.00</td></tr>
+                <tr class="lin"><td>Dome rental</td><td class="num">$4,000.00</td><td class="num mut">—</td><td class="num mut">—</td></tr>
+                <tr class="per"><td>Nov 1, 2026</td><td class="num">$340.00</td><td class="num good">$340.00</td><td class="num mut">$0.00</td></tr>
+                <tr class="lin"><td>Field rental</td><td class="num">$1,200.00</td><td class="num mut">—</td><td class="num mut">—</td></tr>
+                <tr class="per anchor">
+                  <td><span class="pin">1</span>May 1, 2027</td>
+                  <td class="num">$300.00</td>
+                  <td class="num good">$340.00</td>
+                  <td class="num bad">−$40.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--defect">①</span>
+        <span class="txt">
+          The same $340 dome payment, reported a second time against a field-rental month six months
+          later. With three lines in a category it is reported three times.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel panel--defect">
+      <h3>Why it happens, and why it's fixed here</h3>
+      <p>
+        A line's monthly actuals are computed from <b>the category's</b> spending and then drawn under
+        each line in turn. There is no per-line figure to use, because no expense has ever recorded
+        which line it was against.
+      </p>
+      <p style="margin-bottom:0">
+        It only shows up when a category holds more than one line — which is what a real budget looks
+        like. Same root cause as the question in §1, so it is fixed in the same work rather than
+        patched over.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ 3 ═══════════════════ -->
+  <section class="finding" id="fix">
+    <div class="fhead">
+      <span class="fkey">3</span>
+      <h2>One field, on both forms: what is this against?</h2>
+    </div>
+    <p class="verdict verdict--new"><span class="dot"></span>The team's own budget lines — not the organisation's item list</p>
+
+    <p class="indent">
+      Pointing at the <b>line</b> beats pointing at the item. Two lines can legitimately share a
+      category and an item — "Tournament entry", twice, for two different tournaments — and the pair
+      can't tell them apart. The line can. It is also what the coach means: <i>this is against that
+      row of my budget</i>.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed — Add Expense (identical on Add Payable)<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Expense</h4>
+              <p class="sub">Money the team has already spent.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input fl-input--val">November dome invoice</div>
+            </div>
+            <div class="full fl-combo anchor">
+              <span class="pin pin--good">✓</span>
+              <span class="fl-label">What is this against?</span>
+              <div class="fl-input fl-input--focus fl-select">Dome rental</div>
+              <div class="fl-drop">
+                <div class="grp">Facilities</div>
+                <div class="it hot"><span class="left">Dome rental</span><span class="ct">$4,000 planned · <b>$1,190 left</b></span></div>
+                <div class="it"><span class="left">Field rental</span><span class="ct">$1,200 planned · <b>$1,200 left</b></span></div>
+                <div class="grp">Tournaments</div>
+                <div class="it"><span class="left">Spring classic entry</span><span class="ct">$850 planned · <b class="spent">$0 left</b></span></div>
+                <div class="it"><span class="left">Provincials entry</span><span class="ct">$900 planned · <b>$900 left</b></span></div>
+                <div class="it mk"><span class="left">Not in the budget</span><span class="ct">pick a category</span></div>
+              </div>
+            </div>
+            <div>
+              <span class="fl-label">Amount *</span>
+              <div class="fl-input fl-input--val">340.00</div>
+            </div>
+            <div>
+              <span class="fl-label">Paid by</span>
+              <div class="fl-input fl-input--val fl-select">The team</div>
+            </div>
+            <div class="full" style="margin-top:78px">
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Add details (optional)</div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Expense</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">
+          <b>Category</b> becomes <b>"What is this against?"</b> — the same slot, a better question.
+          Choosing a line fills the category in automatically, so the two can't disagree.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          <b>What's left on each line</b>, shown while choosing. The coach learns they're about to
+          overspend a line as they record the cost — not next month, on a report.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          <b>"Not in the budget"</b> as a real option, at the foot. It reveals today's category
+          picker and today's honest warning. Unbudgeted spending is a real thing, not a mistake to
+          design out.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          Everything else on both forms — and a team with <b>no budget plan</b> sees precisely the
+          category picker it sees today.
+        </span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ 4 ═══════════════════ -->
+  <section class="finding" id="after">
+    <div class="fhead">
+      <span class="fkey">4</span>
+      <h2>The report the question makes possible</h2>
+    </div>
+    <p class="verdict verdict--new"><span class="dot"></span>The dashes fill in — and the neighbouring line goes quiet</p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>After<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl">
+          <div class="fl-pad">
+            <table class="bva">
+              <thead>
+                <tr><th>Line</th><th class="num">Planned</th><th class="num">Actual</th><th class="num">Variance</th></tr>
+              </thead>
+              <tbody>
+                <tr class="cat"><td>Facilities</td><td class="num">$5,200.00</td><td class="num">$2,810.00</td><td class="num good">$2,390.00</td></tr>
+                <tr class="lin"><td>Dome rental</td><td class="num">$4,000.00</td><td class="num">$2,810.00</td><td class="num good">$1,190.00</td></tr>
+                <tr class="per"><td>Nov 1, 2026</td><td class="num">$340.00</td><td class="num good">$340.00</td><td class="num mut">$0.00</td></tr>
+                <tr class="per"><td>Dec 1, 2026</td><td class="num">$340.00</td><td class="num good">$340.00</td><td class="num mut">$0.00</td></tr>
+                <tr class="lin anchor">
+                  <td><span class="pin pin--good">✓</span>Field rental</td>
+                  <td class="num">$1,200.00</td><td class="num mut">—</td><td class="num mut">—</td>
+                </tr>
+                <tr class="per"><td>May 1, 2027</td><td class="num">$300.00</td><td class="num mut">—</td><td class="num mut">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">
+          A line now carries its own actual and variance. <b>A line with no spending against it shows
+          nothing</b> — that dash is the defect in §2, gone.
+        </span>
+      </div>
+    </div>
+
+    <table class="matrix" style="margin-left:32px; max-width:none">
+      <thead><tr><th style="width:44%">Today</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>Every line's actual is a dash</td><td class="why">Real spent-vs-planned, line by line</td></tr>
+        <tr><td>Expanded months show the category's money</td><td class="why">Show that line's money</td></tr>
+        <tr><td>The export leaves line actuals blank by design</td><td class="why">The export carries them</td></tr>
+        <tr><td>"Unbudgeted" = the category name didn't match</td><td class="why">"Unbudgeted" = the coach said it wasn't in the plan</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <!-- ═══════════════════ 5 ═══════════════════ -->
+  <section class="finding" id="edge">
+    <div class="fhead">
+      <span class="fkey">5</span>
+      <h2>The cases that decide whether this is safe</h2>
+    </div>
+
+    <table class="matrix" style="margin-left:32px; max-width:none">
+      <thead><tr><th style="width:230px">Case</th><th>Answer</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Records made before this ships</b></td>
+          <td class="why">Left exactly as they are and still matched by category name. <b>Nothing is guessed retroactively</b> — inferring which line a past expense belonged to would be confident and wrong, which is worse than a dash.</td>
+        </tr>
+        <tr>
+          <td><b>A season of mixed records</b></td>
+          <td class="why">Linked and unlinked rows both roll up into the same category totals, so no figure ever disagrees with itself during the changeover. That is what makes shipping without rewriting history safe.</td>
+        </tr>
+        <tr>
+          <td><b>A budget line is deleted</b></td>
+          <td class="why">The spending survives untouched and falls back to its category. <b>Deleting a plan row must never delete a record of money.</b></td>
+        </tr>
+        <tr>
+          <td><b>No budget plan at all</b></td>
+          <td class="why">The field is the category picker it is today. Nothing gets worse for a team that hasn't planned.</td>
+        </tr>
+        <tr>
+          <td><b>The spreadsheet importer</b></td>
+          <td class="why">Unchanged in v1 — its template has a category column, so imported rows land at category level exactly as now. A "budget line" column is a clean follow-up, not a reason to hold this.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="panel panel--flag">
+      <h3>Two questions for sign-off</h3>
+      <p>
+        <b>1.</b> Link to the <b>budget line</b>, as drawn — rather than to a category + item pair,
+        which can't separate two lines that share one?
+      </p>
+      <p style="margin-bottom:0">
+        <b>2.</b> The coach demo (Riverdale Ridge) has both a budget plan and seeded spending. Should
+        its Budget vs. Actual show real per-line actuals once this exists? It is the screen a prospect
+        is most likely to open, and it will keep showing dashes unless someone decides otherwise.
+      </p>
+    </div>
+  </section>
+
+</div>

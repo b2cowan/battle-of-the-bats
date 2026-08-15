@@ -1,0 +1,1124 @@
+<title>Repeating Payables</title>
+
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     DOCUMENT CHROME — the same cool-slate spec sheet as the "Expenses &
+     Payables Fixes" round-2 sheet this plan grew out of (Q6). Deliberately NOT
+     the product: the warm frames below are the product, inset into the page.
+     Light palette on bare :root so the un-stamped (system) state resolves.
+     ══════════════════════════════════════════════════════════════════════════ */
+  :root {
+    --doc-ground:   #E4E8F0;
+    --doc-panel:    #F5F7FB;
+    --doc-panel-2:  #EDF0F6;
+    --doc-ink:      #141A28;
+    --doc-ink-2:    #3A4358;
+    --doc-dim:      #5E6878;
+    --doc-rule:     rgba(20, 26, 40, 0.14);
+    --doc-rule-2:   rgba(20, 26, 40, 0.08);
+    --doc-accent:   #1E3A8A;
+    --doc-accent-2: rgba(30, 58, 138, 0.10);
+    --doc-defect:   #A32B3F;
+    --doc-defect-2: rgba(163, 43, 63, 0.10);
+    --doc-keep:     #2F6B44;
+    --doc-amber:    #8A5A00;
+    --doc-amber-2:  rgba(138, 90, 0, 0.12);
+    --doc-shadow-sm:0 1px 2px rgba(20,26,40,.06);
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-ground:   #0F1420;
+      --doc-panel:    #171D2C;
+      --doc-panel-2:  #1E2637;
+      --doc-ink:      #E9EDF6;
+      --doc-ink-2:    #B7C0D2;
+      --doc-dim:      #8B95A9;
+      --doc-rule:     rgba(233, 237, 246, 0.16);
+      --doc-rule-2:   rgba(233, 237, 246, 0.09);
+      --doc-accent:   #8FA9F2;
+      --doc-accent-2: rgba(143, 169, 242, 0.14);
+      --doc-defect:   #F0899A;
+      --doc-defect-2: rgba(240, 137, 154, 0.13);
+      --doc-keep:     #7BC496;
+      --doc-amber:    #E0B25C;
+      --doc-amber-2:  rgba(224, 178, 92, 0.14);
+      --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --doc-ground:   #0F1420;
+    --doc-panel:    #171D2C;
+    --doc-panel-2:  #1E2637;
+    --doc-ink:      #E9EDF6;
+    --doc-ink-2:    #B7C0D2;
+    --doc-dim:      #8B95A9;
+    --doc-rule:     rgba(233, 237, 246, 0.16);
+    --doc-rule-2:   rgba(233, 237, 246, 0.09);
+    --doc-accent:   #8FA9F2;
+    --doc-accent-2: rgba(143, 169, 242, 0.14);
+    --doc-defect:   #F0899A;
+    --doc-defect-2: rgba(240, 137, 154, 0.13);
+    --doc-keep:     #7BC496;
+    --doc-amber:    #E0B25C;
+    --doc-amber-2:  rgba(224, 178, 92, 0.14);
+    --doc-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--doc-ground);
+    color: var(--doc-ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  a { color: var(--doc-accent); }
+  :focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .mast { padding: 64px 0 30px; border-bottom: 2px solid var(--doc-ink); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--doc-dim); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 54px); line-height: 1.02; letter-spacing: -0.028em;
+    font-weight: 800; margin: 0 0 18px; text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 19px; line-height: 1.55; color: var(--doc-ink-2); margin: 0; max-width: 60ch;
+  }
+  .mast-meta {
+    display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 30px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.05em; color: var(--doc-dim);
+  }
+  .mast-meta b { color: var(--doc-ink); font-weight: 600; }
+
+  .toc {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px; background: var(--doc-rule-2); border: 1px solid var(--doc-rule-2); margin: 26px 0 0;
+  }
+  .toc a { display: block; background: var(--doc-ground); padding: 13px 15px; text-decoration: none; color: var(--doc-ink); }
+  .toc a:hover { background: var(--doc-panel); }
+  .toc .k { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--doc-dim); display: block; margin-bottom: 3px; }
+  .toc .t { font-size: 13.5px; line-height: 1.35; display: block; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 24px 0 0; }
+
+  /* ── Tags ─────────────────────────────────────────────────────────── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 3px;
+    border: 1px solid var(--doc-rule); color: var(--doc-dim); white-space: nowrap;
+  }
+  .tag--new       { color: var(--doc-accent); border-color: var(--doc-accent); background: var(--doc-accent-2); }
+  .tag--restyled  { color: var(--doc-amber);  border-color: var(--doc-amber);  background: var(--doc-amber-2); }
+  .tag--unchanged { color: var(--doc-dim); }
+  .tag--rule      { color: var(--doc-defect); border-color: var(--doc-defect); background: var(--doc-defect-2); }
+
+  /* ── Section block ────────────────────────────────────────────────── */
+  .finding { padding: 58px 0 8px; border-bottom: 1px solid var(--doc-rule); scroll-margin-top: 20px; }
+  .finding:last-of-type { border-bottom: none; }
+  .fhead { display: flex; gap: 20px; align-items: baseline; margin-bottom: 6px; }
+  .fkey {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--doc-accent); padding-top: 8px; flex-shrink: 0; white-space: nowrap;
+  }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 31px); line-height: 1.18; letter-spacing: -0.018em;
+    font-weight: 750; margin: 0; text-wrap: balance;
+  }
+  .finding p { margin: 0 0 16px; max-width: 68ch; }
+  .finding p.indent, .finding ul.indent { margin-left: 32px; }
+  .finding ul { margin: 0 0 16px 32px; padding-left: 20px; max-width: 64ch; }
+  .finding li { margin-bottom: 9px; }
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    margin: 0 0 18px 32px;
+  }
+  .verdict--new  { color: var(--doc-accent); }
+  .verdict--rule { color: var(--doc-defect); }
+  .verdict--ask  { color: var(--doc-amber); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* ── Specimen plate ───────────────────────────────────────────────── */
+  .plate { margin: 26px 0 0 32px; }
+  .plate-head {
+    display: flex; align-items: center; gap: 10px; font-family: var(--mono);
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 9px;
+  }
+  .plate-head--today { color: var(--doc-defect); }
+  .plate-head--prop  { color: var(--doc-accent); }
+  .plate-head--ref   { color: var(--doc-dim); }
+  .plate-head .rule { flex: 1; height: 1px; background: var(--doc-rule-2); }
+
+  .well {
+    overflow-x: auto; background: var(--doc-panel-2);
+    border: 1px solid var(--doc-rule-2); border-radius: 4px; padding: 22px;
+  }
+  .caption {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-top: 11px; font-size: 13.5px; color: var(--doc-dim); line-height: 1.5;
+  }
+  .caption .txt { max-width: 60ch; }
+
+  .anchor { position: relative; }
+  .pin {
+    position: absolute; z-index: 5; top: 0; left: 0;
+    transform: translate(-52%, -52%); width: 19px; height: 19px; border-radius: 50%;
+    background: #1E3A8A; color: #FFFFFF; font-family: var(--mono);
+    font-size: 11px; font-weight: 700; line-height: 19px; text-align: center;
+    box-shadow: 0 0 0 2.5px #F8F4ED, 0 1px 4px rgba(0,0,0,.35);
+  }
+  .pin--r { left: auto; right: 0; transform: translate(52%, -52%); }
+  .pin--bad { background: #A32B3F; }
+
+  /* ── Panels ───────────────────────────────────────────────────────── */
+  .panel {
+    background: var(--doc-panel); border: 1px solid var(--doc-rule);
+    border-radius: 5px; padding: 26px 28px; margin: 30px 0 0 32px;
+    box-shadow: var(--doc-shadow-sm);
+  }
+  .panel h3 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--doc-dim); margin: 0 0 16px; font-weight: 700;
+  }
+  .panel p { max-width: 64ch; }
+  .panel p:last-child { margin-bottom: 0; }
+  .panel--flag { border-left: 3px solid var(--doc-amber); }
+  .panel--rule { border-left: 3px solid var(--doc-defect); }
+
+  .matrix { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .matrix th, .matrix td {
+    text-align: left; padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--doc-rule-2); vertical-align: top;
+  }
+  .matrix thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--doc-dim); font-weight: 700;
+    border-bottom: 1px solid var(--doc-rule);
+  }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix td.state { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .yes  { color: var(--doc-keep); }
+  .no   { color: var(--doc-defect); }
+  .matrix .why { color: var(--doc-dim); font-size: 13px; line-height: 1.45; }
+
+  .seq { counter-reset: seq; list-style: none; padding: 0; margin: 18px 0 0 !important; max-width: 66ch; }
+  .seq li {
+    counter-increment: seq; position: relative; padding-left: 42px;
+    margin-bottom: 16px; line-height: 1.55;
+  }
+  .seq li::before {
+    content: counter(seq); position: absolute; left: 0; top: 1px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    width: 24px; height: 24px; line-height: 23px; text-align: center;
+    border: 1px solid var(--doc-rule); border-radius: 50%; color: var(--doc-dim);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     PRODUCT FRAMES — colour-locked to the real warm coaches portal palette.
+     Specimens stay cream in both document themes: the portal is a cream world
+     regardless of the reader's browser theme, so every value here is a literal.
+     ══════════════════════════════════════════════════════════════════════════ */
+  .fl {
+    --paper: #F8F4ED;
+    --card:  #FFFFFF;
+    --ink:   #241E15;
+    --ink-s: #4A4235;
+    --dim:   #6A635C;
+    --line:  rgba(70, 55, 30, 0.12);
+    --line-s:rgba(70, 55, 30, 0.20);
+    --fill:  rgba(70, 55, 30, 0.08);
+    --olive: #57651E;
+    --olive-s: rgba(87, 101, 30, 0.10);
+    --lime:  #D9F99D;
+    --amber: #835006;
+    --blue:  #134FD3;
+    --win:   #34662A;
+    --live:  #B03A22;
+
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 8px;
+    border: 1px solid var(--line-s);
+    box-shadow: 0 1px 3px rgba(70,55,30,.10), 0 10px 30px rgba(70,55,30,.10);
+    min-width: 560px;
+    overflow: hidden;
+  }
+  .fl--modal { min-width: 430px; max-width: 470px; background: var(--card); overflow: visible; }
+  .fl--wide-modal { min-width: 560px; max-width: 640px; background: var(--card); }
+
+  .fl-modal-head { display: flex; align-items: flex-start; padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
+  .fl-modal-head h4 { margin: 0; font-size: 16px; font-weight: 750; }
+  .fl-modal-head .sub { margin: 3px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.45; max-width: 44ch; }
+  .fl-modal-head .x { margin-left: auto; color: var(--dim); font-size: 15px; padding-left: 12px; }
+
+  .fl-form { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 13px 14px; }
+  .fl-form .full { grid-column: 1 / -1; }
+  .fl-label { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--ink-s); margin-bottom: 5px; }
+  .fl-input {
+    border: 1px solid var(--line-s); background: var(--paper);
+    border-radius: 9px; padding: 8px 11px; font-size: 12.5px; color: var(--dim);
+  }
+  .fl-input--val { color: var(--ink); }
+  .fl-input--focus { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(87,101,30,.14); background: var(--card); color: var(--ink); }
+  .fl-select::after { content: "⌄"; float: right; color: var(--dim); margin-top: -3px; }
+  .fl-hint { font-size: 11px; color: var(--amber); margin: 5px 0 0; display: flex; gap: 5px; align-items: flex-start; line-height: 1.4; }
+  .fl-hint--calm { color: var(--dim); }
+
+  .fl-disclosure {
+    border: 1px dashed var(--line-s); border-radius: 10px; padding: 11px 14px;
+    color: var(--olive); font-weight: 600; font-size: 12.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fl-disclosure .meta {
+    margin-left: auto; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--dim); font-weight: 700;
+  }
+  .fl-disclosure--off { color: var(--dim); border-style: dashed; opacity: .55; }
+
+  .fl-open { border: 1px solid var(--line-s); border-radius: 10px; background: var(--paper); padding: 13px 14px; }
+  .fl-open > .hdr {
+    display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12.5px;
+    color: var(--ink); margin-bottom: 11px;
+  }
+  .fl-open > .hdr .meta { margin-left: auto; font-size: 11px; color: var(--dim); font-weight: 600; }
+  .fl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; }
+  .fl-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 11px 14px; }
+
+  /* Radio pair — the "ends" choice */
+  .fl-radios { display: flex; gap: 16px; align-items: center; font-size: 12.5px; color: var(--ink-s); }
+  .fl-radios label { display: inline-flex; align-items: center; gap: 6px; }
+  .fl-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--line-s); display: inline-block; flex-shrink: 0; }
+  .fl-radio.on { border-color: var(--olive); box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 9px var(--olive); }
+
+  .fl-modal-foot {
+    display: flex; justify-content: flex-end; gap: 10px; align-items: center;
+    padding: 14px 20px; border-top: 1px solid var(--line); background: var(--paper);
+  }
+  .fl-modal-foot .left { margin-right: auto; font-size: 11.5px; color: var(--dim); }
+  .fl-btn {
+    font: inherit; font-size: 12px; font-weight: 600; display: inline-flex;
+    align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px; cursor: default;
+    border: 1px solid var(--line-s); background: var(--card); color: var(--ink); white-space: nowrap;
+  }
+  .fl-btn--lime { background: var(--lime); border-color: rgba(87,101,30,.35); color: #241E15; }
+  .fl-btn--ghost { background: transparent; border-color: transparent; color: var(--ink-s); }
+  .fl-btn--sm { font-size: 11px; padding: 5px 10px; border-radius: 7px; }
+  .fl-ico { font-size: 12px; line-height: 1; }
+  .fl-kebab { width: 28px; height: 26px; padding: 0; justify-content: center; font-size: 15px; letter-spacing: 1px; line-height: 1; }
+
+  /* Row action menu — the control the Edit/Delete work is already adding */
+  .fl-menu-wrap { position: relative; display: inline-block; }
+  .fl-menu {
+    position: absolute; right: 0; top: 30px; z-index: 4; background: var(--card);
+    border: 1px solid var(--line-s); border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(70,55,30,.20); padding: 5px; min-width: 190px; text-align: left;
+  }
+  .fl-menu div { padding: 7px 11px; border-radius: 7px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .fl-menu div.hot { background: var(--fill); font-weight: 600; }
+  .fl-menu div.danger { color: var(--live); }
+
+  .fl-callout {
+    background: rgba(87,101,30,.07); border: 1px solid rgba(87,101,30,.25);
+    border-radius: 9px; padding: 10px 12px; margin-top: 12px; color: var(--ink);
+    font-size: 12px; line-height: 1.5;
+  }
+  .fl-callout--warn { background: rgba(131,80,6,.08); border-color: rgba(131,80,6,.28); }
+
+  /* Occurrence preview table */
+  .fl-preview { max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+  .fl-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .fl-preview th {
+    position: sticky; top: 0; background: var(--paper); text-align: left;
+    font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--dim);
+    font-weight: 700; padding: 8px 11px; border-bottom: 1px solid var(--line);
+  }
+  .fl-preview td { padding: 7px 11px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .fl-preview tr:last-child td { border-bottom: none; }
+  .fl-preview .drop { color: var(--dim); text-decoration: line-through; }
+  .fl-preview .x { color: var(--dim); font-size: 13px; }
+  .fl-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .fl-cellnote { display: block; font-size: 10px; color: var(--dim); line-height: 1.35; margin-top: 2px; }
+  .fl-cellnote--warn { color: var(--amber); }
+  .fl-amt {
+    border: 1px solid var(--line-s); background: var(--paper); border-radius: 7px;
+    padding: 4px 8px; font-size: 12px; color: var(--ink); text-align: right;
+    font-variant-numeric: tabular-nums; min-width: 78px; display: inline-block;
+  }
+  .fl-amt--edited { border-color: var(--olive); box-shadow: 0 0 0 2.5px rgba(87,101,30,.14); background: var(--card); font-weight: 600; }
+  .fl-flag {
+    display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px;
+    border-radius: 999px; background: rgba(131,80,6,.10); color: var(--amber);
+    border: 1px solid rgba(131,80,6,.30); white-space: nowrap;
+  }
+
+  /* Payables row (for the "no schedule" specimen) */
+  .fl-table { width: 100%; border-collapse: collapse; }
+  .fl-table th {
+    text-align: left; font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--dim); font-weight: 700; padding: 9px 12px; background: var(--fill);
+  }
+  .fl-table th:first-child { border-radius: 7px 0 0 7px; }
+  .fl-table th:last-child  { border-radius: 0 7px 7px 0; }
+  .fl-table td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .fl-table tr:last-child td { border-bottom: none; }
+  .fl-badge {
+    display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px;
+    border-radius: 999px; background: var(--fill); color: var(--dim); border: 1px solid var(--line-s);
+  }
+  .fl-badge--sched { background: rgba(19,79,211,.10); color: #10399A; border-color: rgba(19,79,211,.26); }
+  .fl-pad { padding: 16px 18px 18px; }
+
+  @media (max-width: 760px) {
+    .fquote, .verdict, .plate, .panel, .finding p.indent, .finding ul, .finding ul.indent { margin-left: 0; }
+    .fhead { flex-direction: column; gap: 4px; }
+    .fkey { padding-top: 0; }
+    .well { padding: 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- ═══════════════════ MASTHEAD ═══════════════════ -->
+  <header class="mast">
+    <p class="eyebrow">FieldLogicHQ · Coaches portal · Money hub · Expenses &amp; Payables</p>
+    <h1>Repeating Payables</h1>
+    <p class="standfirst">
+      A monthly commitment, set up once and reviewed before it exists. The Q6 sketch drawn as it
+      would ship — plus four additions the code reading says it needs.
+    </p>
+    <div class="mast-meta">
+      <span>Cadence <b>Monthly only</b></span>
+      <span>Series <b>Editable after the fact</b></span>
+      <span>Database <b>One new table + a link</b></span>
+      <span>Status <b>Awaiting approval</b></span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#a"><span class="k">A</span><span class="t">Where it lives</span></a>
+    <a href="#b"><span class="k">B</span><span class="t">The form, open</span></a>
+    <a href="#c"><span class="k">C</span><span class="t">Four additions</span></a>
+    <a href="#d"><span class="k">D</span><span class="t">The invisible-payable rule</span></a>
+    <a href="#e"><span class="k">E</span><span class="t">Repeats vs. the split</span></a>
+    <a href="#g"><span class="k">G</span><span class="t">Changing a run afterwards</span></a>
+    <a href="#f"><span class="k">F</span><span class="t">Left out, on purpose</span></a>
+  </nav>
+
+  <div class="legend">
+    <span class="tag tag--new">New</span>
+    <span class="tag tag--restyled">Restyled</span>
+    <span class="tag tag--unchanged">Unchanged</span>
+    <span class="tag tag--rule">Load-bearing rule</span>
+  </div>
+
+
+  <!-- ═══════════════════ A ═══════════════════ -->
+  <section class="finding" id="a">
+    <div class="fhead">
+      <span class="fkey">A</span>
+      <h2>One more group in a form that already has two</h2>
+    </div>
+    <p class="verdict verdict--new"><span class="dot"></span>Nothing moves — a third disclosure joins the two that are there</p>
+
+    <p class="indent">
+      The Add Payable form opens as three fields and two closed groups. <b>Repeats</b> becomes the
+      third group, above them, because a coach decides <em>whether this repeats</em> before they
+      decide anything about payment terms or bookkeeping. Closed, it costs one line.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Closed — the everyday case is untouched<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Payable</h4>
+              <p class="sub">Money you've committed to but haven't paid yet.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input">e.g. Spring tournament entry, summer dome block</div>
+            </div>
+            <div>
+              <span class="fl-label">What is this against?</span>
+              <div class="fl-input fl-select">Choose a budget line…</div>
+            </div>
+            <div>
+              <span class="fl-label">Total Amount *</span>
+              <div class="fl-input">0.00</div>
+            </div>
+            <div class="full anchor">
+              <span class="pin">1</span>
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Repeats <span class="meta">Off</span></div>
+            </div>
+            <div class="full">
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Split into a deposit and a balance</div>
+            </div>
+            <div class="full">
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Add details (optional)</div>
+            </div>
+          </div>
+          <div class="fl-modal-foot">
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add Payable</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">① <b>Repeats</b> — a third <code>CoachFormDisclosure</code>, the same control the other two groups already are.</span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          Description, Category, Total Amount, both existing groups, both footer buttons, and the
+          form's own subtitle — all exactly as they ship today.
+        </span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ B ═══════════════════ -->
+  <section class="finding" id="b">
+    <div class="fhead">
+      <span class="fkey">B</span>
+      <h2>Open: the dates exist on screen before they exist anywhere else</h2>
+    </div>
+    <p class="verdict verdict--new"><span class="dot"></span>The schedule's repeat-weekly review, and the importer's, applied a third time</p>
+
+    <p class="indent">
+      A winter dome block: <b>$340 on the 1st, November through April</b>. January is a rink closure,
+      so it's unticked. April is a half month, so its amount is typed straight into the row. The
+      button counts what it will actually create.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>Proposed<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--wide-modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Add Payable</h4>
+              <p class="sub">Money you've committed to but haven't paid yet.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+          <div class="fl-form">
+            <div class="full">
+              <span class="fl-label">Description *</span>
+              <div class="fl-input fl-input--val">Winter dome block</div>
+            </div>
+            <div class="anchor">
+              <span class="pin">7</span>
+              <span class="fl-label">What is this against?</span>
+              <div class="fl-input fl-input--val fl-select">Dome rental · Facilities</div>
+            </div>
+            <div>
+              <span class="fl-label">Total Amount *</span>
+              <div class="fl-input fl-input--val">340.00</div>
+            </div>
+
+            <div class="full">
+              <div class="fl-open">
+                <div class="hdr"><span class="fl-ico">−</span> Repeats <span class="meta">Monthly · 6 dates</span></div>
+
+                <div class="fl-grid2">
+                  <div>
+                    <span class="fl-label">How often</span>
+                    <div class="fl-input fl-input--val fl-select">Monthly</div>
+                  </div>
+                  <div class="anchor">
+                    <span class="pin pin--r">2</span>
+                    <span class="fl-label">Day of month</span>
+                    <div class="fl-input fl-input--val fl-select">1st</div>
+                  </div>
+                </div>
+
+                <div class="fl-grid3" style="margin-top:11px">
+                  <div>
+                    <span class="fl-label">First due date</span>
+                    <div class="fl-input fl-input--val">2026-11-01</div>
+                  </div>
+                  <div class="full anchor" style="grid-column: span 2">
+                    <span class="pin">3</span>
+                    <span class="fl-label">Ends</span>
+                    <div class="fl-radios" style="padding-top:5px">
+                      <label><span class="fl-radio on"></span> Until <span class="fl-input fl-input--val" style="padding:4px 8px">2027-04-01</span></label>
+                      <label><span class="fl-radio"></span> After <span class="fl-input" style="padding:4px 8px">6</span> payments</label>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="fl-hint fl-hint--calm" style="margin-top:11px">
+                  <span>◷</span><span>Untick any date you don't owe — a rink closure, a month off. Type over an amount that's different that month.</span>
+                </p>
+
+                <div class="fl-preview" style="margin-top:9px">
+                  <table>
+                    <thead>
+                      <tr><th style="width:26px"></th><th>Due</th><th>What</th><th class="fl-num" style="width:110px">Amount</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td class="x">☑</td><td>Nov 1, 2026</td><td>Winter dome block</td><td class="fl-num"><span class="fl-amt">340.00</span></td></tr>
+                      <tr><td class="x">☑</td><td>Dec 1, 2026</td><td>Winter dome block</td><td class="fl-num"><span class="fl-amt">340.00</span></td></tr>
+                      <tr><td class="x">☐</td><td class="drop">Jan 1, 2027</td><td class="drop">Winter dome block</td><td class="fl-num drop">340.00</td></tr>
+                      <tr><td class="x">☑</td><td>Feb 1, 2027</td><td>Winter dome block</td><td class="fl-num"><span class="fl-amt">340.00</span></td></tr>
+                      <tr><td class="x">☑</td><td>Mar 1, 2027</td><td>Winter dome block</td><td class="fl-num"><span class="fl-amt">340.00</span></td></tr>
+                      <tr class="anchor"><td class="x">☑</td><td>Apr 1, 2027</td><td>Winter dome block</td><td class="fl-num"><span class="fl-amt fl-amt--edited">170.00</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="fl-callout">
+                  Creates <b>5 payables totalling $1,530.00</b>, each with its own due date and its own
+                  Mark paid. They'll appear on the Payment schedule straight away.
+                  <span style="display:block; margin-top:6px; color:#4A4235">
+                    Against <b>Dome rental</b> — $2,150 left on that line, so this run leaves
+                    <b>$620</b>.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="full">
+              <div class="fl-disclosure fl-disclosure--off"><span class="fl-ico">＋</span> Split into a deposit and a balance <span class="meta">Not while it repeats</span></div>
+            </div>
+            <div class="full anchor">
+              <span class="pin pin--r">4</span>
+              <div class="fl-disclosure"><span class="fl-ico">＋</span> Add details (optional) <span class="meta">Applies to all 5</span></div>
+            </div>
+          </div>
+
+          <div class="fl-modal-foot">
+            <span class="left">5 of 6 dates selected</span>
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Add 5 payables</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          The whole Repeats group: cadence, the date rule, the tick-list of occurrences, the total
+          callout, the "N of M dates selected" count, and the counting button.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--restyled">Restyled</span>
+        <span class="txt">
+          The primary button — <b>"Add Payable"</b> when Repeats is off, <b>"Add 5 payables"</b> when it's on.
+          ② ③ ④ are the additions detailed in <a href="#c">C</a>.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          ⑦ <b>A repeat points at a budget line like any other cost</b> — inherited from the
+          budget-alignment change, and the line applies to every occurrence. A run is the largest
+          single commitment a coach makes, so the callout says what it does to that line's remaining
+          balance <b>before</b> five payments exist.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">Title, subtitle, the three top fields, Cancel, the details group's contents.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What makes the preview trustworthy</h3>
+      <ol class="seq">
+        <li>
+          <b>The rule travels, not just the list.</b> The form sends the repeat rule <em>and</em> the
+          dates it showed you. The server regenerates from that rule and refuses any date it did not
+          itself produce — so a date you never reviewed cannot be written, and a date you unticked
+          cannot come back.
+        </li>
+        <li>
+          <b>A ceiling both halves agree on.</b> 24 payments, refused identically by the form and by
+          the server. Monthly across a season is twelve; anything past two years is a typo.
+        </li>
+        <li>
+          <b>A partial failure names dates.</b> If four of six save, the message says which two
+          didn't — never "✓ done" over rows that aren't there.
+        </li>
+      </ol>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ C ═══════════════════ -->
+  <section class="finding" id="c">
+    <div class="fhead">
+      <span class="fkey">C</span>
+      <h2>Four additions to the approved sketch</h2>
+    </div>
+    <p class="verdict verdict--ask"><span class="dot"></span>Each one closes a hole a coach finds on day one — approval needed</p>
+
+    <table class="matrix" style="margin-left:32px; max-width:none">
+      <thead>
+        <tr><th style="width:34px"></th><th style="width:210px">Addition</th><th>Why it isn't optional in practice</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="state">②</td>
+          <td><b>"Last day of month"</b> in the day picker, and short months clamped, visibly</td>
+          <td class="why">The 31st doesn't exist in February. Skipping it silently gives five payments from a six-month rule; clamping silently gives a date nobody typed. So: clamp, keep the count, and <b>say so on the row</b> — and offer "Last day of month" outright, which is what most invoice terms mean anyway.</td>
+        </tr>
+        <tr>
+          <td class="state">③</td>
+          <td><b>"After N payments"</b> beside "Until"</td>
+          <td class="why">Coaches think both ways. A count also <em>cannot</em> produce the runaway list the counting button was added to catch — the safer of the two answers is one click away.</td>
+        </tr>
+        <tr>
+          <td class="state">④</td>
+          <td><b>"Applies to all 5"</b> on the details group</td>
+          <td class="why">Category, payee, payment method, notes and tags go on every occurrence. One line, so nobody types a note expecting it on a single month.</td>
+        </tr>
+        <tr>
+          <td class="state">⑤</td>
+          <td><b>Type an amount on any row</b>, and dates already on the schedule arrive <b>unticked</b></td>
+          <td class="why">Below — the two that change what the coach actually does.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>⑤ The preview under real conditions<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl" style="min-width:520px; max-width:620px; background:#FFFFFF">
+          <div class="fl-pad">
+            <div class="fl-preview" style="max-height:none">
+              <table>
+                <thead>
+                  <tr><th style="width:26px"></th><th>Due</th><th>What</th><th class="fl-num" style="width:110px">Amount</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="x">☐</td>
+                    <td class="drop">Dec 31, 2026<span class="fl-cellnote">Already on the schedule</span></td>
+                    <td class="drop">Ice time — Riverdale Arena</td>
+                    <td class="fl-num drop">1,200.00</td>
+                  </tr>
+                  <tr>
+                    <td class="x">☑</td>
+                    <td>Jan 31, 2027</td>
+                    <td>Ice time — Riverdale Arena</td>
+                    <td class="fl-num"><span class="fl-amt">1,200.00</span></td>
+                  </tr>
+                  <tr class="anchor">
+                    <td class="x">☑</td>
+                    <td>Feb 28, 2027 <span class="fl-flag">last day</span><span class="fl-cellnote fl-cellnote--warn">February has no 31st</span></td>
+                    <td>Ice time — Riverdale Arena</td>
+                    <td class="fl-num"><span class="fl-amt">1,200.00</span></td>
+                  </tr>
+                  <tr>
+                    <td class="x">☑</td>
+                    <td>Mar 31, 2027</td>
+                    <td>Ice time — Riverdale Arena</td>
+                    <td class="fl-num"><span class="fl-amt fl-amt--edited">1,450.00</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fl-callout fl-callout--warn">
+              One date is <b>already on this season's schedule</b> and has been left unticked. Tick it
+              if the team genuinely owes it twice.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          <b>Editable amount</b> — prorated first and last months are the norm. Without it the coach
+          commits six identical rows and then goes hunting for the one to fix: the exact work this
+          feature exists to remove, reappearing at the far end.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          <b>"Already on the schedule"</b> — with no linked series, nothing stops the same repeat
+          being set up twice. Matching rows arrive unticked, so a second run adds only what's missing.
+        </span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ D ═══════════════════ -->
+  <section class="finding" id="d">
+    <div class="fhead">
+      <span class="fkey">D</span>
+      <h2>The one line that decides whether any of this is visible</h2>
+    </div>
+    <p class="verdict verdict--rule"><span class="dot"></span>Load-bearing — a payable with an amount and no due date is not on the schedule at all</p>
+
+    <p class="indent">
+      A payable's due dates live on its <b>halves</b>, not on the payable. A row saved with a total
+      and nothing else reads <b>"No schedule"</b>, never reaches the Payment schedule tab, never
+      counts in Due next or the next thirty days, and offers no Mark paid — it is a commitment with
+      no date attached, and the screen says so honestly.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--today"><span class="dot"></span>If an occurrence is written as a bare total<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl" style="min-width:520px">
+          <div class="fl-pad">
+            <table class="fl-table">
+              <thead><tr><th>Payable</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr class="anchor">
+                  <td>Winter dome block</td>
+                  <td class="fl-num">$340.00</td>
+                  <td><span class="pin pin--bad">✕</span><span class="fl-badge">No schedule</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--rule">Rule</span>
+        <span class="txt">Six of these, and the Payment schedule shows nothing. The feature would look like it had worked.</span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>What is actually written<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl" style="min-width:520px">
+          <div class="fl-pad">
+            <table class="fl-table">
+              <thead><tr><th>Payable</th><th>Due</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Winter dome block</td><td>Nov 1, 2026</td><td class="fl-num">$340.00</td><td><span class="fl-badge fl-badge--sched">Scheduled</span></td></tr>
+                <tr><td>Winter dome block</td><td>Dec 1, 2026</td><td class="fl-num">$340.00</td><td><span class="fl-badge fl-badge--sched">Scheduled</span></td></tr>
+                <tr><td>Winter dome block</td><td>Feb 1, 2027</td><td class="fl-num">$340.00</td><td><span class="fl-badge fl-badge--sched">Scheduled</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          Each occurrence carries its amount on the first half with that month's due date — the same
+          way the payables importer already records a single-amount row, and the same way the form
+          does when you fill in one date. Nothing new exists in the data.
+        </span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ E ═══════════════════ -->
+  <section class="finding" id="e">
+    <div class="fhead">
+      <span class="fkey">E</span>
+      <h2>Repeats and the deposit/balance split can't both be on</h2>
+    </div>
+    <p class="verdict verdict--rule"><span class="dot"></span>Undefined together — so the form states the rule instead of the server discovering it</p>
+
+    <p class="indent">
+      Both groups write the same two dates. "Monthly, and also split into a deposit and a balance"
+      has no obvious meaning — does every month get both halves, or does the split spread across the
+      series? Neither answer is right, so opening one closes the other, with a word saying why. The
+      values you'd typed are kept, so switching back and forth loses nothing.
+    </p>
+
+    <table class="matrix" style="margin-left:32px; max-width:none">
+      <thead><tr><th style="width:200px">Coach is doing this</th><th style="width:130px">Repeats</th><th style="width:150px">Deposit / balance</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>One cost, one date</td><td class="state">off</td><td class="state">off</td><td class="why">Exactly as today — one payable.</td></tr>
+        <tr><td>Tournament entry, deposit now, balance later</td><td class="state no">off</td><td class="state yes">on</td><td class="why">Exactly as today — one payable, two halves.</td></tr>
+        <tr><td>Dome block, every month</td><td class="state yes">on</td><td class="state no">off, disabled</td><td class="why">N payables, one dated half each.</td></tr>
+        <tr><td>Both at once</td><td class="state">—</td><td class="state">—</td><td class="why">Not reachable. The second group greys out with "Not while it repeats".</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <!-- ═══════════════════ G ═══════════════════ -->
+  <section class="finding" id="g">
+    <div class="fhead">
+      <span class="fkey">G</span>
+      <h2>Changing a run after you've set it up</h2>
+    </div>
+    <p class="verdict verdict--new"><span class="dot"></span>Owner revision, 2026-08-15 — and the answer is not "this &amp; future / all occurrences"</p>
+
+    <p class="indent">
+      The calendar-app question asks a coach to reason about a rule they can't see, over rows where
+      some of the money has already been paid. These rows are real payments with real dates. So the
+      answer is simpler and more honest: <b>the list you approved comes back</b>.
+    </p>
+    <p class="indent">
+      The way in is the row menu the screen is already getting for Edit and Delete — <b>one more
+      item, no new furniture</b>. Nothing is added to the row itself: no marker, no second line, no
+      extra height on a table a coach scans down. The sheet says which run it is when it opens.
+    </p>
+
+    <div class="plate">
+      <div class="plate-head plate-head--ref"><span class="dot"></span>The way in — the row's existing "⋯"<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl" style="min-width:520px; overflow:visible">
+          <div class="fl-pad">
+            <table class="fl-table">
+              <thead><tr><th>Payable</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Winter dome block</td>
+                  <td>Feb 1, 2027</td>
+                  <td class="fl-num">$340.00</td>
+                  <td><span class="fl-badge fl-badge--sched">Scheduled</span></td>
+                  <td style="text-align:right; position:relative">
+                    <span class="fl-menu-wrap anchor">
+                      <span class="pin pin--r" style="top:6px">6</span>
+                      <span class="fl-btn fl-btn--sm fl-kebab">⋯</span>
+                      <span class="fl-menu">
+                        <div>✎ Edit payable</div>
+                        <div class="hot">↻ Edit repeating series</div>
+                        <div class="danger">🗑 Delete payable</div>
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          ⑥ <b>"↻ Edit repeating series"</b> — a third item in the row menu, shown only on a payable
+          that belongs to a run.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--unchanged">Unchanged</span>
+        <span class="txt">
+          The row itself, the "⋯" button, and Edit / Delete — all exactly as the Edit &amp; Delete
+          work is already delivering them.
+        </span>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head plate-head--prop"><span class="dot"></span>The series sheet — the creation table, reopened<span class="rule"></span></div>
+      <div class="well">
+        <div class="fl fl--wide-modal">
+          <div class="fl-modal-head">
+            <div>
+              <h4>Winter dome block — repeats monthly</h4>
+              <p class="sub">6 payments on the 1st, Nov 2026 – Apr 2027. Paid months can't be changed here.</p>
+            </div>
+            <span class="x">✕</span>
+          </div>
+
+          <div style="padding:16px 20px">
+            <div class="fl-preview" style="max-height:none">
+              <table>
+                <thead>
+                  <tr><th style="width:26px"></th><th>Due</th><th class="fl-num" style="width:112px">Amount</th><th style="width:104px">Status</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="x" style="opacity:.4">☑</td>
+                    <td class="drop" style="text-decoration:none">Nov 1, 2026</td>
+                    <td class="fl-num drop" style="text-decoration:none">340.00</td>
+                    <td><span class="fl-badge" style="background:rgba(52,102,42,.10);color:#34662A;border-color:rgba(52,102,42,.30)">Paid</span></td>
+                  </tr>
+                  <tr>
+                    <td class="x" style="opacity:.4">☑</td>
+                    <td class="drop" style="text-decoration:none">Dec 1, 2026</td>
+                    <td class="fl-num drop" style="text-decoration:none">340.00</td>
+                    <td><span class="fl-badge" style="background:rgba(52,102,42,.10);color:#34662A;border-color:rgba(52,102,42,.30)">Paid</span></td>
+                  </tr>
+                  <tr class="anchor">
+                    <td class="x">☑</td>
+                    <td>Feb 1, 2027</td>
+                    <td class="fl-num"><span class="fl-amt fl-amt--edited">395.00</span></td>
+                    <td><span class="fl-badge fl-badge--sched">Scheduled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="x">☑</td>
+                    <td>Mar 1, 2027</td>
+                    <td class="fl-num"><span class="fl-amt fl-amt--edited">395.00</span></td>
+                    <td><span class="fl-badge fl-badge--sched">Scheduled</span></td>
+                  </tr>
+                  <tr>
+                    <td class="x">☐</td>
+                    <td class="drop">Apr 1, 2027</td>
+                    <td class="fl-num drop">340.00</td>
+                    <td><span class="fl-badge">Removing</span></td>
+                  </tr>
+                  <tr>
+                    <td class="x">☑</td>
+                    <td>May 1, 2027</td>
+                    <td class="fl-num"><span class="fl-amt">395.00</span></td>
+                    <td><span class="fl-badge" style="background:rgba(19,79,211,.10);color:#10399A;border-color:rgba(19,79,211,.26)">New</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:11px; flex-wrap:wrap">
+              <span class="fl-btn"><span class="fl-ico">＋</span> Add more months</span>
+              <span class="fl-btn" style="color:#B03A22; border-color:rgba(176,58,34,.35)">Remove remaining payments</span>
+            </div>
+
+            <div class="fl-open" style="margin-top:13px">
+              <div class="hdr"><span class="fl-ico">−</span> Change for the whole run <span class="meta">Unpaid payments only</span></div>
+              <div class="fl-grid2">
+                <div>
+                  <span class="fl-label">Description</span>
+                  <div class="fl-input fl-input--val">Winter dome block</div>
+                </div>
+                <div class="anchor">
+                  <span class="pin pin--r">7</span>
+                  <span class="fl-label">What is this against?</span>
+                  <div class="fl-input fl-input--val fl-select">Dome rental · Facilities</div>
+                </div>
+              </div>
+              <p class="fl-hint fl-hint--calm" style="margin-top:9px"><span>◷</span><span>Paid months keep the description they were paid under.</span></p>
+            </div>
+
+            <div class="fl-callout fl-callout--warn">
+              <b>2 amounts changed · 1 payment removed · 1 added.</b> The two paid months are
+              untouched — those can only change on the payment itself.
+            </div>
+          </div>
+
+          <div class="fl-modal-foot">
+            <span class="left">4 payments after saving · $1,525.00 outstanding</span>
+            <span class="fl-btn fl-btn--ghost">Cancel</span>
+            <span class="fl-btn fl-btn--lime">Save changes</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span class="tag tag--new">New</span>
+        <span class="txt">
+          The whole sheet — but <b>not a new pattern</b>: it is the creation table of <a href="#b">B</a>
+          with a status column, loaded from rows that exist.
+        </span>
+      </div>
+      <div class="caption">
+        <span class="tag tag--rule">Rule</span>
+        <span class="txt">
+          <b>Paid rows are frozen — on the server, not just on screen.</b> A request that names a paid
+          occurrence is refused outright. Money that has moved is not a scheduling operation.
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What is stored, and what it will never do</h3>
+      <p>
+        The run remembers its own shape — its cadence, its day of the month, its dates — so
+        <b>"Add more months"</b> knows what "more" means, and so any occurrence can find its siblings.
+        Each payment is still a complete, ordinary payable: editable, deletable, and markable paid on
+        its own, exactly as if it had been typed by hand.
+      </p>
+      <p style="margin-bottom:0">
+        <b>The remembered rule never creates anything by itself.</b> Nothing is written unless a coach
+        opens this sheet and confirms a list they can see. That was the point of the original "no
+        series" decision, and it survives intact — what changed is that the coach can now come back
+        to the list instead of hunting twelve rows.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>One-off edits aren't undone by a series edit</h3>
+      <p style="margin-bottom:0">
+        A payment edited on its own — say February was set to $0 because the club covered it — is
+        marked <b>edited</b> in the sheet. A whole-run re-price shows what it would do to that row
+        before it does it, so a deliberate exception isn't quietly flattened by a bulk change.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ F ═══════════════════ -->
+  <section class="finding" id="f">
+    <div class="fhead">
+      <span class="fkey">F</span>
+      <h2>Left out on purpose</h2>
+    </div>
+
+    <div class="panel">
+      <h3>Not in v1</h3>
+      <p>
+        <b>"This and all future occurrences" as a question.</b> The sheet in <a href="#g">G</a> shows
+        the actual payments instead — simpler to use, and safer over money that has already moved.
+        There is still no rule quietly generating rows in the background.
+      </p>
+      <p>
+        <b>Weekly and biweekly payables.</b> Monthly is what the money actually does — dome and field
+        blocks, insurance, equipment financing.
+      </p>
+      <p style="margin-bottom:0">
+        <b>Per-occurrence descriptions</b> ("Winter dome block — Nov 2026") and
+        <b>suggesting a repeat from a budget line</b>. The first is unnecessary on a date-ordered
+        schedule; the second is a different feature.
+      </p>
+    </div>
+
+    <div class="panel panel--flag">
+      <h3>The dependency</h3>
+      <p style="margin-bottom:0">
+        This ships <b>after Edit and Delete for payables</b>. The series sheet is a convenience over
+        rows that must each be fixable on their own — that base has to exist first. The other change
+        on this screen, the single Add button with an Expense/Payable switch, means <b>Repeats is
+        absent on the Expense side</b>: an expense is money already spent, and repeating it means
+        nothing.
+      </p>
+    </div>
+
+    <div class="panel panel--rule">
+      <h3>Four questions for sign-off</h3>
+      <ol class="seq">
+        <li>Are ② ③ ④ ⑤ ⑦ in, as drawn?</li>
+        <li>Is the series sheet in <a href="#g">G</a> the right answer to "edit the series" — the
+          actual payments rather than a this-and-future question?</li>
+        <li>Is <b>24 payments</b> the right ceiling — two full seasons, counted across the whole run
+          including anything added later?</li>
+        <li>Should the coach demo (Riverdale Ridge) show a monthly commitment on its Payment
+          schedule? It needs no new demo machinery — the rows are ordinary payables.</li>
+      </ol>
+    </div>
+  </section>
+
+</div>
