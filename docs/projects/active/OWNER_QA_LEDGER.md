@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 | 🖥📱 | LIVE · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 | 🖥📱 | LIVE · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -1229,6 +1229,126 @@ books-safety hardening). Two review checks join the walk:
 - [ ] **Read-only money assistant**: sees Payments list, no Record payment, no trash cans, no
       Mark Paid (that button was reachable read-only before this pass; the server always refused).
 
+### 13b 🖥📱 The ledger says where the money went — **ON DEV 2026-08-14**, not yet released · no migration
+
+Pass 4 of the payment record, all from one owner review of the screenshot above. Binding mockup:
+`claude.ai/code/artifact/e73e9842-300d-484c-808e-f3c76bacf780`. Same fixture as §13.
+
+**⚠ A LIVE PRODUCTION DEFECT WAS IN THAT SCREENSHOT.** Paid rows read the literal words **"Paid
+Invalid Date"** — a date formatter written for a date-only column being handed a timestamp. Three
+screens had hand-rolled one and all three were wrong: this drawer and the By-installment grid
+printed "Invalid Date"; the admin rep-team allocation schedule read a bare date as UTC midnight and
+showed every due date **one day early**. One shared formatter now takes both shapes.
+- [ ] A **paid** installment row reads `✓ Paid <a real date>` — never the words "Invalid Date".
+- [ ] Same player in **By installment** (the lens toggle): the covered cell reads `paid <date>` and
+      agrees with the drawer.
+- [ ] **Admin → Rep teams → an allocation**: each installment's Due date matches the date the coach
+      sees for the same installment (this was a day early).
+
+**The four columns.** Each installment now shows Installment / After fundraising / Paid / Owing, and
+the four tiles at the top are those columns totalled — which is why the table has **no** totals row.
+- [ ] Blair (or any part-funded player): the row arithmetic holds across — installment minus what
+      fundraising covered equals **After fundraising**; minus **Paid** equals **Owing**.
+- [ ] The four tiles equal the four columns added up. **Credits −$250** is gone; **After
+      fundraising** stands in its place, and the green strip below still names the credit and offers
+      **Pay out**.
+- [ ] The **Note** column carries one sentence per row — `✓ Paid <date>`, or `$50.00 covered —
+      <effort>`, or `✓ Covered by fundraising — <effort>`. Every row is **one line tall**.
+- [ ] The drawer is wider than it was; the table does **not** scroll sideways on a desktop.
+- [ ] A row with nothing to say (unpaid, no credit, not yet due) has an empty Note — that is
+      correct, not a bug.
+
+**📱 Phone — the collapsible list.**
+- [ ] Each installment is **one line closed**: its due date, and either the amount owing (red),
+      *Paid*, or *Covered*. An overdue one carries the ⚠.
+- [ ] Tapping opens Installment / After fundraising (only when fundraising touched it) / Paid /
+      Owing, the note, and the record button.
+- [ ] The four season tiles are still at the top — that is where the season answer lives now.
+- [ ] Nothing scrolls sideways at 390px.
+
+**The record control — renamed, and shrunk to a tick on desktop.**
+- [ ] 🖥 On a desktop row the control is a small **banknote tick**, not a filled button. Hover it:
+      the tooltip quotes the amount and the date — *"Record as paid — $150.00, dated today"*. Click
+      it and a real payment appears in the **Payments** list below, removable like any other.
+- [ ] 🖥 Tab to it with the keyboard: it takes a visible focus ring and Enter records. (An icon with
+      no name and no focus is the failure mode this design is guarding against.)
+- [ ] 📱 On a phone the control keeps its **words** and appears **only inside an open card** — the
+      collapsed bar must carry NO record button, because that bar is itself the tap target that
+      opens the card.
+- [ ] ⚠ Expenses, payables and allocations keep their own **Mark paid** buttons unchanged — do not
+      expect those to become ticks.
+
+**⚠ THE STATUS COLUMN NOW ANSWERS "IS THIS FAMILY BEHIND?"** — it used to grade season completion,
+so a family paying every installment on time and a family a month late both read *Partial*.
+`Partial` and `Unpaid` are gone; the words are **Past due · Up to date · Fully paid · Settled ·
+In credit · Not set**.
+- [ ] A player who has paid every installment that has fallen due, with more to come, reads
+      **Up to date** — in ordinary ink, not green (green is reserved for finished seasons, so the
+      column stays quiet).
+- [ ] A player who has paid **nothing** but whose first installment is **not due yet** also reads
+      **Up to date**. ⚠ This is the point — they owe nothing today, and the old "Unpaid" cried wolf.
+      Their Paid ($0.00) and Balance columns still tell the rest of the story.
+- [ ] A player with a bill past its date reads **Past due**, in red, **with a ⚠ beside it** (colour
+      never carries the verdict alone).
+- [ ] The count of **Past due** rows equals the footer's **"N overdue"** exactly. ⚠ These were two
+      separate calculations before; they are now one.
+- [ ] A player whose late bill was **covered by fundraising** is NOT Past due — credits settle
+      bills, so nothing is being asked for.
+- [ ] Export **Player dues** to a spreadsheet: the Status column says the same words as the screen,
+      including *Past due*.
+
+**The confirm, and the two new Edit doors** (owner-directed 2026-08-14).
+- [ ] Clicking the banknote tick now opens a **confirmation** naming the amount, the player, the
+      installment number and today's date — and saying it can be edited or removed afterwards.
+      Cancel does nothing at all; confirming records the payment.
+- [ ] **Edit a payment**: the pencil beside a payment opens the same sheet, prefilled. Change the
+      amount and save — the Payments list shows the new figure, the season **Paid** tile moves with
+      it, and the team's books show the old entry **voided** and a new one posted on the date you
+      gave. ⚠ The old entry is not rewritten; both should be visible in the ledger.
+- [ ] Edit a payment's **date** into a different month and confirm the money moves month in Budget
+      vs. Actual's cash-flow row (payments are bucketed by the month they arrived).
+- [ ] **Edit a credit**: a credit you added by hand (a contribution, a forgiven balance) carries a
+      pencil; changing its amount updates **After fundraising** and **Left to send** immediately.
+      ⚠ The credit **Type** is deliberately locked while editing.
+- [ ] ⚠ **A fundraiser credit has NO pencil** — it reads *from fundraiser* instead. Same for a
+      reimbursement (*from expense*) and an overpayment (*auto*). This is the point: those numbers
+      belong to the record that created them.
+- [ ] ⚠ **Lower a credit below what's already been paid out** to that family — it must be refused
+      with the same message the delete gives ("remove the payout first"), not silently accepted.
+- [ ] **Read-only money assistant**: no pencils anywhere, on payments or credits.
+
+**⚠ THE RE-RUN GUARD — the most important walk here.** Until now `Set dues for all players` gave
+every player the identical schedule, flattening any per-player arrangement in silence.
+- [ ] Give ONE player a hand-set schedule (open them → **Edit schedule** → different amounts/dates
+      from the rest of the roster; e.g. a deposit then a balance).
+- [ ] Run **Set dues for all players** again with different dates. The "this roster already has
+      dues" screen now **names that player**, says how many families' **due dates change**, and
+      offers **two** buttons.
+- [ ] Choose **"Keep the 1 I set by hand"** → the success screen says one player kept their
+      schedule; re-open that player and their hand-set amounts and dates are **completely
+      unchanged**, while everyone else has the new ones.
+- [ ] Run it again and choose **"Apply to everyone"** → that player is flattened to the team
+      schedule (this is still allowed — it must simply be the answer you chose).
+- [ ] A roster with **no** hand-set schedules shows the old single **"Replace the dues schedule"**
+      button and no name list.
+- [ ] Payments still survive both answers (the §13 promise is unchanged).
+
+**⚠ THE FIVE DEFECTS `/review` CAUGHT — walk these, they are the ones that would have hurt.**
+- [ ] **A rolled-over season must NOT name the whole roster.** On a team whose dues were carried
+      forward from last season (or migrated from free), run **Set dues for all players** — the
+      confirm screen must name **nobody** as hand-set. ⚠ Before the fix it named EVERY player, and
+      "Keep the N I set by hand" would have applied your change to nobody at all.
+- [ ] Now give ONE player a different schedule and re-run: only **that** player is named.
+- [ ] **A stale edit target must not eat a receipt.** Open a player → pencil a payment → close the
+      drawer with the **X** (not Cancel) → reopen the player → press **Record payment** → enter a
+      DIFFERENT amount → save. You must end with **two** payments in the list. ⚠ Before the fix the
+      original was silently replaced.
+- [ ] Same check with a credit: pencil a credit, close with X, reopen, press **Add Credit** — you
+      get a blank *new* credit, not an edit of the old one.
+- [ ] After a failed correction (hard to force by hand — read the message if you ever see one): it
+      must never tell you to "re-enter" the payment, only to check the Payments list first.
+- [ ] **Read-only money assistant** still sees no pencils, no banknote ticks, no confirm dialog.
+
 ### 14 🖥📱 The Money hub's old doors close — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
 
 **What changed:** the seven standalone Money pages the tabbed hub replaced (the ones with no tab
@@ -1432,7 +1552,7 @@ opens it). Toggle buttons met the 44px floor; same-day installments now sum in D
 tap-floor findings on overview/team-hub/schedule/history — NOT this project's (other
 uncommitted work; their owners' sessions should clear them before release).
 
-### 18 🖥📱 Help reads as a menu of answers — ✅ **OWNER QA PASSED 2026-08-14** · **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 18 🖥📱 Help reads as a menu of answers — ✅ **OWNER QA PASSED 2026-08-14 (ALL EIGHT BATCHES)** · batches 1–6 **LIVE ON PRODUCTION 2026-08-14** (job 256); batches 7 · 8 · 8b **ON DEV**, committed `978ed7f1`, awaiting a release · no migration
 
 **What changed:** the scannable-format standard's first shipment (plan:
 `HELP_SCANNABLE_FORMAT_PLAN.md`, steps 1+2). The help system gained **sub-topics**: a long
@@ -1602,7 +1722,7 @@ So help stops being an app screen that changes colour and becomes documentation.
 surface fixed contrast failures the warm theme was causing on this page, and dropping the
 portal chrome removed its tap-floor debt from the help screen.
 
-**Batch 7 (2026-08-14 — the eight topics the sweep couldn't see):** the standard that drove
+**Batch 7 — ✅ OWNER QA PASSED 2026-08-14.** (2026-08-14 — the eight topics the sweep couldn't see): the standard that drove
 batches 1–6 counted paragraphs, so it was blind to lists. "How to run tryout day" is the longest
 topic in the product — **1,386 words** — but it is three paragraphs plus one 16-item list, so it
 scored 3 and was never touched. The standard now measures **words of body copy, list items
@@ -1630,6 +1750,79 @@ like the rest. **No copy was rewritten** — the same sentences, re-set into tit
 - [ ] Every existing help link still lands where it did — the section anchors did not change.
 ✅ Rendered sweep on the coach help screen: **0 new layout findings** (jump chips on the new
 sub-topics clear the tap floor and wrap at phone width).
+
+**Batch 8 — ✅ OWNER QA PASSED 2026-08-14.** (2026-08-14 — the guide stops being one long page): owner-ruled after mockups
+(artifact "Help Guide, One Topic at a Time"). Opening the full guide used to hand a coach all 40
+topics and 22,131 words on one page. Now **the contents list is a two-level menu and one article
+fills the screen**: pick a topic and it opens in the menu to show its answers underneath; pick an
+answer and that answer *is* the page. The coaches guide is 129 articles plus 20 topic pages. The
+"?" panel is deliberately untouched.
+- [ ] Open the full guide from the portal sidebar: it lands on a **contents page** — the guide's
+      intro, then every topic as a card, grouped, with an answer count on the ones that have them.
+- [ ] Click **Managing your team's money**: the menu opens it and lists its 11 answers underneath;
+      the page shows the topic's overview and an **In this topic** list. Nothing else is on screen.
+- [ ] Click **Player dues & recording payments**: that answer alone fills the page, headed by its
+      own title, with "5 of 11 in Managing your team's money" underneath (the topic name links up).
+- [ ] **Previous / Next in this topic** at the foot walks the eleven answers in order, then rolls
+      on to the next topic. Check the label changes from "in this topic" to "topic" at the seam.
+- [ ] The menu marks **both** levels — the open topic and the answer you're reading. Only the open
+      topic shows its answers; every other topic stays a single row.
+- [ ] A topic with no answers under it (e.g. **Taking attendance**) has no arrow and opens straight
+      to the article.
+- [ ] **Search**: type "season settlement". Results now come in three groups — Topics, **Answers**,
+      Questions. Clicking any of them *opens* that article rather than scrolling to it.
+- [ ] ⚠ **The deep links are the whole risk.** From a Money screen, press **?** then **Open the
+      full guide** — it must land on the Money topic. Then check a few in-product help links land
+      on something that answers their question, not the top of a long page.
+- [ ] ⚠ **The "?" panel must be exactly as it was**: same expander list, same pre-opened answer for
+      that page, same "Open the full guide".
+- [ ] **On a phone**: the guide opens on the contents page; tapping a topic and then an answer is
+      two taps; a sticky **← <topic name>** bar at the top of an answer goes back up. The contents
+      *tree* is deliberately not shown on a phone — the pages themselves are the contents.
+- [ ] Jump chips and the little **#** permalinks beside sub-headings are **gone** — an answer has
+      its own address now. Confirm nothing looks like it lost a control.
+- [ ] Admin and platform-admin guides behave identically (they share the layout).
+✅ Rendered sweep: 0 new findings, and **61 baseline entries stopped reproducing**. All 102
+anchored help links and 9 drawer sub-topic targets resolve; 14 sampled links walked in a real
+browser across four guides and three roles.
+⚠ **Known gap, deliberate:** the answers on a topic page are **titles only** — the one-line
+description per answer (150 lines of new copy) was not written. Say the word and it goes in.
+
+**Batch 8b — ✅ OWNER QA PASSED 2026-08-14.** What `/review` caught and fixed (same day): twelve real defects, all fixed and
+re-checked in a browser. Worth spot-checking these specifically:
+- [ ] On a topic page with several questions, open one from search, then open a **second** one.
+      Both must open. (The second used to do nothing at all.)
+- [ ] In the contents menu, click the header of the group you're already in. It must **collapse**
+      that group — not reveal every group in the guide.
+- [ ] Read a long answer, scroll to the bottom, then click "**— all topics**". The contents page
+      must start at the top, not part-way down.
+- [ ] Tab through the menu and press Enter on a topic. Focus must land on the new article's title
+      (a keyboard reader was previously left on the link with the page changed underneath).
+- [ ] Platform-admin guide: `…/help/platform-admin#faq-who-can-run-bulk` must open that question.
+      (Its three page-level questions had no working address at all.)
+- [ ] Tournaments guide: the contents page must list **Tournament workflow at a glance**, and both
+      the menu and the contents page must show the four sub-headings — *Create the tournament,
+      Define the structure, Build the schedule, Playoffs*.
+- [ ] Open a question from search and check the address bar names **the question**, so the link you
+      copy reopens it.
+- [ ] On a phone, at the narrowest width you have: the back bar must not push the page sideways —
+      check the org-admin guides as well as the coach one.
+- [ ] **"← All guides" is gone from every guide** (owner ruling). It never led to a list of guides:
+      it chopped the last piece off the address, which on the coach side landed you back in the
+      portal — a second copy of it, in the tab you'd opened purely to read. A guide's navigation is
+      the menu beside it, and admins still reach the hub from the admin sidebar's own Help entry.
+- [ ] **The trail matches the menu, level for level.** On an answer it reads *Coaches Portal /
+      Premium Coaches Portal / Managing your team's money / Player dues & recording payments* — the
+      guide, its group, the topic, and the article you're on. It used to show only the guide and the
+      topic, which made an answer look like it sat directly under the guide.
+- [ ] Every step above the current one is a link, and each goes UP within the guide: the guide name
+      to its contents, the **group** to the contents page landed on at that group, the topic to that
+      topic. The last step is the article you're reading and is deliberately not a link.
+- [ ] A guide with sub-groups (Tournaments) shows all five: *Tournaments / Schedule & Playoffs /
+      Build the schedule / Build and adjust the tournament schedule / Rained out or running behind*.
+- [ ] At phone width the trail **wraps** onto more lines — it must never push the page sideways.
+- [ ] The contents page has no trail above its title at all — it would have repeated the heading
+      directly beneath it.
 
 ### 19 🖥📱 Fundraising pays the bill — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **233** ✅ on prod
 
@@ -1826,6 +2019,103 @@ $152.50 each**. Use **`QA Mid Season U14`** to prove the sheet is honest *before
 **On production 2026-08-14** (job 256; migrations 230–235 applied to prod; prod HEAD `8fe59ded`).
 This completes the three-pass money model; full build log in the plan.
 
+### 22 🖥📱 Team settings becomes six closed groups, and the dues settings move into it — **ON DEV 2026-08-14**, not yet released · no migration
+
+The two team-wide dues settings — **Automatic Dues Reminders** and **Credits reduce** — used to sit
+as two cards at the bottom of Player Dues, a screen a coach opens every week to chase money. They
+are set-once decisions, so the **controls** moved to Team settings under a new **Money** group and
+the **sentence** stayed on Player Dues. Team settings itself became six collapsed groups, each
+stating its current value on its own header line.
+
+**Do this on a team with dues already set** (the coach sandbox works, or your own test team).
+
+- [ ] 🖥 Open **Team settings**. Six groups, **all closed**, each with its value on the right —
+      the division, the season and its status, the lineup caps, the money line, the sharing state,
+      the org link. **You should be able to read how the team is set up without opening anything.**
+- [ ] Open each group in turn. Every setting reads the same way: name, a line of plain English,
+      the control on the right. Nothing you could do before has gone.
+- [ ] Change the division and save. Change a lineup cap and **Save rules**. Both still work, and
+      the closed header line updates to match.
+- [ ] Open **Money**. Flip **Automatic Dues Reminders** off and on — it saves immediately, no Save
+      button. Change **Credits reduce** — same. **See an example** opens the real reminder email.
+- [ ] 🖥 Go to **Player Dues**. Under the table, one quiet line states both settings and offers
+      **Change in Team settings**. Follow it: the Money group **opens, scrolls into view and
+      flashes once**. It must not dump you at the top of a page of shut cards.
+- [ ] From **Depth Chart**, use **Edit in Settings →** on the caps bar. Same behaviour — the Game
+      day group opens and flashes.
+- [ ] ⚠ **A team with no dues at all.** Player Dues shows a **No dues set yet** block carrying both
+      controls inline *and* **Set dues for all players**. Set dues for one player: the block is
+      replaced by the table and the one-line statement. The two must never both be on screen.
+- [ ] Set **Credits reduce** to **"They don't — settle at season's end"** — the third option. Both
+      the collapsed Money header and the Player Dues line must read as English
+      (*"Credits don't reduce bills — settled at season's end"*), NOT "credits reduce they don't".
+- [ ] Open **Game day**, type a number into a rule but do **not** save, then collapse the group.
+      The header must still show the **saved** rules, not what you just typed. Reload to confirm.
+- [ ] ⚠ **A finished season.** Open Player Dues in a past season. **The whole policy line is
+      absent** — not just the link. A finished season's dues table cannot state a live setting as
+      though it were the one in force at the time. (Whether an archive should restate its OWN
+      policy is an open question for you — see the plan.)
+- [ ] ⚠ **The treasurer.** From **Staff**, set an assistant to money **View & edit** and turn
+      everything else off. Sign in as them: **Settings appears in their nav**, and the page contains
+      **only** the Money group — no division, no lineup rules, no organization link. This is the
+      whole reason the door widened; if they can reach anything else, that is a defect.
+- [ ] A **money view-only** coach: Settings does *not* appear in their nav (nothing there for them
+      to change), and the Player Dues policy line still reads correctly.
+- [ ] 📱 Phone at 390px: settings group headers wrap so the value drops under the group name rather
+      than crushing it; every control clears a 44px tap target.
+
+- [ ] 🖥 **The coach demo.** Open the coach sandbox, take the guided walk to the money step, and
+      read its last sentence — it should end by saying which bill a credit lands on is your call,
+      set once, with Player Dues printing the answer and Team settings owning the change. Then open
+      that team's **Team settings → Money** and confirm it says what the sentence promised.
+
+**Help was updated in the same change** — the Team settings guide now describes the Money and
+Sharing groups, and a new question answers *"Where did the dues reminder and credit settings go?"*
+
+### 23 🖥📱 A fundraiser opens inside Money, and a past one tells the truth — **ON DEV 2026-08-14**, not yet released · no migration
+
+Opening a fundraiser was the last screen in Money that threw a coach **out** of the hub — the tab
+row, the Import door and the season chip all left with it. It now opens **where the list was**, as
+a state of the Fundraisers tab. The same change fixed something quieter and more expensive: a past
+season's fundraiser used to be shown beside **this** season's players, with the write buttons live.
+
+**Part A — the everyday route** (a live season, head coach)
+
+- [ ] 🖥 **Money → Fundraisers → open a drive** (the name, or **Open fundraiser**). The **tab row is
+      still there** and **Fundraisers is still lit**. Click **Player Dues**: one click, straight
+      there — not back-then-sideways. This is the whole point of the change.
+- [ ] **← All fundraisers** puts the list back. Then open the drive again and press the **browser's
+      Back button** — same result. Neither should reload the whole page.
+- [ ] With a drive open, copy the address, open it in a new tab: **the same drive opens**, hub and
+      all. Then visit an **old-style** address (`…/accounting/fundraisers/<id>`, from a bookmark or
+      an old email) — it must land on the same screen, not 404.
+- [ ] **Log an amount** for a player, then **← All fundraisers**. The list's **Total raised / Team
+      keeps / Credits** for that drive must **already show the new figure** — no reload. (On the old
+      page this was free; inside the hub it had to be built, so it is worth one deliberate check.)
+- [ ] The drive's own **Settings** button sits beside its name, *not* up in the Money header. Change
+      the rebate % and save; the facts line under the title updates.
+- [ ] Switch to another tab (say **Expenses**) and come back to **Fundraisers**: you land on the
+      **list**, not back inside the drive you left.
+- [ ] 📱 Phone at 390px: the tab row scrolls sideways, the leaderboard stacks into one card per
+      player, and **Log amount / Edit amount** are full-width and finger-sized.
+
+**Part B — a finished season** ⚠ *this is the defect being closed; please do not skip it*
+
+- [ ] 🖥 Use the season switcher to open a **completed** season, then **Money → Fundraisers**. Open
+      one of that season's drives.
+- [ ] **The players listed must be that season's roster.** If you recognise someone who only joined
+      **this** year, stop — that is the original defect and it is a Tier 1.
+- [ ] The **`… · Complete`** chip is on the Money header above, and a line under the leaderboard says
+      whose roster this is.
+- [ ] **No Settings button. No Log amount. No Edit amount.** Anywhere on the screen.
+- [ ] **← All fundraisers** returns you to that season's list — **still in the archive**, not
+      teleported back to the live season.
+
+**Part C — a read-only money assistant** (live season)
+
+- [ ] Sign in as an assistant with money **View only**: they can open a drive and read every figure,
+      and there is no Settings button and no way to log an amount. Reading was never the issue.
+
 ### ⚠ ONE LIVE DEFECT ON THE PRODUCTION SHOP WINDOW — needs an owner decision
 
 **The guided tour on the production coach sandbox now describes a fundraiser that isn't there.**
@@ -1855,6 +2145,100 @@ team-lifetime — fine for a live dashboard. It is **not** fine on this sheet, w
 payout ceiling and can be opened for a finished season, so the settlement deliberately **leaves it
 out and says so**. The alternative is to start recording those requests against a season, which
 means a migration and a backfill. Worth deciding before a club-linked team settles a season.
+
+### 24 🖥📱 The dues grid quietens, and the settlement becomes a close-out — **ON DEV 2026-08-14**, not yet released · no migration
+
+**What changed, in one line:** you asked why the dues table had so much text; fixing that turned up
+**two things that were wrong on production**, and the settlement changed shape as a result.
+
+**The dues grid (By installment).** Every cell used to carry an amount *and* a sentence — "paid May
+12", "covered by fundraising", "overdue". The instalment's amount and date now sit **once, in the
+column heading**, and each cell is a mark plus a figure **only where money is still owed**: tick =
+nothing left to send, ⚠ + amount = late, half-circle + amount = part-way, faint dot = not due yet.
+So every figure left on the grid is money to chase. **The grid no longer says whether cash or
+fundraising settled a bill** (your call) — the player's own record still does. The footer's four
+repeated "COLLECTED" cells are **deleted**: the Collection schedule band above already said all
+four, with meters.
+
+**The settlement is now a close-out, not a payment console** (your ruling). It moved from a
+full-width drawer that doubled the page into **one line that opens a window**. It pays everyone
+**once**, and only when the season is genuinely done; a family needing money sooner is paid from
+their own record, which works all season and is unchanged.
+
+**The two production defects this found:**
+1. The Refund column was `owed back + even share − still owes`, and **`still owes` was on no
+   column** — so seven rows of correct arithmetic read as arbitrary. It is now a real column and
+   every row reads across; the footer totals every column, and the refunds total to exactly the
+   cash the team can pay out.
+2. **"Pay all" was never gated on the money existing.** The sheet already computed the shortfall and
+   printed a warning *beside the live button*. Now nothing can be paid until every family is square
+   **and** the team is holding enough.
+
+Also: **negatives render in brackets** — `($152.86)` — across every coach money screen; and the
+**hold-back moved above the total** it was already inside (as printed, the column was short by
+exactly the hold-back).
+
+**Where:** Money → **Player Dues**. The lens toggle picks the grid (`?duesView=installments`); the
+settlement line sits at the foot and still has its own link (`?settlement=open`).
+
+**Fixture:** the same `QA Season End U15` as §21 for a *closable* season, and `QA Mid Season U14`
+for a season that must refuse. Re-seed with
+`node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs money`.
+
+**Part A — the grid reads as marks, not sentences**
+- [ ] **By installment** on a mid-season team: no cell carries a sentence; the amount and due date
+      appear **once** in each column heading.
+- [ ] A settled instalment is a **tick with no date**, whether the family paid it or fundraising
+      covered it. A part-paid one shows **what is left**, not the full instalment.
+- [ ] The key under the grid names all four marks. **Colour is never the only signal** — check the
+      marks differ in shape, not just hue.
+- [ ] A player on a **different amount or date** from the team still shows their own in the cell.
+- [ ] Footer: **no labels**, just the two season figures under *Due next* and *Balance*, and the
+      player count on the left. The band above still carries each instalment's progress.
+- [ ] **Phone:** the grid becomes a card per player and those cards still spell each instalment out
+      in words — the marks are a desktop shorthand, not the phone's only answer.
+
+**Part B — the settlement refuses, and says why**
+- [ ] `QA Mid Season U14`: the foot of Player Dues is **one line**, and opening it **does not change
+      the page's length**.
+- [ ] It opens on **"Not ready to close yet"**, and beside the money summary **"Before the season can
+      close"** lists every condition at once. The two blockers are set in heavier ink than the two
+      warnings.
+- [ ] **Pay everyone and close the season is dead**, and clearly reads as dead — not as a
+      highlighted button. Nothing anywhere offers to pay one family from this sheet.
+- [ ] The money summary reads down: **hold back is above** *Surplus to share*, drawn as a
+      subtraction, and **the column adds up as you read it**.
+- [ ] Every row reads across: **owed back + even share − still owes = refund**. A family who owes
+      shows a figure **in brackets**.
+- [ ] Tap a row: the arithmetic explains the number, with **Change what … takes** beside it.
+      Changing one family's share moves the others immediately.
+- [ ] Close it, record a payment on the grid behind it, reopen it — **the figures are current**, not
+      the first open's answer.
+
+**Part C — closing a season that is ready**
+- [ ] `QA Season End U15`: the checklist turns to **ticks**, the heading becomes **Ready to close**,
+      and the button comes alive.
+- [ ] The footer states what is going out and to how many families. **Pay everyone** writes one
+      payout per player and the sheet stops asking.
+- [ ] ⚠ **While it is recording, the hold-back and every row's Change are dead.** (They were not,
+      until review; two money writes could overlap.)
+
+**Part D — a payout that fails must say so**
+- [ ] Hard to stage, worth one attempt: interrupt the network mid-close-out. **The failure message
+      must remain on screen** after the sheet re-reads itself. (It did not, until review — the error
+      was wiped in the same instant it was set, and a failed money write showed nothing at all.)
+
+**Part E — permissions and a finished season**
+- [ ] A money **view-only** assistant: no Change, no hold-back control, no close-out button —
+      anywhere in the window.
+- [ ] A **finished season** renders the settlement as a record with no controls.
+
+⚠ **STILL OPEN, needs your ruling** — raised and not yet decided:
+- The grid's **Due next** column still carries a caption under each figure (the same two-line shape
+  removed from the instalment cells). It was kept because it is the only place saying *when* the
+  next money is due and how much is already late. Decide whether it goes.
+- **Closing the season does not lock the books.** It pays everyone; further edits stay possible. A
+  lock is a separate decision (assumed, stated, not ruled).
 
 ---
 

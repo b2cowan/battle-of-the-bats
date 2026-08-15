@@ -165,6 +165,37 @@ export interface Settlement {
 }
 
 /**
+ * CAN THIS SEASON BE CLOSED OUT? — the ONE definition of the rule (owner ruling 2026-08-14).
+ *
+ * ⚠ IT LIVES HERE, PURE, BECAUSE IT IS ENFORCED IN TWO PLACES: the dues panel disables the
+ * button with it, and `recordSettlementPayouts` refuses the write with it. Those were two
+ * hand-written copies of the same boolean, and the unit test contained a THIRD — so a regression
+ * to a single condition at either site would have shipped with every test green. Adversarial
+ * review found exactly that (2026-08-14). One function, both callers, and the test now exercises
+ * the real thing.
+ *
+ * ⚠ TWO CONDITIONS, AND THE SECOND IS NOT REDUNDANT.
+ *   • `expectedIn` — a family still owes dues. A forward-looking split spends money the team has
+ *     not received.
+ *   • `awaitingCash` — what would leave the account exceeds what is in it. NOT implied by the
+ *     first: `sharePaid` (money already handed to a family) is not bounded by their eventual
+ *     share, so a family paid out EARLY can owe value back at close-out, and one negative row
+ *     makes `payable` exceed the cash even with every due collected.
+ *
+ * The soft conditions — a budget still planning to spend, club money the sheet cannot attribute —
+ * deliberately do NOT appear here: they are the coach's judgement and only ever warn.
+ */
+export function closeOutBlockers(s: Pick<Settlement, 'pot' | 'awaitingCash'>): {
+  duesOutstanding: number;
+  cashShort: number;
+  canClose: boolean;
+} {
+  const duesOutstanding = s.pot.expectedIn > 0.005 ? s.pot.expectedIn : 0;
+  const cashShort = s.awaitingCash > 0.005 ? s.awaitingCash : 0;
+  return { duesOutstanding, cashShort, canClose: duesOutstanding === 0 && cashShort === 0 };
+}
+
+/**
  * The whole sheet, from one call. Everything is derived: call it again after any payment,
  * credit, payout, expense, forgiveness or adjustment and the answer is simply true again.
  */
@@ -371,6 +402,15 @@ export interface SettlementFamily {
 
 export interface SettlementSheet extends Settlement {
   rows: SettlementSheetRow[];
+  /**
+   * Households: who is one family, what the household is owed, and what it is payable.
+   *
+   * ⚠ CURRENTLY READ BY NOTHING, and kept deliberately. The settlement sheet stopped naming who
+   * shares a payment (owner ruling 2026-08-14) — combining cheques belongs to whatever screen
+   * ISSUES payments, and that screen needs exactly this shape. It also carries the guardian-PII
+   * capability seam (a coach without the grant gets players' own names), which is the part that
+   * would be expensive to rebuild. Delete it if that screen never arrives.
+   */
   families: SettlementFamily[];
   /** Planned season costs not yet spent. Not part of the arithmetic — but a coach reading this
    *  sheet in October is looking at cash the season still needs, and the card says so. */
@@ -380,9 +420,6 @@ export interface SettlementSheet extends Settlement {
    *  when it is not zero the card says so, rather than swallowing it. */
   clubMoneyUncounted: number;
   notes: string | null;
-  /** Families the others are waiting on when `awaitingCash > 0` — the sheet names them rather
-   *  than letting a coach discover it at the bank (plan §4.5). */
-  awaitingFrom: { playerId: string; label: string; amount: number }[];
   /** A finished season renders as a RECORD: the screen offers no payouts, no hold-back and no
    *  row menu. Set by the route from the season-read rail, absent on a write response. */
   readOnly?: boolean;

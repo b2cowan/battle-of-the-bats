@@ -13,8 +13,13 @@ import type { SettlementSheetRow } from '@/lib/season-settlement';
  * is a block nobody re-reads. Everything it renders is SERVER-DERIVED and handed in: this
  * component performs no money arithmetic of its own, which is the rule the whole pass rests on.
  */
+/* ⚠ NOTHING HERE SAYS WHO SHARES A PAYMENT WITH WHOM (owner ruling 2026-08-14). A caption row
+   named the guardian's family; a per-row "· paid with Blair" replaced it; BOTH are gone. This
+   sheet works out what each family is owed — it does not issue the payments, so how the cheques
+   are combined is somebody else's screen and only crowded this one. Siblings still sort adjacent
+   and are still paid as one household when the season closes; the sheet just stops saying so. */
 export default function SettlementRow({
-  row, name, isOpen, onToggle, canWrite, onPayOut, onChangeChoice, fmtDate,
+  row, name, isOpen, onToggle, canWrite, onChangeChoice, fmtDate,
 }: {
   row: SettlementSheetRow;
   /** Already assembled by the caller, which also uses it for the payout sheet's title. */
@@ -23,7 +28,10 @@ export default function SettlementRow({
   onToggle: () => void;
   /** Money-write, and a live season. A finished season renders the record with no controls. */
   canWrite: boolean;
-  onPayOut: () => void;
+  /** ⚠ There is NO `onPayOut` — the season settlement pays every family at once when the season
+   *  closes, or nobody (owner ruling 2026-08-14). A family needing money early (someone leaving
+   *  mid-season) is paid from their OWN money record, where the rest of their history already is.
+   *  `onChangeChoice` stays: deciding who takes what share IS closing out. */
   onChangeChoice: () => void;
   fmtDate: (iso: string) => string;
 }) {
@@ -34,7 +42,7 @@ export default function SettlementRow({
       <tr className={styles.tr} onClick={onToggle} style={{ cursor: 'pointer' }}>
         <td className={styles.td} data-label="Player">
           {name}
-          {row.departed && <span className={styles.muted} style={{ fontSize: '0.72rem' }}> · left the team</span>}
+          {row.departed && <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}> · left the team</span>}
         </td>
         <td
           className={`${styles.td} ${styles.tdNum}`} data-label="Owed back"
@@ -44,51 +52,47 @@ export default function SettlementRow({
         </td>
         <td className={`${styles.td} ${styles.tdNum}`} data-label="Even share">
           {row.choice === 'none'
-            ? <span className={styles.muted} style={{ fontSize: '0.76rem' }}>No share</span>
+            ? <span className={styles.mutedInline} style={{ fontSize: '0.76rem' }}>No share</span>
             : row.cashShare > 0.005
-              ? <>{fmt(row.cashShare)}{row.choice === 'fixed' && <span className={styles.muted} style={{ fontSize: '0.72rem' }}> · set</span>}</>
+              ? <>{fmt(row.cashShare)}{row.choice === 'fixed' && <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}> · set</span>}</>
               : <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>—</span>}
         </td>
-        {/* ⚠ Never colour alone: "still owes" carries the WORDS as well as the amber (the
-            olive↔danger ΔE 1.0 deutan finding). */}
+        {/* The term the Refund column subtracts. Its own column since 2026-08-14, so the row can
+            be checked by reading across it. */}
+        <td
+          className={`${styles.td} ${styles.tdNum}`} data-label="Still owes"
+          style={{ color: row.leftToSend > 0.005 ? 'var(--warning)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}
+        >
+          {row.leftToSend > 0.005 ? fmt(row.leftToSend) : '—'}
+        </td>
+        {/* ⚠ Never colour alone (the olive↔danger ΔE 1.0 deutan finding). The "Still owes" CAPTION
+            that used to do that job is gone — the BRACKETS the formatter now draws round a
+            negative say it independently of hue, and the owner asked for the word to go. */}
         <td
           className={`${styles.td} ${styles.tdNum}`} data-label="Refund"
           style={{ fontWeight: 700, color: owes ? 'var(--warning)' : row.refund > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}
         >
           {fmt(row.refund)}
-          {owes && <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 400 }}>Still owes</span>}
           {row.settled && !owes && row.lastPaidDate && (
-            <span className={styles.muted} style={{ display: 'block', fontSize: '0.7rem', fontWeight: 400 }}>
+            <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.7rem', fontWeight: 400 }}>
               Paid {fmtDate(row.lastPaidDate)}
             </span>
           )}
         </td>
-        {/* The actions never open the breakdown — a click meant for Pay out must not also
-            expand the row underneath it. */}
-        <td className={styles.td} data-label="" onClick={e => e.stopPropagation()}>
-          <span style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            {canWrite && row.payableNow > 0.005 && (
-              <button className={styles.btnSecondary} style={ROW_ACTION} onClick={onPayOut}>Pay out</button>
-            )}
-            {canWrite && !row.departed && (
-              <button
-                className={styles.btnGhost}
-                style={ROW_ACTION}
-                aria-label={`Change what ${name} takes`}
-                onClick={onChangeChoice}
-              >
-                Change
-              </button>
-            )}
-          </span>
-        </td>
       </tr>
 
-      {/* The row OPENS to its breakdown — nothing is explained in the table itself, which stays
-          four clean columns. The lines are the server's and sum to the refund exactly. */}
+      {/* ⚠ THE `Change` BUTTON MOVED IN HERE (2026-08-14) and its column went with it.
+          It carries the portal's 44px tap floor, and a 44px control in every row set the ROW's
+          height — eight families needed a scroll to show four, which is what the owner was seeing
+          when they asked why the table was so big. The row was already a disclosure; changing what
+          a family takes now lives where its arithmetic is explained, which is where a coach
+          deciding to change it is already looking. The table is a list again. */}
       {isOpen && (
         <tr className={styles.tr}>
           <td className={styles.td} colSpan={5} style={{ background: 'var(--home-card, rgba(255,255,255,0.03))' }}>
+            {/* The arithmetic reads at ~420px; the action sits in the width beside it rather than
+                under it, where it added a row of height to every opened family. */}
+            <div className={styles.settlementRowOpen}>
             <div style={{ maxWidth: 420, fontSize: '0.8rem' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>
                 {name}&apos;s {fmt(row.refund)}
@@ -97,10 +101,10 @@ export default function SettlementRow({
                 <div key={i} style={LINE}>
                   <span>
                     {line.label}
-                    {line.detail && <span className={styles.muted}> — {fmtDate(line.detail)}</span>}
+                    {line.detail && <span className={styles.mutedInline}> — {fmtDate(line.detail)}</span>}
                   </span>
                   <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {line.amount < 0 ? `−${fmt(Math.abs(line.amount))}` : line.amount > 0 ? fmt(line.amount) : '—'}
+                    {Math.abs(line.amount) > 0.005 ? fmt(line.amount) : '—'}
                   </span>
                 </div>
               ))}
@@ -109,8 +113,19 @@ export default function SettlementRow({
                 <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(Math.abs(row.refund))}</span>
               </div>
               {row.choiceNote && (
-                <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.4rem 0 0' }}>{row.choiceNote}</p>
+                <p className={styles.mutedInline} style={{ fontSize: '0.74rem', margin: '0.4rem 0 0' }}>{row.choiceNote}</p>
               )}
+            </div>
+            {canWrite && !row.departed && (
+              <button
+                className={styles.btnGhost}
+                style={ROW_ACTION}
+                aria-label={`Change what ${name} takes`}
+                onClick={(e) => { e.stopPropagation(); onChangeChoice(); }}
+              >
+                Change what {name.split(' ')[0] || 'they'} takes
+              </button>
+            )}
             </div>
           </td>
         </tr>

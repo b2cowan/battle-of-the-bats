@@ -66,9 +66,28 @@ export interface DashboardHrefs {
   expensesSchedule: string;
 }
 
+/**
+ * Money for the coach money hub — the SINGLE formatter these screens share.
+ *
+ * ⚠ NEGATIVES RENDER IN BRACKETS, never with a minus sign (owner ruling 2026-08-14). `($152.86)`,
+ * not `-$152.86`. Two reasons it is worth the churn:
+ *   • the accounting convention is what a treasurer reads without being taught, and these screens
+ *     are read by parents doing a team's books, not by developers;
+ *   • it is a NON-COLOUR cue. The warm palette's amber and danger sit at ΔE ~1.0 for deutan
+ *     vision, so a figure whose meaning is the OPPOSITE of its neighbours cannot rely on being
+ *     drawn red — the brackets say it independently of hue.
+ *
+ * ⚠ Known and accepted: brackets mean "negative in THIS column", so the direction flips between
+ * surfaces — a bracketed dues balance is a family in credit (good), a bracketed settlement refund
+ * is a family who owes the team (bad). The column heading and colour separate them; both are the
+ * standard reading of their own column. Deliberately not special-cased.
+ *
+ * The CSV/PDF exports do NOT come through here (lib/coach-money-exports.ts formats its own), so
+ * spreadsheet parsing is unaffected.
+ */
 export function fmt(n: number) {
   const abs = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n < 0 ? `-$${abs}` : `$${abs}`;
+  return n < 0 ? `($${abs})` : `$${abs}`;
 }
 
 /**

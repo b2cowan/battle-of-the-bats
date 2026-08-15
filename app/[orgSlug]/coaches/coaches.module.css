@@ -875,6 +875,61 @@
 .collapseChevron { transition: transform 0.15s; color: var(--white-45); flex-shrink: 0; }
 .collapseSection[open] > .collapseSummary .collapseChevron { transform: rotate(180deg); }
 .collapseBody { padding: 0 1.1rem 1.1rem; }
+
+/* ── Team settings: collapsed groups that state their own value ──────────────────
+   The settings page is six groups a coach sets once, so every group ships COLLAPSED
+   (the tournament-admin settings idiom). That is only safe because each summary
+   carries its current value — a page of shut doors with nothing on them is worse
+   than a long page, since the coach must open all six to learn what is set.
+
+   ⚠ These selectors deliberately out-specify the shared `.collapse*` rules above so
+   the settings page can widen the summary's meta slot WITHOUT changing the shared
+   primitive (CoachCollapseSection) that a dozen other screens use. Same module, so
+   no :global and no cascade surprise — `.settingsStack .collapseMeta` simply wins. */
+.settingsStack { display: flex; flex-direction: column; gap: 0.7rem; }
+
+/* The value summary is a short SENTENCE, not the count the shared meta slot was
+   sized for — so it drops the data font and takes prose sizing. */
+.settingsStack .collapseMeta {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--white-55);
+  text-align: right;
+  min-width: 0;
+}
+/* Narrow screens: the value drops to its own line under the group name rather than
+   crushing the title to two characters. */
+@media (max-width: 560px) {
+  .settingsStack .collapseSummary { flex-wrap: wrap; }
+  .settingsStack .collapseMeta { width: 100%; text-align: left; justify-content: flex-start; }
+}
+
+/* Who may change what lives in this group — one line, above the rows. */
+.settingWho { margin: 0 0 0.7rem; font-size: 0.78rem; color: var(--white-45); }
+
+/* One row grammar for every setting: name, a line of plain English, control right. */
+.settingRows {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  overflow: hidden;
+}
+.settingRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+}
+.settingRow:last-child { border-bottom: 0; }
+.settingRowMain { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+.settingRowLabel { font-size: 0.88rem; font-weight: 600; color: var(--white-90); }
+.settingRowDesc { font-size: 0.78rem; color: var(--white-55); line-height: 1.45; }
+.settingRowCtl { flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.settingRowSaved { font-size: 0.8rem; color: var(--success-light); font-weight: 600; }
 /* Deep-link arrival flash — same orientation cue as admin's ?section= highlight. */
 .collapseFlash { animation: collapseFlash 2s ease-out 1; }
 @keyframes collapseFlash {
@@ -954,6 +1009,19 @@
      grid row and its 0.75rem row-gap behind as a dead band under the title. */
   .pageHeaderStd .pageHeaderActionsWideOnly { display: none; }
 }
+
+/* ── The NESTED shape: a hub tab that has drilled into one record ───────────
+   Money → Fundraisers → one fundraiser (2026-08-14). The hub's own header is one line up and
+   still names the screen, so this names the RECORD: same slots, same right-pinned actions, same
+   phone grid — one step down in weight so the two headings read as parent and child rather than
+   two page titles arguing. Deliberately NOT a second `.pageHeader*` family: every rule below is
+   an override on the standard one, so a change to the header's geometry reaches both shapes.
+
+   The margin drops to 1rem because a facts line follows it (the rebate % and dates), which the
+   top-level shape never has under a title. */
+.pageHeaderNested { margin-bottom: 1rem; }
+.headerIconNested { width: 36px; height: 36px; border-radius: 9px; }
+.pageTitleNested { font-size: 1.3rem; font-weight: 800; }
 
 .headerIcon {
   width: 48px;
@@ -2175,6 +2243,20 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .orgInviteTitle { margin: 0; font-weight: 700; color: var(--white-90); font-size: 0.92rem; }
 .orgInviteBody { margin: 0.15rem 0 0; color: var(--white-55); font-size: 0.82rem; line-height: 1.4; }
 
+/* ⚠⚠ THIS IS THE EMPTY-STATE BLOCK, NOT A TEXT COLOUR. The name reads like "muted text" and the
+   `padding: 2rem` is invisible in the name, so callers reach for it to grey a span and silently
+   get 32px on every side. That has now produced, on different screens, what looked like three
+   unrelated bugs: a modal subtitle indented 32px with its close button floating mid-header; notes
+   each wrapped in a box of air; and a right-aligned figure that appeared LEFT-aligned in its
+   column — it was right-aligned the whole time, pushed off the edge by its own padding.
+
+   👉 For inline text that is merely quieter, use `.mutedInline` (colour only, directly below the
+   `.insightsSeasonStatLbl` group). Use `.muted` only for a standalone "nothing here yet" /
+   "Loading…" paragraph that genuinely wants the block and the breathing room.
+
+   Renaming this to `.mutedEmptyState` would remove the trap at the source — it has ~190 callers
+   across the portal and a good number look like the same misuse, so it wants its own pass rather
+   than a drive-by. Logged in COACH_DUES_SETTLEMENT_CLARITY_PLAN.md. */
 .muted {
   color: var(--white-40);
   padding: 2rem;
@@ -2632,6 +2714,69 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .thNum { text-align: right; }
 .tdNum {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ── A row's own action, at row weight (owner call 2026-08-14, player ledger) ───────────────
+   The player ledger's "record as paid" was a filled three-word button on every row that owed
+   something — up to twelve times in one schedule, wrapping to two lines in its column, and
+   collectively louder than the numbers it sat beside. Same rule that took the file-type chips
+   out of the export menu: ANYTHING DRAWN BESIDE EVERY ITEM IN A LIST IS DRAWN AS MANY TIMES AS
+   THE LIST IS LONG. A 28px control keeps the single tap at a tenth of the width.
+
+   ⚠ THE GLYPH IS NEVER A CHECKMARK ON A ROW THAT ALSO REPORTS STATUS. The Note column beside
+   this one uses ✓ to mean "settled"; the same mark inside a button forty millimetres away reads
+   as a state, not an action — an expensive confusion on a control that writes money. Money-in
+   iconography (a banknote) says what this does without borrowing the status vocabulary.
+
+   ⚠ ICON-ONLY OBLIGES A REAL NAME. Callers MUST pass both `aria-label` and `title`, and both
+   should quote the amount — "Record as paid: $150.00, dated today". Without them this is an
+   unlabelled button, which is no button at all to a screen reader.
+
+   Touch pointers get the 44px floor; a mouse does not need it and the row would grow for
+   nothing. */
+.rowIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
+  border-radius: 7px;
+  background: transparent;
+  color: var(--home-dim, var(--white-45));
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.rowIconBtn:hover:not(:disabled) {
+  color: var(--home-olive, var(--success-light));
+  border-color: var(--home-olive, var(--success-light));
+  background: var(--home-olive-soft, rgba(255,255,255,0.06));
+}
+.rowIconBtn:disabled { opacity: 0.5; cursor: default; }
+@media (pointer: coarse) {
+  .rowIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
+
+/* ── The date column (owner call 2026-08-14, player ledger) ─────────────────────────────────
+   A date is ONE token and must never break into two lines. `.td` inherits normal wrapping, so
+   in any table where a neighbouring column has long text — a credit source, an expense note —
+   auto table layout starves the date column and "Sep 15, 2026" folds after the comma. Every
+   row in the table then stands at two lines' height to accommodate a value that is always the
+   same width, which is what the owner saw in the player ledger: four tall rows, three of them
+   tall for no reason at all.
+
+   ⚠ NOWRAP IS SAFE HERE PRECISELY BECAUSE THE CONTENT IS FIXED-WIDTH. Do not reach for this on
+   a name or a note (see `.wrap640` at the top of this file) — nowrap on variable text buys row
+   height by truncating meaning, and a cut name stops naming anyone.
+
+   Tabular figures so the day numbers stack in a column, matching `.tdNum` next door. */
+.tdDate {
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
 }
@@ -4577,6 +4722,13 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 /* Lineup tab needs room to show all innings without horizontal scroll on desktop */
 .slideOverWide { max-width: min(1180px, 96vw); }
+/* The player ledger's middle size. Its installment table went from four columns to eight
+   (installment / after fundraising / paid / owing, plus #, due, note and the action) when the
+   drawer started answering "where did this family's money go?" rather than "what is left?".
+   At the standard 720px that table scrolls sideways inside its frame at every width, which is
+   the defect the Money-hub table pass closed everywhere else; at `.slideOverWide`'s 1180 a
+   single player's schedule is swimming. This is the width the eight columns actually need. */
+.slideOverLedger { max-width: min(1040px, 96vw); }
 .slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin: 0.5rem 0 1rem; }
 .slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.07)); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 /* Destructive pair pushed to the right, separated from the everyday Edit/Add-game actions. */
@@ -8676,6 +8828,201 @@ button.gdChip[aria-pressed='true'] {
 .duesCellSt[data-tone='up']   { color: var(--home-dim, rgba(255,255,255,0.45)); }
 .duesCellSt[data-tone='none'] { color: var(--home-dim, rgba(255,255,255,0.3)); }
 
+/* ── The season-settlement door + its modal (owner ruling 2026-08-14) ──────────────────────────
+   ONE LINE THAT NEVER GROWS. This was a full-width accordion whose open state roughly doubled the
+   dues page — for an act a coach performs once, at the end of a season. The sheet moved into a
+   modal; what stays on the page is the standing fact and the way in. */
+.settlementDoor {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+  padding: 0.8rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  background: var(--home-card, rgba(255,255,255,0.03));
+}
+.settlementDoorTitle { font-weight: 700; font-size: 0.9rem; flex-shrink: 0; color: var(--home-ink, rgba(255,255,255,0.88)); }
+.settlementDoorNote {
+  flex: 1 1 220px;
+  font-size: 0.78rem;
+  color: var(--home-dim, rgba(255,255,255,0.5));
+}
+
+/* The settlement modal is WIDER than the shared 520px sheet: it carries a money summary and a
+   payout table, and the whole point of the move was that the two sit side by side instead of
+   stacking into the scroll the accordion was.
+   ⚠ The old drawer nested three padded boxes (drawer body → summary card → each row) and pinned
+   the summary to a fixed 460px, which is where the reported "huge padding" and the dead space
+   beside it came from. Here the modal's own 1.5rem is the only outer padding. */
+.modalSettlement { max-width: 900px; }
+
+/* ⚠ The header carries a SUBTITLE, so the X must sit at the top rather than floating halfway
+   down a two-line block — `.modalHeader`'s shared `align-items: center` is right for the
+   one-line headers everywhere else and wrong here. Scoped, so nothing else moves. */
+.modalSettlement > .modalHeader { align-items: flex-start; margin-bottom: 1rem; }
+/* ⚠ The shared `.modalCloseBtn` renders 28px (an 18px glyph + 0.25rem), under the portal's 44px
+   tap floor — the rendered sweep flags it the moment a modal appears on a swept screen. Widened
+   HERE rather than on the shared class: every dialog in the portal inherits that button, and
+   moving it globally is a portal-wide decision, not a side effect of this pass. */
+.modalSettlement > .modalHeader .modalCloseBtn {
+  min-height: var(--tap-min, 44px);
+  min-width: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.settlementSubtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--home-dim, rgba(255,255,255,0.5));
+}
+
+/* The scrolling middle. `.modalScrollBody` (the Add-Expense recipe) pins the header and footer
+   and scrolls exactly one child — that child is named here, the way `.formGrid` is named for the
+   forms. Without it the whole panel scrolls and the footer rides over the table, which is what
+   the first cut shipped. */
+.modalScrollBody > .settlementScroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+/* ⚠ STACKED, NOT SIDE BY SIDE — and this is arithmetic, not taste. The approved mockup put the
+   money summary beside the payout table, and its table was narrower than the real one. Measured
+   against the shipped columns: the summary needs ~320px before "Hold back for next season" starts
+   truncating, and the table needs ~590px for six columns without the player names breaking over
+   two lines. 320 + 590 + gap is ~930px inside an 840px content box, so side-by-side could only
+   ever be delivered by clipping the Refund column — which is what it did.
+
+   Stacking costs a scroll INSIDE the modal, which was never the complaint: the objection was the
+   PAGE growing, and the page no longer moves at all. */
+.settlementBody { display: flex; flex-direction: column; gap: 1.1rem; }
+/* The summary is a label/value list — full width would strand a metre of leader space between the
+   two halves of every row. It sits at its natural reading width, and the sheet's caveats about
+   that money sit BESIDE it rather than stacking underneath, which is what the width beside a
+   420px card is for. */
+.settlementTop { display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: flex-start; }
+.settlementSummary { flex: 0 1 420px; min-width: 300px; }
+.settlementNotes {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 0.1rem;
+}
+.settlementChecksTitle {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+.settlementChecks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.settlementChecks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.7));
+}
+.settlementChecks li svg { flex-shrink: 0; margin-top: 2px; }
+/* ⚠ THE MARK CARRIES THE VERDICT, not the colour — amber and danger sit at ΔE ~1.0 for deutan
+   vision on this palette, so "blocked" and "worth knowing" must differ by more than hue. A blocked
+   item is the only one drawn in danger AND the only one whose text names a shortfall. */
+.settlementChecks li[data-state='done'] svg    { color: var(--success-light); }
+.settlementChecks li[data-state='blocked'] svg { color: var(--danger-light); }
+.settlementChecks li[data-state='blocked']     { color: var(--home-ink, rgba(255,255,255,0.86)); font-weight: 600; }
+.settlementChecks li[data-state='warn'] svg    { color: var(--warning); }
+
+/* An opened family: the arithmetic at its reading width, the action in the space beside it. */
+.settlementRowOpen {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+/* ⚠ A flex item keeps `min-width: auto` — the payout table's own width — so without this the
+   table punches straight out through the modal's edge instead of scrolling inside `.tableWrap`. */
+.settlementCol { min-width: 0; }
+
+/* Names are names: they do not break over two lines while there is width to be had. */
+.modalSettlement .table td:first-child,
+.modalSettlement .table th:first-child { white-space: nowrap; }
+
+/* ⚠ MODAL DENSITY, NOT PAGE DENSITY. The shared table is tuned for a full page — 0.88rem type in
+   0.7rem × 1rem cells — and that is right where a table IS the screen. Dropped into a dialog next
+   to a 0.84rem summary card it reads a size too large, and eight families then need a scroll to
+   see four. Matched to the card it sits beside, so the two halves of the sheet look like one
+   document. Type stays well above the portal's floor; only the air comes out. */
+.modalSettlement .table { font-size: 0.82rem; }
+.modalSettlement .th { padding: 0.4rem 0.7rem; font-size: 0.68rem; }
+.modalSettlement .td { padding: 0.45rem 0.7rem; }
+/* The family grouping row is a caption, not a record — it can be quieter still. */
+.modalSettlement .tableFoot td { padding: 0.5rem 0.7rem; }
+
+/* ⚠ A DISABLED CTA MUST LOOK INERT, and the shared `opacity: 0.5` does not deliver that here.
+   Halving the opacity of a lime fill works on the portal's dark ground; on warm paper it becomes
+   a soft mint panel that reads as a highlighted, pressable button — which is the worst possible
+   reading for the one control that must not be pressed while a season is still collecting.
+   Scoped to this modal: retuning the shared disabled state is a portal-wide call. */
+.modalSettlement .modalFooter .btnPrimary:disabled {
+  opacity: 1;
+  background: var(--home-fill, rgba(255,255,255,0.08));
+  color: var(--home-dim, rgba(255,255,255,0.4));
+  box-shadow: inset 0 0 0 1px var(--home-line, rgba(255,255,255,0.10));
+}
+
+/* ── The grid cell, since the captions went (owner ruling 2026-08-14) ──────────────────────────
+   ONE LINE, not two: a mark, then a figure only where money is still owed. `.duesCellSt` above
+   stays exactly as it is — the PHONE CARD still uses it, and the card deliberately keeps its
+   words, so the two rulesets are not duplicates of one another.
+
+   ⚠ The tone lives on the WRAPPER, so the mark and the figure cannot end up different colours —
+   that split is precisely how a "settled" tick once sat beside an amber amount. */
+.duesCell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.duesCell svg { flex-shrink: 0; }
+.duesCell[data-tone='paid'] { color: var(--success-light); }
+.duesCell[data-tone='part'] { color: var(--warning); font-weight: 700; }
+.duesCell[data-tone='over'] { color: var(--danger-light); font-weight: 700; }
+/* The quietest state on the grid and the commonest early in a season — a single faint dot. It
+   must recede: a column of upcoming instalments is the BACKGROUND against which the amber and
+   red read, and giving it ordinary ink was what made the old grid feel full of text. */
+.duesCell[data-tone='up']   { color: var(--home-dim, rgba(255,255,255,0.32)); }
+.duesCell[data-tone='none'] { color: var(--home-dim, rgba(255,255,255,0.25)); }
+/* A player's OWN date, printed only when it differs from the column heading's. */
+.duesCellWhen { font-size: 0.68rem; font-weight: 400; opacity: 0.8; }
+
+/* The key under the grid. It exists because four marks a coach has not met before need naming
+   once — and once is cheaper than the 28 sentences it replaced. */
+.duesLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+.duesLegend span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.duesLegend span[data-tone='paid'] { color: var(--success-light); }
+.duesLegend span[data-tone='part'] { color: var(--warning); }
+.duesLegend span[data-tone='over'] { color: var(--danger-light); }
+/* ⚠ The legend belongs to the DESKTOP grid, which is hidden on phones — the cards carry their own
+   words and would be describing marks that are not on screen. */
+@media (max-width: 640px) { .duesLegend { display: none; } }
+
 /* Phone cards replace the matrix below 640 — the grid would silently sideways-scroll there,
    the exact defect the Money-hub table pass closed everywhere else.
 
@@ -8779,7 +9126,11 @@ button.gdChip[aria-pressed='true'] {
   color: var(--home-dim, rgba(255,255,255,0.45));
   white-space: nowrap;
 }
-.duesCardRowVal { text-align: right; }
+/* ⚠ The value may WRAP. `.duesCellSt` (shared with the desktop grid, where nowrap is right)
+   carries `white-space: nowrap`, and on a 361px card that turned a long status into a 60px
+   overflow rather than a second line. The label keeps its nowrap; the value gives way. */
+.duesCardRowVal { text-align: right; min-width: 0; }
+.duesCardRowVal .duesCellSt { white-space: normal; }
 .duesCardFoot {
   display: flex;
   justify-content: space-between;

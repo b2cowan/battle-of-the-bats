@@ -17,6 +17,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   deriveSettlement,
+  closeOutBlockers,
   solveEvenLevel,
   type SettlementParticipant,
 } from '../../lib/season-settlement';
@@ -405,5 +406,173 @@ describe('Σ refunds + what stays with the team + hold-back = the cash the team 
       const rowSum = s.rows.reduce((acc, r) => acc + cents(r.refund), 0);
       assert.equal(rowSum, cents(s.totals.refund), `run ${run}: the total is not the sum of its rows`);
     }
+  });
+});
+
+/**
+ * ⚠ WHY THE CLOSE-OUT GATE NEEDS TWO CONDITIONS, NOT ONE (owner ruling 2026-08-14).
+ *
+ * The gate was first written as `expectedIn === 0` alone, on the reasoning that a season with
+ * nothing left to collect cannot have a negative refund, so the payouts must equal the cash on
+ * hand and an affordability check would be arithmetic that could never fire.
+ *
+ * **That reasoning is wrong, and this test is what found it.** `refund` is
+ * `owedBack + cashShare − leftToSend − sharePaid`, and `sharePaid` — money ALREADY handed to a
+ * family — is not bounded by their eventual share. A coach who pays a family early (now the
+ * documented way to settle someone leaving mid-season) can pay them more than the even split
+ * ultimately gives them; that family's refund goes negative even with their dues fully paid.
+ *
+ * Once ANY refund is negative, `payable` (the positive rows, the money that would actually go
+ * out) exceeds the sum of all refunds — which is the cash on hand. So a season that is done
+ * collecting CAN still be unable to fund its own close-out, and the gate must test both.
+ */
+describe('a season that is done collecting cannot overdraw the team', () => {
+  it('⚠ "nothing left to collect" does NOT by itself mean the payouts are affordable', () => {
+    // A family paid $400 on the way out who was holding no credit of their own — so the whole
+    // $400 is an advance against the surplus (`sharePaid`), and the even split only ever gives
+    // them about $167 of it back.
+    const s = deriveSettlement({
+      cash: {
+        duesReceived: 1000, fundraisingRaised: 0, orgFunding: 0,
+        cashOut: 500, payoutsTotal: 400, holdBack: 0,
+      },
+      participants: [
+        player({ playerId: 'early', owedBack: 0, creditsIssued: 0, paidOut: 400, leftToSend: 0 }),
+        player({ playerId: 'b', leftToSend: 0 }),
+        player({ playerId: 'c', leftToSend: 0 }),
+      ],
+    });
+    assert.equal(s.pot.expectedIn, 0, 'the fixture must be done collecting');
+    // The early-paid family owes value back, so the sheet draws a bracketed refund...
+    assert.ok(s.rows.some(r => cents(r.refund) < 0), 'expected a family to owe the team back');
+    // ...and the money that would go OUT is more than the total of all the rows.
+    assert.ok(
+      cents(s.totals.payable) > cents(s.totals.refund),
+      'payable should exceed the net once a row is negative',
+    );
+    // Which is exactly the state `awaitingCash` names — and why the gate must consult it.
+    assert.ok(s.awaitingCash > 0, 'the sheet should report money it is waiting on');
+  });
+
+  it('holds across 400 randomised rosters with nothing left to send', () => {
+    let seed = 24681357;
+    const rnd = () => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+    const money = (max: number) => Math.round(rnd() * max * 100) / 100;
+
+    for (let run = 0; run < 400; run++) {
+      const n = 1 + Math.floor(rnd() * 12);
+      const participants: SettlementParticipant[] = [];
+      for (let i = 0; i < n; i++) {
+        const creditsIssued = money(300);
+        const paidOut = rnd() < 0.25 ? Math.min(creditsIssued + money(200), 99999) : 0;
+        const choiceRoll = rnd();
+        participants.push({
+          playerId: `p${i}`,
+          onRoster: rnd() > 0.15,
+          creditsIssued,
+          owedBack: Math.max(0, Math.round((creditsIssued - paidOut) * 100) / 100),
+          // THE CONDITION UNDER TEST: every family is square.
+          leftToSend: 0,
+          forgiven: rnd() < 0.2 ? money(300) : 0,
+          paidOut,
+          choice: choiceRoll < 0.1 ? 'none' : choiceRoll < 0.2 ? 'fixed' : 'even',
+          fixedAmount: money(300),
+        });
+      }
+      const cash = {
+        duesReceived: money(9000),
+        fundraisingRaised: money(4000),
+        orgFunding: rnd() < 0.2 ? money(1000) : 0,
+        cashOut: money(9000),
+        payoutsTotal: Math.round(participants.reduce((s, p) => s + p.paidOut * 100, 0)) / 100,
+        holdBack: rnd() < 0.3 ? money(800) : 0,
+      };
+      const s = deriveSettlement({ cash, participants });
+
+      assert.equal(s.pot.expectedIn, 0, `run ${run}: the fixture itself is wrong`);
+
+      // A shortfall is the team owing MORE than it holds — a debt, not a payout, and the sheet
+      // states it rather than sharing anything. The gate is not what guards that case.
+      if (s.pot.shortfall > 0) continue;
+
+      // ⚠ THE REAL PREDICATE, not a copy of it. This line WAS a hand-typed
+      // `expectedIn <= 0.005 && awaitingCash <= 0.005` — a third copy of a boolean that also
+      // existed in the dues panel and in the server's payout guard, which meant a regression to a
+      // single condition at either site would have shipped with this suite green. /review caught
+      // that (2026-08-14); `closeOutBlockers` is now the one definition and this exercises it.
+      if (!closeOutBlockers(s).canClose) continue;
+
+      // What the gate then guarantees: what goes out never exceeds what the team can pay out.
+      const available = cents(s.pot.cashHeld) - cents(s.pot.holdBack);
+      assert.ok(
+        cents(s.totals.payable) <= available,
+        `run ${run}: payable ${s.totals.payable} exceeds available ${available / 100}`,
+      );
+    }
+  });
+
+  it('the gate opens on the ordinary healthy season — it is not vacuously safe', () => {
+    // A guard that never opens would pass the test above and ship a button nobody can press.
+    const s = deriveSettlement({
+      cash: {
+        duesReceived: 6050, fundraisingRaised: 2500, orgFunding: 0,
+        cashOut: 6350, payoutsTotal: 0, holdBack: 0,
+      },
+      participants: u15Players(),
+    });
+    assert.equal(s.pot.expectedIn, 0);
+    assert.equal(s.awaitingCash, 0);
+    assert.ok(s.totals.payable > 0, 'the review team should have money to hand back');
+  });
+});
+
+/**
+ * ⚠ THE GATE ITSELF, exercised directly.
+ *
+ * The suite above proves an arithmetic PROPERTY of `deriveSettlement` — real, and newly
+ * discovered — but adversarial review pointed out that every assertion in it would have passed
+ * against the pre-change code, because the thing this work actually added (the two-condition
+ * close-out rule) lived inline in a React component and in a DB-touching module, and the test
+ * re-typed the boolean rather than calling it. A regression to one condition would have shipped
+ * green. `closeOutBlockers` is now the single definition both enforcement points call; these
+ * cases pin it.
+ */
+describe('closeOutBlockers — the one definition of "can this season close?"', () => {
+  const sheet = (expectedIn: number, awaitingCash: number) =>
+    ({ pot: { expectedIn }, awaitingCash }) as Parameters<typeof closeOutBlockers>[0];
+
+  it('opens only when BOTH conditions are clear', () => {
+    assert.equal(closeOutBlockers(sheet(0, 0)).canClose, true);
+  });
+
+  it('⚠ dues outstanding alone blocks it', () => {
+    const b = closeOutBlockers(sheet(150, 0));
+    assert.equal(b.canClose, false);
+    assert.equal(b.duesOutstanding, 150);
+    assert.equal(b.cashShort, 0, 'must not conflate the two reasons — the screen words them differently');
+  });
+
+  it('⚠ A CASH SHORTFALL ALONE BLOCKS IT — the condition a one-condition gate would miss', () => {
+    // This is the regression case. `expectedIn` is zero (every due collected), so a gate written
+    // as `expectedIn <= 0.005` alone would OPEN here and let the team pay out more than it holds.
+    const b = closeOutBlockers(sheet(0, 233.34));
+    assert.equal(b.canClose, false, 'a season done collecting can still be unable to fund its close-out');
+    assert.equal(b.duesOutstanding, 0);
+    assert.equal(b.cashShort, 233.34);
+  });
+
+  it('both reasons are reported together, so the checklist can state both', () => {
+    const b = closeOutBlockers(sheet(150, 200));
+    assert.equal(b.canClose, false);
+    assert.equal(b.duesOutstanding, 150);
+    assert.equal(b.cashShort, 200);
+  });
+
+  it('half-cent noise does not block a season (same deadband as the rest of the sheet)', () => {
+    assert.equal(closeOutBlockers(sheet(0.004, 0.004)).canClose, true);
+    assert.equal(closeOutBlockers(sheet(0.006, 0)).canClose, false);
   });
 });

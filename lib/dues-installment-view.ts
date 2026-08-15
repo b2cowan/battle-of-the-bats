@@ -66,6 +66,16 @@ export interface InstallmentColumn {
   commonDueDate: string | null;
   /** More than one distinct due date exists among players — cells carry their own dates. */
   dueDateVaries: boolean;
+  /**
+   * The instalment amount the most players share (ties break to the largest), or 0 when the
+   * column is empty. The exact twin of `commonDueDate`, and it exists for the same reason: since
+   * the grid stopped printing the amount in every cell (owner ruling 2026-08-14), the COLUMN
+   * HEADING states it once — and a player whose own instalment differs from it must still show
+   * their own figure, or a hand-edited schedule would silently read as the team's.
+   */
+  commonAmount: number;
+  /** More than one distinct amount exists among players — the heading cannot speak for them. */
+  amountVaries: boolean;
   /** Sum of this installment's amounts across every player who has it. */
   assessed: number;
   /** Payment dollars allocated to this installment across the team. */
@@ -110,6 +120,7 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
     let paidCount = 0;
     let behindCount = 0;
     const dateTally = new Map<string, number>();
+    const amountTally = new Map<number, number>();
     for (const { inst, cov } of rows) {
       assessed += toCents(inst.amount);
       // A missing coverage row means no payments have reached this installment.
@@ -125,16 +136,29 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
       // fundraising has fully covered is not past due for anyone.
       if (rem > 0 && inst.dueDate < today) behindCount += 1;
       dateTally.set(inst.dueDate, (dateTally.get(inst.dueDate) ?? 0) + 1);
+      // ⚠ Tallied in CENTS. Keying a map on a float would give 199.99999999 its own bucket and
+      // quietly split a column that every player actually shares.
+      const cents = toCents(inst.amount);
+      amountTally.set(cents, (amountTally.get(cents) ?? 0) + 1);
     }
     let commonDueDate: string | null = null;
     let best = 0;
     for (const [date, count] of [...dateTally.entries()].sort(([a], [b]) => a.localeCompare(b))) {
       if (count > best) { commonDueDate = date; best = count; }
     }
+    // Same modal rule as the date, ties breaking to the LARGEST amount — the heading should never
+    // understate what a player is being asked for.
+    let commonAmountC = 0;
+    let bestAmount = 0;
+    for (const [cents, count] of [...amountTally.entries()].sort(([a], [b]) => b - a)) {
+      if (count > bestAmount) { commonAmountC = cents; bestAmount = count; }
+    }
     return {
       installmentNumber: n,
       commonDueDate,
       dueDateVaries: dateTally.size > 1,
+      commonAmount: toDollars(commonAmountC),
+      amountVaries: amountTally.size > 1,
       assessed: toDollars(assessed),
       collected: toDollars(collected),
       remaining: toDollars(remaining),

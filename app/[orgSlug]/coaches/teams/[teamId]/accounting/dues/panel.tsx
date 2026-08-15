@@ -1,28 +1,36 @@
 'use client';
-import { useState, useEffect, useCallback, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowLeft, DollarSign } from 'lucide-react';
+import Link from 'next/link';
+/* (ChevronDown went with the settlement accordion's twist — it had no other caller here.) */
+import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, Bell, ArrowLeft, DollarSign, Banknote, Pencil } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { DUES_EXPORT_COLUMNS, duesExportRows, duesPdfRows } from '@/lib/coach-money-exports';
-import { isNeverPaidPlayer, duesStatusLabel } from '@/lib/dues-status';
+import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import DuesPayoutSheet from '@/components/coaches/DuesPayoutSheet';
-import SettlementRow, { ROW_ACTION } from '@/components/coaches/SettlementRow';
+import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
 import { installmentToSend } from '@/lib/dues-installment-view';
 import styles from '../../../../coaches.module.css';
-import { tournamentToday, addCalendarDays } from '@/lib/timezone';
+import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
-import { duesReminderEmail } from '@/lib/dues-reminder-email';
 import { fmt } from '@/lib/coach-money-summary';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
-import { creditsTotal, normalizeCreditApplicationMode, CREDIT_APPLICATION_MODES, type CreditApplicationMode } from '@/lib/dues-credits';
+import {
+  creditsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, type CreditApplicationMode,
+} from '@/lib/dues-credits';
+import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
+import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
+import DuesMoneySettingRows from '@/components/coaches/DuesMoneySettingRows';
+import { closeOutBlockers } from '@/lib/season-settlement';
 import type { SettlementSheet, SettlementSheetRow } from '@/lib/season-settlement';
 import type {
   RepRosterPlayer,
@@ -86,9 +94,12 @@ interface PlayerWithDues {
    Money panels' local `fmt`s are NOT duplicates: several deliberately strip the sign because their
    callers print their own, so they stay where they are.) */
 
-function fmtDate(s: string) {
-  return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-}
+/* ⚠ THE SHARED ONE, and it must be: this panel prints date-only columns (`due_date`,
+   `received_date`, `paid_date`) AND timestamps (`paid_at` is timestamptz — a PROJECTION
+   written when payments cover an installment, mig 232) — often in the SAME ROW. The local
+   `new Date(s + 'T00:00:00')` was right for the first and printed the literal words
+   "Invalid Date" for the second, which is what every paid row of this ledger was showing. */
+const fmtDate = formatStoredDate;
 
 /* `balanceColor` (settled-is-quiet ruling) now lives with the By-installment lens in
    InstallmentBreakdown.tsx and is imported above — ONE definition, so the two views of this
@@ -97,18 +108,26 @@ function fmtDate(s: string) {
 /** The colour each dues status is drawn in. The WORD comes from the shared list so this table
  *  and the Money hub's "Player dues" export can never call the same player two different
  *  things; colour is presentation and stays here, where the table is. */
+/* ⚠ THE COLUMN IS QUIET EXCEPT WHERE ACTION IS NEEDED (owner call 2026-08-14).
+   "Up to date" is the commonest state on a healthy roster, so it takes ORDINARY INK, not green —
+   a column that is mostly green has no colour left to spend on the row that matters. Green is
+   reserved for the season's finished states, and danger for the only status that is a call to
+   action. (Past due also carries a ⚠ glyph at the cell: colour never states a verdict alone.) */
 const DUES_STATUS_COLOR: Record<ReturnType<typeof duesStatusLabel>, string> = {
-  'Not set':    'var(--home-dim, rgba(255,255,255,0.3))',
-  'In credit':  'var(--success-light)',
+  'Not set':     'var(--home-dim, rgba(255,255,255,0.3))',
+  'In credit':   'var(--success-light)',
   // Settled = the balance cleared with credits doing part of the work (Paid stays cash — owner
   // model 2026-08-14). Same good green as Fully paid: the family owes nothing either way.
-  Settled:      'var(--success-light)',
-  'Fully paid': 'var(--success-light)',
-  Partial:      'var(--warning)',
-  Unpaid:       'var(--home-dim, rgba(255,255,255,0.4))',
+  Settled:       'var(--success-light)',
+  'Fully paid':  'var(--success-light)',
+  'Past due':    'var(--danger-light)',
+  'Up to date':  'var(--home-ink-soft, rgba(255,255,255,0.7))',
 };
 
 function statusLabel(p: PlayerWithDues) {
+  // ⚠ Installments go in, because the label is a question about TIME — "is this family behind?"
+  // — and without them it could only grade season completion (which called a faithfully-paying
+  // family and a month-late one both "Partial").
   const label = duesStatusLabel(p);
   return { label, color: DUES_STATUS_COLOR[label] };
 }
@@ -125,11 +144,120 @@ const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
   reimbursement: 'Reimbursement',
 };
 
-/** The settlement sheet's two honesty strips — same shape, two temperatures. Amber for "you are
- *  waiting on someone", danger for "the team is short". ⚠ Never colour alone: both carry the
- *  sentence, because the olive↔danger pair is 1.0 ΔE apart for a deutan reader. */
-function stripStyle(tone: 'warning' | 'danger'): React.CSSProperties {
-  const token = tone === 'danger' ? 'var(--danger-light)' : 'var(--warning)';
+/* ⚠ RENAMED FROM "Mark Paid" (owner call 2026-08-14). The button is not a flag — it RECORDS A
+   PAYMENT, for whatever is still owed on the installment, dated today, and that payment appears
+   in the receipt book below and can be removed like any other. "Mark paid" described the
+   pre-payment-record world where it stamped a row, and the old word left a coach reasonably
+   asking what the difference was between this and Record payment. There is none, except that
+   this one does not stop to ask how much, what day and how it arrived.
+   ⚠ DUES ONLY. Expenses, payables and allocations keep their own Mark Paid — those really are
+   flags on a commitment, with no receipt book behind them. */
+const MARK_PAID_LABEL      = 'Record as paid';
+const MARK_PAID_REST_LABEL = 'Record rest as paid';
+
+/* ── One installment, as the player ledger draws it (owner-approved mockup `e73e9842`) ────────
+ * FOUR FIGURES PER INSTALLMENT, and each one totals to a tile at the head of the drawer:
+ *
+ *     installment  −  credit applied  =  after fundraising
+ *     after fundraising  −  cash paid  =  owing
+ *
+ * ⚠ DERIVED ONCE, HANDED TO BOTH RENDERERS. The drawer draws this list twice — an eight-column
+ * table on a desktop, collapsible cards on a phone — and the two must never be able to disagree
+ * about what a family owes. The alternative (each renderer doing its own arithmetic off the same
+ * payload) is the shape of every "the phone said something different" defect this hub has had.
+ *
+ * ⚠ `owing` is the SERVER's net remainder, never `amount − credit − paid` computed here. Credit
+ * allocation across installments is the server's model (lib/dues-credits.ts); re-deriving it
+ * client-side is how the two silently drift apart.
+ */
+function ledgerRowFor(inst: InstallmentWithCredit, coverage: InstallmentCoverage[]) {
+  const cov = coverage.find(c => c.installmentId === inst.id);
+  const paidCash = cov?.allocated ?? 0;
+  const creditApplied = inst.creditApplied ?? 0;
+  const owing = installmentToSend(inst, cov);
+  const afterFundraising = Math.max(inst.amount - creditApplied, 0);
+  const partial = !inst.paidAt && paidCash > 0.005;
+  // A row credits settled is never late — nothing is being asked for.
+  const overdue = owing > 0.005 && isInstallmentOverdue(inst.dueDate, inst.paidAt);
+  // Settled is the SERVER's call (payload creditSettled) — a local threshold here would
+  // silently drift from applyCreditsToBills.
+  const coveredByCredit = !inst.paidAt && creditApplied > 0.005 && (inst.creditSettled ?? false);
+  const coveredLabel = (inst.creditSources ?? []).every(s => s.creditType === 'fundraiser')
+    ? 'Covered by fundraising' : 'Covered by credit';
+  const sourceNote = (inst.creditSources ?? [])
+    .map(s => s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .join(' · ');
+  return { paidCash, creditApplied, owing, afterFundraising, partial, overdue, coveredByCredit, coveredLabel, sourceNote };
+}
+
+type LedgerRow = ReturnType<typeof ledgerRowFor>;
+
+/**
+ * The Note cell — the row's one sentence, and the reason the ledger fits on single lines.
+ *
+ * ⚠ "PAID ON <date>" AND "$X COVERED BY <effort>" ARE THE SAME KIND OF THING (owner call,
+ * 2026-08-14): both EXPLAIN the row rather than measure it, and a row is almost never both —
+ * cash settled it, or fundraising did. One column carries whichever applies, so the money
+ * columns hold nothing but money and no row needs a second line. The rare row that is both
+ * (a credit, then cash for the rest) prints both clauses, which is the honest answer.
+ *
+ * The dollars stay on a PART-covered row and go on a FULLY covered one: there, "After
+ * fundraising $0.00" beside the installment's own amount already states the figure, and what is
+ * left to say is who earned it.
+ */
+function LedgerNote({ inst, row }: { inst: InstallmentWithCredit; row: LedgerRow }) {
+  const good = { display: 'inline-flex', alignItems: 'center', gap: '0.28rem', color: 'var(--success-light)', fontWeight: 600 } as const;
+  const source = row.sourceNote ? ` — ${row.sourceNote}` : '';
+  if (inst.paidAt) {
+    return (
+      <>
+        <span style={good}><CheckCircle2 size={12} aria-hidden /> Paid {fmtDate(inst.paidAt, { withYear: false })}</span>
+        {row.creditApplied > 0.005 && <> · {fmt(row.creditApplied)} covered{source}</>}
+      </>
+    );
+  }
+  if (row.coveredByCredit) {
+    /* Deliberately NOT "Paid" — Paid stays cash, so the books can always say which was
+       which (owner Call 1). */
+    return (
+      <>
+        <span style={good}><CheckCircle2 size={12} aria-hidden /> {row.coveredLabel}</span>{source}
+      </>
+    );
+  }
+  if (row.creditApplied > 0.005) {
+    return <>{row.partial && <>{fmt(row.paidCash)} received · </>}{fmt(row.creditApplied)} covered{source}</>;
+  }
+  if (row.overdue) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.28rem', color: 'var(--danger-light)', fontWeight: 600 }}>
+        <AlertTriangle size={12} aria-hidden /> Overdue
+      </span>
+    );
+  }
+  return null;
+}
+
+/** The phone card's collapsed line: the one number a coach came to the schedule for. */
+function ledgerSummary(inst: InstallmentWithCredit, row: LedgerRow) {
+  if (row.owing > 0.005) return { text: fmt(row.owing), color: 'var(--danger-light)' };
+  if (inst.paidAt)        return { text: 'Paid',         color: 'var(--success-light)' };
+  if (row.coveredByCredit) return { text: 'Covered',     color: 'var(--success-light)' };
+  return { text: 'Settled', color: 'var(--home-dim, rgba(255,255,255,0.45))' };
+}
+
+/** The settlement sheet's ONE remaining honesty strip: the team is short of what it owes families.
+ *
+ *  ⚠ It took a `tone` and had an amber sibling — "you are waiting on someone" — which the
+ *  close-out ruling retired (2026-08-14): the readiness checklist beside the money summary states
+ *  that where the question is asked, and saying it twice was the defect. The parameter went with
+ *  the caller rather than being left as an untravelled branch for a future reader to trust.
+ *
+ *  ⚠ Never colour alone: the strip carries its sentence, because the olive↔danger pair is 1.0 ΔE
+ *  apart for a deutan reader. */
+function stripStyle(): React.CSSProperties {
+  const token = 'var(--danger-light)';
   return {
     display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
     padding: '0.65rem 0.85rem', marginTop: '0.9rem', borderRadius: 7,
@@ -138,18 +266,6 @@ function stripStyle(tone: 'warning' | 'danger'): React.CSSProperties {
     fontSize: '0.82rem', color: token, lineHeight: 1.45,
   };
 }
-
-const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
-  last_first:    'The last payment first',
-  next_first:    'The next payment first',
-  keep_separate: "They don't — settle at season's end",
-};
-
-const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
-  last_first:    'Fundraising shrinks the far end of the schedule; near-term amounts keep their dates',
-  next_first:    'Relief lands on the next bill due',
-  keep_separate: 'Bills never move — every credit waits for season’s end',
-};
 
 const PAYMENT_METHOD_LABELS: Record<DuesPaymentMethod, string> = {
   etransfer: 'E-transfer',
@@ -215,6 +331,17 @@ export function PlayerDuesPanel({
   const [error, setError] = useState('');
 
   const [selected, setSelected] = useState<PlayerWithDues | null>(null);
+  /**
+   * The open player's installments with their four figures, derived ONCE.
+   *
+   * ⚠ BOTH RENDERERS ARE ALWAYS IN THE DOM — the desktop table and the phone cards are drawn
+   * unconditionally and one is hidden by a media query, not unmounted. Deriving inside each
+   * block therefore ran every coverage lookup twice on every render of the drawer.
+   */
+  const ledgerRows = useMemo(
+    () => (selected?.installments ?? []).map(inst => ({ inst, row: ledgerRowFor(inst, selected!.coverage) })),
+    [selected],
+  );
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [form, setForm] = useState(BLANK_SCHEDULE_FORM);
   const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([
@@ -223,6 +350,12 @@ export function PlayerDuesPanel({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [marking, setMarking] = useState<Record<string, boolean>>({});
+  /** The portal's own confirm (never window.confirm) — mounted for every coach screen. */
+  const confirm = useConfirm();
+  /** Set while the payment/credit sheet is correcting an existing row rather than adding one.
+   *  ONE sheet does both jobs — a separate edit form is two places for the same fields to drift. */
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
 
   // Credits
   const [addingCredit, setAddingCredit] = useState(false);
@@ -271,10 +404,9 @@ export function PlayerDuesPanel({
   const [holdBackEditing, setHoldBackEditing] = useState(false);
   const [holdBackInput, setHoldBackInput] = useState('');
   const [holdBackSaving, setHoldBackSaving] = useState(false);
-  /** The row (or family) currently being paid, and the sheet's own form. */
-  const [payingRow, setPayingRow] = useState<{ playerIds: string[]; label: string; max: number } | null>(null);
-  const [rowPayoutForm, setRowPayoutForm] = useState(BLANK_PAYOUT_FORM);
-  const [rowPayoutSaving, setRowPayoutSaving] = useState(false);
+  /* (The settlement's own per-row payout state stood here — a `payingRow`, its form and its
+     saving flag. All three went with the per-row Pay out button, 2026-08-14. The PLAYER DRAWER's
+     payout state is separate and untouched: `payingOut` / `payoutForm` / `payoutSaving`.) */
   const [payAllBusy, setPayAllBusy] = useState(false);
   /** The Set-refund sheet: an even share / a set amount / no share / forgive the balance. */
   const [choiceFor, setChoiceFor] = useState<SettlementSheetRow | null>(null);
@@ -331,6 +463,7 @@ export function PlayerDuesPanel({
   const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
   // The team-wide credits setting (owner Call 2, mig 233) — how credits meet bills.
   const [creditMode, setCreditMode] = useState<CreditApplicationMode | null>(null);
+  const [moneySettingError, setMoneySettingError] = useState('');
   const [creditModeSaving, setCreditModeSaving] = useState(false);
   // Paying a credit out in cash (mig 234) — the mirror of Record payment.
   const [payingOut, setPayingOut] = useState(false);
@@ -344,7 +477,10 @@ export function PlayerDuesPanel({
   // ⚠ Every overlay this panel opens registers here — without it the phone's bottom nav stays
   // tappable underneath (/review 2026-08-14). The Set-refund sheet joins the same call: they are
   // mutually exclusive, so one registration covers them.
-  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor);
+  // ⚠ `refundOpen` joined this list when the settlement became a modal (2026-08-14) — as an
+  // accordion it was page content and correctly absent. An unregistered overlay leaves the
+  // portal's chrome (bottom nav, scroll lock) behaving as though nothing is open on top of it.
+  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor || refundOpen);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -432,39 +568,48 @@ export function PlayerDuesPanel({
     }
   }
 
+  /** Both writes go through the ONE shared helper (lib/coach-accounting-settings) that Team
+   *  settings → Money also uses — the two screens had drifted into different failure behaviour
+   *  while each held a fix the other lacked. What differs here is the CONSEQUENCE, not the save. */
+  /** Failed save ⇒ ask the server what these actually are. Reverting to a captured value is
+   *  unsound once two saves overlap — see `fetchAccountingSettings` for the trace. */
+  async function resyncMoneySettings() {
+    const fresh = await fetchAccountingSettings(orgSlug, teamId);
+    if (!fresh) return;
+    setAutoReminders(fresh.autoRemindersEnabled);
+    setCreditMode(fresh.creditApplication);
+  }
+
   async function saveCreditMode(mode: CreditApplicationMode) {
-    const previous = creditMode;
     setCreditMode(mode); // optimistic — the hint line explains the choice immediately
     setCreditModeSaving(true);
+    setMoneySettingError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creditApplication: mode }),
-      });
-      if (!res.ok) throw new Error();
+      await patchAccountingSetting(orgSlug, teamId, { creditApplication: mode });
       // The setting changes every "to send" figure on this screen — reload so the table,
-      // drawer and lens all tell the new story at once.
+      // drawer and lens all tell the new story at once. (Team settings has nothing to reload,
+      // which is exactly why the shared helper owns the request and not the aftermath.)
       await load();
-    } catch {
-      // Revert only if a NEWER choice hasn't superseded this one — an old failure must never
-      // stomp a selection the coach has already moved past (/review 2026-08-14).
-      setCreditMode(current => (current === mode ? previous : current));
+    } catch (e) {
+      setMoneySettingError(e instanceof Error ? e.message : 'Could not save that setting.');
+      await resyncMoneySettings();
     } finally {
       setCreditModeSaving(false);
     }
   }
 
   async function toggleAutoReminders(enabled: boolean) {
+    setAutoReminders(enabled); // optimistic, matching the picker beside it
     setAutoRemindersSaving(true);
+    setMoneySettingError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ autoRemindersEnabled: enabled }),
-      });
-      if (!res.ok) throw new Error('Failed to update');
-      setAutoReminders(enabled);
+      await patchAccountingSetting(orgSlug, teamId, { autoRemindersEnabled: enabled });
+    } catch (e) {
+      // ⚠ This used to throw into nothing — the switch simply stopped moving and the coach was
+      // told why by no one. A setting that decides whether families get emailed must never fail
+      // in silence, and must never end up SHOWING off while the schedule still sends.
+      setMoneySettingError(e instanceof Error ? e.message : 'Could not save that setting.');
+      await resyncMoneySettings();
     } finally {
       setAutoRemindersSaving(false);
     }
@@ -522,9 +667,18 @@ export function PlayerDuesPanel({
   // Fetch the sheet the first time it is opened — including on a link that arrives with it
   // ALREADY open (`?settlement=open`), which is the state a shared link and the layout sweep
   // both land in. Loading it on mount instead would put a dozen queries behind every dues page.
+  // ⚠ RE-READ EVERY TIME IT OPENS, not only the first time. As an accordion this fetched once per
+  // mount and that was fine; as a modal a coach opens it, closes it, records a payment on the grid
+  // behind it and opens it again — and the guard `!settlement` meant the second open showed the
+  // first open's answer, including a "Ready to close" verdict that was no longer true (found by
+  // /review 2026-08-14). Money safety never depended on this — the server re-derives at write time
+  // — but a checklist that misreports readiness is the whole point of the checklist, undone.
+  const wasRefundOpen = useRef(false);
   useEffect(() => {
-    if (refundOpen && !settlement && !settlementLoading) loadSettlement();
-  }, [refundOpen, settlement, settlementLoading, loadSettlement]);
+    const justOpened = refundOpen && !wasRefundOpen.current;
+    wasRefundOpen.current = refundOpen;
+    if (justOpened && !settlementLoading) loadSettlement();
+  }, [refundOpen, settlementLoading, loadSettlement]);
 
   /** The one figure a coach may state. Refused above the surplus — server-side, with the reason. */
   async function saveHoldBack() {
@@ -575,38 +729,53 @@ export function PlayerDuesPanel({
    * unless the coach typed a smaller one; either way the SERVER re-derives and re-checks it,
    * so a stale screen can never hand a family money twice.
    */
-  async function paySettlement(playerIds: string[] | null, amount: number | null) {
-    const bulk = playerIds === null;
-    if (bulk) setPayAllBusy(true); else setRowPayoutSaving(true);
+  /**
+   * Close the season out — pay every family what the sheet says, in one act.
+   *
+   * ⚠ This took `(playerIds, amount)` and served two callers: the bulk settle AND a per-row payout
+   * sheet inside the settlement table. The per-row caller is gone (owner ruling 2026-08-14 — the
+   * settlement settles a season, not a family), so the parameters went with it.
+   *
+   * ⚠ Paying ONE family early still happens from that player's drawer via `savePayout` — which
+   * posts to `/players/[playerId]/dues-payouts`, a DIFFERENT route that carries no close-out gate
+   * by design. (This comment said "the same route" and was wrong; /review caught it 2026-08-14.
+   * Worth being exact: a maintainer reasoning about which paths the gate covers would have been
+   * misled into thinking the early-payout path was gated when it deliberately is not.)
+   */
+  async function closeOutSeason() {
+    setPayAllBusy(true);
     setSettlementError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus/payouts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          playerIds,
-          amount,
-          paidDate: bulk ? tournamentToday() : rowPayoutForm.paidDate,
-          method: bulk ? 'etransfer' : rowPayoutForm.method,
-          note: bulk ? null : (rowPayoutForm.note.trim() || null),
+          playerIds: null,
+          amount: null,
+          paidDate: tournamentToday(),
+          method: 'etransfer',
+          note: null,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to record the payout');
       applySettlement(await res.json());
-      setPayingRow(null);
       // Paying out puts bills back up and moves the Credits column — reload the table with it.
       await load();
     } catch (e) {
-      setSettlementError(e instanceof Error ? e.message : 'Failed to record the payout');
-      // ⚠ RE-READ ON FAILURE. A bulk settle writes one cheque at a time, so a failure partway
+      const failure = e instanceof Error ? e.message : 'Failed to record the payout';
+      // ⚠ RE-READ ON FAILURE. A close-out writes one cheque at a time, so a failure partway
       // through leaves some families genuinely paid — and leaving the old totals on screen would
       // tell the coach nothing happened and invite them to pay those families a second time. The
       // server is the truth; go and get it.
       await loadSettlement();
       await load();
+      // ⚠ SET THE MESSAGE **AFTER** THE RE-READ, NOT BEFORE. `loadSettlement()` clears the error
+      // as its first statement — correct for an ordinary load, fatal here: written before the
+      // call, the payout's real failure was wiped in the same tick and a coach whose money-write
+      // had just failed saw an empty screen and no reason. Found by /review 2026-08-14.
+      setSettlementError(failure);
     } finally {
       setPayAllBusy(false);
-      setRowPayoutSaving(false);
     }
   }
 
@@ -662,8 +831,25 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function markPaid(p: PlayerWithDues, inst: RepPlayerDuesInstallment) {
+  /**
+   * ⚠ THE CONFIRM IS WHAT MAKES AN ICON-ONLY MONEY BUTTON HONEST (owner call 2026-08-14).
+   * The control shrank to a 28px tick in the same pass; a tick that writes a payment the instant
+   * it is touched asks the coach to trust a glyph. The dialog is where the three facts the button
+   * no longer has room to state get stated — HOW MUCH, WHAT DAY, and that it lands in the receipt
+   * book and can be taken back out. It costs one extra click on the fastest path in the hub,
+   * which is the trade the owner made deliberately.
+   */
+  async function markPaid(p: PlayerWithDues, inst: RepPlayerDuesInstallment, owing: number) {
     if (!p.schedule) return;
+    const name = [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ') || 'this player';
+    const ok = await confirm({
+      title: 'Record this as paid?',
+      message: `Records a payment of ${fmt(owing)} from ${name} for installment #${inst.installmentNumber}, dated today (${fmtDate(tournamentToday())}).\n\nIt posts to the team's books on that date and appears in Payments below, where you can edit or remove it.`,
+      confirmText: `Record ${fmt(owing)}`,
+      cancelText: 'Cancel',
+      tone: 'info',
+    });
+    if (!ok) return;
     setMarking(prev => ({ ...prev, [inst.id]: true }));
     try {
       const res = await fetch(
@@ -679,6 +865,22 @@ export function PlayerDuesPanel({
     }
   }
 
+  /** Open the credit form on an existing credit. Only reachable for coach-authored ones —
+   *  see `creditIsOwned` at the row. */
+  function openEditCredit(c: DuesCredit) {
+    closeMoneySheets();
+    setEditingCreditId(c.id);
+    setCreditForm({
+      amount:      String(c.amount),
+      description: c.description,
+      creditType:  c.creditType,
+      creditDate:  c.creditDate,
+      notes:       c.notes ?? '',
+    });
+    setCreditError('');
+    setAddingCredit(true);
+  }
+
   async function saveCredit() {
     if (!selected) return;
     setCreditError('');
@@ -688,10 +890,16 @@ export function PlayerDuesPanel({
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid credit amount');
       if (!creditForm.description.trim()) throw new Error('Description is required');
       if (!creditForm.creditDate) throw new Error('Date is required');
+      // ⚠ The credit TYPE is not sent on an edit. It is provenance ("where did this come from"),
+      // and a contribution that becomes a fundraiser rebate by retyping is a credit whose story
+      // no longer matches any record. Wrong type ⇒ remove it and add the right one.
+      const editing = editingCreditId;
       const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-credits`,
+        editing
+          ? `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-credits/${editing}`
+          : `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-credits`,
         {
-          method: 'POST',
+          method: editing ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount,
@@ -704,6 +912,7 @@ export function PlayerDuesPanel({
       );
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to save credit');
       setAddingCredit(false);
+      setEditingCreditId(null);
       setCreditForm(BLANK_CREDIT_FORM);
       await load();
     } catch (e: unknown) {
@@ -727,6 +936,47 @@ export function PlayerDuesPanel({
     }
   }
 
+  /**
+   * ⚠ ONE RESET FOR EVERY WAY THE MONEY SHEETS CAN BE DISMISSED — and the reason it exists is a
+   * real defect this replaced (/review 2026-08-14, Critical).
+   *
+   * The sheets are shared between ADD and EDIT: a boolean says "the sheet is open", an id says
+   * "…on this existing row". Six call sites closed or reopened them, and each had to remember to
+   * clear BOTH. The payment Add button cleared the boolean and not the id (the credit one cleared
+   * both — the asymmetry is what gave it away), and no drawer-close path cleared either. So:
+   * pencil a payment → close the drawer with X → reopen the player → press "Record payment" →
+   * fill in what you believe is a SECOND payment → save. It sent a PATCH, and the family's
+   * original receipt was silently replaced by the new figures.
+   *
+   * A stale id is unsurvivable state: nothing on screen says which row a blank form is pointed at
+   * (the only tell was the footer button reading "Save correction"). So no caller is trusted to
+   * remember — every entry and exit goes through here.
+   */
+  function closeMoneySheets() {
+    setRecordingPayment(false);
+    setEditingPaymentId(null);
+    setAddingCredit(false);
+    setEditingCreditId(null);
+    setPayError('');
+    setPayNotice('');
+    setCreditError('');
+  }
+
+  /** Open the payment sheet on an existing receipt, prefilled. */
+  function openEditPayment(pm: RepDuesPayment) {
+    closeMoneySheets();
+    setEditingPaymentId(pm.id);
+    setPayForm({
+      amount:       String(pm.amount),
+      receivedDate: pm.receivedDate,
+      method:       pm.method,
+      note:         pm.note ?? '',
+    });
+    setPayError('');
+    setPayNotice('');
+    setRecordingPayment(true);
+  }
+
   async function savePayment() {
     if (!selected) return;
     setPayError('');
@@ -736,10 +986,16 @@ export function PlayerDuesPanel({
       const amount = parseFloat(payForm.amount);
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid payment amount');
       if (!payForm.receivedDate) throw new Error('Date received is required');
+      // ⚠ An edit is a CORRECTION, not an update: the server voids the old ledger entry and posts
+      // a new one, because a posted entry is never rewritten in this product. The coach sees an
+      // edit; the books keep the trail.
+      const editing = editingPaymentId;
       const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payments`,
+        editing
+          ? `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payments/${editing}`
+          : `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payments`,
         {
-          method: 'POST',
+          method: editing ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount,
@@ -752,6 +1008,7 @@ export function PlayerDuesPanel({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Failed to record payment');
       setRecordingPayment(false);
+      setEditingPaymentId(null);
       setPayForm(BLANK_PAYMENT_FORM);
       // The automatic overpayment credit (owner ruling 2026-08-13) is stated, never silent —
       // the coach must see that $50 of what they just typed became a credit, not dues.
@@ -865,8 +1122,55 @@ export function PlayerDuesPanel({
   // team is holding families' money without the sheet being fetched at all.
   const owedBackTotal = Math.round(players.reduce((s, p) => s + (p.owedBack ?? 0) * 100, 0)) / 100;
 
-  /** Rows in family order: households with siblings first, each under one heading, because they
-   *  are one conversation and one cheque. Everyone else follows in roster order. */
+  /**
+   * Dues still to come in, from figures THIS PAGE ALREADY HOLDS.
+   *
+   * ⚠ Deliberately NOT `settlement.pot.expectedIn`, which is the same quantity from the server:
+   * the door has to say whether the season can be closed BEFORE the sheet is fetched, and
+   * fetching a settlement on every visit to the dues page to label one line would be a poor
+   * trade. The sheet's own figure is what GATES the payout (`closeOutReady`); this one only
+   * chooses the door's wording, and the modal reprints the server's number the moment it lands.
+   */
+  const seasonOutstanding = Math.round(players.reduce((s, p) => s + Math.max(0, p.leftToSend ?? 0) * 100, 0)) / 100;
+
+  /**
+   * Can the season be closed out? (owner ruling 2026-08-14 — the settlement is a close-out.)
+   *
+   * ⚠ TWO CONDITIONS, AND THE SECOND IS NOT REDUNDANT. This was first written as `expectedIn`
+   * alone, reasoning that a season with nothing left to collect must have every refund positive
+   * and therefore payouts equal to the cash on hand. That is FALSE, and a randomised test in
+   * tests/unit/season-settlement.test.ts is what caught it: `sharePaid` — money already handed to
+   * a family — is not bounded by their eventual share, so a family paid out EARLY (now the
+   * documented way to settle someone leaving mid-season) can owe value back at close-out. One
+   * negative row is enough for `payable` to exceed the cash, which is the exact overdraw this
+   * whole gate exists to prevent. `awaitingCash` is the server's name for that gap.
+   *
+   * The two SOFTER conditions — a budget still planning to spend, and club money the sheet can't
+   * attribute to one season — warn further down and deliberately do NOT block: both are the
+   * coach's judgement, and the hold-back exists to answer the first.
+   */
+  // ⚠ THE SHARED PREDICATE, not a copy of it. This was a hand-written boolean here, another in
+  // the server's payout guard and a third in the unit test — so a regression to one condition
+  // would have shipped with every test green (found by /review 2026-08-14). `closeOutBlockers`
+  // in lib/season-settlement.ts is the one definition, and the test exercises IT.
+  const closeOut = settlement ? closeOutBlockers(settlement) : null;
+  const closeOutReady = !!closeOut?.canClose;
+
+  /* The two family counts the sheet quotes — each was being scanned for twice in the JSX, once for
+     the number and again to pluralise the word after it. */
+  const owingCount = settlement?.rows.filter(r => r.leftToSend > 0.005).length ?? 0;
+  const payableCount = settlement?.rows.filter(r => r.payableNow > 0.005).length ?? 0;
+
+  /**
+   * Rows in family order: households with siblings first and adjacent, because they are one
+   * conversation and one cheque. Everyone else follows in roster order.
+   *
+   * ⚠ It hands back ROWS AND NOTHING ELSE now. It used to dress each group with the family's
+   * `label`, `payable` and `playerIds` for a caption row and a "Pay X in one" button — the button
+   * went with the close-out ruling, and the caption went when it turned out to name a guardian
+   * surname nobody on the roster shares. What survives of the grouping is the ORDER (siblings
+   * adjacent) and the fact each row states its own household on itself.
+   */
   const settlementGroups = (() => {
     if (!settlement) return [];
     const byKey = new Map<string, SettlementSheetRow[]>();
@@ -874,28 +1178,15 @@ export function PlayerDuesPanel({
       const list = byKey.get(r.familyKey);
       if (list) list.push(r); else byKey.set(r.familyKey, [r]);
     }
-    const multi = [...byKey.entries()].filter(([, rows]) => rows.length > 1);
-    const single = [...byKey.entries()].filter(([, rows]) => rows.length === 1);
-    const dress = ([key, rows]: [string, SettlementSheetRow[]], showHeader: boolean) => {
-      const family = settlement.families.find(f => f.key === key);
-      return {
-        key, rows, showHeader,
-        label: family?.label ?? '',
-        playerIds: rows.map(r => r.playerId),
-        payable: family?.payable ?? 0,
-      };
-    };
-    return [
-      ...multi.map(e => dress(e, true)),
-      ...single.map(e => dress(e, false)),
-    ];
+    // Households first, then everyone else — one pass. (Two `.filter`s and a `.map` stood here,
+    // left over from when each branch had to be dressed with a label, payable and playerIds for
+    // the family caption row and its "Pay in one" button. Both are gone; so is the scaffolding.)
+    type Group = { key: string; rows: SettlementSheetRow[] };
+    const households: Group[] = [];
+    const singles: Group[] = [];
+    for (const [key, rows] of byKey) (rows.length > 1 ? households : singles).push({ key, rows });
+    return [...households, ...singles];
   })();
-
-  function openSettlementPayout(playerIds: string[], label: string, max: number) {
-    setPayingRow({ playerIds, label, max });
-    setRowPayoutForm({ ...BLANK_PAYOUT_FORM, amount: String(max) });
-    setSettlementError('');
-  }
 
   function openRowChoice(row: SettlementSheetRow) {
     setChoiceFor(row);
@@ -923,18 +1214,21 @@ export function PlayerDuesPanel({
       if (p.schedule) assessed += p.schedule.totalAmount;
       collected += p.paidAmount;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
-      let hasOverdue = false;
+      // ⚠ THE SHARED PREDICATE, not a second loop. This footer's count and the Status column's
+      // "Past due" are answers to the same question, and a table that gives two different ones is
+      // a table nobody trusts. (It WAS two: the footer counted late players while the status
+      // column could not see time at all.)
+      if (hasPastDueInstallment(p.installments)) overduePlayers += 1;
       for (const inst of p.installments) {
         if (inst.paidAt) continue;
         // A bill with nothing left to SEND is not late for anyone — credits settled it, and
         // paid_at deliberately never stamps on credit-covered rows (Paid stays cash).
         if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) <= 0.005) continue;
-        if (isInstallmentOverdue(inst.dueDate, inst.paidAt)) { hasOverdue = true; continue; }
+        if (isInstallmentOverdue(inst.dueDate, inst.paidAt)) continue;
         // "Next due" is the soonest date still AHEAD — an overdue date is not a plan, it's a debt,
         // and it is already reported on its own line.
         if (inst.dueDate && (!nextDue || inst.dueDate < nextDue)) nextDue = inst.dueDate;
       }
-      if (hasOverdue) overduePlayers += 1;
     }
     return { assessed, credits, collected, outstanding, overduePlayers, nextDue };
   })();
@@ -946,6 +1240,10 @@ export function PlayerDuesPanel({
   // Asks whether a SCHEDULE exists, not whether `assessed > 0`: a real schedule totalling zero is
   // a decision a coach made, and its footer should say zero rather than vanish.
   const showSeasonTotals = players.some(p => p.schedule);
+  /** The two money settings have arrived. Their two consumers — the setup block (no dues yet)
+   *  and the policy line (dues exist) — are mutually exclusive on `showSeasonTotals`, so this
+   *  says only "we know the answer yet", nothing about which of the two is showing. */
+  const moneySettingsLoaded = autoReminders !== null && creditMode !== null;
   // The By-installment lens needs at least one schedule for the same reason the footer does —
   // with none, its band and grid would be a page of dashes. The toggle hides with it, and a
   // bookmarked ?duesView=installments URL quietly falls back to the totals table.
@@ -1049,7 +1347,7 @@ export function PlayerDuesPanel({
         <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
       )}
       <CoachPageHeader
-        embedded={embedded}
+        variant={embedded ? 'embedded' : 'standard'}
         icon={Users}
         title="Player Dues"
         season={page.season}
@@ -1070,6 +1368,68 @@ export function PlayerDuesPanel({
               pushed the coach out to a page to do a thing this screen can now do in place —
               "Set dues for all players" opens the generator itself, and carries the
               start-with-a-budget nudge as its own empty state, at the moment it's wanted. */}
+
+          {/* ── Before any dues exist: the setup moment ────────────────────────────────────
+              The two team-wide settings live in Team settings → Money, EXCEPT here. No family
+              owes anything yet, so nothing these change can surprise anyone — and this is the
+              one moment a coach is actually deciding how dues will work, which is the moment
+              to show that the choices exist at all (owner call 2026-08-14).
+
+              The instant the first schedule exists this block is replaced by the table and the
+              one-line policy statement below it, so there is never a second place to change
+              them and never a question about which one is authoritative.
+
+              ⚠ It carries "Set dues for all players" itself. An empty state that only explains
+              is a dead end — the page-level action has to be reachable from the empty screen. */}
+          {!showSeasonTotals && moneySettingsLoaded && (
+            <div style={{
+              marginBottom: '1.5rem', padding: '1rem', borderRadius: 10,
+              border: '1px dashed var(--home-line-strong, rgba(255,255,255,0.16))',
+              background: 'var(--home-olive-soft, rgba(255,255,255,0.03))',
+              display: 'flex', flexDirection: 'column', gap: '0.85rem',
+            }}>
+              <div>
+                <p style={{ margin: 0, fontWeight: 650, fontSize: '0.95rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+                  No dues set yet
+                </p>
+                <p className={styles.muted} style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', maxWidth: '62ch' }}>
+                  Set what each family pays and when. Two choices shape every schedule you create —
+                  set them now, and you&apos;ll find them later under Team settings → Money.
+                </p>
+              </div>
+
+              {/* The SAME rows Team settings → Money renders — one component, so the sentences a
+                  coach reads about their families cannot say two different things. */}
+              <div className={styles.settingRows} style={{ background: 'var(--home-card, rgba(255,255,255,0.03))' }}>
+                <DuesMoneySettingRows
+                  autoReminders={autoReminders}
+                  creditMode={creditMode}
+                  canWrite={moneyCanWrite}
+                  remindersSaving={autoRemindersSaving}
+                  creditModeSaving={creditModeSaving}
+                  onToggleReminders={enabled => void toggleAutoReminders(enabled)}
+                  onChangeCreditMode={mode => void saveCreditMode(mode)}
+                  onPreviewReminder={() => setReminderPreviewOpen(true)}
+                />
+                {moneySettingError && (
+                  <div className={styles.settingRow}>
+                    <p className={styles.errorText} style={{ margin: 0 }}>{moneySettingError}</p>
+                  </div>
+                )}
+              </div>
+
+              {moneyCanWrite && (
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button className={styles.btnPrimary} onClick={() => setApplyAllOpen(true)}>
+                    <DollarSign size={14} aria-hidden /> Set dues for all players
+                  </button>
+                  <span className={styles.settingRowDesc}>
+                    Start from your budget plan, or type the amounts yourself.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Who to chase — ONE LINE plus the bulk action (owner ruling 2026-08-03).
               It used to list every never-paid player with a per-player Remind. On a team early in
@@ -1149,8 +1509,7 @@ export function PlayerDuesPanel({
               onOpenPlayer={id => {
                 const p = players.find(x => x.player.id === id);
                 if (!p) return;
-                setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError('');
-                setRecordingPayment(false); setPayError(''); setPayNotice('');
+                setSelected(p); setEditingSchedule(false); setSaveError(''); closeMoneySheets();
               }}
             />
           )}
@@ -1176,7 +1535,7 @@ export function PlayerDuesPanel({
                       key={p.player.id}
                       className={styles.tr}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); setRecordingPayment(false); setPayError(''); setPayNotice(''); }}
+                      onClick={() => { setSelected(p); setEditingSchedule(false); setSaveError(''); closeMoneySheets(); }}
                     >
                       <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
@@ -1185,7 +1544,10 @@ export function PlayerDuesPanel({
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                        {p.totalCredits > 0 ? `-${fmt(p.totalCredits)}` : '—'}
+                        {/* Credits reduce the bill, so they read as a negative — and since the
+                            brackets ruling (2026-08-14) the FORMATTER draws that, not a
+                            hand-written dash in front of a positive number. */}
+                        {p.totalCredits > 0 ? fmt(-p.totalCredits) : '—'}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.paidAmount > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
                         {p.schedule ? fmt(p.paidAmount) : '—'}
@@ -1194,7 +1556,14 @@ export function PlayerDuesPanel({
                         {p.schedule ? fmt(p.rollingBalance) : '—'}
                       </td>
                       <td className={styles.td} data-label="Status">
-                        <span style={{ color, fontSize: '0.82rem', fontWeight: 500 }}>{label}</span>
+                        {/* ⚠ THE ⚠ IS NOT DECORATION. "Past due" is the one status that is a call
+                            to action, and the design principle is absolute here: colour never
+                            carries a verdict alone. A coach who cannot separate the danger red
+                            from the ordinary ink still sees which rows are behind. */}
+                        <span style={{ color, fontSize: '0.82rem', fontWeight: label === 'Past due' ? 700 : 500, display: 'inline-flex', alignItems: 'center', gap: '0.28rem' }}>
+                          {label === 'Past due' && <AlertTriangle size={12} aria-hidden />}
+                          {label}
+                        </span>
                       </td>
                       <td className={styles.td}>
                         <ChevronRight size={14} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
@@ -1230,7 +1599,7 @@ export function PlayerDuesPanel({
                     <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits">
                       <span className={styles.footLabel}>Credits</span>
                       <span className={styles.footValue}>
-                        {seasonTotals.credits > 0.005 ? `-${fmt(seasonTotals.credits)}` : '—'}
+                        {seasonTotals.credits > 0.005 ? fmt(-seasonTotals.credits) : '—'}
                       </span>
                     </td>
                     {/* The Paid column totals to COLLECTED; the Balance column totals under its
@@ -1281,55 +1650,162 @@ export function PlayerDuesPanel({
           </div>
           )}
 
-          {/* ══ The season settlement sheet (owner model 2026-08-14, mockup §7–§8) ═══════════
-              The Calculate button, the typed pot and the old five-column table are GONE. What
-              stands here is a settlement screen: what the team owes each family, what there is
-              to share, and every row payable from where it is read.
+          {/* ── What the table above is obeying ────────────────────────────────────────────
+              The two team-wide dues settings USED to sit here as two ~70px cards a coach met
+              every time they came to chase a payment. They are set-once decisions, so the
+              controls moved to Team settings → Money (owner call 2026-08-14) — but the SENTENCE
+              stays, because "credits reduce the last payment first" is the explanation for why
+              a family's far-end installments keep shrinking while their next bill does not.
+              Move the control, keep the fact. Same shape the Depth Chart uses for lineup caps.
 
-              ⚠ IT IS HONEST YEAR-ROUND, not gated on season end. A family holding an unapplied
-              rebate in October is owed that money in October — so the header says so before the
-              section is even opened, from figures this page already holds. */}
-          <div style={{
-            marginTop: '2rem',
-            borderRadius: 10,
-            border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-            overflow: 'hidden',
-          }}>
-            <button
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
-                width: '100%', padding: '0.85rem 1.25rem', background: 'var(--home-card, rgba(255,255,255,0.03))',
-                border: 'none', cursor: 'pointer', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))',
-                textAlign: 'left',
-              }}
-              aria-expanded={refundOpen}
-              onClick={() => setRefundOpen(!refundOpen)}
-            >
-              <span style={{ fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>Season settlement</span>
-              <span className={styles.muted} style={{ fontSize: '0.78rem', flex: 1 }}>
-                {owedBackTotal > 0.005
-                  ? `The team is holding ${fmt(owedBackTotal)} of families’ money`
-                  : 'What the team owes each family, and what’s left to share'}
+              ⚠⚠ ABSENT ENTIRELY IN AN ARCHIVE, and the reason is worth keeping. This line first
+              shipped showing the policy in a past season too, on the argument that a finished
+              season should still explain its own numbers. It cannot: the settings route this
+              reads resolves the team's ACTIVE program year and ignores the `?year=` the panel
+              sends it, so an archived season would have printed TODAY's policy over LAST year's
+              table — governing rule 3 of the archive ruling ("does it show what the coach could
+              see AT THE TIME, not today?") failed by a surface whose own comment claimed to
+              satisfy it. A record page stating a live setting is worse than a record page
+              stating nothing, so in a read-only season the table simply stands on its own.
+
+              Serving the season's OWN policy would mean joining the season-read rail, and that
+              is a deliberate decision point (the allow-list fails the build until someone edits
+              it) — logged as an open question in the plan rather than taken here. */}
+          {showSeasonTotals && moneySettingsLoaded && !page.isReadOnly && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap',
+              margin: '0.9rem 0.15rem 0', fontSize: '0.78rem',
+              color: 'var(--home-dim, rgba(255,255,255,0.5))',
+            }}>
+              <Bell size={13} aria-hidden style={{ flexShrink: 0 }} />
+              <span>
+                {autoReminders ? 'Reminders on — 30 and 7 days before each due date' : 'Automatic reminders off'}
               </span>
-              {refundOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
+              <span aria-hidden style={{ opacity: 0.5 }}>·</span>
+              <span>{CREDIT_MODE_SENTENCES[creditMode]}</span>
+              {/* The whole line is live-season-only now, so the link needs no gate of its own. */}
+              {moneyCanWrite && (
+                <>
+                  <span aria-hidden style={{ opacity: 0.5 }}>·</span>
+                  <Link
+                    href={`${base}/settings?section=money`}
+                    /* ⚠ 44px, even though the line around it is deliberately quiet. Type size is
+                       how this stays understated; TAP size is not negotiable, and the rendered
+                       sweep caught this link at 20px — the same mouse-only exception the money
+                       rail already rejected once. */
+                    style={{
+                      color: 'var(--home-olive, var(--primary-light))', fontWeight: 600,
+                      textDecoration: 'none', display: 'inline-flex', alignItems: 'center',
+                      minHeight: 44,
+                    }}
+                  >
+                    Change in Team settings
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
 
-            {refundOpen && (
-              <div style={{ padding: '1.25rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
+          {/* ══ The season settlement (owner model 2026-08-14; modal ruling same day) ═══════════
+              What stands here is a settlement screen: what the team owes each family, what there
+              is to share, and — when the season is done collecting — one act that pays everyone.
+
+              ⚠ IT IS A DOOR, NOT A DRAWER. This was a full-width accordion, and opening it roughly
+              doubled the page. It is an end-of-season act, so the page should not pay for it on
+              every visit: one line that never grows, and the sheet itself in a modal.
+
+              ⚠ IT IS STILL HONEST YEAR-ROUND, not gated on season end. A family holding an
+              unapplied rebate in October is owed that money in October — so the LINE says so
+              before anything is fetched, from figures this page already holds, and the sheet
+              opens early as a forecast. What it cannot do early is pay anyone. */}
+          {/* ⚠ THE DOOR MAY NOT PROMISE MORE THAN THE SHEET WILL DELIVER. It labelled itself from
+              `seasonOutstanding` alone — the FIRST of the gate's two conditions — so a season fully
+              collected but short of cash (a family overpaid early) got a primary "Close out the
+              season" button that opened onto "Not ready to close yet" (found by /review
+              2026-08-14). Once the sheet has been fetched its verdict wins; before that the page's
+              own figure is an honest preview, and the pre-fetch state deliberately does NOT take
+              the primary treatment on its own. */}
+          <div className={styles.settlementDoor}>
+            <span className={styles.settlementDoorTitle}>Season settlement</span>
+            <span className={styles.settlementDoorNote}>
+              {closeOut
+                ? closeOut.canClose
+                  ? 'Everything is in — the season is ready to close'
+                  : closeOut.duesOutstanding > 0
+                    ? `${fmt(closeOut.duesOutstanding)} of dues still to come in`
+                    : `${fmt(closeOut.cashShort)} more than the team holds is needed to pay everyone`
+                : seasonOutstanding > 0.005
+                  ? owedBackTotal > 0.005
+                    ? `The team is holding ${fmt(owedBackTotal)} of families’ money · ${fmt(seasonOutstanding)} of dues still to come in`
+                    : `${fmt(seasonOutstanding)} of dues still to come in`
+                  : 'All dues are in — open to check the season is ready to close'}
+            </span>
+            <button
+              className={closeOutReady ? styles.btnPrimary : styles.btnGhost}
+              style={{ fontSize: '0.78rem', minHeight: 44, flexShrink: 0 }}
+              aria-haspopup="dialog"
+              aria-expanded={refundOpen}
+              onClick={() => setRefundOpen(true)}
+            >
+              {closeOutReady ? 'Close out the season' : 'Review settlement'}
+            </button>
+          </div>
+
+          {refundOpen && (
+            <div
+              className={styles.modalOverlay}
+              onMouseDown={e => { if (e.target === e.currentTarget && !payAllBusy) setRefundOpen(false); }}
+            >
+              <div
+                className={`${styles.modal} ${styles.modalSettlement} ${styles.modalScrollBody} ${styles.modalFlushFooter}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Season settlement"
+              >
+                <div className={styles.modalHeader}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2 className={styles.modalTitle}>
+                      {closeOutReady
+                        ? 'Ready to close the budget and pay families back?'
+                        : 'Not ready to close yet'}
+                    </h2>
+                    {/* ⚠ NOT `.muted` — that class is the empty-state helper and carries
+                        `padding: 2rem`, which indented this line 32px and blew the header open.
+                        `.mutedInline` is the colour-only one; this has its own class because it
+                        also sets the size. */}
+                    {/* ⚠ The subtitle no longer restates what is owed. It read "Families still owe
+                        $X", which is now the first line of the checklist beside the summary — and
+                        a blocking figure printed twice invites the reader to check whether the two
+                        agree. The heading says the verdict, the checklist says why. */}
+                    <p className={styles.settlementSubtitle}>
+                      {assignment?.teamName ?? ''}
+                      {closeOutReady ? ' · Nothing is paid until you choose it below' : ''}
+                    </p>
+                  </div>
+                  <button type="button" className={styles.modalCloseBtn} onClick={() => setRefundOpen(false)} aria-label="Close" disabled={payAllBusy}>
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className={styles.settlementScroll}>
                 {settlementError && <p className={styles.errorText} style={{ marginTop: 0 }}>{settlementError}</p>}
                 {settlementLoading && !settlement ? (
                   <p className={styles.muted}>Loading…</p>
                 ) : !settlement ? null : (
-                  <>
+                  /* Two columns from 760px: the money summary beside the family payouts, which is
+                     what turns a scroll into a screenful. `.settlementBody` owns the split — the
+                     summary's old `maxWidth: 460` is gone with it, since a fixed width inside a
+                     grid track is exactly what left dead space beside it. */
+                  <div className={styles.settlementBody}>
+                    <div className={styles.settlementTop}>
                     {/* ── Where the pot comes from — derived, and showing its work ──────────── */}
-                    <div style={{
+                    <div className={styles.settlementSummary} style={{
                       borderRadius: 9, border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                       background: 'var(--home-card, rgba(255,255,255,0.02))',
-                      padding: '0.9rem 1.1rem', marginBottom: '1.25rem', maxWidth: 460,
+                      padding: '0.9rem 1.1rem',
                       fontSize: '0.84rem',
                     }}>
                       <div style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', marginBottom: '0.55rem' }}>
-                        The team&apos;s money{assignment?.teamName ? ` — ${assignment.teamName}` : ''}
+                        The team&apos;s money
                       </div>
                       {([
                         ['Dues received', settlement.pot.duesReceived, false],
@@ -1337,9 +1813,12 @@ export function PlayerDuesPanel({
                         ['Spent', -settlement.pot.cashOut, false],
                         ...(settlement.pot.payoutsTotal > 0.005 ? [['Paid back to families', -settlement.pot.payoutsTotal, false] as const] : []),
                         ['Cash the team holds', settlement.pot.cashHeld, true],
-                        ['Owed to families (credits)', -settlement.pot.owedBack, false],
+                        // "Credits owed to families", not "Owed to families (credits)" — since the
+                        // brackets ruling the figure carries its own (…), and the old label put two
+                        // sets of brackets side by side on one line.
+                        ['Credits owed to families', -settlement.pot.owedBack, false],
                         ...(settlement.pot.sharePaid > 0.005 ? [['Refunds already shared out', settlement.pot.sharePaid, false] as const] : []),
-                        ...(settlement.pot.expectedIn > 0.005 ? [['Still to come from families', settlement.pot.expectedIn, false] as const] : []),
+                        ...(settlement.pot.expectedIn > 0.005 ? [['Dues still to come in', settlement.pot.expectedIn, false] as const] : []),
                       ] as Array<readonly [string, number, boolean]>).map(([label, value, strong], i) => (
                         <div key={`${label}-${i}`} style={{
                           display: 'flex', justifyContent: 'space-between', gap: '1rem',
@@ -1351,30 +1830,47 @@ export function PlayerDuesPanel({
                           color: strong ? 'var(--home-ink, rgba(255,255,255,0.92))' : 'var(--home-ink-soft, rgba(255,255,255,0.68))',
                         }}>
                           <span>{label}</span>
-                          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                            {value < 0 ? `−${fmt(Math.abs(value))}` : fmt(value)}
-                          </span>
+                          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(value)}</span>
                         </div>
                       ))}
-                      {/* The bottom line — or, in a shortfall, the fact that there isn't one. */}
+                      {/* ⚠ HOLD-BACK SITS ABOVE THE TOTAL, because the total already contains it
+                          (owner ruling 2026-08-14). `pot.surplus` is `surplusBeforeHold − holdBack`
+                          — printing the hold-back UNDER the line it had already changed left the
+                          visible column short by exactly that amount, so anyone adding up the
+                          figures on screen found a hole the size of the hold-back. Same figure,
+                          same control, drawn as the subtraction it is. */}
+                      {/* ⚠ `flexWrap` was 'wrap' and the 44px Change control pushed the figure onto
+                          its own line in a 320px column — the label sat alone above a stray
+                          "($500.00) Change". The Change chip belongs BESIDE THE LABEL (the
+                          approved mockup), the figure stays in the money column with every other
+                          row, and nothing wraps. */}
                       <div style={{
-                        display: 'flex', justifyContent: 'space-between', gap: '1rem',
-                        borderTop: '1px solid var(--home-line, rgba(255,255,255,0.12))',
-                        marginTop: '0.35rem', paddingTop: '0.45rem', fontWeight: 700,
-                        color: 'var(--home-ink, rgba(255,255,255,0.92))',
+                        display: 'flex', justifyContent: 'space-between', gap: '0.6rem', alignItems: 'center',
+                        flexWrap: 'nowrap', padding: '0.24rem 0',
+                        color: 'var(--home-ink-soft, rgba(255,255,255,0.68))',
                       }}>
-                        <span>Surplus to share</span>
-                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(settlement.pot.surplus)}</span>
-                      </div>
-                      {/* Hold back — the ONE control left. Stating an intention, never re-doing
-                          arithmetic, and it can only ever come out of the surplus. */}
-                      <div style={{
-                        display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center',
-                        flexWrap: 'wrap', marginTop: '0.5rem', paddingTop: '0.4rem',
-                        borderTop: '1px dashed var(--home-line, rgba(255,255,255,0.08))',
-                        color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.8rem',
-                      }}>
-                        <span>Hold back for next season</span>
+                        {/* The label no longer truncates — it was ellipsing to "Hold back for
+                            next s…" in the side-by-side column that has since been retired. */}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                          <span>Hold back for next season</span>
+                          {/* ⚠ DEAD WHILE A CLOSE-OUT IS IN FLIGHT. The old bulk button was
+                              mutually exclusive with the per-row payout sheet; that sheet went, and
+                              nothing replaced the exclusion for the two writers still living in
+                              this modal — the hold-back and a family's share — so both stayed
+                              clickable while cheques were being written (found by /review
+                              2026-08-14). Changing what the pot holds mid-payout is a race worth
+                              refusing outright. */}
+                          {moneyCanWrite && !holdBackEditing && (
+                            <button
+                              className={styles.btnGhost}
+                              disabled={payAllBusy}
+                              onClick={() => setHoldBackEditing(true)}
+                              style={{ fontSize: '0.72rem', padding: '0.1rem 0.45rem', minHeight: 44, flexShrink: 0 }}
+                            >
+                              Change
+                            </button>
+                          )}
+                        </span>
                         {holdBackEditing ? (
                           <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                             <input
@@ -1385,7 +1881,7 @@ export function PlayerDuesPanel({
                               onChange={e => setHoldBackInput(e.target.value)}
                               style={{ width: 110, fontSize: '0.8rem' }}
                             />
-                            <button className={styles.btnPrimary} disabled={holdBackSaving} onClick={saveHoldBack} style={{ fontSize: '0.75rem', minHeight: 44 }}>
+                            <button className={styles.btnPrimary} disabled={holdBackSaving || payAllBusy} onClick={saveHoldBack} style={{ fontSize: '0.75rem', minHeight: 44 }}>
                               {holdBackSaving ? '…' : 'Save'}
                             </button>
                             <button className={styles.btnGhost} onClick={() => { setHoldBackEditing(false); setHoldBackInput(settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : ''); }} style={{ fontSize: '0.75rem', minHeight: 44 }}>
@@ -1393,52 +1889,112 @@ export function PlayerDuesPanel({
                             </button>
                           </span>
                         ) : (
-                          <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(settlement.pot.holdBack)}</span>
-                            {moneyCanWrite && (
-                              <button className={styles.btnGhost} onClick={() => setHoldBackEditing(true)} style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', minHeight: 44 }}>
-                                Change
-                              </button>
-                            )}
+                          /* Negated so it reads as the subtraction it is — the formatter draws
+                             the brackets; `holdBack` itself is stored positive. */
+                          <span style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                            {settlement.pot.holdBack > 0.005 ? fmt(-settlement.pot.holdBack) : fmt(0)}
                           </span>
                         )}
                       </div>
                       {holdBackEditing && (
-                        <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
+                        <p className={styles.mutedInline} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
                           At most {fmt(settlement.pot.holdBackCap)} — the rest is money the team owes families.
                         </p>
                       )}
+                      {/* The bottom line — or, in a shortfall, the fact that there isn't one. */}
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', gap: '1rem',
+                        borderTop: '1px solid var(--home-line, rgba(255,255,255,0.12))',
+                        marginTop: '0.35rem', paddingTop: '0.45rem', fontWeight: 700,
+                        color: 'var(--home-ink, rgba(255,255,255,0.92))',
+                      }}>
+                        <span>Surplus to share</span>
+                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(settlement.pot.surplus)}</span>
+                      </div>
                     </div>
 
-                    {/* ⚠ Money the pot cannot honestly claim. Club funding and payments to the
-                        club carry no season of their own, so they cannot be attributed to THIS
-                        one — counting them would let a team in its third season share money an
-                        earlier season received. Said out loud rather than silently dropped. */}
-                    {settlement.clubMoneyUncounted > 0.005 && (
-                      <p className={styles.muted} style={{ fontSize: '0.78rem', margin: '-0.75rem 0 1rem' }}>
-                        {fmt(settlement.clubMoneyUncounted)} of club funding and payments to the club
-                        isn&apos;t counted here — those aren&apos;t recorded against a single season, so
-                        the sheet can&apos;t tell how much of it belongs to this one.
-                      </p>
-                    )}
+                    {/* ── What the sheet has to say ABOUT that money, beside it ─────────────────
+                        ⚠ These notes read as `.muted` and are NOT: that class is the empty-state
+                        helper (`padding: 2rem`), which wrapped each of these one-liners in 32px of
+                        air. `.mutedInline` is the colour. */}
+                    {/* ⚠ THE CHECKLIST ANSWERS THE HEADING. The modal opens saying "Not ready to
+                        close yet" and, until this existed, made a coach hunt for why — the reason
+                        was one amber strip below a table. This states every condition at once, in
+                        the space beside the summary, so "what is stopping me" is answered before
+                        anything is scrolled. Nothing here is newly computed; each line is a figure
+                        the sheet already derived.
 
-                    {/* ⚠ A season still spending is not a season with a surplus. The arithmetic is
-                        untouched (cash held, minus what is owed); this line simply stops the sheet
-                        inviting a coach to share money the season itself still needs. */}
-                    {settlement.unspentPlan > 0.005 && settlement.pot.surplus > 0.005 && (
-                      <p className={styles.muted} style={{ fontSize: '0.78rem', margin: '-0.75rem 0 1rem' }}>
-                        The season still plans to spend {fmt(settlement.unspentPlan)}. Hold that back before
-                        sharing anything.
-                      </p>
-                    )}
+                        ⚠ Two of the four BLOCK and two only WARN, and the marks say which: the
+                        season's own plans and money the sheet can't attribute are the coach's
+                        judgement, not the product's (owner ruling 2026-08-14). */}
+                    <div className={styles.settlementNotes}>
+                      <div className={styles.settlementChecksTitle}>
+                        {closeOutReady ? 'Ready to close' : 'Before the season can close'}
+                      </div>
+                      <ul className={styles.settlementChecks}>
+                        <li data-state={settlement.pot.expectedIn > 0.005 ? 'blocked' : 'done'}>
+                          {settlement.pot.expectedIn > 0.005
+                            ? <AlertTriangle size={14} aria-hidden />
+                            : <CheckCircle2 size={14} aria-hidden />}
+                          <span>
+                            {settlement.pot.expectedIn > 0.005
+                              ? <>{owingCount} famil{owingCount === 1 ? 'y' : 'ies'}
+                                  {' '}still owe {fmt(settlement.pot.expectedIn)}</>
+                              : 'Every family is square on their dues'}
+                          </span>
+                        </li>
+                        <li data-state={settlement.awaitingCash > 0.005 ? 'blocked' : 'done'}>
+                          {settlement.awaitingCash > 0.005
+                            ? <AlertTriangle size={14} aria-hidden />
+                            : <CheckCircle2 size={14} aria-hidden />}
+                          <span>
+                            {settlement.awaitingCash > 0.005
+                              ? <>Paying everyone needs {fmt(settlement.awaitingCash)} more than the team holds</>
+                              : 'The team is holding enough to pay every refund'}
+                          </span>
+                        </li>
+                        {/* ⚠ A season still spending is not a season with a surplus — but this
+                            WARNS and never blocks, and the hold-back is how a coach answers it. */}
+                        {settlement.unspentPlan > 0.005 && settlement.pot.surplus > 0.005 && (
+                          <li data-state="warn">
+                            <AlertTriangle size={14} aria-hidden />
+                            <span>The season still plans to spend {fmt(settlement.unspentPlan)} — hold that back first</span>
+                          </li>
+                        )}
+                        {/* ⚠ Money the pot cannot honestly claim. Club funding and payments to the
+                            club carry no season of their own, so they cannot be attributed to THIS
+                            one — counting them would let a team in its third season share money an
+                            earlier season received. Said out loud rather than silently dropped. */}
+                        {settlement.clubMoneyUncounted > 0.005 && (
+                          <li data-state="warn">
+                            <AlertTriangle size={14} aria-hidden />
+                            <span>
+                              {fmt(settlement.clubMoneyUncounted)} of club funding isn&apos;t counted — it
+                              isn&apos;t recorded against a single season
+                            </span>
+                          </li>
+                        )}
+                      </ul>
+                      {/* The one piece of guidance the retired strip carried that the checklist
+                          does not: where an early payout now happens, said once. */}
+                      {!closeOutReady && (
+                        <p className={styles.mutedInline} style={{ fontSize: '0.75rem', margin: '0.15rem 0 0' }}>
+                          A family who needs paying sooner is paid from their own record.
+                        </p>
+                      )}
+                    </div>
+                    </div>
+
+                    {/* ── The families ───────────────────────────────────────────────────────── */}
+                    <div className={styles.settlementCol}>
 
                     {/* ── When the team can't cover what it owes (owner Call 9) ─────────────── */}
                     {settlement.pot.shortfall > 0.005 && (
-                      <div style={stripStyle('danger')}>
+                      <div style={stripStyle()}>
                         <AlertTriangle size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
                         <span>
                           <strong>The team is {fmt(settlement.pot.shortfall)} short of what it owes families.</strong>{' '}
-                          <span className={styles.muted}>
+                          <span className={styles.mutedInline}>
                             Cash held {fmt(settlement.pot.cashHeld)} · owed to families {fmt(settlement.pot.owedBack)}.
                             There is no surplus to share — this is a debt, not a refund. Nothing is reduced
                             automatically; you decide who is paid from what&apos;s left.
@@ -1460,33 +2016,31 @@ export function PlayerDuesPanel({
                                 <th className={styles.th}>Player</th>
                                 <th className={`${styles.th} ${styles.thNum}`}>Owed back</th>
                                 <th className={`${styles.th} ${styles.thNum}`}>Even share</th>
+                                {/* ⚠ THE TERM THAT WAS DRIVING EVERY REFUND AND APPEARED ON NO
+                                    COLUMN (owner review 2026-08-14). A refund is
+                                    `owedBack + cashShare − leftToSend − sharePaid`; without
+                                    `leftToSend` on the table, a family with a $347.14 share and
+                                    $150 owing showed $197.14 with nothing on the row to explain
+                                    it, and seven rows of that read as arbitrary. Nothing is
+                                    derived here — `leftToSend` was already on the payload. */}
+                                <th className={`${styles.th} ${styles.thNum}`}>Still owes</th>
                                 <th className={`${styles.th} ${styles.thNum}`}>Refund</th>
-                                <th className={styles.th}></th>
+                                {/* (The trailing actions column is gone with the per-row Change
+                                    button — it now lives inside the row's own breakdown.) */}
                               </tr>
                             </thead>
                             <tbody>
                               {settlementGroups.map(group => (
                                 <Fragment key={group.key}>
-                                  {group.showHeader && (
-                                    <tr className={styles.tr}>
-                                      <td className={styles.td} colSpan={5} style={{ background: 'var(--home-card, rgba(255,255,255,0.03))', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>
-                                        <span style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                          <span>
-                                            {group.label} — one payout, {group.playerIds.length} shares
-                                          </span>
-                                          {moneyCanWrite && !settlement.readOnly && group.payable > 0.005 && (
-                                            <button
-                                              className={styles.btnGhost}
-                                              style={ROW_ACTION}
-                                              onClick={() => openSettlementPayout(group.playerIds, group.label, group.payable)}
-                                            >
-                                              Pay {fmt(group.payable)} in one
-                                            </button>
-                                          )}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  )}
+                                  {/* ⚠ THE FAMILY CAPTION ROW IS GONE (owner question 2026-08-14).
+                                      It read "<Guardian> family — one payout, N shares" above each
+                                      multi-player household and failed twice over: it had no
+                                      closing boundary, so on a roster whose one household sorts
+                                      first it captioned the WHOLE table; and its label is the
+                                      GUARDIAN's surname, which on a roster of Ledgers named an
+                                      Okafor nobody could find. The fact it carried — these players
+                                      are paid together — now rides the rows themselves, naming the
+                                      sibling. The GROUPING is untouched: they share one payout. */}
                                   {group.rows.map(row => {
                                     const name = [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ');
                                     return (
@@ -1496,8 +2050,7 @@ export function PlayerDuesPanel({
                                         name={name}
                                         isOpen={openRow === row.playerId}
                                         onToggle={() => setOpenRow(openRow === row.playerId ? null : row.playerId)}
-                                        canWrite={moneyCanWrite && !settlement.readOnly}
-                                        onPayOut={() => openSettlementPayout([row.playerId], name, row.payableNow)}
+                                        canWrite={moneyCanWrite && !settlement.readOnly && !payAllBusy}
                                         onChangeChoice={() => openRowChoice(row)}
                                         fmtDate={fmtDate}
                                       />
@@ -1511,197 +2064,137 @@ export function PlayerDuesPanel({
                                 the Season totals footer 300 lines above. Without the class the
                                 row renders as an ordinary row wearing footer labels. */}
                             <tfoot className={styles.tableFoot}>
+                              {/* ⚠ NO LABELS ON THE TOTALS, same ruling as the dues grid's footer
+                                  (2026-08-14): each figure sits under the column heading that
+                                  already names it, and a totals row on the footer line reads as a
+                                  total without being told. Only "Team" survives — the one thing
+                                  the columns do not say.
+                                  ⚠ The `data-label`s STAY. Unlike the dues grid, this table
+                                  becomes a card stack on a phone, where there are no headings to
+                                  read across to — `.tableAsCards` re-captions from those. */}
                               <tr className={styles.tr}>
-                                <td className={styles.td} data-label="">
-                                  <span className={styles.footLabel}>Team</span>
+                                {/* The count IS the label — a totals row on the footer line needs no
+                                    word telling the reader it totals the team. */}
+                                <td className={`${styles.td} ${styles.footLeadCell}`} data-label="">
                                   <span className={styles.footValue}>
                                     {settlement.rows.length} player{settlement.rows.length !== 1 ? 's' : ''}
                                   </span>
                                 </td>
                                 <td className={`${styles.td} ${styles.tdNum}`} data-label="Owed back">
-                                  <span className={styles.footLabel}>Owed back</span>
                                   <span className={styles.footValue} style={{ color: 'var(--success-light)' }}>{fmt(settlement.totals.owedBack)}</span>
                                 </td>
                                 <td className={`${styles.td} ${styles.tdNum}`} data-label="Even share">
-                                  <span className={styles.footLabel}>Shares</span>
                                   <span className={styles.footValue}>{fmt(settlement.totals.cashShare)}</span>
                                 </td>
-                                {/* ⚠ The SUM OF THE ROWS, not the sum of the two columns beside it.
+                                {/* The column the refunds subtract, totalled — so the "$X still to
+                                    come in" on the summary beside it has something to tie to. */}
+                                <td className={`${styles.td} ${styles.tdNum}`} data-label="Still owes">
+                                  <span className={styles.footValue} style={{ color: settlement.pot.expectedIn > 0.005 ? 'var(--warning)' : undefined }}>
+                                    {settlement.pot.expectedIn > 0.005 ? fmt(settlement.pot.expectedIn) : '—'}
+                                  </span>
+                                </td>
+                                {/* ⚠ The SUM OF THE ROWS, not the sum of the columns beside it.
                                     Where a family still owes, those differ — and the rows are what
                                     will actually be paid. Rows re-adding to the cash on hand is the
-                                    promise this whole sheet rests on. */}
+                                    promise this whole sheet rests on, and with `Still owes` now on
+                                    the table it is finally provable by reading across. */}
                                 <td className={`${styles.td} ${styles.tdNum}`} data-label="Refund">
-                                  <span className={styles.footLabel}>Refunds</span>
                                   <span className={styles.footValue} style={{ color: 'var(--success-light)' }}>{fmt(settlement.totals.refund)}</span>
                                 </td>
-                                <td className={styles.td} data-label="">
-                                  {moneyCanWrite && !settlement.readOnly && settlement.totals.payable > 0.005 && (
-                                    <button
-                                      className={styles.btnPrimary}
-                                      style={{ fontSize: '0.76rem', minHeight: 44 }}
-                                      /* ⚠ Also disabled while a single row's payout sheet is
-                                         open: two settle requests in flight at once is a race the
-                                         server catches, but a coach should never be able to start
-                                         it from two buttons on one screen. */
-                                      disabled={payAllBusy || rowPayoutSaving || !!payingRow}
-                                      onClick={() => paySettlement(null, null)}
-                                    >
-                                      {payAllBusy ? 'Recording…'
-                                        : payingRow ? 'Finish the open payout first'
-                                        : `Pay all ${fmt(settlement.totals.payable)}`}
-                                    </button>
-                                  )}
-                                </td>
+                                {/* ⚠ The close-out button MOVED TO THE MODAL FOOTER, and the
+                                    actions column with it. It lived in this cell when the sheet
+                                    was a page section and the table's last row was the bottom of
+                                    the screen; inside a modal that puts the one action a coach
+                                    came for halfway down a scroll, under a pinned footer that is
+                                    where a dialog's action belongs. */}
                               </tr>
                             </tfoot>
                           </table>
                         </div>
 
-                        {/* ⚠ A forward-looking split spends money that has not arrived. The sheet
-                            says WHOSE, rather than letting a coach discover it at the bank. */}
-                        {settlement.awaitingCash > 0.005 && settlement.awaitingFrom.length > 0 && (
-                          <div style={stripStyle('warning')}>
-                            <AlertTriangle size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-                            <span>
-                              <strong>
-                                Paying everyone needs {fmt(settlement.awaitingCash)} still to arrive
-                                {' '}from {settlement.awaitingFrom.slice(0, 2).map(a => a.label).join(' and ')}
-                                {settlement.awaitingFrom.length > 2 ? ` and ${settlement.awaitingFrom.length - 2} more` : ''}.
-                              </strong>{' '}
-                              <span className={styles.muted}>
-                                The payouts come to {fmt(settlement.totals.payable)} and the team is holding{' '}
-                                {fmt(Math.max(0, settlement.pot.cashHeld - settlement.pot.holdBack))}. Pay out now and one
-                                family waits — or collect what&apos;s owing first.
-                              </span>
-                            </span>
-                          </div>
-                        )}
+                        {/* ⚠ WHY THE SHEET CANNOT PAY YET, naming who it is waiting on.
+                            This strip used to sit beside a LIVE "Pay all" button and merely warn
+                            that a forward-looking split spends money that has not arrived. Since
+                            the close-out ruling the button is dead until this strip is gone, so
+                            the strip's job changed from a caution to the explanation of a
+                            disabled control — and it leads with the season, not the bank
+                            balance, because "families still owe" is the condition that matters. */}
+                        {/* ⚠ THE "WHY IT CAN'T CLOSE" STRIP STOOD HERE AND IS GONE. It said exactly
+                            what the checklist beside the summary now says, only further down and
+                            after the table — and a blocking reason stated twice is the same defect
+                            as a blocking figure stated twice (owner, 2026-08-14). The checklist is
+                            the one place; it sits where the heading raises the question.
+                            ⚠ The SHORTFALL strip above is NOT this and stays: a team owing families
+                            more than it holds is a debt, not a delay, and the checklist does not
+                            cover it. */}
 
                         {settlement.unallocated > 0.005 && (
-                          <p className={styles.muted} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
+                          <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
                             {fmt(settlement.unallocated)} of the surplus stays with the team — nobody is taking it.
                           </p>
                         )}
 
-                        {/* The Pay out sheet, pre-filled — the SAME sheet the player drawer uses. */}
-                        {payingRow && (
-                          <div style={{ maxWidth: 460, marginTop: '1rem' }}>
-                            <p style={{ fontSize: '0.82rem', margin: '0 0 0.5rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
-                              Paying <strong>{payingRow.label}</strong>
-                              {payingRow.playerIds.length > 1 ? ` — ${payingRow.playerIds.length} players, one payment` : ''}
-                            </p>
-                            <DuesPayoutSheet
-                              form={rowPayoutForm}
-                              onChange={setRowPayoutForm}
-                              ceiling={payingRow.max}
-                              overCeilingMessage={`The sheet owes ${payingRow.label} ${fmt(payingRow.max)} — you can’t pay out more than that.`}
-                              consequence={amt =>
-                                payingRow.playerIds.length > 1
-                                  ? `Records ${fmt(payingRow.max)} across ${payingRow.playerIds.length} players and posts it to the team ledger, dated ${fmtDate(rowPayoutForm.paidDate)}.`
-                                  : `Posts ${fmt(amt)} money out to the team ledger, dated ${fmtDate(rowPayoutForm.paidDate)}.`}
-                              saving={rowPayoutSaving}
-                              onCancel={() => setPayingRow(null)}
-                              onSubmit={() => paySettlement(
-                                payingRow.playerIds,
-                                // Siblings are paid what their OWN rows say; a typed amount only
-                                // makes sense for a single row, and the route refuses otherwise.
-                                payingRow.playerIds.length === 1 ? (parseFloat(rowPayoutForm.amount) || 0) : null,
-                              )}
-                            />
-                          </div>
-                        )}
+                        {/* ⚠ The per-row Pay out sheet stood here and is GONE with the close-out
+                            ruling (2026-08-14). Paying ONE family is still entirely possible — it
+                            happens in that player's own money record (the drawer's own
+                            DuesPayoutSheet, further down this file), which is where the rest of
+                            their history is. Nothing about the server path changed: it still
+                            accepts a single-player payout at any point in the season. */}
                       </>
                     )}
-                  </>
+                    </div>
+                  </div>
                 )}
+                </div>
+                {/* ⚠ ONE ACTION, AND ONLY WHEN THE SEASON IS DONE COLLECTING (owner ruling
+                    2026-08-14). This used to offer `Pay all` the moment anything was payable —
+                    while families still owed, and for more cash than the team held. The sheet
+                    ALREADY computed that gap and printed a warning beside the live button, which
+                    is not a safeguard. */}
+                <div className={styles.modalFooter}>
+                  {/* ⚠ Only once the season CAN close. While it is still collecting, "$1,011.68 to
+                      4 families" beside a dead button reads as money queued to go out — the exact
+                      impression the close-out gate exists to prevent. What is blocking is already
+                      said, in words, at the top of the sheet. */}
+                  {closeOutReady && settlement && settlement.totals.payable > 0.005 && (
+                    <span className={styles.mutedInline} style={{ marginRight: 'auto', fontSize: '0.78rem' }}>
+                      {fmt(settlement.totals.payable)} to {payableCount} famil{payableCount === 1 ? 'y' : 'ies'}
+                    </span>
+                  )}
+                  <button className={styles.btnGhost} style={{ minHeight: 44 }} onClick={() => setRefundOpen(false)} disabled={payAllBusy}>
+                    {closeOutReady ? 'Not yet' : 'Close'}
+                  </button>
+                  {settlement && moneyCanWrite && !settlement.readOnly && settlement.totals.payable > 0.005 && (
+                    <button
+                      className={styles.btnPrimary}
+                      style={{ minHeight: 44 }}
+                      disabled={payAllBusy || !closeOutReady}
+                      title={closeOutReady ? undefined : 'The season can’t be closed yet — see the note above.'}
+                      onClick={closeOutSeason}
+                    >
+                      {payAllBusy ? 'Recording…' : 'Pay everyone and close the season'}
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Automatic Dues Reminders — ONE compact row (owner, 2026-08-13: the old card spent
-              ~200px saying one sentence). Title, a short status, "See an example" (opens the
-              schedule + a rendered sample of the REAL email), and the toggle. */}
-          {autoReminders !== null && (
-            <div className={styles.detailSection} style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.6rem 1rem' }}>
-              <Bell size={15} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Automatic Dues Reminders</span>
-                <span className={styles.muted} style={{ fontSize: '0.78rem' }}>
-                  {autoReminders ? '30 and 7 days before each due date' : 'Off — no automatic emails'}
-                </span>
-              </div>
-              <button
-                className={styles.btnGhost}
-                /* Quiet by type size, NOT by tap size — 44px is the portal's floor and the
-                   mouse-only exception was already rejected once (money-rail pass). */
-                style={{ flexShrink: 0, fontSize: '0.75rem', padding: '0.2rem 0.55rem', minHeight: 44 }}
-                onClick={() => setReminderPreviewOpen(true)}
-              >
-                See an example
-              </button>
-              {moneyCanWrite && (
-                <button
-                  className={autoReminders ? styles.btnPrimary : styles.btnGhost}
-                  disabled={autoRemindersSaving}
-                  onClick={() => toggleAutoReminders(!autoReminders)}
-                  style={{ flexShrink: 0, fontSize: '0.8rem', padding: '0.25rem 0.8rem' }}
-                >
-                  {autoRemindersSaving ? '…' : autoReminders ? 'Enabled' : 'Disabled'}
-                </button>
-              )}
             </div>
           )}
 
-          {/* Credits reduce — the ONE team-wide credits setting (owner Call 2, 2026-08-14).
-              A per-credit picker was considered and dropped: it turns every fundraiser entry
-              into a decision, and two credits pointing different ways on one player is a story
-              no one can retell. Same compact-row recipe as the reminders row above. */}
-          {creditMode !== null && (
-            <div className={styles.detailSection} style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.6rem 1rem' }}>
-              <DollarSign size={15} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Credits reduce</span>
-                <span className={styles.muted} style={{ fontSize: '0.78rem' }}>
-                  {CREDIT_MODE_HINTS[creditMode]}
-                </span>
-              </div>
-              {moneyCanWrite ? (
-                <select
-                  className={styles.input}
-                  aria-label="How credits reduce dues"
-                  value={creditMode}
-                  disabled={creditModeSaving}
-                  onChange={e => saveCreditMode(e.target.value as CreditApplicationMode)}
-                  style={{ flexShrink: 0, width: 'auto', fontSize: '0.8rem', minHeight: 44 }}
-                >
-                  {/* One source for the three sentences — the read-only label and the picker
-                      can never drift. */}
-                  {CREDIT_APPLICATION_MODES.map(m => (
-                    <option key={m} value={m}>{CREDIT_MODE_LABELS[m]}</option>
-                  ))}
-                </select>
-              ) : (
-                <span className={styles.muted} style={{ fontSize: '0.8rem', flexShrink: 0 }}>
-                  {CREDIT_MODE_LABELS[creditMode]}
-                </span>
-              )}
-            </div>
-          )}
         </>
       )}
 
       {/* Player slide-over */}
       {selected && (
-        <div className={styles.modalOverlay} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
-          <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
+          <div className={`${styles.slideOver} ${styles.slideOverLedger}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
+              <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
                 <ArrowLeft size={20} />
               </button>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
                 {[selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ')}
               </span>
-              <button className={styles.modalCloseBtn} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
+              <button className={styles.modalCloseBtn} onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
                 <X size={18} />
               </button>
             </div>
@@ -1719,11 +2212,27 @@ export function PlayerDuesPanel({
                     }}>
                       {/* "Left to send" replaced Balance here (binding mockup §1, 2026-08-14):
                           dues − cash − credits applied — the number a family can actually act
-                          on. The in-credit strip below still reports a negative balance. */}
+                          on. The in-credit strip below still reports a negative balance.
+
+                          ⚠ THESE FOUR TILES ARE THE FOUR COLUMNS OF THE TABLE BELOW, TOTALLED
+                          (owner-approved mockup `e73e9842`, 2026-08-14) — and that is why the
+                          table carries NO totals row: it would be these same four figures a
+                          second time, forty millimetres down.
+
+                          ⚠ CREDITS BECAME "AFTER FUNDRAISING", stating the RESULT rather than the
+                          deduction. A negative in a row of positives was the one tile a treasurer
+                          had to stop and decode; as a result, every neighbouring pair relates
+                          — $800 → $550 → $400 → $150, each step readable left to right. The credit
+                          itself is not lost: the strip directly below names it and offers the
+                          payout. */}
                       {[
-                        { label: 'Total Dues', value: fmt(selected.schedule.totalAmount), color: undefined },
+                        { label: 'Total dues', value: fmt(selected.schedule.totalAmount), color: undefined },
+                        {
+                          label: 'After fundraising',
+                          value: fmt(Math.max(selected.schedule.totalAmount - selected.creditApplied, 0)),
+                          color: selected.creditApplied > 0.005 ? 'var(--success-light)' : undefined,
+                        },
                         { label: 'Paid', value: fmt(selected.paidAmount), color: 'var(--success-light)' },
-                        { label: 'Credits', value: selected.totalCredits > 0 ? `-${fmt(selected.totalCredits)}` : '—', color: selected.totalCredits > 0 ? 'var(--success-light)' : undefined },
                         { label: 'Left to send', value: fmt(selected.leftToSend), color: balanceColor(selected.leftToSend) },
                       ].map(stat => (
                         <div key={stat.label}>
@@ -1754,8 +2263,12 @@ export function PlayerDuesPanel({
                         <span style={{ flex: 1, minWidth: 200 }}>
                           {selected.owedBack > 0.005
                             ? <>The team is holding {fmt(selected.owedBack)} of this family&apos;s money
-                                {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their bills.` : '.'}</>
-                            : <>This family&apos;s {fmt(selected.payableNow)} is lowering their bills. You can hand it over in cash instead — their bills go back up.</>}
+                                {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their installments.` : '.'}</>
+                            /* "installments", not "bills" (owner 2026-08-14): the word the rest of
+                               this screen, the schedule editor and the help guide all use. A second
+                               noun for the same object made a coach wonder whether a bill and an
+                               installment were different things. */
+                            : <>This family&apos;s {fmt(selected.payableNow)} is lowering their installments. You can hand it over in cash instead — their installments go back up.</>}
                         </span>
                         {moneyCanWrite && !payingOut && (
                           <button
@@ -1785,7 +2298,7 @@ export function PlayerDuesPanel({
                         consequence={amt =>
                           `Posts ${fmt(amt)} money out to the team ledger, dated ${fmtDate(payoutForm.paidDate)}${
                             selected.creditApplied > 0.005
-                              ? ' — and their bills go back up by whatever this money was covering.'
+                              ? ' — and their installments go back up by whatever this money was covering.'
                               : '.'}`}
                         error={payoutError}
                         saving={payoutSaving}
@@ -1816,7 +2329,8 @@ export function PlayerDuesPanel({
                       {moneyCanWrite && !recordingPayment && (
                         <button
                           className={styles.btnPrimary}
-                          onClick={() => { setRecordingPayment(true); setPayForm(BLANK_PAYMENT_FORM); setPayError(''); setPayNotice(''); }}
+                          /* closeMoneySheets FIRST — an "add" must never inherit an edit target. */
+                          onClick={() => { closeMoneySheets(); setRecordingPayment(true); setPayForm(BLANK_PAYMENT_FORM); }}
                           style={{ fontSize: '0.78rem' }}
                         >
                           Record payment
@@ -1890,10 +2404,23 @@ export function PlayerDuesPanel({
                           // The SAME cents-safe helper the server's write path uses — a preview
                           // that does its own arithmetic is a preview that can disagree with
                           // the credit actually created.
-                          const excess = overpaymentExcess(selected.schedule.totalAmount, paymentsTotal, amt);
+                          // ⚠ On a correction the row being replaced must come OUT of the running
+                          // total first — otherwise the preview counts the old receipt and the
+                          // new one together and warns about an overpayment that will never
+                          // exist.
+                          const editingRow = editingPaymentId
+                            ? selected.payments.find(p => p.id === editingPaymentId)
+                            : undefined;
+                          const excess = overpaymentExcess(
+                            selected.schedule.totalAmount,
+                            paymentsTotal - (editingRow?.amount ?? 0),
+                            amt,
+                          );
                           return (
                             <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                              Posts {fmt(amt)} income to the team ledger, dated {fmtDate(payForm.receivedDate || tournamentToday())} — the day it arrived.
+                              {editingPaymentId
+                                ? <>Replaces this receipt: the old books entry is voided and {fmt(amt)} is posted afresh, dated {fmtDate(payForm.receivedDate || tournamentToday())}.</>
+                                : <>Posts {fmt(amt)} income to the team ledger, dated {fmtDate(payForm.receivedDate || tournamentToday())} — the day it arrived.</>}
                               {excess > 0.005 && (
                                 <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.2rem' }}>
                                   {fmt(excess)} is more than what&apos;s left on this schedule — it will be saved as an overpayment credit.
@@ -1904,9 +2431,11 @@ export function PlayerDuesPanel({
                         })()}
                         {payError && <p className={styles.errorText}>{payError}</p>}
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button className={styles.btnGhost} onClick={() => { setRecordingPayment(false); setPayError(''); }} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                          <button className={styles.btnGhost} onClick={() => closeMoneySheets()} style={{ fontSize: '0.8rem' }}>Cancel</button>
                           <button className={styles.btnPrimary} disabled={paySaving} onClick={savePayment} style={{ fontSize: '0.8rem' }}>
-                            {paySaving ? 'Recording…' : 'Record Payment'}
+                            {paySaving
+                              ? (editingPaymentId ? 'Saving…' : 'Recording…')
+                              : (editingPaymentId ? 'Save correction' : 'Record Payment')}
                           </button>
                         </div>
                       </div>
@@ -1928,99 +2457,84 @@ export function PlayerDuesPanel({
                       </p>
                     )}
 
-                    {/* Installments.
-                        ⚠ `tableAsCards` added 2026-08-13 (Money-hub table pass) — see the refund
-                        preview above: this frame also carried `.tableWrap` alone and scrolled
-                        sideways on a phone in silence. One instalment per row is a list. */}
+                    {/* ── Installments: four figures per row, desktop ────────────────────────
+                        The table carries NO totals row on purpose — the four tiles at the head
+                        of the drawer ARE its totals, and printing both would be the same four
+                        figures twice on one screen (owner call on mockup `e73e9842`).
+
+                        ⚠ `tableAsCards` is GONE from this frame. It was the right answer while
+                        this was a four-column list; at eight columns a stacked card is eight
+                        label/value lines per installment, and a twelve-installment season became
+                        a hundred lines of scroll. The phone gets the collapsible list below
+                        instead — the ONE reason it is safe to hide this table under 640. */}
                     {selected.installments.length > 0 && (
-                      <div className={`${styles.tableWrap} ${styles.tableAsCards}`} style={{ marginBottom: '1.25rem' }}>
+                      <div className={`${styles.tableWrap} ${styles.duesDesktopOnly}`} style={{ marginBottom: '1.25rem' }}>
                         <table className={styles.table}>
                           <thead>
                             <tr>
                               <th className={styles.th}>#</th>
-                              <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                               <th className={styles.th}>Due</th>
-                              <th className={styles.th}>Status</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>Installment</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>After fundraising</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>Paid</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>Owing</th>
+                              <th className={styles.th}>Note</th>
                               <th className={styles.th}></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {selected.installments.map(inst => {
-                              // Coverage comes from recorded payments (mig 232). A part-covered
-                              // installment says HOW FAR it has got — "$200.00 of $300.00" was
-                              // this project's reason to exist; "Unpaid" beside two faithful
-                              // transfers was the defect.
-                              const cov = selected.coverage.find(c => c.installmentId === inst.id);
-                              const allocated = cov?.allocated ?? 0;
-                              const partial = !inst.paidAt && allocated > 0.005;
-                              // Credits meet the bills (2026-08-14): what the family is actually
-                              // asked to SEND, net of credits applied here — with the earning
-                              // named, because "your bill dropped and here is why" is the best
-                              // sentence a fundraising program can show.
-                              const creditApplied = inst.creditApplied ?? 0;
-                              const toSend = installmentToSend(inst, cov);
-                              // A row credits settled is never late — nothing is being asked for.
-                              const overdue = toSend > 0.005 && isInstallmentOverdue(inst.dueDate, inst.paidAt);
-                              // Settled is the SERVER's call (payload creditSettled) — a local
-                              // threshold here would silently drift from applyCreditsToBills.
-                              const coveredByCredit = !inst.paidAt && creditApplied > 0.005 && (inst.creditSettled ?? false);
-                              const coveredLabel = (inst.creditSources ?? []).every(s => s.creditType === 'fundraiser')
-                                ? 'Covered by fundraising' : 'Covered by credit';
-                              const sourceNote = (inst.creditSources ?? [])
-                                .map(s => s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
-                                .filter((v, i, a) => a.indexOf(v) === i)
-                                .join(' · ');
+                            {ledgerRows.map(({ inst, row }) => {
                               return (
                                 <tr key={inst.id} className={styles.tr}>
-                                  <td className={styles.td} data-label="Instalment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
-                                  <td className={styles.td} data-label="Due" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
+                                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
+                                  {/* `.tdDate` — a date is one token and never breaks. Without it
+                                      the long credit note starved this column and "Sep 15, 2026"
+                                      folded after the comma, standing EVERY row at two lines. */}
+                                  <td className={`${styles.td} ${styles.tdDate}`} style={{ color: row.overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                     {fmtDate(inst.dueDate)}
-                                    {overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
+                                    {row.overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                   </td>
-                                  <td className={styles.td} data-label="Status">
-                                    {inst.paidAt ? (
-                                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
-                                        <CheckCircle2 size={12} /> Paid {fmtDate(inst.paidAt)}
-                                      </span>
-                                    ) : coveredByCredit ? (
-                                      /* Deliberately NOT "Paid" — Paid stays cash, so the books
-                                         can always say which was which (owner Call 1). */
-                                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
-                                        <CheckCircle2 size={12} /> {coveredLabel}
-                                      </span>
-                                    ) : partial || creditApplied > 0.005 ? (
-                                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: creditApplied > 0.005 ? 'var(--success-light)' : 'var(--warning)', fontVariantNumeric: 'tabular-nums' }}>
-                                        {fmt(toSend)} to send
-                                      </span>
-                                    ) : (
-                                      <span className={`${styles.badge} ${overdue ? styles.badgeCompleted : styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>
-                                        {overdue ? 'Overdue' : `${fmt(toSend)} to send`}
-                                      </span>
-                                    )}
-                                    {!inst.paidAt && creditApplied > 0.005 && (
-                                      <span style={{ display: 'block', marginTop: '0.15rem', fontSize: '0.7rem', color: 'var(--home-dim, rgba(255,255,255,0.45))' }}>
-                                        {partial ? `${fmt(allocated)} received · ` : ''}
-                                        {fmt(creditApplied)} covered{sourceNote ? ` — ${sourceNote}` : ''}
-                                      </span>
-                                    )}
+                                  <td className={`${styles.td} ${styles.tdNum}`}>{fmt(inst.amount)}</td>
+                                  {/* The cut fundraising made, as a RESULT rather than a deduction —
+                                      the same reading as the "After fundraising" tile above. */}
+                                  <td className={`${styles.td} ${styles.tdNum}`} style={row.creditApplied > 0.005 ? { color: 'var(--success-light)', fontWeight: 650 } : undefined}>
+                                    {fmt(row.afterFundraising)}
                                   </td>
-                                  <td className={`${styles.td} ${styles.cardActionCell}`}>
+                                  <td className={`${styles.td} ${styles.tdNum}`} style={row.paidCash > 0.005 ? { color: 'var(--success-light)', fontWeight: 650 } : { color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>
+                                    {row.paidCash > 0.005 ? fmt(row.paidCash) : '—'}
+                                  </td>
+                                  <td className={`${styles.td} ${styles.tdNum}`} style={row.owing > 0.005 ? { color: 'var(--danger-light)', fontWeight: 700 } : { color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>
+                                    {row.owing > 0.005 ? fmt(row.owing) : '—'}
+                                  </td>
+                                  <td className={styles.td} style={{ fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                                    <LedgerNote inst={inst} row={row} />
+                                  </td>
+                                  <td className={styles.td} style={{ textAlign: 'right' }}>
                                     {/* Hidden once credits leave nothing to ask the family for —
                                         a one-tap charge on a "Covered by fundraising" row is an
                                         invitation to double-collect. Real cash arriving anyway
                                         goes through Record payment (and frees the credit back
-                                        to owed-back — the self-correcting rule). */}
-                                    {!inst.paidAt && moneyCanWrite && toSend > 0.005 && (
+                                        to owed-back — the self-correcting rule).
+
+                                        ⚠ ICON-ONLY HERE, WORDS ON THE PHONE (owner call, mockup
+                                        `e73e9842` option B). A desktop row has hover and a
+                                        pointer to explain a 28px glyph; a phone has neither, and
+                                        an open installment card has room for the full label. The
+                                        accessible name below is what makes the tick a button
+                                        rather than a decoration — it quotes the AMOUNT, so
+                                        "record as paid" is never a leap of faith. */}
+                                    {!inst.paidAt && moneyCanWrite && row.owing > 0.005 && (
                                       <button
-                                        className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                        className={styles.rowIconBtn}
                                         disabled={!!marking[inst.id]}
-                                        onClick={() => markPaid(selected, inst)}
+                                        onClick={() => markPaid(selected, inst, row.owing)}
+                                        title={`${row.partial ? MARK_PAID_REST_LABEL : MARK_PAID_LABEL} — ${fmt(row.owing)}, dated today`}
+                                        aria-label={`${row.partial ? MARK_PAID_REST_LABEL : MARK_PAID_LABEL}: ${fmt(row.owing)}, dated today, installment ${inst.installmentNumber}`}
                                         /* One tap records a payment for what's still UNCOVERED
                                            on this installment, dated today — it can never
                                            double-charge a part-paid row. */
                                       >
-                                        {marking[inst.id] ? '…' : partial ? 'Mark rest paid' : 'Mark Paid'}
+                                        {marking[inst.id] ? '…' : <Banknote size={15} aria-hidden />}
                                       </button>
                                     )}
                                   </td>
@@ -2029,6 +2543,98 @@ export function PlayerDuesPanel({
                             })}
                           </tbody>
                         </table>
+                      </div>
+                    )}
+
+                    {/* ── Installments: phone, one collapsible card each ─────────────────────
+                        CLOSED, A ROW IS A DATE AND ONE NUMBER — the amount owing, or Paid, or
+                        Covered. That is the whole question a phone is usually asked, and it
+                        means a twelve-installment season fits on one screen instead of twelve
+                        six-line blocks, with the only rows wearing a number being the ones that
+                        want attention.
+
+                        The season answer never moves: it lives in the four tiles at the top,
+                        which is precisely why they stayed and the table's totals row did not.
+
+                        Same `.duesCard*` idiom as the By-installment lens's per-player cards —
+                        one collapsible-card language in this hub, not two. */}
+                    {selected.installments.length > 0 && (
+                      <div className={styles.duesCards} style={{ marginBottom: '1.25rem' }}>
+                        {ledgerRows.map(({ inst, row }) => {
+                          const summary = ledgerSummary(inst, row);
+                          return (
+                            <details key={inst.id} className={styles.duesCard}>
+                              <summary className={styles.duesCardHead}>
+                                <ChevronRight size={14} className={styles.duesCardTwist} aria-hidden />
+                                <span className={styles.duesCardName} style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                                  {fmtDate(inst.dueDate)}
+                                  {row.overdue && <AlertTriangle size={11} aria-hidden style={{ marginLeft: 4, verticalAlign: '-1px', color: 'var(--danger-light)' }} />}
+                                </span>
+                                <span className={styles.duesCardSum}>
+                                  <span className={styles.duesCardDue} style={{ color: summary.color }}>{summary.text}</span>
+                                </span>
+                              </summary>
+                              <div className={styles.duesCardBody}>
+                                <div className={styles.duesCardRow}>
+                                  <span className={styles.duesCardRowLab}>Installment</span>
+                                  <span className={styles.duesCardRowVal} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</span>
+                                </div>
+                                {/* Only when fundraising actually moved this installment — an
+                                    identical figure repeated under a second label is the noise a
+                                    card has no columns to justify. */}
+                                {row.creditApplied > 0.005 && (
+                                  <div className={styles.duesCardRow}>
+                                    <span className={styles.duesCardRowLab}>After fundraising</span>
+                                    <span className={styles.duesCardRowVal} style={{ color: 'var(--success-light)', fontWeight: 650, fontVariantNumeric: 'tabular-nums' }}>{fmt(row.afterFundraising)}</span>
+                                  </div>
+                                )}
+                                <div className={styles.duesCardRow}>
+                                  <span className={styles.duesCardRowLab}>Paid</span>
+                                  <span className={styles.duesCardRowVal} style={{ color: row.paidCash > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))', fontVariantNumeric: 'tabular-nums' }}>
+                                    {row.paidCash > 0.005 ? fmt(row.paidCash) : '—'}
+                                  </span>
+                                </div>
+                                <div className={styles.duesCardRow}>
+                                  <span className={styles.duesCardRowLab}>Owing</span>
+                                  <span className={styles.duesCardRowVal} style={{ color: row.owing > 0.005 ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.35))', fontWeight: row.owing > 0.005 ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                                    {row.owing > 0.005 ? fmt(row.owing) : '—'}
+                                  </span>
+                                </div>
+                                {/* ⚠ THE PHONE'S RECORD BUTTON LIVES INSIDE THE OPEN CARD, NEVER ON
+                                    THE COLLAPSED BAR (owner question, ruled 2026-08-14) — and it
+                                    keeps its WORDS, where the desktop row shows a tick.
+
+                                    Two reasons, both about the phone specifically:
+                                    1. THE COLLAPSED BAR IS ITSELF A TAP TARGET. Putting a
+                                       money-WRITING control inside a harmless toggle, at the right
+                                       edge where thumbs land, makes the two compete: miss the small
+                                       one and you open a card (nothing), miss the big one and you
+                                       record a payment. The costs of the two mis-taps are wildly
+                                       unequal, so they must not share a target.
+                                    2. OPENING THE CARD IS THE CONFIRMATION A DESKTOP DOESN'T NEED.
+                                       It shows the $150.00 about to be recorded before the tap that
+                                       records it. The phone's job here is one family at practice,
+                                       not a reconciliation session — two taps is not the cost, and
+                                       the second tap is the one that removes doubt.
+                                    An icon would also be undefended here: no hover, no pointer, no
+                                    tooltip. There is room for the label, so it gets the label. */}
+                                <div className={styles.duesCardFoot}>
+                                  <span style={{ flex: 1, minWidth: 0 }}><LedgerNote inst={inst} row={row} /></span>
+                                  {!inst.paidAt && moneyCanWrite && row.owing > 0.005 && (
+                                    <button
+                                      className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                      disabled={!!marking[inst.id]}
+                                      onClick={() => markPaid(selected, inst, row.owing)}
+                                      aria-label={`${row.partial ? MARK_PAID_REST_LABEL : MARK_PAID_LABEL}: ${fmt(row.owing)}, dated today, installment ${inst.installmentNumber}`}
+                                    >
+                                      {marking[inst.id] ? '…' : row.partial ? MARK_PAID_REST_LABEL : MARK_PAID_LABEL}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </details>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -2058,6 +2664,25 @@ export function PlayerDuesPanel({
                               <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
                                 {fmtDate(pm.receivedDate)}
                               </span>
+                              {/* ⚠ EDIT BEFORE DELETE, and it is the reason this row stopped being
+                                  a dead end. Until now the ONLY correction was Delete, so fixing a
+                                  typo'd amount meant destroying a receipt and re-typing all four
+                                  fields — a coach one slip away from losing the note and the real
+                                  arrival date. What the server does is still a void-and-re-post
+                                  (a posted entry is never rewritten); what the coach does is fix
+                                  the number. */}
+                              {moneyCanWrite && (
+                                <button
+                                  className={styles.rowIconBtn}
+                                  style={{ flexShrink: 0 }}
+                                  disabled={deletingPaymentId === pm.id || paySaving}
+                                  onClick={() => openEditPayment(pm)}
+                                  title={`Edit this ${fmt(pm.amount)} payment`}
+                                  aria-label={`Edit the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)}`}
+                                >
+                                  <Pencil size={13} aria-hidden />
+                                </button>
+                              )}
                               {moneyCanWrite && (
                                 <button
                                   style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
@@ -2090,9 +2715,9 @@ export function PlayerDuesPanel({
                               border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                               fontSize: '0.83rem',
                             }}>
-                              {/* Money OUT — the minus is the arithmetic, not an alarm. */}
+                              {/* Money OUT — the brackets are the arithmetic, not an alarm. */}
                               <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                −{fmt(po.amount)}
+                                {fmt(-po.amount)}
                               </span>
                               <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {PAYMENT_METHOD_LABELS[po.method]}{po.note ? ` · ${po.note}` : ''}
@@ -2130,7 +2755,7 @@ export function PlayerDuesPanel({
                           <button
                             className={styles.btnGhost}
                             style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                            onClick={() => { setAddingCredit(true); setCreditForm(BLANK_CREDIT_FORM); setCreditError(''); }}
+                            onClick={() => { closeMoneySheets(); setAddingCredit(true); setCreditForm(BLANK_CREDIT_FORM); }}
                           >
                             <Plus size={12} /> Add Credit
                           </button>
@@ -2182,9 +2807,18 @@ export function PlayerDuesPanel({
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
                               <label className={styles.label}>Type</label>
+                              {/* ⚠ FIXED ONCE SET. The type is PROVENANCE — where this money came
+                                  from — and the server ignores it on a correction for that reason.
+                                  A contribution that becomes a fundraiser rebate by retyping is a
+                                  credit whose story matches no record anywhere. Wrong type ⇒
+                                  remove it and add the right one, which is one extra step and
+                                  leaves the books honest. Disabled rather than hidden, so the
+                                  coach can still SEE what kind of credit they are correcting. */}
                               <select
                                 className={styles.input}
                                 value={creditForm.creditType}
+                                disabled={!!editingCreditId}
+                                title={editingCreditId ? 'The kind of credit cannot be changed — remove it and add the right kind' : undefined}
                                 onChange={e => setCreditForm(f => ({ ...f, creditType: e.target.value as DuesCreditType }))}
                               >
                                 {(Object.entries(CREDIT_TYPE_LABELS) as [DuesCreditType, string][]).map(([v, l]) => (
@@ -2204,9 +2838,9 @@ export function PlayerDuesPanel({
                           </div>
                           {creditError && <p className={styles.errorText}>{creditError}</p>}
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button className={styles.btnGhost} onClick={() => { setAddingCredit(false); setCreditError(''); }} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                            <button className={styles.btnGhost} onClick={() => closeMoneySheets()} style={{ fontSize: '0.8rem' }}>Cancel</button>
                             <button className={styles.btnPrimary} disabled={creditSaving} onClick={saveCredit} style={{ fontSize: '0.8rem' }}>
-                              {creditSaving ? 'Saving…' : 'Save Credit'}
+                              {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save Credit'}
                             </button>
                           </div>
                         </div>
@@ -2223,8 +2857,13 @@ export function PlayerDuesPanel({
                               border: '1px solid color-mix(in srgb, var(--success-light) 12%, transparent)',
                               fontSize: '0.83rem',
                             }}>
+                              {/* A credit reduces the bill, so it reads negative — and the FORMATTER
+                                  draws that. This hand-wrote a dash in front of a positive number,
+                                  which was consistent until brackets arrived (2026-08-14) and left
+                                  one credit line saying "-$50.00" two rows from another saying
+                                  "($50.00)". */}
                               <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                -{fmt(c.amount as number)}
+                                {fmt(-(c.amount as number))}
                               </span>
                               <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {c.description}
@@ -2232,6 +2871,30 @@ export function PlayerDuesPanel({
                               <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
                                 {CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}
                               </span>
+                              {/* ⚠ EDIT ONLY WHAT THE COACH AUTHORED. A credit carrying a
+                                  fundraiser entry, a payment or an expense was CREATED BY that
+                                  record, and that record states its amount — a rebate is raised ×
+                                  rate, an overpayment is the payment's excess, a reimbursement is
+                                  the out-of-pocket cost. Typing over any of them here would leave
+                                  two disagreeing numbers with no way to tell which is true, and
+                                  the next reconcile would quietly overwrite the coach's fix. Those
+                                  are corrected where they are born; the row says so instead. */}
+                              {c.fundraiserEntryId || c.expenseId ? (
+                                <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there' : 'Set by the out-of-pocket expense that created it — change it there'}>
+                                  {c.fundraiserEntryId ? 'from fundraiser' : 'from expense'}
+                                </span>
+                              ) : !c.paymentId && (
+                                <button
+                                  className={styles.rowIconBtn}
+                                  style={{ flexShrink: 0 }}
+                                  disabled={creditSaving || deletingCreditId === c.id}
+                                  onClick={() => openEditCredit(c)}
+                                  title={`Edit this ${fmt(c.amount as number)} credit`}
+                                  aria-label={`Edit the ${fmt(c.amount as number)} credit, ${c.description}`}
+                                >
+                                  <Pencil size={13} aria-hidden />
+                                </button>
+                              )}
                               {/* An auto-created overpayment credit rides its payment (DB
                                   CASCADE) — deleting it alone would un-balance the books, so
                                   the delete lives on the payment row instead. */}
@@ -2385,7 +3048,7 @@ export function PlayerDuesPanel({
                   </button>
                   <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
                     The team has genuinely given them that money, so it counts as their share, already
-                    received — and their bills stop being chased.
+                    received — and their installments stop being chased.
                   </p>
                 </div>
               )}
@@ -2452,61 +3115,12 @@ export function PlayerDuesPanel({
         </div>
       )}
 
-      {reminderPreviewOpen && (() => {
-        const sampleDue = addCalendarDays(tournamentToday(), 30);
-        const sample = duesReminderEmail({
-          teamName: assignment?.teamName ?? 'your team',
-          window: 30,
-          guardianFirst: 'Jordan',
-          items: [
-            { playerFirstName: 'Alex', playerLastName: 'Rivera', amount: 300, remainingAmount: 300, dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
-            // One row shows the part-payment thank-you, the other the fundraising line — the
-            // two sentences this template exists to get right.
-            { playerFirstName: 'Sam', playerLastName: 'Rivera', amount: 300, remainingAmount: 100, creditApplied: 120, creditNote: 'Bottle Drive', dueDate: sampleDue, installmentNumber: 2, totalInstallments: 4 },
-          ],
-        });
-        return (
-          <div className={styles.modalOverlay} onClick={() => setReminderPreviewOpen(false)}>
-            <div className={styles.modal} style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Dues reminder emails</span>
-                <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setReminderPreviewOpen(false)}>
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div style={{ fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
-                <p style={{ margin: 0 }}>
-                  <strong>When they go out:</strong> with Automatic Dues Reminders on, each family is emailed
-                  about an unpaid installment <strong>30 days</strong> before its due date and again
-                  <strong> 7 days</strong> before — one email per family per wave, never twice in the same week.
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong>Send Due Reminders</strong> (above the table) emails right now about anything past
-                  due or due in the next 3 days. The <strong>Remind all</strong> button on the chase card is
-                  separate — it only ever writes to families with no payment recorded at all.
-                </p>
-                <p style={{ margin: 0 }}>
-                  Emails ask only for <strong>what&apos;s still owing</strong> — a family part-way through paying
-                  is thanked for what&apos;s arrived, never billed the full amount again.
-                </p>
-              </div>
-
-              <div style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid var(--home-line, rgba(255,255,255,0.12))', background: 'white' }}>
-                <div style={{ padding: '0.5rem 0.9rem', borderBottom: '1px solid var(--home-line, rgba(0,0,0,0.08))', fontSize: '0.75rem', color: 'black', opacity: 0.55 }}>
-                  Subject: {sample.subject}
-                </div>
-                {/* The template's own inline styles carry the email's look; colours here only
-                    ground it on the white "email client" card. */}
-                <div style={{ color: 'black', fontSize: '0.85rem' }} dangerouslySetInnerHTML={{ __html: sample.html }} />
-              </div>
-              <p className={styles.muted} style={{ fontSize: '0.72rem', margin: '0.5rem 0 0' }}>
-                Sample family and amounts — real emails use your roster&apos;s names, figures and due dates.
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+      {reminderPreviewOpen && (
+        <DuesReminderPreviewModal
+          teamName={assignment?.teamName ?? ''}
+          onClose={() => setReminderPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }

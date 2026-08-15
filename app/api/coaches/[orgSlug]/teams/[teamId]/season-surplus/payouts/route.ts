@@ -7,6 +7,7 @@ import {
   recordSettlementPayouts,
   SettlementExceedsRefundError,
   SettlementUnwindFailedError,
+  SettlementSeasonNotClosableError,
 } from '@/lib/coach-season-settlement';
 import { tournamentToday } from '@/lib/timezone';
 import { fmt } from '@/lib/coach-money-summary';
@@ -112,6 +113,18 @@ export const POST = withObservability(async (req: Request,
         code: 'SETTLEMENT_UNWIND_FAILED',
         stranded: e.stranded,
       }, { status: 500 });
+    }
+    if (e instanceof SettlementSeasonNotClosableError) {
+      return NextResponse.json({
+        // Two ways to be un-closable, and they need different words: money still to arrive, or
+        // money already handed out that the payouts can no longer cover.
+        error: e.expectedIn > 0.005
+          ? `Families still owe ${fmt(e.expectedIn)} — the season can't be closed until the dues are in.`
+          : `Paying everyone needs ${fmt(e.awaitingCash)} more than the team is holding — a family has already been paid more than their share.`,
+        code: 'SETTLEMENT_SEASON_NOT_CLOSABLE',
+        expectedIn: e.expectedIn,
+        awaitingCash: e.awaitingCash,
+      }, { status: 409 });
     }
     if (e instanceof SettlementExceedsRefundError) {
       return NextResponse.json({

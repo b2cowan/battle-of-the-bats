@@ -104,13 +104,54 @@ describe('buildInstallmentColumns', () => {
     assert.equal(cols.length, 2);
     assert.deepEqual(cols[0], {
       installmentNumber: 1, commonDueDate: '2026-06-01', dueDateVaries: false,
+      commonAmount: 200, amountVaries: false,
       assessed: 400, collected: 320, remaining: 80, creditApplied: 0, playerCount: 2, paidCount: 1, behindCount: 1,
     });
     // Player one's $400 covers BOTH their installments — the future column already holds $200.
     assert.deepEqual(cols[1], {
       installmentNumber: 2, commonDueDate: '2026-09-01', dueDateVaries: false,
+      commonAmount: 200, amountVaries: false,
       assessed: 400, collected: 200, remaining: 200, creditApplied: 0, playerCount: 2, paidCount: 1, behindCount: 0,
     });
+  });
+
+  /**
+   * ⚠ The heading speaks for the team; a hand-edited schedule must speak for itself.
+   *
+   * Since the grid stopped printing the amount in every cell (owner ruling 2026-08-14) the COLUMN
+   * HEADING carries it — which is only safe while the column can tell the difference between "the
+   * whole team pays $200" and "most of them do". Get this wrong and a player on a reduced
+   * instalment silently reads as owing the team's figure.
+   */
+  it('the column knows the team amount, and knows when there ISN\'T one', () => {
+    const a = [inst(1, 200, '2026-06-01')];
+    const b = [inst(1, 200, '2026-06-01')];
+    const c = [inst(1, 120, '2026-06-01')]; // a reduced schedule
+    const uniform = buildInstallmentColumns(
+      [{ installments: a, coverage: [] }, { installments: b, coverage: [] }],
+      TODAY,
+    );
+    assert.equal(uniform[0].commonAmount, 200);
+    assert.equal(uniform[0].amountVaries, false);
+
+    const mixed = buildInstallmentColumns(
+      [{ installments: a, coverage: [] }, { installments: b, coverage: [] }, { installments: c, coverage: [] }],
+      TODAY,
+    );
+    // The MODE, not the mean and not the first row: two players share $200, one does not.
+    assert.equal(mixed[0].commonAmount, 200);
+    assert.equal(mixed[0].amountVaries, true);
+  });
+
+  it('ties break to the LARGEST amount — a heading never understates the ask', () => {
+    const a = [inst(1, 150, '2026-06-01')];
+    const b = [inst(1, 250, '2026-06-01')];
+    const cols = buildInstallmentColumns(
+      [{ installments: a, coverage: [] }, { installments: b, coverage: [] }],
+      TODAY,
+    );
+    assert.equal(cols[0].commonAmount, 250);
+    assert.equal(cols[0].amountVaries, true);
   });
 
   it('credits meet the bills: net remainders drive the column, and paid stays cash', () => {

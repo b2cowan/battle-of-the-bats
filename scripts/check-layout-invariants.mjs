@@ -141,7 +141,9 @@ if (has('--changed') && !onlyIds) {
   } else {
     // Turn each screen's URL back into the route folder that renders it, then match prefixes.
     // Both event-shaped screens live under a `[eventId]` folder, so one sentinel serves both.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__' };
+    // `fundraiserId` lands in a QUERY param, not a path segment, so it never reaches the folder
+    // mapping below — it is here only so the path builder does not interpolate `undefined`.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', fundraiserId: '__ID__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')
@@ -219,6 +221,22 @@ function probeInPage(opts) {
     return cs.visibility !== 'hidden' && cs.opacity !== '0';
   };
   const isExempt = (el) => exempt.some((s) => el.closest(s));
+
+  /**
+   * The open modal, if any — computed ONCE for the whole probe.
+   *
+   * ⚠ Two rules need this and each grew its own copy, which is how their definitions of "the open
+   * modal" start to drift (and how a third rule inherits a fourth). R4 and R6 both narrow to the
+   * dialog when one is open, for the same reason: while an `aria-modal` dialog is up the page
+   * beneath it is inert BY DECLARATION — the user cannot reach it and is not meant to — so
+   * measuring it produces findings that are true and meaningless. `.modalOverlay` is
+   * `position: fixed; inset: 0`, which without this reads to R6 as a full-screen chrome bar
+   * covering every readable thing on the page (122 findings on the first screen swept with a
+   * modal open, ~110 of them phantom) and to R4 as a scroll-locked body trapping every sticky
+   * header behind it.
+   */
+  const openModal = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]'))
+    .find((d) => visible(d)) ?? null;
 
   // ── colour maths (WCAG 2.1) ────────────────────────────────────────────────
   const parseColor = (s) => {
@@ -345,8 +363,14 @@ function probeInPage(opts) {
   // the depth chart's frozen player column and the rotation grid's header row as "inert" — they
   // stick HORIZONTALLY (`left: 0`) inside a container that scrolls sideways and, correctly, not
   // down. Sticking is directional; the check has to ask about the same direction the CSS does.
+  //
+  // ⚠ AND NOT WHILE A MODAL IS OPEN, for the page beneath it. An `aria-modal` dialog locks the
+  // body's scroll, so every sticky header on the inert page behind it reports "trapped in a body
+  // with no vertical travel" — true, and meaningless: nobody is scrolling that page. Same reading
+  // as the modal exemption in R6 below (`openModal`, resolved once above). Sticky elements INSIDE
+  // the dialog are still checked.
   if (wanted('sticky-no-travel')) {
-    for (const el of Array.from(root.querySelectorAll('*'))) {
+    for (const el of Array.from((openModal ?? root).querySelectorAll('*'))) {
       const cs = getComputedStyle(el);
       if (cs.position !== 'sticky') continue;
       if (!visible(el) || isExempt(el)) continue;
@@ -453,9 +477,21 @@ function probeInPage(opts) {
   // Chrome anchored to neither edge (a floating toast) is out of scope: it is transient, and
   // judging it needs a human.
   if (wanted('hidden-behind-chrome')) {
+    // ⚠ AN OPEN MODAL IS NOT CHROME (2026-08-14) — see `openModal` above, resolved once for the
+    // whole probe. The rule exists to catch a fixed NAV or ACTION BAR sitting on content the user
+    // is supposed to be able to read or press; a dialog covering the page is the dialog working.
+    // So the dialog becomes the root, and the question narrows to the one that still means
+    // something — is anything INSIDE it covered by chrome (its own sticky footer, the portal's
+    // bars on a phone)?
+    const modal = openModal;
+    const scope = modal ?? root;
+
     const atTop = window.scrollY <= 2;
     const atEnd = Math.abs(window.scrollY + window.innerHeight - document.documentElement.scrollHeight) <= 2;
     const bars = Array.from(document.querySelectorAll('*')).filter((b) => {
+      // The overlay that carries the dialog, and the dialog panel itself, are the modal — not
+      // chrome laid over it.
+      if (modal && (b.contains(modal) || modal.contains(b) || b === modal)) return false;
       if (getComputedStyle(b).position !== 'fixed' || !visible(b) || isExempt(b)) return false;
       const r = b.getBoundingClientRect();
       if (r.width * r.height < 1000) return false; // a real bar, not a stray positioned dot
@@ -478,7 +514,7 @@ function probeInPage(opts) {
       const sel =
         'button, a[href], summary, select, textarea, input:not([type="hidden"]), [role="button"], ' +
         'h1, h2, h3, h4, p, li, dt, dd, figcaption, blockquote';
-      for (const el of Array.from(root.querySelectorAll(sel))) {
+      for (const el of Array.from(scope.querySelectorAll(sel))) {
         if (!visible(el) || isExempt(el)) continue;
         const r = el.getBoundingClientRect();
         // Fully in view. Anything hanging off an edge is scrolled, not trapped.

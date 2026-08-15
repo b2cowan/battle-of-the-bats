@@ -16,6 +16,7 @@ import {
 import { amountsTotal, deriveDuesPosition, groupByPlayer } from './dues-credits';
 import {
   deriveSettlement,
+  closeOutBlockers,
   expenseTotals,
   type SettlementParticipant,
   type SettlementSheet,
@@ -320,16 +321,12 @@ export async function loadSeasonSettlement(opts: {
     payable: Math.round(f.players.reduce((s, r) => s + Math.max(0, r.refund) * 100, 0)) / 100,
   }));
 
-  // Whose money the others are waiting on — biggest debt first.
-  const awaitingFrom = settlement.awaitingCash <= 0.005 ? [] : rows
-    .filter(r => r.refund < -0.005)
-    .sort((a, b) => a.refund - b.refund)
-    .map(r => ({
-      playerId: r.playerId,
-      label: families.find(f => f.playerIds.includes(r.playerId))?.label
-        ?? [r.playerFirstName, r.playerLastName].filter(Boolean).join(' '),
-      amount: Math.round(-r.refund * 100) / 100,
-    }));
+  // ⚠ `awaitingFrom` stood here and is GONE (2026-08-14). It named, biggest debt first, whose
+  // money the other families were waiting on — and existed for ONE consumer: the "paying everyone
+  // needs $X still to arrive from …" strip on the settlement sheet. The close-out ruling deleted
+  // that strip (the readiness checklist states the same fact where the question is asked), leaving
+  // a per-request derivation with an O(n²) `families.find` inside its map and nothing reading it.
+  // `awaitingCash` — the SCALAR the close-out gate tests — is untouched and still on the payload.
 
   // Planned costs the season has not spent yet. NOT in the arithmetic (the owner's pot is cash
   // held minus what is owed — full stop), but a coach opening this sheet mid-season is looking at
@@ -348,7 +345,6 @@ export async function loadSeasonSettlement(opts: {
     unspentPlan: Math.max(0, Math.round((plan - expensesPaid) * 100) / 100),
     clubMoneyUncounted,
     notes: surplusRow?.notes ?? null,
-    awaitingFrom,
   };
 }
 
@@ -373,6 +369,24 @@ export class SettlementUnwindFailedError extends Error {
   constructor(public readonly stranded: string[]) {
     super('SETTLEMENT_UNWIND_FAILED');
     this.name = 'SettlementUnwindFailedError';
+  }
+}
+
+/**
+ * The season is still collecting, so it cannot be closed out (owner ruling 2026-08-14).
+ *
+ * ⚠ This guards the CLOSE-OUT path only — `playerIds === null`, the "pay everyone" batch. Paying
+ * ONE family (a player leaving mid-season, settled from their own money record) stays legal at any
+ * point in the season and must not be caught here.
+ */
+export class SettlementSeasonNotClosableError extends Error {
+  constructor(
+    public readonly expectedIn: number,
+    /** The payouts' shortfall against cash on hand — non-zero when a family was overpaid early. */
+    public readonly awaitingCash: number,
+  ) {
+    super('SETTLEMENT_SEASON_NOT_CLOSABLE');
+    this.name = 'SettlementSeasonNotClosableError';
   }
 }
 
@@ -414,6 +428,33 @@ export async function recordSettlementPayouts(opts: {
 }): Promise<{ sheet: SettlementSheet; paidCount: number; paidTotal: number }> {
   const load = () => loadSeasonSettlement({ programYear: opts.programYear, capabilities: opts.capabilities });
   const before = await load();
+
+  // ⚠ THE CLOSE-OUT GATE, server-side (owner ruling 2026-08-14). The button is disabled in the
+  // browser; this is what makes the rule true.
+  //
+  // ⚠ IT KEYS ON HOW MANY FAMILIES ARE PAID, NOT ON THE `null` SENTINEL. The first cut tested
+  // `playerIds == null` — the shape the "pay everyone" button sends — and adversarial review
+  // walked straight around it: this route also accepts an explicit array of any length, each row
+  // paid what its own figure says, which is the same act under a different request body. The
+  // browser already holds every playerId, so the bypass was one hand-written fetch. It granted no
+  // capability a coach lacked (paying families one at a time is legal all season, and N sequential
+  // single payouts reach the same place), but a guard that a reshaped request steps around is a
+  // guard that gets BELIEVED and isn't true — including by this file's own comments.
+  //
+  // So: ONE family is the documented early-payout path (a player leaving mid-season) and stays
+  // open all season. TWO OR MORE is a close-out by another name and must meet its conditions.
+  //
+  // ⚠ `awaitingCash` is a SEPARATE condition, not a restatement of the first. A family paid out
+  // early can owe value back at close-out (their `sharePaid` exceeding their eventual share), and
+  // one negative row makes `payable` — what actually leaves the account — larger than the cash on
+  // hand even with every due collected. Proved by the randomised test in
+  // tests/unit/season-settlement.test.ts, which is what caught the one-condition version.
+  const isCloseOut = opts.playerIds == null || opts.playerIds.length > 1;
+  const blockers = closeOutBlockers(before);
+  if (isCloseOut && !blockers.canClose) {
+    throw new SettlementSeasonNotClosableError(blockers.duesOutstanding, blockers.cashShort);
+  }
+
   const rowById = new Map(before.rows.map(r => [r.playerId, r]));
   const nameOf = (row: SettlementSheetRow) =>
     [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ') || 'this family';
