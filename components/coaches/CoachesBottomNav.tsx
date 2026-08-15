@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp, Shield, Bell,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -55,6 +55,10 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },
   ] },
   { header: 'Season', items: [
+    // Practice plans (2026-08-15) — the sidebar puts it directly under Schedule; Schedule is a
+    // PRIMARY tab down here, so the hub leads its section instead. Both navs move together by
+    // rule: a door added to one and not the other is how the two start telling different stories.
+    { key: '/practice',      icon: NotebookPen,   label: 'Practice plans' },
     { key: '/history',       icon: BarChart3,     label: 'Insights' },
     { key: '/tournaments',   icon: Trophy,        label: 'Tournaments', conditional: 'tournaments' },
   ] },

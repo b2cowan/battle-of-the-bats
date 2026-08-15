@@ -171,6 +171,38 @@ export function pickNextOrMostRecent(
   return past[0] ?? null;
 }
 
+/**
+ * The two lists an "which of my events still need X?" hub shows: what's still to come (soonest
+ * first) and what's just been (most recent first, capped).
+ *
+ * ⚠ ONE definition, shared by the Lineups hub and the Practice plans hub. It was written twice,
+ * character for character, before the second hub existed — which put the cap, the cancelled-status
+ * handling and the "upcoming means scheduled AND not yet started" rule in two places with nothing
+ * keeping them in step. Filtering by event TYPE is deliberately the caller's job: the two hubs
+ * disagree about which events they are for, and only about that.
+ *
+ * `now` is passed in so callers stay render-safe (no `Date.now()` in a render body).
+ */
+export function splitUpcomingAndRecent<T extends Pick<RepTeamEvent, 'startsAt' | 'status'>>(
+  events: T[],
+  opts: { now: number; recentCap?: number },
+): { upcoming: T[]; recent: T[] } {
+  const live = events.filter(e => e.status !== 'cancelled');
+  // A past-dated event still marked `scheduled` is behind the coach, and a cancelled-then-restored
+  // one is not "upcoming" until it says `scheduled` again — both halves matter.
+  const isUpcoming = (e: T) => new Date(e.startsAt).getTime() >= opts.now && e.status === 'scheduled';
+  // ⚠ Compared as instants, not as strings. Both hubs did it this way before the extraction, and a
+  // lexicographic compare only agrees with a chronological one while every row carries the same
+  // timestamp shape — which is a property of the serializer, not of this list.
+  const at = (e: T) => new Date(e.startsAt).getTime();
+  return {
+    upcoming: live.filter(isUpcoming).sort((a, b) => at(a) - at(b)),
+    recent: live.filter(e => !isUpcoming(e))
+      .sort((a, b) => at(b) - at(a))
+      .slice(0, opts.recentCap ?? 6),
+  };
+}
+
 // ── Duplicate detection ───────────────────────────────────────────────────────
 
 /**

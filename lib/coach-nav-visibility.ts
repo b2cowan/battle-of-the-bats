@@ -57,6 +57,15 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     case 'Attendance':    return caps.attendance;
     case 'Lineups':       return caps.lineups;
     case 'Schedule':      return caps.schedule;
+    /**
+     * The practice-plans hub (2026-08-15). Keyed on the READ half of the schedule split, not the
+     * manage half, because that is exactly what the page behind it needs: the events read it lists
+     * from gates on `canViewSchedule`, and the plan itself is readable to anyone who can see the
+     * schedule. Writing a plan stays head-coach-only and is enforced by the plan route, not here —
+     * an assistant who can see the list but not edit finds a page that says so, which is better
+     * than a door that vanishes.
+     */
+    case 'Practice plans': return caps.schedule;
     case 'Tryouts':       return caps.tryouts;
     // Hidden unless the coach can send (no draft UI yet). When the draft flow ships, switch this to
     // always-visible or a dedicated `canDraftAnnouncements` cap so granted assistants can draft.

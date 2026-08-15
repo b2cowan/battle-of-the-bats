@@ -13,9 +13,12 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { canManageSchedule } from '@/lib/coach-capabilities';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachEventListRow from '@/components/coaches/CoachEventListRow';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
+import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
+import { formatInOrgZone } from '@/lib/timezone';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
@@ -32,11 +35,16 @@ const TYPE_CHIPS = [
 // line, so repeating them spent the card's scarcest resource on something already on screen (and on
 // a phone it pushed the time onto a second line). The weekday earns its place; the tile has no room
 // for it. One string at every width: redundancy is redundancy on desktop too.
+//
+// ⚠ Both format in the ORG's zone (corrected 2026-08-15). These were bare `toLocaleDateString` /
+// `toLocaleTimeString` calls — the reader's clock, not the field's — which is precisely what
+// `lib/timezone.ts` was written to stop. A coach reading this from another province was being told
+// the wrong start time.
 function formatWeekday(value: string) {
-  return new Date(value).toLocaleDateString('en-CA', { weekday: 'short' });
+  return formatInOrgZone(value, { weekday: 'short' });
 }
 function formatTime(value: string) {
-  return new Date(value).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+  return formatInOrgZone(value, { hour: 'numeric', minute: '2-digit' });
 }
 function gameTitle(e: RepTeamEvent) {
   if (e.opponent) return `${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}`;
@@ -112,19 +120,31 @@ export default function CoachesLineupsPage({
   // Phase 1.2-1.6 sweep) — this page had no scroll lock at all before; the hook adds one.
   useOverlayOpen(!!applyTemplate);
 
-  const load = useCallback(async () => {
+  /**
+   * ⚠ Guarded against a stale response landing on the wrong season (added 2026-08-15). "Lineups"
+   * is one of the archive's doors, so `resolveSeasonSwitchHref` KEEPS this section when the coach
+   * switches year — the URL becomes `/lineups?year=…`, the same leaf re-renders in place, and the
+   * page never unmounts. Without the guard, a slow live-season response arriving after the switch
+   * repopulated the games list and the readiness chips with the LIVE season's data while the
+   * header and the season selector both read the past year.
+   */
+  const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
     setError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
       if (!res.ok) throw new Error('Games could not be loaded');
       const data: { events?: RepTeamEvent[]; lineupSetEventIds?: string[] } = await res.json();
+      // ⚠ Keeps its own `cancelled` filter even though the split helper drops them too: `games` is
+      // also what builds the readiness map below, and widening that set here would be a silent
+      // second change riding along with the extraction.
       const games = (data.events ?? []).filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled');
       // Compute the split here (not during render) so we never call Date.now() in the render body.
-      const now = Date.now();
-      const isUpcoming = (e: RepTeamEvent) => new Date(e.startsAt).getTime() >= now && e.status === 'scheduled';
-      setUpcoming(games.filter(isUpcoming).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()));
-      setRecent(games.filter(e => !isUpcoming(e)).sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()).slice(0, 6));
+      // Shared with the Practice plans hub, so the cap and the "upcoming" rule have one definition.
+      const split = splitUpcomingAndRecent(games, { now: Date.now() });
+      if (isStale()) return;
+      setUpcoming(split.upcoming);
+      setRecent(split.recent);
       if (data.lineupSetEventIds) {
         // Field present ⇒ the server let us see lineups; membership is definitive per game.
         const setIds = new Set(data.lineupSetEventIds);
@@ -135,24 +155,24 @@ export default function CoachesLineupsPage({
         setReady({});
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Games could not be loaded');
+      if (!isStale()) setError(e instanceof Error ? e.message : 'Games could not be loaded');
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [orgSlug, teamId, seasonQuery]);
 
-  const loadTemplates = useCallback(async () => {
+  const loadTemplates = useCallback(async (isStale: () => boolean = () => false) => {
     setTemplatesLoading(true);
     setTemplatesError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates${seasonQuery}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setTemplates(data.templates ?? []);
+      if (!isStale()) setTemplates(data.templates ?? []);
     } catch {
-      setTemplatesError('Templates couldn’t be loaded — refresh to try again.');
+      if (!isStale()) setTemplatesError('Templates couldn’t be loaded — refresh to try again.');
     } finally {
-      setTemplatesLoading(false);
+      if (!isStale()) setTemplatesLoading(false);
     }
   }, [orgSlug, teamId, seasonQuery]);
 
@@ -160,8 +180,11 @@ export default function CoachesLineupsPage({
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
   useEffect(() => {
     if (ctxLoading || !canLineups) return;
-    void Promise.resolve().then(load);
-    void Promise.resolve().then(loadTemplates);
+    let cancelled = false;
+    const isStale = () => cancelled;
+    void Promise.resolve().then(() => load(isStale));
+    void Promise.resolve().then(() => loadTemplates(isStale));
+    return () => { cancelled = true; };
   }, [ctxLoading, canLineups, load, loadTemplates]);
 
   function switchTab(next: 'games' | 'templates') {
@@ -353,27 +376,23 @@ export default function CoachesLineupsPage({
     // link (the row itself keeps one destination — the builder). Absent outside the window and
     // in an archived season: the console is a live-season instrument.
     const gameDayHref = page.isReadOnly ? null : gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
+    // Shared with the Practice plans hub (2026-08-15) — the row's date tile formats in the org's
+    // zone inside the component, so the two hubs cannot drift onto different clocks.
     const row = (
-      <Link key={e.id} href={`${base}/lineups/${e.id}${seasonQuery}`} className={styles.lineupFrontRow}>
-        <span className={styles.lineupFrontDate}>
-          <span className={styles.lineupFrontDay}>{new Date(e.startsAt).getDate()}</span>
-          <span className={styles.lineupFrontMonth}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short' })}</span>
-        </span>
-        <span className={styles.lineupFrontMain}>
-          <span className={styles.lineupFrontTitle}>{gameTitle(e)}</span>
-          <span className={styles.lineupFrontMeta}>{formatWeekday(e.startsAt)} · {formatTime(e.startsAt)}</span>
-        </span>
-        {r === true && <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Lineup set</span>}
-        {r === false && <span className={styles.lineupFrontChip} data-tone="warn"><TriangleAlert size={13} aria-hidden /> Not set</span>}
-        {isPrimary ? (
-          <span className={`btn btn-lime btn-sm ${styles.lineupFrontPrimary}`}>Build lineup <ArrowRight size={14} aria-hidden /></span>
-        ) : (
-          <span className={styles.lineupFrontAction}>
-            {action}
-            <ArrowRight size={14} aria-hidden />
-          </span>
-        )}
-      </Link>
+      <CoachEventListRow
+        key={e.id}
+        href={`${base}/lineups/${e.id}${seasonQuery}`}
+        startsAt={e.startsAt}
+        title={gameTitle(e)}
+        meta={`${formatWeekday(e.startsAt)} · ${formatTime(e.startsAt)}`}
+        chip={
+          r === true ? { tone: 'ok', label: 'Lineup set', icon: <CheckCircle2 size={13} aria-hidden /> }
+          : r === false ? { tone: 'warn', label: 'Not set', icon: <TriangleAlert size={13} aria-hidden /> }
+          : null
+        }
+        action={action}
+        primaryLabel={isPrimary ? 'Build lineup' : null}
+      />
     );
     if (!gameDayHref) return row;
     return (
@@ -587,9 +606,13 @@ export default function CoachesLineupsPage({
             <div className={styles.lineupFrontList}>
               {pickerGames.map(g => (
                 <button key={g.id} type="button" className={styles.lineupFrontRow} disabled={!!applyBusyGameId} onClick={() => applyToGame(g)} style={{ textAlign: 'left', cursor: applyBusyGameId ? 'wait' : 'pointer' }}>
+                  {/* ⚠ NOT CoachEventListRow: this is a <button> that applies a template, not a
+                      link that navigates, and bolting an as-button branch onto a component built
+                      for one navigation idiom is the special case it exists to avoid. It does
+                      share the org-zone clock, which is the half that was actually wrong. */}
                   <span className={styles.lineupFrontDate}>
-                    <span className={styles.lineupFrontDay}>{new Date(g.startsAt).getDate()}</span>
-                    <span className={styles.lineupFrontMonth}>{new Date(g.startsAt).toLocaleDateString('en-CA', { month: 'short' })}</span>
+                    <span className={styles.lineupFrontDay}>{formatInOrgZone(g.startsAt, { day: 'numeric' })}</span>
+                    <span className={styles.lineupFrontMonth}>{formatInOrgZone(g.startsAt, { month: 'short' })}</span>
                   </span>
                   <span className={styles.lineupFrontMain}>
                     <span className={styles.lineupFrontTitle}>{gameTitle(g)}</span>

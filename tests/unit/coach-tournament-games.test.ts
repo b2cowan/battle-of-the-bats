@@ -4,6 +4,7 @@ import {
   diffSeenTimes,
   findDuplicateSelfEntries,
   pickNextOrMostRecent,
+  splitUpcomingAndRecent,
   COACH_GAME_EVENT_TYPES,
 } from '../../lib/coach-tournament-games.ts';
 import type { RepTeamEvent } from '../../lib/types.ts';
@@ -193,5 +194,56 @@ describe('mirrored games — the hand-entered duplicates', () => {
     const pairs = findDuplicateSelfEntries([mirror, mirrorB, own]);
     assert.equal(pairs.length, 1);
     assert.equal(pairs[0].mirrorId, 'mirror');
+  });
+});
+
+describe('the two lists a "what still needs doing?" hub shows', () => {
+  const NOW = Date.parse('2026-05-16T12:00:00+00:00');
+  const at = (id: string, iso: string, status: RepTeamEvent['status'] = 'scheduled') =>
+    event({ id, startsAt: iso, status });
+
+  it('puts what is still to come first, soonest first', () => {
+    const { upcoming } = splitUpcomingAndRecent([
+      at('late', '2026-05-20T09:00:00+00:00'),
+      at('soon', '2026-05-17T09:00:00+00:00'),
+      at('past', '2026-05-01T09:00:00+00:00'),
+    ], { now: NOW });
+    assert.deepEqual(upcoming.map(e => e.id), ['soon', 'late']);
+  });
+
+  it('puts what has just been in the other list, most recent first', () => {
+    const { recent } = splitUpcomingAndRecent([
+      at('older', '2026-05-01T09:00:00+00:00'),
+      at('newer', '2026-05-10T09:00:00+00:00'),
+      at('ahead', '2026-05-20T09:00:00+00:00'),
+    ], { now: NOW });
+    assert.deepEqual(recent.map(e => e.id), ['newer', 'older']);
+  });
+
+  it('caps the recent list, so a long season cannot bury the top of the page', () => {
+    const many = Array.from({ length: 12 }, (_, i) =>
+      at(`e${i}`, `2026-05-${String(i + 1).padStart(2, '0')}T09:00:00+00:00`));
+    assert.equal(splitUpcomingAndRecent(many, { now: NOW }).recent.length, 6);
+    assert.equal(splitUpcomingAndRecent(many, { now: NOW, recentCap: 2 }).recent.length, 2);
+  });
+
+  it('drops cancelled events from both lists — a hub never asks you to prepare for one', () => {
+    const { upcoming, recent } = splitUpcomingAndRecent([
+      at('off-ahead', '2026-05-20T09:00:00+00:00', 'cancelled'),
+      at('off-past', '2026-05-01T09:00:00+00:00', 'cancelled'),
+    ], { now: NOW });
+    assert.deepEqual(upcoming, []);
+    assert.deepEqual(recent, []);
+  });
+
+  it('counts an event starting exactly now as still ahead of you', () => {
+    // The boundary decides which list tonight's practice appears in the moment it starts. It stays
+    // in "coming up" — a coach standing on the field is not reading history.
+    const { upcoming, recent } = splitUpcomingAndRecent(
+      [at('now', new Date(NOW).toISOString())],
+      { now: NOW },
+    );
+    assert.deepEqual(upcoming.map(e => e.id), ['now']);
+    assert.deepEqual(recent, []);
   });
 });

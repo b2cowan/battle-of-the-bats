@@ -2,7 +2,7 @@
 import { Fragment, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Users, UserCog, Calendar, CalendarCheck, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
+import { Users, UserCog, Calendar, CalendarCheck, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches, resolveClosedAssignment, resolveSeasonView } from '@/lib/coaches-context';
 import { resolveSeasonSwitchHref, seasonStatusLabel } from '@/lib/coach-season-view';
@@ -38,6 +38,14 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
   { label: 'Season', items: [
     { label: 'Schedule',    href: '/schedule',    icon: Calendar },
+    // Directly under Schedule (owner-approved 2026-08-15): practice plans had no nav entry at all,
+    // reachable only by opening the Schedule, finding the right practice and scrolling its panel —
+    // while Lineups, built far less often, had a door, a hub and a readiness filter. ⚠ Deliberately
+    // NOT in CLOSED_TEAM_NAV_ITEMS: plans are a live-season instrument, and this group only renders
+    // for a live season, so the door is archive-invisible for free.
+    // ⚠ NotebookPen, not ClipboardList — Tryouts already owns ClipboardList in this nav, and two
+    // items sharing an icon is a worse read than the hub differing from its own drill-in page.
+    { label: 'Practice plans', href: '/practice',  icon: NotebookPen },
     { label: 'Insights',    href: '/history',     icon: BarChart3 },
     { label: 'Tournaments', href: '/tournaments', icon: Trophy, conditional: 'tournaments' },
   ] },
