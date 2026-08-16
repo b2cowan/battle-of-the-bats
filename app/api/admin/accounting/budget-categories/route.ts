@@ -36,6 +36,8 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
       sortOrder:       item.sort_order as number,
       isDefault:       item.is_default as boolean,
       isMisc:          item.is_misc as boolean,
+      // mig 243 — the money-in/money-out hint. Platform rows only; a club's own items are null.
+      direction:       (item.direction as 'in' | 'out' | null) ?? null,
       createdAt:       item.created_at as string,
     })).sort((a, b) => {
       if (a.isMisc !== b.isMisc) return a.isMisc ? 1 : -1;

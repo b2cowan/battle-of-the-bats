@@ -12,12 +12,20 @@
  *   2. the ITEM names the row — never the description;
  *   3. two lines on one item SUM into one row, periods included;
  *   4. an item with spending and no line is its OWN row, flagged, not a footnote.
+ *
+ * ── 2026-08-16: the same module learned DIRECTION and MONEY BACK ────────────────────────────
+ * `rollupMoneyReport` is the full pass; `rollupBudget` is the cost-only wrapper the plan page
+ * still calls. The rules it added are stated at the foot of this file, and three of them are
+ * money-wrong-in-both-directions if reversed:
+ *   5. a row is REVENUE or an EXPENSE, and one item can be both — two rows, one per section;
+ *   6. VARIANCE IS ALWAYS GOOD-NEWS-POSITIVE, because the formula differs by direction;
+ *   7. money back NETS into the row it repaid — never its own row, never income.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  rollupBudget, NO_ITEM_LABEL, NO_CATEGORY_LABEL,
-  type RollupLine, type RollupSpend,
+  rollupBudget, rollupMoneyReport, NO_ITEM_LABEL, NO_CATEGORY_LABEL,
+  type RollupLine, type RollupSpend, type RollupRefund,
 } from '../../lib/coach-budget-rollup.ts';
 
 const TOURNAMENTS = 'cat-tournaments';
@@ -44,6 +52,40 @@ function spend(over: Partial<RollupSpend> = {}): RollupSpend {
     categoryId: TOURNAMENTS, categoryName: 'Tournaments',
     itemId: ENTRY, itemName: 'Entry fees',
     amount: 400, paidDate: '2026-05-01',
+    ...over,
+  };
+}
+
+/* ── Money IN, and money BACK ────────────────────────────────────────────────────────────────
+   Deliberately on the SAME category as the cost helpers above: a category holding both
+   directions is the shape shape B exists for, and the shape most likely to be broken by a
+   change that assumes one row per category+item. */
+const REGISTRATION = 'item-registration';
+
+function inLine(over: Partial<RollupLine> = {}): RollupLine {
+  return line({
+    id: 'in-line-1', direction: 'in',
+    itemId: REGISTRATION, itemName: 'Registration revenue',
+    totalAmount: 6000, description: 'what we expect to take',
+    ...over,
+  });
+}
+
+function income(over: Partial<RollupSpend> = {}): RollupSpend {
+  return spend({
+    id: 'in-1', direction: 'in',
+    itemId: REGISTRATION, itemName: 'Registration revenue',
+    amount: 6400, description: 'Gate + entries', paidDate: '2026-06-01',
+    ...over,
+  });
+}
+
+function refund(over: Partial<RollupRefund> = {}): RollupRefund {
+  return {
+    id: 'back-1', description: 'Cancelled entry refunded',
+    categoryId: TOURNAMENTS, categoryName: 'Tournaments',
+    itemId: ENTRY, itemName: 'Entry fees',
+    amount: 150, receivedDate: '2026-09-03',
     ...over,
   };
 }
@@ -264,5 +306,278 @@ describe('rollupBudget — the category that split in two (/review, 2026-08-15)'
       spend({ id: 'c2', categoryId: 'cat-b', categoryName: 'Officials', itemId: null, itemName: null, amount: 200 }),
     ]);
     assert.equal(rows.length, 2);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   MONEY IN, MONEY OUT, MONEY BACK (2026-08-16)
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('rollupMoneyReport — a row is revenue or an expense, never both at once', () => {
+  it('sorts a line into the section its direction names', () => {
+    const r = rollupMoneyReport({ lines: [line(), inLine()], spend: [] });
+    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['Registration revenue']);
+    assert.deepEqual(r.expenses.categories.flatMap(c => c.items.map(i => i.itemName)), ['Entry fees']);
+  });
+
+  it('gives ONE item carrying both directions TWO rows, one in each section', () => {
+    /* ⚠ THE SHAPE THAT BREAKS A ONE-ROW-PER-ITEM ASSUMPTION. The library's direction tag is a
+       picker HINT, never a constraint (plan §3.6), so a coach can and will point both a cost and
+       an income at the same word. Netting them into one row would report a $6,400 gate and a
+       $2,400 entry fee as $4,000 of something with no name. */
+    const r = rollupMoneyReport({
+      lines: [],
+      spend: [spend({ amount: 2400 }), income({ itemId: ENTRY, itemName: 'Entry fees', amount: 6400 })],
+    });
+    assert.equal(r.revenue.categories[0].items[0].itemName, 'Entry fees');
+    assert.equal(r.revenue.categories[0].items[0].actual, 6400);
+    assert.equal(r.expenses.categories[0].items[0].itemName, 'Entry fees');
+    assert.equal(r.expenses.categories[0].items[0].actual, 2400);
+  });
+
+  it('stamps every row with its direction, so no screen has to infer one', () => {
+    const r = rollupMoneyReport({ lines: [line(), inLine()], spend: [] });
+    assert.equal(r.revenue.categories[0].direction, 'in');
+    assert.equal(r.revenue.categories[0].items[0].direction, 'in');
+    assert.equal(r.expenses.categories[0].direction, 'out');
+    assert.equal(r.expenses.categories[0].items[0].direction, 'out');
+  });
+});
+
+describe('rollupMoneyReport — variance is ALWAYS good-news-positive', () => {
+  /* ⚠⚠ THE DEFECT THE WHOLE REPORT SHAPE EXISTS TO FIX (plan §8). A single mixed table ran
+     `actual − budget` on revenue and `budget − actual` on costs behind one column heading, both
+     green, both positive, the only distinguisher a two-letter tag. The formula still differs —
+     it has to — but it is decided HERE, once, by the row's own direction, and the answer always
+     means the same thing: positive is the good news. Sections supply the wording. */
+
+  it('revenue over its budget is POSITIVE', () => {
+    const r = rollupMoneyReport({ lines: [inLine({ totalAmount: 6000 })], spend: [income({ amount: 6400 })] });
+    assert.equal(r.revenue.categories[0].items[0].variance, 400);
+  });
+
+  it('revenue UNDER its budget is negative', () => {
+    const r = rollupMoneyReport({ lines: [inLine({ totalAmount: 1800 })], spend: [income({ amount: 1640 })] });
+    assert.equal(r.revenue.categories[0].items[0].variance, -160);
+  });
+
+  it('a cost under its budget is POSITIVE, exactly as it always was', () => {
+    const r = rollupMoneyReport({ lines: [line({ totalAmount: 2400 })], spend: [spend({ amount: 2250 })] });
+    assert.equal(r.expenses.categories[0].items[0].variance, 150);
+  });
+
+  it('a cost over its budget is negative', () => {
+    const r = rollupMoneyReport({ lines: [line({ totalAmount: 950 })], spend: [spend({ amount: 1110 })] });
+    assert.equal(r.expenses.categories[0].items[0].variance, -160);
+  });
+});
+
+describe('rollupMoneyReport — money back nets into the row it repaid', () => {
+  it('is ONE row carrying the net, never a second row', () => {
+    // The plan's own worked example: $2,400 paid, $150 back, the row reads $2,250.
+    const r = rollupMoneyReport({
+      lines: [line({ totalAmount: 2400 })],
+      spend: [spend({ amount: 2400 })],
+      refunds: [refund({ amount: 150 })],
+    });
+    const items = r.expenses.categories[0].items;
+    assert.equal(items.length, 1);
+    assert.equal(items[0].actual, 2250);
+    assert.equal(items[0].variance, 150);        // $150 under, good news, positive
+  });
+
+  it('keeps the gross and the refund separately readable, for the "$2,400 paid · $150 back" line', () => {
+    const r = rollupMoneyReport({
+      lines: [], spend: [spend({ amount: 2400 })], refunds: [refund({ amount: 150 })],
+    });
+    const item = r.expenses.categories[0].items[0];
+    assert.equal(item.grossActual, 2400);
+    assert.equal(item.refundTotal, 150);
+    assert.equal(item.refunds.length, 1);
+    assert.equal(item.refunds[0].receivedDate, '2026-09-03');
+  });
+
+  it('reduces the INCOME when it points at an income item — contra-revenue, for free', () => {
+    /* 🎯 The bonus the three-answer form buys (plan §3.1): a registration refunded to a visiting
+       team must lower revenue, not raise costs. Nobody designs for this; the direction of the row
+       it points at decides. */
+    const r = rollupMoneyReport({
+      lines: [inLine({ totalAmount: 6000 })],
+      spend: [income({ amount: 6400 })],
+      refunds: [refund({ id: 'b2', itemId: REGISTRATION, itemName: 'Registration revenue', amount: 250 })],
+    });
+    assert.equal(r.revenue.categories[0].items[0].actual, 6150);
+    assert.equal(r.expenses.categories.length, 0);   // nothing landed on the cost side
+  });
+
+  it('nets into the COST side when an item carries both, because that is the base case', () => {
+    // Documented, deliberate, and the reason a misfiled refund shows up as a negative rather
+    // than as quietly-shrunken income.
+    const r = rollupMoneyReport({
+      lines: [],
+      spend: [spend({ amount: 400 }), income({ itemId: ENTRY, itemName: 'Entry fees', amount: 900 })],
+      refunds: [refund({ amount: 100 })],
+    });
+    assert.equal(r.expenses.categories[0].items[0].actual, 300);
+    assert.equal(r.revenue.categories[0].items[0].actual, 900);
+  });
+
+  it('shows an item that goes NEGATIVE rather than blocking it', () => {
+    /* ⚠ Nearly always the signal it is filed against the wrong item, which is exactly why it
+       must be visible. Brackets are the screen's job; the module's job is not to clamp. */
+    const r = rollupMoneyReport({ lines: [], spend: [], refunds: [refund({ amount: 125 })] });
+    const item = r.expenses.categories[0].items[0];
+    assert.equal(item.actual, -125);
+    assert.equal(item.inPlan, false);
+    assert.equal(item.grossActual, 0);
+  });
+
+  it('is dated when it ARRIVED, landing in that period and not the one the cost was paid in', () => {
+    // Back-dating the credit into July would rewrite a month already reported on and reconciled.
+    const r = rollupMoneyReport({
+      lines: [line({ totalAmount: 600, periods: [
+        { label: 'Jul', date: '2026-07-31', amount: 300, sortOrder: 0 },
+        { label: 'Aug', date: '2026-08-31', amount: 300, sortOrder: 1 },
+        { label: 'Sep', date: '2026-09-30', amount: 0,   sortOrder: 2 },
+      ] })],
+      spend: [
+        spend({ id: 'c1', amount: 300, paidDate: '2026-07-14' }),
+        spend({ id: 'c2', amount: 300, paidDate: '2026-08-20' }),
+      ],
+      refunds: [refund({ amount: 325, receivedDate: '2026-09-03' })],
+    });
+    const periods = r.expenses.categories[0].items[0].periods;
+    assert.deepEqual(periods.map(p => p.actual), [300, 300, -325]);
+    assert.equal(r.expenses.categories[0].items[0].actual, 275);
+  });
+
+  it('⚠⚠ is NOT the same record as an expense a family paid out of pocket', () => {
+    /* THE TRAP (money-back plan §2). Both are "a parent paid me back". An out-of-pocket expense
+       is still SPENDING — it counts in full and the team owes that family a credit. A refund is
+       money returning. On the same item they must both be visible and must not merge: gross
+       $325 of spending, $325 back, a net of zero — and TWO records behind it, not one. */
+    const r = rollupMoneyReport({
+      lines: [],
+      spend: [spend({ id: 'oop', description: 'Permit — paid by the Silva family', amount: 325 })],
+      refunds: [refund({ id: 'back', description: 'Club reimbursed the permit', amount: 325 })],
+    });
+    const item = r.expenses.categories[0].items[0];
+    assert.equal(item.grossActual, 325);
+    assert.equal(item.refundTotal, 325);
+    assert.equal(item.actual, 0);
+    assert.equal(item.costs.length, 1);
+    assert.equal(item.refunds.length, 1);
+  });
+
+  it('never lets money back reach the revenue total as income', () => {
+    // ⚠ NEVER BOTH (plan §4.2). Counted twice, a $325 reimbursement makes a season look $650
+    // better than it is.
+    const r = rollupMoneyReport({ lines: [], spend: [spend({ amount: 400 })], refunds: [refund({ amount: 325 })] });
+    assert.equal(r.revenue.actual, 0);
+    assert.equal(r.expenses.actual, 75);
+    assert.equal(r.net.actual, -75);
+  });
+});
+
+describe('rollupMoneyReport — the statement (shape A)', () => {
+  it('totals each section and ends on the season net', () => {
+    const r = rollupMoneyReport({
+      lines: [inLine({ totalAmount: 8700 }), line({ totalAmount: 5750 })],
+      spend: [income({ amount: 9280 }), spend({ amount: 5760 })],
+    });
+    assert.equal(r.revenue.budgeted, 8700);
+    assert.equal(r.revenue.actual, 9280);
+    assert.equal(r.revenue.variance, 580);        // took more than planned — good
+    assert.equal(r.expenses.budgeted, 5750);
+    assert.equal(r.expenses.actual, 5760);
+    assert.equal(r.expenses.variance, -10);       // $10 over — bad
+    assert.equal(r.net.budgeted, 2950);
+    assert.equal(r.net.actual, 3520);
+    assert.equal(r.net.variance, 570);
+  });
+
+  it('reconciles: a section is the sum of its categories, which are the sum of their items', () => {
+    const r = rollupMoneyReport({
+      lines: [inLine(), line()],
+      spend: [income(), spend(), spend({ id: 'c2', itemId: 'item-travel', itemName: 'Travel', amount: 250 })],
+      refunds: [refund({ amount: 50 })],
+    });
+    for (const section of [r.revenue, r.expenses]) {
+      assert.equal(section.actual, section.categories.reduce((s, c) => s + c.actual, 0));
+      assert.equal(section.budgeted, section.categories.reduce((s, c) => s + c.budgeted, 0));
+      for (const cat of section.categories) {
+        assert.equal(cat.actual, cat.items.reduce((s, i) => s + i.actual, 0));
+      }
+    }
+  });
+});
+
+describe('rollupMoneyReport — by activity (shape B)', () => {
+  const both = () => rollupMoneyReport({
+    lines: [
+      inLine({ totalAmount: 6900 }),
+      line({ totalAmount: 4600 }),
+      line({ id: 'eq', categoryId: 'cat-equipment', categoryName: 'Equipment', itemId: 'item-uniforms', itemName: 'Uniforms', totalAmount: 1150 }),
+    ],
+    spend: [
+      income({ amount: 7640 }),
+      spend({ amount: 4450 }),
+      spend({ id: 'eq-c', categoryId: 'cat-equipment', categoryName: 'Equipment', itemId: 'item-uniforms', itemName: 'Uniforms', amount: 1310 }),
+    ],
+  });
+
+  it('splits a category INSIDE itself and states what it netted', () => {
+    const tournaments = both().activities.find(a => a.categoryName === 'Tournaments')!;
+    assert.equal(tournaments.revenue!.actual, 7640);
+    assert.equal(tournaments.costs!.actual, 4450);
+    assert.equal(tournaments.net.budgeted, 2300);
+    assert.equal(tournaments.net.actual, 3190);
+    assert.equal(tournaments.net.variance, 890);
+  });
+
+  it('gives a cost-only category a NEGATIVE net and no revenue half at all', () => {
+    // The honest reading of Equipment: it earned nothing and cost $1,310.
+    const equipment = both().activities.find(a => a.categoryName === 'Equipment')!;
+    assert.equal(equipment.revenue, null);
+    assert.equal(equipment.costs!.actual, 1310);
+    assert.equal(equipment.net.actual, -1310);
+    assert.equal(equipment.net.variance, -160);
+  });
+
+  it('ends on the SAME season net as the statement, because it is the same money', () => {
+    const r = both();
+    const fromBlocks = Math.round(r.activities.reduce((s, a) => s + a.net.actual, 0) * 100) / 100;
+    assert.equal(fromBlocks, r.net.actual);
+  });
+
+  it('leads with the categories that have BOTH halves — the question this lens exists for', () => {
+    const r = rollupMoneyReport({
+      lines: [
+        inLine({ totalAmount: 6900 }),                                                     // Tournaments, in
+        line({ totalAmount: 4600 }),                                                       // Tournaments, out
+        line({ id: 'eq', categoryId: 'cat-equipment', categoryName: 'Equipment', itemId: 'item-uniforms', itemName: 'Uniforms', totalAmount: 1150 }),
+        inLine({ id: 'fr', categoryId: 'cat-fundraising', categoryName: 'Fundraising', itemId: 'item-drive', itemName: 'Fundraising drive', totalAmount: 1800 }),
+      ],
+      spend: [],
+    });
+    assert.deepEqual(r.activities.map(a => a.categoryName), ['Tournaments', 'Fundraising', 'Equipment']);
+  });
+});
+
+describe('rollupBudget — the cost-only wrapper the plan page still calls', () => {
+  it('is the expenses half of the same pass, so the two can never group one plan two ways', () => {
+    const lines = [line(), inLine()];
+    const spends = [spend(), income()];
+    assert.deepEqual(
+      rollupBudget(lines, spends),
+      rollupMoneyReport({ lines, spend: spends }).expenses.categories,
+    );
+  });
+
+  it('ignores an income line entirely rather than summing it as a cost', () => {
+    // The 19-readers lesson, one level up: a money-in line reaching a cost total inflates the
+    // season and every dues figure derived from it.
+    const rows = rollupBudget([line({ totalAmount: 1000 }), inLine({ totalAmount: 5000 })], []);
+    assert.equal(rows.reduce((s, c) => s + c.budgeted, 0), 1000);
   });
 });

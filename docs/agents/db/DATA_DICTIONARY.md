@@ -3877,6 +3877,57 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 
 **Gotcha 6 — deleting an expense reverses its ledger entries, and pre-mig-236 rows are found by MATCHING.** `deleteRepTeamExpense` (lib/db.ts) voids every entry the record posted, reading `lib/expense-ledger.ts` for what counts as posted. Where the link column is NULL (anything paid before 2026-08-15) it falls back to matching on ledger + `description` + `amount` + `entry_type='expense'`. That fallback is sound for **exactly** that set, because no Edit feature existed before then, so a historic row still carries the description its entry was written with — a guarantee that ends for anything edited after 2026-08-15, which is why new rows store the id. **An ambiguous match (two identical paid expenses) REFUSES with a 409 rather than voiding an arbitrary one**; zero matches returns quietly, since an already-void entry means there is nothing to give back. ⚠ An **out-of-pocket** expense (`paid_by_player_id` set) has **no entry to reverse at all** — no team cash ever moved — but deleting it does remove the family's reimbursement credit by FK cascade from `rep_dues_credits.expense_id`.
 
+### `rep_team_money_in`
+<!-- dict:table:rep_team_money_in -->
+
+**Purpose:** money **arriving** on a rep team, in the same `category` → `item` vocabulary spending has used since mig 240 (mig 243, 2026-08-16; COACH_MONEY_IN_TAXONOMY_PLAN.md, which absorbed COACH_MONEY_BACK_ON_A_COST_PLAN.md). Two kinds share the row via `entry_kind`: **`income`** (the team earned or was given it — its own row under REVENUE) and **`money_back`** (a refund, credit or reimbursement that **nets into the row it repaid** and is never counted as income).
+
+**Gotchas (read first):**
+1. ⚠⚠ **THIS IS NOT THE OUT-OF-POCKET MECHANISM, and a coach describes both as "a parent paid me back".** *Paid out of pocket* is `rep_team_expenses.paid_by_player_id`: the team's cash never moved and the team now **owes that family a credit**. *Money back* is this table: the team's cash went out and some returned, and the team owes **nobody**. Merging them either credits a family twice or loses a credit entirely — real money in a real family's ledger. Keep them two tables apart, and test one of each against the same item.
+2. ⚠⚠ **A REFUND IS NOT A NEGATIVE EXPENSE, which is the whole reason this table exists rather than a third `expense_type`.** A negative row inside `rep_team_expenses` would be summed as spending by every reader of that table — the identical failure the third `line_kind` member caused on 2026-08-15, where nineteen readers kept compiling and quietly filed each sponsorship as a cost. Separation means every existing sum keeps its sign **by construction**: no pre-243 reader can see these rows at all.
+3. ⚠⚠ **NEVER BOTH.** A given arrival is `income` **or** `money_back`. Counted twice, a $325 reimbursement makes a season look $650 better than it is. The kind is create-time; changing it is a delete and re-add.
+4. ⚠⚠ **NOTHING HERE EVER CHANGES A PAYMENT SCHEDULE.** Not a dollar of anyone's dues, on either kind. The budget's funding ladder already subtracts expected funding from what players cover and it is a short step from there into the dues screen — **do not take it** (owner correction 2026-08-15). `received_from = 'family'` is a label, not a credit.
+5. **One row, one source.** Fundraisers and sponsors already derive their own actuals (`rep_fundraisers` / `rep_fundraiser_entries`, receipts only), and player rebates depend on them — so the write path **refuses** an `income` record on a category+item a `funding`/`sponsorship` budget line already claims, and the form says why. Every other income row is typed. Money back is exempt: a refund can land anywhere.
+6. **Amounts are ALWAYS positive on both kinds** (CHECK `> 0`); direction and netting supply the sign. Migration 230's rule, restated because this is the table most tempting to break it in.
+7. **The plan links are `ON DELETE SET NULL`, never CASCADE** — deleting a budget row or retiring an item must never delete a record of money that moved. The row then reads in the *No category / Not itemized* bucket, which is honest.
+8. **`received_date` is a `date`, not a timestamptz** — format with `formatStoredDate()`. A money row mixes both types and hand-rolled formatting has printed garbage on three screens (memory: `reference_stored_date_formatting`).
+9. **RLS enabled with NO policies** (service-role only, coach API) — the migs 225/228/231/232 treatment, so prod's default anon SELECT grant cannot reach it.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_money_in.program_year_id -->
+<!-- dict:col:rep_team_money_in.org_id -->
+<!-- dict:col:rep_team_money_in.team_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, **ON DELETE CASCADE**) / **`org_id`** (FK → `organizations.id`, NOT NULL, **ON DELETE CASCADE**) / **`team_id`** (FK → `rep_teams.id`, nullable, **ON DELETE CASCADE**) — scope; the primary list filter is `program_year_id` (index `idx_rep_team_money_in_year`). ⚠ **All three CASCADE, deliberately, and the contrast with gotcha 7 is the point:** deleting the *season, club or team these records belong to* takes their money history with it, exactly as it does for `rep_team_expenses`; deleting a *budget row they merely point at* must not (those links are SET NULL). Stating the actions rather than leaving them to be assumed is the lesson of the FK-action drift series, migrations 200–203.
+
+<!-- dict:col:rep_team_money_in.entry_kind -->
+**`entry_kind`** (text, NOT NULL; CHECK `income|money_back`) — what kind of arrival this is (gotchas 1–3). ⚠ **Only the coach can decide this**: a club grant and a club reimbursement arrive as the same amount, from the same club, on the same day, and nothing in the data distinguishes them. The harm of getting it wrong is **not** in the season total (both net out there) — it is in the row a coach reads: a reimbursed permit booked as income leaves Facilities claiming spending the club actually carried, so next season's plan is built off an inflated line.
+
+<!-- dict:col:rep_team_money_in.amount -->
+**`amount`** (numeric(10,2), NOT NULL, CHECK `> 0`) — always positive (gotcha 6).
+
+<!-- dict:col:rep_team_money_in.received_date -->
+**`received_date`** (date, NOT NULL) — the day the money arrived, org-local (gotcha 8). ⚠ **A refund is dated when it ARRIVED**, never back-dated into the month the original cost was paid: $600 of permits across July–August with $325 back in September reads `300 / 300 / (325)`, because back-dating rewrites a month already reported on and reconciled.
+
+<!-- dict:col:rep_team_money_in.budget_category_id -->
+<!-- dict:col:rep_team_money_in.budget_item_id -->
+**`budget_category_id`** (FK → `budget_categories.id`, nullable, **ON DELETE SET NULL**) / **`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; partial index `idx_rep_team_money_in_item`) — what this is, in the shared taxonomy (gotcha 7). On a `money_back` row it is what the money is paying you back **for**, and it may point at a **cost item** (reducing the cost) or an **income item** (reducing the income — a registration refunded to a visiting team). The report takes the direction from the row it lands on, never from the record: expense side when the item has one, otherwise revenue, otherwise a new expense row so a misfiled refund surfaces as a visible negative.
+
+<!-- dict:col:rep_team_money_in.description -->
+<!-- dict:col:rep_team_money_in.notes -->
+**`description`** (text, nullable) / **`notes`** (text, nullable) — free text. ⚠ **Neither is ever a grouping key** — the ITEM names the row (owner ruling 2026-08-15). `description` is nullable here where `rep_team_expenses.description` is NOT NULL, because nothing depends on it as an identity: the ledger entry is described from the item, and the delete path uses the stored entry id rather than matching on words.
+
+<!-- dict:col:rep_team_money_in.received_from -->
+**`received_from`** (text, nullable; CHECK `club|vendor|sponsor|family|other`) — an optional **label** on a `money_back` row, offered only on that kind. Never required and **never a behaviour** — in particular `family` does not create, settle or touch any dues credit (gotcha 4).
+
+<!-- dict:col:rep_team_money_in.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, **ON DELETE SET NULL**; **org Accounting domain**) — the team-ledger **income** entry this record posted, so a delete can void it. **Cash on hand rises on `received_date`**, both kinds. ⚠ It is **not** Collections (that is player dues) and **not** funding in the plan. SET NULL rather than CASCADE for the mig 236 reason, applied from birth this time: a voided entry must never delete the record of the money — the app voids, then deletes the row explicitly.
+
+<!-- dict:col:rep_team_money_in.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap).
+
+---
+
 ### `rep_team_payment_requests`
 <!-- dict:table:rep_team_payment_requests -->
 
@@ -4851,6 +4902,9 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:budget_items.is_misc -->
 **`is_misc`** (bool, NOT NULL, default false) — the per-category Misc catch-all; un-deletable (gotcha 1). ⚠ **RETIRED AS A CHOICE 2026-08-15 (mig 240).** The item names a budget row now, and a report row called "Misc" answers nothing — so the coach picker filters these out entirely and no longer auto-selects one when a category is chosen. Rows written before that still point at them and still resolve their name; they are simply never offered again.
+
+<!-- dict:col:budget_items.direction -->
+**`direction`** (text, nullable; CHECK `in|out`; mig 243) — **which way this word usually points**: `in` = revenue, `out` = a cost, NULL = either. ⚠ **A PICKER HINT THAT SORTS, NEVER A CONSTRAINT** (COACH_MONEY_IN_TAXONOMY_PLAN §3.6). It groups the item list so a coach recording income meets income words first, and **everything stays reachable in both directions** — guessing wrong is worse than not guessing, and a coach really can point a refund at an income item or record concession revenue against a word tagged `out`. ⚠ **The report NEVER reads it.** A row's direction comes from what was actually filed against it (`lib/coach-budget-rollup.ts` rule 5), which is why one item can legitimately appear as two rows, one in each section of the statement. ⚠ **NULL on every club- and coach-created item, permanently** — mig 243 tagged only platform rows (`org_id IS NULL`), and the create paths do not offer the field. ⚠ **Categories are deliberately NOT tagged**: *Tournaments* holding both its revenue and its costs is the entire premise of the by-activity report lens.
 
 ---
 

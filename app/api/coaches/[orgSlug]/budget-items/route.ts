@@ -25,6 +25,11 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
     sortOrder:       row.sort_order as number,
     isDefault:       row.is_default as boolean,
     isMisc:          row.is_misc as boolean,
+    /* mig 243 — a hint the picker SORTS by, never a filter. A coach recording income meets income
+       words first and still reaches every other one, because guessing wrong is worse than not
+       guessing: a refund legitimately points at either, and concession takings really can be filed
+       against a word tagged `out`. Null on everything a club or a coach created. */
+    direction:       (row.direction as 'in' | 'out' | null) ?? null,
     createdAt:       row.created_at as string,
   };
 }

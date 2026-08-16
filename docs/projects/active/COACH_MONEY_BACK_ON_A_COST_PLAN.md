@@ -1,7 +1,32 @@
 # Money back on a cost
 
-**Status:** approved by the owner 2026-08-16, **not started**. Build after the category+item release
-(§8).
+**Status:** approved by the owner 2026-08-16 · **BUILT ON DEV 2026-08-16** as one release with
+`COACH_MONEY_IN_TAXONOMY_PLAN.md` · migration **243** · owner QA **§38** (part C is the netting
+rule, part D is §2's trap walked on one item).
+
+⚠ **This file stays the binding detail and is NOT superseded.** Every rule in §6 is implemented:
+its own kind rather than a negative expense (a separate table, so every existing sum over
+`rep_team_expenses` keeps its sign by construction); one row never two; dated when it arrived;
+brackets not a minus sign; no row labels; an item may go negative; re-filing moves no money;
+deleting says the amount first; no backfill. §2 is enforced by keeping the two records in different
+tables with different wording, and the money-back form never offers **Paid by**.
+
+⚠ **What changed against §4.1's original draft:** the switch is three answers, not four kinds — see
+the revision note in that section, which was written before the build and still stands.
+
+⚠⚠ **MERGED INTO ONE RELEASE WITH `COACH_MONEY_IN_TAXONOMY_PLAN.md` (owner, 2026-08-16).** They are
+two halves of one question — this plan's own §3 decision log says so: *"money arriving is NOT one
+thing, and the coach — never the product — says which it is."* Same form, same picker, same record
+shape, same report arithmetic. **Do not build this separately**; the switch would be designed twice
+and the second design would force the first open.
+
+**This file stays the binding detail for how a refund behaves** — §2 (the out-of-pocket trap), §3
+(the decision log), §4.3 (netting, dating, brackets, no labels, negatives) and §6 (the rules) are
+inherited whole and are NOT restated in the money-in plan. What moved there: the form's kind switch
+(now three answers, §3.1), the report's shape (sections, never a direction column, §3.5) and the
+sequencing (§7).
+
+**Build prompt:** `COACH_MONEY_IN_AND_BACK_BUILD_PROMPT.md`
 
 **Mockup (binding):** https://claude.ai/code/artifact/27d6d2df-dc39-4c12-abd2-6fcf26826d52
 
@@ -87,8 +112,12 @@ is credited to nobody. Pairing them teaches something false about both.
 
 ### 4.1 A third kind on the money form
 
-Expenses & Payables opens **one** form with a kind switch. It gains a third: **Expense · Payable ·
-Money back**.
+⚖ **REVISED 2026-08-16 — the switch is now THREE ANSWERS, not four kinds.** This section proposed
+*Expense · Payable · Money back*. With income arriving in the same release, the form asks **what kind
+of entry is this — a cost · income · money back on something**, and Payable stays a timing attribute
+on the cost side rather than becoming a peer of the other two. See
+`COACH_MONEY_IN_TAXONOMY_PLAN.md` §3.1. **Everything else in this section stands**, and the "kind,
+not an action on one expense record" ruling below is unchanged and load-bearing.
 
 ⚠ **A KIND, NOT AN ACTION ON ONE EXPENSE RECORD** (decided 2026-08-16). Attaching a refund to a single
 expense record was the alternative and it fails the common cases: a tournament refunds an entry that
@@ -178,7 +207,13 @@ Builds on **category + item** (`COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md`, dev, migra
 the picker this feature points with. ⚠ **Do not build in parallel** — same form, same picker, same
 report.
 
-**Order:** category+item release → **this** → club money in the budget.
+**Order:** category+item release → **this, built together with `COACH_MONEY_IN_TAXONOMY_PLAN.md` as
+one release** → club money in the budget.
+
+⚠ **The report shape moved.** This plan's §4.3 was written for the report as it stands. That report
+is being reshaped in the same release into **Revenue / Expenses / Net** sections (default) plus a
+**by-activity** lens — see `COACH_MONEY_IN_TAXONOMY_PLAN.md` §3.5. Every rule in §4.3 survives the
+reshape unchanged; only where the row *sits* is different.
 
 ---
 

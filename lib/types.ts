@@ -2362,6 +2362,68 @@ export interface RepTeamExpense {
   updatedAt: string;
 }
 
+// ── Money coming IN (mig 243) ────────────────────────────────────────────────
+
+/**
+ * What kind of arrival this is. ⚠ ONLY THE COACH CAN DECIDE — a club grant and a club
+ * reimbursement arrive as the same amount, from the same club, on the same day.
+ */
+export type MoneyInKind = 'income' | 'money_back';
+
+/** An optional LABEL on a refund. Never a behaviour: `family` touches no dues credit. */
+export type MoneyInSource = 'club' | 'vendor' | 'sponsor' | 'family' | 'other';
+
+/**
+ * Money arriving on a rep team, in the same category+item vocabulary spending uses (mig 243).
+ *
+ * ⚠⚠ `money_back` IS NOT `rep_team_expenses.paidByPlayerId`. A coach describes both as "a parent
+ * paid me back". Out of pocket = the team's cash never moved and it now OWES that family a credit;
+ * money back = the team's cash went out and some returned, and it owes nobody. Merging them
+ * credits a family twice or loses a credit entirely.
+ *
+ * ⚠ A refund is NOT a negative expense and NOT income. It nets into the row it repaid, so no list
+ * of expenses ever shows a negative amount and no revenue total ever counts it.
+ */
+export interface RepTeamMoneyIn {
+  id: string;
+  programYearId: string;
+  teamId: string | null;
+  orgId: string;
+  kind: MoneyInKind;
+  /** Always positive on both kinds — the kind carries the sign, never the amount. */
+  amount: number;
+  /** `YYYY-MM-DD`, the day it ARRIVED. Format with `formatStoredDate()`. */
+  receivedDate: string;
+  /** What this is, in the budget's own words. Null = the "Not itemized" bucket. */
+  budgetItemId: string | null;
+  budgetCategoryId: string | null;
+  /**
+   * The names those two ids resolve to, read with the record.
+   *
+   * ⚠ NOT DENORMALIZED — joined on read, so renaming an item in the library renames it here too.
+   * The money-OUT sibling stores a free-text `category` copy instead, for a reason that does not
+   * apply here: those rows predate the taxonomy and many carry text and no id at all.
+   *
+   * ⚠ THEY LIVE HERE SO ONE PLACE RESOLVES THEM. Before this, the list, the export and the report
+   * route each invented their own lookup, and the report's simply gave up — it passed a null item
+   * name, so an arrival on an item the plan never mentions rendered as "Not itemized" while the
+   * list two tabs away showed its real name. Null only when the id is null, or the row it pointed
+   * at was deleted.
+   */
+  budgetItemName: string | null;
+  budgetCategoryName: string | null;
+  /** A note. ⚠ NEVER a grouping key — the item names the row. */
+  description: string | null;
+  notes: string | null;
+  /** Offered on `money_back` only. */
+  receivedFrom: MoneyInSource | null;
+  /** The team-ledger income entry this posted, so a delete can void it. Cash on hand, not dues. */
+  accountingEntryId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Budget category & item library ───────────────────────────────────────────
 
 export type BudgetScope = 'org' | 'team' | 'both';
@@ -2392,6 +2454,11 @@ export interface BudgetItem {
    *  "Misc" answers nothing — the coach picker no longer offers these, though historic lines keep
    *  pointing at them. */
   isMisc: boolean;
+  /** mig 243 — which way this word usually points. ⚠ A PICKER HINT THAT SORTS, never a constraint:
+   *  everything stays reachable in both directions, and the report takes a row's direction from
+   *  what was actually filed against it, never from here. Null on every club- and coach-created
+   *  item by design — guessing wrong is worse than not guessing. */
+  direction: 'in' | 'out' | null;
   createdAt: string;
 }
 

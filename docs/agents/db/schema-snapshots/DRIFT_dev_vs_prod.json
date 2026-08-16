@@ -1,14 +1,18 @@
 {
   "generated": "2026-08-16",
-  "total": 34,
+  "total": 67,
   "counts": {
-    "tables": 1,
-    "columns": 14,
-    "indexes": 8,
-    "constraints": 8,
-    "rls": 3
+    "tables": 2,
+    "columns": 31,
+    "indexes": 11,
+    "constraints": 16,
+    "rls": 7
   },
   "items": [
+    {
+      "key": "check:only-dev:budget_items.budget_items_direction_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:rep_fundraisers.rep_fundraisers_kind_check",
       "sig": ""
@@ -22,11 +26,27 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_team_money_in.rep_team_money_in_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_money_in.rep_team_money_in_entry_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_money_in.rep_team_money_in_received_from_check",
+      "sig": ""
+    },
+    {
       "key": "column:changed:rep_fundraiser_entries.player_id",
       "sig": "uuid|uuid|YES| :: uuid|uuid|NO|"
     },
     {
       "key": "column:only-dev:budget_categories.sports",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:budget_items.direction",
       "sig": ""
     },
     {
@@ -78,6 +98,70 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_money_in.accounting_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.budget_item_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.description",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.entry_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.received_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.received_from",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_money_in.updated_at",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:budget_items.budget_items_team_id_fkey",
       "sig": ""
     },
@@ -110,6 +194,38 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_accounting_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_budget_item_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:budget_items_team_idx",
       "sig": ""
     },
@@ -130,6 +246,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_team_money_in_item",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_money_in_year",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_fundraiser_tags_pkey",
       "sig": ""
     },
@@ -138,11 +262,19 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_money_in_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:budget_items_unique_org_name",
       "sig": ""
     },
     {
       "key": "table:only-dev:rep_team_fundraiser_tags",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_money_in",
       "sig": ""
     }
   ]

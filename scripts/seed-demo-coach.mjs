@@ -39,7 +39,8 @@ import {
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
-  OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES,
+  OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_MONEY_IN,
+  OFFSEASON_DUES,
   OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_TESTING_ABSENT,
   OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue, demoPaidStampIso,
   SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
@@ -275,6 +276,7 @@ async function wipeProgramYearChildren(teamId, pyId) {
   await del('rep_player_tryout_baselines', q => q.eq('team_id', teamId));
   await del('rep_player_continuity_links', q => q.eq('team_id', teamId));
   await del('rep_team_expenses', q => q.eq('team_id', teamId));
+  await del('rep_team_money_in', q => q.eq('team_id', teamId));
   await del('rep_dues_credits', q => q.eq('program_year_id', pyId));
   await del('rep_season_surplus', q => q.eq('program_year_id', pyId));
   await del('rep_fundraisers', q => q.eq('team_id', teamId));
@@ -387,6 +389,31 @@ async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
 }
 
 /**
+ * Money that ARRIVED — income, and money back on something (mig 243).
+ *
+ * ⚠ NO LEDGER ENTRY IS WRITTEN HERE, and that is the same choice every other seeded money row
+ * makes: the demo seeds the RECORDS a coach would have entered, not the accounting rows the app
+ * posts on top of them. A refund's cash-on-hand effect is a live-product behaviour, and inventing
+ * a matching entry in the seed would give the nightly re-anchor a second thing to keep in step for
+ * no gain a prospect can see.
+ */
+async function insertDemoMoneyIn(team, pyId, records, itemIndex) {
+  if (!records?.length) return;
+  await insertAll('rep_team_money_in', records.map(m => ({
+    program_year_id: pyId, team_id: team.id, org_id: org.id,
+    entry_kind: m.kind,
+    // ⚠ POSITIVE ON BOTH KINDS. The kind carries the sign; a negative here would ADD to the row
+    // the refund is supposed to reduce.
+    amount: m.amount,
+    received_date: m.receivedDate,
+    ...itemRef(itemIndex, m.category, m.item),
+    description: m.description,
+    received_from: m.receivedFrom,
+    created_by: coach.id,
+  })));
+}
+
+/**
  * `category|item` → the two ids both a budget line and a cost are filed under (mig 240).
  *
  * ⚠ THE ITEM IS WHAT NAMES A BUDGET ROW NOW, and what the plan and the books are matched on. A
@@ -492,6 +519,10 @@ async function platformBudgetCategoryIds() {
   const byName = new Map((data ?? []).map(c => [c.name.toLowerCase(), c.id]));
   const required = [...new Set([
     ...OFFSEASON_BUDGET_LINES.map(l => l.category),
+    // Money-in lines and arrivals name real categories too since mig 243 — "Fundraising" is the
+    // renamed "Fundraising Costs", and a stale name here must fail loudly, not seed a headless row.
+    ...OFFSEASON_FUNDING_LINES.map(l => l.category),
+    ...OFFSEASON_MONEY_IN.map(m => m.category),
     ...SEASON_START_BUDGET_LINES.map(l => l.category),
     ...MIDSEASON_BUDGET_LINES.map(l => l.category),
   ])];
@@ -699,7 +730,9 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // Ids are minted here, so lines and their phasing are two batched writes rather than twelve.
   // ⚠ Every cost line carries its ITEM (mig 240) — that is what names the row on the plan and on
   // the report, and what the team's spending is matched to.
-  const offSeasonItems = await budgetItemIds(team.id, [...OFFSEASON_BUDGET_LINES, ...state.expenses]);
+  const offSeasonItems = await budgetItemIds(team.id, [
+    ...OFFSEASON_BUDGET_LINES, ...OFFSEASON_FUNDING_LINES, ...state.expenses, ...state.moneyIn,
+  ]);
   const budgetLineRows = [
     ...OFFSEASON_BUDGET_LINES.map((line, i) => ({
       id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
@@ -707,10 +740,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       item_id: itemRef(offSeasonItems, line.category, line.item).budget_item_id,
       description: line.description, total_amount: line.total, line_kind: 'cost', sort_order: i,
     })),
-    // Money coming IN — stored positive, displayed negative, no category (see the constant).
+    /* Money coming IN — stored positive, the KIND carries the sign, and since mig 243 it carries
+       the same category + item a cost does. Filed under Fundraising ALONGSIDE the raffle's own
+       printing cost, which is what gives the by-activity lens a two-sided block to show. */
     ...OFFSEASON_FUNDING_LINES.map((line, i) => ({
       id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
-      category_id: null,
+      category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+      item_id: itemRef(offSeasonItems, line.category, line.item).budget_item_id,
       description: line.description, total_amount: line.total, line_kind: 'funding',
       sort_order: OFFSEASON_BUDGET_LINES.length + i,
     })),
@@ -730,6 +766,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // ⚠ The photo-day cost names an item in a category this plan never mentions, so it lands as its
   // OWN flagged row on the report — a better telling of the unbudgeted beat than a loose list.
   await insertDemoExpenses(team, pyId, state.expenses, offSeasonItems);
+  /* One income entry and one refund (mig 243). The refund lands on the SAME item the plan's two
+     summed Entry Fees lines name, so the row a prospect reads carries the SUM ruling and the
+     netting ruling at once. */
+  await insertDemoMoneyIn(team, pyId, state.moneyIn, offSeasonItems);
 
   // Dues: two instalments settled, two ahead — and one family a payment behind.
   await seedDues(team, pyId, playerIds, {

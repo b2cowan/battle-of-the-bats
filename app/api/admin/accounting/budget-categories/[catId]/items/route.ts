@@ -25,6 +25,8 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
     sortOrder:       row.sort_order as number,
     isDefault:       row.is_default as boolean,
     isMisc:          row.is_misc as boolean,
+    // mig 243 — null on anything an admin creates: only the platform library is tagged.
+    direction:       (row.direction as 'in' | 'out' | null) ?? null,
     createdAt:       row.created_at as string,
   };
 }

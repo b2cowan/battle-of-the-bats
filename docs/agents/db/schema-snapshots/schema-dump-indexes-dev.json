@@ -2075,6 +2075,21 @@
     "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
   },
   {
+    "tablename": "rep_team_money_in",
+    "indexname": "idx_rep_team_money_in_item",
+    "indexdef": "CREATE INDEX idx_rep_team_money_in_item ON public.rep_team_money_in USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_money_in",
+    "indexname": "idx_rep_team_money_in_year",
+    "indexdef": "CREATE INDEX idx_rep_team_money_in_year ON public.rep_team_money_in USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_money_in",
+    "indexname": "rep_team_money_in_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_money_in_pkey ON public.rep_team_money_in USING btree (id)"
+  },
+  {
     "tablename": "rep_team_opponent_aliases",
     "indexname": "idx_rep_team_opponent_aliases_opponent",
     "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_opponent ON public.rep_team_opponent_aliases USING btree (opponent_id)"

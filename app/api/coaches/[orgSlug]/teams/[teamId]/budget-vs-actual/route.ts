@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
-  getRealisedFundraiserEntries,
+  getRealisedFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -12,9 +12,20 @@ import {
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
-import { rollupBudget, type RollupLine, type RollupSpend } from '@/lib/coach-budget-rollup';
+import {
+  rollupMoneyReport, type RollupLine, type RollupSpend, type RollupRefund, type ItemRow,
+} from '@/lib/coach-budget-rollup';
+import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+
+/** A category row without the raw records behind each item — see the note at the payload. */
+function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
+  return {
+    ...cat,
+    items: cat.items.map(({ lines: _lines, costs: _costs, costCount: _costCount, ...item }) => item),
+  };
+}
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
@@ -48,13 +59,16 @@ export const GET = withObservability(async (req: Request,
     .order('sort_order');
 
   const allLines = (linesRaw ?? []) as Array<Record<string, unknown>>;
-  // ⚠ EXPECTED-FUNDING LINES ARE NOT COSTS and must never enter the cost machinery below: this
-  // report matches actual expenses to a line by category NAME, so a funding line filed under
-  // "Fundraising" would sit waiting to absorb a real expense that happened to carry that word —
-  // and would inflate the budget it is supposed to offset. They get their own block (§8b).
-  // ⚠ BOTH MONEY-IN KINDS. Fundraising and sponsorship differ only in how they REPORT — a filter
-  // naming one would leave the other in the COST bucket, where it would be matched against real
-  // expenses and inflate the very budget it exists to offset (2026-08-15).
+  /* ⚠ MONEY-IN LINES STILL MUST NOT ENTER THE COST MACHINERY — but the mechanism changed in
+     mig 243, and the old one would now be wrong. Until this release they were FILTERED OUT at the
+     top, because the report matches costs to a category by NAME and a funding line filed under
+     "Fundraising" would have sat waiting to absorb a real expense carrying that word. They now
+     carry a category and an item of their own, so filtering them out would lose them — instead
+     they go through the rollup with `direction: 'in'`, which puts them in a different SECTION.
+     A cost and an income row can never collide even on the same category+item, because direction
+     is part of the grouping key (lib/coach-budget-rollup.ts rule 5).
+     ⚠ BOTH MONEY-IN KINDS, through `isFundingKind`. Naming one would leave the other on the cost
+     side, where it would inflate the very budget it exists to offset (2026-08-15). */
   const lines = allLines.filter(l => !isFundingKind(l.line_kind as string | null));
   const fundingLines = allLines.filter(l => isFundingKind(l.line_kind as string | null));
 
@@ -143,7 +157,7 @@ export const GET = withObservability(async (req: Request,
     );
   }
 
-  const rollupLines: RollupLine[] = lines.map(l => ({
+  const toRollupLine = (l: Record<string, unknown>, direction: 'in' | 'out'): RollupLine => ({
     id:           l.id as string,
     categoryId:   (l.category_id as string | null) ?? null,
     categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
@@ -152,6 +166,7 @@ export const GET = withObservability(async (req: Request,
     totalAmount:  (l.total_amount as number) ?? 0,
     description:  l.description as string,
     notes:        (l.notes as string | null) ?? null,
+    direction,
     periods: ((l.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
       .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
       .map(p => ({
@@ -160,7 +175,8 @@ export const GET = withObservability(async (req: Request,
         amount:    p.amount as number,
         sortOrder: p.sort_order as number,
       })),
-  }));
+  });
+  const rollupLines: RollupLine[] = lines.map(l => toRollupLine(l, 'out'));
 
   /** Where one cost sits in the taxonomy — the three-step resolution above, in one place. */
   function placeCost(exp: Record<string, unknown>) {
@@ -211,11 +227,120 @@ export const GET = withObservability(async (req: Request,
       paidDate:    paidDate(exp),
     }));
 
-  const categoryResults = rollupBudget(rollupLines, rollupSpend);
+  /* ── Money IN, in the same two levels (mig 243) ──────────────────────────────────────────────
+     Three feeds, one grouping pass:
+       · money-in BUDGET lines, as revenue rows;
+       · TYPED arrivals, as their actuals;
+       · the DERIVED pools — what fundraisers and sponsors already report — placed as deep in the
+         taxonomy as the claiming lines actually agree.
+     ⚠ AND MONEY BACK, which is none of the three: it nets into the row it repaid, on either side,
+     and never appears as income (COACH_MONEY_BACK_ON_A_COST_PLAN §4.3). */
+  /* ⚠ ALL THREE IN ONE TRIP. This route already runs a long serial chain of awaits, and the
+     realised-entries read below needs nothing these two produce — whether to make it at all is
+     decided by `fundingLines`, which was known before this line. Left sequential it was one more
+     round trip on every request from a team that budgets any fundraising, which is most of them. */
+  const [moneyInRecords, derivedClaims, realisedEntries] = await Promise.all([
+    getRepTeamMoneyIn(programYear.id),
+    getDerivedIncomeClaims(programYear.id),
+    fundingLines.length > 0 ? getRealisedFundraiserEntries(programYear.id) : Promise.resolve([]),
+  ]);
+
+  for (const line of fundingLines) {
+    learnCategory(
+      line.category_id as string | null,
+      ((line.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+    );
+    rollupLines.push(toRollupLine(line, 'in'));
+  }
+
+  /**
+   * Where a money-in record sits. Both names come WITH the record (one join, in the reader) —
+   * the list, the export and this route all read the same two fields.
+   *
+   * ⚠ THE ITEM NAME IS NOT OPTIONAL HERE. An earlier draft passed null on the reasoning that the
+   * budget line would supply it; an arrival on an item the plan never mentions has no budget line,
+   * so its row rendered as "Not itemized" on the report while the Money in tab two clicks away
+   * showed its real name — the same fact, two answers.
+   */
+  const placeArrival = (m: (typeof moneyInRecords)[number]) => ({
+    categoryId:   m.budgetCategoryId,
+    categoryName: m.budgetCategoryName
+      ?? (m.budgetCategoryId ? categoryNameById.get(m.budgetCategoryId) ?? null : null),
+    itemId:       m.budgetItemId,
+    itemName:     m.budgetItemName,
+  });
+
+  const incomeSpend: RollupSpend[] = moneyInRecords
+    .filter(m => m.kind === 'income')
+    .map(m => ({
+      id: m.id,
+      description: m.description ?? '',
+      ...placeArrival(m),
+      amount: m.amount,
+      paidDate: m.receivedDate,
+      direction: 'in' as const,
+    }));
+
+  const refunds: RollupRefund[] = moneyInRecords
+    .filter(m => m.kind === 'money_back')
+    .map(m => ({
+      id: m.id,
+      description: m.description ?? '',
+      ...placeArrival(m),
+      amount: m.amount,
+      receivedDate: m.receivedDate,
+    }));
+
+  /* ⚠⚠ THE DERIVED POOLS, AND WHY THEY ARE NOT TYPED (§4.1). Fundraisers and sponsors report their
+     own realised figures — receipts only, less whatever was rebated to the player who raised it —
+     and PLAYER REBATES ARE COMPUTED FROM THEM. A coach cannot also type an income record on those
+     rows (the money-in write path refuses it), so counting both here is impossible by construction
+     rather than by care.
+     ⚠ SPLIT BY SOURCE. Drives and sponsors are two totals against two sets of lines; placing one
+     with the other's category would look precise and be wrong. */
+  const derivedSpend: RollupSpend[] = [];
+  if (fundingLines.length > 0) {
+    for (const source of ['fundraiser', 'sponsor'] as const) {
+      const total = realisedEntries
+        .filter(e => e.kind === source)
+        .reduce((s, e) => s + (e.amountRaised - e.rebateAmount), 0);
+      if (Math.abs(total) < 0.005) continue;
+      const at = placeDerivedActual(derivedClaims.filter(c => c.source === source));
+      derivedSpend.push({
+        id: `derived-${source}`,
+        // Named so the drill-in says where the figure came from — a coach who cannot find the
+        // record behind a number has to be told there isn't one to find.
+        description: source === 'fundraiser' ? 'From your fundraisers' : 'From your sponsors',
+        categoryId: at.categoryId, categoryName: at.categoryName,
+        itemId: at.itemId, itemName: at.itemName,
+        amount: Math.round(total * 100) / 100,
+        paidDate: null,
+        direction: 'in' as const,
+      });
+    }
+  }
+
+  const report = rollupMoneyReport({
+    lines: rollupLines,
+    spend: [...rollupSpend, ...incomeSpend, ...derivedSpend],
+    refunds,
+  });
+  /* ⚠ THE MONTH GRID AND EVERY COST FIGURE BELOW READ THE EXPENSES HALF, and only that half. The
+     grid is a money-OUT shape — a prior-season column, an un-itemized buffer row, a payment
+     schedule — and putting revenue rows in it would be a second report wearing the first's
+     clothes. Reading it off `report` rather than a second rollup call is what keeps Months and the
+     statement grouping one plan one way. */
+  const categoryResults = report.expenses.categories;
 
   // Kept flat for the export and for anything still asking "what wasn't planned?" as a list. It is
   // no longer a separate SECTION on screen — unplanned spending now sits in its own row inside its
   // own category, where a coach reads it beside everything else rather than below it.
+  /* ⚠ NET OF MONEY BACK. The list below is the individual costs; the FIGURE the screen names
+     ("of which never budgeted") has to reconcile with `totalActual`, which is net of refunds. Left
+     gross, an unplanned $500 truck hire with $200 back reported $500 of unplanned spending against
+     a row contributing $300 — the same money described two ways on one screen (/review). */
+  const unbudgetedRefunds = categoryResults.reduce((s, cat) =>
+    s + cat.items.filter(i => !i.inPlan).reduce((t, i) => t + i.refundTotal, 0), 0);
   const unbudgetedActuals = categoryResults.flatMap(cat =>
     cat.items.filter(i => !i.inPlan).flatMap(i => i.costs.map(c => ({
       id:          c.id,
@@ -395,6 +520,26 @@ export const GET = withObservability(async (req: Request,
     }
   }
 
+  /* ⚠ MONEY BACK REACHES THE MONTH GRID TOO, as a NEGATIVE actual on the month it arrived — or
+     Months and the statement would report different figures for the same item on the same screen,
+     which is the exact defect that made the grid read its rows off the rollup in the first place.
+     Taken from the EXPENSES half of the report rather than from the raw records, so the grid nets
+     exactly the refunds the cost rows netted: a refund the rollup sent to the revenue side must
+     not also come off spending here. */
+  for (const cat of report.expenses.categories) {
+    for (const item of cat.items) {
+      for (const back of item.refunds) {
+        gridActuals.push({ categoryName: cat.categoryName, date: back.receivedDate, amount: -back.amount });
+        pushDetail('actual', cat.categoryName, back.receivedDate, {
+          id: back.id,
+          description: `${back.description || item.itemName} — money back`,
+          amount: -back.amount,
+          paid: true,
+        });
+      }
+    }
+  }
+
   // Prior season — the comparison column. Only the most recent earlier year, and only when it
   // actually has lines; rollover already carries lines + periods forward, so a year-2+ team has
   // this for free and a first-season team correctly gets nothing.
@@ -451,31 +596,19 @@ export const GET = withObservability(async (req: Request,
     bufferAmount: buffer,
   });
 
-  // ── 9. Expected funding vs what the team actually kept ───────────────────
-  // Owner ruling 2026-08-12: the actual against an expected-funding line is the TEAM'S SHARE —
-  // everything raised, less whatever was rebated to the player who raised it. A rebate lowers
-  // that player's own dues, so counting it here would lower the same dues twice.
-  // ONE round trip, not two: the entries are read through their parent fundraiser rather than
-  // fetching the campaign ids first and then filtering by them. This route already runs a long
-  // serial chain of awaits; a second hop at the tail of it buys nothing.
-  // ⚠ RECEIPTS ONLY. A pledged sponsor's entry exists the moment it is recorded, but nothing has
-  // arrived — counting it here reported a $2,000 pledge as $2,000 of actual sponsorship against
-  // the plan, which is a report telling a coach they hit a number they have not (review,
-  // 2026-08-15). Migration 237 states this rule; the shared reader is where it is enforced.
-  let fundingActual = 0;
-  if (fundingLines.length > 0) {
-    for (const en of await getRealisedFundraiserEntries(programYear.id)) {
-      fundingActual += en.amountRaised - en.rebateAmount;
-    }
-  }
-  const funding = fundingLines.length === 0 ? null : {
+  /* ── 9. What players still have to fund ──────────────────────────────────────────────────────
+     ⚠ THE "EXPECTED FUNDING" BLOCK IS GONE FROM HERE, and this is where it went: money in is now a
+     SECTION of the report (`report.revenue`), grouped category → item exactly as spending is, so a
+     single derived total beside the cost table would be the same money reported twice.
+     What survives is the one figure the section cannot state — what dues still have to cover once
+     everything coming in is taken off. Owner ruling 2026-08-12 stands unchanged behind the actual:
+     it is the team's SHARE, everything raised less whatever was rebated to the player who raised
+     it, because a rebate already lowers that player's own dues and counting it here would lower the
+     same dues twice. ⚠ RECEIPTS ONLY — a pledge that counted as actual would flatter the season
+     (mig 237; enforced in the shared reader). */
+  const funding = report.revenue.categories.length === 0 ? null : {
     budget: budgetTotals.expectedFunding,
-    actual: Math.round(fundingActual * 100) / 100,
-    lines: fundingLines.map(l => ({
-      id:          l.id as string,
-      description: l.description as string,
-      amount:      (l.total_amount as number) ?? 0,
-    })),
+    actual: report.revenue.actual,
     fundedByPlayers: budgetTotals.fundedByPlayers,
   };
 
@@ -510,8 +643,18 @@ export const GET = withObservability(async (req: Request,
      figure for the screen to name, NOT as a second addend. Adding it again here would double-count
      precisely the spending this change set out to make visible. */
   const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.actual, 0) * 100) / 100;
-  const unbudgeted   = Math.round(unbudgetedActuals.reduce((s, u) => s + u.amount, 0) * 100) / 100;
+  const unbudgeted   = Math.round(
+    (unbudgetedActuals.reduce((s, u) => s + u.amount, 0) - unbudgetedRefunds) * 100) / 100;
   const headroom     = Math.round((effectiveBudget - totalActual) * 100) / 100;
+
+  /* The season net, once, against the figures the report actually SHOWS — see the note beside it
+     in the payload. With no estimate set the effective budget IS the itemized sum, and this is
+     exactly the rollup's own net. */
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const netBudget = r2(report.revenue.budgeted - effectiveBudget);
+  const netActual = r2(report.revenue.actual - totalActual);
+  const seasonNet = { budgeted: netBudget, actual: netActual, variance: r2(netActual - netBudget) };
+  const expenseCategories = categoryResults.map(slimCategory);
 
   return NextResponse.json({
     headroom,
@@ -530,11 +673,33 @@ export const GET = withObservability(async (req: Request,
        PLAN page uses them (it calls the same function locally to render editable lines), but this
        report renders neither — shipping them would put two full arrays of raw records on every item
        row of a season's report for nothing. The unbudgeted list below is already extracted from
-       them server-side. */
-    categories:    categoryResults.map(cat => ({
-      ...cat,
-      items: cat.items.map(({ lines: _lines, costs: _costs, costCount: _costCount, ...item }) => item),
-    })),
+       them server-side.
+       ⚠ REFUNDS ARE THE EXCEPTION AND STAY. They are what lets a row say "$2,400 paid · $150 back"
+       instead of only "$2,250", and there are ordinarily nought or one of them per row. */
+    /* Both report shapes, off ONE grouping pass (plan §3.5). The statement is the default and the
+       shape a treasurer, a board and a parent already know; by-activity answers the question a
+       statement structurally cannot, because a category appears in both its sections. They end on
+       the same season net because they are the same rows read two ways.
+       ⚠ THE EXPENSES CATEGORIES ARE NOT ALSO SENT AT THE TOP LEVEL. They were, briefly — the same
+       tree twice in one payload, doubling the heaviest part of a season's report on every load,
+       because the export builder still read the old field. It reads this one now. */
+    report: {
+      revenue:  { ...report.revenue,  categories: report.revenue.categories.map(slimCategory) },
+      expenses: { ...report.expenses, categories: expenseCategories },
+      activities: report.activities.map(block => ({
+        ...block,
+        revenue: block.revenue ? slimCategory(block.revenue) : null,
+        costs:   block.costs   ? slimCategory(block.costs)   : null,
+      })),
+      /* ⚠ THE SEASON NET IS COMPUTED HERE, not left to each screen. The pure rollup's own net is
+         revenue less the ITEMIZED cost sum; the report's Total expenses row has always shown the
+         EFFECTIVE budget (the estimate whenever one is set — owner ruling 2026-08-12, shared with
+         the plan page, the Money hub and headroom). Shipping the rollup's figure as `net` put a
+         number in the payload that looked authoritative and was wrong for any team with an
+         estimate, so the screen quietly recomputed its own — two answers, one of them a trap for
+         the next caller. One answer now, and both shapes and the export read it. */
+      net: seasonNet,
+    },
     /** How much of `totalActual` went on items nobody planned — a figure to NAME, never to add. */
     unbudgeted,
     unbudgetedActuals,

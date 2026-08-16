@@ -1,6 +1,598 @@
 {
-  "generated": "2026-08-16T04:39:41.113Z",
+  "generated": "2026-08-16T16:20:21.080Z",
   "entries": {
+    "coach-history-awards|768|tap-floor|a·Insights": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-awards|768|tap-floor|button·Help: Awards": {
+      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Account": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Notifications": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Overview": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Schedule": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Practice plans": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Lineups": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Tournaments": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Development": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Insights": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Money": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Chat": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Email families": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Roster": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Tryouts": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Staff": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Documents": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Settings": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Help": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Sign out": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Help: Awards": {
+      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·Statement": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·By activity": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·Months": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·See it by month": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·Statement": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·By activity": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·Months": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·See it by month": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Add Line": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Show Dome Time's payment periods": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·Statement": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·By activity": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·Months": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than 33px because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Expenses (2)": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Payables (1)": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Money in (0)": {
+      "reason": "The Money in sub-tab (mig 243), the same shared .viewToggleBtn primitive as the Expenses and Payables tabs beside it, at the same 27px. Product-wide sub-tab debt already held for its siblings on this very screen; padding one tab of four would break the row rather than fix the floor.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Payment schedule": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Export": {
+      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Add": {
+      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-expenses|768|tap-floor|button·Mark Paid": {
+      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Add Line": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Diamond Permits": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Show Dome Time's payment periods": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Dome Time": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Entry Fees": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Chocolate sale": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Statement": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·By activity": {
+      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Months": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|button·See it by month": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$1,300.00": {
+      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
+      "detail": "content spills 2px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$2,600.00": {
+      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
+      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$3,900.00": {
+      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
+      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$5,200.00": {
+      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
+      "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·Budgeted (cumulative)": {
+      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
+      "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-expenses|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Import": {
+      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than the 33px they were baselined at one slot away because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Expenses (2)": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Payables (1)": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Money in (0)": {
+      "reason": "The Money in sub-tab (mig 243), the same shared .viewToggleBtn primitive as the Expenses and Payables tabs beside it, at the same 27px. Product-wide sub-tab debt already held for its siblings on this very screen; padding one tab of four would break the row rather than fix the floor.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Payment schedule": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Export": {
+      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Add": {
+      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Edit Practice balls and tees": {
+      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Mark Paid": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|button·Edit Scorekeeping tablet": {
+      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
+      "detail": "24px tall (floor 44)"
+    },
     "coach-fundraisers|361|tap-floor|a·Chocolate sale": {
       "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
       "detail": "24px tall (floor 44)"
@@ -577,43 +1169,11 @@
       "reason": null,
       "detail": "23px tall (floor 44)"
     },
-    "coach-budget|361|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·Categories": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·See it by month": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "19px tall (floor 44)"
-    },
     "coach-payment-requests|361|tap-floor|a·Open Org Allocations": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
     },
     "coach-allocations|361|tap-floor|a·Open Payment Requests": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·Categories": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
     },
@@ -632,94 +1192,6 @@
     "coach-accounting|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Add Line": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Show Winter dome block's payment periods": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Edit Winter dome block": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Edit Diamond permits": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Edit Spring classic entry": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Edit Chocolate sale": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Categories": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than 33px because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Expenses (2)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Payables (1)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Export": {
-      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
-      "detail": "33px tall (floor 44)"
     },
     "coach-payment-requests|768|tap-floor|button·Import": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
@@ -844,346 +1316,6 @@
     "coach-accounting|1440|tap-floor|button·Help: Money": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·FieldLogicHQ Home": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Account": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Notifications": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Overview": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Lineups": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Tryouts": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Insights": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Money": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Chat": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Email families": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Staff": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Documents": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Settings": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Tournaments": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Help": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Sign out": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Add Line": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Show Winter dome block's payment periods": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Edit Winter dome block": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Edit Diamond permits": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Edit Spring classic entry": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|button·Edit Chocolate sale": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·FieldLogicHQ Home": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Account": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Notifications": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Overview": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Lineups": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Tryouts": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Insights": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Money": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Chat": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Email families": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Staff": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Documents": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Settings": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Tournaments": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Help": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Sign out": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Categories": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|button·See it by month": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$1,300.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 2px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$2,600.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$3,900.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$5,200.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·Budgeted (cumulative)": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-expenses|1440|tap-floor|a·FieldLogicHQ Home": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Account": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Notifications": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Overview": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Lineups": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Tryouts": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Insights": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Money": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Chat": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Email families": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Staff": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Documents": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Settings": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Tournaments": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Help": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Sign out": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Import": {
-      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than the 33px they were baselined at one slot away because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Expenses (2)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Payables (1)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Export": {
-      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Mark Paid": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
     },
     "coach-payment-requests|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
@@ -7153,34 +7285,6 @@
       "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-expenses|768|tap-floor|button·Add": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Edit Practice balls and tees": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Mark Paid": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Edit Scorekeeping tablet": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Add": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Edit Practice balls and tees": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Edit Scorekeeping tablet": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
-    },
     "coach-practice-plans|768|tap-floor|button·Help: Practice plans": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "34px tall (floor 44)"
@@ -7309,10 +7413,6 @@
       "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
-    "coach-budget|1440|tap-floor|a·Practice plans": {
-      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
-      "detail": "39px tall (floor 44)"
-    },
     "coach-history|1440|tap-floor|a·Practice plans": {
       "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
@@ -7354,14 +7454,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-accounting|1440|tap-floor|a·Practice plans": {
-      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Practice plans": {
-      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Practice plans": {
       "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
@@ -7420,98 +7512,6 @@
     "coach-payment-requests|1440|tap-floor|button·Edit Diamond permit reimbursement": {
       "reason": "The row-open control (pencil while a request is pending, eye once the club has reviewed it). Deliberate above 768px: this button is drawn once per row, and the owner ruling that made it 24px is that anything drawn beside every item in a list is drawn as many times as the list is long — a 44px control on a twelve-row list out-shouts the figures beside it. The floor IS enforced where thumbs are: at 641-768px it is raised to 44px, and at 640px and below the row becomes a card and the shared card rule turns this into a full-width labelled button. 1440px is pointer territory. Recorded 2026-08-16 after the rendered check first saw these rows with real seeded data.",
       "detail": "24px tall (floor 44)"
-    },
-    "coach-history-awards|768|tap-floor|a·Insights": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-awards|768|tap-floor|button·Help: Awards": {
-      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·FieldLogicHQ Home": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Account": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|button·Notifications": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Overview": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Schedule": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Practice plans": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Lineups": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Tournaments": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Development": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Insights": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Money": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Chat": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Email families": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Roster": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Tryouts": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Staff": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Documents": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Settings": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|a·Help": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|button·Sign out": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-history-awards|1440|tap-floor|button·Help: Awards": {
-      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
-      "detail": "34px tall (floor 44)"
     }
   }
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, use, Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
@@ -28,12 +28,21 @@ import {
   // Aliased: this panel already has a local `scheduleRows` holding the filtered schedule ROWS,
   // and the import is the function that turns them into export rows.
   SCHEDULE_COLUMNS, scheduleRows as scheduleExportRows,
+  MONEY_IN_COLUMNS, moneyInRows,
 } from '@/lib/coach-money-exports';
 import styles from '../../../../coaches.module.css';
-import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer } from '@/lib/types';
+import type {
+  RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
+  RepTeamMoneyIn, MoneyInKind, MoneyInSource,
+} from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { isFundingKind } from '@/lib/coach-budget-totals';
-import { useMoneyRevision } from '@/lib/coach-money-refresh';
+import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { taxonomyKey } from '@/lib/coach-money-derived';
+import {
+  MONEY_IN_KIND_ROW, MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
+} from '@/lib/coach-money-in';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -53,26 +62,85 @@ function fmt(n: number) {
  * a coach recognises. Keep both columns' examples concrete and keep them plural — one example
  * reads as the only case that qualifies.
  */
-function KindCompare() {
+/** One card in the comparison: a name, what it means, and the examples that do the real work. */
+interface KindCard { title: string; body: ReactNode; examples: string }
+
+/** The two-card comparison itself, plus the one-line test underneath. Shared, because there are
+ *  now two of these (money out, money in) and the shape invites a third. */
+function KindComparePanel({ cards, test }: { cards: KindCard[]; test: ReactNode }) {
   return (
     <>
       <div className={styles.moneyKindCompare}>
-        <div className={styles.moneyKindCard}>
-          <h4>Expense</h4>
-          <p>Money that has <strong>already left</strong> the team — you&apos;re recording what happened.</p>
-          <p className={styles.moneyKindEgs}>Pizza night · a diamond you rented last week · uniforms you bought</p>
-        </div>
-        <div className={styles.moneyKindCard}>
-          <h4>Payable</h4>
-          <p>Money you&apos;ve <strong>promised but not paid</strong> — you&apos;re scheduling what&apos;s coming.</p>
-          <p className={styles.moneyKindEgs}>A tournament entry due in March · a dome block · an umpire invoice</p>
-        </div>
+        {cards.map(card => (
+          <div key={card.title} className={styles.moneyKindCard}>
+            <h4>{card.title}</h4>
+            <p>{card.body}</p>
+            <p className={styles.moneyKindEgs}>{card.examples}</p>
+          </div>
+        ))}
       </div>
-      <p className={styles.moneyKindTest}>
+      <p className={styles.moneyKindTest}>{test}</p>
+    </>
+  );
+}
+
+function KindCompare() {
+  return (
+    <KindComparePanel
+      cards={[
+        {
+          title: 'Expense',
+          body: <>Money that has <strong>already left</strong> the team — you&apos;re recording what happened.</>,
+          examples: 'Pizza night · a diamond you rented last week · uniforms you bought',
+        },
+        {
+          title: 'Payable',
+          body: <>Money you&apos;ve <strong>promised but not paid</strong> — you&apos;re scheduling what&apos;s coming.</>,
+          examples: 'A tournament entry due in March · a dome block · an umpire invoice',
+        },
+      ]}
+      test={<>
         <strong>The quick test:</strong> if it has a due date, it&apos;s a payable. Payables appear on your
         Payment schedule; expenses don&apos;t.
-      </p>
-    </>
+      </>}
+    />
+  );
+}
+
+/**
+ * Income or money back? — the comparison under the Money in empty state (mig 243).
+ *
+ * ⚠⚠ THE THIRD CARD IS THE POINT, and it is not about money in at all. A coach says
+ * *"a parent paid me back"* for two opposite things, and the one that already exists — a cost the
+ * family paid the vendor directly — leaves the team OWING that family a credit. Teaching the
+ * income/money-back pair without naming the out-of-pocket case is teaching two thirds of a
+ * distinction, and the third is the one that moves money in a real family's ledger.
+ *
+ * Same shape and same reasoning as `KindCompare` above: examples are what land, definitions are
+ * not, and this is the one moment a coach is reading rather than typing.
+ */
+function MoneyInCompare() {
+  return (
+    <KindComparePanel
+      cards={[
+        {
+          title: 'Income',
+          body: <>Money the team <strong>earned or was given</strong>.</>,
+          examples: 'Registrations for a tournament you hosted · concession takings · a grant',
+        },
+        {
+          title: 'Money back',
+          body: <>The team paid for something and <strong>some of it came back</strong>.</>,
+          examples: 'A cancelled entry refunded · a vendor credit · the club paying back a permit',
+        },
+      ]}
+      test={<>
+        <strong>The quick test:</strong> a refund isn’t income — a refunded $150 entry means the team
+        <em> spent $150 less</em>, so it reduces that item instead of adding a row.{' '}
+        <strong>And neither one is “a family paid the vendor directly”</strong> — that is a cost with{' '}
+        <strong>Paid by</strong> set to the family, and it leaves the team owing them a credit.
+      </>}
+    />
   );
 }
 
@@ -117,7 +185,7 @@ function payableStatus(
   return { label: 'Scheduled', cls: styles.badgeDraft };
 }
 
-type ExpenseTab = 'expenses' | 'payables' | 'schedule';
+type ExpenseTab = 'expenses' | 'payables' | 'money-in' | 'schedule';
 
 type ScheduleFilter = 'unpaid' | 'paid' | 'all';
 
@@ -156,19 +224,110 @@ const BLANK_RECORD = {
   depositDueDate: '',
   balanceAmount: '',
   balanceDueDate: '',
+  /** Money-in only (mig 243): the day it ARRIVED, and — on a refund — who paid it back. */
+  receivedDate: '',
+  receivedFrom: '',
 };
 
-type RecordKind = 'expense' | 'payable';
+/**
+ * THREE ANSWERS, BECAUSE ACCOUNTING HAS THREE (COACH_MONEY_IN_TAXONOMY_PLAN §3.1, mockup
+ * `ee76cc79`). Replaces the two-way Expense · Payable switch.
+ *
+ * ⚠ `refund` IS NOT INCOME, and that is the whole reason there are three rather than two. A
+ * refunded tournament entry means the team spent $150 less, not that it earned $150 — booking it
+ * as income overstates both sides and corrupts every per-item cost figure downstream.
+ *
+ * ⚠ AND `refund` IS NOT "PAID OUT OF POCKET" (`paidByPlayerId`, the field a few lines down). A
+ * coach describes both as "a parent paid me back": one returns money the team spent, the other
+ * means the team OWES that family a credit. The form says so out loud on the refund branch.
+ *
+ * ⚠ THE IDS DELIBERATELY AVOID THE WORDS `cost`, `funding` AND `sponsorship`. Those are budget-LINE
+ * kinds, and `tests/unit/budget-line-kind-guard.test.ts` bans comparing them to literals anywhere
+ * in a file that touches the kind — this one does (`isFundingKind`, below). Different vocabulary,
+ * different names, no collision.
+ */
+type EntryKind = 'expense' | 'income' | 'refund';
 
-/** The sub-tab a coach is standing on decides which kind the form opens as. */
-function kindForTab(tab: ExpenseTab): RecordKind {
-  return tab === 'expenses' ? 'expense' : 'payable';
+/**
+ * ⚠ PAYABLE IS A TIMING ATTRIBUTE, NOT A FOURTH ANSWER (plan §3.1, decided deliberately).
+ *
+ * A payable has always been a cost with a due date — the money is the same money, only later. Made
+ * a peer of Income it would have claimed to be a different KIND of money, and the three-way
+ * question the whole release rests on would have read as four unrelated things. So it lives one
+ * level down, appearing only once "A cost" is chosen. A scheduled INCOME needs no equivalent: that
+ * is a budget line, which the plan side already models.
+ */
+type CostTiming = 'paid' | 'payable';
+
+/**
+ * What the form is called, in every place it has to name itself.
+ *
+ * ⚠ ONE EXHAUSTIVE RECORD, NOT SIX TERNARY CHAINS. The modal title, the discard-guard noun, the
+ * examples line, the stated-fact sentence on an edit, the delete-confirm title and the save button
+ * each spelled the same four-way fork out for themselves — so a fifth kind, or a reworded example,
+ * meant finding all six and getting all six right. A `Record` keyed by the resolved tag makes a
+ * missing case a compile error, which is the same lesson `LINE_KIND_LABEL` and friends already
+ * encode one module over.
+ *
+ * ⚠ Keyed by the RESOLVED tag (payable split out of cost), because that is what the copy varies
+ * by — `entryKind` alone cannot tell an expense from a payable.
+ */
+type FormKindTag = 'expense' | 'payable' | 'income' | 'refund';
+
+const FORM_COPY: Record<FormKindTag, {
+  /** Modal title when editing a saved record. */
+  editTitle: string;
+  /** What the discard guard calls the thing being abandoned. */
+  noun: string;
+  /** The examples under the kind switch. */
+  examples: string;
+  /** The stated fact shown instead of the switch on an edit. */
+  statedFact: string;
+  /** The save button when adding — it names the outcome, so the toolbar button can be "Add". */
+  addLabel: string;
+}> = {
+  expense: {
+    editTitle: 'Edit expense',
+    noun: 'expense',
+    examples: 'Pizza night · a diamond you rented last week · uniforms you bought',
+    statedFact: 'An expense — money the team has already spent.',
+    addLabel: 'Add Expense',
+  },
+  payable: {
+    editTitle: 'Edit payable',
+    noun: 'payable',
+    examples: 'A tournament entry due in March · a dome block · an umpire invoice',
+    statedFact: 'A payable — money committed but not yet paid.',
+    addLabel: 'Add Payable',
+  },
+  income: {
+    editTitle: 'Edit income',
+    noun: 'income entry',
+    examples: 'Tournament registrations you took · concession takings · a grant',
+    statedFact: 'Income — money the team earned or was given.',
+    addLabel: 'Add Income',
+  },
+  refund: {
+    editTitle: 'Edit money back',
+    noun: 'money-back entry',
+    examples: 'A cancelled entry refunded · a vendor credit · the club paying back a permit you fronted',
+    statedFact: 'Money back — a refund, credit or reimbursement of something already recorded.',
+    addLabel: 'Add Money Back',
+  },
+};
+
+/** The sub-tab a coach is standing on decides how the form opens. */
+function kindForTab(tab: ExpenseTab): { kind: EntryKind; timing: CostTiming } {
+  if (tab === 'money-in') return { kind: 'income', timing: 'paid' };
+  if (tab === 'payables') return { kind: 'expense', timing: 'payable' };
+  return { kind: 'expense', timing: 'paid' };
 }
 
 /** Turn a saved record back into form strings, for Edit. */
 function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
   const num = (v: number | null) => (v == null ? '' : String(v));
   return {
+    ...BLANK_RECORD,
     description: e.description,
     category: e.category ?? '',
     budgetCategoryId: e.budgetCategoryId ?? '',
@@ -181,6 +340,20 @@ function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
     depositDueDate: e.depositDueDate ?? '',
     balanceAmount: num(e.balanceAmount),
     balanceDueDate: e.balanceDueDate ?? '',
+  };
+}
+
+/** The same, for an arrival. Shares BLANK_RECORD so the two halves of one form stay one shape. */
+function formFromMoneyIn(m: RepTeamMoneyIn): typeof BLANK_RECORD {
+  return {
+    ...BLANK_RECORD,
+    description: m.description ?? '',
+    budgetCategoryId: m.budgetCategoryId ?? '',
+    budgetItemId: m.budgetItemId ?? '',
+    amount: String(m.amount),
+    notes: m.notes ?? '',
+    receivedDate: m.receivedDate,
+    receivedFrom: m.receivedFrom ?? '',
   };
 }
 
@@ -219,18 +392,29 @@ export function ExpensesPayablesPanel({
      the old category warning carried, one level finer. The panel already fetched the plan, so this
      costs no extra request. */
   const [budgetLines, setBudgetLines] = useState<
-    Array<{ categoryId: string | null; itemId: string | null }>
+    Array<{ categoryId: string | null; itemId: string | null; direction: 'in' | 'out' }>
   >([]);
 
   /* Which payable has its deposit/balance detail open. One at a time — the pair is tall, and a
      list with every row expanded is the card list this replaced. */
   const [expandedPayable, setExpandedPayable] = useState<string | null>(null);
 
-  // One form, two kinds, two modes (add / edit) — see BLANK_RECORD.
+  /* Money coming IN (mig 243): income and money back, in one list beside the two money-out ones.
+     `derivedKeys` are the category+item rows whose actual already comes from a fundraiser or a
+     sponsor — the form greys those out and says why, and the server refuses them regardless. */
+  const [moneyIn, setMoneyIn] = useState<RepTeamMoneyIn[]>([]);
+  const [derivedKeys, setDerivedKeys] = useState<Set<string>>(new Set());
+
+  // One form, three answers, two modes (add / edit) — see BLANK_RECORD and EntryKind.
   const [formOpen, setFormOpen] = useState(false);
-  const [formKind, setFormKind] = useState<RecordKind>('expense');
+  const [formKind, setFormKind] = useState<EntryKind>('expense');
+  const [formTiming, setFormTiming] = useState<CostTiming>('paid');
   /** The record being edited, or null when adding. Held whole so the locks can read its paid state. */
   const [editing, setEditing] = useState<RepTeamExpense | null>(null);
+  /** The ARRIVAL being edited. Separate from `editing` on purpose: they are different records in
+   *  different tables with different rules, and one nullable union would invite a reader to
+   *  forget which they were holding. Exactly one of the two is ever set. */
+  const [editingMoneyIn, setEditingMoneyIn] = useState<RepTeamMoneyIn | null>(null);
   const [form, setForm] = useState(BLANK_RECORD);
   const [formPayee, setFormPayee] = useState<PayeeSelection | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -264,14 +448,25 @@ export function ExpensesPayablesPanel({
      could only ever go stale there — deriving from the record instead means the form cannot render
      a payable's fields for an expense (or vice versa) because a state setter was forgotten. In add
      mode `formKind` is the coach's actual choice and is authoritative. */
+  const entryKind: EntryKind = editingMoneyIn
+    ? (editingMoneyIn.kind === 'income' ? 'income' : 'refund')
+    : editing ? 'expense'
+    : formKind;
+  const isMoneyInForm = entryKind !== 'expense';
   const isPayableForm = editing
     ? editing.expenseType === 'tournament_payable'
-    : formKind === 'payable';
-  /* What the coach is told before confirming a delete. Reads the same function the server reverses
-     with (lib/expense-ledger.ts), so the sentence and the outcome cannot drift apart. */
+    : entryKind === 'expense' && formTiming === 'payable';
+  /** The one place the four-way fork is resolved; every label below reads from `copy`. */
+  const formTag: FormKindTag = entryKind !== 'expense' ? entryKind : isPayableForm ? 'payable' : 'expense';
+  const copy = FORM_COPY[formTag];
+  /* What the coach is told before confirming a delete. Reads the same functions the server reverses
+     with (lib/expense-ledger.ts, lib/coach-money-in.ts), so the sentence and the outcome cannot
+     drift apart. ⚠ Money IN reverses the other way — deleting it LOWERS cash on hand — so it gets
+     its own sentence rather than sharing the expense one with a flipped word. */
   const deletePreview = editing
     ? ledgerReversalPreview(editing)
     : { amount: 0, legs: 0, owesFamily: false };
+  const moneyInDeletePreview = editingMoneyIn ? moneyInReversalPreview(editingMoneyIn) : null;
 
   // Chunk H — the payment schedule: every money-OUT commitment in one list, by due date.
   // Player dues stay on the Dues page, where the reminders that chase them live.
@@ -294,7 +489,9 @@ export function ExpensesPayablesPanel({
      ⚠ WHEN EDITING, "dirty" IS MEASURED AGAINST THE SAVED RECORD, not against blank. Comparing an
      edit form to BLANK_RECORD would call every edit dirty the instant it opened — including one the
      coach opened to read and closed untouched — and the guard would cry wolf until it was ignored. */
-  const formBaseline = editing ? formFromExpense(editing) : BLANK_RECORD;
+  const formBaseline = editingMoneyIn ? formFromMoneyIn(editingMoneyIn)
+    : editing ? formFromExpense(editing)
+    : BLANK_RECORD;
   const baselineTags = editing ? (tagsByExpenseId[editing.id] ?? []) : [];
   const formDirty = touched(form, formBaseline)
     || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
@@ -303,7 +500,7 @@ export function ExpensesPayablesPanel({
   const closeForm = useDiscardGuard({
     dirty: formDirty,
     close: () => { setFormOpen(false); resetForm(); },
-    noun: isPayableForm ? 'payable' : 'expense',
+    noun: copy.noun,
   });
 
   /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
@@ -311,28 +508,43 @@ export function ExpensesPayablesPanel({
      record opened at the third. */
   function resetForm() {
     setEditing(null);
+    setEditingMoneyIn(null);
     setForm(BLANK_RECORD);
     setFormTags([]);
     setFormPayee(null);
     setConfirmDelete(false);
   }
 
-  /** Open the form to ADD, as whichever kind the current sub-tab is about (Q8). */
-  function openAdd(kind: RecordKind = kindForTab(tab)) {
+  /** Open the form to ADD, opening on whatever the current sub-tab is about (Q8). */
+  function openAdd(opening: { kind: EntryKind; timing: CostTiming } = kindForTab(tab)) {
     resetForm();
-    setFormKind(kind);
+    setFormKind(opening.kind);
+    setFormTiming(opening.timing);
+    /* An arrival is dated the day it landed, and that is almost always today — pre-filled through
+       the ORG's clock, never the runtime's, or a coach entering after 8 PM Eastern gets tomorrow. */
+    setForm(f => ({ ...f, receivedDate: tournamentToday() }));
     setSaveError('');
     setFormOpen(true);
   }
 
   /** Open the form to EDIT a saved record. Type is stated, never switchable (owner ruling) — which
-   *  is why `formKind` is not set here: `isPayableForm` derives it from the record itself. */
+   *  is why `formKind` is not set here: `entryKind` derives it from the record itself. */
   function openEdit(e: RepTeamExpense) {
     resetForm();
     setEditing(e);
     setForm(formFromExpense(e));
     setFormTags(tagsByExpenseId[e.id] ?? []);
     setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
+    setSaveError('');
+    setFormOpen(true);
+  }
+
+  /** The same door for an arrival. Its kind is stated too — income and money back are not two
+   *  labels on one event, so switching between them is a delete and a re-add. */
+  function openEditMoneyIn(m: RepTeamMoneyIn) {
+    resetForm();
+    setEditingMoneyIn(m);
+    setForm(formFromMoneyIn(m));
     setSaveError('');
     setFormOpen(true);
   }
@@ -349,26 +561,34 @@ export function ExpensesPayablesPanel({
   const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
   /** The category+item pairs this team budgeted for — rebuilt only when the plan reloads, not on
    *  every keystroke in the open form (the form's state lives in this same component). */
-  const plannedPairs = useMemo(
-    () => new Set(budgetLines.map(l => `${l.categoryId ?? ''}|${l.itemId ?? ''}`)),
-    [budgetLines],
-  );
+  const plannedPairs = useMemo(() => ({
+    out: new Set(budgetLines.filter(l => l.direction === 'out').map(l => taxonomyKey(l.categoryId, l.itemId))),
+    in:  new Set(budgetLines.filter(l => l.direction === 'in').map(l => taxonomyKey(l.categoryId, l.itemId))),
+  }), [budgetLines]);
   const tagById = new Map(expenseTags.map(t => [t.id, t]));
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [res, catRes, planRes] = await Promise.all([
+      const [res, catRes, planRes, inRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
         fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in${seasonQuery}`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setExpenses(data.expenses ?? []);
       setExpenseTags(data.expenseTags ?? []);
       setTagsByExpenseId(data.tagsByExpenseId ?? {});
+      /* Best-effort, like the taxonomy beside it: a money-in read that fails must not blank the
+         expenses list a coach came here for. The tab shows its own empty state instead. */
+      if (inRes.ok) {
+        const inData = await inRes.json();
+        setMoneyIn(inData.moneyIn ?? []);
+        setDerivedKeys(new Set<string>(inData.derivedKeys ?? []));
+      }
       if (catRes.ok) {
         const catData = await catRes.json();
         setCategories(catData.categories ?? []);
@@ -376,9 +596,16 @@ export function ExpensesPayablesPanel({
       if (planRes.ok) {
         const planData = await planRes.json();
         const plan = planData.plan as RepBudgetPlan | undefined;
-        setBudgetLines((plan?.lines ?? [])
-          .filter(l => !isFundingKind(l.lineKind))
-          .map(l => ({ categoryId: l.categoryId, itemId: l.itemId })));
+        /* ⚠ BOTH DIRECTIONS NOW (mig 243). This used to drop money-in lines, which was correct
+           while they carried no category or item; they carry both from this release, and an income
+           entry needs the same "is this in your plan?" honesty a cost gets. The direction comes
+           from `isFundingKind`, never a literal — the whole-tree guard, and the reason a fourth
+           kind will reach this line for free. */
+        setBudgetLines((plan?.lines ?? []).map(l => ({
+          categoryId: l.categoryId,
+          itemId: l.itemId,
+          direction: isFundingKind(l.lineKind) ? 'in' as const : 'out' as const,
+        })));
         if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       }
     } catch (e: any) {
@@ -391,6 +618,18 @@ export function ExpensesPayablesPanel({
   // Re-read (never remount) when the hub's Import menu commits payables while this panel is
   // mounted but off-screen — an in-progress expense form on another tab must survive it.
   const moneyRevision = useMoneyRevision();
+  /**
+   * ⚠ THIS SCREEN'S WRITES MAKE THE REST OF MONEY STALE, and it was not saying so (/review,
+   * concurrency lens). The hub keeps every visited tab MOUNTED behind `display:none`, and Budget
+   * vs. Actual and the Budget Plan only re-read when this revision changes — so a coach who read
+   * the report, came here, recorded a $500 income entry and switched back saw the old Season net
+   * until a hard reload. The Fundraisers panel has bumped this since sponsors shipped, for exactly
+   * the same reason; the money form simply never joined it.
+   *
+   * ⚠ It covers COSTS as well as arrivals, which closes the same pre-existing gap: an expense
+   * marked paid changes the report just as much as an arrival does.
+   */
+  const bumpMoneyRevision = useBumpMoneyRevision();
   useEffect(() => { load(); }, [load, moneyRevision]);
 
   // The roster behind "Paid by" — fetched the first time the Add Expense form opens, not on
@@ -439,7 +678,8 @@ export function ExpensesPayablesPanel({
   // the sub-tab again, not silently do nothing because it already fired once before.
   const wantedTab = seasonSearchParams.get('tab');
   useEffect(() => {
-    if (wantedTab === 'schedule' || wantedTab === 'payables' || wantedTab === 'expenses') setTab(wantedTab);
+    if (wantedTab === 'schedule' || wantedTab === 'payables' || wantedTab === 'expenses'
+      || wantedTab === 'money-in') setTab(wantedTab);
   }, [wantedTab]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
@@ -472,10 +712,62 @@ export function ExpensesPayablesPanel({
    * request entirely rather than sent back unchanged: the server refuses any locked field it is
    * given, so echoing the current amount on a paid record would turn "I renamed it" into a 409.
    */
+  /**
+   * Save an arrival — income, or money back on something (mig 243).
+   *
+   * ⚠ ITS OWN PATH, ITS OWN ENDPOINT, ITS OWN TABLE. A refund is not a negative expense, so nothing
+   * here goes near the expenses route: every existing sum over that table keeps its sign because
+   * these rows never enter it. Kept beside `saveRecord` rather than folded into it because the two
+   * share only the picker — different fields, different validation, different consequences.
+   */
+  async function saveMoneyIn() {
+    const amount = parseFloat(form.amount);
+    if (categories.length > 0 && !form.budgetItemId) {
+      throw new Error(entryKind === 'refund'
+        ? 'Pick what this is paying you back for — it is what lets the refund reduce the right row.'
+        : 'Pick a category and item — they line this up with your budget.');
+    }
+    if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+    if (!form.receivedDate) throw new Error('Enter the date the money arrived');
+
+    const payload = {
+      amount,
+      receivedDate: form.receivedDate,
+      budgetItemId: form.budgetItemId || null,
+      description: form.description.trim() || null,
+      notes: form.notes.trim() || null,
+      // Only a refund has a "who paid it back"; an income record has nothing it could mean.
+      receivedFrom: entryKind === 'refund' ? (form.receivedFrom || null) : null,
+    };
+
+    const res = editingMoneyIn
+      ? await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in/${editingMoneyIn.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      : await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // ⚠ The KIND is set at creation and never sent on an edit — income and money back are
+          // different events, not two labels on one.
+          body: JSON.stringify({ ...payload, kind: entryKind === 'income' ? 'income' : 'money_back' }),
+        });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
+  }
+
   async function saveRecord() {
     setSaveError('');
     setSaving(true);
     try {
+      if (isMoneyInForm) {
+        await saveMoneyIn();
+        setFormOpen(false);
+        resetForm();
+        await load();
+        bumpMoneyRevision();
+        return;
+      }
       /* ⚠ `isPayableForm`, NEVER `formKind`, AND THE DISTINCTION IS NOT COSMETIC. `formKind` is only
          written when ADDING; an edit derives its kind from the record. Reading the raw state here
          meant that opening the screen fresh and going straight to a pencil on a PAYABLE saved as
@@ -559,6 +851,7 @@ export function ExpensesPayablesPanel({
       resetForm();
       await load();
       if (tab === 'schedule') await loadSchedule();
+      bumpMoneyRevision();
     } catch (e: any) {
       setSaveError(e.message);
     } finally {
@@ -574,11 +867,15 @@ export function ExpensesPayablesPanel({
    * sentence written for the coach, so it is shown as-is and the form stays open.
    */
   async function deleteRecord() {
-    if (!editing) return;
+    if (!editing && !editingMoneyIn) return;
     setDeleting(true);
     setSaveError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${editing.id}`, {
+      const res = editingMoneyIn
+        ? await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in/${editingMoneyIn.id}`, {
+            method: 'DELETE',
+          })
+        : await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${editing!.id}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete');
@@ -586,6 +883,7 @@ export function ExpensesPayablesPanel({
       resetForm();
       await load();
       if (tab === 'schedule') await loadSchedule();
+      bumpMoneyRevision();
     } catch (e: any) {
       setSaveError(e.message);
       setConfirmDelete(false);
@@ -607,6 +905,8 @@ export function ExpensesPayablesPanel({
       // Marking a payable paid changes the schedule too — refresh it so the row doesn't sit
       // there still reading "unpaid" until the coach navigates away and back.
       if (tab === 'schedule') await loadSchedule();
+      // ...and it changes the report, which is a different tab of the same mounted hub.
+      bumpMoneyRevision();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -654,7 +954,11 @@ export function ExpensesPayablesPanel({
    * is the point at which a reader counts brackets instead of reading branches.
    */
   function renderPaidBy() {
-    if (isPayableForm) return null;
+    /* ⚠ NEVER ON A MONEY-IN FORM, and the reason is the trap this release is most likely to fall
+       into. "Paid by · a family, out of pocket" means the team OWES that family a credit; money
+       back means the team owes nobody. Offering it here would put the two confusable halves on one
+       screen with one meaning between them. */
+    if (isPayableForm || isMoneyInForm) return null;
 
     if (editing) {
       if (!form.paidByPlayerId) return null;
@@ -727,26 +1031,63 @@ export function ExpensesPayablesPanel({
    * closes. A team that has never built a plan still picks from the standard library, so its
    * spending is classified from day one and its first budget lines meet it already sorted.
    *
-   * Not extracted into a component: ONE call site (the merged Add/Edit modal serves both kinds and
+   * ⚠ ONE FIELD, THREE ANSWERS (mig 243). The same control serves a cost, an income entry and money
+   * back, because they are the same question asked of the same taxonomy — "what is this?" — and
+   * splitting it into three would have been three pickers, three sport rails and three ownership
+   * models to keep in step. Only the LABEL changes, and only on the refund branch, where the honest
+   * wording is what it is paying you back FOR.
+   *
+   * ⚠ THE DIRECTION HINT SORTS, IT NEVER FILTERS (plan §3.6). A coach recording income meets the
+   * income words first and can still reach every other one — a refund legitimately points at
+   * either side, and concession takings really can be filed against a word tagged as a cost.
+   * Filtering here would be the constraint the plan explicitly refused.
+   *
+   * Not extracted into a component: ONE call site (the merged Add/Edit modal serves every kind and
    * both modes). Extract it when the recurring-payables group arrives, not in anticipation of it.
    */
   function budgetItemField() {
     const category = categories.find(c => c.id === form.budgetCategoryId) ?? null;
     const items = category?.items ?? [];
     const chosenItem = items.find(i => i.id === form.budgetItemId) ?? null;
+    const wantIn = entryKind === 'income';
 
     /* Does the team's plan actually budget for this? Derived here purely to SAY so at entry time —
        the report derives it again from the same two ids, and neither stores an answer.
-       The Set itself is memoised above the form: this function runs on every keystroke while the
-       modal is open, and the plan it is built from only changes on a reload. */
+       The Sets are memoised above the form: this function runs on every keystroke while the modal
+       is open, and the plan they are built from only changes on a reload.
+       ⚠ COMPARED AGAINST THE MATCHING DIRECTION. A team that plans Tournaments → Entry fees as a
+       cost has NOT planned Tournaments → Registration revenue as income, and saying otherwise
+       would make the warning meaningless on exactly the rows it is most useful for.
+       ⚠ NOT SHOWN ON MONEY BACK AT ALL: a refund is not a plan item, and "this isn't in your
+       budget" would read as an accusation about the wrong thing. */
+    // From the memoised Sets, not a fresh scan of the raw lines — this function runs on every
+    // keystroke while the modal is open, which is the whole reason those Sets exist.
+    const planned = wantIn ? plannedPairs.in : plannedPairs.out;
+    const hasPlan = planned.size > 0;
     const unplanned = Boolean(
-      budgetLines.length > 0 && form.budgetCategoryId && form.budgetItemId
-      && !plannedPairs.has(`${form.budgetCategoryId}|${form.budgetItemId}`),
+      entryKind !== 'refund' && hasPlan && form.budgetCategoryId && form.budgetItemId
+      && !planned.has(taxonomyKey(form.budgetCategoryId, form.budgetItemId)),
     );
+
+    /* ⚠⚠ ONE ROW, ONE SOURCE (§4.1). Fundraisers and sponsors already report their own actuals and
+       PLAYER REBATES ARE COMPUTED FROM THEM, so a typed income record on the same row would count
+       the same dollar twice and reach a family's dues, not just a report. Said here, in the moment,
+       rather than only at save time. The server refuses it regardless — this is the courtesy.
+       Money back is exempt: it reduces such a row rather than being a second source for it. */
+    const derived = Boolean(
+      entryKind === 'income' && form.budgetItemId
+      && derivedKeys.has(taxonomyKey(form.budgetCategoryId || null, form.budgetItemId)),
+    );
+
+    /** The picker's two groups: the direction the coach is working in, then everything else. */
+    const preferred = items.filter(i => i.direction === (wantIn ? 'in' : 'out') || i.direction === null);
+    const rest = items.filter(i => !preferred.includes(i));
 
     return (
       <div className={`${styles.field} ${styles.formGridFull}`}>
-        <label className={styles.label}>What is this? *</label>
+        <label className={styles.label}>
+          {entryKind === 'refund' ? 'What is it paying you back for? *' : 'What is this? *'}
+        </label>
         <div className={styles.stack640} style={{ gap: '0.6rem' }}>
           <select
             className={styles.select}
@@ -803,18 +1144,36 @@ export function ExpensesPayablesPanel({
             }}
           >
             <option value="">— Item —</option>
-            {items.map(i => (
-              <option key={i.id} value={i.id}>{i.name}</option>
-            ))}
+            {/* Grouped only when there is genuinely a second group — an optgroup wrapping the
+                whole list is a heading that distinguishes nothing. */}
+            {rest.length === 0
+              ? preferred.map(i => <option key={i.id} value={i.id}>{i.name}</option>)
+              : (
+                <>
+                  <optgroup label={wantIn ? 'Money coming in' : 'Money going out'}>
+                    {preferred.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Everything else">
+                    {rest.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                  </optgroup>
+                </>
+              )}
           </select>
         </div>
         {/* Honest at entry time, exactly as the old category warning was — one level finer, and
             now describing a row the coach will actually see rather than a list they might not. */}
         {unplanned && fieldWarning(
-          `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
+          wantIn
+            ? `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as income you didn’t plan for.`
+            : `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
+        )}
+        {derived && fieldWarning(
+          `${chosenItem?.name ?? 'This row'}’s actual already comes from your fundraisers and sponsors. Record the money there — logging it here as well would count it twice.`,
         )}
         {!form.budgetItemId && form.budgetCategoryId !== '' && fieldWarning(
-          'Pick an item too — it is what lines this cost up with your budget.',
+          entryKind === 'refund'
+            ? 'Pick an item too — it is what lets the refund reduce the right row.'
+            : 'Pick an item too — it is what lines this up with your budget.',
         )}
       </div>
     );
@@ -849,6 +1208,16 @@ export function ExpensesPayablesPanel({
 
   const scheduleRows = (schedule ?? []).filter(r =>
     scheduleFilter === 'all' ? true : scheduleFilter === 'paid' ? !!r.paid : !r.paid);
+
+  /* An arrival stores ids, and its names travel WITH it — one join in the reader, so this list,
+     the export and Budget vs. Actual cannot answer "what is this called" three different ways. A
+     row whose item was later deleted keeps its money and reads as the honest gap it now is. */
+  function nameForMoneyIn(m: RepTeamMoneyIn): { category: string; item: string } {
+    return {
+      category: m.budgetCategoryName ?? 'No category',
+      item: m.budgetItemName ?? 'Not itemized',
+    };
+  }
   const summaryHasOrgRows = (schedule ?? []).some(r => r.source === 'org');
   const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
@@ -886,7 +1255,9 @@ export function ExpensesPayablesPanel({
   // would be the same door twice, one line apart. On the standalone route there is no such menu,
   // so the button stays (rule 8: single-dataset screens keep plain buttons).
   /** Is there a tag filter to draw on the left of the toolbar? */
-  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule';
+  /* Money tags live on expenses, so neither the schedule (two sources, by due date) nor Money in
+     has anything for the filter to narrow. */
+  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule' && tab !== 'money-in';
 
   const expenseHeaderActions = !embedded && canWriteMoney ? (
     <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
@@ -941,6 +1312,13 @@ export function ExpensesPayablesPanel({
           <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
             Payables ({allPayables.length})
           </button>
+          {/* ⚠ MONEY IN LIVES BESIDE MONEY OUT, on the screen that owns the one form they share
+              (mig 243). A refund had to land here — it must work for a standalone team with no
+              club anywhere near it, which is why it is not on any org-money screen — and income
+              followed it, because the two are answers to the same question on the same form. */}
+          <button className={`${styles.viewToggleBtn} ${tab === 'money-in' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('money-in')}>
+            Money in ({moneyIn.length})
+          </button>
           <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('schedule')}>
             Payment schedule
           </button>
@@ -965,9 +1343,21 @@ export function ExpensesPayablesPanel({
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
           <MoneyExportButton
-            label={tab === 'schedule' ? 'Payment schedule' : tab === 'payables' ? 'Payables' : 'Expenses'}
+            label={tab === 'schedule' ? 'Payment schedule'
+              : tab === 'money-in' ? 'Money in'
+              : tab === 'payables' ? 'Payables' : 'Expenses'}
             formats={['xlsx', 'csv']}
-            build={() => (tab === 'schedule'
+            build={() => (tab === 'money-in'
+              ? {
+                  dataset: 'money-in',
+                  title: 'Money in',
+                  columns: MONEY_IN_COLUMNS,
+                  rows: moneyInRows(moneyIn, nameForMoneyIn),
+                  scopeLabel: assignment?.programYearName ?? '',
+                  teamName: assignment?.teamName ?? '',
+                  emptyMessage: 'No income or money back has been recorded yet.',
+                }
+              : tab === 'schedule'
               ? {
                   dataset: 'payment-schedule',
                   title: 'Payment Schedule',
@@ -991,7 +1381,9 @@ export function ExpensesPayablesPanel({
             // Matches every sibling tab. Without it, an Export with nothing behind it reads as
             // available right up until you press it — the dialog would still explain itself,
             // but the button should not have invited the click.
-            disabled={tab === 'schedule' ? scheduleRows.length === 0 : filteredActive.length === 0}
+            disabled={tab === 'schedule' ? scheduleRows.length === 0
+              : tab === 'money-in' ? moneyIn.length === 0
+              : filteredActive.length === 0}
           />
           {expenseToolbarActions}
         </div>
@@ -1006,7 +1398,12 @@ export function ExpensesPayablesPanel({
           </span>
         </div>
       )}
-      {filterTag && (
+      {/* ⚠ GATED ON THE SAME CONDITION AS THE CHIPS. The filter itself hides on the tabs money
+          tags cannot narrow, but this caption was gated only on a tag BEING chosen — and nothing
+          clears that choice on a tab change. Filter the Payables list, switch to Money in, and the
+          payables count and total sat there captioning a list they had nothing to do with
+          (/review, regression lens). */}
+      {filterTag && showTagFilter && (
         <div className={styles.moneyTagSummary}>
           vs <strong>{filterTag.name}</strong>: {filteredActive.length} {tab === 'expenses' ? 'expense' : 'payable'}{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
         </div>
@@ -1028,7 +1425,7 @@ export function ExpensesPayablesPanel({
                 icon: <Plus size={15} aria-hidden />,
                 // Names the outcome even though the toolbar button doesn't: an empty state is
                 // teaching, and "Add" alone would answer none of the question it just posed.
-                onClick: () => openAdd('expense'),
+                onClick: () => openAdd({ kind: 'expense', timing: 'paid' }),
               } : undefined}
             />
             <KindCompare />
@@ -1113,7 +1510,7 @@ export function ExpensesPayablesPanel({
               primaryAction={canWriteMoney ? {
                 label: 'Add Payable',
                 icon: <Plus size={15} aria-hidden />,
-                onClick: () => openAdd('payable'),
+                onClick: () => openAdd({ kind: 'expense', timing: 'payable' }),
               } : undefined}
               secondaryAction={canWriteMoney ? {
                 label: 'Import a schedule',
@@ -1274,6 +1671,85 @@ export function ExpensesPayablesPanel({
             </table>
           </div>
         )
+      ) : tab === 'money-in' ? (
+        /* ── Money in (mig 243) ───────────────────────────────────────────────────────────
+           Income and money back in one list, because they arrive through one form and a coach
+           auditing the season needs to see every arrival together.
+
+           ⚠ THE KIND IS A COLUMN, and that does not contradict the report's no-row-labels ruling.
+           Budget vs. Actual carries no "money back" chip because a refund NETS into the row it
+           repaid and there is nothing left to tag. Here they are two different events sharing one
+           table, and a coach has to be able to tell a $325 grant from a $325 reimbursement — which
+           is the one distinction only they can make. */
+        moneyIn.length === 0 ? (
+          <>
+            <CoachEmptyState
+              icon={<Receipt size={22} aria-hidden />}
+              headline="No money in yet"
+              description="Record what the team earned or was given — and anything that came back on something it already paid for."
+              primaryAction={canWriteMoney ? {
+                label: 'Add Income',
+                icon: <Plus size={15} aria-hidden />,
+                onClick: () => openAdd({ kind: 'income', timing: 'paid' }),
+              } : undefined}
+              secondaryAction={canWriteMoney ? {
+                label: 'Add Money Back',
+                icon: <Plus size={15} aria-hidden />,
+                onClick: () => openAdd({ kind: 'refund', timing: 'paid' }),
+              } : undefined}
+            />
+            <MoneyInCompare />
+          </>
+        ) : (
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th}>Received</th>
+                  <th className={styles.th}>What</th>
+                  <th className={styles.th}>Kind</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+                  <th className={styles.th}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {moneyIn.map(m => {
+                  const { category, item } = nameForMoneyIn(m);
+                  return (
+                    <tr
+                      key={m.id}
+                      className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
+                      onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEditMoneyIn(m); } : undefined}
+                    >
+                      {/* ⚠ formatStoredDate, never a hand-roll. `received_date` is a `date` and a
+                          money row mixes dates with timestamps — both hand-rolls have printed
+                          garbage on three screens already. */}
+                      <td className={styles.td} data-label="Received">{formatStoredDate(m.receivedDate)}</td>
+                      <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+                        {item}
+                        <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
+                          {category}{m.description ? ` · ${m.description}` : ''}
+                        </span>
+                      </td>
+                      <td className={styles.td} data-label="Kind">
+                        <span className={`${styles.badge} ${m.kind === 'income' ? styles.badgeActive : styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>
+                          {MONEY_IN_KIND_ROW[m.kind]}
+                        </span>
+                      </td>
+                      {/* ⚠ POSITIVE ON BOTH KINDS. The Kind column carries the direction; a minus
+                          sign here would be the second notation for a thing the report already
+                          shows in brackets, and would read as an amount rather than an effect. */}
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(m.amount)}</td>
+                      <td className={`${styles.td} ${styles.cardActionCell}`}>
+                        {canWriteMoney && <RowEditButton label={`Edit ${item}`} onClick={() => openEditMoneyIn(m)} />}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
       ) : (
         /* ── Payment schedule (chunk H) ────────────────────────────────────────────────
            Every money-OUT commitment in one place, by due date: this team's payable
@@ -1384,57 +1860,99 @@ export function ExpensesPayablesPanel({
         <div className={styles.modalOverlay} onClick={closeForm}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
-              title={editing
-                ? (isPayableForm ? 'Edit payable' : 'Edit expense')
-                : 'Add'}
-              subtitle={editing ? undefined : 'Record something the team spent, or something it owes.'}
+              title={editing || editingMoneyIn ? copy.editTitle : 'Add'}
+              subtitle={editing || editingMoneyIn
+                ? undefined
+                : 'Record money the team spent, money it owes, or money that came in.'}
               onClose={closeForm}
             />
             <div className={styles.formGrid}>
-              {/* ── What kind of record is this? ──────────────────────────────────────────────
-                  ⚠ ONLY WHEN ADDING. A saved record never switches type: converting would mean
-                  due-date and deposit fields materialising on an existing row, and a payable
-                  converting the other way silently dropping a schedule it may already appear on
-                  in the Payment schedule. With Delete available, the wrong type is cheap to fix
-                  by deleting and re-adding, which is the honest correction rather than a
-                  half-migration. */}
-              {!editing ? (
+              {/* ── What kind of entry is this? ───────────────────────────────────────────────
+                  THREE ANSWERS, BECAUSE ACCOUNTING HAS THREE (plan §3.1, mockup ee76cc79).
+
+                  ⚠ ONLY WHEN ADDING. A saved record never switches kind: converting an expense to
+                  a payable would materialise due-date fields on an existing row and converting
+                  back would drop a schedule it may already appear on; converting income to money
+                  back would move a figure from one section of the report to a reduction somewhere
+                  else while one posted ledger entry tried to describe both. With Delete available
+                  and stating its own consequence, the wrong kind is cheap to fix honestly. */}
+              {!editing && !editingMoneyIn ? (
                 <div className={styles.formGridFull}>
-                  <div className={styles.kindSwitch} role="radiogroup" aria-label="What kind of record is this?">
-                    {(['expense', 'payable'] as const).map(k => (
+                  <div className={styles.kindSwitch} role="radiogroup" aria-label="What kind of entry is this?">
+                    {(['expense', 'income', 'refund'] as const).map(k => (
                       <button
                         key={k}
                         type="button"
                         role="radio"
                         aria-checked={formKind === k}
                         className={`${styles.kindSwitchOption} ${formKind === k ? styles.kindSwitchOptionOn : ''}`}
-                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Description, category and amount
-                           are common to both kinds and are exactly the fields already filled in
-                           when a coach realises they picked wrong — clearing them would make the
-                           switch as expensive as cancelling, which is what it exists to replace. */
+                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Category, item, amount and the
+                           note are common to all three and are exactly the fields already filled
+                           in when a coach realises they picked wrong — clearing them would make
+                           the switch as expensive as cancelling, which is what it exists to
+                           replace. The kind-specific fields stay in state unrendered for the same
+                           reason a payable's deposit does. */
                         onClick={() => setFormKind(k)}
                       >
-                        <span className={styles.kindName}>{k === 'expense' ? 'Expense' : 'Payable'}</span>
+                        <span className={styles.kindName}>
+                          {k === 'expense' ? 'A cost' : k === 'income' ? 'Income' : 'Money back on something'}
+                        </span>
                         <span className={styles.kindSub}>
-                          {k === 'expense'
-                            ? 'Already paid — recording what happened'
-                            : 'Promised but not paid — scheduling what’s coming'}
+                          {k === 'expense' ? 'Money the team spent'
+                            : k === 'income' ? 'Money the team earned or was given'
+                            : 'A refund, credit or reimbursement of something already recorded'}
                         </span>
                       </button>
                     ))}
                   </div>
-                  <p className={styles.kindEgs}>
-                    {isPayableForm
-                      ? 'A tournament entry due in March · a dome block · an umpire invoice'
-                      : 'Pizza night · a diamond you rented last week · uniforms you bought'}
-                  </p>
+
+                  {/* ⚠ PAYABLE IS A TIMING QUESTION ON THE COST SIDE, not a fourth answer — see
+                      the note on `CostTiming`. It appears only under "A cost", because a scheduled
+                      income is a budget line and the plan side already models it. */}
+                  {entryKind === 'expense' && (
+                    <div className={styles.kindSwitch} role="radiogroup" aria-label="Has this been paid?" style={{ marginTop: '0.5rem' }}>
+                      {(['paid', 'payable'] as const).map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          role="radio"
+                          aria-checked={formTiming === t}
+                          className={`${styles.kindSwitchOption} ${formTiming === t ? styles.kindSwitchOptionOn : ''}`}
+                          onClick={() => setFormTiming(t)}
+                        >
+                          <span className={styles.kindName}>{t === 'paid' ? 'Already paid' : 'Promised, not paid yet'}</span>
+                          <span className={styles.kindSub}>
+                            {t === 'paid'
+                              ? 'Recording what happened'
+                              : 'A payable — it joins your payment schedule'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className={styles.kindEgs}>{copy.examples}</p>
+
+                  {/* ⚠⚠ THE CONFUSABLE PAIR, SAID OUT LOUD AT THE MOMENT OF THE CHOICE
+                      (money-back plan §2). A coach describes BOTH of these as "a parent paid me
+                      back", and they are opposites: money back returns cash the team spent, while
+                      out-of-pocket means the team OWES that family a credit. Merging them credits
+                      a family twice or loses a credit entirely — real money in a real family's
+                      ledger. The other half of the pair is a field on the cost branch, so this is
+                      the one place a coach can see both descriptions at once. */}
+                  {entryKind === 'refund' && (
+                    <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
+                      The team paid for something and some of the money came back — cash on hand goes
+                      up and <strong>nobody is owed anything</strong>.{' '}
+                      Did a family pay a vendor <em>directly</em> instead? That is a different thing:
+                      record it as <strong>a cost</strong> and set <strong>Paid by</strong> to that
+                      family, so the team&apos;s debt to them is tracked.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
-                  {isPayableForm
-                    ? 'A payable — money committed but not yet paid.'
-                    : 'An expense — money the team has already spent.'}
-                  {' '}Wrong kind? Delete this and add it again.
+                  {copy.statedFact} Wrong kind? Delete this and add it again.
                 </p>
               )}
 
@@ -1451,14 +1969,22 @@ export function ExpensesPayablesPanel({
               {budgetItemField()}
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Description *</label>
+                <label className={styles.label}>Description{isMoneyInForm ? '' : ' *'}</label>
                 <input
                   className={styles.input}
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder={isPayableForm ? 'e.g. Spring tournament entry, summer dome block' : 'e.g. Diamond rental'}
+                  placeholder={isMoneyInForm
+                    ? 'Optional note — the item names the row'
+                    : isPayableForm ? 'e.g. Spring tournament entry, summer dome block' : 'e.g. Diamond rental'}
                 />
-                {/* ⚠ STILL REQUIRED, AND IT IS NOT THE NOTE (that field is optional, under Details).
+                {/* ⚠ OPTIONAL ON AN ARRIVAL, REQUIRED ON A COST, AND THE ASYMMETRY IS REAL. An
+                    expense's description IS the record: it is written onto the team's books as the
+                    ledger entry, and it is how a delete finds the entry to reverse on anything paid
+                    before 2026-08-15. A money-in row stores its ledger link from birth and describes
+                    the entry from the ITEM, so nothing depends on these words — making them
+                    mandatory would be asking for typing that changes nothing. */}
+                {/* ⚠ STILL REQUIRED ON A COST, AND IT IS NOT THE NOTE (that field is optional, under Details).
                     This text IS the record: it is written onto the team's books as the ledger entry
                     when the cost is marked paid, it is how a delete finds the entry to reverse on
                     anything paid before 2026-08-15 (those rows store no entry id and are matched by
@@ -1473,7 +1999,7 @@ export function ExpensesPayablesPanel({
                   cannot change AND be told the way out, or the only remaining move is a support
                   question. The server enforces the same rule — this is the explanation, not the
                   guard. */}
-              {locks.amount ? (
+              {locks.amount && !isMoneyInForm ? (
                 <div className={styles.field}>
                   <label className={styles.label}>{isPayableForm ? 'Total Amount' : 'Amount'}</label>
                   <div className={styles.lockedField}>
@@ -1497,6 +2023,44 @@ export function ExpensesPayablesPanel({
                     onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                     placeholder="0.00"
                   />
+                </div>
+              )}
+
+              {/* ── Money-in only: when it landed, and (on a refund) who sent it ─────────────
+                  ⚠ THE DATE IS THE FACT, not the day it was typed. A refund is dated when it
+                  ARRIVED — $600 of permits across July and August with $325 back in September
+                  reads 300 / 300 / (325) — because back-dating the credit into July would rewrite
+                  a month already reported on and reconciled (money-back plan §4.3). */}
+              {isMoneyInForm && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Date received *</label>
+                  <input
+                    className={styles.input}
+                    type="date"
+                    value={form.receivedDate}
+                    onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+                  />
+                </div>
+              )}
+              {entryKind === 'refund' && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Who paid it back</label>
+                  <select
+                    className={styles.select}
+                    value={form.receivedFrom}
+                    onChange={e => setForm(f => ({ ...f, receivedFrom: e.target.value }))}
+                  >
+                    <option value="">Not saying</option>
+                    {MONEY_IN_SOURCES.map(s => (
+                      <option key={s} value={s}>{MONEY_IN_SOURCE_LABEL[s]}</option>
+                    ))}
+                  </select>
+                  {/* ⚠ A LABEL, NEVER A BEHAVIOUR (money-back plan §4.1). In particular "A family"
+                      does not create, settle or touch any dues credit — that is what the cost
+                      form's "Paid by" does, and it is the opposite event. */}
+                  <p className={styles.formHint}>
+                    Just a note on the record. It changes nothing about anyone&apos;s dues.
+                  </p>
                 </div>
               )}
 
@@ -1568,7 +2132,25 @@ export function ExpensesPayablesPanel({
                 </div>
               )}
 
-              {/* ── Shared bookkeeping detail, folded away on both kinds (Q1) ─────────────── */}
+              {/* ── An arrival's note, in the open ───────────────────────────────────────────
+                  ⚠ NOT BEHIND THE DETAILS DISCLOSURE, because on this branch it would be a
+                  disclosure hiding exactly one field. Payment method, payee and money tags are
+                  deliberately absent: they describe money going OUT to somebody, and inventing
+                  money-in equivalents in this release would be three new fields nothing reads. */}
+              {isMoneyInForm && (
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label}>Notes</label>
+                  <textarea
+                    className={styles.textarea}
+                    rows={2}
+                    value={form.notes}
+                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  />
+                </div>
+              )}
+
+              {/* ── Shared bookkeeping detail, folded away on both money-out kinds (Q1) ────── */}
+              {!isMoneyInForm && (
               <div className={styles.formGridFull}>
                 <CoachFormDisclosure
                   label="Add details (optional)"
@@ -1605,6 +2187,7 @@ export function ExpensesPayablesPanel({
                   </div>
                 </CoachFormDisclosure>
               </div>
+              )}
             </div>
 
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
@@ -1614,6 +2197,37 @@ export function ExpensesPayablesPanel({
                 already paid reverses what it posted, and a coach must be told the size of that
                 before they can consent to it. `ledgerReversalPreview` is the SAME function the
                 server reverses with, so the sentence and the outcome cannot drift apart. */}
+            {/* ⚠ MONEY IN REVERSES THE OTHER WAY, so it gets its own sentence rather than the
+                expense one with a word flipped: deleting an arrival LOWERS cash on hand. And
+                nothing here can change what a family is owed, on either kind — see
+                `moneyInReversalPreview`, which deliberately has no `owesFamily`. */}
+            {confirmDelete && editingMoneyIn && moneyInDeletePreview && (
+              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                <p className={styles.dangerConfirmTitle}>
+                  Delete this {entryKind === 'income' ? 'income entry' : 'money-back entry'}?
+                </p>
+                <p className={styles.dangerConfirmBody}>
+                  {moneyInDeletePreview.posted ? (
+                    <>
+                      <strong>{fmt(moneyInDeletePreview.amount)}</strong> is on the team’s books as money
+                      that came in. Deleting it takes that back off, so cash on hand goes{' '}
+                      <strong>down</strong> by {fmt(moneyInDeletePreview.amount)}.
+                      {entryKind === 'refund' && ' The item it was reducing goes back up by the same amount.'}
+                    </>
+                  ) : (
+                    'Nothing was posted for this, so no money moves.'
+                  )}
+                </p>
+                <p className={styles.dangerConfirmBody}>Nobody’s dues change either way.</p>
+                <div className={styles.dangerConfirmActions}>
+                  <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                  <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                    {deleting ? 'Deleting…' : moneyInDeletePreview.posted ? 'Delete and reverse' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {confirmDelete && editing && (
               <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
                 <p className={styles.dangerConfirmTitle}>
@@ -1647,7 +2261,7 @@ export function ExpensesPayablesPanel({
             <div className={styles.modalFooter}>
               {/* Delete lives in the FORM's footer, not on the row — the pattern Budget Plan set,
                   and the reason a row needs only one control (owner ruling 2026-08-15). */}
-              {editing && canWriteMoney && !confirmDelete && (
+              {(editing || editingMoneyIn) && canWriteMoney && !confirmDelete && (
                 <button
                   className={styles.deleteRecordBtn}
                   onClick={() => setConfirmDelete(true)}
@@ -1660,11 +2274,11 @@ export function ExpensesPayablesPanel({
               <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
                 {saving
                   ? 'Saving…'
-                  : editing
+                  : editing || editingMoneyIn
                     ? 'Save changes'
                     /* The SAVE button names the outcome, which is what lets the toolbar button be
                        a plain "Add" (Q8). */
-                    : isPayableForm ? 'Add Payable' : 'Add Expense'}
+                    : copy.addLabel}
               </button>
             </div>
           </div>

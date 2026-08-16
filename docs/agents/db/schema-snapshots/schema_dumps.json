@@ -1685,6 +1685,15 @@
         "column_default": null
       },
       {
+        "table_name": "budget_items",
+        "pos": 12,
+        "column_name": "direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "chat_message_reactions",
         "pos": 1,
         "column_name": "id",
@@ -13268,6 +13277,150 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_money_in",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 5,
+        "column_name": "entry_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 7,
+        "column_name": "received_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 8,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 9,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 10,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 11,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 12,
+        "column_name": "received_from",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 13,
+        "column_name": "accounting_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_opponent_aliases",
         "pos": 1,
         "column_name": "id",
@@ -18552,14 +18705,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -18622,35 +18775,28 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -18658,6 +18804,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -18839,14 +18992,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19527,6 +19680,55 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_measurable_types_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "accounting_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_money_in_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_team_id_fkey"
       },
       {
         "table_name": "rep_team_opponent_aliases",
@@ -22376,6 +22578,21 @@
         "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
       },
       {
+        "tablename": "rep_team_money_in",
+        "indexname": "idx_rep_team_money_in_item",
+        "indexdef": "CREATE INDEX idx_rep_team_money_in_item ON public.rep_team_money_in USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "idx_rep_team_money_in_year",
+        "indexdef": "CREATE INDEX idx_rep_team_money_in_year ON public.rep_team_money_in USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_money_in_pkey ON public.rep_team_money_in USING btree (id)"
+      },
+      {
         "tablename": "rep_team_opponent_aliases",
         "indexname": "idx_rep_team_opponent_aliases_opponent",
         "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_opponent ON public.rep_team_opponent_aliases USING btree (opponent_id)"
@@ -23265,6 +23482,12 @@
         "table_name": "budget_categories",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_items",
+        "detail": "budget_items_direction_check",
+        "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
       },
       {
         "kind": "RLS",
@@ -24823,6 +25046,30 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_measurable_types",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_entry_kind_check",
+        "check_clause": "(entry_kind = ANY (ARRAY['income'::text, 'money_back'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_received_from_check",
+        "check_clause": "(received_from = ANY (ARRAY['club'::text, 'vendor'::text, 'sponsor'::text, 'family'::text, 'other'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_money_in",
         "detail": "ENABLED",
         "check_clause": null
       },

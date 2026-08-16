@@ -82,8 +82,10 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
   },
   {
     path: 'lib/db.ts',
-    reason: 'Counts lines to answer "has this team started its money at all?" — a funding line is '
-      + 'as good an answer as a cost line.',
+    reason: 'TWO readers, neither of which can be wrong about a kind. `hasBudgetLines` COUNTS lines '
+      + 'to answer "has this team started its money at all?" — a funding line is as good an answer '
+      + 'as a cost line. `getDerivedIncomeClaims` (mig 243) selects the money-in lines through '
+      + '`.in(…, FUNDING_LINE_KINDS)`, the shared list, so a fourth kind reaches it automatically.',
   },
   {
     path: 'lib/demo-coach-reconcile-core.ts',

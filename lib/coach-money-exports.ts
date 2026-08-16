@@ -24,7 +24,8 @@ import {
 import { duesStatusLabel } from './dues-status';
 import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals';
 import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
-import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
+import { MONEY_IN_KIND_ROW, MONEY_IN_SOURCE_LABEL } from './coach-money-in';
+import type { RepBudgetLineWithPeriods, RepTeamExpense, RepTeamMoneyIn } from './types';
 
 export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -187,6 +188,45 @@ export function expenseRows(
   }));
 }
 
+/**
+ * The Money in sub-tab: income and money back, in the order a coach reads them (mig 243).
+ *
+ * ⚠ THE KIND IS A COLUMN HERE, and that is not a contradiction of the report's no-row-labels rule.
+ * Budget vs. Actual carries no "money back" chip because a refund NETS into the row it repaid and
+ * there is nothing left to label. This is the record LIST — two different events sharing one table,
+ * where a coach auditing their own books has to be able to tell them apart.
+ */
+export const MONEY_IN_COLUMNS: ExportColumnDef[] = [
+  { label: 'Received',  key: 'received',    format: 'date' },
+  { label: 'Kind',      key: 'kind',        format: 'text' },
+  { label: 'Category',  key: 'category',    format: 'text' },
+  { label: 'Item',      key: 'item',        format: 'text' },
+  { label: 'Amount',    key: 'amount',      format: 'currency' },
+  { label: 'From',      key: 'from',        format: 'text' },
+  { label: 'Note',      key: 'description', format: 'text' },
+];
+
+export function moneyInRows(
+  records: RepTeamMoneyIn[],
+  /** Resolved names for the taxonomy ids, as the panel already holds them for the picker. */
+  nameFor: (r: RepTeamMoneyIn) => { category: string; item: string },
+): ExportRow[] {
+  return records.map(r => {
+    const { category, item } = nameFor(r);
+    return {
+      received: r.receivedDate,
+      kind: MONEY_IN_KIND_ROW[r.kind],
+      category,
+      item,
+      // ⚠ POSITIVE, both kinds — the Kind column carries the direction. A negative here would be
+      // summed against the income column by whatever spreadsheet this lands in.
+      amount: r.amount,
+      from: r.receivedFrom ? MONEY_IN_SOURCE_LABEL[r.receivedFrom] : '',
+      description: r.description ?? '',
+    };
+  });
+}
+
 /** The payment-schedule sub-tab: one dated commitment per row, across both lanes. */
 export const SCHEDULE_COLUMNS: ExportColumnDef[] = [
   { label: 'Due date',    key: 'dueDate',     format: 'date' },
@@ -342,20 +382,22 @@ export const BVA_EXPORT_COLUMNS: ExportColumnDef[] = [
   { label: 'Variance', key: 'variance', format: 'currency' },
 ];
 
-export type BvaCategorySource = {
-  /** ⚠ CATEGORY → ITEM, matching the screen (owner ruling 2026-08-15). The file used to list a row
-   *  per budget LINE, named by whatever description was typed — so a spreadsheet could not be
-   *  reconciled against the plan any more than the report could. */
-  categories: Array<{
-    categoryName: string; budgeted: number; actual: number; variance: number;
-    /** False = nothing in this category was budgeted; the file leaves Budgeted blank, as the
-     *  screen does, rather than printing a zero that reads like a plan of $0. */
-    inPlan: boolean;
-    items: Array<{
-      itemName: string; budgeted: number; actual: number; variance: number;
-      inPlan: boolean; lineCount: number;
-    }>;
+/** One category, in either direction — the shape both report sections share. */
+type BvaCategory = {
+  categoryName: string; budgeted: number; actual: number; variance: number;
+  /** False = nothing in this category was budgeted; the file leaves Budgeted blank, as the
+   *  screen does, rather than printing a zero that reads like a plan of $0. */
+  inPlan: boolean;
+  items: Array<{
+    itemName: string; budgeted: number; actual: number; variance: number;
+    inPlan: boolean; lineCount: number;
+    /** Money back netted into the row. The file says so in the row's own label, because a
+     *  spreadsheet has no drill-in to put it underneath. */
+    refundTotal: number; grossActual: number;
   }>;
+};
+
+export type BvaCategorySource = {
   /** Estimate not yet itemized — real planned money, so it belongs in the file. */
   buffer: number;
   /** ⚠ NO LONGER ADDED AS EXTRA ROWS — it is reported as one figure. Every paid dollar, planned or
@@ -365,11 +407,23 @@ export type BvaCategorySource = {
   effectiveBudget: number;
   totalActual: number;
   headroom: number;
-  funding: {
-    budget: number; actual: number;
-    lines: Array<{ description: string; amount: number }>;
-    fundedByPlayers: number;
-  } | null;
+  /**
+   * The statement, so the file reads as the screen does (mig 243).
+   *
+   * ⚠ CATEGORY → ITEM, matching the screen (owner ruling 2026-08-15). The file used to list a row
+   * per budget LINE, named by whatever description was typed — so a spreadsheet could not be
+   * reconciled against the plan any more than the report could.
+   *
+   * ⚠ THE EXPENSES CATEGORIES COME FROM HERE, not from a second top-level copy. The route shipped
+   * both for a while and the payload carried the heaviest part of a season's report twice.
+   */
+  report: {
+    revenue:  { categories: BvaCategory[]; budgeted: number; actual: number; variance: number };
+    expenses: { categories: BvaCategory[] };
+    /** Measured against the EFFECTIVE budget, so the file's closing rows match the screen's. */
+    net: { budgeted: number; actual: number; variance: number };
+  };
+  funding: { budget: number; actual: number; fundedByPlayers: number } | null;
 };
 
 /**
@@ -386,7 +440,9 @@ export type BvaCategorySource = {
 export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
   if (!data) return [];
   const rows: ExportRow[] = [];
-  for (const cat of data.categories ?? []) {
+
+  /** One category and its items — the same two levels in both sections. */
+  const pushCategory = (cat: BvaCategory) => {
     rows.push({
       item: cat.inPlan ? cat.categoryName : `${cat.categoryName} (not budgeted)`,
       // ⚠ BLANK, NEVER ZERO, where nothing was budgeted. A 0 in a spreadsheet is a plan of nothing;
@@ -400,39 +456,63 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
     // coach can reconcile one against the other line for line.
     for (const item of cat.items) {
       const label = item.lineCount > 1 ? `${item.itemName} (${item.lineCount} lines)` : item.itemName;
+      /* ⚠ MONEY BACK IS SAID IN THE LABEL, NOT GIVEN A ROW. The screen puts "$2,400 paid · $150
+         back" underneath the row; a spreadsheet has no underneath, and a second row would make the
+         column add up to more spending than the team did — the exact defect that took the
+         unbudgeted rows out of this file. */
+      const back = item.refundTotal > 0.005
+        ? ` — ${item.grossActual.toFixed(2)} less ${item.refundTotal.toFixed(2)} back`
+        : '';
       rows.push({
-        item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}`,
+        item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}${back}`,
         budgeted: item.inPlan ? item.budgeted : '',
         actual:   item.actual,
         variance: item.variance,
       });
     }
+  };
+
+  /* ⚠ THE FILE IS THE STATEMENT, because the screen is (mig 243). Revenue first with its own
+     total, then expenses, then what players still fund — a spreadsheet that grouped the same
+     records differently from the report it was downloaded from is the two-buttons-one-name defect
+     wearing a different hat. */
+  if (data.report.revenue.categories.length > 0) {
+    rows.push({ item: 'REVENUE', budgeted: '', actual: '', variance: '' });
+    for (const cat of data.report.revenue.categories) pushCategory(cat);
+    rows.push({
+      item: 'Total revenue',
+      budgeted: data.report.revenue.budgeted,
+      actual: data.report.revenue.actual,
+      // ⚠ actual − budget on this side. Raising LESS than expected must read as the unfavourable
+      // number here and on screen; written the other way round, a team that came up $1,350 short
+      // saw red on screen and a positive figure in the spreadsheet.
+      variance: data.report.revenue.variance,
+    });
+    rows.push({ item: 'EXPENSES', budgeted: '', actual: '', variance: '' });
   }
+
+  for (const cat of data.report.expenses.categories ?? []) pushCategory(cat);
   if (data.buffer > 0) {
     rows.push({ item: 'Not itemized yet (from your estimate)', budgeted: data.buffer, actual: '', variance: '' });
   }
-  rows.push({ item: 'Total', budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom });
+  rows.push({
+    item: data.report.revenue.categories.length > 0 ? 'Total expenses' : 'Total',
+    budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom,
+  });
   // Named, not added. The rows above already contain every one of these dollars.
   if (data.unbudgeted > 0) {
     rows.push({ item: '  of which never budgeted', budgeted: '', actual: data.unbudgeted, variance: '' });
   }
 
-  // Expected funding travels with the export, NEGATED, so a spreadsheet ends on the same
-  // "funded by players" figure the screen does.
   if (data.funding) {
+    // The server's figure, the same one the screen prints — never a fourth recomputation.
     rows.push({
-      item: 'Expected fundraising (team share)',
-      budgeted: -data.funding.budget,
-      actual: -data.funding.actual,
-      // ⚠ actual − budget, matching the screen. Raising LESS than expected must read as the
-      // unfavourable number in both places; written the other way round, a team that came up
-      // $1,350 short saw red on screen and a positive figure in the spreadsheet.
-      variance: data.funding.actual - data.funding.budget,
+      item: 'Season net',
+      budgeted: data.report.net.budgeted,
+      actual: data.report.net.actual,
+      variance: data.report.net.variance,
     });
-    for (const line of data.funding.lines) {
-      rows.push({ item: `  — ${line.description}`, budgeted: -line.amount, actual: '', variance: '' });
-    }
-    // ⚠ Whole totals, INCLUDING unbudgeted spending — the "Total" row above does the same,
+    // ⚠ Whole totals, INCLUDING unbudgeted spending — the total row above does the same,
     // because this export lists every unbudgeted expense as its own row rather than splitting
     // them into a separate section the way the screen does.
     rows.push({

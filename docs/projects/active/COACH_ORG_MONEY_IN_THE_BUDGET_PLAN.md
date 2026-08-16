@@ -122,7 +122,15 @@ coach's behalf. Building one is the coach's deliberate upgrade out of the bucket
 
 ---
 
-### 3.2b ⚠⚠ THIS SUPERSEDES THE MONEY-IN EXCEPTION, AND THAT DECISION IS NOT THIS PLAN'S TO MAKE ALONE
+### 3.2b ⚠⚠ THIS SUPERSEDED THE MONEY-IN EXCEPTION — AND THE DECISION HAS SINCE BEEN MADE ELSEWHERE
+
+⚖ **CLOSED 2026-08-16 by `COACH_MONEY_IN_TAXONOMY_PLAN.md`.** This section was right that the
+decision was not this plan's to make; it has now been made in the plan that owns the shape of a
+budget line. **Money in carries category + item, both directions share one taxonomy, and a category
+may hold both.** Item 1 below (existing money-in lines) is answered there — they keep working, in
+the same *No category / Not itemized* bucket the cost side already uses, and no backfill guesses a
+category on a coach's behalf. Item 2 below (the `sponsorship` kind) is confirmed as recorded: the
+kind is left alone. **The rest of this section is retained as the reasoning, not as open work.**
 
 `COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md` — **already built on dev, migration 240** — records the owner's
 2026-08-13 ruling that **money-in lines are the exception: no category, no item, description IS the
@@ -272,10 +280,13 @@ table pass exists to prevent.
    that the server refuses it with a sentence the coach can act on. Club costs obey the same rule;
    club money in is the one case that may address both sides.
 
-   ⚠ **Money-in lines have no category and no item** (owner 2026-08-13, restated in the category+item
-   ruling) — their description IS their name. So the funding half of this picker cannot be a
-   category+item control even after §7 lands; it lists money-in lines by name. **The two halves of
-   one picker are shaped differently, and that is correct, not an inconsistency to iron out.**
+   ⛔ **THE PARAGRAPH THAT WAS HERE IS DEAD — owner ruling 2026-08-16 reversed it.** It read: *"money-in
+   lines have no category and no item; the funding half of this picker cannot be a category+item
+   control; the two halves are shaped differently and that is correct."* **Both halves are now the
+   same control.** Money in carries category + item exactly as costs do, through the same picker,
+   the same three-tier ownership and the same sport rail — see
+   `COACH_MONEY_IN_TAXONOMY_PLAN.md`, which is where §3.2b handed this decision and where it was
+   made. Building the funding half as a name list would ship a retired control.
 6. ⚠ **DELETING A PLAN ROW MUST NEVER DELETE A RECORD OF MONEY** — the same `ON DELETE SET NULL`
    rule the expense link uses.
 7. ⚠ **RE-FILING MOVES NO MONEY.** The budget line stays editable on a paid record, exactly as it is

@@ -1106,12 +1106,12 @@ async function seedMoneyLab() {
   // ── the PRIOR season, so the months view has a prior-season column ───────────────────────
   const { data: havePrev } = await db.from('rep_budget_lines').select('id').eq('program_year_id', prev.id).limit(1);
   if (!havePrev?.length) {
-    // ⚠ One of these categories (Fundraising Costs) appears ONLY last season — that is what
+    // ⚠ One of these categories (Fundraising) appears ONLY last season — that is what
     // produces the "last season only" group the ledger asks you to look for.
     const PREV = [
       { cat: 'Tournaments', desc: 'Tournament entry fees', total: 2100 },
       { cat: 'Team Gear', desc: 'Uniform order', total: 1600 },
-      { cat: 'Fundraising Costs', desc: 'Bottle drive supplies', total: 250 },
+      { cat: 'Fundraising', desc: 'Bottle drive supplies', total: 250 },
     ];
     for (const [i, l] of PREV.entries()) {
       die('prev budget line', (await db.from('rep_budget_lines').insert({

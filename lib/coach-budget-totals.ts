@@ -81,6 +81,24 @@ export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
   sponsorship: 'A sponsor or grant, given directly',
 };
 
+/**
+ * Where a line's ACTUAL comes from (mig 243).
+ *
+ * ⚠ AN EXHAUSTIVE NAMED RECORD, NOT A COMPARISON, and the difference is enforced. `kind ===
+ * 'sponsorship' ? 'sponsor' : 'fundraiser'` is the exact shape `budget-line-kind-guard` bans: a
+ * fourth kind would fall silently into the else branch, where this makes it a compile error.
+ *
+ * `typed` = a coach records the actual themselves (every cost, and every income row the fundraiser
+ * machinery does not already answer for). The other two are DERIVED — fundraisers and sponsors
+ * report their own realised figures and player rebates are computed from them, so a typed record
+ * on the same row would count the same dollar twice. See lib/coach-money-derived.ts.
+ */
+export const LINE_KIND_ACTUAL_SOURCE: Record<BudgetLineKind, 'typed' | 'fundraiser' | 'sponsor'> = {
+  cost:        'typed',
+  funding:     'fundraiser',
+  sponsorship: 'sponsor',
+};
+
 /** The heading its section carries — in the plan list, in the summary ladder, in the period grid
  *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected fundraising" is
  *  four places to miss on a rename. */

@@ -1,72 +1,111 @@
-# PM brief — money coming in gets a vocabulary
+# PM brief — money in, money out, money back
 
-**Plan:** [COACH_MONEY_IN_TAXONOMY_PLAN.md](COACH_MONEY_IN_TAXONOMY_PLAN.md)
-**Status:** planned 2026-08-16, **not built** — awaiting approval · one database change
+**Plan:** [COACH_MONEY_IN_TAXONOMY_PLAN.md](COACH_MONEY_IN_TAXONOMY_PLAN.md) (absorbs
+[COACH_MONEY_BACK_ON_A_COST_PLAN.md](COACH_MONEY_BACK_ON_A_COST_PLAN.md))
+**Mockup:** https://claude.ai/code/artifact/ee76cc79-ef74-4b78-8b03-5cf28a7f4d37
+**Status:** approved 2026-08-16 · **built on dev 2026-08-16** · owner QA **§38**
 **Raised by:** the owner, 2026-08-16, reading a real club budget
 
 ## The gap
 
-We just spent a whole change making sure money going **out** is recorded in words a report can
-match on. Money coming **in** is still whatever a coach typed.
+Money going **out** has a shared vocabulary — a plan and a set of books line up row for row. Money
+coming **in** is still whatever a coach typed, there is no way to record money arriving at all
+unless it came through a fundraiser, and there is no way to say *"we spent this and some of it came
+back."*
 
-So a coach who budgets $4,000 of fundraising and raises $3,100 gets two numbers and no way to see
-*which* of their three revenue streams fell short. It's the same problem we already fixed once, on
-the other half of the same page.
+So a coach who budgets $8,700 of income and takes $9,280 gets two totals with no idea which stream
+moved. And a refunded tournament entry has only wrong answers available: delete the expense (erasing
+that the team ever paid) or log it as income (claiming the team earned money it didn't).
 
-## What the real budget showed
+## What changes for a coach
 
-Four kinds of money arriving, not one: fundraising drives, sponsorship and grants, player-raised
-amounts — and **concession revenue from tournaments the club ran itself**, which has nowhere to go
-today at all. That budget has two separate lines for it. Hosting is how these clubs fund a season.
+**One question at the top of a form they already know: what kind of entry is this?**
 
-## What we'd add
+- **A cost** — money the team spent
+- **Income** — money the team earned or was given
+- **Money back on something** — a refund, credit or reimbursement of something already recorded
 
-A short list of revenue kinds — fundraising drive, tournament we hosted, concessions, sponsorship,
-grant, merchandise, gate — picked the same way a cost picks its item. Deliberately **not** the
-spending list: your August ruling that a spending taxonomy has nothing to say about a bottle drive
-still holds, and this is the answer to it rather than a reversal of it.
+Everything below is unchanged: category, item, amount, optional note. Same form on a budget line and
+on a logged entry, so they learn it once and use it four ways.
 
-Budget vs. Actual then reports money in **line for line**, the way it now reports money out.
+**Three answers, because accounting has three.** A refund is not income — when a tournament refunds a
+cancelled entry the team didn't *earn* $150, it *spent* $150 less. Booking it as income overstates
+both what came in and what went out, and every per-item cost figure downstream goes wrong. And only
+the coach can tell a club grant from a club reimbursement; they arrive as the same amount, from the
+same place, on the same day.
 
-## The part only we can do
+## Budget vs. Actual gets a proper shape
 
-**A coach running a tournament on this platform is generating money we already know about.** The
-participating teams registered here; their entry fees are in our own records. Today that coach
-re-types the figure into their budget as a guess and reconciles it by eye at season's end.
+**The default becomes a statement: Revenue, then Expenses, then the season net**, with categories and
+items inside each. The shape every treasurer, board and parent already knows, and the one that
+answers *"are we going to be short?"*
 
-Instead, a money-in line could point at the tournament itself and read its actual straight from
-what the tournament took — so *"did hosting pay for the season?"* answers itself with no data
-entry. The coach still budgets what they **expect** beforehand; only the actual is derived, because
-deriving both would leave nothing to compare.
+**A second lens groups by activity instead** — one block per category showing what it earned, what it
+cost, and what it netted. That's the one that answers *"did hosting the tournament pay for itself?"*,
+which a statement structurally cannot, because a category appears in both its sections.
 
-That's a feature a spreadsheet cannot copy, and it's the reason this is worth doing properly rather
-than as a list of words.
+Both come off the same records and end on the same number.
+
+⚠ **Why sections and not a direction column:** over budget is *good news* on income and *bad news* on
+a cost. A single mixed table with an in/out tag was already running two different formulas behind one
+column heading, and the only thing distinguishing them was a two-letter tag the eye skips. A section
+heading carries that; a column can't.
+
+## Money back never gets its own row
+
+A refund reduces the thing it repaid. Entry fees show **$2,250 on one line** — $2,400 paid, $150
+back — with the detail underneath for anyone who wants it. Two rows would make a coach do arithmetic
+to answer the question the row exists for.
+
+## The risks worth naming
+
+**Double-counting.** Fundraisers and sponsors already report their own actuals, and player rebates
+depend on them, so a category whose actual is already known won't accept a typed one — and the screen
+says so. One row, one source.
+
+**The confusable pair.** *"Money back"* is not *"paid out of pocket"*, even though a coach describes
+both as "a parent paid me back". One returns money the team spent; the other means the team owes a
+family a credit. Confusing them either credits a family twice or loses a credit entirely.
+
+**Nothing here ever changes anyone's dues.** Not on any of the three answers. A coach who receives
+extra money usually spends it on extra things — passing it on is a deliberate edit they make on the
+screen that owns it.
 
 ## Who is affected
 
 | Role | Change |
 |---|---|
-| Head coach / treasurer | Names where money comes from instead of typing it; sees expected-vs-raised per stream; a hosted tournament reports itself. |
-| Club admin | Can publish revenue kinds club-wide, same as cost items. |
-| Families / players | None. |
+| Head coach / treasurer | Logs income and refunds as easily as costs; sees expected-vs-actual per stream; gets a real statement and a per-activity view. |
+| Standalone premium team | Gets refunds outright, with no club anywhere near them — the case that motivated the money-back half. |
+| Club admin | Can publish income words club-wide, same as cost items. |
+| Families / players | None. Dues and fundraiser rebates are untouched. |
 
-## The risk worth naming
+## What we are deliberately not doing yet
 
-**Double-counting.** A coach who budgets "tournament we hosted" *and* logs a fundraiser for the
-same money would see it twice. The build has to decide whether a derived figure suppresses a
-manual one — and say so on screen rather than leaving a coach to notice.
-
-## Three things I need you to decide
-
-1. **Gross or net?** A hosted tournament's entry fees are money in, but the club also pays umpires,
-   diamond hire and prizes. A treasurer usually wants net; the platform only knows gross.
-2. **Whose money is it?** A tournament is run by the club; a budget belongs to a team. One team
-   hosting to fund its own season is clear. A club hosting and splitting proceeds is not.
-3. **Are concessions worth tracking in software at all**, or is that below the line most clubs
-   want to manage here?
+A tournament run on this platform already holds its own entry fees, so that revenue row could fill
+itself in. It stays the most valuable idea here — but the vocabulary ships first, and the row won't
+change shape to receive the automatic figure later.
 
 ## Priority
 
-**Medium-high.** Nothing is broken without it, and the cost side just landed — but the asymmetry is
-visible on one screen, and the hosted-tournament link is the kind of thing that makes the money
-module worth paying for rather than tolerating.
+**High.** This turns the budget from a spending plan into a set of books, and it clears the way for
+club money to land in the plan — the item behind it in the queue.
+
+## What shipped, and what is still your call
+
+Everything above is built. Money in has its own list beside Expenses and Payables, the form asks the
+three questions, and Budget vs. Actual opens on the statement with **By activity** beside it.
+
+**Two decisions were left with you rather than made quietly:**
+
+1. **The screen is still called *Expenses & Payables*** even though it now holds a *Money in* tab.
+   Renaming it touches the Money hub tab, the money rail, the help guide, the demo tour and the
+   layout baseline — worth deciding on its own.
+2. **Three things this brief's plan asserted turned out not to be true**, and the build corrected
+   them: two of the categories §3.6 said already existed did not (*Fundraising Costs* was renamed
+   *Fundraising*, and *Sponsorship* was added), the report view is remembered per device rather than
+   in the address bar, and one library item ships as **Officials** instead of "Umpires & officials"
+   because the platform serves eight sports.
+
+**Before this reaches customers:** migration 243 must be applied to production ahead of the code,
+and it sits behind the category + item migrations (238/240/241/242) doing the same.

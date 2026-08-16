@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 · §29 · §30 | 🖥📱 | LIVE · **§30 ON DEV** (the sponsorship follow-ups — two Overview doors, money tags on money coming IN, a sponsor in the demo world; ⚠ Part A's last step is the filter following a coach to another tab, and Part C is the shop window) · **§29 ON DEV** (the budget speaks in category + item — ⚠⚠ Part C checks the totals still reconcile, and Part D is the one-team-cannot-see-another rule) · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 · §29 · §30 · §38 | 🖥📱 | LIVE · **§38 ON DEV** (money in, money out, money back — the money form asks three questions now and Budget vs. Actual becomes a statement; ⚠⚠ Part C is the netting rule and Part D is the one that moves real money in a family's ledger — walk **§29 first**) · **§30 ON DEV** (the sponsorship follow-ups — two Overview doors, money tags on money coming IN, a sponsor in the demo world; ⚠ Part A's last step is the filter following a coach to another tab, and Part C is the shop window) · **§29 ON DEV** (the budget speaks in category + item — ⚠⚠ Part C checks the totals still reconcile, and Part D is the one-team-cannot-see-another rule) · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -5460,6 +5460,124 @@ the list of years, that is a defect — tell me.
 
 **If A, B and D read correctly, this section passes.** C is the awards fix (worth its own look
 because it corrects a live-season number too); E is the regression check.
+
+## §38 · Money in, money out, money back
+
+**Built on dev 2026-08-16 · not on production · ⚠ carries migration 243, which must reach prod
+BEFORE this code does.** Plans: `COACH_MONEY_IN_TAXONOMY_PLAN.md` (which absorbed
+`COACH_MONEY_BACK_ON_A_COST_PLAN.md` — one release). Mockups: artifacts `ee76cc79` and `27d6d2df`.
+
+⚠ **Walk §29 first if you have not.** This is built directly on the category + item work and shares
+its picker; a defect there shows up here wearing different clothes.
+
+**Why this section exists:** money going out has had a shared vocabulary since §29 — a plan and a
+set of books lining up row for row. Money coming in was still whatever a coach typed, there was no
+way to record an arrival at all unless it came through a fundraiser, and there was no way to say
+*"we spent this and some of it came back."* A refunded tournament entry had only wrong answers
+available: delete the expense (erasing that the team ever paid) or log it as income (claiming the
+team earned money it did not).
+
+**Fixture:** the demo's **14U off-season** team is seeded for this exactly — a raffle with both its
+proceeds and its printing cost in one category, an income entry, and a refund against the same item
+two summed budget lines name. The coach money lab works too, but you would have to enter the
+arrivals yourself.
+
+---
+
+### A · Three answers on one form
+
+- [ ] Money → **Expenses & Payables** → **Add**. The first question is **what kind of entry is
+      this**, with three choices: **A cost** · **Income** · **Money back on something**.
+- [ ] Choose **A cost**. A second question appears — **Already paid** / **Promised, not paid yet** —
+      and the examples underneath change with it. This is where "payable" went: it is a timing
+      question about a cost, not a different kind of money.
+- [ ] Open **Add** from the **Payables** tab instead. It opens on *A cost · Promised, not paid yet*
+      without you touching anything.
+- [ ] Type an amount and a note, then switch between the three answers. **Nothing you typed is
+      lost.**
+- [ ] ⚠ Choose **Money back on something** and read the sentence under the choices. It should tell
+      you this is the team's own cash returning, that **nobody is owed anything**, and that a family
+      paying a vendor *directly* is a different thing recorded as a cost with **Paid by**.
+
+### B · Income, and where it lands
+
+- [ ] Add an **Income** entry — category, item, amount, **date received**, an optional note. Save.
+- [ ] It appears on the new **Money in** tab, with its kind, its date and its item.
+- [ ] Money → **Budget vs. Actual**. The view control now reads **Statement · By activity ·
+      Months**, and it opens on **Statement**.
+- [ ] Your income is a row under **REVENUE**, inside its category — not in a lump at the foot.
+- [ ] ⚠ The variance on a revenue row reads **+$480** or **−$160**, and on a cost row it reads
+      **$150 under** or **$160 over**. Two vocabularies, on purpose: over budget is good news on
+      income and bad news on a cost.
+
+### C · ⚠⚠ Money back nets into the row it repaid — the heart of it
+
+- [ ] On the 14U, find **Tournaments → Entry Fees** under EXPENSES. It should read **$900** actual,
+      not $1,300, with a line underneath saying **$1,300.00 paid · $400.00 back** and the date the
+      refund arrived.
+- [ ] **One row, never two.** There is no separate refund row anywhere, and no "money back" chip or
+      "refund" tag on the row — the figures are the whole story.
+- [ ] **Total revenue does NOT include the $400.** A refund is not income; if you see it in both
+      places the season is $800 better than it is.
+- [ ] Switch to **Months**. The refund appears as a **negative in the month it arrived**, not in the
+      month the entry fee was paid. Tap that cell — the drill-in names it.
+- [ ] Add a refund against an item the team has **not** spent anything on. The row shows a negative
+      **in brackets** — `($125)` — and does **not** read as "under budget". Show it, don't hide it:
+      it is nearly always the signal it is filed against the wrong item. Delete it afterwards.
+
+### D · ⚠⚠ Money back is NOT "paid out of pocket" — do both on one item
+
+*The single most important walk in this section. A coach describes both as "a parent paid me back",
+and they are opposites.*
+
+- [ ] Record **a cost** of $325 with **Paid by** set to a family. Note what happens: the cost counts
+      in the budget, **no team cash moves**, and that family gets a **credit** on Player Dues.
+- [ ] Now record **money back** of $325 against the **same item**. Cash on hand goes **up**, and
+      **no family's dues change at all**.
+- [ ] Open **Player Dues**. That family has **exactly one** credit — the out-of-pocket one. If they
+      have two, or none, stop: that is real money in a real family's ledger.
+- [ ] ⚠ Confirm the money-back form never offers a **Paid by** field, and that "A family" under
+      *Who paid it back* is a plain label that changes nothing.
+
+### E · One row, one source
+
+- [ ] On a team that budgets **expected fundraising**, open the money form as **Income** and pick
+      the category + item that fundraising line names. A warning appears saying its actual already
+      comes from your fundraisers.
+- [ ] Save anyway. The server **refuses** with the same explanation — the warning is a courtesy, not
+      the guard.
+- [ ] The same row still accepts **money back** (a refund of something raised is a real event).
+- [ ] Record an amount on **Fundraisers** and confirm it appears against that row on Budget vs.
+      Actual. One row, one source.
+
+### F · By activity — the question a statement cannot answer
+
+- [ ] Switch to **By activity**. **Fundraising** appears as one block with **Revenue** and **Costs**
+      inside it, ending in what it netted — the raffle's proceeds against the raffle's printing.
+- [ ] A category with only costs (Facilities, say) shows no Revenue half and nets **negative, in
+      brackets**. That is its honest reading.
+- [ ] ⚠ **Both shapes end on the same Season net.** Read it in Statement, switch, read it again.
+- [ ] Switch to **Months** and back. The view you were on is remembered next visit.
+
+### G · Correcting and deleting
+
+- [ ] Tap a money-in row. Amount, date, note and **what it points at** are all editable — re-filing
+      moves no money. The **kind** is stated, not switchable.
+- [ ] **Delete** states the consequence in dollars *before* you confirm, and says cash on hand goes
+      **down**. It also says nobody's dues change.
+- [ ] Delete a refund and confirm the item it was reducing **goes back up** by that amount.
+
+### H · The archive, and the read-only season
+
+- [ ] Open a **completed** season's Money → Expenses & Payables. The **Money in** tab lists **that
+      season's** arrivals — not this season's — and offers **no Add, no pencil, no Delete**.
+- [ ] ⚠ Budget vs. Actual in that season shows that season's revenue and refunds. If you see a
+      figure you recognise from the live season, stop.
+
+---
+
+**If C, D and E read correctly, this section passes.** A and B are the form; F is the second lens;
+G and H are the guards around them.
 
 ## Not in this ledger (why)
 

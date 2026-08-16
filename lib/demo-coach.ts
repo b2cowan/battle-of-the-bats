@@ -914,7 +914,7 @@ export const OFFSEASON_BUDGET_LINES = [
   { description: 'Uniforms, caps and helmets',         category: 'Team Gear',         item: 'Jerseys',       total: 2100 },
   { description: 'Winter cage sessions',               category: 'Training',          item: 'Batting Cages', total: 1400 },
   { description: 'Umpire fees',                        category: 'Officials',         item: 'Umpire Fees',   total: 1200 },
-  { description: 'Raffle licence and printing',        category: 'Fundraising Costs', item: 'Printing',      total: 600 },
+  { description: 'Raffle licence and printing',        category: 'Fundraising', item: 'Printing',      total: 600 },
   // ⚠ A SECOND LINE ON THE SAME ITEM AS THE FIRST, deliberately (mig 240). The owner's own screen
   // was two lines filed under 'Entry Fees'; the plan and the report now SUM them into one row
   // reading 'Entry fees · 2 lines · ,000'. Without this the demo never shows the rule.
@@ -929,13 +929,57 @@ export const OFFSEASON_BUDGET_LINES = [
  * expected to net the team $2,400 — which is the honest shape of a real fundraiser and the reason
  * the two are separate kinds rather than one netted-off number.
  *
- * ⚠ NO CATEGORY, deliberately. A funding line is not an expense: it never enters budget-vs-actual's
- * category matching, and filing it under a spending category would put money coming in beneath a
- * heading that names something the team pays for. It renders in its own section, where the category
- * is not shown at all.
+ * ⚠ IT CARRIES A CATEGORY AND AN ITEM NOW (mig 243), and the note that used to sit here saying it
+ * deliberately did not is retired with the design it described. A money-in line was excluded from
+ * the taxonomy while the taxonomy was a SPENDING one — filing "Raffle proceeds" under a heading
+ * that names something the team pays for really would have been wrong. The library ships income
+ * words now, and the pairing below is the point: **Fundraising holds both the raffle's $600 of
+ * printing and the raffle's proceeds**, so the by-activity lens can answer "did the raffle pay for
+ * itself?" — which is the question that lens exists for, and a prospect never meets it in a world
+ * where every category leans one way.
  */
 export const OFFSEASON_FUNDING_LINES = [
-  { description: 'Raffle proceeds — team share (estimated)', total: 2400 },
+  {
+    description: 'Raffle proceeds — team share (estimated)',
+    category: 'Fundraising', item: 'Fundraising drive', total: 2400,
+  },
+] as const;
+
+/**
+ * Money that ACTUALLY ARRIVED — the record the portal gained on 2026-08-16 (mig 243).
+ *
+ * ⚠ ONE OF EACH, DELIBERATELY, because the pair is the feature. A prospect who only ever sees
+ * income learns that money in is one thing, and it is not:
+ *
+ *   · **Income** — the hoodie order's margin. Its own row under Revenue, in a category that also
+ *     carries a cost, so the by-activity lens has something two-sided to show.
+ *   · **Money back** — a cancelled entry refunded. It NETS into Tournaments → Entry Fees rather
+ *     than becoming revenue, so the demo's own report demonstrates the rule the whole release
+ *     rests on: the team did not EARN $400, it SPENT $400 less.
+ *
+ * ⚠ The refund points at the item the plan's two summed Entry Fees lines already name, so the row
+ * a prospect reads is one row carrying $2,600 planned, $2,400 paid and $400 back — the SUM ruling
+ * and the netting ruling visible in the same line.
+ *
+ * ⚠ NOT ON `Fundraising → Fundraising drive`. That row's actual is DERIVED from the fundraiser
+ * records, and the write path refuses a typed one there (one row, one source) — a seeded world
+ * must never hold a state the product would reject.
+ */
+export const OFFSEASON_MONEY_IN = [
+  {
+    key: 'OS-IN-MERCH', kind: 'income' as const,
+    category: 'Fundraising', item: 'Merchandise sales',
+    amount: 480, weeksBack: 4,
+    description: 'Team hoodie order — margin',
+    receivedFrom: null,
+  },
+  {
+    key: 'OS-IN-REFUND', kind: 'money_back' as const,
+    category: 'Tournaments', item: 'Entry Fees',
+    amount: 400, weeksBack: 2,
+    description: 'Provincials cancelled — entry refunded',
+    receivedFrom: 'other' as const,
+  },
 ] as const;
 
 /** Each line is phased across four months (this month ±). Quarters divide every total exactly —
@@ -1177,11 +1221,26 @@ export interface OffSeasonState {
   /** When each settled installment was actually paid — a few days before it was due. */
   duesPaidDates: string[];
   expenses: DemoExpense[];
+  /** Money that arrived — one income entry and one refund (mig 243). Dated off the same anchor as
+   *  everything else, so the nightly re-anchor moves them with the calendar. */
+  moneyIn: DemoMoneyIn[];
   /** Month-first dates for the budget phasing, oldest first. */
   budgetPeriodDates: string[];
   /** The practice the testing session was run at, and the day it happened. */
   testingSessionPracticeKey: string;
   testingSessionDate: string;
+}
+
+/** One arrival in a demo world, with its date already resolved from the clock. */
+export interface DemoMoneyIn {
+  key: string;
+  kind: 'income' | 'money_back';
+  category: string;
+  item: string;
+  amount: number;
+  receivedDate: string;
+  description: string;
+  receivedFrom: 'club' | 'vendor' | 'sponsor' | 'family' | 'other' | null;
 }
 
 /**
@@ -1258,6 +1317,10 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
     duesDueDates: OFFSEASON_DUES.dueOffsets.map(dateAt),
     duesPaidDates: OFFSEASON_DUES.dueOffsets.map(x => addCalendarDays(dateAt(x), -3)),
     expenses,
+    // Weeks back from the same anchor the rest of this world uses, so a re-anchor moves them too.
+    moneyIn: OFFSEASON_MONEY_IN.map(m => ({
+      ...m, receivedDate: dateAt(-7 * m.weeksBack),
+    })),
     budgetPeriodDates: OFFSEASON_BUDGET_PERIOD_MONTHS.map(offset => monthStart(now, offset)),
     testingSessionPracticeKey: offSeasonSessionKey(offSeasonSundayOffset(-3)),
     testingSessionDate: dateAt(offSeasonSundayOffset(-3)),

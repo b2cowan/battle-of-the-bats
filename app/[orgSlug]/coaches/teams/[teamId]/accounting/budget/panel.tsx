@@ -1107,17 +1107,12 @@ export function BudgetPlanPanel({
   function collectProblems(): FormProblem[] {
     const out: FormProblem[] = [];
 
-    /* ⚠ WHAT NAMES A LINE DEPENDS ON ITS KIND (owner ruling 2026-08-15). A COST is named by its
-       ITEM — the shared word the plan and Budget vs. Actual both group on — so the item is what is
-       required and the description is not asked for at all. MONEY IN carries no category or item
-       (owner, 2026-08-13), so its description IS its name and stays required, with no item-name
-       fallback: a legacy funding line's hidden item name once stood in for a cleared field and
-       saved the old name instead of raising the error the asterisk promises. */
-    if (isFundingKind(form.lineKind)) {
-      if (!form.description.trim()) {
-        out.push({ id: 'desc', message: 'Give this line a description.', focusId: FOCUS_DESC });
-      }
-    } else if (!form.itemId) {
+    /* ⚠ EVERY LINE IS NAMED BY ITS ITEM, IN BOTH DIRECTIONS (mig 243). Money in used to be named
+       by a typed description, because the 2026-08-13 ruling that "a spending taxonomy has nothing
+       to say about a bottle drive" was read as "money in needs its own list" — it does not. A coach
+       can already create categories and items, so the same picker serves both directions, and the
+       report can finally put a hosted tournament's revenue next to its costs. */
+    if (!form.itemId) {
       out.push({
         id: 'item',
         message: 'Pick a category and item — they name this line on your plan and on your report.',
@@ -1203,10 +1198,10 @@ export function BudgetPlanPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description,
-          // Funding lines never store a category/item — including legacy ones saved before the
-          // picker became cost-only, which shed theirs on the next edit.
-          categoryId:  isFundingKind(form.lineKind) ? null : form.categoryId || null,
-          itemId:      isFundingKind(form.lineKind) ? null : form.itemId,
+          // Both directions carry the taxonomy from mig 243. A pre-243 money-in line has none and
+          // keeps working in the "No category / Not itemized" bucket until a coach re-files it.
+          categoryId:  form.categoryId || null,
+          itemId:      form.itemId,
           totalAmount,
           lineKind:    form.lineKind,
           notes:       form.notes.trim() || null,
@@ -1919,16 +1914,16 @@ export function BudgetPlanPanel({
                     type="button"
                     className={styles.kindOption}
                     aria-pressed={form.lineKind === kind}
-                    // Flipping to funding drops any category/item pick: funding lines carry no
-                    // category (the picker below is cost-only), and keeping a stale "Tournaments"
-                    // pick in form state would silently ride along to the save.
-                    onClick={() => setForm(f => (f.lineKind === kind ? f : {
-                      ...f,
-                      lineKind: kind,
-                      ...(isFundingKind(kind)
-                        ? { categoryId: '', itemId: null, categoryName: '', itemName: '' }
-                        : {}),
-                    }))}
+                    /* ⚠ FLIPPING THE KIND KEEPS THE CATEGORY AND ITEM (mig 243). It used to clear
+                       them, correctly, while money-in lines carried no taxonomy and the picker was
+                       cost-only — a stale "Tournaments" pick would have ridden along to the save.
+                       Both halves of that reasoning are now false: every line names an item, and
+                       the item is REQUIRED on every kind. Left as it was, flipping a line to
+                       Sponsorship silently emptied the picker and blocked Save on "Pick a category
+                       and item" — the change fighting its own new rule (/review, regression lens).
+                       ⚠ Switching keeps what has been typed, the same promise the money form makes
+                       one screen over. */
+                    onClick={() => setForm(f => (f.lineKind === kind ? f : { ...f, lineKind: kind }))}
                   >
                     {LINE_KIND_LABEL[kind]}
                     <small>{LINE_KIND_HINT[kind]}</small>
@@ -1940,12 +1935,13 @@ export function BudgetPlanPanel({
               )}
             </div>
 
-            {/* Item picker — COSTS ONLY. A category on a funding line is never used anywhere (the
-                plan lists funding flat in one section, and Budget vs. Actual deliberately keeps
-                funding out of category matching), and the picker offered a SPENDING taxonomy for
-                money coming in — "Sponsorship" filed under "Tournaments". Owner ruling 2026-08-13:
-                a funding line is named by its description alone. */}
-            {!isFundingKind(form.lineKind) && (
+            {/* ⚠ THE PICKER SERVES BOTH DIRECTIONS AGAIN (mig 243), and the objection that closed
+                it has been answered rather than ignored. It was cost-only from 2026-08-13 because
+                the library was a SPENDING taxonomy — "Sponsorship" could only be filed under
+                "Tournaments" — and because a category on a money-in line was read by nothing. Both
+                are now false: the library ships income words (Registration revenue, Fundraising
+                drive, Team sponsorship, Grant), and the report groups money in by category → item
+                exactly as it groups money out. */}
             <div className={styles.field}>
               {/* ⚠ REQUIRED SINCE mig 240 — these two ARE the line's name, on the plan, on Budget
                   vs. Actual and in every export. The asterisk is not decoration: a cost line
@@ -1982,30 +1978,12 @@ export function BudgetPlanPanel({
                 These name this line everywhere. Anything else worth saying goes in Notes.
               </p>
             </div>
-            )}
 
-            {/* ⚠ DESCRIPTION IS FOR MONEY-IN LINES ONLY (owner ruling 2026-08-15). A cost line is
-                named by its ITEM — the shared word both reports group on — so asking for a second
-                name here is what produced a plan row called "test" beside an item called "Entry
-                Fees", and anything typed could never be lined up across the two reports. Notes
-                below carries whatever is worth saying about a cost line. A money-in line has no
-                category and no item at all, so its description IS its name and stays required. */}
-            {isFundingKind(form.lineKind) && (
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={FOCUS_DESC}>
-                Description <span className={styles.labelRequired}>*</span>
-              </label>
-              <input
-                id={FOCUS_DESC}
-                className={`${styles.input} ${flagged('desc') ? styles.inputBad : ''}`}
-                type="text"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value.slice(0, 200) }))}
-                placeholder="e.g. Bottle drive, sponsorship, club grant"
-                maxLength={200}
-              />
-            </div>
-            )}
+            {/* ⚠ THE TYPED DESCRIPTION IS GONE FROM BOTH DIRECTIONS (mig 243), and its removal from
+                the money-in branch is the same ruling that removed it from costs on 2026-08-15: a
+                line named by free text produced a plan row called "test" beside an item called
+                "Entry Fees", and two reports cannot be lined up on words somebody typed. Notes
+                carries whatever is worth saying. */}
 
             {/* Total amount + period toggle. This row uses the page's OWN .formRow, which is
                 why Batch 1's shared one-column-≤640 reflow never reached it: the amount field

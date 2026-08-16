@@ -194,10 +194,11 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     // The budget half. A line with no category never matches an actual, so this is the assertion
     // that keeps the moment's landing screen from quietly becoming a page of "Uncategorized".
     const { data: allLines } = await db.from('rep_budget_lines')
-      .select('id, total_amount, category_id, line_kind, budget_categories(name, scope)').eq('program_year_id', py.id);
-    // Costs and expected funding are separate kinds and separate assertions: a funding line
-    // carries no category ON PURPOSE, so lumping them together would either weaken the
-    // category rule below or fail on a line that is exactly right.
+      // ⚠ `item_id` is load-bearing below, not padding: without it the "no typed income on a
+      // derived row" check compares against a set of undefineds and passes vacuously.
+      .select('id, total_amount, category_id, item_id, line_kind, budget_categories(name, scope)').eq('program_year_id', py.id);
+    // Costs and money in are separate kinds and separate assertions, because they roll up into
+    // separate SECTIONS of the report (mig 243) — lumping them would weaken both rules.
     // Both money-in kinds — a sponsorship line is money in, not a cost (mig 237).
     const isFunding = (k) => k === 'funding' || k === 'sponsorship';
     const lines = (allLines ?? []).filter(l => !isFunding(l.line_kind));
@@ -214,10 +215,14 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     // The shop window must show what the product gained: a budget that subtracts the money the
     // team expects to raise, so a prospect sees dues set on what players actually fund.
     const fundingTotal = fundingLines.reduce((s, l) => s + Number(l.total_amount), 0);
+    /* ⚠ A MONEY-IN LINE CARRIES A CATEGORY NOW (mig 243), and this assertion used to demand the
+       opposite. Without one it lands in the report's "No category / Not itemized" bucket — the
+       state a pre-243 world is correctly left in, and precisely the wrong thing for a shop window
+       to show, because the Revenue section would have nothing named in it. */
     check(fundingLines.length === OFFSEASON_FUNDING_LINES.length
       && fundingTotal === OFFSEASON_FUNDING_LINES.reduce((s, l) => s + l.total, 0)
-      && fundingLines.every(l => !l.category_id),
-      `expected fundraising of $${fundingTotal.toLocaleString()} is budgeted (stored positive, shown positive in green, no category)`);
+      && fundingLines.every(l => l.category_id),
+      `expected fundraising of $${fundingTotal.toLocaleString()} is budgeted, on a real category (stored positive — the kind carries the sign)`);
 
     // Every line, funding included — the phasing rule is the planner's and applies to both kinds,
     // and the nightly re-anchor re-derives them all by sort_order without caring which is which.
@@ -259,6 +264,37 @@ console.log('\nOff-season — Riverdale Ridge 14U');
       s + (e.expense_paid_at ? Number(e.amount) : 0), 0);
     check(spent > 0 && spent < budgetTotal,
       `money is spent but the budget holds ($${spent.toLocaleString()} of $${budgetTotal.toLocaleString()})`);
+
+    /* ── Money IN, and money BACK (mig 243) ────────────────────────────────────────────────────
+       ⚠⚠ BOTH, AND THE PAIR IS THE POINT. A prospect who only ever meets income learns that money
+       arriving is one thing, and the whole release exists because it is not: a refunded entry
+       means the team SPENT LESS, not that it EARNED. The refund is what makes the report
+       demonstrate its own rule, so a world carrying only the income entry is a world that has
+       quietly lost the harder half of the feature — which is exactly the drift this file exists
+       to catch. */
+    const { data: arrivals } = await db.from('rep_team_money_in')
+      .select('entry_kind, amount, received_date, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
+      .eq('program_year_id', py.id);
+    const income = (arrivals ?? []).filter(a => a.entry_kind === 'income');
+    const back = (arrivals ?? []).filter(a => a.entry_kind === 'money_back');
+    check(income.length > 0 && income.every(a => a.budget_item_id),
+      `${income.length} income entry logged, on a real category + item — the Revenue section has a named row`);
+    check(back.length > 0 && back.every(a => a.budget_item_id),
+      `${back.length} money-back entry logged — the prospect meets the refund rule, not just income`);
+    /* ⚠ THE REFUND MUST POINT AT AN ITEM THE TEAM ACTUALLY SPENT ON, or it nets into a row with
+       nothing behind it and reads as a negative — honest, but the wrong story for a shop window. */
+    const backItem = back[0]?.budget_item_id;
+    check((expenses ?? []).some(e => e.budget_item_id === backItem),
+      'the refund points at an item this team really paid for, so it nets into a row that exists');
+    check((arrivals ?? []).every(a => Number(a.amount) > 0),
+      'every arrival is stored POSITIVE — the kind carries the sign, never the amount');
+    /* ⚠ AND NOT ON A ROW THE FUNDRAISERS ALREADY ANSWER FOR (one row, one source). The write path
+       refuses a typed income there; a seeded world must never hold a state the product rejects. */
+    const derivedItemIds = new Set(fundingLines.map(l => l.item_id).filter(Boolean));
+    check(income.every(a => !derivedItemIds.has(a.budget_item_id)),
+      'no typed income sits on a row whose actual comes from a fundraiser — the seed cannot hold a refused state');
+    check((arrivals ?? []).every(a => a.received_date <= today),
+      'every arrival is dated on or before today — nothing has arrived from the future');
 
     // Dues: two settled instalments and one family behind.
     const { data: installments } = await db.from('rep_player_dues_installments')

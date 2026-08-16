@@ -10,6 +10,9 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coach-budget-months';
+import { formatStoredDate } from '@/lib/timezone';
+// The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
+import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
 import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
@@ -36,8 +39,16 @@ interface ItemResult {
   /** Null = the "Not itemized" bucket: lines or costs in this category naming no item. */
   itemId: string | null;
   itemName: string;
+  /** Which section this row belongs to. One item may legitimately appear as two rows (mig 243). */
+  direction: 'in' | 'out';
   budgeted: number;
   actual: number;
+  /** What moved before money back — the "$2,400 paid" half of "$2,400 paid · $150 back". */
+  grossActual: number;
+  refundTotal: number;
+  /** ⚠ GOOD-NEWS-POSITIVE, per direction. The formula differs (revenue: actual − budget; a cost:
+   *  the reverse) and is decided ONCE in the rollup, so this screen has one colour rule and
+   *  changes only its wording per section. */
   variance: number;
   /** Two or more budget lines summed into this row — worth captioning, per the SUM ruling. */
   lineCount: number;
@@ -45,17 +56,47 @@ interface ItemResult {
    *  charged for something it never planned, which is the row this whole change exists to show. */
   inPlan: boolean;
   periods: PeriodResult[];
+  /** The money back netted into this row, so it can show what came back and when. */
+  refunds: Array<{ id: string; description: string; amount: number; receivedDate: string | null }>;
 }
 
 interface CategoryResult {
   categoryId: string | null;
   categoryName: string;
+  direction: 'in' | 'out';
   budgeted: number;
+  /** Net of any money back its items carry. The "paid · back" caption is a ROW's, not a category's. */
   actual: number;
   variance: number;
   /** False when nothing in this category was ever budgeted — the whole heading is unplanned. */
   inPlan: boolean;
   items: ItemResult[];
+}
+
+interface ReportSection {
+  direction: 'in' | 'out';
+  categories: CategoryResult[];
+  budgeted: number;
+  actual: number;
+  variance: number;
+}
+
+/** One block of the by-activity lens: what a category earned, what it cost, what it netted. */
+interface ActivityBlock {
+  categoryId: string | null;
+  categoryName: string;
+  revenue: CategoryResult | null;
+  costs: CategoryResult | null;
+  net: { budgeted: number; actual: number; variance: number };
+  inPlan: boolean;
+}
+
+interface MoneyReport {
+  revenue: ReportSection;
+  expenses: ReportSection;
+  activities: ActivityBlock[];
+  /** Where BOTH shapes end. Variance is actual − budgeted: more net is the good news. */
+  net: { budgeted: number; actual: number; variance: number };
 }
 
 interface UnbudgetedActual {
@@ -90,18 +131,22 @@ interface BvaData extends MonthGridPayload {
   /** Signed: negative means the lines have outgrown the estimate. */
   estimateDifference: number;
   overPlanned: boolean;
-  /** Null when the team budgets no expected funding — the row simply isn't there. */
+  /** Null when the team plans no money in at all — the closing row simply isn't there. */
   funding: {
     budget: number;
-    /** The team's SHARE of what was raised: total less what went back to the players. */
+    /** Everything coming in: typed arrivals plus the team's SHARE of what fundraisers raised. */
     actual: number;
-    lines: Array<{ id: string; description: string; amount: number }>;
     fundedByPlayers: number;
   } | null;
+  /** Both report shapes, off one grouping pass (mig 243). */
+  report: MoneyReport;
   totalActual: number;
   /** How much of `totalActual` went on items nobody planned. A figure to NAME, never to add. */
   unbudgeted: number;
-  categories: CategoryResult[];
+  /* ⚠ NO TOP-LEVEL `categories`. The expenses tree lives at `report.expenses.categories` and
+     nowhere else — it was briefly sent twice, doubling the heaviest part of the payload, and a
+     declared-but-unsent field is how the next reader gets `undefined` at runtime with a clean
+     typecheck. */
   unbudgetedActuals: UnbudgetedActual[];
   duesCollection: DuesCollection;
   monthlyChart: MonthlyPoint[];
@@ -111,7 +156,67 @@ interface BvaData extends MonthGridPayload {
   activeTagId: string | null;
 }
 
-type BvaView = 'categories' | 'months';
+/**
+ * How the coach wants to read the same records (mig 243).
+ *
+ * ⚠ `categories` STILL RESOLVES — see `readStoredView`. It was the shipped value and it is stored
+ * per device, so dropping it would silently reset every treasurer who had chosen a view.
+ */
+type BvaView = 'statement' | 'activity' | 'months';
+
+/**
+ * The stored preference, narrowed — including the legacy value.
+ *
+ * `categories` became **Statement**: the same rows, now split into REVENUE and EXPENSES with a
+ * season net, because money in finally has the vocabulary to be reported beside money out.
+ */
+function readStoredView(raw: unknown): BvaView | null {
+  if (raw === 'months' || raw === 'statement' || raw === 'activity') return raw;
+  if (raw === 'categories') return 'statement';
+  return null;
+}
+
+/**
+ * Money in a report cell. ⚠ A negative reads as BRACKETS, never a minus sign — the notation the
+ * budget importer already understands, so the product has one and not two (money-back plan §4.3).
+ *
+ * ⚠ THE SHARED FORMATTER, not a second bracket rule. `fmtBrackets` (lib/coach-money-summary.ts) is
+ * what the settlement sheet, the payout sheet, the Money overview and the money rail already print
+ * accounting negatives with; a local re-derivation would be the same convention maintained in two
+ * places. The half-cent deadband is this screen's own: a rounding tail must not render `($0.00)`
+ * beside figures a coach can see are equal.
+ */
+function fmtCell(n: number): string {
+  return Math.abs(n) <= 0.005 ? fmt(0) : fmtBrackets(n);
+}
+
+/**
+ * ⚠⚠ VARIANCE READS DIFFERENTLY IN EACH SECTION, AND THAT IS THE FIX, NOT A QUIRK.
+ *
+ * Over budget is good news on income and bad news on a cost. The retired design ran both formulas
+ * behind one column heading, distinguished only by a two-letter IN/OUT tag — registration revenue
+ * showed `+$400` meaning *actual − budget* while entry fees showed `+$150` meaning *budget −
+ * actual*, both green, both positive. The arithmetic is settled in the rollup (always
+ * good-news-positive); what is settled HERE is the wording, which is what a reader actually uses:
+ * revenue varies **up and down**, costs run **over and under**.
+ *
+ * ⚠ COLOUR NEVER CARRIES IT ALONE. Our overrun and healthy tones are near-identical to a deutan
+ * eye, so the sign and the word do the work and the hue is decoration on top.
+ */
+function varianceText(v: number, direction: 'in' | 'out', actual?: number): string {
+  if (Math.abs(v) <= 0.005) return '—';
+  if (direction === 'in') return fmtVariance(v);
+  /* ⚠⚠ A NEGATIVE COST NEVER READS AS "UNDER BUDGET" — the plan warned about this by name (§4.5:
+     "the over/under styling must cope, or a negative renders as a triumphant 'under budget'"), and
+     the arithmetic walks straight into it: an item budgeted $0 that took $150 back has an actual of
+     −$150 and therefore a variance of +$150, which the wording below would print as "$150 under",
+     indistinguishable from an ordinary underspend. It is not an underspend — nothing was spent.
+     The bracketed actual beside it is the fact worth reading, and it is almost always the signal
+     the refund is filed against the wrong item, so the variance says nothing rather than something
+     congratulatory (/review, correctness lens). */
+  if (actual != null && actual < -0.005) return '—';
+  return `${fmt(v)} ${v > 0 ? 'under' : 'over'}`;
+}
 
 // The category table's columns and rows are NOT declared here — they live in
 // `lib/coach-money-exports` beside the Money hub's own "Budget vs. actual" export, so the two
@@ -228,6 +333,211 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
   );
 }
 
+/**
+ * How a category is addressed for expand state, React keys and `aria-describedby`.
+ *
+ * ⚠ THE DIRECTION IS PART OF THE KEY: one category appears in BOTH sections of the statement, and
+ * keying by name alone would give those two rows one shared toggle.
+ *
+ * ⚠ AND SO IS THE ID. The rollup buckets by category ID when there is one, so a club that has
+ * created its own "Officials" alongside the platform's gets two legitimate rows with the same name
+ * and the same direction — which a name-only key collapsed into one React key, one expand toggle
+ * and one duplicated element id, so opening either opened both (/review, correctness lens). This
+ * is the same collision the route's own `learnCategory` fix chased in 2026-08-15, one layer up.
+ */
+function catKeyOf(cat: CategoryResult): string {
+  return `${cat.direction}|${cat.categoryId ?? `name:${cat.categoryName}`}`;
+}
+
+/**
+ * The item rows of one category — shared by both shapes, so the statement and the by-activity
+ * lens can never render one row two different ways.
+ */
+function ItemRows({
+  cat, expandedLines, toggleLine,
+}: {
+  cat: CategoryResult;
+  expandedLines: Set<string>;
+  toggleLine: (id: string) => void;
+}) {
+  const catKey = catKeyOf(cat);
+  return (
+    <>
+      {cat.items.map(item => {
+        const key = `${catKey}|${item.itemId ?? 'none'}`;
+        const open = expandedLines.has(key);
+        return (
+          <Fragment key={key}>
+            <div className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow}`}>
+              <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+                {item.periods.length > 0 ? (
+                  <button
+                    className={shared.ledgerExpand}
+                    aria-expanded={open}
+                    aria-label={open ? `Hide ${item.itemName}'s periods` : `Show ${item.itemName}'s periods`}
+                    onClick={() => toggleLine(key)}
+                  >
+                    {open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
+                  </button>
+                ) : (
+                  <span className={shared.ledgerExpandSpacer} />
+                )}
+                <span className={shared.ledgerDesc}>{item.itemName}</span>
+                {/* Two or more lines summed into one row is the SUM ruling made visible — without
+                    the caption a coach would wonder why their plan has fewer rows than they wrote. */}
+                {item.lineCount > 1 && (
+                  <span className={shared.ledgerNote}>{item.lineCount} lines</span>
+                )}
+              </span>
+              <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
+                {item.inPlan ? fmt(item.budgeted) : '—'}
+              </span>
+              <span className={shared.ledgerNum}>{fmtCell(item.actual)}</span>
+              <span className={shared.ledgerNum} style={{ color: varianceColor(item.variance) }}>
+                {varianceText(item.variance, item.direction, item.actual)}
+              </span>
+            </div>
+
+            {/* ⚠ ONE ROW, NEVER TWO (money-back plan §4.3). A refund nets into the item, and the
+                figures underneath say what made that number rather than splitting it: "$2,400 paid
+                · $150 back". Two rows would make a coach add up in their head to answer the one
+                question the row exists for. ⚠ NO "refund" CHIP AND NO ROW LABEL — the same ruling
+                that retired "not budgeted" from both views. */}
+            {item.refundTotal > 0.005 && (
+              <div className={shared.ledgerSubRows}>
+                <div className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
+                  <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>
+                    {fmt(item.grossActual)} {item.direction === 'in' ? 'received' : 'paid'} · {fmt(item.refundTotal)} back
+                  </span>
+                  <span className={shared.ledgerSubMeta}>
+                    {item.refunds.map(r => formatStoredDate(r.receivedDate, { withYear: false })).join(' · ')}
+                  </span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                </div>
+              </div>
+            )}
+
+            {open && item.periods.length > 0 && (
+              <div className={shared.ledgerSubRows}>
+                {item.periods.map((p, pi) => {
+                  const moved = Math.abs(p.actual) > 0.005;
+                  const variance = item.direction === 'in' ? p.actual - p.amount : p.amount - p.actual;
+                  return (
+                    <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
+                      <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
+                      <span className={shared.ledgerSubMeta}>
+                        {p.date ? formatStoredDate(p.date) : ''}
+                      </span>
+                      <span className={shared.ledgerNum}>{fmt(p.amount)}</span>
+                      <span
+                        className={`${shared.ledgerNum} ${moved ? '' : shared.ledgerNumMuted}`}
+                        style={moved && p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
+                      >
+                        {moved ? fmtCell(p.actual) : '—'}
+                      </span>
+                      <span
+                        className={`${shared.ledgerNum} ${moved ? '' : shared.ledgerNumMuted}`}
+                        style={moved ? { color: varianceColor(variance) } : undefined}
+                      >
+                        {/* The same negative guard as the row above: the September period of a
+                            refunded item has a negative actual, and "under" would be wrong there
+                            for exactly the same reason. */}
+                        {moved ? varianceText(variance, item.direction, p.actual) : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+/** A category: its collapsible header, then its items. */
+function CategoryGroup({
+  cat, expandedCats, toggleCat, expandedLines, toggleLine,
+}: {
+  cat: CategoryResult;
+  expandedCats: Set<string>;
+  toggleCat: (id: string) => void;
+  expandedLines: Set<string>;
+  toggleLine: (id: string) => void;
+}) {
+  const catKey = catKeyOf(cat);
+  /* ⚠ A CATEGORY NOBODY BUDGETED FOR IS THE POINT, NOT AN EDGE CASE (owner ruling 2026-08-15). It
+     carries no Budgeted figure at all, so the row is flagged and the dash is explained by the flag
+     rather than left to read as a lost number. The sentence rides the header via aria-describedby:
+     a screen reader meeting a bare em-dash would otherwise get no explanation, because the flag is
+     a visual one (/review, 2026-08-15). */
+  const noteId = cat.inPlan ? undefined : `bva-cat-note-${catKey.replace(/\W+/g, '-')}`;
+  return (
+    <div className={shared.ledgerGroup}>
+      <button
+        className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader} ${cat.inPlan ? '' : styles.unplannedRow}`}
+        aria-expanded={expandedCats.has(catKey)}
+        aria-describedby={noteId}
+        onClick={() => toggleCat(catKey)}
+      >
+        <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+          <span className={styles.expandIcon}>
+            {expandedCats.has(catKey) ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
+          </span>
+          <span className={shared.ledgerName}>{cat.categoryName}</span>
+        </span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
+          {cat.inPlan ? fmt(cat.budgeted) : '—'}
+        </span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmtCell(cat.actual)}</span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceColor(cat.variance) }}>
+          {varianceText(cat.variance, cat.direction, cat.actual)}
+        </span>
+      </button>
+      {noteId && (
+        <p id={noteId} className={styles.srOnly}>
+          Nothing in {cat.categoryName} was budgeted for this season.
+        </p>
+      )}
+      {expandedCats.has(catKey) && (
+        <div>
+          <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A REVENUE / EXPENSES band, or an activity's own name. */
+function SectionBand({ label, inner }: { label: string; inner?: boolean }) {
+  return (
+    <div className={`${styles.sectionBand} ${inner ? styles.sectionBandInner : ''}`}>
+      <span className={shared.scrollXStickyCell}>{label}</span>
+      <span /><span /><span />
+    </div>
+  );
+}
+
+function SubtotalRow({
+  label, budgeted, actual, variance, direction,
+}: {
+  label: string; budgeted: number; actual: number; variance: number; direction: 'in' | 'out';
+}) {
+  return (
+    <div className={styles.sectionSubtotal}>
+      <span className={shared.scrollXStickyCell}>{label}</span>
+      <span className={shared.ledgerNum}>{fmtCell(budgeted)}</span>
+      <span className={shared.ledgerNum}>{fmtCell(actual)}</span>
+      <span className={shared.ledgerNum} style={{ color: varianceColor(variance) }}>
+        {varianceText(variance, direction, actual)}
+      </span>
+    </div>
+  );
+}
+
 export function BudgetVsActualPanel({
   params: paramsPromise,
   embedded = false,
@@ -254,7 +564,7 @@ export function BudgetVsActualPanel({
   // Chunk H — the month grid. Which view and which lens a coach reads in is DEVICE memory
   // (localStorage per team+season, the shipped pattern for quiet per-coach state): a treasurer
   // who lives in the month view should land there, and it is nobody else's business.
-  const [view, setView] = useState<BvaView>('categories');
+  const [view, setView] = useState<BvaView>('statement');
   const [lens, setLens] = useState<MoneyLens>('budget');
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
@@ -318,7 +628,10 @@ export function BudgetVsActualPanel({
       const raw = localStorage.getItem(prefsKey);
       // Shape-check, not just parse-check: a corrupt value must fall back, never crash.
       const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown } : {};
-      if (parsed.view === 'months' || parsed.view === 'categories') setView(parsed.view);
+      // ⚠ The retired `categories` value still resolves — see `readStoredView`. It is stored per
+      // device, so refusing it would silently reset every treasurer who had chosen a view.
+      const stored = readStoredView(parsed.view);
+      if (stored) setView(stored);
       if (MONEY_LENSES.some(l => l.id === parsed.lens)) setLens(parsed.lens as MoneyLens);
     } catch { /* device memory only */ }
     setPrefsLoaded(true);
@@ -482,7 +795,9 @@ export function BudgetVsActualPanel({
         season={page.season}
         teamBase={page.teamBase}
         helpLabel="Budget vs. Actual"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-months', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        /* Points at the SHAPES topic, not the month grid: Statement is what this page opens on
+           now, and the "?" should explain the thing in front of the reader. */
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-report-shapes', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {loading ? (
@@ -608,27 +923,30 @@ export function BudgetVsActualPanel({
             </div>
           )}
 
-          {/* Chunk H — how the coach wants to read the same report. Categories is the shipped
-              view and stays the default; Months is the treasurer's spreadsheet shape. */}
+          {/* ⚠ THE TWO NEW SHAPES JOIN THE CONTROL THAT WAS ALREADY HERE (plan §3.5), rather than
+              introducing a second idea of "switching views" beside it. Statement is the default —
+              the shape a treasurer, a board and a parent already know, and the one that answers
+              "are we going to be short?" By activity answers what a statement structurally cannot,
+              because a category appears in both its sections: "did hosting the tournament pay for
+              itself?" Months is the treasurer's spreadsheet shape and is money-OUT only. */}
           <div className={styles.viewBar}>
             <span className={styles.viewBarLabel}>View</span>
             <div className={shared.segChoice} role="group" aria-label="Report view">
-              <button
-                type="button"
-                className={`${shared.segBtn} ${view === 'categories' ? shared.segBtnActive : ''}`}
-                aria-pressed={view === 'categories'}
-                onClick={() => setView('categories')}
-              >
-                Categories
-              </button>
-              <button
-                type="button"
-                className={`${shared.segBtn} ${view === 'months' ? shared.segBtnActive : ''}`}
-                aria-pressed={view === 'months'}
-                onClick={() => setView('months')}
-              >
-                Months
-              </button>
+              {([
+                ['statement', 'Statement'],
+                ['activity', 'By activity'],
+                ['months', 'Months'],
+              ] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`${shared.segBtn} ${view === id ? shared.segBtnActive : ''}`}
+                  aria-pressed={view === id}
+                  onClick={() => setView(id)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {view === 'months' && (
@@ -689,8 +1007,37 @@ export function BudgetVsActualPanel({
             </div>
           )}
 
-          {/* Category breakdown */}
-          {data.categories.length > 0 && (
+          {/* ── The report, in whichever shape the coach chose (plan §3.5) ──────────────────
+              Both come off ONE grouping pass on the server and end on the same season net,
+              because they are the same rows read two ways. */}
+          {(data.report.revenue.categories.length > 0 || data.report.expenses.categories.length > 0) && (() => {
+            /* ⚠ THE SERVER'S FIGURE, not a fourth recomputation. It is measured against the
+               EFFECTIVE budget — the estimate whenever a coach has set one (owner ruling
+               2026-08-12, shared with the plan page, the Money hub and headroom) — which is the
+               same number the Total expenses row below shows. Both shapes and the export read it. */
+            const { budgeted: netBudget, actual: netActual, variance: netVariance } = data.report.net;
+
+            /* The part of the estimated total not yet covered by lines. Positive only — an
+               estimate BELOW the lines has nothing unallocated to stand in for, and a negative
+               pseudo-row here would read as a refund. Rendered in BOTH shapes so the rows a reader
+               can see add up to the same Total expenses either way. */
+            const bufferRow = data.buffer > 0 ? (
+              <div className={shared.ledgerGroup}>
+                <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
+                  <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+                    <span className={styles.expandIcon} />
+                    <span className={shared.ledgerName}>Not itemized yet</span>
+                  </span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.buffer)}</span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                </div>
+              </div>
+            ) : null;
+
+            const groupProps = { expandedCats, toggleCat, expandedLines, toggleLine };
+
+            return (
             // data-sandbox-tour: the beat the demo's "is the season on budget" step rings —
             // planned against actually spent, line by line. Inert off a demo org.
             <div className={styles.section} data-sandbox-tour="budget-variance">
@@ -708,200 +1055,110 @@ export function BudgetVsActualPanel({
                 <span className={shared.thNum}>Variance</span>
               </div>
 
-              <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                {data.categories.map(cat => {
-                  /* ⚠ A CATEGORY NOBODY BUDGETED FOR IS THE POINT, NOT AN EDGE CASE (owner ruling
-                     2026-08-15). It carries no Budgeted figure at all, so the row is flagged and
-                     the dash is explained by the flag rather than left to read as a lost number.
-                     The sentence rides the header via aria-describedby: a screen reader meeting a
-                     bare em-dash in the Budgeted column would otherwise get no explanation at all,
-                     because the flag is a visual one (/review, 2026-08-15). */
-                  const noteId = cat.inPlan ? undefined : `bva-cat-note-${cat.categoryName}`;
-                  return (
-                  <div key={cat.categoryName} className={shared.ledgerGroup}>
-                    <button
-                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader} ${cat.inPlan ? '' : styles.unplannedRow}`}
-                      aria-expanded={expandedCats.has(cat.categoryName)}
-                      aria-describedby={noteId}
-                      onClick={() => toggleCat(cat.categoryName)}
-                    >
-                      <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                        <span className={styles.expandIcon}>
-                          {expandedCats.has(cat.categoryName)
-                            ? <ChevronDown size={14} aria-hidden />
-                            : <ChevronRight size={14} aria-hidden />}
-                        </span>
-                        <span className={shared.ledgerName}>{cat.categoryName}</span>
-                        {/* ⚠ THE "not budgeted" TAG WAS REMOVED HERE (owner ruling 2026-08-15) —
-                            the dash in the Budget column one cell to the right already says it, and
-                            the label was the same fact twice. The amber ground stays as the scanning
-                            cue and `aria-describedby` still carries the sentence, so the meaning
-                            survives for a reader who cannot see the tint. */}
-                      </span>
-                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
-                        {cat.inPlan ? fmt(cat.budgeted) : '—'}
-                      </span>
-                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.actual)}</span>
-                      <span
-                        className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}
-                        style={{ color: varianceColor(cat.variance) }}
-                      >
-                        {fmtVariance(cat.variance)}
-                      </span>
-                    </button>
-                    {noteId && (
-                      <p id={noteId} className={styles.srOnly}>
-                        Nothing in {cat.categoryName} was budgeted for this season.
-                      </p>
-                    )}
-
-                    {expandedCats.has(cat.categoryName) && (
-                      <div>
-                        {cat.items.map(item => {
-                          const key = `${cat.categoryName}|${item.itemId ?? 'none'}`;
-                          const open = expandedLines.has(key);
-                          return (
-                          <Fragment key={key}>
-                            <div className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow}`}>
-                              <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                                {item.periods.length > 0 ? (
-                                  <button
-                                    className={shared.ledgerExpand}
-                                    aria-expanded={open}
-                                    aria-label={open
-                                      ? `Hide ${item.itemName}'s periods`
-                                      : `Show ${item.itemName}'s periods`}
-                                    onClick={() => toggleLine(key)}
-                                  >
-                                    {open
-                                      ? <ChevronDown size={13} aria-hidden />
-                                      : <ChevronRight size={13} aria-hidden />}
-                                  </button>
-                                ) : (
-                                  <span className={shared.ledgerExpandSpacer} />
-                                )}
-                                <span className={shared.ledgerDesc}>{item.itemName}</span>
-                                {/* Two or more lines summed into one row is the SUM ruling made
-                                    visible — without the caption a coach would wonder why their
-                                    plan has fewer rows than they wrote. */}
-                                {item.lineCount > 1 && (
-                                  <span className={shared.ledgerNote}>{item.lineCount} lines</span>
-                                )}
-                                {/* The item's own "not budgeted" tag went with the category's — see
-                                    the note on the category header above. The dash in this row's
-                                    Budget cell, one span down, is the signal. */}
-                              </span>
-                              <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
-                                {item.inPlan ? fmt(item.budgeted) : '—'}
-                              </span>
-                              {/* ⚠ EVERY ROW NOW CARRIES A REAL FIGURE. This column printed "—"
-                                  unconditionally until 2026-08-15, because spending recorded a
-                                  category and nothing finer; the item is what made it knowable. */}
-                              <span className={shared.ledgerNum}>{fmt(item.actual)}</span>
-                              <span
-                                className={shared.ledgerNum}
-                                style={{ color: varianceColor(item.variance) }}
-                              >
-                                {fmtVariance(item.variance)}
-                              </span>
-                            </div>
-
-                            {open && item.periods.length > 0 && (
-                              <div className={shared.ledgerSubRows}>
-                                {item.periods.map((p, pi) => {
-                                  const spent = p.actual > 0;
-                                  const variance = p.amount - p.actual;
-                                  return (
-                                    <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
-                                      <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
-                                      <span className={shared.ledgerSubMeta}>
-                                        {p.date
-                                          ? new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {
-                                              month: 'short', day: 'numeric', year: 'numeric',
-                                            })
-                                          : ''}
-                                      </span>
-                                      <span className={shared.ledgerNum}>{fmt(p.amount)}</span>
-                                      <span
-                                        className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
-                                        style={spent ? { color: 'var(--success-light)' } : undefined}
-                                      >
-                                        {spent ? fmt(p.actual) : '—'}
-                                      </span>
-                                      <span
-                                        className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
-                                        style={spent ? { color: varianceColor(variance) } : undefined}
-                                      >
-                                        {spent ? fmtVariance(variance) : '—'}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </Fragment>
-                          );
-                        })}
+              {view === 'statement' ? (
+                /* ── Shape A: the statement ────────────────────────────────────────────────
+                   REVENUE → categories → items → Total revenue; EXPENSES → the same → Total
+                   expenses; SEASON NET. The shape every treasurer, board and parent already
+                   knows, and the one that answers "are we going to be short?" */
+                <>
+                  {data.report.revenue.categories.length > 0 && (
+                    <>
+                      <SectionBand label="Revenue" />
+                      <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+                        {data.report.revenue.categories.map(cat => (
+                          <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
+                        ))}
                       </div>
-                    )}
-                  </div>
-                  );
-                })}
-              </div>
+                      <SubtotalRow
+                        label="Total revenue"
+                        budgeted={data.report.revenue.budgeted}
+                        actual={data.report.revenue.actual}
+                        variance={data.report.revenue.variance}
+                        direction="in"
+                      />
+                    </>
+                  )}
 
-              {/* The part of the estimated total not yet covered by lines. Positive only — an
-                  estimate BELOW the lines has nothing unallocated to show. */}
-              {data.buffer > 0 && (
-                <div className={shared.ledgerGroup}>
-                  <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
-                    <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                      <span className={styles.expandIcon} />
-                      <span className={shared.ledgerName}>Not itemized yet</span>
-                    </span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.buffer)}</span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                  <SectionBand label="Expenses" />
+                  <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+                    {data.report.expenses.categories.map(cat => (
+                      <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
+                    ))}
+                    {bufferRow}
                   </div>
-                </div>
+                  <SubtotalRow
+                    label="Total expenses"
+                    budgeted={data.effectiveBudget}
+                    actual={data.totalActual}
+                    variance={data.headroom}
+                    direction="out"
+                  />
+                </>
+              ) : (
+                /* ── Shape B: by activity ──────────────────────────────────────────────────
+                   One block per category, split into what it earned and what it cost, ending in
+                   what it netted. The question a statement structurally cannot answer, because a
+                   category appears in both of its sections: "did hosting the tournament pay for
+                   itself?" */
+                <>
+                  {data.report.activities.map(block => (
+                    <Fragment key={`${block.categoryId ?? 'none'}|${block.categoryName}`}>
+                      <SectionBand label={block.categoryName} />
+                      {block.revenue && (
+                        <>
+                          {/* The inner Revenue/Costs bands appear only when the block has BOTH —
+                              on a one-sided category they would be a heading distinguishing
+                              nothing from nothing. */}
+                          {block.costs && <SectionBand label="Revenue" inner />}
+                          <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+                            <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} />
+                          </div>
+                        </>
+                      )}
+                      {block.costs && (
+                        <>
+                          {block.revenue && <SectionBand label="Costs" inner />}
+                          <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+                            <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} />
+                          </div>
+                        </>
+                      )}
+                      {/* ⚠ A COST-ONLY BLOCK NETS NEGATIVE, and it says so in brackets rather than
+                          being hidden or flipped: that is the honest reading of a category that
+                          earned nothing. The label follows suit — "netted" only where something
+                          came in. */}
+                      <SubtotalRow
+                        label={block.revenue ? `${block.categoryName} netted` : `${block.categoryName} cost`}
+                        budgeted={block.net.budgeted}
+                        actual={block.net.actual}
+                        variance={block.net.variance}
+                        direction="in"
+                      />
+                    </Fragment>
+                  ))}
+                  {bufferRow && (
+                    <>
+                      <SectionBand label="Not itemized yet" />
+                      <div className={`${shared.ledgerList} ${styles.linesContainer}`}>{bufferRow}</div>
+                    </>
+                  )}
+                </>
               )}
 
-              {/* Expected funding — the money the team planned to bring IN, measured against what
-                  it actually KEPT: everything raised, less whatever was rebated to the player who
-                  raised it (owner ruling 2026-08-12). A rebate lowers that player's own dues, so
-                  counting it here would lower the same dues twice. */}
-              {data.funding && (
-                <div className={shared.ledgerGroup}>
-                  <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
-                    <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                      <span className={styles.expandIcon} />
-                      <span className={shared.ledgerName}>Expected fundraising</span>
-                    </span>
-                    {/* Positive, like the plan page (owner 2026-08-13): the row's name says the
-                        direction; the variance beside them stays a real signed comparison. */}
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.funding.budget)}</span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.funding.actual)}</span>
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceColor(data.funding.actual - data.funding.budget) }}>
-                      {fmtVariance(data.funding.actual - data.funding.budget)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
-                <span className={shared.scrollXStickyCell}>Total</span>
-                <span className={shared.ledgerTotalNum}>{fmt(data.effectiveBudget)}</span>
-                <span className={shared.ledgerTotalNum}>{fmt(data.totalActual)}</span>
-                <span
-                  className={shared.ledgerTotalNum}
-                  style={{ color: varianceColor(data.headroom) }}
-                >
-                  {fmtVariance(data.headroom)}
+              {/* Where both shapes end. */}
+              <div className={styles.netRow}>
+                <span className={shared.scrollXStickyCell}>Season net</span>
+                <span className={shared.ledgerTotalNum}>{fmtCell(netBudget)}</span>
+                <span className={shared.ledgerTotalNum}>{fmtCell(netActual)}</span>
+                <span className={shared.ledgerTotalNum} style={{ color: varianceColor(netVariance) }}>
+                  {varianceText(netVariance, 'in')}
                 </span>
               </div>
 
-              {/* What players actually had to fund, once the money coming in is taken off. The
-                  Total above stays the COST comparison — this closes the same subtraction the
-                  budget plan's summary makes, so the two pages end on the same number. */}
+              {/* What players actually had to fund, once everything coming in is taken off. The
+                  season net above is the books; this is the one figure a coach is asked for by a
+                  parent, and it closes the same subtraction the budget plan's summary makes so the
+                  two pages end on the same number. */}
               {data.funding && (() => {
                 const fundedActual = data.totalActual - data.funding.actual;
                 const fundedVariance = data.funding.fundedByPlayers - fundedActual;
@@ -909,9 +1166,9 @@ export function BudgetVsActualPanel({
                   <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
                     <span className={shared.scrollXStickyCell}>Funded by players</span>
                     <span className={shared.ledgerTotalNum}>{fmt(data.funding.fundedByPlayers)}</span>
-                    <span className={shared.ledgerTotalNum}>{fmt(fundedActual)}</span>
+                    <span className={shared.ledgerTotalNum}>{fmtCell(fundedActual)}</span>
                     <span className={shared.ledgerTotalNum} style={{ color: varianceColor(fundedVariance) }}>
-                      {fmtVariance(fundedVariance)}
+                      {varianceText(fundedVariance, 'out')}
                     </span>
                   </div>
                 );
@@ -920,12 +1177,14 @@ export function BudgetVsActualPanel({
              </CoachScrollX>
              {data.funding && (
                <p className={styles.fundingNote}>
-                 Expected fundraising&apos;s actual is your team&apos;s share — everything raised, less
-                 anything paid back to the player who raised it (that already lowers their own dues).
+                 A fundraiser&apos;s actual is your team&apos;s share — everything raised, less anything
+                 paid back to the player who raised it (that already lowers their own dues). Money
+                 back on something never counts as income: it reduces the row it repaid.
                </p>
              )}
             </div>
-          )}
+            );
+          })()}
 
           </>
           )}

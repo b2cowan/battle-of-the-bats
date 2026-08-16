@@ -6,9 +6,14 @@ import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
+import { moneyInEntryDescription } from './coach-money-in';
+import {
+  FUNDING_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
+} from './coach-budget-totals';
+import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { paidLedgerLegs, type ExpenseLedgerLeg } from './expense-ledger';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
@@ -2312,12 +2317,22 @@ export async function createEntry(
   return mapEntry(data!);
 }
 
+/**
+ * ⚠ IT THROWS ON FAILURE, and it did not until 2026-08-16 (/review, correctness + data lenses).
+ *
+ * `voidEntry` below has checked its error since the day a silent void let a receipt be deleted
+ * while its income entry stayed posted. This function is the same hazard in the other direction
+ * and was missed: it never even destructured `{ error }`, so a failed update returned as though it
+ * had succeeded. `updateRepTeamMoneyIn` (mig 243) is the first caller to PROMISE the consistency
+ * this could not deliver — a coach correcting $2,400 to $2,000 would have had the record move and
+ * the ledger entry stay, permanently, with a green save and nothing logged.
+ */
 export async function updateEntry(
   entryId: string,
   ledgerId: string,
   input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category' | 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>
 ): Promise<void> {
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from('accounting_entries')
     .update({
       ...(input.entryDate     !== undefined && { entry_date:      input.entryDate }),
@@ -2334,6 +2349,7 @@ export async function updateEntry(
     })
     .eq('id', entryId)
     .eq('ledger_id', ledgerId);
+  if (error) throw error;
 }
 
 export async function voidEntry(entryId: string, ledgerId: string): Promise<void> {
@@ -9952,6 +9968,266 @@ export async function deleteRepTeamExpense(
     .eq('id', expense.id);
   if (error) throw error;
   return { reversedAmount: total };
+}
+
+// ── Money coming IN: income, and money back on something (mig 243) ────────────
+//
+// ⚠⚠ A SEPARATE TABLE FROM rep_team_expenses ON PURPOSE. A refund is not a negative expense
+// (money-back plan §6.4): a negative row inside the expenses table would be summed as spending by
+// every reader of it, which is precisely the failure the third `line_kind` member caused on
+// 2026-08-15 — nineteen readers kept compiling and quietly filed each sponsorship as a cost.
+// Separation means every existing sum keeps its sign BY CONSTRUCTION, because no pre-243 reader
+// can see these rows at all.
+//
+// ⚠⚠ AND IT IS NOT "PAID OUT OF POCKET" (rep_team_expenses.paid_by_player_id). That means the
+// team's cash never moved and the team OWES a family a credit. This means the team's cash came
+// back and it owes nobody. Nothing in here writes to rep_dues_credits, and nothing in here touches
+// a payment schedule — not a dollar of anyone's dues, on either kind.
+
+/** Every read of this table asks for the taxonomy NAMES too — see the note on the type. One join,
+ *  so the list, the export and the report cannot each answer "what is this called" differently. */
+const MONEY_IN_SELECT = '*, budget_items(name), budget_categories(name)';
+
+function mapRepTeamMoneyIn(r: any): RepTeamMoneyIn {
+  return {
+    id:                r.id,
+    programYearId:     r.program_year_id,
+    teamId:            r.team_id ?? null,
+    orgId:             r.org_id,
+    kind:              r.entry_kind as MoneyInKind,
+    amount:            Number(r.amount),
+    receivedDate:      r.received_date,
+    budgetItemId:      r.budget_item_id ?? null,
+    budgetCategoryId:  r.budget_category_id ?? null,
+    budgetItemName:     r.budget_items?.name ?? null,
+    budgetCategoryName: r.budget_categories?.name ?? null,
+    description:       r.description ?? null,
+    notes:             r.notes ?? null,
+    receivedFrom:      (r.received_from ?? null) as MoneyInSource | null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+    createdBy:         r.created_by ?? null,
+    createdAt:         r.created_at,
+    updatedAt:         r.updated_at,
+  };
+}
+
+/**
+ * The money-in budget lines whose actual is ALREADY derived from fundraisers and sponsors.
+ *
+ * ⚠ THE `.in(…, FUNDING_LINE_KINDS)` IS THE POINT, and a literal here would be a real bug rather
+ * than a style slip. Naming one kind leaves the other's rows open to a typed income record, which
+ * double-counts money that player rebates are computed from — the same shorthand that filed
+ * nineteen readers' sponsorship lines as costs on 2026-08-15.
+ *
+ * Returns the CLAIMS, not an answer: `lib/coach-money-derived.ts` decides both what they close to
+ * typing (`derivedIncomeKeys`) and where the derived pool lands (`placeDerivedActual`), and those
+ * two must be worked out from one reading or the report and the form disagree about the same row.
+ */
+export async function getDerivedIncomeClaims(programYearId: string): Promise<DerivedClaim[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_budget_lines')
+    .select('category_id, item_id, line_kind, budget_categories(name), budget_items(name)')
+    .eq('program_year_id', programYearId)
+    .in('line_kind', FUNDING_LINE_KINDS);
+  if (error) throw error;
+  return ((data ?? []) as Array<Record<string, unknown>>).map(l => ({
+    /* ⚠ THROUGH THE EXHAUSTIVE RECORD, never a per-kind ternary. Drives and sponsors report two
+     * separate totals and each must be placed against its OWN lines — and the obvious shorthand
+     * for that mapping is the shape `budget-line-kind-guard` bans, because a fourth kind would
+     * fall silently into the else branch and be reported as a fundraiser. */
+    source: LINE_KIND_ACTUAL_SOURCE[normalizeBudgetLineKind(l.line_kind as string | null)] as DerivedClaim['source'],
+    categoryId:   (l.category_id as string | null) ?? null,
+    categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+    itemId:       (l.item_id as string | null) ?? null,
+    itemName:     ((l.budget_items as Record<string, unknown> | null)?.name as string) ?? null,
+  }));
+}
+
+export async function getRepTeamMoneyIn(programYearId: string): Promise<RepTeamMoneyIn[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_money_in')
+    .select(MONEY_IN_SELECT)
+    .eq('program_year_id', programYearId)
+    .order('received_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamMoneyIn);
+}
+
+export async function getRepTeamMoneyInRecord(id: string): Promise<RepTeamMoneyIn | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_money_in')
+    .select(MONEY_IN_SELECT)
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamMoneyIn(data) : null;
+}
+
+/**
+ * Record money arriving, and put it on the team's books the same day.
+ *
+ * ⚠ THE LEDGER ENTRY IS WRITTEN FIRST AND ITS ID IS KEPT. Migration 236 exists because the expense
+ * path created an entry and threw the id away for months, leaving deletes to guess by matching on
+ * a description. This table stores the link from birth, so a delete is exact and a rename can
+ * never orphan a posted entry.
+ *
+ * ⚠ CASH ON HAND, NOT COLLECTIONS AND NOT FUNDING. A refund raises the team's cash on the day it
+ * arrived (money-back plan §4.4). It is not player dues, so it never reaches the Collections
+ * figure, and it is not expected funding, so it never lowers what families are asked for.
+ */
+export async function createRepTeamMoneyIn(
+  fields: {
+    programYearId: string;
+    teamId: string;
+    orgId: string;
+    kind: MoneyInKind;
+    amount: number;
+    receivedDate: string;
+    /** The CALLER validates the item is one this team can see and derives the category from it. */
+    budgetItemId?: string | null;
+    budgetCategoryId?: string | null;
+    description?: string | null;
+    notes?: string | null;
+    receivedFrom?: MoneyInSource | null;
+    createdBy?: string | null;
+  },
+  /** For the ledger entry: the team's own book, and what to call the line in it. */
+  team: { id: string; orgId: string; name: string },
+  itemName: string | null,
+): Promise<RepTeamMoneyIn> {
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const entry = await createEntry(ledger.id, {
+    entryDate:   fields.receivedDate,
+    description: moneyInEntryDescription({ kind: fields.kind, description: fields.description ?? null }, itemName),
+    amount:      fields.amount,
+    entryType:   'income',
+    status:      'posted',
+    category:    itemName,
+    notes:       fields.notes ?? null,
+  }, fields.createdBy ?? '');
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_money_in')
+    .insert({
+      program_year_id:     fields.programYearId,
+      team_id:             fields.teamId,
+      org_id:              fields.orgId,
+      entry_kind:          fields.kind,
+      amount:              fields.amount,
+      received_date:       fields.receivedDate,
+      budget_item_id:      fields.budgetItemId ?? null,
+      budget_category_id:  fields.budgetCategoryId ?? null,
+      description:         fields.description ?? null,
+      notes:               fields.notes ?? null,
+      received_from:       fields.receivedFrom ?? null,
+      accounting_entry_id: entry.id,
+      created_by:          fields.createdBy ?? null,
+    })
+    .select(MONEY_IN_SELECT)
+    .single();
+
+  if (error) {
+    /* The entry is already posted; a failed insert would leave it in the club's ledger with
+       nothing to explain it. Void it before surfacing the failure.
+       ⚠ AND IF THE VOID ALSO FAILS, SAY SO — do not swallow it (/review, concurrency + data
+       lenses). Both failures usually share one cause, so this is the likely case, not the exotic
+       one: the coach sees "save failed", retries, succeeds — and the first entry stays posted
+       forever, inflating cash on hand with no record pointing at it and nothing able to find it.
+       The compensation is best-effort by nature; being told it did not happen is not. */
+    let cleanup = '';
+    try {
+      await voidEntry(entry.id, ledger.id);
+    } catch {
+      cleanup = ` A ledger entry for ${fields.amount} was posted and could NOT be reversed `
+        + `(entry ${entry.id}) — void it in the club ledger before re-entering this.`;
+    }
+    throw new Error(`${(error as { message?: string }).message ?? 'Could not save this record.'}${cleanup}`);
+  }
+  return mapRepTeamMoneyIn(data);
+}
+
+/**
+ * Edit a money-in record, keeping its ledger entry honest.
+ *
+ * ⚠ NOTHING HERE IS LOCKED, and the contrast with an expense is deliberate. A paid expense's
+ * amount locks because reversing and re-posting is the only correct way to change money that has
+ * settled — its entry may be one of two halves, months apart, possibly matched rather than linked.
+ * A money-in record posts exactly ONE entry and always knows its id, so correcting a typo is a
+ * single update to both rows and cannot leave the books ambiguous. Re-filing which item it points
+ * at moves no money at all (money-back plan §6.6: locking it would make delete-and-re-enter the
+ * only way to fix a label).
+ */
+export async function updateRepTeamMoneyIn(
+  record: RepTeamMoneyIn,
+  fields: {
+    amount?: number;
+    receivedDate?: string;
+    budgetItemId?: string | null;
+    budgetCategoryId?: string | null;
+    description?: string | null;
+    notes?: string | null;
+    receivedFrom?: MoneyInSource | null;
+  },
+  team: { id: string; orgId: string; name: string },
+  itemName: string | null,
+): Promise<RepTeamMoneyIn> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.amount !== undefined)           patch.amount = fields.amount;
+  if (fields.receivedDate !== undefined)     patch.received_date = fields.receivedDate;
+  if (fields.budgetItemId !== undefined)     patch.budget_item_id = fields.budgetItemId;
+  if (fields.budgetCategoryId !== undefined) patch.budget_category_id = fields.budgetCategoryId;
+  if (fields.description !== undefined)      patch.description = fields.description;
+  if (fields.notes !== undefined)            patch.notes = fields.notes;
+  if (fields.receivedFrom !== undefined)     patch.received_from = fields.receivedFrom;
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_money_in')
+    .update(patch)
+    .eq('id', record.id)
+    .select(MONEY_IN_SELECT)
+    .single();
+  if (error) throw error;
+  const updated = mapRepTeamMoneyIn(data);
+
+  /* The posted entry follows the record. Left alone, an edited amount would show one figure on the
+     Money screens and another on cash on hand — two pages disagreeing about the same dollar, which
+     is the whole class of defect this repo's shared-arithmetic modules exist to prevent. */
+  if (updated.accountingEntryId) {
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    await updateEntry(updated.accountingEntryId, ledger.id, {
+      entryDate:   updated.receivedDate,
+      description: moneyInEntryDescription(updated, itemName),
+      amount:      updated.amount,
+      category:    itemName,
+      notes:       updated.notes,
+    });
+  }
+  return updated;
+}
+
+/**
+ * Delete a money-in record, taking the money back off the books.
+ *
+ * Order matters, and it is the OPPOSITE risk from an expense: void the entry FIRST, so a failure
+ * leaves the coach with a row they can still act on rather than a posted entry nothing explains.
+ */
+export async function deleteRepTeamMoneyIn(
+  record: RepTeamMoneyIn,
+  team: { id: string; orgId: string; name: string },
+): Promise<{ reversedAmount: number }> {
+  let reversed = 0;
+  if (record.accountingEntryId) {
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    await voidEntry(record.accountingEntryId, ledger.id);
+    reversed = record.amount;
+  }
+  const { error } = await supabaseAdmin
+    .from('rep_team_money_in')
+    .delete()
+    .eq('id', record.id);
+  if (error) throw error;
+  return { reversedAmount: reversed };
 }
 
 // ── Org Payees ────────────────────────────────────────────────────────────────

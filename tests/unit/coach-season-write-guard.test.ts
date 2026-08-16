@@ -351,7 +351,35 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
      */
     'fundraisers/[fundraiserId]/entries',
     'history',
-    'lineup-templates', 'milestones', 'money-summary', 'roster', 'roster/[playerId]',
+    'lineup-templates', 'milestones',
+    /**
+     * ⚠ **MONEY THAT ARRIVED — ruled with the money-in build** (2026-08-16, mig 243;
+     * `docs/projects/active/COACH_MONEY_IN_TAXONOMY_PLAN.md`). Income and money back on something,
+     * listed on the Expenses & Payables tab and rolled into Budget vs. Actual.
+     *
+     * ⚠⚠ **LEAVING IT OUT WOULD HAVE BEEN THE DEFECT, NOT THE SAFE DEFAULT** — which is why this
+     * entry exists rather than the route resolving the live year. Its two neighbours, `expenses`
+     * and `budget-vs-actual`, have served a past season since Chunk F. A live-season-only money-in
+     * read would have furnished an ARCHIVED season's Money screens with THIS season's arrivals:
+     * 2025's costs beside 2027's income, on one page, adding up to a number that never existed.
+     * That is precisely the one-level-down leak Chunk F's expensive defects were.
+     *
+     * The three questions this list demands, answered:
+     *   1. **RECORD or INSTRUMENT?** The GET is a RECORD — what came in, and what came back, in a
+     *      season that has finished. Every instrument is a separate verb in this file or its
+     *      `[moneyInId]` sibling (POST, PATCH, DELETE), and each resolves the ACTIVE year through
+     *      `resolveCoachContext` and additionally re-asserts the record's own program year, so
+     *      none of them can address a past season even by id.
+     *   2. **Does the whole subtree carry the season?** Yes, and there is no level down: the list
+     *      is a tab inside a page that already carries `?year=` through every fetch, and a money
+     *      row has no page of its own — its only detail is the edit form, which a read-only season
+     *      never renders because the panel gates every write door on `page.canWrite()`.
+     *   3. **Does it show what the coach could see AT THE TIME?** Yes. Rows are read by
+     *      `program_year_id` and name their category and item by id, so re-filing a word in the
+     *      library today cannot rewrite what 2025's report says a refund was against.
+     */
+    'money-in',
+    'money-summary', 'roster', 'roster/[playerId]',
     'season-surplus', 'staff', 'staff/[coachId]', 'tags',
     /**
      * ⚠ **CANDIDATE MEMORY — ruled explicitly** (owner, 2026-08-02, ruling **R8**;

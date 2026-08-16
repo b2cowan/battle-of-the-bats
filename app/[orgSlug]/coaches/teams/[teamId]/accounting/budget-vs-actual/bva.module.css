@@ -192,14 +192,25 @@
 .grandTotal,
 .categoryHeader,
 .lineMain,
-.periodRow {
+.periodRow,
+/* The mig-243 section bands, subtotals and season net lay out in the SAME tracks — listed here
+   rather than restating the values under their own heading, because the variance column had to be
+   widened at both sites in one change the first time it moved, and nothing would catch a mismatch. */
+.sectionBand,
+.sectionSubtotal,
+.netRow {
   /* Category / line · Budgeted · Actual · Variance. Declared on every part that lays out in these
      tracks rather than once on a wrapper, because the header and the totals are SIBLINGS of the
      list, not children of it. */
-  --ledger-cols: 1fr 110px 110px 110px;
+  /* ⚠ THE VARIANCE TRACK IS WIDER THAN THE OTHER TWO, and that is not a rounding of taste. A cost
+     variance reads "$7,800.00 under", not "+$7,800.00" — the WORD is what carries the polarity
+     for a reader who cannot separate our overrun tone from our healthy one (mig 243). At 110px it
+     overflowed by up to 11px with no scroller owning it, caught by check:layout at 768 and 1440,
+     which would have clipped the one part of the cell that must never be lost. */
+  --ledger-cols: 1fr 110px 110px 150px;
   /* The period sub-row inserts a date column; the three money tracks stay fixed-width, so they
      still land under the line figures above them. */
-  --ledger-sub-cols: 1fr 100px 110px 110px 110px;
+  --ledger-sub-cols: 1fr 100px 110px 110px 150px;
 }
 
 
@@ -209,6 +220,71 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* ── Sections, subtotals and the season net (mig 243) ────────────────────────
+   ⚠⚠ THE SECTION IS WHAT CARRIES VARIANCE POLARITY, and that is the entire reason this report
+   has bands instead of a direction column. Over budget is GOOD news on income and BAD news on a
+   cost; the previous design ran both formulas behind one "Variance" heading with a two-letter
+   IN/OUT tag as the only distinguisher — a tag the eye skips. A heading a reader is already
+   under cannot be skipped.
+
+   ⚠ COLOUR NEVER CARRIES IT ALONE. The overrun and healthy tones are near-identical to a deutan
+   eye (project_coach_budget_card_plan_vs_actual), so the meaning is in the WORDS: revenue varies
+   "+$400" / "−$160", costs run "$150 under" / "$160 over". These rules set weight and ground
+   only — never a hue that has to be read. */
+.sectionBand {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--home-ink-soft, rgba(255,255,255,0.72));
+}
+
+/* A band one level in — the "Revenue" / "Costs" split inside an activity block. Sentence case and
+   no tint, so it reads as a part of the block above rather than a second block. */
+.sectionBandInner {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.8rem;
+  background: transparent;
+  border-top: none;
+  padding-left: 1.4rem;
+}
+
+.sectionSubtotal {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.09));
+  font-weight: 640;
+  font-size: 0.86rem;
+}
+
+/* Where both shapes end, on the same number, because they are the same money.
+   ⚠ THE TOKENS, NOT THE LITERALS. This shipped as a hand-typed `0.92rem`/`700`, which is the
+   money-total treatment at one weight step LIGHTER than `.ledgerTotal` and `.moneyGridTotal`
+   directly beside it — the exact drift `--money-cat-size`/`--money-cat-weight` were extracted to
+   prevent, and which had already happened twice before. A page-level module is not scanned by
+   `money-hierarchy-type-scale.test.ts`, so nothing would have caught it. */
+.netRow {
+  display: grid;
+  grid-template-columns: var(--ledger-cols);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border-top: 2px solid var(--home-line-strong, rgba(255,255,255,0.16));
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
 }
 
 /* ── Line rows ───────────────────────────────────────────────────────────── */

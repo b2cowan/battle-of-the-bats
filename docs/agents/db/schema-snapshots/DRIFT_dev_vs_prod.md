@@ -2,26 +2,28 @@
 
 **Generated:** 2026-08-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 34 divergence(s)** across dev/prod.
+**⚠️ 67 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 1 | 0 | — |
-| Columns | 13 | 0 | 1 |
-| Indexes | 7 | 1 | 0 |
-| Constraints | 8 | 0 | — |
-| RLS / CHECK | 3 | 0 | 0 (RLS state) |
+| Tables | 2 | 0 | — |
+| Columns | 30 | 0 | 1 |
+| Indexes | 10 | 1 | 0 |
+| Constraints | 16 | 0 | — |
+| RLS / CHECK | 7 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (1)
+### Only in DEV (2)
 - `rep_team_fundraiser_tags`
+- `rep_team_money_in`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (13)
+### Only in DEV (30)
 - `budget_categories.sports`
+- `budget_items.direction`
 - `budget_items.sports`
 - `budget_items.team_id`
 - `rep_fundraisers.kind`
@@ -34,6 +36,22 @@ _none_
 - `rep_team_fundraiser_tags.created_at`
 - `rep_team_fundraiser_tags.fundraiser_id`
 - `rep_team_fundraiser_tags.tag_id`
+- `rep_team_money_in.accounting_entry_id`
+- `rep_team_money_in.amount`
+- `rep_team_money_in.budget_category_id`
+- `rep_team_money_in.budget_item_id`
+- `rep_team_money_in.created_at`
+- `rep_team_money_in.created_by`
+- `rep_team_money_in.description`
+- `rep_team_money_in.entry_kind`
+- `rep_team_money_in.id`
+- `rep_team_money_in.notes`
+- `rep_team_money_in.org_id`
+- `rep_team_money_in.program_year_id`
+- `rep_team_money_in.received_date`
+- `rep_team_money_in.received_from`
+- `rep_team_money_in.team_id`
+- `rep_team_money_in.updated_at`
 
 ### Only in PROD (0)
 _none_
@@ -42,14 +60,17 @@ _none_
 - `rep_fundraiser_entries.player_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (7)
+### Only in DEV (10)
 - `budget_items_team_idx`
 - `budget_items_unique_scope_name`
 - `idx_rep_team_expenses_balance_entry`
 - `idx_rep_team_expenses_budget_item`
 - `idx_rep_team_expenses_deposit_entry`
+- `idx_rep_team_money_in_item`
+- `idx_rep_team_money_in_year`
 - `rep_team_fundraiser_tags_pkey`
 - `rep_team_fundraiser_tags_tag_idx`
+- `rep_team_money_in_pkey`
 
 ### Only in PROD (1)
 - `budget_items_unique_org_name`
@@ -58,7 +79,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (8)
+### Only in DEV (16)
 - `budget_items.budget_items_team_id_fkey`
 - `rep_team_expenses.rep_team_expenses_balance_entry_id_fkey`
 - `rep_team_expenses.rep_team_expenses_budget_category_id_fkey`
@@ -67,6 +88,14 @@ _none_
 - `rep_team_fundraiser_tags.rep_team_fundraiser_tags_fundraiser_id_fkey`
 - `rep_team_fundraiser_tags.rep_team_fundraiser_tags_pkey`
 - `rep_team_fundraiser_tags.rep_team_fundraiser_tags_tag_id_fkey`
+- `rep_team_money_in.rep_team_money_in_accounting_entry_id_fkey`
+- `rep_team_money_in.rep_team_money_in_budget_category_id_fkey`
+- `rep_team_money_in.rep_team_money_in_budget_item_id_fkey`
+- `rep_team_money_in.rep_team_money_in_created_by_fkey`
+- `rep_team_money_in.rep_team_money_in_org_id_fkey`
+- `rep_team_money_in.rep_team_money_in_pkey`
+- `rep_team_money_in.rep_team_money_in_program_year_id_fkey`
+- `rep_team_money_in.rep_team_money_in_team_id_fkey`
 
 ### Only in PROD (0)
 _none_
@@ -75,10 +104,14 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (3)
+### CHECK only in DEV (7)
+- `budget_items.budget_items_direction_check`
 - `rep_fundraisers.rep_fundraisers_kind_check`
 - `rep_fundraisers.rep_fundraisers_sponsor_status_check`
 - `rep_program_years.rep_program_years_default_credit_check`
+- `rep_team_money_in.rep_team_money_in_amount_check`
+- `rep_team_money_in.rep_team_money_in_entry_kind_check`
+- `rep_team_money_in.rep_team_money_in_received_from_check`
 
 ### CHECK only in PROD (0)
 _none_
