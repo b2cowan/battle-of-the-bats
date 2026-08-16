@@ -2,6 +2,52 @@
 
 Paste everything below the line into a fresh chat.
 
+> ⚠⚠ **ADDENDUM 2026-08-16 — added AFTER this prompt was first handed over. If you have already
+> started, read this before you go further; it changes what "done" looks like.** See
+> **§0** immediately below the line.
+
+---
+
+## §0 · ⚠⚠ Read this first — four things the original prompt got wrong or left out
+
+**1 · Produce at least TWO viable designs and recommend one. Do not present a single design.**
+The owner has stated a preference (surgical, screen-by-screen, start from nothing). A single design
+that implements his preference is worth very little to him — he is explicitly using this session to
+**stress-test his own thinking**, and has changed course twice already when shown evidence.
+Presenting one option lets him only say yes. Present the genuine alternatives, with an honest
+recommendation and the reason. **Disagreeing with him is now a standing rule** — it was added to
+`AGENCY_RULES.md` on 2026-08-16 at his request. Argue from what the code does, not from the plan.
+
+**2 · ⚠⚠ Test whether the QUESTION is the right one — a build was just lost to exactly this.**
+The previous session found that the multi-season history was visible to any coach who had ever
+staffed the team, and asked the owner *"who should see this list?"*. He answered, it was built, and
+then **he** spotted the real question: *why does an ex-coach have access at all?* — which invalidated
+the whole build. The evidence had supported the wider question the entire time; nobody widened it.
+
+So before you design: **is "access model" + "archive UX" actually the right pair of questions?** Or
+is there a bigger one underneath — about what a *season* is for, or whether a coach's relationship is
+with a team rather than a season? Say so if there is. That is the highest-value thing you can do
+here, and it is worth more than a good answer to the questions as posed.
+
+**3 · Price the drip-feed before recommending it.** "Start from nothing and add piece by piece" is
+the owner's instinct and it is probably right — but it has a cost he asked to have surfaced: **each
+addition is its own decision, its own build, its own release.** If coaches turn out to need three
+pieces in the first month, the drip-feed is slower and more disruptive than deciding the set up
+front. Do not just agree with it. Either defend it with the specific moments it serves, or say where
+a bigger v1 would be cheaper overall.
+
+⚠ **Cheap first move that may collapse the problem:** name the two or three most likely *"I need to
+look that up"* moments a coach actually has, then check whether **Season's End** and **Season
+Wrapped** already serve them. Both exist, both are look-back artifacts, and neither is a season
+toggle. It is quite possible the answer is "most of this already exists in the right shape and the
+season toggle is the only thing that needs deleting."
+
+**4 · Price the unwind, so the owner chooses with a number attached.** The prompt tells you a lot of
+recent work may be superseded. Before recommending deletion, say **what it actually costs**: how many
+routes, screens, tests and QA sections come out, and what stops working the day it goes. "Delete
+Chunk F" is a very different proposition at 3 files than at 30, and he should not have to guess
+which it is.
+
 ---
 
 You are doing a **design review and re-design**, not a build. Two related questions, one nearly
