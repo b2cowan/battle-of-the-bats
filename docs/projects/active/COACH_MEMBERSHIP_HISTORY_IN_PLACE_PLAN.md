@@ -1,6 +1,6 @@
 # Coach membership & history-in-place — Design A on M1
 
-**Status:** APPROVED 2026-08-16 (owner). **P1 committed `8415dcd2`; P2 BUILT ON DEV the same day**
+**Status:** APPROVED 2026-08-16 (owner). **P1 committed `8415dcd2`; P2 committed `fd7c2c3e` 2026-08-16**
 (the season toggle and the archive place are out) — both awaiting owner QA, §39 and §40.
 **Decision record:** mockup artifact `aa758bcb` (R1, §10 verdict) — owner accepted the recommendation
 verbatim: **Design A** (the season toggle and archive-place are deleted; history is delivered inside
@@ -275,12 +275,17 @@ rep_team_staff_memberships (
   12. CLAUDE.md replacement, ledger §36/§37 retirement + the P2 section, help sweep, TODO/memory.
   13. The layout fixture gains a completed season so Season's End and the compare list are rendered.
 
-  ### P2 build state (2026-08-16, this session): ✅ BUILT ON DEV, awaiting owner QA §40
+  ### P2 build state: ✅ **committed `fd7c2c3e` 2026-08-16** — awaiting owner QA §40
 
-  ⚠ **NOT YET COMMITTED — the landing is its own job.** The money-tab session is mid-rework in the
-  same working copy and now shares seven files with P2. The handoff for committing it, finishing the
-  rendered baseline for the five new finished-season screens, and truthing-up afterwards is
-  `docs/projects/active/COACH_MEMBERSHIP_P2_LANDING_PROMPT.md`.
+  Landed alongside the money-tab session's in-flight rework in the same working copy. Nine files were
+  shared; five were rebuilt from HEAD with only P2's edits applied so their unfinished work stayed
+  uncommitted, and the split was **proved by materialising the staged tree in a scratch worktree and
+  typechecking it there** — which is what caught four files that had been mis-attributed to P2 and
+  one help passage the sweep had missed. Verified in that isolated tree: typecheck ✓ · 2,020 unit
+  tests ✓.
+
+  ⚠ **STILL OWED: the rendered baseline for the five new finished-season screens** — the run needs a
+  quiet dev server and a warmed route set. See §5 P2 checklist item 13 and the follow-ups in §8.
 
   Everything in the checklist above is done. Gates: typecheck ✓ · **2,032 unit tests ✓** ·
   `check:demos` ✓ · CSS purity ✓ · token/contrast/date ratchets ✓ · dictionary ✓ · lint 0 errors.

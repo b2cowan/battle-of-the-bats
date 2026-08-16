@@ -5708,7 +5708,7 @@ this is now most of the newest work, not two odds and ends:
 
 ## §40 · The season toggle comes out — history is delivered in place (M1, Phase 2)
 
-**Built on dev 2026-08-16 · not on production · NO migration, no new table, no new API route.**
+**Committed `fd7c2c3e` 2026-08-16 · not on production · NO migration, no new table, no new API route.**
 Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P2. Decision mockups: artifact `aa758bcb` §10.
 Walk **§39 first** — this section assumes membership is already the access truth.
 

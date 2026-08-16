@@ -1,3 +1,11 @@
+# ⚠ SPENT — P2 was committed `fd7c2c3e` on 2026-08-16.
+
+The landing described below is DONE except for one item: **the rendered baseline for the five new
+finished-season screens**, which needs a quiet dev server (see §2 below, and the plan's §8). Kept for
+the record of how the commit boundary was drawn against the money-tab session; do not re-run it.
+
+---
+
 # New-chat prompt — land P2 (the season toggle is already out; this gets it committed)
 
 Paste everything below the line into a fresh chat.
