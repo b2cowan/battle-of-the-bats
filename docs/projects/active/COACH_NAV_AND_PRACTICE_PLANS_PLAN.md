@@ -1,8 +1,7 @@
 # Coach Portal — Nav regroup, Attendance-as-report, and a front door for Practice Plans
 
-**Status:** Phases 1 (Practice Plans hub), 2 (Attendance page) and 3 (Attendance into Insights)
-BUILT on dev 2026-08-15.
-Phase 4 (sidebar reorder) approved, not built.
+**Status:** ALL FOUR PHASES BUILT on dev 2026-08-15 — Practice Plans hub, the Attendance page,
+Attendance into Insights, and the sidebar regroup. Owner QA owed (ledger §28, §31, §32, §33).
 **Owner-approved:** 2026-08-15, from mockups (artifact `ed56fe2c-0749-4c18-b504-3d3b3ee6c7c7`, rev 3).
 **Origin:** owner review of the Attendance empty state → widened into the sidebar's information architecture.
 
@@ -304,7 +303,7 @@ page reachable from the door — including the ones a live-nav change quietly or
 The double-parent pattern still needs a decision for **Money** and **Development** (referrer-tagged
 back link vs no back link). Not blocking.
 
-### Phase 4 — Reorder the sidebar
+### ✅ Phase 4 — Reorder the sidebar *(BUILT on dev 2026-08-15)*
 
 Groups only. **No item is renamed and no route moves**, so nothing touches permissions.
 
@@ -314,6 +313,74 @@ breaks an assistant-coach gate. Group headings are free; item labels are not.
 **⚠ Both navs move together.** `CoachesBottomNav`'s "More" sheet mirrors the same grouping and the
 same `conditional` mechanism. Changing one and not the other leaves the two navs telling different
 stories.
+
+#### What was built
+
+The approved target in §2, exactly — six fixed groups ordered by heat:
+**Season → Progress → Money → Communication → Team → Team admin**, with Overview ungrouped above.
+Lineups moved into Season (a lineup is built for a *game*, not a fact about the roster);
+Development joined Insights in the new **Progress** group; Roster and Tryouts travelled down
+together into **Team**, keeping their order. `Squad` → `Team` is a **heading** change, which is the
+only kind this phase is allowed to make.
+
+**The `conditional` mechanism is deleted outright, not just the shelf.** Tryouts and Tournaments
+are permanent. Nothing in the sidebar relocates itself based on what the team has or hasn't done.
+
+#### The two invariants are now pinned, not remembered
+
+`tests/unit/coach-nav-groups.test.ts` asserts both risks this phase carried, against the component
+source (these are module-level literals in client components; importing the `.tsx` would drag
+next/navigation, lucide and a CSS module into the node runner for no gain):
+
+1. **The item label set and order**, plus a check that **every label has its own `case`** — a
+   helper (no duties at all) must see none of them. A renamed door falls through to
+   `default: return true`, and this is what catches it.
+2. **The two navs tell the same story** — the More sheet must equal the sidebar minus exactly the
+   phone's four primary tabs (Overview, Schedule, Roster, Chat), and the group headings and their
+   order must match. That one legal divergence is a consequence of the bottom bar, not a second
+   opinion about grouping.
+3. **No "Explore" heading and no `conditional`/`navSignals` survive in either file** — deleting it
+   from one nav only would have kept the shelf alive on phones.
+
+⚠ Two bugs in that test were caught while writing it, both worth knowing: the sidebar's *group
+headings* use the same `label:` key as its items, so the naive regex reported headings as items and
+the two navs "disagreed" about a difference that was entirely the test's; and a first cut asserted
+the *word* `hasTournamentHistory` was absent, which failed on the comment explaining its absence.
+Assert the read, not the mention.
+
+#### Drift this change caused elsewhere, fixed in the same unit of work
+
+- **The portal tour named a group that no longer exists.** Its first card's eyebrow read "Squad",
+  and its body said roster, lineups and development "sit together" — which stopped being true the
+  moment Lineups and Development moved out. Eyebrow → "Team", body rewritten around the sentence
+  that survives (everything reads from the roster) and Tryouts' new neighbourhood. ⚠ The card's
+  `needsAnyOf` is ITEM labels and is untouched — those are the gate keys.
+- **The help guide described the deleted mechanism as a feature.** It told coaches that Tryouts and
+  Tournaments "wait under a small **Explore** heading and move up into Squad and Season
+  automatically" — the same class of drift as the guide's pre-Phase-1 claim that there was no
+  separate practice-plans page. Rewritten to say the opposite, plus a corrected group glossary and
+  six stale "Squad menu" / "under Squad" pointers.
+- ⚠ **The free portal's "Explore" tab is a DIFFERENT, REAL product concept** (where a free coach
+  turns the four optional tools on) and was deliberately left alone. This is the name collision §2
+  flagged. The guide's existing line — *"On Premium, every tool is already in your sidebar — there's
+  no Explore step"* — was slightly untrue before this phase and is now exactly right.
+
+#### Evidence
+
+- Rendered at 1440 and 390: both navs print the six groups in the approved order with the approved
+  contents, no Explore heading anywhere, and no sideways scroll on the phone.
+- Typecheck clean; **1977 tests pass, 0 fail**.
+- Layout sweep across `coach-overview`, `coach-roster`, `coach-schedule`: **no finding belongs to
+  this phase.** The seven reported are Phase 1's un-baselined `a·Practice plans`, and two fixture
+  labels that drifted from their baselined keys (`Season setup4/5` vs `3/5`, and the probe practice
+  whose timestamp is re-anchored to "now" on every run — the baseline key embeds the label text).
+
+#### Known, deliberately not done
+
+`hasTournamentHistory` on the coaching-assignment row now has **no reader** — the shelf was its only
+consumer. Removing it means editing `lib/db.ts`, which is carrying another session's in-flight work,
+so it is left computed-but-unused and recorded here as a follow-up. (`hasTryoutSignal` stays either
+way: `StartNextSeasonModal` still uses it.)
 
 ---
 

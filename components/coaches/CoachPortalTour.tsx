@@ -41,9 +41,17 @@ type TourCard = {
 const CARDS: TourCard[] = [
   {
     key: 'squad',
-    group: 'Squad',
+    // ⚠ The EYEBROW is the sidebar heading this card points at, so it moves when the heading does
+    // (2026-08-15, plan Phase 4: "Squad" → "Team"). A tour that names a group the coach cannot
+    // find is the same drift class as the demo copy describing a screen the product no longer
+    // shows. `needsAnyOf` below is ITEM labels and is deliberately untouched — item labels are the
+    // capability-gate keys and never move.
+    group: 'Team',
     headline: 'Your players live here',
-    body: 'Roster, lineups and player development sit together. Almost everything else in the portal reads from your roster — lineups, attendance, dues, who your announcements reach — which is why it’s the one thing worth doing first.',
+    // Lineups and Development moved to other groups in the regroup, so this can no longer say the
+    // three "sit together". What survives is the sentence that mattered: everything reads from the
+    // roster, which is why it is the one thing worth doing first.
+    body: 'Your roster is where the season starts. Almost everything else in the portal reads from it — lineups, attendance, dues, who your announcements reach — which is why it’s the one thing worth doing first. Tryouts sits alongside it, because that’s where next season’s roster comes from.',
     href: '/roster',
     linkLabel: 'Open Roster',
     needsAnyOf: ['Roster', 'Lineups', 'Development'],

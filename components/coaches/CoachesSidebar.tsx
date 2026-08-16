@@ -21,32 +21,49 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 // they sit in their group only once the team uses them, otherwise they drop to an "Explore" group.
 // The Depth chart lives INSIDE Roster (a view toggle), so it's intentionally not a nav item. Hrefs
 // keep their existing routes (/accounting, /history) — only the labels change.
-const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users; conditional?: 'tryouts' | 'tournaments' }[] }[] = [
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * THE TEAM NAV — six groups, fixed, always in the same place (owner-approved 2026-08-15, plan
+ * Phase 4). `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §2 holds the reasoning; this is the rule:
+ *
+ *   > Order groups by HOW OFTEN A COACH OPENS THEM. Hot at the top, cold at the bottom.
+ *   > Nothing is conditional.
+ *
+ * The sidebar had never had a stated ordering principle. Groups described what the DATA WAS ABOUT
+ * — "Squad" is people, "Season" is time — but a coach on a Tuesday night is not thinking "people",
+ * they are thinking "practice is in two hours". Roster is a September job; Tryouts is an August
+ * job; Schedule and practice plans are a Tuesday job. Once heat is the rule, where each thing goes
+ * stops being a matter of taste.
+ *
+ * ⚠ NO ITEM IS RENAMED AND NO ROUTE MOVES, in this change or any future one made casually.
+ * `isCoachNavItemVisible` is keyed by DISPLAY LABEL, so renaming an item silently drops it through
+ * to `default: return true` and hands an ungranted assistant the door. **Group headings are free;
+ * item labels are not.** ("Squad" → "Team" below is a HEADING, which is why it is allowed.)
+ *
+ * ⚠ BOTH NAVS MOVE TOGETHER. `CoachesBottomNav`'s More sheet mirrors this grouping and this order.
+ * Changing one and not the other leaves the two navs telling different stories — pinned by
+ * `tests/unit/coach-nav-groups.test.ts`.
+ *
+ * ⚠ THE "EXPLORE" SHELF IS DELETED, NOT RENAMED (and with it the whole `conditional` mechanism).
+ * Tryouts and Tournaments used to sit in their group only once `hasTryoutSignal` /
+ * `hasTournamentHistory` was true, and otherwise dropped to a shelf labelled "Explore" — so the
+ * sidebar REARRANGED ITSELF mid-season, moving items a coach had already learned the position of.
+ * The word also collided with a real product concept (browsing public tournaments to enter,
+ * `/discover`). Both surfaces already have empty states that teach what they are for, which is the
+ * job the shelf was doing badly.
+ *
+ * Open and deliberately not decided: under a strict heat rule Chat probably outranks Money (daily
+ * vs monthly). Money is left above Communication because it is the bigger product pillar. Flagged
+ * for the owner, not assumed.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users }[] }[] = [
   { items: [
     { label: 'Overview',    href: '',             icon: LayoutDashboard },
   ] },
-  { label: 'Squad', items: [
-    { label: 'Roster',      href: '/roster',      icon: Users },
-    /**
-     * ⚠ ATTENDANCE IS NOT A NAV ITEM (owner-approved 2026-08-15, plan Phase 3). No attendance is
-     * ever recorded on the attendance page — marking a player present happens in the Schedule's
-     * event panel, and that page's own hero card is a shortcut back to it. What is left is a
-     * season table of fractions: a report, and it was already a report tile on Insights. It has
-     * ONE parent now, which is what retires the wrong-half-the-time back link rather than
-     * patching it.
-     *
-     * ⚠ IT REMAINS IN `CLOSED_TEAM_NAV_ITEMS`, and that is not an oversight. On a finished season
-     * the archive nav points "Insights" at `/history/results`, NOT at the Insights hub — the hub
-     * is live-season-only and `/history/results` carries no attendance door. Removing the archive
-     * entry too would make a past season's attendance report unreachable, deleting an archive door
-     * ruled in under D-F1. Live nav: gone. Archive nav: kept, deliberately.
-     */
-    { label: 'Lineups',     href: '/lineups',     icon: ListOrdered },
-    // Primary (not Explore) by design decision 2026-07-17 — a growth pillar whose
-    // evaluation-sessions job exists before any usage signal could accrue.
-    { label: 'Development', href: '/development', icon: TrendingUp },
-    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList, conditional: 'tryouts' },
-  ] },
+  /** Hottest: the week's work. "Season" is RETAINED as the heading — "Game day" was rejected once
+   *  practice plans joined it, because practices are not game day, and keeping the existing word
+   *  means a coach does not have to relearn a heading whose contents merely changed. */
   { label: 'Season', items: [
     { label: 'Schedule',    href: '/schedule',    icon: Calendar },
     // Directly under Schedule (owner-approved 2026-08-15): practice plans had no nav entry at all,
@@ -57,8 +74,18 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
     // ⚠ NotebookPen, not ClipboardList — Tryouts already owns ClipboardList in this nav, and two
     // items sharing an icon is a worse read than the hub differing from its own drill-in page.
     { label: 'Practice plans', href: '/practice',  icon: NotebookPen },
+    // Moved out of "Squad": a lineup is a thing you build for a GAME, on the calendar, not a fact
+    // about the roster. It now sits beside the two surfaces it is built from.
+    { label: 'Lineups',     href: '/lineups',     icon: ListOrdered },
+    // Permanent, no longer conditional — see the Explore note above.
+    { label: 'Tournaments', href: '/tournaments', icon: Trophy },
+  ] },
+  /** New group. Development and Insights are both "how are we doing?" surfaces read on a quiet
+   *  evening — Development is closer to Insights than Schedule ever was. Attendance is INSIDE
+   *  Insights as of Phase 3 rather than being an item here. */
+  { label: 'Progress', items: [
+    { label: 'Development', href: '/development', icon: TrendingUp },
     { label: 'Insights',    href: '/history',     icon: BarChart3 },
-    { label: 'Tournaments', href: '/tournaments', icon: Trophy, conditional: 'tournaments' },
   ] },
   { label: 'Money', items: [
     { label: 'Money',       href: '/accounting',  icon: DollarSign },
@@ -73,6 +100,15 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   { label: 'Communication', items: [
     { label: 'Chat',           href: '/chat',          icon: MessageSquare },
     { label: 'Email families', href: '/announcements', icon: Megaphone },
+  ] },
+  /** Coldest of the real work: setting the season up. ⚠ TRYOUTS DOES NOT MOVE relative to Roster
+   *  (owner ruling) — the two travel down together and keep their order, because they are both
+   *  "set the season up" tools and one produces the other. The heading is "Team" rather than
+   *  "Squad" only because the group no longer holds the game-day tools that made "Squad" mean
+   *  "the playing side of things". */
+  { label: 'Team', items: [
+    { label: 'Roster',      href: '/roster',      icon: Users },
+    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList },
   ] },
   { label: 'Team admin', items: [
     { label: 'Staff',         href: '/staff',       icon: UserCog },
@@ -142,17 +178,11 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const base = `/${orgSlug}/coaches`;
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
-  // "In use yet?" signals decide whether a conditional item sits in its group or drops to Explore.
-  const navSignals = {
-    tryouts: !!currentAssignment?.hasTryoutSignal,
-    tournaments: !!currentAssignment?.hasTournamentHistory,
-  };
-  type NavItem = { label: string; href: string; icon: typeof Users; conditional?: 'tryouts' | 'tournaments' };
-  const itemState = (item: NavItem): 'primary' | 'explore' | 'hidden' => {
-    if (!navVisible(item.label)) return 'hidden';                       // capability gate wins
-    if (item.conditional && !navSignals[item.conditional]) return 'explore';
-    return 'primary';
-  };
+  // ⚠ The `navSignals` / `itemState` pair that used to live here is GONE with the Explore shelf
+  // (2026-08-15, plan Phase 4). An item is visible or it is not; nothing relocates itself based on
+  // what the team has and hasn't done yet. `hasTournamentHistory` on the assignment row now has no
+  // reader — left in place rather than reaching into `lib/db.ts`, and recorded as a follow-up.
+  type NavItem = { label: string; href: string; icon: typeof Users };
   const renderNavItem = ({ label, href, icon: Icon }: NavItem) => {
     const fullHref = `${base}/teams/${currentTeamId}${href}`;
     const isActive = href === '' ? pathname === fullHref : pathname.startsWith(fullHref);
@@ -285,28 +315,20 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             {currentAssignment.coachRole === 'assistant_coach' && (
               <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
             )}
+            {/* ⚠ A group renders only when the coach can see something in it, so an assistant's
+                sidebar is shorter — but every item they DO have is always in the same place. That
+                is the whole win of deleting the Explore shelf: position is a function of the
+                coach's grants, never of what the team has got round to doing yet. */}
             {TEAM_NAV_GROUPS.map((group, gi) => {
-              const primaryItems = group.items.filter(item => itemState(item) === 'primary');
-              if (!primaryItems.length) return null;
+              const items = group.items.filter(item => navVisible(item.label));
+              if (!items.length) return null;
               return (
                 <Fragment key={gi}>
                   {group.label && <p className={styles.sidebarGroupLabel}>{group.label}</p>}
-                  {primaryItems.map(renderNavItem)}
+                  {items.map(renderNavItem)}
                 </Fragment>
               );
             })}
-            {/* Explore — optional areas not in use yet, kept rediscoverable. Tryouts / Tournaments
-                surface here until the team uses them, then graduate into their group above. */}
-            {(() => {
-              const exploreItems = TEAM_NAV_GROUPS.flatMap(g => g.items).filter(item => itemState(item) === 'explore');
-              if (!exploreItems.length) return null;
-              return (
-                <Fragment>
-                  <p className={styles.sidebarGroupLabel}>Explore</p>
-                  {exploreItems.map(renderNavItem)}
-                </Fragment>
-              );
-            })()}
           </div>
         </>
       )}

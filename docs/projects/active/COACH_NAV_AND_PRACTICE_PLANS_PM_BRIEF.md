@@ -96,12 +96,46 @@ What a coach sees:
   that sidebar entry is the *only* way back to a past season's attendance. Removing it to match the
   live sidebar would have silently deleted a report the archive is supposed to keep.
 
-### 5. Coming next (approved, not yet built)
+### 5. The sidebar is reordered around what a coach is doing *(built on dev, 2026-08-15)*
 
-- **The sidebar is reordered by how often a coach opens things**: Season → Progress → Money →
-  Communication → Team → Team admin. Roster and Tryouts move down together (both are September
-  jobs), Development joins Insights under a new **Progress** group, and the **"Explore" shelf is
-  deleted** — so items stop silently relocating themselves as a season progresses.
+The sidebar had never had a stated ordering principle. Its groups described *what the data was
+about* — "Squad" is people, "Season" is time — but a coach on a Tuesday night isn't thinking
+"people", they're thinking "practice is in two hours". The groups now run **hottest at the top,
+coldest at the bottom**:
+
+| Group | What's in it |
+| --- | --- |
+| *(top, ungrouped)* | Overview |
+| **Season** | Schedule, Practice plans, **Lineups**, Tournaments |
+| **Progress** *(new)* | **Development**, Insights |
+| **Money** | Money |
+| **Communication** | Chat, Email families |
+| **Team** *(was "Squad")* | Roster, Tryouts |
+| **Team admin** | Staff, Documents, Settings |
+
+Lineups moved because a lineup is something you build for a *game*, not a fact about the roster.
+Development moved because it's closer to Insights than to the schedule. Roster and Tryouts travelled
+down together and kept their order — they're both "set the season up" jobs, and one produces the
+other. **Nothing was renamed except the "Squad" heading**, and no page moved, so nobody's
+permissions changed.
+
+**The "Explore" shelf is gone.** Tryouts and Tournaments used to sit under it until your team ran a
+tryout or entered a tournament, then jump up into another group — which meant **the sidebar
+rearranged itself mid-season**, moving items a coach had already learned the position of. They're
+now permanent, in their proper groups, from day one. Both surfaces already explain what they're for
+when you open them, which is the job the shelf was doing badly.
+
+Everything moved on **desktop and phone together** — the phone's "More" sheet carries the same six
+groups in the same order.
+
+**Two knock-on fixes travelled with it:** the first-run portal tour named a group ("Squad") that no
+longer exists and claimed three tools "sit together" that no longer do; and the help guide described
+the Explore shelf as a feature. Both corrected in the same change. *(The **free** portal's separate
+"Explore" tab — where a free coach turns optional tools on — is a different thing and is untouched.)*
+
+**One open question for you:** under a strict "how often do you open it" rule, **Chat probably
+outranks Money** — Chat is daily, Money is monthly. Money is left above Communication because it's
+the bigger product pillar. Arguable either way; flagged rather than decided.
 
 ---
 

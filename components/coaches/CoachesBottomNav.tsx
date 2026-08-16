@@ -40,28 +40,38 @@ const CLOSED_TEAM_TABS = CLOSED_TEAM_NAV_ITEMS.map(item => ({
  *  drop into More, exactly as the live season's do. */
 const ARCHIVE_PRIMARY_LABELS = ["Season's End", 'Roster', 'Schedule', 'Money'];
 
-// Remaining team sections — surfaced under More, each beneath a plain-language section header that
-// mirrors the desktop sidebar groups (design rule: every More item sits under a section header).
-// `conditional` items (Tryouts / Tournaments) drop to an "Explore" section until the team uses them.
-// Hrefs keep their existing routes (/accounting, /history); only the labels change.
-type MoreItem = { key: string; icon: typeof Users; label: string; conditional?: 'tryouts' | 'tournaments' };
+/**
+ * Remaining team sections — surfaced under More, each beneath a plain-language section header.
+ *
+ * ⚠ THIS MIRRORS `TEAM_NAV_GROUPS` IN `CoachesSidebar` — same six groups, same order, same
+ * heat rule (hot at the top, cold at the bottom). **Read that file's header before changing
+ * anything here**; it holds the reasoning, the label-vs-heading rule, and why the "Explore" shelf
+ * and the whole `conditional` mechanism were deleted rather than renamed. Changing one nav and not
+ * the other leaves the two telling different stories — pinned by
+ * `tests/unit/coach-nav-groups.test.ts`.
+ *
+ * ⚠ The ORDER matches; the CONTENTS differ by exactly the phone's primary tabs. Overview,
+ * Schedule, Roster and Chat are bottom-bar primaries (`TEAM_TABS`), so they do not repeat here —
+ * which is why "Team" holds only Tryouts and "Communication" only Email families. That is the one
+ * legal divergence, and it is a consequence of the bar, not a second opinion about grouping.
+ *
+ * Hrefs keep their existing routes (/accounting, /history); only the labels differ from the path.
+ */
+type MoreItem = { key: string; icon: typeof Users; label: string };
 const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
-  { header: 'Squad', items: [
-    // ⚠ Attendance left BOTH navs together (2026-08-15, plan Phase 3) — see the sidebar's note for
-    // why, and for why the ARCHIVE nav above still carries it. Changing one nav and not the other
-    // is how the two start telling different stories; `CLOSED_TAB_ICON` above keeps its icon
-    // precisely because the archive door survives.
-    { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
-    { key: '/development',   icon: TrendingUp,    label: 'Development' },
-    { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },
-  ] },
   { header: 'Season', items: [
+    // ⚠ Attendance left BOTH navs together (2026-08-15, plan Phase 3) — see the sidebar's note for
+    // why, and for why the ARCHIVE nav above still carries it. `CLOSED_TAB_ICON` above keeps its
+    // icon precisely because the archive door survives.
     // Practice plans (2026-08-15) — the sidebar puts it directly under Schedule; Schedule is a
-    // PRIMARY tab down here, so the hub leads its section instead. Both navs move together by
-    // rule: a door added to one and not the other is how the two start telling different stories.
+    // PRIMARY tab down here, so the hub leads its section instead.
     { key: '/practice',      icon: NotebookPen,   label: 'Practice plans' },
+    { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
+    { key: '/tournaments',   icon: Trophy,        label: 'Tournaments' },
+  ] },
+  { header: 'Progress', items: [
+    { key: '/development',   icon: TrendingUp,    label: 'Development' },
     { key: '/history',       icon: BarChart3,     label: 'Insights' },
-    { key: '/tournaments',   icon: Trophy,        label: 'Tournaments', conditional: 'tournaments' },
   ] },
   { header: 'Money', items: [
     { key: '/accounting',    icon: DollarSign,    label: 'Money' },
@@ -70,6 +80,9 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   // name. The route is unchanged, and the capability gate keeps the old label as a fallthrough.
   { header: 'Communication', items: [
     { key: '/announcements', icon: Megaphone,     label: 'Email families' },
+  ] },
+  { header: 'Team', items: [
+    { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts' },
   ] },
   { header: 'Team admin', items: [
     { key: '/staff',         icon: UserCog,       label: 'Staff' },
@@ -143,16 +156,9 @@ export default function CoachesBottomNav() {
   const caps = inArchive ? seasonView.current?.capabilities : currentAssignment?.capabilities;
   // Shared with the desktop sidebar (lib/coach-nav-visibility.ts) — one source of truth for gating.
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
-  // "In use yet?" signals decide whether a conditional item sits in its section or drops to Explore.
-  const navSignals = {
-    tryouts: !!currentAssignment?.hasTryoutSignal,
-    tournaments: !!currentAssignment?.hasTournamentHistory,
-  };
-  const moreItemState = (item: MoreItem): 'primary' | 'explore' | 'hidden' => {
-    if (!navVisible(item.label)) return 'hidden';
-    if (item.conditional && !navSignals[item.conditional]) return 'explore';
-    return 'primary';
-  };
+  // ⚠ The `navSignals` / `moreItemState` pair that used to live here is GONE with the Explore
+  // section (2026-08-15, plan Phase 4), in the same change as the sidebar's. An item is visible or
+  // it is not; nothing relocates itself mid-season. See the sidebar for the full reasoning.
 
   const isOnTeamMore = teamBase && !currentClosed
     ? ALL_MORE_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
@@ -377,11 +383,10 @@ export default function CoachesBottomNav() {
                   </Link>
                 );
               };
-              const exploreItems = MORE_SECTIONS.flatMap(s => s.items).filter(i => moreItemState(i) === 'explore');
               return (
                 <>
                   {MORE_SECTIONS.map(section => {
-                    const items = section.items.filter(i => moreItemState(i) === 'primary');
+                    const items = section.items.filter(i => navVisible(i.label));
                     if (!items.length) return null;
                     return (
                       <Fragment key={section.header}>
@@ -390,12 +395,6 @@ export default function CoachesBottomNav() {
                       </Fragment>
                     );
                   })}
-                  {exploreItems.length > 0 && (
-                    <Fragment>
-                      <div className={styles.dropSectionLabel}>Explore</div>
-                      {exploreItems.map(renderMoreItem)}
-                    </Fragment>
-                  )}
                   <div className={styles.dropDivider} />
                 </>
               );
