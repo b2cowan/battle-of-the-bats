@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 | 🖥📱 | LIVE · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 · §29 · §30 | 🖥📱 | LIVE · **§30 ON DEV** (the sponsorship follow-ups — two Overview doors, money tags on money coming IN, a sponsor in the demo world; ⚠ Part A's last step is the filter following a coach to another tab, and Part C is the shop window) · **§29 ON DEV** (the budget speaks in category + item — ⚠⚠ Part C checks the totals still reconcile, and Part D is the one-team-cannot-see-another rule) · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -4684,6 +4684,275 @@ it needs a record that already existed on dev.
 
 **If Part D or Part E fails, treat it as blocking** — everything else here is a correction to how a
 screen reads, but those two are the books being wrong.
+
+## §30 · Sponsorships, the follow-ups — two doors, tags on money coming in
+
+**Built on dev 2026-08-15 · not on production · ⚠ carries migration 239, which must reach prod
+BEFORE this code does.** Plan: `COACH_SPONSORSHIPS_PLAN.md` §8. Proposal + mockups: artifact
+`50fe3e42`. **Sits on top of §24 — walk §24 first if it is still owed**, because everything here
+assumes a team that already has both a drive and a sponsor.
+
+**Why this section exists:** sponsorships shipped and four things did not follow it. The product
+disagreed with itself about the word *Fundraising* one click apart; a fundraiser or sponsor was the
+only money record that could not be tagged, so the money-tag report could only ever answer what a
+label COST; the Money overview offered one door to a tab holding two different things; and the demo
+world — the shop window — could not show the distinction at all.
+
+### A · The two doors
+
+- [ ] Money → **Overview**. Under *Everything in Money* (or *More in Money* in season) there are now
+      **two** rows where there was one: **Fundraisers** with a green dot and **Sponsorships** with a
+      blue one, matching the chips inside the tab.
+- [ ] The Sponsorships row shows even on a team with **no sponsors** — "None yet · add one" — the
+      way the drives row already introduces itself. A team with a pledge reads its received figure
+      and the pledged one **beside** it, never added together.
+- [ ] Tap each row. Both land on **Fundraising**, each already filtered to its own kind — and the
+      **address bar says which** (`&kind=sponsor`). Copy that URL into a new tab: it opens the same
+      filtered view.
+- [ ] Press **Back** from a filtered view — it steps back through the filter, not out of Money.
+- [ ] ⚠ **The filter must not follow you.** From a filtered Fundraising list, switch to
+      **Expenses**, then back to **Fundraising**: the list shows **everything** again. A kind that
+      rode along would silently hide half a coach's records on an unrelated visit.
+
+### B · Tags on money coming in
+
+- [ ] Fundraising → **＋ New**. The form has a **Tags** box at the bottom, for either kind. Pick an
+      existing money tag — it is the **same list** the Expenses form offers, not a second one.
+- [ ] Type a name that does not exist and use **+ Create**. The new tag appears immediately, and is
+      then offered on the **Expenses** form too.
+- [ ] Save. Open the record: the tags show as chips **inside it**. ⚠ They are deliberately **not**
+      on the list row — a label drawn beside every row is drawn as many times as the list is long.
+- [ ] Open **Settings** on that record, change the tags, save, reopen: the change stuck.
+- [ ] Start editing tags and close the sheet without saving — **it asks before discarding**.
+- [ ] **Export** the Fundraising list. There is a **Tags** column carrying the names.
+- [ ] ⚠ **The export follows the view.** Filter to Sponsors, export: the file has sponsors only, and
+      the scope line says *Sponsors only*. This is new — it used to dump the whole season whatever
+      was on screen.
+
+### C · The demo world (this is the shop window, so it is QA)
+
+- [ ] Open the coach demo (no login) → 12U → Money → **Fundraising**. Beside the Bottle Drive there
+      is a **$750 sponsor, Riverdale Dental**, with a blue Sponsor chip and a Received chip.
+- [ ] Open it: one row, **"Nobody in particular — a club-wide sponsor"**, no credit.
+- [ ] ⚠ **Player Dues must be UNCHANGED**: still **$240 overdue across exactly two families**, still
+      one instalment at **$90 of $120**. The sponsor credits nobody precisely so those stay true —
+      if either has moved, stop and say so.
+- [ ] Run the guided tour to the **money** step. Its last sentence now names the sponsor and
+      explains that a pledge counts in the plan and not in the books. It should read as one thought
+      with the sentences before it, not an addendum.
+
+### D · What must NOT have changed
+
+- [ ] The Fundraising tab is still called **Fundraising**; the filter's middle chip is still called
+      **Fundraisers** (it names a kind, not the tab).
+- [ ] Help → Money → *Getting around the Money hub* and the FAQ *How do I switch between… Money
+      screens* both say **Fundraising**, and mention the two Overview rows.
+- [ ] Budget Plan → add a line → pick **Expected sponsorship**: the explanatory paragraph under the
+      picker is the sponsorship one, and the **Category & Item** picker is hidden (it is cost-only).
+      Pick **Expected fundraising**: the other paragraph, picker still hidden. Pick **A cost**: the
+      picker returns.
+
+---
+
+**If A's last step fails — the kind filter following you to another tab — treat it as blocking.** A
+coach who visits Fundraising a week later and sees half their records missing, with nothing on
+screen saying a filter is on, has no way to work out what happened.
+
+## §31 · The Attendance page answers once
+
+**Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
+Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 2). Mockups: artifact `ed56fe2c`, §01.
+
+**Why this section exists:** you opened Attendance on a team with an empty schedule and found three
+"nothing here" blocks stacked on three different left edges. The page had three regions that each
+decided independently that they had nothing to show, and none of them knew the other two were also
+empty. It is now one decision, and one answer per situation.
+
+**Fixture:** most of this needs **three different teams** (or one team taken through the states in
+order) — a team with **no games or practices at all**, a team with **events but nothing marked**,
+and a team with **real attendance recorded**, at least one of whose players has never been marked.
+The last one is the everyday case and is the only part you can do on an existing team.
+
+### A · The state you photographed — nothing on the schedule
+
+- [ ] A team with **no games or practices**: Attendance shows **one card, centred, and nothing
+      else**. No second "No attendance recorded yet" block. No paragraph about how figures are
+      counted floating above it.
+- [ ] The card offers **one** button, **Open schedule** — and nothing else. ⚠ The mockup drew a
+      second "How attendance works" button here and it was **cut on purpose**: the **?** in the top
+      corner of this same screen already opens that help. If you see two ways to reach the help
+      panel one line apart, that is the defect, not the fix.
+- [ ] ⚠ Look at the **left edges**. The card is deliberately centred *because it is alone*; nothing
+      else should be starting at a different place beside it.
+
+### B · Events exist, nobody marked yet — the common first-week case
+
+- [ ] Attendance shows the **"Take attendance"** shortcut card, then **one quiet line**: *"Nothing
+      recorded yet — totals fill in here as you mark each game and practice."*
+- [ ] Under it, **your actual roster**, every player listed, with a **dash** under Games and under
+      Practices. This replaces the old second "nothing here" message on purpose — it proves the
+      roster is connected and shows the shape that's coming.
+- [ ] The shortcut card, the line, and the table all start on **the same left edge**.
+
+### C · The report in normal use
+
+- [ ] **Games** and **Practices** appear as **column headings once**, at the top — not repeated in
+      small type inside every row.
+- [ ] A player nobody has marked all season reads **"not tracked yet"**, not a pair of zeros.
+- [ ] Under the table: a collapsed line, **"How these figures are counted"**. Open it — the wording
+      you already approved is there in full, including *"to inform playing-time decisions … not a
+      ranking"*. ⚠ It should be **shut when the page loads**, and it should not appear at all in
+      states A or B above.
+- [ ] Tap a player's name → their profile opens, as before.
+
+### D · On a phone (390px or your own)
+
+- [ ] The table becomes **one card per player**, and each figure gets its label back ("GAMES",
+      "PRACTICES") — the headings are a desktop treatment only.
+- [ ] Nothing scrolls sideways, and tapping a player's name is comfortable (the tap target is the
+      whole row's height, not just the word).
+
+### E · A past season — ⚠ the one behaviour change beyond layout
+
+- [ ] Switch to a **completed season**, open Attendance, tap a player.
+- [ ] **You should stay in that season.** Previously this opened the player's *current* season
+      instead — a silent jump from the year you were reading. Check the season chip on the player
+      page says the year you came from.
+
+### F · An empty roster (skip if you have no such team)
+
+- [ ] A team with **events but no active players**: one quiet line, alone, with **no button**. That
+      is deliberate — a coach can hold the attendance duty without roster access, so we do not offer
+      a door that would refuse them.
+
+---
+
+**What has NOT changed, and is worth confirming stayed put:** attendance is still marked on the
+Schedule, inside a game or practice — this page never recorded anything. The "Take attendance"
+shortcut still points at your next (or most recent) event. The back link to Insights is untouched
+here; a later phase removes it when Attendance moves into Insights.
+
+## §32 · Attendance becomes a report inside Insights
+
+**Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
+Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 3). Mockups: artifact `ed56fe2c`, §04.
+
+**Why this section exists:** you asked why Attendance had a back link to Insights when you had not
+come from Insights. It had two front doors — a sidebar item and an Insights tile — so a fixed back
+link was wrong for whoever used the other one. Rather than patch the link, Attendance now has one
+parent. **Nothing about taking attendance changed:** it is still marked on the Schedule, inside a
+game or practice.
+
+**Fixture:** your normal live team, plus — for part D — a team with a **completed season**.
+
+### A · The sidebar is one item shorter
+
+- [ ] Open any team. **Attendance is no longer in the sidebar.** Roster → Lineups → Development sit
+      together with nothing between the first two.
+- [ ] On a phone, tap **More**. Attendance is not in the sheet either. ⚠ If it is in one nav and not
+      the other, that is the defect — they are supposed to move together.
+
+### B · Insights is now the way in
+
+- [ ] Open **Insights**. Among the report doors is **"Who's showing up?"** — with the team's
+      attendance rate beside it, or *"Take attendance at a practice or game to start"* if there is
+      none yet.
+- [ ] Tap it. The page opens, and its **heading reads "Who's showing up?" too** — the same words as
+      the door. ⚠ If the door and the page disagree about their own name, flag it; that is exactly
+      what having one parent is meant to prevent.
+- [ ] The **← Insights** back link at the top takes you back to the hub you just came from.
+
+### C · Taking attendance is untouched
+
+- [ ] Open **Schedule** → a game or practice → the **Attendance** tab. Mark someone present. This is
+      still the only place attendance is ever recorded, and it should look and behave exactly as it
+      did before.
+- [ ] Back on the report, the **"Take attendance"** shortcut card still points at your next (or most
+      recent) event and opens it on that tab.
+
+### D · A finished season — ⚠ the deliberate inconsistency, please confirm it
+
+- [ ] Switch to a **completed season**. **Attendance IS still in the sidebar here**, and that is on
+      purpose, not a miss. In a past season "Insights" goes to the results archive rather than the
+      reports hub, so this is the only way back to that season's attendance.
+- [ ] Open it. The **← Insights** link points at the season's **results** page — the page you were
+      actually on — not at the live-season hub. ⚠ If it lands somewhere showing *this* year's
+      numbers under a past year's heading, that is blocking.
+
+### E · An assistant coach (skip if you have none set up)
+
+- [ ] An assistant who holds the **attendance** duty can still reach the report through Insights.
+      This was flagged in the plan as something you might have to rule on; it was checked and no
+      coach loses access, so there is nothing to decide — but it is worth one look.
+
+---
+
+**Where this leaves the sidebar:** Attendance is gone, Practice plans arrived (§28). The bigger
+regroup — reordering the whole sidebar by how often a coach opens each group — is the last phase and
+is **not built yet**, so the groups are still in their old order.
+
+## §33 · The sidebar stops rearranging itself
+
+**Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed, no item
+renamed.** Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 4). Mockups: artifact `ed56fe2c`, §03.
+
+**Why this section exists:** you asked why Tryouts was at the bottom, why Schedule sat apart from
+Attendance, and what "Explore" was. All three had one root cause — the groups described *what the
+data was about* rather than *what a coach is doing*. The groups now run hottest-first, and **nothing
+is conditional**: every group is always there, in the same place.
+
+**Fixture:** your normal live team, plus — for part D — a team that has **never run a tryout and
+never entered a tournament** (that is the state the old shelf existed for), and an **assistant
+coach** login if you have one.
+
+### A · The order, on a desktop
+
+- [ ] Open a team. The sidebar reads, top to bottom: **Overview**, then **Season** (Schedule,
+      Practice plans, Lineups, Tournaments), **Progress** (Development, Insights), **Money**,
+      **Communication** (Chat, Email families), **Team** (Roster, Tryouts), **Team admin** (Staff,
+      Documents, Settings).
+- [ ] **"Squad" is now "Team"**, and it has moved to near the bottom with Roster and Tryouts still
+      in that order.
+- [ ] There is **no "Explore" heading anywhere**.
+- [ ] Every item still opens the page it always did. ⚠ Nothing was renamed — if any item's *wording*
+      changed, flag it, because item names are what decide who is allowed to see them.
+
+### B · The same order on a phone
+
+- [ ] On a phone, tap **More**. The sheet shows the **same six groups in the same order**.
+- [ ] The bottom bar itself is unchanged (Overview, Schedule, Chat, Roster, More), which is why
+      those four don't repeat inside the sheet.
+- [ ] Nothing scrolls sideways.
+
+### C · The first-run tour and the guide
+
+- [ ] If you can trigger the portal tour on a fresh team, its first card's small heading should say
+      **Team**, not Squad, and its wording should no longer claim roster, lineups and development
+      "sit together" — they're in three different groups now.
+- [ ] Help → *The sidebar: where every tool lives* lists the six groups in the new order, and Help →
+      *Finding Lineups…* no longer describes tools waiting under an "Explore" heading.
+
+### D · ⚠ The behaviour that's actually gone — worth confirming on a brand-new team
+
+- [ ] On a team that has **never run a tryout and never entered a tournament**: **Tryouts and
+      Tournaments are still in the sidebar**, in Team and Season respectively. Previously they'd
+      have been hidden away under "Explore" and would have *jumped* into position later.
+- [ ] Open each one — each explains what it's for. That's the job the shelf was doing badly.
+
+### E · An assistant coach (skip if you have none)
+
+- [ ] Sign in as an assistant with limited duties. They see **fewer items**, but every item they do
+      have is **in the same place it is for you**. A whole group disappears only if they can't see
+      anything in it.
+
+---
+
+**Free portal note:** the free coach portal has its own **Explore** tab — where a free coach switches
+the optional tools on. That is a different thing entirely and is deliberately unchanged.
+
+**One open question, flagged not decided:** on a strict "how often do you open it" rule, Chat
+probably outranks Money. Money sits above Communication because it's the bigger product pillar. Say
+the word if you'd rather they swap.
 
 ## Not in this ledger (why)
 

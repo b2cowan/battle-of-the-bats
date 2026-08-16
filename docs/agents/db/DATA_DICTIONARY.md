@@ -2404,7 +2404,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 1. **Per-team library, NOT per-season** — unlike `rep_team_lineup_templates`, there is no `program_year_id`; a tag persists across seasons so a coach's vocabulary doesn't reset at rollover. Reports aggregate by season through the tagged event's own `program_year_id`, not the tag row.
 2. **`team_id` is NULLABLE — NULL = org-authored SHARED tag** (widened in mig 184 for the org shared library, Phase 3). A shared tag (team_id NULL, org_id set) surfaces in **every** team's picker in that org, alongside each team's own private tags; `getRepTeamTagLibrary(team, kind, org)` returns `team_id = team OR (team_id IS NULL AND org_id = org)`. Shared tags are authored/managed only from the admin Shared Library screen (owner/admin); a coach's team_id-scoped rename/delete is a no-op on them.
 3. **Two uniqueness indexes, both case-insensitive** — `rep_team_tags_name_uniq (team_id, kind, lower(btrim(name)))` for team tags (NULLs are distinct, so it does NOT constrain shared rows) + partial `rep_team_tags_org_name_uniq (org_id, kind, lower(btrim(name))) WHERE team_id IS NULL` for shared tags. A duplicate → 409. App caps tags at **50 per team+kind** (team-only count) and **50 per org+kind** shared (in-process, benign TOCTOU).
-4. **Merging is the only delete path history should take** — `merge_rep_team_tags(winner, loser)` (a `SECURITY DEFINER` function, mig 181; extended in mig 184 to re-point **both** `rep_team_event_tags` AND `rep_team_expense_tags`, and to treat two shared tags' NULL team_ids as same-scope via `IS DISTINCT FROM`) atomically re-points every link from the loser to the winner then deletes the loser. A plain `DELETE` does NOT re-point — the FK cascades just drop the links.
+4. **Merging is the only delete path history should take** — `merge_rep_team_tags(winner, loser)` (a `SECURITY DEFINER` function, mig 181; extended in mig 184 to re-point **both** `rep_team_event_tags` AND `rep_team_expense_tags`, and to treat two shared tags' NULL team_ids as same-scope via `IS DISTINCT FROM`; extended again in mig 239 to re-point `rep_team_fundraiser_tags`) atomically re-points every link from the loser to the winner then deletes the loser. A plain `DELETE` does NOT re-point — the FK cascades just drop the links. **⚠ A NEW LINK TABLE MUST JOIN THE FUNCTION IN THE SAME MIGRATION**: the merge reports success either way, so a missing lane looks like a working merge that quietly lost one side of the history.
 5. **Coach-managed (team tags) + admin-managed (shared tags), via service role** (`supabaseAdmin`). Game-tag routes gate on `capabilities.schedule`; money-tag routes gate on `capabilities.money` (view/write) — the one deliberate capability difference. Shared tags gate on owner/admin + `module_rep_teams`. RLS write policies (coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop; the org-admin policies already cover the team_id-NULL rows.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
@@ -2414,7 +2414,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 **`org_id`** (FK, NOT NULL, CASCADE) / **`team_id`** (FK, **NULLABLE**, CASCADE — NULL = org-shared, gotcha 2) — scope; sourced from the URL/context, not the request body. Indexed: `_team_idx (team_id, kind)` for the list query, `_org_idx (org_id)` for RLS, `_org_shared_idx (org_id, kind) WHERE team_id IS NULL` for the shared-library list.
 
 <!-- dict:col:rep_team_tags.kind -->
-**`kind`** (text, NOT NULL; CHECK `game|expense`) — `'game'` tags apply to `rep_team_events` (schedule); `'expense'` tags apply to `rep_team_expenses` (money) via `rep_team_expense_tags` (both live as of mig 184).
+**`kind`** (text, NOT NULL; CHECK `game|expense`) — `'game'` tags apply to `rep_team_events` (schedule); `'expense'` tags are the MONEY vocabulary and reach both directions of the ledger: `rep_team_expenses` via `rep_team_expense_tags` (mig 184) and `rep_fundraisers` via `rep_team_fundraiser_tags` (mig 239). ⚠ There is deliberately no `'fundraiser'` kind — a label a coach spends against must be the same label they can raise against, or the money-tag report has two vocabularies that look like one.
 
 <!-- dict:col:rep_team_tags.name -->
 **`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the coach-chosen label; unique per team+kind (and per org+kind for shared) case-insensitively (gotcha 3).
@@ -2453,6 +2453,24 @@ record can differ, and changing it is **never** applied retroactively — the sa
 <!-- dict:col:rep_team_expense_tags.expense_id -->
 <!-- dict:col:rep_team_expense_tags.tag_id -->
 **`expense_id` / `tag_id`** (FK, NOT NULL, CASCADE, composite PK) — the expense and the money tag applied to it. `tag_id` is indexed (`_tag_idx`) for the "spend by tag" aggregation (Budget vs. Actual filter); `expense_id` is covered by the PK for the expenses-GET tag lookup.
+
+### `rep_team_fundraiser_tags`
+<!-- dict:table:rep_team_fundraiser_tags -->
+
+**Purpose:** many-to-many join between `rep_team_tags` (`kind='expense'`) and `rep_fundraisers` — which money tags are applied to a given fundraiser or sponsor. Added by migration 239 (Coach Sponsorships §8 follow-up 2). **⚠ DEV-ONLY / PROD-PENDING at author time (applied to dev 2026-08-15).**
+
+**Gotchas (read first):**
+1. **The tag `kind` is `'expense'`, and that is NOT a mistake.** Money tags are ONE vocabulary across both directions of the ledger: a coach who tags a cost "Winter dome" must be able to tag the sponsor who paid for it with the same tag, or the money-tag report has two vocabularies wearing one name. No new `kind` value, no second picker, no second manage screen — the junction table exists only because the FK has to point at a different parent (the same finding mig 184 recorded for expenses).
+2. **RLS reaches tenancy through the FUNDRAISER, not the tag** — same choice and same reason as `rep_team_expense_tags` gotcha 1: an org-shared money tag has `team_id` NULL, so scoping through the tag would drop the link out of the coach's own reach. Policies `EXISTS` against `rep_fundraisers`.
+3. **Set/replace-on-save** — the app writes a record's full tag set in one call (delete-then-insert), same as the two joins above. `tagIds: undefined` on a PATCH means "not editing tags"; `[]` means "clear them", and the two must stay distinguishable or a save from a form that never loaded the picker silently strips the record's labels.
+4. **Both FKs CASCADE**; composite PK `(fundraiser_id, tag_id)`. `merge_rep_team_tags` re-points these links as of mig 239 — **without that third lane a merge would keep every tagged expense and silently drop every tagged sponsor**, the half nobody checks because the merge reports success.
+5. **Tags live on the RECORD, never on the list row** (row-density ruling 2026-08-15) — the Fundraising list carries `tagIds` only so the export can print them; the chips render inside the record and are edited from its Settings sheet.
+
+**Fields** (boilerplate `created_at` omitted; no `id`/`updated_at` — like the two joins above):
+
+<!-- dict:col:rep_team_fundraiser_tags.fundraiser_id -->
+<!-- dict:col:rep_team_fundraiser_tags.tag_id -->
+**`fundraiser_id` / `tag_id`** (FK, NOT NULL, CASCADE, composite PK) — the fundraiser or sponsor and the money tag applied to it. `tag_id` is indexed (`_tag_idx`) for the money-in side of a "by tag" aggregation; `fundraiser_id` is covered by the PK for the list/record tag lookup.
 
 ### `rep_team_award_types`
 <!-- dict:table:rep_team_award_types -->
