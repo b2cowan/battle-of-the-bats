@@ -348,6 +348,11 @@ rep_team_staff_memberships (
   restriction it gated).
 - **P3 — Practice plans shelf. GATED: mockup session first** (ruling §1.6 — quiet-integration
   constraint). Re-homes the read-only past-plan view + copy-forward.
+  **Session prompt ready:** `docs/projects/active/COACH_PRACTICE_PLANS_SHELF_MOCKUP_PROMPT.md` — it
+  opens by testing the QUESTION (what moment is this actually for?), because the copy-forward path
+  already exists and "build nothing" is an acceptable outcome. The real gap is narrower than the
+  plan line suggests: the read-only past-plan page ships TODAY and reaches a finished season while
+  the team is between seasons — what is missing is reaching it once the next season starts.
 - **P4 — Money past-season book. GATED: mockup session first.** Read-only closed book: budget vs
   actual + money story; money-capability only.
 - **Adjacent, logged not built:** wire/warn the settlement-completeness check on season completion
