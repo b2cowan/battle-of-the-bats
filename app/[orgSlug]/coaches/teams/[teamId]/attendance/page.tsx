@@ -11,6 +11,7 @@ import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
 import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
 } from '@/lib/coach-tournament-games';
+import { resolveAttendanceView } from '@/lib/coach-attendance-view';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../coaches.module.css';
 import att from './attendance.module.css';
@@ -156,10 +157,31 @@ export default function CoachesAttendancePage({
      events that produced them (a deleted game), and hiding a coach's real figures behind
      "nothing to take attendance for yet" would be the same species of confident-wrong-answer
      the `markTargetLoading` flag above already exists to prevent. */
-  const reportResolved = !loading && !error;
-  const scheduleIsEmpty = !markTargetLoading && !markTargetFailed && !markTarget;
-  const solo = reportResolved && (rows.length === 0 || (scheduleIsEmpty && !hasAnyData));
-  const nothingYet = reportResolved && rows.length > 0 && !hasAnyData;
+  /**
+   * ⚠ THE WHOLE DECISION LIVES IN `lib/coach-attendance-view.ts`, as a pure function, and is
+   * pinned by `tests/unit/coach-attendance-view.test.ts` — including the 128-combination sweep
+   * that proves no flag state produces a blank page. It is not inline here because the `/review`
+   * of 2026-08-15 found a real defect in the first, inline version of exactly this logic: it
+   * guarded the empty-state DECISION on both fetches but let the report branch paint real rows
+   * off the roster fetch alone, so a table could appear and then vanish. A decision that costly
+   * should be executable by a test rather than re-read by the next person.
+   */
+  const view = resolveAttendanceView({
+    loading, error: !!error, rowCount: rows.length, hasAnyData,
+    markTargetLoading, markTargetFailed, hasMarkTarget: !!markTarget,
+  });
+  const settled = view.state !== 'loading';
+  const solo = view.state === 'solo';
+  const nothingYet = view.showNothingYetNote;
+  /**
+   * ⚠ A FINISHED SEASON IS A RECORD, AND "TAKE ATTENDANCE" IS AN INSTRUMENT (CLAUDE.md rule 1,
+   * /review 2026-08-15). The shortcut card used to render in an archive exactly as it does in a
+   * live season — inviting a coach to take attendance for a season that has ended, on a button
+   * whose link dropped the year and therefore landed on the LIVE schedule hunting for an event
+   * that is not in it. A silent dead end, and the politer face of a 404. The card, and the CTA
+   * inside the no-schedule empty state, are both live-season-only now.
+   */
+  const canTakeAttendance = !page.isReadOnly;
 
   // Six placeholder rows in the real table's shell — one geometry, two renders, so the report
   // does not jump as it settles.
@@ -176,16 +198,25 @@ export default function CoachesAttendancePage({
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Drill-in sub-page back-link (the coach breadcrumb is globally hidden — 2026-07-08 rule).
-          Phase 3 (2026-08-15): this link is now simply TRUE. Attendance left the sidebar, so the
-          Insights hub is its ONE parent and the link points where the coach actually came from —
-          the §02 problem retires rather than being patched with referrer tagging.
+          Phase 3 (2026-08-15): this link is now TRUE, because Attendance has exactly ONE parent.
+          It left the sidebar, and the /review of 2026-08-15 found and removed its second door —
+          a secondary "Attendance" button in the Roster page header, which was the reason the
+          link was still wrong for anyone who arrived that way. The §02 problem retires rather
+          than being patched with referrer tagging.
 
-          ⚠ EXCEPT ON A FINISHED SEASON, where the parent is a different page. The archive nav
-          points "Insights" at `/history/results`, because the Insights hub is live-season-only
-          and would silently answer with the CURRENT season's numbers under a past year's header.
-          The results archive does the same thing on its own back link; this mirrors it, so one
-          label always leads to the page the coach was actually on. */}
-      <CoachBackLink href={page.isReadOnly ? `${base}/history/results${seasonQuery}` : `${base}/history`}>
+          ⚠ ON A FINISHED SEASON the parent is a different page: the archive nav points
+          "Insights" at `/history/results`, because the Insights hub is live-season-only. This
+          mirrors it exactly, so one label always leads where the coach actually was.
+
+          ⚠⚠ AND IT CARRIES NO `?year=`, DELIBERATELY (/review 2026-08-15). An earlier version
+          appended `${seasonQuery}` here, which LOOKED like it carried the season and did not:
+          `/history/results` reads no year param at all — it decides what to show from whether
+          the coach still has a LIVE assignment on the team. For a coach who is still coaching
+          this team, that page answers with the CURRENT season's results and renders no season
+          chip to say so. Appending an inert query dressed that up as solved. The destination
+          being season-blind is a real defect one level below an approved archive door — it is
+          recorded as a follow-up in the plan, and it is not fixed by decorating the link. */}
+      <CoachBackLink href={page.isReadOnly ? `${base}/history/results` : `${base}/history`}>
         Insights
       </CoachBackLink>
 
@@ -209,7 +240,7 @@ export default function CoachesAttendancePage({
            here" — the centred card is allowed its own axis precisely because nothing else is
            competing for one. */
         <div className={att.solo}>
-          {rows.length === 0 && !scheduleIsEmpty ? (
+          {view.soloKind === 'no-roster' ? (
             /* Events exist but the roster does not. `quiet` per CoachEmptyState's own decision
                rule: this block carries NO call to action, because the coach who can hold the
                attendance duty alone may not hold roster access at all, and an "Add players"
@@ -220,7 +251,7 @@ export default function CoachesAttendancePage({
               headline="No active players on the roster yet"
               description="Attendance lists your active players. Once the roster is set, every game and practice starts counting."
             />
-          ) : (
+          ) : canTakeAttendance ? (
             <CoachEmptyState
               icon={<CalendarCheck size={22} aria-hidden />}
               headline="Nothing to take attendance for yet"
@@ -234,6 +265,15 @@ export default function CoachesAttendancePage({
                  already states for its nested variant: two doors to the same place, one line
                  apart, is one door too many. */
             />
+          ) : (
+            /* Same situation, finished season: a statement of record, in the past tense, with no
+               CTA. "Add one to your schedule" is not an offer that can be honoured here. */
+            <CoachEmptyState
+              quiet
+              icon={<CalendarCheck size={22} aria-hidden />}
+              headline="No attendance was recorded this season"
+              description="Attendance is marked on a game or practice. Nothing on this season's schedule carried any."
+            />
           )}
         </div>
       ) : (
@@ -241,7 +281,7 @@ export default function CoachesAttendancePage({
           {/* Batch 4 — record first, review second. The review found this page explained what it
               would show but never linked to where attendance is actually taken; the round trip
               back from the game panel is the matching half. */}
-          {markTargetLoading ? (
+          {!canTakeAttendance ? null /* finished season — see `canTakeAttendance` above */ : markTargetLoading ? (
             // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
             // might have to take back.
             <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
@@ -275,7 +315,12 @@ export default function CoachesAttendancePage({
                   column of "—" with no explanation first. */}
               {nothingYet && (
                 <p className={att.note}>
-                  Nothing recorded yet — totals fill in here as you mark each game and practice.
+                  {canTakeAttendance
+                    ? 'Nothing recorded yet — totals fill in here as you mark each game and practice.'
+                    /* ⚠ Past tense, and no promise. Nothing will "fill in" on a season that has
+                       already ended, and saying it would would be the same untruth as offering
+                       the "Take attendance" card here. */
+                    : 'No attendance was recorded for this season.'}
                 </p>
               )}
 
@@ -295,7 +340,10 @@ export default function CoachesAttendancePage({
                     </tr>
                   </thead>
                   <tbody>
-                    {loading ? skeletonRows : rows.map(r => {
+                    {/* ⚠ `settled`, not `loading`. Real rows are a CLAIM about this team, and a
+                        claim may not be painted until both lookups have landed — otherwise the
+                        table appears and is then taken away again. See `settled` above. */}
+                    {!settled ? skeletonRows : rows.map(r => {
                       const tracked = r.games.known > 0 || r.practices.known > 0;
                       const games = fraction(r.games);
                       const practices = fraction(r.practices);
@@ -335,7 +383,11 @@ export default function CoachesAttendancePage({
                   standing between the coach and it. The first sentence is deliberate wording
                   under a standing ruling (memory/decision_playing_time_vocabulary.md) —
                   "measurement in context", never "fair" — so it travels with the rest rather
-                  than being trimmed as preamble. */}
+                  than being trimmed as preamble.
+                  ⚠ `settled` for the same reason the rows are: it explains a table that is not
+                  yet on screen, and on a page about to collapse to a solo empty state it would
+                  be the second block beside an empty state that is meant to be alone. */}
+              {settled && (
               <details className={att.method}>
                 <summary className={att.methodHead}>
                   <ChevronRight size={14} className={att.methodCaret} aria-hidden />
@@ -347,6 +399,7 @@ export default function CoachesAttendancePage({
                   when marked attending or late, and events with no reply aren&apos;t counted against anyone.
                 </p>
               </details>
+              )}
             </>
           )}
         </>

@@ -445,7 +445,7 @@ test.describe('switching seasons in-app repaints the data, not just the label', 
    * The live-nav half is pinned in team-tournament-game-mirror-smoke.spec.ts; the archive half
    * can only be pinned here, because this is the fixture that HAS a finished season.
    */
-  test('a finished season keeps its own Attendance door, and the back link leads where the coach was', async ({ page }) => {
+  test('a finished season keeps its own Attendance door, and offers no way to take attendance', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
     await open(page, `${base()}/attendance?year=${pastYearId}`);
 
@@ -456,8 +456,22 @@ test.describe('switching seasons in-app repaints the data, not just the label', 
 
     // ⚠ And the back link must NOT point at the live-season Insights hub, which would answer a
     // past-year header with THIS year's numbers. It mirrors the archive nav: the results page.
+    // No `?year=` — that page reads none, and appending one dressed an unsolved problem up as
+    // solved (/review 2026-08-15).
     await expect(main(page).getByRole('link', { name: 'Insights' }))
-      .toHaveAttribute('href', /\/history\/results\?year=/);
+      .toHaveAttribute('href', /\/history\/results$/);
+
+    /**
+     * ⚠⚠ NO INSTRUMENT INSIDE A RECORD (CLAUDE.md rule 1; /review 2026-08-15 found this live).
+     * The "Take attendance" shortcut used to render here exactly as in a live season, on a
+     * button whose link dropped the year and therefore landed on the LIVE schedule hunting for
+     * an event that is not in it — a silent dead end. A finished season offers the report and
+     * nothing else.
+     */
+    await expect(main(page).getByRole('link', { name: /Take attendance/ }),
+      'a finished season must not offer to take attendance').toHaveCount(0);
+    await expect(main(page).getByRole('link', { name: 'Open schedule' }),
+      'a finished season must not invite the coach to add to its schedule').toHaveCount(0);
   });
 });
 

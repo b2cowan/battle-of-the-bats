@@ -298,10 +298,77 @@ page reachable from the door — including the ones a live-nav change quietly or
   finished season. It is covered by the unit test and the frozen-season spec, and is an explicit
   owner QA step.
 
+#### ⚠⚠ What `/review` found afterwards (2026-08-15) — and the claim that was wrong
+
+The adversarial review ran over all four phases. Permissions and the regroup came back clean —
+nobody lost access (traced to the API), nothing was orphaned, no nav item lost its gate. **Every
+real finding was in the archive path, plus one claim this plan made that was untrue.**
+
+**1. "Attendance has ONE parent now" was FALSE when written.** The **Roster page header carried a
+second "Attendance" button** straight to the report. So the back link was still wrong for anyone
+who arrived that way — the exact defect Phase 3 existed to retire, surviving in a narrower form,
+while three documents asserted it was gone. It was also the report's *original* door, from before
+Attendance had a nav item, and it still had the wart Batch 4 recorded: it disappears in the
+depth-chart view. **Owner call: removed.** Insights is now genuinely the only door, and the back
+link is true for the first time.
+
+⚠ The lesson generalises: **"it has one parent now" is a claim about the whole codebase, not about
+the file you edited.** Removing a nav item does not make a page single-parented; only grepping
+every link to it does.
+
+**2. A finished season still offered to take attendance — on a button that dead-ended.** The
+shortcut card rendered in an archive exactly as in a live season, and its link dropped the year, so
+it landed on the LIVE schedule hunting for an event that is not in it. Nothing happened. That is an
+instrument inside a record (governing rule 1) *and* the politer face of a 404 that CLAUDE.md's
+"hide the entry point" rule exists to prevent. **Owner call: hidden.** In a finished season the page
+now shows the report and nothing else; the no-schedule empty state loses its "Open schedule" CTA and
+speaks in the past tense, and the "totals fill in as you mark" caption becomes "No attendance was
+recorded for this season" — because nothing will fill in.
+
+**3. The read-only back link's `?year=` was inert, and dressed an unsolved problem as solved.**
+`/history/results` reads no year param at all: it decides what to show from whether the coach still
+holds a LIVE assignment. For a coach still coaching the team, it answers with the **current**
+season's results — and renders no season chip to say so. Appending a season query made the link
+*look* like it carried the year. **The query is removed** (mirroring the archive nav exactly), and
+the real defect is recorded as a follow-up below rather than decorated over.
+
+**4. The page could paint a table and then take it away.** The first version guarded the empty-state
+*decision* on both fetches but let the report branch paint real rows off the roster fetch alone — so
+a team with players and an empty schedule, whose report landed first, drew the whole table and then
+had it replaced by the lone empty card. Whichever fetch won the race decided what the coach saw.
+The rule is now stated once and enforced: **a skeleton may render before we know; anything that
+makes a claim may not.**
+
+⚠ **The whole four-state decision moved into `lib/coach-attendance-view.ts` as a pure function**,
+pinned by `tests/unit/coach-attendance-view.test.ts` — including a sweep of all 128 flag
+combinations proving none produces a blank page, an empty state without a kind, or the caption
+without a table. The review found the defect in logic that was *inline and commented*; the comment
+had even asserted the property it did not hold. Executable beats eloquent.
+
+**5. Help-guide copy missed by the earlier pass** — two passages still quoted the tile as "Who shows
+up?", and one told coaches to reach the report via **Roster → Attendance**, which finding 1 has now
+made false. All corrected.
+
+Verified after the fixes: the race reproduced in a browser with the schedule lookup deliberately
+delayed — paint sequence is `skeleton → empty card`, the table is never drawn first. Roster carries
+no Attendance door. 1970 unit tests pass; typecheck clean.
+
 #### Still open, unchanged by this phase
 
-The double-parent pattern still needs a decision for **Money** and **Development** (referrer-tagged
-back link vs no back link). Not blocking.
+- The double-parent pattern still needs a decision for **Money** and **Development**
+  (referrer-tagged back link vs no back link). Not blocking.
+- ⚠ **`/history/results` is season-blind** — an approved archive door (`Insights`, in
+  `APPROVED_ARCHIVE_DOORS`) whose page never reads `?year=` and shows a still-coaching coach the
+  CURRENT season's results with no season chip. This is the Chunk F class exactly: correct at the
+  door, leaky one level below it. Out of this project's blast radius, found by its review, and the
+  single most valuable thing left on this rail.
+- `hasTournamentHistory` still has no reader, and the review adds that it is not free: computing it
+  costs several sequential database round trips on every coaching-assignment load. Removing it means
+  editing `lib/db.ts`.
+- ~39 stale `a·Attendance` entries in the layout baseline (informational; `check:layout:prune`).
+- `pickNextOrMostRecent` compares timestamps as TEXT while its sibling in the same file was
+  deliberately moved to date comparison, with a comment warning about exactly this. One call from
+  the attendance page.
 
 ### ✅ Phase 4 — Reorder the sidebar *(BUILT on dev 2026-08-15)*
 

@@ -65,6 +65,30 @@ One small correctness fix travelled with it: opening a player from a **past seas
 report used to land on that player's *current* season. It now stays in the season the coach was
 reading.
 
+### What the review changed afterwards
+
+An adversarial review of all four phases found the navigation and permissions work clean, and
+everything worth fixing in one place — what a **finished season** does. Four things changed:
+
+- **The Roster page's "Attendance" button is gone.** We'd said Attendance now had one way in; it
+  had two, and the second one meant the "back" link was still wrong for anyone who used it. Insights
+  is now genuinely the only door — which is what makes the back link honest. *(That button also
+  disappeared whenever a coach switched Roster to its depth-chart view, so it was an unreliable door
+  as well as a duplicate one.)*
+- **A finished season no longer offers to take attendance.** The shortcut card used to appear there
+  exactly as in a live season, and tapping it did nothing at all — it looked for the old event on
+  this year's schedule and found nothing. A completed season now shows the report and nothing else,
+  and its wording is in the past tense rather than promising totals that will never arrive.
+- **A flicker on brand-new teams is gone.** Depending on which of two lookups came back first, the
+  page could draw the full roster table and then replace it with the "nothing here" card a moment
+  later. It now waits until it actually knows.
+- **Two help passages** still used the old wording and one pointed at the Roster button. Corrected.
+
+**One thing found and deliberately not fixed here, because it's outside this project:** in a
+finished season, the "Insights" link leads to the season results page — and *that* page doesn't read
+which season you asked for. A coach still running the team sees this year's results, with nothing on
+screen saying so. It's the most valuable item left on that rail and it's written up in the plan.
+
 ### 4. Attendance now lives in Insights *(built on dev, 2026-08-15)*
 
 Attendance has left the sidebar. Nothing is lost and nothing about taking attendance changes — the

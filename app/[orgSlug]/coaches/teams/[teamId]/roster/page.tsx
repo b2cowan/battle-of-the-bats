@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste, HelpCircle } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -486,16 +486,24 @@ export default function RosterPage({
 
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call
   // stays scannable (same shape as the Money panels' headerActions consts).
+  /**
+   * ⚠ THE "ATTENDANCE" BUTTON IS GONE (owner call 2026-08-15, /review finding).
+   *
+   * The attendance report has ONE parent now — the Insights hub, where it is the
+   * "Who's showing up?" door. This button was its SECOND, and it is the reason the report's
+   * back link was still wrong half the time: a coach arriving from here was told to go "back"
+   * to Insights, a page they had never been on. That is the exact defect the nav change
+   * existed to retire, surviving in a narrower form — and the review caught the project
+   * asserting "one parent now" in three documents while this was still on screen.
+   *
+   * It was also the report's ORIGINAL door, from before Attendance had a nav item at all
+   * (Batch 4's own note called it out: "its only door was a secondary button on Roster that
+   * disappears in the depth-chart view"). It never stopped doing that — `view === 'list'`
+   * below still gates the rest of this row — so it was a door that vanished depending on
+   * which toggle the coach had last pressed.
+   */
   const rosterHeaderActions = view === 'list' && (
     <>
-      <Link
-        href={`${base}/attendance`}
-        className={styles.btnSecondary}
-        aria-label="Attendance"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem', textDecoration: 'none' }}
-      >
-        <CalendarCheck size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Attendance</span>
-      </Link>
       <ExportMenu
         formats={['xlsx', 'csv', 'pdf']}
         onExportXLSX={handleExportXLSX}
