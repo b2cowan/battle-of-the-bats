@@ -123,7 +123,12 @@ The original four, for the record:
   carries the same timestamp shape — "a property of the serializer, not of this list". It is one
   call from the Attendance page.
 
-## E. Two files that could not be committed, and why
+## E. Two files that could not be committed, and why ✅ RESOLVED 2026-08-16
+
+Both landed in `c81db8bb` — the owner committed the shared files as a whole once the working tree
+was green, so the help-guide corrections and the demo-check fix are in. `npm run check:demos`
+passes; the guide no longer routes coaches through a button that does not exist. **Nothing to do
+here — the account below is kept only because the entanglement pattern recurs.**
 
 `lib/help-content/coaches.tsx` and `scripts/check-demo-coach.mjs` carry **finished, verified edits
 from this project** that could not be staged: both were simultaneously holding another session's
