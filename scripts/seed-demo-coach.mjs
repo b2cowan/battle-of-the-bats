@@ -196,8 +196,17 @@ async function ensureProgramYear(team, year, name, fields) {
   return keeper.id;
 }
 
-/** Head-coach assignment on a program year — season-scoped, which is what archive access rides on. */
+/** Head-coach assignment: the TEAM MEMBERSHIP (access truth since mig 245 / M1) plus the
+ *  season's record row. ⚠ Both, always — a coach row without a membership is a locked-out
+ *  coach: every membership-gated route (staff, settings, seasons, documents…) 403s, while the
+ *  page shell still half-renders. Exactly the defect class the M1 review caught in the
+ *  provisioning path (2026-08-16); a reseed must never reintroduce it. */
 async function ensureHeadCoach(team, programYearId) {
+  die('upsert membership', (await db.from('rep_team_staff_memberships').upsert({
+    org_id: org.id, team_id: team.id, user_id: coach.id,
+    coach_role: 'head_coach', capabilities: null,
+    status: 'active', revoked_at: null, revoked_by: null,
+  }, { onConflict: 'team_id,user_id' })).error);
   const existing = (await db.from('rep_team_coaches')
     .select('id').eq('program_year_id', programYearId).eq('user_id', coach.id).maybeSingle()).data;
   if (!existing) {

@@ -1,6 +1,6 @@
 'use client';
 import { use } from 'react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachChatView from '@/components/chat/CoachChatView';
 import styles from './chat.module.css';
 
@@ -10,11 +10,22 @@ export default function TeamChatPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { assignments, loading } = useCoaches();
+  const { assignments, closedAssignments, loading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === params.teamId);
+  // M1 (2026-08-16): between seasons this coach is still on the team — the bare check told a
+  // current member "you are not assigned", which was false. Chat stays a live-season instrument
+  // (rooms ride the live staff assignment), so the in-between state gets the true sentence.
+  const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
 
   if (loading) {
     return <p style={{ padding: '1rem', color: 'var(--white-40)' }}>Loading…</p>;
+  }
+  if (!assignment && closed) {
+    return (
+      <p style={{ padding: '1rem', color: 'var(--white-40)' }}>
+        The season has finished, so the team’s chat is closed for now. It reopens with the next season.
+      </p>
+    );
   }
   if (!assignment) {
     return <p style={{ padding: '1rem', color: 'var(--white-40)' }}>You are not assigned to this team.</p>;

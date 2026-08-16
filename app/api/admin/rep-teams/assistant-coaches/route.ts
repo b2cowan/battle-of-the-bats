@@ -3,8 +3,9 @@ import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } f
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
-  getOrgAssistantCoaches, getRepTeam, getRepTeamCoachById, removeRepTeamCoach, cleanupOrphanedCoachMembership,
+  getOrgAssistantCoaches, getRepTeam, getRepTeamCoachById,
 } from '@/lib/db';
+import { removeStaffMember, getActiveTeamMembership } from '@/lib/coach-membership';
 import {
   listOpenAssistantInvitesForOrg, getAssistantInviteById, approveAssistantInvite, revokeAssistantInvite,
   orgRequiresAssistantApproval,
@@ -116,17 +117,29 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
   if (action === 'remove') {
     const coachId = typeof body.coachId === 'string' ? body.coachId : '';
     if (!coachId) return NextResponse.json({ error: 'Missing coachId.' }, { status: 400 });
+    // The row id is only how the oversight list NAMES the person — it translates to
+    // (team, user) and nothing more. Role and tenancy are re-asserted against the MEMBERSHIP,
+    // the access truth, never trusted from a season row (adversarial review 2026-08-16).
     const target = await getRepTeamCoachById(coachId);
     if (!target || target.orgId !== ctx!.org.id) return NextResponse.json({ error: 'Assistant not found' }, { status: 404 });
-    if (target.coachRole !== 'assistant_coach') return NextResponse.json({ error: 'Only assistant coaches can be removed here.' }, { status: 400 });
     const scopeErr = await teamScopeError(target.teamId);
     if (scopeErr) return scopeErr;
+    const membership = await getActiveTeamMembership(ctx!.org.id, target.teamId, target.userId);
+    if (!membership) return NextResponse.json({ error: 'Assistant not found' }, { status: 404 });
+    if (membership.coachRole !== 'assistant_coach') {
+      return NextResponse.json({ error: 'Only assistant coaches can be removed here.' }, { status: 400 });
+    }
 
-    await removeRepTeamCoach(coachId);
-    await cleanupOrphanedCoachMembership(ctx!.org.id, target.userId);
+    // M1 (2026-08-16): oversight removal revokes the TEAM membership — every screen, every
+    // season, in one action. The live season's record row is dropped and the guest org
+    // membership cleaned up inside.
+    const removed = await removeStaffMember(ctx!.org.id, target.teamId, target.userId, ctx!.user.id);
+    if (!removed) {
+      console.warn('[assistant-coaches remove] no active membership to revoke', { coachId });
+    }
     // Phase 4: revoke the removed assistant's stale tournament chat access.
     await revokeStaleChatMembershipsForCoach(target.userId).catch(() => {});
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, removed });
   }
 
   return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });

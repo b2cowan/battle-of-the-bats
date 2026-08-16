@@ -3711,14 +3711,35 @@ export async function addRepTeamCoach(
   orgId: string,
   userId: string,
   coachRole: 'head_coach' | 'assistant_coach' = 'head_coach',
+  // M1: the live-season PROJECTION mirrors membership grants (lib/coach-membership.ts), so the
+  // row is written with its capabilities in ONE insert rather than insert-then-update.
+  capabilities: AssistantCapabilityGrants | null = null,
 ): Promise<RepTeamCoach> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_coaches')
-    .insert({ program_year_id: programYearId, team_id: teamId, org_id: orgId, user_id: userId, coach_role: coachRole })
+    .insert({
+      program_year_id: programYearId, team_id: teamId, org_id: orgId, user_id: userId,
+      coach_role: coachRole, capabilities,
+    })
     .select()
     .single();
   if (error) throw error;
   return mapRepTeamCoach(data);
+}
+
+/** Point lookup on the (program_year_id, user_id) UNIQUE index — one row, never the whole list. */
+export async function getRepTeamCoachForUserYear(
+  programYearId: string,
+  userId: string,
+): Promise<RepTeamCoach | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamCoach(data) : null;
 }
 
 export async function removeRepTeamCoach(coachId: string): Promise<void> {
@@ -3754,19 +3775,43 @@ export async function cleanupOrphanedCoachMembership(orgId: string, userId: stri
     .eq('role', 'coach');
 }
 
-/** Set an assistant coach's per-assistant capability grants (Assistant Coaches Phase 2). */
-export async function updateRepTeamCoachCapabilities(
-  coachId: string,
-  grants: AssistantCapabilityGrants,
-): Promise<RepTeamCoach> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_coaches')
-    .update({ capabilities: grants })
-    .eq('id', coachId)
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepTeamCoach(data);
+/**
+ * Display identities (org display name + auth email) for a set of coach user ids — the one
+ * enrichment recipe shared by the season-record staff read below and the membership staff panel
+ * (`lib/coach-membership.ts`). The name batch and the email lookups are independent, so they run
+ * together. Emails are best-effort: a failed auth lookup costs the label, never the list.
+ */
+export async function resolveCoachUserIdentities(
+  orgId: string,
+  userIds: string[],
+): Promise<Map<string, { displayName: string | null; email: string | null }>> {
+  if (userIds.length === 0) return new Map();
+
+  const [memberRows, emails] = await Promise.all([
+    supabaseAdmin
+      .from('organization_members')
+      .select('user_id, display_name')
+      .eq('organization_id', orgId)
+      .in('user_id', userIds)
+      .then(r => r.data ?? []),
+    Promise.all(userIds.map(async userId => {
+      try {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+        return [userId, data.user?.email ?? null] as const;
+      } catch {
+        return [userId, null] as const; // best-effort — email is display-only
+      }
+    })),
+  ]);
+
+  const nameByUser = new Map(
+    memberRows.map((r: any) => [r.user_id as string, (r.display_name as string | null) ?? null]),
+  );
+  const emailByUser = new Map(emails);
+  return new Map(userIds.map(id => [id, {
+    displayName: nameByUser.get(id) ?? null,
+    email: emailByUser.get(id) ?? null,
+  }]));
 }
 
 export interface RepTeamStaffMember {
@@ -3775,12 +3820,17 @@ export interface RepTeamStaffMember {
   coachRole: 'head_coach' | 'assistant_coach';
   displayName: string | null;
   email: string | null;
-  capabilities: AssistantCapabilityGrants | null;
   createdAt: string;
 }
 
-/** The full coaching staff for a program year, enriched with each coach's display name + email
- *  (name from `organization_members`, email from auth). Head coach first, then assistants. */
+/**
+ * The full coaching staff RECORD for a program year, enriched with display name + email. Head
+ * coach first, then assistants.
+ *
+ * ⚠ Deliberately does NOT expose the row's `capabilities` (M1, 2026-08-16): every caller uses
+ * this for name/role attribution only, and a season row's grants are a historical record — the
+ * live answer is the membership's. Not returning them makes the stale read impossible to write.
+ */
 export async function getRepTeamStaffForYear(
   programYearId: string,
   orgId: string,
@@ -3788,28 +3838,14 @@ export async function getRepTeamStaffForYear(
   const coaches = await getRepTeamCoaches(programYearId);
   if (coaches.length === 0) return [];
 
-  const { data: memberRows } = await supabaseAdmin
-    .from('organization_members')
-    .select('user_id, display_name')
-    .eq('organization_id', orgId)
-    .in('user_id', coaches.map(c => c.userId));
-  const nameByUser = new Map((memberRows ?? []).map((r: any) => [r.user_id as string, (r.display_name as string | null) ?? null]));
-
-  const staff = await Promise.all(coaches.map(async c => {
-    let email: string | null = null;
-    try {
-      const { data } = await supabaseAdmin.auth.admin.getUserById(c.userId);
-      email = data.user?.email ?? null;
-    } catch { /* best-effort — email is display-only */ }
-    return {
-      coachId: c.id,
-      userId: c.userId,
-      coachRole: c.coachRole,
-      displayName: nameByUser.get(c.userId) ?? null,
-      email,
-      capabilities: c.capabilities,
-      createdAt: c.createdAt,
-    };
+  const identities = await resolveCoachUserIdentities(orgId, coaches.map(c => c.userId));
+  const staff = coaches.map(c => ({
+    coachId: c.id,
+    userId: c.userId,
+    coachRole: c.coachRole,
+    displayName: identities.get(c.userId)?.displayName ?? null,
+    email: identities.get(c.userId)?.email ?? null,
+    createdAt: c.createdAt,
   }));
 
   // Head coach(es) first, then assistants, each oldest-first.
@@ -4202,41 +4238,17 @@ export async function getCoachingAssignmentsForUser(
 }
 
 /**
- * Every season this coach holds an assignment on for ONE team — open or closed — in capability
- * terms only. Extracted /simplify 2026-08-03.
+ * A coaching assignment on a CLOSED (completed/archived) program year. Deliberately a SEPARATE
+ * lookup from `getCoachingAssignmentsForUser`: the active list feeds ~49 write-capable routes that
+ * all assume "visible = writable", so closed seasons must never flow through it.
  *
- * ⚠ **Deliberately lean, and that is the whole point.** The only other way to answer "what could
- * this coach do in 2025?" was `getCoachingAssignmentsForUser` + `getClosedCoachingAssignmentsForUser`,
- * and the open half of that pair is expensive: it also fetches money badges and the tryout signal
- * (`getCoachingBadges` + `getCoachingTryoutSignals`, extra round trips) that a capability question
- * has no use for. This is one query for all four statuses instead.
- */
-export async function getCoachAssignmentCapabilitiesForTeam(
-  orgId: string,
-  userId: string,
-  teamId: string,
-  opts?: CoachAssignmentLookupOpts,
-): Promise<{ programYearId: string; capabilities: CoachCapabilities }[]> {
-  const rows = await loadCoachAssignmentRows(
-    orgId, userId, ['draft', 'active', 'completed', 'archived'], opts,
-  );
-  return rows
-    .filter(r => r.team_id === teamId)
-    .map(r => ({
-      programYearId: r.program_year_id,
-      capabilities: resolveCoachCapabilities(
-        r.coach_role as 'head_coach' | 'assistant_coach',
-        r.capabilities ?? null,
-      ),
-    }));
-}
-
-/**
- * A coaching assignment on a CLOSED (completed/archived) program year — the Season's End
- * access model (Coach Portal Batch 3, P0 #1). Deliberately a SEPARATE lookup from
- * `getCoachingAssignmentsForUser`: the active list feeds ~49 write-capable routes that all
- * assume "visible = writable", so closed seasons must never flow through it. Closed
- * assignments grant READ-ONLY surfaces only (Season's End, Wrapped, the Insights archive).
+ * ── M1 (2026-08-16): these rows GRANT nothing any more. ──
+ * Access truth is `rep_team_staff_memberships` (lib/coach-membership.ts); a closed row is the
+ * RECORD that this person coached that season, and this lookup exists so the shell can LIST a
+ * member's finished seasons. It therefore filters to teams where the caller holds an ACTIVE
+ * membership — an ex-coach's closed rows stay in the record but stop appearing anywhere, which
+ * is the "removing a coach removes them" half of the ruling. The membership check is inlined
+ * here (not imported from coach-membership.ts) because that module imports THIS one.
  */
 export interface ClosedCoachingAssignment {
   teamId: string;
@@ -4256,9 +4268,23 @@ export async function getClosedCoachingAssignmentsForUser(
   userId: string,
   opts?: CoachAssignmentLookupOpts,
 ): Promise<ClosedCoachingAssignment[]> {
-  const accessible = await loadCoachAssignmentRows(orgId, userId, ['completed', 'archived'], opts);
+  // The record rows and the membership filter are independent — one round trip, not two.
+  // M1: only teams the caller CURRENTLY staffs list their finished seasons (see the JSDoc).
+  const [accessible, membershipResult] = await Promise.all([
+    loadCoachAssignmentRows(orgId, userId, ['completed', 'archived'], opts),
+    supabaseAdmin
+      .from('rep_team_staff_memberships')
+      .select('team_id')
+      .eq('org_id', orgId)
+      .eq('user_id', userId)
+      .eq('status', 'active'),
+  ]);
+  if (accessible.length === 0) return [];
+  if (membershipResult.error) throw membershipResult.error;
+  const memberTeamIds = new Set((membershipResult.data ?? []).map(r => r.team_id as string));
 
   return accessible
+    .filter(r => memberTeamIds.has(r.team_id))
     .map(r => ({
       teamId: r.team_id,
       teamName: r.rep_teams?.name ?? '',

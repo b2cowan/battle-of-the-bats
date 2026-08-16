@@ -88,6 +88,21 @@ const { data: members } = await db.from('organization_members')
 check(members?.length === 1 && members[0].role === 'coach' && members[0].status === 'active',
   'exactly one member, role coach — the demo session cannot see admin surfaces');
 
+// M1 (mig 245): the TEAM MEMBERSHIP is the access truth — a demo team whose coach holds only the
+// season row is a locked-out shop window (staff/settings/seasons/documents all 403 while the
+// shell half-renders). One active head-coach membership per team, no exceptions.
+{
+  const { data: demoTeams } = await db.from('rep_teams')
+    .select('id, name').eq('org_id', org.id).eq('is_archived', false);
+  const { data: memberships } = await db.from('rep_team_staff_memberships')
+    .select('team_id, coach_role, status').eq('org_id', org.id).eq('user_id', members?.[0]?.user_id ?? '');
+  const activeByTeam = new Set((memberships ?? []).filter(m => m.status === 'active').map(m => m.team_id));
+  const missing = (demoTeams ?? []).filter(t => !activeByTeam.has(t.id)).map(t => t.name);
+  check(missing.length === 0,
+    'the demo coach holds an ACTIVE team membership on every team (mig 245 — access truth)',
+    missing.length ? `missing on: ${missing.join(', ')}` : undefined);
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────────────────────
 async function programYears(teamId) {
   return (await db.from('rep_program_years').select('id, year, status, tryout_open').eq('team_id', teamId)).data ?? [];

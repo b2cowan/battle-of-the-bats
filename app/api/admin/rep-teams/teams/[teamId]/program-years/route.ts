@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYears, createRepProgramYear } from '@/lib/db';
+import { projectMembershipsOntoProgramYear } from '@/lib/coach-membership';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -77,6 +78,26 @@ export const POST = withObservability(async (req: Request,
       tryoutOpen: body.tryoutOpen === true,
       tryoutDescription: body.tryoutDescription?.trim() || null,
     });
+    // M1 (2026-08-16): the new season's staff RECORD is written from the team's memberships the
+    // moment the year exists. Before this, a fresh year started with ZERO coach rows and the
+    // admin re-added everyone by hand — under the old access model that was also a lock-out
+    // window for the whole staff.
+    //
+    // ⚠ REVERT ON FAILURE, exactly like the rollover path — a draft year counts as LIVE for
+    // every coach operation the moment it exists, so a year whose staff projection silently
+    // failed would make the team look "between seasons" to its own staff (the ~54 write routes
+    // and the live assignments list still read season rows) while memberships insist all is
+    // well, and nothing self-heals team-wide. Deleting the year is clean: rows cascade with it.
+    try {
+      await projectMembershipsOntoProgramYear(team.id, ctx!.org.id, programYear.id);
+    } catch (e) {
+      console.error('[program-years POST] staff projection failed; deleting the half-created year:', e);
+      await supabaseAdmin.from('rep_program_years').delete().eq('id', programYear.id);
+      return NextResponse.json(
+        { error: 'Could not set up coaching access for the new program year. Nothing was created — please try again.' },
+        { status: 500 },
+      );
+    }
     return NextResponse.json({ programYear }, { status: 201 });
   } catch (e: any) {
     if (e?.code === '23505') {

@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
@@ -510,7 +511,7 @@ export default function CoachPracticePlanPage({
   // ── Render ──
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return <div className={styles.notAssigned}><h2>Team not found</h2><p>You are not assigned to this team.</p></div>;
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const event = data?.event;

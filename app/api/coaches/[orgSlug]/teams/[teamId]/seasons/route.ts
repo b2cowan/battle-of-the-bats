@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import {
-  getCoachingAssignmentsForUser,
-  getClosedCoachingAssignmentsForUser,
-  getRepTeam,
-  getActiveRepProgramYear,
-  getLatestClosedRepProgramYear,
-} from '@/lib/db';
+import { getRepTeam } from '@/lib/db';
+import { getEntitledTeamMembership, resolveWorkingProgramYear } from '@/lib/coach-membership';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { startNextRepSeason, SeasonRolloverError } from '@/lib/rep-season-rollover';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -17,51 +12,29 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
-  const team = await getRepTeam(teamId);
+  // M1 (2026-08-16): standing to roll a season is TEAM MEMBERSHIP — one gate for the mid-season
+  // and the between-seasons ("stranded") states alike. The old two-branch dance (live assignment,
+  // else a closed assignment on exactly the latest closed year) existed because standing itself
+  // was per-season; membership answers both of its hardening checks for free — former staff hold
+  // no membership, and a coach from a bygone year holds no membership either.
+  // All three lookups are independent — one round trip. The roll runs FROM the live season when
+  // there is one, else from the newest closed one (the Season's End recovery state — that CTA is
+  // the whole way forward on that screen).
+  const [team, membership, programYear] = await Promise.all([
+    getRepTeam(teamId),
+    getEntitledTeamMembership(ctx.org, teamId, ctx.user.id),
+    resolveWorkingProgramYear(teamId),
+  ]);
   if (!team || team.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
-
-  const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(ctx.org) };
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id, lookupOpts);
-  const assignment = assignments.find(a => a.teamId === teamId);
-
-  if (assignment) {
-    const programYear = await getActiveRepProgramYear(teamId);
-    if (!programYear) {
-      return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
-    }
-    return { ctx, team, assignment: { coachRole: assignment.coachRole }, programYear };
-  }
-
-  // Season's End recovery (Batch 3, P0 #1): a standalone head coach whose ONLY season is
-  // closed must still be able to start the next one — that CTA is the whole way forward on
-  // the Season's End screen. Rolling forward FROM a completed season is safe: the rollover
-  // copies roster + staff from it, creates the new active year, and re-completing the old
-  // year is a no-op. The head-coach + standalone gates below still apply unchanged.
-  //
-  // Two hardening checks (adversarial review): this door exists ONLY for the stranded state.
-  // (1) If the team has an ACTIVE season the caller simply isn't on, they are not stranded —
-  //     they are former staff, and must not be able to roll (and thereby force-complete) the
-  //     current staff's season. (2) The caller's own closed assignment must be on the team's
-  //     LATEST closed season — a coach from a bygone year has no standing to roll the years
-  //     that followed without them.
-  const stillOpen = await getActiveRepProgramYear(teamId);
-  if (stillOpen) return { error: forbidden() };
-
-  const closed = (await getClosedCoachingAssignmentsForUser(ctx.org.id, ctx.user.id, lookupOpts))
-    .find(a => a.teamId === teamId);
-  if (!closed) return { error: forbidden() };
-
-  const latestClosed = await getLatestClosedRepProgramYear(teamId);
-  if (!latestClosed) {
+  if (!membership) return { error: forbidden() };
+  if (!programYear) {
     return { error: NextResponse.json({ error: 'No program year found for this team' }, { status: 404 }) };
   }
-  if (closed.programYearId !== latestClosed.id) return { error: forbidden() };
 
-  // Both branches return the same deliberately-narrow shape: only what the POST reads.
-  const narrowed: { coachRole: 'head_coach' | 'assistant_coach' } = { coachRole: closed.coachRole };
-  return { ctx, team, assignment: narrowed, programYear: latestClosed };
+  // The same deliberately-narrow shape as before: only what the POST reads.
+  return { ctx, team, assignment: { coachRole: membership.coachRole }, programYear };
 }
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/seasons — coach starts the team's next season

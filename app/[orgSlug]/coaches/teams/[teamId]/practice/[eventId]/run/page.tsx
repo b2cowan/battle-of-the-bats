@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode 
 import Link from 'next/link';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -313,7 +314,7 @@ export default function CoachPracticeRunPage({
   // ── Render ──
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return <div className={styles.notAssigned}><h2>Team not found</h2><p>You are not assigned to this team.</p></div>;
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const backToPlan = (

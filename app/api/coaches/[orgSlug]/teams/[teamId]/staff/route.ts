@@ -1,32 +1,28 @@
 import { NextResponse } from 'next/server';
-import {
-  getRepTeamStaffForYear,
-} from '@/lib/db';
-import { resolveCoachCapabilities, denyUnless } from '@/lib/coach-capabilities';
+import { resolveCoachCapabilities } from '@/lib/coach-capabilities';
+import { requireHeadCoachMembership, getTeamStaffPanelList } from '@/lib/coach-membership';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { listVerifiedFamilyEmails } from '@/lib/family-access';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 
-// GET /api/coaches/[orgSlug]/teams/[teamId]/staff — the coaching staff + each assistant's effective
-// capabilities, for the head coach's "Coaching staff" manage panel. Head coach only.
-export const GET = withObservability(async (req: Request,
+// GET /api/coaches/[orgSlug]/teams/[teamId]/staff — THE team's staff (M1: one list, no season
+// dimension) + each member's effective capabilities, for the head coach's manage panel.
+// Head coach only. Seasons' staff RECORDS are separate (`rep_team_coaches`) and not served here.
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
-  if ('error' in resolved) return resolved.error;
-  const { ctx, capabilities, programYear } = resolved;
-  const denied = denyUnless(capabilities.isHeadCoach, 'Only the head coach manages the coaching staff.');
-  if (denied) return denied;
+  const gate = await requireHeadCoachMembership(orgSlug, teamId);
+  if ('error' in gate) return gate.error;
+  const { ctx } = gate;
 
   /**
    * ⚠ **A LABEL, NOT A JOIN** (owner ruling 2026-08-03 — "leave the model alone").
    *
    * The same adult can be staff AND connected to the team as a family member, as two unrelated
-   * records that nothing connects. The owner ruled that separation is CORRECT and declined a merge or a combined
-   * "people" view: the two relationships run in opposite directions of trust, carry different
-   * consent, and stay auditable precisely because one file answers "who is in?" and a different
-   * one answers "what do they see?".
+   * records that nothing connects. The owner ruled that separation is CORRECT and declined a merge
+   * or a combined "people" view: the two relationships run in opposite directions of trust, carry
+   * different consent, and stay auditable precisely because one file answers "who is in?" and a
+   * different one answers "what do they see?".
    *
    * So this is deliberately the weakest possible thing that helps: **one boolean, computed here by
    * comparing normalised email addresses, joining no data and offering no action.** It exists for
@@ -48,7 +44,7 @@ export const GET = withObservability(async (req: Request,
    * charged every open of this panel an extra round trip for a label.
    */
   const [staff, familyEmails] = await Promise.all([
-    getRepTeamStaffForYear(programYear.id, ctx.org.id),
+    getTeamStaffPanelList(teamId, ctx.org.id),
     listVerifiedFamilyEmails(teamId).catch((err) => {
       console.error('[staff] family-connection lookup failed; labels omitted for this load', err);
       return new Set<string>();
@@ -61,16 +57,16 @@ export const GET = withObservability(async (req: Request,
   };
 
   return NextResponse.json({
-    staff: staff.map(s => ({
-      coachId: s.coachId,
-      userId: s.userId,
-      coachRole: s.coachRole,
-      displayName: s.displayName,
-      email: s.email,
+    staff: staff.map(m => ({
+      memberId: m.id,
+      userId: m.userId,
+      coachRole: m.coachRole,
+      displayName: m.displayName,
+      email: m.email,
       // The current effective grant per area (head coach = full), so the grid renders live state.
-      capabilities: resolveCoachCapabilities(s.coachRole, s.capabilities),
-      isSelf: s.userId === ctx.user.id,
-      alsoFollowsTeam: alsoFollows(s.email),
+      capabilities: resolveCoachCapabilities(m.coachRole, m.capabilities),
+      isSelf: m.userId === ctx.user.id,
+      alsoFollowsTeam: alsoFollows(m.email),
     })),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/staff' });

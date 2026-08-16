@@ -206,10 +206,15 @@ export function resolveCoachSeasonPage(
     query: season.query,
     teamBase: `/${orgSlug}/coaches/teams/${teamId}`,
     hasAccess: !!(live || closed || season.current),
-    // Any season of this team on which they held the head-coach role. `options` is already scoped
-    // to this team and carries each season's own capability row, so this asks exactly what the
-    // server asks — see the field's doc comment.
-    everHeadCoach: season.options.some(o => o.capabilities?.isHeadCoach === true),
+    /**
+     * ⚠ CURRENT role, not history (M1, 2026-08-16). This used to scan every season's own
+     * capability row ("ever head coach"), but the server's gate now answers from the coach's
+     * CURRENT capabilities — so a demoted former head coach was shown the season-history doors
+     * and then served an empty list ("None yet" — the exact lie the server's own comments
+     * forbid). The live assignment mirrors the membership; between seasons the newest row does.
+     * The field name survives only until P2 retires the restriction it feeds (slated revert).
+     */
+    everHeadCoach: (live?.capabilities ?? season.current?.capabilities ?? closed?.capabilities)?.isHeadCoach === true,
     // ⚠ Courtesy only. Hiding a control is not read-only — the server refuses the write, and a
     // source-level test proves no write handler can even address a past season.
     canWrite: (capability: boolean | undefined) => !isReadOnly && !!capability,

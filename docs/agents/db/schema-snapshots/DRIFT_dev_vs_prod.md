@@ -2,26 +2,27 @@
 
 **Generated:** 2026-08-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 67 divergence(s)** across dev/prod.
+**⚠️ 90 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 2 | 0 | — |
-| Columns | 30 | 0 | 1 |
-| Indexes | 10 | 1 | 0 |
-| Constraints | 16 | 0 | — |
-| RLS / CHECK | 7 | 0 | 0 (RLS state) |
+| Tables | 3 | 0 | — |
+| Columns | 40 | 0 | 1 |
+| Indexes | 14 | 1 | 0 |
+| Constraints | 22 | 0 | — |
+| RLS / CHECK | 9 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (2)
+### Only in DEV (3)
 - `rep_team_fundraiser_tags`
 - `rep_team_money_in`
+- `rep_team_staff_memberships`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (30)
+### Only in DEV (40)
 - `budget_categories.sports`
 - `budget_items.direction`
 - `budget_items.sports`
@@ -52,6 +53,16 @@ _none_
 - `rep_team_money_in.received_from`
 - `rep_team_money_in.team_id`
 - `rep_team_money_in.updated_at`
+- `rep_team_staff_memberships.capabilities`
+- `rep_team_staff_memberships.coach_role`
+- `rep_team_staff_memberships.created_at`
+- `rep_team_staff_memberships.id`
+- `rep_team_staff_memberships.org_id`
+- `rep_team_staff_memberships.revoked_at`
+- `rep_team_staff_memberships.revoked_by`
+- `rep_team_staff_memberships.status`
+- `rep_team_staff_memberships.team_id`
+- `rep_team_staff_memberships.user_id`
 
 ### Only in PROD (0)
 _none_
@@ -60,7 +71,7 @@ _none_
 - `rep_fundraiser_entries.player_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (10)
+### Only in DEV (14)
 - `budget_items_team_idx`
 - `budget_items_unique_scope_name`
 - `idx_rep_team_expenses_balance_entry`
@@ -71,6 +82,10 @@ _none_
 - `rep_team_fundraiser_tags_pkey`
 - `rep_team_fundraiser_tags_tag_idx`
 - `rep_team_money_in_pkey`
+- `rep_team_staff_memberships_org_user_idx`
+- `rep_team_staff_memberships_pkey`
+- `rep_team_staff_memberships_team_idx`
+- `rep_team_staff_memberships_team_user_key`
 
 ### Only in PROD (1)
 - `budget_items_unique_org_name`
@@ -79,7 +94,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (16)
+### Only in DEV (22)
 - `budget_items.budget_items_team_id_fkey`
 - `rep_team_expenses.rep_team_expenses_balance_entry_id_fkey`
 - `rep_team_expenses.rep_team_expenses_budget_category_id_fkey`
@@ -96,6 +111,12 @@ _none_
 - `rep_team_money_in.rep_team_money_in_pkey`
 - `rep_team_money_in.rep_team_money_in_program_year_id_fkey`
 - `rep_team_money_in.rep_team_money_in_team_id_fkey`
+- `rep_team_staff_memberships.rep_team_staff_memberships_org_id_fkey`
+- `rep_team_staff_memberships.rep_team_staff_memberships_pkey`
+- `rep_team_staff_memberships.rep_team_staff_memberships_revoked_by_fkey`
+- `rep_team_staff_memberships.rep_team_staff_memberships_team_id_fkey`
+- `rep_team_staff_memberships.rep_team_staff_memberships_team_user_key`
+- `rep_team_staff_memberships.rep_team_staff_memberships_user_id_fkey`
 
 ### Only in PROD (0)
 _none_
@@ -104,7 +125,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (7)
+### CHECK only in DEV (9)
 - `budget_items.budget_items_direction_check`
 - `rep_fundraisers.rep_fundraisers_kind_check`
 - `rep_fundraisers.rep_fundraisers_sponsor_status_check`
@@ -112,6 +133,8 @@ _none_
 - `rep_team_money_in.rep_team_money_in_amount_check`
 - `rep_team_money_in.rep_team_money_in_entry_kind_check`
 - `rep_team_money_in.rep_team_money_in_received_from_check`
+- `rep_team_staff_memberships.rep_team_staff_memberships_coach_role_check`
+- `rep_team_staff_memberships.rep_team_staff_memberships_status_check`
 
 ### CHECK only in PROD (0)
 _none_

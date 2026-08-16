@@ -5,10 +5,10 @@ import {
   getRepProgramYears,
   getRepRosterPlayers,
   createRepRosterPlayer,
-  getRepTeamCoaches,
-  addRepTeamCoach,
+  getRepTeamCoachForUserYear,
   suggestContinuityLinksBulk,
 } from './db';
+import { addStaffMember, projectMembershipsOntoProgramYear } from './coach-membership';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import type { RepProgramYear } from './types';
 
@@ -148,18 +148,22 @@ export async function startNextRepSeason(params: {
   summary.newSeason.id = newSeason.id;
 
   try {
-    // Carry forward every coaching assignment (head + any assistants) so the team's staff continues.
-    const coaches = await getRepTeamCoaches(currentSeason.id);
-    let initiatorIncluded = false;
-    for (const c of coaches) {
-      const created = await addRepTeamCoach(newSeason.id, teamId, orgId, c.userId, c.coachRole);
-      createdCoachIds.push(created.id);
-      if (c.userId === initiatorUserId) initiatorIncluded = true;
+    // M1 (2026-08-16): the new season's staff RECORD is written from the team's MEMBERSHIPS —
+    // role AND capability grants — not copied from last season's rows. This is the change that
+    // ends the silent yearly reset of customized grants (rows used to be re-minted with NULL
+    // capabilities) and it means a member added between seasons is not skipped. Access itself
+    // never derives from these rows any more; they are the record + what the write routes read.
+    let memberIds = await projectMembershipsOntoProgramYear(teamId, orgId, newSeason.id);
+    if (memberIds.length === 0) {
+      // The initiator reached this code as the team's head coach; a team with zero memberships is
+      // a data gap (pre-M1 stragglers), and the roll must not strand them — mint theirs now.
+      // addStaffMember also projects onto the live year, which IS the just-created active season,
+      // so the row lands there; point-read it back for the rollback bookkeeping.
+      await addStaffMember({ orgId, teamId, userId: initiatorUserId, coachRole: 'head_coach' });
+      const initiatorRow = await getRepTeamCoachForUserYear(newSeason.id, initiatorUserId);
+      memberIds = initiatorRow ? [initiatorRow.id] : [];
     }
-    if (!initiatorIncluded) {
-      const created = await addRepTeamCoach(newSeason.id, teamId, orgId, initiatorUserId, 'head_coach');
-      createdCoachIds.push(created.id);
-    }
+    createdCoachIds.push(...memberIds);
   } catch (e) {
     console.error('[rep-season-rollover] coach assignment failed; rolling back new season:', e);
     await cleanupNewSeason(newSeason.id, createdCoachIds);

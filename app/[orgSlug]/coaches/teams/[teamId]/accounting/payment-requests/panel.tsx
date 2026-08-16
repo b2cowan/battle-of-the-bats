@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Plus, Trash2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -315,12 +316,7 @@ export function PaymentRequestsPanel({
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
-    return (
-      <div className={styles.notAssigned}>
-        <h2>Team not found</h2>
-        <p>You are not assigned to this team.</p>
-      </div>
-    );
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   /* Same flag as `canWrite` above, which had to be computed before the not-assigned guard so the

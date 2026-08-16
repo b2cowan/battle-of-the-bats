@@ -5579,6 +5579,65 @@ and they are opposites.*
 **If C, D and E read correctly, this section passes.** A and B are the form; F is the second lens;
 G and H are the guards around them.
 
+## §39 · The team is the account — staff membership (M1, Phase 1)
+
+**Built on dev 2026-08-16 · not on production · migration 245 APPLIED TO DEV ONLY.**
+Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P1. Decision mockups: artifact `aa758bcb`.
+Passed `/simplify` (18 findings applied) and the full `/review` funnel (5 lenses; 1 Critical +
+4 High clusters found and fixed the same day — the Critical was new-signup provisioning minting a
+coach with no membership).
+
+**Why this section exists:** removing a coach used to remove them from ONE season while every past
+season kept admitting them. Staff now belongs to the TEAM: one list, remove-means-removed
+everywhere, permissions survive rollover. ⚠ Until §40 (P2) the season switcher and archive still
+exist — this section is about ACCESS, not the archive's shape.
+
+**Fixture: three sign-ins on one team** — you (head coach), a current assistant, and someone you
+will remove during the walk. Ideal team also has at least one finished season.
+
+### A · One staff list, and Remove means removed
+
+- [ ] Open **Staff**. One list — no season attached to it, no per-season staff anywhere.
+- [ ] Remove the sacrificial assistant. The dialog says **"every screen, every season"** and that
+      their name stays on the seasons they coached. Confirm.
+- [ ] As the removed person: the team is gone from their portal — every page, and any old season
+      they try by URL. ⚠ This must be true IMMEDIATELY, no sign-out needed.
+- [ ] Re-add them (invite → accept). Their access returns **with the grants they had before** —
+      check one customized toggle survived the round trip.
+
+### B · Current permissions, everywhere (the widening you ruled)
+
+- [ ] Give the current assistant **Money** access (they had none last season). Switch into a
+      finished season → Money: **they now read last season's money.** That is the ruling working,
+      not a leak — flag it only if it FAILS.
+- [ ] Same for guardian contacts (rosterPii): granted today ⇒ visible in past rosters too.
+
+### C · Between seasons is ordinary
+
+- [ ] On a team whose season is finished with no next season yet: **Settings loads** (no
+      "unavailable" wall), **Email families** and **Chat** say the season has finished — never
+      "you are not assigned to this team".
+- [ ] Staff still works there: you can invite next season's assistant before the season exists.
+
+### D · The record stayed honest
+
+- [ ] Open a finished season's roster/results: unchanged. The removed person's name still appears
+      wherever that season recorded them (game moments, staff attribution on plans).
+- [ ] In a finished season the archive shows **no Staff door** any more — that's intended (§39's
+      model change), not a regression.
+
+### E · New signup (if you can spare one dev checkout)
+
+- [ ] Provision a fresh standalone Premium team on dev. The new head coach can open **Settings,
+      Staff, and start-a-season** from minute one. ⚠ This is the Critical the review caught —
+      worth one real pass of the signup flow.
+
+---
+
+**If A and C pass, the model is safe; B proves the ruling; E proves the launch path.** D is the
+record check. UAT note: 11 Playwright spec fixtures still need membership companions before the
+next `/uat` run (listed in the plan §5 P1 tail) — the frozen-season smoke is already converted.
+
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its

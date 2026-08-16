@@ -7441,9 +7441,10 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .tryoutHistoryNotes li { margin-bottom: 0.25rem; }
 
-/* The ONE explanatory line Chunk F keeps (D-F4, owner-approved exception 2026-08-01): the Staff
-   screen of a finished season, where the "Complete" chip is genuinely misleading because the
-   buttons still work. Everywhere else the chip carries it alone. */
+/* The Staff page's one explanatory note. Since M1 (2026-08-16) staff belongs to the TEAM — one
+   list, no season dimension — so this box no longer explains a per-season "remove access"
+   control (Chunk F rule 3, retired); it tells a head coach who reached Staff under a finished
+   season's chrome that the list is the team's and edits apply everywhere at once. */
 .seasonReadAccessNote {
   margin: 0 0 1rem;
   padding: 0.7rem 0.9rem;

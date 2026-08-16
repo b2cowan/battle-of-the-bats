@@ -2,6 +2,7 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { BookMarked, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagPicker from '@/components/coaches/TagPicker';
@@ -163,7 +164,7 @@ export default function CoachPlanTemplateEditorPage({
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return <div className={styles.notAssigned}><h2>Team not found</h2><p>You are not assigned to this team.</p></div>;
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const canWrite = data?.canWrite ?? false;

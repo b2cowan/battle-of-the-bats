@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { ListOrdered, CalendarDays, X, Undo2, Redo2, Printer, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -403,7 +404,7 @@ export default function CoachLineupBuilderPage({
   // ── Render ──
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return <div className={styles.notAssigned}><h2>Team not found</h2><p>You are not assigned to this team.</p></div>;
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const gameTitle = event

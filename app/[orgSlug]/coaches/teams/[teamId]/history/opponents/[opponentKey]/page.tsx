@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import { Telescope, Check, X, Share2, GitMerge } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
@@ -222,7 +223,7 @@ export default function CoachOpponentCardPage({
   }, [data, filterTag]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) return <div className={styles.notAssigned}>You are not assigned to this team.</div>;
+  if (!assignment) return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   if (loading) return <div className={styles.loadingState}>Loading…</div>;
   if (error || !data) {
     return (

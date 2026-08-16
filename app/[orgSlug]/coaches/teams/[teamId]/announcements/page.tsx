@@ -1,8 +1,9 @@
 'use client';
 import { use } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Mail } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
 import { DRAFT_SUBJECT_PARAM, DRAFT_BODY_PARAM } from '@/lib/postgame-draft';
@@ -14,8 +15,14 @@ export default function TeamAnnouncementsPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { assignments, loading: assignmentsLoading } = useCoaches();
+  const { assignments, closedAssignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === params.teamId);
+  // M1 (2026-08-16): between seasons this coach is still on the team — the old bare
+  // `assignments.find` told a legitimately-current coach "you are not assigned to this team",
+  // which was false. Emailing families stays a live-season instrument (the send route resolves
+  // the live year, deliberately), so the between-seasons state gets an honest sentence instead
+  // of a lie — and instead of an editor whose Send could only fail.
+  const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
 
   // Chunk D 3.1 — a draft handed over from the schedule's score entry. Read here rather than
   // inside the editor so the editor stays a plain controlled component with no URL knowledge.
@@ -28,6 +35,20 @@ export default function TeamAnnouncementsPage({
 
   if (assignmentsLoading) {
     return <div className={styles.page}><p className={styles.bodyNote}>Loading…</p></div>;
+  }
+  if (!assignment && closed) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader icon={Mail} title="Email families" helpLabel="Email families"
+          help={{ module: 'coaches', sectionIds: ['recipe-announcements'], fullGuideHref: `/${params.orgSlug}/coaches/help#recipe-announcements` }} />
+        <p className={styles.bodyNote}>
+          The season has finished, so there&apos;s no roster to email right now. When the next
+          season starts, this screen comes back with it — in the meantime, the season&apos;s story
+          lives in{' '}
+          <Link href={`/${params.orgSlug}/coaches/teams/${params.teamId}/season-end`}>Season&apos;s End</Link>.
+        </p>
+      </div>
+    );
   }
   if (!assignment) {
     return <div className={styles.page}><p className={styles.bodyNote}>You are not assigned to this team.</p></div>;

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
-import { denyUnless, HELPER_PRESET } from '@/lib/coach-capabilities';
+import { requireHeadCoachMembership, resolveWorkingProgramYear } from '@/lib/coach-membership';
+import { HELPER_PRESET } from '@/lib/coach-capabilities';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { createAssistantInvite, orgRequiresAssistantApproval } from '@/lib/assistant-invites';
 import { sendEmail, assistantCoachInviteHtml } from '@/lib/email';
@@ -17,21 +16,16 @@ export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
 
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
+  // M1: authority is the caller's ACTIVE team membership — which also means a head coach whose
+  // season just ended can still build next year's staff (the between-seasons state is ordinary).
+  const gate = await requireHeadCoachMembership(orgSlug, teamId, 'Only the head coach can invite staff.');
+  if ('error' in gate) return gate.error;
+  const { ctx, team } = gate;
 
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
-  const denied = denyUnless(assignment.capabilities.isHeadCoach, 'Only the head coach can invite staff.');
-  if (denied) return denied;
-
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
+  // The invite token still records a season for provenance; acceptance grants TEAM membership,
+  // so between seasons the newest closed year stands in and nothing about access reads it.
+  const programYear = await resolveWorkingProgramYear(teamId);
+  if (!programYear) return NextResponse.json({ error: 'This team has no seasons yet.' }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';

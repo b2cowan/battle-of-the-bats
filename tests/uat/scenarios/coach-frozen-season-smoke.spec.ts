@@ -4,22 +4,25 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * The frozen past season (Coach Portal Chunk F).
+ * The frozen past season — under the M1 access model ("the team is the account", 2026-08-16).
  *
- * PERMANENT regression coverage for the things unit tests can't see — and this chunk's risk is
+ * PERMANENT regression coverage for the things unit tests can't see — and this surface's risk is
  * almost entirely READ AUTHORIZATION, so the probes lean that way:
  *
- *  1. GOVERNING RULE 1 — an assistant's access to a past season is what it was AT THE TIME.
- *     The fixture makes this concrete and adversarial: the assistant has money in the LIVE season
- *     and had none in the closed one. If capabilities leaked from the current assignment (which is
- *     exactly what the shipped resolver did before this chunk), the archive would hand them last
- *     year's money. Asserted at the API, not just in the nav.
- *  2. GOVERNING RULE 3 — a coach REMOVED from a past season's staff is refused by the SERVER.
- *     Losing the menu item is not losing access; this is the leak class that has bitten four
- *     chunks running, so it is checked as an HTTP status against a former team-mate's data.
- *  3. GOVERNING RULE 2 — writes are refused for a closed season. A source-level test proves no
- *     write handler can even ADDRESS one (tests/unit/coach-season-write-guard.test.ts); this is
- *     the runtime half.
+ *  1. CURRENT CAPABILITIES, EVERYWHERE (owner ruling 2026-08-16 — REPLACES governing rule 1).
+ *     A member's access to every season is their current grant. The fixture that used to prove
+ *     the opposite now proves the ruling ON PURPOSE, in both directions: the assistant granted
+ *     money TODAY reads the closed season's money (the recorded widening — if that 200 turns
+ *     403, someone un-decided an owner ruling), and guardian PII follows the current rosterPii
+ *     grant into the past for the same reason.
+ *  2. REMOVING A COACH REMOVES THEM — EVERYWHERE, AT ONCE (replaces governing rule 3, whose
+ *     per-season revocation retired with the per-season access model). Revoking the TEAM
+ *     MEMBERSHIP closes every season at the server; the season's staff RECORD row survives,
+ *     because who coached it is a fact. Losing the menu item is not losing access; checked as
+ *     HTTP statuses against a former team-mate's data.
+ *  3. A FINISHED SEASON IS A RECORD — writes are refused for a closed season. A source-level test
+ *     proves no write handler can even ADDRESS one (tests/unit/coach-season-write-guard.test.ts);
+ *     this is the runtime half.
  *  4. The ROLLED-FORWARD case, which the plan of record never named: a team with a live season
  *     AND past ones. Its archive must be read-only even though the team itself is not closed.
  *  5. Every door a past season opens carries help (the Chunk B rule), walked from the RENDERED
@@ -74,7 +77,12 @@ let liveYearId = '';
 let pastYearId = '';
 let pastPlayerId = '';
 let pastFundraiserId = '';
-let revokedCoachRowId = '';
+/** The revoked user's TEAM MEMBERSHIP (M1) — flipped to 'revoked' mid-test. */
+let revokedMembershipId = '';
+/** Their PAST season's record row — asserted to SURVIVE the revocation. */
+let revokedPastRowId = '';
+/** The archived player's guardian email — real data, so the PII probes can't pass vacuously. */
+const PAST_GUARDIAN_EMAIL = `${MARK}-guardian@dev.local`;
 
 const LIVE_YEAR = new Date().getFullYear() + 1;
 const PAST_YEAR = LIVE_YEAR - 1;
@@ -99,6 +107,8 @@ async function cleanup() {
       await admin.from('rep_roster_players').delete().eq('program_year_id', y.id);
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
     }
+    // M1: memberships are team-scoped, not season-scoped — clear them before the team goes.
+    await admin.from('rep_team_staff_memberships').delete().eq('team_id', t.id);
     await admin.from('rep_program_years').delete().eq('team_id', t.id);
     await admin.from('rep_teams').delete().eq('id', t.id);
   }
@@ -180,20 +190,49 @@ test.beforeAll(async () => {
   });
   if (liveAcErr) throw liveAcErr;
 
-  // Rule 3's subject: on the PAST season's staff, removed part-way through the run.
+  // The revocation subject: coached the PAST season (their record row), currently on the team
+  // (their membership) — removed part-way through the run by revoking the MEMBERSHIP.
   const { data: revokedRow, error: revErr } = await admin.from('rep_team_coaches').insert({
     program_year_id: pastYearId, team_id: repTeamId, org_id: orgId,
     user_id: revokedUserId, coach_role: 'assistant_coach',
     capabilities: { money: 'off', roster: 'view', rosterPii: false, schedule: true, attendance: true, tryouts: false },
   }).select('id').single();
   if (revErr) throw revErr;
-  revokedCoachRowId = revokedRow!.id;
+  revokedPastRowId = revokedRow!.id;
+
+  /**
+   * ── M1 memberships — THE access truth (mig 245). Without these, every probe below 403s. ──
+   * The membership's grants are the member's CURRENT capabilities in EVERY season (the ruling
+   * probes in section 1 depend on exactly these values):
+   *   · head — head coach, full access
+   *   · assistant — money WRITE + rosterPii TRUE today (had neither on the past season's record
+   *     row, which is what makes the widening probes adversarial rather than vacuous)
+   *   · revoked-subject — ordinary assistant defaults, revoked mid-run
+   */
+  const memberships: { user_id: string; coach_role: string; capabilities: object | null }[] = [
+    { user_id: headUserId, coach_role: 'head_coach', capabilities: null },
+    {
+      user_id: assistUserId, coach_role: 'assistant_coach',
+      capabilities: { money: 'write', rosterPii: true, schedule: true, attendance: true, tryouts: false },
+    },
+    { user_id: revokedUserId, coach_role: 'assistant_coach', capabilities: null },
+  ];
+  for (const m of memberships) {
+    const { data: mRow, error: mErr } = await admin.from('rep_team_staff_memberships').insert({
+      org_id: orgId, team_id: repTeamId, user_id: m.user_id,
+      coach_role: m.coach_role, capabilities: m.capabilities, status: 'active',
+    }).select('id').single();
+    if (mErr) throw mErr;
+    if (m.user_id === revokedUserId) revokedMembershipId = mRow!.id;
+  }
 
   // A player who exists ONLY in the past season — the thing an archive is for, and the thing a
   // revoked coach must stop being able to read.
   const { data: player, error: playerErr } = await admin.from('rep_roster_players').insert({
     program_year_id: pastYearId, team_id: repTeamId, org_id: orgId,
     player_first_name: `${MARK}Archived`, player_last_name: 'Player',
+    // Real guardian data, so the PII probes distinguish "redacted" from "was never there".
+    guardian_email: PAST_GUARDIAN_EMAIL,
     status: 'active', source: 'admin_manual',
   }).select('id').single();
   if (playerErr) throw playerErr;
@@ -268,12 +307,20 @@ async function apiGet(page: Page, url: string) {
   }, url);
 }
 
-// ── 1. Governing rule 1 — what you could see THEN ────────────────────────────
+// ── 1. Current capabilities, everywhere (M1, 2026-08-16 — replaces governing rule 1) ─────────
 
-test.describe('rule 1 — a past season shows what the coach could see at the time', () => {
+test.describe('capabilities are the member’s CURRENT ones, in every season', () => {
   test.use({ viewport: DESKTOP });
 
-  test('an assistant with money NOW is refused the past season’s money', async ({ page }) => {
+  /**
+   * ⚠⚠ THIS PROBE'S EXPECTATION FLIPPED ON 2026-08-16, DELIBERATELY. It used to assert 403 —
+   * "capabilities must come from the PAST season's assignment row" (governing rule 1). The owner
+   * replaced that rule: access belongs to current staff, and their current grant is the honest one
+   * everywhere, which WIDENS what a newly-trusted assistant can read (recorded, with the reasoning,
+   * in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §1). The 200 below is that ruling, asserted so it
+   * stays a decision — if it ever turns 403 again, someone has quietly un-decided it.
+   */
+  test('an assistant with money NOW reads the past season’s money — the recorded widening', async ({ page }) => {
     await signIn(page, ASSIST_EMAIL);
 
     // Live season: they genuinely have money, so this must succeed — otherwise the next
@@ -281,11 +328,11 @@ test.describe('rule 1 — a past season shows what the coach could see at the ti
     const live = await apiGet(page, `${api()}/money-summary`);
     expect(live.status, 'the assistant DOES have money in the live season').toBe(200);
 
-    // Past season: they had none. This is the leak the chunk exists to close.
+    // Past season: their PAST record row said money:'off' — and no longer governs anything.
     const past = await apiGet(page, `${api()}/money-summary?year=${pastYearId}`);
     expect(past.status,
-      'capabilities must come from the PAST season’s assignment row, not the current one')
-      .toBe(403);
+      'capabilities are the member’s CURRENT ones in every season (owner ruling 2026-08-16)')
+      .toBe(200);
   });
 
   test('…but the roster they COULD see is still readable', async ({ page }) => {
@@ -331,31 +378,53 @@ test.describe('rule 1 — a past season shows what the coach could see at the ti
       .toBe(0);
   });
 
-  test('guardian details stay hidden if they were hidden then', async ({ page }) => {
+  /**
+   * ⚠ FLIPPED WITH THE RULING, same date, same reasoning as the money probe above: rosterPii was
+   * FALSE on the past season's record row and is TRUE on the membership today, so the guardian
+   * email is VISIBLE in the past season now. The fixture player carries a real guardian email
+   * precisely so this cannot pass by the field never having existed.
+   */
+  test('guardian details follow the CURRENT rosterPii grant into the past', async ({ page }) => {
     await signIn(page, ASSIST_EMAIL);
     const res = await apiGet(page, `${api()}/roster?year=${pastYearId}`);
     const body = res.body as { players?: Record<string, unknown>[] };
     const archived = body.players?.find(p => p.playerFirstName === `${MARK}Archived`);
     expect(archived, 'fixture player must be present or this assertion is vacuous').toBeTruthy();
-    // rosterPii was FALSE last season and TRUE this season — a leak would surface the field.
-    expect(archived?.guardianEmail ?? null).toBeNull();
+    expect(archived?.guardianEmail,
+      'current rosterPii governs every season (owner ruling 2026-08-16)')
+      .toBe(PAST_GUARDIAN_EMAIL);
   });
 });
 
-// ── 2. Governing rule 3 — revocation bites at the server ─────────────────────
+// ── 2. Removing a coach removes them — everywhere, at once (M1; replaces rule 3) ─────────────
 
-test.describe('rule 3 — removing a coach from a past season removes their access', () => {
+test.describe('revoking the membership closes every season at the server', () => {
   test.use({ viewport: DESKTOP });
 
-  test('reads the archive before revocation, is refused after', async ({ page }) => {
+  /**
+   * ⚠⚠ THE MECHANISM CHANGED ON 2026-08-16. This used to delete ONE season's assignment row and
+   * assert that one season closed — governing rule 3's per-season revocation, which was also the
+   * defect's shape: removing a coach removed them from one season and nothing else. Under M1 the
+   * Staff screen revokes the TEAM MEMBERSHIP, and that single flip must close the past season,
+   * the live season, and everything between — while the season's staff RECORD survives, because
+   * who coached it is a fact about the season, not a key.
+   */
+  test('reads before revocation; refused everywhere after; the record survives', async ({ page }) => {
     await signIn(page, REVOKED_EMAIL);
 
-    const before = await apiGet(page, `${api()}/roster?year=${pastYearId}`);
-    expect(before.status, 'must genuinely have access first, or the revocation proves nothing')
+    const beforePast = await apiGet(page, `${api()}/roster?year=${pastYearId}`);
+    expect(beforePast.status, 'must genuinely have access first, or the revocation proves nothing')
       .toBe(200);
+    const beforeLive = await apiGet(page, `${api()}/roster`);
+    expect(beforeLive.status, 'live access too — the sweep below must prove BOTH close').toBe(200);
 
-    // The head coach removes them from that season's staff (what the Staff screen does).
-    const { error } = await admin.from('rep_team_coaches').delete().eq('id', revokedCoachRowId);
+    // The heart of what the Staff screen's Remove does now: one flip on the membership. (The
+    // real path also drops the LIVE season's projection row so write routes refuse too — the
+    // GET probes below gate on membership alone, which is exactly what this simulates.) The
+    // past record row is deliberately untouched.
+    const { error } = await admin.from('rep_team_staff_memberships')
+      .update({ status: 'revoked', revoked_at: new Date().toISOString() })
+      .eq('id', revokedMembershipId);
     expect(error).toBeNull();
 
     const after = await apiGet(page, `${api()}/roster?year=${pastYearId}`);
@@ -363,11 +432,20 @@ test.describe('rule 3 — removing a coach from a past season removes their acce
       'a removed coach must be refused BY THE SERVER — losing the menu item is not losing access')
       .toBe(403);
 
-    // And not merely on that one route: the whole archive closes.
-    for (const route of ['history', 'attendance', 'events', 'wrapped']) {
-      const res = await apiGet(page, `${api()}/${route}?year=${pastYearId}`);
-      expect([401, 403, 404], `${route} must refuse a removed coach`).toContain(res.status);
+    // Not merely one route or one season: everything closes at once.
+    for (const probe of ['history', 'attendance', 'events', 'wrapped']) {
+      const res = await apiGet(page, `${api()}/${probe}?year=${pastYearId}`);
+      expect([401, 403, 404], `${probe} (past) must refuse a removed coach`).toContain(res.status);
     }
+    for (const probe of ['roster', 'events', 'money-summary']) {
+      const res = await apiGet(page, `${api()}/${probe}`);
+      expect([401, 403, 404], `${probe} (live) must refuse a removed coach`).toContain(res.status);
+    }
+
+    // The other half of the ruling: revocation keeps the record. The past season still names them.
+    const { data: recordRow } = await admin.from('rep_team_coaches')
+      .select('id').eq('id', revokedPastRowId).maybeSingle();
+    expect(recordRow, 'the season’s staff record must SURVIVE the revocation').toBeTruthy();
   });
 });
 

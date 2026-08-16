@@ -9,7 +9,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
-import { resolveCoachSeasonReadContext, resolveCoachSeasonCapabilityMap } from '@/lib/coach-season-read';
+import { resolveCoachSeasonReadContext } from '@/lib/coach-season-read';
 import { canShowTryoutMemory, inPlayTryoutCandidates } from '@/lib/tryout-report';
 import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
 
@@ -31,10 +31,10 @@ import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
  *   2. **Does the whole subtree carry the season?** There is no subtree. The read is one strip
  *      inside one card; it opens no page, links nowhere, and adds NO archive door — nav is
  *      untouched and `/tryouts/history` remains the only way into a finished tryout.
- *   3. **Does it show what the coach could see AT THE TIME?** Yes, twice over. Prior averages are
- *      recomputed from that season's own scores against that season's own scorecard, and the
- *      capability check runs against THAT year's assignment row (governing rule 1) — a coach who
- *      wasn't cleared for tryouts in 2026 reads nothing from 2026.
+ *   3. **Whose eyes govern?** Prior averages are recomputed from that season's own scores against
+ *      that season's own scorecard — the DATA is at-the-time. The capability check is the
+ *      member's CURRENT `tryouts` grant, applied to every year (M1, 2026-08-16 — governing
+ *      rule 1 retired; the widening is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §1).
  *
  * ⚠ It deliberately takes NO `?year=`: `resolveCoachSeasonReadContext` is called with no yearId,
  * so the CURRENT season is always the live one. The past seasons this route reaches are chosen by
@@ -66,14 +66,19 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ blind: true, byRegistration: {} });
   }
 
-  const [rubric, registrations, scores, continuityLinks, allYears, capabilityByYear] = await Promise.all([
+  const [rubric, registrations, scores, continuityLinks, allYears] = await Promise.all([
     getRepTryoutRubric(tryout!.id),
     getRepTryoutRegistrations(programYear.id),
     getRepTryoutScores(tryout!.id),
     getRepTeamContinuityLinks(teamId),
     getRepProgramYears(teamId),
-    resolveCoachSeasonCapabilityMap(ctx.org, ctx.user.id, teamId),
   ]);
+
+  // M1 (2026-08-16): capabilities are the member's CURRENT ones in every season, and the rail
+  // already resolved them — so the per-year map is built from data in hand instead of re-asking
+  // the resolver (which re-ran the membership AND years lookups this handler had already paid
+  // for). The per-year SHAPE stays: `resolveTryoutMemoryPairs`' absent-year contract is real.
+  const capabilityByYear = new Map(allYears.map(y => [y.id, capabilities]));
 
   const pairs = await resolveTryoutMemoryPairs({
     teamId,

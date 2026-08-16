@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getCoachingAssignmentsForUser,
   getRepRosterPlayer,
   getRepPlayerDocuments,
   createRepPlayerDocument,
 } from '@/lib/db';
+import {
+  getEntitledTeamMembership,
+  resolveMembershipCapabilities,
+  resolveWorkingProgramYear,
+} from '@/lib/coach-membership';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -25,12 +29,29 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
+  // M1 (2026-08-16): membership-gated, current capabilities. The three lookups are independent
+  // — one round trip, checks in order after they land.
+  const [membership, player, workingYear] = await Promise.all([
+    getEntitledTeamMembership(ctx.org, teamId, ctx.user.id),
+    getRepRosterPlayer(playerId),
+    resolveWorkingProgramYear(teamId),
+  ]);
+  if (!membership) return { error: forbidden() };
+  const assignment = { capabilities: resolveMembershipCapabilities(membership) };
 
-  const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
+    return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
+  }
+
+  /**
+   * ⚠ WORKING-SEASON ROSTER ONLY — this closes a dormant gap, deliberately (Design A, v1:
+   * documents have NO historical surface). `rep_player_documents` carries no season column and
+   * this resolver used to accept ANY roster row on the team, any year — nothing in the archive
+   * linked here, but the route was reachable by id. Signed forms are a live instrument
+   * ("collect fresh ones for the new season" is the rollover's own rule), so a past season's
+   * roster row answers 404 — the same as a row that never existed, never a hint.
+   */
+  if (!workingYear || player.programYearId !== workingYear.id) {
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 

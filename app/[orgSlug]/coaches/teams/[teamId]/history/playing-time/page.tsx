@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Scale, BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
@@ -91,12 +92,7 @@ export default function CoachesPlayingTimeReportPage({
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return (
-      <div className={styles.notAssigned}>
-        <h2>Team not found</h2>
-        <p>You are not assigned to this team.</p>
-      </div>
-    );
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const rows = analytics && analytics.gamesWithLineup > 0 ? mergeRows(analytics) : [];

@@ -38,13 +38,13 @@ const COACH_API_ROOT = join(process.cwd(), 'app', 'api', 'coaches');
 const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
 
 /**
- * Governing rule 3's single deliberate exception: the head coach may still manage WHO CAN SEE a
- * closed season. Its writes touch assignment rows only — never that season's records. Adding a
- * path here is a security decision; it must come with an owner ruling.
+ * Governing rule 3's write exception is RETIRED (M1, 2026-08-16): the staff routes no longer
+ * touch the season-read rail at all — staff is team membership, and removal revokes every season
+ * at once, so there is nothing per-season left to write. The list stays (empty) because the
+ * INVARIANT stays: no write handler may resolve through the rail. Adding a path here is a
+ * security decision; it must come with an owner ruling.
  */
-const READ_ACCESS_WRITE_EXCEPTIONS = [
-  join('teams', '[teamId]', 'staff'),
-];
+const READ_ACCESS_WRITE_EXCEPTIONS: string[] = [];
 
 function routeFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -289,9 +289,16 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
    * `CLOSED_SECTION_EXTRAS` (lib/coach-nav-visibility.ts) so the season switcher cannot make the
    * same mistake.
    */
+  /**
+   * ⚠ 'Staff' LEFT this list on 2026-08-16 (M1 — "the team is the account",
+   * COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md). Staff belongs to the TEAM now: one list, no
+   * season dimension, current membership the only key. A finished season has no staff surface —
+   * who coached it is a fact in its record, and the per-season "remove access" write exception
+   * (governing rule 3) retired with the per-season access model that needed it.
+   */
   const APPROVED_ARCHIVE_DOORS = [
     "Season's End", 'Roster', 'Schedule', 'Lineups', 'Money',
-    'Documents', 'Development', 'Tryouts', 'Insights', 'Staff',
+    'Documents', 'Development', 'Tryouts', 'Insights',
   ];
 
   /**
@@ -380,7 +387,9 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
      */
     'money-in',
     'money-summary', 'roster', 'roster/[playerId]',
-    'season-surplus', 'staff', 'staff/[coachId]', 'tags',
+    // ⚠ 'staff' and 'staff/[coachId]' left this list on 2026-08-16 (M1): the staff routes are
+    // membership-gated and season-free now — see the APPROVED_ARCHIVE_DOORS note above.
+    'season-surplus', 'tags',
     /**
      * ⚠ **CANDIDATE MEMORY — ruled explicitly** (owner, 2026-08-02, ruling **R8**;
      * `docs/projects/active/COACH_TRYOUT_INSIGHTS_PLAN.md` §2/§6). These two routes read a PRIOR
@@ -643,7 +652,8 @@ describe('Chunk F — every closed-season door is actually gated', () => {
   };
 
   it('the closed-season nav is the full record set, not Batch 3’s two doors', () => {
-    assert.ok(CLOSED_TEAM_NAV_ITEMS.length >= 10,
+    // 9 since 2026-08-16: Staff left the set (M1 — staff is team membership, no season surface).
+    assert.ok(CLOSED_TEAM_NAV_ITEMS.length >= 9,
       `expected the opened door set, found ${CLOSED_TEAM_NAV_ITEMS.length}`);
   });
 

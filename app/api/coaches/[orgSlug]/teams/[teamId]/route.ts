@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getCoachingAssignmentsForUser,
   getRepTeam,
   getActiveRepProgramYear,
+  getLatestClosedRepProgramYear,
   updateRepTeam,
   updateRepProgramYear,
   setRepTeamShareClubBook,
 } from '@/lib/db';
+import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import type { Organization } from '@/lib/types';
@@ -15,21 +16,40 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteScoutingSummary, canViewMoney } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 
-async function resolveCoachContext(orgSlug: string, teamId: string) {
+/**
+ * M1 (2026-08-16): the gate is TEAM MEMBERSHIP, and the between-seasons state is ordinary.
+ * The old resolver required a live assignment + an active year, which walled Settings off with
+ * "Settings unavailable" for a coach whose season had just ended — one of the two shipped limbo
+ * dead-ends the membership model closes. READS fall back to the newest closed season
+ * (`requireLiveSeason: false`); WRITES still demand the live one — a finished season's
+ * configuration is part of its record.
+ */
+async function resolveCoachContext(
+  orgSlug: string,
+  teamId: string,
+  opts: { requireLiveSeason: boolean },
+) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
-  const team = await getRepTeam(teamId);
+  // Independent lookups resolve together; the checks run in order after they land.
+  const [team, membership, liveYear] = await Promise.all([
+    getRepTeam(teamId),
+    getEntitledTeamMembership(ctx.org, teamId, ctx.user.id),
+    getActiveRepProgramYear(teamId),
+  ]);
   if (!team || team.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
+  if (!membership) return { error: forbidden() };
+  const assignment = {
+    coachRole: membership.coachRole,
+    capabilities: resolveMembershipCapabilities(membership),
+  };
 
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-
-  const programYear = await getActiveRepProgramYear(teamId);
+  const programYear = liveYear
+    ?? (opts.requireLiveSeason ? null : await getLatestClosedRepProgramYear(teamId));
   if (!programYear) {
     return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
   }
@@ -60,7 +80,8 @@ function computeScope(
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
+  // Read: works between seasons too (newest closed year stands in; status says which it is).
+  const resolved = await resolveCoachContext(orgSlug, teamId, { requireLiveSeason: false });
   if ('error' in resolved) return resolved.error!;
   const { ctx, team, assignment, programYear } = resolved;
 
@@ -120,7 +141,8 @@ export const GET = withObservability(async (_req: Request,
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
+  // Write: the live season only — a finished season's configuration is part of its record.
+  const resolved = await resolveCoachContext(orgSlug, teamId, { requireLiveSeason: true });
   if ('error' in resolved) return resolved.error!;
   const { ctx, team, assignment, programYear } = resolved;
 

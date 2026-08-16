@@ -125,6 +125,12 @@ tenure. Money figures *are* correctly scoped per year. Not a regression and not 
 if the owner rules that "their history" means "the seasons they were there for", that ruling changes
 this rail's shape.
 
+> ⚠ **OVERTAKEN 2026-08-16 (M1 — "the team is the account").** Access is current-membership-gated
+> and capabilities are the member's CURRENT ones in every season now, so "money scoped per year"
+> stopped being true the same day this was written — the money gate answers uniformly from the
+> current grant (recorded widening, `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` §1). The
+> head-coach-only scrapbook restriction is slated for revert in that plan's P2.
+
 ## ⚠ This working copy is shared with other sessions
 
 Everything happens on `dev`. **Stage explicit pathspecs only, never `git add -A`, and read the actual

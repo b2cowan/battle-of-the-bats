@@ -124,6 +124,18 @@ if (!member) {
 // ── 6. Coaching assignment — THE SECOND MISSING PIECE ────────────────────────
 // `capabilities: null` = a head coach, who holds everything. That is what the probes need in
 // order to reach every surface; an assistant-parity probe sets its own narrower grants.
+//
+// ⚠ M1 (mig 245, 2026-08-16): access truth is the TEAM MEMBERSHIP; the season row is the record
+// + what the legacy write routes read. A fixture with the row but no membership 403s on every
+// membership-gated route — the exact "every spec lands on Not assigned" incident this script's
+// header describes, wearing the new table.
+const mem = await db.from('rep_team_staff_memberships').upsert({
+  org_id: org.id, team_id: team.id, user_id: user.id,
+  coach_role: 'head_coach', capabilities: null,
+  status: 'active', revoked_at: null, revoked_by: null,
+}, { onConflict: 'team_id,user_id' });
+if (mem.error) { console.error('✗ rep_team_staff_memberships upsert', mem.error.message); process.exit(1); }
+ok('team staff membership present');
 const { data: coachRow } = await db.from('rep_team_coaches')
   .select('id, coach_role').eq('program_year_id', py.id).eq('user_id', user.id).maybeSingle();
 if (!coachRow) {

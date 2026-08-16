@@ -3988,15 +3988,14 @@ const coachesHelp: HelpPageContent = {
         },
         {
           id: 'premium-staff-past-season',
-          title: 'Staff on a finished season',
+          title: 'One staff list, every season',
           content: (
             <>
-              <p><strong>A finished season keeps its own staff list,</strong> and you still control who can open it. Switch to a past season and Staff shows who was on it and what each of them could see at the time. Two things work differently there:</p>
+              <p><strong>Your staff list belongs to the team, not to a season.</strong> Whoever is on it can open the team — and removing someone removes them <strong>everywhere, immediately: every screen, every season</strong>. There is no season-by-season access to manage.</p>
               <ul>
-                <li>You <strong>can</strong> remove someone&rsquo;s access to that season&rsquo;s records — it takes effect straight away and doesn&rsquo;t touch your current team.</li>
-                <li>You <strong>can&rsquo;t</strong> change what anyone could see, because that&rsquo;s part of the record of what happened.</li>
+                <li>Each finished season still <strong>remembers who coached it</strong> — that record doesn&rsquo;t change when your staff does.</li>
+                <li>Adding someone back later restores their access, with their permissions where you left them.</li>
               </ul>
-              <p>Nobody can be added to a season that&rsquo;s already over.</p>
             </>
           ),
         },

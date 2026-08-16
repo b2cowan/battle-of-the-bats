@@ -33,9 +33,11 @@ import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
  * ⚠ **R8 — the returning-improvement line makes this a past-season reader** (Phase 3, work item
  * C4), so this path is listed in `APPROVED_SEASON_AWARE_ROUTES`
  * (tests/unit/coach-season-write-guard.test.ts) alongside `tryout-memory`, which carries the full
- * three-question answer. The read is the same one: prior tryout averages, gated per prior season
- * on THAT year's assignment row via `resolveCoachSeasonCapabilityMap` (governing rule 1). The
- * report's own season stays the ACTIVE one — this route takes no `?year=` and never will.
+ * three-question answer. The read is the same one: prior tryout averages, gated through
+ * `resolveCoachSeasonCapabilityMap` — which since M1 (2026-08-16) answers with the coach's
+ * CURRENT capabilities for every year, membership-gated (governing rule 1 retired with the
+ * per-season access model; the widening is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md
+ * §1). The report's own season stays the ACTIVE one — this route takes no `?year=` and never will.
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {

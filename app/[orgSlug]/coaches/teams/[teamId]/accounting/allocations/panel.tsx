@@ -5,6 +5,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
@@ -147,12 +148,7 @@ export function OrgAllocationsPanel({
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
-    return (
-      <div className={styles.notAssigned}>
-        <h2>Team not found</h2>
-        <p>You are not assigned to this team.</p>
-      </div>
-    );
+    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
   }
 
   const allInstallments = splits.flatMap(s => s.installments);

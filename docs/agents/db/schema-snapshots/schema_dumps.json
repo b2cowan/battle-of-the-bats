@@ -13916,6 +13916,96 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 5,
+        "column_name": "coach_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 6,
+        "column_name": "capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 7,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'active'::text"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 9,
+        "column_name": "revoked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 10,
+        "column_name": "revoked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_tags",
         "pos": 1,
         "column_name": "id",
@@ -18691,20 +18781,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -18713,20 +18796,27 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -18761,14 +18851,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -18803,14 +18893,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -19883,6 +19973,34 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_plan_templates_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_staff_memberships_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "revoked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_staff_memberships_revoked_by_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_staff_memberships_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_staff_memberships_user_id_fkey"
       },
       {
         "table_name": "rep_team_tags",
@@ -22698,6 +22816,26 @@
         "indexdef": "CREATE INDEX rep_team_plan_templates_team_idx ON public.rep_team_plan_templates USING btree (team_id, is_active)"
       },
       {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_org_user_idx",
+        "indexdef": "CREATE INDEX rep_team_staff_memberships_org_user_idx ON public.rep_team_staff_memberships USING btree (org_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_staff_memberships_pkey ON public.rep_team_staff_memberships USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_team_idx",
+        "indexdef": "CREATE INDEX rep_team_staff_memberships_team_idx ON public.rep_team_staff_memberships USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_team_user_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_staff_memberships_team_user_key ON public.rep_team_staff_memberships USING btree (team_id, user_id)"
+      },
+      {
         "tablename": "rep_team_tags",
         "indexname": "rep_team_tags_name_uniq",
         "indexdef": "CREATE UNIQUE INDEX rep_team_tags_name_uniq ON public.rep_team_tags USING btree (team_id, kind, lower(btrim(name)))"
@@ -25136,6 +25274,24 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_plan_templates",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_coach_role_check",
+        "check_clause": "(coach_role = ANY (ARRAY['head_coach'::text, 'assistant_coach'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_status_check",
+        "check_clause": "(status = ANY (ARRAY['active'::text, 'revoked'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_staff_memberships",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -282,6 +282,12 @@ async function seedCancelLab() {
 
   // capabilities: null = head coach, holds everything — so "open a roster, open attendance,
   // open lineups" in the setup step all genuinely work before the cancel.
+  // ⚠ M1 (mig 245): the membership is the access truth; the row is the record/projection. Both.
+  die('coach membership', (await db.from('rep_team_staff_memberships').upsert({
+    org_id: org.id, team_id: team.id, user_id: coach.id,
+    coach_role: 'head_coach', capabilities: null,
+    status: 'active', revoked_at: null, revoked_by: null,
+  }, { onConflict: 'team_id,user_id' })).error);
   const { data: coachRow } = await db.from('rep_team_coaches')
     .select('id').eq('program_year_id', py.id).eq('user_id', coach.id).maybeSingle();
   if (!coachRow) {
@@ -935,6 +941,13 @@ async function seedMoneyLab() {
 
   async function assignStaff(team, py) {
     for (const u of users) {
+      // ⚠ M1 (mig 245): membership first (the access truth), then the season row (the record +
+      // what the legacy write routes read). A row without a membership is a locked-out fixture.
+      die('staff membership', (await db.from('rep_team_staff_memberships').upsert({
+        org_id: org.id, team_id: team.id, user_id: u.user.id,
+        coach_role: u.role, capabilities: u.caps,
+        status: 'active', revoked_at: null, revoked_by: null,
+      }, { onConflict: 'team_id,user_id' })).error);
       const has = (await db.from('rep_team_coaches').select('id')
         .eq('program_year_id', py.id).eq('user_id', u.user.id).maybeSingle()).data;
       const row = {

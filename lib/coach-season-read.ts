@@ -4,43 +4,39 @@ import { getAuthContext, unauthorized, forbidden } from './api-auth';
 import {
   getRepTeam,
   getRepProgramYear,
+  getRepProgramYears,
   getActiveRepProgramYear,
   getLatestClosedRepProgramYear,
-  getCoachingAssignmentsForUser,
-  getClosedCoachingAssignmentsForUser,
-  getCoachAssignmentCapabilitiesForTeam,
 } from './db';
-import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { getEntitledTeamMembership, resolveMembershipCapabilities } from './coach-membership';
 import type { CoachCapabilities } from './coach-capabilities';
 import type { RepProgramYear } from './types';
 
 /**
- * READ-ONLY coach context for a SPECIFIC season — the single read rail for the frozen past
- * season (Chunk F), and the rail Batch 3's closed-season surfaces already ran on.
+ * READ-ONLY coach context for a SPECIFIC season — the single `?year=` read rail.
  *
- * The standard per-route `resolveCoachContext` (hand-declared in ~53 route files) requires an
- * ACTIVE (draft/active) assignment and then resolves `getActiveRepProgramYear` — correct for the
- * write-capable routes, which must never see a closed year. This resolver is the GET-only
- * counterpart: it admits an assignment on ANY of the team's program years and resolves the one
- * the caller asked for.
+ * ── ACCESS MODEL REPLACED 2026-08-16 (Design A on M1, "the team is the account") ──
+ * The gate is an ACTIVE TEAM MEMBERSHIP (`lib/coach-membership.ts`), and the capabilities handed
+ * back are the member's CURRENT ones — in every season. Chunk F's governing rule 1 ("same access
+ * as when it was live, resolved from the viewed season's own assignment row") is retired: it
+ * existed because access itself was historical, and once only current staff hold access, their
+ * current grant is the honest one. Revocation therefore bites here the moment a membership is
+ * revoked — for every season at once, not per-row.
  *
  * ⚠ NEVER use this in a route that writes. It is the ONLY thing standing between a `?year=`
- * parameter and a past season's data, and Chunk F's write safety is enforced by a source-level
- * test (tests/unit/coach-season-write-guard.test.ts) that fails the build if a write handler imports it.
- * The Staff route is the one declared exception — see governing rule 3.
+ * parameter and a past season's data, and write safety is enforced by a source-level test
+ * (tests/unit/coach-season-write-guard.test.ts) that fails the build if a write handler imports it.
  *
- * ── Governing rule 1: "same access as when it was live, for everyone who had it" ──
- * Capabilities come from the assignment row recorded against the RESOLVED season, not from the
- * coach's newest assignment. Before Chunk F this resolver took no year at all and fell back to
- * the newest closed assignment, which silently handed a coach their CURRENT capabilities when
- * they opened an older year — the exact leak governing rule 1 exists to prevent.
+ * ⚠ This rail is scheduled for REMOVAL in Phase 2 of COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md
+ * (the season-toggle archive is deleted; the few surviving history endpoints re-gate on
+ * membership + an explicit year). Until that lands, it stays the one door — do not add callers.
  */
 export interface CoachSeasonReadContext {
   ctx: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>;
   team: NonNullable<Awaited<ReturnType<typeof getRepTeam>>>;
   /** The season being read — always resolved, never assumed to be the active one. */
   programYear: RepProgramYear;
-  /** Effective capabilities FOR THAT SEASON (rule 1). */
+  /** The member's CURRENT capabilities (owner ruling 2026-08-16: current permissions, everywhere). */
   capabilities: CoachCapabilities;
   /** The season is completed/archived ⇒ every surface renders as a record. Derived from the
    *  SEASON, never from the team: a rolled-forward team is never itself "closed". */
@@ -67,13 +63,14 @@ export async function resolveCoachSeasonReadContext(
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
-  // The team and the season depend only on ids already in hand, so they resolve together —
-  // every coach-portal GET now funnels through here, and serialising them would add a round
-  // trip to the critical path of every page load. The tenancy cross-checks happen after both
-  // land, so nothing is decided on a half-resolved context.
-  const [team, requestedYear] = await Promise.all([
+  // The team, the season AND the membership depend only on ids already in hand, so all three
+  // resolve together — every coach-portal GET funnels through here, and serialising any of them
+  // would add a round trip to the critical path of every page load. The tenancy and membership
+  // checks happen after all land, so nothing is decided on a half-resolved context.
+  const [team, requestedYear, membership] = await Promise.all([
     getRepTeam(teamId),
     opts.yearId ? getRepProgramYear(opts.yearId) : getActiveRepProgramYear(teamId),
+    getEntitledTeamMembership(ctx.org, teamId, ctx.user.id),
   ]);
 
   if (!team || team.orgId !== ctx.org.id) {
@@ -97,23 +94,18 @@ export async function resolveCoachSeasonReadContext(
     }
   }
 
-  // ── Capabilities FROM THAT SEASON's assignment row (rule 1) ──
-  const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(ctx.org) };
+  // ── The gate: an ACTIVE membership on the team (entitlement posture included) ──
+  // Revocation bites HERE, immediately, for every season at once — at the API, not in the nav.
+  if (!membership) return { error: forbidden() };
+
   const isClosed = programYear.status === 'completed' || programYear.status === 'archived';
-
-  // Only pay for the lookup that can match the resolved season's status — the everyday
-  // in-season request never touches the closed list.
-  const assignment = isClosed
-    ? (await getClosedCoachingAssignmentsForUser(ctx.org.id, ctx.user.id, lookupOpts))
-        .find(a => a.programYearId === programYear!.id) ?? null
-    : (await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id, lookupOpts))
-        .find(a => a.programYearId === programYear!.id) ?? null;
-
-  // Rule 3: revoking an assistant from a past season's staff removes the assignment row, so
-  // this 403 is what makes revocation bite immediately — at the API, not in the nav.
-  if (!assignment) return { error: forbidden() };
-
-  return { ctx, team, programYear, capabilities: assignment.capabilities, isReadOnly: isClosed };
+  return {
+    ctx,
+    team,
+    programYear,
+    capabilities: resolveMembershipCapabilities(membership),
+    isReadOnly: isClosed,
+  };
 }
 
 /**
@@ -132,24 +124,27 @@ export async function resolveCoachSeasonRead(
 }
 
 /**
- * Rule 1, applied to a surface that spans MANY seasons at once (the Insights archive): a map of
- * program-year id → the capabilities recorded against that year's assignment row.
+ * Multi-season surfaces (tryout memory, the cross-season history list) ask "what may this coach
+ * see of year X?" for many years at once.
  *
- * A single boolean can't be right across an archive — an assistant granted money in 2024 and not
- * in 2025 must see 2024's totals and not 2025's. Years the coach holds no assignment on are
- * absent from the map, so `map.get(id)` returning undefined is itself the "no access" answer.
+ * Under M1 the answer stopped varying by year: it is the member's CURRENT capabilities for every
+ * season the team has, or nothing at all — `map.get(id)` returning undefined still reads as "no
+ * access", which is what a revoked/never member gets for every year. The per-year capability
+ * archaeology this used to perform died with governing rule 1 (owner ruling 2026-08-16; the
+ * stated widening — e.g. an assistant granted tryouts TODAY now reads prior seasons' tryout
+ * pairs — is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §1).
  */
 export async function resolveCoachSeasonCapabilityMap(
   org: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>['org'],
   userId: string,
   teamId: string,
 ): Promise<Map<string, CoachCapabilities>> {
-  // ⚠ ONE lean query, not the open+closed assignment pair this used to run (/simplify 2026-08-03).
-  // The open lookup also fetches money badges and nav signals — several sequential round trips
-  // that a capability question never reads. Callers pay this on ordinary page loads, and two of
-  // them now call it alongside a resolver that already loaded assignments for its own reasons.
-  const rows = await getCoachAssignmentCapabilitiesForTeam(
-    org.id, userId, teamId, { isTeamWorkspace: isTeamWorkspaceOrg(org) },
-  );
-  return new Map(rows.map(r => [r.programYearId, r.capabilities]));
+  // Independent lookups — one round trip, not two.
+  const [membership, years] = await Promise.all([
+    getEntitledTeamMembership(org, teamId, userId),
+    getRepProgramYears(teamId),
+  ]);
+  if (!membership) return new Map();
+  const capabilities = resolveMembershipCapabilities(membership);
+  return new Map(years.map(y => [y.id, capabilities]));
 }

@@ -1,5 +1,13 @@
 # Coach access becomes CURRENT STAFF ONLY — and the archive follows the team, not the tenure
 
+> ⚠⚠ **SUPERSEDED 2026-08-16 (same day) by `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md`.** The owner
+> approved Design A on M1 (mockup artifact `aa758bcb` §10): the rulings recorded here (remove =
+> revoke keeping the record; current capabilities everywhere) are absorbed there, but **this plan's
+> access definition — "current staff = rows on the most recent program year" — is REPLACED by a
+> team-level membership record.** Reason: the rows definition locks out an entire staff the moment a
+> club admin creates next year's blank season, and it leaves the yearly capability reset in place.
+> Do not build from this file.
+
 **Status:** PLANNED 2026-08-16, owner-ruled, not yet built.
 **Owner ruling:** 2026-08-16, in response to the archive rail's scrapbook question.
 **Supersedes:** the head-coach-only scrapbook restriction shipped in `12cf1b19` (now redundant —

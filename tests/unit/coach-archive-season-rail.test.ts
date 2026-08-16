@@ -370,13 +370,24 @@ describe('the team scrapbook is head-coach only', () => {
     );
   });
 
+  /**
+   * ⚠ THE PREDICATE'S MEANING CHANGED ON 2026-08-16 (M1) AND THIS ASSERTION CHANGED WITH IT.
+   * It used to pin "ever head coach of this team, across seasons" — scanning every season's own
+   * capability row. M1 made the server answer from the member's CURRENT capabilities (uniform
+   * across years), so a client still scanning history disagreed with its own server: a demoted
+   * former head coach was shown the doors and then served an empty list — the "None yet" lie the
+   * assertions above exist to prevent. The pinned shape is now CURRENT-first (live assignment,
+   * else the newest row as the between-seasons mirror), matching the server's uniform map. The
+   * restriction itself is slated for revert in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md P2 —
+   * when that lands, rewrite this block to assert the gate is GONE on both sides, don't delete it.
+   */
   it('asks the same question the server asks', () => {
     assert.match(
       readFileSync(join(process.cwd(), 'lib', 'coach-season-view.ts'), 'utf8'),
-      /everHeadCoach: season\.options\.some\(o => o\.capabilities\?\.isHeadCoach === true\)/,
-      'the client predicate must mirror the server exactly (ever head coach of THIS team, across '
-      + 'seasons). A per-season test would show the scrapbook on one year and hide it on the next '
-      + 'for the same person; a looser client test would draw a section the server will not fill.',
+      /everHeadCoach: \(live\?\.capabilities \?\? season\.current\?\.capabilities \?\? closed\?\.capabilities\)\?\.isHeadCoach === true/,
+      'the client predicate must mirror the server exactly — the member\'s CURRENT role (M1), '
+      + 'never a scan of historical rows. A history-scanning client draws doors the server will '
+      + 'not fill (the "None yet" lie); a looser one hides doors the server would serve.',
     );
   });
 });

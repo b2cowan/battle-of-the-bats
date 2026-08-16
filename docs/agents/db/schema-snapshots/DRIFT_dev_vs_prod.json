@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-16",
-  "total": 67,
+  "total": 90,
   "counts": {
-    "tables": 2,
-    "columns": 31,
-    "indexes": 11,
-    "constraints": 16,
-    "rls": 7
+    "tables": 3,
+    "columns": 41,
+    "indexes": 15,
+    "constraints": 22,
+    "rls": 9
   },
   "items": [
     {
@@ -35,6 +35,14 @@
     },
     {
       "key": "check:only-dev:rep_team_money_in.rep_team_money_in_received_from_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_coach_role_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_status_check",
       "sig": ""
     },
     {
@@ -162,6 +170,46 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_staff_memberships.capabilities",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.coach_role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.revoked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.revoked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.user_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:budget_items.budget_items_team_id_fkey",
       "sig": ""
     },
@@ -226,6 +274,30 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_revoked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_team_user_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:budget_items_team_idx",
       "sig": ""
     },
@@ -266,6 +338,22 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_staff_memberships_org_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_staff_memberships_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_staff_memberships_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_staff_memberships_team_user_key",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:budget_items_unique_org_name",
       "sig": ""
     },
@@ -275,6 +363,10 @@
     },
     {
       "key": "table:only-dev:rep_team_money_in",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_staff_memberships",
       "sig": ""
     }
   ]

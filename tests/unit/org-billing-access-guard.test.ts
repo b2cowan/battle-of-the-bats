@@ -234,7 +234,7 @@ describe('billing rail — a cancelled subscription stops working', () => {
     // billing. They are covered now because `getAuthContext` gates by default — so the thing worth
     // protecting is that they keep resolving the user THROUGH it rather than some private path.
     //
-    // Six rails are accepted. Five are shared resolvers/factories that each reach getAuthContext
+    // Seven rails are accepted. Six are shared resolvers/factories that each reach getAuthContext
     // with `requireOrgSlug: true` — verified individually, file:line, so this list is evidence
     // rather than assumption. A route riding any of them is on the rail transitively.
     const RAILS = [
@@ -244,6 +244,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'resolveCoachTeamAssignment',  // lib/coach-route-context.ts:49    → getAuthContext
       'resolveFamilyCoachContext',   // lib/family-coach-route.ts:42     → getAuthContext
       'coach-tag-routes',            // the tag route FACTORY; rides the two resolvers above
+      // M1 (2026-08-16): the staff routes' shared head-coach gate.
+      'requireHeadCoachMembership',  // lib/coach-membership.ts          → getAuthContext (requireOrgSlug: true)
     ];
 
     // ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE: only `[orgSlug]` routes. The FREE

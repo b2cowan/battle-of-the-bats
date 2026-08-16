@@ -1,5 +1,11 @@
 # New-chat prompt — coach access & the archive: review the design, then propose a better one
 
+> ✅ **RESOLVED 2026-08-16 — do not re-execute.** The review ran, three designs + two membership
+> models were mocked (artifact `aa758bcb`), and the owner approved **Design A on M1** with v1
+> shelves = practice plans + money book and a per-screen mockup gate for every history shelf.
+> Canonical plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` (+ PM brief). This file stays as the
+> record of the questions asked.
+
 Paste everything below the line into a fresh chat.
 
 > ⚠⚠ **ADDENDUM 2026-08-16 — added AFTER this prompt was first handed over. If you have already

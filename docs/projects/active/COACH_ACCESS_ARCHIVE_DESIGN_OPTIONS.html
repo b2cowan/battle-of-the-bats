@@ -1,0 +1,688 @@
+<title>The Team Is the Account</title>
+<style>
+  /* ── Document chrome: cool ink studio, so the warm product frames read as specimens ── */
+  :root {
+    --d-ground: #EFF1F5;
+    --d-panel: #FFFFFF;
+    --d-panel-2: #E7EAF0;
+    --d-ink: #1A1E27;
+    --d-ink-soft: #3D4453;
+    --d-dim: #5C6374;
+    --d-line: rgba(26, 30, 39, 0.13);
+    --d-line-soft: rgba(26, 30, 39, 0.07);
+    --d-accent: #1F6E63;          /* verdigris — deliberately absent from the product palette */
+    --d-accent-ink: #FFFFFF;
+    --d-accent-soft: rgba(31, 110, 99, 0.09);
+    --d-keep: #2A5222;
+    --d-keep-soft: rgba(42, 82, 34, 0.10);
+    --d-cut: #9A2E17;
+    --d-cut-soft: rgba(154, 46, 23, 0.09);
+    --d-warn: #6B4105;
+    --d-warn-soft: rgba(107, 65, 5, 0.10);
+    --d-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+    --d-sans: system-ui, "Segoe UI", -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --d-ground: #14171D;
+      --d-panel: #1C2029;
+      --d-panel-2: #232834;
+      --d-ink: #ECEEF3;
+      --d-ink-soft: #C5CAD6;
+      --d-dim: #97A0B0;
+      --d-line: rgba(236, 238, 243, 0.14);
+      --d-line-soft: rgba(236, 238, 243, 0.07);
+      --d-accent: #63BFAF;
+      --d-accent-ink: #0F1418;
+      --d-accent-soft: rgba(99, 191, 175, 0.12);
+      --d-keep: #8FCB83;
+      --d-keep-soft: rgba(143, 203, 131, 0.13);
+      --d-cut: #E58A74;
+      --d-cut-soft: rgba(229, 138, 116, 0.13);
+      --d-warn: #D9A85C;
+      --d-warn-soft: rgba(217, 168, 92, 0.13);
+    }
+  }
+  :root[data-theme="dark"] {
+    --d-ground: #14171D;
+    --d-panel: #1C2029;
+    --d-panel-2: #232834;
+    --d-ink: #ECEEF3;
+    --d-ink-soft: #C5CAD6;
+    --d-dim: #97A0B0;
+    --d-line: rgba(236, 238, 243, 0.14);
+    --d-line-soft: rgba(236, 238, 243, 0.07);
+    --d-accent: #63BFAF;
+    --d-accent-ink: #0F1418;
+    --d-accent-soft: rgba(99, 191, 175, 0.12);
+    --d-keep: #8FCB83;
+    --d-keep-soft: rgba(143, 203, 131, 0.13);
+    --d-cut: #E58A74;
+    --d-cut-soft: rgba(229, 138, 116, 0.13);
+    --d-warn: #D9A85C;
+    --d-warn-soft: rgba(217, 168, 92, 0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--d-ground);
+    color: var(--d-ink);
+    font-family: var(--d-sans);
+    font-size: 15.5px;
+    line-height: 1.62;
+    padding: clamp(20px, 4vw, 56px) clamp(14px, 4vw, 40px) 90px;
+  }
+  .sheet { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+  a { color: var(--d-accent); text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--d-accent); outline-offset: 2px; border-radius: 2px; }
+
+  /* ── Masthead ── */
+  .eyebrow { font-family: var(--d-mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--d-dim); }
+  h1 { font-size: clamp(1.9rem, 4.6vw, 2.9rem); line-height: 1.06; letter-spacing: -0.015em; font-weight: 750; text-wrap: balance; margin-top: 10px; }
+  .stand { max-width: 62ch; margin-top: 14px; color: var(--d-ink-soft); font-size: 1.02rem; }
+  .stand strong { color: var(--d-ink); }
+
+  .ruling-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .ruling { font-family: var(--d-mono); font-size: 0.68rem; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--d-line); color: var(--d-ink-soft); background: var(--d-panel); }
+  .ruling b { color: var(--d-ink); font-weight: 650; }
+  .ruling.open { border-color: var(--d-accent); background: var(--d-accent-soft); }
+
+  .toc { margin-top: 26px; border-top: 1px solid var(--d-line); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 26px; }
+  .toc a { font-size: 0.86rem; color: var(--d-ink-soft); display: flex; gap: 10px; padding: 3px 0; }
+  .toc a:hover { color: var(--d-accent); }
+  .toc .n { font-family: var(--d-mono); font-size: 0.72rem; color: var(--d-dim); min-width: 2.4em; padding-top: 2px; }
+
+  /* ── Sections ── */
+  section { scroll-margin-top: 20px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; border-top: 2px solid var(--d-ink); padding-top: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+  .sec-head .n { font-family: var(--d-mono); font-size: 0.8rem; color: var(--d-accent); font-weight: 600; letter-spacing: 0.06em; }
+  h2 { font-size: 1.42rem; letter-spacing: -0.01em; font-weight: 720; text-wrap: balance; }
+  .sec-kick { color: var(--d-dim); font-size: 0.86rem; font-family: var(--d-mono); margin-left: auto; }
+  .lede { max-width: 68ch; color: var(--d-ink-soft); margin: 8px 0 20px; }
+  .lede strong { color: var(--d-ink); }
+  p + p { margin-top: 10px; }
+
+  /* ── Tags (NEW / RESTYLED / UNCHANGED / REMOVED) ── */
+  .tag { font-family: var(--d-mono); font-size: 0.6rem; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 3px; font-weight: 650; white-space: nowrap; }
+  .tag.new { background: var(--d-accent); color: var(--d-accent-ink); }
+  .tag.restyled { background: var(--d-warn-soft); color: var(--d-warn); border: 1px solid currentColor; }
+  .tag.unchanged { color: var(--d-dim); border: 1px solid var(--d-line); background: transparent; }
+  .tag.removed { background: var(--d-cut-soft); color: var(--d-cut); border: 1px solid currentColor; }
+
+  /* ── Frames: the product specimens. Warm palette is COMMITTED (real ratified tokens),
+        identical in both document themes — these are photographs, not chrome. ── */
+  .frame-row { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+  .frame { border: 1px solid var(--d-line); border-radius: 12px; background: var(--d-panel); overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .frame-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid var(--d-line-soft); background: var(--d-panel-2); }
+  .frame-bar .dots { display: flex; gap: 4px; }
+  .frame-bar .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--d-line); display: block; }
+  .frame-bar .crumb { font-family: var(--d-mono); font-size: 0.66rem; color: var(--d-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .frame-cap { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px 12px; border-top: 1px solid var(--d-line-soft); background: var(--d-panel); }
+  .frame-cap p { font-size: 0.82rem; color: var(--d-ink-soft); line-height: 1.5; }
+  .frame-cap .tag { margin-top: 2px; }
+
+  /* Warm product surface — ratified values from the live portal */
+  .warm {
+    --w-paper: #F8F4ED; --w-card: #FFFFFF; --w-ink: #241E15; --w-ink-soft: #4A4235;
+    --w-dim: #6A635C; --w-line: rgba(70,55,30,0.12); --w-line-strong: rgba(70,55,30,0.20);
+    --w-fill: rgba(70,55,30,0.08); --w-olive: #57651E; --w-olive-soft: rgba(87,101,30,0.10);
+    --w-live: #B03A22; --w-amber: #835006; --w-blue: #134FD3; --w-win: #34662A;
+    --w-plum: #7B4B6E; --w-rust: #B45309; --w-lime: #D9F99D; --w-gold: #856611;
+    background: var(--w-paper); color: var(--w-ink); font-size: 13.5px; line-height: 1.5;
+    padding: 16px; overflow-x: auto;
+  }
+  .warm * { box-sizing: border-box; }
+  .warm .pg-title { font-size: 1.16rem; font-weight: 700; letter-spacing: -0.01em; }
+  .warm .pg-sub { color: var(--w-dim); font-size: 0.78rem; margin-top: 2px; }
+  .warm .card { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 14px; padding: 12px 14px; }
+  .warm .card + .card { margin-top: 10px; }
+  .warm .hair { border: 0; border-top: 1px solid var(--w-line); margin: 10px 0; }
+  .warm .chip { display: inline-block; font-size: 0.66rem; font-weight: 650; padding: 2px 8px; border-radius: 999px; background: var(--w-fill); color: var(--w-ink-soft); }
+  .warm .chip.olive { background: var(--w-olive-soft); color: var(--w-olive); }
+  .warm .chip.blue { background: rgba(19,79,211,0.09); color: var(--w-blue); }
+  .warm .chip.win { background: rgba(52,102,42,0.10); color: var(--w-win); }
+  .warm .chip.live { background: rgba(176,58,34,0.10); color: var(--w-live); }
+  .warm .chip.amber { background: rgba(131,80,6,0.10); color: var(--w-amber); }
+  .warm .btn { display: inline-block; font-size: 0.74rem; font-weight: 650; padding: 6px 12px; border-radius: 9px; border: 1px solid var(--w-line-strong); color: var(--w-ink-soft); background: var(--w-card); }
+  .warm .btn.primary { background: var(--w-blue); border-color: var(--w-blue); color: #fff; }
+  .warm .btn.lime { background: var(--w-lime); border-color: var(--w-lime); color: var(--w-ink); }
+  .warm .btn.danger { background: var(--w-live); border-color: var(--w-live); color: #fff; }
+  .warm .btn.ghost { border-color: transparent; background: transparent; color: var(--w-olive); font-weight: 650; }
+  .warm .muted { color: var(--w-dim); }
+  .warm .soft { color: var(--w-ink-soft); }
+  .warm table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+  .warm th { font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--w-dim); text-align: left; font-weight: 650; padding: 6px 8px; border-bottom: 1px solid var(--w-line-strong); }
+  .warm td { padding: 7px 8px; border-bottom: 1px solid var(--w-line); vertical-align: top; }
+  .warm .num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* Sidebar specimen */
+  .warm .side { width: 218px; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 14px; padding: 12px; flex-shrink: 0; }
+  .warm .side .lbl { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w-dim); font-weight: 650; margin: 10px 0 4px; }
+  .warm .side .sel { border: 1px solid var(--w-line-strong); border-radius: 9px; padding: 6px 9px; font-size: 0.78rem; display: flex; justify-content: space-between; gap: 8px; background: var(--w-paper); }
+  .warm .side .sel span:last-child { color: var(--w-dim); }
+  .warm .nav-item { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 8px; font-size: 0.8rem; color: var(--w-ink-soft); }
+  .warm .nav-item.on { background: var(--w-olive-soft); color: var(--w-olive); font-weight: 650; }
+  .warm .side .note { font-size: 0.7rem; color: var(--w-dim); border-top: 1px solid var(--w-line); margin-top: 10px; padding-top: 8px; line-height: 1.45; }
+  .side-pair { display: flex; gap: 14px; align-items: flex-start; }
+
+  /* Staff rows */
+  .warm .person { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--w-line); flex-wrap: wrap; }
+  .warm .person:last-child { border-bottom: 0; }
+  .warm .ava { width: 30px; height: 30px; border-radius: 50%; background: var(--w-fill); display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; color: var(--w-ink-soft); flex-shrink: 0; }
+  .warm .person .who { min-width: 130px; }
+  .warm .person .who b { display: block; font-size: 0.84rem; }
+  .warm .person .who span { font-size: 0.7rem; color: var(--w-dim); }
+  .warm .person .grants { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+  .warm .modal { background: var(--w-card); border: 1px solid var(--w-line-strong); border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(36,30,21,0.18); max-width: 400px; }
+  .warm .modal h4 { font-size: 0.92rem; margin-bottom: 6px; }
+  .warm .modal p { font-size: 0.79rem; color: var(--w-ink-soft); }
+  .warm .modal .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+  /* Scenario tables (document, not product) */
+  .ops { border: 1px solid var(--d-line); border-radius: 10px; overflow: hidden; }
+  .ops table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+  .ops th { background: var(--d-panel-2); text-align: left; padding: 8px 12px; font-family: var(--d-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-dim); }
+  .ops td { padding: 9px 12px; border-top: 1px solid var(--d-line-soft); background: var(--d-panel); vertical-align: top; }
+  .ops td:first-child { font-weight: 600; width: 26%; }
+  .ok { color: var(--d-keep); font-weight: 600; }
+  .bad { color: var(--d-cut); font-weight: 600; }
+  .meh { color: var(--d-warn); font-weight: 600; }
+
+  /* For/Against + verdicts */
+  .fa { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+  .fa .col { border: 1px solid var(--d-line); border-radius: 10px; padding: 14px 16px; background: var(--d-panel); }
+  .fa h3 { font-family: var(--d-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .fa .for h3 { color: var(--d-keep); } .fa .against h3 { color: var(--d-cut); }
+  .fa ul { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 0.87rem; color: var(--d-ink-soft); }
+  .fa li strong { color: var(--d-ink); }
+
+  .price { border-left: 3px solid var(--d-accent); background: var(--d-accent-soft); border-radius: 0 10px 10px 0; padding: 12px 16px; margin-top: 18px; font-size: 0.88rem; color: var(--d-ink-soft); }
+  .price b { color: var(--d-ink); }
+  .price .pt { font-family: var(--d-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--d-accent); display: block; margin-bottom: 4px; }
+
+  /* Membership diagrams */
+  .dia { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; margin: 18px 0 6px; }
+  .dia .box { border: 1.5px solid var(--d-ink-soft); border-radius: 12px; padding: 12px 14px; background: var(--d-panel); min-width: 215px; flex: 1; }
+  .dia .box h4 { font-size: 0.8rem; font-family: var(--d-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--d-dim); margin-bottom: 8px; font-weight: 650; }
+  .dia .box .line { font-size: 0.85rem; padding: 3px 0; }
+  .dia .box .line b { font-weight: 650; }
+  .dia .box.accent { border-color: var(--d-accent); background: var(--d-accent-soft); }
+  .dia .box.hazard { border-color: var(--d-cut); border-style: dashed; }
+  .dia .arrow { align-self: center; font-family: var(--d-mono); color: var(--d-dim); font-size: 0.8rem; padding: 0 2px; }
+  .chapters { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chapter { border: 1px solid var(--d-line); border-radius: 8px; padding: 6px 10px; font-family: var(--d-mono); font-size: 0.7rem; color: var(--d-ink-soft); background: var(--d-panel); }
+  .chapter.now { border-color: var(--d-accent); color: var(--d-accent); font-weight: 650; }
+  .chapter.void { border-style: dashed; color: var(--d-cut); border-color: var(--d-cut); }
+
+  /* Matrix */
+  .matrix { overflow-x: auto; border: 1px solid var(--d-line); border-radius: 10px; }
+  .matrix table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 0.85rem; }
+  .matrix th { background: var(--d-panel-2); padding: 9px 12px; text-align: left; font-family: var(--d-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-dim); }
+  .matrix td { padding: 8px 12px; border-top: 1px solid var(--d-line-soft); background: var(--d-panel); }
+  .matrix td:first-child { font-weight: 600; }
+
+  .verdict { border: 1.5px solid var(--d-accent); border-radius: 14px; padding: 20px 24px; background: var(--d-panel); margin-top: 22px; }
+  .verdict .pt { font-family: var(--d-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--d-accent); font-weight: 650; }
+  .verdict h3 { font-size: 1.2rem; margin: 6px 0 10px; letter-spacing: -0.01em; }
+  .verdict ul { padding-left: 18px; display: flex; flex-direction: column; gap: 7px; font-size: 0.9rem; color: var(--d-ink-soft); }
+  .verdict li strong { color: var(--d-ink); }
+
+  .foot { border-top: 1px solid var(--d-line); padding-top: 14px; color: var(--d-dim); font-size: 0.76rem; font-family: var(--d-mono); display: flex; flex-wrap: wrap; gap: 6px 24px; }
+
+  @media (max-width: 720px) {
+    .side-pair { flex-direction: column; }
+    .warm .side { width: 100%; }
+    .sec-kick { margin-left: 0; width: 100%; }
+  }
+</style>
+
+<div class="sheet">
+
+  <!-- ═══════════ MASTHEAD ═══════════ -->
+  <header>
+    <p class="eyebrow">FieldLogicHQ · Coaches portal · Decision sheet · Round 1 · 2026-08-16</p>
+    <h1>The team is the account</h1>
+    <p class="stand">Three shapes for how a coach reaches a finished season, and two homes for staff membership —
+      mocked, priced, and recommended. <strong>Nothing here is built.</strong> Every screen below uses the portal's
+      ratified Warm palette and real, verified behaviour; frames are simplified, not invented.</p>
+    <div class="ruling-row">
+      <span class="ruling open"><b>OPEN</b> · portal shape — §01–§07 (A / B / C)</span>
+      <span class="ruling open"><b>OPEN</b> · membership home — §08–§09 (M1 / M2)</span>
+      <span class="ruling"><b>DECIDED</b> · v1 reference pieces = Practice plans + Money book</span>
+      <span class="ruling"><b>DECIDED</b> · remove = revoke; the record keeps every name</span>
+      <span class="ruling"><b>DECIDED</b> · permissions are a coach's current ones, everywhere</span>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#s01"><span class="n">§01</span> Design A — the season dial comes out</a>
+      <a href="#s02"><span class="n">§02</span> A · Staff becomes one list</a>
+      <a href="#s03"><span class="n">§03</span> A · Season's End is the look-back</a>
+      <a href="#s04"><span class="n">§04</span> A · Practice plans shelf (v1)</a>
+      <a href="#s05"><span class="n">§05</span> A · Money's past-season book (v1)</a>
+      <a href="#s06"><span class="n">§06</span> Design B — one Season File per year</a>
+      <a href="#s07"><span class="n">§07</span> Design C — keep the place</a>
+      <a href="#s08"><span class="n">§08</span> M1 · Membership on the team</a>
+      <a href="#s09"><span class="n">§09</span> M2 · Membership from season rows</a>
+      <a href="#s10"><span class="n">§10</span> The matrix, the prices, the call</a>
+    </nav>
+  </header>
+
+  <!-- ═══════════ §01 ═══════════ -->
+  <section id="s01">
+    <div class="sec-head"><span class="n">§01</span><h2>Design A — the season dial comes out of the portal</h2><span class="sec-kick">what changes on every page</span></div>
+    <p class="lede">Today the sidebar carries a season selector; picking a finished year swaps the whole portal into
+      an archive with its own ten-door menu. In Design A that dial and menu are <strong>gone</strong>. You are always
+      on your team, in its current chapter — history arrives inside the tools that use it (§03–§05).</p>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge — sidebar, before → after</span></div>
+      <div class="warm">
+        <div class="side-pair">
+          <div class="side">
+            <div class="lbl">Team</div>
+            <div class="sel"><span>16U Ridge</span><span>▾</span></div>
+            <div class="lbl">Viewing archive</div>
+            <div class="sel" style="border-color:var(--w-amber);"><span>2025 · Complete</span><span>▾</span></div>
+            <div class="lbl">This finished season offers</div>
+            <div class="nav-item on">Season's End</div>
+            <div class="nav-item">Roster</div>
+            <div class="nav-item">Schedule</div>
+            <div class="nav-item">Lineups</div>
+            <div class="nav-item">Money</div>
+            <div class="nav-item">Documents</div>
+            <div class="nav-item">Development</div>
+            <div class="nav-item">Tryouts</div>
+            <div class="nav-item">Insights</div>
+            <div class="nav-item">Staff</div>
+            <div class="note">TODAY — ten archive doors, thirty-one data routes, a second copy of the whole portal in read-only.</div>
+          </div>
+          <div class="side">
+            <div class="lbl">Team</div>
+            <div class="sel"><span>16U Ridge</span><span>▾</span></div>
+            <div class="lbl">This season</div>
+            <div class="nav-item on">Overview</div>
+            <div class="nav-item">Schedule</div>
+            <div class="nav-item">Roster</div>
+            <div class="nav-item">Practice plans</div>
+            <div class="nav-item">Development</div>
+            <div class="nav-item">Money</div>
+            <div class="nav-item">Tryouts</div>
+            <div class="nav-item">Insights</div>
+            <div class="nav-item">Staff</div>
+            <div class="nav-item">Settings</div>
+            <div class="note">DESIGN A — no season control anywhere. Finished years live in <b>Insights → Past seasons</b> and <b>Season's End</b> (§03).</div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-cap"><span class="tag removed">Removed</span><p>The season selector (desktop sidebar, phone
+        “More” sheet, and the page-title chip), the archive menu, and the frozen-season copy of every screen. The
+        left sidebar stops existing as a state a coach can be in.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §02 ═══════════ -->
+  <section id="s02">
+    <div class="sec-head"><span class="n">§02</span><h2>A · Staff becomes one list, and Remove means removed</h2><span class="sec-kick">the access half, on screen</span></div>
+    <p class="lede">Staff stops being “staff of the season you're looking at.” It is <strong>the team's staff</strong>,
+      one screen, no year attached. Removal takes everything away at once — and says so. Past seasons keep every
+      name as a record; re-adding someone restores access because nothing was destroyed.</p>
+
+    <div class="frame-row">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge / staff</span></div>
+        <div class="warm">
+          <div class="pg-title">Staff</div>
+          <div class="pg-sub">Who runs 16U Ridge, and what each person can open.</div>
+          <div class="card" style="margin-top:10px;">
+            <div class="person">
+              <span class="ava">JB</span>
+              <span class="who"><b>Jordan Blake</b><span>Head coach · you</span></span>
+              <span class="grants"><span class="chip olive">Everything</span></span>
+            </div>
+            <div class="person">
+              <span class="ava">RO</span>
+              <span class="who"><b>Riley Okafor</b><span>Assistant</span></span>
+              <span class="grants"><span class="chip plum" style="background:rgba(123,75,110,0.10);color:var(--w-plum);">Money · write</span><span class="chip">Tryouts</span><span class="chip">Lineups</span></span>
+              <span class="btn ghost">Edit</span><span class="btn ghost" style="color:var(--w-live);">Remove</span>
+            </div>
+            <div class="person">
+              <span class="ava">ST</span>
+              <span class="who"><b>Sam Tran</b><span>Assistant</span></span>
+              <span class="grants"><span class="chip">Helper — schedule &amp; attendance</span></span>
+              <span class="btn ghost">Edit</span><span class="btn ghost" style="color:var(--w-live);">Remove</span>
+            </div>
+          </div>
+          <p class="muted" style="font-size:0.72rem;margin-top:8px;">Every season's staff record keeps the names of
+            the people who actually coached it — see any year's Season's End.</p>
+        </div>
+        <div class="frame-cap"><span class="tag new">New</span><p>No season context, no “viewing 2025's staff.”
+          Permission chips are the person's <em>current</em> grants and apply to everything they can open, including
+          the past-season pieces in §03–§05.</p></div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">remove — confirmation</span></div>
+        <div class="warm" style="display:flex;justify-content:center;padding:26px 16px;">
+          <div class="modal">
+            <h4>Remove Riley Okafor?</h4>
+            <p>Riley loses access to <b>16U Ridge</b> immediately — every screen, every season. Their name stays on
+              the 2024 and 2025 staff records, because they really did coach those seasons.</p>
+            <p style="margin-top:6px;">Re-adding Riley later brings their access back.</p>
+            <div class="acts"><span class="btn">Cancel</span><span class="btn danger">Remove from team</span></div>
+          </div>
+        </div>
+        <div class="frame-cap"><span class="tag new">New</span><p>Compare today's dialog, which honestly admits the
+          defect: removing someone in an archived season “<em>doesn't affect any other season</em>.” In A there is
+          exactly one Remove, and it means what a head coach thinks it means.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §03 ═══════════ -->
+  <section id="s03">
+    <div class="sec-head"><span class="n">§03</span><h2>A · Season's End carries the whole look-back</h2><span class="sec-kick">already shipped — it just becomes the only door</span></div>
+    <p class="lede">“What happened in 2024?” already has an answer in the product: <strong>Season's End</strong>, the
+      shareable <strong>Season Wrapped</strong> recap, and the <strong>every-season compare list</strong>. Design A
+      doesn't build a look-back — it promotes the one you have. The two-day-old head-coach-only restriction reverts
+      (already ruled): every current staff member sees this.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge / season's end · 2025</span></div>
+      <div class="warm">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+          <div><div class="pg-title">Season's End — 2025</div><div class="pg-sub">The season is closed. Its story is kept.</div></div>
+          <span class="chip amber">Closed season</span>
+        </div>
+        <div class="card" style="margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
+          <div><div style="font-size:1.5rem;font-weight:750;font-variant-numeric:tabular-nums;">18–6–2</div><div class="muted" style="font-size:0.7rem;">FINAL RECORD</div></div>
+          <div><div style="font-size:1.5rem;font-weight:750;font-variant-numeric:tabular-nums;">24</div><div class="muted" style="font-size:0.7rem;">PLAYERS</div></div>
+          <div><div style="font-size:1.5rem;font-weight:750;font-variant-numeric:tabular-nums;">9/12</div><div class="muted" style="font-size:0.7rem;">FAMILIES READ THEIR RECAP</div></div>
+          <span class="btn lime" style="margin-left:auto;">Open Season Wrapped</span>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;"><b style="font-size:0.86rem;">Compare every season</b><span class="muted" style="font-size:0.7rem;">all current staff</span></div>
+          <table style="margin-top:6px;">
+            <tr><th>Season</th><th>Record</th><th class="num">Players</th><th class="num">Money, net</th><th></th></tr>
+            <tr><td>2026 <span class="chip win">Current</span></td><td>4–1–0 so far</td><td class="num">23</td><td class="num muted">in progress</td><td></td></tr>
+            <tr><td>2025</td><td>18–6–2</td><td class="num">24</td><td class="num">+$1,240</td><td><span class="btn ghost">Wrapped →</span></td></tr>
+            <tr><td>2024</td><td>15–9–1</td><td class="num">22</td><td class="num">−$310</td><td><span class="btn ghost">Wrapped →</span></td></tr>
+          </table>
+          <p class="muted" style="font-size:0.7rem;margin-top:6px;">Money column appears only for staff with money access.</p>
+        </div>
+      </div>
+      <div class="frame-cap"><span class="tag restyled">Restyled</span><p>Surface is shipped and stays; what changes is
+        its role — it becomes the <em>only</em> whole-season artifact — and its audience (restriction reverted per the
+        standing ruling). A team whose season just ended lands here automatically, with settle-up and “start next
+        season” intact.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §04 ═══════════ -->
+  <section id="s04">
+    <div class="sec-head"><span class="n">§04</span><h2>A · Practice plans get a “Past seasons” shelf</h2><span class="sec-kick">v1 · chosen</span></div>
+    <p class="lede">The moment is real and named: <strong>planning this week's practice, starting from what worked last
+      October.</strong> Today the only way to <em>view</em> an old plan is the archive; drills and templates already
+      copy forward. The shelf re-homes that read inside the tool, read-only, with copy-forward one tap away.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge / practice plans</span></div>
+      <div class="warm">
+        <div class="pg-title">Practice plans</div>
+        <div class="pg-sub">This season's plans, then the shelf.</div>
+        <div class="card" style="margin-top:10px;">
+          <div class="person" style="border-bottom:1px solid var(--w-line);"><b style="font-size:0.84rem;flex:1;">Tue Aug 18 · Full squad — stations + small-area games</b><span class="chip blue">Planned</span></div>
+          <div class="person"><b style="font-size:0.84rem;flex:1;">Thu Aug 20 · Goal-line sets, special teams</b><span class="chip">Draft</span></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;">
+            <b style="font-size:0.86rem;">Past seasons</b><span class="chip amber">Read-only</span>
+          </div>
+          <table style="margin-top:6px;">
+            <tr><th>Season</th><th>Plans kept</th><th></th></tr>
+            <tr><td>2025</td><td>14 practice plans</td><td><span class="btn ghost">Browse →</span></td></tr>
+            <tr><td>2024</td><td>11 practice plans</td><td><span class="btn ghost">Browse →</span></td></tr>
+          </table>
+          <hr class="hair">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div><b style="font-size:0.82rem;">Tue Oct 14, 2025 · Receiving under pressure</b><div class="muted" style="font-size:0.72rem;">4 blocks · 75 min · ran as planned</div></div>
+            <span class="btn lime">Copy to this season</span>
+          </div>
+        </div>
+      </div>
+      <div class="frame-cap"><span class="tag new">New</span><p>One shelf inside the live tool. No year dial — the shelf
+        lists closed seasons explicitly. Same permission as the tool itself; nothing here can be edited, only read and
+        copied forward. The old archive door this replaces was reachable only through a report.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §05 ═══════════ -->
+  <section id="s05">
+    <div class="sec-head"><span class="n">§05</span><h2>A · Money gets last year's book, read-only</h2><span class="sec-kick">v1 · chosen</span></div>
+    <p class="lede">The treasurer's moment — <strong>building this season's budget against what last season actually
+      cost</strong>, or answering “what did we raise last year?” — gets a closed book inside Money. Stated widening,
+      out loud: whoever holds money access <em>today</em> can read the closed books, including years before they held
+      the role. That follows the “current permissions, everywhere” ruling.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge / money / past seasons · 2025</span></div>
+      <div class="warm">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+          <div><div class="pg-title">Money · Past seasons</div><div class="pg-sub">The 2025 book, exactly as it closed.</div></div>
+          <div><span class="chip olive">2025</span> <span class="chip">2024</span></div>
+        </div>
+        <div class="card" style="margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;">
+          <div><div style="font-weight:750;font-variant-numeric:tabular-nums;color:var(--w-plum);">$18,450</div><div class="muted" style="font-size:0.68rem;">COLLECTED</div></div>
+          <div><div style="font-weight:750;font-variant-numeric:tabular-nums;color:var(--w-rust);">$17,210</div><div class="muted" style="font-size:0.68rem;">SPENT</div></div>
+          <div><div style="font-weight:750;font-variant-numeric:tabular-nums;color:var(--w-win);">$1,240</div><div class="muted" style="font-size:0.68rem;">RETURNED TO FAMILIES</div></div>
+          <span class="chip amber" style="margin-left:auto;align-self:center;">Closed book — nothing can be added</span>
+        </div>
+        <div class="card">
+          <b style="font-size:0.86rem;">Budget vs. actual — 2025</b>
+          <table style="margin-top:6px;">
+            <tr><th>Category</th><th class="num">Planned</th><th class="num">Actual</th><th class="num">Difference</th></tr>
+            <tr><td>Facility time</td><td class="num">$7,200</td><td class="num">$7,690</td><td class="num" style="color:var(--w-live);">+$490 over</td></tr>
+            <tr><td>Tournament entries</td><td class="num">$4,800</td><td class="num">$4,800</td><td class="num muted">on plan</td></tr>
+            <tr><td>Equipment</td><td class="num">$2,100</td><td class="num">$1,880</td><td class="num" style="color:var(--w-win);">−$220 under</td></tr>
+            <tr><td>Travel</td><td class="num">$3,000</td><td class="num">$2,840</td><td class="num" style="color:var(--w-win);">−$160 under</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="frame-cap"><span class="tag new">New</span><p>Read-only by construction — the book of a closed season,
+        not a money screen in the past. Visible only to staff with money access today. Overruns never speak through
+        colour alone (the ‘over/under’ words carry it), per the standing contrast ruling.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §06 ═══════════ -->
+  <section id="s06">
+    <div class="sec-head"><span class="n">§06</span><h2>Design B — one Season File per finished year</h2><span class="sec-kick">the consolidated alternative</span></div>
+    <p class="lede">Same access layer as A, same deletion of the dial — but instead of per-tool shelves, each closed
+      season gets <strong>one read-only page</strong> holding everything anyone might look up: results, the roster's
+      names, awards with reprint, attendance, and a money summary for money-permitted staff.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span><span class="crumb">coaches / 16U Ridge / seasons / 2025 — season file</span></div>
+      <div class="warm">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+          <div><div class="pg-title">2025 · Season file</div><div class="pg-sub">One page. Everything the year left behind.</div></div>
+          <span class="chip amber">Read-only record</span>
+        </div>
+        <div class="card" style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span class="chip win">18–6–2</span><span class="chip">24 players</span><span class="chip">86% attendance</span><span class="chip">6 awards</span><span class="chip plum" style="background:rgba(123,75,110,0.10);color:var(--w-plum);">Money: +$1,240 net</span>
+        </div>
+        <div class="card">
+          <b style="font-size:0.86rem;">Roster of record</b>
+          <p class="soft" style="font-size:0.78rem;margin-top:4px;">Avery M. #4 · Quinn R. #7 · Dana K. #9 · Jules P. #11 · Sasha T. #13 · <span class="muted">…19 more</span></p>
+          <p class="muted" style="font-size:0.7rem;margin-top:4px;">Names and numbers only — no family contact details are kept on a finished season's page.</p>
+        </div>
+        <div class="card">
+          <b style="font-size:0.86rem;">Awards given in 2025</b>
+          <table style="margin-top:6px;">
+            <tr><td>Player of the Season — Quinn R.</td><td style="text-align:right;"><span class="btn ghost">Reprint certificate</span></td></tr>
+            <tr><td>Most Improved — Dana K.</td><td style="text-align:right;"><span class="btn ghost">Reprint certificate</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="frame-cap"><span class="tag new">New</span><p>Reached from the compare list in §03 (“Open file”).
+        Certificate reprint — the one real moment Design A leaves homeless — survives here. Nothing on this page can
+        be edited from it.</p></div>
+    </div>
+
+    <div class="fa">
+      <div class="col for"><h3>For B</h3><ul>
+        <li><strong>One build answers “what happened in 20XX?” forever</strong> — no future drip of shelf decisions and releases.</li>
+        <li><strong>Reprint survives</strong>, and so does “who was on that team,” without re-opening a whole portal.</li>
+        <li>Dead-simple mental model: every season is one page.</li>
+      </ul></div>
+      <div class="col against"><h3>Against B</h3><ul>
+        <li><strong>It builds a browsing surface no moment has asked for</strong> — the instinct the owner ruled against.</li>
+        <li><strong>It re-creates the drift force.</strong> The last “deliberate, opt-in” container grew to ten doors in a month; every future feature will ask “shouldn't the Season File show this too?”</li>
+        <li>History gets two homes — the File and Season's End/Wrapped overlap and will disagree eventually.</li>
+        <li>Working-moment pieces still end up in the tools anyway (copying a plan belongs in Practice plans), so B tends toward “A plus one more page.”</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §07 ═══════════ -->
+  <section id="s07">
+    <div class="sec-head"><span class="n">§07</span><h2>Design C — keep the place, fix access only</h2><span class="sec-kick">the honest baseline</span></div>
+    <p class="lede">Membership still moves (the revocation defect is real under any design), but the season dial, the
+      ten-door archive, and the frozen-season copy of the portal all stay. Cheapest today. The mock is simply the
+      left half of §01 — that <em>is</em> the design.</p>
+    <div class="fa">
+      <div class="col for"><h3>For C</h3><ul>
+        <li><strong>Smallest immediate build</strong> — access fix plus nothing.</li>
+        <li>Whole-season browsing and certificate reprint keep working exactly as today.</li>
+        <li>No demo re-scripting; the sandbox's “every screen still opens” promise stays true.</li>
+      </ul></div>
+      <div class="col against"><h3>Against C</h3><ul>
+        <li><strong>Every future feature pays the archive tax forever</strong> — the three-question checklist, the allow-list edit, the one-level-down audit that produced Chunk F's most expensive defects.</li>
+        <li><strong>Nothing automated can see it.</strong> The rendered test fixture has no completed season; §36/§37-class owner QA recurs with every door.</li>
+        <li>~2,400 lines of season-toggle machinery stay live to protect a surface whose audience has never been named.</li>
+        <li>The opt-in contract's own history — ten doors, thirty-one routes — shows where this road keeps going.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ §08 ═══════════ -->
+  <section id="s08">
+    <div class="sec-head"><span class="n">§08</span><h2>M1 — membership lives on the team</h2><span class="sec-kick">recommended · the §0.2 answer</span></div>
+    <p class="lede">One membership card per person per team: role, permissions, active-or-revoked. Seasons become
+      <strong>chapters that snapshot who served</strong> — written automatically, never managed. Access questions
+      have exactly one answer in exactly one place.</p>
+
+    <div class="dia">
+      <div class="box accent">
+        <h4>Membership card — the source of truth</h4>
+        <div class="line"><b>Riley Okafor</b> ↔ <b>16U Ridge</b></div>
+        <div class="line">Role: Assistant</div>
+        <div class="line">Permissions: Money · write, Tryouts, Lineups</div>
+        <div class="line">Status: <b>Active</b> <span style="color:var(--d-dim);">(Remove flips this — nothing is deleted)</span></div>
+      </div>
+      <div class="arrow">→ writes the record</div>
+      <div class="box">
+        <h4>Season chapters — record only</h4>
+        <div class="chapters">
+          <span class="chapter">2024 · staff: 3 names</span>
+          <span class="chapter">2025 · staff: 3 names</span>
+          <span class="chapter now">2026 · current</span>
+        </div>
+        <div class="line" style="margin-top:10px;color:var(--d-dim);font-size:0.82rem;">Each chapter keeps who coached it. Nobody manages these; they cannot grant anything.</div>
+      </div>
+    </div>
+
+    <div class="ops"><table>
+      <tr><th style="width:26%;">Event</th><th>What happens under M1</th></tr>
+      <tr><td>Head coach removes Riley</td><td><span class="ok">Gone everywhere, instantly.</span> Card flips to revoked; every screen and every history piece closes at once. 2024/2025 records still name them.</td></tr>
+      <tr><td>Riley is re-added next spring</td><td><span class="ok">Everything back</span> — same card reactivated, permissions where they left them.</td></tr>
+      <tr><td>Season rolls over</td><td><span class="ok">Permissions carry.</span> The silent yearly reset of customized grants dies by construction — there is no new row to reset.</td></tr>
+      <tr><td>Club admin creates next year early (blank)</td><td><span class="ok">Non-event.</span> Access never derived from season rows, so an empty new year revokes nobody.</td></tr>
+      <tr><td>Season ends, next not started</td><td><span class="ok">Every screen keeps working.</span> The two dead walls that exist today (Settings, Announcements) are fixed by the same single rule.</td></tr>
+    </table></div>
+
+    <div class="price"><span class="pt">Price</span><b>One migration + the staff/invite/remove flows + one shared
+      access rule.</b> The 54 write endpoints keep working through a live-season projection, so the blast radius stays
+      narrow. This is the only option that kills all five defect classes at the root rather than patching two.</div>
+  </section>
+
+  <!-- ═══════════ §09 ═══════════ -->
+  <section id="s09">
+    <div class="sec-head"><span class="n">§09</span><h2>M2 — membership derived from season rows</h2><span class="sec-kick">the plan as written, priced honestly</span></div>
+    <p class="lede">Keep the per-season staff rows as the only real thing; define “current staff” as
+      <strong>whoever holds a row on the newest season</strong>. Cheaper to reach — no migration — but belonging stays
+      a side-effect of season paperwork, and three patches are needed to make it safe.</p>
+
+    <div class="dia">
+      <div class="box">
+        <h4>Season rows — the source of truth</h4>
+        <div class="chapters">
+          <span class="chapter">2024 · rows: JB, RO, ST</span>
+          <span class="chapter">2025 · rows: JB, RO, ST</span>
+          <span class="chapter now">2026 · rows: JB, RO, ST ← “current staff”</span>
+          <span class="chapter void">2027 · created blank → staff = nobody</span>
+        </div>
+        <div class="line" style="margin-top:10px;color:var(--d-dim);font-size:0.82rem;">“The newest column is the team” — until a newer, emptier column exists.</div>
+      </div>
+    </div>
+
+    <div class="ops"><table>
+      <tr><th style="width:26%;">Event</th><th>What happens under M2</th></tr>
+      <tr><td>Head coach removes Riley</td><td><span class="meh">Two mechanisms.</span> Flag the newest row revoked <em>and</em> sweep every older row so nothing else re-admits them. The sweep is the kind of shadow rule that gets missed.</td></tr>
+      <tr><td>Riley is re-added next spring</td><td><span class="ok">Works</span> — new row on the newest season.</td></tr>
+      <tr><td>Season rolls over</td><td><span class="bad">Permissions still reset silently</span> — new rows are minted with defaults. Needs its own separate fix to copy grants forward, forever, on both rollover paths.</td></tr>
+      <tr><td>Club admin creates next year early (blank)</td><td><span class="bad">The whole staff is locked out</span> the moment the blank year exists, until each person is re-added by hand. Needs a special-case patch (“newest season <em>with staff</em>”), which is a rule nobody will remember.</td></tr>
+      <tr><td>Season ends, next not started</td><td><span class="ok">Works</span> — the completed year is still the newest, so its rows still count.</td></tr>
+    </table></div>
+
+    <div class="price"><span class="pt">Price</span><b>No migration, smaller day-one diff — plus three permanent
+      patches</b> (revocation sweep, rollover grant-copy, blank-year exception) and staff management stays
+      season-shaped, which is the mental model the owner already called not useful. The cheapness is front-loaded;
+      the complexity is annual.</div>
+  </section>
+
+  <!-- ═══════════ §10 ═══════════ -->
+  <section id="s10">
+    <div class="sec-head"><span class="n">§10</span><h2>The matrix, the prices, the call</h2></div>
+
+    <div class="matrix"><table>
+      <tr><th>Criterion</th><th>A · in place</th><th>B · season file</th><th>C · keep the place</th></tr>
+      <tr><td>Serves the named moments (plans, money)</td><td class="ok">Yes, where the work happens</td><td>Yes, one page away</td><td>Yes, via portal-switch</td></tr>
+      <tr><td>Whole-season browsing</td><td class="bad">Gone (Wrapped + compare only)</td><td class="meh">One page per year</td><td class="ok">Full portal copy</td></tr>
+      <tr><td>Certificate reprint</td><td class="bad">Homeless in v1</td><td class="ok">On the file</td><td class="ok">As today</td></tr>
+      <tr><td>Future cost per feature</td><td class="ok">Zero unless a moment is named</td><td class="meh">“Should the file show it?” forever</td><td class="bad">Archive tax on everything, forever</td></tr>
+      <tr><td>Wrong-season defect surface</td><td class="ok">Six proven surfaces, zero defects to date</td><td class="meh">One new surface to audit</td><td class="bad">31 routes; fixture still blind to all of it</td></tr>
+      <tr><td>Unwind / build now</td><td class="meh">~2,400 lines out; ~30 routes simplified; tests rewritten smaller; demo re-scripted</td><td class="meh">A's unwind + one new page build</td><td class="ok">Near zero now</td></tr>
+      <tr><td>QA the owner must walk</td><td class="ok">§36/§37 mostly retire; small new section</td><td class="meh">A's + the file itself</td><td class="bad">§36/§37 now, and every future door</td></tr>
+    </table></div>
+
+    <div class="matrix" style="margin-top:14px;"><table>
+      <tr><th>Criterion</th><th>M1 · team membership</th><th>M2 · season rows</th></tr>
+      <tr><td>Remove means removed</td><td class="ok">One flip, everywhere</td><td class="meh">Flag + sweep, two mechanisms</td></tr>
+      <tr><td>Permissions survive rollover</td><td class="ok">By construction</td><td class="bad">Separate permanent fix required</td></tr>
+      <tr><td>Blank-year lockout</td><td class="ok">Impossible</td><td class="bad">Real; needs a special case</td></tr>
+      <tr><td>Between-seasons access</td><td class="ok">Uniform rule, fixes 2 shipped dead-ends</td><td class="ok">Works, by definition choice</td></tr>
+      <tr><td>Build</td><td class="meh">Migration + staff flows</td><td class="ok">No migration</td></tr>
+      <tr><td>Ongoing complexity</td><td class="ok">One rule, one home</td><td class="bad">Three patches, annual exposure</td></tr>
+    </table></div>
+
+    <div class="verdict">
+      <span class="pt">Recommendation</span>
+      <h3>Build A on M1 — history in place, membership on the team.</h3>
+      <ul>
+        <li><strong>The pattern is already proven in this product, six times,</strong> with zero wrong-season defects — while the toggle model needed a build-time contract, a 700-line smoke test, and still shipped the defects §36/§37 exist to catch.</li>
+        <li><strong>M1 is the only membership home that kills all five defect classes at the root</strong> — revocation, the yearly permission reset, the blank-year lockout, the between-seasons dead screens, and the archive's “as-you-were” access maze.</li>
+        <li><strong>“Start from nothing” stays honest:</strong> v1 ships only the two moments already named (plans §04, money §05); everything else waits for a person and a task. Wrapped and the compare list absorb the browsing questions at zero marginal cost.</li>
+        <li><strong>Named losses, day one:</strong> browsing a past roster/schedule/attendance/money screen; reprinting an old certificate (decide: accept for now, or seat a small awards shelf later); any screen listing who staffed a given year (the data is kept, the screen isn't).</li>
+        <li><strong>What would flip me:</strong> three or more new reference requests in the first month of real use — that's B's consolidation winning on evidence. Or a real customer moment for whole-season browsing that Wrapped can't answer — that's C's toggle earning its audience for the first time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>R1 · 2026-08-16</span>
+    <span>Every behaviour claim verified against the guard tests and route scans, not plan docs</span>
+    <span>Warm frames use the ratified portal palette; simplified, not pixel-exact</span>
+    <span>Tags: NEW / RESTYLED / UNCHANGED / REMOVED per mockup convention</span>
+  </footer>
+
+</div>

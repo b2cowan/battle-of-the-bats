@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { Telescope, Library } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { recordChip, recordTone, resultLetter, hasMeetings, hasBookContent, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -54,7 +55,7 @@ export default function CoachesOpponentsPage({
   }, [orgSlug, teamId]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) return <div className={styles.notAssigned}>You are not assigned to this team.</div>;
+  if (!assignment) return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
 
   const q = query.trim().toLowerCase();
   const shown = entries

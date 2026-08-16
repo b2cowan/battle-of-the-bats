@@ -47,15 +47,14 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // ⚠ Chunk F, governing rule 1: this route spans EVERY season, so it deliberately does NOT use
-  // the single-season read rail — that would resolve one season's context (and its team +
-  // program-year lookups) only to throw the result away, then re-fetch the same assignment lists
-  // here. The per-season capability map IS the access check: an empty map means this coach was
-  // never on this team's staff, in any year.
+  // This route spans EVERY season, so it deliberately does NOT use the single-season read rail —
+  // the capability map IS the access check: an empty map means no ACTIVE team membership.
   //
-  // One boolean can't be right across an archive — an assistant granted money in 2024 and not in
-  // 2025 must see 2024's totals and not 2025's — so the gate is resolved PER SEASON from that
-  // season's own assignment row.
+  // ⚠ M1 (2026-08-16) changed what the map holds: it is the member's CURRENT capabilities for
+  // every year (governing rule 1 — "that season's own assignment row" — is retired; the widening
+  // is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §1). `moneyForYear` below therefore
+  // answers the same for every season; the per-year SHAPE stays because the map's absent-year
+  // contract still carries "no access at all".
   const capsByYear = await resolveCoachSeasonCapabilityMap(ctx.org, ctx.user.id, teamId);
   if (capsByYear.size === 0) return forbidden();
 
@@ -73,9 +72,13 @@ export const GET = withObservability(async (_req: Request,
    * scoped per year; nothing else was. Surfaced by the archive rail's review as pre-existing.
    *
    * The ruling is deliberately the simple one — head coach, no tenure windows ("we can figure out
-   * how to expand later"). ⚠ It is "EVER head coach of this team", matching the cross-season shape
-   * `canViewMoney` above already uses: the scrapbook belongs to the TEAM and spans seasons, so a
-   * per-season test would show it on one year and hide it on the next for the same person.
+   * how to expand later").
+   *
+   * ⚠ M1 note: with the map now uniform-current, this predicate means "head coach NOW" — the
+   * client's door derivation was aligned to the same answer (lib/coach-season-view.ts), so the
+   * two can no longer disagree and serve the "None yet" lie. The restriction itself is slated
+   * for REVERT in P2 of COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md (owner ruling: all current
+   * staff see the whole history), at which point this gate goes entirely.
    *
    * ⚠ This NARROWS access — it opens no archive door and needs no allow-list entry. And it is
    * enforced HERE, not just hidden on the page: the rows must not reach a browser that shouldn't

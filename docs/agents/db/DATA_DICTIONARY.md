@@ -1938,12 +1938,12 @@ record can differ, and changing it is **never** applied retroactively — the sa
 ### `rep_team_coaches`
 <!-- dict:table:rep_team_coaches -->
 
-**Purpose:** the **coach-assignment join** — maps an `auth.users` account to a `(team, program_year)` with a role, per season. Membership here is the **single gate** into the coach-operator portal for a team.
+**Purpose:** the **coach-assignment join** — maps an `auth.users` account to a `(team, program_year)` with a role, per season. ⚠ **DEMOTED by mig 245 (M1, 2026-08-16): no longer the source of access truth.** It is now (a) the immutable per-season RECORD of who coached each year, and (b) a **live-season PROJECTION** of `rep_team_staff_memberships` kept in sync by `lib/coach-membership.ts` so the ~54 write routes that resolve an active-year row keep working. Access questions go to the memberships table; nothing may read access truth from a season row when a membership exists.
 
 **Gotchas (read first):**
-1. **This is the coach-portal access gate.** `getCoachingAssignmentsForUser(orgId, userId)` ([lib/db.ts:4160](../../../lib/db.ts#L4160)) is the membership check inside `resolveCoachContext` for every coach route; no row → no access.
-2. **Assignments are filtered to `draft`/`active` seasons** ([lib/db.ts:4175](../../../lib/db.ts#L4175)) — a coach assigned only to a `completed`/`archived` year is effectively locked out via this helper even though the row persists.
-3. **Team-workspace plans add an entitlement filter.** For a `team_workspace`/`plan_id='team'` org, assignments are further intersected with `getActiveTeamEntitledRepTeamIds` ([lib/db.ts:4180](../../../lib/db.ts#L4180)) — an active billing entitlement is required on top of the assignment row.
+1. **Was the coach-portal access gate; now the projection the gate writes.** `getCoachingAssignmentsForUser(orgId, userId)` ([lib/db.ts:4203](../../../lib/db.ts#L4203)) still keys the write routes, which is exactly why membership writes mirror role + `capabilities` onto the live season's row (`syncLiveSeasonProjection`). A drifted mirror gates writes on yesterday's grants — sync is the invariant, not a nicety. The closed-season lookup (`getClosedCoachingAssignmentsForUser`) additionally filters to teams where the caller holds an ACTIVE membership, so an ex-coach's rows persist as record but list nowhere.
+2. **Assignments are filtered to `draft`/`active` seasons** ([lib/db.ts:4208](../../../lib/db.ts#L4208)) — a coach assigned only to a `completed`/`archived` year is effectively locked out via this helper even though the row persists.
+3. **Team-workspace plans add an entitlement filter.** For a `team_workspace`/`plan_id='team'` org, assignments are further intersected with `getActiveTeamEntitledRepTeamIds` (inside `loadCoachAssignmentRows`, [lib/db.ts:4196](../../../lib/db.ts#L4196)) — an active billing entitlement is required on top of the assignment row.
 4. **Insert/delete only for role — NO `updated_at`.** Changing a coach's role = delete + re-add (`addRepTeamCoach`/`removeRepTeamCoach` [lib/db.ts:4034](../../../lib/db.ts#L4034)). Team-workspace provisioning seeds the owner as `head_coach`. (Assistant Coaches Phase 2 adds a `capabilities` UPDATE path — the head coach edits an assistant's grants in place.)
 5. **`coach_role` + `capabilities` are the ENFORCEMENT anchor (was "display-only" pre-mig-170).** A head coach gets full access; an `assistant_coach` is resolved to a least-privilege capability set (refined by `capabilities`) in `getCoachingAssignmentsForUser` and enforced app-layer in every coach route (money off/read/write, roster-PII lock, notes, documents view/manage, announcements send, tryouts head-only, roster-write head-only). The two pre-existing standalone-workspace head-coach gates (season-start, division-edit) are unchanged.
 6. **Adding a coach requires an existing active `organization_members` row** ([app/api/admin/rep-teams/.../coaches/route.ts:96](../../../app/api/admin/rep-teams/teams/%5BteamId%5D/program-years/%5ByearId%5D/coaches/route.ts#L96)) → 422 otherwise. This table references, never creates, the membership.
@@ -1966,6 +1966,41 @@ record can differ, and changing it is **never** applied retroactively — the sa
 
 <!-- dict:col:rep_team_coaches.capabilities -->
 **`capabilities`** (jsonb, nullable; mig 173) — per-assistant capability grants (`AssistantCapabilityGrants`, `lib/coach-capabilities.ts`). NULL = assistant least-privilege defaults; **ignored for head coaches**. App-shaped, no DB CHECK (loose-jsonb pattern). Set by the head coach via the coach-portal staff panel; read into the effective `CoachCapabilities` on every `CoachingAssignment`.
+
+### `rep_team_staff_memberships`
+<!-- dict:table:rep_team_staff_memberships -->
+
+**Purpose:** **THE coach-portal access truth** (mig 245, M1 — owner ruling 2026-08-16, "the team is the account", `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md`). One row per (team, person): role, per-assistant capability grants, active-or-revoked. Seasons stopped being an access dimension — `rep_team_coaches` remains as the per-season record + live-season projection of this table.
+
+**Gotchas (read first):**
+1. **Revoke ≠ delete.** Removal flips `status='revoked'` (+`revoked_at`/`revoked_by`) — the row survives so re-adding reactivates it with grants where they were left ("nothing was destroyed", the ruling). The live season's `rep_team_coaches` projection row IS deleted on revoke; closed seasons' rows are never touched (they are the record).
+2. **Capabilities live HERE and survive rollover.** Rollover used to re-mint season rows with NULL `capabilities`, silently resetting every customized grant yearly — under M1 the membership persists and the new season's rows are written FROM it (role + grants).
+3. **`UNIQUE(team_id, user_id)`** — reactivation updates, never duplicates. Indexed `(org_id, user_id)` and `(team_id)`.
+4. **Service-role only** — RLS enabled, **zero policies** (the [[reference_supabase_rls_grants]] class). All access via `lib/coach-membership.ts`.
+5. **Backfill (in mig 245) took each team's newest season THAT HAS coach rows** — not the newest season outright, or a club team whose admin pre-created a blank draft year would have backfilled nobody (the lock-out that got the rejected M2 design rejected). Users whose only rows sit on older seasons got NO membership — that shipping revocation of ex-staff is Design A's point, not an oversight.
+6. **Entitlement posture rides on top:** for team-workspace orgs, `getEntitledTeamMembership` intersects with `getActiveTeamEntitledRepTeamIds` — a lapsed standalone plan serves no portal through this table either.
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_team_staff_memberships.org_id -->
+<!-- dict:col:rep_team_staff_memberships.team_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE, NOT NULL) — tenant + the team the membership belongs to.
+
+<!-- dict:col:rep_team_staff_memberships.user_id -->
+**`user_id`** (FK → `auth.users.id` ON DELETE CASCADE, NOT NULL) — the staff account; part of `UNIQUE(team_id, user_id)`.
+
+<!-- dict:col:rep_team_staff_memberships.coach_role -->
+**`coach_role`** (text, NOT NULL, CHECK `head_coach|assistant_coach`) — same enforcement anchor semantics as the projection's column: head = full access, assistant = defaults refined by `capabilities`.
+
+<!-- dict:col:rep_team_staff_memberships.capabilities -->
+**`capabilities`** (jsonb, nullable) — `AssistantCapabilityGrants` (`lib/coach-capabilities.ts`), NULL = assistant defaults, ignored for head coaches; sanitized on every write; mirrored onto the live season's projection row on every change.
+
+<!-- dict:col:rep_team_staff_memberships.status -->
+**`status`** (text, NOT NULL, default `'active'`, CHECK `active|revoked`) — the access switch. Every reader filters `status='active'`.
+
+<!-- dict:col:rep_team_staff_memberships.revoked_at -->
+<!-- dict:col:rep_team_staff_memberships.revoked_by -->
+**`revoked_at`** (timestamptz, nullable) / **`revoked_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — when/by whom access was taken; cleared on reactivation.
 
 ### `assistant_invite_tokens`
 <!-- dict:table:assistant_invite_tokens -->
@@ -3798,7 +3833,7 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 1. **`notes` column — was missing, now ✓ FIXED (migration 119, dev+prod, 2026-06-09).** At commit `5479605` the row had only 23 columns with **no `notes`**, yet `createRepTeamExpense`/`updateRepTeamExpense` and the coach expenses form's Notes textarea all used `notes` → every save/edit errored `column "notes" does not exist` (the exact schema-drift class this dictionary exists to surface). Migration 119 added the nullable `notes text` to both envs; the feature now works as designed.
 2. **Two-payment model is by `expense_type`, NOT by arithmetic.** `expense`: fully paid when `expense_paid_at` is set; the deposit/balance fields are ignored. `tournament_payable`: fully paid when BOTH `deposit_paid_at` AND `balance_paid_at` are set; paid amount = (deposit_paid_at ? deposit_amount : 0) + (balance_paid_at ? balance_amount : 0). **`deposit_amount + balance_amount == amount` is NOT enforced** (no CHECK, no app validation). Worse, mark-deposit/mark-balance fall back to the FULL `amount` when the leg amount is NULL, so a payable with null split amounts can post the full amount twice. There is no single "is paid" flag.
 3. **`expense_type` CHECK `expense|tournament_payable`** — `tournament_payable` = money owed to a tournament/host (deposit+balance schedule). `upcoming-payables` surfaces rows by deposit/balance **due dates only**, regardless of `expense_type`, so lump `expense` rows (no due dates) never appear there.
-4. **`accounting_entry_id` is never written** — on mark-paid the route creates a team-ledger entry but discards its id (the ledger entry is authoritative, no back-reference).
+4. **`accounting_entry_id` IS written — this gotcha was stale and is corrected 2026-08-16.** It described the pre-migration-236 behaviour ("the route creates a team-ledger entry but discards its id"), which stopped being true when mig 236 added the link and the delete path started using it to reverse exactly the right entry rather than matching on an editable description. Both doors that post a cash entry now record it: mark-paid (`markExpensePaid` / `markDepositPaid` / `markBalancePaid`, into `accounting_entry_id` / `deposit_entry_id` / `balance_entry_id`) and `createPaidExpense`, the create-time already-paid path added 2026-08-16.
 5. **`payee_id` (→ org `org_payees`) vs `payee_payer` (text) are mutually exclusive** — picking a structured org payee sets `payee_id` (clears `payee_payer`); a free-text name sets `payee_payer` (clears `payee_id`); both set at create only. **`category` is free text** and is the (name-based, case-insensitive) join key to `rep_budget_lines` categories in budget-vs-actual — a typo silently drops the expense into "unbudgeted".
 6. **CHECK `amount > 0`** (only `amount`; the deposit/balance amounts have no CHECK and are nullable).
 
@@ -3826,6 +3861,15 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 
 <!-- dict:col:rep_team_expenses.expense_paid_at -->
 **`expense_paid_at`** (timestamptz, nullable) — marks a lump `expense` paid (not used for payables).
+⚠ **It answers WHICH DAY money moved, and is written at ORG NOON** (2026-08-16). Every reader turns
+it back into a calendar day — some through the org's clock, some by slicing the ISO string — so the
+stored instant has to land on the intended day under both. Noon is twelve hours from either
+midnight, which no timezone the platform serves can cross; a bare `YYYY-MM-DD` becomes UTC midnight
+and reads as the PREVIOUS day in Toronto, and a real `now()` late in the evening slices into the
+NEXT day (and, on the 31st, the next month). Write it with `orgDayAsStoredInstant()`
+(`lib/timezone.ts`); read it with `formatStoredDate()`, never a hand-rolled `new Date(...)`.
+⚠ **It is a coach-chosen date, not a system timestamp** — the money form asks for it, and all three
+mark-paid actions accept one, so it may be back-dated to any real past day (never a future one).
 
 <!-- dict:col:rep_team_expenses.deposit_amount -->
 <!-- dict:col:rep_team_expenses.deposit_due_date -->

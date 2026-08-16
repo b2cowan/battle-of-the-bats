@@ -434,6 +434,24 @@ ORDER BY rt.created_at, py.created_at
 LIMIT 1
 ON CONFLICT (program_year_id, user_id) DO UPDATE SET coach_role = 'head_coach';
 
+-- M1 (mig 245, 2026-08-16): the TEAM MEMBERSHIP is the access truth — the row above is the
+-- season record + what the legacy write routes read. Without this, every membership-gated
+-- route (staff, settings, seasons, documents…) 403s the fixture coach.
+INSERT INTO rep_team_staff_memberships (
+  id, org_id, team_id, user_id, coach_role, capabilities, status, created_at
+)
+SELECT
+  gen_random_uuid(), rt.org_id, rt.id, u.id, 'head_coach', NULL, 'active', now()
+FROM auth.users u
+CROSS JOIN organizations o
+JOIN rep_teams rt ON rt.org_id = o.id AND rt.is_archived = false
+WHERE u.email = 'uat-coach@uat-test-org.local'
+  AND o.slug = 'uat-test-org'
+ORDER BY rt.created_at
+LIMIT 1
+ON CONFLICT (team_id, user_id)
+  DO UPDATE SET coach_role = 'head_coach', status = 'active', revoked_at = NULL, revoked_by = NULL;
+
 
 -- ================================================================
 -- DONE -- verify with these queries

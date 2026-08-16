@@ -25,7 +25,8 @@ import css from './CoachStaffPanel.module.css';
 type Caps = CoachCapabilities;
 
 interface StaffMember {
-  coachId: string;
+  /** The TEAM MEMBERSHIP id (M1, 2026-08-16) — one row per person per team, no season attached. */
+  memberId: string;
   userId: string;
   coachRole: 'head_coach' | 'assistant_coach';
   displayName: string | null;
@@ -38,9 +39,6 @@ interface StaffMember {
    * (it fails soft), and it matches on the address the person signed in with, which need not be the
    * one they followed under. Every sentence that reads this must stay true when it is wrongly
    * false — see the removal dialog.
-   *
-   * ⚠ It reflects TODAY, so it is suppressed in the read-only archive view, where showing it would
-   * assert a present-day fact about a finished season (governing rule 1).
    */
   alsoFollowsTeam?: boolean;
   capabilities: Caps;
@@ -287,19 +285,16 @@ function grantsFrom(c: Caps): Required<AssistantCapabilityGrants> {
  */
 const isHelperBundle = (c: Caps) => staffKindLabel(c) === 'helper';
 
-export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = false, seasonQuery = '' }: {
+/**
+ * M1 (owner ruling 2026-08-16): staff is THE TEAM'S — one list, no season attached. Removing
+ * someone revokes their access to every screen and every season at once; their name stays on the
+ * seasons they coached, and re-inviting reactivates the same membership. The panel's old archive
+ * mode ("who may still look at this finished season", Chunk F governing rule 3) is retired with
+ * the per-season access model that needed it.
+ */
+export default function CoachStaffPanel({ orgSlug, teamId }: {
   orgSlug: string;
   teamId: string;
-  /**
-   * Chunk F, governing rule 3: on a FINISHED season this panel governs who may still LOOK at
-   * that season, and nothing else. Removing a coach revokes their read access immediately;
-   * nobody can be invited to a season that has already happened, so the invite form goes.
-   * The capability toggles become a read-out of what each person could see at the time — the
-   * grants are the historical record, not a live control.
-   */
-  readAccessOnly?: boolean;
-  /** `?year=…` for the season being shown, so the LIST matches the page heading. */
-  seasonQuery?: string;
 }) {
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -322,14 +317,11 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
   const confirm = useConfirm();
   const uid = useId();
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/staff`;
-  // ⚠ READ only. The write endpoints below deliberately do NOT carry the season — they resolve
-  // the live year, which is why the archive hides them (see the Remove button).
-  const readBase = `${base}${seasonQuery}`;
 
   const load = useCallback(async () => {
     setLoadError('');
     try {
-      const res = await fetch(readBase);
+      const res = await fetch(base);
       if (!res.ok) throw new Error('Could not load the coaching staff.');
       const json = await res.json();
       setStaff(json.staff ?? []);
@@ -342,24 +334,24 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
 
   async function saveCaps(member: StaffMember, next: Caps) {
     // Optimistic update
-    setStaff(prev => prev?.map(s => s.coachId === member.coachId ? { ...s, capabilities: next } : s) ?? prev);
-    setSavingId(member.coachId);
+    setStaff(prev => prev?.map(s => s.memberId === member.memberId ? { ...s, capabilities: next } : s) ?? prev);
+    setSavingId(member.memberId);
     setSavedId(null);
     try {
-      const res = await fetch(`${base}/${member.coachId}`, {
+      const res = await fetch(`${base}/${member.memberId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ capabilities: grantsFrom(next) }),
       });
       if (!res.ok) throw new Error();
       const json = await res.json();
-      setStaff(prev => prev?.map(s => s.coachId === member.coachId ? { ...s, capabilities: json.capabilities } : s) ?? prev);
-      setSavedId(member.coachId);
-      setTimeout(() => setSavedId(id => id === member.coachId ? null : id), 1800);
+      setStaff(prev => prev?.map(s => s.memberId === member.memberId ? { ...s, capabilities: json.capabilities } : s) ?? prev);
+      setSavedId(member.memberId);
+      setTimeout(() => setSavedId(id => id === member.memberId ? null : id), 1800);
     } catch {
       void load(); // revert to server truth on failure
     } finally {
-      setSavingId(id => id === member.coachId ? null : id);
+      setSavingId(id => id === member.memberId ? null : id);
     }
   }
 
@@ -394,46 +386,36 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
     // Was a native window.confirm() — the one dialog in the portal that broke from the app's own
     // styled confirmations (readiness-review finding f7-5).
     const ok = await confirm({
-      title: readAccessOnly ? 'Remove their access to this season?' : 'Remove this assistant?',
-      // The archive wording names the blast radius precisely: this season's records only, and
-      // nothing about the current one. It matters because the same button on a live season DOES
-      // remove them from the team.
+      title: 'Remove this assistant?',
       /**
-       * ⚠ **THE SENTENCE THAT WAS FALSE** (owner ruling 2026-08-03, ruling D).
+       * ⚠ **TWO SENTENCES WITH A HISTORY — both load-bearing.**
        *
-       * This read "…loses access to this team immediately." For an adult who ALSO follows the team
-       * as a family member, that was untrue: a staff removal doesn't touch the family layer, so
-       * they keep the schedule, the results and any shared game page. The head coach most likely to
-       * read this line carefully is the one removing someone after a problem — and they'd stop at
-       * "immediately".
+       * "Every screen, every season" is NEW (M1, 2026-08-16) and is the whole point of the model
+       * change: removal used to drop ONE season's row while every past season kept admitting them,
+       * and the old dialog honestly admitted it ("doesn't affect any other season"). If removal
+       * ever stops meaning everywhere-at-once, this sentence is lying about the product's core
+       * access promise.
        *
-       * Fixed as a sentence, not a model change: the owner explicitly declined merging the two
-       * records. So the dialog now says what removal actually does, and names the other
-       * relationship only when one exists, with where to go to end it too.
-       *
-       * ⚠ **THE BASE SENTENCE SAYS "COACHING ACCESS" IN BOTH BRANCHES, AND THAT IS THE WHOLE
-       * SAFETY PROPERTY.** `alsoFollowsTeam` can be a false negative for reasons this dialog cannot
-       * see — the lookup failed, or the person follows under a different address than the one they
-       * signed in with. If the fallback claimed they "lose access to this team", every one of those
-       * cases would put the original false sentence straight back. Scoping the claim to *coaching*
-       * access makes it true no matter what the flag says; the flag's only job is to ADD the family
-       * warning when we positively know about it. Under-inform, never mis-state.
+       * "COACHING access" (owner ruling 2026-08-03, ruling D): for an adult who ALSO follows the
+       * team as a family member, "loses access to this team" was untrue — a staff removal doesn't
+       * touch the family layer. `alsoFollowsTeam` can be a false NEGATIVE (failed lookup, different
+       * address), so the base sentence stays scoped to coaching access no matter what the flag
+       * says; the flag's only job is to ADD the family warning when we positively know about it.
+       * Under-inform, never mis-state.
        */
-      message: readAccessOnly
-        ? `${who} will no longer be able to open this finished season's records. It doesn't change what happened, and it doesn't affect any other season.`
-        : member.alsoFollowsTeam
-          ? `${who} loses their coaching access to this team immediately. ⚠ They're also connected to this team as a family member, and that's separate — they'll keep seeing your schedule, results and any game page you've shared. To end that too, remove them under Family access on your Roster page.`
-          : `${who} loses their coaching access to this team immediately. You can invite them again later.`,
-      confirmText: readAccessOnly ? 'Remove access' : 'Remove',
+      message: member.alsoFollowsTeam
+        ? `${who} loses their coaching access to this team immediately — every screen, every season. Their name stays on the seasons they coached. ⚠ They're also connected to this team as a family member, and that's separate — they'll keep seeing your schedule, results and any game page you've shared. To end that too, remove them under Family access on your Roster page.`
+        : `${who} loses their coaching access to this team immediately — every screen, every season. Their name stays on the seasons they coached, and adding them back later restores their access.`,
+      confirmText: 'Remove',
       cancelText: 'Keep them',
       tone: 'danger',
     });
     if (!ok) return;
-    setRemovingId(member.coachId);
+    setRemovingId(member.memberId);
     try {
-      const res = await fetch(`${base}/${member.coachId}`, { method: 'DELETE' });
+      const res = await fetch(`${base}/${member.memberId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-      setStaff(prev => prev?.filter(s => s.coachId !== member.coachId) ?? prev);
+      setStaff(prev => prev?.filter(s => s.memberId !== member.memberId) ?? prev);
     } catch {
       void load();
     } finally {
@@ -508,16 +490,12 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
       {/* One sentence. The other half of the old intro ("nothing sensitive until you grant it")
           now lives in the access rail, where it can name the actual areas instead of being the
           same promise said twice on one screen. */}
-      <p className={css.lede}>{readAccessOnly
-          ? 'Who can still open this season’s records. Removing someone takes their access away straight away.'
-          : 'Invite assistants and choose exactly what each one can do.'}</p>
+      <p className={css.lede}>Invite assistants and choose exactly what each one can do.</p>
 
       {loadError && <p className={styles.errorText}>{loadError}</p>}
 
       <div className={css.cols}>
-        {/* Invite — its own object, with a real field label. Absent in an archive: you cannot
-            add someone to a season that has already happened (Chunk F, rule 3). */}
-        {!readAccessOnly && (
+        {/* Invite — its own object, with a real field label. */}
         <div className={`${css.inviteArea} ${css.card} ${css.inviteCard}`}>
           <form onSubmit={sendInvite} className={css.inviteForm}>
             {/*
@@ -572,7 +550,6 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
           {inviteMsg && <p className={css.inviteNote}>{inviteMsg}</p>}
           {inviteError && <p className={`${styles.errorText} ${css.inviteError}`}>{inviteError}</p>}
         </div>
-        )}
 
         {/*
           What the chosen preset actually hands over, in sentences. This lives in the PAGE and not
@@ -580,8 +557,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
           (design decision 2026-08-03) — and a head coach on a phone is the one who most needs to
           read what a stranger is about to be able to see.
         */}
-        {!readAccessOnly && (
-          <div className={`${css.accessArea} ${css.card}`}>
+        <div className={`${css.accessArea} ${css.card}`}>
             <p className={css.groupLabel}>
               {invitePreset === 'helper' ? 'What a helper gets' : 'What an assistant gets'}
             </p>
@@ -624,8 +600,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                 ? 'A helper can’t change anything — not the plan, not the schedule, not a single game. They sign in as themselves, and you can take this back any time.'
                 : 'Every assistant signs in as themselves — you never share a password — and you can take any of this back the moment you need to.'}
             </p>
-          </div>
-        )}
+        </div>
 
         <div className={css.listArea}>
           {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
@@ -662,7 +637,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
             // details, that was the most consequential gap /review found (2026-07-31). The ids are
             // per-assistant so they stay unique when several staff cards are on screen.
             const renderSegment = (seg: Segment) => {
-              const labelId = `${uid}-${member.coachId}-${String(seg.key)}`;
+              const labelId = `${uid}-${member.memberId}-${String(seg.key)}`;
               return (
                 <div key={String(seg.key)} className={css.seg}>
                   <span className={css.segLabel} id={labelId}>{seg.label}</span>
@@ -672,10 +647,6 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                       return (
                         <button key={opt.value} type="button"
                           aria-pressed={active}
-                          // Archive: a read-out of what this person could see AT THE TIME, not a
-                          // control. The grants ARE the historical record (rule 1) — changing
-                          // them would rewrite what the season showed.
-                          disabled={readAccessOnly}
                           className={active ? `${css.segBtn} ${css.segBtnOn}` : css.segBtn}
                           onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}>
                           {opt.label}
@@ -689,7 +660,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
             };
             const renderToggle = (t: Toggle) => (
               <label key={String(t.key)} className={css.check}>
-                <input type="checkbox" checked={Boolean(c[t.key])} disabled={readAccessOnly}
+                <input type="checkbox" checked={Boolean(c[t.key])}
                   onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} />
                 <span>
                   <span className={css.checkLabel}>{t.label}</span>
@@ -699,29 +670,24 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
             );
             const granted = sensitiveGrantCount(c);
             return (
-              <div key={member.coachId} className={css.card}>
+              <div key={member.memberId} className={css.card}>
                 <div className={css.person}>
                   <div>
                     <p className={css.personName}>{member.displayName || member.email || 'Assistant coach'}</p>
                     {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
-                    {member.alsoFollowsTeam && !readAccessOnly && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
+                    {member.alsoFollowsTeam && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
                   </div>
                   <div className={css.personActions}>
                     {/* Persistent live region — a wrapper that only appears WITH its text is often
                         never announced. This confirms a money / guardian-contact grant actually
                         saved, so it has to reach assistive tech. (/review 2026-07-31) */}
                     <span role="status" aria-live="polite">
-                      {savingId === member.coachId && <span className={css.saveState}>Saving…</span>}
-                      {savedId === member.coachId && <span className={css.saveStateDone}>Saved</span>}
+                      {savingId === member.memberId && <span className={css.saveState}>Saving…</span>}
+                      {savedId === member.memberId && <span className={css.saveStateDone}>Saved</span>}
                     </span>
-                    {/*
-                      Rule 3's one live action on a finished season. The endpoint resolves the
-                      TARGET'S own season, so removing here revokes access to THAT season and
-                      never touches a live assignment — the label says which.
-                    */}
-                    <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.coachId}
+                    <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.memberId}
                       className={`${styles.btnSecondary} ${css.removeBtn}`}>
-                      <Trash2 size={13} /> {readAccessOnly ? 'Remove access' : 'Remove'}
+                      <Trash2 size={13} /> Remove
                     </button>
                   </div>
                 </div>
@@ -765,18 +731,18 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
             it in one tap or take it away in one tap.
           */}
           {helpers.map(member => (
-            <div key={member.coachId} className={`${css.card} ${css.helperCard}`}>
+            <div key={member.memberId} className={`${css.card} ${css.helperCard}`}>
               <div className={css.person}>
                 <div>
                   <p className={css.personName}>{member.displayName || member.email || 'Helper'}</p>
                   {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
-                  {member.alsoFollowsTeam && !readAccessOnly && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
+                  {member.alsoFollowsTeam && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
                 </div>
                 <div className={css.personActions}>
                   <span className={css.helperChip}>Helper</span>
                   <span role="status" aria-live="polite">
-                    {savingId === member.coachId && <span className={css.saveState}>Saving…</span>}
-                    {savedId === member.coachId && <span className={css.saveStateDone}>Saved</span>}
+                    {savingId === member.memberId && <span className={css.saveState}>Saving…</span>}
+                    {savedId === member.memberId && <span className={css.saveStateDone}>Saved</span>}
                   </span>
                 </div>
               </div>
@@ -786,29 +752,18 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                 Not in staff chat.
               </p>
 
-              {!readAccessOnly && (
-                <div className={css.helperActions}>
-                  <button type="button" className={styles.btnSecondary}
-                    disabled={savingId === member.coachId}
-                    onClick={() => { void promoteToAssistant(member); }}>
-                    Make assistant coach
-                  </button>
-                  <button type="button" className={`${styles.btnSecondary} ${css.removeBtn}`}
-                    disabled={removingId === member.coachId}
-                    onClick={() => removeAssistant(member)}>
-                    <Trash2 size={13} /> Remove
-                  </button>
-                </div>
-              )}
-              {readAccessOnly && (
-                <div className={css.helperActions}>
-                  <button type="button" className={`${styles.btnSecondary} ${css.removeBtn}`}
-                    disabled={removingId === member.coachId}
-                    onClick={() => removeAssistant(member)}>
-                    <Trash2 size={13} /> Remove access
-                  </button>
-                </div>
-              )}
+              <div className={css.helperActions}>
+                <button type="button" className={styles.btnSecondary}
+                  disabled={savingId === member.memberId}
+                  onClick={() => { void promoteToAssistant(member); }}>
+                  Make assistant coach
+                </button>
+                <button type="button" className={`${styles.btnSecondary} ${css.removeBtn}`}
+                  disabled={removingId === member.memberId}
+                  onClick={() => removeAssistant(member)}>
+                  <Trash2 size={13} /> Remove
+                </button>
+              </div>
             </div>
           ))}
         </div>

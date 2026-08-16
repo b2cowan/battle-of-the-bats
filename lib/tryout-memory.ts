@@ -97,7 +97,8 @@ export async function resolveTryoutMemoryPairs(input: {
   rubric: Pick<RepTryoutRubric, 'scaleMax' | 'categories'> | null;
   scores: Parameters<typeof rankTryoutCandidates>[2];
   continuityLinks: RepPlayerContinuityLink[];
-  /** program-year id → capabilities recorded against THAT year's assignment row. */
+  /** program-year id → the coach's capabilities for that year (since M1: their CURRENT ones,
+   *  for every year the team has — absent entirely when they hold no membership). */
   capabilityByYear: Map<string, CoachCapabilities>;
 }): Promise<TryoutMemoryPair[]> {
   const { teamId, programYear, allYears, registrations, rubric, scores, capabilityByYear } = input;
@@ -126,8 +127,11 @@ export async function resolveTryoutMemoryPairs(input: {
    * Every reason a link drops out is applied here:
    *   · no prior identity, or a hand-added player with no tryout registration behind them —
    *     scores are keyed by registration, so there is nothing to remember;
-   *   · the coach held no `tryouts` capability on THAT season's assignment row (governing rule 1),
-   *     which is a silent, per-year refusal rather than an error.
+   *   · the coach holds no `tryouts` capability for that year — a silent, per-year refusal
+   *     rather than an error. ⚠ Since M1 (2026-08-16) the map answers with the coach's CURRENT
+   *     capabilities for every year (membership-gated), so in practice this is one answer asked
+   *     per-year; the per-year SHAPE stays because the map's absent-year contract ("no entry =
+   *     no access") is load-bearing here.
    */
   const wanted = candidateLinks.flatMap(link => {
     const prior = priorById.get(link.priorRosterId ?? link.priorRegistrationId ?? '');

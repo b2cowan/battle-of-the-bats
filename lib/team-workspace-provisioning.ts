@@ -1,11 +1,12 @@
 import {
-  addRepTeamCoach,
   createOrganization,
   createOrganizationMember,
   createRepTeam,
   getOrCreateOrgLedger,
   getOrCreateRepTeamLedger,
+  getRepTeamCoachForUserYear,
 } from './db';
+import { addStaffMember } from './coach-membership';
 import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
@@ -308,7 +309,21 @@ export async function provisionStandaloneTeamWorkspace(
       year: seasonYear,
     });
 
-    const coachAssignment = await addRepTeamCoach(programYear.id, team.id, provisionedOrg.id, ownerUserId, 'head_coach');
+    /**
+     * M1 (2026-08-16): the owner's access is a TEAM MEMBERSHIP — `addStaffMember` mints it and
+     * projects the season row in one call. Minting only the row (as this line did) shipped a
+     * paying owner who could open their portal but was 403'd from Settings, staff management,
+     * starting a season and roster documents from their very first minute — the membership-gated
+     * routes never saw them (adversarial review 2026-08-16, the Critical). The projected row is
+     * read back because callers still receive the season-record assignment shape.
+     */
+    await addStaffMember({
+      orgId: provisionedOrg.id, teamId: team.id, userId: ownerUserId, coachRole: 'head_coach',
+    });
+    const coachAssignment = await getRepTeamCoachForUserYear(programYear.id, ownerUserId);
+    if (!coachAssignment) {
+      throw new Error('Team provisioning could not confirm the head-coach assignment row.');
+    }
     const orgLedger = await getOrCreateOrgLedger(provisionedOrg.id, provisionedOrg.name);
     const teamLedger = await getOrCreateRepTeamLedger(provisionedOrg.id, team.id, team.name);
 

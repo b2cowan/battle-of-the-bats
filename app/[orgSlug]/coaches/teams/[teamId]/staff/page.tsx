@@ -15,10 +15,16 @@ export default function CoachStaffPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(params);
-  const { loading } = useCoaches();
+  const { assignments, loading } = useCoaches();
   const searchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
-  const isHeadCoach = page.capabilities?.isHeadCoach ?? false;
+  // M1: the panel is team-scoped and membership-gated, so the gate reads the CURRENT role — the
+  // live assignment mirrors the membership. `page.capabilities` is season-resolved and, under a
+  // stale archived `?year=` URL, would answer with a bygone season's role: a demoted former head
+  // coach would watch the live panel try to render and fail, and a newly-promoted one would be
+  // told only the head coach manages staff (adversarial review 2026-08-16).
+  const isHeadCoach =
+    (assignments.find(a => a.teamId === teamId)?.capabilities ?? page.capabilities)?.isHeadCoach ?? false;
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
@@ -45,30 +51,21 @@ export default function CoachStaffPage({
       />
 
       {/*
-        Governing rule 3 — the ONE deliberate write surface on a finished season, and the one
-        place D-F4's chip-only signal is genuinely misleading: the season IS complete and these
-        buttons DO work. Without this line, "Remove access" beside a Complete chip reads as though
-        it might erase the person from the season's history rather than take away their view.
-        Owner-approved exception, 2026-08-01 — one sentence, on one screen.
+        M1 (owner ruling 2026-08-16): staff belongs to the TEAM, not to a season — one list,
+        wherever you opened it from. The old per-season "who may still look at this finished
+        season" mode (Chunk F governing rule 3) is retired with the per-season access model.
+        A stale archive URL still lands here; the panel it finds manages the team's staff.
       */}
       {page.isReadOnly && isHeadCoach && (
         <div className={styles.seasonReadAccessNote} role="note">
-          <strong>This season is finished, but you still control who can look at it.</strong>{' '}
-          Removing someone here takes away their access to this season&apos;s records straight away,
-          and affects nothing else — not what happened, and not your current season. What each
-          person could see is part of the record, so it can&apos;t be changed.
+          <strong>Staff belongs to the team, not to a season.</strong>{' '}
+          This is your team&apos;s one staff list — changes here apply everywhere at once. Who
+          coached this finished season is part of its record and doesn&apos;t change.
         </div>
       )}
 
       {isHeadCoach ? (
-        <CoachStaffPanel
-          orgSlug={orgSlug}
-          teamId={teamId}
-          // In an archive the panel governs READ ACCESS ONLY: who may still open this season.
-          // Nobody can be added to a season that has already happened.
-          readAccessOnly={page.isReadOnly}
-          seasonQuery={page.query}
-        />
+        <CoachStaffPanel orgSlug={orgSlug} teamId={teamId} />
       ) : (
         <CoachEmptyState
           quiet

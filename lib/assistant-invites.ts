@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { generateAssistantInviteToken, hashAssistantInviteToken } from './assistant-invite-token';
-import { addRepTeamCoach, updateRepTeamCoachCapabilities } from './db';
+import { addStaffMember, getActiveTeamMembership } from './coach-membership';
 import { sanitizeAssistantGrants, type AssistantCapabilityGrants } from './coach-capabilities';
 
 // ── Org-level coach settings (organizations.coach_settings jsonb, mig 174) ────
@@ -252,20 +252,26 @@ export async function acceptAssistantInvite(
   }
   // (any other existing membership — a real role, or an active one — is left entirely as-is.)
 
-  // 2) rep_team_coaches assistant row (dedupe on the UNIQUE(program_year_id, user_id); a head coach
-  //    who accepts is already present, so we never re-add or demote them).
-  const { data: existingCoach } = await supabaseAdmin
-    .from('rep_team_coaches')
-    .select('id')
-    .eq('program_year_id', row.program_year_id)
-    .eq('user_id', userId)
-    .maybeSingle<{ id: string }>();
-  if (!existingCoach) {
-    const created = await addRepTeamCoach(row.program_year_id, row.team_id, row.org_id, userId, 'assistant_coach');
+  // 2) TEAM MEMBERSHIP (M1, 2026-08-16) — the access truth; the live season's record row is
+  //    projected by addStaffMember. A head coach who accepts their own invite is already an
+  //    active member, so we never re-add or DEMOTE them; anyone else lands (or is reactivated)
+  //    as an assistant with the invite's grants.
+  //
+  //    ⚠ A REVOKED former head coach who accepts an assistant invite reactivates as an
+  //    ASSISTANT — deliberate: the invite names the seat being offered, and the head coach (or
+  //    admin) chose "assistant" when sending it. Reactivation restores stored GRANTS when the
+  //    invite carries none, but the ROLE is always the invite's. (Flagged by /simplify's
+  //    altitude pass 2026-08-16; recorded as intended behavior, not an oversight.)
+  const existing = await getActiveTeamMembership(row.org_id, row.team_id, userId);
+  if (!existing) {
     const grants = row.initial_capabilities ? sanitizeAssistantGrants(row.initial_capabilities) : null;
-    if (grants && Object.keys(grants).length > 0) {
-      await updateRepTeamCoachCapabilities(created.id, grants);
-    }
+    await addStaffMember({
+      orgId: row.org_id,
+      teamId: row.team_id,
+      userId,
+      coachRole: 'assistant_coach',
+      capabilities: grants && Object.keys(grants).length > 0 ? grants : null,
+    });
   }
 
   return { ok: true, orgSlug: org.data.slug, teamId: row.team_id };

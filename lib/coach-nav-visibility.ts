@@ -14,6 +14,10 @@ import { hasRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilitie
  *     (check-in, evaluator links, decisions, offer emails); the archive records one.
  *   • Money points at the records hub; payment requests and allocations move money and stay
  *     live-season only.
+ *   • Staff (removed 2026-08-16, M1) — staff belongs to the TEAM now, one list with no season
+ *     dimension, so a finished season has no staff surface to offer: who coached it is a fact
+ *     in its record, and who may open things is decided by current membership alone. The old
+ *     per-season "remove access" control (governing rule 3) retired with the model.
  * Season's End leads because it is the archive's front door (D-F2). Icons resolve per
  * component; a door added here reaches both navs at once.
  */
@@ -38,7 +42,6 @@ export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
    * exact defect the live-nav tidy-up caught and avoided a day earlier.
    */
   { label: 'Insights',     href: '/history' },
-  { label: 'Staff',        href: '/staff' },
 ];
 
 /**

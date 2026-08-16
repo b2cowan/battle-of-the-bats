@@ -3,7 +3,8 @@ import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } f
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getRepTeam, getRepProgramYear, getRepTeamCoaches, addRepTeamCoach, removeRepTeamCoach, cleanupOrphanedCoachMembership } from '@/lib/db';
+import { getRepTeam, getRepProgramYear, getRepTeamCoaches, getRepTeamCoachForUserYear, getActiveRepProgramYear } from '@/lib/db';
+import { addStaffMember, removeStaffMember } from '@/lib/coach-membership';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { withObservability } from '@/lib/observability';
@@ -122,15 +123,36 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  try {
-    const coach = await addRepTeamCoach(programYear.id, team.id, ctx!.org.id, userId, coachRole);
-    return NextResponse.json({ coach }, { status: 201 });
-  } catch (e: any) {
-    if (e?.code === '23505') {
-      return NextResponse.json({ error: 'This user is already assigned as a coach for this program year' }, { status: 409 });
-    }
-    throw e;
+  // M1 (2026-08-16): an admin adds someone to the TEAM's staff, not to a season. A finished
+  // season's staff list is a record — it names who really coached it and is never edited.
+  if (programYear.status === 'completed' || programYear.status === 'archived') {
+    return NextResponse.json(
+      { error: 'This season is finished. Its staff list is a record — add coaches to the team’s current staff instead.' },
+      { status: 409 },
+    );
   }
+  // ⚠ And the URL's year must BE the team's current live season. Two open years can coexist
+  // (draft + draft — the create guard only blocks a second ACTIVE), and membership writes always
+  // project onto the newest one; operating this endpoint against the older year would silently
+  // file the coach somewhere the admin isn't looking and answer 201 with `coach: null`
+  // (adversarial review 2026-08-16). Refusing is the honest answer.
+  const liveYear = await getActiveRepProgramYear(team.id);
+  if (!liveYear || liveYear.id !== programYear.id) {
+    return NextResponse.json(
+      { error: 'Staff is managed on the team’s current season. Open the newest season and add them there.' },
+      { status: 409 },
+    );
+  }
+
+  // Membership + the live-season record row (projected by addStaffMember). Point lookups on the
+  // (program_year_id, user_id) unique index — never the whole staff list. Response keeps the row
+  // shape the admin screen lists.
+  if (await getRepTeamCoachForUserYear(programYear.id, userId)) {
+    return NextResponse.json({ error: 'This user is already assigned as a coach for this program year' }, { status: 409 });
+  }
+  await addStaffMember({ orgId: ctx!.org.id, teamId: team.id, userId, coachRole });
+  const coach = await getRepTeamCoachForUserYear(programYear.id, userId);
+  return NextResponse.json({ coach }, { status: 201 });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });
 
 export const DELETE = withObservability(async (req: Request,
@@ -169,10 +191,32 @@ export const DELETE = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Coach assignment not found' }, { status: 404 });
   }
 
-  await removeRepTeamCoach(coachId);
-  // Clean up an orphaned capability-less guest membership + revoke stale tournament chat access
-  // (consistent with the coach-side + oversight removal paths).
-  await cleanupOrphanedCoachMembership(ctx!.org.id, row.user_id as string).catch(() => {});
+  // M1: a finished season's staff list is a record — removal happens on the team's staff, not
+  // on history. (The per-season revocation this used to perform is retired with the model.)
+  const rowYear = await getRepProgramYear(yearId);
+  if (rowYear && (rowYear.status === 'completed' || rowYear.status === 'archived')) {
+    return NextResponse.json(
+      { error: 'This season is finished. Who coached it is part of its record — remove the coach from the team’s current staff instead.' },
+      { status: 409 },
+    );
+  }
+  // Same current-season guard as the POST: removal acts team-wide, and the live row it clears is
+  // the NEWEST open year's — acting from an older open year's screen would orphan the row the
+  // admin is actually looking at while revoking everywhere else.
+  const liveYearForDelete = await getActiveRepProgramYear(teamId);
+  if (!liveYearForDelete || liveYearForDelete.id !== yearId) {
+    return NextResponse.json(
+      { error: 'Staff is managed on the team’s current season. Open the newest season and remove them there.' },
+      { status: 409 },
+    );
+  }
+
+  // Revokes the TEAM membership (record kept) + deletes the live season's row + cleans up the
+  // guest org membership — removal means removed, everywhere, in one action.
+  const removed = await removeStaffMember(ctx!.org.id, teamId, row.user_id as string, ctx!.user.id);
+  if (!removed) {
+    console.warn('[program-year coaches DELETE] no active membership to revoke', { coachId });
+  }
   await revokeStaleChatMembershipsForCoach(row.user_id as string).catch(() => {});
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, removed });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });
