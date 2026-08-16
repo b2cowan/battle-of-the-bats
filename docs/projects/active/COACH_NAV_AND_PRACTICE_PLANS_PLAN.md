@@ -362,13 +362,8 @@ no Attendance door. 1970 unit tests pass; typecheck clean.
   CURRENT season's results with no season chip. This is the Chunk F class exactly: correct at the
   door, leaky one level below it. Out of this project's blast radius, found by its review, and the
   single most valuable thing left on this rail.
-- `hasTournamentHistory` still has no reader, and the review adds that it is not free: computing it
-  costs several sequential database round trips on every coaching-assignment load. Removing it means
-  editing `lib/db.ts`.
-- ~39 stale `a·Attendance` entries in the layout baseline (informational; `check:layout:prune`).
-- `pickNextOrMostRecent` compares timestamps as TEXT while its sibling in the same file was
-  deliberately moved to date comparison, with a comment warning about exactly this. One call from
-  the attendance page.
+- ✅ **DONE 2026-08-16** — `hasTournamentHistory`, the layout baseline and `pickNextOrMostRecent`,
+  together with the lineup builder's timezone. See §6 below.
 
 ### ✅ Phase 4 — Reorder the sidebar *(BUILT on dev 2026-08-15)*
 
@@ -444,10 +439,10 @@ Assert the read, not the mention.
 
 #### Known, deliberately not done
 
-`hasTournamentHistory` on the coaching-assignment row now has **no reader** — the shelf was its only
-consumer. Removing it means editing `lib/db.ts`, which is carrying another session's in-flight work,
-so it is left computed-but-unused and recorded here as a follow-up. (`hasTryoutSignal` stays either
-way: `StartNextSeasonModal` still uses it.)
+✅ **DONE 2026-08-16.** `hasTournamentHistory` on the coaching-assignment row had **no reader** — the
+shelf was its only consumer — and was left computed-but-unused because `lib/db.ts` was carrying
+another session's in-flight work. Removed in §6. (`hasTryoutSignal` stays either way:
+`StartNextSeasonModal` still uses it.)
 
 ---
 
@@ -482,9 +477,8 @@ way: `StartNextSeasonModal` still uses it.)
 
 ### Known, not fixed (deliberate)
 
-- **`lineups/[eventId]` (the lineup BUILDER, a different page) still formats in the reader's
-  timezone.** Outside this diff's blast radius, but it is now the one stale sibling beside a fixed
-  hub. Worth a follow-up.
+- ✅ **DONE 2026-08-16** — **`lineups/[eventId]` (the lineup BUILDER, a different page) formatted in
+  the reader's timezone.** It was the one stale sibling beside the hub Phase 1 fixed. See §6.
 - **Both hubs snapshot the clock once at mount**, so a "Run practice" / "Game day" button cannot
   appear or disappear on a tab left open for hours. Pre-existing accepted pattern shared with
   Lineups (only the Overview refreshes its clock); copied, not worsened.
@@ -536,7 +530,69 @@ Both wants the same re-seed — worth doing once, together, when that work settl
 
 ---
 
-## 6. Links
+## 6. The follow-up debt, cleared *(2026-08-16, on dev)*
+
+The four items §3 and §4 left behind — the "debt with no design content" list in
+`COACH_ARCHIVE_RAIL_AND_FOLLOWUPS_PROMPT.md` §D. No feature changed; nothing here needs a mockup.
+
+**1. The lineup BUILDER now prints the field's clock, not the reader's.** Phase 1 fixed the Lineups
+*hub* in three places and left its sibling — `lineups/[eventId]` — on the bare `toLocaleDateString`
+/ `toLocaleTimeString` pair. Both now go through `formatInOrgZone`, with the same options, so the
+two screens agree. ⚠ **This string is not only on screen:** it is the `dateLabel` stamped onto the
+printed lineup poster and the batting-order card, so a coach in another province was printing the
+wrong start time onto paper handed out at the field. Verified against
+`memory/reference_stored_date_formatting.md` first: `startsAt` is a stored instant, never a `date`
+column, so `formatInOrgZone` is the right one of the two formatters — and the date-correctness
+ratchet still reports **0 grandfathered sites** across 1540 files.
+
+**2. `hasTournamentHistory` is gone, and it took three queries with it.** The signal had no reader
+after Phase 4 deleted the "Explore" shelf, and it was not free: a `team_workspaces` lookup, an
+admin-link lookup, and — waiting on the first of those — a `basic_coach_team_registrations` lookup,
+on **every** coaching-assignment load. What remains is one batched `rep_tryouts` read, so
+`getCoachingNavSignals` (which answered two questions) became `getCoachingTryoutSignals` (which
+answers the one that still has a reader: `StartNextSeasonModal`). It now runs **concurrently with**
+the money badges instead of after them, since neither depends on the other.
+
+⚠ **The knowledge did not go with it.** `getMergedTournamentHistoryForRepTeam` already answers "has
+this rep team ever registered for a tournament" properly, across both bridges — it is now the only
+place that reads them together, which is recorded in its own comment so a future third bridge is
+added in one place rather than two.
+
+**3. `pickNextOrMostRecent` compares instants.** It sorted `startsAt` with `localeCompare` while its
+sibling in the same file carried a comment explaining why that is wrong — lexicographic order agrees
+with chronological order only while every row is serialised identically, "a property of the
+serializer, not of this list". One row with a `-04:00` offset instead of `Z` is enough to point the
+coach at the wrong game to take attendance for. Pinned by a test that fails on the old code, in both
+the upcoming and the past-only branch.
+
+**4. The layout baseline — and two things the follow-up list got wrong.**
+
+- The 38 stale `a·Attendance` entries are gone. ⚠ **But `check:layout:prune` wanted to remove 130**,
+  not 38. The extra ~92 stop reproducing for reasons that are not fixes: fixture labels that drift
+  between runs (`Season setup3/5`, the probe practice whose timestamp re-anchors to "now" and whose
+  text is part of the baseline KEY), the help guide's article list changing shape, and — the reason
+  this matters — **screens currently carrying another session's uncommitted money/sponsorship work.**
+  Pruning those would ratchet the baseline down onto working-tree state that is not committed, so
+  the run's write was replaced with a surgical removal of the `a·Attendance` keys alone. **Take the
+  tool's stale list as a proposal, not a verdict, while the tree is shared.**
+- ⚠ **"Informational only — the check still passes" was FALSE.** The coach sweep **fails**, with 141
+  new findings. **34 of them are Phase 1's own `a·Practice plans`** — the nav item this project
+  added, never baselined, reported on every coach screen at 1440. That is the other half of the
+  same nav change as the Attendance entries, so 32 were baselined here, each copying the reason
+  already carried by a sibling nav link **on the same screen at the same width** (identical 39px
+  grandfathered portal chrome — no new decision recorded). The 2 skipped sit on `coach-sponsor` /
+  `coach-sponsors-list`, screens that have no committed coverage to copy a reason from.
+- **The remaining ~107 findings are not this project's** — they are the sponsorship session's
+  in-flight screens (`a·Northside Physio`, the sponsors-list toolbar) plus the fixture-label drift
+  above. The coach group does not go green until that work lands and is baselined by its own owner.
+
+**Verification.** Typecheck clean; **1973 unit tests pass, 0 fail** (one new). Lint clean on every
+touched file (only lib/db.ts's pre-existing `any` warnings). Date-correctness ratchet at zero.
+Rendered layout check re-run over six coach screens after the baseline edit: **no new findings, no
+stale entries.** ⚠ `lib/db.ts` is a shared module — the dev server needs a restart before browser
+testing.
+
+## 7. Links
 
 - Mockups: `https://claude.ai/code/artifact/ed56fe2c-0749-4c18-b504-3d3b3ee6c7c7`
 - PM brief: `COACH_NAV_AND_PRACTICE_PLANS_PM_BRIEF.md`

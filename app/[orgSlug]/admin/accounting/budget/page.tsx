@@ -5,6 +5,7 @@ import { DollarSign, ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check }
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import TeamBudgetItems from '@/components/accounting/TeamBudgetItems';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -833,6 +834,13 @@ export default function OrgBudgetPage() {
           )}
         </>
       )}
+
+      {/* ⚠ THE CLUB'S ONLY WINDOW ONTO ITS TEAMS' OWN BUDGET VOCABULARY (mig 240). A coach's item
+          belongs to their team and appears in no other team's picker — which is the ruling, and
+          also means a club could otherwise never see that three teams have each invented the same
+          word. It sits on the org's own budget page because that is where the club's taxonomy is
+          already managed; publishing is the one action, and it is one-way. */}
+      {currentOrg?.slug && <TeamBudgetItems orgSlug={currentOrg.slug} canWrite={canWrite} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
@@ -32,6 +32,7 @@ import {
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
+import { isFundingKind } from '@/lib/coach-budget-totals';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 
 function fmt(n: number) {
@@ -141,6 +142,10 @@ type ScheduleRow = PayableItem & { source: 'team' | 'org' };
 const BLANK_RECORD = {
   description: '',
   category: '',
+  /** What this cost IS (mig 240): the category and the item, which together are the key both
+   *  reports group on. Empty until the coach chooses — nothing is assumed for them. */
+  budgetCategoryId: '',
+  budgetItemId: '',
   amount: '',
   notes: '',
   paymentMethod: '',
@@ -166,6 +171,8 @@ function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
   return {
     description: e.description,
     category: e.category ?? '',
+    budgetCategoryId: e.budgetCategoryId ?? '',
+    budgetItemId: e.budgetItemId ?? '',
     amount: String(e.amount),
     notes: e.notes ?? '',
     paymentMethod: e.paymentMethod ?? '',
@@ -205,8 +212,15 @@ export function ExpensesPayablesPanel({
   // Structured categories (owner decision 2026-07-08: free-text retired). The picker
   // shares the budget taxonomy so Budget vs. Actual's name-match join can't misfire.
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
-  const [budgetedCategories, setBudgetedCategories] = useState<Set<string>>(new Set());
-  const [hasBudgetPlan, setHasBudgetPlan] = useState(false);
+  /* Which category+item pairs this team actually BUDGETED for (mig 240) — cost lines only.
+     ⚠ IT EXISTS ONLY TO SAY SO AT ENTRY TIME. Nothing here is saved on the cost; the report
+     derives the same answer from the same two ids. A coach filing something the plan never
+     mentioned is told, in the moment, that it will appear as unplanned spending — the same honesty
+     the old category warning carried, one level finer. The panel already fetched the plan, so this
+     costs no extra request. */
+  const [budgetLines, setBudgetLines] = useState<
+    Array<{ categoryId: string | null; itemId: string | null }>
+  >([]);
 
   /* Which payable has its deposit/balance detail open. One at a time — the pair is tall, and a
      list with every row expanded is the card list this replaced. */
@@ -333,6 +347,12 @@ export function ExpensesPayablesPanel({
   const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
   const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
+  /** The category+item pairs this team budgeted for — rebuilt only when the plan reloads, not on
+   *  every keystroke in the open form (the form's state lives in this same component). */
+  const plannedPairs = useMemo(
+    () => new Set(budgetLines.map(l => `${l.categoryId ?? ''}|${l.itemId ?? ''}`)),
+    [budgetLines],
+  );
   const tagById = new Map(expenseTags.map(t => [t.id, t]));
 
   const load = useCallback(async () => {
@@ -341,7 +361,7 @@ export function ExpensesPayablesPanel({
     try {
       const [res, catRes, planRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/budget-items`),
+        fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
@@ -356,13 +376,9 @@ export function ExpensesPayablesPanel({
       if (planRes.ok) {
         const planData = await planRes.json();
         const plan = planData.plan as RepBudgetPlan | undefined;
-        const budgeted = new Set<string>(
-          (plan?.lines ?? [])
-            .map(l => (l.categoryName ?? '').toLowerCase())
-            .filter(Boolean),
-        );
-        setBudgetedCategories(budgeted);
-        setHasBudgetPlan((plan?.lines.length ?? 0) > 0);
+        setBudgetLines((plan?.lines ?? [])
+          .filter(l => !isFundingKind(l.lineKind))
+          .map(l => ({ categoryId: l.categoryId, itemId: l.itemId })));
         if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       }
     } catch (e: any) {
@@ -471,6 +487,14 @@ export function ExpensesPayablesPanel({
       const isPayable = isPayableForm;
       const amount = parseFloat(form.amount);
       if (!form.description.trim()) throw new Error('Description is required');
+      /* ⚠ THE ASTERISK ON "What is this?" HAS TO MEAN SOMETHING. It was drawn as required and the
+         comment above the field asserted it was, but nothing checked — so a coach could save a cost
+         with no category and no item at all, and it landed in the "Not itemized" bucket this whole
+         change exists to empty, silently. A label that promises and does not enforce is worse than
+         no label: it teaches coaches the field is optional. The server refuses too. */
+      if (categories.length > 0 && !form.budgetItemId) {
+        throw new Error('Pick a category and item — they line this cost up with your budget.');
+      }
       if (isNaN(amount) || amount <= 0) {
         throw new Error(isPayable ? 'Enter a valid total amount' : 'Enter a valid amount');
       }
@@ -478,6 +502,12 @@ export function ExpensesPayablesPanel({
       const common = {
         description:   form.description.trim(),
         category:      form.category.trim() || null,
+        /* mig 240 — what the cost IS. The server derives the text category from the item, so the
+           two keys the report reads can never disagree about one row.
+           ⚠ SENT ON EVERY SAVE, INCLUDING AN EDIT OF A PAID RECORD. Re-filing a cost against the
+           right item moves no money and posts nothing, so it is deliberately not one of the
+           figures `lockedFields` freezes — see the API route, which owns that ruling. */
+        budgetItemId: form.budgetItemId || null,
         notes:         form.notes.trim() || null,
         paymentMethod: form.paymentMethod.trim() || null,
         payeeId:       formPayee?.payeeId ?? null,
@@ -665,30 +695,126 @@ export function ExpensesPayablesPanel({
     );
   }
 
-  // Structured category picker (shared budget taxonomy) + an entry-time honesty hint:
-  // anything that won't match a budget line is flagged BEFORE it silently lands in
-  // "Unbudgeted" on Budget vs. Actual.
-  function categoryField(value: string, onChange: (v: string) => void) {
-    const unmatched = hasBudgetPlan && value !== '' && !budgetedCategories.has(value.toLowerCase());
-    const uncategorized = hasBudgetPlan && value === '';
+  /** The warning line both halves of the field use — one shape, so a category warning and a
+   *  budget warning can't drift into two different-looking sentences one above the other. */
+  function fieldWarning(text: string) {
     return (
-      <div className={styles.field}>
-        <label className={styles.label}>Category</label>
-        <select className={styles.select} value={value} onChange={e => onChange(e.target.value)}>
-          <option value="">— No category —</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.name}>{c.name}</option>
-          ))}
-        </select>
-        {(unmatched || uncategorized) && (
-          <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--warning)', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
-            <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
-            <span>
-              {unmatched
-                ? 'Not in your budget plan — this will show as Unbudgeted in Budget vs. Actual.'
-                : 'Uncategorized spending shows as Unbudgeted in Budget vs. Actual.'}
-            </span>
-          </p>
+      <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--warning)', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
+        <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
+        <span>{text}</span>
+      </p>
+    );
+  }
+
+  /**
+   * WHAT IS THIS COST? — category, then item (owner ruling 2026-08-15).
+   *
+   * ⚠ THIS REPLACED "WHAT IS THIS AGAINST?", A CONTROL EXACTLY ONE DAY OLD, and the reasoning is
+   * worth keeping because it is a rule about the whole report rather than about this field. That
+   * control asked the coach to point at a BUDGET LINE, because two lines sharing an item were
+   * ambiguous and their actuals could not be split. The ruling that such lines simply SUM into one
+   * row dissolved the ambiguity — so the category+item pair became a complete answer on its own,
+   * and a line pointer beside it was a second classification that could only agree or drift.
+   *
+   * ⚠ AND "NOT IN THE BUDGET" WENT WITH IT. Whether something was planned is no longer a thing a
+   * coach declares: a budget line exists for this category and item, or it does not, and the report
+   * works that out. The coach says what the cost IS. Nothing is hidden by this — spending on
+   * something unplanned now gets its own flagged row on Budget vs. Actual, which is more visible
+   * than the "Unbudgeted" list it used to fall into, not less.
+   *
+   * ⚠ THE ITEM IS REQUIRED, and that is what makes both reports line up. A cost recording only a
+   * category can be placed under a heading and no further, which is the entire defect this change
+   * closes. A team that has never built a plan still picks from the standard library, so its
+   * spending is classified from day one and its first budget lines meet it already sorted.
+   *
+   * Not extracted into a component: ONE call site (the merged Add/Edit modal serves both kinds and
+   * both modes). Extract it when the recurring-payables group arrives, not in anticipation of it.
+   */
+  function budgetItemField() {
+    const category = categories.find(c => c.id === form.budgetCategoryId) ?? null;
+    const items = category?.items ?? [];
+    const chosenItem = items.find(i => i.id === form.budgetItemId) ?? null;
+
+    /* Does the team's plan actually budget for this? Derived here purely to SAY so at entry time —
+       the report derives it again from the same two ids, and neither stores an answer.
+       The Set itself is memoised above the form: this function runs on every keystroke while the
+       modal is open, and the plan it is built from only changes on a reload. */
+    const unplanned = Boolean(
+      budgetLines.length > 0 && form.budgetCategoryId && form.budgetItemId
+      && !plannedPairs.has(`${form.budgetCategoryId}|${form.budgetItemId}`),
+    );
+
+    return (
+      <div className={`${styles.field} ${styles.formGridFull}`}>
+        <label className={styles.label}>What is this? *</label>
+        <div className={styles.stack640} style={{ gap: '0.6rem' }}>
+          <select
+            className={styles.select}
+            style={{ flex: 1, minWidth: 0 }}
+            aria-label="Category"
+            value={form.budgetCategoryId}
+            onChange={e => setForm(f => {
+              /* ⚠ CLEARING THE ITEM MUST ALSO CLEAR ITS PRE-FILLED NAME. Leaving the description
+                 behind was a real defect: with the item blank, the item-select below can no longer
+                 recognise the text as its own pre-fill, so picking a NEW item leaves the OLD item's
+                 name sitting on the record — "Entry fees" saved against "Umpire fees", which is the
+                 exact name/thing mismatch this whole change exists to remove, reintroduced through
+                 the category control. Words the coach typed themselves are still never touched. */
+              const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
+                .find(i => i.id === f.budgetItemId) ?? null;
+              const untouched = previous !== null && f.description.trim() === previous.name;
+              return {
+                ...f,
+                budgetCategoryId: e.target.value,
+                // Changing the category invalidates the item under it — an item belongs to exactly
+                // one category, so keeping the old one would produce a pair that cannot exist.
+                budgetItemId: '',
+                description: untouched ? '' : f.description,
+                category: categories.find(c => c.id === e.target.value)?.name ?? '',
+              };
+            })}
+          >
+            <option value="">— Category —</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          <select
+            className={styles.select}
+            style={{ flex: 1, minWidth: 0 }}
+            aria-label="Item"
+            disabled={!category}
+            value={form.budgetItemId}
+            onChange={e => {
+              const item = items.find(i => i.id === e.target.value) ?? null;
+              setForm(f => {
+                /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a
+                   description that is empty, or one still holding the name of the item being
+                   switched AWAY from — text this control put there and nobody has touched. */
+                const previous = items.find(i => i.id === f.budgetItemId) ?? null;
+                const untouched = f.description.trim() === ''
+                  || (previous !== null && f.description.trim() === previous.name);
+                return {
+                  ...f,
+                  budgetItemId: e.target.value,
+                  description: untouched ? (item?.name ?? '') : f.description,
+                };
+              });
+            }}
+          >
+            <option value="">— Item —</option>
+            {items.map(i => (
+              <option key={i.id} value={i.id}>{i.name}</option>
+            ))}
+          </select>
+        </div>
+        {/* Honest at entry time, exactly as the old category warning was — one level finer, and
+            now describing a row the coach will actually see rather than a list they might not. */}
+        {unplanned && fieldWarning(
+          `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
+        )}
+        {!form.budgetItemId && form.budgetCategoryId !== '' && fieldWarning(
+          'Pick an item too — it is what lines this cost up with your budget.',
         )}
       </div>
     );
@@ -1312,6 +1438,18 @@ export function ExpensesPayablesPanel({
                 </p>
               )}
 
+              {/* ⚠ THE BUDGET LINE IS ASKED BEFORE THE DESCRIPTION (owner ruling 2026-08-15), and
+                  the order is the feature. Choosing a line NAMES the record — the description
+                  arrives pre-filled with the line's own name, ready to be typed over — so the
+                  question that used to be the first thing a coach typed is usually already
+                  answered by the time they reach it. Asked the other way round, the pre-fill would
+                  land on a field they had just finished filling in.
+
+                  ⚠ ONE CALL SITE, BOTH KINDS, ADD AND EDIT. The two Add modals merged into this one
+                  form on 2026-08-15, which is why the budget-line field only has to be placed once
+                  to reach an expense, a payable, and every edit of either. */}
+              {budgetItemField()}
+
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
                 <input
@@ -1320,9 +1458,15 @@ export function ExpensesPayablesPanel({
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder={isPayableForm ? 'e.g. Spring tournament entry, summer dome block' : 'e.g. Diamond rental'}
                 />
+                {/* ⚠ STILL REQUIRED, AND IT IS NOT THE NOTE (that field is optional, under Details).
+                    This text IS the record: it is written onto the team's books as the ledger entry
+                    when the cost is marked paid, it is how a delete finds the entry to reverse on
+                    anything paid before 2026-08-15 (those rows store no entry id and are matched by
+                    description), and it is the only thing naming the row in the lists, the Payment
+                    schedule, the exports and the delete confirmation. Blank, a record is nameless in
+                    five places and a paid one can become impossible to reverse cleanly. Pre-filling
+                    it from the budget line is the answer to the typing, not making it optional. */}
               </div>
-
-              {categoryField(form.category, v => setForm(f => ({ ...f, category: v })))}
 
               {/* ⚠ A LOCKED FIGURE IS SHOWN WITH ITS VALUE AND ITS REASON, never greyed into
                   silence (owner ruling 2026-08-15). A coach has to be able to read the amount they

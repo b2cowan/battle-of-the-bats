@@ -1658,6 +1658,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "budget_items",
+        "pos": 10,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "chat_message_reactions",
         "pos": 1,
         "column_name": "id",
@@ -12539,6 +12548,51 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_expenses",
+        "pos": 29,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 30,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 1,
+        "column_name": "fundraiser_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 2,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_game_moments",
         "pos": 1,
         "column_name": "id",
@@ -17210,6 +17264,13 @@
         "constraint_name": "budget_items_org_id_fkey"
       },
       {
+        "table_name": "budget_items",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "budget_items_team_id_fkey"
+      },
+      {
         "table_name": "chat_message_reactions",
         "column_name": "message_id",
         "foreign_table": "chat_messages",
@@ -18473,14 +18534,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -18501,14 +18562,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -19192,6 +19253,20 @@
       },
       {
         "table_name": "rep_team_expenses",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
@@ -19245,6 +19320,20 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_expenses_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "column_name": "fundraiser_id",
+        "foreign_table": "rep_fundraisers",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_fundraiser_tags_fundraiser_id_fkey"
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_fundraiser_tags_tag_id_fkey"
       },
       {
         "table_name": "rep_team_game_moments",
@@ -20425,13 +20514,18 @@
       },
       {
         "tablename": "budget_items",
+        "indexname": "budget_items_team_idx",
+        "indexdef": "CREATE INDEX budget_items_team_idx ON public.budget_items USING btree (team_id) WHERE (team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "budget_items",
         "indexname": "budget_items_unique_default_name",
         "indexdef": "CREATE UNIQUE INDEX budget_items_unique_default_name ON public.budget_items USING btree (category_id, lower(name)) WHERE (org_id IS NULL)"
       },
       {
         "tablename": "budget_items",
-        "indexname": "budget_items_unique_org_name",
-        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
+        "indexname": "budget_items_unique_scope_name",
+        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_scope_name ON public.budget_items USING btree (category_id, org_id, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(name)) WHERE (org_id IS NOT NULL)"
       },
       {
         "tablename": "chat_message_reactions",
@@ -22110,6 +22204,11 @@
       },
       {
         "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_budget_item",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_budget_item ON public.rep_team_expenses USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
         "indexname": "idx_rep_team_expenses_deposit_entry",
         "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
       },
@@ -22122,6 +22221,16 @@
         "tablename": "rep_team_expenses",
         "indexname": "rep_team_expenses_year_idx",
         "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_fundraiser_tags",
+        "indexname": "rep_team_fundraiser_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_fundraiser_tags_pkey ON public.rep_team_fundraiser_tags USING btree (fundraiser_id, tag_id)"
+      },
+      {
+        "tablename": "rep_team_fundraiser_tags",
+        "indexname": "rep_team_fundraiser_tags_tag_idx",
+        "indexdef": "CREATE INDEX rep_team_fundraiser_tags_tag_idx ON public.rep_team_fundraiser_tags USING btree (tag_id)"
       },
       {
         "tablename": "rep_team_game_moments",
@@ -24570,6 +24679,12 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_expenses",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_fundraiser_tags",
         "detail": "ENABLED",
         "check_clause": null
       },

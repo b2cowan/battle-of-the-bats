@@ -22,10 +22,15 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
     sortOrder:  row.sort_order as number,
     isDefault:  row.is_default as boolean,
     createdAt:  row.created_at as string,
-    items:      ((row.budget_items ?? []) as Record<string, unknown>[]).map(item => ({
+    // ⚠ TEAM-OWNED ITEMS ARE EXCLUDED FROM THE ADMIN CATEGORY LIST (mig 240). This list feeds the
+    // org's own budget tools, where a single team's private vocabulary has no business appearing;
+    // the club sees those on the dedicated team-items screen, where each carries the team that owns
+    // it and can be published to everyone.
+    items:      ((row.budget_items ?? []) as Record<string, unknown>[]).filter(item => !item.team_id).map(item => ({
       id:              item.id as string,
       categoryId:      item.category_id as string,
       orgId:           item.org_id as string | null,
+      teamId:          (item.team_id as string | null) ?? null,
       name:            item.name as string,
       suggestedAmount: item.suggested_amount as number | null,
       sortOrder:       item.sort_order as number,

@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import Link from 'next/link';
-import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
@@ -11,7 +11,6 @@ import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { ALLOCATION_COLUMNS, allocationRows } from '@/lib/coach-money-exports';
-import { moneySectionHref } from '@/lib/coach-money-links';
 
 interface SplitWithInstallments {
   id: string;
@@ -32,6 +31,52 @@ function fmtDate(s: string) {
   if (!s) return '—';
   const d = new Date(s.length === 10 ? s + 'T00:00:00' : s);
   return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+/**
+ * What an allocation IS — the pair of cards under the empty state (owner-approved mockup
+ * 2026-08-15). Same shape as the Expense/Payable comparison on Expenses & Payables, because a
+ * coach meeting an unfamiliar Money tab should meet the same teaching device every time.
+ *
+ * ⚠ THE EMPTY STATE IS THE ONLY PLACE A COACH EVER LEARNS THIS. Unlike Expenses, this screen has
+ * no Add form whose subtitle could carry it and no toolbar at all while it is empty — a coach
+ * whose club has never billed them sees this once and nothing else. So it answers the two
+ * questions a blank screen actually raises: where does one come from, and what am I meant to do
+ * when one arrives.
+ *
+ * ⚠ NO CTA, EVER. A coach cannot create an allocation, which is precisely why the block above
+ * uses the QUIET empty-state variant (addendum §iii — the trigger is the absence of an action on
+ * the block). Adding a button here would break that pairing.
+ */
+function AllocationExplainer() {
+  return (
+    <>
+      <div className={styles.moneyKindCompare}>
+        <div className={styles.moneyKindCard}>
+          <h4>Where it comes from</h4>
+          <p>
+            Your club&apos;s <strong>owner or treasurer</strong> decides the split. You can&apos;t add or
+            change one here — this tab is the bill, not the chequebook.
+          </p>
+          <p className={styles.moneyKindEgs}>Field and diamond fees · league insurance · association dues</p>
+        </div>
+        <div className={styles.moneyKindCard}>
+          <h4>What you do with it</h4>
+          <p>
+            A share arrives <strong>split into instalments</strong> with due dates. Mark each one paid as
+            you pay it and the club&apos;s books follow.
+          </p>
+          <p className={styles.moneyKindEgs}>
+            Anything falling due soon also appears in Next 30 days on your Money overview
+          </p>
+        </div>
+      </div>
+      <p className={`${styles.moneyKindTest} ${styles.moneyKindTestStart}`}>
+        <strong>Not the same as an expense:</strong> allocations are money owed to your own club.
+        Anything you owe an outside supplier belongs on Expenses &amp; Payables.
+      </p>
+    </>
+  );
 }
 
 export function OrgAllocationsPanel({
@@ -129,7 +174,11 @@ export function OrgAllocationsPanel({
         icon={Building2}
         title="Org Allocations"
         helpLabel="Org Allocations"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-navigation', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        /* ⚠ `premium-money-org`, the sub-topic that actually answers THIS screen. It pointed at
+           "Getting around the Money hub" until 2026-08-15 only because no org-money answer
+           existed to point at — so the "?" on a screen a coach was confused by opened a tour of
+           the tab bar. */
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-org', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* Allocations is READ-ONLY and had no control row at all — it gains one for this, and
@@ -161,7 +210,15 @@ export function OrgAllocationsPanel({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : splits.length === 0 ? (
-        <div className={styles.emptyState}>No allocations have been assigned to this team yet.</div>
+        <>
+          <CoachEmptyState
+            quiet
+            icon={<Building2 size={18} aria-hidden />}
+            headline="Your club hasn't billed this team yet"
+            description="When your club splits a shared cost across its teams, this team's share shows up here with its own payment schedule."
+          />
+          <AllocationExplainer />
+        </>
       ) : (
         <>
           {/* Summary */}
@@ -223,11 +280,13 @@ export function OrgAllocationsPanel({
                       )}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--success-light)' }}>{fmt(splitCollected)} paid</span>
-                    {splitOutstanding > 0 && (
-                      <span style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmt(splitOutstanding)} due</span>
-                    )}
+                  <div className={styles.allocFigures}>
+                    <span className={`${styles.allocFigure} ${styles.allocFigurePaid}`}>{fmt(splitCollected)} paid</span>
+                    {/* Always present — see the note on .allocFigure. A fully-paid share renders
+                        an empty slot rather than collapsing the column. */}
+                    <span className={`${styles.allocFigure} ${styles.allocFigureDue}`}>
+                      {splitOutstanding > 0 ? `${fmt(splitOutstanding)} due` : ''}
+                    </span>
                     {isOpen
                       ? <ChevronUp size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', flexShrink: 0 }} />
                       : <ChevronDown size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', flexShrink: 0 }} />
@@ -272,7 +331,12 @@ export function OrgAllocationsPanel({
                                       <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
                                     </span>
                                   ) : (
-                                    <span className={`${styles.badge} ${overdue ? styles.badgeCompleted : styles.badgeDraft}`}>
+                                    /* ⚠ `badgeOverdue`, NOT `badgeCompleted`. This row said
+                                       "Overdue" in the AMBER of a completed season while the
+                                       Overdue summary tile directly above it — and every other
+                                       overdue mark in the portal — said it in red. The badge
+                                       existed; this table had simply never been pointed at it. */
+                                    <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
                                       {overdue ? 'Overdue' : 'Unpaid'}
                                     </span>
                                   )}
@@ -303,17 +367,12 @@ export function OrgAllocationsPanel({
         </>
       )}
 
-      {/* Cross-link (review f4-7). Both org-money pages were reachable only from the Money
-          hub and neither mentioned the other, so a coach looking at what they owe had no
-          route to the page that pays it. */}
-      {!loading && !error && (
-        <p className={styles.muted} style={{ fontSize: '0.8rem', marginTop: '1.25rem' }}>
-          Paying the org back, or claiming a reimbursement?{' '}
-          <Link href={moneySectionHref(base, 'payment-requests')} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
-            Open Payment Requests <ArrowRight size={12} aria-hidden />
-          </Link>
-        </p>
-      )}
+      {/* ⚠ THE PAYMENT-REQUESTS CROSS-LINK WAS REMOVED HERE (owner ruling 2026-08-15), and its
+          twin on Payment Requests with it. It was added when both org-money screens were
+          standalone pages reachable only from the Money hub; since they became TABS the row
+          above already sits two words away, and a body-copy link to the neighbouring tab reads
+          as though the two are alternatives to each other rather than opposite directions of
+          the same relationship. Do not reinstate one without reinstating both. */}
     </div>
   );
 }

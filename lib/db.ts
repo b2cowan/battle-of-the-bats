@@ -3889,10 +3889,12 @@ export interface CoachingAssignment {
   capabilities: CoachCapabilities;
   overdueInstallments: number;
   upcomingEventsCount: number;
-  /** "In use yet?" nav signals — keep optional areas (Tryouts, Tournaments) out of the primary
-   *  nav groups until a team actually uses them (still surfaced under "Explore"). */
+  /** Has this season's tryout workspace been opened yet? Read by `StartNextSeasonModal` alone — it
+   *  offers to carry a tryout list forward only when there is one. ⚠ This was one of two "in use
+   *  yet?" signals feeding the sidebar's deleted "Explore" shelf; the other (`hasTournamentHistory`)
+   *  left with it (2026-08-16), because a signal nothing reads is not free — it cost three queries,
+   *  one of them sequential, on every coaching-assignment load. */
   hasTryoutSignal: boolean;
-  hasTournamentHistory: boolean;
 }
 
 type CoachingAssignmentRow = {
@@ -4055,82 +4057,28 @@ export async function getCoachTeamMilestones(
 }
 
 /**
- * Cheap, read-only "is this area in use yet?" signals for the coach nav. Lets the sidebar and
- * bottom-nav keep optional areas (Tryouts, Tournaments) out of the primary groups until a team
- * actually uses them — while still surfacing them under "Explore". All batched; never writes.
+ * Which of these seasons already have a tryout workspace — `rep_tryouts` is 1:1 with a program year
+ * and the row is written the first time a coach opens the tryouts area, so the presence of one is
+ * "this team has run a tryout here". One batched read; never writes.
+ *
+ * ⚠ **This used to answer two questions and now answers one.** It was `getCoachingNavSignals`, and
+ * its second signal (`hasTournamentHistory`) existed only to decide whether the sidebar showed
+ * Tournaments in its group or demoted it to an "Explore" shelf. That shelf was deleted 2026-08-15
+ * (the sidebar no longer rearranges itself), which left the signal with no reader — and it was not
+ * free: three more queries, one of which had to wait for another's output, on a page-load-critical
+ * path taken on every coaching-assignment load. Removed 2026-08-16. If a future surface needs
+ * "has this rep team ever registered for a tournament", `getMergedTournamentHistoryForRepTeam`
+ * (lib/basic-coach-teams.ts) already answers it properly, across both bridges.
  */
-async function getCoachingNavSignals(
-  keys: { teamId: string; programYearId: string }[],
-): Promise<Map<string, { hasTryoutSignal: boolean; hasTournamentHistory: boolean }>> {
-  const result = new Map<string, { hasTryoutSignal: boolean; hasTournamentHistory: boolean }>();
-  for (const k of keys) result.set(k.teamId, { hasTryoutSignal: false, hasTournamentHistory: false });
-  if (keys.length === 0) return result;
-
-  const programYearIds = [...new Set(keys.map(k => k.programYearId))];
-  const teamIds = [...new Set(keys.map(k => k.teamId))];
-
-  // Tryouts, workspace-bridge, and admin-link are all independent of one another (none depends on
-  // another's result) — run them in parallel. Only the basic-registrations lookup below depends on
-  // the workspace query's output (basicIds), so it stays sequential after this batch.
-  const [
-    { data: tryoutRows, error: tryoutErr },
-    { data: wsRows, error: wsErr },
-    { data: repLinkRows, error: repLinkErr },
-  ] = await Promise.all([
-    // Tryouts: a tryout workspace exists for this season (rep_tryouts is 1:1 with a program year;
-    // the row is created the first time a coach opens the tryouts area — so the item graduates from
-    // Explore into Squad once they've used it once).
-    supabaseAdmin
-      .from('rep_tryouts')
-      .select('program_year_id')
-      .in('program_year_id', programYearIds),
-    // Tournaments: rep team → team workspace → basic-coach team → any tournament registration.
-    // We read the already-linked basic_coach_team_id only (no lazy source_tournament_team_id repair
-    // here — this stays a read-only nav-load path). If a workspace's link hasn't been backfilled yet,
-    // the signal is false and Tournaments stays under "Explore" (still reachable, not a dead end); it
-    // self-heals on the coach's next load after the Tournaments page visit writes the link back.
-    supabaseAdmin
-      .from('team_workspaces')
-      .select('rep_team_id, basic_coach_team_id')
-      .in('rep_team_id', teamIds),
-    // Admin-link bridge (rep_team_tournament_registrations, mig 196) — an org-created rep team with
-    // no workspace at all still graduates Tournaments out of Explore once an admin links it directly.
-    // One batched query, same cheap-read-path rule as the lookups above.
-    supabaseAdmin
-      .from('rep_team_tournament_registrations')
-      .select('rep_team_id')
-      .in('rep_team_id', teamIds),
-  ]);
-  if (tryoutErr) console.error('[getCoachingNavSignals] tryout signal query failed (defaulting Tryouts to Explore):', tryoutErr.message);
-  const tryoutYears = new Set((tryoutRows ?? []).map((r: any) => r.program_year_id as string));
-
-  if (wsErr) console.error('[getCoachingNavSignals] workspace lookup failed (defaulting Tournaments to Explore):', wsErr.message);
-  const basicIdByTeam = new Map<string, string>();
-  for (const w of (wsRows ?? []) as { rep_team_id: string | null; basic_coach_team_id: string | null }[]) {
-    if (w.rep_team_id && w.basic_coach_team_id) basicIdByTeam.set(w.rep_team_id, w.basic_coach_team_id);
-  }
-  const basicIds = [...new Set([...basicIdByTeam.values()])];
-  let registeredBasicIds = new Set<string>();
-  if (basicIds.length > 0) {
-    const { data: regRows, error: regErr } = await supabaseAdmin
-      .from('basic_coach_team_registrations')
-      .select('basic_coach_team_id')
-      .in('basic_coach_team_id', basicIds);
-    if (regErr) console.error('[getCoachingNavSignals] tournament-registration lookup failed (defaulting Tournaments to Explore):', regErr.message);
-    registeredBasicIds = new Set((regRows ?? []).map((r: any) => r.basic_coach_team_id as string));
-  }
-
-  if (repLinkErr) console.error('[getCoachingNavSignals] admin-link lookup failed (defaulting Tournaments to Explore):', repLinkErr.message);
-  const adminLinkedTeamIds = new Set((repLinkRows ?? []).map((r: any) => r.rep_team_id as string));
-
-  for (const k of keys) {
-    const basicId = basicIdByTeam.get(k.teamId);
-    result.set(k.teamId, {
-      hasTryoutSignal: tryoutYears.has(k.programYearId),
-      hasTournamentHistory: (!!basicId && registeredBasicIds.has(basicId)) || adminLinkedTeamIds.has(k.teamId),
-    });
-  }
-  return result;
+async function getCoachingTryoutSignals(programYearIds: string[]): Promise<Set<string>> {
+  const ids = [...new Set(programYearIds)];
+  if (ids.length === 0) return new Set();
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryouts')
+    .select('program_year_id')
+    .in('program_year_id', ids);
+  if (error) console.error('[getCoachingTryoutSignals] tryout signal query failed (treated as no tryout):', error.message);
+  return new Set((data ?? []).map((r: any) => r.program_year_id as string));
 }
 
 /** Options shared by the two assignment lookups. `isTeamWorkspace` lets a caller that
@@ -4208,10 +4156,12 @@ export async function getCoachingAssignmentsForUser(
   const accessible = await loadCoachAssignmentRows(orgId, userId, ['draft', 'active'], opts);
 
   const programYearIds = accessible.map(r => r.program_year_id);
-  const badges = await getCoachingBadges(programYearIds);
-  const navSignals = await getCoachingNavSignals(
-    accessible.map(r => ({ teamId: r.team_id, programYearId: r.program_year_id })),
-  );
+  // Independent of one another, and both on the path every coach load waits for — so they go
+  // together rather than one after the other.
+  const [badges, tryoutYears] = await Promise.all([
+    getCoachingBadges(programYearIds),
+    getCoachingTryoutSignals(programYearIds),
+  ]);
 
   return accessible.map(r => ({
     coachId: r.id,
@@ -4231,8 +4181,7 @@ export async function getCoachingAssignmentsForUser(
     ),
     overdueInstallments:  badges.get(r.program_year_id)?.overdueInstallments  ?? 0,
     upcomingEventsCount:  badges.get(r.program_year_id)?.upcomingEventsCount   ?? 0,
-    hasTryoutSignal:       navSignals.get(r.team_id)?.hasTryoutSignal       ?? false,
-    hasTournamentHistory:  navSignals.get(r.team_id)?.hasTournamentHistory  ?? false,
+    hasTryoutSignal:      tryoutYears.has(r.program_year_id),
   }));
 }
 
@@ -4242,9 +4191,9 @@ export async function getCoachingAssignmentsForUser(
  *
  * ⚠ **Deliberately lean, and that is the whole point.** The only other way to answer "what could
  * this coach do in 2025?" was `getCoachingAssignmentsForUser` + `getClosedCoachingAssignmentsForUser`,
- * and the open half of that pair is expensive: it also fetches money badges and nav signals
- * (`getCoachingBadges` + `getCoachingNavSignals`, several sequential round trips) that a
- * capability question has no use for. This is one query for all four statuses instead.
+ * and the open half of that pair is expensive: it also fetches money badges and the tryout signal
+ * (`getCoachingBadges` + `getCoachingTryoutSignals`, extra round trips) that a capability question
+ * has no use for. This is one query for all four statuses instead.
  */
 export async function getCoachAssignmentCapabilitiesForTeam(
   orgId: string,
@@ -9690,6 +9639,8 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     expenseType: r.expense_type,
     description: r.description,
     category: r.category ?? null,
+    budgetItemId: r.budget_item_id ?? null,
+    budgetCategoryId: r.budget_category_id ?? null,
     amount: Number(r.amount),
     expensePaidAt: r.expense_paid_at ?? null,
     depositAmount: r.deposit_amount != null ? Number(r.deposit_amount) : null,
@@ -9740,6 +9691,10 @@ export async function createRepTeamExpense(fields: {
   expenseType: 'expense' | 'tournament_payable';
   description: string;
   category?: string | null;
+  /** mig 240 — what this cost IS, in the budget's own words. The CALLER validates the item is one
+   *  this team can see and derives the text `category` from it; this writes what it is given. */
+  budgetItemId?: string | null;
+  budgetCategoryId?: string | null;
   amount: number;
   depositAmount?: number | null;
   depositDueDate?: string | null;
@@ -9767,6 +9722,8 @@ export async function createRepTeamExpense(fields: {
       expense_type:     fields.expenseType,
       description:      fields.description,
       category:         fields.category ?? null,
+      budget_item_id:     fields.budgetItemId ?? null,
+      budget_category_id: fields.budgetCategoryId ?? null,
       amount:           fields.amount,
       deposit_amount:   fields.depositAmount ?? null,
       deposit_due_date: fields.depositDueDate ?? null,
@@ -9790,6 +9747,9 @@ export async function createRepTeamExpense(fields: {
 export async function updateRepTeamExpense(expenseId: string, fields: {
   description?: string;
   category?: string | null;
+  /** mig 240 — re-filing a cost against a different item. Validated at the door, like the create. */
+  budgetItemId?: string | null;
+  budgetCategoryId?: string | null;
   notes?: string | null;
   amount?: number;
   paymentMethod?: string | null;
@@ -9809,6 +9769,8 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.category !== undefined) patch.category = fields.category;
+  if (fields.budgetItemId !== undefined) patch.budget_item_id = fields.budgetItemId;
+  if (fields.budgetCategoryId !== undefined) patch.budget_category_id = fields.budgetCategoryId;
   if (fields.notes !== undefined) patch.notes = fields.notes;
   if (fields.amount !== undefined) patch.amount = fields.amount;
   if (fields.paymentMethod !== undefined) patch.payment_method = fields.paymentMethod;

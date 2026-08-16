@@ -232,15 +232,25 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     // The actual half, matched the way the report matches it: category name, case-insensitive.
     const categoryNames = new Set((lines ?? []).map(l => l.budget_categories?.name?.toLowerCase()).filter(Boolean));
     const { data: expenses } = await db.from('rep_team_expenses')
-      .select('description, category, amount, expense_type, expense_paid_at, balance_amount, balance_due_date, balance_paid_at')
+      .select('description, category, budget_item_id, amount, expense_type, expense_paid_at, balance_amount, balance_due_date, balance_paid_at')
       .eq('program_year_id', py.id);
     check(expenses?.length === state.expenses.length, `${expenses?.length} expenses logged against the plan`);
     const matched = (expenses ?? []).filter(e => categoryNames.has((e.category ?? '').toLowerCase()));
+    const unbudgetedCost = (expenses ?? []).find(e => !categoryNames.has((e.category ?? '').toLowerCase()));
     check(matched.length === (expenses ?? []).length - 1,
       'all but one expense matches a budget line by category — and exactly one does not, on purpose');
-    const unbudgeted = (expenses ?? []).find(e => !categoryNames.has((e.category ?? '').toLowerCase()));
-    check(!!unbudgeted && Number(unbudgeted.amount) > 0,
-      `the unbudgeted one is real money ("${unbudgeted?.description}", $${unbudgeted?.amount})`);
+    /* ⚠ AND EVERY ONE OF THEM NAMES AN ITEM (mig 240). A category alone puts the money under a
+       heading and no further — the report groups on category + item, so a world seeded without
+       items shows a dash beside every row on the screen a prospect is most likely to open. */
+    check((expenses ?? []).every(e => e.budget_item_id),
+      'every 14U cost names a budget item, so the report reads item by item');
+    /* ⚠ AND THE UNBUDGETED ONE STILL NAMES ONE — which is the whole improvement. The team photo is
+       filed as Events / Photo Day, a category this plan never mentions, so it appears as its own
+       flagged "not budgeted" row rather than as an unclassified line in a list at the foot. */
+    check(!!unbudgetedCost?.budget_item_id,
+      'the deliberately unbudgeted cost still names its item — it appears as its own flagged row');
+    check(!!unbudgetedCost && Number(unbudgetedCost.amount) > 0,
+      `the unbudgeted one is real money ("${unbudgetedCost?.description}", $${unbudgetedCost?.amount})`);
     const payable = (expenses ?? []).find(e => e.expense_type === 'tournament_payable');
     check(!!payable && !payable.balance_paid_at && payable.balance_due_date > today,
       'a tournament balance is still owed, and it falls due AHEAD of today');
@@ -507,12 +517,29 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     const unsigned = (roster ?? []).filter(r => !signed.has(r.id));
     check(roster?.length === 12 && unsigned.length === 1, '12 on the roster, exactly one waiver unsigned');
 
-    // Two past practices are written up, and NO upcoming one is — the Overview's one thing stays
-    // Saturday's lineup rather than competing with a plan waiting to be run.
+    /**
+     * THREE practices are written up — two behind us, and one on this week's Thursday.
+     *
+     * ⚠ THIS ASSERTION USED TO READ "two … both already behind us", AND WENT STALE THE MOMENT THE
+     * OWNER RULED OTHERWISE (2026-08-15, COACH_NAV_AND_PRACTICE_PLANS_PLAN.md §5). Seeding plans
+     * on past practices only was right while a plan was invisible unless you opened the practice.
+     * The new Practice plans hub changed that: a prospect clicking that door met "Coming up" with
+     * every practice marked **No plan** and a "Needs a plan · 3" chip — the shop window's loudest
+     * read being that the coach is behind. So a third plan went onto an upcoming practice. The
+     * world module was updated; this check was not, and only a re-seed could reveal that.
+     *
+     * ⚠ DO NOT ASSERT "exactly one upcoming". P-THU-0 is ahead Sunday→Wednesday and behind
+     * Thursday→Saturday (the 12U has no practices past this week), so an upcoming-count assertion
+     * would pass for half the week and fail for the other half — a check that depends on the day
+     * you run it is worse than no check. Two-or-more behind us is true every day.
+     *
+     * Still safe for the Overview: `resolveOverviewAnchor` reads the next event's TYPE, never
+     * whether it carries a plan, so Saturday's unset lineup stays that team's one thing.
+     */
     const plannedPractices = (events ?? []).filter(e => e.practice_plan)
       .map(e => orgDateWithOffset(new Date(e.starts_at), 0));
-    check(plannedPractices.length === 2 && plannedPractices.every(d => d < today),
-      'two practices are written up, both already behind us');
+    check(plannedPractices.length === 3 && plannedPractices.filter(d => d < today).length >= 2,
+      'three practices are written up, at least two of them behind us');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 12U guardian address is unreachable example.com');
 
     /* The 12U was the only team with practices and NO attendance-timing assertion — and it is the
@@ -534,9 +561,15 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       'every 12U budget line hangs off a real category (or the report files the season as unbudgeted)');
 
     const { data: spend } = await db.from('rep_team_expenses')
-      .select('description, category, amount, expense_paid_at').eq('program_year_id', py.id);
+      .select('description, category, budget_item_id, amount, expense_paid_at').eq('program_year_id', py.id);
     check((spend ?? []).length === state.expenses.length,
       `${state.expenses.length} expenses logged against the 12U's season`, `found ${(spend ?? []).length}`);
+    // Every 12U cost names its item (mig 240) — this is the team whose Budget vs. Actual a
+    // prospect is most likely to open, and its rows now carry real actuals rather than dashes.
+    // ⚠ Two entry fees and two diamond rentals SUM into one row each, which is the ruling this
+    // world exists to demonstrate: six costs, four rows.
+    check((spend ?? []).every(e => e.budget_item_id),
+      'every 12U cost names its budget item — the report reads item by item');
     check((spend ?? []).every(e => e.expense_paid_at && orgDateWithOffset(new Date(e.expense_paid_at), 0) <= today),
       'no 12U bill is dated in the future');
 

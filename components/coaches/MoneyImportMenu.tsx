@@ -110,7 +110,7 @@ export default function MoneyImportMenu({
       // shape — and that shape's look-alike detection needs the existing descriptions. Skipping
       // the third call to save a request would quietly downgrade the preview's verdicts.
       const [catRes, planRes, expRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/budget-items`),
+        fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
       ]);

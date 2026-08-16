@@ -64,7 +64,11 @@ export const BUDGET_LINE_COLUMNS: ExportColumnDef[] = [
 export function budgetLineRows(lines: RepBudgetLineWithPeriods[]): ExportRow[] {
   return lines.map(l => ({
     category: l.categoryName ?? '',
-    line: l.description,
+    // ⚠ THE LIVE ITEM NAME, not the one captured when the line was written. `description` stores
+    // the item's name at creation and is never re-synced, so a club admin renaming a shared item
+    // left this file printing the old word while the report printed the new one — one record, two
+    // names. The description stays the fallback for a money-in line, which has no item.
+    line: l.itemName ?? l.description,
     kind: LINE_KIND_LABEL[normalizeBudgetLineKind(l.lineKind)],
     amount: l.totalAmount,
     // The month split flattened into one readable cell. A column per month would make the

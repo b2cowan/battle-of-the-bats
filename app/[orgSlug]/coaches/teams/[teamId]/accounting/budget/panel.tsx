@@ -12,6 +12,7 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
+import { rollupBudget } from '@/lib/coach-budget-rollup';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -134,6 +135,8 @@ function blankLineForm(seasonYear: number, mode: PeriodSplitMode): LineForm {
 const FOCUS_TOTAL = 'budget-line-total';
 const FOCUS_DESC  = 'budget-line-desc';
 const FOCUS_ADD   = 'budget-period-add';
+/** The item picker's own select — where "pick a category and item" sends a coach (mig 240). */
+const FOCUS_ITEM  = 'budget-item-picker';
 const focusPeriodAmount = (i: number) => `budget-period-amount-${i}`;
 
 interface FormProblem {
@@ -440,6 +443,50 @@ function sameLineForm(a: LineForm, b: LineForm): boolean {
     p.label === b.periods[i].label && p.date === b.periods[i].date && p.amount === b.periods[i].amount);
 }
 
+/**
+ * Group COST lines CATEGORY → ITEM for display (owner ruling 2026-08-15).
+ *
+ * ⚠ THE ITEM NAMES THE ROW, AND TWO LINES ON ONE ITEM ARE ONE ROW. This used to group by category
+ * and then list lines by their typed description, which is how a coach who picked the item
+ * "Entry Fees" ended up reading a plan row called "test". The shared rule lives in
+ * `lib/coach-budget-rollup.ts` so this list and Budget vs. Actual cannot group the same plan two
+ * different ways — the entire point of making the item the key.
+ *
+ * Funding lines are deliberately absent: they are money coming IN, carry no category or item, and
+ * have their own section at the foot of the plan.
+ */
+function groupLines(lines: RepBudgetLineWithPeriods[]) {
+  const byId = new Map(lines.map(l => [l.id, l]));
+  const categories = rollupBudget(
+    lines.filter(l => !isFundingKind(l.lineKind)).map(l => ({
+      id: l.id,
+      categoryId: l.categoryId,
+      categoryName: l.categoryName,
+      itemId: l.itemId,
+      itemName: l.itemName,
+      totalAmount: l.totalAmount,
+      description: l.description,
+      notes: l.notes,
+      periods: l.periods.map(p => ({
+        label: p.periodLabel, date: p.periodDate, amount: p.amount, sortOrder: p.sortOrder,
+      })),
+    })),
+    [],
+  );
+  // Back to the full line objects the row component needs — the rollup deliberately carries only
+  // what the arithmetic needs, so the screen re-attaches what only the screen uses.
+  return categories.map(cat => ({
+    categoryName: cat.categoryName,
+    total: cat.budgeted,
+    items: cat.items.map(item => ({
+      key: item.itemId ?? `${cat.categoryName}|no-item`,
+      itemName: item.itemName,
+      total: item.budgeted,
+      lines: item.lines.map(l => byId.get(l.id)).filter((l): l is RepBudgetLineWithPeriods => !!l),
+    })),
+  }));
+}
+
 export function BudgetPlanPanel({
   params: paramsPromise,
   embedded = false,
@@ -693,7 +740,9 @@ export function BudgetPlanPanel({
     try {
       const [planRes, catRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/budget-items`),
+        // ⚠ teamId, ALWAYS (mig 240): without it the answer excludes this team's own items, so a
+        // coach's own vocabulary would vanish from the picker that created it.
+        fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
       ]);
       const planData = await planRes.json();
       const catData  = await catRes.json();
@@ -1058,14 +1107,22 @@ export function BudgetPlanPanel({
   function collectProblems(): FormProblem[] {
     const out: FormProblem[] = [];
 
-    // A funding line's description IS its name — no item-name fallback (review finding: a
-    // legacy funding line's hidden item name silently stood in for a cleared field, saving
-    // the old name instead of raising the error the asterisk promises).
-    const named = isFundingKind(form.lineKind)
-      ? form.description.trim()
-      : form.description.trim() || form.itemName.trim();
-    if (!named) {
-      out.push({ id: 'desc', message: 'Give this line a description.', focusId: FOCUS_DESC });
+    /* ⚠ WHAT NAMES A LINE DEPENDS ON ITS KIND (owner ruling 2026-08-15). A COST is named by its
+       ITEM — the shared word the plan and Budget vs. Actual both group on — so the item is what is
+       required and the description is not asked for at all. MONEY IN carries no category or item
+       (owner, 2026-08-13), so its description IS its name and stays required, with no item-name
+       fallback: a legacy funding line's hidden item name once stood in for a cleared field and
+       saved the old name instead of raising the error the asterisk promises. */
+    if (isFundingKind(form.lineKind)) {
+      if (!form.description.trim()) {
+        out.push({ id: 'desc', message: 'Give this line a description.', focusId: FOCUS_DESC });
+      }
+    } else if (!form.itemId) {
+      out.push({
+        id: 'item',
+        message: 'Pick a category and item — they name this line on your plan and on your report.',
+        focusId: FOCUS_ITEM,
+      });
     }
     const total = parseFloat(form.totalAmount);
     if (isNaN(total) || total <= 0) {
@@ -1218,25 +1275,16 @@ export function BudgetPlanPanel({
     }
   }
 
-  // Group COST lines by category name for display. Funding lines are deliberately not here:
-  // they are money coming IN, and filing them under a spending category would put "Chocolate
-  // drive" under "Tournaments". They get one section of their own at the foot of the plan.
-  function groupLines(lines: RepBudgetLineWithPeriods[]) {
-    const grouped: Map<string, RepBudgetLineWithPeriods[]> = new Map();
-    for (const line of lines) {
-      if (isFundingKind(line.lineKind)) continue;
-      const key = line.categoryName ?? 'Uncategorized';
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(line);
-    }
-    return [...grouped.entries()];
-  }
+
+  /* Memoised because the line-edit form lives in this same component: without it, every
+     keystroke in the Add/Edit modal re-ran the whole category→item rollup over a plan that had
+     not changed. */
+  const allLines = useMemo(() => plan?.lines ?? [], [plan]);
+  const groups   = useMemo(() => groupLines(allLines), [allLines]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
 
-  const allLines    = plan?.lines ?? [];
-  const groups      = groupLines(allLines);
   const fundingLines = allLines.filter(l => isFundingKind(l.lineKind));
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
@@ -1576,7 +1624,7 @@ export function BudgetPlanPanel({
                 <span style={{ textAlign: 'right' }}>Planned</span>
                 <span />
               </div>
-              {groups.map(([catName, lines]) => (
+              {groups.map(({ categoryName: catName, total: catTotal, items }) => (
                 <div key={catName} className={shared.ledgerGroup}>
                   {/* ⚠ COLLAPSIBLE, by the same ruling that gave the By-period grid its chevrons
                       (owner 2026-08-13: any hierarchy in a table is collapsible). This was the last
@@ -1599,20 +1647,63 @@ export function BudgetPlanPanel({
                       <span className={shared.ledgerName}>{catName}</span>
                     </span>
                     <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>
-                      {fmt(lines.reduce((s, l) => s + l.totalAmount, 0))}
+                      {fmt(catTotal)}
                     </span>
                     <span />
                   </button>
-                  {!isClosed(catKey(catName)) && lines.map(line => (
-                    <BudgetLineRow
-                      key={line.id}
-                      line={line}
-                      funding={false}
-                      expanded={expandedLines.has(line.id)}
-                      canWrite={moneyCanWrite}
-                      onToggle={() => toggleLineExpanded(line.id)}
-                      onEdit={() => openEdit(line)}
-                    />
+                  {!isClosed(catKey(catName)) && items.map(item => (
+                    /* ⚠ ONE ROW PER ITEM. With a single line behind it — which is the ordinary
+                       shape — the row IS that line, named by its item, and behaves exactly as it
+                       always has: tap to edit, chevron for its payment periods. Two or more lines
+                       on one item is the case the owner's SUM ruling exists for, and only then does
+                       the row become a group that opens to reveal them. */
+                    item.lines.length === 1 ? (
+                      <BudgetLineRow
+                        key={item.key}
+                        line={{ ...item.lines[0], description: item.itemName }}
+                        funding={false}
+                        expanded={expandedLines.has(item.lines[0].id)}
+                        canWrite={moneyCanWrite}
+                        onToggle={() => toggleLineExpanded(item.lines[0].id)}
+                        onEdit={() => openEdit(item.lines[0])}
+                      />
+                    ) : (
+                      <Fragment key={item.key}>
+                        <button
+                          type="button"
+                          className={`${shared.ledgerRow} ${shared.ledgerGroupHeadBtn}`}
+                          aria-expanded={!isClosed(item.key)}
+                          onClick={() => toggleSectionClosed(item.key)}
+                        >
+                          <span className={shared.ledgerCell}>
+                            <span className={shared.ledgerExpandSpacer}>
+                              {isClosed(item.key)
+                                ? <ChevronRight size={14} aria-hidden />
+                                : <ChevronDown size={14} aria-hidden />}
+                            </span>
+                            <span className={styles.lineInfo}>
+                              <span className={shared.ledgerDesc}>{item.itemName}</span>
+                              <span className={`${shared.ledgerNote} ${shared.wrap640}`}>
+                                {item.lines.length} lines
+                              </span>
+                            </span>
+                          </span>
+                          <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(item.total)}</span>
+                          <span />
+                        </button>
+                        {!isClosed(item.key) && item.lines.map(line => (
+                          <BudgetLineRow
+                            key={line.id}
+                            line={line}
+                            funding={false}
+                            expanded={expandedLines.has(line.id)}
+                            canWrite={moneyCanWrite}
+                            onToggle={() => toggleLineExpanded(line.id)}
+                            onEdit={() => openEdit(line)}
+                          />
+                        ))}
+                      </Fragment>
+                    )
                   ))}
                 </div>
               ))}
@@ -1856,9 +1947,18 @@ export function BudgetPlanPanel({
                 a funding line is named by its description alone. */}
             {!isFundingKind(form.lineKind) && (
             <div className={styles.field}>
-              <label className={styles.label}>Category &amp; Item</label>
+              {/* ⚠ REQUIRED SINCE mig 240 — these two ARE the line's name, on the plan, on Budget
+                  vs. Actual and in every export. The asterisk is not decoration: a cost line
+                  without an item has nothing to be called and nothing for spending to line up
+                  against, which is the whole defect this change closes. */}
+              <label className={styles.label}>
+                Category &amp; Item <span className={styles.labelRequired}>*</span>
+              </label>
               <BudgetItemPicker
+                selectId={FOCUS_ITEM}
+                invalid={flagged('item')}
                 categories={categories}
+                teamId={teamId}
                 value={form.categoryId ? {
                   categoryId:      form.categoryId,
                   categoryName:    form.categoryName,
@@ -1872,22 +1972,28 @@ export function BudgetPlanPanel({
                   categoryName: v.categoryName,
                   itemId:       v.itemId,
                   itemName:     v.itemName,
-                  // Description stays user-typed only — the save path already falls
-                  // back to the item name when it's left blank (no "Misc" stamping).
                   totalAmount:  f.totalAmount || (v.suggestedAmount ? String(v.suggestedAmount) : f.totalAmount),
                 }))}
                 createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                 createItemMode="coach"
                 allowCreateCategory
               />
+              <p className={styles.kindHint}>
+                These name this line everywhere. Anything else worth saying goes in Notes.
+              </p>
             </div>
             )}
 
-            {/* Description override — for a funding line it IS the name, so it's marked required
-                there (a cost line can fall back to its item name). */}
+            {/* ⚠ DESCRIPTION IS FOR MONEY-IN LINES ONLY (owner ruling 2026-08-15). A cost line is
+                named by its ITEM — the shared word both reports group on — so asking for a second
+                name here is what produced a plan row called "test" beside an item called "Entry
+                Fees", and anything typed could never be lined up across the two reports. Notes
+                below carries whatever is worth saying about a cost line. A money-in line has no
+                category and no item at all, so its description IS its name and stays required. */}
+            {isFundingKind(form.lineKind) && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor={FOCUS_DESC}>
-                Description{isFundingKind(form.lineKind) && <> <span className={styles.labelRequired}>*</span></>}
+                Description <span className={styles.labelRequired}>*</span>
               </label>
               <input
                 id={FOCUS_DESC}
@@ -1895,12 +2001,11 @@ export function BudgetPlanPanel({
                 type="text"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value.slice(0, 200) }))}
-                placeholder={isFundingKind(form.lineKind)
-                  ? 'e.g. Bottle drive, sponsorship, club grant'
-                  : form.itemName || 'e.g. May tournament entry fee'}
+                placeholder="e.g. Bottle drive, sponsorship, club grant"
                 maxLength={200}
               />
             </div>
+            )}
 
             {/* Total amount + period toggle. This row uses the page's OWN .formRow, which is
                 why Batch 1's shared one-column-≤640 reflow never reached it: the amount field

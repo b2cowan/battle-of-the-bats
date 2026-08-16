@@ -2,10 +2,9 @@
 import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
@@ -17,43 +16,53 @@ import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import type { ExportColumnDef } from '@/lib/export';
-import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
+import type { RepTeamTag } from '@/lib/types';
 import styles from './bva.module.css';
 import shared from '../../../../coaches.module.css';
 
+/* ⚠ THE REPORT IS TWO LEVELS: CATEGORY → ITEM (owner ruling 2026-08-15). It used to be category →
+   budget line, named by whatever description a coach had typed, which is why a line filed under the
+   item "Entry Fees" could render as a row called "test" and why the plan and the books could never
+   be matched to each other. The shapes below mirror `lib/coach-budget-rollup.ts`, which owns the
+   grouping for this screen and for the route together. */
 interface PeriodResult {
   label: string;
-  periodDate: string | null;
-  estimated: number;
-  /** ⚠ NULL MEANS NOBODY CAN SAY, and it is not the same fact as 0 (nothing spent). An expense
-   *  records a CATEGORY and nothing finer, so a period's own actual exists only where the
-   *  category holds a single line — see the route's §5. */
-  actual: number | null;
+  date: string | null;
+  amount: number;
+  actual: number;
 }
 
-interface LineResult {
-  budgetLineId: string;
-  description: string;
-  totalEstimated: number;
-  hasPeriods: boolean;
+interface ItemResult {
+  /** Null = the "Not itemized" bucket: lines or costs in this category naming no item. */
+  itemId: string | null;
+  itemName: string;
+  budgeted: number;
+  actual: number;
+  variance: number;
+  /** Two or more budget lines summed into this row — worth captioning, per the SUM ruling. */
+  lineCount: number;
+  /** ⚠ DERIVED, never stored: is there a budget line for this category+item? False = the team was
+   *  charged for something it never planned, which is the row this whole change exists to show. */
+  inPlan: boolean;
   periods: PeriodResult[];
 }
 
 interface CategoryResult {
+  categoryId: string | null;
   categoryName: string;
-  categoryEstimated: number;
-  categoryActual: number;
-  categoryVariance: number;
-  /** False when the category holds more than one line — its periods then report nothing, and the
-   *  category says why rather than leaving a bare dash to read as a missing number. */
-  lineActualsKnown: boolean;
-  lines: LineResult[];
+  budgeted: number;
+  actual: number;
+  variance: number;
+  /** False when nothing in this category was ever budgeted — the whole heading is unplanned. */
+  inPlan: boolean;
+  items: ItemResult[];
 }
 
 interface UnbudgetedActual {
   id: string;
   description: string;
   category: string | null;
+  item: string | null;
   amount: number;
   paidAt: string | null;
 }
@@ -90,6 +99,8 @@ interface BvaData extends MonthGridPayload {
     fundedByPlayers: number;
   } | null;
   totalActual: number;
+  /** How much of `totalActual` went on items nobody planned. A figure to NAME, never to add. */
+  unbudgeted: number;
   categories: CategoryResult[];
   unbudgetedActuals: UnbudgetedActual[];
   duesCollection: DuesCollection;
@@ -250,13 +261,12 @@ export function BudgetVsActualPanel({
   // Money-tag filter (Phase 3): scope the actuals to expenses carrying a tag (server-side).
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
 
-  // Recategorize fix-it for unbudgeted expenses (money-write only)
-  const [taxonomy, setTaxonomy] = useState<BudgetCategoryWithItems[]>([]);
-  const [recatTarget, setRecatTarget] = useState<UnbudgetedActual | null>(null);
-  useOverlayOpen(!!recatTarget);
-  const [recatCategory, setRecatCategory] = useState('');
-  const [recatSaving, setRecatSaving] = useState(false);
-  const [recatError, setRecatError] = useState('');
+  /* ⚠ THE RECATEGORIZE FIX-IT IS GONE (mig 240), and its absence is deliberate. It existed to
+     move an expense onto a real CATEGORY so it stopped sitting in a separate Unbudgeted list at the
+     foot of the report. There is no such list now: unplanned spending appears in its own category
+     and item row, flagged, in place. And the fix itself moved — a coach opens the cost and picks
+     its item, which is the same control that files it correctly in the first place, rather than a
+     second half-strength editor that could only ever set the coarser of the two levels. */
 
   // No PDF-settings fetch here any more: MoneyExportButton loads the org's branding on the FIRST
   // PDF export and remembers it, rather than every Money tab requesting it on mount for a file
@@ -283,16 +293,12 @@ export function BudgetVsActualPanel({
     setLoading(true);
     setError('');
     try {
-      const [res, catRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${bvaQuery}`),
-        fetch(`/api/coaches/${orgSlug}/budget-items`),
-      ]);
+      // ⚠ ONE REQUEST NOW. The item taxonomy was fetched alongside the report purely to fill the
+      // Recategorize picker, which mig 240 retired — the report names every category and item
+      // itself, so a second call would load a list nothing reads.
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${bvaQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setData(await res.json());
-      if (catRes.ok) {
-        const catData = await catRes.json();
-        setTaxonomy(catData.categories ?? []);
-      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -324,26 +330,6 @@ export function BudgetVsActualPanel({
     if (!prefsKey || !prefsLoaded) return;
     try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens })); } catch { /* device memory only */ }
   }, [prefsKey, prefsLoaded, view, lens]);
-
-  async function saveRecategorize() {
-    if (!recatTarget) return;
-    setRecatError('');
-    setRecatSaving(true);
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${recatTarget.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: recatCategory || null }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
-      setRecatTarget(null);
-      await load();
-    } catch (e: unknown) {
-      setRecatError(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setRecatSaving(false);
-    }
-  }
 
   // ── Export helpers ─────────────────────────────────────────────────────────
   // The export always matches what is on screen. In the Months view that means the month grid
@@ -466,7 +452,6 @@ export function BudgetVsActualPanel({
     );
   }
 
-  const unbudgetedTotal = data?.unbudgetedActuals.reduce((s, u) => s + u.amount, 0) ?? 0;
 
   // ⚠ THIS SCREEN IS WHY EXPORT LEFT THE HUB HEADER (owner ruling 2026-08-13, mockup 96675523).
   // For a while it had TWO Export buttons: one above the tab bar exporting the category table,
@@ -724,19 +709,20 @@ export function BudgetVsActualPanel({
               </div>
 
               <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                {data.categories.map((cat, ci) => {
-                  // The explanation for this category's dashes, tied to the button that opens
-                  // them. Sighted readers meet the sentence as a footnote under the lines;
-                  // a screen reader would otherwise meet a column of bare em-dashes with
-                  // nothing saying why, so the description rides the header instead of DOM
-                  // order (/review, 2026-08-15).
-                  const noteId = cat.lineActualsKnown ? undefined : `bva-cat-note-${ci}`;
+                {data.categories.map(cat => {
+                  /* ⚠ A CATEGORY NOBODY BUDGETED FOR IS THE POINT, NOT AN EDGE CASE (owner ruling
+                     2026-08-15). It carries no Budgeted figure at all, so the row is flagged and
+                     the dash is explained by the flag rather than left to read as a lost number.
+                     The sentence rides the header via aria-describedby: a screen reader meeting a
+                     bare em-dash in the Budgeted column would otherwise get no explanation at all,
+                     because the flag is a visual one (/review, 2026-08-15). */
+                  const noteId = cat.inPlan ? undefined : `bva-cat-note-${cat.categoryName}`;
                   return (
                   <div key={cat.categoryName} className={shared.ledgerGroup}>
                     <button
-                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader}`}
+                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader} ${cat.inPlan ? '' : styles.unplannedRow}`}
                       aria-expanded={expandedCats.has(cat.categoryName)}
-                      aria-describedby={expandedCats.has(cat.categoryName) ? noteId : undefined}
+                      aria-describedby={noteId}
                       onClick={() => toggleCat(cat.categoryName)}
                     >
                       <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
@@ -746,71 +732,101 @@ export function BudgetVsActualPanel({
                             : <ChevronRight size={14} aria-hidden />}
                         </span>
                         <span className={shared.ledgerName}>{cat.categoryName}</span>
+                        {/* ⚠ THE "not budgeted" TAG WAS REMOVED HERE (owner ruling 2026-08-15) —
+                            the dash in the Budget column one cell to the right already says it, and
+                            the label was the same fact twice. The amber ground stays as the scanning
+                            cue and `aria-describedby` still carries the sentence, so the meaning
+                            survives for a reader who cannot see the tint. */}
                       </span>
-                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.categoryEstimated)}</span>
-                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.categoryActual)}</span>
+                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
+                        {cat.inPlan ? fmt(cat.budgeted) : '—'}
+                      </span>
+                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(cat.actual)}</span>
                       <span
                         className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}
-                        style={{ color: varianceColor(cat.categoryVariance) }}
+                        style={{ color: varianceColor(cat.variance) }}
                       >
-                        {fmtVariance(cat.categoryVariance)}
+                        {fmtVariance(cat.variance)}
                       </span>
                     </button>
+                    {noteId && (
+                      <p id={noteId} className={styles.srOnly}>
+                        Nothing in {cat.categoryName} was budgeted for this season.
+                      </p>
+                    )}
 
                     {expandedCats.has(cat.categoryName) && (
                       <div>
-                        {cat.lines.map(line => (
-                          <Fragment key={line.budgetLineId}>
-                            <div className={`${shared.ledgerRow} ${styles.lineMain}`}>
+                        {cat.items.map(item => {
+                          const key = `${cat.categoryName}|${item.itemId ?? 'none'}`;
+                          const open = expandedLines.has(key);
+                          return (
+                          <Fragment key={key}>
+                            <div className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow}`}>
                               <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                                {line.hasPeriods ? (
+                                {item.periods.length > 0 ? (
                                   <button
                                     className={shared.ledgerExpand}
-                                    aria-expanded={expandedLines.has(line.budgetLineId)}
-                                    aria-label={expandedLines.has(line.budgetLineId)
-                                      ? `Hide ${line.description}'s periods`
-                                      : `Show ${line.description}'s periods`}
-                                    onClick={() => toggleLine(line.budgetLineId)}
+                                    aria-expanded={open}
+                                    aria-label={open
+                                      ? `Hide ${item.itemName}'s periods`
+                                      : `Show ${item.itemName}'s periods`}
+                                    onClick={() => toggleLine(key)}
                                   >
-                                    {expandedLines.has(line.budgetLineId)
+                                    {open
                                       ? <ChevronDown size={13} aria-hidden />
                                       : <ChevronRight size={13} aria-hidden />}
                                   </button>
                                 ) : (
                                   <span className={shared.ledgerExpandSpacer} />
                                 )}
-                                <span className={shared.ledgerDesc}>{line.description}</span>
+                                <span className={shared.ledgerDesc}>{item.itemName}</span>
+                                {/* Two or more lines summed into one row is the SUM ruling made
+                                    visible — without the caption a coach would wonder why their
+                                    plan has fewer rows than they wrote. */}
+                                {item.lineCount > 1 && (
+                                  <span className={shared.ledgerNote}>{item.lineCount} lines</span>
+                                )}
+                                {/* The item's own "not budgeted" tag went with the category's — see
+                                    the note on the category header above. The dash in this row's
+                                    Budget cell, one span down, is the signal. */}
                               </span>
-                              <span className={shared.ledgerNum}>{fmt(line.totalEstimated)}</span>
-                              <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                              <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
+                              <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
+                                {item.inPlan ? fmt(item.budgeted) : '—'}
+                              </span>
+                              {/* ⚠ EVERY ROW NOW CARRIES A REAL FIGURE. This column printed "—"
+                                  unconditionally until 2026-08-15, because spending recorded a
+                                  category and nothing finer; the item is what made it knowable. */}
+                              <span className={shared.ledgerNum}>{fmt(item.actual)}</span>
+                              <span
+                                className={shared.ledgerNum}
+                                style={{ color: varianceColor(item.variance) }}
+                              >
+                                {fmtVariance(item.variance)}
+                              </span>
                             </div>
 
-                            {line.hasPeriods && expandedLines.has(line.budgetLineId) && (
+                            {open && item.periods.length > 0 && (
                               <div className={shared.ledgerSubRows}>
-                                {line.periods.map((p, pi) => {
-                                  // ⚠ `p.actual > 0` WOULD BE TRUE OF null IN NEITHER DIRECTION but
-                                  // reads as if it handled it. A null is "nobody can say"; a 0 is
-                                  // "nothing was spent". Both print "—" — the sentence under the
-                                  // category is what tells the two apart.
-                                  const spent = p.actual !== null && p.actual > 0;
-                                  const variance = p.estimated - (p.actual ?? 0);
+                                {item.periods.map((p, pi) => {
+                                  const spent = p.actual > 0;
+                                  const variance = p.amount - p.actual;
                                   return (
                                     <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
                                       <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
                                       <span className={shared.ledgerSubMeta}>
-                                        {p.periodDate
-                                          ? new Date(p.periodDate + 'T12:00:00').toLocaleDateString('en-CA', {
+                                        {p.date
+                                          ? new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {
                                               month: 'short', day: 'numeric', year: 'numeric',
                                             })
                                           : ''}
                                       </span>
-                                      <span className={shared.ledgerNum}>{fmt(p.estimated)}</span>
+                                      <span className={shared.ledgerNum}>{fmt(p.amount)}</span>
                                       <span
                                         className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
                                         style={spent ? { color: 'var(--success-light)' } : undefined}
                                       >
-                                        {spent ? fmt(p.actual!) : '—'}
+                                        {spent ? fmt(p.actual) : '—'}
                                       </span>
                                       <span
                                         className={`${shared.ledgerNum} ${spent ? '' : shared.ledgerNumMuted}`}
@@ -824,19 +840,8 @@ export function BudgetVsActualPanel({
                               </div>
                             )}
                           </Fragment>
-                        ))}
-                        {/* Why every line here reads "—" under Actual. A dash with nothing to
-                            explain it reads as a number the product lost — and this one is a
-                            deliberate refusal to guess: spending records a category and nothing
-                            finer, so with more than one line in the category no line can claim a
-                            share of it. Shown only where it applies; a single-line category CAN
-                            report its own spending and does. */}
-                        {!cat.lineActualsKnown && (
-                          <p id={noteId} className={styles.lineActualsNote}>
-                            {cat.categoryName} has {cat.lines.length} budget lines, so spending is
-                            matched to the category, not to a line.
-                          </p>
-                        )}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -885,12 +890,12 @@ export function BudgetVsActualPanel({
               <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
                 <span className={shared.scrollXStickyCell}>Total</span>
                 <span className={shared.ledgerTotalNum}>{fmt(data.effectiveBudget)}</span>
-                <span className={shared.ledgerTotalNum}>{fmt(data.totalActual - unbudgetedTotal)}</span>
+                <span className={shared.ledgerTotalNum}>{fmt(data.totalActual)}</span>
                 <span
                   className={shared.ledgerTotalNum}
-                  style={{ color: varianceColor(data.headroom + unbudgetedTotal) }}
+                  style={{ color: varianceColor(data.headroom) }}
                 >
-                  {fmtVariance(data.headroom + unbudgetedTotal)}
+                  {fmtVariance(data.headroom)}
                 </span>
               </div>
 
@@ -898,7 +903,7 @@ export function BudgetVsActualPanel({
                   Total above stays the COST comparison — this closes the same subtraction the
                   budget plan's summary makes, so the two pages end on the same number. */}
               {data.funding && (() => {
-                const fundedActual = data.totalActual - unbudgetedTotal - data.funding.actual;
+                const fundedActual = data.totalActual - data.funding.actual;
                 const fundedVariance = data.funding.fundedByPlayers - fundedActual;
                 return (
                   <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
@@ -922,97 +927,11 @@ export function BudgetVsActualPanel({
             </div>
           )}
 
-          {/* Unbudgeted actuals */}
-          {data.unbudgetedActuals.length > 0 && (
-            <div className={styles.unbudgetedSection}>
-              <p className={styles.sectionTitle}>Unbudgeted Expenses</p>
-              <p className={styles.sectionSub}>
-                These paid expenses don&apos;t match any budget category and reduce your headroom.
-                {moneyCanWrite ? ' Recategorize them to count against the right budget line.' : ''}
-              </p>
-              {/* A list of one-off expenses, not a comparison — so this stacks into a card at
-                  640 rather than joining the scrolling grid above. */}
-              {data.unbudgetedActuals.map(u => (
-                <div key={u.id} className={`${styles.unbudgetedRow} ${shared.stack640}`}>
-                  <span className={styles.unbudgetedDesc}>{u.description}</span>
-                  {u.category && (
-                    <span className={styles.unbudgetedCat}>{u.category}</span>
-                  )}
-                  {u.paidAt && (
-                    <span className={styles.unbudgetedDate}>
-                      {new Date(u.paidAt + 'T12:00:00').toLocaleDateString('en-CA', {
-                        month: 'short', day: 'numeric',
-                      })}
-                    </span>
-                  )}
-                  <span className={styles.unbudgetedAmount}>{fmt(u.amount)}</span>
-                  {moneyCanWrite && (
-                    <button
-                      type="button"
-                      className={`${shared.btnSecondary} ${shared.block640} ${shared.compactAction}`}
-                      style={{ flexShrink: 0 }}
-                      onClick={() => { setRecatTarget(u); setRecatCategory(''); setRecatError(''); }}
-                    >
-                      Recategorize
-                    </button>
-                  )}
-                </div>
-              ))}
-              <div className={styles.unbudgetedTotal}>
-                <span>Unbudgeted Total</span>
-                <span>{fmt(unbudgetedTotal)}</span>
-              </div>
-            </div>
-          )}
           </>
           )}
         </>
       )}
 
-      {/* Recategorize modal — moves an unbudgeted expense onto a real category so it
-          matches (or deliberately doesn't match) the budget plan. */}
-      {recatTarget && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setRecatTarget(null)}>
-          <div className={shared.modal} style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <div className={shared.modalHeader}>
-              <h3 className={shared.modalTitle}>Recategorize Expense</h3>
-              <button className={shared.modalCloseBtn} onClick={() => setRecatTarget(null)}><X size={16} /></button>
-            </div>
-            <p className={shared.muted} style={{ margin: '0 0 0.9rem', fontSize: '0.85rem' }}>
-              “{recatTarget.description}” — {fmt(recatTarget.amount)}
-              {recatTarget.category ? <> · currently “{recatTarget.category}”</> : null}
-            </p>
-            <div className={shared.field}>
-              <label className={shared.label}>Category</label>
-              <select
-                className={shared.select}
-                value={recatCategory}
-                onChange={e => setRecatCategory(e.target.value)}
-              >
-                <option value="">— select category —</option>
-                {taxonomy.map(c => {
-                  const inBudget = data?.categories.some(bc => bc.categoryName.toLowerCase() === c.name.toLowerCase());
-                  return (
-                    <option key={c.id} value={c.name}>
-                      {c.name}{inBudget ? ' (in budget)' : ''}
-                    </option>
-                  );
-                })}
-              </select>
-              <p className={shared.muted} style={{ margin: '0.35rem 0 0', fontSize: '0.75rem' }}>
-                Pick a category marked “(in budget)” to count this against your plan.
-              </p>
-            </div>
-            {recatError && <p className={shared.errorText} style={{ marginTop: '0.6rem' }}>{recatError}</p>}
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => setRecatTarget(null)}>Cancel</button>
-              <button type="button" className={shared.btnPrimary} disabled={recatSaving || !recatCategory} onClick={saveRecategorize}>
-                {recatSaving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

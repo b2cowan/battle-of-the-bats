@@ -22,9 +22,16 @@ interface Props {
   // For admin route the endpoint needs [catId] in the path; for coach it's a body field.
   // Specify which pattern to use.
   createItemMode: 'admin' | 'coach';
+  /** Coach mode: which team owns an item created here (mig 240). An item belongs to ONE team and
+   *  appears in no other team's picker, so the server requires this and refuses without it. */
+  teamId?: string;
   // Coach mode only: allow creating a new top-level category inline (posts
   // { newCategoryName } to createItemEndpoint). Owner decision 2026-07-09.
   allowCreateCategory?: boolean;
+  /** Lets a caller point its "you must pick one" message at the first select. */
+  selectId?: string;
+  /** Draw the controls as at fault — the picker is a required field since mig 240. */
+  invalid?: boolean;
   disabled?: boolean;
 }
 
@@ -34,11 +41,19 @@ export default function BudgetItemPicker({
   onChange,
   createItemEndpoint,
   createItemMode,
+  teamId,
   allowCreateCategory = false,
+  selectId,
+  invalid = false,
   disabled = false,
 }: Props) {
   const [selectedCatId, setSelectedCatId] = useState<string>(value?.categoryId ?? '');
-  const [selectedItemId, setSelectedItemId] = useState<string>(value?.itemId ?? '__misc__');
+  /* ⚠ NO "MISC" DEFAULT ANY MORE (owner ruling 2026-08-15). Choosing a category used to silently
+     select that category's Misc item, so a coach could complete the picker without ever making the
+     choice — which was harmless while the description named the row and is not now the ITEM does.
+     A report row called "Misc" answers nothing. The item starts unchosen and the form refuses to
+     save until it isn't. */
+  const [selectedItemId, setSelectedItemId] = useState<string>(value?.itemId ?? '');
 
   const [addingItem, setAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -68,18 +83,21 @@ export default function BudgetItemPicker({
     }
     setAddingCategory(false);
     setSelectedCatId(catId);
-    setSelectedItemId('__misc__');
+    setSelectedItemId('');
     setAddingItem(false);
     setSaveError('');
 
+    /* ⚠ CHOOSING A CATEGORY NO LONGER CHOOSES AN ITEM. It used to auto-select that category's
+       "Misc" row, which meant a coach could leave the picker having made half the decision and not
+       know it. Now the selection is reported with a null item so the caller's own validation can
+       say what is still missing — and the item select below opens on "choose an item". */
     const cat = localCategories.find(c => c.id === catId);
     if (cat) {
-      const misc = cat.items.find(i => i.isMisc);
       onChange({
         categoryId:      cat.id,
         categoryName:    cat.name,
-        itemId:          misc?.id ?? null,
-        itemName:        misc?.name ?? 'Misc',
+        itemId:          null,
+        itemName:        '',
         suggestedAmount: null,
       });
     }
@@ -122,7 +140,10 @@ export default function BudgetItemPicker({
         body = { name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null };
       } else {
         url  = createItemEndpoint;
-        body = { categoryId: selectedCatId, name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null };
+        // ⚠ `teamId` IS REQUIRED BY THE SERVER (mig 240) — a coach's item belongs to their team and
+        // appears in no other team's picker. Omitting it used to mean "org-wide", which is the
+        // behaviour this replaced, so the server refuses rather than assuming.
+        body = { categoryId: selectedCatId, teamId, name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null };
       }
 
       const res  = await fetch(url, {
@@ -135,12 +156,10 @@ export default function BudgetItemPicker({
 
       const newItem: BudgetItem = data.item;
 
-      // Inject the new item into localCategories
+      // Inject the new item into localCategories. (Misc items are no longer offered at all, so
+      // there is nothing to keep pinned to the bottom of the list.)
       setLocalCategories(prev => prev.map(c =>
-        c.id !== selectedCatId ? c : {
-          ...c,
-          items: [...c.items.filter(i => !i.isMisc), newItem, ...c.items.filter(i => i.isMisc)],
-        }
+        c.id !== selectedCatId ? c : { ...c, items: [...c.items, newItem] }
       ));
 
       setSelectedItemId(newItem.id);
@@ -179,12 +198,14 @@ export default function BudgetItemPicker({
       setLocalCategories(prev => [...prev, newCat]);
       setAddingCategory(false);
       setSelectedCatId(newCat.id);
-      setSelectedItemId('__misc__');
+      setSelectedItemId('');
+      // A brand-new category has no items yet, so the choice is genuinely half-made: report a null
+      // item and let the caller's validation ask for the other half.
       onChange({
         categoryId:      newCat.id,
         categoryName:    newCat.name,
         itemId:          null,
-        itemName:        newCat.name, // no items yet — the category name is the honest fallback label
+        itemName:        '',
         suggestedAmount: null,
       });
     } catch (e: unknown) {
@@ -201,7 +222,8 @@ export default function BudgetItemPicker({
         <div className={styles.field}>
           <label className={styles.label}>Category</label>
           <select
-            className={styles.select}
+            id={selectId}
+            className={`${styles.select} ${invalid ? styles.selectBad : ''}`}
             value={addingCategory ? '__addcat__' : selectedCatId}
             onChange={e => handleCatChange(e.target.value)}
             disabled={disabled}
@@ -219,11 +241,13 @@ export default function BudgetItemPicker({
           <div className={styles.field}>
             <label className={styles.label}>Item</label>
             <select
-              className={styles.select}
+              className={`${styles.select} ${invalid ? styles.selectBad : ''}`}
               value={addingItem ? '__add__' : selectedItemId}
               onChange={e => handleItemChange(e.target.value)}
               disabled={disabled}
             >
+              {/* Present until something is chosen — the picker no longer answers for the coach. */}
+              <option value="">— select item —</option>
               {itemsForCat.map(i => (
                 <option key={i.id} value={i.id}>{i.name}</option>
               ))}
@@ -327,7 +351,13 @@ export default function BudgetItemPicker({
             </button>
           </div>
           <p className={styles.hint}>
-            This item will be saved to your org&apos;s library and become selectable for all coaches.
+            {/* ⚠ THIS SENTENCE WAS A LIE FROM THE MOMENT mig 240 SHIPPED, and it is the exact copy
+                two separate code comments predicted would be missed. A coach's item belongs to
+                THEIR TEAM now and appears in no other team's list until a club admin publishes it;
+                an admin's belongs to the club from the start. */}
+            {createItemMode === 'coach'
+              ? 'This item is saved to this team’s list — no other team will see it unless your club chooses to share it.'
+              : 'This item will be saved to your org’s library and become selectable for all coaches.'}
           </p>
         </div>
       )}

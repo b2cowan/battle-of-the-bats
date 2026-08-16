@@ -530,11 +530,14 @@ export const MIDSEASON_SPONSOR = {
  * would merge on screen and the over-plan line would disappear into an average.
  */
 export const MIDSEASON_BUDGET_LINES = [
-  { description: 'Diamond rentals',    category: 'Facilities',  total: 3200 },
-  { description: 'Tournament entries', category: 'Tournaments', total: 2400 },
-  { description: 'Uniforms & caps',    category: 'Team Gear',   total: 1800 },
-  { description: 'Umpires',            category: 'Officials',   total: 1100 },
-  { description: 'Balls, screens and practice gear', category: 'Training', total: 900 },
+  { description: 'Diamond rentals',    category: 'Facilities',  item: 'Diamond Permits', total: 3200 },
+  { description: 'Tournament entries', category: 'Tournaments', item: 'Entry Fees',      total: 2400 },
+  { description: 'Uniforms & caps',    category: 'Team Gear',   item: 'Jerseys',         total: 1800 },
+  { description: 'Umpires',            category: 'Officials',   item: 'Umpire Fees',     total: 1100 },
+  // ⚠ THE ONE ITEM THE PLATFORM LIBRARY DOES NOT HAVE, on purpose: the seed creates it as a TEAM
+  // item, so the demo shows the tier a coach actually uses when their season needs a word we did
+  // not think of — and shows it belonging to one team rather than the whole club.
+  { description: 'Balls, screens and practice gear', category: 'Training', item: 'Practice Gear', total: 900 },
 ] as const;
 
 /**
@@ -557,13 +560,26 @@ export const MIDSEASON_SEASON_ESTIMATE = 10_200;
 export const MIDSEASON_UNSIGNED_WAIVER_INDEX = 2;
 
 /**
- * Two plans on the 12U's most recent PAST practices — the written record of what was actually run
- * on the Tuesday the room emptied out and the Thursday after it.
+ * Three plans on the 12U: two on the most recent PAST practices — the written record of what was
+ * actually run on the Tuesday the room emptied out and the Thursday after it — and one on THIS
+ * WEEK'S Thursday, which is still ahead for most of the week.
  *
- * ⚠ Past practices only, deliberately. A plan on an UPCOMING practice would be a second thing the
- * Overview could be asked about, and this team's whole beat is that its one thing is Saturday's
- * unset lineup. (Confirmed harmless either way — `resolveOverviewAnchor` reads the next event's
- * TYPE, never whether it has a plan — but the moment stays undiluted on purpose.)
+ * ⚠ The upcoming one was added deliberately on 2026-08-15, reversing a "past practices only" rule
+ * that had been right until the product changed under it. That rule existed to keep the Overview's
+ * moment undiluted, and it cost nothing while a plan was invisible unless you opened the practice.
+ * **The Practice plans hub ended that**: a prospect opening it found every upcoming practice marked
+ * "No plan" under a "Needs a plan" count, with the team's actual plans filed below under "Recent" —
+ * a shop window whose loudest line was that the coach is behind. One planned upcoming practice
+ * makes the page read the way a working team's does: one done, the rest to do.
+ *
+ * Still safe for the Overview, for the reason the old note already established:
+ * `resolveOverviewAnchor` reads the next event's TYPE, never whether it has a plan, so Saturday's
+ * unset lineup remains the one thing that team is asked about.
+ *
+ * ⚠ P-THU-0 is ahead Sunday→Wednesday and behind Thursday→Saturday (there are no practices past
+ * this week). Late in the week the hub's "Coming up" is legitimately empty and this plan reads as
+ * a recent one — which is why it is written as a plan for the NEXT game rather than a report on a
+ * past one, and reads correctly in both positions.
  */
 export const MIDSEASON_PRACTICE_PLANS: readonly DemoPracticePlan[] = [
   {
@@ -612,6 +628,64 @@ export const MIDSEASON_PRACTICE_PLANS: readonly DemoPracticePlan[] = [
       {
         id: 'demo-12u-thu-run', title: 'Baserunning', minutes: 15,
         description: 'Leads and reads at second.',
+        playerIndexes: null,
+      },
+    ],
+  },
+  {
+    // This week's Thursday — the one still ahead. A rotation is deliberate: it is the part of a
+    // practice plan a shared document genuinely cannot do, so the demo's one upcoming plan is the
+    // one worth opening.
+    practiceKey: 'P-THU-0',
+    goal: 'Everyone gets a round at all three before Saturday.',
+    practiceTypes: ['Fielding', 'Hitting'],
+    equipment: ['Tees', 'Screens', 'Buckets', 'Cones'],
+    blocks: [
+      {
+        id: 'demo-12u-thu0-warmup', title: 'Warm-up and throwing', minutes: 15,
+        description: 'Band work, then long toss out to the grass.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-12u-thu0-stations', title: 'Three stations', minutes: 45,
+        description: 'Groups move every fifteen.',
+        goal: 'Nobody stands and watches.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+        stations: [
+          {
+            id: 'demo-12u-stn-tee', name: 'Tee work',
+            description: 'Two strikes, shortened up, off the tee.',
+            goal: 'Put the ball in play from a count you hate.',
+            equipment: ['Tees', 'Screens'], setup: 'Two tees into the net along the fence.',
+            coachingPoints: ['Shorten up, don’t swing harder'],
+            staff: [DEMO_COACH_DISPLAY_NAME],
+          },
+          {
+            id: 'demo-12u-stn-cuts', name: 'Infield reads and cuts',
+            description: 'Ball to the gap, cut man on the grass every time.',
+            goal: 'Somebody is always calling the cut.',
+            equipment: ['Buckets', 'Cones'], setup: 'Two lines from the right-field corner.',
+            coachingPoints: ['Loud and early, then get out of the way'],
+          },
+          {
+            id: 'demo-12u-stn-situations', name: 'Situations',
+            description: 'Runner on second, one out. Play it out, then talk about it.',
+            equipment: ['Screens'], setup: 'Machine at half speed.',
+            note: 'Saturday’s opponent runs on everything — make them decide.',
+          },
+        ],
+        rotation: {
+          intervalMinutes: 15,
+          groups: [
+            { id: 'demo-12u-grp-a', name: 'Group A', playerIndexes: [0, 1, 2, 3] },
+            { id: 'demo-12u-grp-b', name: 'Group B', playerIndexes: [4, 5, 6, 7] },
+            { id: 'demo-12u-grp-c', name: 'Group C', playerIndexes: [8, 9, 10, 11] },
+          ],
+        },
+      },
+      {
+        id: 'demo-12u-thu0-close', title: 'Baserunning and out', minutes: null, restOfPractice: true,
+        description: 'Leads at second, then Saturday’s first three hitters.',
         playerIndexes: null,
       },
     ],
@@ -720,15 +794,15 @@ export function resolveMidSeasonState(now: Date): MidSeasonState {
    */
   const paidAt = (weeksBack: number) => orgDateWithOffset(now, satOffset - 7 * weeksBack);
   const expenses: DemoExpense[] = [
-    demoExpense('MS-DIAMOND-1', 'Diamond rentals — spring block', 'Facilities', 2400, paidAt(11)),
-    demoExpense('MS-DIAMOND-2', 'Diamond rentals — weeknight slots', 'Facilities', 1050, paidAt(3),
+    demoExpense('MS-DIAMOND-1', 'Diamond rentals — spring block', 'Facilities', 'Diamond Permits', 2400, paidAt(11)),
+    demoExpense('MS-DIAMOND-2', 'Diamond rentals — weeknight slots', 'Facilities', 'Diamond Permits', 1050, paidAt(3),
       'Two rainouts moved to weeknights. Not in the spring plan.'),
-    demoExpense('MS-TOURN-1', 'Spring Classic entry', 'Tournaments', 1200, paidAt(12)),
-    demoExpense('MS-TOURN-2', 'Riverside Invitational entry', 'Tournaments', 1200, paidAt(5)),
-    demoExpense('MS-GEAR', 'Jerseys, caps and helmets', 'Team Gear', 1755, paidAt(10)),
-    demoExpense('MS-UMP-1', 'Umpire fees — first half', 'Officials', 550, paidAt(7)),
-    demoExpense('MS-UMP-2', 'Umpire fees — second half', 'Officials', 440, paidAt(2)),
-    demoExpense('MS-TRAINING', 'Balls, screens and practice gear', 'Training', 610, paidAt(9)),
+    demoExpense('MS-TOURN-1', 'Spring Classic entry', 'Tournaments', 'Entry Fees', 1200, paidAt(12)),
+    demoExpense('MS-TOURN-2', 'Riverside Invitational entry', 'Tournaments', 'Entry Fees', 1200, paidAt(5)),
+    demoExpense('MS-GEAR', 'Jerseys, caps and helmets', 'Team Gear', 'Jerseys', 1755, paidAt(10)),
+    demoExpense('MS-UMP-1', 'Umpire fees — first half', 'Officials', 'Umpire Fees', 550, paidAt(7)),
+    demoExpense('MS-UMP-2', 'Umpire fees — second half', 'Officials', 'Umpire Fees', 440, paidAt(2)),
+    demoExpense('MS-TRAINING', 'Balls, screens and practice gear', 'Training', 'Practice Gear', 610, paidAt(9)),
   ];
 
   return { year, yearName: `${year} Season`, games, practices, saturdayDate, expenses };
@@ -775,12 +849,16 @@ export const OFFSEASON_ROSTER: readonly DemoPlayer[] = [
  * enforces the scope so this cannot be reintroduced by choosing a plausible-sounding name.
  */
 export const OFFSEASON_BUDGET_LINES = [
-  { description: 'Tournament entries — four weekends', category: 'Tournaments',       total: 3600 },
-  { description: 'Diamond and dome rentals',           category: 'Facilities',        total: 2800 },
-  { description: 'Uniforms, caps and helmets',         category: 'Team Gear',         total: 2100 },
-  { description: 'Winter cage sessions',               category: 'Training',          total: 1400 },
-  { description: 'Umpire fees',                        category: 'Officials',         total: 1200 },
-  { description: 'Raffle licence and printing',        category: 'Fundraising Costs', total: 600 },
+  { description: 'Tournament entries — four weekends', category: 'Tournaments',       item: 'Entry Fees',    total: 3600 },
+  { description: 'Diamond and dome rentals',           category: 'Facilities',        item: 'Dome Time',     total: 2800 },
+  { description: 'Uniforms, caps and helmets',         category: 'Team Gear',         item: 'Jerseys',       total: 2100 },
+  { description: 'Winter cage sessions',               category: 'Training',          item: 'Batting Cages', total: 1400 },
+  { description: 'Umpire fees',                        category: 'Officials',         item: 'Umpire Fees',   total: 1200 },
+  { description: 'Raffle licence and printing',        category: 'Fundraising Costs', item: 'Printing',      total: 600 },
+  // ⚠ A SECOND LINE ON THE SAME ITEM AS THE FIRST, deliberately (mig 240). The owner's own screen
+  // was two lines filed under 'Entry Fees'; the plan and the report now SUM them into one row
+  // reading 'Entry fees · 2 lines · ,000'. Without this the demo never shows the rule.
+  { description: 'Provincials entry — deposit',         category: 'Tournaments',       item: 'Entry Fees',    total: 400 },
 ] as const;
 
 /**
@@ -821,6 +899,16 @@ export interface DemoExpense {
   description: string;
   /** Free text in the product; here, always a budget category name — or deliberately not one. */
   category: string;
+  /**
+   * ⚠ WHAT THIS COST IS, in the same words the budget uses (mig 240) — and the reason the demo's
+   * Budget vs. Actual reads line by line rather than showing a dash beside everything. The report
+   * groups on category + item, so a seeded world without items would present a prospect with a
+   * product that cannot answer its own headline question.
+   *
+   * The seed resolves it against the platform library and CREATES a team item when the name is not
+   * there (see `budgetItemIds` in the seed) — exactly what a real coach does in the picker.
+   */
+  item: string;
   amount: number;
   type: 'expense' | 'tournament_payable';
   /** Lump expenses: when it was paid. Payables leave this null and use the two legs. */
@@ -838,10 +926,10 @@ export interface DemoExpense {
  * their object literal, because a two-legged bill has nothing to abbreviate.
  */
 export function demoExpense(
-  key: string, description: string, category: string, amount: number,
+  key: string, description: string, category: string, item: string, amount: number,
   paidDate: string, notes: string | null = null,
 ): DemoExpense {
-  return { key, description, category, amount, type: 'expense', paidDate, notes };
+  return { key, description, category, item, amount, type: 'expense', paidDate, notes };
 }
 
 /** Dues: $900 a player in four. One family is a payment behind — $225 overdue, and the sweep that
@@ -1078,14 +1166,14 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
   practices.sort((a, b) => a.date.localeCompare(b.date));
 
   // Offsets in, dates out — the shared row builder takes a date, and this team thinks in offsets.
-  const expense = (key: string, description: string, category: string, amount: number,
+  const expense = (key: string, description: string, category: string, item: string, amount: number,
                    paidX: number, notes: string | null = null): DemoExpense =>
-    demoExpense(key, description, category, amount, dateAt(paidX), notes);
+    demoExpense(key, description, category, item, amount, dateAt(paidX), notes);
 
   const expenses: DemoExpense[] = [
-    expense('EX-FALL', 'Fall Classic entry', 'Tournaments', 900, -45),
+    expense('EX-FALL', 'Fall Classic entry', 'Tournaments', 'Entry Fees', 900, -45),
     {
-      key: 'EX-SPRING', description: 'Spring Invitational', category: 'Tournaments',
+      key: 'EX-SPRING', description: 'Spring Invitational', category: 'Tournaments', item: 'Entry Fees',
       amount: 1200, type: 'tournament_payable', paidDate: null,
       // Paid a couple of days BEFORE it was due, like every other settled row in this world —
       // the only thing running late here is the dues instalment that is meant to be.
@@ -1093,12 +1181,12 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
       balance: { amount: 800, dueDate: dateAt(21), paidDate: null },
       notes: 'Balance due four weeks before the first game.',
     },
-    expense('EX-DOME', 'Dome time — January block', 'Facilities', 1150, -38),
-    expense('EX-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 1050, -24),
-    expense('EX-CAGE', 'Cage rental — eight weeks', 'Training', 700, -17),
+    expense('EX-DOME', 'Dome time — January block', 'Facilities', 'Dome Time', 1150, -38),
+    expense('EX-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 'Jerseys', 1050, -24),
+    expense('EX-CAGE', 'Cage rental — eight weeks', 'Training', 'Batting Cages', 700, -17),
     // Deliberately on a category with NO budget line: the report's "unbudgeted" section has to
     // have something honest to report, and a team photo is exactly the sort of thing nobody plans.
-    expense('EX-PHOTO', 'Team photo day — deposit', 'Events', 180, -10,
+    expense('EX-PHOTO', 'Team photo day — deposit', 'Events', 'Photo Day', 180, -10,
       'Nobody budgeted for this. It happens every year.'),
   ];
 
@@ -1168,10 +1256,10 @@ export const SEASON_START_BATTING_ORDER: readonly number[] = [7, 4, 0, 2, 9, 1, 
 
 /** Team-reachable categories only — same rule as `OFFSEASON_BUDGET_LINES`, same reason. */
 export const SEASON_START_BUDGET_LINES = [
-  { description: 'Diamond permits',         category: 'Facilities', total: 1600 },
-  { description: 'Umpire fees',             category: 'Officials',  total: 900 },
-  { description: 'Jerseys, caps and balls', category: 'Team Gear',  total: 1500 },
-  { description: 'Year-end party',          category: 'Events',     total: 400 },
+  { description: 'Diamond permits',         category: 'Facilities', item: 'Diamond Permits', total: 1600 },
+  { description: 'Umpire fees',             category: 'Officials',  item: 'Umpire Fees',     total: 900 },
+  { description: 'Jerseys, caps and balls', category: 'Team Gear',  item: 'Jerseys',         total: 1500 },
+  { description: 'Year-end party',          category: 'Events',     item: 'Year-End Party',  total: 400 },
 ] as const;
 
 /** Dues: $600 a player in four. Eleven of twelve have paid the first — mostly current, one chase. */
@@ -1276,9 +1364,9 @@ export function resolveSeasonStartState(now: Date): SeasonStartState {
     // draft paid the gear line off in full, which put a fortnight-old season at 56% of its budget
     // and made the health check fail on its own data. Front-loaded is realistic; already spent is
     // a different team's story, and this moment's whole point is the year still being ahead.
-    demoExpense('SS-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 900, dateAt(-28)),
-    demoExpense('SS-PERMIT', 'Diamond permits — first half', 'Facilities', 800, dateAt(-21)),
-    demoExpense('SS-UMP', 'Umpire fees — opening weekend', 'Officials', 165, dateAt(-7)),
+    demoExpense('SS-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 'Jerseys', 900, dateAt(-28)),
+    demoExpense('SS-PERMIT', 'Diamond permits — first half', 'Facilities', 'Diamond Permits', 800, dateAt(-21)),
+    demoExpense('SS-UMP', 'Umpire fees — opening weekend', 'Officials', 'Umpire Fees', 165, dateAt(-7)),
   ];
 
   return {
@@ -1389,10 +1477,10 @@ export const SEASONS_END_FAMILY = { verifiedLinks: 12, recapViews: 9 } as const;
 export const SEASONS_END_DUES = { totalAmount: 600, installments: 4, installmentAmount: 150 } as const;
 
 export const SEASONS_END_BUDGET_LINES = [
-  { description: 'Diamond rentals', total: 2800 },
-  { description: 'Tournament entries', total: 3000 },
-  { description: 'Uniforms & caps', total: 1600 },
-  { description: 'Umpires', total: 1000 },
+  { description: 'Diamond rentals',    category: 'Facilities',  item: 'Diamond Permits', total: 2800 },
+  { description: 'Tournament entries', category: 'Tournaments', item: 'Entry Fees',      total: 3000 },
+  { description: 'Uniforms & caps',    category: 'Team Gear',   item: 'Jerseys',         total: 1600 },
+  { description: 'Umpires',            category: 'Officials',   item: 'Umpire Fees',     total: 1000 },
 ] as const;
 
 export interface SeasonsEndState {

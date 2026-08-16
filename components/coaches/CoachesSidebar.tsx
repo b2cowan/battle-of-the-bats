@@ -180,8 +180,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
 
   // ⚠ The `navSignals` / `itemState` pair that used to live here is GONE with the Explore shelf
   // (2026-08-15, plan Phase 4). An item is visible or it is not; nothing relocates itself based on
-  // what the team has and hasn't done yet. `hasTournamentHistory` on the assignment row now has no
-  // reader — left in place rather than reaching into `lib/db.ts`, and recorded as a follow-up.
+  // what the team has and hasn't done yet. The assignment row's tournament-history signal followed
+  // it out of `lib/db.ts` on 2026-08-16, taking three queries off every coach load with it.
   type NavItem = { label: string; href: string; icon: typeof Users };
   const renderNavItem = ({ label, href, icon: Icon }: NavItem) => {
     const fullHref = `${base}/teams/${currentTeamId}${href}`;

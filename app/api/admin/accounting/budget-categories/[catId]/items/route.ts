@@ -18,6 +18,8 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
     id:              row.id as string,
     categoryId:      row.category_id as string,
     orgId:           row.org_id as string | null,
+    // Always null here: an item an ADMIN creates is club-published by definition (mig 240).
+    teamId:          (row.team_id as string | null) ?? null,
     name:            row.name as string,
     suggestedAmount: row.suggested_amount as number | null,
     sortOrder:       row.sort_order as number,

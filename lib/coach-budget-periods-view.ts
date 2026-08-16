@@ -52,6 +52,10 @@ export const MAX_PERIOD_MONTHS = MAX_MONTH_COLUMNS;
 export interface PeriodViewLine {
   id: string;
   description: string;
+  /** The item that NAMES this row (mig 240). `description` holds the item name captured when the
+   *  line was written and is never re-synced, so it goes stale the moment a club admin renames a
+   *  shared item — this is the live one, and the fallback is for money-in lines, which have none. */
+  itemName?: string | null;
   categoryName: string | null;
   totalAmount: number;
   lineKind?: BudgetLineKind | null;
@@ -244,7 +248,7 @@ export function buildPeriodView(
     if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
 
     const rowTotal = r2(sign * line.totalAmount);
-    const row: PeriodViewRow = { id: line.id, description: line.description, lineKind, cells, total: rowTotal };
+    const row: PeriodViewRow = { id: line.id, description: line.itemName ?? line.description, lineKind, cells, total: rowTotal };
 
     // Funding is one group regardless of the categories its lines carry: it is subtracted as a
     // whole, and splitting it by cost category would put money coming IN under a heading that

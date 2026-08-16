@@ -185,7 +185,8 @@
    disagreed on radius, category-bar layout, name size and ink for no decided reason.
 
    What survives here is only what is specific to THIS page: its four column tracks, the scroller
-   and pin gutters that let the comparison scroll on a phone, and the unbudgeted section below. */
+   and pin gutters that let the comparison scroll on a phone, and nothing else — the unbudgeted section that used to live here went with its markup (mig 240:
+   unplanned spending is a flagged row in place now, not a card at the foot). */
 .linesContainer,
 .tableHeader,
 .grandTotal,
@@ -201,26 +202,7 @@
   --ledger-sub-cols: 1fr 100px 110px 110px 110px;
 }
 
-/* The one quiet sentence under a category whose lines cannot report their own spending.
-   ⚠ STICKY TO THE SCROLLER'S LEFT EDGE. It lives inside <CoachScrollX>, whose content is wider
-   than a phone; without this the explanation for the dashes would slide away exactly as the coach
-   swipes across to look at them. `fit-content` keeps it from widening the scroll area it sits in. */
-.lineActualsNote {
-  position: sticky;
-  left: 0;
-  width: fit-content;
-  max-width: min(100%, 34rem);
-  margin: 0;
-  padding: 0.4rem 0.9rem 0.6rem;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  /* ⚠ `--white-45`, NOT `--white-40` — the floor the ink ladder is capped at (see .summaryHint
-     above). `--home-dim` resolves inside the portal in both themes, so the fallback only fires
-     for an account with no theme attribute set at all — which is exactly the path nothing
-     measures. It was `--white-40` here for one draft: 3.8:1 on the card, under the 4.5:1 floor,
-     while `.chartNote` twelve rules up had already got this right (/review, 2026-08-15). */
-  color: var(--home-dim, var(--white-45));
-}
+
 
 .expandIcon {
   color: var(--white-40, rgba(255,255,255,0.4));
@@ -247,81 +229,54 @@
    retired. `.grandTotal` survives only as the hook that hands it the column tracks and its pin
    gutter — see the `--ledger-cols` block above and the phone block below.) */
 
-/* ── Unbudgeted actuals ──────────────────────────────────────────────────── */
-.unbudgetedSection {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bva-unbudgeted) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--bva-unbudgeted) 20%, transparent);
+/* ── Spending on something nobody planned ────────────────────────────────────
+   ⚠ THESE ROWS USED TO BE A SEPARATE SECTION at the foot of the report; since mig 240 they sit in
+   place, inside their own category and item, where a coach reads them beside everything else.
+
+   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT (the rule survives the label that used
+   to state it). Until 2026-08-15 these rows also printed the words "not budgeted"; the owner
+   removed them because **the row's Budget cell is already a dash** — the label was the same fact
+   twice, in a report whose whole job is to put facts in columns. What carries the meaning now:
+     1. the em-dash where a Budgeted figure would be — visible, textual, colour-independent;
+     2. the `aria-describedby` sentence on the category header, for a screen reader.
+   The amber ground is a SCANNING CUE ON TOP OF THOSE, never the thing that says it. Do not remove
+   the dash or the described-by sentence on the grounds that "the row is already amber". */
+.unplannedRow {
+  background: color-mix(in srgb, var(--bva-unbudgeted) 7%, transparent);
 }
 
-.sectionTitle {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--bva-unbudgeted);
-  margin: 0 0 0.25rem;
-}
-
-.sectionSub {
-  font-size: 0.78rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  margin: 0 0 1rem;
-}
-
-.unbudgetedRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.04));
-  font-size: 0.85rem;
-}
-.unbudgetedRow:last-of-type { border-bottom: none; }
-
-.unbudgetedDesc {
-  flex: 1;
-  color: var(--white-75, rgba(255,255,255,0.75));
-  white-space: nowrap;
+/* For a sentence that exists only to give a screen reader what the amber flag gives everyone
+   else — see the `aria-describedby` on the category header. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.unbudgetedCat {
-  font-size: 0.75rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  background: var(--home-card, rgba(255,255,255,0.06));
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  clip-path: inset(50%);
   white-space: nowrap;
+  border: 0;
 }
 
-.unbudgetedDate {
-  font-size: 0.78rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
-  white-space: nowrap;
-}
 
-.unbudgetedAmount {
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--bva-unbudgeted);
-  white-space: nowrap;
-  margin-left: auto;
-}
 
-.unbudgetedTotal {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.75rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid color-mix(in srgb, var(--bva-unbudgeted) 20%, transparent);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--bva-unbudgeted);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .emptyState {
@@ -386,24 +341,9 @@
   .lineMain   { --scrollx-pin-gutter: 1.4rem; }
   .periodRow  { --scrollx-pin-gutter: 2.1rem; }
 
-  /* (Long line and period names wrap rather than ellipse — shared .wrap640 on the
-     elements themselves, not a rule here.) */
-
-  /* Unbudgeted expenses are a LIST, so the row becomes a card (`.stack640` on the row
-     supplies the axis flip). Left-aligned, with the amount and the action on their own
-     lines instead of chased off the right edge by `margin-left: auto`. */
-  .unbudgetedRow {
-    align-items: flex-start;
-    gap: 0.3rem;
-    padding: 0.65rem 0;
-  }
-  .unbudgetedCat,
-  .unbudgetedDate { align-self: flex-start; }
-  .unbudgetedAmount {
-    margin-left: 0;
-    font-size: 1rem;
-  }
-  .unbudgetedTotal { gap: 0.75rem; }
+  
+  
+  
 }
 
 /* ── Warm Coaches Portal — Stage 3 (dev-gated) ───────────────────────────────

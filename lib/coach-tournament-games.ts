@@ -163,11 +163,15 @@ export function pickNextOrMostRecent(
   opts: { types: string[]; now: number },
 ): RepTeamEvent | null {
   const eligible = events.filter(e => e.status !== 'cancelled' && opts.types.includes(e.eventType));
-  const upcoming = eligible
-    .filter(e => new Date(e.startsAt).getTime() >= opts.now)
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  // ⚠ Compared as instants, not as strings — the same rule as `splitUpcomingAndRecent` below, which
+  // this function sat beside comparing `startsAt.localeCompare` until 2026-08-16. A lexicographic
+  // compare only agrees with a chronological one while every row carries the same timestamp shape,
+  // which is a property of the serializer rather than of this list: one row arriving with an offset
+  // (`+00:00`) or without milliseconds is enough to pick the wrong game for the coach to act on.
+  const at = (e: RepTeamEvent) => new Date(e.startsAt).getTime();
+  const upcoming = eligible.filter(e => at(e) >= opts.now).sort((a, b) => at(a) - at(b));
   if (upcoming.length > 0) return upcoming[0];
-  const past = eligible.slice().sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  const past = eligible.slice().sort((a, b) => at(b) - at(a));
   return past[0] ?? null;
 }
 

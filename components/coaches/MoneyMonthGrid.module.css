@@ -74,19 +74,11 @@
 
 .catLead { padding-left: 0.35rem; }
 
-.unplannedTag {
-  display: inline-block;
-  margin-left: 0.35rem;
-  font-family: var(--font-data, inherit);
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--warning);
-  border: 1px solid var(--warning);
-  border-radius: 999px;
-  padding: 0 0.35rem;
-  vertical-align: middle;
-}
+/* ⚠ `.unplannedTag` WAS RETIRED HERE 2026-08-15 (owner ruling), with its twin on the Categories
+   view. It printed "not in your plan" beside a category the coach never budgeted — which the
+   Budget lens already shows by having nothing in it. Do not reinstate one on this grid alone:
+   the two views of this report have been consolidated twice, and a label on one and not the
+   other is exactly the drift those passes removed. */
 
 /* (The line indent, the total row and the cash-flow strip are the shared `.moneyGridLead`,
    `.moneyGridTotal` and `.moneyGridFlow` — this grid's own copies are retired. The total used to

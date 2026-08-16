@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T15:36:04.375Z",
+  "generated": "2026-08-16T04:39:41.113Z",
   "entries": {
     "coach-fundraisers|361|tap-floor|a·Chocolate sale": {
       "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
@@ -78,10 +78,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-fundraisers|1440|tap-floor|a·Roster": {
-      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-fundraisers|1440|tap-floor|a·Attendance": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "39px tall (floor 44)"
     },
@@ -222,10 +218,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-fundraiser|1440|tap-floor|a·Roster": {
-      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every other screen id. They appear here only because coach-fundraiser is a new screen id (added 2026-08-14 when the fundraiser drill-in stopped being an unswept page of its own). Desktop widths keep the portal compact control heights by a standing portal-wide decision; the 44px floor is enforced at the phone breakpoint, and this screen is clean at 361 and 390.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-fundraiser|1440|tap-floor|a·Attendance": {
       "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every other screen id. They appear here only because coach-fundraiser is a new screen id (added 2026-08-14 when the fundraiser drill-in stopped being an unswept page of its own). Desktop widths keep the portal compact control heights by a standing portal-wide decision; the 44px floor is enforced at the phone breakpoint, and this screen is clean at 361 and 390.",
       "detail": "39px tall (floor 44)"
     },
@@ -401,10 +393,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-dues|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-dues|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -502,10 +490,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-dues-settlement|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-dues-settlement|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -797,10 +781,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-accounting|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-accounting|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -882,10 +862,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-budget|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -1002,10 +978,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-budget-vs-actual|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -1129,10 +1101,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-expenses|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-expenses|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -1237,10 +1205,6 @@
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "39px tall (floor 44)"
     },
-    "coach-payment-requests|1440|tap-floor|a·Attendance": {
-      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
-      "detail": "39px tall (floor 44)"
-    },
     "coach-payment-requests|1440|tap-floor|a·Lineups": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "39px tall (floor 44)"
@@ -1342,10 +1306,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-allocations|1440|tap-floor|a·Roster": {
-      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-allocations|1440|tap-floor|a·Attendance": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "39px tall (floor 44)"
     },
@@ -1471,10 +1431,6 @@
     },
     "coach-help|361|tap-floor|a·Building the lineup": {
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Attendance": {
-      "reason": null,
       "detail": "30px tall (floor 44)"
     },
     "coach-help|361|tap-floor|a·Tournament games on your schedule": {
@@ -2163,10 +2119,6 @@
     },
     "coach-help|390|tap-floor|a·Building the lineup": {
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Attendance": {
-      "reason": null,
       "detail": "30px tall (floor 44)"
     },
     "coach-help|390|tap-floor|a·Tournament games on your schedule": {
@@ -2873,10 +2825,6 @@
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
-    "coach-help|768|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "coach-help|768|tap-floor|a·Tournament games on your schedule": {
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
@@ -2960,10 +2908,6 @@
     "coach-attendance|768|tap-floor|a·Take attendance": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
     },
     "coach-roster|768|tap-floor|button·Export as Excel": {
       "reason": null,
@@ -4121,10 +4065,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-overview|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-overview|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -4214,10 +4154,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-team-hub|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-team-hub|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -4397,10 +4333,6 @@
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
-    "coach-help|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "coach-help|1440|tap-floor|a·Tournament games on your schedule": {
       "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
@@ -4450,10 +4382,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-schedule|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-schedule|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -4569,10 +4497,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-attendance|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-attendance|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -4654,10 +4578,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-roster|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-roster|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -4833,10 +4753,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-lineups|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-lineups|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -4930,10 +4846,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-depth-chart|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-depth-chart|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -5617,10 +5529,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-development|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-development|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -5725,10 +5633,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-development-drills|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-development-drills|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -5817,10 +5721,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-development-board|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-development-board|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -5894,10 +5794,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-development-templates|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-development-templates|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -6046,10 +5942,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-practice-plan|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -6281,10 +6173,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-game-console|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-game-console|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -6358,10 +6246,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-announcements|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-announcements|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -6457,10 +6341,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-documents|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-documents|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -6538,10 +6418,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-staff|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-staff|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -6637,10 +6513,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-settings|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-settings|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -6718,10 +6590,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-tryouts|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-tryouts|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -6833,10 +6701,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-history|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-history|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -6918,10 +6782,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-history-development|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-history-development|1440|tap-floor|a·Attendance": {
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
@@ -7057,10 +6917,6 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "coach-history-results|1440|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "coach-history-results|1440|tap-floor|a·Lineups": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -7153,10 +7009,6 @@
       "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
       "detail": "39px tall (floor 44)"
     },
-    "coach-settings-money|1440|tap-floor|a·Attendance": {
-      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
-      "detail": "39px tall (floor 44)"
-    },
     "coach-settings-money|1440|tap-floor|a·Lineups": {
       "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
       "detail": "39px tall (floor 44)"
@@ -7238,10 +7090,6 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-settings-lineups|1440|tap-floor|a·Roster": {
-      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-settings-lineups|1440|tap-floor|a·Attendance": {
       "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
       "detail": "39px tall (floor 44)"
     },
@@ -7332,6 +7180,234 @@
     "coach-expenses|1440|tap-floor|button·Edit Scorekeeping tablet": {
       "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
       "detail": "24px tall (floor 44)"
+    },
+    "coach-practice-plans|768|tap-floor|button·Help: Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Account": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|button·Notifications": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Overview": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Roster": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Lineups": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Development": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Tryouts": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Schedule": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Insights": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Money": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Chat": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Email families": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Staff": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Documents": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Settings": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Tournaments": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|a·Help": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|button·Sign out": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plans|1440|tap-floor|button·Help: Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-lineups|1024|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-lineups|1280|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-lineups|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-fundraisers|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payment-requests|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-overview|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-team-hub|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-schedule|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-attendance|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-development-board|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-development|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-results|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-roster|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-depth-chart|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-development|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-development-drills|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-development-templates|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plan|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-accounting|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-expenses|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-dues|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-dues-settlement|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-fundraiser|1440|tap-floor|a·Practice plans": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every other screen id. They appear here only because coach-fundraiser is a new screen id (added 2026-08-14 when the fundraiser drill-in stopped being an unswept page of its own). Desktop widths keep the portal compact control heights by a standing portal-wide decision; the 44px floor is enforced at the phone breakpoint, and this screen is clean at 361 and 390.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-allocations|1440|tap-floor|a·Practice plans": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-announcements|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-documents|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-staff|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-settings|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-settings-money|1440|tap-floor|a·Practice plans": {
+      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-settings-lineups|1440|tap-floor|a·Practice plans": {
+      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-tryouts|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
     }
   }
 }

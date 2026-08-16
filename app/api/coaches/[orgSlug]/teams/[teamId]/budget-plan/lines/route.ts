@@ -4,7 +4,8 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
-import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { BUDGET_LINE_KINDS, isFundingKind, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { resolveBudgetItem } from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -43,14 +44,23 @@ export const POST = withObservability(async (req: Request,
 
   const description: string = typeof body.description === 'string' ? body.description.trim() : '';
   const totalAmount: number = Number(body.totalAmount);
-  const categoryId: string | null = body.categoryId || null;
   const itemId:     string | null = body.itemId     || null;
   const notes:      string | null = body.notes?.trim() || null;
   // Absent = cost, which is what every line was before migration 230. Only the two known kinds
   // are accepted; the DB CHECK would reject anything else, but a 400 explains it.
   const lineKind: string = body.lineKind === undefined ? 'cost' : String(body.lineKind);
+  // ⚠ THROUGH THE SHARED READER, never a literal comparison. Spelling the two kinds out here was
+  // correct with three and would be silently wrong with a fourth — the exact shorthand that landed
+  // every sponsorship line in the COST bucket across nineteen readers (mig 237).
+  const isMoneyIn = isFundingKind(lineKind);
 
-  if (!description || description.length > 200) {
+  /* ⚠ WHAT NAMES THE LINE DEPENDS ON ITS KIND, and this is the whole of mig 240's client contract.
+     A COST is named by its ITEM — the shared word both reports group on — so category and item are
+     required and the description is not stored at all. MONEY IN carries no category or item (owner
+     ruling 2026-08-13: a spending taxonomy has nothing to say about a bottle drive), so its
+     description IS its name and stays required. The database column is NOT NULL either way, so a
+     cost line stores its item's name; that is a display fallback, never a grouping key. */
+  if (isMoneyIn && (!description || description.length > 200)) {
     return NextResponse.json({ error: 'description is required (max 200 chars)' }, { status: 400 });
   }
   if (isNaN(totalAmount) || totalAmount <= 0) {
@@ -62,23 +72,24 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'lineKind must be one of: cost, funding, sponsorship' }, { status: 400 });
   }
 
-  // The FK payload must belong to this org's taxonomy (platform defaults are org_id
-  // NULL) — the same ownership check the budget-items POST performs. Without it a
-  // crafted request could link a line to, and echo back the name of, another org's
-  // custom category/item. Pre-existing gap, hardened during the Chunk G review.
-  if (categoryId) {
-    const { data: cat } = await supabaseAdmin
-      .from('budget_categories').select('id')
-      .eq('id', categoryId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-      .maybeSingle();
-    if (!cat) return NextResponse.json({ error: 'Category not found' }, { status: 400 });
-  }
-  if (itemId) {
-    const { data: item } = await supabaseAdmin
-      .from('budget_items').select('id')
-      .eq('id', itemId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-      .maybeSingle();
-    if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 400 });
+  /* The item must be one THIS TEAM can see — platform, club-published, or its own (mig 240). The
+     category is derived from it rather than accepted from the request: an item belongs to exactly
+     one category, so trusting both would let a caller file a line under a category its own item
+     does not live in, and the report's two levels would disagree about the same row. Same lesson as
+     the ownership gap hardened during the Chunk G review, one tier deeper. */
+  let categoryId: string | null = null;
+  let itemName: string | null = null;
+  if (!isMoneyIn) {
+    if (!itemId) {
+      return NextResponse.json(
+        { error: 'Pick a category and item — they name this line on your plan and on Budget vs. Actual.' },
+        { status: 400 },
+      );
+    }
+    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, team.id);
+    if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: 400 });
+    categoryId = resolved.item!.categoryId;
+    itemName   = resolved.item!.name;
   }
 
   const { data, error } = await supabaseAdmin
@@ -88,8 +99,10 @@ export const POST = withObservability(async (req: Request,
       team_id:         team.id,
       program_year_id: programYear.id,
       category_id:     categoryId,
-      item_id:         itemId,
-      description,
+      item_id:         isMoneyIn ? null : itemId,
+      // NOT NULL in the database, and no longer a name for a cost: the item's own name is stored so
+      // anything reading the column raw still shows something true.
+      description:     isMoneyIn ? description : (description || itemName || ''),
       total_amount:    totalAmount,
       line_kind:       lineKind,
       notes,

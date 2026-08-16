@@ -1,9 +1,9 @@
 'use client';
-import { Pencil } from 'lucide-react';
+import { Pencil, Eye } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * "Open this record to edit it" — the one row-level edit affordance in the coaches portal.
+ * "Open this record" — the one row-level affordance for that job in the coaches portal.
  *
  * Owner ruling 2026-08-15. A survey of the Money hub found five different idioms doing this job
  * (pencil, bare chevron, chevron+label, plain text button, and an icon-only pencil next to an
@@ -28,13 +28,27 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export default function RowEditButton({
   label,
   onClick,
-  title = 'Edit',
+  title,
   onPhone = 'label',
+  mode = 'edit',
 }: {
-  /** What this edits, as a screen reader will read it — e.g. `Edit Team pizza night`. */
+  /** What this opens, as a screen reader will read it — e.g. `Edit Team pizza night`. */
   label: string;
   onClick: () => void;
   title?: string;
+  /**
+   * Whether the record behind this row can still be changed.
+   *
+   * - `'edit'` (default) — a pencil. The row opens a form the coach can save.
+   * - `'view'` — an eye. The row opens the same record read-only, because something has happened
+   *   to it that a coach may not undo (Payment Requests: the club has approved or declined it).
+   *
+   * ⚠ IT LIVES HERE RATHER THAN AS A SECOND COMPONENT because the two states appear IN THE SAME
+   * COLUMN OF THE SAME TABLE, one row apart, and the icon is the only thing telling a coach which
+   * they'll get before they tap. Two components would be two places for that column to drift —
+   * which is the exact failure this component was extracted to end.
+   */
+  mode?: 'edit' | 'view';
   /**
    * What happens to this button at the phone breakpoint. The row is the visible door either way;
    * the difference is what the surrounding table does, and there are exactly two answers:
@@ -52,17 +66,19 @@ export default function RowEditButton({
    */
   onPhone?: 'label' | 'clip';
 }) {
+  const isView = mode === 'view';
+  const Icon = isView ? Eye : Pencil;
   return (
     <button
       type="button"
       className={`${styles.rowEditBtn} ${onPhone === 'clip' ? styles.rowEditBtnClip : ''}`}
-      title={title}
+      title={title ?? (isView ? 'View' : 'Edit')}
       aria-label={label}
       // Stops the row's own click handler firing a second time behind this one.
       onClick={e => { e.stopPropagation(); onClick(); }}
     >
-      <Pencil size={13} aria-hidden />
-      {onPhone === 'label' && <span className={styles.cardActionLabel}>Edit</span>}
+      <Icon size={13} aria-hidden />
+      {onPhone === 'label' && <span className={styles.cardActionLabel}>{isView ? 'View' : 'Edit'}</span>}
     </button>
   );
 }

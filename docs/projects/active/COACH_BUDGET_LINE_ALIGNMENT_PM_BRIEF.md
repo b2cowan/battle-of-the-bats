@@ -1,7 +1,8 @@
 # PM brief — spending points at a budget line
 
 **Plan:** [COACH_BUDGET_LINE_ALIGNMENT_PLAN.md](COACH_BUDGET_LINE_ALIGNMENT_PLAN.md)
-**Status:** planned 2026-08-15, **not built** — awaiting approval · one database change
+**Status:** **built on dev 2026-08-15** · owner QA = ledger **§29** · one database change (238,
+applied to dev; production application is a release step)
 **Raised by:** the owner, 2026-08-15, from the Add Expense / Add Payable form
 **Mockup:** https://claude.ai/code/artifact/dffa11b7-14a1-4182-afb7-e327985d7443
 
@@ -33,22 +34,25 @@ has the same root cause as the owner's question, so it's fixed in the same work 
 
 On **both** Add Expense and Add Payable, the "Category" dropdown becomes one field:
 
-**"What is this against?"** — the team's own budget lines, grouped by category, each showing what's
-left on it:
+**"What is this against?"** — the team's own budget lines, by name, grouped by category:
 
 > **FACILITIES**
-> Dome rental — $4,000 planned · **$1,190 left**
-> Field rental — $1,200 planned · **$1,200 left**
+> Dome rental
+> Field rental
 > **TOURNAMENTS**
-> Spring classic entry — $850 planned · **$0 left** ⚠
+> Spring classic entry
 > ─────────────
 > *Not in the budget*
 
-Picking a line fills in the category automatically — one decision instead of two, and it can't
-disagree with the plan.
+It's the **first question on the form**, and picking a line fills in **both the category and the
+description** — the line's own name, ready to type over. One decision instead of two, the category
+can't disagree with the plan, and most costs now need nothing typed but the amount.
 
-**The quiet win is the "left" figure.** The coach finds out they're about to overspend a line at the
-moment they record the cost, rather than next month on a report they may not open.
+**Names only, deliberately** (owner ruling 2026-08-15, after seeing it built with "$4,000 planned ·
+$1,190 left" on every option). A coach on this form is **logging money already spent or already
+promised, not deciding whether to incur it** — budget figures can't change that decision, so they're
+noise in the one control that has to be read to file the cost correctly. Overspending is Budget vs.
+Actual's news to deliver, and after this change it delivers it **line by line**.
 
 ## What stays the same
 
@@ -95,9 +99,39 @@ dependency on anything in flight.
 
 ## Success criteria
 
-1. Recording a cost against a budget line takes one choice, and shows what's left on that line
-   before it's saved.
+1. Recording a cost against a budget line takes **one choice**, and the category follows from it.
 2. Budget vs. Actual reports each line's own spending — and a line with no spending against it shows
    nothing, rather than its neighbour's money.
 3. A team with no budget plan, and every record made before this shipped, behave exactly as they do
    today.
+
+## What changed while building it
+
+**A dash on the report now means one thing, and the report says what.** The original write-up left a
+line with nothing spent against it showing a dash forever. As built it shows **$0.00** — because
+once every cost in a category is pointed at a line, "nothing was spent on field rental" is a fact,
+not a gap. A dash survives only where there is money in the category that doesn't say which line it
+belongs to, and the report names that money in dollars underneath: *"$200 of Facilities spending
+isn't against a budget line."* That sentence doubles as the instruction — re-file those costs and
+the dashes fill in.
+
+**Fixing a mis-filed cost never costs you money.** Which line something is against stays editable
+after it's been paid, unlike the amount. Re-filing is bookkeeping; the alternative would have been
+delete-and-re-enter, which moves real money on the team's books to correct a label.
+
+**Description stays required, but you rarely type it.** It reads like a note, but it's the record's
+name: it's what gets written onto the team's books when a cost is marked paid, it's how deleting a
+paid record finds the entry to reverse, and it's the only thing identifying the row in every list,
+the payment schedule and the exports. Making it optional would leave nameless rows and paid records
+that are awkward to reverse. Instead the budget line is now asked **first** and fills the
+description in with the line's name — so the common case is no typing at all, and anything you've
+written yourself is never overwritten.
+
+**The picker shows names only.** It was built with the planned and remaining figures on every
+option, per the original write-up, and the owner cut them the same day — see "What a coach does
+differently" above for the reasoning, which is a rule about this form rather than a preference about
+this control.
+
+**The demo had to be re-filed too.** A line reports its own spending only where a cost points at it,
+so the sandbox's seeded season needed the same treatment — otherwise the report a prospect is most
+likely to open would show a dash beside every budget line on a team 18 games into its season.

@@ -12,17 +12,21 @@ import {
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
-import { buildLinePeriodActuals, lineActualsKnowable } from '@/lib/coach-budget-line-actuals';
+import { rollupBudget, type RollupLine, type RollupSpend } from '@/lib/coach-budget-rollup';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
 // Returns a full budget-vs-actual report for the active program year.
-// Actuals are matched to budget categories by expense.category name (case-insensitive) — a
-// CATEGORY is the finest grain an expense records, so a per-LINE actual exists only where the
-// category holds one line (see §5 and lib/coach-budget-line-actuals.ts).
-// Unbudgeted actuals are expenses whose category doesn't match any budget category name.
+//
+// ⚠ THE REPORT IS TWO LEVELS: CATEGORY → ITEM (owner ruling 2026-08-15), and a cost reaches them
+// three ways that coexist — its ITEM (mig 240), its category id, or its free-text `category` matched
+// by NAME, which is every row written before any of this. All three land under the same headings,
+// which is what makes shipping without a backfill safe.
+// Two budget lines on one item SUM into one row; an item with spending and NO line is its own
+// flagged row; and whether something was budgeted is DERIVED, never stored. The rule lives in
+// lib/coach-budget-rollup.ts, which owns it for this route and the screen together.
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -39,7 +43,7 @@ export const GET = withObservability(async (req: Request,
   // ── 1. Load budget lines + periods ──────────────────────────────────────
   const { data: linesRaw } = await supabaseAdmin
     .from('rep_budget_lines')
-    .select('*, rep_budget_periods(*), budget_categories(name)')
+    .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
     .eq('program_year_id', programYear.id)
     .order('sort_order');
 
@@ -57,7 +61,7 @@ export const GET = withObservability(async (req: Request,
   // ── 2. Load expenses (paid and unpaid) ───────────────────────────────────
   const { data: expensesRaw } = await supabaseAdmin
     .from('rep_team_expenses')
-    .select('id, description, category, amount, expense_paid_at, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at, expense_type, created_at')
+    .select('id, description, category, budget_item_id, budget_category_id, amount, expense_paid_at, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at, expense_type, created_at, budget_items(name, category_id, budget_categories(name))')
     .eq('program_year_id', programYear.id)
     .order('created_at');
 
@@ -94,108 +98,133 @@ export const GET = withObservability(async (req: Request,
     return dates.sort()[0].slice(0, 10);
   }
 
-  // ── 3. Build category → lines map ────────────────────────────────────────
-  // Key: lowercase category name. Value: list of budget line objects.
-  const categoryNameMap = new Map<string, string>();  // lowercase name → display name
-  const categoryLines   = new Map<string, typeof lines>();
+  // ── 3–5. Roll the plan and the spending up to CATEGORY → ITEM ───────────────────────────────
+  //
+  // ⚠ THE ITEM IS THE KEY — NOT THE LINE, AND NEVER THE DESCRIPTION (owner ruling 2026-08-15). Two
+  // lines on one item SUM into one row, an item with spending and no line is its own row, and the
+  // rule lives in lib/coach-budget-rollup.ts so this route and the screen cannot group one plan two
+  // different ways. That module's header carries the reasoning, including why the one-day-old
+  // expense→line link was retired to get here.
+  //
+  // Resolving ONE cost to its place in the taxonomy, in strict order of trust:
+  //   1. its ITEM (mig 240) — which states the category too, since an item lives in exactly one;
+  //   2. its category id (mig 238) — an imported or part-classified row;
+  //   3. its free-text `category`, matched by NAME against the categories the plan uses, exactly as
+  //      this report has always done for every row written before any of it existed.
+  // Anything resolving to none of the three is spending with no category at all, and gets one
+  // honest row of its own rather than a separate section nobody scrolls to.
+  const categoryNameById = new Map<string, string>();
+  const categoryIdByName = new Map<string, string>();
+  const learnCategory = (catId: string | null, catName: string | null) => {
+    const name = (catName ?? '').trim();
+    if (!catId || !name) return;
+    if (!categoryNameById.has(catId)) categoryNameById.set(catId, name);
+    if (!categoryIdByName.has(name.toLowerCase())) categoryIdByName.set(name.toLowerCase(), catId);
+  };
 
   for (const line of lines) {
-    const catName = ((line.budget_categories as Record<string, unknown> | null)?.name as string) ?? 'Uncategorized';
-    const key     = catName.toLowerCase();
-    categoryNameMap.set(key, catName);
-    if (!categoryLines.has(key)) categoryLines.set(key, []);
-    categoryLines.get(key)!.push(line);
-  }
-
-  // ── 4. Assign expenses to categories ─────────────────────────────────────
-  const categoryActuals = new Map<string, number>(); // lowercase cat name → paid amount
-  const unbudgetedActuals: Array<{
-    id: string; description: string; category: string | null; amount: number; paidAt: string | null;
-  }> = [];
-
-  for (const exp of expenses) {
-    const expCat = ((exp.category as string | null) ?? '').toLowerCase();
-    const paid   = paidAmount(exp);
-
-    if (paid <= 0) continue; // only include paid amounts in actuals
-
-    if (expCat && categoryNameMap.has(expCat)) {
-      categoryActuals.set(expCat, (categoryActuals.get(expCat) ?? 0) + paid);
-    } else {
-      unbudgetedActuals.push({
-        id:          exp.id as string,
-        description: exp.description as string,
-        category:    exp.category as string | null,
-        amount:      paid,
-        paidAt:      paidDate(exp),
-      });
-    }
-  }
-
-  // ── 5. Build category result objects ────────────────────────────────────
-  // ⚠ A LINE'S OWN SPENDING IS USUALLY NOT KNOWABLE. An expense names a CATEGORY and nothing
-  // finer, so only a category holding exactly one line can report a per-line figure — the rule,
-  // and the placing of spending into periods, live in lib/coach-budget-line-actuals.ts. Every
-  // line in a multi-line category used to be handed the whole category's spending mapped onto its
-  // own periods, which reported the same dollar once per line (fixed 2026-08-15).
-  const categoryResults = [...categoryLines.entries()].map(([key, catLines]) => {
-    const categoryName     = categoryNameMap.get(key) ?? key;
-    const categoryActual   = Math.round((categoryActuals.get(key) ?? 0) * 100) / 100;
-    const categoryEstimated = catLines.reduce((s, l) => s + (l.total_amount as number), 0);
-    const categoryVariance  = Math.round((categoryEstimated - categoryActual) * 100) / 100;
-    const lineActualsKnown  = lineActualsKnowable(catLines.length);
-
-    // Each line's periods in display order, held once: the actuals are computed across the whole
-    // category and the rows are then built from the same arrays.
-    const linePeriods = catLines.map(line =>
-      ((line.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
-        .sort((a, b) => (a.sort_order as number) - (b.sort_order as number)));
-
-    // This category's paid spending — gathered once per category rather than once per line.
-    const categoryEvents = lineActualsKnown
-      ? expenses
-        .filter(e => ((e.category as string | null) ?? '').toLowerCase() === key && paidAmount(e) > 0)
-        .map(e => ({ date: paidDate(e), amount: paidAmount(e) }))
-      : [];
-
-    const actualsByLine = buildLinePeriodActuals(
-      linePeriods.map(ps => ps.map(p => ({
-        periodDate: p.period_date as string | null,
-        sortOrder:  p.sort_order as number,
-      }))),
-      categoryEvents,
+    learnCategory(
+      line.category_id as string | null,
+      ((line.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
     );
+  }
+  /* ⚠ AND FROM THE SPENDING TOO, or a category the team never budgeted for SPLITS IN TWO. Learning
+     names only from budget lines means a category with no line has no id↔name pairing at all — so a
+     cost carrying its id buckets under the id while a sibling cost carrying only the typed text
+     buckets under the name, and the report shows "Officials" twice, $2,000 and $600, for one $2,600
+     category. The season total stayed right; the breakdown a coach actually reads did not. (The two
+     rows also shared one expand toggle, being keyed by name.) */
+  for (const exp of expenses) {
+    const item = exp.budget_items as Record<string, unknown> | null;
+    learnCategory(
+      (exp.budget_category_id as string | null) ?? (item?.category_id as string | null) ?? null,
+      ((item?.budget_categories as Record<string, unknown> | null)?.name as string)
+        ?? (exp.category as string | null),
+    );
+  }
 
-    const lineResults = catLines.map((line, li) => {
-      const rawPeriods = linePeriods[li];
-      const periodActuals = actualsByLine[li];
+  const rollupLines: RollupLine[] = lines.map(l => ({
+    id:           l.id as string,
+    categoryId:   (l.category_id as string | null) ?? null,
+    categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+    itemId:       (l.item_id as string | null) ?? null,
+    itemName:     ((l.budget_items as Record<string, unknown> | null)?.name as string) ?? null,
+    totalAmount:  (l.total_amount as number) ?? 0,
+    description:  l.description as string,
+    notes:        (l.notes as string | null) ?? null,
+    periods: ((l.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
+      .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
+      .map(p => ({
+        label:     p.period_label as string,
+        date:      p.period_date as string | null,
+        amount:    p.amount as number,
+        sortOrder: p.sort_order as number,
+      })),
+  }));
 
+  /** Where one cost sits in the taxonomy — the three-step resolution above, in one place. */
+  function placeCost(exp: Record<string, unknown>) {
+    const item = exp.budget_items as Record<string, unknown> | null;
+    if (exp.budget_item_id && item) {
+      const catId = (item.category_id as string | null) ?? null;
       return {
-        budgetLineId:   line.id as string,
-        description:    line.description as string,
-        totalEstimated: line.total_amount as number,
-        hasPeriods:     rawPeriods.length > 0,
-        periods:        rawPeriods.map((p, i) => ({
-          label:      p.period_label as string,
-          periodDate: p.period_date as string | null,
-          estimated:  p.amount as number,
-          /** ⚠ null = nobody can say (see above). A real 0 means nothing was spent. */
-          actual:     periodActuals ? Math.round(periodActuals[i] * 100) / 100 : null,
-        })),
+        categoryId:   catId,
+        categoryName: ((item.budget_categories as Record<string, unknown> | null)?.name as string)
+          ?? (catId ? categoryNameById.get(catId) ?? null : null),
+        itemId:       exp.budget_item_id as string,
+        itemName:     (item.name as string) ?? null,
       };
-    });
-
+    }
+    const explicitCat = exp.budget_category_id as string | null;
+    if (explicitCat) {
+      return {
+        categoryId:   explicitCat,
+        categoryName: categoryNameById.get(explicitCat) ?? (exp.category as string | null),
+        itemId: null, itemName: null,
+      };
+    }
+    const text = ((exp.category as string | null) ?? '').trim();
     return {
-      categoryName,
-      categoryEstimated: Math.round(categoryEstimated * 100) / 100,
-      categoryActual,
-      categoryVariance,
-      /** False when the category holds more than one line — the screen says so rather than
-       *  leaving a bare dash to look like a bug. */
-      lineActualsKnown,
-      lines: lineResults,
+      categoryId:   text ? categoryIdByName.get(text.toLowerCase()) ?? null : null,
+      categoryName: text || null,
+      itemId: null, itemName: null,
     };
-  });
+  }
+
+  /* Resolved ONCE per expense, then read by both the category table and the month grid below.
+     Those are two readings of one report: a cost landing under Facilities in one and under a stale
+     string in the other is the same product answering itself twice — and resolving it twice was
+     also plain repeated work. */
+  const placedByExpense = new Map<string, ReturnType<typeof placeCost>>(
+    expenses.map(exp => [exp.id as string, placeCost(exp)]));
+  const placedFor = (exp: Record<string, unknown>) =>
+    placedByExpense.get(exp.id as string) ?? placeCost(exp);
+
+  const rollupSpend: RollupSpend[] = expenses
+    .map(exp => ({ exp, paid: paidAmount(exp) }))
+    .filter(({ paid }) => paid > 0)   // only paid amounts are actuals
+    .map(({ exp, paid }) => ({
+      id:          exp.id as string,
+      description: exp.description as string,
+      ...placedFor(exp),
+      amount:      paid,
+      paidDate:    paidDate(exp),
+    }));
+
+  const categoryResults = rollupBudget(rollupLines, rollupSpend);
+
+  // Kept flat for the export and for anything still asking "what wasn't planned?" as a list. It is
+  // no longer a separate SECTION on screen — unplanned spending now sits in its own row inside its
+  // own category, where a coach reads it beside everything else rather than below it.
+  const unbudgetedActuals = categoryResults.flatMap(cat =>
+    cat.items.filter(i => !i.inPlan).flatMap(i => i.costs.map(c => ({
+      id:          c.id,
+      description: c.description,
+      category:    cat.categoryName,
+      item:        i.itemName,
+      amount:      c.amount,
+      paidAt:      c.paidDate,
+    }))));
 
   // ── 6. Dues collection summary ────────────────────────────────────────
   const { data: schedules } = await supabaseAdmin
@@ -294,21 +323,31 @@ export const GET = withObservability(async (req: Request,
   });
 
   // ── 8. The month grid (chunk H) ────────────────────────────────────────
-  // Rows = category → line, columns = the season's months, one payload serving all four lenses
+  // Rows = category → ITEM, columns = the season's months, one payload serving all four lenses
   // (Budget · Scheduled · Actual · Difference) so flipping a lens never refetches. The arithmetic
   // lives in lib/coach-budget-months.ts and is unit-tested; this block is the assembly half.
   const todayMonth = tournamentToday().slice(0, 7); // ORG timezone — never the runtime's UTC month
 
-  const gridLines: GridLine[] = lines.map(l => ({
-    id:            l.id as string,
-    description:   l.description as string,
-    categoryName:  ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? 'Uncategorized',
-    itemId:        (l.item_id as string | null) ?? null,
-    itemName:      null, // the grid's select doesn't join budget_items; description carries the name
-    totalAmount:   l.total_amount as number,
-    periods:       ((l.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
-      .map(p => ({ date: p.period_date as string | null, amount: p.amount as number })),
-  }));
+  /* ⚠⚠ THE GRID'S ROWS COME FROM THE ROLLUP, NOT FROM THE RAW LINES — because Months and Categories
+     are two views of ONE report and must not group it two different ways. Built from `lines` (as it
+     was until 2026-08-15) a team with two budget lines on one item read as ONE row under Categories
+     and TWO under Months, on the same screen, for the same plan. Taking the rows from
+     `categoryResults` means the SUM ruling, the merged payment periods and the "not budgeted" rows
+     all arrive already applied, by the one module that owns them.
+     ⚠ Unplanned items are included with a zero budget on purpose: their category exists on this
+     screen, and their spending needs a row to land in. */
+  const gridLines: GridLine[] = categoryResults.flatMap(cat => cat.items.map(item => ({
+    id:           `${cat.categoryName}|${item.itemId ?? 'no-item'}`,
+    description:  item.itemName,
+    categoryName: cat.categoryName,
+    itemId:       item.itemId,
+    itemName:     item.itemName,
+    totalAmount:  item.budgeted,
+    // Carried so the grid can still tell a planned category from one that only has spending —
+    // every item now arrives with a row, so the row's presence no longer answers that.
+    inPlan:       item.inPlan,
+    periods:      item.periods.map(p => ({ date: p.date, amount: p.amount })),
+  })));
 
   // Actuals: what was paid, on the day it was paid. A payable's deposit and balance are separate
   // events — they land in different months and the grid must show them that way.
@@ -326,7 +365,7 @@ export const GET = withObservability(async (req: Request,
   }
 
   for (const exp of expenses) {
-    const cat = exp.category as string | null;
+    const cat = placedFor(exp).categoryName;
     const id = exp.id as string;
     const description = exp.description as string;
 
@@ -465,9 +504,14 @@ export const GET = withObservability(async (req: Request,
   // ── 10. Headroom ──────────────────────────────────────────────────────
   // Measured against the EFFECTIVE budget (see above, where it is reconciled) so this report,
   // the Money hub, and the budget planner always agree.
-  const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.categoryActual, 0) * 100) / 100;
+  /* ⚠ EVERY PAID DOLLAR IS NOW INSIDE A CATEGORY ROW, including the unplanned ones — the rollup
+     gives spending on an unbudgeted item its own row rather than a separate list. So the season's
+     actual is the categories' sum and nothing is added on top; `unbudgeted` is reported as its own
+     figure for the screen to name, NOT as a second addend. Adding it again here would double-count
+     precisely the spending this change set out to make visible. */
+  const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.actual, 0) * 100) / 100;
   const unbudgeted   = Math.round(unbudgetedActuals.reduce((s, u) => s + u.amount, 0) * 100) / 100;
-  const headroom     = Math.round((effectiveBudget - totalActual - unbudgeted) * 100) / 100;
+  const headroom     = Math.round((effectiveBudget - totalActual) * 100) / 100;
 
   return NextResponse.json({
     headroom,
@@ -480,8 +524,19 @@ export const GET = withObservability(async (req: Request,
     overPlanned:        budgetTotals.overPlanned,
     /** Null when the team budgets no funding — the row simply isn't there. */
     funding,
-    totalActual:   Math.round((totalActual + unbudgeted) * 100) / 100,
-    categories:    categoryResults,
+    // Already whole (see §10): the categories now hold every paid dollar, planned or not.
+    totalActual,
+    /* ⚠ SENT WITHOUT THE RAW LINES AND COSTS BEHIND EACH ROW. The rollup carries them because the
+       PLAN page uses them (it calls the same function locally to render editable lines), but this
+       report renders neither — shipping them would put two full arrays of raw records on every item
+       row of a season's report for nothing. The unbudgeted list below is already extracted from
+       them server-side. */
+    categories:    categoryResults.map(cat => ({
+      ...cat,
+      items: cat.items.map(({ lines: _lines, costs: _costs, costCount: _costCount, ...item }) => item),
+    })),
+    /** How much of `totalActual` went on items nobody planned — a figure to NAME, never to add. */
+    unbudgeted,
     unbudgetedActuals,
     duesCollection,
     monthlyChart,

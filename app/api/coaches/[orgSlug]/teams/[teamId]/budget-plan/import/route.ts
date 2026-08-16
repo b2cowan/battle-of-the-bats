@@ -9,6 +9,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
 import { isFundingKind } from '@/lib/coach-budget-totals';
+import { itemVisibleToTeam, type OwnedBudgetItem } from '@/lib/coach-budget-items';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue,
   MAX_IMPORT_ROWS,
@@ -129,7 +130,7 @@ export const POST = withObservability(async (req: Request,
   // The taxonomy this org may link to: platform defaults + its own custom entries.
   const { data: categoryRows } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, name, budget_items(id, name)')
+    .select('id, name, budget_items(id, name, org_id, team_id)')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     // Team-visible categories only â the same filter the coach's own picker applies, so an
     // imported sheet can never link a team budget to an org-admin-only category.
@@ -139,7 +140,11 @@ export const POST = withObservability(async (req: Request,
     .map((c: Record<string, unknown>) => ({
       id: c.id as string,
       name: c.name as string,
+      // ⚠ THIS TEAM'S VISIBLE ITEMS ONLY (mig 240) — platform, club-published, or its own. Another
+      // team's word must never be matched against, or an import would silently file this team's
+      // budget under vocabulary its own picker will not even show.
       items: ((c.budget_items ?? []) as Array<Record<string, unknown>>)
+        .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id))
         .map(i => ({ id: i.id as string, name: i.name as string })),
     }));
   const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
@@ -247,7 +252,51 @@ export const POST = withObservability(async (req: Request,
         skipped.push({ rowNumber: row.rowNumber, name: label, reason: 'Category not found' });
         continue;
       }
-      const item = category.items.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
+      /* ⚠ AN IMPORTED LINE MUST END UP WITH AN ITEM (mig 240) — the item is what NAMES it on the
+         plan and on Budget vs. Actual, so a row that matched nothing in the library would arrive
+         nameless, under "Not itemized", and be invisible to the report it was imported for. So a
+         sheet name the library does not know CREATES a team item from it: the same thing the coach
+         would have done in the picker, done for them by the door they actually used. It belongs to
+         this team alone, like every other item a coach creates. */
+      let item = category.items.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
+      if (!item && row.lineName.trim()) {
+        const name = row.lineName.trim().slice(0, 80);
+        const { data: madeItem, error: itemError } = await supabaseAdmin
+          .from('budget_items')
+          .insert({
+            category_id: category.id, org_id: ctx!.org.id, team_id: team.id,
+            name, is_default: false, is_misc: false,
+          })
+          .select('id, name')
+          .single();
+        if (madeItem) {
+          item = { id: madeItem.id as string, name: madeItem.name as string };
+          // Keep the in-memory library current so two sheet rows naming the same thing land on ONE
+          // item rather than racing to create it twice.
+          category.items.push(item);
+        } else if (itemError?.code === '23505') {
+          /* ⚠ SOMEBODY ELSE CREATED IT BETWEEN OUR READ AND OUR WRITE — a second import in another
+             tab, or a coach using "+ Add custom item" mid-import. Swallowing this left `item`
+             undefined and wrote the line with NO item, reported as a clean import: the row lands
+             under "Not itemized" and neither coach is told. Take the winner instead. */
+          const { data: winner } = await supabaseAdmin
+            .from('budget_items')
+            .select('id, name')
+            .eq('category_id', category.id).eq('org_id', ctx!.org.id).eq('team_id', team.id)
+            .ilike('name', name)
+            .maybeSingle();
+          if (winner) {
+            item = { id: winner.id as string, name: winner.name as string };
+            category.items.push(item);
+          }
+        }
+        if (!item) {
+          // Still nothing to name it with — refuse the row rather than importing a nameless line
+          // and calling it a success.
+          failed.push({ rowNumber: row.rowNumber, name: label, error: 'Could not add this to your item list' });
+          continue;
+        }
+      }
 
       let lineId = row.matchedLineId;
       if (row.outcome === 'update' && lineId) {

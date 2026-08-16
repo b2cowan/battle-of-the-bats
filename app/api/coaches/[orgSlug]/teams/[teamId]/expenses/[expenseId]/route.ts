@@ -14,6 +14,7 @@ import {
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { lockedFields } from '@/lib/expense-ledger';
+import { resolveBudgetItem } from '@/lib/coach-budget-items';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -96,6 +97,25 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Category must be 80 characters or fewer' }, { status: 400 });
     }
     patch.category = trimmed || null;
+  }
+
+  /* ── What this cost IS (mig 240) ─────────────────────────────────────────────────────────────
+     ⚠ DELIBERATELY NOT LOCKED ON A PAID RECORD, unlike the amount beside it. Re-filing a past cost
+     under the right item is ordinary bookkeeping: it moves no money, posts nothing, and touches no
+     ledger entry — mig 236's links are to the AMOUNT, not to the classification. Locking it would
+     leave a coach who mis-filed a paid invoice with only one remedy, delete-and-re-enter, which
+     reverses and re-posts real money to fix a label. `lockedFields` is unchanged for exactly that
+     reason: this is not a figure.
+
+     Re-derives the text category from the item too, so an edit cannot leave the pair disagreeing —
+     the same rule the create path applies, for the same reason. */
+  if (body.budgetItemId !== undefined) {
+    const linked = await resolveBudgetItem(body.budgetItemId, ctx!.org.id, teamId);
+    if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
+    patch.budgetItemId     = linked.item?.id ?? null;
+    patch.budgetCategoryId = linked.item?.categoryId ?? null;
+    // Clearing the item leaves whatever category the same request supplied; choosing one wins.
+    if (linked.item) patch.category = linked.item.categoryName;
   }
   if (notes !== undefined) patch.notes = notes?.trim() || null;
 

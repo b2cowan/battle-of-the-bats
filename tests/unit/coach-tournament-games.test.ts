@@ -128,6 +128,19 @@ describe('which event to take attendance for', () => {
   it('returns null for an empty calendar', () => {
     assert.equal(pickNextOrMostRecent([], opts), null);
   });
+
+  // ⚠ The regression this function carried until 2026-08-16: it sorted `startsAt` with
+  // `localeCompare`, which agrees with chronological order only while every row is serialised the
+  // same way. One row with an offset instead of `Z` is enough — here the offset row sorts FIRST as
+  // text and LAST as an instant, so the coach was pointed at the wrong game.
+  it('orders by the instant, not the text, when timestamp shapes are mixed', () => {
+    const offsetLater  = at('offset-later', '2026-05-17T23:00:00-04:00');  // = 2026-05-18T03:00Z
+    const zulusSooner  = at('zulu-sooner',  '2026-05-18T01:00:00Z');
+    assert.equal(pickNextOrMostRecent([offsetLater, zulusSooner], opts)?.id, 'zulu-sooner');
+    // …and the same in the past-only branch, where "most recent" must not be "largest string".
+    const pastOpts = { ...opts, now: new Date('2026-06-01T00:00:00Z').getTime() };
+    assert.equal(pickNextOrMostRecent([offsetLater, zulusSooner], pastOpts)?.id, 'offset-later');
+  });
 });
 
 describe('mirrored games — the hand-entered duplicates', () => {

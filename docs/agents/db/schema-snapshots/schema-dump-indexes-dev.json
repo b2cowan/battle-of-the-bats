@@ -231,13 +231,18 @@
   },
   {
     "tablename": "budget_items",
+    "indexname": "budget_items_team_idx",
+    "indexdef": "CREATE INDEX budget_items_team_idx ON public.budget_items USING btree (team_id) WHERE (team_id IS NOT NULL)"
+  },
+  {
+    "tablename": "budget_items",
     "indexname": "budget_items_unique_default_name",
     "indexdef": "CREATE UNIQUE INDEX budget_items_unique_default_name ON public.budget_items USING btree (category_id, lower(name)) WHERE (org_id IS NULL)"
   },
   {
     "tablename": "budget_items",
-    "indexname": "budget_items_unique_org_name",
-    "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
+    "indexname": "budget_items_unique_scope_name",
+    "indexdef": "CREATE UNIQUE INDEX budget_items_unique_scope_name ON public.budget_items USING btree (category_id, org_id, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(name)) WHERE (org_id IS NOT NULL)"
   },
   {
     "tablename": "chat_message_reactions",
@@ -1916,6 +1921,11 @@
   },
   {
     "tablename": "rep_team_expenses",
+    "indexname": "idx_rep_team_expenses_budget_item",
+    "indexdef": "CREATE INDEX idx_rep_team_expenses_budget_item ON public.rep_team_expenses USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_expenses",
     "indexname": "idx_rep_team_expenses_deposit_entry",
     "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
   },
@@ -1928,6 +1938,16 @@
     "tablename": "rep_team_expenses",
     "indexname": "rep_team_expenses_year_idx",
     "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_fundraiser_tags",
+    "indexname": "rep_team_fundraiser_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_fundraiser_tags_pkey ON public.rep_team_fundraiser_tags USING btree (fundraiser_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_fundraiser_tags",
+    "indexname": "rep_team_fundraiser_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_fundraiser_tags_tag_idx ON public.rep_team_fundraiser_tags USING btree (tag_id)"
   },
   {
     "tablename": "rep_team_game_moments",

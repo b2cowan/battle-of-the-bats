@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-15",
-  "total": 13,
+  "generated": "2026-08-16",
+  "total": 32,
   "counts": {
-    "tables": 0,
-    "columns": 6,
-    "indexes": 2,
-    "constraints": 2,
+    "tables": 1,
+    "columns": 12,
+    "indexes": 8,
+    "constraints": 8,
     "rls": 3
   },
   "items": [
@@ -26,6 +26,10 @@
       "sig": "uuid|uuid|YES| :: uuid|uuid|NO|"
     },
     {
+      "key": "column:only-dev:budget_items.team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_fundraisers.kind",
       "sig": ""
     },
@@ -42,7 +46,31 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_expenses.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_expenses.budget_item_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_expenses.deposit_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_fundraiser_tags.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_fundraiser_tags.fundraiser_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_fundraiser_tags.tag_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:budget_items.budget_items_team_id_fkey",
       "sig": ""
     },
     {
@@ -50,7 +78,35 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_budget_item_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_expenses.rep_team_expenses_deposit_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_fundraiser_tags.rep_team_fundraiser_tags_fundraiser_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_fundraiser_tags.rep_team_fundraiser_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_fundraiser_tags.rep_team_fundraiser_tags_tag_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:budget_items_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:budget_items_unique_scope_name",
       "sig": ""
     },
     {
@@ -58,7 +114,27 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_team_expenses_budget_item",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:idx_rep_team_expenses_deposit_entry",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_fundraiser_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_fundraiser_tags_tag_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:budget_items_unique_org_name",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_fundraiser_tags",
       "sig": ""
     }
   ]

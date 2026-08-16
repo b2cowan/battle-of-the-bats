@@ -4,7 +4,8 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
-import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { BUDGET_LINE_KINDS, isFundingKind, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { resolveBudgetItem } from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -39,10 +40,11 @@ export const PATCH = withObservability(async (req: Request,
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  // Verify line belongs to this program year
+  // Verify line belongs to this program year. `line_kind` rides along because the item guard below
+  // has to know what this line WILL be after the patch, not only what the request mentions.
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('rep_budget_lines')
-    .select('id')
+    .select('id, line_kind')
     .eq('id', lineId)
     .eq('program_year_id', programYear.id)
     .single();
@@ -84,31 +86,34 @@ export const PATCH = withObservability(async (req: Request,
     updates.line_kind = body.lineKind;
   }
 
-  // The FK payload must belong to this org's taxonomy (platform defaults are org_id NULL) — the
-  // same ownership check the lines POST performs. Without it a crafted PATCH could relink a line
-  // to, and echo back the name of, ANOTHER org's custom category or item. The POST was hardened
-  // during the Chunk G review; its PATCH sibling was not, and still had the gap (chunk H).
-  if ('categoryId' in body) {
-    const categoryId = body.categoryId || null;
-    if (categoryId) {
-      const { data: cat } = await supabaseAdmin
-        .from('budget_categories').select('id')
-        .eq('id', categoryId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-        .maybeSingle();
-      if (!cat) return NextResponse.json({ error: 'Category not found' }, { status: 400 });
-    }
-    updates.category_id = categoryId;
-  }
+  /* ⚠ THE ITEM RENAMES THE ROW, so this is no longer a link edit — it is a rename (mig 240). It
+     must belong to the taxonomy THIS TEAM can see (platform, club-published, or its own), and the
+     category is derived from it rather than accepted alongside it: an item lives in exactly one
+     category, so trusting both would let a caller file a line under a category its item does not
+     belong to and the report's two levels would disagree about one row.
+     ⚠ `categoryId` FROM THE REQUEST IS IGNORED for the same reason. The POST was hardened during
+     the Chunk G review and its PATCH sibling was not — that gap is closed here for good, because
+     there is now nothing to accept. */
   if ('itemId' in body) {
     const itemId = body.itemId || null;
-    if (itemId) {
-      const { data: item } = await supabaseAdmin
-        .from('budget_items').select('id')
-        .eq('id', itemId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-        .maybeSingle();
-      if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 400 });
+    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, teamId);
+    if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: 400 });
+    /* ⚠ A COST LINE MAY NOT BE STRIPPED BACK TO NOTHING. The create path refuses to make a cost
+       line without an item; letting a PATCH clear one produces a state no form can create — a
+       nameless cost line sitting under "Not itemized" — reachable from a stale tab or a replayed
+       request, which is this route's stated threat model. The kind about to be stored is what
+       matters: a request that flips the line to money-in in the same breath legitimately clears it. */
+    const kindAfter = ('lineKind' in body ? body.lineKind : existing.line_kind) as string | null;
+    if (!resolved.item && !isFundingKind(kindAfter)) {
+      return NextResponse.json(
+        { error: 'A cost line needs a category and item — they are what name it on your plan and your report.' },
+        { status: 400 },
+      );
     }
-    updates.item_id = itemId;
+    updates.item_id     = resolved.item?.id ?? null;
+    updates.category_id = resolved.item?.categoryId ?? null;
+    // The NOT NULL text column follows the item, so anything reading it raw shows something true.
+    if (resolved.item && typeof body.description !== 'string') updates.description = resolved.item.name;
   }
 
   const { data, error } = await supabaseAdmin

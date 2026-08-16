@@ -55,6 +55,18 @@ const TABLE = 'rep_budget_lines';
  */
 const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
   {
+    path: 'app/api/admin/accounting/team-budget-items/route.ts',
+    reason: 'COUNTS lines per budget ITEM so a club can tell a word tried once from one a season '
+      + 'depends on. It sums nothing and reads no amount — and a money-in line carries no item at '
+      + 'all (they have no category or item by design), so the kind cannot change the answer.',
+  },
+  {
+    path: 'app/api/admin/accounting/team-budget-items/[itemId]/publish/route.ts',
+    reason: 'Repoints lines from an absorbed duplicate ITEM onto the published one. It touches '
+      + 'item_id and nothing else — no amount, no kind, no total — and money-in lines carry no '
+      + 'item, so none of them can be in the set it moves.',
+  },
+  {
     path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/route.ts',
     reason: 'Creates a line and is where the kind is CHOSEN — it validates the value it writes.',
   },

@@ -27,7 +27,7 @@ export const PATCH = withObservability(async (req: Request,
   // Verify item belongs to this org (not a platform default — those are immutable)
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('budget_items')
-    .select('id, org_id, is_default')
+    .select('id, org_id, team_id, is_default')
     .eq('id', itemId)
     .eq('category_id', catId)
     .single();
@@ -37,6 +37,16 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (existing.org_id !== ctx!.org.id) {
     return NextResponse.json({ error: 'Platform default items cannot be modified' }, { status: 403 });
+  }
+  /* ⚠ A TEAM'S OWN ITEM IS NOT THE CLUB'S TO REWORD (mig 240). The club can SEE every team's items
+     and PUBLISH one to all teams; renaming one from here would change the name of a budget row on a
+     plan the club does not own, and the coach who wrote it would have no idea why. Publishing is the
+     sanctioned action, and it is deliberately the only one. */
+  if (existing.team_id) {
+    return NextResponse.json(
+      { error: 'That item belongs to a team. You can publish it to every team, but only that team can rename it.' },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
@@ -93,7 +103,7 @@ export const DELETE = withObservability(async (req: Request,
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('budget_items')
-    .select('id, org_id, is_misc')
+    .select('id, org_id, team_id, is_misc')
     .eq('id', itemId)
     .eq('category_id', catId)
     .single();
@@ -103,6 +113,19 @@ export const DELETE = withObservability(async (req: Request,
   }
   if (existing.org_id !== ctx!.org.id) {
     return NextResponse.json({ error: 'Platform default items cannot be deleted' }, { status: 403 });
+  }
+  /* ⚠⚠ A TEAM'S OWN ITEM IS NOT THE CLUB'S TO DELETE (mig 240) — and this guard was missing while
+     the PATCH beside it had one, which is exactly how a rule gets half-applied. Deleting it does
+     not fail loudly: both link columns that point at an item are ON DELETE SET NULL, so every
+     budget line and every recorded cost that team had filed against it would silently lose its
+     classification and reappear under "Not itemized" — the data loss the PATCH comment warns
+     about, through the door next to it. Publishing is the sanctioned action on another team's
+     vocabulary, and it remains the only one. */
+  if (existing.team_id) {
+    return NextResponse.json(
+      { error: 'That item belongs to a team. Only that team can remove it — you can publish it to every team instead.' },
+      { status: 403 },
+    );
   }
   if (existing.is_misc) {
     return NextResponse.json({ error: 'Misc items cannot be deleted' }, { status: 403 });

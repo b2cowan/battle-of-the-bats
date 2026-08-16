@@ -2344,9 +2344,16 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .statValue { font-size: 1rem; font-weight: 700; color: var(--white-90); }
 
 /* ── Summary cards ──────────────────────────────────────────────────────── */
+/* ⚠ auto-FIT, NEVER auto-FILL (owner call 2026-08-15). `auto-fill` keeps generating empty
+   160px tracks to the end of the row and then shares the free space across ALL of them,
+   empty ones included — so Org Allocations' four tiles sat squeezed into the left 55% of a
+   desktop with a band of nothing beside them, and Payment Requests' three were worse. Every
+   surface using this grid carries 3–4 tiles, i.e. always fewer than the row can hold, which
+   is exactly the case the two keywords disagree on. `auto-fit` collapses the empty tracks so
+   the tiles that exist divide the width between them. */
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.75rem;
   margin-bottom: 2rem;
 }
@@ -2616,6 +2623,29 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
 .badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 .badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+
+/* ── Payment requests: where a request stands, and which way the money moves ──────────────
+   Both sets replace bespoke inline-styled pills that sat in the Payments table with their own
+   sizes, their own casing (capitalize, against every other badge's uppercase) and their own
+   colour literals — the last two hand-rolled badge treatments in the Money hub.
+
+   ⚠ PURPOSE-NAMED, not aliased onto the variants that happen to share their hue. `.badgeActive`
+   is already green and `.badgeOverdue` already red, and reusing them here would have been two
+   fewer classes — but an approval is not an active season and a denial is not an overdue
+   instalment, so a future restyle of either would silently repaint this table. Same split
+   `.badgeSponsor` was carved out of `.badgeTryout` under. */
+.badgePending   { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.badgeApproved  { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeDenied    { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
+
+/* The direction pair. ⚠ THE ARROW AND THE WORDS ARE THE CARRIER, never the hue: red-vs-green is
+   the one pairing a deutan reader cannot separate, and this badge states the single fact the
+   column exists for. `nowrap` because "Request from Org" wrapped to two lines inside its own
+   pill at desktop width, which is what made these rows twice as tall as every other list row
+   in Money. */
+.badgeDirection { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.badgeToOrg     { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
+.badgeFromOrg   { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
 
 /* ── Loading state ──────────────────────────────────────────────────────── */
 .loadingState {
@@ -3850,6 +3880,22 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
 .textarea { resize: vertical; min-height: 70px; }
+
+/* A field's VALUE, where the record can no longer be changed — Payment Requests opens the same
+   window read-only once the club has approved or declined the request.
+
+   ⚠ PLAIN TEXT UNDER ITS LABEL, NOT A DISABLED INPUT. A greyed-out box a coach cannot type in
+   reads as something broken and invites them to hunt for the reason; text simply reads as a
+   record. It keeps the input's own 0.9rem so a window doesn't resize when it locks. */
+.recordValue {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--white-90);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
 /* ── Grouped event form (When / Where / Who) ───────────────────────────────── */
 /* padding-bottom lets the last field (Notes) scroll clear of the sticky Save footer. */
@@ -6793,7 +6839,12 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border-radius: var(--home-radius, 10px);
   padding: 0.85rem 1rem;
 }
+/* Flex because the Payments pair puts a direction arrow beside the name; a text-only heading
+   (the Expense/Payable pair) renders identically as a single anonymous flex item. */
 .moneyKindCard h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   margin: 0 0 0.35rem;
   font-size: 0.9rem;
   font-weight: 700;
@@ -6817,9 +6868,47 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   color: var(--home-dim, var(--white-45));
 }
 .moneyKindTest strong { color: var(--home-ink-soft, var(--white-70)); }
+/* Under the QUIET empty state (Org Allocations), where the whole block is left-aligned and
+   full-width, a centred closing line reads as a stray caption. */
+.moneyKindTestStart { text-align: left; }
+
+/* Payments' two request types tint to match the direction badges the same rows carry once the
+   list fills — money leaving the team is the danger hue, money arriving is the success hue.
+   ⚠ THE COLOUR IS NEVER THE CARRIER: each card is named ("Pay Org" / "Request from Org") and
+   arrowed, because these two hues sit close enough for a deutan reader to read as one. */
+.moneyKindCardPay { border-color: color-mix(in srgb, var(--danger-light) 22%, transparent); }
+.moneyKindCardPay h4 { color: var(--danger-light); }
+.moneyKindCardClaim { border-color: color-mix(in srgb, var(--success-light) 22%, transparent); }
+.moneyKindCardClaim h4 { color: var(--success-light); }
 @media (max-width: 640px) {
   .moneyKindCompare { flex-direction: column; }
   .moneyKindTest { text-align: left; }
+}
+
+/* ── Org Allocations: the figures on an accordion header ─────────────────────────────────────
+   The tab's top-level list is an accordion, not a <table>, so `.thNum` / `.tdNum` cannot reach
+   it — and its two figures were plain inline spans, which meant the "paid" amount began at a
+   different x on every row while only the right edge lined up. Same complaint `.tdNum` was
+   added to answer inside the tables, so it gets the same answer: a fixed slot per figure,
+   right-aligned, tabular.
+
+   ⚠ THE "DUE" SLOT IS ALWAYS RENDERED, empty when a share is fully paid. Dropping the element
+   on a settled allocation let its "paid" figure slide into the vacated column, so the one row
+   in the list that most wants to look finished was the one that broke the alignment. */
+.allocFigures { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.allocFigure {
+  min-width: 7.25rem;
+  text-align: right;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+.allocFigurePaid { color: var(--success-light); }
+.allocFigureDue  { color: var(--home-dim, var(--white-50)); }
+@media (max-width: 640px) {
+  /* A card-width row has no columns left to align, and two 7.25rem slots plus the chevron is
+     wider than a 360px phone. */
+  .allocFigure { min-width: 0; }
 }
 
 .moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }

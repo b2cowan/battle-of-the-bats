@@ -460,6 +460,16 @@
     "update_rule": null
   },
   {
+    "table_name": "budget_items",
+    "constraint_name": "budget_items_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "chat_message_reactions",
     "constraint_name": "chat_message_reactions_message_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3485,7 +3495,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3495,7 +3505,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3525,7 +3535,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3535,7 +3545,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4921,6 +4931,26 @@
   },
   {
     "table_name": "rep_team_expenses",
+    "constraint_name": "rep_team_expenses_budget_category_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "budget_category_id",
+    "foreign_table": "budget_categories",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "constraint_name": "rep_team_expenses_budget_item_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "budget_item_id",
+    "foreign_table": "budget_items",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_expenses",
     "constraint_name": "rep_team_expenses_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "created_by",
@@ -5005,6 +5035,46 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "constraint_name": "rep_team_fundraiser_tags_fundraiser_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fundraiser_id",
+    "foreign_table": "rep_fundraisers",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "constraint_name": "rep_team_fundraiser_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "fundraiser_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "constraint_name": "rep_team_fundraiser_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "tag_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "constraint_name": "rep_team_fundraiser_tags_tag_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tag_id",
+    "foreign_table": "rep_team_tags",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"

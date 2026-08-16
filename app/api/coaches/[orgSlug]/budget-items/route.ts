@@ -5,12 +5,21 @@ import { getCoachingAssignmentsForUser } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import {
+  budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems,
+  type BudgetItemTier, type OwnedBudgetItem,
+} from '@/lib/coach-budget-items';
+
+/** Ours first, then the club's, then this team's own — so a coach meets the standard vocabulary
+ *  before the local additions, and the additions read as additions. */
+const TIER_ORDER: Record<BudgetItemTier, number> = { platform: 0, club: 1, team: 2 };
 
 function mapItem(row: Record<string, unknown>): BudgetItem {
   return {
     id:              row.id as string,
     categoryId:      row.category_id as string,
     orgId:           row.org_id as string | null,
+    teamId:          (row.team_id as string | null) ?? null,
     name:            row.name as string,
     suggestedAmount: row.suggested_amount as number | null,
     sortOrder:       row.sort_order as number,
@@ -31,11 +40,20 @@ async function resolveCoachContext(orgSlug: string) {
   return { ctx, assignments };
 }
 
-// GET /api/coaches/[orgSlug]/budget-items
-// Returns platform defaults + org custom categories/items visible to coaches.
+// GET /api/coaches/[orgSlug]/budget-items?teamId=…
+// Returns platform defaults + this org's categories/items visible to coaches.
 // Only 'team' and 'both' scoped categories are returned (org-only categories
 // are admin tools, not relevant to the team budget planner).
-export const GET = withObservability(async (_req: Request,
+//
+// ⚠ `teamId` DECIDES WHAT THE TEAM TIER CONTRIBUTES (mig 240). With it, the caller gets platform +
+// club + that team's own items. WITHOUT it the team tier is dropped entirely rather than opened up:
+// a list that leaked one team's vocabulary to another is the exact thing the tiers exist to prevent,
+// and an omitted parameter must fail closed.
+//
+// ⚠ "MISC" ITEMS ARE NOT OFFERED (owner ruling 2026-08-15). The item names the budget row now, and a
+// report row called "Misc" answers nothing. They stay in the database so lines written before this
+// still resolve their name; they are simply never choosable again.
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
@@ -43,6 +61,10 @@ export const GET = withObservability(async (_req: Request,
   const { ctx, assignments } = resolved;
   const denied = denyUnless(assignments.some(a => canViewMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
+
+  // Only a team this coach is actually assigned to can widen the list.
+  const askedTeamId = new URL(req.url).searchParams.get('teamId');
+  const teamId = askedTeamId && assignments.some(a => a.teamId === askedTeamId) ? askedTeamId : null;
 
   const { data, error } = await supabaseAdmin
     .from('budget_categories')
@@ -62,10 +84,23 @@ export const GET = withObservability(async (_req: Request,
     isDefault: row.is_default as boolean,
     createdAt: row.created_at as string,
     items:     ((row.budget_items ?? []) as Record<string, unknown>[])
+      .filter(item => !item.is_misc)
+      .filter(item => teamId
+        ? itemVisibleToTeam(item as OwnedBudgetItem, ctx.org.id, teamId)
+        // No team named: platform + club only. A team's own item is never in this answer.
+        : !item.team_id)
       .map(mapItem)
       .sort((a, b) => {
-        if (a.isMisc !== b.isMisc) return a.isMisc ? 1 : -1;
-        return a.sortOrder - b.sortOrder;
+        // The club's and the team's own words sit under ours, so the standard vocabulary is what a
+        // coach meets first and the local additions read as additions.
+        // ⚠ Through `budgetItemTier`, never a local re-derivation: that function is the ONE place
+        // the three tiers are decided, and an inline copy here is the fourth surface computing the
+        // same fact — the drift the module was written to prevent.
+        const rank = (i: BudgetItem) =>
+          TIER_ORDER[budgetItemTier({ org_id: i.orgId, team_id: i.teamId })];
+        if (rank(a) !== rank(b)) return rank(a) - rank(b);
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        return a.name.localeCompare(b.name);
       }),
   }));
 
@@ -75,8 +110,16 @@ export const GET = withObservability(async (_req: Request,
 // POST /api/coaches/[orgSlug]/budget-items
 // Lets a coach add a custom item to any accessible category — or, with
 // `newCategoryName`, create a whole new top-level category (owner decision
-// 2026-07-09: coaches can create categories just like items). Both are saved
-// org-wide so they become reusable by all coaches in the org.
+// 2026-07-09: coaches can create categories just like items).
+//
+// ⚠ AN ITEM NOW BELONGS TO THE TEAM THAT CREATED IT (mig 240), not to the whole org. It appears in
+// that team's picker and no other's; a club admin can see it and PUBLISH it to every team. This
+// reverses the behaviour every comment and help sentence used to promise ("saved to your org's
+// library and selectable for all coaches") — the item is the NAME of a budget row now, and one
+// team's specifics filling every other team's list was the cost the owner refused (2026-08-15).
+//
+// ⚠ CATEGORIES ARE STILL ORG-WIDE. A category is a heading, not a name: there are a dozen of them,
+// clubs want them shared, and the report's top level would fragment if each team invented its own.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
@@ -133,6 +176,7 @@ export const POST = withObservability(async (req: Request,
   // ── Create a new item in an existing category ────────────────────────────
   const catId: string = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';
   const name: string  = typeof body.name === 'string' ? body.name.trim() : '';
+  const teamId: string = typeof body.teamId === 'string' ? body.teamId.trim() : '';
   const suggestedAmount: number | null =
     typeof body.suggestedAmount === 'number' && body.suggestedAmount > 0
       ? body.suggestedAmount
@@ -143,6 +187,12 @@ export const POST = withObservability(async (req: Request,
   }
   if (!name || name.length > 80) {
     return NextResponse.json({ error: 'name is required and must be 80 characters or fewer' }, { status: 400 });
+  }
+  // ⚠ REQUIRED, AND CHECKED AGAINST THIS COACH'S OWN ASSIGNMENTS. An item has to belong to a team
+  // now, and accepting an unowned one would quietly recreate the org-wide behaviour this replaced —
+  // silently, on a path that already works.
+  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
+    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
   }
 
   // Verify category is accessible (platform default or this org's, team/both scope)
@@ -158,11 +208,23 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Category not found' }, { status: 404 });
   }
 
+  /* ⚠ AN IDENTICAL NAME ALREADY VISIBLE TO THIS TEAM IS RETURNED, NOT REFUSED. The uniqueness index
+     is per (category, org, team) — so a coach CAN create "Provincials entry" while the club already
+     publishes one, and the picker would then show the same words twice with the reports splitting
+     between them. That is the exact fragmentation the tiers exist to prevent, and a 409 would just
+     leave the coach stuck beside an item they cannot see the point of. Handing back the existing one
+     is the honest answer: they wanted that item, and now they have it. */
+  const visible = await listVisibleBudgetItems(ctx.org.id, teamId);
+  const already = visible.find(i =>
+    i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase());
+  if (already) return NextResponse.json({ item: mapItem(already) }, { status: 200 });
+
   const { data, error } = await supabaseAdmin
     .from('budget_items')
     .insert({
       category_id:      catId,
       org_id:           ctx.org.id,
+      team_id:          teamId,
       name,
       suggested_amount: suggestedAmount,
       is_default:       false,
@@ -173,6 +235,13 @@ export const POST = withObservability(async (req: Request,
 
   if (error) {
     if (error.code === '23505') {
+      /* ⚠ SOMEBODY CREATED IT BETWEEN OUR CHECK AND OUR INSERT — a second tab, or an import running
+         at the same moment. The pre-check above hands back an existing item precisely so a coach is
+         never stuck beside a name they cannot use; a 409 here would break that promise for whoever
+         loses the race, which is the one case the coach can do nothing about. Hand back the winner. */
+      const winner = (await listVisibleBudgetItems(ctx.org.id, teamId)).find(i =>
+        i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase());
+      if (winner) return NextResponse.json({ item: mapItem(winner) }, { status: 200 });
       return NextResponse.json({ error: 'An item with this name already exists in this category' }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });

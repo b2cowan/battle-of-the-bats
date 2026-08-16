@@ -4685,6 +4685,173 @@ it needs a record that already existed on dev.
 **If Part D or Part E fails, treat it as blocking** — everything else here is a correction to how a
 screen reads, but those two are the books being wrong.
 
+## §28 · Practice plans get a front door
+
+**Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
+Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 1). Mockups: artifact `ed56fe2c`.
+
+**Why this section exists:** a practice plan could only be reached by opening the Schedule, finding
+the right practice, and scrolling its panel — so a coach preparing Thursday's session on Wednesday
+night had to remember which day it was on before the product would help. Lineups, built far less
+often, already had a nav door, a hub and a readiness filter. This gives practice plans the same.
+**Nothing was taken away:** the Schedule panel keeps its own "Plan this practice" button.
+
+**Fixture:** a live season with at least **three upcoming practices** (one of them with a plan
+already, one without), at least **one past practice**, and — for part D — a practice starting within
+the next couple of hours.
+
+---
+
+### A · The door
+
+- [ ] **Practice plans** appears in the sidebar under **Season**, directly beneath Schedule.
+- [ ] On a phone, it appears under **More → Season**.
+- [ ] Its icon is distinct from Tryouts' (the two must not share one).
+- [ ] Opening it, then opening a plan, then a running practice — the nav item stays highlighted
+      the whole way down.
+
+### B · The list
+
+- [ ] **Coming up** lists upcoming practices soonest-first; **Recent practices** lists past ones
+      most-recent-first, capped at six.
+- [ ] Each row shows **Plan set** or **No plan**, and a practice with a plan also shows what the
+      plan is (blocks, minutes, rotations) on its meta line.
+- [ ] The dates and times shown match what the **Schedule** shows for the same practices.
+- [ ] Exactly **one** row carries the green button, and it is the **nearest upcoming practice with
+      no plan**. If every upcoming practice is planned, there is no green button anywhere.
+- [ ] Tapping a row opens the existing plan editor, unchanged.
+
+### C · The "Needs a plan" filter
+
+- [ ] The filter shows a count matching the number of unplanned practices.
+- [ ] Turning it on leaves only unplanned practices; turning it off restores the full list.
+- [ ] **Plan the last unplanned practice while the filter is on.** The list empties and says "All
+      caught up" — and the filter chip is **still there** so you can switch it back off. (If the
+      chip disappears, that is the defect this step exists for.)
+
+### D · Running a practice
+
+- [ ] A practice starting within about three hours, **and which has a plan**, shows a separate
+      **Run practice** button beside its row.
+- [ ] A practice in that window **without** a plan shows no Run button.
+- [ ] A practice next week shows no Run button, planned or not.
+
+### E · Templates
+
+- [ ] A **Plan templates** link sits at the bottom of the list and opens the existing templates
+      page — the same templates you see under Development. There must be **no second list** of
+      templates on the practice hub.
+
+### F · Who sees what
+
+- [ ] **Assistant coach with schedule access but not head coach:** sees the hub and the list, can
+      open a plan, but is not offered "Plan this practice" as an action they can complete.
+- [ ] **Assistant without schedule access:** the nav item is absent; visiting the page directly
+      explains what practice plans are and who to ask.
+- [ ] **Assistant who cannot manage the schedule:** no **Plan templates** link (it would refuse
+      them on arrival).
+
+### G · Past seasons — the one that matters
+
+- [ ] With the season switcher, move to a **completed season** while standing on this page. You get
+      a short explanation that plans are a live-season tool — **never a list of practices**.
+- [ ] In that completed season, **Practice plans is absent from the sidebar and from More.**
+- [ ] Switch back to the live season: the list returns.
+
+---
+
+**If part G fails, treat it as blocking** — a list of archive practices whose plans all refuse to
+open is the "link that 404s wearing a politer face" this portal has a standing rule against.
+
+## §29 · The budget speaks in category + item, and so does spending
+
+**Built on dev 2026-08-15 · not on production · ⚠ carries migration 240, which must reach prod
+BEFORE this code does.** Plan: `COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md`. Mockups: artifact `945391e9`.
+
+**Why this section exists:** a coach picked the item **Entry Fees** and their plan rendered a row
+called **"test"** — the shared word invisible, the typed text the identity. Two reports cannot be
+lined up on words somebody typed, which is why the budget now groups **category → item**, the item
+names the row, two lines on one item **sum**, and spending records the same two things. The payoff
+is the question that started it: *what item did we get charged for that we never budgeted?*
+
+⚠ **This replaced the budget-line picker built the same week.** If you QA'd that, forget it — the
+"What is this against?" control and the "Not in the budget" choice are both gone, and whether
+something was planned is now worked out for you.
+
+**Fixture:** the coach money lab, or the demo's 12U. You need a team with a budget plan, at least
+one category holding **two lines on the same item**, and spending that includes **one cost on
+something the plan never mentions**. The demo is seeded exactly this way.
+
+---
+
+### A · The plan reads two levels
+
+- [ ] Budget Plan → **List**. Every row under a category is named by its **item**, not by anything
+      anyone typed.
+- [ ] A category with **two lines on one item** shows **one row** with the summed total and a
+      "2 lines" caption. Opening it reveals both lines, each still editable.
+- [ ] Open a cost line for editing. There is **no Description field** — Category & Item is marked
+      required, and **Notes** is the one free-text box.
+- [ ] Try to save a cost line without picking an item. It refuses, names what is missing, and puts
+      you in the picker.
+- [ ] Choosing a category **no longer auto-picks an item**. ⚠ If "Misc" appears anywhere in the item
+      list, stop — a report row called "Misc" is what this change exists to prevent.
+- [ ] Open an **Expected fundraising** line. It still has **Description, required**, and no category
+      or item — unchanged from your August 13 ruling.
+
+### B · Recording a cost
+
+- [ ] Add an expense. It asks **"What is this?"** — a category, then an item.
+- [ ] Picking an item fills the **description** with its name, ready to type over.
+- [ ] ⚠ **Type your own description first, then change the item.** Your words must survive; only a
+      description you never touched is replaced.
+- [ ] Pick an item your plan has **no line for**. A warning says it will show as spending you didn't
+      plan for. There is **no "Not in the budget" choice** anywhere — nothing asks you to declare it.
+- [ ] Add a payable the same way. The field is identical on both kinds.
+
+### C · ⚠⚠ The report — what this was all for
+
+- [ ] Budget vs. Actual → **Categories**. Rows are **category → item**, and the two lines sharing an
+      item are **one row** carrying both amounts.
+- [ ] The cost on something unplanned appears as **its own row, flagged "not budgeted"**, inside its
+      own category, with a **dash** where Budgeted would be. It is **not** in a separate list at the
+      foot of the report — that section is gone.
+- [ ] ⚠ **Add up a category's item Actuals. They must equal the category's own Actual**, and the
+      categories must add up to the season Total. If the Total is *larger* than the categories, stop
+      and report it — that is unplanned spending being counted twice.
+- [ ] Now **add a budget line** for that unplanned category+item. The flag clears and the row starts
+      comparing against your plan.
+- [ ] ⚠⚠ **Switch the view to Months.** It must show **the same rows** as Categories — the two lines
+      sharing an item are ONE row here too, and the unplanned item is present. If Months shows more
+      rows than Categories, stop and report it: that is one screen grouping the same plan two
+      different ways, which is exactly what this change exists to remove.
+- [ ] **Export** the Categories view. Same two levels, same figures; an unplanned row is **blank**
+      under Budgeted, never zero.
+
+### D · Whose words are whose
+
+- [ ] In the item picker, use **+ Add custom item**. It saves and is selectable immediately.
+- [ ] Open **another team's** budget form. ⚠ **Your new item must not be in its list.** This is the
+      ruling — if it appears, stop and report it.
+- [ ] As a club admin: **Accounting → Budget**, and scroll to **"Items your teams have added"**. Your
+      new item is listed with the team that owns it and how many lines use it.
+- [ ] Press **Publish to all teams**. The message says what happened. Re-open the other team's form —
+      the item is **now** there.
+- [ ] If two teams had both invented the same name, publishing says how many copies it absorbed and
+      how many budget lines moved. ⚠ Check those teams' plans still show the same totals.
+
+### E · The importer, and a team with no plan
+
+- [ ] Import budget lines from a sheet whose line names are **not** in the item list. Every imported
+      row still arrives **named** — the names became items belonging to your team.
+- [ ] On a team with **no budget plan**, add an expense: the category and item picker still works,
+      and the report shows what was spent under those headings with nothing to compare against.
+
+---
+
+**If C's totals disagree, treat it as blocking.** A season total larger than the sum of its
+categories is unplanned spending counted twice — the exact failure this design set out to remove.
+
 ## §30 · Sponsorships, the follow-ups — two doors, tags on money coming in
 
 **Built on dev 2026-08-15 · not on production · ⚠ carries migration 239, which must reach prod
@@ -4870,14 +5037,23 @@ game or practice.
 - [ ] Back on the report, the **"Take attendance"** shortcut card still points at your next (or most
       recent) event and opens it on that tab.
 
-### D · A finished season — ⚠ the deliberate inconsistency, please confirm it
+### D · A finished season — ⚠ rewritten after the 2026-08-15 review, please read before testing
 
 - [ ] Switch to a **completed season**. **Attendance IS still in the sidebar here**, and that is on
       purpose, not a miss. In a past season "Insights" goes to the results archive rather than the
       reports hub, so this is the only way back to that season's attendance.
-- [ ] Open it. The **← Insights** link points at the season's **results** page — the page you were
-      actually on — not at the live-season hub. ⚠ If it lands somewhere showing *this* year's
-      numbers under a past year's heading, that is blocking.
+- [ ] ⚠ **There is NO "Take attendance" card here**, and no "Open schedule" button if that season
+      had nothing on it. A finished season shows the report and nothing else. *(Before the review
+      the card did appear — and tapping it did nothing at all, because it hunted for that old event
+      on THIS year's schedule.)*
+- [ ] If nothing was ever marked that season, the line above the table reads **"No attendance was
+      recorded for this season"** — past tense. It must not promise totals will "fill in as you
+      mark", because nothing will.
+- [ ] **Known, not fixed, not blocking — please don't log it as new.** The **← Insights** link here
+      goes to the season **results** page, and that page does not yet honour *which* season you
+      asked for: if you still coach this team you will see **this** year's results there, with no
+      chip saying so. Found by the review, written up as the top follow-up on this rail, and
+      deliberately out of this project's scope.
 
 ### E · An assistant coach (skip if you have none set up)
 
@@ -4885,11 +5061,21 @@ game or practice.
       This was flagged in the plan as something you might have to rule on; it was checked and no
       coach loses access, so there is nothing to decide — but it is worth one look.
 
+### F · The second door is closed (added by the review)
+
+- [ ] Open **Roster** (list view). ⚠ **There is no "Attendance" button in its header any more.**
+      That button was the report's second front door, and it is why the back link was still wrong
+      for anyone who used it — Insights is the only way in now, which is what makes "← Insights"
+      truthful. Reaching the report from Insights is the tested path.
+- [ ] On a **brand-new team with players but nothing on the schedule**: the page should go straight
+      from its loading shimmer to the single "Nothing to take attendance for yet" card. ⚠ It must
+      **not** briefly show a full table of players and then take it away — that flicker was real and
+      is what the review caught.
+
 ---
 
-**Where this leaves the sidebar:** Attendance is gone, Practice plans arrived (§28). The bigger
-regroup — reordering the whole sidebar by how often a coach opens each group — is the last phase and
-is **not built yet**, so the groups are still in their old order.
+**Where this leaves the sidebar:** Attendance is gone, Practice plans arrived (§28), and the full
+regroup landed too (§33).
 
 ## §33 · The sidebar stops rearranging itself
 

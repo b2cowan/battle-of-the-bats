@@ -187,7 +187,12 @@ export default function MoneyMonthGrid({
                           : open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
                         <span className={shared.wrap640}>{cat.categoryName}</span>
                       </button>
-                      {cat.unplanned && <span className={styles.unplannedTag}>not in your plan</span>}
+                      {/* ⚠ THE "not in your plan" TAG WAS REMOVED HERE (owner ruling 2026-08-15).
+                          A category with nothing budgeted and something actual has already said so
+                          in its own figures; the words repeated what the reader could see. Its twin
+                          on the Categories view ("not budgeted") went in the same change — one view
+                          keeping a label the other dropped is the drift this report has been
+                          consolidated twice to remove. */}
                     </th>
                     {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(cat.priorTotal)}</td>}
                     {showUndated && (

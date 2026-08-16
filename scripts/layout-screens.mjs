@@ -67,6 +67,10 @@ export const SCREENS = [
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/development/templates`, ready: 'h1' },
 
   // ── Practice plans (Phase 4 slice 1a/1b/2, QA pending) ──────────────────────
+  // The hub (2026-08-15) — the list of practices and what still needs a plan. Added with the
+  // screen itself: a new coach page that no rendered check addresses is a page whose sideways
+  // scroll and tap floors nobody has ever looked at.
+  { id: 'coach-practice-plans', session: 'coach', path: (c) => `${team(c)}/practice`, ready: 'h1' },
   {
     id: 'coach-practice-plan',
     session: 'coach',

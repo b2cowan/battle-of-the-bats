@@ -17,6 +17,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveBudgetItem } from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -84,6 +85,8 @@ export const POST = withObservability(async (req: Request,
     payeeId = null,
     payeePayer = null,
     paidByPlayerId = null,
+    /** mig 240 — what this cost IS: an item from the taxonomy the budget is written in. */
+    budgetItemId = null,
   } = body;
 
   if (!expenseType || !['expense', 'tournament_payable'].includes(expenseType)) {
@@ -94,6 +97,26 @@ export const POST = withObservability(async (req: Request,
   }
   if (typeof amount !== 'number' || amount <= 0) {
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
+  }
+
+  /* WHAT THIS COST IS (mig 240). Validated against the taxonomy THIS TEAM can see — platform,
+     club-published, or its own — and the text category is DERIVED from the item, because an item
+     belongs to exactly one category and the report reads both levels.
+     ⚠ WHETHER IT WAS BUDGETED IS NOT RECORDED HERE, OR ANYWHERE. It is derived by asking whether a
+     budget line exists for the same category and item, which is what let the old "Not in the
+     budget" declaration be deleted outright. See lib/coach-budget-items.ts. */
+  const linked = await resolveBudgetItem(budgetItemId, ctx!.org.id, team.id);
+  if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
+  /* ⚠ REQUIRED ON A NEW COST, and enforced HERE as well as on the form. The form is a courtesy — a
+     stale tab, a replay or a direct caller all arrive here — and an unclassified cost is the exact
+     "Not itemized" row this change exists to stop producing. ⚠ ONLY ON CREATE: an EDIT may legally
+     clear it (a coach fixing a mis-filed cost), and every row written before mig 240 has no item at
+     all, so refusing them retroactively would lock coaches out of their own history. */
+  if (!linked.item) {
+    return NextResponse.json(
+      { error: 'Pick a category and item — they line this cost up with your budget.' },
+      { status: 400 },
+    );
   }
 
   // Out-of-pocket (owner Call 5): a family covered this cost directly. Validate the player is on
@@ -138,7 +161,12 @@ export const POST = withObservability(async (req: Request,
     orgId:          team.orgId,
     expenseType,
     description:    description.trim(),
-    category:       category?.trim() || null,
+    // ⚠ A CHOSEN ITEM WINS OVER TYPED TEXT. The form derives the same category client-side, but a
+    // stale tab or a direct caller could send a mismatched pair — and the mismatch would be
+    // invisible until the report placed the money under one heading and the plan under another.
+    category:       linked.item ? linked.item.categoryName : (category?.trim() || null),
+    budgetItemId:     linked.item?.id ?? null,
+    budgetCategoryId: linked.item?.categoryId ?? null,
     amount,
     depositAmount:  depositAmount != null ? Number(depositAmount) : null,
     depositDueDate: depositDueDate || null,

@@ -34,6 +34,16 @@ export interface GridLine {
   itemId: string | null;
   itemName: string | null;
   totalAmount: number;
+  /**
+   * Is this row actually IN the plan? (mig 240.)
+   *
+   * ⚠ IT EXISTS BECAUSE THE ROWS STOPPED BEING BUDGET LINES. The grid used to be fed raw budget
+   * lines, so a category with no line simply never appeared and `unplanned` could be read off the
+   * map. It is now fed the report rollup, which emits a zero-budget row for every item the team
+   * SPENT on — so every spending category has a row and the map can no longer tell the two apart.
+   * Absent reads as true, which keeps every pre-240 caller honest.
+   */
+  inPlan?: boolean;
   /** Dated splits of `totalAmount`. Empty = the whole total is undated. */
   periods: DatedAmount[];
 }
@@ -315,7 +325,9 @@ export function buildMonthGrid(input: {
 
   for (const key of [...catOrder, ...unplannedKeys]) {
     const ownLines = catLines.get(key) ?? [];
-    const unplanned = !catLines.has(key);
+    // A category is unplanned when NOTHING in it is in the plan — not merely when it has no rows,
+    // which stopped being the same question once spend-only rows started arriving (see GridLine).
+    const unplanned = ownLines.length === 0 || ownLines.every(l => l.inPlan === false);
     // The DISTINCT prior lines this category's lines matched — see `priorByKey`.
     const catPriorMatches = new Set<PriorLine>();
 

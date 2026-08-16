@@ -402,7 +402,7 @@ const money = { budget: 0, dues: 0, expenses: 0, fundraisers: 0, requests: 0 };
 // ("Uncategorized" everywhere) without anyone reading it. Mirrors the coach-side reader in
 // `app/api/coaches/[orgSlug]/budget-items/route.ts`, which uses the same `['team','both']` filter.
 const { data: cats, error: catErr } = await db.from('budget_categories')
-  .select('id, name').in('scope', ['team', 'both']).order('sort_order').limit(2);
+  .select('id, name').in('scope', ['team', 'both']).order('sort_order');
 if (catErr) { console.error('✗ budget_categories read', catErr.message); process.exit(1); }
 if (!cats?.length) {
   // Loud, not silent: a fixture that cannot name its categories is not the fixture anyone meant.
@@ -410,14 +410,48 @@ if (!cats?.length) {
   process.exit(1);
 }
 
+/* ⚠ EVERY COST LINE NEEDS AN ITEM (mig 240) — the item NAMES the row now, and a fixture seeded
+   without one renders the whole plan as "Not itemized", which is what the rendered layout sweep
+   was reading until 2026-08-15. Two items are taken from each category so the fixture also
+   exercises the shape the redesign exists for: two lines sharing one item, summed into one row. */
+const { data: catItems } = await db.from('budget_items')
+  .select('id, name, category_id')
+  .in('category_id', (cats ?? []).map(c => c.id))
+  .is('org_id', null).eq('is_misc', false).order('sort_order');
+/** By NAME, never by position — an index picked "Entry Fees" for a dome block, and a fixture a
+ *  human reads during QA has to say things that make sense. Falls back to the first item in the
+ *  category so the line is still named rather than left blank. */
+const catByName = (n) => (cats ?? []).find(c => c.name.toLowerCase() === n.toLowerCase())?.id ?? cats?.[0]?.id ?? null;
+const itemFor = (catId, wanted) => {
+  const inCat = (catItems ?? []).filter(i => i.category_id === catId);
+  const hit = wanted && inCat.find(i => i.name.toLowerCase() === wanted.toLowerCase());
+  return (hit ?? inCat[0])?.id ?? null;
+};
+/** What each seeded line is actually FOR, so the repair below can name an old row correctly. */
+const FIXTURE_ITEMS = {
+  'Winter dome block':    { category: 'Facilities',  item: 'Dome Time' },
+  'Diamond permits':      { category: 'Facilities',  item: 'Diamond Permits' },
+  'Spring classic entry': { category: 'Tournaments', item: 'Entry Fees' },
+};
+/** Both halves of a line's taxonomy, resolved by NAME. ⚠ The category has to be right BEFORE the
+ *  item can be: an item lives in exactly one category, so a line filed under the wrong heading
+ *  cannot find its own item and silently falls back to whatever sits first under that heading. */
+const taxonomyFor = (desc) => {
+  const want = FIXTURE_ITEMS[desc];
+  const categoryId = want ? catByName(want.category) : (cats?.[0]?.id ?? null);
+  return { category_id: categoryId, item_id: itemFor(categoryId, want?.item) };
+};
+
 const { data: existingLines } = await db.from('rep_budget_lines')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
 
 if (!existingLines?.length) {
   const lineRows = [
-    { description: 'Winter dome block', total_amount: 5200, notes: '16 sessions, Jan–Mar', line_kind: 'cost',    category_id: cats?.[0]?.id ?? null, sort_order: 1 },
-    { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    category_id: cats?.[0]?.id ?? null, sort_order: 2 },
-    { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    category_id: cats?.[1]?.id ?? cats?.[0]?.id ?? null, sort_order: 3 },
+    { description: 'Winter dome block', total_amount: 5200, notes: '16 sessions, Jan–Mar', line_kind: 'cost',    ...taxonomyFor('Winter dome block'), sort_order: 1 },
+    // Deliberately the SAME item as the line above: the plan and the report must show these
+    // two as ONE row carrying ,400, which is the ruling this fixture has to be able to prove.
+    { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
+    { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
     { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', category_id: null, sort_order: 4 },
   ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
 
@@ -438,6 +472,25 @@ if (!existingLines?.length) {
   }
   ok(`budget plan seeded (${money.budget} lines, one split across three periods)`);
 } else {
+  /* ⚠ COST LINES SEEDED BEFORE mig 240 CARRY NO ITEM, and the item is what names a row now — so a
+     fixture left as it was renders the whole plan as "Not itemized", which is exactly what the
+     rendered layout sweep was reading. Repaired rather than skipped, for the same reason the
+     periods below get their own guard: this fixture is what the rendered layout check self-heals
+     with, and a half-old fixture reporting green is the silent half-truth this file exists to end. */
+  const { data: itemless } = await db.from('rep_budget_lines')
+    .select('id, description, category_id')
+    .eq('team_id', team.id).eq('program_year_id', py.id)
+    .neq('line_kind', 'funding').neq('line_kind', 'sponsorship')
+    .is('item_id', null);
+  for (const line of itemless ?? []) {
+    const taxonomy = taxonomyFor(line.description);
+    if (!taxonomy.item_id) continue;
+    await db.from('rep_budget_lines').update(taxonomy).eq('id', line.id);
+  }
+  if ((itemless ?? []).length) {
+    console.log(`  repaired ${itemless.length} budget line(s) that carried no item`);
+  }
+
   /* ⚠ THE PERIODS GET THEIR OWN GUARD, not the lines'. Nested under the outer check they could
      never be retried: one failed periods insert used to be logged-and-continued, the run reported
      the fixture "whole", and every later run skipped the whole block because the LINES existed —

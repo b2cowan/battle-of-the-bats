@@ -44,6 +44,17 @@
   border-color: var(--blueprint-blue);
 }
 
+/* The picker became a REQUIRED field with mig 240 — the item is what names a budget line — so it
+   needs the same "this is what's missing" treatment every other required control on the form has.
+   ⚠ Colour is not the only signal: the form's problem counter names the field in words and moves
+   the cursor into it, which is what carries the message for anyone who cannot see the border. */
+.selectBad {
+  border-color: var(--danger);
+}
+.selectBad:focus {
+  border-color: var(--danger);
+}
+
 .select option { background: var(--home-card, #1a1f2e); } /* token-exempt: native <select> option bg outside warm gate, no root token */
 
 /* ── Inline add-item form ────────────────────────────────────────────────── */

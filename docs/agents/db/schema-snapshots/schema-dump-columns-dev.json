@@ -1656,6 +1656,15 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "budget_items",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "chat_message_reactions",
     "column_name": "id",
     "data_type": "uuid",
@@ -12535,6 +12544,51 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 27
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "column_name": "budget_category_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "rep_team_expenses",
+    "column_name": "budget_item_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "column_name": "fundraiser_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "column_name": "tag_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_fundraiser_tags",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
   },
   {
     "table_name": "rep_team_game_moments",

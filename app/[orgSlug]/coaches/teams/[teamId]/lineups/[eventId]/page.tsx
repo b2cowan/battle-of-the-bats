@@ -17,6 +17,7 @@ import {
   DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
+import { formatInOrgZone } from '@/lib/timezone';
 import {
   LINEUP_POSITIONS, buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
 } from '@/lib/lineup-grid';
@@ -28,11 +29,16 @@ import type {
   RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepProgramYear,
 } from '@/lib/types';
 
+// ⚠ Both format in the ORG's zone (corrected 2026-08-16), matching the Lineups hub next door.
+// These were bare `toLocaleDateString` / `toLocaleTimeString` calls — the reader's clock, not the
+// field's — which is precisely what `lib/timezone.ts` was written to stop. `startsAt` is a stored
+// instant, so a coach reading this from another province was told the wrong start time, and the
+// same string is stamped onto the printed lineup poster and the batting-order card.
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
 }
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;

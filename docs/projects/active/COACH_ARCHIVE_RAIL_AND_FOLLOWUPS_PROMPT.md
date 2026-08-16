@@ -89,7 +89,21 @@ bigger product pillar. Flagged, never decided.
 Show it both ways in the mockup. It is a one-line change either way; the value here is entirely in
 the owner seeing the two orders side by side.
 
-## D. Debt with no design content — just do these
+## D. Debt with no design content — just do these ✅ ALL FOUR DONE on dev 2026-08-16
+
+**Written up in `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §6.** Two of the four notes below turned out
+to be wrong in the same direction — the debt was bigger than recorded:
+
+- The builder's stale times were **also stamped onto the printed lineup poster and batting-order
+  card**, not just the screen.
+- The layout baseline was **not** "informational only, the check still passes". The coach sweep
+  **fails** — 34 of its 141 new findings are this project's own un-baselined `a·Practice plans` nav
+  item (baselined now, from the sibling links' existing reason). And `--prune` wanted to drop **130**
+  entries rather than 39: the surplus stops reproducing because of fixture-label drift and **another
+  session's uncommitted sponsorship work**, so only the `a·Attendance` keys were taken. Treat the
+  prune tool's stale list as a proposal while the working tree is shared.
+
+The original four, for the record:
 
 - **The lineup BUILDER still formats event times in the reader's timezone**, not the org's — the
   bare `toLocaleDateString` that `lib/timezone.ts` exists to replace. Phase 1 fixed the Lineups

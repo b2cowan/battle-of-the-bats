@@ -361,10 +361,17 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
  * of them must agree exactly — two spellings of the same instant would make a steady day rewrite
  * every row, and the job's whole contract is that it doesn't.
  */
-async function insertDemoExpenses(team, pyId, expenses) {
+async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
   await insertAll('rep_team_expenses', expenses.map(e => ({
     program_year_id: pyId, team_id: team.id, org_id: org.id,
     expense_type: e.type, description: e.description, category: e.category,
+    /* ⚠ WHAT THIS COST IS (mig 240) — and it is not a nicety in a demo. Budget vs. Actual groups on
+       category + item, so a world seeded without items reports a dash beside every row on the
+       screen a prospect is most likely to open. With them, the 12U reads line by line, including
+       the deliberate Facilities overspend this world exists to demonstrate — and the 14U's team
+       photo lands as its OWN flagged row ("Events / Photo Day — not budgeted"), which is a better
+       telling of that beat than the loose Unbudgeted list it used to fall into. */
+    ...itemRef(itemIndex, e.category, e.item),
     amount: e.amount, notes: e.notes ?? null,
     expense_paid_at: e.paidDate ? demoPaidStampIso(e.paidDate) : null,
     deposit_amount: e.deposit?.amount ?? null,
@@ -376,6 +383,57 @@ async function insertDemoExpenses(team, pyId, expenses) {
     payee_payer: 'Riverdale Ridge Baseball Club',
     created_by: coach.id,
   })));
+}
+
+/**
+ * `category|item` → the two ids both a budget line and a cost are filed under (mig 240).
+ *
+ * ⚠ THE ITEM IS WHAT NAMES A BUDGET ROW NOW, and what the plan and the books are matched on. A
+ * seeded world whose lines carry no item renders every row as "Not itemized" and every actual as a
+ * dash — a product that looks unable to answer its own headline question, on the screen a prospect
+ * is most likely to open.
+ *
+ * ⚠ IT CREATES WHAT THE PLATFORM LIBRARY LACKS, as a TEAM item — the same thing a real coach does
+ * in the picker and the importer does with an unfamiliar sheet name. The 12U's "Practice Gear" is
+ * deliberately not a platform default, so the demo shows that tier working and shows it belonging
+ * to one team rather than to the whole club.
+ */
+async function budgetItemIds(teamId, pairs) {
+  const wanted = [...new Map(
+    pairs.map(p => [`${p.category.toLowerCase()}|${p.item.toLowerCase()}`, p]),
+  ).values()];
+  const categoryIds = [...new Set(wanted.map(p => budgetCategoryIds.get(p.category.toLowerCase())))];
+  const { data: existingRows } = await db.from('budget_items')
+    .select('id, name, category_id, org_id, team_id')
+    .in('category_id', categoryIds);
+  const known = existingRows ?? [];
+
+  const index = new Map();
+  for (const pair of wanted) {
+    const categoryId = budgetCategoryIds.get(pair.category.toLowerCase());
+    // Visible to THIS team: a platform default, one the club published, or one this team owns.
+    const hit = known.find(i =>
+      i.category_id === categoryId
+      && String(i.name).trim().toLowerCase() === pair.item.trim().toLowerCase()
+      && (!i.org_id || (i.org_id === org.id && (!i.team_id || i.team_id === teamId))));
+    let itemId = hit?.id;
+    if (!itemId) {
+      itemId = randomUUID();
+      die(`create demo budget item ${pair.item}`, (await db.from('budget_items').insert({
+        id: itemId, category_id: categoryId, org_id: org.id, team_id: teamId,
+        name: pair.item, is_default: false, is_misc: false,
+      })).error);
+      known.push({ id: itemId, name: pair.item, category_id: categoryId, org_id: org.id, team_id: teamId });
+    }
+    index.set(`${pair.category.toLowerCase()}|${pair.item.toLowerCase()}`,
+      { budget_item_id: itemId, budget_category_id: categoryId });
+  }
+  return index;
+}
+
+/** The two ids a demo row carries, looked up by the pair the world names. */
+function itemRef(index, category, item) {
+  return index.get(`${String(category ?? '').toLowerCase()}|${String(item ?? '').toLowerCase()}`) ?? {};
 }
 
 /**
@@ -638,10 +696,14 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // The budget plan: real platform categories, each line phased across four months so the report
   // this moment lands on has a month grid rather than one undated lump.
   // Ids are minted here, so lines and their phasing are two batched writes rather than twelve.
+  // ⚠ Every cost line carries its ITEM (mig 240) — that is what names the row on the plan and on
+  // the report, and what the team's spending is matched to.
+  const offSeasonItems = await budgetItemIds(team.id, [...OFFSEASON_BUDGET_LINES, ...state.expenses]);
   const budgetLineRows = [
     ...OFFSEASON_BUDGET_LINES.map((line, i) => ({
       id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
       category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+      item_id: itemRef(offSeasonItems, line.category, line.item).budget_item_id,
       description: line.description, total_amount: line.total, line_kind: 'cost', sort_order: i,
     })),
     // Money coming IN — stored positive, displayed negative, no category (see the constant).
@@ -662,8 +724,11 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     }))));
 
   // What has actually been spent — the "actual" half of the report, one row deliberately on a
-  // category with no budget line so the unbudgeted section has something honest to say.
-  await insertDemoExpenses(team, pyId, state.expenses);
+  // category with no budget line so the unbudgeted section has something honest to say (and, by
+  // the same token, one row that stays unlinked).
+  // ⚠ The photo-day cost names an item in a category this plan never mentions, so it lands as its
+  // OWN flagged row on the report — a better telling of the unbudgeted beat than a loose list.
+  await insertDemoExpenses(team, pyId, state.expenses, offSeasonItems);
 
   // Dues: two instalments settled, two ahead — and one family a payment behind.
   await seedDues(team, pyId, playerIds, {
@@ -747,13 +812,16 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       SEASON_START_LINEUP_GRID.map((inning, idx) => [String(idx + 1), inning[rosterIndex]])),
   })));
 
-  await insertAll('rep_budget_lines', SEASON_START_BUDGET_LINES.map((line, i) => ({
-    org_id: org.id, team_id: team.id, program_year_id: pyId,
+  const seasonStartItems = await budgetItemIds(team.id, [...SEASON_START_BUDGET_LINES, ...state.expenses]);
+  const seasonStartLineRows = SEASON_START_BUDGET_LINES.map((line, i) => ({
+    id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+    item_id: itemRef(seasonStartItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
-  })));
+  }));
+  await insertAll('rep_budget_lines', seasonStartLineRows);
   // The plan is complete; the spending has barely started. That contrast IS this moment's books.
-  await insertDemoExpenses(team, pyId, state.expenses);
+  await insertDemoExpenses(team, pyId, state.expenses, seasonStartItems);
 
   // Dues mostly current: everyone but one family has paid the first instalment; the rest are ahead.
   await seedDues(team, pyId, playerIds, {
@@ -920,7 +988,9 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     focus_area: goal.focusArea, note: goal.note, status: 'working', created_by: coach.id,
   })));
 
-  console.log(`✓ 12U mid-season — ${state.games.length - 1} decided games (14-3-1), game Saturday ${state.saturdayDate}, dues + budget + waivers in, ${MIDSEASON_PRACTICE_PLANS.length} past practices written up`);
+  // ⚠ "practice plans", not "past practices" — one of them is on THIS WEEK'S Thursday and is
+  // ahead of today for most of the week. See the note on MIDSEASON_PRACTICE_PLANS for why.
+  console.log(`✓ 12U mid-season — ${state.games.length - 1} decided games (14-3-1), game Saturday ${state.saturdayDate}, dues + budget + waivers in, ${MIDSEASON_PRACTICE_PLANS.length} practice plans written`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -968,8 +1038,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     paidDates: [0, 1, 2, 3].map(n => `${state.year}-0${5 + n}-03`),
     isPaid: () => true, // a closed season owes nothing
   });
+  // The archive's plan carries categories and items too (mig 240) — a finished season a coach
+  // opens read-only must not be the one place the report says "Not itemized".
+  const seasonsEndItems = await budgetItemIds(team.id, SEASONS_END_BUDGET_LINES);
   await insertAll('rep_budget_lines', SEASONS_END_BUDGET_LINES.map((line, i) => ({
     org_id: org.id, team_id: team.id, program_year_id: pyId,
+    category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+    item_id: itemRef(seasonsEndItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
   })));
 

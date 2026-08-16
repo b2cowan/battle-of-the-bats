@@ -2325,6 +2325,13 @@ export interface RepTeamExpense {
   expenseType: 'expense' | 'tournament_payable';
   description: string;
   category: string | null;
+  /** WHAT THIS COST IS (mig 240) — the item, in the same words the budget uses, and the key
+   *  Budget vs. Actual groups on. Null for a row recorded before this shipped, an imported row, or
+   *  one whose item was later deleted. ⚠ Whether it was BUDGETED is not stored anywhere: it is
+   *  derived, by asking whether a budget line exists for the same category and item. */
+  budgetItemId: string | null;
+  /** The item's category — derived from it, and the surviving link if that item is deleted. */
+  budgetCategoryId: string | null;
   amount: number;
   expensePaidAt: string | null;
   depositAmount: number | null;
@@ -2374,11 +2381,17 @@ export interface BudgetItem {
   id: string;
   categoryId: string;
   orgId: string | null;       // null = platform default (read-only)
+  /** mig 240 — set = this TEAM's own item, visible in its picker only. Null with an orgId = the
+   *  club published it to every team. See lib/coach-budget-items.ts for the one-way rule. */
+  teamId: string | null;
   name: string;
   suggestedAmount: number | null;
   sortOrder: number;
   isDefault: boolean;
-  isMisc: boolean;            // true = Misc catch-all, always rendered last
+  /** ⚠ RETIRED AS A CHOICE 2026-08-15. The item names the budget row now, and a report row called
+   *  "Misc" answers nothing — the coach picker no longer offers these, though historic lines keep
+   *  pointing at them. */
+  isMisc: boolean;
   createdAt: string;
 }
 

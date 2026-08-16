@@ -1335,8 +1335,10 @@ export async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
  * a redundant shadow of it). The two bridge lookups are independent, so they run concurrently; the
  * workspace-dependent resolve + history fetch continues after.
  *
- * ⚠ nav signal in lib/db.ts `getCoachingNavSignals` derives bridge EXISTENCE separately — keep the
- * two in mind together when adding a bridge.
+ * ⚠ This is now the ONLY reader of the two bridges together. `lib/db.ts` used to derive bridge
+ * EXISTENCE separately for a sidebar signal, which meant a new bridge had to be added in two
+ * places; that signal was deleted 2026-08-16 with the "Explore" shelf it fed, so a new bridge
+ * belongs here alone.
  */
 export async function getMergedTournamentHistoryForRepTeam(repTeamId: string): Promise<{
   history: BasicCoachTournamentHistoryEntry[];

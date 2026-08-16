@@ -1,11 +1,33 @@
 # Coach Money — spending points at a budget line, not just a category
 
-**Status:** planned 2026-08-15 · **not built** · awaiting owner approval
+**Status:** **BUILT on dev 2026-08-15** · owner QA = ledger **§29**
+**Migration:** **238** applied to **dev 2026-08-15**. ⚠ It must reach production before this code
+does — that step, and where each thing stands, live in the Owner QA Ledger and the release history,
+not here.
+**Commit anchor:** _stamped when this is committed; the owner's confirmation is the gate._
 **Raised by:** the owner, 2026-08-15 — *"in the create expense/payable, it looks like we can only
 select a category but not an item, don't we need the item to align with the budget? this should be
 available when creating an expense as well"*
 **Mockup:** https://claude.ai/code/artifact/dffa11b7-14a1-4182-afb7-e327985d7443
 (source: `COACH_BUDGET_LINE_ALIGNMENT_MOCKUP.html`)
+**⚠ Read §9 before reading §6** — three things were built differently from the plan below, and the
+third changes what a dash on the report MEANS.
+
+> ## ⚠⚠ SUPERSEDED IN PART — read this first (2026-08-15, same day)
+>
+> The owner ruled hours after this shipped to dev that **a budget groups two levels only, category
+> then item; the item names the row; and two lines on one item SUM into one row.** That last clause
+> dissolves §3's entire argument for linking spending to a LINE rather than to a category+item pair —
+> the argument was that two lines sharing a pair are ambiguous, and summed lines are not ambiguous.
+>
+> So **the expense→line link, its picker, the "Not in the budget" choice and migration 238 are
+> retired** in favour of category + item on the expense, planned. What survives untouched: §2's
+> per-line double-count fix and its honesty rule, the report/export plumbing, the ownership check,
+> and the demo's linked seeding — all of which change key, not shape.
+>
+> **Nothing here has reached production**, so this is a dev-only reversal.
+> ⛔ **Do not release this plan on its own.** See
+> [COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md](COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md) §2 and §8.
 **PM brief:** [COACH_BUDGET_LINE_ALIGNMENT_PM_BRIEF.md](COACH_BUDGET_LINE_ALIGNMENT_PM_BRIEF.md)
 **Sibling plan:** [COACH_RECURRING_PAYABLES_PLAN.md](COACH_RECURRING_PAYABLES_PLAN.md) — independent;
 either may ship first.
@@ -108,28 +130,38 @@ that is genuinely unbudgeted, and for every row already in the database.
 One field replaces the category picker on **both** the Add Expense and the Add Payable form (and
 their Edit forms, once those land):
 
-**"What is this against?"** — the team's budget lines, grouped by category, each showing what is
-left on it:
+**"What is this against?"** — the team's budget lines, by name, grouped by category:
 
 ```
 FACILITIES
-  Dome rental                  $4,000 planned · $1,190 left
-  Field rental                 $1,200 planned · $1,200 left
+  Dome rental
+  Field rental
 TOURNAMENTS
-  Spring classic entry           $850 planned · $0 left ⚠
+  Spring classic entry
   ──────────────────────────────────────────────
   Not in the budget            → then pick a category, as today
 ```
 
 - **Choosing a line fills the category automatically.** One decision instead of two, and it cannot
   disagree with the plan.
+- **It is the FIRST question on the form, above Description — and it fills that in too** (owner,
+  2026-08-15). The line's own name arrives in Description, ready to be typed over, so the field a
+  coach used to have to compose is usually already answered. See §9.7 for why Description stays
+  required rather than becoming optional.
 - **"Not in the budget"** keeps today's category picker and today's honest warning ("this will show
   as Unbudgeted in Budget vs. Actual"). Deliberately not hidden — unbudgeted spending is a real
   category of thing, not a mistake to be designed out.
 - **No budget plan yet?** The field degrades to exactly today's category picker. Nothing gets worse
   for a team that hasn't built a plan.
-- **Remaining-on-the-line is shown at the moment of choosing.** This is the quiet win: the coach
-  learns they're about to overspend a line *while recording the cost*, not next month on a report.
+
+> ⚠ **REVISED BY THE OWNER 2026-08-15, after seeing it built.** This section originally put
+> *"$4,000 planned · $1,190 left"* on every option, and called remaining-on-the-line "the quiet
+> win". **The options carry names only.** The owner's reading is the correct one: a coach on this
+> form is **logging money already spent or already promised, not deciding whether to incur it** — so
+> the figures cannot change the decision being made, and they are noise in the one control that has
+> to be read to file the cost correctly (and long option strings scan badly on a phone, where this
+> form is most often opened). Budget vs. Actual is where overspending is reported, and after this
+> plan it reports it line by line, which is what the link was for. See §9.6.
 
 ## 5. What it fixes downstream
 
@@ -212,4 +244,114 @@ what makes it safe to ship without a backfill.
   dashes, which is the screen a prospect is most likely to open. This is the case CLAUDE.md warns
   about: the product gains something and the demo does not follow unless someone decides it should.
 - **Owner QA:** the multi-line category case above is the test that matters; it is the one that is
-  wrong today.
+  wrong today. **Written up as ledger §29**, whose Part C walks exactly that category.
+
+## 9. As built — where this differs from the plan above (2026-08-15)
+
+Three deliberate departures. The first two make the work smaller; the third changes a rule.
+
+### 9.1 One field, not a new component
+
+§6.2 called for a `BudgetLinePicker` beside `BudgetItemPicker`. It was built as a function inside
+the expenses panel instead, because **the two Add modals merged into one form on 2026-08-15**
+(`cfb66a84`) after this plan was written. Replacing the single `categoryField` call site gave the
+field to expenses, payables, and every edit of either, at once. A component with one call site is an
+abstraction built for a caller that does not exist — the recurring-payables group that would be the
+second is a separate, unstarted plan, and the code says to extract it when that arrives.
+
+### 9.2 The picker offers COST lines only
+
+This plan predates sponsorships (migration 237). A `funding` or `sponsorship` line is money coming
+**in**, and one sitting in the cost machinery would absorb a real expense and inflate the very budget
+it exists to offset — the warning Budget vs. Actual already carries in its own words. The picker
+filters them out; the server refuses one with a sentence the coach can act on ("that line is money
+coming IN … pick a cost line"); and `tests/unit/coach-budget-line-link.test.ts` states it for **both**
+money-in kinds, which is the shape migration 237 broke nineteen readers with.
+
+### 9.3 ⚠ The dash rule got sharper — a line with nothing against it reports $0.00
+
+§6.5's first case says the two unlinked lines "report nothing". As built they report **$0.00**, and
+only when **nothing in their category is unattributed**. The rule is now:
+
+| | Reported |
+|---|---|
+| One line in the category | everything the category holds, linked or not |
+| The coach pointed spending at this line | that spending, and only that |
+| Nothing points here, **and nothing in the category is unattributed** | **$0.00** — every dollar has been claimed by another line |
+| Otherwise | `—` |
+
+**Why this is better, and not merely different.** A dash now means exactly one thing: *there is
+money in this category that names no line, and some of it could be yours.* So **every dash on the
+report has a sentence under the category explaining it, in dollars** — *"$200 of Facilities spending
+isn't against a budget line, so it counts in the category total only"* — and that sentence is also
+the instruction: re-file those costs and the dashes fill in on their own. Under the plan's literal
+reading, a fully re-filed category would still have shown unexplained dashes on the lines nothing
+was spent against, which is the "a bare dash reads as a number the product lost" failure this
+codebase has a standing rule against.
+
+The invariant the plan actually cares about is untouched and tested: **no line ever shows another
+line's money.** The §2 regression (three lines, one unlinked invoice, all `—`) passes unchanged.
+One assertion in `coach-budget-line-actuals.test.ts` changed with the rule and says so in place.
+
+### 9.4 The budget line is NOT locked on a paid record
+
+Deliberate, and the opposite of the amount beside it. Re-filing a past cost against the right line
+moves no money, posts nothing and touches no ledger entry — migration 236's links are to the
+**amount**, not to the classification. Locking it would leave a coach who mis-filed a paid invoice
+with only delete-and-re-enter, which reverses and re-posts real money to correct a label.
+`lockedFields` is unchanged for exactly that reason: this is not a figure.
+
+### 9.5 The demo links are load-bearing, not decoration
+
+§8 asked for seeded links so Budget vs. Actual shows real per-line actuals — and unlinked, the
+report a prospect is most likely to open (the 12U's, on a season 18 games old) shows **a dash beside
+every single budget line**, which reads as a product that cannot answer its own headline question.
+`check-demo-coach.mjs` now asserts every budgeted demo cost carries its link — and that the 14U's
+deliberately-unbudgeted one does not.
+
+### 9.6 ⚠ The picker shows NAMES ONLY — owner ruling, reversing §4
+
+Built with "$4,000 planned · $1,190 left" on every option, per §4 and the mockup. **Removed the same
+day at the owner's direction**, and the reasoning is worth keeping because it is a rule about this
+form, not a preference about this control:
+
+> A coach on Add Expense / Add Payable is **recording money that is already spent or already
+> promised**. They are not deciding whether to incur it. Budget information cannot change the
+> decision in front of them, so it is noise in the one control they have to read to file the cost
+> correctly.
+
+Two supporting facts: long option strings scan badly on a phone, where this form is most used; and
+Budget vs. Actual now reports the overspend **line by line**, which is where that news belongs and
+what this whole plan was for.
+
+⛔ **Do not re-add it here without a new ruling.** If a "you are about to overrun this line" warning
+is ever wanted, its home is the **recurring-payables commit callout** — the one place in Money where
+a coach genuinely *is* deciding, because it creates a run of costs in a single action. That sibling
+plan already sketches exactly such a sentence.
+
+### 9.7 The line is asked FIRST, and it names the record (owner, 2026-08-15)
+
+The owner asked why Description is required — *"that seems more like a note that should be
+optional"*. It is not the note (that field exists, is optional, and lives under Details). It is the
+record's **name**, and four things depend on it:
+
+1. **It is written onto the team's books** as the ledger entry's description when the cost is marked
+   paid (`— Deposit` / `— Balance` for a payable's halves).
+2. **It is how a delete finds the entry to reverse** on anything paid before 2026-08-15. Those rows
+   store no entry id and are matched on description + amount + type; an ambiguous match **refuses**
+   rather than voiding an arbitrary entry, so two blank descriptions could make a paid record
+   impossible to reverse cleanly. (Migration 236's own comment predicted this.)
+3. **It is the only thing naming the row** in the Expenses list, the Payables list, the Payment
+   schedule, all three exports and the delete confirmation.
+4. **The payables importer matches look-alikes on it**, which is how a re-import avoids
+   double-committing a season.
+
+`rep_team_expenses.description` is `NOT NULL` in the database for the same reasons.
+
+**So the answer to the typing is a pre-fill, not an optional field.** The budget-line control moved
+**above** Description, and choosing a line puts that line's name into it, ready to be typed over —
+most costs are named after the line they are against, so the common case is now zero typing in that
+field. ⚠ **The pre-fill never overwrites a coach's own words**: it lands only on an empty
+description, or on one still holding the name of the line being switched *away* from — text this
+control put there and nobody has touched. Switching to "Not in the budget" clears an untouched
+pre-fill for the same reason: it is the abandoned line's name, not theirs.

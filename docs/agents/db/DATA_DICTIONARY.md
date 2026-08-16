@@ -3862,8 +3862,18 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 <!-- dict:col:rep_team_expenses.balance_entry_id -->
 **`balance_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL; mig 236) — same rule as `deposit_entry_id`, other half. Partial index `idx_rep_team_expenses_balance_entry`.
 
+<!-- dict:col:rep_team_expenses.budget_item_id -->
+**`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; mig 240) — **what this cost IS, in the same words the budget uses**, and the key Budget vs. Actual groups on. It implies the category too, since an item belongs to exactly one. NULL for a row recorded before this shipped, and for one whose item was later deleted; those fall back to `budget_category_id` and then to the free-text `category`. ⚠ **Whether the cost was BUDGETED is not stored anywhere** — it is derived, by asking whether a budget line exists for the same category + item. That is what let the old "Not in the budget" declaration be deleted outright. ⚠ **ON DELETE SET NULL is load-bearing:** removing an item from the library must never delete or orphan a record of money. Partial index `idx_rep_team_expenses_budget_item`. **No backfill** (see gotcha 7).
+
+> ⚠ **`budget_line_id` (mig 238) WAS DROPPED BY MIG 240, one day old and dev-only.** That column pointed spending at a specific budget LINE, because two lines sharing a category+item pair were ambiguous and their actuals could not be split. The owner's ruling that such lines simply **SUM into one row** dissolved the ambiguity — the pair became a complete answer, and a line pointer beside it was a second classification that could only agree or drift. It never reached production; no coach ever saw it.
+
+<!-- dict:col:rep_team_expenses.budget_category_id -->
+**`budget_category_id`** (FK → `budget_categories.id`, nullable, **ON DELETE SET NULL**; mig 238, kept by mig 240) — the category, normally derived from `budget_item_id`. Carried on its own for a row that names a category but no item, and the surviving link if that item is later deleted. It does **not** replace free-text `category`, which stays populated for the name-matching path every older row still uses.
+
 <!-- dict:col:rep_team_expenses.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap).
+
+**Gotcha 7 — THREE ways a cost reaches the budget coexist, and they roll up to the same rows.** Since mig 240 a row may carry `budget_item_id` (the coach said what the cost IS), or `budget_category_id` alone, or only free-text `category` (every older row, and every import that matched nothing). Budget vs. Actual resolves each cost in strict order of trust — **the item, then the category id, then the text category matched by NAME** — so all three land under the same headings, which is what makes shipping without a backfill safe. A cost resolving to none of them gets its own honest **"No category"** row rather than a separate list nobody scrolls to. ⚠ **Two budget lines on one item SUM into a single report row, payment periods included** (owner ruling 2026-08-15), and **whether a cost was BUDGETED is never stored** — it is derived, by asking whether a line exists for the same category + item, which is why the old "Not in the budget" declaration could be deleted outright. The rule lives in `lib/coach-budget-rollup.ts`, which owns it for the route and the screen together.
 
 **Gotcha 6 — deleting an expense reverses its ledger entries, and pre-mig-236 rows are found by MATCHING.** `deleteRepTeamExpense` (lib/db.ts) voids every entry the record posted, reading `lib/expense-ledger.ts` for what counts as posted. Where the link column is NULL (anything paid before 2026-08-15) it falls back to matching on ledger + `description` + `amount` + `entry_type='expense'`. That fallback is sound for **exactly** that set, because no Edit feature existed before then, so a historic row still carries the description its entry was written with — a guarantee that ends for anything edited after 2026-08-15, which is why new rows store the id. **An ambiguous match (two identical paid expenses) REFUSES with a 409 rather than voiding an arbitrary one**; zero matches returns quietly, since an already-void entry means there is nothing to give back. ⚠ An **out-of-pocket** expense (`paid_by_player_id` set) has **no entry to reverse at all** — no team cash ever moved — but deleting it does remove the family's reimbursement credit by FK cascade from `rep_dues_credits.expense_id`.
 
@@ -4814,10 +4824,13 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`category_id`** (FK → `budget_categories.id` ON DELETE CASCADE, NOT NULL) — parent category; indexed. Deleting a category cascades its items.
 
 <!-- dict:col:budget_items.org_id -->
-**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, **nullable**) — NULL = immutable default; set = org custom (immutability enforced via this, not `is_default`).
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, **nullable**) — NULL = immutable platform default; set = this club's (immutability enforced via this, not `is_default`). Read together with `team_id` for the tier.
+
+<!-- dict:col:budget_items.team_id -->
+**`team_id`** (FK → `rep_teams.id`, nullable, **ON DELETE CASCADE**; mig 240) — **who owns this item, and therefore whose picker it appears in.** Three tiers, read from this column and `org_id` together: `org_id` NULL = **platform**, everyone sees it; `org_id` set + `team_id` NULL = **club-published**, every team in that org sees it; both set = **that team's own**, and **no other team's picker offers it** (owner ruling 2026-08-15: *"we shouldn't populate 1 team's list with another team"*). ⚠ **One direction only:** a club admin can see every team's items and **publish** one, which clears `team_id` and hands it to everyone; there is deliberately no unpublish, because an item a team is already planning against cannot be taken back. ⚠ **CASCADE, not SET NULL** — a deleted team's private vocabulary must not silently become the club's; budget lines pointing at it are protected separately by their own ON DELETE SET NULL. The one predicate that reads all of this is `itemVisibleToTeam` in `lib/coach-budget-items.ts`, shared by the picker and by every write path so a list can never offer what a save refuses. Partial index `budget_items_team_idx`.
 
 <!-- dict:col:budget_items.name -->
-**`name`** (text, NOT NULL, ≤80 app-side) — item name; case-insensitive uniqueness per category per scope.
+**`name`** (text, NOT NULL, ≤80 app-side) — **the name of a budget row** since mig 240, and the key both the plan and Budget vs. Actual group on. Case-insensitive uniqueness per category per scope: `budget_items_unique_default_name` for platform rows, and `budget_items_unique_scope_name` for org rows — the latter coalesces `team_id` to a zero uuid, because a plain multi-column unique index would let every club-published row escape it entirely (NULL never equals NULL), while two teams must still each be able to invent "Provincials entry".
 
 <!-- dict:col:budget_items.suggested_amount -->
 **`suggested_amount`** (numeric(10,2), nullable) — planner pre-fill HINT in dollars; not a budgeted figure (gotcha 4).
@@ -4829,7 +4842,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`is_default`** (bool, NOT NULL, default false) — platform-seeded item.
 
 <!-- dict:col:budget_items.is_misc -->
-**`is_misc`** (bool, NOT NULL, default false) — the per-category Misc catch-all; un-deletable (gotcha 1).
+**`is_misc`** (bool, NOT NULL, default false) — the per-category Misc catch-all; un-deletable (gotcha 1). ⚠ **RETIRED AS A CHOICE 2026-08-15 (mig 240).** The item names a budget row now, and a report row called "Misc" answers nothing — so the coach picker filters these out entirely and no longer auto-selects one when a category is chosen. Rows written before that still point at them and still resolve their name; they are simply never offered again.
 
 ---
 
