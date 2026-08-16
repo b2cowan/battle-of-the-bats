@@ -148,6 +148,24 @@ and the tile hides. The plan's own framing would have led the next session to bu
 3. **Game tags in an archive → HIDDEN.** Built in Phase 1; the "at the time" rule answers it.
 4. **Awards in an archive → SHOWN, with the leak fixed and the instruments put away** (new in Phase
    2; the question only became visible once the audit row was checked — see §4's correction 2).
+5. **The team scrapbook → HEAD COACHES ONLY** (owner, 2026-08-16). The season-by-season list was
+   served to **any coach who had ever staffed the team, for every season** — including years before
+   they arrived and after they left. Money figures were correctly per-year scoped; nothing else was.
+   ⚠ The owner chose the **simple** rule over tenure-windowing — *"just make the head coach able to
+   see the archives, keep it simple; we can figure out how to expand later."* So: **ever head coach
+   of this team ⇒ sees its whole history; everyone else sees none of it.** No tenure maths.
+
+   **Scope, stated because the ruling could be read wider than it is:** this restricts the
+   **cross-season summary only**. An assistant who coached 2024 still opens 2024 and reads its
+   roster, schedule, attendance, results, awards and development exactly as they could at the time —
+   governing rule 1 is untouched. Reading it as "only head coaches may open past seasons" would gut
+   that rule and break the frozen-season fixture, which is how it was ruled out rather than asked.
+
+   **Three surfaces, so no door survives its list:** the section on `/history/results` is **absent**
+   (not an empty state — "None yet" would be a lie to an assistant on a team with three archived
+   years); the hub tile **omits** its past-seasons clause rather than printing a fabricated `0`; and
+   Season's End **hides "Compare every season"**, whose entire promise is that list. ⚠ Enforced at
+   the API, not just the page — the rows must not reach a browser that may not have them.
 
 ---
 
@@ -259,11 +277,12 @@ morning's pre-change sweep** (the un-baselined `a·Insights @768`), so none belo
 
 #### Two pre-existing items this review surfaced — NOT from this change
 
-- **Cross-year scrapbook exposure.** The multi-season summary (record, roster size, tryout
-  acceptance) is served to any coach who ever held an assignment on the team, for **every** season —
-  including years before or after their own tenure. Money figures *are* correctly scoped per year.
-  Worth an owner ruling on what "their history" means; unchanged by this work, which narrows nothing
-  and widens nothing.
+- **Cross-year scrapbook exposure — ✅ RULED AND CLOSED 2026-08-16, see §5.5.** The multi-season
+  summary was served to any coach who ever held an assignment on the team, for **every** season,
+  including years outside their own tenure. **Now head-coach only.** ⚠ Worth noting how it was
+  found: the review that surfaced it was reviewing something else entirely, and the finding was
+  reported as *pre-existing, not caused here* rather than folded silently into the phase. That is
+  what got it in front of the owner instead of into a backlog.
 - **The help drawer on this page describes the Insights HUB**, not the game log in front of the
   coach, and directs them at a door that does not exist in a finished season. **Phase 2 makes that
   door exist**, which resolves it properly — folded in there rather than patched here.

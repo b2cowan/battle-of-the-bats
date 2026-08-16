@@ -302,6 +302,85 @@ describe('a record shows records, and puts the instruments away', () => {
   });
 });
 
+/**
+ * ⚠⚠ THE TEAM'S SEASON-BY-SEASON HISTORY IS HEAD-COACH ONLY (owner ruling, 2026-08-16).
+ *
+ * The scrapbook — per-season record, roster size, tryout acceptance and money summaries — was
+ * served to ANY coach who had ever staffed the team, for EVERY season, **including years before
+ * they arrived and after they left**. Money figures were correctly per-year scoped; nothing else
+ * was. Surfaced as pre-existing by this project's review, then ruled on.
+ *
+ * The ruling is deliberately the SIMPLE one — head coach, no tenure windows. Widening it is a
+ * decision someone has to make on purpose, which is what this test is for.
+ */
+describe('the team scrapbook is head-coach only', () => {
+  const historyRoute = readFileSync(
+    join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'history', 'route.ts'),
+    'utf8',
+  );
+
+  /**
+   * ⚠ THE SERVER IS THE AUTHORITY. Hiding the section while still shipping the rows would leave a
+   * team's whole history in a browser that is not allowed it — the distinction this repo draws
+   * between "the client hides it" and "the server refuses it".
+   */
+  it('withholds the rows at the API, not just on the page', () => {
+    assert.match(
+      code(historyRoute), /const everHeadCoach = \[\.\.\.capsByYear\.values\(\)\]\.some\(c => c\.isHeadCoach\)/,
+      'the history route must decide head-coach-ness from the per-season capability rows.',
+    );
+    assert.match(
+      code(historyRoute), /everHeadCoach\s*\?[\s\S]{0,200}getRepTeamHistory[\s\S]{0,200}:\s*\[\[\], null\]/,
+      'a coach who was never head coach must get NO history rows from the server — not rows the '
+      + 'page then declines to draw.',
+    );
+    assert.match(
+      code(historyRoute), /canViewSeasonHistory: everHeadCoach/,
+      'the response must SAY whether history is permitted. "Allowed but empty" and "not allowed" '
+      + 'need different words on screen — "None yet" would be a lie to an assistant on a team with '
+      + 'three archived years.',
+    );
+  });
+
+  it('hides the scrapbook section rather than showing an empty state', () => {
+    assert.match(
+      results, /\{page\.everHeadCoach && \(\s*<section/,
+      'the "Past seasons" section must be ABSENT for a non-head-coach. An empty state under a '
+      + '"Past seasons" heading tells them the team has none, which is false.',
+    );
+  });
+
+  it('omits the past-seasons count on the Insights tile', () => {
+    assert.match(
+      hub, /const pastSeasonsClause = page\.everHeadCoach/,
+      'the "N past seasons on file" clause must be omitted, not rendered as 0 — the server sends '
+      + 'no history to a non-head-coach, so a count would be a fabricated zero.',
+    );
+  });
+
+  /**
+   * ⚠ HIDE THE ENTRY POINT. This door's entire promise is the cross-season list; leaving it for a
+   * coach who cannot see that list is a door that succeeds while quietly not delivering — the
+   * exact failure this project's Phase 1 review called out about this very link.
+   */
+  it("hides Season's End's \"Compare every season\" door for everyone else", () => {
+    assert.match(
+      read('season-end'), /\{page\.everHeadCoach && \(\s*\n?\s*<Link href=\{`\$\{base\}\/history\/results\$\{page\.query\}`\}/,
+      'the "Compare every season" door must be hidden when the list behind it is not permitted.',
+    );
+  });
+
+  it('asks the same question the server asks', () => {
+    assert.match(
+      readFileSync(join(process.cwd(), 'lib', 'coach-season-view.ts'), 'utf8'),
+      /everHeadCoach: season\.options\.some\(o => o\.capabilities\?\.isHeadCoach === true\)/,
+      'the client predicate must mirror the server exactly (ever head coach of THIS team, across '
+      + 'seasons). A per-season test would show the scrapbook on one year and hide it on the next '
+      + 'for the same person; a looser client test would draw a section the server will not fill.',
+    );
+  });
+});
+
 describe('the season survives every link the rail offers', () => {
   it('every Insights tile carries the year', () => {
     for (const dest of [

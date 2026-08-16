@@ -345,6 +345,11 @@ export default function CoachesResultsReportPage({
             *   · The `/history` fetch that feeds it was still being issued and then thrown away.
             * The aesthetic argument lost to three concrete ones.
             */}
+          {/* ⚠⚠ HEAD COACHES ONLY (owner ruling 2026-08-16). The whole section is ABSENT for
+              anyone else — not an empty state, which would tell an assistant "None yet" about a
+              team with three archived years. The server withholds the rows regardless; this keeps
+              the page from drawing a heading over nothing. */}
+          {page.everHeadCoach && (
           <section style={{ marginTop: '1.75rem' }}>
             <p className={styles.sectionKicker}>Past seasons</p>
             {history.length === 0 ? (
@@ -411,6 +416,7 @@ export default function CoachesResultsReportPage({
               })
             )}
           </section>
+          )}
         </>
       )}
     </div>

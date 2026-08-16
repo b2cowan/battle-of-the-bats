@@ -297,6 +297,40 @@ test.describe('rule 1 — a past season shows what the coach could see at the ti
     expect(body.players?.some(p => p.playerFirstName === `${MARK}Archived`)).toBe(true);
   });
 
+  /**
+   * ⚠⚠ THE TEAM SCRAPBOOK IS HEAD-COACH ONLY (owner ruling, 2026-08-16) — asserted at the API,
+   * because that is where it is enforced.
+   *
+   * The season-by-season history was served to ANY coach who had ever staffed the team, for EVERY
+   * season, including years outside their own tenure. This fixture is the right place to prove the
+   * fix: it holds a head coach and an assistant on the SAME team and the same seasons, so the two
+   * calls differ by nothing except the role.
+   *
+   * ⚠ Both halves matter. Asserting only that the assistant is refused would pass just as happily
+   * if the route were broken for everyone.
+   */
+  test('the season-by-season history is the head coach’s alone', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    const asHead = await apiGet(page, `${api()}/history`);
+    expect(asHead.status).toBe(200);
+    const headBody = asHead.body as { history?: unknown[]; canViewSeasonHistory?: boolean };
+    expect(headBody.canViewSeasonHistory, 'the head coach may see the team scrapbook').toBe(true);
+    expect((headBody.history ?? []).length,
+      'the head coach must actually get rows, or the assistant assertion below proves nothing')
+      .toBeGreaterThan(0);
+
+    await signIn(page, ASSIST_EMAIL);
+    const asAssistant = await apiGet(page, `${api()}/history`);
+    // Still 200 — they retain the rest of their archive access; only the scrapbook is withheld.
+    expect(asAssistant.status).toBe(200);
+    const assistBody = asAssistant.body as { history?: unknown[]; canViewSeasonHistory?: boolean };
+    expect(assistBody.canViewSeasonHistory, 'an assistant may not see the team scrapbook').toBe(false);
+    expect((assistBody.history ?? []).length,
+      'the rows must be WITHHELD BY THE SERVER, not merely hidden on the page — otherwise a team’s '
+      + 'whole history sits in a browser that is not allowed it')
+      .toBe(0);
+  });
+
   test('guardian details stay hidden if they were hidden then', async ({ page }) => {
     await signIn(page, ASSIST_EMAIL);
     const res = await apiGet(page, `${api()}/roster?year=${pastYearId}`);

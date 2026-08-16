@@ -4409,6 +4409,19 @@ const coachesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-past-seasons-head-coach',
+          question: 'Why can’t I see the “Past seasons” list of my team’s earlier years?',
+          answerText: 'The season-by-season list — each year\'s record, roster size, tryout acceptance and money summaries — is the head coach\'s. If you are an assistant, you will not see it on "How are we doing?", you will not see a past-seasons count on Insights, and Season\'s End will not offer "Compare every season". This is not about the season you are looking at: it is one rule about the team\'s whole history. Nothing else changes. You still open any season you coached and read its roster, schedule, attendance, results, awards and development exactly as you could at the time — the restriction is only the cross-season summary of years, some of which you may not have been there for. If you are the head coach and still cannot see it, check you are opening a team you head-coach rather than assist.',
+          keywords: ['past seasons missing', 'cannot see past seasons', 'no past seasons list', 'where is past seasons', 'compare every season missing', 'season history missing', 'head coach only', 'assistant cannot see history', 'team history permission', 'previous years missing', 'scrapbook'],
+          answer: (
+            <>
+              <p>The season-by-season list — each year&rsquo;s record, roster size, tryout acceptance and money summaries — is <strong>the head coach&rsquo;s</strong>. If you&rsquo;re an assistant you won&rsquo;t see it on <em>&ldquo;How are we doing?&rdquo;</em>, you won&rsquo;t see a past-seasons count on Insights, and Season&rsquo;s End won&rsquo;t offer <em>&ldquo;Compare every season&rdquo;</em>.</p>
+              <p><strong>It isn&rsquo;t about the season you&rsquo;re looking at</strong> — it&rsquo;s one rule about the team&rsquo;s whole history, which spans years you may not have been there for.</p>
+              <p><strong>Nothing else changes.</strong> You still open any season you coached and read its roster, schedule, attendance, results, awards and development exactly as you could at the time. Only the cross-season summary is held back.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-insights-past-season',
           question: 'Can I open Insights for a season that has already finished?',
           answerText: 'Yes. Switch season with the chip beside the page title and the whole Insights page describes that year instead: its scoreboard, what stood out, and the report tiles — results, attendance, money, awards and development. Every tile keeps you in that season, and the year is named on screen so you always know which one you are reading. This works even if you no longer coach the team. If you ran it that season, you can open that season, and what you see is what your access allowed you AT THE TIME — an assistant who had no money access last year still sees no money figures for last year, even if they have money access on a team today. Two tiles are deliberately missing in a finished season: "Where is playing time going?" and "Who did we play?". Playing-time figures are recalculated from your saved lineups every time you open them, and your opponent notes are the book you keep today, so neither can promise to show that past season as you actually saw it back then — rather than quietly showing you this year\'s answer under last year\'s heading, we do not offer them. The "Ask about your team" bar is also live-season only. Attendance no longer has its own menu line in a finished season; it is reached through Insights as "Who\'s showing up?", exactly as it is in a live one.',

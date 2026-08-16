@@ -5424,6 +5424,29 @@ an award in it. Part D needs a second sign-in that no longer coaches that team.
       with no money access last year sees no dues figures for last year, even if they have money
       access on a team today.
 
+### D2 · ⚠ The team's season history is now the head coach's alone (owner ruling 2026-08-16)
+
+**What changed and why:** the season-by-season list — each year's record, roster size, tryout
+acceptance and money summaries — was being shown to **any** coach who had ever staffed the team, for
+**every** season, *including years before they arrived and after they left*. Money figures were
+correctly scoped; nothing else was. You ruled it head-coach only, the simple way, with no tenure
+windows.
+
+⚠ **This restricts the cross-season summary ONLY.** An assistant who coached a past season still
+opens that season and reads everything in it. If you find an assistant losing anything *other* than
+the list of years, that is a defect — tell me.
+
+- [ ] As the **head coach**: Insights → *How are we doing?* still shows **Past seasons** at the foot
+      with its *Season Wrapped →* links, and Season's End still offers **Compare every season**.
+- [ ] Sign in as an **assistant** on the same team. On *How are we doing?* the **Past seasons
+      section is absent entirely** — not an empty box, and not the words "None yet" (that would be
+      claiming the team has no history, which is false).
+- [ ] That assistant's Insights tile for *How are we doing?* shows **no "N past seasons on file"**
+      — the clause is gone, not showing `0`.
+- [ ] That assistant's **Season's End offers no "Compare every season"** door.
+- [ ] ⚠ And the important half: that same assistant can **still open a past season they coached**
+      and read its roster, schedule, attendance and results normally.
+
 ### E · Switching seasons, and the live season untouched
 
 - [ ] From the hub, switch season **twice in quick succession** with the chip. It always settles on

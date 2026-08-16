@@ -447,6 +447,13 @@ export default function CoachesInsightsPage({
     development: 'Development',
   };
 
+  /** The team's season history is head-coach only (owner ruling 2026-08-16) — the clause is
+   *  omitted entirely for everyone else, rather than printing a count the server deliberately
+   *  did not send. Absent, not zero. */
+  const pastSeasonsClause = page.everHeadCoach
+    ? ` · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
+    : '';
+
   const overCapCount = analytics ? analytics.armCare.filter(r => r.overCapGames > 0).length : 0;
   const hasBand = scopedGames > 0 || last5.length > 0 || scoredGames.length > 0 || attendancePct != null || duesPct != null;
 
@@ -608,10 +615,13 @@ export default function CoachesInsightsPage({
               <span className={styles.insightsDoorSum}>
                 {/* Scoped record only when the scope actually holds results — otherwise a real
                     count, never a fabricated "0-0" (results may exist outside the record scope). */}
+                {/* ⚠ The past-seasons count is HEAD-COACH ONLY (owner ruling 2026-08-16) — the
+                    server sends no history to anyone else, so without this the clause would read
+                    "0 past seasons on file" to an assistant on a team with three. Absent, not zero. */}
                 {scopedGames > 0
-                  ? `${recStr(record)} ${seasonWord} · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
+                  ? `${recStr(record)} ${seasonWord}${pastSeasonsClause}`
                   : finalized.length > 0
-                    ? `${finalized.length} result${finalized.length === 1 ? '' : 's'} ${seasonWord} · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
+                    ? `${finalized.length} result${finalized.length === 1 ? '' : 's'} ${seasonWord}${pastSeasonsClause}`
                     : isRecord
                       ? 'No result was recorded in this season'
                       : 'First season under way — your first result shows up here'}

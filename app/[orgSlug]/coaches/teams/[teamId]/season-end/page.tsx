@@ -166,11 +166,17 @@ export default function SeasonEndPage({
               Everything from this season is still here — roster, schedule, attendance, lineups,
               money records, documents and tryouts. Open any of them from the menu.
             </p>
-            {/* ⚠ CARRIES THE YEAR (Phase 2). This is the archive's front door, so the coach
+            {/* ⚠⚠ HIDDEN FOR ANYONE BUT A HEAD COACH (owner ruling 2026-08-16). This door's whole
+                promise is the cross-season list, and that list is head-coach only now — leaving it
+                would be a door that succeeds while quietly not delivering, which is the exact
+                failure this project's Phase 1 review called out about this very link.
+
+                ⚠ CARRIES THE YEAR (Phase 2). This is the archive's front door, so the coach
                 clicking through is usually IN a past season — and since Phase 1 the destination
                 reads `?year=`, so a bare link answered a 2024 reader with the live season's game
                 log above the cross-season list they came for. Found by grepping inbound links to
                 a page this rail had made season-aware, which is the only way these surface. */}
+            {page.everHeadCoach && (
             <Link href={`${base}/history/results${page.query}`} className={styles.seasonDoorRow}>
               <span>
                 Compare every season
@@ -178,6 +184,7 @@ export default function SeasonEndPage({
               </span>
               <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
             </Link>
+            )}
           </section>
 
           {showStartNext && closed && (

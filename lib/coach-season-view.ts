@@ -159,6 +159,21 @@ export interface CoachSeasonPage {
   teamBase: string;
   /** The coach has SOME access to this team (live or archived). False ⇒ render "not assigned". */
   hasAccess: boolean;
+  /**
+   * ⚠ MAY THIS COACH SEE THE TEAM'S SEASON-BY-SEASON HISTORY? Head coaches only (owner ruling
+   * 2026-08-16).
+   *
+   * The multi-season scrapbook — per-season record, roster size, tryout acceptance and money
+   * summaries — was served to ANY coach who ever staffed the team, for EVERY season, including
+   * years before they arrived and after they left. The owner's ruling is deliberately the simple
+   * one: head coach, no tenure windows. Widening it later is a decision; this is the floor.
+   *
+   * ⚠ "EVER head coach of this team", not "head coach of the season on screen" — the scrapbook
+   * belongs to the TEAM and spans seasons, so a per-season test would show it on one year and hide
+   * it on the next for the same person. It mirrors this route's existing cross-season `canViewMoney`
+   * shape, and the server computes the identical thing so the client can never show more.
+   */
+  everHeadCoach: boolean;
   /** Fold a capability into the read-only rule: `canWrite(caps.rosterWrite)`. */
   canWrite: (capability: boolean | undefined) => boolean;
 }
@@ -191,6 +206,10 @@ export function resolveCoachSeasonPage(
     query: season.query,
     teamBase: `/${orgSlug}/coaches/teams/${teamId}`,
     hasAccess: !!(live || closed || season.current),
+    // Any season of this team on which they held the head-coach role. `options` is already scoped
+    // to this team and carries each season's own capability row, so this asks exactly what the
+    // server asks — see the field's doc comment.
+    everHeadCoach: season.options.some(o => o.capabilities?.isHeadCoach === true),
     // ⚠ Courtesy only. Hiding a control is not read-only — the server refuses the write, and a
     // source-level test proves no write handler can even address a past season.
     canWrite: (capability: boolean | undefined) => !isReadOnly && !!capability,

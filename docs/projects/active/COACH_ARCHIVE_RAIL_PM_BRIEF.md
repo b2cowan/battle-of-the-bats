@@ -87,6 +87,13 @@ who built it, is a retention asset that doesn't work.
    the same calculation.
 4. **Awards in a past season → shown** (this question only appeared once the plan's own audit was
    checked — see below).
+5. **The team's season-by-season history → head coaches only.** It was being shown to anyone who had
+   ever helped with the team, for every year, including seasons before they arrived and after they
+   left. You chose the simple rule over working out who was there when: head coach sees it, nobody
+   else does, expand later if it's worth it.
+
+   ⚠ **This is the list of years only.** An assistant who coached last season still opens last
+   season and reads all of it. If they lose anything other than the cross-season list, that's a bug.
 
 ## What changed after the plan was checked against the code
 
