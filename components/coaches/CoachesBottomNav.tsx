@@ -47,9 +47,10 @@ const ARCHIVE_PRIMARY_LABELS = ["Season's End", 'Roster', 'Schedule', 'Money'];
 type MoreItem = { key: string; icon: typeof Users; label: string; conditional?: 'tryouts' | 'tournaments' };
 const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Squad', items: [
-    // Batch 4: Attendance had no door in either nav. Placed ahead of Lineups to mirror the
-    // sidebar's Roster → Attendance → Lineups order.
-    { key: '/attendance',    icon: CalendarCheck, label: 'Attendance' },
+    // ⚠ Attendance left BOTH navs together (2026-08-15, plan Phase 3) — see the sidebar's note for
+    // why, and for why the ARCHIVE nav above still carries it. Changing one nav and not the other
+    // is how the two start telling different stories; `CLOSED_TAB_ICON` above keeps its icon
+    // precisely because the archive door survives.
     { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
     { key: '/development',   icon: TrendingUp,    label: 'Development' },
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },

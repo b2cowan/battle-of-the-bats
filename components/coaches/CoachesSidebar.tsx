@@ -27,9 +27,20 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
   { label: 'Squad', items: [
     { label: 'Roster',      href: '/roster',      icon: Users },
-    // Between Roster and Lineups — the order a coach actually works in on game day (who's here,
-    // then who's batting). Batch 4: it had no nav entry at all before.
-    { label: 'Attendance',  href: '/attendance',  icon: CalendarCheck },
+    /**
+     * ⚠ ATTENDANCE IS NOT A NAV ITEM (owner-approved 2026-08-15, plan Phase 3). No attendance is
+     * ever recorded on the attendance page — marking a player present happens in the Schedule's
+     * event panel, and that page's own hero card is a shortcut back to it. What is left is a
+     * season table of fractions: a report, and it was already a report tile on Insights. It has
+     * ONE parent now, which is what retires the wrong-half-the-time back link rather than
+     * patching it.
+     *
+     * ⚠ IT REMAINS IN `CLOSED_TEAM_NAV_ITEMS`, and that is not an oversight. On a finished season
+     * the archive nav points "Insights" at `/history/results`, NOT at the Insights hub — the hub
+     * is live-season-only and `/history/results` carries no attendance door. Removing the archive
+     * entry too would make a past season's attendance report unreachable, deleting an archive door
+     * ruled in under D-F1. Live nav: gone. Archive nav: kept, deliberately.
+     */
     { label: 'Lineups',     href: '/lineups',     icon: ListOrdered },
     // Primary (not Explore) by design decision 2026-07-17 — a growth pillar whose
     // evaluation-sessions job exists before any usage signal could accrue.

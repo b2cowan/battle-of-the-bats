@@ -21,6 +21,14 @@ export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
   { label: "Season's End", href: '/season-end' },
   { label: 'Roster',       href: '/roster' },
   { label: 'Schedule',     href: '/schedule' },
+  /**
+   * ⚠ THE ONE DOOR THAT IS ARCHIVE-ONLY (2026-08-15, plan Phase 3). Attendance left both LIVE
+   * navs — it is a report, and its parent is the Insights hub. It stays here because the archive
+   * points "Insights" at `/history/results`, not at that hub: the hub is live-season-only, and
+   * the results archive carries no attendance door. Deleting this line would make a past season's
+   * attendance report unreachable — an approved archive door (D-F1) removed by accident while
+   * tidying the live nav.
+   */
   { label: 'Attendance',   href: '/attendance' },
   { label: 'Lineups',      href: '/lineups' },
   { label: 'Money',        href: '/accounting' },
@@ -49,11 +57,18 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     // ⚠ A1 (2026-08-03): was `caps.roster !== 'off'`. The roster PAGE is a record surface, so it
     // follows record access; the NAMES on it are baseline and no longer gate anything.
     case 'Roster':        return hasRecordAccess(caps);
-    // Batch 4 (P1 f2-6 / f6-0 ×2 / f8-2): the season attendance report had no home in either nav —
-    // its only door was a secondary button on Roster that disappears in the depth-chart view.
-    // ⚠ A1: this needed BOTH grants only because the route gated on roster visibility while the
-    // page leads with "take attendance for {next event}". The route gates on `attendance` now, so
-    // one grant answers both and the door can no longer 403.
+    /**
+     * ⚠ NOT A LIVE NAV ITEM ANY MORE (2026-08-15, plan Phase 3), and this case stays anyway. It is
+     * now the shared answer to "may this coach open the attendance report", asked by three callers
+     * that are not the sidebar: the ARCHIVE nav (which still lists it, see above), the Insights
+     * hub's "Who's showing up?" door, and the Overview's coaching-pair tile
+     * (`resolveCoachingPair`). Deleting it would fall through to `default: return true` and hand
+     * the report to a helper.
+     *
+     * ⚠ A1: this needed BOTH grants only because the route gated on roster visibility while the
+     * page leads with "take attendance for {next event}". The route gates on `attendance` now, so
+     * one grant answers both and the door can no longer 403.
+     */
     case 'Attendance':    return caps.attendance;
     case 'Lineups':       return caps.lineups;
     case 'Schedule':      return caps.schedule;

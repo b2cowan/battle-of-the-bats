@@ -482,8 +482,13 @@ export default function CoachesInsightsPage({
                 /attendance, and that page gates on its own grant now. Record access would have
                 offered it to coaches who 403 on arrival. */}
             {canAttendance && (
+              /* ⚠ "Who's showing up?" is now the ATTENDANCE PAGE'S OWN TITLE too (2026-08-15,
+                 plan Phase 3) — it left the sidebar, so this tile is its only live door and the
+                 two must read identically. Changing the wording here without changing the page
+                 heading (or the reverse) puts a coach through a door named one thing onto a page
+                 named another. */
               <Link href={`${base}/attendance`} className={`${styles.insightsDoor} ${attendancePct == null ? styles.insightsDoorSoft : ''}`}>
-                <span className={styles.insightsDoorQ}>Who shows up?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorQ}>Who&apos;s showing up?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {srcErrors.attendance
                     ? 'Couldn’t load — refresh to try again'

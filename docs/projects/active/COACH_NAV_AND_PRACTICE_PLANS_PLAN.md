@@ -1,6 +1,8 @@
 # Coach Portal — Nav regroup, Attendance-as-report, and a front door for Practice Plans
 
-**Status:** Phase 1 (Practice Plans hub) BUILT on dev 2026-08-15. Phases 2–4 approved, not built.
+**Status:** Phases 1 (Practice Plans hub), 2 (Attendance page) and 3 (Attendance into Insights)
+BUILT on dev 2026-08-15.
+Phase 4 (sidebar reorder) approved, not built.
 **Owner-approved:** 2026-08-15, from mockups (artifact `ed56fe2c-0749-4c18-b504-3d3b3ee6c7c7`, rev 3).
 **Origin:** owner review of the Attendance empty state → widened into the sidebar's information architecture.
 
@@ -128,7 +130,7 @@ panel already hides the plan section behind `!page.isReadOnly`, and neither plan
 themselves, and the Schedule panel's own "Plan this practice" button. This adds a door; it closes
 none.
 
-### Phase 2 — Fix the Attendance page
+### ✅ Phase 2 — Fix the Attendance page *(BUILT on dev 2026-08-15)*
 
 Worth doing regardless of where the page ends up living, and it makes Phase 3 a clean lift rather
 than a relocation of a mess.
@@ -141,19 +143,163 @@ than a relocation of a mess.
   same words, out of the path between the coach and their data, absent when there is no data.
 - **Column headings once**, replacing the per-row `GAMES` / `PRACTICES` micro-labels.
 - **New "scheduled but nothing marked" state**: render the real table with the roster and dashes,
-  above a one-line explanation. Proves the roster is connected and shows the shape that is coming.
+  under a one-line explanation. Proves the roster is connected and shows the shape that is coming.
 
-### Phase 3 — Move Attendance into Insights
+#### How it was built
+
+**The three regions became one decision.** The defect was not three misaligned blocks; it was three
+regions each concluding independently that they had nothing to show. There is now a single
+four-way branch at the top of the render — `solo` / `nothing marked yet` / `the report` / loading —
+and the "alone" rule is structural rather than remembered: the solo branch renders the empty card
+and returns, so nothing else *can* draw beside it.
+
+**⚠ Both flags wait for BOTH fetches.** A schedule known to be empty while the report is still in
+flight is not yet grounds for the empty state — attendance rows outlive the events that produced
+them (a deleted game), so `scheduleIsEmpty` only wins when the report has also come back with
+nothing recorded. This is the same class of mistake the page's existing `markTargetLoading` flag
+was already written to prevent: a confident answer given before we had looked.
+
+**⚠ The `.muted` fix went to a NEW page-local module, not to `coaches.module.css`.** The reported
+misalignment *was* a shared class reaching a page that never asked for it. `.muted` has many other
+callers, so the fix could not be made there; and `coaches.module.css` was carrying two other
+sessions' in-flight edits, so adding to it could not be committed cleanly either. Everything this
+page needs beyond the portal's existing primitives lives in
+`app/[orgSlug]/coaches/teams/[teamId]/attendance/attendance.module.css`, blast radius one screen.
+
+**The table is the portal's existing list-table idiom** (`.tableWrap / .table / .th / .td / .thNum /
+.tdNum / .tableAsCards`), not a new one — which is also *why the micro-labels could go*. At ≤640 the
+shared class stacks the table into cards and re-prints each figure's label from the cell's
+`data-label`, so the per-row wording the column headings replace on a desktop comes back on a phone
+automatically.
+
+**⚠ A `<table>` cannot nest a row-level `<a>`, so the whole-row drill-in became a name link** with
+`min-height: var(--tap-min)` and the cell's vertical padding surrendered to it. Measured at 44px
+(and 501px wide on a desktop row) — the tap target is the row's height, not the word's. Without
+that one declaration this change would have traded a misalignment for ~12 new tap-floor findings.
+
+**⚠ The mockup's "How attendance works" button was NOT built (owner call, 2026-08-15).** §01's
+proposed empty state carried a second, ghost button opening the help — reasonable on paper, since
+this is the one state where the counting rules are not on the page. But the header's "?" sits on
+that same screen, in its fixed corner, opening that exact drawer: a second door to it one line
+below would be the duplication this phase exists to remove, wearing a politer face. Same rule
+`CoachPageHeader` already states for its nested variant — two doors to the same place, one line
+apart, is one door too many. **The empty state offers "Open schedule" alone.**
+
+**Two things joined the change that the mockups did not cover, both by applying the approved rule
+rather than inventing:**
+- **"No active roster players" is now a solo empty state too.** It was a full-width centred block
+  under a left-aligned shortcut card — the third left edge, in a different state. It renders
+  `quiet` and carries **no** CTA, per `CoachEmptyState`'s own decision rule: a coach can hold the
+  attendance duty *alone*, without roster access, and an "Add players" button that 403s is worse
+  than no button.
+- **The per-player drill-in now carries `?year=`.** `roster/[playerId]` is on
+  `APPROVED_SEASON_AWARE_ROUTES`, but this link was not passing the season — so a past season's
+  attendance row opened the ACTIVE season's player. That is governing rule 2 ("does the whole
+  subtree carry the season?") failing one level down from an archive door, which is exactly where
+  Chunk F's expensive defects lived.
+
+#### Evidence (rendered, not read)
+
+Measured on the served page — the only check that can see the thing that was actually reported:
+
+- **One left edge, one width.** At 1440: shortcut card, table, and disclosure all at `left 252`,
+  `width 1156`. At 390: all at `left 16`, `width 358`. The back link sits at 244 with 8px of its
+  own padding, putting its *text* on 252 — optical alignment, not drift.
+- **All four states rendered** (the two empty ones by stubbing the API responses, since the fixture
+  team has data): solo empty card alone offering **only** "Open schedule", the header's "?" still
+  in its corner and no table, disclosure or shortcut beside it; shortcut + note + dashed roster +
+  disclosure; quiet solo card for the empty roster; and the full report with `not tracked yet`
+  spanning both figure columns for the one untracked player.
+- **The disclosure** is collapsed at load, its summary is exactly 44px, and it opens to the
+  methodology verbatim — including the sentence under the playing-time vocabulary ruling.
+- **The layout sweep is unchanged by this diff.** `--only=coach-attendance` returns the identical
+  finding count at all four widths before and after (1 / 1 / 3 / 23).
+
+**⚠ The sweep does report 2 NEW findings, and neither belongs to Phase 2** — both reproduce exactly
+on the pre-change page: `a·Practice plans @1440` (Phase 1's new nav item, never baselined) and
+`a·Insights @768`. They need Phase 1's baseline decision, not a fix here.
+
+#### Unchanged, and deliberately so
+
+The "Take attendance" shortcut card and its three-state loading behaviour, the season / read-only
+handling, the loading skeletons (re-shaped to the table's geometry so the report still does not
+jump as it settles), and the back link — which **Phase 3 deletes outright**, so no effort was spent
+on it.
+
+### ✅ Phase 3 — Move Attendance into Insights *(BUILT on dev 2026-08-15)*
 
 - Retitle as a question to match its neighbours (**"Who's showing up?"**).
 - Drop the sidebar item; the recording flow on the Schedule is untouched.
 - The back link becomes *true* — one parent — so §2's problem retires rather than being patched.
 
-**⚠ Decide before building.** Attendance is a duty an assistant coach can hold on its own
-(`caps.attendance`), while Insights gates on `hasRecordAccess`. An assistant whose only duty is
-attendance would keep the ability to mark players present on the Schedule but lose the season
-report. Recommended as correct — "take the register" and "review the season" are different levels of
-trust — but it is an owner call, not an implementation detail.
+#### ⚠⚠ THE BLOCKING OWNER DECISION WAS NEVER REAL — and this is the finding worth keeping
+
+This plan and the mockup's §04 both recorded, as the one thing to decide before building:
+
+> *"An assistant whose only duty is attendance would keep the ability to mark players present on
+> the Schedule but lose the season report."*
+
+**That was already false when it was written.** `hasRecordAccess` — the predicate the Insights nav
+item gates on — is a UNION that **includes the attendance duty**, folded in by A1 (2026-08-03).
+So `caps.attendance ⟹ hasRecordAccess`, which means the set of coaches who can open the attendance
+report is a strict **subset** of those who can open Insights. Nobody loses anything; there was
+nothing to rule on.
+
+It is recorded loudly because the claim was plausible, written down in two places, survived an
+owner review, and would have cost a decision the owner did not need to make. The invariant is now
+**pinned by test** (`tests/unit/coach-attendance-home.test.ts`) rather than left to be re-reasoned:
+if a future change narrows `hasRecordAccess`, or gives Insights its own tighter gate, the build
+fails before a coach discovers the only door to their season attendance stopped existing.
+
+#### ⚠⚠ THE ARCHIVE DOOR THE TIDY-UP WOULD HAVE DELETED
+
+Removing Attendance from the live navs makes removing it from `CLOSED_TEAM_NAV_ITEMS` look like the
+obvious matching change. **It is not, and doing it would have broken the archive.**
+
+On a finished season the nav points **Insights at `/history/results`, not at the Insights hub** —
+the hub is live-season-only (it holds no season resolver at all, and would answer a past year's
+header with this year's numbers), and the results archive carries no attendance door. So the
+archive nav entry is the **only** route to a past season's attendance report, which is an archive
+door ruled in under D-F1 with a season-aware route behind it.
+
+**Live nav: gone. Archive nav: kept, deliberately.** Both halves are pinned — the live half in
+`team-tournament-game-mirror-smoke.spec.ts`, the archive half in `coach-frozen-season-smoke.spec.ts`
+(the only fixture that has a finished season) and in the unit test above.
+
+This is governing rule 2 read in reverse: an archive is a container, so the unit of work is every
+page reachable from the door — including the ones a live-nav change quietly orphans.
+
+#### What was built
+
+- **The page is titled "Who's showing up?"**, and **the Insights door was reworded to match it
+  exactly** (it read "Who shows up?"). A door and its destination disagreeing about their own name
+  is the drift having one parent is supposed to prevent, so the two strings move together or not
+  at all. The page now sits among seven sibling questions on the hub.
+- **The item left both navs together** — sidebar and the bottom nav's More sheet. Changing one and
+  not the other is how the two start telling different stories.
+- **The `case 'Attendance'` capability gate stays** in `isCoachNavItemVisible`. It is no longer a
+  nav question but is still the shared answer for three other callers: the archive nav, the
+  Insights door, and the Overview's coaching-pair tile. Deleting it would fall through to
+  `default: return true` and hand the report to a helper.
+- **The back link is true, including in an archive.** On a live season it points at the Insights
+  hub. On a finished one it points at `/history/results${year}` — mirroring what the archive nav
+  itself does, so one label always leads to the page the coach was actually on.
+
+#### Evidence
+
+- Rendered at 1440 and 390: the sidebar and the More sheet no longer carry Attendance; the page
+  heading reads **"Who's showing up?"**; the Insights hub lists it among its seven doors with the
+  identical wording, pointing at `/attendance`.
+- `npm test` — 1954 pass, 0 fail, including the six new invariant assertions. Typecheck clean.
+- Layout sweep across `coach-attendance`, `coach-overview`, `coach-roster`: **no new finding
+  belongs to this phase**, and `coach-attendance @1440` fell from 23 findings to 22 as the nav item
+  left. (`a·Practice plans` is Phase 1's un-baselined item; `button·Season setup4/5` is the fixture
+  label drifting from its baselined `3/5` key, which changes the key and reads as new.)
+- ⚠ **The archived-season behaviour is NOT rendered-verified here** — the layout fixture has no
+  finished season. It is covered by the unit test and the frozen-season spec, and is an explicit
+  owner QA step.
+
+#### Still open, unchanged by this phase
 
 The double-parent pattern still needs a decision for **Money** and **Development** (referrer-tagged
 back link vs no back link). Not blocking.

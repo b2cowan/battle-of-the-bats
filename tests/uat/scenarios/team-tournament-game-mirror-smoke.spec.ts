@@ -455,22 +455,39 @@ test.describe('Batch 4 — tournament games get real tools', () => {
     expect((healed.data ?? []).filter(r => r.status === 'scheduled').map(r => r.id).sort()).toEqual(liveBefore);
   });
 
-  test('Attendance has a real home in the nav, and the page says where to record it', async ({ page }) => {
+  /**
+   * ⚠ REWRITTEN 2026-08-15 (plan Phase 3). This test used to assert "Attendance has a real home in
+   * the nav" — and it did, in both navs. It does not any more, and that is the change, not a
+   * regression: nothing is ever RECORDED on that page (marking happens in the Schedule's event
+   * panel, which this test still pins), so it is a report and its one parent is the Insights hub.
+   * The assertion is inverted rather than deleted, so a future change that quietly re-adds the nav
+   * item fails here instead of silently restoring the double-parent this phase removed.
+   */
+  test('Attendance is a report under Insights, and the page still says where to record it', async ({ page }) => {
     await signIn(page);
     await page.goto(`${base()}/attendance`);
     await page.waitForLoadState('networkidle');
 
     const main = page.locator('main[class*="coachesMain"]');
+    // The page is titled as a question now, and the word for word must match the Insights door
+    // that leads here — a door and its destination disagreeing about their own name is exactly
+    // what having one parent is supposed to prevent.
+    await expect(main.getByRole('heading', { name: /Who's showing up\?/ })).toBeVisible();
+
     // The card links straight to where attendance is recorded, for a specific event — the review's
     // complaint was that this page explained itself but never said where to go. Asserting the
     // event-scoped href (not just the words) is what stops the honest empty state, whose CTA is a
-    // bare /schedule link, from passing this test.
+    // bare /schedule link, from passing this test. UNCHANGED by Phase 3: the recording flow moved
+    // nowhere.
     const cta = main.getByRole('link', { name: /Take attendance/ });
     await expect(cta).toHaveAttribute('href', /\/schedule\?event=.+&tab=attendance/);
 
-    // Phone: the More sheet carries it (bottom nav's five primaries are unchanged).
+    // Phone: the More sheet must NOT carry it any more — it left both navs together.
     await page.getByRole('button', { name: /More/i }).click();
-    await expect(page.getByRole('link', { name: 'Attendance' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Attendance', exact: true })).toHaveCount(0);
+    // ...and the door that replaced it is right there in the same sheet.
+    await expect(page.getByRole('link', { name: 'Insights', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
 
     // Nothing scrolls sideways at 360.
     const widths = await page.evaluate(() => ({
@@ -478,5 +495,16 @@ test.describe('Batch 4 — tournament games get real tools', () => {
       vw: window.innerWidth,
     }));
     expect(widths.doc).toBe(widths.vw);
+  });
+
+  /** The Insights hub is now the report's ONLY live door, so the hub must actually carry it. */
+  test('the Insights hub carries the attendance door, worded exactly as the page it opens', async ({ page }) => {
+    await signIn(page);
+    await page.goto(`${base()}/history`);
+    await page.waitForLoadState('networkidle');
+
+    const door = page.locator('main').getByRole('link', { name: /Who's showing up\?/ });
+    await expect(door).toBeVisible();
+    await expect(door).toHaveAttribute('href', /\/attendance$/);
   });
 });

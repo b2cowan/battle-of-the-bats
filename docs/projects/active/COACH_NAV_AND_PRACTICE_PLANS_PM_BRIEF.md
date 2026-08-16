@@ -32,15 +32,72 @@ filter and templates — for something a coach makes maybe twenty times a season
 two to three times as often, got a link buried in a panel. This corrects that imbalance, and it is
 the only item in this project that adds capability rather than tidying what exists.
 
-### 3. Coming next (approved, not yet built)
+### 3. The Attendance page now answers once *(built on dev, 2026-08-15)*
 
-- **The Attendance page stops saying "nothing here" three times.** One empty state instead of two,
-  everything on one left edge, and the paragraph explaining how attendance is counted moves under
-  the table where the figures are. When there are games on the schedule but nothing marked yet, the
-  coach sees their actual roster with dashes rather than a second empty message.
-- **Attendance moves into Insights** and is retitled "Who's showing up?". It never recorded anything
-  — marking players present happens on the Schedule, on the event — so it belongs with the other
-  season reports. Nothing changes about how attendance is actually taken.
+The screen that started this review is fixed. What a coach sees now, by situation:
+
+- **Nothing on the schedule yet** — one card, alone on the page: *"Nothing to take attendance for
+  yet"*, with a single button, **Open schedule**. Nothing else draws. This was the reported
+  screenshot, and it is the rarest state. *(The mockup also drew a "How attendance works" button
+  here; the owner cut it — the "?" is already in the corner of the same screen and opens the same
+  help, and a second door to it one line below is the duplication this phase exists to remove.)*
+- **Games and practices exist, but nobody has been marked** — the *common* first-week case, and the
+  one that used to get a second "nothing here" message. The coach now sees the **"Take attendance"**
+  shortcut, one quiet line saying totals fill in as they mark, and **their real roster** with a dash
+  in each column. It proves the roster is connected and shows the shape that's coming.
+- **Attendance is being taken** — the shortcut card, then the report as a proper table with
+  **Games** and **Practices** headed once at the top instead of the label repeated inside every row.
+  A player nobody has marked yet still reads *"not tracked yet"* rather than a pair of zeros.
+- **No active players on the roster** — one quiet line, alone, with no button: the coach who can
+  hold the attendance duty may not have roster access at all, so we don't offer a door that would
+  refuse them.
+
+**The paragraph about how figures are counted** — including the deliberate "to inform playing-time
+decisions… not a ranking" wording — is kept word for word, but folded shut under the table as
+**"How these figures are counted"**. It's out of the way of the data, and it doesn't appear at all
+on a page with no figures.
+
+**Everything now shares one left edge.** That was the actual complaint: three blocks starting in
+three different places. On a phone the table stacks into per-player cards, where each figure gets
+its label back automatically.
+
+One small correctness fix travelled with it: opening a player from a **past season's** attendance
+report used to land on that player's *current* season. It now stays in the season the coach was
+reading.
+
+### 4. Attendance now lives in Insights *(built on dev, 2026-08-15)*
+
+Attendance has left the sidebar. Nothing is lost and nothing about taking attendance changes — the
+page never recorded anything in the first place. Marking players present still happens on the
+**Schedule**, inside a game or practice, exactly as before.
+
+What a coach sees:
+
+- **The sidebar is one item shorter**, on desktop and in the phone "More" sheet. The report is
+  reached from **Insights**, where it always had a tile, alongside "How are we doing?", "Where is
+  playing time going?" and the rest.
+- **The page is titled "Who's showing up?"** — a question, like every other report on that hub. The
+  Insights tile was reworded to match it word for word, so a coach never goes through a door named
+  one thing and lands on a page named another.
+- **The back link is finally right.** It used to point at Insights whether or not you came from
+  there — wrong for most coaches, because most arrived from the sidebar. Now there is only one way
+  in, so the link tells the truth. On a **finished season** it points at the season's results
+  archive instead, which is where the coach actually was.
+
+**Two things worth knowing, because both were nearly decided the wrong way:**
+
+- **No coach loses access.** The plan flagged this as an owner decision — the worry being that an
+  assistant whose only duty is attendance would keep marking players present but lose the season
+  report. That turned out to be **untrue of the product as it stands**: holding the attendance duty
+  already grants Insights. There was nothing to rule on, and the rule is now locked down by an
+  automated check so a future change can't quietly break it.
+- **A finished season keeps its own Attendance link in the sidebar.** This looks inconsistent and
+  isn't: in a past season, "Insights" goes to the results archive rather than the reports hub, so
+  that sidebar entry is the *only* way back to a past season's attendance. Removing it to match the
+  live sidebar would have silently deleted a report the archive is supposed to keep.
+
+### 5. Coming next (approved, not yet built)
+
 - **The sidebar is reordered by how often a coach opens things**: Season → Progress → Money →
   Communication → Team → Team admin. Roster and Tryouts move down together (both are September
   jobs), Development joins Insights under a new **Progress** group, and the **"Explore" shelf is
@@ -59,9 +116,12 @@ the only item in this project that adds capability rather than tidying what exis
 - **Past seasons:** practice plans are a live-season tool and are not part of the read-only archive.
   A coach viewing a completed season sees a short explanation instead of a list they could not open.
 
-When Attendance moves to Insights, one role case changes: an assistant whose *only* duty is
-attendance keeps the ability to mark players present, but loses the season report. **This needs an
-owner yes before that phase is built.**
+**Attendance moving to Insights changes no role case.** This brief previously said an assistant
+whose *only* duty is attendance would keep marking players present but lose the season report, and
+that it needed an owner yes. Checked against the product before building: **it was not true.**
+Holding the attendance duty already grants Insights, so every coach who could open the report
+before can open it now. No decision was needed, and an automated check now holds that true so a
+future change cannot quietly break it.
 
 ---
 

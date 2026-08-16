@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CalendarCheck, ArrowRight } from 'lucide-react';
+import { CalendarCheck, ArrowRight, ChevronRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -14,6 +13,7 @@ import {
 } from '@/lib/coach-tournament-games';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../coaches.module.css';
+import att from './attendance.module.css';
 
 /** Event types attendance is taken on — the games plus practices and multi-day tournaments,
  *  matching the server-side reliability rollup's buckets. */
@@ -36,19 +36,6 @@ interface AttendanceRow {
 // "attended / known" — known excludes no-reply so an untracked RSVP never counts against a player.
 function fraction(s: CategoryStat): string | null {
   return s.known > 0 ? `${s.attended}/${s.known}` : null;
-}
-
-// A single game/practice figure, styled neutrally (this is a support read, never a leaderboard).
-function StatCell({ label, stat }: { label: string; stat: CategoryStat }) {
-  const frac = fraction(stat);
-  return (
-    <div style={{ minWidth: 96 }}>
-      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--home-dim, rgba(255,255,255,0.38))' }}>{label}</div>
-      <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: frac ? 'var(--home-ink, rgba(255,255,255,0.85))' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-        {frac ?? '—'}
-      </div>
-    </div>
-  );
 }
 
 export default function CoachesAttendancePage({
@@ -152,123 +139,217 @@ export default function CoachesAttendancePage({
   // rather than an ambiguous row of dashes.
   const hasAnyData = rows.some(r => r.games.known > 0 || r.practices.known > 0);
 
-  // One geometry, two renders — the skeleton rows have to land exactly where the real rows land,
-  // or the list jumps as it settles.
-  const attendanceRowStyle: CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
-    minHeight: 48, padding: '0.6rem 0.9rem', borderRadius: 9,
-    background: 'var(--home-card, rgba(255,255,255,0.03))',
-    border: '1px solid var(--home-line, rgba(255,255,255,0.07))',
-  };
+  /* ── Which of the four states is this? (Phase 2, owner rule 2026-08-15) ──────────────────────
+     The reported defect was three regions each deciding independently that they had nothing to
+     show. There is now ONE decision, taken here, and the render below is a single either/or:
+
+       solo         → nothing to take attendance for (or nobody to take it of). One empty state,
+                      and it is the only thing on the page.
+       nothingYet   → the schedule has events but nobody has been marked. The COMMON first-week
+                      case, and the one the old second empty state answered worst: it said
+                      "nothing here" where the real roster, dashed, proves the roster is
+                      connected and shows the shape that is coming.
+       (otherwise)  → the report, plus the counting rules folded under it.
+
+     ⚠ Both flags wait for BOTH fetches. A schedule known to be empty while the report is still
+     in flight is not yet grounds for the solo empty state — attendance rows can outlive the
+     events that produced them (a deleted game), and hiding a coach's real figures behind
+     "nothing to take attendance for yet" would be the same species of confident-wrong-answer
+     the `markTargetLoading` flag above already exists to prevent. */
+  const reportResolved = !loading && !error;
+  const scheduleIsEmpty = !markTargetLoading && !markTargetFailed && !markTarget;
+  const solo = reportResolved && (rows.length === 0 || (scheduleIsEmpty && !hasAnyData));
+  const nothingYet = reportResolved && rows.length > 0 && !hasAnyData;
+
+  // Six placeholder rows in the real table's shell — one geometry, two renders, so the report
+  // does not jump as it settles.
+  const skeletonRows = Array.from({ length: 6 }).map((_, i) => (
+    <tr key={i} className={styles.tr}>
+      <td className={`${styles.td} ${att.nameCell}`}>
+        <span className={att.name}><SkeletonBlock w="130px" h="0.8rem" /></span>
+      </td>
+      <td className={`${styles.td} ${styles.tdNum}`}><SkeletonBlock w="46px" h="0.8rem" /></td>
+      <td className={`${styles.td} ${styles.tdNum}`}><SkeletonBlock w="46px" h="0.8rem" /></td>
+    </tr>
+  ));
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Drill-in sub-page back-link (the coach breadcrumb is globally hidden — 2026-07-08 rule).
-          IA parent = the Insights hub; the Roster page keeps its own in-context button here. */}
-      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
+          Phase 3 (2026-08-15): this link is now simply TRUE. Attendance left the sidebar, so the
+          Insights hub is its ONE parent and the link points where the coach actually came from —
+          the §02 problem retires rather than being patched with referrer tagging.
+
+          ⚠ EXCEPT ON A FINISHED SEASON, where the parent is a different page. The archive nav
+          points "Insights" at `/history/results`, because the Insights hub is live-season-only
+          and would silently answer with the CURRENT season's numbers under a past year's header.
+          The results archive does the same thing on its own back link; this mirrors it, so one
+          label always leads to the page the coach was actually on. */}
+      <CoachBackLink href={page.isReadOnly ? `${base}/history/results${seasonQuery}` : `${base}/history`}>
+        Insights
+      </CoachBackLink>
 
       {/* Header (page-header ruling 2026-08-11): title + "?" in its fixed corner, nothing
           under the title. */}
+      {/* Phase 3: titled as a QUESTION, matching its neighbours on the Insights hub ("How are we
+          doing?", "Where is playing time going?"). ⚠ The word for word MUST match the Insights
+          door that leads here — a door and its destination disagreeing about their own name is
+          the drift this phase is closing, not creating. */}
       <CoachPageHeader
         icon={CalendarCheck}
-        title="Attendance"
+        title="Who's showing up?"
         season={page.season}
         teamBase={page.teamBase}
         helpLabel="Attendance"
         help={{ module: 'coaches', sectionIds: ['recipe-attendance'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-attendance` }}
       />
 
-      {/* Batch 4 — record first, review second. The review found this page explained what it would
-          show but never linked to where attendance is actually taken; the round trip back from the
-          game panel is the matching half. */}
-      {markTargetLoading ? (
-        // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
-        // might have to take back.
-        <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
-          <SkeletonBlock w="110px" h="0.7rem" />
-          <SkeletonBlock w="min(360px, 85%)" h="1.35rem" />
-          <SkeletonBlock w="170px" h="0.9rem" />
-          <SkeletonBlock w="150px" h="30px" />
-        </div>
-      ) : markTarget ? (
-        // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
-        // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
-        <div className={styles.nowCard}>
-          <p className={styles.nowEyebrow}>Take attendance</p>
-          <p className={styles.nowHeadline}>{eventDisplayTitle(markTarget)}</p>
-          <p className={styles.nowMeta}>{formatEventWhen(markTarget.startsAt)}</p>
-          <div className={styles.nowActions}>
-            <Link href={`${base}/schedule?event=${markTarget.id}&tab=attendance`} className="btn btn-lime btn-sm">
-              Take attendance <ArrowRight size={14} aria-hidden />
-            </Link>
-          </div>
-        </div>
-      ) : markTargetFailed ? null : (
-        // Only reached once the lookup has actually come back empty. A FAILED lookup renders
-        // nothing at all above — we don't know the schedule is empty, so we don't say it is, and
-        // the shortcut was never a dependency of the report below.
-        <CoachEmptyState
-          icon={<CalendarCheck size={22} aria-hidden />}
-          eyebrow="Attendance"
-          headline="Nothing to take attendance for yet"
-          description="Attendance is marked on a game or practice. Add one to your schedule and it'll be one tap from here."
-          primaryAction={{ label: 'Open schedule', href: `${base}/schedule` }}
-        />
-      )}
-
-      <p className={styles.muted} style={{ fontSize: '0.85rem', margin: '1.25rem 0', maxWidth: 640 }}>
-        A season view to inform playing-time decisions and spot when someone&apos;s drifting away — not a ranking.
-        Each figure counts games or practices where you recorded attendance; a player is &ldquo;present&rdquo;
-        when marked attending or late, and events with no reply aren&apos;t counted against anyone.
-      </p>
-
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }} aria-busy="true" aria-label="Loading attendance">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} style={attendanceRowStyle}>
-              <SkeletonBlock w="130px" h="0.8rem" />
-              <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <SkeletonBlock w="62px" h="0.8rem" />
-                <SkeletonBlock w="62px" h="0.8rem" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <p className={styles.errorText}>{error}</p>
-      ) : rows.length === 0 ? (
-        <div className={styles.emptyState}>No active roster players found.</div>
-      ) : !hasAnyData ? (
-        <div className={styles.emptyState}>
-          <CalendarCheck size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p className={styles.emptyStateTitle}>No attendance recorded yet</p>
-          <p className={styles.emptyStateSub}>Mark attendance on your games and practices, and each player&apos;s season totals will show here.</p>
+      {solo ? (
+        /* THE ONLY THING ON THE PAGE. No shortcut card, no methodology, no second "nothing
+           here" — the centred card is allowed its own axis precisely because nothing else is
+           competing for one. */
+        <div className={att.solo}>
+          {rows.length === 0 && !scheduleIsEmpty ? (
+            /* Events exist but the roster does not. `quiet` per CoachEmptyState's own decision
+               rule: this block carries NO call to action, because the coach who can hold the
+               attendance duty alone may not hold roster access at all, and an "Add players"
+               button that 403s is worse than no button. It is still alone on the page. */
+            <CoachEmptyState
+              quiet
+              icon={<CalendarCheck size={22} aria-hidden />}
+              headline="No active players on the roster yet"
+              description="Attendance lists your active players. Once the roster is set, every game and practice starts counting."
+            />
+          ) : (
+            <CoachEmptyState
+              icon={<CalendarCheck size={22} aria-hidden />}
+              headline="Nothing to take attendance for yet"
+              description="Attendance is marked on a game or practice. Add one to your schedule and it'll be one tap from here."
+              primaryAction={{ label: 'Open schedule', href: `${base}/schedule` }}
+              /* ⚠ NO "How attendance works" SECOND BUTTON (owner call, 2026-08-15). The mockup
+                 carried one, to replace the methodology this state no longer shows. But the
+                 header's "?" is on this same screen, in its fixed corner, opening that exact
+                 drawer — so a second door to it one line below would be the duplication this
+                 phase exists to remove, wearing a politer face. Same rule CoachPageHeader
+                 already states for its nested variant: two doors to the same place, one line
+                 apart, is one door too many. */
+            />
+          )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          {rows.map(r => {
-            const tracked = r.games.known > 0 || r.practices.known > 0;
-            return (
-              <Link
-                key={r.playerId}
-                href={`${base}/roster/${r.playerId}`}
-                style={{ ...attendanceRowStyle, textDecoration: 'none', color: 'inherit' }}
-              >
-                <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>
-                  {[r.playerFirstName, r.playerLastName].filter(Boolean).join(' ')}
-                </span>
-                {tracked ? (
-                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                    <StatCell label="Games" stat={r.games} />
-                    <StatCell label="Practices" stat={r.practices} />
-                  </div>
-                ) : (
-                  <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>not tracked yet</span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+        <>
+          {/* Batch 4 — record first, review second. The review found this page explained what it
+              would show but never linked to where attendance is actually taken; the round trip
+              back from the game panel is the matching half. */}
+          {markTargetLoading ? (
+            // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
+            // might have to take back.
+            <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
+              <SkeletonBlock w="110px" h="0.7rem" />
+              <SkeletonBlock w="min(360px, 85%)" h="1.35rem" />
+              <SkeletonBlock w="170px" h="0.9rem" />
+              <SkeletonBlock w="150px" h="30px" />
+            </div>
+          ) : markTarget ? (
+            // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
+            // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
+            <div className={styles.nowCard}>
+              <p className={styles.nowEyebrow}>Take attendance</p>
+              <p className={styles.nowHeadline}>{eventDisplayTitle(markTarget)}</p>
+              <p className={styles.nowMeta}>{formatEventWhen(markTarget.startsAt)}</p>
+              <div className={styles.nowActions}>
+                <Link href={`${base}/schedule?event=${markTarget.id}&tab=attendance`} className="btn btn-lime btn-sm">
+                  Take attendance <ArrowRight size={14} aria-hidden />
+                </Link>
+              </div>
+            </div>
+          ) : null /* Lookup failed, or the events are gone but their figures remain. Either way
+                      we do not know the schedule is empty, so we do not say it is. */}
+
+          {error ? (
+            <p className={styles.errorText}>{error}</p>
+          ) : (
+            <>
+              {/* Replaces the second empty state. It sits ABOVE the table because it is the
+                  caption for the dashes underneath — read the other way round, a coach meets a
+                  column of "—" with no explanation first. */}
+              {nothingYet && (
+                <p className={att.note}>
+                  Nothing recorded yet — totals fill in here as you mark each game and practice.
+                </p>
+              )}
+
+              {/* .tableAsCards reflows the table into stacked cards @640 (the Roster idiom), where
+                  each cell's `data-label` restores the per-row wording the column headings replace
+                  on a desktop. That is the whole reason the micro-labels could go. */}
+              <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      {/* ⚠ NO sort affordance on any column, ever. Roster order is the only order —
+                          this is a support read to inform playing-time decisions, and a sortable
+                          column is a leaderboard however neutrally it is drawn. */}
+                      <th className={styles.th}>Player</th>
+                      <th className={`${styles.th} ${styles.thNum}`}>Games</th>
+                      <th className={`${styles.th} ${styles.thNum}`}>Practices</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? skeletonRows : rows.map(r => {
+                      const tracked = r.games.known > 0 || r.practices.known > 0;
+                      const games = fraction(r.games);
+                      const practices = fraction(r.practices);
+                      return (
+                        <tr key={r.playerId} className={styles.tr}>
+                          <td className={`${styles.td} ${att.nameCell}`}>
+                            <Link href={`${base}/roster/${r.playerId}${seasonQuery}`} className={att.name}>
+                              {[r.playerFirstName, r.playerLastName].filter(Boolean).join(' ')}
+                            </Link>
+                          </td>
+                          {/* One player untracked among tracked team-mates is a different fact from
+                              "nobody has been marked yet", and it says so in words rather than
+                              leaving two dashes to be read as zeros. It spans both figure columns
+                              because it is one statement about the row, not two missing numbers. */}
+                          {hasAnyData && !tracked ? (
+                            <td className={`${styles.td} ${styles.tdNum} ${att.quiet}`} colSpan={2}>
+                              not tracked yet
+                            </td>
+                          ) : (
+                            <>
+                              <td className={`${styles.td} ${styles.tdNum}${games ? '' : ` ${att.quiet}`}`} data-label="Games">
+                                {games ?? '—'}
+                              </td>
+                              <td className={`${styles.td} ${styles.tdNum}${practices ? '' : ` ${att.quiet}`}`} data-label="Practices">
+                                {practices ?? '—'}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* The methodology, kept word for word, folded shut UNDER the data instead of
+                  standing between the coach and it. The first sentence is deliberate wording
+                  under a standing ruling (memory/decision_playing_time_vocabulary.md) —
+                  "measurement in context", never "fair" — so it travels with the rest rather
+                  than being trimmed as preamble. */}
+              <details className={att.method}>
+                <summary className={att.methodHead}>
+                  <ChevronRight size={14} className={att.methodCaret} aria-hidden />
+                  How these figures are counted
+                </summary>
+                <p className={att.methodBody}>
+                  A season view to inform playing-time decisions and spot when someone&apos;s drifting away — not a ranking.
+                  Each figure counts games or practices where you recorded attendance; a player is &ldquo;present&rdquo;
+                  when marked attending or late, and events with no reply aren&apos;t counted against anyone.
+                </p>
+              </details>
+            </>
+          )}
+        </>
       )}
     </div>
   );

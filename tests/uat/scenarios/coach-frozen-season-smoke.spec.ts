@@ -433,6 +433,32 @@ test.describe('switching seasons in-app repaints the data, not just the label', 
     await expect(page, 'Attendance 2026 → Attendance 2025, not back to the front door')
       .toHaveURL(/\/attendance\?year=/, { timeout: 30_000 });
   });
+
+  /**
+   * ⚠ THE DOOR THE LIVE-NAV TIDY-UP NEARLY TOOK WITH IT (2026-08-15, plan Phase 3). Attendance
+   * left BOTH live navs — it is a report, and its parent is the Insights hub. Removing it from
+   * `CLOSED_TEAM_NAV_ITEMS` too looks like the obvious matching change and is not: the archive
+   * points "Insights" at `/history/results`, NOT at the hub (the hub is live-season-only), and
+   * the results archive carries no attendance door. This nav entry is therefore the ONLY route
+   * to a past season's attendance report — an archive door ruled in under D-F1.
+   *
+   * The live-nav half is pinned in team-tournament-game-mirror-smoke.spec.ts; the archive half
+   * can only be pinned here, because this is the fixture that HAS a finished season.
+   */
+  test('a finished season keeps its own Attendance door, and the back link leads where the coach was', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    await open(page, `${base()}/attendance?year=${pastYearId}`);
+
+    // The archive nav still offers it — this is the report's only past-season route.
+    await expect(page.getByRole('link', { name: 'Attendance', exact: true }).first(),
+      'the archive lost its attendance door — a past season\'s report is unreachable')
+      .toBeVisible({ timeout: 30_000 });
+
+    // ⚠ And the back link must NOT point at the live-season Insights hub, which would answer a
+    // past-year header with THIS year's numbers. It mirrors the archive nav: the results page.
+    await expect(main(page).getByRole('link', { name: 'Insights' }))
+      .toHaveAttribute('href', /\/history\/results\?year=/);
+  });
 });
 
 // ── 4c. The archive is read-only ALL THE WAY DOWN, not just at the top ───────

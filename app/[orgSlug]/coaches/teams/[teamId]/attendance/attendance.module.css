@@ -1,0 +1,99 @@
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   Attendance report — the page's own recipes (Phase 2 of COACH_NAV_AND_PRACTICE_PLANS_PLAN).
+
+   ⚠ WHY A PAGE-LOCAL MODULE AND NOT `coaches.module.css`. The reported defect WAS a shared
+   class reaching a page that never asked for it: `.muted` carries `padding: 2rem`, this page
+   overrode `margin` only, and the methodology paragraph therefore sat 2rem inside every other
+   block on the screen — a third left edge nobody chose. `.muted` has many other callers, so
+   the fix could not be made there. Everything this page needs that the portal does not
+   already own lives here instead, where its blast radius is one screen.
+
+   The table itself is NOT here: it is the shared `.tableWrap / .table / .th / .td / .thNum /
+   .tdNum / .tableAsCards` idiom from coaches.module.css, unchanged, so this report opens the
+   same way as every list table in the portal (and stacks into the same cards at 640).
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The ONE empty state, alone on the page (owner rule, 2026-08-15): "a page shows one empty
+   state, and when it does, it is the only thing on the page." The vertical air is what makes
+   a centred card read as deliberate rather than stranded — it is the exception precisely
+   because nothing else is competing with it for an axis. */
+.solo {
+  padding: 2.4rem 0;
+}
+@media (max-width: 640px) {
+  .solo { padding: 1.2rem 0; }
+}
+
+/* "Nothing recorded yet" — the one quiet line above a roster table full of dashes. It shares
+   the page column's left edge and width with the table under it; that shared edge is the
+   whole point of this phase, so nothing here sets a max-width or an inset. */
+.note {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--white-45);
+  line-height: 1.5;
+}
+
+/* The player's name is the drill-in to their profile. It fills the cell's height rather than
+   the text's, so the tap target is the row (48px+) and not a 21px word — the whole row used
+   to be one <a>, and a real <table> cannot nest that. The cell surrenders its vertical
+   padding to the link for the same reason; the horizontal padding stays on the cell so the
+   name still lines up under the "Player" heading. */
+.nameCell {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.name {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+.name:hover { text-decoration: underline; }
+
+/* A figure this player has none of. Dimmer than a real number so a column of dashes reads as
+   "not yet", never as a zero. */
+.quiet {
+  color: var(--white-35);
+}
+
+/* ── "How these figures are counted" ───────────────────────────────────────────────────────
+   The methodology paragraph, kept word for word but moved OUT of the path between the coach
+   and their data and folded shut. A footnote, deliberately quieter than
+   `CoachCollapseSection` (a card with an <h3>) and than `.ppRunFold` (a bordered panel): this
+   annotates the table above it, it is not a section of the page in its own right.
+
+   ⚠ It renders only when a table renders. On a page with no figures there is nothing to
+   explain, and the standing playing-time framing is carried instead by the empty state's
+   "How attendance works" — which opens the same help the "?" in the header does. */
+.method {
+  margin-top: 0.9rem;
+  border-top: 1px dashed var(--home-line, rgba(255, 255, 255, 0.08));
+  padding-top: 0.2rem;
+}
+.methodHead {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--tap-min, 44px);
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--white-45);
+}
+.methodHead::-webkit-details-marker { display: none; }
+.methodHead:hover { color: var(--white-70); }
+.methodCaret {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+.method[open] .methodCaret { transform: rotate(90deg); }
+.methodBody {
+  margin: 0 0 0.9rem;
+  max-width: 640px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--white-45);
+}
