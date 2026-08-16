@@ -204,23 +204,24 @@ export default function CoachesAttendancePage({
           link was still wrong for anyone who arrived that way. The §02 problem retires rather
           than being patched with referrer tagging.
 
-          ⚠ ON A FINISHED SEASON the parent is a different page: the archive nav points
-          "Insights" at `/history/results`, because the Insights hub is live-season-only. This
-          mirrors it exactly, so one label always leads where the coach actually was.
+          ⚠⚠ THIS LINK HAS NOW CHANGED THREE TIMES IN THREE DAYS, EACH TIME CORRECTLY, BECAUSE ITS
+          DESTINATION KEPT MOVING. The whole history is kept because the pattern is the lesson:
 
-          ⚠⚠ AND IT NOW CARRIES `?year=` AGAIN — the reversal is the point, so here is both halves.
-          On 2026-08-15 a `/review` REMOVED this query, correctly: `/history/results` read no year
-          at all back then, deciding what to show from whether the coach still held a LIVE
-          assignment, so the query LOOKED like it carried the season and did not. Decorating a link
-          whose destination ignores it is worse than leaving it bare, because it reads as fixed.
-          On 2026-08-16 the destination learned to read the year (archive rail Phase 1), which
-          makes the bare link the defect instead: a coach reading a PAST season's attendance would
-          tap "Insights" and land on the LIVE season's results — the very cross-season mix-up that
-          phase exists to end, re-entered through a link nobody re-examined.
-          ⚠ The lesson worth keeping: **a deliberate omission is only as durable as the reason for
-          it.** This comment named its reason, which is the only thing that made the reversal
-          findable when the reason expired. */}
-      <CoachBackLink href={page.isReadOnly ? `${base}/history/results${seasonQuery}` : `${base}/history`}>
+          · 2026-08-15 — a `/review` REMOVED the `?year=`, correctly: `/history/results` read no year
+            at all, deciding what to show from whether the coach still held a LIVE assignment, so
+            the query LOOKED like it carried the season and did not. Decorating a link whose
+            destination ignores it is worse than leaving it bare, because it reads as fixed.
+          · 2026-08-16 (rail Phase 1) — that destination learned to read the year, which inverted
+            the requirement: a bare link now landed a past-season reader on the LIVE season's
+            results. The query came back.
+          · 2026-08-16 (rail Phase 2) — the destination itself changed. The archive's "Insights"
+            door was `/history/results` only because the hub was live-season-only; the hub reads
+            its season now, so Attendance has ONE parent again in every season and the branch goes.
+
+          ⚠ The lesson worth keeping, and the reason each step was findable: **a deliberate omission
+          is only as durable as the reason stated with it.** Every one of these was caught by
+          re-reading the reason written here, never by noticing the link. */}
+      <CoachBackLink href={`${base}/history${seasonQuery}`}>
         Insights
       </CoachBackLink>
 

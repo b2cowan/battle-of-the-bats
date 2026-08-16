@@ -28,16 +28,21 @@ const TEAM_TABS = [
 
 // A CLOSED season's tabs (Batch 3, P0 #1): the shared door list lives in
 // lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
+// ⚠ No `Attendance` key: it left the archive menu on 2026-08-16 (archive rail Phase 2) and is
+// reached through the Insights hub in every season now. The key was inert once the label was gone,
+// which is exactly why it is worth deleting — an icon for a door that does not exist reads as
+// evidence the door does.
 const CLOSED_TAB_ICON: Record<string, typeof Users> = {
-  "Season's End": Trophy, Roster: Users, Schedule: Calendar, Attendance: CalendarCheck,
+  "Season's End": Trophy, Roster: Users, Schedule: Calendar,
   Lineups: ListOrdered, Money: DollarSign, Documents: FileText, Development: TrendingUp,
   Tryouts: ClipboardList, Insights: BarChart3, Staff: UserCog,
 };
 const CLOSED_TEAM_TABS = CLOSED_TEAM_NAV_ITEMS.map(item => ({
   key: item.href, icon: CLOSED_TAB_ICON[item.label] ?? Trophy, label: item.label,
 }));
-/** Chunk F: the archive has eleven doors and a phone bar holds four. These lead; the rest
- *  drop into More, exactly as the live season's do. */
+/** Chunk F: the archive's doors outnumber the four a phone bar holds, so these lead and the rest
+ *  drop into More, exactly as the live season's do. (The count is deliberately not stated — it was
+ *  written as "eleven" and went stale the day Attendance left the menu, 2026-08-16.) */
 const ARCHIVE_PRIMARY_LABELS = ["Season's End", 'Roster', 'Schedule', 'Money'];
 
 /**
@@ -60,9 +65,11 @@ const ARCHIVE_PRIMARY_LABELS = ["Season's End", 'Roster', 'Schedule', 'Money'];
 type MoreItem = { key: string; icon: typeof Users; label: string };
 const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Season', items: [
-    // ⚠ Attendance left BOTH navs together (2026-08-15, plan Phase 3) — see the sidebar's note for
-    // why, and for why the ARCHIVE nav above still carries it. `CLOSED_TAB_ICON` above keeps its
-    // icon precisely because the archive door survives.
+    // ⚠ Attendance is in NEITHER nav now, live or archived. It left both live navs on 2026-08-15
+    // (plan Phase 3) and left the archive menu on 2026-08-16 (archive rail Phase 2), once the
+    // Insights hub became the archive's door and could carry it. It is a report whose parent is
+    // that hub, in every season — reachable, just not listed. `CLOSED_SECTION_EXTRAS` in
+    // lib/coach-nav-visibility.ts is what keeps the season switcher honouring that distinction.
     // Practice plans (2026-08-15) — the sidebar puts it directly under Schedule; Schedule is a
     // PRIMARY tab down here, so the hub leads its section instead.
     { key: '/practice',      icon: NotebookPen,   label: 'Practice plans' },

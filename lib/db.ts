@@ -6894,6 +6894,30 @@ export async function getRepTeamPlayerAwards(teamId: string): Promise<RepPlayerA
 /** Team awards joined with the award type (incl. retired, so history still resolves a name/
  *  emoji) and the player's display name, plus the opponent for event-linked awards — the
  *  single fetch the "Who's earning it?" report page needs (leaderboard + history table). */
+/**
+ * ⚠⚠ AWARDS ARE TEAM-SCOPED, NOT SEASON-SCOPED — apply this to anything showing ONE season.
+ *
+ * `rep_player_awards` has no `program_year_id` column and needs none: `player_id` points at a
+ * `rep_roster_players` row, and rollover mints a NEW roster row per player per season, so a
+ * player id already belongs to exactly one year. But the lookups above filter by `team_id`, which
+ * spans every season the team has ever had. A screen that shows one season must therefore narrow
+ * by that season's ROSTER, and the narrowing is invisible when it is missing: every row renders,
+ * the leaderboard adds up, and a second-year team is quietly told last year's awards are this
+ * year's.
+ *
+ * That is exactly what the "Who's earning it?" report did until 2026-08-16 — it printed "N awards
+ * given this season" over every award the team had ever handed out. Season Wrapped had the
+ * narrowing right from the start; this exists so the reason lives beside the getter that needs it
+ * rather than in one caller that happened to remember.
+ */
+export function scopeAwardsToSeasonRoster<T extends { playerId: string }>(
+  awards: T[],
+  seasonRoster: { id: string }[],
+): T[] {
+  const rosterIds = new Set(seasonRoster.map(p => p.id));
+  return awards.filter(a => rosterIds.has(a.playerId));
+}
+
 export async function getRepTeamPlayerAwardsHydrated(teamId: string, orgId: string): Promise<RepPlayerAward[]> {
   const [awards, types] = await Promise.all([
     getRepTeamPlayerAwards(teamId),

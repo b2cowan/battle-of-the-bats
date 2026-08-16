@@ -5316,8 +5316,11 @@ Ideally do part C with a second sign-in that no longer coaches that team.
 
 ### B · What a record doesn't offer
 
-- [ ] In a past season there is **no back link** at the top. (Insights points straight here in an
-      archive, so there is nothing above it to go back to. It returns in the next phase.)
+- [ ] ~~In a past season there is **no back link** at the top.~~ ⚠⚠ **SUPERSEDED BY §37 — do not
+      report this as a defect.** When Phase 1 shipped, the archive pointed Insights straight at this
+      page, so there was genuinely nothing above it to go back to. **Phase 2 (§37) made the Insights
+      hub the archive's door**, so this page has a real parent again and the back link is **expected
+      in every season now** — and it must carry you back to *the same season*.
 - [ ] There are **no tag filter chips** in a past season. Tags are a list you edit today, so
       filtering an old season by them would be answering a question nobody could have asked then.
 - [ ] The **"Past seasons" list IS still at the foot**, with its *Season Wrapped →* links — it is the
@@ -5334,8 +5337,9 @@ Ideally do part C with a second sign-in that no longer coaches that team.
 - [ ] ⚠ **It must never end up stuck on "Loading report…".** Before the fix, a slow response for an
       abandoned season could land last and strand the page on a spinner **permanently** — no
       reload, no recovery. If you ever see a spinner that does not resolve, stop and tell me.
-- [ ] Also: from a past season's **attendance** report, tap **Insights**. You land on **that
-      season's** results, not the live season's.
+- [ ] Also: from a past season's **attendance** report, tap **Insights**. You stay in **that
+      season**. ⚠ Where it lands changed in §37 — it now opens the **Insights hub** for that season
+      rather than the results page. Either way the test is the same: the year must not change.
 
 ### C · ⚠ The coach who moved on — the half that was completely broken
 
@@ -5354,6 +5358,85 @@ Ideally do part C with a second sign-in that no longer coaches that team.
 ---
 
 **If A and C both read correctly, this section passes.** B is polish; D is the regression check.
+
+## §37 · Insights itself learns which season it is describing
+
+**Built on dev 2026-08-16 · not on production · no migration, no new API.**
+Plan: `COACH_ARCHIVE_RAIL_PLAN.md` Phase 2. Walk it straight after **§36** — same fixture, and §36's
+part B has one step §37 deliberately overturns.
+
+**Why this section exists:** §36 fixed the *results* page. The **Insights hub above it** was worse —
+it held no season resolver at all, so a coach who no longer coached the team hit a **"Team not
+found"** wall on a page describing the season they ran themselves. The archive worked around this by
+pointing **Insights** past the hub at the results page, and that one workaround is why **Attendance**
+had a menu line in a finished season that it has in no live one. Phase 2 removes the workaround: the
+hub reads its season, the archive's Insights door opens it, and Attendance goes back to living behind
+Insights in both seasons.
+
+⚠ **Same fixture gap as §36 — nothing automated can see any of this.** The rendered test fixture has
+no completed season. Your eyes are the only proof.
+
+**Fixture:** a team with a **completed or archived** season that has games, attendance and (ideally)
+an award in it. Part D needs a second sign-in that no longer coaches that team.
+
+### A · The archive's Insights door opens the hub
+
+- [ ] Open a team, switch to a **past season**. In the menu, **Attendance is gone** — that is
+      intended, not a regression. Everything else is still there.
+- [ ] Tap **Insights**. You land on the **hub** (scoreboard band, "What stands out", report tiles),
+      *not* straight on the game log. A **season chip** beside the title names that season.
+- [ ] The scoreboard figures are **that season's** — cross-check the record against Season's End for
+      the same year.
+
+### B · Every tile stays in the season, and two are deliberately absent
+
+- [ ] **Who's showing up?** is on the hub. Tap it → that season's attendance report, still in that
+      season. ⚠ **This is Attendance's only route into a past season now** — if this tile is missing
+      or lands you in the live season, stop and tell me, because the menu line was removed on the
+      strength of it.
+- [ ] **How are we doing?**, **Where's the money?**, **Who's earning it?** and **Is everyone getting
+      attention?** each open **that same season**. Check the chip on each page.
+- [ ] ⚠ **"Where is playing time going?" and "Who are we up against?" are NOT offered** in a past
+      season. That is a decision, not an omission — playing-time figures are recalculated from saved
+      lineups each time, and opponent notes are the book you keep *today*, so neither can honestly
+      claim to show that year. Both are still there on the live season.
+- [ ] The **Ask about your team** bar does not appear in a past season (it answers from the live
+      season only).
+
+### C · Awards, which had a wrong number even in the live season
+
+- [ ] On the **live** season, open Insights → **Who's earning it?** The line reads *"N awards given
+      this season"*. ⚠ **If your team has run more than one season, that number was previously
+      counting every award you have ever given.** It should now count only this season's.
+- [ ] In a **past** season, the leaderboard shows **that season's** awards only — not this year's.
+- [ ] In a past season there is **no "Give an award"** button, **no "Manage award types"**, and **no
+      remove (bin) icon** on any row.
+- [ ] The **printer icon is still there** — printing a certificate reproduces something that already
+      happened, which is exactly what you open a finished season to do. Print one: the certificate
+      names **the season the award was won in**, not the season running today.
+
+### D · ⚠ The coach who moved on — the wall that was there before
+
+- [ ] Sign in as someone who coached the team **that season but not now**. Open the team's past
+      season → **Insights**.
+- [ ] They reach the **hub**. Before this change they got **"Team not found"** on it.
+- [ ] What they can see matches what they were allowed to see **that season** — e.g. an assistant
+      with no money access last year sees no dues figures for last year, even if they have money
+      access on a team today.
+
+### E · Switching seasons, and the live season untouched
+
+- [ ] From the hub, switch season **twice in quick succession** with the chip. It always settles on
+      the season named in the chip and **never sticks on "Loading insights…"**.
+- [ ] From the **live** attendance report, switch to a past season with the chip. You land on **that
+      season's attendance report** — not bounced to Season's End. ⚠ This is the step that proves
+      removing Attendance from the archive menu did not remove the section itself.
+- [ ] On the **live** season the hub is unchanged: all seven tiles, the Ask bar, the findings.
+
+---
+
+**If A, B and D read correctly, this section passes.** C is the awards fix (worth its own look
+because it corrects a live-season number too); E is the regression check.
 
 ## Not in this ledger (why)
 

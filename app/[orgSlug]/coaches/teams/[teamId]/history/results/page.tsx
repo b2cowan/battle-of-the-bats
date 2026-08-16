@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
-import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
@@ -49,9 +49,7 @@ export default function CoachesResultsReportPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
-  const { assignments, closedAssignments, loading: ctxLoading } = useCoaches();
-  const assignment = assignments.find(a => a.teamId === teamId);
-  const closedAssignment = resolveClosedAssignment(assignments, closedAssignments, teamId);
+  const { loading: ctxLoading } = useCoaches();
   /**
    * ⚠⚠ WHICH SEASON — the whole point of this page's 2026-08-16 rework (archive rail Phase 1).
    *
@@ -70,7 +68,7 @@ export default function CoachesResultsReportPage({
   const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
   const seasonQuery = page.query;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  const sportPack = getSportPack(assignment?.teamSport ?? closedAssignment?.teamSport ?? DEFAULT_SPORT);
+  const sportPack = getSportPack(page.teamSport ?? DEFAULT_SPORT);
   const scoreUnit = sportPack.score.unit.toLowerCase();
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
@@ -213,11 +211,13 @@ export default function CoachesResultsReportPage({
 
   return (
     <div className={styles.page}>
-      {/* ⚠ NO back link in a record. In a finished season the nav points Insights straight HERE,
-          so this page is the destination rather than a drill-in — a link claiming a parent is the
-          double-parent defect in its original form. The Insights hub is still live-season-only;
-          archive-rail Phase 2 makes it season-aware and this link comes back for every season. */}
-      {page.isReadOnly ? null : <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>}
+      {/* ⚠ THE BACK LINK IS BACK, IN EVERY SEASON (Phase 2, 2026-08-16). Phase 1 removed it in a
+          record and was right to at the time: the archive nav pointed Insights straight HERE, so
+          the page was the destination rather than a drill-in, and a link claiming a parent it did
+          not have is the double-parent defect in its original form. Phase 2 ended that premise —
+          the archive's Insights door is the HUB now, so this page has a real parent again in a
+          finished season, and it must carry the year to return to the same one. */}
+      <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the conditional line is deleted — the question in the h1
           already says what the page answers, and the results list below shows its own scope.
           Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page

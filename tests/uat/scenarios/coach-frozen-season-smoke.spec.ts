@@ -435,37 +435,63 @@ test.describe('switching seasons in-app repaints the data, not just the label', 
   });
 
   /**
-   * ⚠ THE DOOR THE LIVE-NAV TIDY-UP NEARLY TOOK WITH IT (2026-08-15, plan Phase 3). Attendance
-   * left BOTH live navs — it is a report, and its parent is the Insights hub. Removing it from
-   * `CLOSED_TEAM_NAV_ITEMS` too looks like the obvious matching change and is not: the archive
-   * points "Insights" at `/history/results`, NOT at the hub (the hub is live-season-only), and
-   * the results archive carries no attendance door. This nav entry is therefore the ONLY route
-   * to a past season's attendance report — an archive door ruled in under D-F1.
+   * ⚠⚠ THIS TEST'S PREMISE EXPIRED ON 2026-08-16, AND THE REWRITE IS THE LESSON.
    *
-   * The live-nav half is pinned in team-tournament-game-mirror-smoke.spec.ts; the archive half
-   * can only be pinned here, because this is the fixture that HAS a finished season.
+   * It used to require the archive nav to show an "Attendance" link, because the archive pointed
+   * "Insights" at `/history/results` (the hub being live-season-only) and the results page carries
+   * no attendance door — so that nav entry was genuinely the ONLY route to a past season's report.
+   * Archive rail Phase 2 made the hub season-aware and pointed the archive's Insights door at it,
+   * which retired the workaround: Attendance is reached through Insights in both seasons now.
+   *
+   * ⚠ So the assertion changes shape, and deliberately does NOT become weaker. What was ever worth
+   * protecting is the ACCESS, never the menu line — "a past season's attendance report is
+   * reachable" is the property, and it is now proved by walking the route a coach actually takes.
+   * A test that had simply dropped the old expectation would have stopped checking anything.
+   *
+   * The live-nav half is pinned in team-tournament-game-mirror-smoke.spec.ts; the archive half can
+   * only be pinned here, because this is the fixture that HAS a finished season.
    */
-  test('a finished season keeps its own Attendance door, and offers no way to take attendance', async ({ page }) => {
+  test('a finished season reaches attendance through Insights, and offers no way to take it', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
-    await open(page, `${base()}/attendance?year=${pastYearId}`);
 
-    // The archive nav still offers it — this is the report's only past-season route.
-    await expect(page.getByRole('link', { name: 'Attendance', exact: true }).first(),
-      'the archive lost its attendance door — a past season\'s report is unreachable')
+    // ── The route a coach actually takes: archive nav → Insights hub → "Who's showing up?" ──
+    await open(page, `${base()}/season-end?year=${pastYearId}`);
+    const insightsDoor = page.getByRole('link', { name: 'Insights', exact: true }).first();
+    await expect(insightsDoor, 'the archive must keep an Insights door').toBeVisible({ timeout: 30_000 });
+    await expect(insightsDoor, 'the archive`s Insights door is the HUB now, not the results page')
+      .toHaveAttribute('href', new RegExp(`/history\\?year=${pastYearId}$`));
+
+    await open(page, `${base()}/history?year=${pastYearId}`);
+    // ⚠ The hub must have resolved the PAST season, or every assertion below is about this year.
+    await expect(main(page).getByText(/Complete/).first(),
+      'the Insights hub must show the archived-season marker — it held no season resolver at all '
+      + 'before Phase 2, and walled a closed-only coach out with "Team not found"')
       .toBeVisible({ timeout: 30_000 });
 
-    // ⚠ And the back link must NOT point at the live-season Insights hub, which would answer a
-    // past-year header with THIS year's numbers. It mirrors the archive nav: the results page.
-    //
-    // ⚠⚠ IT MUST NOW CARRY THE YEAR, AND THIS ASSERTION ONCE PROVED THE OPPOSITE. Until
-    // 2026-08-16 it required NO `?year=`, because the destination read none — appending one
-    // dressed an unsolved problem up as solved (/review 2026-08-15). Archive rail Phase 1 made
-    // that page read the year, which inverted the requirement: a bare link now lands a
-    // past-season reader on the LIVE season's results. **A test can certify a defect as correct
-    // the moment its premise expires** — this one did, and only re-reading its own stated reason
-    // caught it. State the reason, always.
+    const attendanceDoor = main(page).getByRole('link', { name: /Who's showing up/ });
+    await expect(attendanceDoor,
+      'the attendance report lost its only route into a past season — it left the archive menu on '
+      + 'the strength of this door existing')
+      .toBeVisible({ timeout: 30_000 });
+    await expect(attendanceDoor, 'the door must carry the year, or it opens the LIVE season')
+      .toHaveAttribute('href', new RegExp(`/attendance\\?year=${pastYearId}$`));
+    await attendanceDoor.click();
+    await expect(main(page).getByText(/Complete/).first(),
+      'following the door must land in the archived season').toBeVisible({ timeout: 30_000 });
+
+    /**
+     * ⚠⚠ THE BACK LINK HAS NOW MOVED THREE TIMES IN THREE DAYS, EACH TIME CORRECTLY, BECAUSE ITS
+     * DESTINATION KEPT MOVING — and each move was caught only by re-reading the reason written
+     * beside it, never by noticing the link:
+     *   · 2026-08-15 — `?year=` REMOVED (the destination read no year; the query dressed an
+     *     unsolved problem up as solved).
+     *   · 2026-08-16 Phase 1 — destination learned to read the year, so a BARE link became the
+     *     defect. The query came back.
+     *   · 2026-08-16 Phase 2 — the destination itself changed to the hub, in every season.
+     * **A test can certify a defect as correct the moment its premise expires.** This one did.
+     */
     await expect(main(page).getByRole('link', { name: 'Insights' }))
-      .toHaveAttribute('href', new RegExp(`/history/results\\?year=${pastYearId}$`));
+      .toHaveAttribute('href', new RegExp(`/history\\?year=${pastYearId}$`));
 
     /**
      * ⚠⚠ NO INSTRUMENT INSIDE A RECORD (CLAUDE.md rule 1; /review 2026-08-15 found this live).
@@ -503,6 +529,11 @@ test.describe('no write control survives anywhere in the archive', () => {
     { path: '/development', label: 'Development' },
     { path: '/lineups', label: 'Lineups' },
     { path: '/tryouts/history', label: 'Tryout history' },
+    // Archive rail Phase 2 (2026-08-16): the Insights hub is the archive's own door now, and the
+    // awards report is a door behind it. Both were live-season-only until this phase.
+    { path: '/history', label: 'Insights hub' },
+    { path: '/history/results', label: 'Insights results' },
+    { path: '/history/awards', label: 'Awards' },
   ];
 
   for (const { path, label } of DEEP_PAGES) {
@@ -551,6 +582,41 @@ test.describe('no write control survives anywhere in the archive', () => {
       await expect(main(page).getByRole('button', { name }),
         'a finished season’s fundraiser is offering a write control').toHaveCount(0);
     }
+  });
+
+  /**
+   * ⚠⚠ A HIDDEN TILE IS THE ONLY HONEST ANSWER FOR A REPORT THAT CANNOT SERVE A PAST SEASON, and
+   * this probe exists because the failure mode is a *silent* one: both routes below are OFF the
+   * season-read rail, so asking them from an archive returns the LIVE season's numbers — a page
+   * that renders perfectly, with a season chip above it, describing the wrong year.
+   *
+   *   · Playing time — ruled live-season-only PERMANENTLY (owner, 2026-08-16): its figures are
+   *     recomputed from saved lineups, so a past season would show as today's code reads it.
+   *   · Opponents — the scouting book is an INSTRUMENT (owner, 2026-08-04, re-confirmed with this
+   *     phase): the notes are the team's CURRENT book, not a snapshot of that year.
+   *
+   * CLAUDE.md's rule: hide the entry point in an archive rather than letting it dead-end.
+   */
+  test('the Insights hub hides the two reports a record cannot honestly serve', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    await open(page, `${base()}/history?year=${pastYearId}`);
+    await expect(main(page).getByText(/Complete/).first(),
+      'the hub must have resolved the PAST season, or this proves nothing')
+      .toBeVisible({ timeout: 30_000 });
+
+    for (const { name, why } of [
+      { name: /Where is playing time going/, why: 'lineup-analytics is off the season-read rail — this tile would open the LIVE season' },
+      { name: /Who are we up against/, why: 'the scouting book is a live-season instrument (owner ruling 2026-08-04)' },
+    ]) {
+      await expect(main(page).getByRole('link', { name }), why).toHaveCount(0);
+    }
+
+    // …and both are genuinely offered in the LIVE season, so the assertions above cannot pass
+    // for the wrong reason (a tile hidden by a missing capability rather than by the season).
+    await open(page, `${base()}/history`);
+    await expect(main(page).getByRole('link', { name: /Where is playing time going/ }),
+      'the playing-time tile must exist in a live season, or the archive assertion is vacuous')
+      .toHaveCount(1);
   });
 
   test('a player opened from the archived roster is a record, not a dead end', async ({ page }) => {

@@ -72,14 +72,38 @@ who built it, is a retention asset that doesn't work.
 3. Nobody sees a report their duties that season didn't allow.
 4. No link in a finished season leads anywhere that shows the wrong year or nothing at all.
 
-## Owner decisions needed
+## Owner decisions — ALL SETTLED (2026-08-16)
 
-1. **Approve the direction** (season-aware Insights, per the mockups).
-2. **Opponent notes in a past season** — show today's scouting book, labelled as current? (Recommended.)
-3. **Playing time** — put it on the season rail later, or rule it live-season-only for good?
+1. **Direction approved** — season-aware Insights, per the mockups. Built.
+2. **Opponent notes in a past season → hidden.** ⚠ This was put to the owner **re-framed**, because
+   the question as originally written was misleading: the scouting book had already been ruled a
+   live-season tool with the project approval in August, so "should we show it?" was really "should
+   we reverse that?". Answered accurately, the ruling stands. A coach loses nothing — who they
+   played and what the score was is already in the archive's results and schedule.
+3. **Playing time → live-season-only, permanently. There is no Phase 3.** Its figures are
+   recalculated from saved lineups every time the report opens, so a past season would show what
+   today's system makes of old lineups rather than what the coach actually read that year. Every
+   other archive report is a stored record; this one is a calculation, and it can't promise to be
+   the same calculation.
+4. **Awards in a past season → shown** (this question only appeared once the plan's own audit was
+   checked — see below).
+
+## What changed after the plan was checked against the code
+
+Two things in the plan turned out to be wrong, and both changed the work:
+
+- **The scouting book was listed as ready for the archive. It wasn't**, and a standing ruling said it
+  shouldn't be. Caught before anything was built.
+- **The awards report has been showing a wrong number to live seasons all along.** It counted *every*
+  award the team had ever given while saying "this season" — wrong for any team in its second year.
+  Nobody would have found this without an archive door making it matter. **It is now fixed for the
+  live season too**, which is the most valuable thing in this phase that nobody asked for.
 
 ## Testing
 
 Needs a **genuinely finished season** — the automated layout fixture has none, which is exactly why
-this gap survived. The same fixture gap makes ledger **§32 part D** the highest-value QA step already
-outstanding; these should be walked together.
+this gap survived. Owner QA is ledger **§36** (phase 1) and **§37** (phase 2); walk them together,
+and together with **§32 part D**, which shares the fixture gap.
+
+⚠ **§36 has one step that phase 2 deliberately overturned** (the results page's back link, absent in
+phase 1, expected now). It is marked in the ledger so it isn't reported as a defect.

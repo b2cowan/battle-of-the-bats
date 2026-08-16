@@ -5,6 +5,7 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getRepTeamPlayerAwardsHydrated,
+  scopeAwardsToSeasonRoster,
   getRepRosterPlayers,
   getRepTeamAwardTypeLibrary,
   getRepTeamEventById,
@@ -54,10 +55,25 @@ export const GET = withObservability(async (req: Request,
   // `players` is a minimal, PII-free roster slice (id/name/number only) so the give-award
   // picker works for a schedule-only coach too, without widening the more tightly-scoped
   // `roster` capability that the full `/roster` endpoint requires.
-  const [awards, roster] = await Promise.all([
+  const [allAwards, roster] = await Promise.all([
     getRepTeamPlayerAwardsHydrated(teamId, ctx.org.id),
     getRepRosterPlayers(programYear.id),
   ]);
+  /**
+   * ⚠⚠ SCOPED TO THE RESOLVED SEASON — a defect fixed here, not a new restriction (2026-08-16).
+   *
+   * The lookup above is TEAM-scoped (awards have no year column), so this route was returning
+   * every award the team had ever given while the report above it printed "N awards given this
+   * season". Any team in its second year has been reading a wrong number, live, for as long as
+   * the report has existed — and archive rail Phase 2 made it load-bearing, because opening 2024
+   * would otherwise list 2025's awards under a 2024 chip.
+   *
+   * ⚠ The narrowing uses the FULL roster, not the active slice below: an award given to a player
+   * later released still belongs to that season, and dropping it would trade one wrong number for
+   * another. `players` stays active-only because it feeds the give-award picker, which is a
+   * different question from "what happened".
+   */
+  const awards = scopeAwardsToSeasonRoster(allAwards, roster);
   const players = roster
     .filter(p => p.status === 'active')
     .map(p => ({

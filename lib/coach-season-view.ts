@@ -13,7 +13,7 @@
 import type { CoachSeasonOption } from './types';
 import type { CoachCapabilities } from './coach-capabilities';
 import type { CoachingAssignment, ClosedCoachingAssignment } from './db';
-import { CLOSED_TEAM_NAV_ITEMS } from './coach-nav-visibility';
+import { archiveHasSection } from './coach-nav-visibility';
 import { pathWithSearchParams } from './coaches-portal-routes';
 
 /**
@@ -35,7 +35,13 @@ export function seasonQueryFor(season: Pick<CoachSeasonOption, 'programYearId' |
  *
  * Sections that don't exist in an archive (Chat, Email families, Settings) would 404 going
  * backwards, so those fall back to Season's End — that fallback is the reason this needs to know
- * about the nav at all.
+ * which sections a finished season actually has.
+ *
+ * ⚠ It asks `archiveHasSection`, NOT the archive menu. Those were the same question until
+ * 2026-08-16 and are not any more, in BOTH directions: Attendance exists in an archive with no menu
+ * entry, and `/history/playing-time` sits under a menu entry's prefix while not existing in an
+ * archive at all. Reading the menu directly would strand a coach on one and dead-end them on the
+ * other — see the lists in `coach-nav-visibility.ts` for why each case is separate.
  */
 export function resolveSeasonSwitchHref(
   teamBase: string,
@@ -43,10 +49,7 @@ export function resolveSeasonSwitchHref(
   target: CoachSeasonOption,
 ): string {
   const section = pathname.startsWith(teamBase) ? pathname.slice(teamBase.length) : '';
-  const archiveHasSection = CLOSED_TEAM_NAV_ITEMS.some(
-    item => item.href !== '' && section.startsWith(item.href),
-  );
-  const keepSection = target.status === 'live' || archiveHasSection;
+  const keepSection = target.status === 'live' || archiveHasSection(section);
   return `${teamBase}${keepSection ? section : '/season-end'}${seasonQueryFor(target)}`;
 }
 
@@ -144,6 +147,10 @@ export interface CoachSeasonPage {
   /** THAT season's grants (rule 1) — never the coach's current ones when viewing an archive. */
   capabilities: CoachCapabilities | undefined;
   teamName: string;
+  /** The team's sport, live-or-archived. Here rather than looked up again by each page: two
+   *  pages were re-running `resolveClosedAssignment` purely to reach this one field, beside a
+   *  resolver that had already resolved both assignments to answer `teamName` the same way. */
+  teamSport: string | undefined;
   programYearName: string;
   isReadOnly: boolean;
   /** `?year=…` — append to every fetch and section link so the season survives navigation. */
@@ -178,6 +185,7 @@ export function resolveCoachSeasonPage(
     season,
     capabilities,
     teamName: live?.teamName ?? closed?.teamName ?? '',
+    teamSport: live?.teamSport ?? closed?.teamSport,
     programYearName: season.current?.programYearName ?? live?.programYearName ?? closed?.programYearName ?? '',
     isReadOnly,
     query: season.query,

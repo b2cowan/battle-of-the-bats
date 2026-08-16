@@ -119,8 +119,11 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
 
 // A CLOSED season's nav (Batch 3, P0 #1): the shared door list lives in
 // lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
+// ⚠ No `Attendance` key — it left the archive menu on 2026-08-16 (archive rail Phase 2), reached
+// through the Insights hub in every season now. An icon for a door that no longer exists reads as
+// evidence the door does.
 const CLOSED_NAV_ICON: Record<string, typeof Users> = {
-  "Season's End": Trophy, Roster: Users, Schedule: Calendar, Attendance: CalendarCheck,
+  "Season's End": Trophy, Roster: Users, Schedule: Calendar,
   Lineups: ListOrdered, Money: DollarSign, Documents: FileText, Development: TrendingUp,
   Tryouts: ClipboardList, Insights: BarChart3, Staff: Shield,
 };

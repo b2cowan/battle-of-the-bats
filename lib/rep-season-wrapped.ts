@@ -5,6 +5,7 @@ import {
   getRepRosterPlayers,
   getRepTeamGameMomentsForSeason,
   getRepTeamPlayerAwardsHydrated,
+  scopeAwardsToSeasonRoster,
   getRepTeamSeasonLineups,
   getRepTeamLineupTemplates,
 } from './db';
@@ -79,9 +80,10 @@ export async function assembleSeasonWrapped(
     opts?.includeMoments ? getRepTeamGameMomentsForSeason(team.id, programYear.id) : Promise.resolve([]),
   ]);
 
-  const rosterIds = new Set(roster.map(p => p.id));
-  const awards = allAwards
-    .filter(a => rosterIds.has(a.playerId))
+  // Awards carry no year column — they scope through the year's roster rows. The shared helper
+  // holds that reasoning (2026-08-16); this was the only caller that had it right, and the
+  // awards report next door had it wrong for as long as it existed.
+  const awards = scopeAwardsToSeasonRoster(allAwards, roster)
     .map(a => ({ playerId: a.playerId, typeName: a.awardType?.name ?? 'Award' }));
 
   // Share-safe label: FIRST name + jersey number only (approved mockups — never a full

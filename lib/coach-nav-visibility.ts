@@ -21,23 +21,120 @@ export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
   { label: "Season's End", href: '/season-end' },
   { label: 'Roster',       href: '/roster' },
   { label: 'Schedule',     href: '/schedule' },
-  /**
-   * ⚠ THE ONE DOOR THAT IS ARCHIVE-ONLY (2026-08-15, plan Phase 3). Attendance left both LIVE
-   * navs — it is a report, and its parent is the Insights hub. It stays here because the archive
-   * points "Insights" at `/history/results`, not at that hub: the hub is live-season-only, and
-   * the results archive carries no attendance door. Deleting this line would make a past season's
-   * attendance report unreachable — an approved archive door (D-F1) removed by accident while
-   * tidying the live nav.
-   */
-  { label: 'Attendance',   href: '/attendance' },
   { label: 'Lineups',      href: '/lineups' },
   { label: 'Money',        href: '/accounting' },
   { label: 'Documents',    href: '/documents' },
   { label: 'Development',  href: '/development' },
   { label: 'Tryouts',      href: '/tryouts/history' },
-  { label: 'Insights',     href: '/history/results' },
+  /**
+   * ⚠ THE HUB, not the results page (archive rail Phase 2, 2026-08-16). This pointed at
+   * `/history/results` for as long as the hub was live-season-only, and that one workaround is
+   * what forced Attendance to keep an archive-only nav entry — the results page carries no
+   * attendance door, so the menu was the only route to a past season's report. The hub reads its
+   * season now, so the door is the hub again and both navs tell one story.
+   *
+   * ⚠⚠ ORDER MATTERED HERE. Attendance could only leave this list once the hub was genuinely the
+   * door; deleting it first would have made a past season's attendance unreachable, which is the
+   * exact defect the live-nav tidy-up caught and avoided a day earlier.
+   */
+  { label: 'Insights',     href: '/history' },
   { label: 'Staff',        href: '/staff' },
 ];
+
+/**
+ * ⚠ SECTIONS THAT EXIST IN AN ARCHIVE WITHOUT A MENU ENTRY — and why this list has to exist.
+ *
+ * The archive MENU is not the same question as "which sections can a finished season render".
+ * Attendance is the case that proves it: it is an approved archive door (D-F1), its page and route
+ * are both season-aware, and it is reached through the Insights hub exactly as it is in a live
+ * season — it simply has no line of its own in the menu any more.
+ *
+ * `resolveSeasonSwitchHref` used to answer "does this section exist in an archive?" from
+ * `CLOSED_TEAM_NAV_ITEMS` alone. Once Attendance left that list, a coach reading the LIVE
+ * attendance report and switching to a past season would have been dumped on Season's End instead
+ * of that season's report — a working destination silently replaced by a fallback, because the
+ * menu was standing in for a question it does not actually answer.
+ */
+export const CLOSED_SECTION_EXTRAS: string[] = ['/attendance'];
+
+/**
+ * ⚠ THE INVERSE, AND THE SUBTLER HALF: sections UNDER an archive-reachable prefix that do not
+ * themselves exist in a finished season.
+ *
+ * `/history` is now an archive door, and a prefix match on it sweeps in every page beneath it —
+ * including the two Insights reports a record deliberately hides. Without this list, switching to a
+ * past season from the live playing-time or opponents report would keep the coach on a page the
+ * archive hides everywhere else, reached through the one control that bypassed the hiding.
+ *
+ *   · playing-time — `lineup-analytics` is not on the season-read rail, and was ruled
+ *     live-season-only PERMANENTLY (owner, 2026-08-16). It cannot serve a past season at all.
+ *   · opponents — the scouting book is an INSTRUMENT (owner ruling 2026-08-04, ratified again
+ *     2026-08-16); its notes are the team's current book, not a snapshot of that year.
+ *
+ * Both fall back to Season's End, the archive's front door, rather than to a page that would
+ * quietly answer with the live season.
+ */
+/**
+ * Named so the hub and this list cannot disagree by typo. The Insights hub asks
+ * `archiveHasSection(PLAYING_TIME_SECTION)` rather than restating `!isReadOnly`, so reversing
+ * either ruling is a one-line edit HERE and the tile follows.
+ */
+export const PLAYING_TIME_SECTION = '/history/playing-time';
+export const OPPONENTS_SECTION = '/history/opponents';
+
+export const LIVE_ONLY_ARCHIVE_SECTIONS: string[] = [
+  PLAYING_TIME_SECTION,
+  OPPONENTS_SECTION,
+  /**
+   * ⚠⚠ THESE TWO ARE A PRE-EXISTING DEFECT THIS LIST EXPOSED (`/review` 2026-08-16) — not something
+   * Phase 2 introduced, and the switcher reached them before this list existed too.
+   *
+   * The drill library and the plan-template library are INSTRUMENTS, ruled live-season-only by the
+   * owner on 2026-08-01, with a dedicated build-enforced test each in
+   * `tests/unit/coach-season-write-guard.test.ts`. Their routes are off the season-read rail, their
+   * pages read no `?year=` at all, and the Development hub already hides both doors in a record.
+   *
+   * But `/development` IS an archive door, so a prefix match sweeps its children in — which left the
+   * SEASON SWITCHER as the one control that still reached them. Switching from the live drill
+   * library to a past season landed a coach on the LIVE drills under a past-season chip: every row
+   * correct, every row the wrong year, no error anywhere.
+   *
+   * It is fixed here rather than left because this list is now the stated answer to "which
+   * live-only sections sit under an archive prefix" — and a list that holds two of the four cases
+   * is a guard that reads as complete while being half blind, which is worse than no list.
+   */
+  '/development/drills',
+  '/development/templates',
+];
+
+/**
+ * ⚠ Matches on a PATH BOUNDARY, not a bare prefix (`/review` 2026-08-16).
+ *
+ * A plain `startsWith` answers yes for `/rosterNotes` against `/roster` — the two share letters,
+ * not a parent. No such collision exists in the tree today, which is exactly why it is worth
+ * closing now: the failure would be a future route silently classified as archive-reachable (or
+ * silently hidden) with no type error and nothing rendered wrongly enough to notice.
+ *
+ * A section belongs to an href when it IS that href, or continues it with `/` (a child route) or
+ * `?` (the same page with a query — the Money hub's tabs arrive as `/accounting?section=dues`).
+ */
+function isUnder(section: string, href: string): boolean {
+  if (href === '') return false;
+  return section === href || section.startsWith(`${href}/`) || section.startsWith(`${href}?`);
+}
+
+/**
+ * Does a finished season have this section at all? The union of the menu and the hub-reached
+ * extras, minus the live-only pages that sit under an archive-reachable prefix.
+ *
+ * ⚠ The subtraction is checked FIRST and deliberately: `/history/playing-time` is a child of
+ * `/history`, so a plain "some item matches" test answers yes for a page the archive hides.
+ */
+export function archiveHasSection(section: string): boolean {
+  if (LIVE_ONLY_ARCHIVE_SECTIONS.some(s => isUnder(section, s))) return false;
+  return [...CLOSED_TEAM_NAV_ITEMS.map(i => i.href), ...CLOSED_SECTION_EXTRAS]
+    .some(href => isUnder(section, href));
+}
 
 /**
  * Whether a coach nav item (keyed by its display label) is visible for the given capabilities.
@@ -58,12 +155,12 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     // follows record access; the NAMES on it are baseline and no longer gate anything.
     case 'Roster':        return hasRecordAccess(caps);
     /**
-     * ⚠ NOT A LIVE NAV ITEM ANY MORE (2026-08-15, plan Phase 3), and this case stays anyway. It is
-     * now the shared answer to "may this coach open the attendance report", asked by three callers
-     * that are not the sidebar: the ARCHIVE nav (which still lists it, see above), the Insights
-     * hub's "Who's showing up?" door, and the Overview's coaching-pair tile
-     * (`resolveCoachingPair`). Deleting it would fall through to `default: return true` and hand
-     * the report to a helper.
+     * ⚠ NOT A NAV ITEM ANYWHERE ANY MORE — live (2026-08-15) or archived (2026-08-16) — and this
+     * case stays anyway, which is the whole point. It is the shared answer to "may this coach open
+     * the attendance report", asked now by callers that are not a nav at all: the Insights hub's
+     * "Who's showing up?" door in BOTH seasons, and the Overview's coaching-pair tile
+     * (`resolveCoachingPair`). Deleting it because no menu lists the label would fall through to
+     * `default: return true` and hand the report to a helper.
      *
      * ⚠ A1: this needed BOTH grants only because the route gated on roster visibility while the
      * page leads with "take attendance for {next event}". The route gates on `attendance` now, so

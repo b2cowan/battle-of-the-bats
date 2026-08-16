@@ -1,7 +1,8 @@
 # Coach Portal — the archive rail: Insights learns which season it is describing
 
-**Status:** **Phase 1 BUILT on dev 2026-08-16** (owner QA = ledger §36). Phases 2–3 proposed,
-awaiting the owner decisions in §5.
+**Status:** **Phases 1 AND 2 BUILT on dev 2026-08-16** (owner QA = ledger **§36** and **§37**).
+**Phase 3 no longer exists** — playing time was ruled live-season-only permanently (§5.2, owner
+2026-08-16). Every open question in §5 is now answered; the project is complete pending owner QA.
 **Mockups:** artifact `8dae1e81-79a4-4165-80c6-e421a6b02a21` (published 2026-08-16).
 **Origin:** the `/review` of `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md`, which rated this the single most
 valuable thing left on the rail. Handoff: `COACH_ARCHIVE_RAIL_AND_FOLLOWUPS_PROMPT.md` §A.
@@ -91,24 +92,62 @@ week must not filter 2024's games as though it existed then.
 | How are we doing? | `events` + `history` | ✅ | **The page to ask for a year.** The headline fix. |
 | Who's showing up? | `attendance` | ✅ | Nothing — season-aware already (nav plan Phase 2/3). |
 | Where did the money go? | `dues`, `budget*`, `expenses`, `fundraisers`, `money-summary` | ✅ | Nothing — approved archive door since Chunk F. |
-| Who did we award? | `awards`, `award-types` | ✅ | Page to pass the year. ⚠ award **types** are a live vocabulary. |
+| Who did we award? | `awards`, `award-types` | ✅ | ⚠⚠ **MORE than "pass the year" — see the correction below.** |
 | Is development covered? | `development/board` | ✅ | Almost nothing — **the page already builds and passes a season query**, and its child ("practices you've run") already carries the year. |
-| Who did we play? | `opponents` | ✅ | ⚠ **A ruling** — see §5. |
-| Where is playing time going? | `lineup-analytics` | ❌ **not on the rail** | Hidden in an archive until it joins the rail or is ruled live-only. The only genuinely new rail work here. |
+| Who did we play? | `opponents` | ❌ **NOT on the rail** | ⚠⚠ **This row said ✅ and was WRONG — see the correction below.** Hidden in an archive (owner, 2026-08-16). |
+| Where is playing time going? | `lineup-analytics` | ❌ **not on the rail** | Hidden in an archive. **Ruled live-season-only PERMANENTLY** (owner, 2026-08-16). |
+
+### ⚠⚠ Two rows of this audit were wrong, and Phase 2 found it by checking rather than trusting
+
+The handoff prompt for Phase 2 warned that its predecessor "carried two premises that did not
+survive contact with the code" and told the next session to verify anything it was about to build
+on. Doing that found **two defects in this very table**:
+
+**1 · `opponents` was marked ✅ on the rail. It is not — and a standing owner ruling says it must not
+be.** The scouting book was ruled an **INSTRUMENT** with the project approval (owner, 2026-08-04),
+its routes are deliberately OFF the season-read rail, and
+`tests/unit/coach-season-write-guard.test.ts` carries a **dedicated build-enforced test** that fails
+the moment one joins it — a test whose failure message spells out exactly what showing it in an
+archive would require. So §5.1 was not the open question it appeared to be: the recommendation to
+"show them, with the page saying they are the team's current book" was a request to **reverse an
+existing ruling**, not to settle an open one. Put to the owner in those terms, **the ruling stands**
+and the tile hides. The plan's own framing would have led the next session to build the opposite.
+
+**2 · The awards door needed three things, not one.** "Page to pass the year" understated it:
+
+- The report is **an instrument as well as a record** — Give an award, Manage award types, Remove —
+  so it needed read-only treatment, not just a season parameter.
+- Its **subtree is two pages deep**: the printable certificate reads the awards endpoint with no
+  year AND prints `assignment.programYearName`, so a past year's award would have gone onto paper
+  with **this** year's season name on it. Governing question 2 exists for exactly this.
+- ⚠⚠ **And the report was already cross-season, live, today.** `rep_player_awards` has no
+  `program_year_id`, and the route filtered by **team**, so *"N awards given this season"* has been
+  counting every award the team ever gave — wrong for any team in its second year, and a hard
+  blocker for an archive door. Season Wrapped had the narrowing right from the start (awards scope
+  through the year's roster rows); the fix is that technique, extracted so the reason lives beside
+  the getter. **A pre-existing live-season defect, found only because an archive door made it
+  load-bearing.**
 
 ---
 
-## 5. Open questions the owner should settle before Phase 2 ships
+## 5. The open questions — ALL SETTLED (owner, 2026-08-16)
 
-1. **Opponent notes in a past season.** Scouting notes are written *about an opponent*, not inside a
-   season. Showing today's notes on a 2024 page may be exactly right (the book is cumulative) or may
-   be governing rule 3 broken. **Recommendation: show them, with the page saying the notes are the
-   team's current book rather than a 2024 snapshot** — but this is the owner's call, not an
-   assumption.
-2. **Playing time (Phase 3).** Join the rail, or rule it live-only permanently? The figures are
-   recomputed from saved lineups, so "what the coach could see at the time" is genuinely hard here.
-3. **Game tags in an archive.** Proposal: **hidden**. The chips filter by a vocabulary the coach edits
-   today. (Recorded as a proposal rather than a question because the "at the time" rule answers it.)
+1. **Opponent notes in a past season → HIDDEN. The existing ruling stands.** ⚠ This was mis-framed
+   as an open question with a recommendation to *show* them; it was really a request to reverse the
+   2026-08-04 INSTRUMENT ruling (see the correction under §4). Put accurately, the owner kept it.
+   The tile is absent in a record and the routes stay off the rail. **A coach loses nothing they
+   had** — the per-season facts the book surfaces (who we played, what the score was) are already
+   behind the approved Schedule and Insights doors.
+2. **Playing time → LIVE-SEASON-ONLY, PERMANENTLY. Phase 3 does not exist.** The reason is governing
+   rule 3, not effort: the figures are **recomputed** from saved lineups on every open, so a 2024
+   report would show what *today's code* makes of 2024's lineups — not what the coach read that
+   year. Everything else on the rail is a stored record; this one is a derivation, and a derivation
+   cannot promise "what the coach could see AT THE TIME". Recorded as a build-enforced decision in
+   `coach-season-write-guard.test.ts` so a later session cannot mistake it for a gap. ⚠ Reversing it
+   needs a new ruling **and** an answer to the recomputation problem.
+3. **Game tags in an archive → HIDDEN.** Built in Phase 1; the "at the time" rule answers it.
+4. **Awards in an archive → SHOWN, with the leak fixed and the instruments put away** (new in Phase
+   2; the question only became visible once the audit row was checked — see §4's correction 2).
 
 ---
 
@@ -229,21 +268,80 @@ morning's pre-change sweep** (the un-baselined `a·Insights @768`), so none belo
   coach, and directs them at a door that does not exist in a finished season. **Phase 2 makes that
   door exist**, which resolves it properly — folded in there rather than patched here.
 
-### Phase 2 — the hub reads the season and becomes the archive's door
+### ✅ Phase 2 — the hub reads the season and becomes the archive's door *(BUILT on dev 2026-08-16)*
 
-- The hub resolves the season; the "Team not found" wall goes for closed-only coaches.
-- Each tile carries the year. **Playing time hides** rather than dead-ends — CLAUDE.md's
-  "hide the entry point" rule.
-- The archive nav points **Insights → `/history`** (the hub), not the results page.
-- **Attendance leaves the archive nav** — reachable through Insights again, exactly as it is live.
-  Both navs tell one story.
-- ⚠ **This phase edits the build-enforced lists** in `tests/unit/coach-season-write-guard.test.ts`
-  (`APPROVED_ARCHIVE_DOORS` loses `Attendance`). **That edit failing the build is the decision point,
-  by design** — it is not an obstacle to route around.
+Owner QA = ledger **§37**.
 
-### Phase 3 — playing time: join the rail, or rule it live-only
+#### What was built
 
-Deliberately separated so phases 1 and 2 are not held up by a question that deserves its own answer.
+- **The hub resolves its season** and gates on `page.hasAccess`, so the **"Team not found" wall is
+  gone** for a coach with no live assignment. Capabilities come from that season's assignment row
+  (rule 1), so an assistant granted money this year and not last reads no money for last year.
+- **Every tile carries the year, and every destination reads it.** Results, Attendance, Money and
+  Development already did; **Awards** was made season-aware here, along with its certificate.
+- **Playing time and Opponents hide in a record — and are not fetched.** ⚠ The fetch is the gate,
+  not the tile: both routes are off the rail, so calling them from an archive returns the LIVE
+  season's numbers, which a finding or a summary line would then print under a past year's chip.
+- **The archive nav points Insights → `/history`**, and **Attendance leaves the archive menu**,
+  reachable through the hub in both seasons.
+- **The results page's back link returns in every season**, carrying the year — Phase 1 removed it
+  correctly, on a premise this phase ended.
+- **The findings engine gets no "today" in a record** — its one deadline rule would otherwise count
+  down to a date in a season that has ended.
+
+#### Three things that joined it by applying the rules rather than inventing
+
+- **⚠⚠ The awards report was cross-season, live, today** — see §4's correction 2. Fixed at the route
+  by scoping to the season's roster, using the technique Season Wrapped already had right.
+- **⚠⚠ The menu is not the set of sections, and the season switcher conflated them.**
+  `resolveSeasonSwitchHref` decided "does this section exist in an archive?" by reading
+  `CLOSED_TEAM_NAV_ITEMS`. That was the same question until this phase and is now wrong in **both**
+  directions: Attendance exists in an archive with no menu line, and `/history/playing-time` sits
+  under a menu entry's prefix while not existing in an archive at all. Left alone, a coach switching
+  season from the live attendance report would have been dumped on Season's End, and one switching
+  from the live playing-time report would have reached a page the archive hides everywhere else.
+  Split into `CLOSED_SECTION_EXTRAS` + `LIVE_ONLY_ARCHIVE_SECTIONS` behind `archiveHasSection()`.
+- **The Ask bar is hidden in a record.** It is live-season-only *by omission* — it takes no `?year=`
+  anywhere — so inside an archive every answer would have been about this year.
+
+#### Evidence
+
+- **`tests/unit/coach-archive-season-rail.test.ts`** — Phase 1's file **generalised** to the hub and
+  its doors rather than copied (28 assertions). ⚠ Two of its own assertions **failed on first run
+  against comments that describe the fix**, which is a real hazard of source-level absence checks:
+  the pressure is to delete the explanation to make the test pass. Negatives now run over
+  comment-stripped source, and a mutation proved the stripper did not make them vacuous.
+- ⚠⚠ **A mutation test found a hole in this file's own guard.** The "hidden reports stay hidden to
+  the switcher" check looped over `LIVE_ONLY_ARCHIVE_SECTIONS`, so **deleting an entry made it pass
+  vacuously**. It names both paths now. *A guard must not derive its input from the thing it
+  guards* — the same class `coach-season-write-guard.test.ts` grew a dedicated test for.
+- **Two existing tests were certifying the expired premise** and were updated deliberately, not
+  deleted: `coach-attendance-home.test.ts` required Attendance in the archive menu, and the
+  frozen-season smoke spec asserted the same. ⚠ Both were findable **only because each stated its
+  own expiry condition in words** — the old test literally said *"if the archive ever points
+  Insights at the hub, revisit whether Attendance still needs its own archive door."* Their
+  replacements pin the **access** (`archiveHasSection('/attendance')`) rather than the menu line,
+  which is the property that ever mattered and is strictly stronger.
+- Typecheck clean · **2043 of 2043 unit tests pass** · lint clean on every changed file.
+- ⚠ **A shared working copy, and the discipline that kept it clean.** For most of this build the
+  suite showed one failure and a handful of type errors that were **another session's in-flight
+  money work**, not this one's. The failure was the archive allow-list refusing their new route —
+  the gate doing its job on their change. It was deliberately **left alone**: adding their route to
+  that list would have been this session approving **their** archive decision, which is the one
+  thing the list exists to prevent. They added it themselves, with their own reasoning, and the
+  suite went green. The commit was staged **hunk by hunk** for the same reason — five files carry
+  both sessions' edits, and one of them (the QA ledger) had their new section sitting directly
+  against mine.
+- Rendered sweep over `coach-history` + `coach-history-results`: **5 findings, none belonging to
+  this change** — proved empirically by re-running the sweep against the pre-change hub restored
+  from HEAD, which reproduces the 4 hub findings byte-identically (they are the money session's dues
+  callouts); the 5th was already recorded as un-baselined in Phase 1's evidence.
+- ⚠ **The archive path itself is NOT rendered-verified** — there is still no finished season in the
+  layout fixture. Owner QA (§37) is the only proof.
+
+### ~~Phase 3 — playing time~~ — **CLOSED, not built** (owner ruling 2026-08-16)
+
+Ruled live-season-only permanently. See §5.2 for the reasoning and where it is enforced.
 
 ---
 

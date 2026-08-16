@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import { formatShortDate } from '@/lib/measurable-format';
@@ -33,14 +33,26 @@ export default function AwardCertificatePage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
-  const { assignments, loading: ctxLoading } = useCoaches();
+  const { loading: ctxLoading } = useCoaches();
   const { currentOrg } = useOrg();
-  const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const searchParams = useSearchParams();
   const awardId = searchParams.get('awardId');
   const typeId = searchParams.get('typeId');
+  /**
+   * ⚠⚠ THE LEVEL BELOW THE DOOR, which is where this rail's expensive defects have always been.
+   *
+   * Archive rail Phase 2 made the awards report an archive door; this page is one step past it and
+   * had THREE ways to answer with the wrong season — it gated on the live assignment (so a coach
+   * with no live one could not print at all), it fetched awards with no year, and it printed
+   * `assignment.programYearName` onto the certificate, which would have put THIS year's season name
+   * on paper handed to a child for an award won in a previous one. Paper does not get a second
+   * chance to be right.
+   */
+  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
+  const seasonQuery = page.query;
+  const caps = page.capabilities;
 
   const [awards, setAwards] = useState<RepPlayerAward[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +62,7 @@ export default function AwardCertificatePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`, { cache: 'no-store' });
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`, { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAwards((data.awards ?? []) as RepPlayerAward[]);
@@ -59,7 +71,7 @@ export default function AwardCertificatePage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -67,7 +79,9 @@ export default function AwardCertificatePage({
   }, [ctxLoading, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment || !canManageAwards(assignment.capabilities)) {
+  // ⚠ THAT season's grant (rule 1) and `hasAccess`, not the live assignment — a coach printing
+  // 2024's certificates may hold no live assignment at all.
+  if (!page.hasAccess || !caps || !canManageAwards(caps)) {
     return (
       <div className={styles.notAssigned}>
         <h2>No access</h2>
@@ -90,7 +104,7 @@ export default function AwardCertificatePage({
   return (
     <div className={cert.screen}>
       <div className={cert.bar}>
-        <CoachBackLink href={`${base}/history/awards`}>Awards</CoachBackLink>
+        <CoachBackLink href={`${base}/history/awards${seasonQuery}`}>Awards</CoachBackLink>
         <p className={cert.barNote}>
           Letter, landscape — one page per certificate. Turn on background graphics in your
           browser’s print options if the frame doesn’t appear.
@@ -121,8 +135,12 @@ export default function AwardCertificatePage({
             </h1>
             <span className={cert.to}>presented to</span>
             <p className={cert.kid}>{a.playerName}</p>
+            {/* ⚠ THE SEASON PRINTED HERE IS THE ONE THE AWARD WAS WON IN, not the one running
+                today. This read `assignment.programYearName` — the coach's CURRENT season — which
+                on a certificate for a past year's award is a wrong fact on paper handed to a
+                child. `page.programYearName` resolves the season on screen. */}
             <span className={cert.meta}>
-              {[assignment.teamName, assignment.programYearName, formatShortDate(a.awardedAt)]
+              {[page.teamName, page.programYearName, formatShortDate(a.awardedAt)]
                 .filter(Boolean).join(' · ')}
             </span>
             {/* The coach's own words about this award, when they wrote any. Absent otherwise —

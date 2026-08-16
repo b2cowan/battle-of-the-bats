@@ -271,8 +271,26 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
    * chip, and offer no write control (tests/uat/scenarios/coach-frozen-season-smoke.spec.ts
    * sweeps exactly that). Owner ruling D-F1 governs what belongs here.
    */
+  /**
+   * ⚠⚠ **ATTENDANCE LEFT THIS LIST ON 2026-08-16, AND LOST NO ACCESS** (archive rail Phase 2).
+   *
+   * This list is the archive's MENU, not the set of sections a finished season has. Attendance is
+   * still an approved archive door under D-F1 — its route is still on the season-read rail, its
+   * page still resolves `?year=`, and a coach still reads a past season's report. What changed is
+   * the route TO it: the archive's "Insights" door pointed at `/history/results` only because the
+   * Insights hub was live-season-only, and that one workaround is the entire reason Attendance
+   * needed a menu line of its own while having none in a live season. The hub reads its season
+   * now, so Attendance is reached through it in BOTH seasons and the two navs tell one story.
+   *
+   * ⚠ ORDER WAS THE RISK, not the removal. Deleting this entry before the hub became the door
+   * would have made a past season's attendance report unreachable — an approved archive door
+   * removed by accident while tidying a menu, which is exactly the defect the live-nav tidy-up
+   * caught and avoided a day earlier. The sections-vs-menu distinction now lives in
+   * `CLOSED_SECTION_EXTRAS` (lib/coach-nav-visibility.ts) so the season switcher cannot make the
+   * same mistake.
+   */
   const APPROVED_ARCHIVE_DOORS = [
-    "Season's End", 'Roster', 'Schedule', 'Attendance', 'Lineups', 'Money',
+    "Season's End", 'Roster', 'Schedule', 'Lineups', 'Money',
     'Documents', 'Development', 'Tryouts', 'Insights', 'Staff',
   ];
 
@@ -487,6 +505,38 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
         + 'any kind (owner ruling, plan §4.4). Curation is each head coach’s, on their own book.',
       );
     }
+  });
+
+  /**
+   * ⚠⚠ **PLAYING TIME IS LIVE-SEASON-ONLY, PERMANENTLY** (owner ruling, 2026-08-16, taken with
+   * archive rail Phase 2). Recorded here as a DECISION so no later session mistakes it for a gap.
+   *
+   * It was the one Insights door with no season rail behind it, and the plan of record left open
+   * whether a Phase 3 should build one. The answer is no, and the reason is governing rule 3
+   * rather than effort: the figures are **recomputed** from saved lineups every time the report is
+   * opened, so what it would show for 2024 is what today's code makes of 2024's lineups — not what
+   * the coach actually read that season. Everything else in this list is a stored record; this one
+   * is a derivation, and a derivation cannot promise "what the coach could see AT THE TIME".
+   *
+   * A coach loses nothing they had: the report has never been reachable in an archive. Phase 2
+   * HIDES its Insights tile in a finished season rather than letting it dead-end (CLAUDE.md: hide
+   * the entry point, never 404 politely), and `LIVE_ONLY_ARCHIVE_SECTIONS` keeps the season
+   * switcher from reaching it sideways.
+   *
+   * ⚠ Reversing this needs a new owner ruling AND an answer to the recomputation problem — not
+   * just an entry in APPROVED_SEASON_AWARE_ROUTES.
+   */
+  it('playing-time analytics are live-season only, by ruling (archive rail, 2026-08-16)', () => {
+    const analytics = files.find(f => f.replace(/\\/g, '/').includes('/lineup-analytics/'));
+    assert.ok(analytics, 'expected the lineup-analytics route to exist');
+    assert.ok(
+      !/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(readFileSync(analytics!, 'utf8')),
+      'lineup-analytics joined the season-read rail. Playing time was ruled live-season-only '
+      + 'PERMANENTLY (owner, 2026-08-16): its figures are recomputed from saved lineups, so a past '
+      + 'season would be shown as today`s code reads it rather than as the coach saw it. Reversing '
+      + 'that needs a new ruling and an answer to the recomputation problem — then the Insights hub '
+      + 'must stop hiding its tile and LIVE_ONLY_ARCHIVE_SECTIONS must drop the path.',
+    );
   });
 
   /**
