@@ -7420,6 +7420,98 @@
     "coach-payment-requests|1440|tap-floor|button·Edit Diamond permit reimbursement": {
       "reason": "The row-open control (pencil while a request is pending, eye once the club has reviewed it). Deliberate above 768px: this button is drawn once per row, and the owner ruling that made it 24px is that anything drawn beside every item in a list is drawn as many times as the list is long — a 44px control on a twelve-row list out-shouts the figures beside it. The floor IS enforced where thumbs are: at 641-768px it is raised to 44px, and at 640px and below the row becomes a card and the shared card rule turns this into a full-width labelled button. 1440px is pointer territory. Recorded 2026-08-16 after the rendered check first saw these rows with real seeded data.",
       "detail": "24px tall (floor 44)"
+    },
+    "coach-history-awards|768|tap-floor|a·Insights": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-awards|768|tap-floor|button·Help: Awards": {
+      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Account": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Notifications": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Overview": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Schedule": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Practice plans": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Lineups": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Tournaments": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Development": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Insights": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Money": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Chat": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Email families": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Roster": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Tryouts": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Staff": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Documents": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Settings": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|a·Help": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Sign out": {
+      "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-history-awards|1440|tap-floor|button·Help: Awards": {
+      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
+      "detail": "34px tall (floor 44)"
     }
   }
 }

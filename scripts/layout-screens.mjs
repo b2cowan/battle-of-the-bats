@@ -162,6 +162,13 @@ export const SCREENS = [
   { id: 'coach-history',             session: 'coach', path: (c) => `${team(c)}/history`,             ready: 'h1' },
   { id: 'coach-history-development', session: 'coach', path: (c) => `${team(c)}/history/development`, ready: 'h1' },
   { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history/results`,     ready: 'h1' },
+  /**
+   * ⚠ ADDED 2026-08-16 (archive rail Phase 2) — it was the one Insights door with NO rendered
+   * coverage at all, and it had just gained a read-only mode, a season chip and a season-aware
+   * certificate link. Its own `/review` had to record "not covered" for a screen this project
+   * changed substantially, which is the gap worth closing rather than noting again next time.
+   */
+  { id: 'coach-history-awards',      session: 'coach', path: (c) => `${team(c)}/history/awards`,      ready: 'h1' },
 ];
 
 /** Widths under test. 361 is the narrowest phone the portal supports; 900/640 are its breakpoints. */
