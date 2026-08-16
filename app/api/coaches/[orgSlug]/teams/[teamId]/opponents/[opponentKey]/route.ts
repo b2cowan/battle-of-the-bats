@@ -22,7 +22,7 @@ import { getSportPack } from '@/lib/sports';
  * the derived "numbers vs them" insight lines (P2). Keyed by NORMALIZED NAME
  * (URL-encoded), not row id — entries exist before any write mints a row, and aliases
  * resolve to the owning entry. Assembly lives in lib/coach-opponent-card so the staff-chat
- * share posts exactly what this serves. INSTRUMENT: off the season rail by decision (see
+ * share posts exactly what this serves. INSTRUMENT: off the working-season read by decision (see
  * the list route's header comment).
  */
 export const GET = withObservability(async (req: Request,

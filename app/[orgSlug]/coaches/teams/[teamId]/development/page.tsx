@@ -1,7 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { TrendingUp, Plus, X, HelpCircle } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -38,9 +38,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const { assignments, loading: assignmentsLoading } = useCoaches();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   // Chunk F: THAT season's grants (governing rule 1), not the coach's current ones.
   const caps = page.capabilities;
@@ -68,7 +66,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   // two separate GETs doubled the auth/capability resolution per hub load).
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`${apiBase}/sessions${seasonQuery}`);
+      const res = await fetch(`${apiBase}/sessions`);
       const json = await res.json().catch(() => null);
       if (res.status === 404) {
         // No active program year — the hub still renders honestly empty.
@@ -86,7 +84,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       setSessions(s => s ?? []);
       setTypes(t => t ?? []);
     }
-  }, [apiBase, seasonQuery]);
+  }, [apiBase]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -109,7 +107,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   useEffect(() => {
     if (!canSeeBoard) return;
     let cancelled = false;
-    fetch(`${apiBase}/board${seasonQuery}`)
+    fetch(`${apiBase}/board`)
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (cancelled || !data) return;
@@ -122,7 +120,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [apiBase, canSeeBoard, seasonQuery]);
+  }, [apiBase, canSeeBoard]);
 
   async function newSession() {
     if (busy) return;
@@ -420,7 +418,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     </p>
   );
 
-
   /* The keys here are load-bearing, not decoration. Without them React reconciles these
      siblings POSITIONALLY across the firstRun flip, so adding the first test tore down and
      rebuilt the very card the coach was typing in — dropping keyboard focus to the top of the
@@ -440,8 +437,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       <CoachPageHeader
         icon={TrendingUp}
         title="Development"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Development"
         help={helpRequest}
       />

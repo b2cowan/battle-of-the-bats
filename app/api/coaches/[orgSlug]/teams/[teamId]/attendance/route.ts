@@ -4,7 +4,7 @@ import {
   getRepTeamAttendanceReliability,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless } from '@/lib/coach-capabilities';
 
 const EMPTY_STAT = { attended: 0, known: 0, recorded: 0 };
@@ -15,10 +15,10 @@ const EMPTY_STAT = { attended: 0, known: 0, recorded: 0 };
  * grantable thing). Attendance is not guardian PII. Active players with no recorded
  * attendance come back with zeroed stats so the view can show them as "not tracked yet".
  */
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear } = resolved;
   // A1 (2026-08-03): was `canViewRoster` — attendance rode roster visibility because the report

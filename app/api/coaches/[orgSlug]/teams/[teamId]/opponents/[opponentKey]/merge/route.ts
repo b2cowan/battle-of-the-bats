@@ -20,8 +20,8 @@ import { normalizeOpponentName, normalizeOpponentKeyParam, planOpponentMerge } f
  * discards a coach's words. Un-merge is the alias DELETE route beside this one.
  *
  * Caps `notes` (the curation grant, same as the book line): identity is a coach decision,
- * not an open contribution. Live-season route off the season rail — INSTRUMENT ruling;
- * never add resolveCoachSeasonRead here (asserted by coach-season-write-guard.test.ts).
+ * not an open contribution. Live-season route off the working-season read — INSTRUMENT ruling;
+ * never add resolveCoachTeamRead here (asserted by coach-history-endpoint-guard.test.ts).
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string }> },) => {

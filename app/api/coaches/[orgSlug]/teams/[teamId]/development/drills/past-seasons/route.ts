@@ -25,10 +25,10 @@ import { collectImportableDrills } from '@/lib/rep-drill-usage';
  *     stay records, and only their words are copied forward.
  *   · It is HEAD-COACH-ONLY, because everything it exists to do is a write to the library.
  *
- * It therefore deliberately does NOT use `resolveCoachSeasonRead`: that rail exists to let a page
- * *serve* a past season read-only, carrying the season through every link and fetch. This route
- * serves the LIVE season and merely reads across years, so putting it on that rail would claim a
- * capability it neither has nor wants.
+ * It therefore deliberately does NOT use `resolveCoachTeamRead`: that resolver answers with ONE
+ * season — the team's working one — and this route deliberately reads across all of them, into the
+ * LIVE library. It is a CROSS-SEASON READER, which the guard test lists separately from the two
+ * history endpoints precisely because the two are different powers.
  *
  * ⚠ A team is PERMANENT — only its program year turns over — so a team's drill library already
  * survives a season rollover untouched. What genuinely needed rescuing was the PLANS, which live on

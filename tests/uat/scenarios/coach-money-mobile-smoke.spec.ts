@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
 
 /**
  * Money on a phone (Coach Portal Chunk A — readiness review P1 #10, #5, f7-6).
@@ -90,6 +91,9 @@ async function cleanup() {
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
     }
     await admin.from('rep_program_years').delete().eq('team_id', t.id);
+    // M1: memberships are team-scoped — clear them before the team row goes, or the
+    // FK leaves the team undeletable and it surfaces as the teardown assertion.
+    await clearMemberships(admin, t.id);
     await admin.from('rep_teams').delete().eq('id', t.id);
   }
   await admin.from('rep_cost_allocations').delete().like('description', `${MARK}%`);
@@ -272,6 +276,17 @@ test.beforeAll(async () => {
     capabilities: { money: 'read', roster: true, schedule: true },
   });
   if (sacErr) throw sacErr;
+
+  /**
+   * ⚠ M1 MEMBERSHIPS — THE ACCESS TRUTH (owner ruling 2026-08-16, mig 245). Without this every
+   * coach above 403s at the first membership-gated route, and the spec fails for a reason that
+   * has nothing to do with what it tests. PROJECTED from the season rows rather than restated,
+   * so the pair can never disagree — see tests/uat/scenarios/_coach-membership-fixture.ts.
+   */
+  // ⚠ BOTH teams — the starter team is a second REAL rep team (the no-budget-yet state), and the
+  // desktop tall-sheet probe opens its empty state.
+  await grantMembershipsFromSeasonRows(admin, repTeamId);
+  await grantMembershipsFromSeasonRows(admin, starterTeamId);
 });
 
 test.afterAll(async () => {
@@ -350,7 +365,8 @@ test.describe('Money on a phone @360x740', () => {
       ['Money hub', `${base()}/accounting`],
       ['Season Budget Plan', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
-      ['Expenses', `${base()}/accounting?section=expenses`],
+      ['Transactions', `${base()}/accounting?section=transactions`],
+      ['Payables', `${base()}/accounting?section=payables`],
       ['Player Dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
@@ -364,11 +380,11 @@ test.describe('Money on a phone @360x740', () => {
       await expectNoClippedAmounts(page, label);
     }
 
-    // The payables tab is a separate render of the Expenses page (the two-across split).
-    await open(page, `${base()}/accounting?section=expenses`);
+    // The commitment list is a sub-view of Payables (Money split P1, 2026-08-16) — the tab opens
+    // on its Schedule, so this switches to the list the assertions below are about.
+    await open(page, `${base()}/accounting?section=payables`);
     const main = page.locator('main[class*="coachesMain"]');
-    // Renamed in chunk H: the same record always handled any commitment, not only a tournament.
-    await main.getByRole('button', { name: /^payables/i }).click();
+    await main.getByRole('button', { name: /^commitments/i }).click();
     await expect(main.getByText('Provincials entry')).toBeVisible();
     // Both halves of the split are readable, not two ~150px boxes.
     await expect(main.getByText(/mark deposit paid/i)).toBeVisible();
@@ -377,8 +393,8 @@ test.describe('Money on a phone @360x740', () => {
       const box = await main.getByRole('button', { name: label }).boundingBox();
       expect(box!.width, 'a stacked payable action should span the card').toBeGreaterThan(200);
     }
-    await expectNoPageScroll(page, 'Expenses — payables tab');
-    await expectNoClippedAmounts(page, 'Expenses — payables tab');
+    await expectNoPageScroll(page, 'Payables — commitments view');
+    await expectNoClippedAmounts(page, 'Payables — commitments view');
   });
 
   test('Budget vs. Actual keeps the comparison: scrolls inside its own frame, first column pinned, hint present', async ({ page }) => {
@@ -473,9 +489,13 @@ test.describe('Money on a phone @360x740', () => {
 
   test('an untouched form still closes silently — a guard with nothing to protect is friction', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=expenses`);
+    await open(page, `${base()}/accounting?section=transactions`);
 
-    await page.getByRole('button', { name: /add expense/i }).first().click();
+    /* ⚠ THE TOOLBAR BUTTON IS "Add", NOT "Add Expense" — it has been since the one-Add-button
+       ruling (2026-08-15), and this selector had gone stale against it: the fixture seeds two
+       expenses, so the empty state that DOES say "Add Expense" never renders here. The form's
+       own SAVE button names the outcome instead. */
+    await page.getByRole('button', { name: /^add$/i }).first().click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toBeVisible();
     await page.getByRole('button', { name: /^back$/i }).click();
     await expect(page.getByText(/discard this expense/i)).toBeHidden();
@@ -484,7 +504,7 @@ test.describe('Money on a phone @360x740', () => {
 
   test('list-shaped money tables become labelled cards, and empty action cells draw no blank line', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=expenses`);
+    await open(page, `${base()}/accounting?section=transactions`);
 
     // thead is hidden and each cell carries its own label — the Dues card idiom.
     const wrap = page.locator('[class*="tableAsCards"]').first();
@@ -514,7 +534,8 @@ test.describe('Money on a phone @360x740', () => {
       ['Money hub', `${base()}/accounting`],
       ['Season Budget Plan', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
-      ['Expenses', `${base()}/accounting?section=expenses`],
+      ['Transactions', `${base()}/accounting?section=transactions`],
+      ['Payables', `${base()}/accounting?section=payables`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
@@ -527,7 +548,7 @@ test.describe('Money on a phone @360x740', () => {
       const main = page.locator('main[class*="coachesMain"]');
       await expect(
         main.getByRole('button', {
-          name: /mark paid|mark deposit paid|mark balance paid|add line|add expense|add payable|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
+          name: /mark paid|mark deposit paid|mark balance paid|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);
@@ -583,9 +604,13 @@ test.describe('Money forms on a desktop', () => {
 
   test('a backdrop click on a dirty Money form asks before discarding', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=expenses`);
+    await open(page, `${base()}/accounting?section=transactions`);
 
-    await page.getByRole('button', { name: /add expense/i }).first().click();
+    /* ⚠ THE TOOLBAR BUTTON IS "Add", NOT "Add Expense" — it has been since the one-Add-button
+       ruling (2026-08-15), and this selector had gone stale against it: the fixture seeds two
+       expenses, so the empty state that DOES say "Add Expense" never renders here. The form's
+       own SAVE button names the outcome instead. */
+    await page.getByRole('button', { name: /^add$/i }).first().click();
     await page.getByPlaceholder(/diamond rental/i).fill('Bat bag');
 
     await page.locator('[class*="modalOverlay"]').first().click({ position: { x: 5, y: 5 } });
@@ -939,10 +964,10 @@ test.describe('The payment schedule (chunk H)', () => {
 
   test('every commitment in one list, by due date, with a filter that means what it says', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=expenses&tab=schedule`);
+    await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const main = page.locator('main[class*="coachesMain"]');
 
-    await expect(main.getByRole('heading', { name: /expenses & payables/i })).toBeVisible();
+    await expect(main.getByRole('heading', { name: /^payables$/i })).toBeVisible();
     // The seeded payable's deposit was due 5 days ago and its balance is 30 days out; the org
     // allocation adds another overdue instalment. Unpaid is the default view.
     await expect(main.getByText(/provincials entry — deposit/i)).toBeVisible();
@@ -973,7 +998,7 @@ test.describe('The payment schedule (chunk H)', () => {
     // …but no cell offers a way into an editor.
     expect(await main.locator('a[href*="section=budget&line="]').count()).toBe(0);
 
-    await open(page, `${base()}/accounting?section=expenses&tab=schedule`);
+    await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const sched = page.locator('main[class*="coachesMain"]');
     await expect(sched.getByText(/provincials entry — deposit/i)).toBeVisible();
     expect(await sched.getByRole('button', { name: /mark paid/i }).count()).toBe(0);
@@ -1127,9 +1152,9 @@ test.describe('Importing a budget @360x740', () => {
     const main = page.locator('main[class*="coachesMain"]');
     expect(await main.getByRole('button', { name: /^import$/i }).count()).toBe(0);
 
-    await open(page, `${base()}/accounting?section=expenses`);
-    const expensesMain = page.locator('main[class*="coachesMain"]');
-    expect(await expensesMain.getByRole('button', { name: /import payables/i }).count()).toBe(0);
+    await open(page, `${base()}/accounting?section=payables`);
+    const payablesMain = page.locator('main[class*="coachesMain"]');
+    expect(await payablesMain.getByRole('button', { name: /import payables/i }).count()).toBe(0);
   });
 });
 

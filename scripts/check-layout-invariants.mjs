@@ -143,7 +143,9 @@ if (has('--changed') && !onlyIds) {
     // Both event-shaped screens live under a `[eventId]` folder, so one sentinel serves both.
     // `fundraiserId` lands in a QUERY param, not a path segment, so it never reaches the folder
     // mapping below — it is here only so the path builder does not interpolate `undefined`.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', fundraiserId: '__ID__' };
+    // `finishedTeamId` maps to the same `[teamId]` folder as `teamId` — the between-seasons screens
+    // are the SAME routes rendered against a team with no live season, which is the point of them.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', fundraiserId: '__ID__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')

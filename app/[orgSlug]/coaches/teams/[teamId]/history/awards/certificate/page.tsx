@@ -50,8 +50,7 @@ export default function AwardCertificatePage({
    * on paper handed to a child for an award won in a previous one. Paper does not get a second
    * chance to be right.
    */
-  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
 
   const [awards, setAwards] = useState<RepPlayerAward[]>([]);
@@ -62,7 +61,7 @@ export default function AwardCertificatePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`, { cache: 'no-store' });
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`, { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAwards((data.awards ?? []) as RepPlayerAward[]);
@@ -71,7 +70,7 @@ export default function AwardCertificatePage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -104,7 +103,7 @@ export default function AwardCertificatePage({
   return (
     <div className={cert.screen}>
       <div className={cert.bar}>
-        <CoachBackLink href={`${base}/history/awards${seasonQuery}`}>Awards</CoachBackLink>
+        <CoachBackLink href={`${base}/history/awards`}>Awards</CoachBackLink>
         <p className={cert.barNote}>
           Letter, landscape — one page per certificate. Turn on background graphics in your
           browser’s print options if the frame doesn’t appear.

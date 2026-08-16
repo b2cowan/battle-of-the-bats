@@ -74,8 +74,7 @@ export default function CoachesAccountingPage({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -160,7 +159,7 @@ export default function CoachesAccountingPage({
   const load = useCallback(async (quiet = false) => {
     if (!quiet) { setLoading(true); setError(''); }
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setSummary(await res.json());
     } catch (e: unknown) {
@@ -171,7 +170,7 @@ export default function CoachesAccountingPage({
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -275,14 +274,10 @@ export default function CoachesAccountingPage({
       <CoachPageHeader
         icon={DollarSign}
         title="Money"
-        season={page.season}
-        teamBase={page.teamBase}
-        chipExtraQuery={effectiveSection !== 'overview' ? `section=${effectiveSection}` : undefined}
         actions={canViewMoney ? (
           <MoneyImportMenu
             orgSlug={orgSlug}
             teamId={teamId}
-            seasonQuery={seasonQuery}
             canWriteMoney={canWrite}
             onNotice={setDataNotice}
             onImported={() => { void load(true); }}

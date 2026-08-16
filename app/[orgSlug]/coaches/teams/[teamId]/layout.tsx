@@ -1,4 +1,4 @@
-import { resolveSeasonView, buildCoachSeasons } from '@/lib/coach-season-view';
+import { resolveWorkingSeason } from '@/lib/coach-season-view';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import {
   getCoachPortalAuth,
@@ -49,23 +49,29 @@ export default async function CoachTeamLayout({
     isTeamWorkspace ? Promise.resolve(null) : getCoachPortalPublicHref(authCtx.org),
   ]);
 
-  // Same list, same shape and the SAME selection rule the client uses (`resolveSeasonView`), so the
-  // season this feed is built for can never be a different one from the season on screen.
-  const seasons = buildCoachSeasons(assignments, closedAll);
-  const teamSeasons = seasons.filter(s => s.teamId === teamId);
-  const defaultSeason = resolveSeasonView(seasons, teamId, null).current;
+  // The SAME resolution rule the client runs (`resolveWorkingSeason`) over the SAME two arrays, so
+  // the season this feed is built for can never be a different one from the season on screen.
+  //
+  // ⚠ ONE season's ids, not every season's (P2, 2026-08-16). This used to build the record map for
+  // EVERY season the coach held on the team, because the season switcher could put any of them on
+  // screen. Nothing can any more, so the extra years were a per-team-entry read whose answers no
+  // surface could ever ask for.
+  const closedForTeam = closedAll.filter(a => a.teamId === teamId);
+  const workingSeason = resolveWorkingSeason(assignments, closedForTeam, teamId);
 
   // Record + status ride the season's `schedule` capability — the same gate the Overview's own
   // record and next-up tiles ride (their events fetch is schedule-gated), so an assistant without
-  // it sees identity only here, exactly as they do one screen down. For a past season the grant
-  // comes from THAT season's assignment row (Chunk F governing rule 1), never today's.
-  const yearIds = teamSeasons.filter(s => s.capabilities?.schedule).map(s => s.programYearId);
-  const liveSeason = defaultSeason?.status === 'live' && defaultSeason.capabilities?.schedule
-    ? defaultSeason
+  // it sees identity only here, exactly as they do one screen down.
+  const mayReadSchedule = workingSeason?.capabilities?.schedule === true;
+  const liveSeason = workingSeason && !workingSeason.isReadOnly && mayReadSchedule
+    ? workingSeason
     : null;
 
-  const feed = yearIds.length
-    ? await getCoachMastheadFeed({ yearIds, activeYearId: liveSeason?.programYearId ?? null })
+  const feed = workingSeason && mayReadSchedule
+    ? await getCoachMastheadFeed({
+        yearIds: [workingSeason.programYearId],
+        activeYearId: liveSeason?.programYearId ?? null,
+      })
     : EMPTY_MASTHEAD_FEED;
 
   const liveAssignment = liveSeason
@@ -109,11 +115,11 @@ export default async function CoachTeamLayout({
         status={status}
         scoutingNudge={scoutingNudge}
         gameDayConsole={gameDayConsole}
-        // ⚠ WHICH season the status describes. A layout cannot read `?year=`, so this feed is
-        // always built for the DEFAULT season — while the client resolves the season on screen
-        // from the URL. A team mid-rollover can hold two live seasons at once, and a hand-typed
-        // `?year=` at the other one would otherwise show THAT season's year and record beside
-        // THIS season's game day. The client renders the status only when the two agree.
+        // ⚠ WHICH season the status describes. Server and client now resolve the working season
+        // from the same two arrays by the same rule, so they agree by construction — and this
+        // prop is what makes "by construction" checkable rather than assumed. A team mid-rollover
+        // holds two live seasons at once; if the two ever picked differently, the header would
+        // rather say nothing than put one season's game day beside another's year and record.
         statusYearId={liveAssignment?.programYearId ?? null}
       />
       {children}

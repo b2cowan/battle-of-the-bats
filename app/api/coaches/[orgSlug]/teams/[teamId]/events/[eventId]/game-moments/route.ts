@@ -15,9 +15,9 @@ import { validateGameMoment } from '@/lib/coach-game-moments';
  * Game-Day Mode P2 — capture ONE moment (plan §3.7 / §4).
  *
  * ⚠ LIVE-SEASON INSTRUMENT, exactly like the P1 console read whose auth chain this follows:
- * `resolveLiveCoachTeamContext`, never the season-read rail, so a past season is unaddressable
+ * `resolveLiveCoachTeamContext`, never the working-season read, so a past season is unaddressable
  * here by construction. This route joins NEITHER `APPROVED_ARCHIVE_DOORS` nor
- * `APPROVED_SEASON_AWARE_ROUTES` — a finished season SHOWS moments (owner ruling 2026-08-05,
+ * `HISTORY_ENDPOINTS` — a finished season SHOWS moments (owner ruling 2026-08-05,
  * via Wrapped) and offers no way to add one.
  *
  * ⚠ NOTHING HERE NOTIFIES. No `notify()`, no family layer, no toast that reaches a guardian.

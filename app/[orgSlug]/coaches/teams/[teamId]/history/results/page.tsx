@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -64,9 +63,7 @@ export default function CoachesResultsReportPage({
    * season's (governing rule 1) and `page.isReadOnly` is derived from the SEASON, never from the
    * team — a rolled-forward team is not itself closed.
    */
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(page.teamSport ?? DEFAULT_SPORT);
   const scoreUnit = sportPack.score.unit.toLowerCase();
@@ -77,12 +74,11 @@ export default function CoachesResultsReportPage({
   const [error, setError] = useState('');
   /**
    * Guards the stale flash on client-side switches — the page doesn't remount for either.
-   * ⚠ The key carries the SEASON as well as the team (2026-08-16). The season switcher rewrites
-   * this page's own URL with `?year=`, so without the season in the key a past year's header
-   * would sit above the live season's games until the new fetch landed — the same defect the
-   * Lineups and Practice hubs were both fixed for a day earlier.
+   * ⚠ The key was `${teamId}|${seasonQuery}` while a season switcher could rewrite this page's
+   * own URL without remounting it. That trigger is deleted (P2, 2026-08-16) and the composite key
+   * went with it — the TEAM half is still real, because this component survives a team switch.
    */
-  const loadKey = `${teamId}|${seasonQuery}`;
+  const loadKey = teamId;
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   // Coach Tags: the team's game-tag library + which tags each event carries (both already
   // returned by the events GET — this report is the first consumer of them).
@@ -112,14 +108,13 @@ export default function CoachesResultsReportPage({
         // ⚠ The season goes to the API too, not just onto the header. `events` has been on the
         // season-read rail since Chunk F — it could always serve a past season; this page simply
         // never asked. `history` is deliberately year-less: it IS the cross-season summary.
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`),
       ]);
-      // A team with NO season resolvable at all (no active year, and no `?year=` asked for)
-      // 403/404s on /events — that's a legitimate state, not a failure: the past-seasons archive
-      // below is the whole point of this page then. ⚠ It is now much RARER than it was: with a
-      // season on the request the route resolves that season and answers normally, which is what
-      // gives a coach with no live assignment a game log for the first time. Any OTHER events
+      // A team with NO season resolvable at all — not even a finished one — 403/404s on /events.
+      // That is a legitimate state, not a failure: the Past seasons list below is the whole point
+      // of this page then. ⚠ It is RARE now, because the route falls back to the newest finished
+      // season, which is what gives a coach between seasons a game log at all. Any OTHER events
       // failure (a 500) is still a real error — swallowing it would render a misleading
       // "No results yet" over a team that has played games (adversarial review).
       const eventsClosedOut = !evRes.ok && (evRes.status === 403 || evRes.status === 404);
@@ -145,7 +140,7 @@ export default function CoachesResultsReportPage({
         setLoading(false);
       }
     }
-  }, [orgSlug, teamId, seasonQuery, loadKey]);
+  }, [orgSlug, teamId, loadKey]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -211,28 +206,17 @@ export default function CoachesResultsReportPage({
 
   return (
     <div className={styles.page}>
-      {/* ⚠ THE BACK LINK IS BACK, IN EVERY SEASON (Phase 2, 2026-08-16). Phase 1 removed it in a
-          record and was right to at the time: the archive nav pointed Insights straight HERE, so
-          the page was the destination rather than a drill-in, and a link claiming a parent it did
-          not have is the double-parent defect in its original form. Phase 2 ended that premise —
-          the archive's Insights door is the HUB now, so this page has a real parent again in a
-          finished season, and it must carry the year to return to the same one. */}
-      <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
+      {/* The hub is this page's parent in every season state — there is no longer a nav shape in
+          which Insights points here directly, so the back link is never claiming a parent it does
+          not have (the double-parent defect this once had). */}
+      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the conditional line is deleted — the question in the h1
-          already says what the page answers, and the results list below shows its own scope.
-          Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page
-          is a nav destination in its own right — the /history hub that carries the icon is not
-          reachable at all. On a live season it is a drill-in and inherits the hub's guide; one
-          icon covers both readings rather than two rules. */}
-      {/* ⚠ The season chip (2026-08-16). The header has been able to draw it since Chunk F — this
-          page was simply never handed a season, so a coach reading a past year had nothing on
-          screen telling them which year it was. The chip also switches seasons in place. */}
+          already says what the page answers, and the results list below shows its own scope. It
+          is a drill-in from the hub and inherits the hub's guide. */}
       <CoachPageHeader
         icon={Trophy}
         title="How are we doing?"
         helpLabel="Insights"
-        season={page.season}
-        teamBase={page.teamBase}
         help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
       />
 
@@ -329,27 +313,22 @@ export default function CoachesResultsReportPage({
           )}
 
           {/**
-            * ⚠⚠ RENDERS IN EVERY SEASON — and the proposal that it should not was WRONG, overturned
-            * by this project's own `/review` (2026-08-16) before it reached an owner.
+            * ⚠⚠ **THE COMPARE LIST — this is the look-back layer now** (P2, 2026-08-16, Design A).
             *
-            * The argument for hiding it in a record was that the season chip above already switches
-            * seasons, so a list of seasons below is the same control twice. That mistook what this
-            * section is. It is not a switcher: it is the team's SCRAPBOOK — per-season record,
-            * roster size, tryout acceptance, money summaries and a Season Wrapped link — and it
-            * belongs to the TEAM rather than to the season on screen. Three costs, each found
-            * independently:
-            *   · **Season's End links here as "Compare every season."** That door exists FOR this
-            *     list; hiding it let the link succeed while quietly not delivering — worse than a
-            *     404, which at least announces itself.
-            *   · Reaching another closed year's Season Wrapped became two steps instead of one.
-            *   · The `/history` fetch that feeds it was still being issued and then thrown away.
-            * The aesthetic argument lost to three concrete ones.
+            * With the archive deleted as a place, this section stopped being a nice extra at the
+            * bottom of a report and became one of the three ways a coach reaches a finished season
+            * at all (the others being Season's End and Season Wrapped, both of which it links to).
+            * It is the team's SCRAPBOOK — per-season record, roster size, tryout acceptance, money
+            * summaries — and it belongs to the TEAM, not to the season on screen, which is why it
+            * renders whatever state that season is in.
+            *
+            * ⚠⚠ **EVERY CURRENT MEMBER SEES IT.** The head-coach-only restriction shipped hours
+            * earlier on 2026-08-16 as a floor, while access was still per-season and an ex-coach
+            * could still read the whole book. M1 removed that premise — only current staff hold a
+            * membership at all — so the owner reverted it with Design A: an assistant on the team
+            * today sees the seasons the team has played. Money figures inside stay money-gated
+            * server-side, which is the grant that governs the sensitive half.
             */}
-          {/* ⚠⚠ HEAD COACHES ONLY (owner ruling 2026-08-16). The whole section is ABSENT for
-              anyone else — not an empty state, which would tell an assistant "None yet" about a
-              team with three archived years. The server withholds the rows regardless; this keeps
-              the page from drawing a heading over nothing. */}
-          {page.everHeadCoach && (
           <section style={{ marginTop: '1.75rem' }}>
             <p className={styles.sectionKicker}>Past seasons</p>
             {history.length === 0 ? (
@@ -416,7 +395,6 @@ export default function CoachesResultsReportPage({
               })
             )}
           </section>
-          )}
         </>
       )}
     </div>

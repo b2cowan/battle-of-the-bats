@@ -142,7 +142,7 @@ the sequence.
 |---|---|---|---|---|
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
-| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 · §29 · §30 · §38 | 🖥📱 | LIVE · **§38 ON DEV** (money in, money out, money back — the money form asks three questions now and Budget vs. Actual becomes a statement; ⚠⚠ Part C is the netting rule and Part D is the one that moves real money in a family's ledger — walk **§29 first**) · **§30 ON DEV** (the sponsorship follow-ups — two Overview doors, money tags on money coming IN, a sponsor in the demo world; ⚠ Part A's last step is the filter following a coach to another tab, and Part C is the shop window) · **§29 ON DEV** (the budget speaks in category + item — ⚠⚠ Part C checks the totals still reconcile, and Part D is the one-team-cannot-see-another rule) · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
+| **1C** | Money | §1.2 · §1.3 · §2.3 · §11 · §12 · §13 · §13b · §14 · §15 · §16 · §17 · §18 · §19 · §20 · §21 · §22 · §23 · §24 · §27 · §29 · §30 · §38 · §41 | 🖥📱 | LIVE · **§41 ON DEV** (Money splits in two — Transactions records what happened, Payables manages what is owed; ⚠ **walk §38 first**, and read its screen names through §38's annotation note — §41 renamed them the same day; ⚠⚠ §41 D is the one that counts records: a settle must leave ONE transaction and no second row beside the commitment) · **§38 ON DEV** (money in, money out, money back — the money form asks three questions now and Budget vs. Actual becomes a statement; ⚠⚠ Part C is the netting rule and Part D is the one that moves real money in a family's ledger — walk **§29 first**) · **§30 ON DEV** (the sponsorship follow-ups — two Overview doors, money tags on money coming IN, a sponsor in the demo world; ⚠ Part A's last step is the filter following a coach to another tab, and Part C is the shop window) · **§29 ON DEV** (the budget speaks in category + item — ⚠⚠ Part C checks the totals still reconcile, and Part D is the one-team-cannot-see-another rule) · **§27 ON DEV** (correcting a money record — edit/delete with ledger reversal; one Add door — ⚠ Parts D and E move real money) · **§24 ON DEV** (sponsors beside fundraisers; the budget splits — ⚠ Part D checks an arithmetic sign that would over-bill families) · **§23 ON DEV** (a fundraiser opens inside Money; a past season's drive shows that season's roster — ⚠ Part B closes a wrong-season defect) · **§22 ON DEV** (Team settings regroups; the two dues settings move into it) · **§13b ON DEV** (ledger columns + re-run guard + a live "Invalid Date" defect fixed) · §11 ✅ **PASSED 2026-08-12** — 5 post-review checks owed (see §11 note) · **§12–§21 ALL LIVE ON PRODUCTION 2026-08-14 (job 256)**, migrations **231–235 ✅ applied to prod** · §18 (help sub-topics) ✅ **PASSED 2026-08-14** · ⚠ **§12–§17 and §19–§21 shipped to production BEFORE owner QA** — the walk-throughs below are now run against the live site, not staging |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
 | **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
@@ -4605,16 +4605,30 @@ not**. Money → Expenses & Payables.
 - [ ] Open a record and close it **untouched**: no discard prompt. (A prompt here would be the
       guard crying wolf until it is ignored.)
 
-### C · ⚠ Editing something already PAID — the lock
+### C · ⚖ Editing something already PAID — the books follow
 
-- [ ] Open a **paid** expense. The amount is shown as a **locked** field with its value visible,
-      the date it was paid, and the sentence telling you to delete and re-enter. It is not greyed
-      into silence, and it is not hidden.
-- [ ] Change its **description** and save. It saves.
-- [ ] Change its **category, notes and tags** and save. They save.
-- [ ] Open the **part-paid payable**. The **paid half** is locked and shows its figure; the **open
-      half is still fully editable**. Change the open half's amount and due date — they save.
-      ⚠ If the whole row is frozen, that is the defect this rule exists to prevent.
+⚖ **REWRITTEN 2026-08-16.** This part used to check that a paid amount was **locked**. You reversed
+that ruling — *"once it is edited the new value should permeate to the books and everything be in
+sync"* — so the steps below check the opposite. **Nothing on a saved record should be greyed out.**
+
+- [ ] Open a **paid** expense. The amount is an ordinary editable field. Beneath it, a line says
+      when it was paid and that **changing it updates the team's books too**.
+- [ ] Change its **description, category, notes and tags** and save. They save, and no money moves.
+- [ ] ⚠⚠ Note **cash on hand** (Money → Overview). Now change the paid expense's **amount** — raise
+      it by $50 — and save. Expected: it saves, and **cash on hand moves by exactly $50**.
+- [ ] Change the same record's **Date paid** to a day in the previous month. On Budget vs. Actual →
+      **Months**, the cost must move into **that** month. ⚠ Check the day shown is the day you
+      picked, not the one before it.
+- [ ] Open the **part-paid payable**. **Both halves are editable.** Change the **paid** half's
+      amount — the books move. Change the **open** half's amount and due date — they save and no
+      money moves. ⚠ If anything is frozen, that is the old rule still in place.
+- [ ] ⚠⚠ **The one that touches a family.** Open a cost a family **paid out of pocket** and change
+      its amount. Expected: **no team cash moves at all**, and on **Player Dues** what the team owes
+      that family has changed by the same difference. If their credit still reads the old figure,
+      stop — the team owes a real household the wrong amount.
+- [ ] Confirm **Paid by** is still not changeable on a saved record. That one is deliberate: moving
+      it would move a debt from one family to another, and it is a separate decision you have not
+      made yet. The form should say so rather than fail silently.
 
 ### D · ⚠⚠ Deleting — the money consequence
 
@@ -5287,10 +5301,20 @@ floor — recorded as a deliberate exception, because it is drawn once per row a
 a full-size control on a twelve-row list out-shouts the figures beside it. It **is** raised at tablet
 widths, and on a phone it is already a full-width labelled button.
 
-## §36 · A past season shows that season
+## §36 · A past season shows that season — ⚠⚠ RETIRED UNWALKED, superseded by §40
 
-**Built on dev 2026-08-16 · not on production · no migration, no new API, no route change.**
-Plan: `COACH_ARCHIVE_RAIL_PLAN.md` Phase 1. Mockups: artifact `8dae1e81`, §01–§02.
+**RETIRED 2026-08-16 without ever being walked.** This section walked the SEASON DIAL: open a
+finished season, check the page describes that season and not this one. The owner then deleted the
+dial (Design A — history is delivered in place; there is no archive to open), so every step below
+addresses a control that no longer exists.
+
+**Salvaged into §40, not lost:** the awards report's "N this season" count, the read-only behaviour
+of the Insights hub and its reports, and the live-hub regression checks. All three still matter —
+they are now about a team whose WORKING season has finished, which is the state that replaced the
+archive. Nothing else here survives.
+
+*(Original build note: built on dev 2026-08-16 · never promoted · plan `COACH_ARCHIVE_RAIL_PLAN.md`
+Phase 1 · mockups artifact `8dae1e81` §01–§02. Kept below for provenance; do not walk it.)*
 
 **Why this section exists:** opening a finished season and tapping **Insights** gave you a page that
 never asked which season it was meant to describe. It answered from whether you still coach the team
@@ -5359,11 +5383,19 @@ Ideally do part C with a second sign-in that no longer coaches that team.
 
 **If A and C both read correctly, this section passes.** B is polish; D is the regression check.
 
-## §37 · Insights itself learns which season it is describing
+## §37 · Insights learns which season it is describing — ⚠⚠ RETIRED UNWALKED, superseded by §40
 
-**Built on dev 2026-08-16 · not on production · no migration, no new API.**
-Plan: `COACH_ARCHIVE_RAIL_PLAN.md` Phase 2. Walk it straight after **§36** — same fixture, and §36's
-part B has one step §37 deliberately overturns.
+**RETIRED 2026-08-16 without ever being walked**, for the same reason as §36: it walked the archive's
+own nav and the season switcher, both of which are deleted.
+
+**Salvaged into §40:** the Insights hub rendering a finished season honestly (past tense, no
+instruments, the two reports it cannot serve hidden rather than dead-ending), and the attendance
+door surviving as the report's only parent. **§37 D2 — the head-coach-only scrapbook — is RETIRED
+OUTRIGHT**: the owner reverted that restriction with Design A, so every current member of the staff
+now sees the compare list, and §40 walks it that way round.
+
+*(Original build note: built on dev 2026-08-16 · never promoted · plan `COACH_ARCHIVE_RAIL_PLAN.md`
+Phase 2. Kept below for provenance; do not walk it.)*
 
 **Why this section exists:** §36 fixed the *results* page. The **Insights hub above it** was worse —
 it held no season resolver at all, so a coach who no longer coached the team hit a **"Team not
@@ -5466,6 +5498,15 @@ because it corrects a live-season number too); E is the regression check.
 **Built on dev 2026-08-16 · not on production · ⚠ carries migration 243, which must reach prod
 BEFORE this code does.** Plans: `COACH_MONEY_IN_TAXONOMY_PLAN.md` (which absorbed
 `COACH_MONEY_BACK_ON_A_COST_PLAN.md` — one release). Mockups: artifacts `ee76cc79` and `27d6d2df`.
+
+> ⚠ **THE SCREEN NAMES BELOW ARE PRE-SPLIT — the walk is not.** §41 (2026-08-16, same day) divided
+> *Expenses & Payables* into two tabs, so while reading this section: **Expenses & Payables** →
+> **Transactions** · its **Payables** sub-tab → **Payables → Commitments** · its **Payment
+> schedule** sub-tab → **Payables → Schedule**. **Annotated, deliberately not renumbered or
+> rewritten** — this walk is still owed and its substance is untouched. Two steps below no longer
+> exist and §41 E covers what replaced them: the *"already paid / promised, not paid yet"* switch,
+> and anything asserting a paid amount is locked (the owner reversed that lock the same day).
+> **Walk §38 first, then §41.**
 
 ⚠ **Walk §29 first if you have not.** This is built directly on the category + item work and shares
 its picker; a defect there shows up here wearing different clothes.
@@ -5589,8 +5630,9 @@ coach with no membership).
 
 **Why this section exists:** removing a coach used to remove them from ONE season while every past
 season kept admitting them. Staff now belongs to the TEAM: one list, remove-means-removed
-everywhere, permissions survive rollover. ⚠ Until §40 (P2) the season switcher and archive still
-exist — this section is about ACCESS, not the archive's shape.
+everywhere, permissions survive rollover. ⚠ **P2 has since landed (§40), so the season switcher and
+the archive no longer exist** — if a step below asks you to switch seasons, that step is stale and
+§40 is the walk that replaces it. Everything about ACCESS here still stands.
 
 **Fixture: three sign-ins on one team** — you (head coach), a current assistant, and someone you
 will remove during the walk. Ideal team also has at least one finished season.
@@ -5663,6 +5705,235 @@ ships the same day, the way the invisible-help-text defect did on 2026-08-03.
 
 **What still gates on your OK before customers see it** *(re-checked against git, 2026-08-06)* —
 this is now most of the newest work, not two odds and ends:
+
+## §40 · The season toggle comes out — history is delivered in place (M1, Phase 2)
+
+**Built on dev 2026-08-16 · not on production · NO migration, no new table, no new API route.**
+Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P2. Decision mockups: artifact `aa758bcb` §10.
+Walk **§39 first** — this section assumes membership is already the access truth.
+
+**Why this section exists:** the portal had a second mode. A dial in the sidebar (and a list in the
+phone's More sheet, and a chip beside every page title) pointed the whole product at a past year;
+the moment you used it, your menu was replaced by a different, shorter one. The owner's ruling:
+**delete the place, keep the history.** A coach now sees the season their team is on. Looking back
+happens in three named spots — **Season's End**, **Season Wrapped**, and **"Past seasons"** at the
+bottom of Insights → *How are we doing?*
+
+**What is retired with it:** §36 and §37 (both unwalked — their live-season and read-only checks are
+folded in below), and **§37 D2**, the head-coach-only rule on the season history, which the owner
+reversed: every current member of the staff sees it now.
+
+**Fixture: two teams and two sign-ins.**
+- A team **between seasons** — its most recent season is finished and there is no new one yet. (The
+  coach demo's *Riverdale Ridge 13U* is exactly this if you'd rather not set one up.)
+- A team **mid-season**, with at least one finished season behind it.
+- Sign in as the **head coach**, then as a **current assistant**.
+
+⚠ **This is the first ledger section on this rail that the automated sweep can partly see.** A
+between-seasons team was added to the rendered fixture world in this same change, so Season's End,
+the compare list and the read-only records now have screenshots behind them for the first time. Your
+eyes are still the proof for everything about *behaviour*.
+
+### A · The dial is gone, and nothing feels missing
+
+- [ ] Open the **mid-season** team. There is **no season dropdown** in the sidebar, and **no chip
+      beside the page title** on any screen (Roster, Money, Insights — check a few).
+- [ ] On a phone (or a narrow window), open **More**. There is no *"This team's seasons"* list.
+- [ ] The masthead at the top still names the season ("2026 season") and the team, as before.
+
+### B · A team between seasons is still your team
+
+**⚠ This is the part worth the most attention.** Until today, a finished season replaced your menu
+with a shorter one that dropped Settings, Chat, Email families and Staff.
+
+- [ ] Open the **between-seasons** team. You land on **Season's End**.
+- [ ] The sidebar is **your normal menu, in your normal order** — the only change is that the first
+      item reads **Season's End** instead of Overview.
+- [ ] **Settings opens** and shows the team's settings (it used to say *"Settings unavailable"*).
+- [ ] **Staff opens** and lists the current staff.
+- [ ] **Chat** and **Email families** open.
+- [ ] Open **Roster**, **Schedule**, **Money**, **Documents**, **Insights**. Each shows the finished
+      season's records, and the masthead says **Complete**.
+- [ ] None of them offers a way to add, edit or delete anything.
+- [ ] Open **Development → Drills**. It says *"This season has finished — this screen is part of
+      running a live season, and it comes back when the next one starts"*, with a link to Season's
+      End. That is intended: a drill library is a tool, not a record.
+
+### C · Looking back, in three places
+
+- [ ] From the between-seasons team, open **Insights → How are we doing?**. Scroll to
+      **"Past seasons"** — every season the team has played, with its record, roster size, tryout
+      acceptance and (if you handle money) the money summary.
+- [ ] Each row has a **Season Wrapped →** link. Open one for an OLDER season: you land on Season's
+      End for **that** year, with that year's wrap-up card.
+- [ ] On that page, the note reads *"This season's story is kept here. Your menu is showing the
+      season the team is on now."* — it does **not** claim the menu will show you that older year.
+- [ ] Back on the between-seasons team's own Season's End: **"Compare every season"** takes you to
+      the list you just used.
+- [ ] ⚠ **Salvaged from §37 D2, and the answer is now the opposite:** sign in as a **current
+      assistant** and repeat the first step. They **see the Past seasons list** too. (Money figures
+      inside it still depend on whether they handle money.)
+
+### D · The reports that cannot honestly serve a finished season
+
+*(Salvaged from §36/§37 — the rulings did not change, only where they apply.)*
+
+- [ ] On the between-seasons team's **Insights** hub, there is **no** *"Where is playing time
+      going?"* tile and **no** *"Who are we up against?"* tile. Both are deliberate: playing time is
+      recalculated from today's rules, and the scouting book is this year's book.
+- [ ] There **is** a *"Who's showing up?"* tile — attendance is a record of who turned up. Open it:
+      the report shows, and there is **no** *"Take attendance"* button.
+- [ ] On the **mid-season** team, both hidden tiles **are** present. (If they aren't, they're hidden
+      for a permissions reason, not a season one, and the checks above proved nothing.)
+- [ ] Open **Insights → Who's earning it?** on the between-seasons team. The award counts read as
+      past tense, there is no *"Give an award"* or *"Manage award types"*, and each award still
+      offers **print a certificate** — which names **that** season, not this year.
+- [ ] Empty states in a finished season are past tense and promise nothing ("No results were
+      recorded", not "Once a game gets a score…").
+
+### E · A stale link lands somewhere honest
+
+- [ ] On the **mid-season** team, paste this into the address bar, replacing the id with one of its
+      finished seasons:
+      `/{org}/coaches/teams/{teamId}/roster?year={a-finished-season-id}`
+- [ ] You get **this** season's roster, not the finished one. The old bookmark is harmless — it does
+      not open an archive, because there isn't one.
+
+### F · The demo still tells the truth
+
+- [ ] Open the coach demo and take the **guided tour** to its last step ("Open a season that is
+      already over"). The sentence now says the season is closed and *the record of it is still
+      here: the same menu, every screen read-only*. Press one of the menu items from there and
+      confirm that is exactly what happens.
+- [ ] The moments dock's **Season's End** chip says the same thing in one line.
+
+---
+
+## §41 · Money splits in two — Transactions and Payables (money redesign, Phase 1)
+
+**Built on dev 2026-08-16 · not on production · NO migration, no new table, no new API route.**
+Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §10 P1. Naming mockup: artifact `eca99e68`.
+Walk **§38 first** — this builds directly on the money form that section covers.
+
+**Why this section exists:** one screen was doing two jobs. *Expenses & Payables* held what the
+team had already spent **and** what it had merely promised to pay, and the form behind its single
+*Add* button derived a hidden mode from whichever sub-tab you happened to open it from — so
+recording last night's diamond rental and scheduling March's tournament entry were the same screen
+wearing two meanings. P1 makes that line the tab boundary: **Transactions** records what happened,
+**Payables** manages what is owed, and a payment is only ever born in one place.
+
+⚠ **§38's wording predates this.** Where it says *Expenses & Payables*, read **Transactions**; its
+*Payables* sub-tab is now **Payables → Commitments**, and its *Payment schedule* sub-tab is
+**Payables → Schedule**. **Do not renumber §38** — its walk is otherwise unchanged and still owed.
+
+**Fixture: `qa-money-lab`** (already seeded — do not rebuild), signed in as
+`qa-money-head@dev.local`. An automated walk already proves the mechanics end to end (commitment
+with a split → settle the deposit back-dated → one entry on the books, dated as chosen, balance
+still owed). **Your eyes are the proof for whether the split reads as an improvement**, which is
+the thing no script can check.
+
+### A · The two doors
+
+- [ ] Open **Money**. The tab bar reads … Fundraising · **Transactions** · **Payables** ·
+      Allocations · Payments · Budget vs. Actual. *Expenses & Payables* is gone.
+- [ ] **Transactions** holds two views: **Expenses** and **Money in**. Nothing about either list
+      has changed — that is deliberate; the register is P3.
+- [ ] **Payables** opens on the **Schedule**, not on the list. Ask yourself whether that is the
+      right thing to land on — it is a recommendation, and it is cheap to reverse.
+- [ ] Its second view is **Commitments**, holding what used to be the Payables list, with the
+      deposit/balance drawer and the importer intact.
+- [ ] ⚠ **A settled commitment stays on the Commitments list.** Only the Schedule's
+      Unpaid/Paid/All filter narrows by paid state. Confirm that reads as intended rather than as
+      clutter.
+
+### B · Every old link still works
+
+- [ ] Paste `…/accounting?section=expenses` into the address bar. It lands on **Transactions**,
+      and **the address in the bar rewrites itself** to `section=transactions`.
+- [ ] `…?section=expenses&tab=schedule` lands on **Payables → Schedule**;
+      `…&tab=payables` lands on **Payables → Commitments**; `…&tab=money-in` lands on
+      **Transactions → Money in**.
+- [ ] The old standalone route `…/accounting/expenses` still redirects, and
+      `…/accounting/expenses?tab=schedule` still reaches the schedule.
+- [ ] On the Money **Overview**: the rail now has **two** rows where it had one — *Transactions*
+      ("$X paid") and *Payables* ("N coming due" / "Nothing due"). Each opens its own tab.
+- [ ] A **Next 30 days** row's *View* opens **Payables** (it is money that has not moved yet), and
+      *See full schedule* opens the Schedule.
+- [ ] On **Budget vs. Actual → Months**, an *Actual* cell's drill-in says **Open Transactions**; a
+      *Scheduled* cell's says **Open the payment schedule** and lands on Payables.
+
+### C · The commitment door
+
+- [ ] On **Payables**, the button says **Add a commitment** — not a bare "Add".
+- [ ] The form asks: what it's for, **amount owed**, **due date**, description. There is **no
+      income option** — a commitment is always money out.
+- [ ] ⚠⚠ **The due date is new.** Before this release the form said *"leave this closed to record
+      one amount due on one date"* and offered no such date — so a simple commitment saved with
+      none, showed *No schedule*, never reached the payment schedule, and had **no Mark paid button
+      anywhere**. Save one with a date and confirm it appears on the Schedule.
+- [ ] Try to save one **without** a due date. It refuses, and says why.
+- [ ] Open **Split into a deposit and a balance**. The single *Due date* field **disappears** and
+      the two halves take over. Close it again with **Use one date instead** and the single date
+      returns.
+- [ ] Above the buttons: **"When you save: nothing moves."** Save it, then check **Cash on hand**
+      on the Overview — unchanged.
+
+### D · Mark paid goes through the money door
+
+- [ ] On the **Schedule**, press **Mark paid** on a commitment's deposit. The **Add money** form
+      opens, pre-filled, headed *Settling …*.
+- [ ] ⚠ It shows the **half's** amount, not the commitment's total. On a $600 entry split
+      $200/$400, settling the deposit must offer **$200**.
+- [ ] It asks **Date paid**, and states what saving will do. **Back-date it by a couple of weeks.**
+- [ ] Save. ⚠⚠ **Now the count that matters:** the deposit is settled, **one** transaction is on
+      the books for **$200 dated the day you chose**, the **balance is still owed at $400**, and
+      **no second record** appeared beside the commitment. A transaction *and* a commitment both
+      carrying the same money is the double-count this whole design exists to prevent.
+- [ ] Check **Budget vs. Actual → Months**: the $200 lands in the month you back-dated to, not
+      this one.
+- [ ] The same **Mark paid** on the commitment's own row (via *Payment details*) does the same
+      thing. Two doors onto one act must not behave differently.
+- [ ] ⚠ **On Transactions, an unpaid expense keeps its old inline date prompt** — tap *Mark Paid*
+      and the date appears in the row, not in a modal. That is deliberate: it is not a commitment,
+      and it is the walk §38 covers. Confirm it still works.
+
+### E · Add money stops asking about timing
+
+- [ ] On **Transactions → Expenses**, press **Add**. The kind switch still offers *a cost* /
+      *income* / *money back*, but **"Promised, not paid yet" is gone**, along with its deposit,
+      balance and due-date fields.
+- [ ] **Type** a future date into *Date paid* (the picker won't offer one). Saving is refused with
+      *"That hasn't happened yet"* and a link: **Add it as a commitment instead**.
+- [ ] Press that link. The commitment form opens **carrying what you already typed** — the item,
+      the amount, the description — with your future date now the **due date**. Confirm nothing has
+      to be re-entered.
+
+### F · The gates that must still hold
+
+- [ ] **Money back ≠ paid out of pocket.** Record one of each against the same item and count the
+      credits on Player Dues — **exactly one**.
+- [ ] **Nothing here changes a dues schedule.** Not a dollar, on any of it.
+- [ ] Sign in as `qa-money-read@dev.local`. Both tabs **read** normally and offer **no** Add,
+      Mark paid, Import or edit pencil.
+- [ ] Sign in as `qa-money-off@dev.local`. Neither tab is reachable at all.
+- [ ] Export from each view: **Expenses**, **Money in**, **Commitments**, **Payment schedule**.
+      Each names the view you are on and honours the money-tag filter.
+
+### G · The words
+
+- [ ] ⚖ **The arrivals list is still called "Money in", not "Income"** — an owner call taken
+      during the build, against the plan's own §6. That list holds income **and** money back, and
+      the panel under its empty state teaches in bold that a refund is not income. It gets renamed
+      properly in **P3**, where the register's separate *Income* and *Refunds* filters make the
+      word true. Confirm you still agree, now that you can see it in place.
+- [ ] The record is a **commitment**; the tab is **Payables**. Two words for one object is a
+      deliberate compromise (the tab name keeps continuity with the schedule, the exports, the help
+      guide and this ledger). Say if it grates.
+- [ ] **Help → Money** now has two topics where it had one: *Transactions: recording what happened*
+      and *Payables: what you owe, and when*. Both dropped two sentences that had become false —
+      the removed timing switch, and the amount lock the 2026-08-16 ruling reversed.
+
+---
 
 | Gate | Sections | Also needs |
 |---|---|---|

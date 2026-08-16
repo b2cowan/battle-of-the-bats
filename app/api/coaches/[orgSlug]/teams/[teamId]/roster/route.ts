@@ -9,7 +9,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster, hasRecordAccess } from '@/lib/coach-capabilities';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -36,10 +36,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 // READ: season-scoped (Chunk F). `?year=` opens a past season's roster read-only, with the
 // capabilities recorded against THAT season's assignment row — an assistant who couldn't see
 // guardian details in 2025 still can't, no matter what they were granted since.
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear, isReadOnly } = resolved;
   // A1 (2026-08-03): the roster PAGE is a record surface, so it gates on record access rather than

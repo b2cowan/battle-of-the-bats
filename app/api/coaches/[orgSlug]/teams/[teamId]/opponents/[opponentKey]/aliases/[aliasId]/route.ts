@@ -12,7 +12,7 @@ import { denyUnless, canWriteScoutingSummary } from '@/lib/coach-capabilities';
  * alias id alone addresses the row, team-scoped).
  *
  * Caps `notes`, the same curation grant as the merge. Live-season route off the season
- * rail — INSTRUMENT ruling (coach-season-write-guard.test.ts).
+ * rail — INSTRUMENT ruling (coach-history-endpoint-guard.test.ts).
  */
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string; aliasId: string }> },) => {

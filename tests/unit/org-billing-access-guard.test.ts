@@ -239,7 +239,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
     // rather than assumption. A route riding any of them is on the rail transitively.
     const RAILS = [
       'getAuthContext',              // the chokepoint itself, incl. the ~53 hand-declared resolvers
-      'resolveCoachSeasonRead',      // lib/coach-season-read.ts:66      → getAuthContext
+      'resolveCoachTeamRead',        // lib/coach-team-read.ts:100      → getAuthContext
+      'resolveCoachHistoryRead',     // lib/coach-team-read.ts:123      → getAuthContext
       'resolveLiveCoachTeamContext', // lib/coach-route-context.ts:49    → getAuthContext
       'resolveCoachTeamAssignment',  // lib/coach-route-context.ts:49    → getAuthContext
       'resolveFamilyCoachContext',   // lib/family-coach-route.ts:42     → getAuthContext

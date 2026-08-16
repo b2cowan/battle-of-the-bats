@@ -16,11 +16,10 @@ import type { RepTeam } from './types';
  * than a step each family route has to remember, so a fourth family route cannot be added
  * without it.
  *
- * ⚠ LIVE SEASON ONLY. This deliberately does NOT import `lib/coach-season-read.ts`. Family
- * access is an INSTRUMENT — it configures who may reach the team RIGHT NOW — so under the
- * archive's opt-in rule it must not be addressable in a past season. Because this chain never
- * joins the season-read rail it resolves the team's active state and cannot address an
- * archived one. Routes using it must never appear in `APPROVED_SEASON_AWARE_ROUTES`.
+ * ⚠ LIVE SEASON ONLY. This deliberately does NOT import `lib/coach-team-read.ts`. Family access
+ * is an INSTRUMENT — it configures who may reach the team RIGHT NOW — so it resolves the team's
+ * ACTIVE state and cannot serve a season that has ended, let alone one a caller names. Routes
+ * using it must never appear in the guard's `HISTORY_ENDPOINTS`.
  *
  * Capability checks stay at the CALL SITE: the panel routes need guardian-contact access
  * (`rosterPii`) while sharing a game needs schedule access, and folding those together here

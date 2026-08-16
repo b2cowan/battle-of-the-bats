@@ -15,7 +15,7 @@ import { expenseTotals } from '@/lib/season-settlement';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
@@ -39,10 +39,10 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 // Note: rep_team_payment_requests has no program-year scoping — approved sums are
 // team-lifetime. Acceptable under single-active-season semantics (documented in
 // COACH_MONEY_HUB_REDESIGN_PLAN.md).
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

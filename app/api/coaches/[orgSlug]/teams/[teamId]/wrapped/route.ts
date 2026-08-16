@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getLatestClosedRepProgramYear } from '@/lib/db';
-import { resolveCoachSeasonReadContext, seasonParam } from '@/lib/coach-season-read';
+import { resolveCoachHistoryRead } from '@/lib/coach-team-read';
 import { canLogGameMoment, hasRecordAccess } from '@/lib/coach-capabilities';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
 import { countRecapViewers } from '@/lib/family-engagement';
@@ -9,20 +8,25 @@ import { withObservability } from '@/lib/observability';
 /**
  * Season Wrapped (Coach Portal Batch 3, wow #7). GET-only, and only for CLOSED seasons —
  * a live season's story isn't finished, and the Overview/Insights already narrate it.
- * Uses the season-READ resolver (accepts closed assignments) so the coach whose season was
- * just completed — the exact person the old access model locked out — can load it. No
- * money data in the payload: the card is built to be shared beyond the team.
+ *
+ * ⚠ **ONE OF THE TWO SURVIVING HISTORY ENDPOINTS** (P2, 2026-08-16). The season dial is deleted,
+ * so a caller-named year is now a decision rather than a default — this route and the Season's End
+ * page it feeds are the whole look-back layer, reached from the compare list at the bottom of the
+ * results report. `tests/unit/coach-history-endpoint-guard.test.ts` fails the build if that set
+ * changes. No money data in the payload: the card is built to be shared beyond the team.
  */
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  // Chunk F: the year goes THROUGH the rail, not around it. Resolving it separately (as this
-  // route used to) meant the access check ran against the team rather than the requested season —
-  // a coach who joined in 2026 could open 2023's Wrapped. The rail 403s unless they were on that
-  // season's staff, and hands back the season it actually admitted.
-  const resolved = await resolveCoachSeasonReadContext(orgSlug, teamId, {
-    yearId: seasonParam(req) ?? (await getLatestClosedRepProgramYear(teamId))?.id ?? null,
-  });
+  // The year goes THROUGH the resolver, not around it. Resolving it separately (as this route
+  // once did) meant the access check ran against the team rather than the requested season.
+  //
+  // ⚠ NO "newest closed" FALLBACK any more. It used to silently answer a bare request with some
+  // other year's story — a hidden season choice, which is precisely what P2 deleted, and with the
+  // page-title season chip gone there would be nothing on screen to say which year was showing.
+  // Absent `?year=`, this is the team's WORKING season, and a season still under way answers 409.
+  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
+  const resolved = await resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
   if ('error' in resolved) return resolved.error;
   const { team, programYear } = resolved;
 

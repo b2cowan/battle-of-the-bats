@@ -18,8 +18,8 @@ import { resolveClubContentKeys } from '@/lib/coach-club-book-server';
  *
  * ⚠ INSTRUMENT, not record: reads game events from EVERY season (team-scoped, the
  * drills-past-seasons pattern) to feed the LIVE season's preparation, and is deliberately
- * OFF the season-read rail — never add resolveCoachSeasonRead here, never add this route
- * to APPROVED_SEASON_AWARE_ROUTES (asserted by tests/unit/coach-season-write-guard.test.ts).
+ * OFF the working-season read — never add resolveCoachTeamRead here, never add this route
+ * to HISTORY_ENDPOINTS (asserted by tests/unit/coach-history-endpoint-guard.test.ts).
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {

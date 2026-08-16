@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
@@ -431,7 +431,6 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-
 // A tryout session projected onto the calendar — read-only, visually distinct from a game (dashed,
 // clipboard, "Tryout" label), links to the Tryouts tab rather than opening the event editor.
 function TryoutChip({ session, href }: { session: RepTryoutSession; href: string }) {
@@ -676,8 +675,7 @@ export default function CoachesSchedulePage({
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const page = useCoachSeasonPage(orgSlug, teamId);
 
   // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
   // game rows and the Scouting tab's availability. Non-fatal — a failed load just means no
@@ -720,7 +718,6 @@ export default function CoachesSchedulePage({
     if (r.wins + r.losses + r.ties === 0) return null;
     return recordChip(r);
   }, [bookByKey]);
-  const seasonQuery = page.query;
   /**
    * Game-Day Mode entry (P1): a game row grows a `Game day` action inside its live window —
    * ABSENT outside the window (never disabled), absent on cancelled rows (the predicate checks
@@ -778,7 +775,7 @@ export default function CoachesSchedulePage({
     if (firstLoadRef.current) firstLoadRef.current = false;
     else router.refresh();
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       const nextEvents: RepTeamEvent[] = data.events ?? [];
@@ -801,8 +798,8 @@ export default function CoachesSchedulePage({
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
       // org/team — fetch them concurrently (one round-trip, not two) and apply each independently.
       const [tryoutRes, gamesRes] = await Promise.allSettled([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games`),
       ]);
       if (tryoutRes.status === 'fulfilled' && tryoutRes.value.ok) {
         try { setTryoutSessions((await tryoutRes.value.json()).sessions ?? []); } catch { /* optional */ }
@@ -815,7 +812,7 @@ export default function CoachesSchedulePage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery, router]);
+  }, [orgSlug, teamId, router]);
 
   // Player Awards data — separate from fetchEvents (own endpoints), but loaded alongside it so
   // the give-award picker and the slide-over's "Awards given" section are ready without a
@@ -823,8 +820,8 @@ export default function CoachesSchedulePage({
   const fetchAwardData = useCallback(async () => {
     try {
       const [typesRes, awardsRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
       ]);
       if (typesRes.ok) setAwardTypes((await typesRes.json()).awardTypes ?? []);
       if (awardsRes.ok) {
@@ -833,7 +830,7 @@ export default function CoachesSchedulePage({
         setAwardPlayers(awardsData.players ?? []);
       }
     } catch { /* non-fatal — the schedule still works without award data */ }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchEvents);
@@ -1315,10 +1312,6 @@ export default function CoachesSchedulePage({
 
 
 
-
-
-
-
   function openEvent(event: RepTeamEvent) {
     setSlideTab('attendance');
     setAttendanceFilter('all');
@@ -1439,8 +1432,8 @@ export default function CoachesSchedulePage({
     let hasLineup = false;
     try {
       const [attRes, lineupRes] = await Promise.allSettled([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/attendance${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/lineup${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/attendance`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/lineup`),
       ]);
       if (attRes.status === 'fulfilled' && attRes.value.ok) {
         const d = await attRes.value.json();
@@ -1716,8 +1709,6 @@ export default function CoachesSchedulePage({
       setAttendanceSaving(false);
     }
   }
-
-
 
 
 
@@ -2057,7 +2048,6 @@ export default function CoachesSchedulePage({
     );
   }
 
-
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call stays
   // scannable (same shape as the Money panels' headerActions consts).
   const scheduleHeaderActions = (
@@ -2127,8 +2117,6 @@ export default function CoachesSchedulePage({
       <CoachPageHeader
         icon={Calendar}
         title="Schedule"
-        season={page.season}
-        teamBase={page.teamBase}
         actions={scheduleHeaderActions}
         helpLabel="Schedule"
         help={scheduleHelpRequest}

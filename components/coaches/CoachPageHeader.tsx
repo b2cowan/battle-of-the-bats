@@ -2,20 +2,18 @@
 import type { ComponentType, ReactNode } from 'react';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
-import type { SeasonView } from '@/lib/coaches-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
  * The ONE page header for every standard coach-portal page (ruling 2026-08-11; binding mockup
  * = COACH_PAGE_HEADER_CONSISTENCY_MOCKUP.html). Fixed slots, enforced by construction:
  *
- *   [icon 22 in the 48px tile] [h1 title + archive chip] [titleChips] … [actions] [help "?"]
+ *   [icon 22 in the 48px tile] [h1 title] [titleChips] … [actions] [help "?"]
  *
  * Three shapes, all owned here so no caller hand-rolls a fourth, and selected by ONE `variant`
  * prop so the set stays exhaustive: `standard` (the page header above), `embedded` (a hub tab
  * whose page header is already on screen — actions only), and `nested` (a hub tab that has
- * drilled into ONE record — the same slots at h2, no season chip, no "?").
+ * drilled into ONE record — the same slots at h2, no "?").
  *
  * - NO SUBTITLE SLOT EXISTS. The masthead above owns season + role; live facts live in the
  *   body they describe; required framing lines live in the card they frame. A page that wants
@@ -25,8 +23,10 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   right-pinned row beneath (the .pageHeaderStd grid in coaches.module.css).
  * - Secondary action buttons opt into phone icon-only by wrapping their label in
  *   `styles.headerBtnLabel` + carrying an aria-label; the one lime primary keeps its words.
- * - The archive chip renders INSIDE the <h1> so an archived page's accessible name says so
- *   ("Roster 2025 · Complete") — this was previously done two different ways.
+ * - ⚠ THE ARCHIVE CHIP IS GONE (P2, 2026-08-16). It rendered "2025 · Complete" inside the <h1>
+ *   and doubled as the season SWITCHER, which is what it really was; both died with the archive
+ *   as a place. A finished working season is signalled once, by the masthead's own "Complete"
+ *   chip — where the season already lives, and where it costs no page its title line.
  *
  * CoachModalHeader is this component's older sibling for modals; pages went years without the
  * equivalent and grew ~40 hand-rolled copies, two forked CSS blocks and one live bug.
@@ -35,9 +35,6 @@ export default function CoachPageHeader({
   icon: Icon,
   title,
   titleChips,
-  season,
-  teamBase,
-  chipExtraQuery,
   actions,
   actionsPhoneHidden,
   help,
@@ -50,12 +47,6 @@ export default function CoachPageHeader({
   title: ReactNode;
   /** Identity/state chips beside the title (premium badge, status badge, division). Never quantities. */
   titleChips?: ReactNode;
-  /** Season view → the "{year} · Complete" archive chip inside the h1. Renders nothing live. */
-  season?: SeasonView;
-  /** `/{org}/coaches/teams/{teamId}` — where the archive chip's season switch lands. */
-  teamBase?: string;
-  /** Extra query preserved by the chip's season switch (tabbed hubs put the tab here). */
-  chipExtraQuery?: string;
   /** The action group — primary + secondaries. Rendered right of the title, left of help. */
   actions?: ReactNode;
   /**
@@ -90,9 +81,9 @@ export default function CoachPageHeader({
    * - `nested` — a hub tab that has drilled into ONE record (Money → Fundraisers → one drive).
    *   Same slots one level down: a smaller tile and an `<h2>`, so the hub's `<h1>` keeps naming
    *   the screen and a screen reader gets a real heading hierarchy rather than two competing page
-   *   titles. ⚠ `season` and `help` are IGNORED in this shape — the header above already carries
-   *   the archive chip and the "?" for this screen, and a second copy of either is two doors to
-   *   the same place one line apart. A drill-in that wants its own help topic is a page.
+   *   titles. ⚠ `help` is IGNORED in this shape — the header above already carries the "?" for
+   *   this screen, and a second copy is two doors to the same drawer one line apart. A drill-in
+   *   that wants its own help topic is a page.
    */
   variant?: 'standard' | 'embedded' | 'nested';
 }) {
@@ -116,10 +107,7 @@ export default function CoachPageHeader({
           {nested ? (
             <h2 className={`${styles.pageTitle} ${styles.pageTitleNested}`}>{title}</h2>
           ) : (
-            <h1 className={styles.pageTitle}>
-              {title}
-              {season && <CoachSeasonChip season={season} teamBase={teamBase} extraQuery={chipExtraQuery} />}
-            </h1>
+            <h1 className={styles.pageTitle}>{title}</h1>
           )}
           {titleChips}
         </div>

@@ -52,7 +52,6 @@ export type MoneyDataNotice = { text: string; tone: 'ok' | 'bad' } | null;
 export default function MoneyImportMenu({
   orgSlug,
   teamId,
-  seasonQuery,
   canWriteMoney,
   onNotice,
   onImported,
@@ -60,7 +59,6 @@ export default function MoneyImportMenu({
   orgSlug: string;
   teamId: string;
   /** `?year=…` on an archived season, '' on the live one — every dataset read follows it. */
-  seasonQuery: string;
   /** Money write capability, already folded through the season's read-only state by the caller. */
   canWriteMoney: boolean;
   /**
@@ -111,8 +109,8 @@ export default function MoneyImportMenu({
       // the third call to save a request would quietly downgrade the preview's verdicts.
       const [catRes, planRes, expRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
       ]);
       const catData = await catRes.json().catch(() => ({}));
       const planData = await planRes.json().catch(() => ({}));
@@ -141,7 +139,7 @@ export default function MoneyImportMenu({
     } finally {
       setImportLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery, onNotice]);
+  }, [orgSlug, teamId, onNotice]);
 
   // ── Recent imports ────────────────────────────────────────────────────────
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -191,8 +189,12 @@ export default function MoneyImportMenu({
               hint="A month grid or a simple list, from a file or pasted"
               onSelect={() => { void openImport('budget'); }}
             />
+            {/* ⚠ THE IMPORT ONLY EVER MADE COMMITMENTS (Money split P1, 2026-08-16). Its label
+                said "Expenses & payables" because that was the SCREEN they landed on, not what it
+                creates — every imported row carries a due date and joins the payment schedule. The
+                screen has split, so the label can finally name the thing. */}
             <CoachToolbarMenuItem
-              label="Expenses & payables"
+              label="Commitments"
               hint="What you owe and when"
               onSelect={() => { void openImport('payables'); }}
             />
@@ -252,7 +254,9 @@ export default function MoneyImportMenu({
 
 const DATASET_WORDS: Record<RepTeamImportEvent['dataset'], string> = {
   budget_lines: 'Budget lines',
-  payables: 'Expenses & payables',
+  // ⚠ The stored dataset KEY stays `payables` (it is history, already written); only the word a
+  // coach reads follows the split.
+  payables: 'Commitments',
 };
 
 const SHAPE_WORDS: Record<RepTeamImportEvent['shape'], string> = {

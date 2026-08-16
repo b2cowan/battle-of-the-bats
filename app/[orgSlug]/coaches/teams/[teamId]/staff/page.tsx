@@ -1,6 +1,5 @@
 'use client';
 import { use } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Users, ShieldCheck } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -16,8 +15,7 @@ export default function CoachStaffPage({
 }) {
   const { orgSlug, teamId } = use(params);
   const { assignments, loading } = useCoaches();
-  const searchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
+  const page = useCoachSeasonPage(orgSlug, teamId);
   // M1: the panel is team-scoped and membership-gated, so the gate reads the CURRENT role — the
   // live assignment mirrors the membership. `page.capabilities` is season-resolved and, under a
   // stale archived `?year=` URL, would answer with a bygone season's role: a demoted former head
@@ -44,8 +42,6 @@ export default function CoachStaffPage({
       <CoachPageHeader
         icon={Users}
         title="Coaching staff"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Coaching staff"
         help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
       />

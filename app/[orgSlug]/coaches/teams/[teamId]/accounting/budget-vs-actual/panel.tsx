@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { TrendingUp, ChevronDown, ChevronRight, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -584,18 +583,10 @@ export function BudgetVsActualPanel({
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
-  // This page already carries a tag filter, so the season has to MERGE into the same query
-  // string rather than append a second `?`.
-  const bvaQuery = (() => {
-    const qs = new URLSearchParams();
-    if (filterTagId) qs.set('tagId', filterTagId);
-    if (page.season.isReadOnly && page.season.current) qs.set('year', page.season.current.programYearId);
-    const q = qs.toString();
-    return q ? `?${q}` : '';
-  })();
+  const page = useCoachSeasonPage(orgSlug, teamId);
+  // The tag filter is the only thing this page puts on the wire now — the season went with the
+  // dial (P2, 2026-08-16), so this is a plain one-param query rather than a merge.
+  const bvaQuery = filterTagId ? `?tagId=${encodeURIComponent(filterTagId)}` : '';
   const assignment = assignments.find(a => a.teamId === teamId);
   const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
 
@@ -718,7 +709,6 @@ export function BudgetVsActualPanel({
     return bvaCategoryRows(data);
   }
 
-
   /**
    * Everything the export needs, built AT CLICK TIME from what is on screen — the view, the
    * reading, the whole lot. This is the reason Export sits on the tab rather than in the hub
@@ -765,7 +755,6 @@ export function BudgetVsActualPanel({
     );
   }
 
-
   // ⚠ THIS SCREEN IS WHY EXPORT LEFT THE HUB HEADER (owner ruling 2026-08-13, mockup 96675523).
   // For a while it had TWO Export buttons: one above the tab bar exporting the category table,
   // one here exporting the month grid at the chosen reading — both labelled "Export", neither
@@ -783,7 +772,7 @@ export function BudgetVsActualPanel({
   return (
     <div className={styles.page}>
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={shared.lineupBackLink}>
+        <Link href={`${base}/accounting`} className={shared.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
@@ -792,8 +781,6 @@ export function BudgetVsActualPanel({
         variant={embedded ? 'embedded' : 'standard'}
         icon={TrendingUp}
         title="Budget vs. Actual"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Budget vs. Actual"
         /* Points at the SHAPES topic, not the month grid: Statement is what this page opens on
            now, and the "?" should explain the thing in front of the reader. */
@@ -811,7 +798,7 @@ export function BudgetVsActualPanel({
             eyebrow="Budget vs. actual"
             headline="No budget plan yet"
             description="Create a budget plan to start tracking estimated spend against your actual ledger."
-            primaryAction={{ label: 'Create a budget plan', href: moneySectionHref(base, 'budget', undefined, seasonQuery) }}
+            primaryAction={{ label: 'Create a budget plan', href: moneySectionHref(base, 'budget', undefined) }}
             secondaryAction={{ label: 'See a finished example', onClick: () => setSampleOpen(true) }}
           />
           {sampleOpen && <SampleBudgetSheet initialTab="bva" onClose={() => setSampleOpen(false)} />}
@@ -984,7 +971,6 @@ export function BudgetVsActualPanel({
               lens={lens}
               base={base}
               canWrite={moneyCanWrite}
-              seasonQuery={seasonQuery}
             />
           ) : (
           <>

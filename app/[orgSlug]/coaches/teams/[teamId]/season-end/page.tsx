@@ -14,11 +14,19 @@ import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import styles from '../../../coaches.module.css';
 
 /**
- * Season's End (Batch 3, P0 #1 — approved mockups = spec). The landing surface for a
- * CLOSED season: leads with Season Wrapped, keeps read-only doors into what the coach
- * built, and names the honest path to the next season (standalone head coach: start it;
- * club coach: the team reappears when the admin staffs next season). Also reachable with
- * `?year=` from the Insights archive for any past season of an ACTIVE team.
+ * Season's End — the landing surface for a finished season (Batch 3, P0 #1; approved mockups =
+ * spec). Leads with Season Wrapped, says how the families engaged with it, points at the compare
+ * list, and names the honest path to the next season (standalone head coach: start it; club coach:
+ * the team reappears when the admin staffs next season).
+ *
+ * ⚠ **THE LAST PAGE IN THE PORTAL THAT READS A YEAR** (P2, 2026-08-16, Design A). With the season
+ * dial deleted, `?year=` survives here and on the `wrapped` route it calls — and nowhere else —
+ * because the compare list's per-year "Season Wrapped →" links are the look-back layer's only
+ * route to a season that is not the team's working one. Without the parameter this page IS the
+ * working season, which is how a coach lands here when their season ends.
+ *
+ * Reached three ways, all of them deliberate: the nav's first slot once the working season has
+ * finished, the Overview's redirect for the same state, and a per-year link from the compare list.
  */
 export default function SeasonEndPage({
   params,
@@ -36,9 +44,16 @@ export default function SeasonEndPage({
   const active = assignments.find(a => a.teamId === teamId) ?? null;
   // Shared closed-state predicate (lib/coaches-context.tsx) — same rule as the navs.
   const closed = resolveClosedAssignment(assignments, closedAssignments, teamId);
-  // Chunk F: this page is now the ARCHIVE'S FRONT DOOR (D-F2), reached for any past season of
-  // any team — not just a team whose only season has ended.
-  const page = useCoachSeasonPage(orgSlug, teamId, yearParam);
+  const page = useCoachSeasonPage(orgSlug, teamId);
+  /**
+   * ⚠ WHICH season this page is describing is NOT `page.isReadOnly`. That answers for the team's
+   * WORKING season; this page can also be handed a specific past year by the compare list, while
+   * the team is mid-season. Everything below therefore reads the year from the URL when it is
+   * there and falls back to the working season only when it is not.
+   */
+  const showingWorkingSeason = !yearParam || yearParam === page.season?.programYearId;
+  /** The working season is still under way and no year was named ⇒ there is no end to look at. */
+  const seasonStillUnderWay = showingWorkingSeason && !!page.season && !page.season.isReadOnly;
 
   const [wrapped, setWrapped] = useState<SeasonWrappedPayload | null>(null);
   /** Counts only — the route omits this entirely for a coach without guardian-contact access. */
@@ -57,7 +72,7 @@ export default function SeasonEndPage({
   const mayReadWrapped = page.hasAccess && (!page.capabilities || hasRecordAccess(page.capabilities));
 
   useEffect(() => {
-    if (loading || !mayReadWrapped) return;
+    if (loading || !mayReadWrapped || seasonStillUnderWay) return;
     let cancelled = false;
     setFetching(true);
     setError('');
@@ -71,7 +86,7 @@ export default function SeasonEndPage({
       .catch(() => { if (!cancelled) setError('This season’s wrap-up couldn’t be loaded — refresh to try again.'); })
       .finally(() => { if (!cancelled) setFetching(false); });
     return () => { cancelled = true; };
-  }, [loading, mayReadWrapped, orgSlug, teamId, yearParam]);
+  }, [loading, mayReadWrapped, seasonStillUnderWay, orgSlug, teamId, yearParam]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -85,22 +100,49 @@ export default function SeasonEndPage({
   }
 
   /**
-   * ⚠ **WHERE A HELPER ACTUALLY LANDS** (owner ruling 2026-08-03).
-   *
-   * Practice Plans Phase 4 put the "this season has finished" screen on the TEAM page — but a
-   * helper only reaches that by typing a URL. Signing in sends them to the portal root, which
-   * redirects a closed team straight here; so do both team switchers and the `?year=` season rail.
-   * Six paths, and this is the one they use.
-   *
-   * ⚠ Read from `page.capabilities` — THAT season's grants, not today's (governing rule 1). A
-   * helper who was on a team in 2024 and is an assistant now must still be judged as what they
-   * were at the time.
+   * ⚠ **WHERE A HELPER ACTUALLY LANDS** (owner ruling 2026-08-03). Signing in sends them to the
+   * portal root, which redirects a team with no live season straight here; so does the nav's first
+   * slot, and so does the team switcher. This is the screen they see.
    *
    * Not a gate: the Wrapped route refuses them on its own and the nav hides the door. This is the
    * altitude choice that stops the refusal rendering as a broken page.
    */
   if (page.capabilities && !hasRecordAccess(page.capabilities)) {
     return <CoachSeasonFinishedNotice />;
+  }
+
+  /**
+   * ⚠ THE SEASON IS STILL RUNNING. Reachable by typing the URL, or from a bookmark made in the
+   * months when a coach could dial into this page from anywhere. It used to answer by quietly
+   * showing the NEWEST FINISHED season's Wrapped instead — a hidden season choice, which is exactly
+   * what P2 deleted, and with the page-title season chip gone nothing on screen would have said
+   * which year it was. So it says so, and points at the list that does hold the finished ones.
+   */
+  if (seasonStillUnderWay) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader
+          icon={Trophy}
+          title="Season's End"
+          helpLabel="Season's End"
+          help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
+        />
+        <section className={styles.setupPanel}>
+          <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+            <strong>{page.programYearName}</strong> is still under way. When it finishes, this is
+            where it gets wrapped up — the season&apos;s story, and how many families opened their
+            player&apos;s recap.
+          </p>
+          <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
+            <span>
+              Compare every season
+              <small>Records, roster size and money summaries, season by season</small>
+            </span>
+            <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
+          </Link>
+        </section>
+      </div>
+    );
   }
 
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
@@ -113,16 +155,11 @@ export default function SeasonEndPage({
   return (
     <div className={styles.page}>
       {/* Page-header ruling 2026-08-11: the page names ITSELF, not the team — this was the same
-          masthead-repeat the Overview had. The chip moves inside the h1 (where every other page
-          puts it) and the season line under it retires with the rest.
-          Chunk B (P1 #17): on a closed season this is one of only TWO doors the coach gets, so a
-          missing help icon lands on the coach with the least context — the one returning months
-          later to look something up. */}
+          masthead-repeat the Overview had. Chunk B (P1 #17): a coach reaching this months later
+          has the least context of anyone, so the help icon earns its place here. */}
       <CoachPageHeader
         icon={Trophy}
         title="Season's End"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Season's End"
         help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
       />
@@ -158,33 +195,29 @@ export default function SeasonEndPage({
 
           <section className={styles.setupPanel} aria-labelledby="season-end-doors">
             <p className={styles.setupKicker} id="season-end-doors">Look back any time</p>
-            {/* Chunk F: the sidebar now carries the WHOLE record set for this season, so this
-                page stops being the terminus it was in Batch 3 and becomes the way in. The one
-                door that stays here is the cross-season view, which the sidebar can't express —
-                it spans seasons rather than belonging to this one. */}
+            {/* ⚠ THE SENTENCE MOVED WITH THE MODEL (P2, 2026-08-16). It used to promise the whole
+                record set "from the menu", which was true of a season the ARCHIVE was displaying.
+                What is true now: when this IS the team's working season, the menu is still the
+                coach's own and every record in it opens read-only. When the coach arrived from the
+                compare list to read an OLDER year, the menu belongs to the live season — so the
+                honest offer is this page and the list, not a menu that would answer for a
+                different year. */}
             <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
-              Everything from this season is still here — roster, schedule, attendance, lineups,
-              money records, documents and tryouts. Open any of them from the menu.
+              {showingWorkingSeason
+                ? 'Everything from this season is still here — roster, schedule, attendance, lineups, money records, documents and tryouts. Open any of them from the menu.'
+                : 'This season’s story is kept here. Your menu is showing the season the team is on now.'}
             </p>
-            {/* ⚠⚠ HIDDEN FOR ANYONE BUT A HEAD COACH (owner ruling 2026-08-16). This door's whole
-                promise is the cross-season list, and that list is head-coach only now — leaving it
-                would be a door that succeeds while quietly not delivering, which is the exact
-                failure this project's Phase 1 review called out about this very link.
-
-                ⚠ CARRIES THE YEAR (Phase 2). This is the archive's front door, so the coach
-                clicking through is usually IN a past season — and since Phase 1 the destination
-                reads `?year=`, so a bare link answered a 2024 reader with the live season's game
-                log above the cross-season list they came for. Found by grepping inbound links to
-                a page this rail had made season-aware, which is the only way these surface. */}
-            {page.everHeadCoach && (
-            <Link href={`${base}/history/results${page.query}`} className={styles.seasonDoorRow}>
+            {/* ⚠ Every current member of the staff, not just the head coach (owner ruling,
+                reverted with Design A on 2026-08-16 — see the compare list's own note). This door
+                exists FOR that list, so gating one without the other made the link succeed while
+                quietly not delivering. */}
+            <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
               <span>
                 Compare every season
                 <small>Records, roster size and money summaries, season by season</small>
               </span>
               <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
             </Link>
-            )}
           </section>
 
           {showStartNext && closed && (

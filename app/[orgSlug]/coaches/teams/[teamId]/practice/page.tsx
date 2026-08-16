@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import {
   NotebookPen, CalendarPlus, CheckCircle2, TriangleAlert, ArrowRight, HelpCircle, BookMarked,
 } from 'lucide-react';
@@ -56,9 +55,7 @@ export default function CoachesPracticePlansPage({
   const { orgSlug, teamId } = use(paramsPromise);
   const { loading: ctxLoading } = useCoaches();
   const { openHelp } = useHelpDrawer();
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   // Clock snapshot, once per mount — the render body must stay pure (same rule as Lineups).
   const [nowMs] = useState(() => Date.now());
@@ -91,16 +88,17 @@ export default function CoachesPracticePlansPage({
 
   /**
    * ⚠ Every state write is behind `isStale()`. This page does NOT unmount when only the team
-   * segment or the `?year=` changes — App Router re-renders the same leaf in place — so a slow
-   * response for the team or season the coach has just left would otherwise land on the one they
-   * are now looking at: the header would name team B while the list, and the plan summaries in it,
-   * came from team A. The same guard, for the same reason, is on the Attendance page.
+   * segment changes — App Router re-renders the same leaf in place — so a slow response for the
+   * team the coach has just left would otherwise land on the one they are now looking at: the
+   * header would name team B while the list, and the plan summaries in it, came from team A. The
+   * same guard, for the same reason, is on the Attendance page. (It also covered a `?year=` change
+   * until that control was deleted on 2026-08-16.)
    */
   const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error('Practices could not be loaded');
       const data: { events?: RepTeamEvent[] } = await res.json();
       const practices = (data.events ?? []).filter(e => e.eventType === 'practice');
@@ -117,7 +115,7 @@ export default function CoachesPracticePlansPage({
     } finally {
       if (!isStale()) setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // Wait for the assignments context before fetching, so the fail-open default above can't fire a
   // request for a coach whose schedule access has been revoked. `hasAccess` is in the guard too —
@@ -144,8 +142,6 @@ export default function CoachesPracticePlansPage({
     <CoachPageHeader
       icon={NotebookPen}
       title="Practice plans"
-      season={page.season}
-      teamBase={page.teamBase}
       helpLabel="Practice plans"
       help={helpRequest}
     />

@@ -1110,31 +1110,10 @@ export interface LineupRulesOverride {
   minInningsPerPlayer?: number | null;
 }
 
-/**
- * One entry in a team's season switcher (Coach Portal Chunk F). Crosses the wire from the
- * assignments endpoint, so it lives here rather than beside the server-only read rail.
- * `live` = the team's draft/active season; `complete` = completed/archived (read-only).
- */
-export interface CoachSeasonOption {
-  teamId: string;
-  programYearId: string;
-  programYearName: string;
-  programYearYear: number | null;
-  status: 'live' | 'complete';
-  /**
-   * The capabilities recorded against THIS season's assignment row — governing rule 1, and the
-   * only way the nav can draw the right door set for a season the coach no longer holds their
-   * current grants on. The coach's own grants, so nothing sensitive crosses the wire; the server
-   * re-checks every read regardless, and this only decides which doors are drawn.
-   */
-  capabilities: CoachCapabilities;
-  /**
-   * The role held on THIS season's assignment row — a sibling of `capabilities` for the same
-   * reason (a coach can be head on one season and assistant on another). The masthead's role
-   * tag reads it off the resolved season instead of re-searching the assignment arrays.
-   */
-  coachRole: 'head_coach' | 'assistant_coach';
-}
+// ⚠ `CoachSeasonOption` — one entry in a team's season switcher — was DELETED on 2026-08-16 with
+// the switcher itself (Design A, P2 of COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md). The working
+// season a page renders is resolved from the assignment arrays the shell already holds; see
+// `CoachWorkingSeason` in lib/coach-season-view.ts. Nothing crosses the wire per-season any more.
 
 export interface RepProgramYear {
   id: string;

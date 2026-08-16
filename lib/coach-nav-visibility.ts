@@ -1,142 +1,56 @@
 import { hasRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilities } from './coach-capabilities';
 
 /**
- * The CLOSED-season nav set. Batch 3 shipped this as exactly two doors — everything else a
- * coach built was unreachable the moment the season ended. Chunk F opens it to the full record
- * set, still capability-gated by `isCoachNavItemVisible` against THAT season's grants.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚠⚠ **THE SECOND NAV IS DELETED** (Design A, owner ruling 2026-08-16; P2 of
+ * COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md).
  *
- * What is deliberately absent, and why (owner ruling D-F1/D-F7, 2026-08-01) — records in,
- * instruments out:
- *   • Chat / Email families — a finished season must not offer to message a team that no
- *     longer exists.
- *   • Settings — nothing in a finished season is configurable.
- *   • Tryouts points at `/tryouts/history`, NOT the live hub: the hub runs a tryout
- *     (check-in, evaluator links, decisions, offer emails); the archive records one.
- *   • Money points at the records hub; payment requests and allocations move money and stay
- *     live-season only.
- *   • Staff (removed 2026-08-16, M1) — staff belongs to the TEAM now, one list with no season
- *     dimension, so a finished season has no staff surface to offer: who coached it is a fact
- *     in its record, and who may open things is decided by current membership alone. The old
- *     per-season "remove access" control (governing rule 3) retired with the model.
- * Season's End leads because it is the archive's front door (D-F2). Icons resolve per
- * component; a door added here reaches both navs at once.
+ * `CLOSED_TEAM_NAV_ITEMS`, `CLOSED_SECTION_EXTRAS`, `LIVE_ONLY_ARCHIVE_SECTIONS` and
+ * `archiveHasSection` all lived here, and all of them existed to describe a PLACE: a shorter,
+ * differently-ordered menu that replaced the coach's own the moment a season ended, plus the two
+ * correction lists needed to stop the season switcher reaching pages that menu hid. There is no
+ * such place now. There is one nav, in one order, and a team between seasons is a team — every
+ * door still opens, records render read-only, and the live instruments behind them say so in
+ * their own words (`components/coaches/CoachNotOnTeam.tsx`).
+ *
+ * ⚠ The two rulings those lists encoded did NOT change, and neither did their teeth:
+ *   · Playing-time analytics are live-season-only PERMANENTLY (owner, 2026-08-16) — the figures
+ *     are recomputed from saved lineups, so a finished season would be shown as today's code
+ *     reads it rather than as the coach read it.
+ *   · The opponent scouting book is an INSTRUMENT (owner, 2026-08-04, ratified 2026-08-16) — its
+ *     notes are the team's current book, not a snapshot of a year.
+ * Both are enforced where enforcement belongs — `tests/unit/coach-history-endpoint-guard.test.ts`
+ * fails the build if either route learns to serve a season it was not given — and the Insights hub
+ * hides their tiles on a finished season rather than letting them dead-end. What died with the
+ * lists is the switcher that could reach them sideways; there is no sideways any more.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
-  { label: "Season's End", href: '/season-end' },
-  { label: 'Roster',       href: '/roster' },
-  { label: 'Schedule',     href: '/schedule' },
-  { label: 'Lineups',      href: '/lineups' },
-  { label: 'Money',        href: '/accounting' },
-  { label: 'Documents',    href: '/documents' },
-  { label: 'Development',  href: '/development' },
-  { label: 'Tryouts',      href: '/tryouts/history' },
-  /**
-   * ⚠ THE HUB, not the results page (archive rail Phase 2, 2026-08-16). This pointed at
-   * `/history/results` for as long as the hub was live-season-only, and that one workaround is
-   * what forced Attendance to keep an archive-only nav entry — the results page carries no
-   * attendance door, so the menu was the only route to a past season's report. The hub reads its
-   * season now, so the door is the hub again and both navs tell one story.
-   *
-   * ⚠⚠ ORDER MATTERED HERE. Attendance could only leave this list once the hub was genuinely the
-   * door; deleting it first would have made a past season's attendance unreachable, which is the
-   * exact defect the live-nav tidy-up caught and avoided a day earlier.
-   */
-  { label: 'Insights',     href: '/history' },
-];
+
+/** The label the landing slot carries in a live season. */
+export const OVERVIEW_LABEL = 'Overview';
+/** …and what replaces it once the working season has finished. */
+export const SEASON_END_LABEL = "Season's End";
 
 /**
- * ⚠ SECTIONS THAT EXIST IN AN ARCHIVE WITHOUT A MENU ENTRY — and why this list has to exist.
+ * Swap the landing slot for Season's End when the team's working season has finished.
  *
- * The archive MENU is not the same question as "which sections can a finished season render".
- * Attendance is the case that proves it: it is an approved archive door (D-F1), its page and route
- * are both season-aware, and it is reached through the Insights hub exactly as it is in a live
- * season — it simply has no line of its own in the menu any more.
+ * ⚠ **ONE RULE, ONE HOME** — the same reason `isCoachNavItemVisible` below lives here. The sidebar
+ * and the bottom nav are required to stay in step (pinned by `tests/unit/coach-nav-groups.test.ts`),
+ * and this was two hand-copied ternaries in two files with separately-named constants, which is the
+ * shape those two navs have drifted apart in before.
  *
- * `resolveSeasonSwitchHref` used to answer "does this section exist in an archive?" from
- * `CLOSED_TEAM_NAV_ITEMS` alone. Once Attendance left that list, a coach reading the LIVE
- * attendance report and switching to a past season would have been dumped on Season's End instead
- * of that season's report — a working destination silently replaced by a fallback, because the
- * menu was standing in for a question it does not actually answer.
+ * ⚠ Matched on the LABEL, not on object identity. The `===` comparison this replaced worked only
+ * because both call sites happened to reference a module-level constant — a nav item rebuilt inline
+ * (a `.map` that spreads, a memo that clones) would silently stop swapping, and the coach would
+ * land on an Overview describing a season that has ended.
  */
-export const CLOSED_SECTION_EXTRAS: string[] = ['/attendance'];
-
-/**
- * ⚠ THE INVERSE, AND THE SUBTLER HALF: sections UNDER an archive-reachable prefix that do not
- * themselves exist in a finished season.
- *
- * `/history` is now an archive door, and a prefix match on it sweeps in every page beneath it —
- * including the two Insights reports a record deliberately hides. Without this list, switching to a
- * past season from the live playing-time or opponents report would keep the coach on a page the
- * archive hides everywhere else, reached through the one control that bypassed the hiding.
- *
- *   · playing-time — `lineup-analytics` is not on the season-read rail, and was ruled
- *     live-season-only PERMANENTLY (owner, 2026-08-16). It cannot serve a past season at all.
- *   · opponents — the scouting book is an INSTRUMENT (owner ruling 2026-08-04, ratified again
- *     2026-08-16); its notes are the team's current book, not a snapshot of that year.
- *
- * Both fall back to Season's End, the archive's front door, rather than to a page that would
- * quietly answer with the live season.
- */
-/**
- * Named so the hub and this list cannot disagree by typo. The Insights hub asks
- * `archiveHasSection(PLAYING_TIME_SECTION)` rather than restating `!isReadOnly`, so reversing
- * either ruling is a one-line edit HERE and the tile follows.
- */
-export const PLAYING_TIME_SECTION = '/history/playing-time';
-export const OPPONENTS_SECTION = '/history/opponents';
-
-export const LIVE_ONLY_ARCHIVE_SECTIONS: string[] = [
-  PLAYING_TIME_SECTION,
-  OPPONENTS_SECTION,
-  /**
-   * ⚠⚠ THESE TWO ARE A PRE-EXISTING DEFECT THIS LIST EXPOSED (`/review` 2026-08-16) — not something
-   * Phase 2 introduced, and the switcher reached them before this list existed too.
-   *
-   * The drill library and the plan-template library are INSTRUMENTS, ruled live-season-only by the
-   * owner on 2026-08-01, with a dedicated build-enforced test each in
-   * `tests/unit/coach-season-write-guard.test.ts`. Their routes are off the season-read rail, their
-   * pages read no `?year=` at all, and the Development hub already hides both doors in a record.
-   *
-   * But `/development` IS an archive door, so a prefix match sweeps its children in — which left the
-   * SEASON SWITCHER as the one control that still reached them. Switching from the live drill
-   * library to a past season landed a coach on the LIVE drills under a past-season chip: every row
-   * correct, every row the wrong year, no error anywhere.
-   *
-   * It is fixed here rather than left because this list is now the stated answer to "which
-   * live-only sections sit under an archive prefix" — and a list that holds two of the four cases
-   * is a guard that reads as complete while being half blind, which is worse than no list.
-   */
-  '/development/drills',
-  '/development/templates',
-];
-
-/**
- * ⚠ Matches on a PATH BOUNDARY, not a bare prefix (`/review` 2026-08-16).
- *
- * A plain `startsWith` answers yes for `/rosterNotes` against `/roster` — the two share letters,
- * not a parent. No such collision exists in the tree today, which is exactly why it is worth
- * closing now: the failure would be a future route silently classified as archive-reachable (or
- * silently hidden) with no type error and nothing rendered wrongly enough to notice.
- *
- * A section belongs to an href when it IS that href, or continues it with `/` (a child route) or
- * `?` (the same page with a query — the Money hub's tabs arrive as `/accounting?section=dues`).
- */
-function isUnder(section: string, href: string): boolean {
-  if (href === '') return false;
-  return section === href || section.startsWith(`${href}/`) || section.startsWith(`${href}?`);
-}
-
-/**
- * Does a finished season have this section at all? The union of the menu and the hub-reached
- * extras, minus the live-only pages that sit under an archive-reachable prefix.
- *
- * ⚠ The subtraction is checked FIRST and deliberately: `/history/playing-time` is a child of
- * `/history`, so a plain "some item matches" test answers yes for a page the archive hides.
- */
-export function archiveHasSection(section: string): boolean {
-  if (LIVE_ONLY_ARCHIVE_SECTIONS.some(s => isUnder(section, s))) return false;
-  return [...CLOSED_TEAM_NAV_ITEMS.map(i => i.href), ...CLOSED_SECTION_EXTRAS]
-    .some(href => isUnder(section, href));
+export function withLandingSlot<T extends { label: string }>(
+  items: T[],
+  seasonFinished: boolean,
+  seasonEndItem: T,
+): T[] {
+  if (!seasonFinished) return items;
+  return items.map(item => (item.label === OVERVIEW_LABEL ? seasonEndItem : item));
 }
 
 /**
@@ -231,10 +145,14 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * Overview is deliberately NOT here: it is where a helper lands, and it renders their practice.
      */
     /**
-     * ⚠ The archive's FRONT DOOR, and until 2026-08-03 the one closed-season door no grant
-     * governed — it fell through to `default: return true`, so a helper kept it. Season's End
-     * leads with Season Wrapped, which is the team's whole season; a parent volunteer who ran one
-     * station has no claim to it (owner ruling 2026-08-03). Same key as the route behind it.
+     * ⚠ The post-season landing, and until 2026-08-03 the one door of its kind no grant governed
+     * — it fell through to `default: return true`, so a helper kept it. Season's End leads with
+     * Season Wrapped, which is the team's whole season; a parent volunteer who ran one station has
+     * no claim to it (owner ruling 2026-08-03). Same key as the route behind it.
+     *
+     * ⚠ It is in the nav ONLY when the working season has finished (P2, 2026-08-16) — the one
+     * item whose visibility depends on the season's state rather than on a grant. Mid-season there
+     * is no season's end to look back on, and the look-back layer is reached from Insights.
      */
     case "Season's End": return hasRecordAccess(caps);
     case 'Chat':          return caps.staffChat;

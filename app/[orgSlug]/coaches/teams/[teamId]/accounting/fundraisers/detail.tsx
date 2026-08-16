@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Gift, Settings, X, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -188,9 +187,7 @@ export function FundraiserDetail({
   // `page.canWrite()` folds read-only in, so an archived season offers no Settings and no
   // log/edit control; the API refuses both regardless (the write routes resolve the ACTIVE
   // year and a past fundraiser 404s), and this is the same answer given before the click.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const isSponsor = fundraiser?.kind === 'sponsor';
@@ -238,7 +235,7 @@ export function FundraiserDetail({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}/entries${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}/entries`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setFundraiser({ ...data.fundraiser, tagIds: data.fundraiser?.tagIds ?? [] });
@@ -251,7 +248,7 @@ export function FundraiserDetail({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, fundraiserId, seasonQuery]);
+  }, [orgSlug, teamId, fundraiserId]);
 
   /**
    * ⚠ THE SIGNAL RUNS BOTH WAYS, and a screen that only sends it is the one left wrong.
@@ -418,7 +415,7 @@ export function FundraiserDetail({
     <>
       {/* One level up, IN THE SAME SEASON — the old page's back link dropped `?year=`, so leaving
           an archived fundraiser quietly ended the archive visit. */}
-      <CoachBackLink href={moneySectionHref(base, 'fundraisers', undefined, seasonQuery)}>
+      <CoachBackLink href={moneySectionHref(base, 'fundraisers', undefined)}>
         All fundraisers
       </CoachBackLink>
       {/* Page-header ruling 2026-08-11: the Active/Closed badge is STATE, so it rides the title

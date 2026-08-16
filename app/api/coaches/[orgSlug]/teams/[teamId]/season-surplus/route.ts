@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { fmt } from '@/lib/coach-money-summary';
 
 /**
@@ -46,10 +46,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/season-surplus
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear, isReadOnly } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

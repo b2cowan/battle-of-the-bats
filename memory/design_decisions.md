@@ -4,6 +4,53 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-16 — THE SEASON DIAL IS DELETED: history is delivered in place, and a year parameter is a DECISION
+
+**Owner ruling (Design A on M1, artifact `aa758bcb` §10), and it OVERRIDES the archive rulings below.**
+The coaches portal had a second mode: a `<select>` in the sidebar, a season list in the phone's More
+sheet, and a "2025 · Complete" chip beside every page title, any of which pointed the whole product at
+a past year — and replaced the coach's menu with a shorter, differently-ordered one while it did.
+That place is gone. A coach sees the season their team is **on**: the live one, or the newest finished
+one when the team is between seasons.
+
+**What this supersedes, explicitly:** D-F3 (where the season switcher lives — there is none), D-F4
+(the "2025 · Complete" page-title chip — deleted; the masthead's own presentational chip is the only
+place a finished season is named), the "archive is opt-in" allow-list pair
+(`APPROVED_ARCHIVE_DOORS` / `APPROVED_SEASON_AWARE_ROUTES`), and Chunk F's **governing rule 1**
+("what the coach could see AT THE TIME"), which M1 had already retired — capabilities are the
+member's current ones, in every season, because only current staff hold access at all.
+
+**What replaces it, and where the teeth are.** `HISTORY_ENDPOINTS` in
+`tests/unit/coach-history-endpoint-guard.test.ts` is the whole look-back layer — today exactly
+`wrapped` (Season Wrapped, and the payload behind Season's End), reached from the **Past seasons**
+compare list at the foot of Insights → "How are we doing?". The build fails when a route *or a page*
+learns to read a year. ⚠ **That page-side half was impossible to write before**: while ~24 pages
+legitimately carried `?year=` there was nothing to assert, and the client half of the contract went
+unguarded for the whole life of the archive.
+
+⚠ **ONE NAV, ALWAYS — the design decision inside the deletion.** A team between seasons keeps its
+whole menu, in its usual order; only the landing slot swaps (Overview ⇄ **Season's End**). The
+second, shorter menu was the confusing part, not the read-only-ness. This is only honest because P1
+had already built `CoachNotOnTeam` — *"this screen is part of running a live season, and it comes
+back when the next one starts"*, with a Season's End link — so the live instruments explain
+themselves instead of dead-ending, and CLAUDE.md's "hide the entry point" rule does not apply to
+them.
+
+⚠ **The two hidden Insights tiles are NOT the same rule, and both survive.** Playing time is hidden
+on a finished season because its figures are **recomputed** from saved lineups (a derivation cannot
+promise what the coach read that year); the scouting book is hidden because it is an **instrument**
+(today's notes, not a snapshot). Attendance is the counter-case and its tile **stays** — a record of
+who turned up, and since it is in neither nav, that tile is the report's only door in the product.
+
+**Applies to:** `lib/coach-team-read.ts` (the renamed season-read rail — minus its year it is the
+shared working-season resolver ~23 routes depend on, so it was renamed rather than deleted),
+`lib/coach-season-view.ts`, `lib/coach-nav-visibility.ts`, `lib/coaches-context.tsx`,
+`CoachesSidebar`/`CoachesBottomNav`/`CoachPageHeader` (`CoachSeasonChip` deleted), ~24 coach pages,
+the coach demo's tour step 7 + dock line, and CLAUDE.md's binding section. Built on dev 2026-08-16;
+owner QA ledger §40. [[design-principles]]
+
+---
+
 ### 2026-08-15 — A STRUCTURAL BRAND TOKEN IS THEME-INVISIBLE IN THE WARM PORTAL: sponsor blue is `--info`, never `--blueprint-blue`
 
 **Trigger:** the rendered sweep, on the coach Money hub's Fundraising tab — the **Sponsor** kind chip

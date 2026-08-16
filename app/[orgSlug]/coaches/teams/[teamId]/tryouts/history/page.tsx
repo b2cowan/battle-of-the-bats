@@ -1,6 +1,5 @@
 'use client';
 import { use, useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { ClipboardList, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useCoachSeasonPage, useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -75,9 +74,7 @@ export default function TryoutHistoryPage({
 }) {
   const { orgSlug, teamId } = use(params);
   const { loading } = useCoaches();
-  const searchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
 
   const [data, setData] = useState<HistoryPayload | null>(null);
   const [error, setError] = useState('');
@@ -88,7 +85,7 @@ export default function TryoutHistoryPage({
     setFetching(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-history${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-history`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Failed to load tryout history');
       setData(json as HistoryPayload);
@@ -97,7 +94,7 @@ export default function TryoutHistoryPage({
     } finally {
       setFetching(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { if (!loading) void load(); }, [loading, load]);
 
@@ -123,8 +120,6 @@ export default function TryoutHistoryPage({
       <CoachPageHeader
         icon={ClipboardList}
         title="Tryout history"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Tryout history"
         help={{ module: 'coaches', sectionIds: ['premium-tryout-history'], fullGuideHref: `/${orgSlug}/coaches/help#premium-tryout-history` }}
       />

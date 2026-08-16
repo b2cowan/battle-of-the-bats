@@ -190,8 +190,8 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       sub: 'last season, closed',
       teamId: DEMO_COACH_TEAM_IDS.seasonsEnd,
       path: teamPath(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
-      saidPublic: 'A finished year, kept: 18-6-2, the recap nine families opened, and every screen of the season still browsable — read-only, exactly as it ended.',
-      saidOperator: 'A finished year, kept: 18-6-2, the recap nine families opened, and every screen of the season still browsable — read-only, exactly as it ended.',
+      saidPublic: 'A finished year, kept: 18-6-2, the recap nine families opened, and the season\'s record still open from the same menu — read-only, exactly as it ended.',
+      saidOperator: 'A finished year, kept: 18-6-2, the recap nine families opened, and the season\'s record still open from the same menu — read-only, exactly as it ended.',
       bannerNote: 'A finished year, kept',
     }),
   ];
@@ -457,8 +457,9 @@ export function sandboxTourSteps(
  * ── The rule every destination obeys ─────────────────────────────────────────────────────────
  * **A step lands one level deeper than its moment's dock chip.** The dock drops a visitor on the
  * moment's front door; the tour opens the drawer behind it. Step 7 is the single exception, and
- * deliberately: the archive promise is not a screen you can point at, it is the fact that pressing
- * things still works, so the step lands where the chip does and the sentence says so.
+ * deliberately: what it is showing is not a screen you can point at, it is the fact that the
+ * season's record is still there under the coach's own menu, so the step lands where the chip does
+ * and the sentence says so.
  *
  * ── What was measured before this list was written (2026-08-05, live demo, real browser) ─────
  * Three of the plan's candidate beats could not be pointed at, and this list routes around all
@@ -563,7 +564,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,
       anchor: '[data-sandbox-tour="season-recaps"]',
-      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed and every screen of it still opens, read-only, exactly as it ended. Try one.',
+      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, and the record of it is still here: the same menu, every screen read-only, exactly as it ended. Try one.',
     },
   ];
 }

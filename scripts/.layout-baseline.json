@@ -1,6 +1,330 @@
 {
-  "generated": "2026-08-16T16:20:21.080Z",
+  "generated": "2026-08-16T22:45:59.244Z",
   "entries": {
+    "coach-payables|361|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Expenses (2)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Money in (0)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Mark Paid": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Schedule": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Commitments (1)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Add a commitment": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Unpaid": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Paid": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·All": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|select·UAT Test TeamUAT Between Seasons · 2025 ": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Expenses (2)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Money in (0)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Edit Practice balls and tees": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Mark Paid": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|1440|tap-floor|button·Edit Scorekeeping tablet": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|select·UAT Test TeamUAT Between Seasons · 2025 ": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Practice plans": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Schedule": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Commitments (1)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Add a commitment": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Unpaid": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Paid": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·All": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|button·Mark paid": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|1440|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
     "coach-history-awards|768|tap-floor|a·Insights": {
       "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
       "detail": "34px tall (floor 44)"
@@ -184,42 +508,6 @@
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than 33px because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Expenses (2)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Payables (1)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Money in (0)": {
-      "reason": "The Money in sub-tab (mig 243), the same shared .viewToggleBtn primitive as the Expenses and Payables tabs beside it, at the same 27px. Product-wide sub-tab debt already held for its siblings on this very screen; padding one tab of four would break the row rather than fix the floor.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Export": {
-      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Add": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-expenses|768|tap-floor|button·Mark Paid": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "33px tall (floor 44)"
     },
     "coach-budget|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
@@ -468,130 +756,6 @@
     "coach-budget-vs-actual|1440|content-overflow|text·Budgeted (cumulative)": {
       "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
       "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-expenses|1440|tap-floor|a·FieldLogicHQ Home": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Account": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Notifications": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Overview": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Practice plans": {
-      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Lineups": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Tournaments": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Insights": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Money": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Chat": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Email families": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Roster": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Tryouts": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Staff": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Documents": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Settings": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|a·Help": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Sign out": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Import": {
-      "reason": "2026-08-13 page-level action pass: standard portal control at its compact desktop size, re-keyed because it moved (Money hub header -> the tab’s own toolbar) or was renamed (\"Import payables\" -> \"Import\"). None is new to the screen. Add Expense / Add Payable read 31px rather than the 33px they were baselined at one slot away because rule 5 made them the LIME FILL, which has no 1px border — a 2px consequence of the shared button classes, portal-wide, not a decision taken here. <=640px every one of them clears the 44px floor via .panelToolbarActions (and the header grid before it); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, exactly as the 2026-08-11 header pass recorded for these same buttons.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Expenses (2)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Payables (1)": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Money in (0)": {
-      "reason": "The Money in sub-tab (mig 243), the same shared .viewToggleBtn primitive as the Expenses and Payables tabs beside it, at the same 27px. Product-wide sub-tab debt already held for its siblings on this very screen; padding one tab of four would break the row rather than fix the floor.",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Export": {
-      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Add": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Edit Practice balls and tees": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Mark Paid": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-expenses|1440|tap-floor|button·Edit Scorekeeping tablet": {
-      "reason": "Desktop/tablet widths keep the portal's compact control heights by the standing portal-wide decision; the 44px floor is enforced at the PHONE breakpoint, and every one of these clears it there — at 361/390 the card rules give each trailing control full width and the tap minimum, which is why none of them appear at those widths. Added 2026-08-15 with the row-edit convention (RowEditButton) and the single Add button: same controls, same sizes as the Budget Plan pencil and the Mark Paid buttons already baselined beside them.",
-      "detail": "24px tall (floor 44)"
     },
     "coach-fundraisers|361|tap-floor|a·Chocolate sale": {
       "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",

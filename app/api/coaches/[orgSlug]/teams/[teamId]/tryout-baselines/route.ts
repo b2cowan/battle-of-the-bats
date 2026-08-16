@@ -39,8 +39,8 @@ import { ORG_TIME_ZONE } from '@/lib/timezone';
  * (`canWriteDevelopment`). Gating on either alone would open a side door around the other's rule.
  *
  * ⚠ **LIVE SEASON ONLY, by construction.** Built on `resolveLiveCoachTeamContext`, never the
- * season-read rail: seeding a season's development plan is an INSTRUMENT, not a record, so a
- * finished season cannot be addressed here at all (archive-is-opt-in, CLAUDE.md).
+ * working-season read: seeding a season's development plan is an INSTRUMENT, not a record, so a
+ * finished season cannot be addressed here at all.
  *
  * ⚠ **The client never supplies a snapshot.** It is recomputed server-side at seed time from the
  * scores, through the same `rankTryoutCandidates` the scoreboard and the report use — a posted

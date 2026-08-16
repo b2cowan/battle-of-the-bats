@@ -51,7 +51,9 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
 
 /**
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
- *                    practiceEventId:string, gameEventId:string, baseUrl:string}>}
+ *                    practiceEventId:string, gameEventId:string, fundraiserId:string,
+ *                    sponsorId:string, finishedTeamId:string, finishedYearId:string,
+ *                    baseUrl:string}>}
  */
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -139,6 +141,32 @@ export async function resolveUatContext() {
   if (sp.error) throw new FixtureError(`sponsor lookup failed: ${sp.error.message}`);
   if (!sp.data) throw new FixtureError('No SPONSOR on the active program year — the sponsor screen cannot be swept.');
 
+  /**
+   * ⚠⚠ THE BETWEEN-SEASONS TEAM — the fixture gap that hid three rounds of defects (closed
+   * 2026-08-16, P2). Until this existed the rendered sweep's world had NO completed season, so
+   * Season's End, the compare list and every "this season has finished" state were invisible to it.
+   * A separate TEAM rather than a second season, because the state worth rendering is a team with
+   * no live year at all — which the main fixture team cannot be without losing every other screen.
+   */
+  const pastTeam = await db.from('rep_teams')
+    .select('id, name').eq('org_id', org.data.id).eq('name', 'UAT Between Seasons').maybeSingle();
+  if (pastTeam.error) throw new FixtureError(`between-seasons team lookup failed: ${pastTeam.error.message}`);
+  if (!pastTeam.data) throw new FixtureError('No "UAT Between Seasons" team — the finished-season screens cannot be swept.');
+
+  const pastYear = await db.from('rep_program_years')
+    .select('id, year, status').eq('team_id', pastTeam.data.id)
+    .order('year', { ascending: false }).limit(1).maybeSingle();
+  if (pastYear.error) throw new FixtureError(`finished season lookup failed: ${pastYear.error.message}`);
+  if (!pastYear.data) throw new FixtureError('The between-seasons team has no program year.');
+  // ⚠ A live year here would silently turn every finished-season screen into a live one, and the
+  // sweep would render them happily. The state is the point, so it is asserted rather than assumed.
+  if (pastYear.data.status !== 'completed' && pastYear.data.status !== 'archived') {
+    throw new FixtureError(
+      `"UAT Between Seasons" has a ${pastYear.data.status} year — it must have NO live season, or `
+      + 'the finished-season screens render as live ones and the sweep measures the wrong thing.',
+    );
+  }
+
   return {
     orgSlug: org.data.slug,
     orgId: org.data.id,
@@ -148,6 +176,9 @@ export async function resolveUatContext() {
     gameEventId: game.data.id,
     fundraiserId: fr.data.id,
     sponsorId: sp.data.id,
+    /** A team whose WORKING season has finished — Season's End, the compare list, read-only records. */
+    finishedTeamId: pastTeam.data.id,
+    finishedYearId: pastYear.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

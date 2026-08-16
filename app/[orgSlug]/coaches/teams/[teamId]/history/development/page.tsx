@@ -1,7 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Info, TrendingUp } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -82,9 +81,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   // Chunk F — which SEASON is on screen. The board route this page reads has been on the
   // season-read rail since Chunk F; the page simply never passed the parameter, so a coach opening
   // the report from an archived season silently got the live one.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
 
   const [data, setData] = useState<ReportData | null>(null);
   const [noSeason, setNoSeason] = useState(false);
@@ -96,9 +93,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     try {
       // ?history=1 → the History-linked column. ?plans=1 → the three Phase 3 sections. Both are
       // opt-in because each costs a scan the board page and the hub tile don't render.
-      const sep = seasonQuery ? '&' : '?';
       const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/development/board${seasonQuery}${sep}history=1&plans=1`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/development/board?history=1&plans=1`,
       );
       const json = await res.json().catch(() => null);
       // No active program year is a legitimate state, not a retryable failure (board parity).
@@ -117,7 +113,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the report — try again.');
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -170,8 +166,6 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
       <CoachPageHeader
         icon={TrendingUp}
         title="Is everyone getting attention?"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Development"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
       />
@@ -231,7 +225,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                   return (
                     <tr key={r.playerId}>
                       <td>
-                        <Link href={`${base}/roster/${r.playerId}${seasonQuery}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        <Link href={`${base}/roster/${r.playerId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                           {r.number ? <span className={styles.devRowNum}>#{r.number} </span> : null}{name}
                         </Link>
                       </td>
@@ -332,7 +326,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                         practice section stays hidden in a finished season, as 1b ruled. The link
                         carries the viewed season so the page it opens resolves the same one. */}
                     {p.hasPlan && (
-                      <Link href={`${base}/history/development/practices/${p.eventId}${seasonQuery}`}
+                      <Link href={`${base}/history/development/practices/${p.eventId}`}
                         className={styles.reportRecapLink}>
                         Open the plan →
                       </Link>

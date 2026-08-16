@@ -12,7 +12,7 @@ import { assemblePlayerSeasonRecap } from '@/lib/rep-player-season-recap';
 /**
  * GET the season recap a family will read for ONE player — the coach's PREVIEW (Chunk D 3.2).
  *
- * ⚠ LIVE SEASON ONLY, deliberately. This route does not touch `lib/coach-season-read.ts`, so
+ * ⚠ LIVE SEASON ONLY, deliberately. This route does not touch `lib/coach-team-read.ts`, so
  * it resolves the team's ACTIVE year and cannot address a past season at all — the archive's
  * fail-closed default (owner ruling 2026-08-01). That is also the right MOMENT for a preview:
  * once a season closes, every write to it is refused, so there is nothing a coach could act on

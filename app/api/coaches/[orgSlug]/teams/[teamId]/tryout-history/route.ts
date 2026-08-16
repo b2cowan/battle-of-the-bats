@@ -8,7 +8,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { pickPriorProgramYear } from '@/lib/tryout-report';
 
 /**
@@ -23,10 +23,10 @@ import { pickPriorProgramYear } from '@/lib/tryout-report';
  * this candidate last time. Gated on the `tryouts` capability recorded against THAT season's
  * assignment row — a coach who wasn't cleared for tryouts then can't read them now.
  */
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { programYear, capabilities, isReadOnly } = resolved;
 

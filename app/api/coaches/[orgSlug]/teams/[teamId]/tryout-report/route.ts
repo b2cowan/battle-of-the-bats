@@ -14,7 +14,7 @@ import {
 } from '@/lib/db';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonCapabilityMap } from '@/lib/coach-season-read';
+import { resolveCoachTeamCapabilities } from '@/lib/coach-team-read';
 import { buildTryoutReport, pickPriorProgramYear, inPlayTryoutCandidates } from '@/lib/tryout-report';
 import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
 
@@ -31,13 +31,13 @@ import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
  * null — the name×score×decision mapping for the full-detail export does not leave the server.
  *
  * ⚠ **R8 — the returning-improvement line makes this a past-season reader** (Phase 3, work item
- * C4), so this path is listed in `APPROVED_SEASON_AWARE_ROUTES`
- * (tests/unit/coach-season-write-guard.test.ts) alongside `tryout-memory`, which carries the full
- * three-question answer. The read is the same one: prior tryout averages, gated through
- * `resolveCoachSeasonCapabilityMap` — which since M1 (2026-08-16) answers with the coach's
- * CURRENT capabilities for every year, membership-gated (governing rule 1 retired with the
- * per-season access model; the widening is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md
- * §1). The report's own season stays the ACTIVE one — this route takes no `?year=` and never will.
+ * C4), so this path is listed in `CROSS_SEASON_READERS`
+ * (tests/unit/coach-history-endpoint-guard.test.ts) alongside `tryout-memory`, which carries the
+ * full three-question answer. The read is the same one: prior tryout averages, gated through
+ * `resolveCoachTeamCapabilities` — which since M1 (2026-08-16) answers with the coach's CURRENT
+ * capabilities, membership-gated, for every year (governing rule 1 retired with the per-season
+ * access model; the widening is recorded in COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §1). The
+ * report's own season stays the ACTIVE one — this route takes no year parameter and never will.
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -62,14 +62,14 @@ export const GET = withObservability(async (_req: Request,
   ]);
   const prior = pickPriorProgramYear(allYears, programYear.id);
 
-  const [rubric, registrations, scores, roster, continuityLinks, priorRegistrations, capabilityByYear] = await Promise.all([
+  const [rubric, registrations, scores, roster, continuityLinks, priorRegistrations, memberCapabilities] = await Promise.all([
     tryout ? getRepTryoutRubric(tryout.id) : Promise.resolve(null),
     getRepTryoutRegistrations(programYear.id),
     tryout ? getRepTryoutScores(tryout.id) : Promise.resolve([]),
     getRepRosterPlayers(programYear.id),
     getRepTeamContinuityLinks(teamId),
     prior ? getRepTryoutRegistrations(prior.id) : Promise.resolve(null),
-    resolveCoachSeasonCapabilityMap(ctx.org, ctx.user.id, teamId),
+    resolveCoachTeamCapabilities(ctx.org, ctx.user.id, teamId),
   ]);
 
   // C4 — the returning-improvement aggregate. The resolver applies R6 itself and returns nothing
@@ -87,7 +87,7 @@ export const GET = withObservability(async (_req: Request,
     rubric,
     scores,
     continuityLinks,
-    capabilityByYear,
+    capabilities: memberCapabilities,
   });
 
   const report = buildTryoutReport({

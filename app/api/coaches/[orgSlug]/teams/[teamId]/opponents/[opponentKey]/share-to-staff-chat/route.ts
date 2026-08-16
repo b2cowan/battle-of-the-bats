@@ -15,7 +15,7 @@ import { getSportPack } from '@/lib/sports';
  * exactly what the coach was looking at.
  *
  * Caps `staffChat`; the room membership check inside postChatMessage is the second lock.
- * Live-season route off the season rail — INSTRUMENT ruling (coach-season-write-guard).
+ * Live-season route off the working-season read — INSTRUMENT ruling (coach-history-endpoint-guard).
  */
 export const POST = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string }> },) => {

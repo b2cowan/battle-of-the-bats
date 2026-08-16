@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Award, Check, Printer, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -35,9 +34,7 @@ export default function CoachesAwardsReportPage({
    *      every write verb here resolves the ACTIVE year and cannot address a past season at all.
    *   3. **Stop the report spanning seasons.** Fixed at the route, not here — see the awards GET.
    */
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
   const isRecord = page.isReadOnly;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -63,9 +60,7 @@ export default function CoachesAwardsReportPage({
    * season's leaderboard under another's chip, and an unguarded write from a superseded run can
    * strand the page on "Loading report…" for good. Same shape as the results page and the hub.
    */
-  const loadKey = `${teamId}|${seasonQuery}`;
-  /** The season as a SECOND query param — the certificate links already own the `?`. */
-  const seasonParam = seasonQuery.replace('?', '&');
+  const loadKey = teamId;
 
   /**
    * ⚠⚠ STALENESS IS INTERNAL, BECAUSE AN OPT-IN GUARD GETS FORGOTTEN — and it was, three times
@@ -92,8 +87,8 @@ export default function CoachesAwardsReportPage({
     setError('');
     try {
       const [typesRes, awardsRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
       ]);
       // No active program year is a legitimate state, not a retryable failure — the same
       // honest-empty branch this report's three siblings already have (WI-7). ⚠ Far RARER now:
@@ -123,7 +118,7 @@ export default function CoachesAwardsReportPage({
         setLoading(false);
       }
     }
-  }, [orgSlug, teamId, seasonQuery, loadKey]);
+  }, [orgSlug, teamId, loadKey]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -209,15 +204,13 @@ export default function CoachesAwardsReportPage({
       {/* ⚠ The back link carries the year. The hub is this page's parent in EVERY season now, and
           a bare link would return a coach reading 2024 to the live season's hub — the "link one
           level down" defect this rail has already sprung twice. */}
-      <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
+      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
       {/* Page-header ruling 2026-08-11: "Every award given this season" deleted — the list below
           IS every award given this season, and the season is the masthead's to state. */}
       <CoachPageHeader
         icon={Award}
         title="Who's earning it?"
         helpLabel="Awards"
-        season={page.season}
-        teamBase={page.teamBase}
         help={{ module: 'coaches', sectionIds: ['recipe-game-day-details'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-game-day-details` }}
       />
 
@@ -256,7 +249,7 @@ export default function CoachesAwardsReportPage({
                 won in, and that page reads it from the URL. */}
             {activeType && visibleAwards.length > 0 && (
               <Link
-                href={`${base}/history/awards/certificate?typeId=${activeType.id}${seasonParam}`}
+                href={`${base}/history/awards/certificate?typeId=${activeType.id}`}
                 className={styles.tagManageLink}
               >
                 <Printer size={13} aria-hidden /> Print {visibleAwards.length} certificate{visibleAwards.length === 1 ? '' : 's'}
@@ -351,7 +344,7 @@ export default function CoachesAwardsReportPage({
                             {/* Two clicks from the history the coach already keeps (3.4). */}
                             <Link
                               title="Print certificate"
-                              href={`${base}/history/awards/certificate?awardId=${a.id}${seasonParam}`}
+                              href={`${base}/history/awards/certificate?awardId=${a.id}`}
                               style={{ color: 'var(--white-45)', padding: '0.2rem', display: 'inline-block' }}
                             >
                               <Printer size={13} aria-hidden />

@@ -14,7 +14,7 @@ import {
  * Approve / decline / remove one family connection. The coach is the gatekeeper —
  * this is the only place a `requested` row becomes `verified`.
  *
- * ⚠ LIVE SEASON ONLY — see the sibling route's header. Never joins the season-read rail.
+ * ⚠ LIVE SEASON ONLY — see the sibling route's header. Never joins the working-season read.
  */
 
 

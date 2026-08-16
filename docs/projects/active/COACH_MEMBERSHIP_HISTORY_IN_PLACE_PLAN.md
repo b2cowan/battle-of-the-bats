@@ -1,6 +1,7 @@
 # Coach membership & history-in-place — Design A on M1
 
-**Status:** APPROVED 2026-08-16 (owner), not yet built. Build begins with Phase 1.
+**Status:** APPROVED 2026-08-16 (owner). **P1 committed `8415dcd2`; P2 BUILT ON DEV the same day**
+(the season toggle and the archive place are out) — both awaiting owner QA, §39 and §40.
 **Decision record:** mockup artifact `aa758bcb` (R1, §10 verdict) — owner accepted the recommendation
 verbatim: **Design A** (the season toggle and archive-place are deleted; history is delivered inside
 live tools + Season's End) on **M1** (staff membership lives on the TEAM, not on season rows).
@@ -211,6 +212,135 @@ rep_team_staff_memberships (
   archive section REPLACED with the new contract (same unit of work); ledger §36/§37 retired with a
   salvage note (awards-count fix + live-hub regression checks fold into the new QA section); help
   docs updated (`/docs`); old plans moved to archive.
+
+  ### P2 build checklist (2026-08-16 session — the ordered execution)
+
+  **Three corrections to the handoff prompt, made from the code rather than the prose:**
+
+  1. **The rail module is RENAMED, not deleted.** `lib/coach-season-read.ts` minus its `yearId`
+     option IS the working-season read context — team + working year + membership + read-only, in
+     ONE round trip, shared by ~26 GETs. Deleting the file would hand-roll P1's team-route pattern
+     26 times, which is the drift this repo has paid for repeatedly. It becomes
+     **`lib/coach-team-read.ts`**: `resolveCoachTeamRead(orgSlug, teamId)` (no `Request`, no year),
+     plus `resolveCoachHistoryRead(orgSlug, teamId, yearId)` for the two enumerated history
+     endpoints and `resolveCoachTeamCapabilities(org, userId, teamId)` replacing the per-year
+     capability map (uniform since M1). **Season CHOICE dies; the shared resolver survives.**
+  2. **Tour step 7's promise is NOT falsified by this phase.** The 13U demo team has no live year,
+     so its WORKING season is the finished one — every record screen still opens read-only, exactly
+     as the sentence claims. What over-claims is the word *every*: drills, playing time, payment
+     requests and the other live instruments already refuse today (P1's `CoachNotOnTeam`). The copy
+     is rewritten for that reason, not for a breakage that does not exist.
+  3. **`/season-end?year=` SURVIVES**, and must. The compare list's per-year "Season Wrapped →"
+     links are the look-back layer's only route to a year that is not the working one. So exactly
+     one explicit year parameter remains, on the look-back surface alone, and it is enumerated in
+     the new guard's `HISTORY_ENDPOINTS`.
+
+  **The nav decision, argued from P1's own code.** The prompt's "LIVE nav shape routed to what still
+  exists" resolves to: **one nav, every door, always** — plus a `Season's End` door when the working
+  season is finished. P1 already built the honest state for the live-instrument pages
+  (`CoachNotOnTeam`: *"This screen is part of running a live season, and it comes back when the next
+  one starts"* + a Season's End link), and P1 already made the team/settings route fall back to the
+  newest closed season. That is not a dead-end, so CLAUDE.md's "hide the entry point" rule does not
+  bite; a second, shorter menu that appears when a season ends is the thing that was confusing.
+
+  Ordered:
+
+  1. `lib/coach-team-read.ts` replaces `lib/coach-season-read.ts` (above).
+  2. `lib/coach-tag-routes.ts` — `seasonAwareRead` deleted; every GET resolves the working season,
+     every write keeps `resolveLiveCoachTeamContext`.
+  3. The ~26 route call sites: `resolveCoachSeasonRead(o, t, req)` → `resolveCoachTeamRead(o, t)`.
+     `wrapped` moves to `resolveCoachHistoryRead`; `history` + `tryout-report` to
+     `resolveCoachTeamCapabilities`.
+  4. `lib/coach-season-view.ts` — `seasonQueryFor`, `resolveSeasonSwitchHref`, `seasonStatusLabel`,
+     `buildCoachSeasons`, `resolveSeasonView`, `SeasonView`, `CoachSeasonOption` all go. The page
+     resolver survives as `resolveCoachSeasonPage(ctx, orgSlug, teamId)` — no year, no `query`, no
+     `everHeadCoach`.
+  5. `lib/coaches-context.tsx` + `lib/types.ts` + both layouts + `assignments` route — the `seasons`
+     seed is DELETED (it existed only to feed the switcher; `assignments` ∪ `closedAssignments` is
+     already exactly the working season per team).
+  6. `CoachesSidebar` / `CoachesBottomNav` — closed branches and season switchers out; Season's End
+     door in when the working season is finished. `CoachSeasonChip` deleted; `CoachPageHeader` loses
+     `season` / `teamBase` / `chipExtraQuery` (~20 callers).
+  7. ~24 pages: drop `useSearchParams().get('year')` and every `${page.query}`.
+  8. `history/results` + `season-end` — the scrapbook gate reverted (all current staff), Season's End
+     keeps `?year=` for the compare list's Wrapped links.
+  9. `lib/coach-nav-visibility.ts` — `CLOSED_TEAM_NAV_ITEMS`, `CLOSED_SECTION_EXTRAS`,
+     `LIVE_ONLY_ARCHIVE_SECTIONS`, `archiveHasSection` deleted. The playing-time / opponents rulings
+     keep their build-enforced home in the guard test, and the Insights hub hides those two tiles on
+     a finished season with the ruling named at the tile.
+  10. Tests: `coach-season-write-guard` → `coach-history-endpoint-guard`; `coach-archive-season-rail`
+      retired with its keepers redistributed; the frozen-season smoke finishes its rename to a
+      membership smoke; the 11 UAT fixtures gain memberships.
+  11. Demo re-script + `check-demo-coach` section 6 wording; `check:demos` proves it.
+  12. CLAUDE.md replacement, ledger §36/§37 retirement + the P2 section, help sweep, TODO/memory.
+  13. The layout fixture gains a completed season so Season's End and the compare list are rendered.
+
+  ### P2 build state (2026-08-16, this session): ✅ BUILT ON DEV, awaiting owner QA §40
+
+  ⚠ **NOT YET COMMITTED — the landing is its own job.** The money-tab session is mid-rework in the
+  same working copy and now shares seven files with P2. The handoff for committing it, finishing the
+  rendered baseline for the five new finished-season screens, and truthing-up afterwards is
+  `docs/projects/active/COACH_MEMBERSHIP_P2_LANDING_PROMPT.md`.
+
+  Everything in the checklist above is done. Gates: typecheck ✓ · **2,032 unit tests ✓** ·
+  `check:demos` ✓ · CSS purity ✓ · token/contrast/date ratchets ✓ · dictionary ✓ · lint 0 errors.
+  Schema-parity is red for the dev-only migrations 236–245, which are other sessions' and pre-date
+  this phase — **no migration in P2**.
+
+  **The shape that came out of it:**
+  - `lib/coach-season-read.ts` → **`lib/coach-team-read.ts`**: `resolveCoachTeamRead` (working
+    season, 23 routes + the tag factory), `resolveCoachHistoryRead` (the ONE year-taking resolver,
+    used by `wrapped` alone), `resolveCoachTeamCapabilities` (replacing the per-year capability
+    map, which M1 had already made uniform). `seasonAwareRead` deleted from the tag factory.
+  - `lib/coach-season-view.ts` reduced to `resolveWorkingSeason` + `resolveCoachSeasonPage`;
+    `seasonQueryFor`, `resolveSeasonSwitchHref`, `seasonStatusLabel`, `buildCoachSeasons`,
+    `resolveSeasonView`, `SeasonView` and `CoachSeasonOption` all deleted. The `seasons` array is
+    gone from the context, the assignments API and both layouts — it existed only for the switcher,
+    and `assignments` ∪ `closedAssignments` already answers "the working season per team".
+  - `CoachSeasonChip` deleted; `CoachPageHeader` lost `season`/`teamBase`/`chipExtraQuery` (20
+    callers). The masthead's presentational "Complete" chip survives and is now the ONLY place the
+    portal says a season has finished.
+  - **One nav.** `CLOSED_TEAM_NAV_ITEMS`, `CLOSED_SECTION_EXTRAS`, `LIVE_ONLY_ARCHIVE_SECTIONS` and
+    `archiveHasSection` deleted with both closed-branches. The landing slot swaps
+    (Overview ⇄ Season's End) and nothing else moves.
+  - The team layout stopped building the masthead record map for EVERY season — one working season,
+    one year id, per team entry.
+
+  **Three corrections to the handoff prompt, made from the code** (the reasoning is above): the rail
+  module was renamed rather than deleted; tour step 7's promise was not falsified by this phase (it
+  over-claimed *"every screen"*, which was already untrue); and `/season-end?year=` had to survive
+  or the compare list's per-year Wrapped links break.
+
+  **Tests: rewritten, never deleted.**
+  - `coach-season-write-guard.test.ts` → **`coach-history-endpoint-guard.test.ts`**: same fs-scan,
+    new contract (`HISTORY_ENDPOINTS` = `{wrapped}`, `HISTORY_PAGES` = `{season-end}`,
+    `CROSS_SEASON_READERS` = `{history, tryout-report}`), plus a NEW client-side half that was
+    impossible before — *no coach page may read `?year=`* — and an absence check that neither nav
+    has grown a switcher back. The decided-absence blocks survive re-worded.
+  - `coach-archive-season-rail.test.ts` → **retired**, keepers redistributed into
+    **`coach-finished-season-surfaces.test.ts`** (read-only behaviour, past-tense empty states, the
+    awards generation-counter guard, the certificate's own-season naming) plus new look-back-layer
+    assertions. Its season-switching assertions died with the feature — stated in the commit.
+  - `coach-season-view.test.ts` rewritten around `resolveWorkingSeason`.
+  - `coach-attendance-home.test.ts`'s archive-menu block rewritten for the SECOND time by its own
+    expiry condition — it now pins the property that survived both rewrites: the Insights hub is the
+    attendance report's only parent and must carry its door.
+  - `coach-frozen-season-smoke.spec.ts` → **`coach-membership-smoke.spec.ts`**, re-fixtured around a
+    BETWEEN-SEASONS team (which the old fixture never had) plus a rolled-forward one. Its sharpest
+    new probe: asking an ordinary route for a past year answers with the LIVE season.
+  - The 11 UAT fixtures gained memberships via a shared `_coach-membership-fixture.ts` that
+    **projects** them from the season rows each spec already writes, rather than making eleven specs
+    restate the same grants a second time.
+
+  **The fixture gap is closed.** `seed-uat-coach-fixture.mjs` now seeds a *UAT Between Seasons* team
+  (two finished seasons, a roster, four finalized games), `uat-fixture-context.mjs` resolves it and
+  REFUSES if it has grown a live year, and `layout-screens.mjs` gained five screens on it
+  (Season's End, Insights, the compare list, roster, Money). ⚠ `check:layout` needs a dev server and
+  a reseeded fixture — **run `node scripts/seed-uat-coach-fixture.mjs` before the next sweep**, or it
+  throws with that repair command rather than passing quietly.
+
+  **Owner QA: §40** (§36/§37 retired unwalked with a salvage note; §37 D2 retired outright with the
+  restriction it gated).
 - **P3 — Practice plans shelf. GATED: mockup session first** (ruling §1.6 — quiet-integration
   constraint). Re-homes the read-only past-plan view + copy-forward.
 - **P4 — Money past-season book. GATED: mockup session first.** Read-only closed book: budget vs
@@ -239,3 +369,32 @@ retired §36/§37 walk. §37 D2 retires now (restriction reverted in P2). The §
 salvaging into the new sections: the awards "N this season" count fix, certificate printing the
 award's own season (moves into the shelf-phase QA if awards ever get one; the live awards report
 keeps the scoped count), and the live-hub regression checks.
+
+---
+
+## 8. Follow-ups opened by P2's `/simplify` + `/review` (2026-08-16)
+
+Recorded rather than fixed, each with the reason:
+
+1. **⚠ The client and the server break a mid-rollover tie by DIFFERENT rules.** When a team holds a
+   draft AND an active year at once, `resolveWorkingSeason` (client + the team layout) picks the
+   highest `year`, while every API route resolves through `getActiveRepProgramYear`, which picks the
+   most recently CREATED row. Every rollover the product itself performs makes those agree, so this
+   bites only if someone mints a lower-numbered year AFTER a higher one — and then the masthead
+   names one season while the data comes from another. **Pre-existing** (the deleted `resolveSeasonView`
+   sorted the same way), but P2 removed the `?year=` that used to override it. Closing it properly
+   means carrying `created_at` onto the assignment row — a shared-DB change, and `lib/db.ts` is
+   currently another session's working file. Own unit of work.
+2. **The guard test's two stated scope limits** (now written into its header): a season id arriving
+   in a request BODY is not detectable by the scan, and server layouts are outside it. No live
+   violation of either; the note is what stops the guard reading as wider than it is.
+3. **`tryout-report`'s primary gate still uses the legacy assignment lookup** rather than membership
+   (P1's known tail — the route was never on P1's conversion list). The projection invariant means
+   the two agree in practice; converting it belongs with the rest of that tail.
+4. **`moneySectionHref`'s 4th `carryQuery` parameter is now dead** — P2 removed its last two callers,
+   and its JSDoc still points at `page.query`, which no longer exists. Left alone deliberately:
+   `lib/coach-money-links.ts` is inside the money session's active rework (`CoachMoneySection` is
+   being re-split as this lands), and editing it would collide.
+5. **The between-seasons fixture's two finished years are chosen from the current calendar year**, so
+   a run either side of New Year adds a third rather than reusing the two. Slow accumulation, not
+   per-run drift (the games it seeds use fixed dates keyed to the season's own year, deliberately).

@@ -15,7 +15,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
@@ -67,10 +67,10 @@ function mapEntry(e: Record<string, unknown>) {
 // a 2025 fundraiser with the 2026 roster. The archive door was already open; only its last room
 // was furnished from the wrong season. Capabilities come from the RESOLVED season's assignment
 // row (governing rule 1), so an assistant granted money in 2025 and not since still reads 2025.
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

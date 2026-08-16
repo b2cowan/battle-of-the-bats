@@ -3,7 +3,7 @@ import {
   getCoachTeamMilestones,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 /**
  * The Overview progress trail's data (Coach Portal Batch 2, P0 #6) — "which first-week milestones
@@ -14,10 +14,10 @@ import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
  * dot for money they're not allowed to see. Any coach assigned to the team may read the rest —
  * these are counts of their own team's work, and every underlying page is already reachable.
  */
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear } = resolved;
 

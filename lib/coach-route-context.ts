@@ -36,10 +36,10 @@ export type CoachRouteResult<T> = { error: Response } | T;
  * manage it. Baking the season check in here would quietly impose the stricter rule on both, which
  * is how a coach loses their template room every autumn.
  *
- * ⚠ **Deliberately NOT the season-read rail** (`lib/coach-season-read.ts`). That rail admits CLOSED
- * seasons by design and is read-only infrastructure; a route built on this one resolves the LIVE
- * team, which is the fail-closed default the archive-is-opt-in ruling depends on. A source-level
- * test (`tests/unit/coach-season-write-guard.test.ts`) enforces the split.
+ * ⚠ **Deliberately NOT the working-season read** (`lib/coach-team-read.ts`). That resolver admits a
+ * FINISHED season by design and is read-only infrastructure; a route built on this one resolves the
+ * LIVE team, which is what keeps a write out of a season that has ended. A source-level test
+ * (`tests/unit/coach-history-endpoint-guard.test.ts`) enforces the split.
  *
  * This is not a migration of the other ~53 routes — it is the shared home the next one should use.
  */

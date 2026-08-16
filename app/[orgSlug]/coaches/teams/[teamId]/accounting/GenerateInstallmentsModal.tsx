@@ -81,12 +81,11 @@ interface ReplaceFacts {
  *     total becomes an overpayment credit — all said out loud in the success state.
  */
 export default function GenerateInstallmentsModal({
-  orgSlug, teamId, seasonQuery, budgetHref, duesHref, tabActive = true, onClose, onGenerated,
+  orgSlug, teamId, budgetHref, duesHref, tabActive = true, onClose, onGenerated,
 }: {
   orgSlug: string;
   teamId: string;
   /** '' or '?year=…' — the season the caller is showing. */
-  seasonQuery: string;
   /** Where "Build your budget" goes when there is nothing to divide up yet. */
   budgetHref: string;
   /** Success-state link to the dues list. Omit when the caller IS the dues list. */
@@ -140,7 +139,7 @@ export default function GenerateInstallmentsModal({
     let live = true;
     (async () => {
       try {
-        const res  = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`);
+        const res  = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`);
         const data = await res.json().catch(() => null);
         if (!live) return;
         if (!res.ok || !data) throw new Error(data?.error ?? 'Failed to load your budget');
@@ -153,7 +152,7 @@ export default function GenerateInstallmentsModal({
       }
     })();
     return () => { live = false; };
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   const totals = useMemo(() => computeBudgetTotals({
     lines: (plan?.lines ?? []).map(l => ({ totalAmount: l.totalAmount, lineKind: l.lineKind })),

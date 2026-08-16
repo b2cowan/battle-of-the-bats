@@ -50,15 +50,30 @@ a parallel session, and that plan depends on this one shipping first.
 
 ## The rules that must not be quietly undone
 
-### 1. A paid record locks its FIGURES, never its words
-Owner ruling 2026-08-15. Description, category, notes and tags stay editable forever; the amount
-and who paid lock once money has posted. **The gate is per half on a payable** — a paid deposit must
-not freeze a balance the coach still has to manage — and a payable's *total* locks only once both
-halves have paid, because the total is the commitment rather than a half.
+### 1. ⚖ REVERSED 2026-08-16 — a paid record locks nothing; the books follow the correction
 
-One definition serves all three readers (the form that shows the lock, the save that omits locked
-fields, the API that refuses them). They were each deriving it separately until `/simplify`; the
-client's send-filter was the copy most likely to be missed, and it fails **silently**.
+**The rule that used to be here:** *a paid record locks its FIGURES, never its words* (owner ruling
+2026-08-15). Description, category, notes and tags stayed editable; the amount and who paid locked
+once money had posted, per half on a payable.
+
+**Why it is gone.** The owner re-read it on 2026-08-16 — *"I don't recall making that decision…
+once it is edited the new value should permeate to the books and everything be in sync. Not sure
+why we would restrict this."* The lock was never a principle. It was a workaround for a missing
+capability: nothing could push a correction through to the team's books, so a row saying $225 beside
+an entry saying $325 was avoided by forbidding the edit. `syncExpenseBooksForEdit` supplies the
+missing half, so **every figure and every paid date is editable and the entry the money created
+moves with it** — amount, deposit, balance, and the day it was paid. An out-of-pocket cost has no
+entry but does have a debt, and the family's credit tracks the figure for the same reason.
+
+The three-readers argument died with the rule: the form no longer greys anything, the save no longer
+filters, and the API no longer refuses. That is one fewer rule maintained in three places — and the
+copy that used to fail silently (the client's send-filter) simply does not exist now.
+
+**Two refusals survive, and neither is a lock on a figure:**
+- A record paid **before migration 236** has no recorded link to its entry, so a figure edit matches
+  it by description and amount first — and refuses an ambiguous pair rather than rewriting a guess.
+- **Who** paid a cost out of pocket. That moves a debt between households rather than restating a
+  number, so it is its own decision and its own change; delete-and-re-add remains the route.
 
 ### 2. Deleting reverses the money, and says how much first
 Never a bare "Are you sure?". The confirmation and the reversal read the **same function**, so the

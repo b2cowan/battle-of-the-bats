@@ -698,7 +698,8 @@ console.log("\nSeason's End — Riverdale Ridge 13U");
   const py = years.find(y => y.status === 'completed');
   check(!!py && py?.year === thisYear - 1, `the ${thisYear - 1} year is CLOSED (completed)`);
   check(!years.some(y => y.status === 'active' || y.status === 'draft'),
-    'no open year on this team — the portal resolves straight to the archive');
+    'no open year on this team — so its WORKING season IS the finished one, the portal lands on '
+    + "Season's End, and every record screen renders read-only from the ordinary menu");
   if (py) {
     const { data: events } = await db.from('rep_team_events')
       .select('id, event_type, starts_at, result, team_score, opponent_score').eq('program_year_id', py.id);
@@ -708,7 +709,7 @@ console.log("\nSeason's End — Riverdale Ridge 13U");
     const t = games.filter(g => g.result === 'tie').length;
     check(games.length === 26 && w === 18 && l === 6 && t === 2, 'a full 26-game season at 18-6-2');
     check(games.every(g => g.result && g.team_score != null && g.opponent_score != null),
-      'every game finalized and scored — nothing dangles in the archive');
+      'every game finalized and scored — nothing dangles in the season the demo calls finished');
 
     const ordered = games.slice().sort((a, b) => a.starts_at.localeCompare(b.starts_at));
     let streak = 0, best = 0;

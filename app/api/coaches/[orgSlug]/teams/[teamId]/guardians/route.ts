@@ -24,8 +24,8 @@ import {
  * Permission: `rosterPii`, same as the team family access panel — this surface shows guardian
  * email addresses.
  *
- * ⚠ LIVE SEASON ONLY — rides `resolveFamilyCoachContext`, which never joins the season-read
- * rail. Managing who may reach a child is an instrument, not a record.
+ * ⚠ LIVE SEASON ONLY — rides `resolveFamilyCoachContext`, which resolves the team's ACTIVE year
+ * and nothing else. Managing who may reach a child is an instrument, not a record.
  */
 
 function offOrNotFound() {

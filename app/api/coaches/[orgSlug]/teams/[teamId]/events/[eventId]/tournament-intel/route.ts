@@ -24,7 +24,7 @@ import { assembleOpponentTournamentIntel } from '@/lib/coach-tournament-intel';
  * ⚠ SCOPE (plan §9 Q4, owner-ruled): this tournament ONLY. Reading the opponent's games in
  * other platform tournaments is cross-event profiling and needs a fresh owner ruling.
  * ⚠ INSTRUMENT (owner 2026-08-04): resolves the ACTIVE program year only, like every
- * scouting-book route — never the season-read rail, never an archive door.
+ * scouting-book route — never the working-season read, never an archive door.
  * ⚠ READ-ONLY JOIN: mirrored rows and organizer-side games stay organizer-owned; this route
  * writes nothing anywhere.
  *

@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, use } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Download, FileText } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -35,10 +34,9 @@ export default function TeamDocumentsPage({
 }) {
   const params = use(paramsPromise);
   const { loading: assignmentsLoading } = useCoaches();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(params.orgSlug, params.teamId, seasonSearchParams.get('year'));
+  // Which SEASON is on screen — the team's working one. `page.canWrite()` folds in read-only,
+  // so every write flag goes through it.
+  const page = useCoachSeasonPage(params.orgSlug, params.teamId);
   const apiBase = `/api/coaches/${params.orgSlug}/teams/${params.teamId}/documents/templates`;
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -147,8 +145,6 @@ export default function TeamDocumentsPage({
       <CoachPageHeader
         icon={FileText}
         title="Documents"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Documents"
         help={documentsHelpRequest}
       />

@@ -36,12 +36,12 @@ import {
 /**
  * Ask the Front Office — the answer route (Phase A).
  *
- * ⚠ **ACTIVE SEASON ONLY, BY OMISSION.** This route deliberately does NOT touch the season-read
- * rail (`lib/coach-season-read.ts`), so `getActiveRepProgramYear` is the only season it can ever
+ * ⚠ **ACTIVE SEASON ONLY, BY OMISSION.** This route deliberately does NOT touch the working-season
+ * read (`lib/coach-team-read.ts`), so `getActiveRepProgramYear` is the only season it can ever
  * resolve and `?year=` means nothing here. That is the CLAUDE.md archive ruling working as
  * designed: a new coach surface is invisible in a finished season until someone decides otherwise,
- * and deciding otherwise means editing the allow-lists in coach-season-write-guard.test.ts, which
- * fails the build until it is done. Do not "helpfully" convert this to the season rail.
+ * and deciding otherwise means editing the allow-lists in coach-history-endpoint-guard.test.ts, which
+ * fails the build until it is done. Do not "helpfully" convert this to the working-season read.
  *
  * ⚠ **The capability check here is the real gate.** The chips are filtered client-side from the
  * same library, but that is a courtesy — this check is what actually refuses. A question reached
@@ -59,7 +59,7 @@ export const GET = withObservability(async (req: Request,
   if (ctx.org.slug !== orgSlug) return forbidden();
 
   // The team, the caller's assignments and the active season depend only on ids already in hand,
-  // so they resolve together — the same reasoning `lib/coach-season-read.ts` documents for its
+  // so they resolve together — the same reasoning `lib/coach-team-read.ts` documents for its
   // team+year pair. Serialising three lookups put two avoidable round trips on the critical path
   // of every answer. Tenancy is still decided after all three land, so nothing is judged on a
   // half-resolved context.

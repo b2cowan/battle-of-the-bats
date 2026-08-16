@@ -11,7 +11,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 const MAX_AWARD_TYPES = 30;
 
@@ -38,10 +38,10 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities } = resolved;
   const denied = denyUnless(canManageAwards(capabilities), 'You do not have access to awards.');

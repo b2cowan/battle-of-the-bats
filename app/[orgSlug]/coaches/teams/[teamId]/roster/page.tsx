@@ -101,7 +101,7 @@ export default function RosterPage({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1) and
   // `page.canWrite()` folds in read-only, so every write flag below goes through it.
   const searchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   // Quick-add position dropdowns offer the sport's assignable FIELD positions (the ones auto-fill
   // uses) — not the OF catch-all or DH. PositionSelect keeps a "Custom…" escape for edge cases.
@@ -112,14 +112,8 @@ export default function RosterPage({
   const router = useRouter();
   const pathname = usePathname();
   const view = searchParams.get('view') === 'depth' ? 'depth' : 'list';
-  // Chunk F: toggling the view must not drop the season — both params ride the same URL.
-  const seasonQuery = page.query;
   const setView = (v: 'list' | 'depth') => {
-    const qs = new URLSearchParams();
-    if (v === 'depth') qs.set('view', 'depth');
-    if (page.season.isReadOnly && page.season.current) qs.set('year', page.season.current.programYearId);
-    const q = qs.toString();
-    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    router.replace(v === 'depth' ? `${pathname}?view=depth` : pathname, { scroll: false });
   };
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
@@ -157,7 +151,7 @@ export default function RosterPage({
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`);
       // A failure that isn't JSON (an HTML 404/error page, a gateway timeout) must not surface as a
       // raw parser message — parse defensively and let the status decide what the coach is told.
       const data = await res.json().catch(() => null);
@@ -170,7 +164,7 @@ export default function RosterPage({
     } finally {
       setFetching(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
@@ -540,8 +534,6 @@ export default function RosterPage({
       <CoachPageHeader
         icon={Users}
         title="Roster"
-        season={page.season}
-        teamBase={page.teamBase}
         actions={rosterHeaderActions}
         helpLabel="Roster"
         help={rosterHelpRequest}
@@ -635,7 +627,6 @@ export default function RosterPage({
                         key={p.id}
                         player={p}
                         base={base}
-                        seasonQuery={seasonQuery}
                         togglingId={togglingId}
                         onToggle={handleToggleStatus}
                         canWrite={canWriteRoster}
@@ -846,7 +837,6 @@ export default function RosterPage({
 function SortableRow({
   player: p,
   base,
-  seasonQuery,
   togglingId,
   onToggle,
   canWrite,
@@ -859,7 +849,6 @@ function SortableRow({
   player: RepRosterPlayer;
   base: string;
   /** Chunk F: keeps a player link inside the season the roster is showing. */
-  seasonQuery: string;
   togglingId: string | null;
   onToggle: (player: RepRosterPlayer) => void;
   canWrite: boolean;
@@ -899,7 +888,7 @@ function SortableRow({
       </td>
       <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
         <span className={styles.playerCell}>
-          <Link href={`${base}/roster/${p.id}${seasonQuery}`} className={styles.playerNameLink}>{fullName}</Link>
+          <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
           {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
           <span className={styles.playerCellMeta}>
             {p.playerNumber && (

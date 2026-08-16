@@ -14,7 +14,7 @@ import { getTeamFamilyAccess } from '@/lib/family-access';
  * location is exactly the thing ruling #16 reserved for the Public-link setting, not
  * something a per-game share should be able to publish sideways.
  *
- * ⚠ LIVE SEASON ONLY — never joins the season-read rail.
+ * ⚠ LIVE SEASON ONLY — never joins the working-season read.
  */
 
 

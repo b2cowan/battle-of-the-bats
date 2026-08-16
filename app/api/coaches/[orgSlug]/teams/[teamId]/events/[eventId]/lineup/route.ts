@@ -15,7 +15,7 @@ import {
 import type { RepLineupMode } from '@/lib/types';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
@@ -86,10 +86,10 @@ function normalizeInningPositions(raw: unknown, inningCount: number): Record<str
 // READ: season-scoped (Chunk F). A game from a past season is a record worth opening — before
 // this, tapping one from the archive's Lineups list hit "No active program year for this team".
 // The event must belong to the SEASON being read, so a year id can't surface another season's game.
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
-  const season = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const season = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in season) return season.error;
   const { capabilities, programYear, isReadOnly } = season;
   const denied = denyUnless(capabilities.lineups, 'You do not have access to lineups.');

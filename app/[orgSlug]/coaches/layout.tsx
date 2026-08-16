@@ -10,7 +10,6 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import type { OrgRole } from '@/lib/types';
-import { buildCoachSeasons } from '@/lib/coach-season-view';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
 import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
@@ -174,10 +173,6 @@ export default async function CoachesLayout({
     seenClosedTeams.add(a.teamId);
     return true;
   });
-  // The season switcher's list (Chunk F) — EVERY season, undeduped, including the past seasons of
-  // a rolled-forward team, which `closedAssignments` above deliberately drops. Derived from the
-  // lookups already in flight, so the switcher costs nothing.
-  const seasons = buildCoachSeasons(assignments, closedAll);
 
   if (assignments.length === 0 && closedAssignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
@@ -250,7 +245,6 @@ export default async function CoachesLayout({
         orgSlug={orgSlug}
         initialAssignments={assignments}
         initialClosedAssignments={closedAssignments}
-        initialSeasons={seasons}
         initialOnboardingPrefs={onboardingPrefs}
       >
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +

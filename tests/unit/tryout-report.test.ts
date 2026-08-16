@@ -489,7 +489,7 @@ describe('C5 — no blind surface can reach candidate memory (R6)', () => {
     'resolveTryoutMemoryPairs',
     'buildTryoutMemoryPair',
     'TryoutMemoryPair',
-    'resolveCoachSeasonCapabilityMap',
+    'resolveCoachTeamCapabilities',
     'getRepTeamContinuityLinks',
   ];
 

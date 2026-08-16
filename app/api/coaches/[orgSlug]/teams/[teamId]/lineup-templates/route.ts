@@ -12,7 +12,7 @@ import type { RepLineupMode, RepTeamLineupTemplateEntry } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 import { cleanTemplateEntries } from '@/lib/lineup-template-entries';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const MAX_TEMPLATES_PER_SEASON = 50;
@@ -40,10 +40,10 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear } = resolved;
   const denied = denyUnless(capabilities.lineups, 'You do not have access to lineups.');

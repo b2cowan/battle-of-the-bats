@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { CalendarCheck, ArrowRight, ChevronRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -49,9 +48,7 @@ export default function CoachesAttendancePage({
   const { loading: ctxLoading } = useCoaches();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [rows, setRows] = useState<AttendanceRow[]>([]);
@@ -72,7 +69,7 @@ export default function CoachesAttendancePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       if (!isStale()) setRows(data.players ?? []);
@@ -81,7 +78,7 @@ export default function CoachesAttendancePage({
     } finally {
       if (!isStale()) setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // Non-fatal: the report stands on its own if this fails — it just loses the shortcut.
   const loadMarkTarget = useCallback(async (isStale: () => boolean = () => false) => {
@@ -93,7 +90,7 @@ export default function CoachesAttendancePage({
     setMarkTargetFailed(false);
     setMarkTarget(null);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) { if (!isStale()) setMarkTargetFailed(true); return; }
       const data: { events?: RepTeamEvent[] } = await res.json();
       if (isStale()) return;
@@ -107,7 +104,7 @@ export default function CoachesAttendancePage({
     } finally {
       if (!isStale()) setMarkTargetLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // Both loads are keyed on teamId, and a coach with several assignments can switch teams without
   // this page unmounting — so a slow response for the previous team must not land on the new one.
@@ -221,7 +218,7 @@ export default function CoachesAttendancePage({
           ⚠ The lesson worth keeping, and the reason each step was findable: **a deliberate omission
           is only as durable as the reason stated with it.** Every one of these was caught by
           re-reading the reason written here, never by noticing the link. */}
-      <CoachBackLink href={`${base}/history${seasonQuery}`}>
+      <CoachBackLink href={`${base}/history`}>
         Insights
       </CoachBackLink>
 
@@ -234,8 +231,6 @@ export default function CoachesAttendancePage({
       <CoachPageHeader
         icon={CalendarCheck}
         title="Who's showing up?"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Attendance"
         help={{ module: 'coaches', sectionIds: ['recipe-attendance'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-attendance` }}
       />
@@ -355,7 +350,7 @@ export default function CoachesAttendancePage({
                       return (
                         <tr key={r.playerId} className={styles.tr}>
                           <td className={`${styles.td} ${att.nameCell}`}>
-                            <Link href={`${base}/roster/${r.playerId}${seasonQuery}`} className={att.name}>
+                            <Link href={`${base}/roster/${r.playerId}`} className={att.name}>
                               {[r.playerFirstName, r.playerLastName].filter(Boolean).join(' ')}
                             </Link>
                           </td>

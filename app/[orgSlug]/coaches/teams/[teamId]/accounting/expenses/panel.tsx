@@ -552,8 +552,7 @@ export function ExpensesPayablesPanel({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
@@ -572,10 +571,10 @@ export function ExpensesPayablesPanel({
     setError('');
     try {
       const [res, catRes, planRes, inRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
         fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
@@ -613,7 +612,7 @@ export function ExpensesPayablesPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // Re-read (never remount) when the hub's Import menu commits payables while this panel is
   // mounted but off-screen — an in-progress expense form on another tab must survive it.
@@ -667,7 +666,7 @@ export function ExpensesPayablesPanel({
     } finally {
       setScheduleLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule]);
 
@@ -1268,7 +1267,7 @@ export function ExpensesPayablesPanel({
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {!embedded && (
-        <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
+        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
       {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
           ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
@@ -1277,8 +1276,6 @@ export function ExpensesPayablesPanel({
         variant={embedded ? 'embedded' : 'standard'}
         icon={Receipt}
         title={<>Expenses &amp; Payables</>}
-        season={page.season}
-        teamBase={page.teamBase}
         actions={expenseHeaderActions}
         helpLabel="Expenses & Payables"
         help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-payables', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
@@ -1834,7 +1831,7 @@ export function ExpensesPayablesPanel({
                             </button>
                           )}
                           {row.source === 'org' && !row.paid && (
-                            <Link href={moneySectionHref(base, 'allocations', undefined, seasonQuery)} className={styles.linkBtn}>Open allocations</Link>
+                            <Link href={moneySectionHref(base, 'allocations', undefined)} className={styles.linkBtn}>Open allocations</Link>
                           )}
                         </td>
                       </tr>
@@ -1846,7 +1843,7 @@ export function ExpensesPayablesPanel({
             <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
               Money going out only — payable deposits and balances{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
-              <Link href={moneySectionHref(base, 'dues', undefined, seasonQuery)} className={styles.linkBtn}>Player Dues</Link>.
+              <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.linkBtn}>Player Dues</Link>.
             </p>
           </>
         )

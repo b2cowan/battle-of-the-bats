@@ -417,8 +417,7 @@ export function PlayerDuesPanel({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -486,7 +485,7 @@ export function PlayerDuesPanel({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setPlayers(data.players ?? []);
@@ -495,12 +494,12 @@ export function PlayerDuesPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings${seasonQuery}`)
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return;
@@ -510,7 +509,7 @@ export function PlayerDuesPanel({
         setCreditMode(normalizeCreditApplicationMode(d.creditApplication));
       })
       .catch(() => {});
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   /** Hand a family their credit back in cash. Their bills go back up — those dollars are settled
    *  now — which is why this reloads rather than patching state locally. */
@@ -654,7 +653,7 @@ export function PlayerDuesPanel({
     setSettlementLoading(true);
     setSettlementError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       applySettlement(await res.json());
     } catch (e) {
@@ -662,7 +661,7 @@ export function PlayerDuesPanel({
     } finally {
       setSettlementLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery, applySettlement]);
+  }, [orgSlug, teamId, applySettlement]);
 
   // Fetch the sheet the first time it is opened — including on a link that arrives with it
   // ALREADY open (`?settlement=open`), which is the state a shared link and the layout sweep
@@ -1344,14 +1343,12 @@ export function PlayerDuesPanel({
           icon-only, "?" in its fixed corner). The reminder status lines stay stacked under the
           buttons — they're feedback about the action group, so they travel with it. */}
       {!embedded && (
-        <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
+        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
       <CoachPageHeader
         variant={embedded ? 'embedded' : 'standard'}
         icon={Users}
         title="Player Dues"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Player Dues"
         help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-dues', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
@@ -2962,8 +2959,7 @@ export function PlayerDuesPanel({
         <GenerateInstallmentsModal
           orgSlug={orgSlug}
           teamId={teamId}
-          seasonQuery={seasonQuery}
-          budgetHref={moneySectionHref(base, 'budget', undefined, seasonQuery)}
+          budgetHref={moneySectionHref(base, 'budget', undefined)}
           tabActive={tabActive}
           onClose={() => setApplyAllOpen(false)}
           onGenerated={load}

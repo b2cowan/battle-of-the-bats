@@ -5,7 +5,9 @@ import {
   type CoachCapabilities,
   type AssistantCapabilityGrants,
 } from '../../lib/coach-capabilities.ts';
-import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS, archiveHasSection } from '../../lib/coach-nav-visibility.ts';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -90,47 +92,51 @@ describe('the attendance report can never be reachable without Insights also bei
 
 describe('a finished season still reaches its attendance report', () => {
   /**
-   * ⚠⚠ THIS BLOCK USED TO ASSERT THE OPPOSITE, AND ITS OWN COMMENT IS WHAT RETIRED IT.
+   * ⚠⚠ THIS BLOCK HAS NOW BEEN REWRITTEN TWICE BY ITS OWN EXPIRY CONDITIONS, WHICH IS THE POINT.
    *
-   * Until 2026-08-16 it required Attendance to appear in `CLOSED_TEAM_NAV_ITEMS`, because the
-   * archive pointed "Insights" at `/history/results` (the hub being live-season-only) and the
-   * results page carries no attendance door — so that menu line genuinely was the only route to a
-   * past season's report. The second test spelled out the expiry condition in as many words: *"if
-   * the archive ever points Insights at the hub, revisit whether Attendance still needs its own
-   * archive door."* Archive rail Phase 2 did exactly that, and the sentence is what made the
-   * revisit happen instead of the build going red for a reason nobody could reconstruct.
+   * Round 1 (until 2026-08-16) required Attendance to appear in the archive's menu, because the
+   * archive pointed "Insights" at `/history/results` and that page carries no attendance door.
+   * The test spelled out its own expiry: *"if the archive ever points Insights at the hub, revisit
+   * whether Attendance still needs its own archive door."* It did, so the assertion was replaced
+   * by the ACCESS it was really protecting rather than deleted.
    *
-   * ⚠ The rewrite is deliberately NOT weaker. The menu line was never the point — the ACCESS was.
-   * So this now pins the access directly, which also stops the two failure modes the old pair could
-   * not see: a section that loses its menu line AND its reachability, and a menu-driven season
-   * switcher that strands a coach reading a section the menu no longer names.
+   * Round 2 (P2, the same day): the archive menu itself is deleted — there is one nav, and a team
+   * whose working season has finished keeps it. So "does the archive have this section?" has no
+   * meaning any more, and the property that survives both rewrites is the one that always
+   * mattered: **the Insights hub is Attendance's only parent, and the hub carries a door to it.**
+   * A page with no nav entry and no door on its parent is unreachable, and nothing else would say
+   * so.
    */
-  it('does not carry an Attendance line in the archive menu any more', () => {
-    assert.equal(
-      CLOSED_TEAM_NAV_ITEMS.some(i => i.label === 'Attendance'), false,
-      'Attendance is reached through the Insights hub in BOTH seasons since archive rail Phase 2. '
-      + 'A menu line here would be a second door to one report, in one season only — the asymmetry '
-      + 'that phase existed to remove.',
+  const HUB = readFileSync(
+    join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'history', 'page.tsx'),
+    'utf8',
+  );
+
+  it('the Insights hub carries the door to the attendance report', () => {
+    assert.match(
+      HUB, /href=\{`\$\{base\}\/attendance`\}/,
+      'the attendance report lost its only door. It is in NEITHER nav (it left the live navs on '
+      + '2026-08-15 and the archive menu died with the archive on 2026-08-16), so this tile is the '
+      + 'single inbound link in the product. Remove it and the page is unreachable.',
     );
   });
 
-  it('still HAS the section, which is the property that ever mattered', () => {
-    assert.ok(
-      archiveHasSection('/attendance'),
-      'a past season lost its attendance report. It is an approved archive door (D-F1) whose route '
-      + 'and page are both season-aware — losing the menu line must never lose the section, or the '
-      + 'season switcher dumps a coach reading it onto Season`s End.',
+  it('the door rides the attendance grant, not record access', () => {
+    assert.match(
+      HUB, /const canAttendance = !!caps\?\.attendance;/,
+      'the tile must be keyed on the grant the REPORT gates on. Keyed on record access it would '
+      + 'be offered to coaches who 403 on arrival — a door drawn onto a refusal.',
     );
   });
 
-  it('points the archive`s Insights door at the hub, which is what carries the report', () => {
-    const insights = CLOSED_TEAM_NAV_ITEMS.find(i => i.label === 'Insights');
+  it('the door is offered in a finished season too', () => {
+    const idx = HUB.indexOf('Who&apos;s showing up?');
+    assert.ok(idx > 0, 'expected the attendance tile to exist at all');
     assert.equal(
-      insights?.href, '/history',
-      'the archive`s Insights door must be the hub. It pointed at /history/results only while the '
-      + 'hub was live-season-only, and that workaround is the entire reason Attendance needed an '
-      + 'archive-only menu line. If this ever reverts, Attendance needs its own door back FIRST — '
-      + 'in that order, or a past season`s report becomes unreachable in between.',
+      /!isRecord/.test(HUB.slice(Math.max(0, idx - 900), idx)), false,
+      'the attendance tile must NOT be hidden on a finished season. Attendance is a RECORD of who '
+      + 'turned up — unlike playing time and the scouting book beside it, which are live-only by '
+      + 'ruling. Hiding it would take a past season\'s report away with nothing to replace it.',
     );
   });
 });

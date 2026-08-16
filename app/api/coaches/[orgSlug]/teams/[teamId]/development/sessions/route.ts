@@ -8,7 +8,7 @@ import {
   getRepTeamMeasurableTypes,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isValidRecordDate } from '@/lib/measurable-format';
 
@@ -28,14 +28,14 @@ async function resolveContext(orgSlug: string, teamId: string) {
  *  auth-gated round trip (board-route precedent — two GETs doubled auth resolution).
  *  Two waves: (auth ∥ programYear) → deny → (sessions ∥ types). Team-scoped reads never
  *  run before the deny resolves — an unassigned org member must not force them. */
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   // Season-scoped (Chunk F). This route used to resolve the ACTIVE year unconditionally while
   // the Development page happily rendered a "2025 · Complete" chip above it — the archive said
   // one season and the data was another. `?year=` now decides, and the capability gate reads
   // that season's own grants.
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { programYear, capabilities, isReadOnly } = resolved;
 

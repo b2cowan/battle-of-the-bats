@@ -22,7 +22,7 @@ import {
  * bypass this — the mig-141 chat-engine lesson.
  *
  * ⚠ **THE ARCHIVE DOOR — decided, not discovered.** This route deliberately does NOT use
- * `resolveCoachSeasonRead`, so it resolves the team's live context and cannot serve a past season.
+ * `resolveCoachTeamRead`, so it resolves the team's live context and cannot serve a past season.
  * A template library is a reusable INSTRUMENT, not a record of a season (owner ruling 2026-08-01),
  * so the Development hub hides its door in a completed season. That costs a coach nothing: the
  * table is keyed by TEAM, not by program year, so a team's templates cross a rollover with nothing

@@ -5,7 +5,7 @@ import {
   getRepTeamEventTagsByKind,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/lib/coach-capabilities';
 
 /**
@@ -13,7 +13,7 @@ import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/li
  * 2026-08-01, `COACH_PRACTICE_PLANS_PLAN.md` §10.8 ruling 1).
  *
  * The archive is OPT-IN. This is the single route in Practice Plans that opts in, and it is on the
- * approved list in `tests/unit/coach-season-write-guard.test.ts` because that decision was taken
+ * approved list in `tests/unit/coach-history-endpoint-guard.test.ts` because that decision was taken
  * explicitly — the build failing until the list was edited is what forced the question.
  *
  * ── Why a SEPARATE route from the practice-plan GET beside it ──
@@ -37,13 +37,13 @@ import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/li
  * route is the whole subtree: the page it serves links only back to the list it came from, and
  * carries the viewed season on that link.
  */
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
 
   // Governing rule 1 — capabilities come from the assignment row recorded against the RESOLVED
   // season, never from the coach's newest one.
-  const seasonCtx = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const seasonCtx = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in seasonCtx) return seasonCtx.error;
   const { programYear, capabilities, isReadOnly } = seasonCtx;
 

@@ -14,7 +14,7 @@ import {
   denyUnless, canManageSchedule, canViewMoney, canWriteMoney, canViewDevelopmentGoals,
   type CoachCapabilities,
 } from './coach-capabilities';
-import { resolveCoachSeasonRead } from './coach-season-read';
+import { resolveCoachTeamRead } from './coach-team-read';
 import type { RepTagKind } from './types';
 
 /**
@@ -36,9 +36,15 @@ import type { RepTagKind } from './types';
  *   · `canWrite`  — who may mint, rename, merge and delete.
  *
  * ⚠ **EVERY WRITE resolves the LIVE season, always** — enforced at the source by
- * `tests/unit/coach-season-write-guard.test.ts`. Only the READ may address a past season, and only
- * for the libraries that have been approved for it (`seasonAwareRead` below). Keeping both halves
- * in one file makes that asymmetry visible instead of a coincidence of two files.
+ * `tests/unit/coach-history-endpoint-guard.test.ts`. The READ resolves the team's WORKING season,
+ * which between seasons is the finished one: a coach reading a completed season's game log still
+ * sees the tags those games were filed under. Keeping both halves in one file makes that asymmetry
+ * visible instead of a coincidence of two files.
+ *
+ * ⚠ **`seasonAwareRead` IS GONE** (P2, 2026-08-16). It was a per-library opt-in to the season DIAL,
+ * and the dial is deleted — no read here can address a season the coach names, so there is nothing
+ * left for a library to opt into. The 'focus' vocabulary's decided absence from the archive
+ * survives as what it always really was: an instrument, whose write path still demands a live year.
  */
 
 /** How many tags one team may keep per kind. Merge two to add another. */
@@ -54,20 +60,6 @@ export interface CoachTagRouteConfig {
   canWrite: (caps: CoachCapabilities) => boolean;
   readDenied: string;
   writeDenied: string;
-  /**
-   * May the GET serve a PAST season?
-   *
-   * ⚠ **A per-library decision, never a default** — this is the archive-is-opt-in ruling expressed
-   * as a field. `true` puts the route in `APPROVED_SEASON_AWARE_ROUTES`, which the build enforces;
-   * `false` means it resolves the team's ACTIVE year and cannot address a past season at all.
-   *
-   * ⚠ It is `false` for the 'focus' vocabulary BY DECISION (2026-08-01), not by omission. A tag
-   * library is an INSTRUMENT, like the drill library, and the read-only past-plan page needs no
-   * live tags: a past plan renders from the tag NAMES snapshotted into it when the drill was
-   * added, which is what keeps it honest about what the coach could see AT THE TIME. Flipping this
-   * to "make the libraries consistent" would reverse a ruling.
-   */
-  seasonAwareRead: boolean;
 }
 
 type TeamParams = { params: Promise<{ orgSlug: string; teamId: string }> };
@@ -85,8 +77,6 @@ export const GAME_TAG_LIBRARY = {
   canWrite: canManageSchedule,
   readDenied: 'You do not have access to the schedule.',
   writeDenied: 'You do not have access to the schedule.',
-  // Approved in Chunk F: a past season's games still render the tags they were given.
-  seasonAwareRead: true,
 } as const satisfies Omit<CoachTagRouteConfig, 'route'>;
 
 /** Money tags — ⚠ the one deliberate capability difference: these ride MONEY, not schedule. */
@@ -97,8 +87,6 @@ export const EXPENSE_TAG_LIBRARY = {
   canWrite: canWriteMoney,
   readDenied: 'You do not have access to team finances.',
   writeDenied: 'You do not have permission to change team finances.',
-  // Approved in Chunk F: a finished season's expenses still render the tags they were filed under.
-  seasonAwareRead: true,
 } as const satisfies Omit<CoachTagRouteConfig, 'route'>;
 
 /**
@@ -108,6 +96,20 @@ export const EXPENSE_TAG_LIBRARY = {
  * ⚠ The read/write gates are deliberately DIFFERENT capabilities. Reading is what lets the focus
  * rail explain itself, so an assistant with `notes` alone must be able to see which areas match
  * tonight; MINTING team vocabulary is a practice-planning act and rides `schedule`.
+ *
+ * ⚠⚠ **WHAT HAPPENED TO ITS `seasonAwareRead: false`** (`/review` 2026-08-16 — asked, and worth
+ * answering here rather than leaving a deleted ruling unexplained). That flag was `false` BY
+ * DECISION (owner, 2026-08-01): a tag library is an INSTRUMENT and must never be addressable in a
+ * past season. **That ruling is intact and still build-enforced** — no read here can be handed a
+ * year, and `coach-history-endpoint-guard.test.ts` fails if one learns to be.
+ *
+ * What DID change is the between-seasons case: the GET used to require an ACTIVE year and 404 when
+ * a team had none, and now it answers for the team's working season whatever state that season is
+ * in. That follows directly from the model the owner approved — a team between seasons is a team,
+ * and its vocabulary belongs to the TEAM rather than to a year. MINTING still demands a live season
+ * (every write below keeps `resolveLiveTeamContext`), which is the half the instrument ruling was
+ * actually protecting. No current screen reaches this read on a finished season; the behaviour is
+ * stated here so a future one does not have to guess whether it was decided or drifted.
  */
 export const FOCUS_TAG_LIBRARY = {
   kind: 'focus',
@@ -116,14 +118,6 @@ export const FOCUS_TAG_LIBRARY = {
   canWrite: canManageSchedule,
   readDenied: 'You do not have access to this team’s practice planning.',
   writeDenied: 'You do not have access to the schedule.',
-  /**
-   * ⚠ **FALSE BY DECISION** (owner ruling 2026-08-01), not by omission. A tag vocabulary is an
-   * INSTRUMENT, exactly like the drill library, so this resolves the team's ACTIVE year and cannot
-   * address a past season at all. The read-only past-plan page needs nothing from here: a past
-   * plan renders from the tag NAMES snapshotted into it when the drill was added, which is what
-   * keeps it honest about what the coach could see AT THE TIME.
-   */
-  seasonAwareRead: false,
 } as const satisfies Omit<CoachTagRouteConfig, 'route'>;
 
 /**
@@ -131,7 +125,8 @@ export const FOCUS_TAG_LIBRARY = {
  * routes rather than hand-declared for a fourth time (`lib/coach-route-context.ts`).
  *
  * ⚠ A tag vocabulary describes the season a coach is IN, so this is the variant that requires an
- * active program year. Deliberately NOT the season-read rail, which admits CLOSED seasons.
+ * ACTIVE program year. Deliberately NOT `resolveCoachTeamRead`, which admits a finished working
+ * season by design — minting vocabulary into a season that has ended is not a thing.
  */
 const resolveLiveTeamContext = resolveLiveCoachTeamContext;
 
@@ -157,24 +152,18 @@ function readTagName(body: unknown): { name: string } | { error: NextResponse } 
 
 /** `/tags` — GET the library, POST to mint one. */
 export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
-  const GET = withObservability(async (req: Request, { params }: TeamParams) => {
+  const GET = withObservability(async (_req: Request, { params }: TeamParams) => {
     const { orgSlug, teamId } = await params;
 
-    // ⚠ Which season this read may address is a per-library DECISION — see `seasonAwareRead`.
-    // Both branches produce the same shape; only what they are allowed to reach differs.
-    let orgId: string;
-    let capabilities: CoachCapabilities;
-    if (config.seasonAwareRead) {
-      const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
-      if ('error' in resolved) return resolved.error;
-      orgId = resolved.ctx.org.id;
-      capabilities = resolved.capabilities;
-    } else {
-      const resolved = await resolveLiveTeamContext(orgSlug, teamId);
-      if ('error' in resolved) return resolved.error!;
-      orgId = resolved.ctx.org.id;
-      capabilities = resolved.assignment.capabilities;
-    }
+    // ⚠ ONE posture for every library now (P2, 2026-08-16): the team's WORKING season. The fork
+    // this replaced existed to serve the season dial, and the dial is gone — a library's read can
+    // no longer address a season the caller names, whichever vocabulary it is. Between seasons it
+    // resolves the finished year rather than 404ing, which is what lets a coach read a completed
+    // season's game log with its tags intact.
+    const resolved = await resolveCoachTeamRead(orgSlug, teamId);
+    if ('error' in resolved) return resolved.error;
+    const orgId = resolved.ctx.org.id;
+    const capabilities: CoachCapabilities = resolved.capabilities;
 
     const denied = denyUnless(config.canRead(capabilities), config.readDenied);
     if (denied) return denied;

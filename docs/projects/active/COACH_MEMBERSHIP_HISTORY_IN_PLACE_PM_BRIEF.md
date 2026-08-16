@@ -50,3 +50,30 @@ never produced a wrong-season bug.
 - The two v1 shelves pass their mockup gates and ship without making the live screens busier.
 - The coach demo's finished-season story still lands, re-scripted around "the season's story is
   kept."
+
+---
+
+## P2 delta — what the build settled that the brief left open (2026-08-16)
+
+Three things a product owner should know that this brief did not previously say, because the answers
+came out of the code rather than the plan:
+
+- **The coach's menu is not shortened when a season ends — only its first item changes.** The brief
+  said the read-only copy of the portal "goes away", which read as *fewer doors*. What actually
+  happens is the opposite: a team between seasons keeps the whole menu it always had, in the same
+  order, and **Overview becomes Season's End** in the landing slot. Settings, Staff, Chat and Email
+  families — all of which the old archive menu dropped — are back where the coach left them. Screens
+  that only make sense while a season is running say so in a sentence and offer the way to Season's
+  End; they do not vanish.
+- **Reprinting an old award certificate is NOT homeless.** The brief listed it as an accepted loss.
+  It survives for the season a coach is on — including a finished one, which is the common case when
+  someone goes looking — and the certificate names *that* season rather than the current year. What
+  genuinely went is reaching a certificate for a season the team has since moved past; that is a
+  candidate for the practice-plans-style shelf treatment if a real moment asks for it.
+- **Opening an older season's wrap-up says what your menu is doing.** Coming from the compare list to
+  a year the team has moved past, Season's End tells the coach plainly that their menu is showing the
+  season the team is on now — rather than implying the whole portal has travelled back with them.
+  That sentence is the honest replacement for the archive's implied promise.
+
+**Where it stands:** built on dev, no database change, owner QA is ledger **§40**. §36 and §37 were
+retired unwalked — they walked the season dial — with their still-true checks folded into §40.

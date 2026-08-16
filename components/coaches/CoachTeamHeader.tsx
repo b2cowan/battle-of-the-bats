@@ -1,10 +1,9 @@
 'use client';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { ArrowLeftRight, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
-import { resolveSeasonView } from '@/lib/coach-season-view';
+import { resolveWorkingSeason } from '@/lib/coach-season-view';
 import { mastheadSeasonLabel } from '@/lib/coach-season-label';
 import { formatRecord } from '@/lib/coach-season-record';
 import {
@@ -32,13 +31,13 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   so the team's name appears exactly once. Org name arrives as a SERVER prop (never from
  *   client org-context — the default-org gotcha mislabeled multi-org coaches).
  * - Meta line: the season YEAR ("2026 season") — never programYearName, which often embeds
- *   the team's name (a third of the original stutter). Archives show a year-only
- *   "2025 · Complete" chip — PRESENTATIONAL, deliberately not a second season switcher:
- *   the page-title chip (Chunk F D-F3/D-F4) is the one switcher, and two focusable
- *   controls for the same action on one screen was a /review-confirmed a11y defect.
+ *   the team's name (a third of the original stutter). A team whose working season has
+ *   FINISHED shows a "Complete" chip here — PRESENTATIONAL, and since 2026-08-16 the ONLY
+ *   place the portal says so: the page-title chip that used to repeat it was the season
+ *   switcher wearing a label, and it died with the archive as a place (P2, Design A).
  * - A2 (2026-08-02): the record and the one status that matters today join that line —
- *   "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." A quiet week adds nothing, and an
- *   archive shows its own frozen final record instead of a status. Both arrive as PROPS from
+ *   "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." A quiet week adds nothing, and a
+ *   finished season shows its own final record instead of a status. Both arrive as PROPS from
  *   the team layout's single SSR feed; this component never fetches.
  * - Sticky against the viewport below the fixed top strip (the document is the portal's one
  *   real scroll container); publishes --coach-header-h; desktop never collapses, phone
@@ -69,8 +68,7 @@ function CoachTeamHeaderInner({
   /** Game-Day Mode (P1): the console link, present only inside the game's live window. */
   gameDayConsole: MastheadGameDayConsole | null;
 }) {
-  const searchParams = useSearchParams();
-  const { assignments, closedAssignments, seasons } = useCoaches();
+  const { assignments, closedAssignments } = useCoaches();
   const headerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
@@ -124,8 +122,8 @@ function CoachTeamHeaderInner({
   const teamName = live?.teamName ?? closed?.teamName ?? null;
   if (!teamName) return null;
 
-  const season = resolveSeasonView(seasons, teamId, searchParams.get('year'));
-  const year = season.current?.programYearYear ?? null;
+  const season = resolveWorkingSeason(assignments, closedAssignments, teamId);
+  const year = season?.programYearYear ?? null;
   // Page-header ruling 2026-08-11: the masthead owns the season AND the role, so no page
   // subtitle ever restates either. Both resolve HERE, client-side, for the season on screen.
   //  · Season text: an org's NAMED season ("Fall Ball 2026", "2026 Season") renders verbatim
@@ -136,19 +134,19 @@ function CoachTeamHeaderInner({
   //    capabilities, for the same per-season reason) — never a second search of the
   //    assignment arrays, which is how a mid-rollover team gets described wrong. Falls back
   //    to the team's assignment only while the season is still resolving.
-  const seasonRole = season.current?.coachRole ?? (live ?? closed)?.coachRole ?? null;
+  const seasonRole = season?.coachRole ?? (live ?? closed)?.coachRole ?? null;
   const roleLabel = seasonRole
     ? (seasonRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach')
     : null;
-  const seasonText = mastheadSeasonLabel(season.current?.programYearName, teamName, year);
+  const seasonText = mastheadSeasonLabel(season?.programYearName, teamName, year);
   // The record OF THE SEASON ON SCREEN — an archive gets its own frozen final tally, never the
   // live season's. Absent from the map means no decided game yet, which renders as nothing: a
   // record of 0–0 is not a record, it is a season that hasn't started.
-  const record = season.current ? records[season.current.programYearId] ?? null : null;
+  const record = season ? records[season.programYearId] ?? null : null;
   // Only speak for the season this status was actually computed for. A team mid-rollover can hold
   // two live seasons, and the server (which cannot see `?year=`) always builds the feed for the
   // default one — saying nothing beats describing the wrong season's game day (/review 2026-08-02).
-  const status = season.current?.programYearId === statusYearId ? rawStatus : null;
+  const status = season?.programYearId === statusYearId ? rawStatus : null;
 
   // Game-Day Mode (P1): inside the live window the status line becomes the door to the bench
   // console — gated on the SAME status it decorates, and on the very event it names, so it can
@@ -194,7 +192,7 @@ function CoachTeamHeaderInner({
           <div className={styles.teamHeaderMeta}>
             {seasonText && <span>{seasonText}</span>}
             {/* An archive's record is stated on the right, beside its Complete chip. */}
-            {!season.isReadOnly && record && (
+            {!season?.isReadOnly && record && (
               <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>
             )}
           </div>
@@ -204,11 +202,11 @@ function CoachTeamHeaderInner({
             the one thing that changes day to day, which is also what stops a standalone team's bar
             being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
         <div className={styles.teamHeaderRight}>
-          {season.isReadOnly ? (
+          {season?.isReadOnly ? (
             <>
-              {/* Presentational — the page-title chip is THE season switcher (see docblock). No
-                  status on an archive, ever: a finished season has no next thing, and the archive is
-                  opt-in — nothing live may be read for or shown on one. */}
+              {/* Presentational, and the ONE place a finished season is named (see docblock). No
+                  status on a season that has ended: it has no next thing, and nothing live may be
+                  read for it. */}
               <span className={styles.seasonChip}>Complete</span>
               {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
             </>
@@ -292,24 +290,9 @@ function nextLabel(status: NonNullable<MastheadStatus>): string {
   return `${day} ${time} ${word}`;
 }
 
-export default function CoachTeamHeader(props: {
-  teamId: string;
-  orgName: string;
-  isTeamWorkspace: boolean;
-  publicHref: string | null;
-  records: Record<string, MastheadRecord>;
-  status: MastheadStatus;
-  /** The season `status` was computed for — see the layout's note. Null when there is none. */
-  statusYearId: string | null;
-  /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
-  scoutingNudge: MastheadScoutingNudge | null;
-  /** Game-Day Mode (P1): the console link, present only inside the game's live window. */
-  gameDayConsole: MastheadGameDayConsole | null;
-}) {
-  // useSearchParams requires a Suspense boundary when rendered from a layout.
-  return (
-    <Suspense fallback={null}>
-      <CoachTeamHeaderInner {...props} />
-    </Suspense>
-  );
-}
+/**
+ * ⚠ The Suspense boundary that wrapped this is GONE with the `?year=` read (P2, 2026-08-16).
+ * `useSearchParams()` forces one on any component rendered from a layout, and this component's
+ * only reason to call it was resolving which season the coach had dialled to. There is no dial.
+ */
+export default CoachTeamHeaderInner;

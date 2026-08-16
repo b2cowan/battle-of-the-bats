@@ -22,12 +22,12 @@ import { gameDayWindow } from '@/lib/coach-game-day';
  * answers, in a single round trip, mirroring the practice-plan read's shape.
  *
  * ⚠ LIVE-SEASON INSTRUMENT (CLAUDE.md archive ruling, test #1: it runs a game). This route
- * deliberately rides `resolveLiveCoachTeamContext` — NOT the season-read rail — so a past
- * season is unaddressable here by construction. It joins NEITHER `APPROVED_ARCHIVE_DOORS` nor
- * `APPROVED_SEASON_AWARE_ROUTES`, and archived seasons never show an entry point. (The plan's
- * §5 mention of `resolveCoachSeasonRead` was overridden by the build prompt for exactly this
- * reason — the P3 /simplify lesson: never hand-copy the auth chain, and never put an
- * instrument on the archive rail.)
+ * deliberately rides `resolveLiveCoachTeamContext` — NOT the working-season read — so a past
+ * season is unaddressable here by construction — it joins neither `HISTORY_ENDPOINTS` nor
+ * `CROSS_SEASON_READERS`, and a finished season never shows an entry point. (The plan's §5
+ * mention of a season-aware read was overridden by the build prompt for exactly this reason —
+ * the P3 /simplify lesson: never hand-copy the auth chain, and never put an instrument on a
+ * resolver that admits a season that has ended.)
  *
  * ⚠ NOTHING IS WRITTEN HERE, and no write route is added anywhere in P1. The console's writes
  * are the EXISTING lineup PUT, attendance PATCH and events PATCH (with the quiet flag) — one

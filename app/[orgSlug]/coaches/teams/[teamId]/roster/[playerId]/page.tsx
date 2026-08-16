@@ -1,7 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Users, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { stripTeamNamePrefix } from '@/lib/coach-season-label';
@@ -124,9 +123,7 @@ export default function PlayerDetailPage({
   const { assignments, loading: assignmentsLoading } = useCoaches();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   // Positions/pitching vocabulary comes from this team's sport (falls back to the default until the
   // assignment loads). The picker offers the assignable FIELD positions (not the OF catch-all / DH).
@@ -286,7 +283,7 @@ export default function PlayerDetailPage({
     <div className={styles.page}>
       <UnsavedChangesGuard active={isDirty} />
       {/* Drill-in back link (the breadcrumb is globally hidden — this is the one way back). */}
-      <CoachBackLink href={`${base}/roster${seasonQuery}`}>Roster</CoachBackLink>
+      <CoachBackLink href={`${base}/roster`}>Roster</CoachBackLink>
 
       {/* Header (page-header ruling 2026-08-11): the player's name + archive chip, nothing
           under the title — jersey number and age are live facts, so they lead the status row
@@ -294,8 +291,6 @@ export default function PlayerDetailPage({
       <CoachPageHeader
         icon={Users}
         title={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
-        season={page.season}
-        teamBase={page.teamBase}
       />
 
       {/* Status row */}
@@ -724,7 +719,7 @@ export default function PlayerDetailPage({
             </p>
           </>
         )}
-        <Link href={moneySectionHref(base, 'dues', undefined, seasonQuery)} className={styles.contactLink}>Manage dues →</Link>
+        <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.contactLink}>Manage dues →</Link>
       </CoachCollapseSection>
 
       {/* Save bar — viewport-pinned while there are unsaved changes, no matter where you scroll.

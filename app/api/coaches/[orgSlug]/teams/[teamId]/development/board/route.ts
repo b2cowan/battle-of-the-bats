@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-// ⚠ No direct auth imports: every read here resolves through the season rail below, which is the
+// ⚠ No direct auth imports: every read here resolves through the working-season read below, which is the
 // only thing that can hand back a PAST season's capabilities (governing rule 1). Leftover
 // `getAuthContext` / `getActiveRepProgramYear` imports from before that conversion were unused.
 import {
@@ -14,7 +14,7 @@ import {
   getRepTeamEventTagsByKind,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import {
   denyUnless, canViewDevelopmentGoals, canViewMeasurables, canManageSchedule,
 } from '@/lib/coach-capabilities';
@@ -51,7 +51,7 @@ export const GET = withObservability(async (req: Request,
 
   // Season-scoped (Chunk F): `?year=` decides which season is being read, and the grants come
   // from THAT season's assignment row (governing rule 1) rather than the coach's current ones.
-  const seasonCtx = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const seasonCtx = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in seasonCtx) return seasonCtx.error;
   const caps = seasonCtx.capabilities;
 

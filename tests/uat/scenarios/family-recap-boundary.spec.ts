@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
 
 /**
  * The season recap's access boundary (Coach Portal Chunk D, Slice 3).
@@ -113,6 +114,9 @@ async function cleanup() {
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
     }
     await admin.from('rep_program_years').delete().eq('team_id', t.id);
+    // M1: memberships are team-scoped — clear them before the team row goes, or the
+    // FK leaves the team undeletable and it surfaces as the teardown assertion.
+    await clearMemberships(admin, t.id);
     await admin.from('rep_teams').delete().eq('id', t.id);
   }
   for (const u of marked) {
@@ -234,6 +238,18 @@ test.beforeAll(async () => {
     user_id: headUserId, coach_role: 'head_coach',
   });
   if (pastCoachErr) throw pastCoachErr;
+
+  /**
+   * ⚠ M1 MEMBERSHIPS — THE ACCESS TRUTH (owner ruling 2026-08-16, mig 245). Without this every
+   * coach above 403s at the first membership-gated route, and the spec fails for a reason that
+   * has nothing to do with what it tests. PROJECTED from the season rows rather than restated,
+   * so the pair can never disagree — see tests/uat/scenarios/_coach-membership-fixture.ts.
+   */
+  // ⚠ BOTH teams. This spec provisions a closed team AND a live one, and four of its probes call
+  // the LIVE team's routes — granting only the closed team left those probes 403ing at the
+  // membership gate, where two of them would have passed vacuously behind an `if (status === 200)`.
+  await grantMembershipsFromSeasonRows(admin, teamId);
+  await grantMembershipsFromSeasonRows(admin, liveTeamId);
 });
 
 test.afterAll(async () => {

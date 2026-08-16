@@ -1,7 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { CoachingAssignment, ClosedCoachingAssignment } from './db';
-import type { CoachSeasonOption } from './types';
 import { resolveCoachSeasonPage as resolveCoachSeasonPageImpl } from './coach-season-view';
 
 /** The two account-scoped coach onboarding preferences (Quiet Mode Phase C2). */
@@ -17,10 +16,6 @@ interface CoachesContextType {
   /** Teams whose ONLY season(s) are closed — read-only Season's End access (Batch 3, P0 #1).
    *  One entry per team (its newest closed season). Never mixed into `assignments`. */
   closedAssignments: ClosedCoachingAssignment[];
-  /** EVERY season this coach holds an assignment on, across their teams (Chunk F) — the season
-   *  switcher's list. Distinct from `closedAssignments`, which answers "which of my TEAMS has
-   *  finished" and is deduped to one row per team. */
-  seasons: CoachSeasonOption[];
   loading: boolean;
   refresh: () => Promise<void>;
   /**
@@ -38,7 +33,6 @@ const DEFAULT_PREFS: CoachOnboardingPrefsState = { tourDismissed: false, hintsOf
 const CoachesContext = createContext<CoachesContextType>({
   assignments: [],
   closedAssignments: [],
-  seasons: [],
   loading: true,
   refresh: async () => {},
   onboardingPrefs: DEFAULT_PREFS,
@@ -67,7 +61,6 @@ export function CoachesProvider({
   orgSlug,
   initialAssignments,
   initialClosedAssignments,
-  initialSeasons,
   initialOnboardingPrefs,
 }: {
   children: ReactNode;
@@ -77,9 +70,6 @@ export function CoachesProvider({
    *  the identical data on every mount. Provide BOTH or NEITHER. */
   initialAssignments?: CoachingAssignment[];
   initialClosedAssignments?: ClosedCoachingAssignment[];
-  /** SSR seed for the season switcher (Chunk F) — derived in the layout from the same two
-   *  lookups, so it costs no extra query. */
-  initialSeasons?: CoachSeasonOption[];
   /** SSR seed for the account-scoped onboarding preferences — read in the layout's existing
    *  parallel lookup, so no client round-trip and no flash of the wrong state. Absent = the
    *  show-guidance defaults, which is the correct fail-open direction. */
@@ -88,7 +78,6 @@ export function CoachesProvider({
   const seeded = initialAssignments !== undefined && initialClosedAssignments !== undefined;
   const [assignments, setAssignments] = useState<CoachingAssignment[]>(initialAssignments ?? []);
   const [closedAssignments, setClosedAssignments] = useState<ClosedCoachingAssignment[]>(initialClosedAssignments ?? []);
-  const [seasons, setSeasons] = useState<CoachSeasonOption[]>(initialSeasons ?? []);
   const [loading, setLoading] = useState(!seeded);
   const [onboardingPrefs, setPrefsState] = useState<CoachOnboardingPrefsState>(initialOnboardingPrefs ?? DEFAULT_PREFS);
 
@@ -111,7 +100,6 @@ export function CoachesProvider({
         const data = await res.json();
         setAssignments(data.assignments ?? []);
         setClosedAssignments(data.closedAssignments ?? []);
-        setSeasons(data.seasons ?? []);
       }
     } finally {
       setLoading(false);
@@ -124,7 +112,7 @@ export function CoachesProvider({
   }, [seeded, load]);
 
   return (
-    <CoachesContext.Provider value={{ assignments, closedAssignments, seasons, loading, refresh: load, onboardingPrefs, setOnboardingPrefs }}>
+    <CoachesContext.Provider value={{ assignments, closedAssignments, loading, refresh: load, onboardingPrefs, setOnboardingPrefs }}>
       {children}
     </CoachesContext.Provider>
   );
@@ -135,22 +123,24 @@ export function useCoaches() {
 }
 
 /**
- * Which season is on screen, and is it a record (Chunk F). The logic itself lives in
+ * Which season is on screen, and is it a record. The logic itself lives in
  * `lib/coach-season-view.ts` — pure, so it can be unit-tested without React — and is re-exported
  * here because every consumer reaches it through this context anyway.
  *
- * `yearParam` is passed IN by the caller's own `useSearchParams()` rather than read here, so a
- * page that isn't inside a Suspense boundary doesn't get forced into one by this hook.
+ * ⚠ It takes no year (P2, 2026-08-16): there is one season, the team's working one, and no control
+ * anywhere lets a coach point the portal at a different one. The `useSearchParams()` every page
+ * used to feed this hook went with it — several of them existed for nothing else, which is why a
+ * handful of pages stopped needing a Suspense boundary in the same change.
  */
 export {
-  resolveSeasonView,
+  resolveWorkingSeason,
   resolveCoachSeasonPage,
-  type SeasonView,
+  type CoachWorkingSeason,
   type CoachSeasonPage,
 } from './coach-season-view';
 
-/** The everyday page-side entry point: `const page = useCoachSeasonPage(orgSlug, teamId, year)`. */
-export function useCoachSeasonPage(orgSlug: string, teamId: string, yearParam: string | null) {
-  const { assignments, closedAssignments, seasons } = useCoaches();
-  return resolveCoachSeasonPageImpl({ assignments, closedAssignments, seasons }, orgSlug, teamId, yearParam);
+/** The everyday page-side entry point: `const page = useCoachSeasonPage(orgSlug, teamId)`. */
+export function useCoachSeasonPage(orgSlug: string, teamId: string) {
+  const { assignments, closedAssignments } = useCoaches();
+  return resolveCoachSeasonPageImpl({ assignments, closedAssignments }, orgSlug, teamId);
 }

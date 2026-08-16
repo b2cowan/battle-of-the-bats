@@ -1,6 +1,5 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { ClipboardList, Library } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -136,14 +135,11 @@ export default function CoachPastPracticePlanPage({
 }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> }) {
   const { orgSlug, teamId, eventId } = use(params);
   const { loading: ctxLoading } = useCoaches();
-  const searchParams = useSearchParams();
-  const year = searchParams.get('year');
-  const seasonQuery = year ? `?year=${encodeURIComponent(year)}` : '';
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   // Page-header ruling 2026-08-11: the archive chip is the SHARED one, in the h1, like every other
   // page in the portal — this page had hand-rolled its own read-only span, which meant it also had
   // no way OUT of the archive from the chip (the shared component is the exit too).
-  const page = useCoachSeasonPage(orgSlug, teamId, year);
+  const page = useCoachSeasonPage(orgSlug, teamId);
 
   const [data, setData] = useState<LoadState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +149,7 @@ export default function CoachPastPracticePlanPage({
     setLoading(true); setError('');
     try {
       const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/practice-plan/read${seasonQuery}`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/practice-plan/read`,
       );
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not open that plan.');
       setData(await res.json());
@@ -162,7 +158,7 @@ export default function CoachPastPracticePlanPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, eventId, seasonQuery]);
+  }, [orgSlug, teamId, eventId]);
   useEffect(() => { load(); }, [load]);
 
   const nameOf = useCallback((id: string): string | null => {
@@ -179,7 +175,7 @@ export default function CoachPastPracticePlanPage({
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* ⚠ The ONLY link out, and it carries the viewed season — an archive is a container, and a
           page inside one must not drop the season on the way back. */}
-      <CoachBackLink href={`${base}/history/development${seasonQuery}`}>Practices you&apos;ve run</CoachBackLink>
+      <CoachBackLink href={`${base}/history/development`}>Practices you&apos;ve run</CoachBackLink>
 
       {loading ? (
         <div className={styles.loadingState}>Opening the plan…</div>
@@ -190,8 +186,6 @@ export default function CoachPastPracticePlanPage({
           <CoachPageHeader
             icon={ClipboardList}
             title={data.event.name || 'Practice plan'}
-            season={page.season}
-            teamBase={page.teamBase}
             helpLabel="Practice plans"
             help={{ module: 'coaches', sectionIds: ['premium-practice-plans'], fullGuideHref: `/${orgSlug}/coaches/help#premium-practice-plans` }}
           />

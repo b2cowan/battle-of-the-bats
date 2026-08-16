@@ -17,12 +17,12 @@ import {
 /**
  * Coach-side family access: the team's link, its schedule visibility, and its followers.
  *
- * ⚠ LIVE SEASON ONLY — deliberately does NOT import `lib/coach-season-read.ts`. Family
+ * ⚠ LIVE SEASON ONLY — deliberately does NOT import `lib/coach-team-read.ts`. Family
  * access is an INSTRUMENT (it configures who may reach the team right now), not a record,
  * so under the archive's opt-in rule it must not be addressable in a past season. Because
- * this route never joins the season-read rail it resolves the team's active state and
+ * this route never joins the working-season read it resolves the team's active state and
  * cannot address an archived one — the fail-closed default doing its job. It must never
- * appear in `APPROVED_SEASON_AWARE_ROUTES`.
+ * appear in `HISTORY_ENDPOINTS`.
  *
  * Permission: `rosterPii`. This panel surfaces guardian/family email addresses, which is
  * exactly the capability an assistant is (by default) not granted.

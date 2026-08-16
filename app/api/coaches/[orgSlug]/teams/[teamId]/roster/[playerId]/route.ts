@@ -17,7 +17,7 @@ import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } fr
 import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import {
   denyUnless, canLogGameMoment, canViewMoney, hasRecordAccess, redactRosterPlayer,
 } from '@/lib/coach-capabilities';
@@ -54,10 +54,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 // "No active program year for this team" — a dead end at the end of a door the archive opened.
 // The player must belong to the SEASON being read, not merely to the team, or a past season's
 // page would happily show a current player's record.
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string }> },) => {
   const { orgSlug, teamId, playerId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear, isReadOnly } = resolved;
   // A1 (2026-08-03): a player's own page is a record surface — see the roster list route.

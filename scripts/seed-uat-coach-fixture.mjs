@@ -129,12 +129,16 @@ if (!member) {
 // + what the legacy write routes read. A fixture with the row but no membership 403s on every
 // membership-gated route — the exact "every spec lands on Not assigned" incident this script's
 // header describes, wearing the new table.
-const mem = await db.from('rep_team_staff_memberships').upsert({
-  org_id: org.id, team_id: team.id, user_id: user.id,
-  coach_role: 'head_coach', capabilities: null,
-  status: 'active', revoked_at: null, revoked_by: null,
-}, { onConflict: 'team_id,user_id' });
-if (mem.error) { console.error('✗ rep_team_staff_memberships upsert', mem.error.message); process.exit(1); }
+/** Head-coach membership on a team — idempotent, and the ONE place this fixture writes one. */
+async function ensureHeadCoachMembership(teamId) {
+  const mem = await db.from('rep_team_staff_memberships').upsert({
+    org_id: org.id, team_id: teamId, user_id: user.id,
+    coach_role: 'head_coach', capabilities: null,
+    status: 'active', revoked_at: null, revoked_by: null,
+  }, { onConflict: 'team_id,user_id' });
+  if (mem.error) { console.error('✗ rep_team_staff_memberships upsert', mem.error.message); process.exit(1); }
+}
+await ensureHeadCoachMembership(team.id);
 ok('team staff membership present');
 const { data: coachRow } = await db.from('rep_team_coaches')
   .select('id, coach_role').eq('program_year_id', py.id).eq('user_id', user.id).maybeSingle();
@@ -715,9 +719,105 @@ if (!existingPr?.length) {
   ok('payment requests already present');
 }
 
+// ── 14. The BETWEEN-SEASONS team ─────────────────────────────────────────────
+/**
+ * ⚠⚠ **THE FIXTURE GAP THIS CLOSES HID THREE ROUNDS OF DEFECTS.** Until 2026-08-16 the rendered
+ * layout sweep had NO completed season anywhere in its world, so Season's End, the compare list and
+ * every "this season has finished" state were invisible to it — the guard tests said so in as many
+ * words, and every defect on that rail was found by reading source or by owner QA instead.
+ *
+ * A second TEAM rather than a second season on the first one, deliberately: the state worth
+ * rendering is a team whose WORKING season has finished (no live year at all), which the fixture's
+ * main team cannot be without losing every other screen.
+ *
+ * Two finished seasons, not one, so the compare list has a row that is NOT the season on screen —
+ * with a single season its per-year "Season Wrapped" link would point at the page already open.
+ */
+const BETWEEN_TEAM_NAME = 'UAT Between Seasons';
+let { data: pastTeam } = await db.from('rep_teams')
+  .select('id, name').eq('org_id', org.id).eq('name', BETWEEN_TEAM_NAME).maybeSingle();
+if (!pastTeam) {
+  const ins = await db.from('rep_teams')
+    .insert({ org_id: org.id, name: BETWEEN_TEAM_NAME, slug: 'uat-between-seasons', sport: 'baseball' })
+    .select('id, name').single();
+  if (ins.error) { console.error('✗ between-seasons team insert', ins.error.message); process.exit(1); }
+  pastTeam = ins.data;
+}
+ok(`between-seasons team ${pastTeam.name} (${pastTeam.id})`);
+
+const thisYear = new Date().getFullYear();
+const pastYears = [];
+for (const year of [thisYear - 2, thisYear - 1]) {
+  let { data: row } = await db.from('rep_program_years')
+    .select('id, year').eq('team_id', pastTeam.id).eq('year', year).maybeSingle();
+  if (!row) {
+    const ins = await db.from('rep_program_years')
+      .insert({ team_id: pastTeam.id, org_id: org.id, name: `${year} Season`, year, status: 'completed' })
+      .select('id, year').single();
+    if (ins.error) { console.error('✗ finished program year insert', ins.error.message); process.exit(1); }
+    row = ins.data;
+  }
+  pastYears.push(row);
+}
+const finishedYear = pastYears[pastYears.length - 1];
+ok(`finished seasons ${pastYears.map(y => y.year).join(' + ')} — no live year on this team`);
+
+// M1: the membership is the access truth; the season rows are the record the year names its staff by.
+await ensureHeadCoachMembership(pastTeam.id);
+for (const y of pastYears) {
+  const { data: row } = await db.from('rep_team_coaches')
+    .select('id').eq('program_year_id', y.id).eq('user_id', user.id).maybeSingle();
+  if (!row) {
+    const ins = await db.from('rep_team_coaches').insert({
+      program_year_id: y.id, team_id: pastTeam.id, org_id: org.id,
+      user_id: user.id, coach_role: 'head_coach', capabilities: null,
+    });
+    if (ins.error) { console.error('✗ finished-season coach row insert', ins.error.message); process.exit(1); }
+  }
+}
+ok('between-seasons membership + season record rows present');
+
+// Enough content that the screens have something to draw: a roster, and finished games so the
+// scoreboard band, the results table and Season Wrapped all have real figures rather than empties.
+const { data: pastRoster } = await db.from('rep_roster_players')
+  .select('id').eq('program_year_id', finishedYear.id).limit(1);
+if (!pastRoster?.length) {
+  const rows = FIRST_NAMES.slice(0, 9).map((name, i) => ({
+    program_year_id: finishedYear.id, team_id: pastTeam.id, org_id: org.id,
+    player_first_name: name, player_last_name: 'Past', player_number: String(i + 1),
+    status: 'active', source: 'admin_manual', display_order: i,
+  }));
+  const ins = await db.from('rep_roster_players').insert(rows);
+  if (ins.error) { console.error('✗ finished-season roster insert', ins.error.message); process.exit(1); }
+  ok('finished-season roster seeded (9 players)');
+}
+
+const { data: pastGames } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', finishedYear.id).limit(1);
+if (!pastGames?.length) {
+  // Fixed offsets from the season's own year, never from "now" — a rendered baseline keyed on the
+  // screen's text must not drift every time the sweep runs (the probe practice already taught us).
+  const rows = [
+    { result: 'win',  team_score: 7, opponent_score: 4, opponent: 'Ridgeview' },
+    { result: 'win',  team_score: 5, opponent_score: 3, opponent: 'Lakeside' },
+    { result: 'loss', team_score: 2, opponent_score: 6, opponent: 'Northgate' },
+    { result: 'tie',  team_score: 3, opponent_score: 3, opponent: 'Fairhaven' },
+  ].map((g, i) => ({
+    program_year_id: finishedYear.id, team_id: pastTeam.id, org_id: org.id,
+    event_type: 'league_game', name: `vs ${g.opponent}`, opponent: g.opponent,
+    home_away: i % 2 === 0 ? 'home' : 'away',
+    starts_at: new Date(Date.UTC(finishedYear.year, 5, 4 + i * 7, 22, 0)).toISOString(),
+    status: 'scheduled', result: g.result, team_score: g.team_score, opponent_score: g.opponent_score,
+  }));
+  const ins = await db.from('rep_team_events').insert(rows);
+  if (ins.error) { console.error('✗ finished-season games insert', ins.error.message); process.exit(1); }
+  ok('finished-season games seeded (4 finalized, 2-1-1)');
+}
+
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);
+console.log(`  Between    : /${org.slug}/coaches/teams/${pastTeam.id}/season-end`);
 console.log(`  Run screen : /${org.slug}/coaches/teams/${team.id}/practice/${eventId}/run`);
 console.log(`  Console    : /${org.slug}/coaches/teams/${team.id}/game/${gameId}\n`);
 console.log(`  Probes     : PROBE_EVENT_ID=${eventId} npx playwright test --config playwright.config.ts\n`);

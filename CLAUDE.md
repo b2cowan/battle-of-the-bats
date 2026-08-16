@@ -1,27 +1,41 @@
 @AGENTS.md
 @AGENCY_RULES.md
 
-# Coaches Portal — the archive is OPT-IN (owner ruling 2026-08-01, binding)
+# Coaches Portal — HISTORY IS DELIVERED IN PLACE (owner ruling 2026-08-16, binding)
 
-**New coaches-portal functionality is NOT viewable in archived (completed/archived) seasons unless
-someone explicitly decides it should be.** A coach can open any past season read-only (Chunk F); what
-they find there is a deliberate allow-list, never whatever happened to get built.
+**There is no archive, and no season toggle.** A coach opens their team and sees the season the team
+is on — its live one, or its newest finished one when the team is between seasons. Nothing anywhere
+points the portal at a different year. This replaces the "archive is opt-in" ruling of 2026-08-01,
+which governed a PLACE (a season dial, a second nav, ~30 season-aware routes) that is now deleted.
+Plan of record: `docs/projects/active/COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md`.
 
-This fails closed by design: a coach API route that does not opt into the season-read rail
-(`lib/coach-season-read.ts`) resolves the team's ACTIVE year and cannot address a past season at all.
-Two lists in `tests/unit/coach-season-write-guard.test.ts` turn that into a contract —
-`APPROVED_ARCHIVE_DOORS` (what a finished season offers) and `APPROVED_SEASON_AWARE_ROUTES` (what may
-serve one). **Adding either fails the build until the list is edited, which is the decision point.**
+**Between seasons is an ordinary state, not a lock-out.** A team whose working season has finished
+keeps its whole nav in its usual order; only the landing slot changes (Overview → Season's End).
+Records render read-only. Live instruments say so in their own words
+(`components/coaches/CoachNotOnTeam.tsx`) rather than vanishing.
 
-Before proposing that anything join those lists, answer three questions:
+**A year parameter is a DECISION.** `HISTORY_ENDPOINTS` in
+`tests/unit/coach-history-endpoint-guard.test.ts` is the whole look-back layer — today, exactly
+`wrapped` (Season Wrapped / Season's End), reached from the compare list at the bottom of Insights →
+"How are we doing?". The build fails when a route or a page learns to read a year, which is the
+decision point. Before proposing an addition, answer three questions:
 1. **Record or instrument?** Anything that moves money, runs a tryout, messages families, or
-   configures the team stays live-season-only.
-2. **Does the whole subtree carry the season?** An archive is a container — the unit of work is every
-   page reachable from the door, not the door. Chunk F's expensive defects were all one level down.
-3. **Does it show what the coach could see AT THE TIME**, not today?
+   configures the team stays on the working season.
+2. **Does the whole subtree carry the year?** The unit of work is every page reachable from the
+   door, not the door. Chunk F's expensive defects were all one level down.
+3. **Could the coach tell which season they are reading?** The page-title season chip is gone; a
+   surface that can show two different years needs its own answer to that.
 
-**If a surface is not archive-ready, hide its entry point in an archive** rather than letting it
-dead-end — a link that 404s is the same bug wearing a politer face.
+**⚠ Every history shelf gets its own owner mockup session before it is built** (P3 practice plans,
+P4 the money book, and anything after them). Binding design constraint for those sessions: **the
+current season is always the primary focus** — the historical layer must be quiet (below the live
+content, collapsed/on-demand, never default-open). A shelf that makes the live screen noisier is a
+failed design regardless of how useful the history is.
+
+**If a surface cannot honestly serve a finished season, hide its entry point** rather than letting it
+dead-end — a link that 404s is the same bug wearing a politer face. Standing examples, both
+build-enforced: playing-time analytics (recomputed figures, live-season-only PERMANENTLY) and the
+opponent scouting book (an instrument — today's book, not a snapshot).
 
 # Post-edit review
 

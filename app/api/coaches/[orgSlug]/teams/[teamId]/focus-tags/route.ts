@@ -9,7 +9,7 @@ import { FOCUS_TAG_LIBRARY, coachTagCollectionRoutes } from '@/lib/coach-tag-rou
  * itself, but minting team vocabulary is a practice-planning act and rides `schedule`. Both are
  * declared on `FOCUS_TAG_LIBRARY` in `lib/coach-tag-routes.ts`.
  *
- * ⚠ The GET rides the season-read rail, so a past season's records still render the words they
+ * ⚠ The GET rides the working-season read, so a past season's records still render the words they
  * were tagged with. Every WRITE resolves the LIVE season — a vocabulary is an INSTRUMENT.
  */
 export const { GET, POST } = coachTagCollectionRoutes({

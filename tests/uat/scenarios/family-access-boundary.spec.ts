@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
 
 /**
  * The family layer's access boundary (Coach Portal Chunk D, Slice 1).
@@ -99,6 +100,9 @@ async function cleanup() {
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
     }
     await admin.from('rep_program_years').delete().eq('team_id', t.id);
+    // M1: memberships are team-scoped — clear them before the team row goes, or the
+    // FK leaves the team undeletable and it surfaces as the teardown assertion.
+    await clearMemberships(admin, t.id);
     await admin.from('rep_teams').delete().eq('id', t.id);
   }
   for (const u of marked) {
@@ -207,6 +211,17 @@ test.beforeAll(async () => {
   await addLink(teamAId, followerUserId, FOLLOWER_EMAIL, 'verified');
   await addLink(teamAId, declinedUserId, DECLINED_EMAIL, 'declined');
   await addLink(teamAId, revokedUserId, REVOKED_EMAIL, 'revoked');
+
+  /**
+   * ⚠ M1 MEMBERSHIPS — THE ACCESS TRUTH (owner ruling 2026-08-16, mig 245). Without this every
+   * coach above 403s at the first membership-gated route, and the spec fails for a reason that
+   * has nothing to do with what it tests. PROJECTED from the season rows rather than restated,
+   * so the pair can never disagree — see tests/uat/scenarios/_coach-membership-fixture.ts.
+   */
+  // Two teams here — both need their staff projected, or the cross-team boundary probes 403 on
+  // the side they are supposed to be admitted to.
+  await grantMembershipsFromSeasonRows(admin, teamAId);
+  await grantMembershipsFromSeasonRows(admin, teamBId);
 });
 
 test.afterAll(async () => {

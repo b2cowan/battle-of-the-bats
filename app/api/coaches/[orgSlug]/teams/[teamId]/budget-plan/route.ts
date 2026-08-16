@@ -4,7 +4,7 @@ import type { RepBudgetLineWithPeriods, RepBudgetPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
   const periods = ((row.rep_budget_periods ?? []) as Record<string, unknown>[])
@@ -45,10 +45,10 @@ function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
 // Returns the full budget plan for the active program year, including
 // per-line period breakdowns, total budget, roster count, and whether
 // dues installments have already been generated.
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

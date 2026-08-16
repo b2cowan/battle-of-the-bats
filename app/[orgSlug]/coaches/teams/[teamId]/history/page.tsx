@@ -1,10 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { BarChart3 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import { archiveHasSection, PLAYING_TIME_SECTION, OPPONENTS_SECTION } from '@/lib/coach-nav-visibility';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachAskBar from '@/components/coaches/CoachAskBar';
 import { askReportHref } from '@/lib/coach-ask-questions';
@@ -66,21 +64,14 @@ export default function CoachesInsightsPage({
   const { assignments, loading: ctxLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
   /**
-   * ⚠⚠ WHICH SEASON — archive rail Phase 2 (2026-08-16), and the hub was the worse half of the
-   * defect its results page had.
+   * ⚠⚠ WHICH SEASON — the team's WORKING one, which for a team between seasons is a finished one.
    *
    * This page held NO season resolver at all, and its live-assignment check fired first — so a
-   * coach with no live assignment hit a "Team not found" wall on the hub describing the season
-   * they ran themselves. Meanwhile a coach who still ran the team could not reach this hub from an
-   * archive in the first place, because the nav routed around it to `/history/results`.
-   *
-   * The season decides what this page describes; WHO is reading decides only what they may open,
-   * and the API is the authority on that. `page.capabilities` are that season's (governing rule 1),
-   * so an assistant granted money in 2024 and not in 2025 gets 2024's dues block and not 2025's.
+   * coach with no live season hit a "Team not found" wall on the hub describing the season they
+   * ran themselves. The SEASON decides what this page describes; WHO is reading decides only what
+   * they may open, and the API is the authority on that.
    */
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
   const isRecord = page.isReadOnly;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -91,19 +82,19 @@ export default function CoachesInsightsPage({
   const seasonWord = isRecord ? 'that season' : 'this season';
 
   /**
-   * ⚠⚠ HIDDEN IN A RECORD, AND THE GATE IS THE FETCH AS WELL AS THE TILE. `lineup-analytics` is
-   * NOT on the season-read rail — it was ruled live-season-only PERMANENTLY (owner, 2026-08-16),
-   * because the figures are recomputed from saved lineups and "what the coach could see at the
-   * time" cannot be guaranteed. Asking it while viewing 2024 would answer with the LIVE season's
-   * numbers, silently, under a 2024 chip; a tile hidden over a fetch still made is how that number
-   * would have leaked into a finding. CLAUDE.md's rule: hide the entry point, never 404 politely.
+   * ⚠⚠ HIDDEN ON A FINISHED SEASON, AND THE GATE IS THE FETCH AS WELL AS THE TILE. Playing-time
+   * analytics were ruled live-season-only PERMANENTLY (owner, 2026-08-16): the figures are
+   * RECOMPUTED from saved lineups every time the report is opened, so what it would show for a
+   * finished season is what today's code makes of that season's lineups — not what the coach read
+   * at the time. `lineup-analytics` therefore serves the live season only, and asking it here
+   * would answer with THIS season's numbers under a finished season's heading. A tile hidden over
+   * a fetch still made is how that number leaks into a finding.
    *
-   * ⚠ ASKED OF `archiveHasSection`, not restated as a bare `!isRecord`. The ruling already has a
-   * home — `LIVE_ONLY_ARCHIVE_SECTIONS` — and the season switcher reads it from there. A hand-
-   * written second copy of the same fact is how the switcher and the hub drift apart: reverse the
-   * ruling in one place and the other keeps hiding (or keeps offering) with nothing to catch it.
+   * ⚠ The ruling's build-enforced home is `tests/unit/coach-history-endpoint-guard.test.ts`, which
+   * fails if that route ever learns to serve a season it was handed. Reversing it needs a new
+   * owner ruling AND an answer to the recomputation problem — not an edit here.
    */
-  const canLineups = (!isRecord || archiveHasSection(PLAYING_TIME_SECTION)) && !!caps?.lineups;
+  const canLineups = !isRecord && !!caps?.lineups;
   /**
    * ⚠ A1 (2026-08-03): this WAS one `canRoster` flag reading roster visibility, and it did two
    * jobs — deciding whether to fetch the attendance report, and whether to offer the door to it.
@@ -132,7 +123,7 @@ export default function CoachesInsightsPage({
     setAwardsSummary(null);
     if (!canAwards) return;
     let cancelled = false;
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`)
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (cancelled || !data) return;
@@ -146,7 +137,7 @@ export default function CoachesInsightsPage({
       })
       .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
     return () => { cancelled = true; };
-  }, [canAwards, orgSlug, teamId, seasonQuery]);
+  }, [canAwards, orgSlug, teamId]);
 
   // "Is everyone getting attention?" tile summary — same self-contained-fetch pattern as
   // the awards tile; rides the board GET (one dataset, several doors). 404 = no active
@@ -156,7 +147,7 @@ export default function CoachesInsightsPage({
     setDevSummary(null);
     if (!canDevelopment) return;
     let cancelled = false;
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/board${seasonQuery}`)
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/board`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (cancelled || !data) return;
@@ -169,24 +160,21 @@ export default function CoachesInsightsPage({
       })
       .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
     return () => { cancelled = true; };
-  }, [canDevelopment, orgSlug, teamId, seasonQuery]);
+  }, [canDevelopment, orgSlug, teamId]);
 
   /**
    * "Who are we up against?" tile summary — same self-contained-fetch pattern as the awards tile.
    * Gated on schedule (the book's own open-contribution gate), never record access.
    *
-   * ⚠⚠ HIDDEN IN A RECORD, by a standing owner ruling this phase re-confirmed rather than
-   * reopened. The scouting book is an INSTRUMENT (owner 2026-08-04, ratified again 2026-08-16):
-   * its routes are OFF the season-read rail and a build-enforced test in
-   * `coach-season-write-guard.test.ts` fails the moment one joins it. A book note written last week
-   * is not what the coach saw in 2024, and asking this route from an archive would answer with
-   * today's book under a past year's chip. The per-season facts a coach wants from it — who we
-   * played, what the score was — are already behind the results and schedule doors.
-   *
-   * ⚠ Same derivation as playing time above: the ruling lives in `LIVE_ONLY_ARCHIVE_SECTIONS`,
-   * and this asks it rather than repeating its conclusion.
+   * ⚠⚠ HIDDEN ON A FINISHED SEASON, by a standing owner ruling this phase re-confirmed rather
+   * than reopened. The scouting book is an INSTRUMENT (owner 2026-08-04, ratified again
+   * 2026-08-16): it reads every season's games to prepare for the LIVE one, and a build-enforced
+   * test in `coach-history-endpoint-guard.test.ts` fails the moment it learns to answer for a
+   * season it was handed. A book note written last week is not what the coach saw two years ago.
+   * The per-season facts a coach wants from it — who we played, what the score was — are already
+   * behind the results and schedule doors.
    */
-  const canScouting = (!isRecord || archiveHasSection(OPPONENTS_SECTION)) && !!caps?.schedule;
+  const canScouting = !isRecord && !!caps?.schedule;
   const [oppSummary, setOppSummary] = useState<{ total: number; withBook: number } | null>(null);
   useEffect(() => {
     setOppSummary(null);
@@ -219,13 +207,14 @@ export default function CoachesInsightsPage({
   // "no data yet" — its tile shows a quiet error instead of teach copy (honesty).
   const [srcErrors, setSrcErrors] = useState({ lineups: false, attendance: false, dues: false });
   /**
-   * Guards the stale flash: the body renders as loading until the data belongs to THIS team AND
-   * THIS season. ⚠ The key carries the season (Phase 2) — the switcher rewrites this page's own
-   * URL with `?year=` and the page does not remount, so a team-only key would paint a past year's
-   * scoreboard under the live season's chip until the new fetch landed. Same fix the results page,
-   * the Lineups hub and the Practice hub all took.
+   * Guards the stale flash: the body renders as loading until the data belongs to THIS team.
+   *
+   * ⚠ The key was `${teamId}|${seasonQuery}` while a season switcher could rewrite this page's own
+   * URL without remounting it. That trigger is gone (P2, 2026-08-16), and the composite key went
+   * with it — but the TEAM half is still real: this is a client component that survives a team
+   * switch, so a slow response for the old team could still paint over the new one.
    */
-  const loadKey = `${teamId}|${seasonQuery}`;
+  const loadKey = teamId;
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   // Record scope mirrors the Overview widget's remembered per-team choice.
   const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
@@ -237,16 +226,17 @@ export default function CoachesInsightsPage({
   // stale name here would have fetched `/attendance` for anyone with record access and reported the
   // resulting 403 as a genuine failure — "couldn't be loaded" for a section they simply don't have.
   /**
-   * ⚠⚠ EVERY WRITE IS GUARDED, not just the render — the single highest-risk change in Phase 2.
+   * ⚠⚠ EVERY WRITE IS GUARDED, not just the render.
    *
-   * Before this phase the season could not re-fire this load at all, so the gap had no way to
-   * show. Making the hub season-aware creates exactly the trigger the results page's `/review`
-   * found next door: switch to a slow season, switch again to a fast one, the slow response lands
-   * last and stamps ITS key into `loadedFor` — the correct scoreboard already on screen reverts to
-   * "Loading insights…" and STAYS there, because nothing in the effect's deps has changed so it
-   * never re-fires. A page that paints the right answer and then takes it away for good.
+   * `loadedFor` guards what is PAINTED; it does not guard what is WRITTEN. A superseded run's
+   * response landing last stamps ITS key into `loadedFor` — the correct scoreboard already on
+   * screen reverts to "Loading insights…" and STAYS there, because nothing in the effect's deps
+   * has changed so it never re-fires. A page that paints the right answer and then takes it away
+   * for good.
    *
-   * Same `isStale()` shape the results page, the Lineups hub and the Practice hub all carry.
+   * ⚠ The season switcher was the trigger that made this reachable, and it is deleted — but the
+   * guard stays, because a team switch and a refresh race the same way. Same `isStale()` shape the
+   * results page, the Lineups hub and the Practice hub all carry.
    */
   /**
    * ⚠ The gate object is `gate`, NOT `caps` (/simplify 2026-08-16). This parameter has always been
@@ -274,15 +264,14 @@ export default function CoachesInsightsPage({
       return res.json();
     };
     const [ev, hi, an, at, du] = await Promise.allSettled([
-      // ⚠ The season goes to the API, not just onto the header — a `?year=` on the chrome with a
-      // year-less fetch behind it is the mistake that was tried and reverted in 004ca10c, where the
-      // query made an unsolved problem merely LOOK solved. `history` is deliberately year-less: it
-      // IS the cross-season summary, and the scrapbook belongs to the team rather than the season.
-      get(`/events${seasonQuery}`),
+      // ⚠ `history` is the CROSS-SEASON summary — it spans every year the team has played, and
+      // the scrapbook belongs to the team rather than to the season on screen. Everything beside it
+      // resolves the working season server-side; none of these carry a year, and none may.
+      get(`/events`),
       get('/history'),
       gate.lineups ? get('/lineup-analytics') : Promise.reject(new Error('skipped')),
-      gate.attendance ? get(`/attendance${seasonQuery}`) : Promise.reject(new Error('skipped')),
-      gate.money ? get(`/dues${seasonQuery}`) : Promise.reject(new Error('skipped')),
+      gate.attendance ? get(`/attendance`) : Promise.reject(new Error('skipped')),
+      gate.money ? get(`/dues`) : Promise.reject(new Error('skipped')),
     ]);
     // ⚠ Nothing below this line may write for a run that has been superseded — see the block
     // comment above. The whole batch is checked once, here, rather than per-source: a partial
@@ -332,7 +321,7 @@ export default function CoachesInsightsPage({
     // ⚠ A stale run must not stamp its own season here — that is precisely what strands the page.
     setLoadedFor(loadKey);
     setLoading(false);
-  }, [orgSlug, teamId, seasonQuery, loadKey]);
+  }, [orgSlug, teamId, loadKey]);
 
   useEffect(() => {
     // ⚠ Gated on `hasAccess`, never on the live assignment (see the block comment above). The old
@@ -447,10 +436,11 @@ export default function CoachesInsightsPage({
     development: 'Development',
   };
 
-  /** The team's season history is head-coach only (owner ruling 2026-08-16) — the clause is
-   *  omitted entirely for everyone else, rather than printing a count the server deliberately
-   *  did not send. Absent, not zero. */
-  const pastSeasonsClause = page.everHeadCoach
+  /** The team's season history — EVERY current member sees it (the head-coach restriction was
+   *  reverted with Design A, P2 2026-08-16: M1 already ensures only current staff hold access at
+   *  all, so narrowing the team's own scrapbook was gating the wrong thing). Omitted while the
+   *  team has no past seasons, rather than printing a zero. */
+  const pastSeasonsClause = historySummary.pastSeasons > 0
     ? ` · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
     : '';
 
@@ -461,16 +451,12 @@ export default function CoachesInsightsPage({
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Page-header ruling 2026-08-11: the team name is the masthead's, and "how your season is
           going" is what the whole page is — a title's worth of blurb under the title. */}
-      {/* ⚠ The season chip (Phase 2). Without it a coach reading 2024's hub has nothing on screen
-          telling them which year the scoreboard belongs to — and this page is now the archive's
-          Insights door, so that is the common case rather than the rare one. The chip also
-          switches seasons in place. */}
+      {/* ⚠ No season chip (P2, 2026-08-16). The masthead above says "Complete" when the working
+          season has finished, and there is no other season this page could be showing. */}
       <CoachPageHeader
         icon={BarChart3}
         title="Insights"
         helpLabel="Insights"
-        season={page.season}
-        teamBase={page.teamBase}
         help={{ module: 'coaches', sectionIds: ['premium-insights', 'premium-ask'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
       />
 
@@ -571,7 +557,7 @@ export default function CoachesInsightsPage({
                 /* ⚠ The season rides the finding's link too. A callout is a sentence ABOUT the
                    season on screen, so a bare href would hand the coach a 2024 statement and open
                    the live season's report to explain it. */
-                <Link key={i} href={`${askReportHref(base, f.report)}${seasonQuery}`} className={styles.insightsCo}>
+                <Link key={i} href={`${askReportHref(base, f.report)}`} className={styles.insightsCo}>
                   <span className={styles.insightsCoDot} data-tone={f.tone} aria-hidden />
                   <span className={styles.insightsCoText}>{f.text}</span>
                   <span className={styles.insightsCoChip}>{REPORT_CHIP[f.report]} →</span>
@@ -589,11 +575,9 @@ export default function CoachesInsightsPage({
               must REMOUNT this, never hand it a new team while it still holds the old team's
               answer. Today the page's `loadedFor` gate happens to unmount it anyway, but that is
               the parent's branch structure, not a property of the bar. */}
-          {/* ⚠ NOT IN A RECORD (Phase 2). The bar is an INSTRUMENT: it answers live questions from
-              the active season by omission — it takes no `?year=` anywhere, so inside an archive
-              every answer it gave would be about this year, under a past year's chip. That is the
-              silent-wrong-season failure this whole rail exists to end, so the bar is absent
-              rather than quietly misleading. */}
+          {/* ⚠ NOT ON A FINISHED SEASON. The bar is an INSTRUMENT: it answers from the ACTIVE
+              season, so on a season that has ended every answer would be about a season that has
+              not started. Absent rather than quietly misleading. */}
           {!isRecord && assignment && (
             <CoachAskBar
               key={teamId}
@@ -606,18 +590,15 @@ export default function CoachesInsightsPage({
 
           {/* ── 3 · Report doorways (depth is always a page, never an expansion) ── */}
           <div className={styles.insightsDoors}>
-            {/* ⚠ EVERY TILE CARRIES THE YEAR, and every destination reads it — the two halves are
-                one change. A `?year=` on a link whose page ignores it was tried and reverted
-                (004ca10c); it dressed an unsolved problem up as solved. The audit behind these
-                seven doors is §4 of COACH_ARCHIVE_RAIL_PLAN.md. */}
-            <Link href={`${base}/history/results${seasonQuery}`} className={`${styles.insightsDoor} ${finalized.length === 0 ? styles.insightsDoorSoft : ''}`}>
+            {/* ⚠ Every tile lands on a page that resolves the SAME working season this hub did —
+                no link here carries a year, and none may (the guard test scans for it). A `?year=`
+                on a link whose page ignores it was tried and reverted once (004ca10c); it dressed
+                an unsolved problem up as solved. */}
+            <Link href={`${base}/history/results`} className={`${styles.insightsDoor} ${finalized.length === 0 ? styles.insightsDoorSoft : ''}`}>
               <span className={styles.insightsDoorQ}>How are we doing?<span aria-hidden>→</span></span>
               <span className={styles.insightsDoorSum}>
                 {/* Scoped record only when the scope actually holds results — otherwise a real
                     count, never a fabricated "0-0" (results may exist outside the record scope). */}
-                {/* ⚠ The past-seasons count is HEAD-COACH ONLY (owner ruling 2026-08-16) — the
-                    server sends no history to anyone else, so without this the clause would read
-                    "0 past seasons on file" to an assistant on a team with three. Absent, not zero. */}
                 {scopedGames > 0
                   ? `${recStr(record)} ${seasonWord}${pastSeasonsClause}`
                   : finalized.length > 0
@@ -648,11 +629,11 @@ export default function CoachesInsightsPage({
                  two must read identically. Changing the wording here without changing the page
                  heading (or the reverse) puts a coach through a door named one thing onto a page
                  named another. */
-              /* ⚠⚠ THE TILE THAT RETIRES A WORKAROUND. Attendance had an archive-ONLY nav entry
-                 because the archive routed Insights around this hub; this door is what let that
-                 entry go, so it must carry the year — it is now a past season's only route to its
-                 own attendance report. */
-              <Link href={`${base}/attendance${seasonQuery}`} className={`${styles.insightsDoor} ${attendancePct == null ? styles.insightsDoorSoft : ''}`}>
+              /* ⚠⚠ THE REPORT'S ONLY DOOR IN THE PRODUCT. Attendance is in NEITHER nav — it left
+                 the live ones in 2026-08-15 and the archive menu died with the archive — so
+                 deleting this tile makes the page unreachable. Pinned by
+                 tests/unit/coach-attendance-home.test.ts. */
+              <Link href={`${base}/attendance`} className={`${styles.insightsDoor} ${attendancePct == null ? styles.insightsDoorSoft : ''}`}>
                 <span className={styles.insightsDoorQ}>Who&apos;s showing up?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {srcErrors.attendance
@@ -666,7 +647,7 @@ export default function CoachesInsightsPage({
               </Link>
             )}
             {canMoney && (
-              <Link href={`${base}/accounting${seasonQuery}`} className={`${styles.insightsDoor} ${duesPct == null ? styles.insightsDoorSoft : ''}`}>
+              <Link href={`${base}/accounting`} className={`${styles.insightsDoor} ${duesPct == null ? styles.insightsDoorSoft : ''}`}>
                 <span className={styles.insightsDoorQ}>Where&apos;s the money?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {srcErrors.dues
@@ -680,7 +661,7 @@ export default function CoachesInsightsPage({
               </Link>
             )}
             {canAwards && (
-              <Link href={`${base}/history/awards${seasonQuery}`} className={`${styles.insightsDoor} ${!awardsSummary || awardsSummary.total === 0 ? styles.insightsDoorSoft : ''}`}>
+              <Link href={`${base}/history/awards`} className={`${styles.insightsDoor} ${!awardsSummary || awardsSummary.total === 0 ? styles.insightsDoorSoft : ''}`}>
                 <span className={styles.insightsDoorQ}>Who&apos;s earning it?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {awardsSummary && awardsSummary.total > 0
@@ -694,7 +675,7 @@ export default function CoachesInsightsPage({
             {/* Sixth tile (3D, D4 Option B — owner-sanctioned exception to the 5-tile
                 ceiling, logged in design decisions 2026-07-17). */}
             {canDevelopment && (
-              <Link href={`${base}/history/development${seasonQuery}`} className={`${styles.insightsDoor} ${!devSummary || devSummary.withMeasurable === 0 ? styles.insightsDoorSoft : ''}`}>
+              <Link href={`${base}/history/development`} className={`${styles.insightsDoor} ${!devSummary || devSummary.withMeasurable === 0 ? styles.insightsDoorSoft : ''}`}>
                 <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {devSummary && (devSummary.withMeasurable > 0 || devSummary.withFocus > 0)

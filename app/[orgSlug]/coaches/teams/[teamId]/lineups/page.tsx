@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import {
   ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
   Plus, Pencil, Trash2, Check, X, ClipboardCheck, HelpCircle,
@@ -65,9 +64,7 @@ export default function CoachesLineupsPage({
   const { openHelp } = useHelpDrawer();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
-  const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   // Clock snapshot, once per mount (render must stay pure) — see the schedule page's twin note.
   const [gameDayNowMs] = useState(() => Date.now());
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -121,18 +118,20 @@ export default function CoachesLineupsPage({
   useOverlayOpen(!!applyTemplate);
 
   /**
-   * ⚠ Guarded against a stale response landing on the wrong season (added 2026-08-15). "Lineups"
-   * is one of the archive's doors, so `resolveSeasonSwitchHref` KEEPS this section when the coach
-   * switches year — the URL becomes `/lineups?year=…`, the same leaf re-renders in place, and the
-   * page never unmounts. Without the guard, a slow live-season response arriving after the switch
-   * repopulated the games list and the readiness chips with the LIVE season's data while the
-   * header and the season selector both read the past year.
+   * ⚠ Guarded against a stale response landing on the wrong TEAM (added 2026-08-15). This page does
+   * not unmount when only the team segment changes — App Router re-renders the same leaf in place —
+   * so a slow response for the team the coach has just left would otherwise repopulate the games
+   * list and the readiness chips while the header names the new one.
+   *
+   * ⚠ It was written for a season switch, which could rewrite this page's own URL the same way.
+   * That control is deleted (P2, 2026-08-16); the guard is not, because the team race is real and
+   * was always the more likely of the two.
    */
   const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error('Games could not be loaded');
       const data: { events?: RepTeamEvent[]; lineupSetEventIds?: string[] } = await res.json();
       // ⚠ Keeps its own `cancelled` filter even though the split helper drops them too: `games` is
@@ -159,13 +158,13 @@ export default function CoachesLineupsPage({
     } finally {
       if (!isStale()) setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   const loadTemplates = useCallback(async (isStale: () => boolean = () => false) => {
     setTemplatesLoading(true);
     setTemplatesError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       if (!isStale()) setTemplates(data.templates ?? []);
@@ -174,7 +173,7 @@ export default function CoachesLineupsPage({
     } finally {
       if (!isStale()) setTemplatesLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // Wait for the assignments context to resolve before deciding whether to fetch — otherwise the
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
@@ -255,7 +254,7 @@ export default function CoachesLineupsPage({
     if (!t) return;
     setApplyBusyGameId(game.id);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`);
       if (!res.ok) throw new Error('Could not open that game');
       const data: {
         players?: RepRosterPlayer[];
@@ -330,8 +329,6 @@ export default function CoachesLineupsPage({
     <CoachPageHeader
       icon={ListOrdered}
       title="Lineups"
-      season={page.season}
-      teamBase={page.teamBase}
       helpLabel="Lineups"
       help={helpRequest}
     />
@@ -381,7 +378,7 @@ export default function CoachesLineupsPage({
     const row = (
       <CoachEventListRow
         key={e.id}
-        href={`${base}/lineups/${e.id}${seasonQuery}`}
+        href={`${base}/lineups/${e.id}`}
         startsAt={e.startsAt}
         title={gameTitle(e)}
         meta={`${formatWeekday(e.startsAt)} · ${formatTime(e.startsAt)}`}

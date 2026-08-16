@@ -14,7 +14,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -40,10 +40,10 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (req: Request,
+export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, programYear, capabilities } = resolved;
   // ⚠ Stated HERE, not in a resolver. `resolveTeamCoachContext` below folds this same check into

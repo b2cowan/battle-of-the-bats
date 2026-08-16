@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
+import { isCoachNavItemVisible, OVERVIEW_LABEL, SEASON_END_LABEL } from '../../lib/coach-nav-visibility.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 
 /**
@@ -32,6 +32,15 @@ const ROOT = path.join(import.meta.dirname, '..', '..');
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
 
 /**
+ * Nav labels that are written as a shared CONSTANT rather than a literal. Imported from the module
+ * that owns them, so this map cannot drift from the value the navs actually render.
+ */
+const KNOWN_LABEL_CONSTANTS: Record<string, string> = {
+  OVERVIEW_LABEL,
+  SEASON_END_LABEL,
+};
+
+/**
  * Pull the ITEM labels out of a bounded slice of source, in order.
  *
  * ⚠ The negative lookahead is load-bearing. The sidebar's GROUP headings use the same `label:`
@@ -43,7 +52,27 @@ function labelsIn(source: string, startMarker: string, endMarker: string): strin
   assert.notEqual(start, -1, `could not find ${startMarker} — the nav was restructured, update this test`);
   const end = source.indexOf(endMarker, start);
   assert.notEqual(end, -1, `could not find ${endMarker} after ${startMarker}`);
-  return [...source.slice(start, end).matchAll(/label: '([^']+)'(?!, items:)/g)].map(m => m[1]);
+  // ⚠ THREE forms, and each was a blind spot in turn — this helper has now lost sight of a real,
+  // capability-gated door twice, which is precisely what it exists to prevent:
+  //   · single quotes — the original;
+  //   · DOUBLE quotes — "Season's End" carries an apostrophe, so it cannot use the first form;
+  //   · a SCREAMING_SNAKE identifier — the two landing-slot labels are shared constants, because
+  //     the label IS the capability-gate key and two hand-typed copies of it is exactly the drift
+  //     this file guards. Resolved through KNOWN_LABEL_CONSTANTS below rather than skipped, so the
+  //     assertion still fails if a label's TEXT changes.
+  //
+  // ⚠ The identifier form is deliberately restricted to the repo's CONSTANT casing. A bare `\w+`
+  // also matched the TYPE annotation on the group literal (`{ label: string; items: … }`) and blew
+  // up trying to resolve `string` as a nav label.
+  return [...source.slice(start, end).matchAll(/label: (?:'([^']+)'|"([^"]+)"|([A-Z][A-Z0-9_]*))(?!, items:)/g)]
+    .map((m) => {
+      if (m[1] ?? m[2]) return m[1] ?? m[2];
+      const resolved = KNOWN_LABEL_CONSTANTS[m[3]];
+      assert.ok(resolved,
+        `nav item label \`${m[3]}\` is an identifier this guard cannot resolve. Add it to `
+        + 'KNOWN_LABEL_CONSTANTS — a label the extractor skips is a door that stops being checked.');
+      return resolved;
+    });
 }
 
 /**
@@ -62,7 +91,15 @@ function headersIn(source: string, startMarker: string, endMarker: string, key: 
 const SIDEBAR = read('components/coaches/CoachesSidebar.tsx');
 const BOTTOM = read('components/coaches/CoachesBottomNav.tsx');
 
-const sidebarItems = labelsIn(SIDEBAR, 'const TEAM_NAV_GROUPS', '\n];');
+/**
+ * ⚠ THE LANDING SLOT IS HOISTED, AND THE EXTRACTOR HAS TO FOLLOW IT (P2, 2026-08-16). Overview and
+ * Season's End live in named constants above `TEAM_NAV_GROUPS` because the first slot SWAPS: a team
+ * whose working season has finished lands on Season's End instead. Both are still capability-gated
+ * labels, so both belong in the pinned list — reading only the group literal would have quietly
+ * dropped two doors out of this guard's sight, which is exactly the blindness it exists to prevent.
+ */
+const landingItems = labelsIn(SIDEBAR, 'const OVERVIEW_ITEM', 'const TEAM_NAV_GROUPS');
+const sidebarItems = [...landingItems, ...labelsIn(SIDEBAR, 'const TEAM_NAV_GROUPS', '\n];')];
 const sidebarGroups = headersIn(SIDEBAR, 'const TEAM_NAV_GROUPS', '\n];', 'label');
 const bottomItems = labelsIn(BOTTOM, 'const MORE_SECTIONS', '\n];');
 const bottomGroups = headersIn(BOTTOM, 'const MORE_SECTIONS', '\n];', 'header');
@@ -75,7 +112,8 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
    * portal tour still asks for "Announcements" by its pre-Chunk-B name).
    */
   const EXPECTED_ITEMS = [
-    'Overview',
+    // The landing slot — whichever of the two the season's state calls for.
+    'Overview', "Season's End",
     'Schedule', 'Practice plans', 'Lineups', 'Tournaments',
     'Development', 'Insights',
     'Money',
@@ -96,6 +134,7 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
       money: 'off', documents: 'off', tryouts: false, rosterPii: false, announcementsSend: false,
       staffChat: false,
     });
+    // Overview is deliberately ungated — it is where a helper lands, and it renders their practice.
     const ungated = sidebarItems.filter(l => l !== 'Overview' && isCoachNavItemVisible(helper, l));
     assert.deepEqual(ungated, [],
       'these nav labels have no case in isCoachNavItemVisible and fall through to `return true`');
@@ -115,7 +154,11 @@ describe('the two navs tell the same story', () => {
    * minus exactly those. This is the one legal divergence — a consequence of the bar, not a second
    * opinion about grouping.
    */
-  const PHONE_PRIMARIES = ['Overview', 'Schedule', 'Roster', 'Chat'];
+  // ⚠ Season's End joins this list as of P2 (2026-08-16) — not as a fifth tab, but because it
+  // OCCUPIES the Overview tab on a team whose working season has finished. The bar still shows
+  // four; which one the first is depends on the season, and neither of the two candidates repeats
+  // in the sheet.
+  const PHONE_PRIMARIES = ['Overview', "Season's End", 'Schedule', 'Roster', 'Chat'];
 
   it('the More sheet is the sidebar minus the phone primaries — nothing else', () => {
     assert.deepEqual(bottomItems, sidebarItems.filter(l => !PHONE_PRIMARIES.includes(l)));

@@ -97,11 +97,12 @@ export async function resolveTryoutMemoryPairs(input: {
   rubric: Pick<RepTryoutRubric, 'scaleMax' | 'categories'> | null;
   scores: Parameters<typeof rankTryoutCandidates>[2];
   continuityLinks: RepPlayerContinuityLink[];
-  /** program-year id → the coach's capabilities for that year (since M1: their CURRENT ones,
-   *  for every year the team has — absent entirely when they hold no membership). */
-  capabilityByYear: Map<string, CoachCapabilities>;
+  /** The member's capabilities — their CURRENT ones, which since M1 (2026-08-16) is the answer for
+   *  every season. Null when they hold no active membership on the team, which reads as "nothing
+   *  to remember" rather than as an error. */
+  capabilities: CoachCapabilities | null;
 }): Promise<TryoutMemoryPair[]> {
-  const { teamId, programYear, allYears, registrations, rubric, scores, capabilityByYear } = input;
+  const { teamId, programYear, allYears, registrations, rubric, scores, capabilities } = input;
 
   // R6, fail-closed and FIRST: while names are hidden there is nothing to resolve, so nothing is
   // read. Not a render gate — a fetch gate.
@@ -127,16 +128,17 @@ export async function resolveTryoutMemoryPairs(input: {
    * Every reason a link drops out is applied here:
    *   · no prior identity, or a hand-added player with no tryout registration behind them —
    *     scores are keyed by registration, so there is nothing to remember;
-   *   · the coach holds no `tryouts` capability for that year — a silent, per-year refusal
-   *     rather than an error. ⚠ Since M1 (2026-08-16) the map answers with the coach's CURRENT
-   *     capabilities for every year (membership-gated), so in practice this is one answer asked
-   *     per-year; the per-year SHAPE stays because the map's absent-year contract ("no entry =
-   *     no access") is load-bearing here.
+   *   · the coach holds no `tryouts` capability — a silent refusal rather than an error.
+   *     ⚠ Asked ONCE, not per prior year (P2, 2026-08-16). This was a `Map<yearId, caps>` while
+   *     access itself was per-season; M1 made every year answer identically and P2 deleted the
+   *     season dial that made the shape look meaningful. Keeping a map whose values can no longer
+   *     differ is a guard that reads as per-year while being a single boolean — the "absent year =
+   *     no access" contract it claimed to carry now means only "no membership", which is `null`.
    */
-  const wanted = candidateLinks.flatMap(link => {
+  const mayReadPriorTryouts = capabilities?.tryouts === true;
+  const wanted = !mayReadPriorTryouts ? [] : candidateLinks.flatMap(link => {
     const prior = priorById.get(link.priorRosterId ?? link.priorRegistrationId ?? '');
     if (!prior?.sourceRegistrationId) return [];
-    if (capabilityByYear.get(prior.programYearId)?.tryouts !== true) return [];
     return [{ link, prior, sourceRegistrationId: prior.sourceRegistrationId }];
   });
   if (wanted.length === 0) return [];

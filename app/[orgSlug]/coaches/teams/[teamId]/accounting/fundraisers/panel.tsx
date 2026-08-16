@@ -125,8 +125,7 @@ export function FundraisersPanel({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   // Money is three-state (off|read|write); the create route already refuses a read-only
   // coach, so offering the form and failing at submit is a broken affordance.
   const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
@@ -206,7 +205,7 @@ export function FundraisersPanel({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers${seasonQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setFundraisers(data.fundraisers);
@@ -218,7 +217,7 @@ export function FundraisersPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // ⚠ The revision is a DEPENDENCY, not a second fetch path: an import above the tabs, or a
   // rebate logged inside a fundraiser, both bump it, and this list re-reads its totals without
@@ -242,7 +241,7 @@ export function FundraisersPanel({
       try {
         const [teamRes, rosterRes] = await Promise.all([
           fetch(`/api/coaches/${orgSlug}/teams/${teamId}`),
-          fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster${seasonQuery}`),
+          fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`),
         ]);
         if (cancelled) return;
         if (teamRes.ok) {
@@ -263,7 +262,7 @@ export function FundraisersPanel({
       } catch { /* the form still works; it just starts at zero with no roster to attribute to */ }
     })();
     return () => { cancelled = true; };
-  }, [orgSlug, teamId, seasonQuery, canWriteMoney, openFundraiserId]);
+  }, [orgSlug, teamId, canWriteMoney, openFundraiserId]);
 
   /** Create a money tag from inside the picker, returning it so the box can select it at once. */
   async function addMoneyTag(name: string): Promise<RepTeamTag | null> {
@@ -389,7 +388,7 @@ export function FundraisersPanel({
   return (
     <div className={styles.page}>
       {!embedded && (
-        <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
+        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
       {/* Page-level action ruling 2026-08-13: "New Fundraiser" creates a FUNDRAISER, and inside
           the Money hub the header above the tabs names the container, not the fundraisers — so
@@ -400,8 +399,6 @@ export function FundraisersPanel({
         variant={embedded ? 'embedded' : 'standard'}
         icon={Gift}
         title="Fundraising"
-        season={page.season}
-        teamBase={page.teamBase}
         helpLabel="Fundraising"
         // `premium-money-fundraisers` — this was pointing at the BUDGET sub-topic, the nearest
         // thing that existed when the screen was written, and wrong the whole time.
@@ -445,7 +442,7 @@ export function FundraisersPanel({
                 columns: FUNDRAISER_COLUMNS,
                 rows: fundraiserRows(visibleRows, new Map(moneyTags.map(t => [t.id, t]))),
                 scopeLabel: [
-                  page.season.current?.programYearName ?? '',
+                  page.programYearName,
                   kindFilter === 'sponsor' ? 'Sponsors only' : kindFilter === 'fundraiser' ? 'Fundraisers only' : '',
                 ].filter(Boolean).join(' · '),
                 teamName: '',
@@ -556,7 +553,7 @@ export function FundraisersPanel({
                       {/* ⚠ Through the shared builder, carrying the SEASON: the old link was a
                           hand-built `/accounting/fundraisers/{id}` with no `?year=`, so opening a
                           past season's drive silently landed in the live one. */}
-                      <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id }, seasonQuery)} className={styles.playerNameLink}>
+                      <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id })} className={styles.playerNameLink}>
                         {f.name}
                       </Link>
                       <span className={`${styles.badge} ${f.kind === 'sponsor' ? styles.badgeSponsor : styles.badgeActive}`}>
@@ -589,7 +586,7 @@ export function FundraisersPanel({
                     <span className={`${styles.badge} ${statusBadgeClass(f)}`}>{statusLabel(f)}</span>
                   </td>
                   <td className={`${styles.td} ${styles.cardActionCell} ${styles.tdNum}`}>
-                    <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id }, seasonQuery)} className={styles.linkBtn} aria-label={`Open ${f.name}`}>
+                    <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id })} className={styles.linkBtn} aria-label={`Open ${f.name}`}>
                       <span className={styles.cardActionLabel}>Open</span>
                       <ChevronRight size={16} aria-hidden />
                     </Link>

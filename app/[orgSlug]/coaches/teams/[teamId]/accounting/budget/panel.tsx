@@ -640,8 +640,7 @@ export function BudgetPlanPanel({
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
-  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
+  const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
 
   // Checklist dismissals ("we don't pay for this") are DEVICE memory — localStorage per
@@ -739,7 +738,7 @@ export function BudgetPlanPanel({
     setError('');
     try {
       const [planRes, catRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
         // ⚠ teamId, ALWAYS (mig 240): without it the answer excludes this team's own items, so a
         // coach's own vocabulary would vanish from the picker that created it.
         fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
@@ -758,7 +757,7 @@ export function BudgetPlanPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId]);
 
   // `moneyRevision` bumps when the hub's Import menu commits rows while this panel is mounted
   // but off-screen — the panel re-READS rather than remounting, so a half-filled line form on
@@ -1353,7 +1352,7 @@ export function BudgetPlanPanel({
     <div className={styles.page}>
       {/* Header */}
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={shared.lineupBackLink}>
+        <Link href={`${base}/accounting`} className={shared.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
@@ -1361,8 +1360,6 @@ export function BudgetPlanPanel({
         variant={embedded ? 'embedded' : 'standard'}
         icon={BarChart3}
         title="Season Budget Plan"
-        season={page.season}
-        teamBase={page.teamBase}
         actions={headerActions}
         helpLabel="Budget Plan"
         help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-budget', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
@@ -2359,12 +2356,11 @@ export function BudgetPlanPanel({
         <GenerateInstallmentsModal
           orgSlug={orgSlug}
           teamId={teamId}
-          seasonQuery={seasonQuery}
-          budgetHref={moneySectionHref(base, 'budget', undefined, seasonQuery)}
+          budgetHref={moneySectionHref(base, 'budget', undefined)}
           // ⚠ The HUB tab, not the standalone page one directory down. Those legacy routes still
           // resolve and render without the hub's tab bar, so following this link dropped a coach
           // out of the Money hub onto a page with no way back into it but the browser button.
-          duesHref={moneySectionHref(base, 'dues', undefined, seasonQuery)}
+          duesHref={moneySectionHref(base, 'dues', undefined)}
           // Must travel with the modal: the hub keeps this panel mounted behind another tab, and
           // a dirty form that can't be seen must not intercept clicks. See the prop's own note.
           tabActive={tabActive}

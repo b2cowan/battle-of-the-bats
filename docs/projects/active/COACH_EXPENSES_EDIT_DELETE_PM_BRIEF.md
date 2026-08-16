@@ -26,10 +26,17 @@ already paid the confirmation states the money consequence in dollars before you
 on hand goes back up by $1,300.00."* If a family paid out of pocket, it also says their credit
 disappears with it.
 
-**See why something can't change.** Once a record is marked paid its amount locks — that figure is
-already on the books. The form shows the amount, the reason, and the way out, rather than greying a
-box and saying nothing. On a payable, only the **half that has actually been paid** locks; a paid
-deposit leaves the balance fully editable.
+**⚖ Correct anything, and the books follow** *(revised 2026-08-16 — this replaces "see why something
+can't change")*. The first version of this screen locked a paid record's amount: the figure was on
+the team's books and nothing could carry a correction through to them, so the form showed the amount
+with a reason and told the coach to delete and re-enter. The owner reversed that — a mistyped amount
+should be a two-second fix, not a reversal of real money. **Now every figure is editable, including
+after it has posted**, and saving moves the matching entry on the books with it: cash on hand
+follows the new figure and the cost lands in the month you dated it. Where a family paid out of
+pocket, what the team owes them moves too. The form says what the change will do instead of
+preventing it. Two things still can't be corrected in place — a small number of costs paid before
+mid-August whose entry can't be matched unambiguously, and *who* paid a cost out of pocket, which
+moves a debt between households.
 
 **Add without choosing a door first.** Two lime buttons became one. The Expense-or-Payable choice
 now sits at the top of the form, already set to whichever list you were looking at, and switching it
@@ -84,11 +91,15 @@ they are never shown a door the server would refuse.
 
 Owner QA ledger **§27** carries the walk-through. The three things worth most attention:
 
-1. Edit a **paid** expense — the description should save; the amount should be locked with an
-   explanation, not silently rejected.
+1. ⚖ *(revised 2026-08-16)* Edit a **paid** expense's amount — it should save, and **cash on hand
+   should move by the difference**. Change its date too and check the cost lands in that month on
+   Budget vs. Actual. Nothing should be greyed out.
 2. Delete a **paid** expense — read the dollar figure before confirming, then check cash on hand
    moved by exactly that amount.
-3. Open a **part-paid payable** — the paid half locks, the open half stays editable.
+3. Open a **part-paid payable** — both halves are editable; changing the paid one moves the books,
+   changing the open one does not.
+4. ⚖ *(new)* Edit the amount of a cost a **family paid out of pocket** — what the team owes that
+   family on Player Dues must move with it, and no team cash should move at all.
 
 ---
 

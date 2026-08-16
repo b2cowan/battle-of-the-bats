@@ -17,7 +17,7 @@ import {
 } from '@/lib/coach-budget-rollup';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 /** A category row without the raw records behind each item — see the note at the payload. */
 function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
@@ -41,7 +41,7 @@ function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

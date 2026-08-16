@@ -22,9 +22,19 @@
  * failure rather than a pass; see LANDING_FAILURES in the runner.
  */
 
-/** @typedef {{orgSlug:string, teamId:string, practiceEventId:string}} Ctx */
+/**
+ * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
+ *            fundraiserId:string, sponsorId:string, finishedTeamId:string,
+ *            finishedYearId:string}} Ctx
+ *
+ * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
+ * three fields behind before `finishedTeamId` joined it — nothing enforces a JSDoc typedef in plain
+ * JS, so a screen can reference a context field that no longer exists and simply build a URL with
+ * `undefined` in it, which renders as a 404 the sweep reports as a layout failure.
+ */
 
 const team = (c) => `/${c.orgSlug}/coaches/teams/${c.teamId}`;
+/** The team whose WORKING season has finished — see the block above `coach-season-end`. */
 
 export const SCREENS = [
   // ── The portal's own front doors ────────────────────────────────────────────
@@ -139,6 +149,26 @@ export const SCREENS = [
   { id: 'coach-sponsors-list',     session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&kind=sponsor`, ready: 'h1' },
   { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting?section=payment-requests`, ready: 'h1' },
   { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting?section=allocations`,      ready: 'h1' },
+
+  // ── A team BETWEEN SEASONS — its working season has finished ────────────────
+  /**
+   * ⚠⚠ **THE GAP THESE CLOSE HID THREE ROUNDS OF DEFECTS** (added 2026-08-16, P2). This world had no
+   * completed season anywhere in it, so Season's End, the compare list and every "this season has
+   * finished" state were invisible to the sweep — the guard tests said so in as many words, and
+   * every defect on that rail was found by reading source or by owner QA instead.
+   *
+   * They point at a DIFFERENT team (`finishedTeamId`), because the state worth rendering is a team
+   * with no live year at all. Season's End is where such a team lands, the Insights hub is the
+   * read-only scoreboard, and the results report carries the compare list — the whole look-back
+   * layer, in three screens.
+   */
+  { id: 'coach-season-end',        session: 'coach', path: (c) => `${finished(c)}/season-end`,      ready: 'h1' },
+  { id: 'coach-finished-insights', session: 'coach', path: (c) => `${finished(c)}/history`,          ready: 'h1' },
+  { id: 'coach-finished-results',  session: 'coach', path: (c) => `${finished(c)}/history/results`, ready: 'h1' },
+  /* The record surfaces a finished season still draws, one from each shape: a table (roster) and a
+     tabbed hub (Money). Both must render with no write control and no empty-state CTA. */
+  { id: 'coach-finished-roster',   session: 'coach', path: (c) => `${finished(c)}/roster`,           ready: 'h1' },
+  { id: 'coach-finished-money',    session: 'coach', path: (c) => `${finished(c)}/accounting`,       ready: 'h1' },
 
   // ── The season around it ────────────────────────────────────────────────────
   { id: 'coach-announcements', session: 'coach', path: (c) => `${team(c)}/announcements`, ready: 'h1' },

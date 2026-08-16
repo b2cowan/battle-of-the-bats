@@ -13,9 +13,10 @@ import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-template
  * "Add a template from a past season" — the archive ruling made concrete for plan templates.
  *
  * ⚠ **A cross-season READ that writes nothing into a finished season**, exactly like its drill
- * sibling, and deliberately NOT on the season-read rail for the same reason: that rail exists to
- * let a page *serve* a past season read-only, carrying the season through every link. This serves
- * the LIVE season and merely reads across years.
+ * sibling, and deliberately NOT on `resolveCoachTeamRead` for the same reason: that resolver
+ * answers with ONE season — the team's working one — and this route deliberately reads across all
+ * of them, into the LIVE library. It is a CROSS-SEASON READER, which the guard test lists
+ * separately from the two history endpoints because the two are different powers.
  *
  * ⚠ Head-coach-only — everything this list can do is feed a library write.
  *

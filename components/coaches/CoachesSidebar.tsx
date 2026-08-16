@@ -1,12 +1,11 @@
 'use client';
 import { Fragment, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Users, UserCog, Calendar, CalendarCheck, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
-import { useCoaches, resolveClosedAssignment, resolveSeasonView } from '@/lib/coaches-context';
-import { resolveSeasonSwitchHref, seasonStatusLabel } from '@/lib/coach-season-view';
-import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
+import { useCoaches, resolveWorkingSeason } from '@/lib/coaches-context';
+import { isCoachNavItemVisible, withLandingSlot, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
@@ -57,10 +56,19 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * for the owner, not assumed.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
+/**
+ * ⚠ THE FIRST SLOT IS "WHERE YOU LAND", AND WHERE YOU LAND CHANGES (P2, 2026-08-16). A team whose
+ * working season has finished shows **Season's End** here instead of Overview — the Overview is a
+ * live-season dashboard (what's next, the one thing to do today) and has nothing to say about a
+ * season that is over, which is why it already redirects there. One slot, one destination, no
+ * second menu: this replaced a whole parallel `CLOSED_TEAM_NAV_ITEMS` set that reordered and
+ * shortened the coach's nav the moment a season ended.
+ */
+const OVERVIEW_ITEM = { label: 'Overview', href: '', icon: LayoutDashboard };
+const SEASON_END_ITEM = { label: SEASON_END_LABEL, href: '/season-end', icon: Trophy };
+
 const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users }[] }[] = [
-  { items: [
-    { label: 'Overview',    href: '',             icon: LayoutDashboard },
-  ] },
+  { items: [OVERVIEW_ITEM] },
   /** Hottest: the week's work. "Season" is RETAINED as the heading — "Game day" was rejected once
    *  practice plans joined it, because practices are not game day, and keeping the existing word
    *  means a coach does not have to relearn a heading whose contents merely changed. */
@@ -117,23 +125,10 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
 ];
 
-// A CLOSED season's nav (Batch 3, P0 #1): the shared door list lives in
-// lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
-// ⚠ No `Attendance` key — it left the archive menu on 2026-08-16 (archive rail Phase 2), reached
-// through the Insights hub in every season now. An icon for a door that no longer exists reads as
-// evidence the door does.
-const CLOSED_NAV_ICON: Record<string, typeof Users> = {
-  "Season's End": Trophy, Roster: Users, Schedule: Calendar,
-  Lineups: ListOrdered, Money: DollarSign, Documents: FileText, Development: TrendingUp,
-  Tryouts: ClipboardList, Insights: BarChart3, Staff: Shield,
-};
-const CLOSED_TEAM_NAV = CLOSED_TEAM_NAV_ITEMS.map(item => ({ ...item, icon: CLOSED_NAV_ICON[item.label] ?? Trophy }));
-
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { assignments, closedAssignments, seasons } = useCoaches();
+  const { assignments, closedAssignments } = useCoaches();
   const { currentOrg, userRole } = useOrg();
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
@@ -155,27 +150,20 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     try { localStorage.setItem(`flhq-coach-last-team:${orgSlug}`, currentTeamId); } catch { /* ignore */ }
   }, [currentTeamId, orgSlug]);
 
-  const currentAssignment = currentTeamId
-    ? assignments.find(a => a.teamId === currentTeamId)
-    : null;
-  // Closed-season access — ONE shared predicate (lib/coaches-context.tsx) with the nav,
-  // Overview, and the read-only pages, so no surface can drift on what "closed" means.
-  const currentClosed = resolveClosedAssignment(assignments, closedAssignments, currentTeamId);
-
-  // Which SEASON is on screen (Chunk F). Read-only is a fact about the season, never the team:
-  // a rolled-forward team is never itself "closed", but its 2025 is still a record.
-  const seasonView = resolveSeasonView(seasons, currentTeamId, searchParams.get('year'));
-  const inArchive = seasonView.isReadOnly;
+  // The team's WORKING season — its live one, or its newest finished one when it has no live
+  // season. ONE resolution rule, shared with the bottom nav, the masthead and every page
+  // (lib/coach-season-view.ts), so no surface can drift on which season it is describing.
+  //
+  // ⚠ Read-only is a fact about the SEASON, never about the team, and "between seasons" is not a
+  // lock-out: the coach keeps their whole nav, the records render, and the live instruments behind
+  // the doors say for themselves that they come back next season.
+  const workingSeason = resolveWorkingSeason(assignments, closedAssignments, currentTeamId);
+  const seasonFinished = workingSeason?.isReadOnly === true;
 
   // Assistant Coaches: hide nav areas the current coach isn't cleared for. The gate is shared with
   // the mobile bottom nav (lib/coach-nav-visibility.ts) so it's one source of truth. Head coaches
   // have full capabilities so nothing hides; fail-open if caps are absent (server still enforces).
-  //
-  // ⚠ In an archive the grants come from THAT SEASON's assignment row (governing rule 1), not the
-  // coach's current ones — an assistant promoted this year must not retroactively see 2025's money.
-  const caps = inArchive
-    ? seasonView.current?.capabilities
-    : currentAssignment?.capabilities;
+  const caps = workingSeason?.capabilities;
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
 
   const base = `/${orgSlug}/coaches`;
@@ -192,9 +180,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     return (
       <Link
         key={label}
-        // Carry the season across section links, so switching sections keeps the year:
-        // Roster 2025 → Schedule 2025, never silently back to the live season.
-        href={`${fullHref}${seasonView.query}`}
+        href={fullHref}
         className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
       >
         <Icon size={14} />
@@ -202,13 +188,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
       </Link>
     );
-  };
-
-  /** Move to another season, keeping the coach on the section they are already reading. */
-  const switchSeason = (programYearId: string) => {
-    const target = seasonView.options.find(s => s.programYearId === programYearId);
-    if (!target || !currentTeamId) return;
-    router.push(resolveSeasonSwitchHref(`${base}/teams/${currentTeamId}`, pathname, target));
   };
 
   return (
@@ -258,8 +237,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
               <option key={a.teamId} value={a.teamId}>{a.teamName}</option>
             ))}
             {closedAssignments.length > 0 && (
-              // "No live season" not "Season complete" (Chunk F): these are TEAMS, and a group
-              // beside the seasons switcher below saying "season" would read as the same thing.
+              // "No live season", not "Season complete": these are TEAMS, and the word describes
+              // where the team is — the coach still has it, and every record in it still opens.
               <optgroup label="No live season">
                 {closedAssignments.map(a => (
                   <option key={a.teamId} value={a.teamId}>{a.teamName} · {a.programYearName}</option>
@@ -270,52 +249,22 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         </div>
       )}
 
-      {/* Season switcher (Chunk F, D-F3) — the same slot and shape as the admin shell's
-          tournament switcher, one level down. Only earns its place with 2+ seasons, so a
-          first-season coach never sees a control that does nothing. */}
-      {currentTeamId && seasonView.hasChoice && (
-        <div className={styles.sidebarSection}>
-          <label className={styles.sidebarSectionLabel} htmlFor="coach-season-select">
-            {inArchive ? 'Viewing archive' : 'Season'}
-          </label>
-          <select
-            id="coach-season-select"
-            className={`${styles.teamSwitcherSelect}${inArchive ? ` ${styles.seasonSwitcherArchive}` : ''}`}
-            value={seasonView.current?.programYearId ?? ''}
-            onChange={e => switchSeason(e.target.value)}
-          >
-            {seasonView.options.map(s => (
-              <option key={s.programYearId} value={s.programYearId}>
-                {s.programYearName} · {seasonStatusLabel(s)}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* ⚠ THE SEASON SWITCHER STOOD HERE and is deleted (P2, 2026-08-16, Design A). A coach reads
+          the season their team is on; there is no control anywhere that points the portal at a
+          different one. Looking back is Season's End, Season Wrapped and the compare list at the
+          bottom of Insights → "How are we doing?" — three destinations, not a mode. */}
 
-      {/* ARCHIVE nav — the full record set for the season being viewed (Chunk F). Replaces
-          Batch 3's two doors. Reached two ways: a team with no live season at all, or any team
-          whose coach has switched back to a past year. */}
-      {currentTeamId && (currentClosed || inArchive) && (
-        <>
-          <div className={styles.sidebarDivider} />
-          <div className={styles.sidebarSection}>
-            {/* No team-name heading — the switchers above already name team and season. */}
-            {CLOSED_TEAM_NAV.filter(item => navVisible(item.label)).map(renderNavItem)}
-          </div>
-        </>
-      )}
-
-      {/* Team-scoped nav — only when inside a team, and only for the LIVE season. A
-          rolled-forward team viewing 2025 has a live assignment but must show the archive
-          door set above, not both. */}
-      {currentTeamId && currentAssignment && !inArchive && (
+      {/* Team-scoped nav — ONE menu, one order, in every season state. When the working season
+          has finished the first slot becomes Season's End and the rest stay exactly where the
+          coach learned them; records render read-only and the live instruments say so themselves.
+          (The parallel closed-season menu that used to replace all of this is deleted.) */}
+      {currentTeamId && workingSeason && (
         <>
           <div className={styles.sidebarDivider} />
           <div className={styles.sidebarSection}>
             {/* No team-name heading — with one team the header names it, and with several
                 the switcher dropdown above already shows the current team. */}
-            {currentAssignment.coachRole === 'assistant_coach' && (
+            {workingSeason.coachRole === 'assistant_coach' && (
               <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
             )}
             {/* ⚠ A group renders only when the coach can see something in it, so an assistant's
@@ -323,7 +272,10 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
                 is the whole win of deleting the Explore shelf: position is a function of the
                 coach's grants, never of what the team has got round to doing yet. */}
             {TEAM_NAV_GROUPS.map((group, gi) => {
-              const items = group.items.filter(item => navVisible(item.label));
+              // The landing slot swaps with the season's state — ONE rule, shared with the bottom
+              // nav (lib/coach-nav-visibility.ts), because these two navs must not drift.
+              const items = withLandingSlot(group.items, seasonFinished, SEASON_END_ITEM)
+                .filter(item => navVisible(item.label));
               if (!items.length) return null;
               return (
                 <Fragment key={gi}>

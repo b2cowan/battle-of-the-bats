@@ -23,7 +23,7 @@ import { countDrillUses } from '@/lib/rep-drill-usage';
  * bypass this — the mig-141 chat-engine lesson.
  *
  * ⚠ **THE ARCHIVE DOOR — decided, not discovered.** This route deliberately does NOT use
- * `resolveCoachSeasonRead`, so it resolves the team's live context and cannot serve a past season.
+ * `resolveCoachTeamRead`, so it resolves the team's live context and cannot serve a past season.
  * A drill library is a reusable INSTRUMENT, not a record of a season (owner ruling 2026-08-01), so
  * it fails the archive test the same way tryouts and money do, and the Drills door is hidden in a
  * completed season. That costs a coach nothing, because a team is PERMANENT and only its program

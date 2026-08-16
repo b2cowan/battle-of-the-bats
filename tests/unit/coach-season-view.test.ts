@@ -1,138 +1,128 @@
 /**
- * Chunk F — the two pure resolvers behind "which season am I looking at, and is it a record".
+ * The two pure resolvers behind "which season am I looking at, and is it a record".
  *
- * These are worth testing in isolation because the whole chunk's correctness reduces to them:
- * every page's write flags, every nav door set, and every fetch's `?year=` come from here. The
- * bug they exist to prevent is the one the plan of record got wrong — deciding "read-only" from
- * the TEAM's state rather than the SEASON's, which leaves a rolled-forward team's archive
+ * Worth testing in isolation because every page's write flags reduce to them, and because the bug
+ * they exist to prevent is the one the plan of record got wrong: deciding "read-only" from the
+ * TEAM's state rather than the SEASON's, which leaves a rolled-forward team's finished season
  * quietly writable.
+ *
+ * ⚠ REWRITTEN 2026-08-16 (P2, Design A). The `?year=` half of these resolvers is deleted with the
+ * season dial — there is no option list, no `hasChoice`, no `query`, and no per-season capability
+ * archaeology. What remains is the question that never depended on the dial: **what is the team's
+ * WORKING season, and has it finished?** The tests that asserted switching behaviour died with the
+ * feature; the ones below are their surviving half.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { resolveSeasonView, resolveCoachSeasonPage } from '../../lib/coach-season-view.ts';
+import { resolveWorkingSeason, resolveCoachSeasonPage } from '../../lib/coach-season-view.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 
 const HEAD = resolveCoachCapabilities('head_coach', null);
-const ASSISTANT_NO_MONEY = resolveCoachCapabilities('assistant_coach', null);
 const ASSISTANT_WITH_MONEY = resolveCoachCapabilities('assistant_coach', { money: 'read' });
 
 const TEAM = 'team-1';
-const season = (id: string, name: string, status: 'live' | 'complete', capabilities = HEAD) => ({
-  teamId: TEAM, programYearId: id, programYearName: name,
-  programYearYear: Number(name), status, capabilities,
-  coachRole: 'head_coach' as const,
-});
 
-/** A rolled-forward team: 2026 live, 2025 + 2024 complete. The case the ledger never named. */
-const ROLLED_FORWARD = [
-  season('y2026', '2026', 'live'),
-  season('y2025', '2025', 'complete'),
-  season('y2024', '2024', 'complete'),
-];
+/** A live (draft/active) assignment row, as the shell's `assignments` array carries it. */
+const live = (id: string, year: number, capabilities = HEAD) => ({
+  teamId: TEAM, teamName: 'Riverdale Rays 12U', teamColor: null, teamSport: 'softball',
+  programYearId: id, programYearName: String(year), programYearYear: year,
+  coachRole: 'head_coach' as const, capabilities,
+} as never);
 
-describe('resolveSeasonView', () => {
-  it('defaults to the live season when no year is asked for', () => {
-    const v = resolveSeasonView(ROLLED_FORWARD, TEAM, null);
-    assert.equal(v.current?.programYearId, 'y2026');
-    assert.equal(v.isReadOnly, false);
-    assert.equal(v.query, '', 'a live season adds nothing to links or fetches');
+/** A finished season, as `closedAssignments` carries it — deduped to one per team, newest first. */
+const closed = (id: string, year: number, capabilities = HEAD) => ({
+  ...(live(id, year, capabilities) as object),
+  programYearStatus: 'completed',
+} as never);
+
+describe('resolveWorkingSeason', () => {
+  it('is the live season when the team has one', () => {
+    const s = resolveWorkingSeason([live('y2026', 2026)], [closed('y2025', 2025)], TEAM);
+    assert.equal(s?.programYearId, 'y2026');
+    assert.equal(s?.isReadOnly, false);
   });
 
-  it('a rolled-forward team viewing a past year IS read-only', () => {
-    const v = resolveSeasonView(ROLLED_FORWARD, TEAM, 'y2025');
-    assert.equal(v.current?.programYearId, 'y2025');
-    assert.equal(v.isReadOnly, true,
-      'the team has a LIVE season — read-only must come from the season, not the team');
-    assert.equal(v.query, '?year=y2025');
+  /**
+   * ⚠ THE CASE THE WHOLE MODEL RESTS ON. A team between seasons is not a lock-out and not an
+   * archive — it is a team whose working season has finished. Every record surface renders it,
+   * read-only, and the nav's first slot becomes Season's End.
+   */
+  it('is the newest finished season when the team has no live one', () => {
+    const s = resolveWorkingSeason([], [closed('y2025', 2025)], TEAM);
+    assert.equal(s?.programYearId, 'y2025');
+    assert.equal(s?.isReadOnly, true);
   });
 
-  it('a team with no live season resolves to its newest closed one', () => {
-    const closedOnly = ROLLED_FORWARD.filter(s => s.status === 'complete');
-    const v = resolveSeasonView(closedOnly, TEAM, null);
-    assert.equal(v.current?.programYearId, 'y2025');
-    assert.equal(v.isReadOnly, true);
+  /**
+   * ⚠ A ROLLED-FORWARD TEAM IS NEVER ITSELF "CLOSED". Its finished seasons still exist as records,
+   * but the season on screen is the live one — this is exactly the inversion the plan of record
+   * got backwards, and keying off the team's state would make last year writable.
+   */
+  it('a rolled-forward team is live, even though it has finished seasons behind it', () => {
+    const s = resolveWorkingSeason([live('y2026', 2026)], [closed('y2025', 2025)], TEAM);
+    assert.equal(s?.isReadOnly, false, 'read-only must come from the SEASON, never from the team');
   });
 
-  it('an unknown or foreign year falls back to live rather than an empty archive', () => {
-    const v = resolveSeasonView(ROLLED_FORWARD, TEAM, 'y1999-from-another-team');
-    assert.equal(v.current?.programYearId, 'y2026');
-    assert.equal(v.isReadOnly, false);
-  });
-
-  it('only offers seasons of the team on screen', () => {
-    const other = { ...season('other-y', '2025', 'complete'), teamId: 'team-2' };
-    const v = resolveSeasonView([...ROLLED_FORWARD, other], TEAM, null);
-    assert.deepEqual(v.options.map(o => o.programYearId), ['y2026', 'y2025', 'y2024']);
-  });
-
-  it('hides the switcher when there is only one season', () => {
-    assert.equal(resolveSeasonView([season('y1', '2026', 'live')], TEAM, null).hasChoice, false);
-    assert.equal(resolveSeasonView(ROLLED_FORWARD, TEAM, null).hasChoice, true);
-  });
-
+  /**
+   * Mid-rollover a team legitimately holds a draft AND an active year. The server resolves the most
+   * recent; if the client picked the other one, the masthead would name a season the data did not
+   * come from. The rows are supplied oldest-first deliberately — the lookup has no ORDER BY, so
+   * arrival order is arbitrary and must not decide this.
+   */
   it('picks the NEWEST live season when a team holds a draft and an active year at once', () => {
-    // Mid-rollover a team legitimately has both. The server resolves the most recent; if the
-    // client picked the other one, the page header would name a season the data didn't come from.
-    const draftNext = season('y2027', '2027', 'live');
-    const activeNow = season('y2026', '2026', 'live');
-    // Deliberately supplied oldest-first — the lookup has no ORDER BY, so arrival order is
-    // arbitrary and must not decide this.
-    const v = resolveSeasonView([activeNow, draftNext, season('y2025', '2025', 'complete')], TEAM, null);
-    assert.equal(v.current?.programYearId, 'y2027');
-    assert.equal(v.isReadOnly, false);
+    const s = resolveWorkingSeason([live('y2026', 2026), live('y2027', 2027)], [], TEAM);
+    assert.equal(s?.programYearId, 'y2027');
+    assert.equal(s?.isReadOnly, false);
+  });
+
+  it('ignores other teams’ rows', () => {
+    const other = { ...(live('other-y', 2026) as object), teamId: 'team-2' } as never;
+    assert.equal(resolveWorkingSeason([other], [], TEAM), null);
   });
 
   it('has no season at all for a team the coach holds nothing on', () => {
-    const v = resolveSeasonView(ROLLED_FORWARD, 'team-nope', null);
-    assert.equal(v.current, null);
-    assert.equal(v.isReadOnly, false);
+    assert.equal(resolveWorkingSeason([live('y2026', 2026)], [], 'team-nope'), null);
   });
 });
 
-describe('resolveCoachSeasonPage — governing rule 1', () => {
-  const liveAssignment = {
-    teamId: TEAM, teamName: 'Riverdale Rays 12U', teamSport: 'softball',
-    programYearName: '2026', capabilities: ASSISTANT_WITH_MONEY,
-  } as never;
+describe('resolveCoachSeasonPage', () => {
+  const rolledForward = { assignments: [live('y2026', 2026, ASSISTANT_WITH_MONEY)], closedAssignments: [closed('y2025', 2025)] };
+  const betweenSeasons = { assignments: [], closedAssignments: [closed('y2025', 2025, ASSISTANT_WITH_MONEY)] };
 
-  const ctx = {
-    assignments: [liveAssignment],
-    closedAssignments: [],
-    // The 2025 row records what this assistant could see THEN: no money.
-    seasons: [
-      season('y2026', '2026', 'live', ASSISTANT_WITH_MONEY),
-      season('y2025', '2025', 'complete', ASSISTANT_NO_MONEY),
-    ],
-  };
-
-  it('an assistant promoted this year does NOT gain last year’s money', () => {
-    const page = resolveCoachSeasonPage(ctx as never, 'org', TEAM, 'y2025');
-    assert.equal(page.capabilities?.money, 'off',
-      'capabilities must come from the 2025 assignment row, not the coach’s current grants');
-  });
-
-  it('…and still sees money in the live season', () => {
-    const page = resolveCoachSeasonPage(ctx as never, 'org', TEAM, null);
+  /**
+   * ⚠ CAPABILITIES ARE THE MEMBER'S CURRENT ONES, IN EVERY SEASON (owner ruling 2026-08-16, M1).
+   * Chunk F's governing rule 1 — "resolve the grants from the viewed season's own assignment row"
+   * — is retired: it existed because ACCESS itself was historical, and once only current staff hold
+   * access at all, their current grant is the honest one. There is exactly one capability set
+   * anywhere, so this now holds by construction rather than by care.
+   */
+  it('hands the page the member’s current grants', () => {
+    const page = resolveCoachSeasonPage(rolledForward as never, 'org', TEAM);
     assert.equal(page.capabilities?.money, 'read');
+    assert.equal(page.programYearName, '2026');
   });
 
-  it('canWrite() refuses everything in an archive, whatever the grant says', () => {
-    const archive = resolveCoachSeasonPage(ctx as never, 'org', TEAM, 'y2025');
-    assert.equal(archive.canWrite(true), false, 'nothing is writable in a finished season');
-    assert.equal(archive.isReadOnly, true);
+  it('canWrite() refuses everything once the season has finished, whatever the grant says', () => {
+    const finished = resolveCoachSeasonPage(betweenSeasons as never, 'org', TEAM);
+    assert.equal(finished.isReadOnly, true);
+    assert.equal(finished.canWrite(true), false, 'nothing is writable in a finished season');
 
-    const liveSeason = resolveCoachSeasonPage(ctx as never, 'org', TEAM, null);
+    const liveSeason = resolveCoachSeasonPage(rolledForward as never, 'org', TEAM);
     assert.equal(liveSeason.canWrite(true), true);
     assert.equal(liveSeason.canWrite(false), false, 'read-only never GRANTS a capability');
   });
 
-  it('carries the year on links and fetches only when archived', () => {
-    assert.equal(resolveCoachSeasonPage(ctx as never, 'org', TEAM, 'y2025').query, '?year=y2025');
-    assert.equal(resolveCoachSeasonPage(ctx as never, 'org', TEAM, null).query, '');
+  it('a coach between seasons still has access, and reads that season', () => {
+    const page = resolveCoachSeasonPage(betweenSeasons as never, 'org', TEAM);
+    assert.equal(page.hasAccess, true,
+      'between seasons is an ordinary state, not a lock-out — the whole reason the working season '
+      + 'falls back to the newest finished one');
+    assert.equal(page.programYearName, '2025');
   });
 
-  it('reports no access for a team the coach was never on', () => {
-    const page = resolveCoachSeasonPage(ctx as never, 'org', 'team-nope', null);
+  it('reports no access for a team the coach is not on', () => {
+    const page = resolveCoachSeasonPage(rolledForward as never, 'org', 'team-nope');
     assert.equal(page.hasAccess, false);
+    assert.equal(page.season, null);
   });
 });
