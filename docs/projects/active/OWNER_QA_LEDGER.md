@@ -5320,10 +5320,22 @@ Ideally do part C with a second sign-in that no longer coaches that team.
       archive, so there is nothing above it to go back to. It returns in the next phase.)
 - [ ] There are **no tag filter chips** in a past season. Tags are a list you edit today, so
       filtering an old season by them would be answering a question nobody could have asked then.
-- [ ] There is **no "Past seasons" list** at the foot — you are already in a season, and the chip
-      above switches between them.
+- [ ] The **"Past seasons" list IS still at the foot**, with its *Season Wrapped →* links — it is the
+      team's scrapbook, not a duplicate of the season chip. ⚠ An earlier draft of this walk said it
+      should be hidden here; that was wrong and was corrected before you read it, because
+      **Season's End links straight to this list** as "Compare every season".
 - [ ] If the season genuinely had no scored games, the message reads in the **past tense** ("No
       results were recorded"), not "Once a game gets a score, it shows up here."
+
+### B2 · ⚠ Switching seasons quickly — the bug the review caught
+
+- [ ] From a past season, switch season **twice in quick succession** using the chip (e.g. 2024 →
+      2023 → 2024). The table always settles on the season named in the chip.
+- [ ] ⚠ **It must never end up stuck on "Loading report…".** Before the fix, a slow response for an
+      abandoned season could land last and strand the page on a spinner **permanently** — no
+      reload, no recovery. If you ever see a spinner that does not resolve, stop and tell me.
+- [ ] Also: from a past season's **attendance** report, tap **Insights**. You land on **that
+      season's** results, not the live season's.
 
 ### C · ⚠ The coach who moved on — the half that was completely broken
 
