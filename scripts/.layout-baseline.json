@@ -7290,87 +7290,87 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-overview|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-team-hub|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-schedule|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-attendance|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-development-board|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-budget|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-history|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-history-development|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-history-results|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-roster|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-depth-chart|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-development|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-development-drills|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-development-templates|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-practice-plan|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-game-console|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-accounting|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-budget-vs-actual|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-expenses|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-dues|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-dues-settlement|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-fundraiser|1440|tap-floor|a·Practice plans": {
@@ -7382,19 +7382,19 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-announcements|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-documents|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-staff|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-settings|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
     },
     "coach-settings-money|1440|tap-floor|a·Practice plans": {
@@ -7406,8 +7406,20 @@
       "detail": "39px tall (floor 44)"
     },
     "coach-tryouts|1440|tap-floor|a·Practice plans": {
-      "reason": null,
+      "reason": "Shared coach-portal chrome — a sidebar nav link at the portal-wide desktop size, where the 44px floor is deliberately not enforced (it is enforced at the phone breakpoints, and this link clears it there: the sweep reports it at 1440 only). Not this screen's control and not new behaviour — every sibling nav link beside it is already baselined on this screen at this width. Added 2026-08-16 with the Practice plans nav item, taking the same entry its predecessor `a·Attendance` held on this screen until that item left the nav.",
       "detail": "39px tall (floor 44)"
+    },
+    "coach-payment-requests|1440|tap-floor|button·View Team share of league fee": {
+      "reason": "The row-open control (pencil while a request is pending, eye once the club has reviewed it). Deliberate above 768px: this button is drawn once per row, and the owner ruling that made it 24px is that anything drawn beside every item in a list is drawn as many times as the list is long — a 44px control on a twelve-row list out-shouts the figures beside it. The floor IS enforced where thumbs are: at 641-768px it is raised to 44px, and at 640px and below the row becomes a card and the shared card rule turns this into a full-width labelled button. 1440px is pointer territory. Recorded 2026-08-16 after the rendered check first saw these rows with real seeded data.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-payment-requests|1440|tap-floor|button·View Extra practice jerseys": {
+      "reason": "The row-open control (pencil while a request is pending, eye once the club has reviewed it). Deliberate above 768px: this button is drawn once per row, and the owner ruling that made it 24px is that anything drawn beside every item in a list is drawn as many times as the list is long — a 44px control on a twelve-row list out-shouts the figures beside it. The floor IS enforced where thumbs are: at 641-768px it is raised to 44px, and at 640px and below the row becomes a card and the shared card rule turns this into a full-width labelled button. 1440px is pointer territory. Recorded 2026-08-16 after the rendered check first saw these rows with real seeded data.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-payment-requests|1440|tap-floor|button·Edit Diamond permit reimbursement": {
+      "reason": "The row-open control (pencil while a request is pending, eye once the club has reviewed it). Deliberate above 768px: this button is drawn once per row, and the owner ruling that made it 24px is that anything drawn beside every item in a list is drawn as many times as the list is long — a 44px control on a twelve-row list out-shouts the figures beside it. The floor IS enforced where thumbs are: at 641-768px it is raised to 44px, and at 640px and below the row becomes a card and the shared card rule turns this into a full-width labelled button. 1440px is pointer territory. Recorded 2026-08-16 after the rendered check first saw these rows with real seeded data.",
+      "detail": "24px tall (floor 44)"
     }
   }
 }

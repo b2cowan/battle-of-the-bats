@@ -54,8 +54,20 @@ export default function StartNextSeasonModal({
   // Only teams that have actually USED tryouts get the check — the nav's own signal. This also
   // skips the fetch for coaches without the tryouts grant (403) and avoids lazily creating a
   // tryout workspace row for teams that never opened the feature (review finding).
+  //
+  // ⚠ Scoped to the ACTIVE season deliberately (2026-08-16 review). `tryout-overview` resolves the
+  // team's active program year (`getActiveRepProgramYear`) and answers about THAT tryout, so the
+  // gate in front of it has to ask the same season's signal. A team can legitimately hold a draft
+  // AND an active year at once, the assignments list has no ORDER BY, and a bare
+  // `.find(a => a.teamId === teamId)` returns whichever the database happened to hand back first —
+  // so the draft row winning the race silently suppressed the warning on a live season. Invisible
+  // until 2026-08-16, when the signal started being computed per season: before that both rows
+  // carried the same aliased value, so the ambiguity was hidden rather than absent.
   const { assignments } = useCoaches();
-  const hasTryoutSignal = assignments.find(a => a.teamId === teamId)?.hasTryoutSignal ?? false;
+  const teamAssignments = assignments.filter(a => a.teamId === teamId);
+  const hasTryoutSignal =
+    (teamAssignments.find(a => a.programYearStatus === 'active') ?? teamAssignments[0])
+      ?.hasTryoutSignal ?? false;
   useEffect(() => {
     if (!hasTryoutSignal) return;
     let alive = true;
