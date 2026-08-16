@@ -5287,7 +5287,7 @@ floor — recorded as a deliberate exception, because it is drawn once per row a
 a full-size control on a twelve-row list out-shouts the figures beside it. It **is** raised at tablet
 widths, and on a phone it is already a full-width labelled button.
 
-## §35 · A past season shows that season
+## §36 · A past season shows that season
 
 **Built on dev 2026-08-16 · not on production · no migration, no new API, no route change.**
 Plan: `COACH_ARCHIVE_RAIL_PLAN.md` Phase 1. Mockups: artifact `8dae1e81`, §01–§02.

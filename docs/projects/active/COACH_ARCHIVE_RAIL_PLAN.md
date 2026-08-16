@@ -1,6 +1,6 @@
 # Coach Portal — the archive rail: Insights learns which season it is describing
 
-**Status:** **Phase 1 BUILT on dev 2026-08-16** (owner QA = ledger §35). Phases 2–3 proposed,
+**Status:** **Phase 1 BUILT on dev 2026-08-16** (owner QA = ledger §36). Phases 2–3 proposed,
 awaiting the owner decisions in §5.
 **Mockups:** artifact `8dae1e81-79a4-4165-80c6-e421a6b02a21` (published 2026-08-16).
 **Origin:** the `/review` of `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md`, which rated this the single most
