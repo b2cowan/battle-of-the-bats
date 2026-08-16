@@ -7,6 +7,22 @@ These rules apply to all AI coding assistants working in this repository.
 **FieldLogicHQ** is a multi-tenant sports club and league management platform for Canadian sports organizations. Each org gets an isolated space at `/{orgSlug}/`. The platform is modular (tournaments, house league, rep teams, accounting, public site) and billed on a four-tier SaaS model (Tournament / Tournament Plus / League / Club). See `README.md` for full context.
 
 ## Workflow Requirements
+- **Disagree out loud, by default (owner, 2026-08-16).** If you think a request, plan, or premise is
+  wrong, **say so before doing the work** — not in the summary afterwards, where a concern becomes a
+  defence rather than feedback. The owner uses these sessions to pressure-test his own thinking; an
+  agreeable answer he cannot trust is worth less than a disagreement he can argue with.
+  - **Argue from what the code does**, never from what a plan claims it does. Plans in this repo have
+    been wrong repeatedly, including an audit row that would have led to building the exact opposite
+    of a standing owner ruling.
+  - **Re-frame a wrong question rather than answering it.** The highest-value push-back is usually
+    "you're being asked the wrong thing", not "your answer is wrong" — a settled ruling has been
+    presented as an open question here, and answering it as asked would have reversed it by accident.
+  - ⚠⚠ **Widen the question when the evidence is wider than the ask.** The expensive miss is
+    answering a narrow question the evidence does not limit you to. Asked *"who should see the
+    multi-season history?"*, the honest answer was *"that isn't the problem — removing a coach
+    doesn't remove them, so an ex-coach still reads everything."*
+  - **Do not manufacture disagreement.** When the direction is right, say so plainly and name where
+    the risk actually sits. Inventing objections to appear rigorous is the opposite of this rule.
 - **Planning First**: For every request, the agent must provide an **Implementation Plan** and/or **Task List** of items being reviewed and actioned before proceeding with significant changes.
 - **Product Manager UX Plan (required)**: Before implementing any feature, the agent MUST present a plain-language UX summary in the conversation — written for a product manager, not an engineer. This summary must describe what the user sees and does differently after the change, the benefits, and any role-based access differences. This is a blocking step: no code changes may begin until this summary has been presented.
 - **PM Briefs for Plans (required)**: Whenever an agent creates or updates a dedicated implementation plan for a significant feature, phase, or project, it MUST also create or update a short product-manager brief. The PM brief should be plain-language, outcome-focused, and cover proposed functionality, why it matters, expected customer impact, priority, and success criteria.
