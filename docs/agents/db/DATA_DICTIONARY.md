@@ -4795,6 +4795,9 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:budget_categories.name -->
 **`name`** (text, NOT NULL, ≤80 app-side) — category name. **No unique index** (only `(org_id)` + PK) — unlike `budget_items`/`org_payees`, duplicate category names are **silently allowed**; the POST route's `23505→409` branch is dead code for categories.
 
+<!-- dict:col:budget_categories.sports -->
+**`sports`** (text[], nullable; mig 241) — which sports this whole category is offered to. NULL = every sport. Same rule and same normaliser as `budget_items.sports`; this is the coarser gate, checked first, so a category no sport offers hides its items whatever they are tagged.
+
 <!-- dict:col:budget_categories.scope -->
 **`scope`** (text, NOT NULL, default `'both'`; CHECK `org|team|both`) — which planner(s) show it (gotcha 2).
 
@@ -4825,6 +4828,11 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:budget_items.org_id -->
 **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, **nullable**) — NULL = immutable platform default; set = this club's (immutability enforced via this, not `is_default`). Read together with `team_id` for the tier.
+
+<!-- dict:col:budget_items.sports -->
+**`sports`** (text[], nullable; mig 241) — **which sports this item is offered to.** NULL = every sport, and that is the common case: travel, insurance, league registration and bank fees cost the same whatever is being played, so only genuinely sport-shaped words carry a tag. Values are Sport Pack ids (`softball`, `baseball`, `basketball`, `soccer`, `hockey`, `volleyball`, `lacrosse`, `other`). ⚠ **An ARRAY, deliberately** — baseball and softball share one vocabulary (one diamond, one set of umpires, one cage), so a single-sport column would have forced duplicate rows a club could pick the wrong one of. ⚠ **Compare through `normalizeSportId`** — `rep_teams.sport` holds mixed casing in live data (both Baseball and baseball exist), so a raw string compare hides half a club's library from half its teams, silently. ⚠ **An item is only reachable if its CATEGORY is offered to that sport too**; the category is the coarser gate and is checked first. Enforced in the app, not the database: `offeredForSport` in `lib/coach-budget-items.ts`, shared by the picker and every write path.
+
+> ⚠ **WHY THIS EXISTS.** The default library was diamond-shaped (Bats, Batting Cages, Diamond Permits, Umpire Fees, Plate Fees) while the platform serves eight sports. Survivable while the item was an optional label; **not** survivable after mig 240 made the item the NAME of every budget row — a basketball club's whole plan would read in someone else's language, on screen and in every export. The Sport Pack already owns this kind of vocabulary everywhere else in the product; budgets were the one place it did not reach.
 
 <!-- dict:col:budget_items.team_id -->
 **`team_id`** (FK → `rep_teams.id`, nullable, **ON DELETE CASCADE**; mig 240) — **who owns this item, and therefore whose picker it appears in.** Three tiers, read from this column and `org_id` together: `org_id` NULL = **platform**, everyone sees it; `org_id` set + `team_id` NULL = **club-published**, every team in that org sees it; both set = **that team's own**, and **no other team's picker offers it** (owner ruling 2026-08-15: *"we shouldn't populate 1 team's list with another team"*). ⚠ **One direction only:** a club admin can see every team's items and **publish** one, which clears `team_id` and hands it to everyone; there is deliberately no unpublish, because an item a team is already planning against cannot be taken back. ⚠ **CASCADE, not SET NULL** — a deleted team's private vocabulary must not silently become the club's; budget lines pointing at it are protected separately by their own ON DELETE SET NULL. The one predicate that reads all of this is `itemVisibleToTeam` in `lib/coach-budget-items.ts`, shared by the picker and by every write path so a list can never offer what a save refuses. Partial index `budget_items_team_idx`.

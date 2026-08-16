@@ -110,7 +110,7 @@ export const PATCH = withObservability(async (req: Request,
      Re-derives the text category from the item too, so an edit cannot leave the pair disagreeing —
      the same rule the create path applies, for the same reason. */
   if (body.budgetItemId !== undefined) {
-    const linked = await resolveBudgetItem(body.budgetItemId, ctx!.org.id, teamId);
+    const linked = await resolveBudgetItem(body.budgetItemId, ctx!.org.id, teamId, team.sport);
     if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
     patch.budgetItemId     = linked.item?.id ?? null;
     patch.budgetCategoryId = linked.item?.categoryId ?? null;

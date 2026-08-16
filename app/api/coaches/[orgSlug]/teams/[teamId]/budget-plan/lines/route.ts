@@ -86,7 +86,7 @@ export const POST = withObservability(async (req: Request,
         { status: 400 },
       );
     }
-    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, team.id);
+    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, team.id, team.sport);
     if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: 400 });
     categoryId = resolved.item!.categoryId;
     itemName   = resolved.item!.name;

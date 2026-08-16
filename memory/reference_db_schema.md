@@ -381,11 +381,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, intent_type NOT NULL, st
 - Indexes: idx_billing_retention_intents_org, idx_billing_retention_intents_retention
 
 ### budget_categories
-id (uuid), org_id (uuid) → organizations.id, name NOT NULL, scope, sort_order (integer), is_default (boolean), created_at
+id (uuid), org_id (uuid) → organizations.id, name NOT NULL, scope, sort_order (integer), is_default (boolean), created_at, sports
 - Indexes: budget_categories_org_idx
 
 ### budget_items
-id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) → organizations.id, name NOT NULL, suggested_amount (numeric), sort_order (integer), is_default (boolean), is_misc (boolean), created_at, team_id (uuid) → rep_teams.id
+id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) → organizations.id, name NOT NULL, suggested_amount (numeric), sort_order (integer), is_default (boolean), is_misc (boolean), created_at, team_id (uuid) → rep_teams.id, sports
 - Indexes: budget_items_category_idx, budget_items_org_idx, budget_items_team_idx, budget_items_unique_default_name, budget_items_unique_scope_name
 
 ### org_budget_lines

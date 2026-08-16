@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { Info, TrendingUp } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatShortDate } from '@/lib/measurable-format';
 import { formatInOrgZone } from '@/lib/timezone';
 import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
@@ -128,7 +127,6 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   if (!data) {
     return (
       <div className={styles.page}>
-        <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
         <p className={styles.detailPlaceholder}>
           {error}{' '}
           <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
@@ -162,7 +160,9 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
+      {/* ⚠ NO BACK LINK, deliberately (owner ruling 2026-08-16). This report sits on the Insights
+          hub AND on the Development hub, so a link asserting "Insights" was wrong for everyone who
+          came the other way. Both hubs are one tap away in the sidebar. */}
       {/* Page-header ruling 2026-08-11: the report takes the QUESTION as its title — it was the
           only "Development" other than the hub of the same name, and the question is what the page
           answers. The coverage framing it used to trail is required wording, so it moves down to

@@ -2,12 +2,12 @@
 
 **Generated:** 2026-08-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 32 divergence(s)** across dev/prod.
+**⚠️ 34 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 11 | 0 | 1 |
+| Columns | 13 | 0 | 1 |
 | Indexes | 7 | 1 | 0 |
 | Constraints | 8 | 0 | — |
 | RLS / CHECK | 3 | 0 | 0 (RLS state) |
@@ -20,7 +20,9 @@
 _none_
 
 ## Columns
-### Only in DEV (11)
+### Only in DEV (13)
+- `budget_categories.sports`
+- `budget_items.sports`
 - `budget_items.team_id`
 - `rep_fundraisers.kind`
 - `rep_fundraisers.sponsor_status`

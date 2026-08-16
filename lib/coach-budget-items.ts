@@ -26,13 +26,38 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
+import { normalizeSportId } from './sports';
 
 export type BudgetItemTier = 'platform' | 'club' | 'team';
 
-/** Anything with the two ownership columns — the shape every reader here needs and no more. */
+/** Anything with the ownership columns and the sport tag — all any reader here needs. */
 export interface OwnedBudgetItem {
   org_id?: string | null;
   team_id?: string | null;
+  /** mig 241 — which sports this is offered to. Null/absent = every sport, the common case. */
+  sports?: string[] | null;
+}
+
+/**
+ * Is this word part of THIS sport's vocabulary? (mig 241.)
+ *
+ * ⚠ THE DEFAULT LIBRARY WAS DIAMOND-SHAPED AND THE PLATFORM IS NOT. Bats, Batting Cages, Diamond
+ * Permits, Umpire Fees — survivable while the item was an optional label, and not survivable once
+ * mig 240 made the item the NAME of every budget row: a basketball club's whole plan would read in
+ * someone else's language.
+ *
+ * ⚠ NULL MEANS EVERY SPORT, and most rows are null. Travel, insurance, league registration and
+ * bank fees cost the same whatever is being played; only genuinely sport-shaped words are tagged.
+ * That default also means everything written before this behaves exactly as it did.
+ *
+ * ⚠ COMPARED THROUGH `normalizeSportId`. `rep_teams.sport` holds mixed casing in live data —
+ * "Baseball" and "baseball" both exist — so a raw string compare would hide half a club's library
+ * from half its teams, silently, and only for the teams whose row was written by the other path.
+ */
+export function offeredForSport(row: { sports?: string[] | null }, teamSport: string | null | undefined): boolean {
+  if (!row.sports || row.sports.length === 0) return true;
+  const sport = normalizeSportId(teamSport);
+  return row.sports.some(s => normalizeSportId(s) === sport);
 }
 
 /** Which tier an item belongs to. ONE definition: three surfaces label these and they must agree. */
@@ -86,6 +111,9 @@ export async function resolveBudgetItem(
   itemId: unknown,
   orgId: string,
   teamId: string,
+  /** The team's sport (mig 241). Omit to skip the sport gate — for callers that have no team sport
+   *  in hand and only need the ownership check; the picker always passes it. */
+  teamSport?: string | null,
 ): Promise<BudgetItemResult> {
   if (itemId === null || itemId === undefined || itemId === '') return { ok: true, item: null };
   if (typeof itemId !== 'string') {
@@ -94,14 +122,19 @@ export async function resolveBudgetItem(
 
   const { data } = await supabaseAdmin
     .from('budget_items')
-    .select('id, category_id, org_id, team_id, name, budget_categories(name)')
+    .select('id, category_id, org_id, team_id, sports, name, budget_categories(name, sports)')
     .eq('id', itemId)
     .maybeSingle();
 
-  // One message for "another club's", "another team's" and "no such item": they are the same answer
-  // to the coach, and separating them would confirm the existence of another team's rows to anyone
-  // who guessed an id.
-  if (!data || !itemVisibleToTeam(data as OwnedBudgetItem, orgId, teamId)) {
+  // One message for "another club's", "another team's", "another sport's" and "no such item": they
+  // are the same answer to the coach, and separating them would confirm the existence of another
+  // team's rows to anyone who guessed an id.
+  const category = (data?.budget_categories ?? null) as { sports?: string[] | null } | null;
+  const wrongSport = data != null && teamSport !== undefined && (
+    !offeredForSport(data as OwnedBudgetItem, teamSport)
+    || (category != null && !offeredForSport(category, teamSport))
+  );
+  if (!data || wrongSport || !itemVisibleToTeam(data as OwnedBudgetItem, orgId, teamId)) {
     return { ok: false, error: 'That budget item is not available to this team.' };
   }
 

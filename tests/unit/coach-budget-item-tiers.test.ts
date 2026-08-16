@@ -14,7 +14,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  budgetItemTier, itemVisibleToTeam, ITEM_TIER_LABEL,
+  budgetItemTier, itemVisibleToTeam, offeredForSport, ITEM_TIER_LABEL,
 } from '../../lib/coach-budget-items.ts';
 
 const CLUB = 'org-riverdale';
@@ -75,5 +75,52 @@ describe('itemVisibleToTeam', () => {
     const every = [platform, clubItem, teamItem, otherTeamItem, otherClubItem];
     const visible = every.filter(i => itemVisibleToTeam(i, CLUB, TEAM));
     assert.deepEqual(visible, [platform, clubItem, teamItem]);
+  });
+});
+
+describe('offeredForSport — the starting vocabulary knows the sport (mig 241)', () => {
+  const universal = { sports: null };
+  const diamond = { sports: ['softball', 'baseball'] };
+  const courtAndField = { sports: ['basketball', 'soccer', 'hockey', 'volleyball', 'lacrosse', 'other'] };
+
+  it('offers an untagged word to every sport — which is most of the library', () => {
+    // ⚠ NULL IS THE COMMON CASE AND THE SAFE DEFAULT. Travel, insurance, league registration and
+    // bank fees cost the same whatever is being played, and it means every row written before this
+    // behaves exactly as it did.
+    for (const sport of ['baseball', 'basketball', 'soccer', 'hockey', 'other', null]) {
+      assert.equal(offeredForSport(universal, sport), true);
+    }
+    assert.equal(offeredForSport({}, 'basketball'), true);
+    assert.equal(offeredForSport({ sports: [] }, 'basketball'), true);
+  });
+
+  it('keeps diamond words out of a basketball club\'s plan', () => {
+    // The whole point: since the item NAMES every budget row, the wrong vocabulary is not a longer
+    // list — it is the coach's plan written in someone else's language.
+    assert.equal(offeredForSport(diamond, 'baseball'), true);
+    assert.equal(offeredForSport(diamond, 'softball'), true);
+    assert.equal(offeredForSport(diamond, 'basketball'), false);
+    assert.equal(offeredForSport(diamond, 'soccer'), false);
+  });
+
+  it('serves baseball and softball from ONE row rather than two', () => {
+    // A single-sport column would have forced duplicate "Diamond Permits" a club could pick the
+    // wrong one of. Both diamond sports genuinely share the word.
+    assert.equal(offeredForSport(diamond, 'baseball') && offeredForSport(diamond, 'softball'), true);
+  });
+
+  it('⚠ compares through the sport normaliser, because live data is mixed-case', () => {
+    // `rep_teams.sport` holds BOTH "Baseball" and "baseball" today. A raw string compare would hide
+    // half a club's library from half its teams — silently, and only for the teams whose row was
+    // written by the other path.
+    assert.equal(offeredForSport(diamond, 'Baseball'), true);
+    assert.equal(offeredForSport(diamond, 'SOFTBALL'), true);
+    assert.equal(offeredForSport(diamond, ' Baseball '), true);
+    assert.equal(offeredForSport(courtAndField, 'Basketball'), true);
+  });
+
+  it('treats an unknown sport as "other" rather than showing it everything', () => {
+    assert.equal(offeredForSport(courtAndField, 'underwater hockey'), true);   // → other
+    assert.equal(offeredForSport(diamond, 'underwater hockey'), false);
   });
 });

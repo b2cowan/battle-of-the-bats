@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Scale, BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
@@ -104,7 +103,11 @@ export default function CoachesPlayingTimeReportPage({
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
+      {/* ⚠ NO BACK LINK, deliberately (owner ruling 2026-08-16). This report has FOUR doors — the
+          Insights hub, the game console's "where did the minutes go" row, an Overview tile and the
+          team page's "Season insights →" — so a link asserting "Insights" was wrong for three
+          arrivals out of four. The same defect Attendance had, found by counting the links rather
+          than by reading this file. Insights is in the sidebar for anyone who wants it. */}
       {/* Page-header ruling 2026-08-11: the provenance is LOAD-BEARING — a reader must know these
           numbers come from saved lineups, not from the games played — so it moves into the table's
           basis line below rather than being deleted with the decorative subtitles. */}

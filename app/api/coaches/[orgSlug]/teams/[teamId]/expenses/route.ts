@@ -105,7 +105,7 @@ export const POST = withObservability(async (req: Request,
      ⚠ WHETHER IT WAS BUDGETED IS NOT RECORDED HERE, OR ANYWHERE. It is derived by asking whether a
      budget line exists for the same category and item, which is what let the old "Not in the
      budget" declaration be deleted outright. See lib/coach-budget-items.ts. */
-  const linked = await resolveBudgetItem(budgetItemId, ctx!.org.id, team.id);
+  const linked = await resolveBudgetItem(budgetItemId, ctx!.org.id, team.id, team.sport);
   if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
   /* ⚠ REQUIRED ON A NEW COST, and enforced HERE as well as on the form. The form is a courtesy — a
      stale tab, a replay or a direct caller all arrive here — and an unclassified cost is the exact

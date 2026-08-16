@@ -1577,6 +1577,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "budget_categories",
+        "pos": 8,
+        "column_name": "sports",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "budget_items",
         "pos": 1,
         "column_name": "id",
@@ -1663,6 +1672,15 @@
         "column_name": "team_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "budget_items",
+        "pos": 11,
+        "column_name": "sports",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
         "is_nullable": "YES",
         "column_default": null
       },

@@ -1,9 +1,9 @@
 {
   "generated": "2026-08-16",
-  "total": 32,
+  "total": 34,
   "counts": {
     "tables": 1,
-    "columns": 12,
+    "columns": 14,
     "indexes": 8,
     "constraints": 8,
     "rls": 3
@@ -24,6 +24,14 @@
     {
       "key": "column:changed:rep_fundraiser_entries.player_id",
       "sig": "uuid|uuid|YES| :: uuid|uuid|NO|"
+    },
+    {
+      "key": "column:only-dev:budget_categories.sports",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:budget_items.sports",
+      "sig": ""
     },
     {
       "key": "column:only-dev:budget_items.team_id",

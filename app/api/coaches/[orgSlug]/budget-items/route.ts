@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import {
-  budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems,
+  budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   type BudgetItemTier, type OwnedBudgetItem,
 } from '@/lib/coach-budget-items';
 
@@ -65,6 +65,12 @@ export const GET = withObservability(async (req: Request,
   // Only a team this coach is actually assigned to can widen the list.
   const askedTeamId = new URL(req.url).searchParams.get('teamId');
   const teamId = askedTeamId && assignments.some(a => a.teamId === askedTeamId) ? askedTeamId : null;
+  /* The team's SPORT decides which of the standard words it is offered (mig 241) — a basketball
+     club has no use for Diamond Permits, and since mig 240 the item is the NAME of every budget
+     row, so the wrong vocabulary is the coach's whole plan. Without a team named we cannot know
+     the sport, and the safe answer is the universal words only. */
+  const team = teamId ? await getRepTeam(teamId) : null;
+  const teamSport = team?.sport ?? null;
 
   const { data, error } = await supabaseAdmin
     .from('budget_categories')
@@ -75,7 +81,10 @@ export const GET = withObservability(async (req: Request,
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const categories: BudgetCategoryWithItems[] = (data ?? []).map(row => ({
+  const categories: BudgetCategoryWithItems[] = (data ?? [])
+    // A whole category can belong to one sport's world; its items are unreachable if it is.
+    .filter(row => offeredForSport(row as { sports?: string[] | null }, teamSport))
+    .map(row => ({
     id:        row.id as string,
     orgId:     row.org_id as string | null,
     name:      row.name as string,
@@ -85,6 +94,7 @@ export const GET = withObservability(async (req: Request,
     createdAt: row.created_at as string,
     items:     ((row.budget_items ?? []) as Record<string, unknown>[])
       .filter(item => !item.is_misc)
+      .filter(item => offeredForSport(item as { sports?: string[] | null }, teamSport))
       .filter(item => teamId
         ? itemVisibleToTeam(item as OwnedBudgetItem, ctx.org.id, teamId)
         // No team named: platform + club only. A team's own item is never in this answer.

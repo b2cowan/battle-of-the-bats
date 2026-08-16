@@ -36,7 +36,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, lineId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment, programYear } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -96,7 +96,7 @@ export const PATCH = withObservability(async (req: Request,
      there is now nothing to accept. */
   if ('itemId' in body) {
     const itemId = body.itemId || null;
-    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, teamId);
+    const resolved = await resolveBudgetItem(itemId, ctx!.org.id, teamId, team.sport);
     if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: 400 });
     /* ⚠ A COST LINE MAY NOT BE STRIPPED BACK TO NOTHING. The create path refuses to make a cost
        line without an item; letting a PATCH clear one produces a state no form can create — a

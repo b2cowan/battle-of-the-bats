@@ -1575,6 +1575,15 @@
     "ordinal_position": 7
   },
   {
+    "table_name": "budget_categories",
+    "column_name": "sports",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
     "table_name": "budget_items",
     "column_name": "id",
     "data_type": "uuid",
@@ -1663,6 +1672,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
+  },
+  {
+    "table_name": "budget_items",
+    "column_name": "sports",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
   },
   {
     "table_name": "chat_message_reactions",
