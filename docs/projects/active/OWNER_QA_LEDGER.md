@@ -5140,6 +5140,66 @@ the optional tools on. That is a different thing entirely and is deliberately un
 probably outranks Money. Money sits above Communication because it's the bigger product pillar. Say
 the word if you'd rather they swap.
 
+## §34 · The lineup builder tells the time at the field
+
+**Built on dev 2026-08-16 · not on production · no migration, no new API, no route change, nothing
+renamed.** Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §6 and §6a. No mockups — this is the
+project's follow-up debt, not a design change.
+
+**Why this section exists:** the Lineups *list* was fixed in an earlier pass and the **builder next
+door was missed**. It printed each game's date and time in **the reader's own device timezone**
+rather than the team's — so a coach checking a lineup from another province was told the wrong start
+time. The same string is stamped onto the **printed lineup poster and batting-order card**, so the
+wrong time was going onto paper handed out at the field. Three other items rode along with no
+visible surface (a faster team load, a more reliable "next game" pick, and bookkeeping).
+
+**Fixture:** your normal live team with at least one scheduled game. Part B needs a second device or
+browser profile set to a **different timezone** — on Windows, changing the system clock's zone and
+reloading is enough.
+
+### A · The builder still reads correctly at home
+
+- [ ] Open a game's lineup (Lineups → a game → build). The date and time in the page header match
+      what the **Schedule** and the **Lineups list** say for that same game — all three agree.
+- [ ] Times still read like **"9:00 a.m."**, not "09:00". ⚠ Flag it if any screen switched to a
+      24-hour clock.
+
+### B · ⚠ The actual defect — needs a second timezone
+
+- [ ] Set a second device (or browser profile) to a **different timezone** — Vancouver is the easy
+      test. Sign in and open the same game's lineup.
+- [ ] The date and time shown are **identical to what you see at home** — the field's clock, not the
+      reader's. Before this change they differed by three hours.
+- [ ] Do the same on the **Lineups list** and the **Schedule** — all three agree on both devices.
+
+### C · The printed sheets
+
+- [ ] From the builder, download the **lineup poster** and the **batting-order card**. The date line
+      on each carries the same date and time as the screen.
+- [ ] Repeat from the second-timezone device. **The printed sheets must not differ between the two.**
+
+### D · Nothing else moved
+
+- [ ] Everything else on the builder behaves as before — building, saving, templates, printing,
+      undo/redo.
+- [ ] Attendance → the "take attendance for your next game" shortcut still offers the game you'd
+      expect (the soonest upcoming one, or the most recent if the season is behind you).
+- [ ] Opening a team feels no slower — three database lookups were removed from that path.
+
+### E · The season-rollover warning (skip unless you can make the fixture)
+
+- [ ] Only testable on a team holding **both a draft season and a live one at once**. Start next
+      season from a live season that has an **unfinished tryout** (candidates still awaiting an
+      outcome). The dialog shows **"Your tryout isn't finished…"**.
+- [ ] Previously this warning could go missing depending on which season the database happened to
+      answer with first. Nothing is at risk either way — a rollover has never carried tryout data —
+      so this is a "does the heads-up appear" check, not a data check.
+
+---
+
+**Nothing here is user-facing beyond A–C.** If B and C read the same on both devices, this section
+passes.
+
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its
