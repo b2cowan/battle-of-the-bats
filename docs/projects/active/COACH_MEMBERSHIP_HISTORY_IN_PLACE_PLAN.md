@@ -127,8 +127,10 @@ rep_team_staff_memberships (
   the membership gate. Fixture probes for revocation rewritten. **No archive changes yet** — the
   rail temporarily gates on membership (one-line change) so nothing leaks between phases.
 
-  **P1 build state (2026-08-16, this session):** everything above is BUILT on the working copy
-  except the tail below. Mig 245 APPLIED to dev (+dictionary +snapshots); typecheck ✓; 2,048 unit
+  **P1 build state (2026-08-16, this session): ✅ COMMITTED `8415dcd2`** (68 files; the money-tab
+  session's concurrent edits were hunk-excluded from the three shared files). Everything above is
+  BUILT except the tail below. **P2 handoff prompt:**
+  `docs/projects/active/COACH_MEMBERSHIP_P2_ARCHIVE_REMOVAL_PROMPT.md`. Mig 245 APPLIED to dev (+dictionary +snapshots); typecheck ✓; 2,048 unit
   tests ✓; Staff also LEFT the archive (door, allow-list entries, rule-3 write exception — the
   per-season "remove access" control retired with the model, so keeping the door would have made
   its Remove button lie).
