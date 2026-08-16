@@ -5200,6 +5200,93 @@ reloading is enough.
 **Nothing here is user-facing beyond A–C.** If B and C read the same on both devices, this section
 passes.
 
+## §35 · Club money screens explain themselves, and a payment request becomes a record
+
+**Built on dev 2026-08-16 · not on production · NO migration.** ⚠ **One NEW server capability: a
+coach can now change a PENDING payment request.** Mockups: artifacts `2c74c60d` (empty states) and
+`0e714ace` (rows + record window). Adversarial review run 2026-08-16 — four defects found and fixed,
+three of them money-integrity; parts **D** and **E** are the ones that exercise them.
+
+**Why this section exists:** you asked what Allocations and Payments even were. They turned out to be
+the two Money screens that never explained themselves — and pulling on that found a table drawn
+unlike its siblings, a one-tap irreversible delete, and a report label saying what an empty column
+already said.
+
+**Fixture:** a **club-run** team (these two tabs do not exist otherwise) with an allocation carrying
+an overdue instalment, and payment requests in all three states. `qa-money-lab` / **QA Mid Season
+U14** is seeded for exactly this — 3 allocations (2 overdue) and 5 requests. ⚠ Those records were
+written straight to the database, so the **club's own accounting ledger has no matching entries** —
+do not use this team to check club-side reconciliation.
+
+### A · The two screens now say what they are
+
+- [ ] On a team with **no** club billing, open **Money → Allocations**. It explains what an allocation
+      is, where it comes from, and that you cannot create one. **No button** — you genuinely can't act.
+- [ ] **Money → Payments** with no requests explains **Pay Org** and **Request from Org** with real
+      examples, and offers **Make a request**.
+- [ ] ⚠ Neither screen links to the other any more. Deliberate — the tab row is two words away.
+
+### B · The tiles and the tables
+
+- [ ] Summary tiles on **Allocations** and **Payments** **fill the width** instead of crowding left.
+      Same on **Fundraising** and its drill-in.
+- [ ] Allocations: an overdue instalment's badge is **red**, matching the Overdue tile above it.
+- [ ] Allocations: the **paid / due** figures line up in columns down the list.
+- [ ] Payments: every row is **one line tall**; the type reads **Pay Org** / **From Org** on one line.
+
+### C · The record window
+
+- [ ] Tap any payment request row — it opens the record. A **pencil** while pending, an **eye** once
+      the club has reviewed it.
+- [ ] The **declined** one is read-only with the club's written reason **at the top**.
+- [ ] The **approved** one is read-only; method and review date are inside, not crammed in a column.
+- [ ] The footer sits tight to the bottom and the Notes field scrolls fully into view.
+
+### D · ⚠ Editing a pending request — THIS IS THE NEW ABILITY
+
+- [ ] Open a **pending** request, change the amount, **Save changes**. The row updates.
+- [ ] Reopen and close without typing — **no discard prompt**. Change something and close — **it asks**.
+- [ ] ⚠ While a save is in flight the window **cannot be dismissed** (no X, no click-outside, no
+      Cancel). *Found in review: without this, a slow save could close a different record you had since
+      opened and throw away typing with no prompt.*
+- [ ] If the club approves it while you have it open, saving should say **it has already been
+      reviewed** rather than silently overwriting. *This is the one that could have left a request
+      saying one amount while a different amount actually moved.*
+
+### E · ⚠ Withdrawing — MOVES REAL MONEY IF IT RACES
+
+- [ ] **Withdraw request** now sits in the window, not on the row, and **asks first**, saying plainly
+      that nothing is kept.
+- [ ] While the confirmation is up, **Save changes and Cancel are both dead**. *Found in review: a live
+      Save under a yes/no question let you save the very edit you were abandoning.*
+- [ ] A withdraw that loses a race to an approval should **say so**, not report success.
+
+### F · A read-only money assistant
+
+- [ ] With money access view-only, rows still open — but every window is **read-only, including a
+      pending one**, and there is no Make a request, no Save, no Withdraw.
+
+### G · The report loses two labels
+
+- [ ] **Budget vs. Actual**, both **Categories** and **Months**: rows for things never budgeted no
+      longer carry a **"not budgeted"** / **"not in your plan"** tag. The **empty Budget column** says it.
+- [ ] The amber row tint stays in Categories. ⚠ **Months has no cue at all now** — it only ever had the
+      label. Flag it if that reads wrong; it is a deliberate consequence, not an oversight.
+- [ ] Exports still write "(not budgeted)" — kept on purpose, because a spreadsheet is filtered.
+
+### H · Warm theme, and a phone
+
+- [ ] ⚠ **In the warm theme**, check the status badges — Pending / Approved / Denied / Overdue / Pay
+      Org / From Org. Their ink was **deepened** to clear the contrast floor (they were failing at
+      4.06:1 against 4.50). Confirm they still read as the right colours.
+- [ ] At **phone width**, Payments rows stack into cards and the row control becomes a labelled
+      **Edit** / **View** button. Nothing scrolls sideways.
+
+**Known and accepted:** on a desktop the row's Edit/View control stays 24px, under the 44px touch
+floor — recorded as a deliberate exception, because it is drawn once per row and your ruling was that
+a full-size control on a twelve-row list out-shouts the figures beside it. It **is** raised at tablet
+widths, and on a phone it is already a full-width labelled button.
+
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its

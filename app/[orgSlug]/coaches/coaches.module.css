@@ -2601,8 +2601,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 
 .badgeDraft     { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
-.badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .badgeArchived  { background: var(--white-05); color: var(--home-dim, rgba(255,255,255,0.3)); border: 1px solid var(--border-2); }
 .badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 /* A SPONSOR, in the Fundraising list. Blue against the drives' green, because the split the tab
@@ -2621,8 +2621,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    and stays #3B82F6 in dark. The token is not the lever — the recipe that consumes it is. */
 .badgeSponsor   { background: rgba(var(--info-rgb),0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb),0.3); }
 .badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
-.badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
-.badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--badge-danger-ink); border: 1px solid rgba(var(--danger-rgb), 0.3); }
+.badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 
 /* ── Payment requests: where a request stands, and which way the money moves ──────────────
    Both sets replace bespoke inline-styled pills that sat in the Payments table with their own
@@ -2634,9 +2634,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    fewer classes — but an approval is not an active season and a denial is not an overdue
    instalment, so a future restyle of either would silently repaint this table. Same split
    `.badgeSponsor` was carved out of `.badgeTryout` under. */
-.badgePending   { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
-.badgeApproved  { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.badgeDenied    { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
+.badgePending   { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.badgeApproved  { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeDenied    { background: rgba(var(--danger-rgb), 0.12); color: var(--badge-danger-ink); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 
 /* The direction pair. ⚠ THE ARROW AND THE WORDS ARE THE CARRIER, never the hue: red-vs-green is
    the one pairing a deutan reader cannot separate, and this badge states the single fact the
@@ -2644,8 +2644,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    pill at desktop width, which is what made these rows twice as tall as every other list row
    in Money. */
 .badgeDirection { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
-.badgeToOrg     { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
-.badgeFromOrg   { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeToOrg     { background: rgba(var(--danger-rgb), 0.12); color: var(--badge-danger-ink); border: 1px solid rgba(var(--danger-rgb), 0.3); }
+.badgeFromOrg   { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 
 /* ── Loading state ──────────────────────────────────────────────────────── */
 .loadingState {
@@ -6760,6 +6760,24 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .rowEditBtn:hover {
   color: var(--home-ink, var(--white-80));
   border-color: var(--home-line-strong, rgba(255,255,255,0.25));
+}
+
+/* ── The touch floor, where fingers actually are (rendered check, 2026-08-16) ─────────────────
+   This control renders ~24px against a 44px floor. It is small ON PURPOSE and that was an owner
+   call: anything drawn beside every row is drawn as many times as the list is long, so a full-size
+   button on a twelve-row list out-shouts the figures it sits beside.
+
+   Both things are true, so the floor is applied where it matters and the smallness is kept where
+   it does not. Below 641px the row has already become a card and the shared card rule turns this
+   into a full-width labelled button — nothing to do. The gap is the tablet band in between, which
+   is touch and is not carded.
+
+   ⚠ ABOVE 768px THE 24px CONTROL STANDS, DELIBERATELY. That is pointer territory, the floor exists
+   for thumbs, and raising it there would undo the ruling above on every list table in the portal.
+   The rendered check still reports it at 1440 — record it as a known exception with this reason
+   rather than "fixing" it into a taller row. */
+@media (min-width: 641px) and (max-width: 768px) {
+  .rowEditBtn { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); justify-content: center; }
 }
 /* ⚠ ON A PHONE THE PENCIL BECOMES A LABELLED BUTTON — it is NOT hidden, and an earlier draft that
    hid it caused a real defect worth remembering.

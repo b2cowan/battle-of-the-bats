@@ -91,6 +91,25 @@
   --warning-strong: var(--warning);
   --danger-strong:  var(--danger);
 
+  /* ── Badge ink: status-as-TEXT inside a tinted chip ────────────────────────────────────────
+     A status badge is small text (≈11.5px) sitting on a tint of its own hue, which is the worst
+     case in the palette — the ink and its ground are the same colour family, so the ratio is thin
+     by construction. On the dark portal that is fine; the warm portal remaps these to deep inks on
+     a cream card, and the RED one lands at 4.06:1 against a 4.50 floor (measured in the browser
+     2026-08-16, not computed from declarations — the static contrast gate reads the dark theme
+     only and cannot see this).
+
+     ⚠ THE INK IS WHAT MOVES, NOT THE CHIP. Paling the chip was the tempting fix and it does not
+     hold: the brand red only clears the floor when the tint is close to zero, and the composite
+     depends on which card the badge happens to sit on — so it would pass on one screen and fail on
+     the next. A darker ink is ground-independent.
+
+     ⚠ BADGE-SCOPED ON PURPOSE. `--home-live` still paints live-game dots and alerts at full brand
+     strength; only badge TEXT deepens. */
+  --badge-danger-ink:  var(--danger);
+  --badge-warning-ink: var(--warning);
+  --badge-success-ink: var(--success);
+
   /* Status colours as LIGHTER TEXT/GLYPH on DARK operator surfaces (the Tailwind
      -400 tier). Brighter than the base --success/--warning/--danger/--info fills so
      small status text/icons read clearly on dark panels/pills. Operator surfaces are
@@ -833,6 +852,14 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --success-strong: var(--home-win);
   --warning-strong: var(--home-amber);
   --danger-strong:  var(--home-live);
+
+  /* Badge ink on cream — see the note beside these tokens in :root. Measured on the rendered
+     chip (rgb(225,209,194)): live 4.06 ✗ · amber 4.56 · win 4.63. Only red actually fails, but
+     amber and green clear by three hundredths and would fail the moment a chip sits on a slightly
+     warmer card, so all three deepen together rather than waiting to be found one at a time. */
+  --badge-danger-ink:  #9A2E17;  /* 5.08:1 on the chip (was 4.06 at --home-live) */
+  --badge-warning-ink: #6B4105;  /* was 4.56 */
+  --badge-success-ink: #2A5222;  /* was 4.63 */
 
   /* ── Legible-on-white gold (round-2 A-squad star). Also remap --gold itself so
      gold GLYPHS (the A-squad star) deepen to the legible tone on cream instead of
