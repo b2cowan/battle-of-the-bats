@@ -123,10 +123,21 @@ export async function resolveUatContext() {
   // (`?section=fundraisers&fundraiser=`), and a drill-in with no id to open would sweep the LIST
   // twice and report green on a screen nobody looked at.
   const fr = await db.from('rep_fundraisers')
-    .select('id').eq('program_year_id', py.data.id)
+    .select('id').eq('program_year_id', py.data.id).eq('kind', 'fundraiser')
     .order('created_at').limit(1).maybeSingle();
   if (fr.error) throw new FixtureError(`rep_fundraisers lookup failed: ${fr.error.message}`);
   if (!fr.data) throw new FixtureError('No fundraiser on the active program year.');
+
+  // ⚠ A SPONSOR DRAWS A DIFFERENT SCREEN, and nothing automated had ever opened one. The drill-in
+  // for a drive is a six-column leaderboard; a sponsor replaces it with a one-row record, its own
+  // title chips and a status hint — none of which the `coach-fundraiser` screen can measure,
+  // because a drive never renders them. Resolved by KIND rather than by taking the second row:
+  // "whatever is second" is how a fixture reshuffle silently sweeps the same screen twice.
+  const sp = await db.from('rep_fundraisers')
+    .select('id').eq('program_year_id', py.data.id).eq('kind', 'sponsor')
+    .order('created_at').limit(1).maybeSingle();
+  if (sp.error) throw new FixtureError(`sponsor lookup failed: ${sp.error.message}`);
+  if (!sp.data) throw new FixtureError('No SPONSOR on the active program year — the sponsor screen cannot be swept.');
 
   return {
     orgSlug: org.data.slug,
@@ -136,6 +147,7 @@ export async function resolveUatContext() {
     practiceEventId: ev.data.id,
     gameEventId: game.data.id,
     fundraiserId: fr.data.id,
+    sponsorId: sp.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

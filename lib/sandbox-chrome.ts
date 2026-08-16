@@ -525,7 +525,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // credits land is the reason the row above reads the way it does, so a prospect who has just
       // been shown the effect is the one prospect who cares that it is a choice. The seed states
       // both settings (DEMO_DUES_SETTINGS) rather than inheriting them, so this stays true.
-      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it. Which bill that lands on is your call, set once — Player Dues prints the answer under the table, and Team settings is where it changes.',
+      // ⚠ The sponsor clause (seeded 2026-08-15 with the sponsorships follow-ups). It is one
+      // sentence because it earns one: the DISTINCTION is the product's idea — a drive asks what
+      // each player raised, a sponsor is a single arrival — and the tour had no way to say the
+      // portal knows the difference. The demo's sponsor is deliberately club-wide and credited to
+      // nobody, so this sentence must never imply a family's bill moved (see MIDSEASON_SPONSOR:
+      // the three pins the clause above depends on survive precisely because it does not).
+      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it. Which bill that lands on is your call, set once — Player Dues prints the answer under the table, and Team settings is where it changes. Money coming in is not all one thing either: beside the bottle drive sits a $750 sponsor, recorded as one arrival rather than a roster of blank rows, and marked received — a pledge would sit in the plan and count as nothing in the books until the cheque lands.',
       nextLabel: 'Next: playing time',
     },
     {

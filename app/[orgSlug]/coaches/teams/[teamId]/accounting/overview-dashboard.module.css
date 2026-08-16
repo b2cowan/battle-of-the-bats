@@ -598,7 +598,11 @@
 .railRow:hover .railName { text-decoration: underline; }
 .railDot { width: 8px; height: 8px; border-radius: 50%; }
 .railDotGood { background: var(--success); }
-.railDotBlue { background: var(--blueprint-blue); }
+/* ⚠ `--info`, not `--blueprint-blue`: the coach warm gate remaps the latter to `--home-olive`, so
+   the "blue lane" dot rendered the SAME olive as `.railDotOlive` two rows below it — the lane
+   scheme the comment at the top of MoneyRail describes was not actually being drawn. `--info` is
+   the warm palette's real blue and is unchanged in dark. */
+.railDotBlue { background: var(--info); }
 .railDotRust { background: var(--home-rust, var(--warning)); }
 .railDotPlum { background: var(--home-plum, var(--warning)); }
 .railDotOlive { background: var(--home-olive, var(--success)); }

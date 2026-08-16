@@ -34,11 +34,11 @@ type RowKey = Exclude<keyof DashboardHrefs, 'budgetStarter' | 'budgetGenerate' |
  *  blank. Adding an all-optional step means revisiting that rule, not just this list. */
 const INDEX_STEPS: { step: string; keys: RowKey[] }[] = [
   { step: 'Plan',    keys: ['budget'] },
-  { step: 'Collect', keys: ['dues', 'fundraisers'] },
+  { step: 'Collect', keys: ['dues', 'fundraisers', 'sponsorships'] },
   { step: 'Spend',   keys: ['expenses', 'allocations', 'paymentRequests'] },
   { step: 'Review',  keys: ['budgetVsActual'] },
 ];
-const MORE_KEYS: RowKey[] = ['fundraisers', 'allocations', 'paymentRequests', 'budget', 'budgetVsActual'];
+const MORE_KEYS: RowKey[] = ['fundraisers', 'sponsorships', 'allocations', 'paymentRequests', 'budget', 'budgetVsActual'];
 
 const danger = (text: string) => <span className={styles.railStatDanger}>{text}</span>;
 
@@ -46,8 +46,17 @@ const danger = (text: string) => <span className={styles.railStatDanger}>{text}<
  * one map entry rather than three parallel lookups kept in step by hand. `Record<RowKey, …>`
  * makes that exhaustive: a new destination key fails the build until it has a row.
  *
- * Dot colour is a lane, not decoration: green = money in, rust = money out,
- * blue = the org's side, plum/olive = planning and review. */
+ * ⚠ A DOT IS THE COLOUR OF THE CHIP YOU'LL SEE WHEN YOU ARRIVE (owner ruling 2026-08-15). This
+ * comment used to say the dot was a money-direction LANE — green in, rust out, blue the org's
+ * side — and mostly it still reads that way. But Sponsorships is money IN and is deliberately
+ * BLUE, because that is the chip the Fundraising tab shows it under; a lane scheme would have
+ * made it green and identical to the Fundraisers row one line above, which is the whole thing
+ * the two rows exist to separate. The chip-match is the rule; the lane reading is a coincidence
+ * that mostly holds.
+ *
+ * So Sponsorships and Allocations share blue, adjacent in the `more` variant, and that is
+ * accepted: the row NAME carries the information and the dot only reinforces it — the same
+ * reason the deutan ruling forbids colour from ever being the sole carrier. */
 const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) => ReactNode }> = {
   budget: {
     dot: styles.railDotPlum,
@@ -75,14 +84,48 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       );
     },
   },
+  /**
+   * ⚠ TWO ROWS, NOT ONE (owner ruling 2026-08-15, revising the single combined row first
+   * proposed). A drive and a sponsor answer different questions and are budgeted against separate
+   * lines, so one merged figure could not tell a treasurer how much of the season families sold
+   * for versus how much was given. What earns the second ROW specifically — rather than one row
+   * with two figures in it — is that each opens the tab ALREADY FILTERED to its kind: a rail row
+   * is a door, and two doors onto an identical view would be a second navigation system.
+   *
+   * The dots match the tab's own chips: green for drives, blue for sponsors.
+   *
+   * ⚠ "Fundraisers" here is CORRECT and is not the stale tab name. The TAB is "Fundraising"
+   * because it holds both kinds; this row names one kind and opens the tab filtered to it. The
+   * label that WAS stale — a single row called "Fundraisers" standing for the whole tab — is what
+   * this split removed.
+   */
   fundraisers: {
     dot: styles.railDotGood,
     name: 'Fundraisers',
-    stat: s => s.fundraisers.totalRaised > 0
-      ? <><b>{fmt(s.fundraisers.totalRaised)}</b> raised</>
+    stat: s => s.fundraisers.driveRaised > 0
+      ? <><b>{fmt(s.fundraisers.driveRaised)}</b> raised</>
       : s.fundraisers.activeCount > 0
         ? <>{s.fundraisers.activeCount} active</>
         : <>None yet · <b>start one</b></>,
+  },
+  sponsorships: {
+    dot: styles.railDotBlue,
+    name: 'Sponsorships',
+    // ⚠ A PLEDGE RIDES ALONGSIDE THE MONEY, NEVER INSIDE IT — the same rule the tab's own summary
+    // keeps. "$500 · $2,000 pledged" is honest; "$2,500" would be a season flattering itself with
+    // a cheque nobody has received.
+    stat: s => {
+      const { sponsorReceived, sponsorPledged, sponsorCount } = s.fundraisers;
+      // Shows at ZERO, the way the drives row above introduces itself — a coach who has never
+      // recorded a sponsor is exactly the coach who does not know they can.
+      if (sponsorCount === 0) return <>None yet · <b>add one</b></>;
+      return (
+        <>
+          {sponsorReceived > 0 ? <><b>{fmt(sponsorReceived)}</b> in</> : <>{sponsorCount} recorded</>}
+          {sponsorPledged > 0.005 && <> · {fmt(sponsorPledged)} pledged</>}
+        </>
+      );
+    },
   },
   expenses: {
     dot: styles.railDotRust,

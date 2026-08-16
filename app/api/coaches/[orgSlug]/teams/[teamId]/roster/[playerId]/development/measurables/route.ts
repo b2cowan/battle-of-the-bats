@@ -88,7 +88,10 @@ export const POST = withObservability(async (req: Request,
     if (typeof body.sessionId !== 'string') {
       return NextResponse.json({ error: 'Invalid sessionId' }, { status: 400 });
     }
-    const session = await getRepTeamEvaluationSession(body.sessionId, teamId);
+    // The season is now part of the LOOKUP rather than a check after it (2026-08-15) — the same
+    // rule, moved to where it cannot be forgotten. The comparison below is kept as the belt: the
+    // parity anchor is the PLAYER's season, and stating it twice costs nothing.
+    const session = await getRepTeamEvaluationSession(body.sessionId, teamId, resolved.player.programYearId);
     if (!session || session.programYearId !== resolved.player.programYearId) {
       return NextResponse.json({ error: 'Session not found for this team and season.' }, { status: 400 });
     }

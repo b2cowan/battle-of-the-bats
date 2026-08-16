@@ -10,6 +10,8 @@ import {
   getRepDuesPayoutsByProgramYear,
   getRepFundraiser,
   createEntry,
+  getRepTeamTagLibrary,
+  getRepTeamFundraiserTagsMap,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -70,7 +72,7 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId, fundraiserId } = await params;
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error!;
-  const { capabilities, programYear } = resolved;
+  const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -165,6 +167,15 @@ export const GET = withObservability(async (req: Request,
   const totalRaised  = allEntries.reduce((s, e) => s + Number(e.amount_raised), 0);
   const totalRebates = allEntries.reduce((s, e) => s + Number(e.rebate_amount), 0);
 
+  // The record's money tags, and the library behind the picker in its Settings sheet. The library
+  // is the team's LIVE vocabulary even in an archived season — a tag is an instrument, and the
+  // read-only sheet never opens there anyway; what the archive must show correctly is which tags
+  // this record carries, which comes from the record.
+  const [moneyTags, tagsByFundraiserId] = await Promise.all([
+    getRepTeamTagLibrary(teamId, 'expense', ctx!.org.id),
+    getRepTeamFundraiserTagsMap([fundraiserId]),
+  ]);
+
   return NextResponse.json({
     fundraiser: {
       id:                  fundraiser.id,
@@ -179,7 +190,9 @@ export const GET = withObservability(async (req: Request,
       startDate:           fundraiser.start_date ?? null,
       endDate:             fundraiser.end_date   ?? null,
       isActive:            fundraiser.is_active,
+      tagIds:              tagsByFundraiserId[fundraiserId] ?? [],
     },
+    moneyTags,
     summary: {
       totalRaised:  Math.round(totalRaised  * 100) / 100,
       teamNet:      Math.round((totalRaised - totalRebates) * 100) / 100,

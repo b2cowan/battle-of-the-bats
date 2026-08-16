@@ -141,7 +141,7 @@ export const GET = withObservability(async (_req: Request,
     // whole plan screen down with them. (The migration still has to precede the code to prod;
     // this is defence in depth, not a substitute for that.)
     getRepTeamEventsWithPracticePlans(programYear.id, { excludeEventId: eventId }).catch(() => []),
-    getRepTeamEvaluationSessionsForEvent(eventId, teamId),
+    getRepTeamEvaluationSessionsForEvent(eventId, teamId, programYear.id),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
     // The picker's source: this team's own drills PLUS the club's shared set, active only — a
     // retired drill must never be offered while building a practice. Non-fatal for the same reason
@@ -305,7 +305,7 @@ export const PUT = withObservability(async (req: Request,
   );
   const plan = sanitizePracticePlan(body.plan, rosterIds);
 
-  const event = await updateRepTeamEventPracticePlan(eventId, teamId, plan);
+  const event = await updateRepTeamEventPracticePlan(eventId, teamId, programYear.id, plan);
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   return NextResponse.json({ event, plan: event.practicePlan });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/practice-plan' });
@@ -377,7 +377,9 @@ export const PATCH = withObservability(async (req: Request,
     // Trimmed to nothing is NULL, not an empty string — "nothing written down for this one" is a
     // state the UI states honestly, and it must have exactly one representation.
     const recap = raw === null ? null : (raw.trim().slice(0, MAX_RECAP_LEN) || null);
-    const updated = await updateRepTeamEventPracticeRecap(eventId, teamId, recap);
+    // Season-scoped at the WRITE, not only at the resolver above (2026-08-15) — a scoped write
+    // states its own scope rather than trusting whatever called it.
+    const updated = await updateRepTeamEventPracticeRecap(eventId, teamId, resolved.programYear.id, recap);
     if (!updated) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     event = updated;
   }

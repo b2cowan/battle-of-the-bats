@@ -1,6 +1,7 @@
 # Coach Money — sponsorships beside fundraisers
 
-**Status:** approved from mockup, build in progress (2026-08-15) · **migration 237**
+**Status:** both phases + all seven follow-ups BUILT on dev (2026-08-15) · **migrations 237 + 239**
+(both DEV-ONLY — apply to prod before promoting) · owner QA owed, ledger §24 + §25
 **Binding mockup:** Claude Artifact "Fundraisers & Sponsors" (revision 3c) —
 https://claude.ai/code/artifact/47fdb6e1-dab4-4f4e-876c-558e190a9711
 **PM brief:** [COACH_SPONSORSHIPS_PM_BRIEF.md](COACH_SPONSORSHIPS_PM_BRIEF.md)
@@ -195,56 +196,160 @@ piece of work; the one file it failed to catch is fixed.
 
 Ledger §24.
 
-## 8. Not built — the seven follow-ups
+## 8. The seven follow-ups — BUILT 2026-08-15 · **migration 239**
 
 **Owner-reviewed and approved 2026-08-15**, proposal + mockups:
 https://claude.ai/code/artifact/50fe3e42-0071-41e3-bbde-a2064f854608
-None is a correction to what shipped; all seven sit on top of it, and none blocks QA §23/§24.
+None was a correction to what shipped in §6; all seven sit on top of it. Owner directed a single
+pass covering all seven, including item 7 (which the proposal had argued should be its own unit of
+work), and confirmed item 2's open question: **the tag field was wanted.**
 
-**What a coach would notice**
+**What a coach notices**
 
-1. **Two labels still say "Fundraisers"** — the Money hub's own list of screens, and one help
-   passage walking the tab bar. The tab was renamed; these were missed, so the product disagrees
-   with itself one click apart. (The kind FILTER's "Fundraisers" chip is correct and stays — it
-   names a kind, not the tab.)
-2. **Money tags were never built.** The owner cut the tag *filter*; the *field* was in the approved
-   mockup and does not exist, so nothing can be tagged and the money-tag report still has no
-   money-in side. ⚠ **OPEN QUESTION** — confirm the field was wanted, since the cut may have been
-   read too broadly.
-3. **The Money overview gets TWO rows, not one** (owner ruling 2026-08-15, revising the single
-   combined row first proposed). One for Fundraisers, one for Sponsorships, each opening the tab
-   **already filtered to its kind** — which is what earns a second row, since a rail row is a door
-   and two doors to an identical view would be a second navigation system.
-   - ⚠ **This forces the kind filter into the ADDRESS** rather than component state — a bonus, not
-     a cost: the filtered view becomes shareable and Back works across it, matching `section` and
-     `fundraiser`. It must join the hub's `ONE_SHOT_KEYS` or it will ride to other tabs.
-   - The Sponsorships row **shows at zero** ("None yet · add one"), the way the drives row already
-     introduces itself. Blue dot for sponsorships, green for drives, matching the tab's chips.
-4. **No sponsor in the demo world.** ⚠ **The demo fundraiser carries three pins the guided tour
-   narrates BY NAME** — $240 overdue across exactly two families, no rebate able to cascade
-   backwards, one deliberately part-paid instalment. **A sponsor attributed to a family would
-   credit their dues and could clear a debt the tour talks about.** So the demo sponsor is
-   **club-wide, credited to nobody**: it adds money to the team and touches no family's bill, and
-   all three pins survive by construction. One sentence joins the money tour step; the demo health
-   check gains the sponsor so a reseed cannot drop it.
+1. **The two stale "Fundraisers" labels are gone.** The help passage walking the tab bar now says
+   *Fundraising*. The Money overview's row was not renamed but SPLIT (see 3) — each row now names a
+   kind, which is what the word was always right for. (The kind filter's "Fundraisers" chip is
+   correct and stays; both places now carry a comment saying so, because it has been mistaken for a
+   stale label once already.)
+2. **A fundraiser or sponsor can carry money tags** — the same picker, the same library and the
+   same "+ Create" door as an expense, so one label follows a thing in both directions. Tags live
+   **on the record**, never on the list row (the row-density ruling stands), and they reach the
+   export. This is the first money-IN side the money-tag report has ever had.
+3. **The Money overview has two rows** — *Fundraisers* (green) and *Sponsorships* (blue), each
+   opening the tab already filtered to its kind. The Sponsorships row shows at zero
+   ("None yet · add one"). The kind filter therefore moved into the ADDRESS: a filtered list is
+   shareable, Back steps through it, and the **export now follows the view** rather than always
+   dumping the season. `kind` joined the hub's `ONE_SHOT_KEYS`, so it cannot ride to another tab.
+4. **The demo world has a sponsor** — $750 from Riverdale Dental, **club-wide and credited to
+   nobody**, so it adds money to the team and touches no family's bill. That is not a shortcut: the
+   12U's bills carry the $240-across-exactly-two-families story and the $90-of-$120 part-paid row,
+   both narrated BY NAME in the guided tour, and a credited sponsor could clear either. One
+   sentence joined the money tour step; `check-demo-coach` now pins the sponsor's kind, its single
+   entry, and — the two that protect the tour — that it names no player and writes no credit.
 
-**What stops the next defect** — take these FIRST (this project produced two defects of exactly the
-kind they would have caught, and a human reading a report caught both)
+**What stops the next defect**
 
-5. **Nothing automated ever opens a sponsor.** The rendered sweep opens a *fundraiser*; a sponsor
-   draws a different screen. Add it as its own swept screen, and add an end-to-end test that walks
-   the MONEY, not the markup: create a **pledged** sponsor → assert it adds nothing to the hub's
-   money-in, nothing to Budget vs. Actual's actual, nothing to any family's dues → flip to
-   **received** → assert all three move → flip back → assert they unwind. **That test is the one
-   that would have caught the review's worst finding before a human looked.**
-6. **The budget-line guard does not prove what it claims** (§6b). It checks whether a file
-   *mentions* the kind column, so it stayed green while five readers were wrong. Replace the
-   substring check with one that flags **the banned shape** — a line kind compared to a literal
-   anywhere outside the shared reader. That catches all five, and makes a fourth kind safe to add
-   later.
-7. **Three siblings share the wrong-season assumption** — tryout evaluations, lineup templates and
-   the practice recap still look a record up by id + team on season-scoped data. Narrower exposure
-   (all live-season-only, no archive door hands out a past id), but it is the same reasoning that
-   already failed once. Move them to a season-scoped lookup and add a guard for the shape. **Its
-   own unit of work** — three unrelated features, and a shared fix that breaks one is worse than
-   the hole.
+5. **A sponsor is opened by something automated, at last.** Two new swept screens (a sponsor
+   RECORD, which draws a different shape from a drive's leaderboard, and the kind-filtered list),
+   plus `tests/uat/scenarios/coach-sponsor-money-lifecycle.spec.ts` — which walks the MONEY through
+   three independent readers: a **pledged** sponsor is visible as a record and adds nothing to the
+   hub's money-in, nothing to Budget vs. Actual's actual and nothing to the family's dues; flipping
+   to **received** moves all three; flipping BACK unwinds all three, including removing the credit
+   row. It also pins that the per-player drive endpoint still refuses a sponsor.
+   **RUN AND PASSING against dev (2026-08-15).** ⚠ Its FIRST execution failed twice, on its own
+   fixture — a NOT-NULL column the fixture omitted, and a dues row read with the wrong shape
+   (`playerId` where the payload nests `player.id`). Both would have been invisible in review, and
+   the second is the dangerous kind: a `find` that misses returns `undefined`, and `undefined === 0`
+   would have satisfied several "adds nothing to the family's dues" assertions for the wrong
+   reason. **A test that has never been executed is not coverage** — it is a plan to have coverage.
+6. **The budget-line guard proves what it claims.** The mention check stays (it catches a reader
+   that never heard of the column) and a second rule joins it: a kind compared to a LITERAL
+   anywhere outside `lib/coach-budget-totals.ts` fails the build, including the database twin
+   `.eq('line_kind', …)`. It has a self-test that asserts it still recognises all five shipped
+   offences and still passes correct code. **It found two live comparisons on its first run** —
+   both in the budget form, now routed through the shared reader (the long kind hint became an
+   exhaustive `Record`, so a fourth kind is a compile error rather than a copy gap).
+7. **Five siblings, not three, now state their season.** `tests/unit/season-scoped-lookup-guard.test.ts`
+   flags any season-keyed table addressed by `id + team_id` without `program_year_id`. The three
+   the review listed by hand are fixed (evaluation sessions, lineup templates, the practice recap)
+   — and the guard immediately found **two more nobody had listed**: the practice PLAN writer and
+   the per-event session read.
+
+## 8b. `/review` on the follow-ups — what it found
+
+High-risk funnel, four lenses (correctness · security/tenancy · data & contract · regression).
+**Seven confirmed, six fixed.** The two that matter both have the same shape as the defects §6b
+recorded, which is the point worth keeping.
+
+### ⚠⚠ A `CREATE OR REPLACE` BUILT FROM THE WRONG ANCESTOR (Critical — fixed)
+
+Migration 239 extended `merge_rep_team_tags` to re-point the new fundraiser links, and built its
+replacement from **migration 184**. But **migration 221** had already replaced that function since,
+adding three more lanes — drills, plan templates, focus-area goals — and an **org-mismatch guard**.
+`CREATE OR REPLACE` swaps the whole body, so 239 silently deleted all four.
+
+The blast radius, had it shipped: merging two tags would CASCADE-delete every drill link and every
+plan-template link on the loser, NULL every player's focus-area grouping, and let two org-shared
+tags from **different organizations** merge cleanly — while reporting success. That is verbatim the
+failure this migration's own comment warns about for the money-in lane. It was applied to dev before
+review; **the dev function has been repaired and verified live** (all six lanes + the org guard).
+The rule now sits in the migration: take the HIGHEST-numbered definition, never an older one.
+
+### ⚠ THE NEW GUARD'S COVERAGE WAS ITSELF A HAND-KEPT LIST (High — fixed)
+
+`season-scoped-lookup-guard` shipped with eight table names typed from memory. The live schema has
+far more carrying a program year — and one of the omitted ones, **game moments**, held a live
+instance of exactly the defect the guard exists to catch. It reported "no offenders" over a set that
+excluded the offender: the same decay as the convention it replaced, wearing a test's clothes.
+
+It now **derives its table set from the committed schema snapshot**, so a table gains protection the
+moment a migration gives it a season. On the first run of the widened version it found a **seventh**
+case (the moments list read). Both are fixed; **five siblings became seven.**
+
+### Also fixed
+
+The budget-line guard missed `switch (kind) { case 'funding': … }` and `{ funding: … }[kind]` — the
+two shapes `=== 'funding'` becomes when someone tidies it up, both carrying the identical defect;
+both are now banned shapes with self-tests, and the correct *named* exhaustive `Record` is pinned as
+a must-pass so the guard cannot push authors back to the ternary. Plus a PATCH response that carried
+`tagIds` only when the request happened to edit tags (a sometimes-present field is worse than an
+absent one), and a prod guard on the new money-writing UAT spec.
+
+### ⚠ THE SPONSOR CHIP WAS NEVER BLUE (Medium — fixed via `/design`, decision logged)
+
+The rendered sweep, able to see a sponsor for the first time because this pass put one in the
+fixture, reported the **Sponsor chip at 4.18:1 against the card ground at 361/390** — under the
+4.5:1 AA floor. One line explained both halves: the coach warm gate remaps
+`--blueprint-blue → --home-olive`, so the "blue" chip rendered **olive**, on an **olive-tinted**
+ground — an AA miss *and* the reason the owner's "blue for sponsorships, green for drives" ruling
+was silently not delivered (the sponsorship rail dot was the same olive as Budget vs. Actual's).
+
+Fixed by moving the chip and the rail dot to **`--info`** — the warm palette's real blue — rather
+than by touching `--blueprint-blue`, whose warm mapping carries the whole portal. **Re-measured on
+the served page: gone at 361 and 390.** Full reasoning and the standing rule
+(`--blueprint-blue` / `--logic-lime` / `--primary-light` all mean OLIVE in this portal; a surface
+that means blue must say `--info`) are in `memory/design_decisions.md`, 2026-08-15.
+
+**Owner ruling 2026-08-15, taken with that fix: a dot is the colour of the chip you'll see when you
+arrive.** Sponsorships and Allocations therefore share blue, adjacent in the in-season rail, and
+that is accepted rather than worked around — the row NAME is the information and colour is already
+forbidden from being the sole carrier. The rail's old "money-direction lane" comment is superseded
+(it would have made Sponsorships green and identical to the Fundraisers row above it, which is the
+one thing the split exists to prevent).
+
+**Also refuted and dropped:** an "empty season shows a pointless Show-everything link" (that branch
+cannot render — the empty state owns the zero case), and `CREATE POLICY` non-idempotency (matches
+181/184 convention exactly).
+
+**Noted, pre-existing, its own work:** `merge_rep_team_tags` is `SECURITY DEFINER` and granted to
+`authenticated` with no ownership check inside it (migration 221). Practically bounded by RLS —
+another org's tag ids cannot be enumerated — but the guard belongs in the function, not in the
+callers.
+
+### Verified on dev (2026-08-15)
+
+`typecheck` ✓ · **1954/1954 unit tests** ✓ (both new guards among them) · `check:demos` ✓ on every
+sponsorship assertion, including the three tour pins · dictionary + snapshots refreshed for mig 239 ·
+**`coach-sponsor-money-lifecycle.spec.ts` RUN AND PASSING** · rendered sweep clean on
+`coach-sponsor`, `coach-sponsors-list`, `coach-fundraisers` and `coach-accounting` at 361/390/1440,
+with the one remaining finding a **known-accepted pattern under a new label** (see below).
+
+### What is left
+
+- **Nothing is committed.** The tree also carries two other sessions' work; every file here is
+  staged-clean and separable.
+- **Migration 239 is DEV-ONLY** (applied to dev 2026-08-15, and its merge-function block re-applied
+  after review). It must reach prod BEFORE the code that reads `rep_team_fundraiser_tags` is
+  promoted, or prod 500s.
+- **Owner QA** — ledger **§30** (walk §24 first if it is still owed; §30 assumes a team that
+  already has both a drive and a sponsor).
+- **The layout baseline needs one re-init, later.** Seeding a sponsor produced a new
+  `a·Northside Physio` tap-floor entry that is the SAME accepted decision as the baselined
+  `a·Chocolate sale` / `a·Bottle drive` (24px name links at 361) — the baseline is keyed on an
+  element's visible LABEL, so new fixture data reads as a new finding. Deliberately NOT re-inited
+  here: `--init` rewrites the whole file, a concurrent session is mid-change in it, and doing it now
+  would bake that session's sidebar tap-floor regressions in as "accepted".
+- **A full-suite `check:layout` has not been run** — an earlier attempt aborted on the memory floor
+  (a real abort, not a pass). The sponsorship screens were swept scoped instead and are clean; the
+  full sweep wants a restarted dev server.
+- **Its own work:** `merge_rep_team_tags` should carry its own ownership check (see above).

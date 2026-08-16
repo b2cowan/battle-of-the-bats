@@ -49,6 +49,30 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { tournamentToday } from '@/lib/timezone';
 
+/**
+ * The paragraph under the kind picker, for the kind the coach has chosen.
+ *
+ * ⚠ A RECORD, NOT A TERNARY — and that is the difference between a copy gap and a compile error.
+ * This was `lineKind === 'sponsorship' ? … : …`, the exact shape that let a third kind ship while
+ * nineteen readers silently filed it as a cost. Keyed exhaustively, a FOURTH kind cannot be added
+ * without someone writing its sentence. (The short label and one-line hint live in
+ * `lib/coach-budget-totals`; these are JSX and belong beside the form that draws them.)
+ */
+const KIND_HINT_LONG: Record<BudgetLineKind, React.ReactNode> = {
+  cost: null,  // the cost form explains itself — the category picker below it is the explanation
+  funding: (
+    <>Expected fundraising lowers what players are asked to pay — a bottle drive, a chocolate sale,
+      anything the team raises by selling. Enter what you expect the <strong>team</strong> to keep:
+      if a campaign pays part of what a player raises back to that player, that already lowers their
+      dues and shouldn&apos;t be counted here.</>
+  ),
+  sponsorship: (
+    <>Expected sponsorship lowers what players are asked to pay — a business sponsor, a grant,
+      anything given directly rather than raised by selling. It is budgeted apart from fundraising
+      so <strong>Budget vs. Actual</strong> can tell you whether each hit its number.</>
+  ),
+};
+
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -1821,17 +1845,7 @@ export function BudgetPlanPanel({
                 ))}
               </div>
               {isFundingKind(form.lineKind) && (
-                <p className={styles.kindHint}>
-                  {form.lineKind === 'sponsorship'
-                    ? <>Expected sponsorship lowers what players are asked to pay — a business sponsor,
-                        a grant, anything given directly rather than raised by selling. It is budgeted
-                        apart from fundraising so <strong>Budget vs. Actual</strong> can tell you whether
-                        each hit its number.</>
-                    : <>Expected fundraising lowers what players are asked to pay — a bottle drive, a
-                        chocolate sale, anything the team raises by selling. Enter what you expect the{' '}
-                        <strong>team</strong> to keep: if a campaign pays part of what a player raises back
-                        to that player, that already lowers their dues and shouldn&apos;t be counted here.</>}
-                </p>
+                <p className={styles.kindHint}>{KIND_HINT_LONG[form.lineKind]}</p>
               )}
             </div>
 
@@ -1840,7 +1854,7 @@ export function BudgetPlanPanel({
                 funding out of category matching), and the picker offered a SPENDING taxonomy for
                 money coming in — "Sponsorship" filed under "Tournaments". Owner ruling 2026-08-13:
                 a funding line is named by its description alone. */}
-            {form.lineKind === 'cost' && (
+            {!isFundingKind(form.lineKind) && (
             <div className={styles.field}>
               <label className={styles.label}>Category &amp; Item</label>
               <BudgetItemPicker

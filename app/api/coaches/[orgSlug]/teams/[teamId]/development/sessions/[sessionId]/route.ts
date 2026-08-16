@@ -17,22 +17,38 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster } from '@/lib/coach-capabilities';
 import { isValidRecordDate } from '@/lib/measurable-format';
 
+/**
+ * ⚠ THE SEASON IS PART OF THE LOOKUP (2026-08-15). This resolver used to find the session by
+ * `id + team_id` and then check only its ORG — which meant a finished season's session was
+ * addressable from a live-season write route, so its date could be changed (re-stamping every
+ * reading in it) or the whole session deleted. Nothing in the product hands out a past session id,
+ * so the exposure was narrow; the reasoning was the same one that already failed once on an
+ * archived fundraiser, which is why it is closed rather than left resting on navigation.
+ *
+ * Resolving the ACTIVE program year here also means every verb in this file inherits the write
+ * rule for free: writes address the live season, always.
+ */
 async function resolveContext(orgSlug: string, teamId: string, sessionId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
-  const [assignments, session] = await Promise.all([
+  const [assignments, programYear] = await Promise.all([
     getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id),
-    getRepTeamEvaluationSession(sessionId, teamId),
+    getActiveRepProgramYear(teamId),
   ]);
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return { error: forbidden() };
+  if (!programYear) {
+    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
+  }
+
+  const session = await getRepTeamEvaluationSession(sessionId, teamId, programYear.id);
   if (!session || session.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Session not found' }, { status: 404 }) };
   }
 
-  return { ctx, assignment, session };
+  return { ctx, assignment, session, programYear };
 }
 
 /** The run screen's whole world in one fetch: the session, the roster (in roster order —
@@ -41,25 +57,23 @@ async function resolveContext(orgSlug: string, teamId: string, sessionId: string
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; sessionId: string }> },) => {
   const { orgSlug, teamId, sessionId } = await params;
-  // programYear only needs teamId — overlap it with auth/session resolution.
-  const [resolved, programYear] = await Promise.all([
-    resolveContext(orgSlug, teamId, sessionId),
-    getActiveRepProgramYear(teamId),
-  ]);
+  // The season comes from the resolver now — it needs it to FIND the session, so fetching it
+  // twice in parallel would be two reads of the same row and two chances to disagree.
+  const resolved = await resolveContext(orgSlug, teamId, sessionId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, session } = resolved;
+  const { assignment, session, programYear } = resolved;
   const caps = assignment.capabilities;
   const denied = denyUnless(canViewMeasurables(caps), 'You do not have access to measurables.');
   if (denied) return denied;
   const [players, types, entries, events] = await Promise.all([
-    programYear ? getRepRosterPlayers(programYear.id) : Promise.resolve([]),
+    getRepRosterPlayers(programYear.id),
     getRepTeamMeasurableTypes(teamId, { includeRetired: true }),
     getRepSessionMeasurables(sessionId, teamId),
     // D10 — the event picker's options. ANY event in the season qualifies (§10.2 ruling 2):
     // restricting to practices creates a dead end for the coach who tested at a Saturday
     // scrimmage warm-up, and the link is descriptive, not structural. The client orders them
     // practices-first and by proximity to the session's current date.
-    programYear && canWriteDevelopment(caps) ? getRepTeamEvents(programYear.id) : Promise.resolve([]),
+    canWriteDevelopment(caps) ? getRepTeamEvents(programYear.id) : Promise.resolve([]),
   ]);
 
   // Roster order as-is; names only — the grid needs identity, not guardian PII (redaction
@@ -152,7 +166,7 @@ export const PATCH = withObservability(async (req: Request,
     restampedCount = await restampRepSessionMeasurables(sessionId, teamId, fields.sessionDate!);
   }
 
-  const session = await updateRepTeamEvaluationSession(sessionId, teamId, fields);
+  const session = await updateRepTeamEvaluationSession(sessionId, teamId, resolved.programYear.id, fields);
 
   // ⚠ There is no transaction spanning the two writes above, so the failure direction has to be
   // handled by hand: if the readings moved but the session row did NOT (a concurrent delete, or
@@ -183,7 +197,7 @@ export const DELETE = withObservability(async (_req: Request,
   if (denied) return denied;
 
   // Entries survive (SET NULL → they become singles); only the grouping artifact goes.
-  const deleted = await deleteRepTeamEvaluationSession(sessionId, teamId);
+  const deleted = await deleteRepTeamEvaluationSession(sessionId, teamId, resolved.programYear.id);
   if (!deleted) return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/sessions/[sessionId]' });

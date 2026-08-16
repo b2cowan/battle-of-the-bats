@@ -41,8 +41,10 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, templateId } = await params;
   const resolved = await resolveTemplateContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  // Delete is scoped by team_id, so a template can only be removed by a coach of its own team.
-  await deleteRepTeamLineupTemplate(templateId, teamId);
+  // ⚠ Scoped by team AND SEASON (2026-08-15). It was team-only, and templates are keyed by program
+  // year — so a coach standing in the live season could delete a FINISHED season's template by
+  // pasting its id. The team check reads as tight, which is why it survived three reviews.
+  await deleteRepTeamLineupTemplate(templateId, teamId, resolved.programYear.id);
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-templates/[templateId]' });
 
@@ -99,7 +101,7 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
-  const updated = await updateRepTeamLineupTemplate(templateId, teamId, patch);
+  const updated = await updateRepTeamLineupTemplate(templateId, teamId, programYear.id, patch);
   if (!updated) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
   return NextResponse.json({ template: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-templates/[templateId]' });

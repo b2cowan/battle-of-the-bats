@@ -6,7 +6,7 @@ import {
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepTeamExpenses,
-  getRealisedFundraiserEntries,
+  getSeasonFundraiserEntries,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
@@ -74,7 +74,7 @@ export const GET = withObservability(async (req: Request,
       .eq('status', 'active'),
     supabaseAdmin
       .from('rep_fundraisers')
-      .select('id, is_active')
+      .select('id, is_active, kind')
       .eq('program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_allocation_splits')
@@ -173,19 +173,35 @@ export const GET = withObservability(async (req: Request,
   // Money handed back to families is real money out (mig 234).
   const payoutsTotal = amountsTotal(seasonPayouts);
 
-  // ── Fundraisers ──────────────────────────────────────────────────────────
-  const fundraisers = (fundraisersRes.data ?? []) as Array<{ id: string; is_active: boolean }>;
+  // ── Fundraising: drives and sponsors, counted apart ──────────────────────
+  const fundraisers = (fundraisersRes.data ?? []) as Array<{ id: string; is_active: boolean; kind?: string | null }>;
   let fundraisingRaised = 0;
   let creditsIssued = 0;
+  let driveRaised = 0;
+  let sponsorReceived = 0;
+  let sponsorPledged = 0;
   if (fundraisers.length > 0) {
-    // ⚠ REALISED ONLY. A pledged sponsor's entry exists (it records the arrangement) but nothing
-    // has posted — counting it here put promised money in the hub's headline "Money in" figure
-    // (review, 2026-08-15).
-    for (const en of await getRealisedFundraiserEntries(programYear.id)) {
+    for (const en of await getSeasonFundraiserEntries(programYear.id)) {
+      /**
+       * ⚠ THE PLEDGE LANE IS THE ONLY THING THAT MAY SEE AN UNREALISED ROW, and it is a LABEL, not
+       * a total: nothing below adds `sponsorPledged` to anything. Every other figure here — the
+       * headline "Money in", the fundraising card, the cash-on-hand subtraction — is realised-only,
+       * because a pledged sponsor's entry exists to record the arrangement while no income has
+       * posted and no credit exists. Counting it as banked is the review's worst finding
+       * (2026-08-15) and this is the one place in the route where that distinction is made.
+       */
+      if (!en.realised) {
+        if (en.kind === 'sponsor') sponsorPledged += en.amountRaised;
+        continue;
+      }
       fundraisingRaised += en.amountRaised;
       creditsIssued += en.rebateAmount;
+      if (en.kind === 'sponsor') sponsorReceived += en.amountRaised;
+      else driveRaised += en.amountRaised;
     }
   }
+  const driveCount = fundraisers.filter(f => (f.kind ?? 'fundraiser') !== 'sponsor').length;
+  const sponsorCount = fundraisers.filter(f => f.kind === 'sponsor').length;
 
   // ── Org allocations ──────────────────────────────────────────────────────
   const splits = (splitsRes.data ?? []) as Array<{ id: string; amount: number }>;
@@ -301,9 +317,17 @@ export const GET = withObservability(async (req: Request,
       schedulesCount: schedules.length,
     },
     fundraisers: {
-      activeCount: fundraisers.filter(f => f.is_active).length,
+      // "Active" is a DRIVE's question — a sponsor answers pledged/received instead, and every
+      // sponsor row carries is_active true by column default, so counting them here would have
+      // reported "3 active" on a team running no drives at all.
+      activeCount: fundraisers.filter(f => f.is_active && (f.kind ?? 'fundraiser') !== 'sponsor').length,
       totalRaised: r2(fundraisingRaised),
       creditsIssued: r2(creditsIssued),
+      driveCount,
+      driveRaised: r2(driveRaised),
+      sponsorCount,
+      sponsorReceived: r2(sponsorReceived),
+      sponsorPledged: r2(sponsorPledged),
     },
     expenses: {
       paidTotal: r2(expensesPaid),

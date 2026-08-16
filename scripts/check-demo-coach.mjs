@@ -34,7 +34,8 @@ import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
-  MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_DUES, resolveMidSeasonState,
+  MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
+  MIDSEASON_DUES, resolveMidSeasonState,
   SEASON_START_BUDGET_LINES,
 } from '../lib/demo-coach.ts';
 
@@ -446,7 +447,8 @@ console.log('\nMid-season — Riverdale Ridge 12U');
             why the entry list excludes them, and why that exclusion is asserted rather than
             trusted. */
     const { data: drives } = await db.from('rep_fundraisers')
-      .select('id, name, end_date, is_active, player_rebate_percent').eq('program_year_id', py.id);
+      .select('id, name, end_date, is_active, player_rebate_percent, kind, sponsor_status')
+      .eq('program_year_id', py.id);
     const drive = (drives ?? []).find(f => f.name === MIDSEASON_FUNDRAISER.name);
     check(!!drive && !drive.is_active && drive.end_date < today,
       `the ${MIDSEASON_FUNDRAISER.name} is closed and behind us — so its rebates are real credits`,
@@ -469,6 +471,32 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       const overdueIds = new Set(overdue.map(i => i.player_id));
       check(!(entries ?? []).some(e => overdueIds.has(e.player_id)),
         'no rebate lands on an overdue family — the $240 story is not cleared from the side');
+    }
+
+    /* ── The sponsor: the OTHER kind of money coming in ────────────────────────────────────────
+       Added 2026-08-15 with the sponsorships follow-ups. Sponsorships shipped and the shop window
+       did not follow — a prospect met a Fundraising tab that could only show a bottle drive, so
+       the product had gained a distinction the demo could not say. A reseed that drops it would
+       break nothing on screen, which is exactly why it is pinned here.
+
+       ⚠ TWO OF THESE THREE ASSERTIONS PROTECT THE TOUR, NOT THE SPONSOR. A sponsor attributed to
+       a family writes a dues credit onto that family's bill; the 12U's bills carry the $240-across-
+       two-families story and the $90-of-$120 part-paid row, both narrated by name. So "no player"
+       and "no credit" are not descriptions of how it happens to be seeded — they are the condition
+       under which this sponsor is safe to exist at all. */
+    const sponsor = (drives ?? []).find(f => f.name === MIDSEASON_SPONSOR.name);
+    check(!!sponsor && sponsor.kind === 'sponsor' && sponsor.sponsor_status === 'received',
+      `${MIDSEASON_SPONSOR.name} is a RECEIVED sponsor — money that has actually arrived, not a pledge`,
+      sponsor ? `kind ${sponsor.kind}, status ${sponsor.sponsor_status}` : 'no sponsor found');
+    if (sponsor) {
+      const { data: sponsorEntries } = await db.from('rep_fundraiser_entries')
+        .select('player_id, amount_raised, rebate_amount, credit_id').eq('fundraiser_id', sponsor.id);
+      const rows = sponsorEntries ?? [];
+      check(rows.length === 1 && Number(rows[0].amount_raised) === MIDSEASON_SPONSOR.amount,
+        `it is ONE arrival of $${MIDSEASON_SPONSOR.amount} — a sponsor is its single entry, never a roster of them`,
+        `${rows.length} entries`);
+      check(rows.every(e => e.player_id === null && Number(e.rebate_amount) === 0 && !e.credit_id),
+        'it is CLUB-WIDE and credits nobody — so it cannot clear the overdue bills the tour narrates');
     }
 
     const { data: roster } = await db.from('rep_roster_players')

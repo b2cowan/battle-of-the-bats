@@ -75,7 +75,7 @@ export const GET = withObservability(async (_req: Request,
     showAttendance ? getRepTeamEventAttendance(eventId) : Promise.resolve([]),
     showLineup ? getRepTeamLineupForEvent(eventId) : Promise.resolve(null),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
-    showMoments ? getRepTeamGameMomentsForEvent(teamId, eventId) : Promise.resolve([]),
+    showMoments ? getRepTeamGameMomentsForEvent(teamId, eventId, programYear.id) : Promise.resolve([]),
   ]);
   const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
 

@@ -38,7 +38,26 @@ export interface MoneySummary {
     neverPaidCount: number;
     schedulesCount: number;
   };
-  fundraisers: { activeCount: number; totalRaised: number; creditsIssued: number };
+  /**
+   * Money coming in from outside dues — SPLIT BY KIND, because the Overview rail carries a row for
+   * each (owner ruling 2026-08-15).
+   *
+   * ⚠ `totalRaised` is drives + received sponsors and NEVER the pledged figure. A pledge is
+   * carried as its own number so a row can say so out loud; folding it in is the exact flattering
+   * the pledged/received split exists to prevent, and it has already been shipped wrong once.
+   */
+  fundraisers: {
+    activeCount: number;
+    totalRaised: number;
+    creditsIssued: number;
+    /** Drives: how many, and what they actually raised. */
+    driveCount: number;
+    driveRaised: number;
+    /** Sponsors: how many, what has ARRIVED, and what is still only promised. */
+    sponsorCount: number;
+    sponsorReceived: number;
+    sponsorPledged: number;
+  };
   expenses: { paidTotal: number; loggedCount: number; unpaidCount: number; upcomingDueCount: number };
   allocations: { count: number; totalAllocated: number; outstanding: number; overdueCount: number };
   paymentRequests: { pendingCount: number };
@@ -53,7 +72,14 @@ export interface DashboardHrefs {
   dues: string;
   budget: string;
   budgetVsActual: string;
+  /** The Fundraising tab, filtered to DRIVES. */
   fundraisers: string;
+  /**
+   * The Fundraising tab, filtered to SPONSORS (owner ruling 2026-08-15, revising a single combined
+   * row). Two rail rows rather than one, and what earns the second is that each opens the tab
+   * ALREADY FILTERED — two doors onto an identical view would be a second navigation system.
+   */
+  sponsorships: string;
   expenses: string;
   allocations?: string;
   paymentRequests?: string;

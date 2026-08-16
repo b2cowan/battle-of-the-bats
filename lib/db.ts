@@ -5771,6 +5771,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
 export async function updateRepTeamEventPracticePlan(
   eventId: string,
   teamId: string,
+  programYearId: string,
   practicePlan: PracticePlan | null,
 ): Promise<RepTeamEvent | null> {
   const { data, error } = await supabaseAdmin
@@ -5782,6 +5783,11 @@ export async function updateRepTeamEventPracticePlan(
     // it means a future caller, or a refactor that loosens that check, can't silently regain a
     // cross-team write. Same posture as restampRepSessionMeasurables and the session delete.
     .eq('team_id', teamId)
+    // ⚠ And the SEASON, on the same reasoning (2026-08-15). Team plus id reads as tight and is
+    // not: events are keyed by program year, so the pair names this event in every season the
+    // team has had. Found by `season-scoped-lookup-guard.test.ts` the day it was written — this
+    // was a FOURTH sibling of the three the review listed by hand.
+    .eq('program_year_id', programYearId)
     .select()
     .maybeSingle();
   if (error) throw error;
@@ -5797,11 +5803,19 @@ export async function updateRepTeamEventPracticePlan(
  * recap it never loaded — the "a truncated body silently wipes the column" class of bug the plan
  * PUT already carries a guard against.
  *
- * Pass `null` to clear it. Scoped by `team_id` for the same belt-and-braces reason as the plan.
+ * Pass `null` to clear it. Scoped by `team_id` AND `program_year_id` for the same belt-and-braces
+ * reason as the plan.
+ *
+ * ⚠ THE SEASON JOINED THE SCOPE ON 2026-08-15. Its route already refused an event from another
+ * season before reaching here, so nothing was reachable — but the writer itself would happily
+ * re-write a finished season's recap for any caller that skipped that check, and "the caller
+ * remembers" is precisely the arrangement that failed for the archived fundraiser. The rule this
+ * file keeps is that a scoped write states its own scope.
  */
 export async function updateRepTeamEventPracticeRecap(
   eventId: string,
   teamId: string,
+  programYearId: string,
   recap: string | null,
 ): Promise<RepTeamEvent | null> {
   const { data, error } = await supabaseAdmin
@@ -5809,6 +5823,7 @@ export async function updateRepTeamEventPracticeRecap(
     .update({ practice_recap: recap, updated_at: new Date().toISOString() })
     .eq('id', eventId)
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .select()
     .maybeSingle();
   if (error) throw error;
@@ -6301,19 +6316,30 @@ export async function createRepTeamLineupTemplate(fields: {
   return mapRepTeamLineupTemplate(data);
 }
 
-/** Scoped delete (team_id guards against cross-team deletes even if RLS is bypassed). */
-export async function deleteRepTeamLineupTemplate(id: string, teamId: string): Promise<void> {
+/**
+ * Scoped delete — team AND SEASON.
+ *
+ * ⚠ THE SEASON IS NOT DECORATION HERE (2026-08-15). `rep_team_lineup_templates` is keyed by
+ * program year, so `id + team_id` alone reaches a FINISHED season's template from a live-season
+ * write route: a coach on 2027 could delete a template belonging to 2026 by pasting its id. The
+ * team check reads as tight, which is exactly why it survived — it is the same reasoning that
+ * already let an archived fundraiser be renamed (mig-237 build), fixed there and left standing in
+ * three siblings.
+ */
+export async function deleteRepTeamLineupTemplate(id: string, teamId: string, programYearId: string): Promise<void> {
   const { error } = await supabaseAdmin
     .from('rep_team_lineup_templates')
     .delete()
     .eq('id', id)
-    .eq('team_id', teamId);
+    .eq('team_id', teamId)
+    .eq('program_year_id', programYearId);
   if (error) throw error;
 }
 
-/** Scoped partial update (team_id guards cross-team edits). Only provided fields are written;
- *  returns null if the row doesn't exist / isn't this team's, or if nothing was provided. */
-export async function updateRepTeamLineupTemplate(id: string, teamId: string, fields: {
+/** Scoped partial update — team AND SEASON, for the reason written over the delete above. Only
+ *  provided fields are written; returns null if the row doesn't exist, isn't this team's, isn't
+ *  this season's, or if nothing was provided. */
+export async function updateRepTeamLineupTemplate(id: string, teamId: string, programYearId: string, fields: {
   name?: string;
   lineupMode?: RepLineupMode;
   inningCount?: number;
@@ -6330,6 +6356,7 @@ export async function updateRepTeamLineupTemplate(id: string, teamId: string, fi
     .update(patch)
     .eq('id', id)
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .select()
     .maybeSingle();
   if (error) throw error;
@@ -6694,6 +6721,41 @@ export async function setRepTeamExpenseTags(expenseId: string, tagIds: string[])
   const { error: insError } = await supabaseAdmin
     .from('rep_team_expense_tags')
     .insert(tagIds.map(tagId => ({ expense_id: expenseId, tag_id: tagId })));
+  if (insError) throw insError;
+}
+
+// ── Fundraising tags (migration 239) — the SAME money vocabulary, on money coming IN ──
+//
+// ⚠ Deliberately the `expense` tag kind, not a new one. A coach who tags a cost "Winter dome" has
+// to be able to tag the sponsor who paid for it with that same label, or the money-tag report ends
+// up with two vocabularies that look like one. The junction table differs only because the FK has
+// to point at a different parent (the mig-184 finding, arriving a second time).
+
+/** fundraiser_id -> tag_id[] for a set of records (one query, mirrors the expense map). */
+export async function getRepTeamFundraiserTagsMap(fundraiserIds: string[]): Promise<Record<string, string[]>> {
+  if (fundraiserIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_fundraiser_tags')
+    .select('fundraiser_id, tag_id')
+    .in('fundraiser_id', fundraiserIds);
+  if (error) throw error;
+  const map: Record<string, string[]> = {};
+  for (const row of data ?? []) {
+    (map[row.fundraiser_id] ??= []).push(row.tag_id);
+  }
+  return map;
+}
+
+/** Replace-on-save: the full tag set for one fundraiser or sponsor. Caller must have validated
+ *  that every id belongs to this team's money-tag library (this function trusts its input). */
+export async function setRepTeamFundraiserTags(fundraiserId: string, tagIds: string[]): Promise<void> {
+  const { error: delError } = await supabaseAdmin
+    .from('rep_team_fundraiser_tags').delete().eq('fundraiser_id', fundraiserId);
+  if (delError) throw delError;
+  if (tagIds.length === 0) return;
+  const { error: insError } = await supabaseAdmin
+    .from('rep_team_fundraiser_tags')
+    .insert(tagIds.map(tagId => ({ fundraiser_id: fundraiserId, tag_id: tagId })));
   if (insError) throw insError;
 }
 
@@ -7852,20 +7914,32 @@ export async function createRepTeamEvaluationSession(fields: {
   return mapRepTeamEvaluationSession(data);
 }
 
-/** Scoped single-session read (team_id guards cross-team ids). */
-export async function getRepTeamEvaluationSession(id: string, teamId: string): Promise<RepTeamEvaluationSession | null> {
+/**
+ * Scoped single-session read — team AND SEASON.
+ *
+ * ⚠ `id + team_id` was NOT enough (2026-08-15). Sessions are keyed by program year, so the pair
+ * reached a finished season's session from a live-season route — and this lookup is the gate every
+ * write on the session run screen passes through, so the whole PATCH/DELETE surface inherited it.
+ * A closed season's evaluation could be re-dated (which RE-STAMPS every reading in it) or deleted
+ * outright. Narrower than the archived-fundraiser defect only because no archive door hands out a
+ * past session id — which is a property of today's navigation, not of this query.
+ */
+export async function getRepTeamEvaluationSession(
+  id: string, teamId: string, programYearId: string,
+): Promise<RepTeamEvaluationSession | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
     .select('*')
     .eq('id', id)
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamEvaluationSession(data) : null;
 }
 
 export async function updateRepTeamEvaluationSession(
-  id: string, teamId: string,
+  id: string, teamId: string, programYearId: string,
   fields: { sessionDate?: string; note?: string | null; eventId?: string | null },
 ): Promise<RepTeamEvaluationSession | null> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -7877,6 +7951,7 @@ export async function updateRepTeamEvaluationSession(
     .update(patch)
     .eq('id', id)
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .select()
     .maybeSingle();
   if (error) throw error;
@@ -7922,13 +7997,15 @@ export async function restampRepSessionMeasurables(
  *  This is the ONE surface in the feature allowed to say something happened, and it earns that
  *  because a coach typed real numbers into it. */
 export async function getRepTeamEvaluationSessionsForEvent(
-  eventId: string, teamId: string,
+  eventId: string, teamId: string, programYearId: string,
 ): Promise<RepTeamEvaluationSession[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
     .select('*')
     .eq('event_id', eventId)
     .eq('team_id', teamId)
+    // The season, stated here rather than inherited from whoever resolved the event.
+    .eq('program_year_id', programYearId)
     .order('session_date', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamEvaluationSession);
@@ -7936,12 +8013,15 @@ export async function getRepTeamEvaluationSessionsForEvent(
 
 /** Deleting a session degrades its entries to singles via ON DELETE SET NULL — readings
  *  are never erased (dictionary gotcha 1). */
-export async function deleteRepTeamEvaluationSession(id: string, teamId: string): Promise<boolean> {
+export async function deleteRepTeamEvaluationSession(
+  id: string, teamId: string, programYearId: string,
+): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
     .delete()
     .eq('id', id)
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .select('id');
   if (error) throw error;
   return (data ?? []).length > 0;
@@ -8936,28 +9016,64 @@ export async function getRepFundraiser(
  */
 export async function getRealisedFundraiserEntries(
   programYearId: string,
-): Promise<Array<{ id: string; fundraiserId: string; playerId: string | null; amountRaised: number; rebateAmount: number }>> {
+): Promise<SeasonFundraiserEntry[]> {
+  return (await getSeasonFundraiserEntries(programYearId)).filter(e => e.realised);
+}
+
+/** One season's fundraising entry, carrying the parent facts every caller needs to reason about it. */
+export interface SeasonFundraiserEntry {
+  id: string;
+  fundraiserId: string;
+  playerId: string | null;
+  amountRaised: number;
+  rebateAmount: number;
+  /** The parent's kind — a drive's row, or a sponsor's single arrival. */
+  kind: 'fundraiser' | 'sponsor';
+  /** The parent's status; null on a drive. */
+  sponsorStatus: 'pledged' | 'received' | null;
+  /** Has this money actually landed? `isRealisedRecord` applied once, here. */
+  realised: boolean;
+}
+
+/**
+ * EVERY fundraising entry on a season, each stamped with its parent's kind, status and whether the
+ * money has landed.
+ *
+ * ⚠ Most callers want `getRealisedFundraiserEntries` above and should keep using it — it is the
+ * safe default, and the reason it exists is written out over that function. This unfiltered read
+ * exists for the ONE question realised-only cannot answer: **how much is merely promised?** The
+ * Money overview's Sponsorships row carries the pledged figure beside the received one, which
+ * means it must see the rows a pledge produces without ever adding them to a total.
+ *
+ * Anything summing this into a "raised", "collected", "actual" or "on hand" figure is a bug. Filter
+ * on `realised` (or call the sibling) unless you are deliberately reporting the promise itself.
+ */
+export async function getSeasonFundraiserEntries(
+  programYearId: string,
+): Promise<SeasonFundraiserEntry[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_fundraiser_entries')
     .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, rep_fundraisers!inner(program_year_id, kind, sponsor_status)')
     .eq('rep_fundraisers.program_year_id', programYearId);
   if (error) throw error;
   return (data ?? [])
-    .filter((r: any) => {
+    // Belt: a to-one embed is an object, but a shape change must not silently pass everything.
+    .filter((r: any) => !!r.rep_fundraisers)
+    .map((r: any) => {
       const parent = r.rep_fundraisers;
-      // Belt: a to-one embed is an object, but a shape change must not silently pass everything.
-      if (!parent) return false;
-      // THE rule, from lib/coach-fundraising.ts — not a second copy of it here, so a change to
-      // what "realised" means reaches this query and the client rollup together.
-      return isRealisedRecord({ kind: parent.kind, sponsorStatus: parent.sponsor_status });
-    })
-    .map((r: any) => ({
-      id: r.id,
-      fundraiserId: r.fundraiser_id,
-      playerId: r.player_id ?? null,
-      amountRaised: Number(r.amount_raised ?? 0),
-      rebateAmount: Number(r.rebate_amount ?? 0),
-    }));
+      return {
+        id: r.id,
+        fundraiserId: r.fundraiser_id,
+        playerId: r.player_id ?? null,
+        amountRaised: Number(r.amount_raised ?? 0),
+        rebateAmount: Number(r.rebate_amount ?? 0),
+        kind: parent.kind === 'sponsor' ? 'sponsor' as const : 'fundraiser' as const,
+        sponsorStatus: (parent.sponsor_status ?? null) as 'pledged' | 'received' | null,
+        // THE rule, from lib/coach-fundraising.ts — not a second copy of it here, so a change to
+        // what "realised" means reaches this query and the client rollup together.
+        realised: isRealisedRecord({ kind: parent.kind, sponsorStatus: parent.sponsor_status }),
+      };
+    });
 }
 
 export async function getRepDuesCreditsForPlayer(
@@ -11336,13 +11452,18 @@ function mapRepTeamGameMoment(row: Record<string, unknown>): RepTeamGameMoment {
   };
 }
 
-/** Tonight's moments for one game — what the console reads back and the wrap lists. */
+/** Tonight's moments for one game — what the console reads back and the wrap lists.
+ *
+ *  Season-scoped alongside the event: an event id already belongs to exactly one program year, so
+ *  this is belt rather than braces — but it costs one predicate and it means the query says what
+ *  it depends on instead of inheriting it from whoever resolved the event. */
 export async function getRepTeamGameMomentsForEvent(
-  teamId: string, eventId: string,
+  teamId: string, eventId: string, programYearId: string,
 ): Promise<RepTeamGameMoment[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_game_moments').select('*')
     .eq('team_id', teamId).eq('event_id', eventId)
+    .eq('program_year_id', programYearId)
     .order('happened_at', { ascending: false }).order('id', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamGameMoment);
@@ -11397,21 +11518,35 @@ export async function createRepTeamGameMoment(opts: {
   return mapRepTeamGameMoment(data);
 }
 
+/**
+ * One moment, scoped by team AND SEASON.
+ *
+ * ⚠ THE SEASON JOINED ON 2026-08-15, found by `season-scoped-lookup-guard.test.ts` the day it was
+ * written. Its route already refused a moment from another season before deleting, so nothing was
+ * reachable — but `id + team_id` names this row in every season the team has had, and "the caller
+ * remembers" is the arrangement that failed for the archived fundraiser. A scoped write states its
+ * own scope; so does the read that gates it.
+ */
 export async function getRepTeamGameMomentById(
-  teamId: string, momentId: string,
+  teamId: string, momentId: string, programYearId: string,
 ): Promise<RepTeamGameMoment | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_game_moments').select('*')
-    .eq('team_id', teamId).eq('id', momentId).maybeSingle();
+    .eq('team_id', teamId).eq('id', momentId)
+    .eq('program_year_id', programYearId).maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamGameMoment(data) : null;
 }
 
-export async function deleteRepTeamGameMoment(teamId: string, momentId: string): Promise<void> {
+export async function deleteRepTeamGameMoment(
+  teamId: string, momentId: string, programYearId: string,
+): Promise<void> {
   const { error } = await supabaseAdmin
     .from('rep_team_game_moments').delete()
-    // team_id alongside the PK: defense-in-depth, like every sibling delete helper.
-    .eq('id', momentId).eq('team_id', teamId);
+    // team_id alongside the PK: defense-in-depth, like every sibling delete helper — and the
+    // season with it, because a moment is a record of a night in ONE season (see the read above).
+    .eq('id', momentId).eq('team_id', teamId)
+    .eq('program_year_id', programYearId);
   if (error) throw error;
 }
 

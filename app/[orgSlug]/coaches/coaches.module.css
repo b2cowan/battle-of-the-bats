@@ -2602,7 +2602,17 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    exists to show is fundraiser-vs-sponsor and colour is the fastest way to read a mixed list.
    ⚠ Its own class rather than reusing `.badgeTryout`, which happens to be the same blue: a
    sponsor is not a tryout, and a rename of one must not silently restyle the other. */
-.badgeSponsor   { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+/* ⚠ `--info`, NOT `--blueprint-blue` — the coach warm gate remaps `--blueprint-blue` to
+   `--home-olive`, so a "blue" sponsor chip rendered OLIVE: the same hue as the drive chip beside
+   it and as the olive-tinted card ground under it. Two failures in one line — the kind distinction
+   the two-row Overview ruling asked for was invisible, and the chip measured 4.18:1 against that
+   ground at 361/390 (AA floor 4.5).
+
+   This is the E3 violation the 2026-07-27 `--logic-lime-fixed` decision exists to prevent and the
+   Staff panel hit in the same way: a raw structural-brand token is theme-invisible in the warm
+   portal. `--info` is the warm palette's REAL blue (`--home-blue`, already carrying `--evt-scrimmage`)
+   and stays #3B82F6 in dark. The token is not the lever — the recipe that consumes it is. */
+.badgeSponsor   { background: rgba(var(--info-rgb),0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb),0.3); }
 .badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
 .badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 .badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }

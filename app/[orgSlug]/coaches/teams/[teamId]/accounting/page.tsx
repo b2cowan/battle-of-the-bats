@@ -142,7 +142,11 @@ export default function CoachesAccountingPage({
   // `fundraiser` is the Fundraisers tab's SUB-VIEW (one drive open, 2026-08-14). Same rule, and
   // the consequence of missing it is louder than a stale lens: the id would ride to Expenses and
   // then back into Fundraisers, silently reopening a drive the coach had left.
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser'];
+  // `kind` is the Fundraising tab's own filter, which moved into the address on 2026-08-15 so the
+  // Overview's two rows could each be a real destination. ⚠ It MUST be on this list: left off, a
+  // coach who arrived through the Sponsorships row carries `kind=sponsor` to Expenses and back,
+  // and every later visit to Fundraising silently hides their drives.
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser', 'kind'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -231,7 +235,12 @@ export default function CoachesAccountingPage({
     dues: sectionHref('dues'),
     budget: sectionHref('budget'),
     budgetVsActual: sectionHref('budget-vs-actual'),
-    fundraisers: sectionHref('fundraisers'),
+    // ⚠ Each fundraising row states its OWN kind rather than one leaving the filter off: the two
+    // rows exist precisely because they land on different views, and "no kind" means "show
+    // everything", which would make the Fundraisers row and a hypothetical unfiltered row the
+    // same door wearing two names.
+    fundraisers: sectionHref('fundraisers', { kind: 'fundraiser' }),
+    sponsorships: sectionHref('fundraisers', { kind: 'sponsor' }),
     expenses: sectionHref('expenses'),
     budgetStarter: sectionHref('budget', { starter: '1' }),
     budgetGenerate: sectionHref('budget', { generate: '1' }),

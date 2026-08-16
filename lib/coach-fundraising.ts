@@ -43,6 +43,28 @@ export function isFundraisingKind(v: unknown): v is FundraisingKind {
   return v === 'fundraiser' || v === 'sponsor';
 }
 
+/**
+ * What the Fundraising list is showing — and, since 2026-08-15, a URL parameter rather than a
+ * component state.
+ *
+ * ⚠ IT MOVED INTO THE ADDRESS BECAUSE A ROW BECAME A DOOR. The Money overview now carries a
+ * Fundraisers row and a Sponsorships row, and what earns a second row is that it opens the tab
+ * ALREADY FILTERED — two doors onto an identical view would be a second navigation system, which
+ * is the thing the hub's own rules keep removing. A filter that lives in component state cannot be
+ * addressed, so it could not have been the destination.
+ *
+ * Two consequences worth stating: the filtered view is now shareable and Back steps through it,
+ * and `kind` MUST join the hub's ONE_SHOT_KEYS or it rides to Expenses and comes back with the
+ * coach's list silently narrowed.
+ */
+export type KindFilter = 'all' | FundraisingKind;
+
+/** A `?kind=` from the address, or a stored value, read defensively. Anything unrecognised — a
+ *  typo, an old link, a hand-edited URL — means "show everything", never an empty screen. */
+export function normalizeKindFilter(v: unknown): KindFilter {
+  return isFundraisingKind(v) ? v : 'all';
+}
+
 export function isSponsorStatus(v: unknown): v is SponsorStatus {
   return v === 'pledged' || v === 'received';
 }

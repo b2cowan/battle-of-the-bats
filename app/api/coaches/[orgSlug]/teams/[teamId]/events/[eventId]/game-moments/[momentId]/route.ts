@@ -26,10 +26,10 @@ export const DELETE = withObservability(async (_req: Request,
   const denied = denyUnless(canLogGameMoment(assignment.capabilities), 'Your coach runs the bench.');
   if (denied) return denied;
 
-  const moment = await getRepTeamGameMomentById(teamId, momentId);
+  const moment = await getRepTeamGameMomentById(teamId, momentId, programYear.id);
   // The event in the URL must be the moment's own — otherwise a moment could be erased through
-  // any game's path, and the audit trail in the URL would be a fiction. The season check keeps
-  // the live rail's promise: this route cannot reach a past season's row.
+  // any game's path, and the audit trail in the URL would be a fiction. The season is now part of
+  // the LOOKUP as well (2026-08-15); the comparison stays as the belt, costing nothing.
   if (!moment || moment.eventId !== eventId || moment.programYearId !== programYear.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -39,6 +39,6 @@ export const DELETE = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Only the head coach can remove someone else’s moment.' }, { status: 403 });
   }
 
-  await deleteRepTeamGameMoment(teamId, momentId);
+  await deleteRepTeamGameMoment(teamId, momentId, programYear.id);
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/game-moments/[momentId]' });

@@ -12,6 +12,9 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import { createMoneyTag } from '@/lib/coach-money-tags';
+import type { RepTeamTag } from '@/lib/types';
 import { applyCreditsToBills, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 import {
   KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT,
@@ -47,6 +50,8 @@ interface FundraiserDetail {
   startDate: string | null;
   endDate: string | null;
   isActive: boolean;
+  /** Money tags on this record (mig 239) — the money-in half of the money-tag vocabulary. */
+  tagIds: string[];
 }
 
 interface FundraiserEntry {
@@ -149,6 +154,8 @@ export function FundraiserDetail({
   // Normalized at the fetch boundary (mirror of the server's mapper), so everything below
   // trusts the state as a real mode.
   const [creditApplication, setCreditApplication] = useState<CreditApplicationMode>('last_first');
+  /** The team's money-tag vocabulary — the same library expenses draw on (mig 239). */
+  const [moneyTags, setMoneyTags]     = useState<RepTeamTag[]>([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
 
@@ -175,6 +182,7 @@ export function FundraiserDetail({
   const [editPlayerId, setEditPlayerId]     = useState('');
   const [editCredit, setEditCredit]         = useState('0');
   const [editCreditUnit, setEditCreditUnit] = useState<CreditUnit>('percent');
+  const [editTags, setEditTags]             = useState<string[]>([]);
 
   // Chunk F — which SEASON is on screen, read exactly as the surrounding panels read it.
   // `page.canWrite()` folds read-only in, so an archived season offers no Settings and no
@@ -200,6 +208,11 @@ export function FundraiserDetail({
   const settingsDirty = !!fundraiser && (
     editName !== fundraiser.name
     || editDesc !== (fundraiser.description ?? '')
+    // Tags are a change like any other — compared as SETS, since the picker appends and the
+    // server returns them in its own order, and an order-sensitive compare would report a
+    // freshly-opened sheet as dirty.
+    || editTags.length !== fundraiser.tagIds.length
+    || editTags.some(id => !fundraiser.tagIds.includes(id))
     || (isSponsor
       ? (
         editStatus !== (fundraiser.sponsorStatus ?? 'received')
@@ -228,9 +241,10 @@ export function FundraiserDetail({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}/entries${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
-      setFundraiser(data.fundraiser);
+      setFundraiser({ ...data.fundraiser, tagIds: data.fundraiser?.tagIds ?? [] });
       setSummary(data.summary);
       setPlayers(data.players);
+      setMoneyTags(data.moneyTags ?? []);
       setCreditApplication(normalizeCreditApplicationMode(data.creditApplication));
     } catch (e: any) {
       setError(e.message ?? 'Failed to load fundraiser.');
@@ -316,6 +330,16 @@ export function FundraiserDetail({
     }
   }
 
+  /** Same create door as the new-record form — a coach labelling a sponsor after the fact must not
+   *  have to leave for the Expenses page to invent the label first. */
+  async function addMoneyTag(name: string): Promise<RepTeamTag | null> {
+    setEditError('');
+    const result = await createMoneyTag(orgSlug, teamId, name);
+    if ('error' in result) { setEditError(result.error); return null; }
+    setMoneyTags(prev => [...prev, result.tag]);
+    return result.tag;
+  }
+
   function openSettings() {
     if (!fundraiser) return;
     setEditName(fundraiser.name);
@@ -332,6 +356,7 @@ export function FundraiserDetail({
     setEditPlayerId(sponsorRow?.playerId ?? '');
     setEditCredit(String(fundraiser.playerRebatePercent));
     setEditCreditUnit('percent');
+    setEditTags(fundraiser.tagIds);
     setEditError('');
     setShowSettings(true);
   }
@@ -365,6 +390,7 @@ export function FundraiserDetail({
             broughtInById: editPlayerId || null,
             creditValue:   editPlayerId ? Number(editCredit) || 0 : 0,
             creditUnit:    editCreditUnit,
+            tagIds:        editTags,
           } : {
             name:               editName.trim(),
             description:        editDesc.trim() || null,
@@ -372,6 +398,7 @@ export function FundraiserDetail({
             startDate:          editStart || null,
             endDate:            editEnd   || null,
             isActive:           editActive,
+            tagIds:             editTags,
           }),
         },
       );
@@ -436,6 +463,23 @@ export function FundraiserDetail({
                 {fundraiser.endDate && ` → ${fundraiser.endDate}`}
               </>}
         </p>
+      )}
+
+      {/* ⚠ THE TAGS LIVE HERE, one level in — the list row deliberately does not carry them (the
+          row-density ruling: anything drawn beside every item in a list is drawn as many times as
+          the list is long). Read-only chips; Settings is where they change. Absent, not an empty
+          row, when a record has none. */}
+      {fundraiser && fundraiser.tagIds.length > 0 && (
+        <div className={styles.tagComboChips} style={{ margin: '-1rem 0 1.5rem' }}>
+          {fundraiser.tagIds
+            .map(id => moneyTags.find(t => t.id === id))
+            .filter((t): t is RepTeamTag => !!t)
+            .map(tag => (
+              <span key={tag.id} className={`${styles.tagComboChip} ${tag.teamId === null ? styles.tagComboChipOrg : ''}`}>
+                {tag.name}
+              </span>
+            ))}
+        </div>
       )}
 
       {loading ? (
@@ -809,6 +853,19 @@ export function FundraiserDetail({
                     </div>
                   </>
                 )}
+
+                {/* The same money vocabulary an expense uses, on the money-in side (mig 239).
+                    Below the fork because it applies to both kinds. */}
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label}>Tags</label>
+                  <TagSearchCombobox
+                    library={moneyTags}
+                    selectedIds={editTags}
+                    onChange={setEditTags}
+                    onCreate={addMoneyTag}
+                    placeholder="Type to find or create a money tag…"
+                  />
+                </div>
               </div>
               {editError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{editError}</p>}
               <div className={styles.modalFooter}>

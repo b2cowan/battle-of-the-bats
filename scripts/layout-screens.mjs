@@ -121,6 +121,18 @@ export const SCREENS = [
      (h2 + smaller icon tile) that exists nowhere else in the portal. `coach-fundraisers` above
      measures the list and would stay green through anything that happened one level in. */
   { id: 'coach-fundraiser',        session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.fundraiserId}`, ready: 'h1' },
+  /* ⚠ A SPONSOR IS NOT THE SAME SCREEN, and until 2026-08-15 nothing automated had opened one. The
+     entry above draws a drive: a six-column leaderboard with an inline edit form. A sponsor
+     replaces it with a THREE-column single-row record, a kind chip beside a pledged/received chip
+     in the title row, and a status sentence under it — none of which the drive can render, so a
+     green `coach-fundraiser` proved nothing about any of them. Same lesson as the settlement sheet
+     and the collapsed team-settings groups: the sweep only measures what is actually drawn. */
+  { id: 'coach-sponsor',           session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.sponsorId}`, ready: 'h1' },
+  /* The kind-filtered list — the view the Money overview's two rows now land on (2026-08-15). It
+     is the same table with a different row count, so it is cheap; what it proves is that the
+     filter chips, the split summary cards and the "no sponsors this season" fallback all compose
+     at every width, which the unfiltered `coach-fundraisers` entry above never shows. */
+  { id: 'coach-sponsors-list',     session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&kind=sponsor`, ready: 'h1' },
   { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting?section=payment-requests`, ready: 'h1' },
   { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting?section=allocations`,      ready: 'h1' },
 

@@ -487,6 +487,36 @@ export const MIDSEASON_FUNDRAISER = {
 } as const;
 
 /**
+ * The sponsor — the demo's answer to "what does the OTHER kind of money-in look like?"
+ *
+ * Sponsorships shipped 2026-08-15 and the shop window did not follow: a prospect opening the coach
+ * sandbox met a Fundraising tab with one bottle drive on it and nothing to show that the product
+ * distinguishes a drive from a business writing a cheque. The product had gained something the
+ * demo could not say — the drift this repo's rule exists to catch, and one a health check can
+ * never raise on its own.
+ *
+ * ⚠⚠ CLUB-WIDE, CREDITED TO NOBODY, AND THAT IS NOT A SHORTCUT. Attributing it to a family would
+ * write a dues credit onto that family's bill, and the 12U's bills are load-bearing: the guided
+ * tour narrates $240 overdue across EXACTLY two families and one instalment sitting at $90 of $120,
+ * and `check-demo-coach` pins both. A sponsor credit could clear a debt the tour talks about by
+ * name, or settle the $30 that makes the part-paid row worth looking at. A club-wide sponsor
+ * touches no bill at all, so every pin survives BY CONSTRUCTION rather than by arithmetic that has
+ * to be re-checked whenever a number moves. The three pins on MIDSEASON_FUNDRAISER above are the
+ * same rule, arrived at the same way.
+ *
+ * RECEIVED rather than pledged: a pledge is the state that does nothing to the books, and a demo
+ * whose only sponsor was invisible in every figure would be showing the feature switched off. The
+ * pledged/received distinction is told in the tour's sentence and in the help guide instead.
+ */
+export const MIDSEASON_SPONSOR = {
+  name: 'Riverdale Dental',
+  description: 'Season sponsor — banner at the diamond and a name on the practice jerseys.',
+  amount: 750,
+  /** Received, relative to the anchored clock (days). Well inside the season already played. */
+  receivedOffset: -34,
+} as const;
+
+/**
  * The 12U's plan, built in the spring — and, since Phase 3, actually spent against.
  *
  * ⚠ **The categories are not decoration.** Budget-vs-actual matches a logged expense to a line by

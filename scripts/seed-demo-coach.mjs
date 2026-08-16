@@ -32,7 +32,8 @@ import {
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
-  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
+  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
+  MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
@@ -858,17 +859,43 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     }
   }
 
+  // The sponsor — one record, one arrival, no family (mig 237/239). See MIDSEASON_SPONSOR for why
+  // it is deliberately club-wide: a credited family would land money on a bill the guided tour
+  // narrates by name, and could clear the very debt it points at.
+  {
+    const sponsorId = randomUUID();
+    die('insert 12U sponsor', (await db.from('rep_fundraisers').insert({
+      id: sponsorId, org_id: org.id, team_id: team.id, program_year_id: pyId,
+      kind: 'sponsor', sponsor_status: 'received',
+      name: MIDSEASON_SPONSOR.name, description: MIDSEASON_SPONSOR.description,
+      // No family, so no share: the whole cheque stays with the team.
+      player_rebate_percent: 0,
+      start_date: orgDateWithOffset(now, MIDSEASON_SPONSOR.receivedOffset),
+      end_date: null,
+      is_active: true,
+    })).error);
+    // A sponsor IS its entry — every total, export and archive reads entries, which is why the
+    // record alone would show as $0 raised.
+    die('insert 12U sponsor entry', (await db.from('rep_fundraiser_entries').insert({
+      id: randomUUID(), fundraiser_id: sponsorId, org_id: org.id, team_id: team.id,
+      player_id: null,
+      amount_raised: MIDSEASON_SPONSOR.amount, rebate_percent: 0, rebate_amount: 0,
+    })).error);
+  }
+
   // The plan, on real platform categories — without them budget-vs-actual has nothing to match a
   // logged expense to, and files the whole season as unbudgeted (the state this moment shipped in
   // until 2026-08-05). Undated on purpose: unlike the 14U, this team's story is the season it has
   // already spent, not the months it planned to spend it across.
+  const midSeasonItems = await budgetItemIds(team.id, [...MIDSEASON_BUDGET_LINES, ...state.expenses]);
   const budgetRows = MIDSEASON_BUDGET_LINES.map((line, i) => ({
     id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+    item_id: itemRef(midSeasonItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
   }));
   await insertAll('rep_budget_lines', budgetRows);
-  await insertDemoExpenses(team, pyId, state.expenses);
+  await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems);
 
   // Waivers: a published template, signed by everyone except one — the beat the roster tells.
   const templateId = randomUUID();

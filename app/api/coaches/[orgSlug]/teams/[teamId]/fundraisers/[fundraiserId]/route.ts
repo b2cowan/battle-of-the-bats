@@ -7,7 +7,9 @@ import {
   getRepFundraiser,
   getOrCreateRepTeamLedger,
   createEntry,
+  setRepTeamFundraiserTags,
 } from '@/lib/db';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -186,6 +188,20 @@ export const PATCH = withObservability(async (req: Request,
   const body = await req.json();
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
+  // ⚠ Validated BEFORE anything is written, and by the same rule the create path uses: the
+  // junction's RLS reaches tenancy through the fundraiser, so a stray, cross-team or wrong-kind id
+  // has to be refused here or nowhere. `undefined` means "not editing tags"; `[]` means "clear
+  // them", and the two must stay distinguishable or a save from a form that never loaded the
+  // picker would silently strip a record's labels.
+  let tagIds: string[] | null = null;
+  if (body.tagIds !== undefined) {
+    const resolvedTags = await resolveValidTagIds(team.id, ctx!.org.id, 'expense', body.tagIds);
+    if (resolvedTags === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing money-tag ids' }, { status: 400 });
+    }
+    tagIds = resolvedTags;
+  }
+
   if (body.name !== undefined) {
     if (!body.name?.trim()) return NextResponse.json({ error: 'name cannot be empty' }, { status: 400 });
     updates.name = body.name.trim();
@@ -247,6 +263,8 @@ export const PATCH = withObservability(async (req: Request,
     if ('error' in applied) return applied.error;
   }
 
+  if (tagIds !== null) await setRepTeamFundraiserTags(fundraiserId, tagIds);
+
   return NextResponse.json({
     fundraiser: {
       id:                  data.id,
@@ -257,6 +275,11 @@ export const PATCH = withObservability(async (req: Request,
       endDate:             data.end_date   ?? null,
       isActive:            data.is_active,
       updatedAt:           data.updated_at,
+      /* ⚠ NO `tagIds` HERE, deliberately. It would be present only when the request happened to
+         edit tags and absent otherwise — a field that is sometimes on a fundraiser object and
+         sometimes not is worse than one that never is, because the first reader to trust it will
+         be right most of the time. Every path that promises `tagIds` (the list GET, the create
+         POST, the record GET) always sends it. The only client of this PATCH refetches. */
     },
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]' });

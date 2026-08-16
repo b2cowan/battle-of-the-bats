@@ -596,6 +596,43 @@ if (!existingFr?.length) {
   ok('fundraisers already present');
 }
 
+/**
+ * A SPONSOR, checked for by KIND rather than by "are there any fundraisers".
+ *
+ * ⚠ Its own guard on purpose. The block above skips when ANY fundraising record exists, so on
+ * every fixture seeded before 2026-08-15 a sponsor would never appear — and `resolveUatContext`
+ * would throw for the sweep rather than quietly sweeping the wrong screen, which is the right
+ * failure but a tedious one. This heals it in place.
+ *
+ * Received and ATTRIBUTED, with a real family share: that is the fullest render the sponsor record
+ * has — a name in "Brought in by", a plum figure in "Credited to them", and the received chip —
+ * and a screen swept in its emptiest state is the trap this repo keeps re-learning.
+ */
+const { data: existingSponsor } = await db.from('rep_fundraisers')
+  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').limit(1);
+
+if (!existingSponsor?.length) {
+  const sp = await db.from('rep_fundraisers').insert({
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    kind: 'sponsor', sponsor_status: 'received',
+    name: 'Northside Physio', description: 'Season sponsor — banner at the diamond.',
+    player_rebate_percent: 20, is_active: true,
+  }).select('id').single();
+  if (sp.error) console.log(`  ! sponsor skipped (${sp.error.message})`);
+  else {
+    // A sponsor IS its single entry — the record alone reads as $0 raised everywhere.
+    const en = await db.from('rep_fundraiser_entries').insert({
+      fundraiser_id: sp.data.id, org_id: org.id, team_id: team.id,
+      player_id: ids[0] ?? null,
+      amount_raised: 500, rebate_percent: 20, rebate_amount: 100,
+    });
+    if (en.error) console.log(`  ! sponsor entry skipped (${en.error.message})`);
+    else ok('sponsor seeded (received, attributed, $500 with a $100 family share)');
+  }
+} else {
+  ok('sponsor already present');
+}
+
 // One request per status that changes the row: pending keeps its Cancel button, denied carries a
 // reason and therefore an expandable detail row.
 const { data: existingPr } = await db.from('rep_team_payment_requests')

@@ -6,7 +6,11 @@ import {
   getActiveRepProgramYear,
   getOrCreateRepTeamLedger,
   createEntry,
+  getRepTeamTagLibrary,
+  getRepTeamFundraiserTagsMap,
+  setRepTeamFundraiserTags,
 } from '@/lib/db';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -15,7 +19,11 @@ import { tournamentToday } from '@/lib/timezone';
 import { isFundraisingKind, isSponsorStatus, resolveCredit } from '@/lib/coach-fundraising';
 
 /** The list shape a freshly-created record answers with — the table needs every column it prints. */
-function mapNewRecord(row: Record<string, any>, money?: { amount: number; credit: number }) {
+function mapNewRecord(
+  row: Record<string, any>,
+  money?: { amount: number; credit: number },
+  tagIds: string[] = [],
+) {
   const amount = money?.amount ?? 0;
   const credit = money?.credit ?? 0;
   return {
@@ -35,6 +43,7 @@ function mapNewRecord(row: Record<string, any>, money?: { amount: number; credit
     playerCount:         0,
     broughtInBy:         null,
     broughtInById:       null,
+    tagIds,
   };
 }
 
@@ -181,7 +190,7 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
-  const { capabilities, programYear } = resolved;
+  const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -193,13 +202,22 @@ export const GET = withObservability(async (req: Request,
 
   if (fErr) return NextResponse.json({ error: fErr.message }, { status: 500 });
 
-  if (!fundraisers?.length) return NextResponse.json({ fundraisers: [] });
+  // ⚠ The money-tag LIBRARY ships even on an empty season, because the create form needs it before
+  // the first record exists — an empty list must not mean an empty picker.
+  const moneyTags = await getRepTeamTagLibrary(teamId, 'expense', ctx!.org.id);
+
+  if (!fundraisers?.length) {
+    return NextResponse.json({ fundraisers: [], moneyTags, tagsByFundraiserId: {} });
+  }
 
   const fundraiserIds = fundraisers.map(f => f.id);
-  const { data: entries } = await supabaseAdmin
-    .from('rep_fundraiser_entries')
-    .select('fundraiser_id, player_id, amount_raised, rebate_amount')
-    .in('fundraiser_id', fundraiserIds);
+  const [{ data: entries }, tagsByFundraiserId] = await Promise.all([
+    supabaseAdmin
+      .from('rep_fundraiser_entries')
+      .select('fundraiser_id, player_id, amount_raised, rebate_amount')
+      .in('fundraiser_id', fundraiserIds),
+    getRepTeamFundraiserTagsMap(fundraiserIds),
+  ]);
 
   const totalsMap = new Map<string, { totalRaised: number; totalRebates: number; playerCount: number }>();
   // A SPONSOR's one entry names the family who brought it in — the two muted words the list keeps
@@ -254,10 +272,14 @@ export const GET = withObservability(async (req: Request,
       // Sponsor only — null on a drive, and null on a club-wide sponsor.
       broughtInBy:         f.kind === 'sponsor' && attributed ? (nameById.get(attributed) ?? null) : null,
       broughtInById:       f.kind === 'sponsor' ? (attributed ?? null) : null,
+      // ⚠ Tags travel with the RECORD, never onto the list row (row-density ruling 2026-08-15) —
+      // the list carries them only so the export can, and so opening a record does not need a
+      // second fetch to know what it is already labelled.
+      tagIds:              tagsByFundraiserId[f.id] ?? [],
     };
   });
 
-  return NextResponse.json({ fundraisers: result });
+  return NextResponse.json({ fundraisers: result, moneyTags, tagsByFundraiserId });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers' });
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/fundraisers
@@ -298,6 +320,18 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'playerRebatePercent must be between 0 and 100' }, { status: 400 });
   }
 
+  // ⚠ Every id PROVED against this team's money-tag library before anything is written. RLS on the
+  // junction reaches tenancy through the FUNDRAISER, not the tag (mig 239), so the database cannot
+  // catch a route that links one club's sponsor to another club's tag — this is that check.
+  let tagIds: string[] = [];
+  if (body.tagIds !== undefined) {
+    const resolvedTags = await resolveValidTagIds(team.id, ctx!.org.id, 'expense', body.tagIds);
+    if (resolvedTags === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing money-tag ids' }, { status: 400 });
+    }
+    tagIds = resolvedTags;
+  }
+
   // ── A DRIVE: the record is the whole of it; its rows arrive later, one per player. ──
   if (kind === 'fundraiser') {
     const { data, error } = await supabaseAdmin
@@ -317,7 +351,8 @@ export const POST = withObservability(async (req: Request,
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ fundraiser: mapNewRecord(data) }, { status: 201 });
+    if (tagIds.length > 0) await setRepTeamFundraiserTags(data.id, tagIds);
+    return NextResponse.json({ fundraiser: mapNewRecord(data, undefined, tagIds) }, { status: 201 });
   }
 
   // ── A SPONSOR: one record AND its single arrival, written together. ──
@@ -381,5 +416,7 @@ export const POST = withObservability(async (req: Request,
   });
   if ('error' in money) return money.error;
 
-  return NextResponse.json({ fundraiser: mapNewRecord(record, { amount, credit }) }, { status: 201 });
+  if (tagIds.length > 0) await setRepTeamFundraiserTags(record.id, tagIds);
+
+  return NextResponse.json({ fundraiser: mapNewRecord(record, { amount, credit }, tagIds) }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers' });

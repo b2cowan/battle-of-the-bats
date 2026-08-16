@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Gift, Plus, ChevronRight, TrendingUp, Handshake } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -12,14 +12,17 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import { createMoneyTag } from '@/lib/coach-money-tags';
+import type { RepTeamTag } from '@/lib/types';
 import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import {
   KIND_LABEL, KIND_HINT, FUNDRAISING_KINDS,
   SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT, SPONSOR_STATUSES,
-  resolveCredit, rollUpFundraising,
-  type FundraisingKind, type SponsorStatus, type CreditUnit,
+  resolveCredit, rollUpFundraising, normalizeKindFilter,
+  type FundraisingKind, type SponsorStatus, type CreditUnit, type KindFilter,
 } from '@/lib/coach-fundraising';
 import { FundraiserDetail, fmt } from './detail';
 
@@ -42,6 +45,9 @@ interface Fundraiser {
   broughtInBy: string | null;
   broughtInById: string | null;
   createdAt: string;
+  /** Money tags on the RECORD (mig 239). Not drawn on the row — see the row-density ruling —
+   *  but carried here so the export can print them without a second read. */
+  tagIds: string[];
 }
 
 /** What the status column says for either kind — a drive is running or it isn't, a sponsor has
@@ -61,9 +67,10 @@ function statusBadgeClass(f: Fundraiser): string {
   return f.isActive ? styles.badgeActive : styles.badgeArchived;
 }
 
-type KindFilter = 'all' | FundraisingKind;
 const KIND_FILTERS: { id: KindFilter; label: string }[] = [
   { id: 'all',        label: 'All' },
+  // ⚠ "Fundraisers" here is CORRECT and stays. It names a KIND, not the tab — the tab is
+  // "Fundraising" because it holds both. This chip was mistaken for a stale label once.
   { id: 'fundraiser', label: 'Fundraisers' },
   { id: 'sponsor',    label: 'Sponsors' },
 ];
@@ -89,7 +96,6 @@ export function FundraisersPanel({
   const { loading: ctxLoading } = useCoaches();
 
   const [fundraisers, setFundraisers] = useState<Fundraiser[]>([]);
-  const [kindFilter, setKindFilter] = useState<KindFilter>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -106,12 +112,15 @@ export function FundraisersPanel({
   const [formPlayerId, setFormPlayerId]     = useState('');
   const [formCredit, setFormCredit]         = useState('0');
   const [formCreditUnit, setFormCreditUnit] = useState<CreditUnit>('percent');
+  const [formTags, setFormTags]             = useState<string[]>([]);
   const [saving, setSaving]                 = useState(false);
   const [formError, setFormError]           = useState('');
   /** The roster, for "brought in by". Fetched once with the list rather than per form open. */
   const [roster, setRoster] = useState<{ id: string; name: string }[]>([]);
   /** The team's standard split, which pre-fills both forms (migration 237). */
   const [defaultCreditPercent, setDefaultCreditPercent] = useState(0);
+  /** The team's money-tag vocabulary — the SAME library expenses use (mig 239). */
+  const [moneyTags, setMoneyTags] = useState<RepTeamTag[]>([]);
 
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
@@ -135,6 +144,30 @@ export function FundraisersPanel({
    * relying on the arrival refetch a full page navigation used to give it for free.
    */
   const openFundraiserId = seasonSearchParams.get('fundraiser');
+
+  /**
+   * ⚠ THE KIND FILTER LIVES IN THE ADDRESS (2026-08-15), not in this component.
+   *
+   * The Money overview grew a Fundraisers row AND a Sponsorships row, and what earns a second row
+   * is that it opens this tab already filtered — two doors onto the identical view would be a
+   * second navigation system. A filter held in `useState` cannot be a destination, so it had to
+   * move. The view is shareable now, and Back steps through it.
+   *
+   * `replace`, not `push`: flipping between three chips should not bury the page a coach arrived
+   * from under three history entries (the same call the dues lens made). Every other param —
+   * `section`, `year`, `fundraiser` — is preserved, because this panel is only ever reached with
+   * `?section=` already on the URL.
+   */
+  const router = useRouter();
+  const pathname = usePathname();
+  const kindFilter = normalizeKindFilter(seasonSearchParams.get('kind'));
+  function setKindFilter(next: KindFilter) {
+    const sp = new URLSearchParams(seasonSearchParams.toString());
+    if (next === 'all') sp.delete('kind'); else sp.set('kind', next);
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
   const visibleRows = kindFilter === 'all' ? fundraisers : fundraisers.filter(f => f.kind === kindFilter);
   // The other unit, in words. Derived at render rather than stored, so it can never disagree with
   // what is in the two inputs.
@@ -156,7 +189,13 @@ export function FundraisersPanel({
 
   // Discard guard (review f7-3/f7-7). Rebate opens at '0', so it only counts as entered once
   // the coach moves it off that default.
-  const formDirty = Boolean(formName || formDesc || formStart || formEnd || formRebate !== '0');
+  // ⚠ Tags count as typing. A coach who picked three labels and closed the sheet has done work
+  // the guard exists to protect, and a form that only watched the text fields would drop it
+  // silently — the same fork-shaped oversight the Settings sheet's sponsor fields already fixed.
+  const formDirty = Boolean(
+    formName || formDesc || formStart || formEnd || formRebate !== '0'
+    || formAmount || formTags.length > 0,
+  );
   const closeModal = useDiscardGuard({
     dirty: formDirty,
     close: () => setShowModal(false),
@@ -171,6 +210,9 @@ export function FundraisersPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setFundraisers(data.fundraisers);
+      // The money-tag library rides the list — it is needed the moment the create form opens, and
+      // fetching it there would put a spinner inside a modal.
+      setMoneyTags(data.moneyTags ?? []);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load fundraisers.');
     } finally {
@@ -223,6 +265,15 @@ export function FundraisersPanel({
     return () => { cancelled = true; };
   }, [orgSlug, teamId, seasonQuery, canWriteMoney, openFundraiserId]);
 
+  /** Create a money tag from inside the picker, returning it so the box can select it at once. */
+  async function addMoneyTag(name: string): Promise<RepTeamTag | null> {
+    setFormError('');
+    const result = await createMoneyTag(orgSlug, teamId, name);
+    if ('error' in result) { setFormError(result.error); return null; }
+    setMoneyTags(prev => [...prev, result.tag]);
+    return result.tag;
+  }
+
   function openModal() {
     setFormKind('fundraiser');
     setFormName('');
@@ -238,6 +289,7 @@ export function FundraisersPanel({
     setFormPlayerId('');
     setFormCredit(String(defaultCreditPercent));
     setFormCreditUnit('percent');
+    setFormTags([]);
     setFormError('');
     setShowModal(true);
   }
@@ -271,12 +323,14 @@ export function FundraisersPanel({
           playerRebatePercent: rebate,
           startDate:          formStart || null,
           endDate:            formEnd   || null,
+          tagIds:             formTags,
         } : {
           kind:          'sponsor',
           name:          formName.trim(),
           description:   formDesc.trim() || null,
           sponsorStatus: formStatus,
           sponsorAmount: amount,
+          tagIds:        formTags,
           // No family means no credit — the server enforces the same thing, because a client
           // that sent one anyway must not be able to create a credit with nobody to credit.
           broughtInById: formPlayerId || null,
@@ -377,15 +431,23 @@ export function FundraisersPanel({
             {/* ⚠ Per-fundraiser TOTALS only — the per-player breakdown names children beside the
                 money they raised and stays on the fundraiser's own page. Not write-gated:
                 reading is not writing. */}
+            {/* ⚠ EXPORTS WHAT IS ON SCREEN, not the whole season. That is the hub-wide rule for
+                why Export lives on a tab's own toolbar at all — "what a tab exports depends on the
+                view and the filters the coach has set" — and it only started to matter here when
+                the kind filter became a real, addressable view. The scope label says which kind,
+                so a spreadsheet can never be mistaken for the full picture. */}
             <MoneyExportButton
               label="Fundraisers"
               formats={['xlsx', 'csv']}
               build={() => ({
                 dataset: 'fundraisers',
-                title: 'Fundraisers',
+                title: kindFilter === 'sponsor' ? 'Sponsors' : kindFilter === 'fundraiser' ? 'Fundraisers' : 'Fundraising',
                 columns: FUNDRAISER_COLUMNS,
-                rows: fundraiserRows(fundraisers),
-                scopeLabel: page.season.current?.programYearName ?? '',
+                rows: fundraiserRows(visibleRows, new Map(moneyTags.map(t => [t.id, t]))),
+                scopeLabel: [
+                  page.season.current?.programYearName ?? '',
+                  kindFilter === 'sponsor' ? 'Sponsors only' : kindFilter === 'fundraiser' ? 'Fundraisers only' : '',
+                ].filter(Boolean).join(' · '),
                 teamName: '',
                 emptyMessage: 'This season has no fundraisers to export yet.',
               })}
@@ -712,6 +774,23 @@ export function FundraisersPanel({
                     )}
                   </>
                 )}
+
+                {/* ⚠ TAGS ARE ON THE RECORD, AND ONLY ON THE RECORD (owner ruling 2026-08-15). The
+                    tag FILTER was cut from the list — with five rows it earns nothing — and the
+                    field was mistakenly read as cut with it. This is the money-in half of the
+                    money-tag report, which until now could only see spending: the SAME vocabulary
+                    an expense uses, so "Winter dome" means one thing whichever direction the money
+                    went. Last in the form, below the fork, because it applies to both kinds. */}
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label}>Tags</label>
+                  <TagSearchCombobox
+                    library={moneyTags}
+                    selectedIds={formTags}
+                    onChange={setFormTags}
+                    onCreate={addMoneyTag}
+                    placeholder="Type to find or create a money tag…"
+                  />
+                </div>
               </div>
               {formError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{formError}</p>}
               <div className={styles.modalFooter}>

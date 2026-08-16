@@ -4,6 +4,63 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-15 — A STRUCTURAL BRAND TOKEN IS THEME-INVISIBLE IN THE WARM PORTAL: sponsor blue is `--info`, never `--blueprint-blue`
+
+**Trigger:** the rendered sweep, on the coach Money hub's Fundraising tab — the **Sponsor** kind chip
+measured **4.18:1** against the card ground at 361/390 (AA floor 4.5). Two defects shared one line.
+
+⚠ **THE CHIP WAS NEVER BLUE.** `.badgeSponsor` was written as `--blueprint-blue`, and the coach warm
+gate remaps `--blueprint-blue → --home-olive` (`app/globals.css`, alongside `--logic-lime` and
+`--primary-light`). So the "blue" sponsor chip rendered **olive #57651E** — the same hue family as the
+green drive chip beside it, on an **olive-tinted** card ground. Both halves of the failure follow from
+that one remap: an AA miss (a fill on a ground tinted with its own hue — the **2026-07-30** ruling,
+which measured the same shape at 5.8:1 and generalised *never put a filled CTA on a panel tinted with
+the CTA's own hue*), and a **ruling that was silently not delivered** — the owner's "blue dot for
+sponsorships, green for drives, matching the tab's chips" could not be true while both rendered olive.
+
+**Decision:** `.badgeSponsor` and `.railDotBlue` use **`--info`** (warm `--home-blue #134FD3`, already
+carrying `--evt-scrimmage`; unchanged `#3B82F6` in dark). Chip fill drops 0.15 → **0.12**. Re-measured
+on the served page: the contrast finding is **gone at both 361 and 390**, and `coach-sponsor @390` is
+fully clean.
+
+⚠ **THE TOKEN WAS NOT THE LEVER — THE RECIPE THAT CONSUMES IT WAS.** Repointing `--blueprint-blue`'s
+warm mapping would have moved every structural use in the portal. This is the third instance of one
+pattern (`--logic-lime-fixed`, 2026-07-27; the Staff panel's segmented "on" fill; now this), so state
+it as a rule: **in the coach warm portal, `--blueprint-blue`, `--logic-lime` and `--primary-light` all
+resolve to olive. Any surface that means *blue* must say `--info`; any surface that means *green* must
+say `--success`. A structural brand token used for MEANING is a bug that only the warm skin shows.**
+
+⚠ **AND THE SWEEP COULD ONLY SEE IT ONCE THE FIXTURE HAD A SPONSOR IN IT.** `coach-fundraisers` had
+been green for months over a fixture that contained two drives and no sponsor — the chip had never
+been rendered, so it had never been measured. This is the *green sweep over an empty fixture* trap
+arriving in its useful direction. **Seeding a new record TYPE into the UAT fixture is a coverage
+change, not test housekeeping.**
+
+**Known and left:** the layout baseline is keyed on an element's visible LABEL, so seeding a third
+record produced a "new" `a·Northside Physio` tap-floor finding that is the *same accepted decision* as
+the baselined `a·Chocolate sale` / `a·Bottle drive` (24px name links at 361). Not re-baselined here —
+`--init` rewrites the whole file and a concurrent session is mid-change in it.
+
+**A DOT IS THE COLOUR OF THE CHIP YOU'LL SEE WHEN YOU ARRIVE (owner ruling 2026-08-15, accepting the
+recommendation).** Now that both actually render blue, the Money rail carries **Sponsorships and
+Allocations on the same dot**, adjacent in the `more` variant. That forced a choice the rail had never
+had to make: its own header comment describes dots as *money-direction lanes* (green = in, rust = out,
+blue = the org's side), under which sponsorships would be GREEN — but the two-row ruling ties the dot
+to the chip of the tab it opens. Both were defensible; they cannot both be the rule.
+
+**Ruled: the chip-match wins, and the lane comment is superseded.** A coach can learn "the dot matches
+what I'll see when I get there" from the screen itself; "direction of money" appears nowhere on it. The
+shared hue is accepted rather than worked around, because the binding deutan ruling (2026-08-13, ΔE 1.0
+olive↔danger) already forbids colour from being the sole carrier — **the row NAME is the information
+and the dot only reinforces it**, which is exactly why two rows may share one.
+
+**Applies to:** `app/[orgSlug]/coaches/coaches.module.css` (`.badgeSponsor`),
+`app/[orgSlug]/coaches/teams/[teamId]/accounting/overview-dashboard.module.css` (`.railDotBlue` — also
+corrects the Allocations dot, which had the same invisible remap). Plan:
+`docs/projects/active/COACH_SPONSORSHIPS_PLAN.md` §8b. [[design-system]] [[design-principles]]
+
+---
+
 ### 2026-08-15 — A COLUMN HEADING IS NEVER THE FAINTEST TEXT IN ITS OWN TABLE; and an overloaded token is not the lever
 
 **Trigger:** owner, on the Money hub's Expenses tab — *"can we look at our dark mode styling rules for

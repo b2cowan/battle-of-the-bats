@@ -222,15 +222,24 @@ export const FUNDRAISER_COLUMNS: ExportColumnDef[] = [
   { label: 'Player credits', key: 'credits',  format: 'currency' },
   { label: 'Team net',       key: 'net',      format: 'currency' },
   { label: 'Players',        key: 'players',  format: 'number' },
+  // ⚠ The money-in half of the money-tag report (mig 239). The Expenses export has carried a Tags
+  // column since 2026-08-15; without the same column here a coach pivoting a spreadsheet by tag
+  // sees every dollar that label COST and none of what it BROUGHT IN, which reads as a loss.
+  { label: 'Tags',           key: 'tags',     format: 'text' },
 ];
 
+/**
+ * @param tagById the loaded money-tag library, for turning each record's tag ids into names.
+ * Optional: a caller without it still gets every other column, with Tags blank.
+ */
 export function fundraiserRows(
   list: Array<{
     name: string; playerRebatePercent: number; startDate: string | null; endDate: string | null;
     totalRaised: number; totalCredits: number; teamNet: number; playerCount: number;
     kind?: 'fundraiser' | 'sponsor'; sponsorStatus?: 'pledged' | 'received' | null;
-    isActive?: boolean;
+    isActive?: boolean; tagIds?: string[];
   }>,
+  tagById: Map<string, { name: string }> = new Map(),
 ): ExportRow[] {
   return list.map(f => ({
     name: f.name,
@@ -247,6 +256,11 @@ export function fundraiserRows(
     credits: f.totalCredits,
     net: f.teamNet,
     players: f.playerCount,
+    // Names, not ids, joined the way the record shows them — same rule as the expense export.
+    tags: (f.tagIds ?? [])
+      .map(id => tagById.get(id)?.name)
+      .filter((n): n is string => !!n)
+      .join(', '),
   }));
 }
 
@@ -325,14 +339,25 @@ export const BVA_EXPORT_COLUMNS: ExportColumnDef[] = [
 ];
 
 export type BvaCategorySource = {
+  /** ⚠ CATEGORY → ITEM, matching the screen (owner ruling 2026-08-15). The file used to list a row
+   *  per budget LINE, named by whatever description was typed — so a spreadsheet could not be
+   *  reconciled against the plan any more than the report could. */
   categories: Array<{
-    categoryName: string; categoryEstimated: number; categoryActual: number; categoryVariance: number;
-    lines: Array<{ description: string; totalEstimated: number }>;
+    categoryName: string; budgeted: number; actual: number; variance: number;
+    /** False = nothing in this category was budgeted; the file leaves Budgeted blank, as the
+     *  screen does, rather than printing a zero that reads like a plan of $0. */
+    inPlan: boolean;
+    items: Array<{
+      itemName: string; budgeted: number; actual: number; variance: number;
+      inPlan: boolean; lineCount: number;
+    }>;
   }>;
   /** Estimate not yet itemized — real planned money, so it belongs in the file. */
   buffer: number;
-  /** Spending that matched no budget category. Omitting it would understate what was spent. */
-  unbudgetedActuals: Array<{ description: string; category: string | null; amount: number }>;
+  /** ⚠ NO LONGER ADDED AS EXTRA ROWS — it is reported as one figure. Every paid dollar, planned or
+   *  not, is inside a category row now (mig 240), so listing these again below the total was how a
+   *  spreadsheet came out with more spending in it than the team did. */
+  unbudgeted: number;
   effectiveBudget: number;
   totalActual: number;
   headroom: number;
@@ -359,27 +384,34 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
   const rows: ExportRow[] = [];
   for (const cat of data.categories ?? []) {
     rows.push({
-      item: cat.categoryName,
-      budgeted: cat.categoryEstimated,
-      actual: cat.categoryActual,
-      variance: cat.categoryVariance,
+      item: cat.inPlan ? cat.categoryName : `${cat.categoryName} (not budgeted)`,
+      // ⚠ BLANK, NEVER ZERO, where nothing was budgeted. A 0 in a spreadsheet is a plan of nothing;
+      // an empty cell is the absence of a plan, and those are different facts a treasurer acts on
+      // differently.
+      budgeted: cat.inPlan ? cat.budgeted : '',
+      actual: cat.actual,
+      variance: cat.variance,
     });
-    // Only the BUDGET is known per line — actuals match a category, not a line — so a line row
-    // is blank under actual and variance, exactly as it reads on screen.
-    for (const line of cat.lines) {
-      rows.push({ item: `  — ${line.description}`, budgeted: line.totalEstimated, actual: '', variance: '' });
+    // Every item, planned or not — the file carries the same two levels the screen does, so a
+    // coach can reconcile one against the other line for line.
+    for (const item of cat.items) {
+      const label = item.lineCount > 1 ? `${item.itemName} (${item.lineCount} lines)` : item.itemName;
+      rows.push({
+        item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}`,
+        budgeted: item.inPlan ? item.budgeted : '',
+        actual:   item.actual,
+        variance: item.variance,
+      });
     }
   }
   if (data.buffer > 0) {
     rows.push({ item: 'Not itemized yet (from your estimate)', budgeted: data.buffer, actual: '', variance: '' });
   }
-  for (const u of data.unbudgetedActuals ?? []) {
-    rows.push({
-      item: `Unbudgeted — ${u.description}${u.category ? ` (${u.category})` : ''}`,
-      budgeted: '', actual: u.amount, variance: '',
-    });
-  }
   rows.push({ item: 'Total', budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom });
+  // Named, not added. The rows above already contain every one of these dollars.
+  if (data.unbudgeted > 0) {
+    rows.push({ item: '  of which never budgeted', budgeted: '', actual: data.unbudgeted, variance: '' });
+  }
 
   // Expected funding travels with the export, NEGATED, so a spreadsheet ends on the same
   // "funded by players" figure the screen does.

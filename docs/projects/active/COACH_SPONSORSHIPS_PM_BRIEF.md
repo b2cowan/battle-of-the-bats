@@ -72,3 +72,57 @@ team default in Team settings → Money and confirm both new forms pre-fill from
 2. A treasurer can see fundraising and sponsorship as separate figures, in the tab and in the budget.
 3. A pledge is visible but never counted as money in hand.
 4. The standard split is typed once per season, not once per record.
+
+---
+
+# Follow-up pass — built 2026-08-15
+
+Seven things sat on top of the feature after it shipped. All seven are now built (owner directed a
+single pass, and confirmed the one open question: the tag field was wanted). Nothing here corrects
+what shipped.
+
+## What a coach gets
+
+**Two doors instead of one.** The Money overview listed *Fundraisers* once, for a tab that holds two
+different things. It now lists **Fundraisers** and **Sponsorships** separately, each opening the tab
+already showing just that kind — and the Sponsorships row appears even at zero ("None yet · add
+one"), so a coach who has never recorded a sponsor finds out they can.
+
+Because a row is a door, which kind you're looking at is now part of the **address**. Three things
+follow from that, all improvements: a filtered list can be bookmarked or sent to someone, **Back**
+steps through it, and the **export now matches what's on screen** rather than always dumping the
+whole season.
+
+**Money coming in can be tagged.** A fundraiser or sponsor gains the same Tags box an expense has,
+drawing on the same list of labels. Until now only spending could be tagged, so "Winter dome" could
+tell a coach what it cost and never what it brought in. Tags sit inside the record (not on the list
+row, which the row-density ruling keeps clear) and come through on the export.
+
+**The demo shows a sponsor.** A $750 sponsor now sits beside the bottle drive in the coach sandbox
+— deliberately club-wide and credited to nobody, because the demo's bills carry two stories the
+guided tour narrates by name and a credited sponsor could quietly clear either. One sentence joined
+the money tour step.
+
+**One word, one meaning.** The two places still saying "Fundraisers" for the whole tab now say
+*Fundraising*, and the help guide follows.
+
+## What it cost us to make safe
+
+Three things exist only so the next defect doesn't ship:
+
+- **Something automated now opens a sponsor.** Nothing ever had — the screen sweep opens a
+  *fundraiser*, which draws a different page. A sponsor is now swept, and a new test walks the money
+  rather than the markup: a **pledged** sponsor must add nothing to the money-in figure, nothing to
+  Budget vs. Actual, and nothing to any family's bill; marking it **received** must move all three;
+  marking it back must unwind all three. That is the test that would have caught the review's worst
+  finding before a person did.
+- **The budget-line guard now proves what it claimed.** It used to check whether a file *mentioned*
+  the kind of budget line, which is why it stayed green while five places were wrong. **On its first
+  run under the new rule it found two more.**
+- **Five places now say which season a record belongs to, not three.** The three we knew about are
+  fixed; a new guard found two nobody had listed.
+
+## What's left
+
+Owner QA — **ledger §30**. And the database change (migration 239) has to reach production before
+this code does.
