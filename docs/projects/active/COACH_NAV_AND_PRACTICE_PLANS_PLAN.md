@@ -651,6 +651,41 @@ green, and the baseline diff re-checked by set arithmetic — 26 entries changed
 `a·Practice plans`, every `detail` preserved, nothing added or removed. ⚠ Another session added
 three payment-request entries to the same file in the meantime; they are preserved untouched.
 
+## 6b. The two open rulings, taken *(owner, 2026-08-16)*
+
+### Chat stays below Money — DECIDED, no change
+
+Under §2's strict heat rule Chat probably outranks Money. **Owner ruling: leave the order alone.**
+The reasoning is the part worth keeping: **Chat is mainly used on a phone**, and on a phone Chat is
+already one of the four primary bottom-bar tabs — so the heat rule is *already satisfied where that
+heat actually is*. Promoting it in the desktop sidebar would optimise the surface it is least used on.
+Revisit only if coaches say otherwise.
+
+### The double-parent back link — dropped, and the finding was wrong about which pages
+
+**Owner ruling: drop the back links rather than referrer-tagging them; leave the sidebar as is.**
+
+⚠ **But "Money and Development have the double-parent shape" was FALSE**, and the grep the handoff
+demanded is what proved it. **Neither hub carries a back link at all** — Money's sub-pages point back
+to the Money hub, which is genuinely their parent, and Development's do the same. There was nothing
+to fix on either.
+
+**The real double-parent pages are the Insights reports**, and one is worse than the finding described:
+
+| Report | Ways in | Back link said | Action |
+| --- | --- | --- | --- |
+| Where is playing time going? | **FOUR** — Insights hub, the game console, an Overview tile, the team page's "Season insights →" | "Insights" | **Removed** |
+| Is development covered? | TWO — Insights hub, Development hub | "Insights" | **Removed** |
+| How are we doing? (results) | THREE — Insights hub, Season's End, the Attendance back link | conditional | **Left alone** — its back link is doing archive work, and `COACH_ARCHIVE_RAIL_PLAN.md` is about to redesign that page's season behaviour |
+| Who did we award? · Who did we play? | ONE each | "Insights" | **Kept** — single-parent, so the link is true |
+
+The rule applied is the one Phase 3 established for Attendance: **a back link is shown only where it
+is true.** Both hubs are one tap away in the sidebar for everyone else.
+
+⚠ The transferable bit, again: **the door count is a property of the codebase, not of the file you are
+reading.** Two documents named Money and Development; four links pointed at a page neither of them
+mentioned.
+
 ## 7. Links
 
 - Mockups: `https://claude.ai/code/artifact/ed56fe2c-0749-4c18-b504-3d3b3ee6c7c7`

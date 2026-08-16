@@ -1,0 +1,157 @@
+# Coach Portal — the archive rail: Insights learns which season it is describing
+
+**Status:** PROPOSAL, awaiting owner approval. No code written.
+**Mockups:** artifact `8dae1e81-79a4-4165-80c6-e421a6b02a21` (published 2026-08-16).
+**Origin:** the `/review` of `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md`, which rated this the single most
+valuable thing left on the rail. Handoff: `COACH_ARCHIVE_RAIL_AND_FOLLOWUPS_PROMPT.md` §A.
+**PM brief:** `COACH_ARCHIVE_RAIL_PM_BRIEF.md`.
+
+---
+
+## 1. The defect, stated precisely
+
+`/history/results` is the page the archive's **Insights** door opens. **It never reads `?year=`.**
+It decides what to show from one test — *does this coach still hold a live assignment on this team?* —
+which is a different question from the one the coach asked.
+
+That single test produces **two different wrong answers**:
+
+| Who | What they asked for | What they get |
+| --- | --- | --- |
+| A coach who **still runs the team** | 2024 | **This season's** record and game log, and `CoachPageHeader` is given no `season`, so **no archive chip renders to say so** |
+| A coach with **no live assignment** | 2024 | The finalized-games table **suppressed entirely** — only the multi-season summary list. The archive's results door shows no results |
+
+The **Insights hub** (`/history`) is worse: it holds no season resolver at all, and its live-assignment
+check fires first, so a closed-only coach hits a **"Team not found"** wall on the hub that describes
+the season they ran.
+
+⚠ **This is why Attendance had to keep an archive-only nav entry** while losing both live ones
+(nav plan Phase 3): the archive points Insights at the results page rather than the hub, and the
+results page carries no attendance door — so the nav item was the only route to a past season's
+attendance report.
+
+⚠ **Do NOT "fix" this by appending `?year=` to the links.** Tried and reverted in `004ca10c`. The
+destination reads no year, so the query made an unsolved problem *look* solved.
+
+---
+
+## 2. The recommendation
+
+> **Make Insights genuinely season-aware — hub included — and point the archive nav at the hub.**
+
+**Why this rather than the alternative.** The brief offered a second direction: a deliberately
+smaller, flatter set of record doors with the season stated on each. That was defensible when it was
+written; it stopped being the better answer once the back end was actually counted.
+
+**32 coach API routes are already on the season-read rail** (`lib/coach-season-read.ts`), and
+**six of the hub's seven doors read from routes that are on it.** The plumbing exists, the read
+safety is build-enforced, and the capabilities-as-of-that-season rule is already handled. Insights is
+simply the surface that never asks.
+
+The flatter alternative would mean **building a second information architecture for the archive** —
+new pages, new copy, a second thing to keep true — in order to show a coach **less** than the data
+already supports, and it would freeze the nav asymmetry permanently.
+
+### Rejected, with reasons
+
+| Option | Why not |
+| --- | --- |
+| A flatter set of record doors | Builds new surface area to deliver strictly less; keeps Attendance's archive-only nav entry forever. |
+| Query-string only (`?year=` on links) | Already tried and reverted — the destination reads no year. |
+| Leave it; the summary list is "enough" | The season's record is already shown as a summary line while the games behind it are unreachable. The door is approved and open; what is behind it is wrong. |
+
+---
+
+## 3. ⚠ The three governing questions, answered out loud
+
+Required by CLAUDE.md before anything joins the archive.
+
+**1 · Record or instrument?** Every Insights door is a **report** — it reads, never acts. The
+instruments that *produce* these records (marking attendance on the Schedule, editing a cost, running
+a tryout, writing a lineup) live elsewhere and stay live-season-only. The one to police is **Money**,
+whose hub is already an approved archive door and whose write verbs already resolve the ACTIVE year.
+
+**2 · Does the whole subtree carry the season?** §4 is that audit. It extends one level below every
+door — Season Wrapped, "practices you've run", one opponent's page, an award certificate. **Every one
+carries the year, or its door does not open.** This is the question that cost Chunk F its expensive
+defects, and it is the reason this plan is longer than its headline.
+
+**3 · Does it show what the coach could see AT THE TIME?** Capabilities come from the assignment
+recorded against *that* season — the rail already guarantees it. Three **live vocabularies** are the
+risk, and each is called out below: **game tags, award types, opponent notes.** A tag invented last
+week must not filter 2024's games as though it existed then.
+
+---
+
+## 4. The audit — every door, and what feeds it
+
+| Door | Reads from | On the rail? | What it needs |
+| --- | --- | --- | --- |
+| How are we doing? | `events` + `history` | ✅ | **The page to ask for a year.** The headline fix. |
+| Who's showing up? | `attendance` | ✅ | Nothing — season-aware already (nav plan Phase 2/3). |
+| Where did the money go? | `dues`, `budget*`, `expenses`, `fundraisers`, `money-summary` | ✅ | Nothing — approved archive door since Chunk F. |
+| Who did we award? | `awards`, `award-types` | ✅ | Page to pass the year. ⚠ award **types** are a live vocabulary. |
+| Is development covered? | `development/board` | ✅ | Almost nothing — **the page already builds and passes a season query**, and its child ("practices you've run") already carries the year. |
+| Who did we play? | `opponents` | ✅ | ⚠ **A ruling** — see §5. |
+| Where is playing time going? | `lineup-analytics` | ❌ **not on the rail** | Hidden in an archive until it joins the rail or is ruled live-only. The only genuinely new rail work here. |
+
+---
+
+## 5. Open questions the owner should settle before Phase 2 ships
+
+1. **Opponent notes in a past season.** Scouting notes are written *about an opponent*, not inside a
+   season. Showing today's notes on a 2024 page may be exactly right (the book is cumulative) or may
+   be governing rule 3 broken. **Recommendation: show them, with the page saying the notes are the
+   team's current book rather than a 2024 snapshot** — but this is the owner's call, not an
+   assumption.
+2. **Playing time (Phase 3).** Join the rail, or rule it live-only permanently? The figures are
+   recomputed from saved lineups, so "what the coach could see at the time" is genuinely hard here.
+3. **Game tags in an archive.** Proposal: **hidden**. The chips filter by a vocabulary the coach edits
+   today. (Recorded as a proposal rather than a question because the "at the time" rule answers it.)
+
+---
+
+## 6. Phases
+
+Each is shippable alone and leaves the archive better than it found it.
+
+### Phase 1 — the results page asks which season *(all the value is here)*
+
+- Read the season through the same hook the Attendance page uses; ask the events route for **that**
+  season (already supported).
+- Render the **archive chip** via `CoachPageHeader`'s existing `season` prop.
+- **Decide the page's shape from the SEASON, not from whether the coach holds a live assignment.**
+  Both defects in §1 close together, and a closed-only coach gets a game log for the first time.
+- "Past seasons" renders on the **live season only** — inside an archive the chip above already
+  switches seasons, and a second list is the same control drawn twice.
+- Tag chips hide in a record (§5.3).
+
+### Phase 2 — the hub reads the season and becomes the archive's door
+
+- The hub resolves the season; the "Team not found" wall goes for closed-only coaches.
+- Each tile carries the year. **Playing time hides** rather than dead-ends — CLAUDE.md's
+  "hide the entry point" rule.
+- The archive nav points **Insights → `/history`** (the hub), not the results page.
+- **Attendance leaves the archive nav** — reachable through Insights again, exactly as it is live.
+  Both navs tell one story.
+- ⚠ **This phase edits the build-enforced lists** in `tests/unit/coach-season-write-guard.test.ts`
+  (`APPROVED_ARCHIVE_DOORS` loses `Attendance`). **That edit failing the build is the decision point,
+  by design** — it is not an obstacle to route around.
+
+### Phase 3 — playing time: join the rail, or rule it live-only
+
+Deliberately separated so phases 1 and 2 are not held up by a question that deserves its own answer.
+
+---
+
+## 7. Risks
+
+1. **Removing Attendance from the archive nav is only safe once the hub is the door.** Doing it
+   before Phase 2 lands repeats the exact defect Phase 3 of the nav project caught and avoided.
+2. **The layout fixture has no completed season** — so nothing here can be rendered-verified by the
+   sweep. Owner QA on a real finished season is the only proof, and it is the same gap that makes
+   ledger §32 part D the highest-value QA step outstanding.
+3. **Live vocabularies drifting into records** (tags, award types, opponent notes) — the failure is
+   silent and looks like data, not like a bug.
+4. **A route joining the rail must be read-only.** The build-enforced write guard covers this; do not
+   weaken it to make a page convenient.

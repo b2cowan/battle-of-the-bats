@@ -29,7 +29,21 @@ rather than producing a mockup of a database change.
 
 ---
 
-## A. The archive rail — the largest and most valuable item
+## A. The archive rail ✅ PROPOSED 2026-08-16 — awaiting owner approval
+
+**Recommendation, mockups and plan are done.** `COACH_ARCHIVE_RAIL_PLAN.md` +
+`COACH_ARCHIVE_RAIL_PM_BRIEF.md`; mockups at artifact `8dae1e81-79a4-4165-80c6-e421a6b02a21`.
+
+**The recommendation is season-aware Insights (hub included), and the reason the choice stopped being
+close is countable:** 32 coach API routes are already on the season-read rail, and **six of the hub's
+seven doors read from routes that are on it** — the Development report's page even builds and passes a
+season query already. Insights is the one surface that never asks. The flatter alternative would have
+meant *building* a parallel archive IA to show a coach **less** than the data already supports.
+The only door without season plumbing is **playing time**, which the plan hides in an archive rather
+than dead-ends, and defers to its own phase. **No code written — three owner decisions listed in the
+plan's §5.**
+
+## A (original). The archive rail — the largest and most valuable item
 
 **The finding.** `Insights` is an approved archive door (`APPROVED_ARCHIVE_DOORS`). In a finished
 season the nav points it at `/history/results`. **That page never reads `?year=`.** It decides what
@@ -62,7 +76,15 @@ point of it.
 **⚠ Do not "fix" this by appending `?year=` to links.** That was tried and reverted in `004ca10c`:
 the destination reads no year, so the query only made an unsolved problem *look* solved.
 
-## B. The double-parent pattern — Money and Development *(owner ruling needed)*
+## B. The double-parent pattern ✅ RULED + DONE 2026-08-16 — and the premise was wrong
+
+**Owner ruling: drop the back links, leave the sidebar as is.** Applied — but the enumeration this
+section demanded proved **Money and Development do not have the shape**: neither hub carries a back
+link at all. The real double-parent pages are the Insights *reports*, and **"Where is playing time
+going?" has FOUR doors**, not two. Written up in `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §6b.
+**The warning below was right and is why this was caught — keeping it.**
+
+## B (original). The double-parent pattern — Money and Development *(owner ruling needed)*
 
 Attendance had two front doors and a back link that asserted one. Phase 3 retired that by giving it
 a single parent. **Money and Development still have the shape** — each is both a sidebar item and a
@@ -79,7 +101,14 @@ whole codebase, not the file you edited. Before proposing anything, **grep every
 `/accounting` and `/development`** and enumerate the real door count. Attendance was asserted
 single-parented in three documents while a second door sat in the Roster page header.
 
-## C. Chat above Money? *(owner ruling needed, deliberately not taken)*
+## C. Chat above Money? ✅ RULED 2026-08-16 — no change
+
+**Owner ruling: leave the order as is.** Chat is mainly used on a phone, where it is already one of
+the four primary bottom-bar tabs — so the heat rule is satisfied where the heat actually is, and
+promoting Chat in the *desktop* sidebar would optimise the surface it is least used on. Revisit only
+on coach feedback. Recorded in `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §6b.
+
+## C (original). Chat above Money? *(owner ruling needed, deliberately not taken)*
 
 Phase 4 ordered the sidebar by how often a coach opens each group: **Season → Progress → Money →
 Communication → Team → Team admin**. Under a strict reading of that rule, **Chat probably outranks
