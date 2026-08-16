@@ -208,15 +208,19 @@ export default function CoachesAttendancePage({
           "Insights" at `/history/results`, because the Insights hub is live-season-only. This
           mirrors it exactly, so one label always leads where the coach actually was.
 
-          ⚠⚠ AND IT CARRIES NO `?year=`, DELIBERATELY (/review 2026-08-15). An earlier version
-          appended `${seasonQuery}` here, which LOOKED like it carried the season and did not:
-          `/history/results` reads no year param at all — it decides what to show from whether
-          the coach still has a LIVE assignment on the team. For a coach who is still coaching
-          this team, that page answers with the CURRENT season's results and renders no season
-          chip to say so. Appending an inert query dressed that up as solved. The destination
-          being season-blind is a real defect one level below an approved archive door — it is
-          recorded as a follow-up in the plan, and it is not fixed by decorating the link. */}
-      <CoachBackLink href={page.isReadOnly ? `${base}/history/results` : `${base}/history`}>
+          ⚠⚠ AND IT NOW CARRIES `?year=` AGAIN — the reversal is the point, so here is both halves.
+          On 2026-08-15 a `/review` REMOVED this query, correctly: `/history/results` read no year
+          at all back then, deciding what to show from whether the coach still held a LIVE
+          assignment, so the query LOOKED like it carried the season and did not. Decorating a link
+          whose destination ignores it is worse than leaving it bare, because it reads as fixed.
+          On 2026-08-16 the destination learned to read the year (archive rail Phase 1), which
+          makes the bare link the defect instead: a coach reading a PAST season's attendance would
+          tap "Insights" and land on the LIVE season's results — the very cross-season mix-up that
+          phase exists to end, re-entered through a link nobody re-examined.
+          ⚠ The lesson worth keeping: **a deliberate omission is only as durable as the reason for
+          it.** This comment named its reason, which is the only thing that made the reversal
+          findable when the reason expired. */}
+      <CoachBackLink href={page.isReadOnly ? `${base}/history/results${seasonQuery}` : `${base}/history`}>
         Insights
       </CoachBackLink>
 

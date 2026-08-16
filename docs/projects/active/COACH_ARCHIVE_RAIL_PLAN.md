@@ -169,6 +169,66 @@ before.
 - ⚠ **The archive path itself is NOT rendered-verified** — there is no finished season to render.
   Owner QA is the only proof, and it is the same walk as ledger §32 part D.
 
+#### ⚠⚠ What `/review` found afterwards (2026-08-16) — including a proposal of this plan's that was wrong
+
+Four lenses. **Access came back clean** — the season list is built only from the coach's own
+assignments so it cannot be forged, an unknown `?year=` falls back to the coach's live season and is
+never forwarded to the API, and the events route independently re-resolves capabilities from the
+assignment row recorded against the *requested* season and 403s one the coach never coached. Nobody
+can reach a season they could not before.
+
+**1. ⚠⚠ The page could strand itself on "Loading report…" — permanently.** The load key guarded what
+was **painted**, never what was **written**. Switch to a slow season, switch again to a fast one, and
+the slow response lands last and stamps *its* season into `loadedFor`; the correct table already on
+screen reverts to a spinner, and **nothing re-fires**, because no dependency has changed. Phase 1
+created the trigger: before it, the season could not re-run the load at all, so the structural gap
+had no way to fire. The sibling hubs had adopted the full `isStale()` shape a day earlier — **this
+page copied the render half and not the write half.** Every write is now guarded and the effect
+cancels its previous run.
+
+**2. The same gap, reached through the tolerated 403/404 branch.** When the events read is legitimately
+refused, the writes were skipped while `loadedFor` still advanced — leaving the **previous** season's
+game log under the new season's chip, with no error. State is now cleared rather than left: absent
+data reads as absent.
+
+**3. ⚠⚠ A link one level down, and this project's own defect class.** The Attendance page's read-only
+back link deliberately carried **no** `?year=`, correctly, because on 2026-08-15 the destination read
+no year and appending one only made an unsolved problem look solved. **Phase 1 inverted that premise
+silently:** the bare link now lands a past-season reader on the LIVE season's results — the exact
+mix-up this phase exists to end, re-entered through a link nobody re-examined. Fixed, both halves
+recorded. ⚠ **A deliberate omission is only as durable as the reason stated with it** — the stated
+reason is the only thing that made this findable when it expired.
+
+**4. ⚠⚠ And a test was certifying it.** `coach-frozen-season-smoke.spec.ts` — the ONLY spec with a
+finished-season fixture — asserted that link must have no `?year=`, with a comment explaining the
+now-expired reasoning. It passed happily. **A test can certify a defect as correct the moment its
+premise expires.** Updated, and it now pins the year explicitly.
+
+**5. ⚠ §6/§02's "Past seasons is live-season only" was WRONG, and was overturned before the owner saw
+it.** The argument was that the season chip is already a switcher. That mistook the section for one:
+it is the team's **scrapbook** — per-season record, roster size, tryout acceptance, money summaries,
+a Season Wrapped link — and it belongs to the TEAM, not to the season on screen. Three concrete costs
+against one aesthetic argument: **Season's End links straight to it as "Compare every season"**, a
+door that then succeeded while quietly not delivering; reaching another closed year's Wrapped went
+from one step to two; and the fetch feeding it was still being made and discarded. **It renders in
+every season.** The mockup's §02 pin C is superseded. *(The related worry that hiding it orphaned
+Season Wrapped was **refuted** — the archive nav's "Season's End" carries the season correctly.)*
+
+**Verified after the fixes:** typecheck clean · **1986 tests pass** · lint clean · rendered check over
+`coach-history-results` + `coach-attendance` returns **2 findings, both byte-identical to this
+morning's pre-change sweep** (the un-baselined `a·Insights @768`), so none belongs to this work.
+
+#### Two pre-existing items this review surfaced — NOT from this change
+
+- **Cross-year scrapbook exposure.** The multi-season summary (record, roster size, tryout
+  acceptance) is served to any coach who ever held an assignment on the team, for **every** season —
+  including years before or after their own tenure. Money figures *are* correctly scoped per year.
+  Worth an owner ruling on what "their history" means; unchanged by this work, which narrows nothing
+  and widens nothing.
+- **The help drawer on this page describes the Insights HUB**, not the game log in front of the
+  coach, and directs them at a door that does not exist in a finished season. **Phase 2 makes that
+  door exist**, which resolves it properly — folded in there rather than patched here.
+
 ### Phase 2 — the hub reads the season and becomes the archive's door
 
 - The hub resolves the season; the "Team not found" wall goes for closed-only coaches.

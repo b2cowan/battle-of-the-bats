@@ -91,10 +91,43 @@ describe('the archive results page asks which season', () => {
       'game tags are a LIVE vocabulary the coach edits today; offering them as a filter over a past '
       + 'season fails "what the coach could see at the time" silently.',
     );
+  });
+
+  /**
+   * ⚠ THE ASSERTION THAT WAS HERE ARGUED THE OPPOSITE, AND WAS WRONG — kept as a note rather than
+   * deleted, because the reversal is the lesson. It required "Past seasons" to be hidden in a
+   * record, on the reasoning that the season chip above is already a switcher. That mistook the
+   * section for a switcher: it is the team's SCRAPBOOK, it belongs to the team rather than to the
+   * season on screen, and Season's End links straight to it as "Compare every season" — a door
+   * that then succeeded while quietly not delivering. `/review` overturned it the same day, before
+   * an owner ever saw it. **A test can pin a decision; it cannot make the decision right.**
+   */
+  it('shows the team scrapbook in every season', () => {
+    assert.equal(
+      /page\.isReadOnly \? null : \(\s*<section/.test(source), false,
+      'the "Past seasons" section must render in a record too — Season`s End advertises it as '
+      + '"Compare every season", and hiding it made that door under-deliver silently.',
+    );
+  });
+
+  /**
+   * ⚠ The render guard alone was not enough: it guards what is PAINTED, never what is WRITTEN, so
+   * a slow response for an abandoned season could stamp its own key over the correct one and strand
+   * the page on "Loading report…" for good — nothing in the effect's deps changes, so it never
+   * re-fires. Found by `/review` 2026-08-16; the same shape the Lineups and Practice hubs adopted.
+   */
+  it('guards every write against a stale run, not just the render', () => {
     assert.ok(
-      /page\.isReadOnly \? null : \(\s*<section/.test(source),
-      'the "Past seasons" list is the live season only — inside a record the season chip above is '
-      + 'already the switcher, and two of them is one too many.',
+      /const load = useCallback\(async \(isStale: \(\) => boolean = \(\) => false\)/.test(source),
+      'load() must take an isStale predicate — the render guard cannot stop a stale run writing.',
+    );
+    assert.ok(
+      /if \(!isStale\(\)\) \{\s*setLoadedFor\(loadKey\);/.test(source),
+      'a stale run must not stamp its own season into loadedFor — that is what strands the page.',
+    );
+    assert.ok(
+      /return \(\) => \{ cancelled = true; \};/.test(source),
+      'the effect must cancel its previous run.',
     );
   });
 

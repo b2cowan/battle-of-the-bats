@@ -456,10 +456,16 @@ test.describe('switching seasons in-app repaints the data, not just the label', 
 
     // ⚠ And the back link must NOT point at the live-season Insights hub, which would answer a
     // past-year header with THIS year's numbers. It mirrors the archive nav: the results page.
-    // No `?year=` — that page reads none, and appending one dressed an unsolved problem up as
-    // solved (/review 2026-08-15).
+    //
+    // ⚠⚠ IT MUST NOW CARRY THE YEAR, AND THIS ASSERTION ONCE PROVED THE OPPOSITE. Until
+    // 2026-08-16 it required NO `?year=`, because the destination read none — appending one
+    // dressed an unsolved problem up as solved (/review 2026-08-15). Archive rail Phase 1 made
+    // that page read the year, which inverted the requirement: a bare link now lands a
+    // past-season reader on the LIVE season's results. **A test can certify a defect as correct
+    // the moment its premise expires** — this one did, and only re-reading its own stated reason
+    // caught it. State the reason, always.
     await expect(main(page).getByRole('link', { name: 'Insights' }))
-      .toHaveAttribute('href', /\/history\/results$/);
+      .toHaveAttribute('href', new RegExp(`/history/results\\?year=${pastYearId}$`));
 
     /**
      * ⚠⚠ NO INSTRUMENT INSIDE A RECORD (CLAUDE.md rule 1; /review 2026-08-15 found this live).

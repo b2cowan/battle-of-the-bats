@@ -92,7 +92,21 @@ export default function CoachesResultsReportPage({
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * ⚠⚠ EVERY WRITE IS GUARDED, not just the render (added by `/review` 2026-08-16).
+   *
+   * The `loadedFor`/`loadKey` pair guards what is PAINTED. It does not guard what is WRITTEN — and
+   * once the season became a re-fire trigger, that gap became reachable in a routine flow: switch
+   * to a slow season, switch again to a fast one, and the slow response lands last. Its `finally`
+   * then stamps `loadedFor` with ITS season, which no longer matches the season on screen, so the
+   * correct table the coach was already reading flips back to "Loading report…" — and stays there,
+   * because nothing in `load`'s deps has changed, so the effect never re-fires. A page that paints
+   * the right answer and then takes it away for good.
+   *
+   * Same `isStale()` shape the Lineups and Practice hubs adopted a day earlier for the same class
+   * of bug. This page had only the render half of it.
+   */
+  const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
     setError('');
     try {
@@ -113,27 +127,34 @@ export default function CoachesResultsReportPage({
       const eventsClosedOut = !evRes.ok && (evRes.status === 403 || evRes.status === 404);
       if (!evRes.ok && !eventsClosedOut) throw new Error();
       if (!hiRes.ok && !evRes.ok) throw new Error();
-      if (evRes.ok) {
-        const ev = await evRes.json();
-        setEvents(ev.events ?? []);
-        setTeamTags(ev.tags ?? []);
-        setTagsByEventId(ev.tagsByEventId ?? {});
-      }
-      if (hiRes.ok) {
-        const hi = await hiRes.json();
-        setHistory(hi.history ?? []);
-      }
+      const ev = evRes.ok ? await evRes.json() : null;
+      const hi = hiRes.ok ? await hiRes.json() : null;
+      if (isStale()) return;
+      // ⚠ CLEARED, not left alone, when the events read is refused. `eventsClosedOut` is a
+      // legitimate state rather than an error, but skipping the writes entirely left the PREVIOUS
+      // season's games in state while `loadedFor` said the new one had landed — which is the wrong
+      // season's game log under the right season's chip, silently. Absent data reads as absent.
+      setEvents(ev?.events ?? []);
+      setTeamTags(ev?.tags ?? []);
+      setTagsByEventId(ev?.tagsByEventId ?? {});
+      if (hi) setHistory(hi.history ?? []);
     } catch {
-      setError('This report couldn’t be loaded — refresh to try again.');
+      if (!isStale()) setError('This report couldn’t be loaded — refresh to try again.');
     } finally {
-      setLoadedFor(loadKey);
-      setLoading(false);
+      // ⚠ A stale run must not stamp its own season here — that is the whole defect.
+      if (!isStale()) {
+        setLoadedFor(loadKey);
+        setLoading(false);
+      }
     }
   }, [orgSlug, teamId, seasonQuery, loadKey]);
 
   useEffect(() => {
     if (ctxLoading) return;
-    void Promise.resolve().then(load);
+    let cancelled = false;
+    const isStale = () => cancelled;
+    void Promise.resolve().then(() => load(isStale));
+    return () => { cancelled = true; };
   }, [ctxLoading, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
@@ -307,10 +328,23 @@ export default function CoachesResultsReportPage({
             </>
           )}
 
-          {/* ⚠ THE LIVE SEASON ONLY (2026-08-16). Inside a record the coach is already standing IN
-              a season and the chip above switches between them — a second list of seasons below is
-              the same control drawn twice, and the one that doesn't say which season you are on. */}
-          {page.isReadOnly ? null : (
+          {/**
+            * ⚠⚠ RENDERS IN EVERY SEASON — and the proposal that it should not was WRONG, overturned
+            * by this project's own `/review` (2026-08-16) before it reached an owner.
+            *
+            * The argument for hiding it in a record was that the season chip above already switches
+            * seasons, so a list of seasons below is the same control twice. That mistook what this
+            * section is. It is not a switcher: it is the team's SCRAPBOOK — per-season record,
+            * roster size, tryout acceptance, money summaries and a Season Wrapped link — and it
+            * belongs to the TEAM rather than to the season on screen. Three costs, each found
+            * independently:
+            *   · **Season's End links here as "Compare every season."** That door exists FOR this
+            *     list; hiding it let the link succeed while quietly not delivering — worse than a
+            *     404, which at least announces itself.
+            *   · Reaching another closed year's Season Wrapped became two steps instead of one.
+            *   · The `/history` fetch that feeds it was still being issued and then thrown away.
+            * The aesthetic argument lost to three concrete ones.
+            */}
           <section style={{ marginTop: '1.75rem' }}>
             <p className={styles.sectionKicker}>Past seasons</p>
             {history.length === 0 ? (
@@ -377,7 +411,6 @@ export default function CoachesResultsReportPage({
               })
             )}
           </section>
-          )}
         </>
       )}
     </div>
