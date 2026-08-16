@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
-import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
@@ -50,11 +51,24 @@ export default function CoachesResultsReportPage({
   const { orgSlug, teamId } = use(paramsPromise);
   const { assignments, closedAssignments, loading: ctxLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
-  // Closed-season access (Batch 3, P0 #1): this archive is one of the read-only surfaces a
-  // coach keeps after their season closes — the /history API admits closed assignments too.
-  // Shared closed-state predicate (lib/coaches-context.tsx), same rule as the navs.
   const closedAssignment = resolveClosedAssignment(assignments, closedAssignments, teamId);
-  const isClosedOnly = !assignment && !!closedAssignment;
+  /**
+   * ⚠⚠ WHICH SEASON — the whole point of this page's 2026-08-16 rework (archive rail Phase 1).
+   *
+   * This page used to decide what to show from `!assignment && !!closedAssignment` — "does this
+   * coach still hold a LIVE assignment?" — which is a different question from the one the coach
+   * asked. One missing question produced TWO wrong answers: a coach who still ran the team opened
+   * a past season and got THIS season's record and game log with no chip to say so, while a coach
+   * with no live assignment had the game log suppressed outright, so the archive's own results
+   * door showed no results.
+   *
+   * The season now decides, and WHO is reading decides nothing. `page.capabilities` are that
+   * season's (governing rule 1) and `page.isReadOnly` is derived from the SEASON, never from the
+   * team — a rolled-forward team is not itself closed.
+   */
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? closedAssignment?.teamSport ?? DEFAULT_SPORT);
   const scoreUnit = sportPack.score.unit.toLowerCase();
@@ -63,7 +77,14 @@ export default function CoachesResultsReportPage({
   const [history, setHistory] = useState<HistoryYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // Guards the stale-team flash on client-side team switches (page doesn't remount).
+  /**
+   * Guards the stale flash on client-side switches — the page doesn't remount for either.
+   * ⚠ The key carries the SEASON as well as the team (2026-08-16). The season switcher rewrites
+   * this page's own URL with `?year=`, so without the season in the key a past year's header
+   * would sit above the live season's games until the new fetch landed — the same defect the
+   * Lineups and Practice hubs were both fixed for a day earlier.
+   */
+  const loadKey = `${teamId}|${seasonQuery}`;
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   // Coach Tags: the team's game-tag library + which tags each event carries (both already
   // returned by the events GET — this report is the first consumer of them).
@@ -76,13 +97,18 @@ export default function CoachesResultsReportPage({
     setError('');
     try {
       const [evRes, hiRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
+        // ⚠ The season goes to the API too, not just onto the header. `events` has been on the
+        // season-read rail since Chunk F — it could always serve a past season; this page simply
+        // never asked. `history` is deliberately year-less: it IS the cross-season summary.
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`),
       ]);
-      // A team with NO active season 403/404s on /events (that route is active-year-scoped
-      // by design) — that's the closed-season state, not a failure: the past-seasons archive
-      // below is the whole point of this page then. Any OTHER events failure (a 500 on an
-      // active team) is still a real error — swallowing it would render a misleading
+      // A team with NO season resolvable at all (no active year, and no `?year=` asked for)
+      // 403/404s on /events — that's a legitimate state, not a failure: the past-seasons archive
+      // below is the whole point of this page then. ⚠ It is now much RARER than it was: with a
+      // season on the request the route resolves that season and answers normally, which is what
+      // gives a coach with no live assignment a game log for the first time. Any OTHER events
+      // failure (a 500) is still a real error — swallowing it would render a misleading
       // "No results yet" over a team that has played games (adversarial review).
       const eventsClosedOut = !evRes.ok && (evRes.status === 403 || evRes.status === 404);
       if (!evRes.ok && !eventsClosedOut) throw new Error();
@@ -100,10 +126,10 @@ export default function CoachesResultsReportPage({
     } catch {
       setError('This report couldn’t be loaded — refresh to try again.');
     } finally {
-      setLoadedFor(teamId);
+      setLoadedFor(loadKey);
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery, loadKey]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -111,7 +137,9 @@ export default function CoachesResultsReportPage({
   }, [ctxLoading, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment && !closedAssignment) {
+  // ⚠ `hasAccess` covers live AND archived assignments. The old test here was the live one only,
+  // which is how the hub next door still tells a coach their own finished season's team "not found".
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -135,7 +163,13 @@ export default function CoachesResultsReportPage({
   // scope), so a chip's count always matches how many rows selecting it will show; a tag with zero
   // finalized games simply never gets a chip (self-hides per the plan). Derived every render
   // (not synced via an effect) so a tag deleted/merged elsewhere just quietly stops matching.
-  const tagChips = teamTags
+  //
+  // ⚠ HIDDEN IN A RECORD (2026-08-16). Game tags are a LIVE vocabulary the coach edits today —
+  // renaming, merging and deleting them as the season goes. Offering 2024's games filtered by a
+  // tag invented last week is governing rule 3 broken ("what the coach could see AT THE TIME"),
+  // and it fails silently: every row renders, the counts add up, and the page is quietly
+  // answering a question nobody could have asked that year.
+  const tagChips = page.isReadOnly ? [] : teamTags
     .map(tag => ({ tag, count: finalized.filter(e => (tagsByEventId[e.id] ?? []).includes(tag.id)).length }))
     .filter(c => c.count > 0)
     .sort((a, b) => a.tag.name.localeCompare(b.tag.name));
@@ -158,32 +192,46 @@ export default function CoachesResultsReportPage({
 
   return (
     <div className={styles.page}>
-      {/* A closed-only team's Insights hub is season-live — its back door goes to Season's End. */}
-      <CoachBackLink href={isClosedOnly ? `${base}/season-end` : `${base}/history`}>{isClosedOnly ? "Season's End" : 'Insights'}</CoachBackLink>
+      {/* ⚠ NO back link in a record. In a finished season the nav points Insights straight HERE,
+          so this page is the destination rather than a drill-in — a link claiming a parent is the
+          double-parent defect in its original form. The Insights hub is still live-season-only;
+          archive-rail Phase 2 makes it season-aware and this link comes back for every season. */}
+      {page.isReadOnly ? null : <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>}
       {/* Page-header ruling 2026-08-11: the conditional line is deleted — the question in the h1
           already says what the page answers, and the results list below shows its own scope.
           Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page
           is a nav destination in its own right — the /history hub that carries the icon is not
           reachable at all. On a live season it is a drill-in and inherits the hub's guide; one
           icon covers both readings rather than two rules. */}
+      {/* ⚠ The season chip (2026-08-16). The header has been able to draw it since Chunk F — this
+          page was simply never handed a season, so a coach reading a past year had nothing on
+          screen telling them which year it was. The chip also switches seasons in place. */}
       <CoachPageHeader
         icon={Trophy}
         title="How are we doing?"
         helpLabel="Insights"
+        season={page.season}
+        teamBase={page.teamBase}
         help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
       />
 
-      {loading || loadedFor !== teamId ? (
+      {loading || loadedFor !== loadKey ? (
         <div className={styles.loadingState}>Loading report…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : (
         <>
-          {isClosedOnly ? null : finalized.length === 0 ? (
+          {finalized.length === 0 ? (
             <div className={styles.emptyState}>
               <Trophy size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
-              <p className={styles.emptyStateTitle}>No results yet</p>
-              <p className={styles.emptyStateSub}>Once a game gets a score, it shows up here.</p>
+              {/* ⚠ Past tense in a record, and no promise of anything arriving — nothing will.
+                  Same rule the attendance report took on the same day. */}
+              <p className={styles.emptyStateTitle}>{page.isReadOnly ? 'No results were recorded' : 'No results yet'}</p>
+              <p className={styles.emptyStateSub}>
+                {page.isReadOnly
+                  ? 'No game in this season was finalized with a score.'
+                  : 'Once a game gets a score, it shows up here.'}
+              </p>
             </div>
           ) : (
             <>
@@ -259,7 +307,11 @@ export default function CoachesResultsReportPage({
             </>
           )}
 
-          <section style={{ marginTop: isClosedOnly ? 0 : '1.75rem' }}>
+          {/* ⚠ THE LIVE SEASON ONLY (2026-08-16). Inside a record the coach is already standing IN
+              a season and the chip above switches between them — a second list of seasons below is
+              the same control drawn twice, and the one that doesn't say which season you are on. */}
+          {page.isReadOnly ? null : (
+          <section style={{ marginTop: '1.75rem' }}>
             <p className={styles.sectionKicker}>Past seasons</p>
             {history.length === 0 ? (
               <p className={styles.insightsQuietText}>
@@ -325,6 +377,7 @@ export default function CoachesResultsReportPage({
               })
             )}
           </section>
+          )}
         </>
       )}
     </div>

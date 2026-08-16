@@ -1,6 +1,7 @@
 # Coach Portal — the archive rail: Insights learns which season it is describing
 
-**Status:** PROPOSAL, awaiting owner approval. No code written.
+**Status:** **Phase 1 BUILT on dev 2026-08-16** (owner QA = ledger §35). Phases 2–3 proposed,
+awaiting the owner decisions in §5.
 **Mockups:** artifact `8dae1e81-79a4-4165-80c6-e421a6b02a21` (published 2026-08-16).
 **Origin:** the `/review` of `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md`, which rated this the single most
 valuable thing left on the rail. Handoff: `COACH_ARCHIVE_RAIL_AND_FOLLOWUPS_PROMPT.md` §A.
@@ -115,7 +116,7 @@ week must not filter 2024's games as though it existed then.
 
 Each is shippable alone and leaves the archive better than it found it.
 
-### Phase 1 — the results page asks which season *(all the value is here)*
+### ✅ Phase 1 — the results page asks which season *(BUILT on dev 2026-08-16)*
 
 - Read the season through the same hook the Attendance page uses; ask the events route for **that**
   season (already supported).
@@ -125,6 +126,48 @@ Each is shippable alone and leaves the archive better than it found it.
 - "Past seasons" renders on the **live season only** — inside an archive the chip above already
   switches seasons, and a second list is the same control drawn twice.
 - Tag chips hide in a record (§5.3).
+
+#### What was built
+
+The page resolves its season from `?year=` through the same hook the Attendance page uses, sends it
+to the events read, renders the archive chip, and — the actual fix — **decides its shape from the
+SEASON, never from whether the coach holds a live assignment.** `isClosedOnly` is gone entirely; the
+access test is now `page.hasAccess` (live **or** archived).
+
+**Two things joined it by applying the rule rather than inventing:**
+
+- **The stale-response guard was keyed on the team alone.** The season switcher rewrites *this
+  page's own URL* with `?year=` and the page does not remount — so a past year's header would have
+  sat above the live season's games until the new fetch landed. Exactly the defect the Lineups and
+  Practice hubs were fixed for a day earlier; this page had the same hole and nobody had looked.
+  The key now carries the season.
+- **The back link is gone in a record.** In a finished season the nav points Insights straight at
+  this page, so it is the destination rather than a drill-in — a link claiming a parent is the
+  double-parent defect in its original form. It returns for every season once Phase 2 makes the hub
+  season-aware.
+
+**And the copy stops promising a future in a record:** "No results yet / Once a game gets a score, it
+shows up here" becomes "No results were recorded / No game in this season was finalized with a
+score." Nothing will fill in — the season is over. Same rule the attendance report took the day
+before.
+
+#### Evidence
+
+- **`tests/unit/coach-archive-results-season.test.ts` — 6 assertions, and all 8 of its underlying
+  properties were verified to FAIL against the pre-change page.** A green test never shown to fail
+  is not evidence, and this one could not be written any other way: the failure is a *missing
+  argument*, not a wrong one, so no type can catch it.
+- ⚠ **It asserts over the source, deliberately.** This is a client component whose behaviour depends
+  on the URL and the coaches context, and **the layout fixture has no completed season to render it
+  against.** That fixture gap is precisely how the defect survived — so the guard must not depend on
+  the fixture that could not see it.
+- Typecheck clean · **1984 tests pass** · lint clean.
+- Rendered sweep over `coach-history-results` + `coach-history`: **no finding belongs to this
+  change.** The 5 reported all reproduce in the morning's pre-change sweep — `a·Insights @768` was
+  already an un-baselined finding (recorded in the nav plan's Phase 2 evidence), and the two dues
+  links on the hub are the money session's in-flight work.
+- ⚠ **The archive path itself is NOT rendered-verified** — there is no finished season to render.
+  Owner QA is the only proof, and it is the same walk as ledger §32 part D.
 
 ### Phase 2 — the hub reads the season and becomes the archive's door
 

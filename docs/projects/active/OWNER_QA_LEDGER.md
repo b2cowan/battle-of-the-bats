@@ -5287,6 +5287,62 @@ floor — recorded as a deliberate exception, because it is drawn once per row a
 a full-size control on a twelve-row list out-shouts the figures beside it. It **is** raised at tablet
 widths, and on a phone it is already a full-width labelled button.
 
+## §35 · A past season shows that season
+
+**Built on dev 2026-08-16 · not on production · no migration, no new API, no route change.**
+Plan: `COACH_ARCHIVE_RAIL_PLAN.md` Phase 1. Mockups: artifact `8dae1e81`, §01–§02.
+
+**Why this section exists:** opening a finished season and tapping **Insights** gave you a page that
+never asked which season it was meant to describe. It answered from whether you still coach the team
+— a different question entirely — so a coach who stayed saw **this** season's games under a past
+year, and a coach who had moved on saw **no games at all**.
+
+⚠ **THIS IS THE MOST IMPORTANT QA IN THE LEDGER RIGHT NOW, because nothing automated can see it.**
+The rendered test fixture has **no completed season**, which is exactly how the defect survived. Your
+eyes are the only proof. Walk it together with **§32 part D**, which has the same fixture gap.
+
+**Fixture:** a team with at least one **completed or archived** season *and* games with scores in it.
+Ideally do part C with a second sign-in that no longer coaches that team.
+
+### A · The season is named, and it is the one you asked for
+
+- [ ] Open a team, switch to a **past season**, open **Insights**.
+- [ ] A **season chip** appears beside the page title naming that season (e.g. *2024 Season ·
+      Archived*). ⚠ Before this change there was no chip at all — if you don't see one, stop and say so.
+- [ ] The games listed are **that season's**, and the record line above them matches. Cross-check a
+      couple against what you remember, or against Season's End for the same year.
+- [ ] Change season from the chip. The page reloads to the other season's games, and **the header and
+      the table never disagree** — no flash of one season's games under the other's name.
+
+### B · What a record doesn't offer
+
+- [ ] In a past season there is **no back link** at the top. (Insights points straight here in an
+      archive, so there is nothing above it to go back to. It returns in the next phase.)
+- [ ] There are **no tag filter chips** in a past season. Tags are a list you edit today, so
+      filtering an old season by them would be answering a question nobody could have asked then.
+- [ ] There is **no "Past seasons" list** at the foot — you are already in a season, and the chip
+      above switches between them.
+- [ ] If the season genuinely had no scored games, the message reads in the **past tense** ("No
+      results were recorded"), not "Once a game gets a score, it shows up here."
+
+### C · ⚠ The coach who moved on — the half that was completely broken
+
+- [ ] Sign in as someone who coached the team **that season but does not coach it now** (an assistant
+      from last year). Open the team's past season → **Insights**.
+- [ ] **They see the season's game log.** Before this change the whole table was suppressed for them —
+      the archive's results door showed no results.
+- [ ] They see the same record and the same games you do for that season.
+
+### D · The live season is untouched
+
+- [ ] On the **current** season, Insights → *How are we doing?* looks and behaves exactly as before:
+      back link to Insights, the tag filter chips, the game log, and the **Past seasons** list at the
+      foot with its *Season Wrapped →* links.
+
+---
+
+**If A and C both read correctly, this section passes.** B is polish; D is the regression check.
+
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its
