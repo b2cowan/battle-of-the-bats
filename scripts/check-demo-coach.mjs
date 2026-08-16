@@ -35,6 +35,7 @@ import {
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
+  MIDSEASON_CLUB_MONEY,
   MIDSEASON_DUES, resolveMidSeasonState,
   SEASON_START_BUDGET_LINES,
 } from '../lib/demo-coach.ts';
@@ -508,6 +509,44 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       check(rows.every(e => e.player_id === null && Number(e.rebate_amount) === 0 && !e.credit_id),
         'it is CLUB-WIDE and credits nobody — so it cannot clear the overdue bills the tour narrates');
     }
+
+    /* The money WITH THE CLUB — the two tabs only a club-run team has, and the two this world
+       showed EMPTY until 2026-08-16. A prospect on the Club plan is shopping for exactly this
+       relationship, so "the screens render" is not the bar: they have to have something in them. */
+    const { data: splits } = await db.from('rep_allocation_splits')
+      .select('id, amount, notes, rep_cost_allocations ( description )').eq('team_id', teamId);
+    const split = (splits ?? [])[0];
+    check((splits ?? []).length === 1
+       && split?.rep_cost_allocations?.description === MIDSEASON_CLUB_MONEY.allocation.description
+       && Number(split.amount) === MIDSEASON_CLUB_MONEY.allocation.teamShare,
+      `the club has billed the 12U $${MIDSEASON_CLUB_MONEY.allocation.teamShare} — Org Allocations is not an empty screen`,
+      split ? `${(splits ?? []).length} split(s), $${split.amount}` : 'no allocation split found');
+
+    if (split) {
+      const { data: insts } = await db.from('rep_allocation_installments')
+        .select('amount, due_date, paid_at').eq('split_id', split.id);
+      const rows2 = insts ?? [];
+      const paid = rows2.filter(i => i.paid_at);
+      check(rows2.length === MIDSEASON_CLUB_MONEY.allocation.installments.length && paid.length === 2,
+        'it is part paid — two instalments settled, one still ahead, which is what a mid-season team actually looks like',
+        `${rows2.length} instalments, ${paid.length} paid`);
+      /* ⚠ THE ONE THAT MUST NOT DRIFT. The demo carries exactly one honest problem — the overdue
+         families the guided tour narrates by name. An overdue club instalment on a neighbouring tab
+         competes with it for the prospect's attention. */
+      check(!rows2.some(i => !i.paid_at && i.due_date < today),
+        'and NOTHING here is overdue — the demo keeps its one red thing on Player Dues, where the tour points');
+    }
+
+    const { data: reqs } = await db.from('rep_team_payment_requests')
+      .select('request_type, amount, status').eq('team_id', teamId);
+    const rq = reqs ?? [];
+    check(rq.length === MIDSEASON_CLUB_MONEY.requests.length
+       && rq.some(r => r.request_type === 'charge_to_org' && r.status === 'approved')
+       && rq.some(r => r.request_type === 'payment_to_org' && r.status === 'pending'),
+      'Payments shows money moving BOTH ways — one reimbursement approved, one payment awaiting the club',
+      `${rq.length} request(s): ${rq.map(r => `${r.request_type}/${r.status}`).join(', ')}`);
+    check(!rq.some(r => r.status === 'denied'),
+      'and none of them is DECLINED — a club refusing this coach is a sour note in a shop window');
 
     const { data: roster } = await db.from('rep_roster_players')
       .select('id, guardian_email').eq('program_year_id', py.id).eq('status', 'active');

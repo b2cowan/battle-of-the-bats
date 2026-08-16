@@ -33,6 +33,7 @@ import {
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
   midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
+  MIDSEASON_CLUB_MONEY,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
@@ -949,6 +950,51 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       player_id: null,
       amount_raised: MIDSEASON_SPONSOR.amount, rebate_percent: 0, rebate_amount: 0,
     })).error);
+  }
+
+  // The money WITH THE CLUB — the two tabs a Club-plan buyer is shopping for, and the two this
+  // world was showing empty until 2026-08-16. See MIDSEASON_CLUB_MONEY for why there is no overdue
+  // instalment and no declined request here, and why none of it can disturb the tour's pinned dues.
+  {
+    const alloc = MIDSEASON_CLUB_MONEY.allocation;
+    const allocationId = randomUUID();
+    die('insert 12U cost allocation', (await db.from('rep_cost_allocations').insert({
+      id: allocationId, org_id: org.id,
+      description: alloc.description, total_amount: alloc.orgTotal,
+      created_by: coach.id,
+    })).error);
+
+    const splitId = randomUUID();
+    die('insert 12U allocation split', (await db.from('rep_allocation_splits').insert({
+      id: splitId, allocation_id: allocationId, team_id: team.id, program_year_id: pyId,
+      org_id: org.id, amount: alloc.teamShare,
+      // Fixed rather than a percentage: the club decided this team's share, and a percentage would
+      // invite a reader to check it against an org total that is not on screen.
+      split_method: 'fixed', split_value: alloc.teamShare,
+      payment_schedule: 'standard', notes: alloc.notes,
+    })).error);
+
+    die('insert 12U allocation instalments', (await db.from('rep_allocation_installments').insert(
+      alloc.installments.map(i => ({
+        id: randomUUID(), split_id: splitId, org_id: org.id, team_id: team.id,
+        installment_number: i.number, amount: i.amount,
+        due_date: orgDateWithOffset(now, i.dueOffset),
+        paid_at: i.paidOffset === null ? null : `${orgDateWithOffset(now, i.paidOffset)}T15:00:00Z`,
+        paid_by: i.paidOffset === null ? null : coach.id,
+      })),
+    )).error);
+
+    die('insert 12U payment requests', (await db.from('rep_team_payment_requests').insert(
+      MIDSEASON_CLUB_MONEY.requests.map(r => ({
+        id: randomUUID(), org_id: org.id, team_id: team.id,
+        request_type: r.requestType, amount: r.amount, description: r.description,
+        payment_method: r.paymentMethod, notes: r.notes, status: r.status,
+        created_by: coach.id,
+        reviewed_by: r.reviewedOffset === null ? null : coach.id,
+        reviewed_at: r.reviewedOffset === null ? null : `${orgDateWithOffset(now, r.reviewedOffset)}T14:00:00Z`,
+        created_at: `${orgDateWithOffset(now, r.createdOffset)}T13:00:00Z`,
+      })),
+    )).error);
   }
 
   // The plan, on real platform categories — without them budget-vs-actual has nothing to match a

@@ -517,6 +517,66 @@ export const MIDSEASON_SPONSOR = {
 } as const;
 
 /**
+ * The 12U's money WITH ITS CLUB — the two Money tabs that only exist on a club-run team.
+ *
+ * ⚠ **WHY THIS EXISTS: the demo was showing them EMPTY.** The seed deleted allocations and payment
+ * requests and created none, so a prospect opening the Club-plan story met two blank screens — the
+ * one relationship a Club-plan buyer is actually shopping for. Found 2026-08-16, the same day those
+ * screens gained empty states; blank stopped looking broken and started looking like a feature the
+ * product did not have.
+ *
+ * ⚠ **NOTHING HERE TOUCHES A PLAYER'S BILL, BY CONSTRUCTION** — the same rule `MIDSEASON_SPONSOR`
+ * was made club-wide under. Club money moves between the team and the org only, so the tour's
+ * pinned $240-across-two-families and its $90-of-$120 part-paid row survive without any arithmetic
+ * being re-checked here.
+ *
+ * ⚠ **NO OVERDUE INSTALMENT AND NO DECLINED REQUEST, DELIBERATELY.** The demo already carries its
+ * one honest problem — the overdue families the guided tour narrates. A second red thing on a
+ * neighbouring tab competes with it, and a club refusing this coach is a sour note in a shop
+ * window. Both states are covered in the help guide instead. What this shows is the mechanism
+ * working: a bill part-paid with one instalment ahead, and money moving both directions.
+ */
+export const MIDSEASON_CLUB_MONEY = {
+  /** What the club has billed the team — one shared cost, split, three instalments. */
+  allocation: {
+    description: 'Diamond & field permits — summer block',
+    /** The club's whole cost across its teams; the 12U carries the share below. */
+    orgTotal: 6300,
+    teamShare: 900,
+    notes: 'Your share of the club’s summer permit block, split by home dates.',
+    /** Two settled, one ahead — the state a well-run team is actually in mid-season. */
+    installments: [
+      { number: 1, amount: 300, dueOffset: -62, paidOffset: -64 },
+      { number: 2, amount: 300, dueOffset: -31, paidOffset: -33 },
+      { number: 3, amount: 300, dueOffset: 12, paidOffset: null },
+    ],
+  },
+  /** Both directions, and both live states. */
+  requests: [
+    {
+      requestType: 'charge_to_org',
+      amount: 180,
+      description: 'Diamond permit — paid the city direct',
+      paymentMethod: 'E-Transfer',
+      notes: 'Booking desk needed it that afternoon and the club office was closed.',
+      status: 'approved',
+      createdOffset: -26,
+      reviewedOffset: -21,
+    },
+    {
+      requestType: 'payment_to_org',
+      amount: 95,
+      description: 'Team share of the umpire pool',
+      paymentMethod: 'Cheque',
+      notes: null,
+      status: 'pending',
+      createdOffset: -4,
+      reviewedOffset: null,
+    },
+  ],
+} as const;
+
+/**
  * The 12U's plan, built in the spring — and, since Phase 3, actually spent against.
  *
  * ⚠ **The categories are not decoration.** Budget-vs-actual matches a logged expense to a line by
