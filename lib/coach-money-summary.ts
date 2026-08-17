@@ -107,8 +107,10 @@ export interface DashboardHrefs {
    */
   transactions: string;
   payables: string;
-  allocations?: string;
-  paymentRequests?: string;
+  /** The merged club workspace — bills and requests on one screen (money redesign P4, 2026-08-17).
+   *  Optional because a standalone team has no club: absent means the gate said no, and the rail
+   *  drops the row rather than rendering a link to a tab that is not in the bar. */
+  club?: string;
   // ── deep links, not surfaces ──
   /** Budget, with the guided starter open (Chunk G). */
   budgetStarter: string;

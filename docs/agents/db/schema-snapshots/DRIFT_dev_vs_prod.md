@@ -2,14 +2,14 @@
 
 **Generated:** 2026-08-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 232 divergence(s)** across dev/prod.
+**⚠️ 244 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 3 | 0 | — |
-| Columns | 41 | 0 | 1 |
-| Indexes | 154 | 1 | 0 |
-| Constraints | 23 | 0 | — |
+| Columns | 45 | 0 | 1 |
+| Indexes | 158 | 1 | 0 |
+| Constraints | 27 | 0 | — |
 | RLS / CHECK | 9 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -22,11 +22,13 @@
 _none_
 
 ## Columns
-### Only in DEV (41)
+### Only in DEV (45)
 - `budget_categories.sports`
 - `budget_items.direction`
 - `budget_items.sports`
 - `budget_items.team_id`
+- `rep_allocation_splits.budget_category_id`
+- `rep_allocation_splits.budget_item_id`
 - `rep_fundraisers.kind`
 - `rep_fundraisers.sponsor_status`
 - `rep_program_years.default_player_credit_percent`
@@ -53,6 +55,8 @@ _none_
 - `rep_team_money_in.received_from`
 - `rep_team_money_in.team_id`
 - `rep_team_money_in.updated_at`
+- `rep_team_payment_requests.budget_category_id`
+- `rep_team_payment_requests.budget_item_id`
 - `rep_team_payment_requests.program_year_id`
 - `rep_team_staff_memberships.capabilities`
 - `rep_team_staff_memberships.coach_role`
@@ -72,7 +76,7 @@ _none_
 - `rep_fundraiser_entries.player_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (154)
+### Only in DEV (158)
 - `accounting_entries_linked_entry_id_idx`
 - `accounting_entries_payee_id_idx`
 - `announcements_tournament_id_idx`
@@ -122,6 +126,8 @@ _none_
 - `pool_slots_division_id_idx`
 - `pools_division_id_idx`
 - `rep_allocation_installments_accounting_entry_id_idx`
+- `rep_allocation_splits_budget_category_idx`
+- `rep_allocation_splits_budget_item_idx`
 - `rep_allocation_splits_org_id_idx`
 - `rep_allocation_splits_program_year_id_idx`
 - `rep_budget_lines_category_id_idx`
@@ -199,6 +205,8 @@ _none_
 - `rep_team_money_in_team_id_idx`
 - `rep_team_opponent_observations_org_id_idx`
 - `rep_team_payment_requests_accounting_entry_id_idx`
+- `rep_team_payment_requests_budget_category_idx`
+- `rep_team_payment_requests_budget_item_idx`
 - `rep_team_payment_requests_budget_line_id_idx`
 - `rep_team_payment_requests_program_year_id_idx`
 - `rep_team_payment_requests_program_year_idx`
@@ -235,8 +243,10 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (23)
+### Only in DEV (27)
 - `budget_items.budget_items_team_id_fkey`
+- `rep_allocation_splits.rep_allocation_splits_budget_category_id_fkey`
+- `rep_allocation_splits.rep_allocation_splits_budget_item_id_fkey`
 - `rep_team_expenses.rep_team_expenses_balance_entry_id_fkey`
 - `rep_team_expenses.rep_team_expenses_budget_category_id_fkey`
 - `rep_team_expenses.rep_team_expenses_budget_item_id_fkey`
@@ -252,6 +262,8 @@ _none_
 - `rep_team_money_in.rep_team_money_in_pkey`
 - `rep_team_money_in.rep_team_money_in_program_year_id_fkey`
 - `rep_team_money_in.rep_team_money_in_team_id_fkey`
+- `rep_team_payment_requests.rep_team_payment_requests_budget_category_id_fkey`
+- `rep_team_payment_requests.rep_team_payment_requests_budget_item_id_fkey`
 - `rep_team_payment_requests.rep_team_payment_requests_program_year_id_fkey`
 - `rep_team_staff_memberships.rep_team_staff_memberships_org_id_fkey`
 - `rep_team_staff_memberships.rep_team_staff_memberships_pkey`

@@ -3784,6 +3784,10 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 <!-- dict:col:rep_allocation_splits.notes -->
 **`notes`** (text, nullable) — free text.
 
+<!-- dict:col:rep_allocation_splits.budget_item_id -->
+<!-- dict:col:rep_allocation_splits.budget_category_id -->
+**`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; **mig 250**) / **`budget_category_id`** (FK → `budget_categories.id`, nullable, **ON DELETE SET NULL**; **mig 250**) — what the club's bill to **this** team was for, in the **team's own** taxonomy. ⚠ **Filed by the COACH, never by the club:** the parent `rep_cost_allocations` row spans every team the cost was divided across, and two teams may legitimately file one shared cost under different words — so the filing lives on the split, and one filing covers all of that split's instalments (they are a payment schedule for a single thing). NULL until a coach files it, which reads in Budget vs. Actual's existing *Not itemized* bucket; **no backfill is possible** — only a coach can say what a bill was for. **Both levels are stored** because the report reads them in different orders (see the matching columns on `rep_team_payment_requests`). Registered in `BUDGET_ITEM_REFERENCES` (`lib/coach-budget-item-usage.ts`) as *club bills*.
+
 ### `rep_allocation_installments`
 <!-- dict:table:rep_allocation_installments -->
 
@@ -3985,6 +3989,7 @@ mark-paid actions accept one, so it may be back-dated to any real past day (neve
 5. **`status` (CHECK `pending|approved|denied`, default `pending`) is a one-way machine** — both approve and deny 409 if `status != pending`; no reopening. `denial_reason` is required (app-layer) on deny. `reviewed_by`/`reviewed_at` stamped on the decision. Coaches may DELETE (cancel) only their own **pending** requests.
 6. **`created_by` is NOT NULL** (the requesting coach); `reviewed_by` nullable until decided. **NO Stripe columns** — settlement is internal double-entry only (`payment_method` is a free-text label, not a Stripe ref). **CHECK `amount > 0`**; indexes `(org_id, status)`, `(team_id, status)`, `(team_id, program_year_id, status)`.
 7. **⚠⚠ THIS TABLE HAD NO SEASON UNTIL MIGRATION 247 (2026-08-17), and two readers were wrong because of it.** The coach's **Cash on hand** summed approved requests **team-lifetime** while every other input to that figure was scoped to the working program year — so a team in its second season read the previous season's club money as this season's cash. And the **season close-out pot** (`lib/coach-season-settlement.ts`) excluded club money outright, printing a caveat on the card, because it could not attribute it; its comment named this migration as the fix. Both read `program_year_id` now. **Anything that sums this table must scope by season.**
+8. **⚠⚠ AND IT CARRIED NO TEAM-SIDE CLASSIFICATION UNTIL MIGRATION 250 (2026-08-17), which is why NO club money reached Budget vs. Actual at all.** That route reads the budget plan, `rep_team_expenses`, `rep_team_money_in`, realised fundraiser entries and dues — and neither this table nor `rep_allocation_installments`. So on a club-run team, every dollar of the club's bill the team paid *and* every cost the club agreed to cover were absent from the one screen that answers "how did we do against plan?" — frequently the season's largest line. The cause was this gap: `budget_line_id` points at the **club's** `org_budget_lines` (gotcha 4) and could not carry a team's vocabulary even if something wrote it. Fixed by `budget_item_id`/`budget_category_id` below, on this table and on `rep_allocation_splits`.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -4017,7 +4022,11 @@ mark-paid actions accept one, so it may be back-dated to any real past day (neve
 **`denial_reason`** (text, nullable) — required on deny (gotcha 5).
 
 <!-- dict:col:rep_team_payment_requests.budget_line_id -->
-**`budget_line_id`** (FK → `org_budget_lines.id`, nullable; **org Accounting**) — categorization hint; not used in transfer logic (gotcha 4).
+**`budget_line_id`** (FK → `org_budget_lines.id`, nullable; **org Accounting**) — categorization hint; not used in transfer logic (gotcha 4). ⚠ **Not the team-side filing** — that is `budget_item_id`/`budget_category_id` below, added by mig 250 precisely because this column points at the wrong budget and no coach surface has ever written it.
+
+<!-- dict:col:rep_team_payment_requests.budget_item_id -->
+<!-- dict:col:rep_team_payment_requests.budget_category_id -->
+**`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; **mig 250**) / **`budget_category_id`** (FK → `budget_categories.id`, nullable, **ON DELETE SET NULL**; **mig 250**) — what the request is **for**, in the team's own shared taxonomy (gotcha 8). ⚠ **Chosen from the money-OUT side of the item library on BOTH request directions.** A `charge_to_org` brings money *in*, but what it is *for* is a cost — it is a reimbursement, and the refund rule applies: the direction flips the money, never the list (mig 246 + redesign P2). Filing it as revenue would double-count the season, which `rep_team_money_in`'s own table comment already spells out. ⚠ **Both levels are stored on every row**, because Budget vs. Actual reads them in **different orders** — month attribution prefers the stored category, cost placement derives from the item — so a row carrying only one reports under two different headings depending which part of the page is asking. The write path derives the category from the chosen item and never trusts the caller. Registered in `BUDGET_ITEM_REFERENCES` (`lib/coach-budget-item-usage.ts`) as *club requests*.
 
 <!-- dict:col:rep_team_payment_requests.accounting_entry_id -->
 **`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — never written (gotcha 2).

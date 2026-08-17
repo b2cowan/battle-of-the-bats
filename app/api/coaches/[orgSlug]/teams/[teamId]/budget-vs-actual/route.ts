@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import {
   getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
   getRealisedFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
+  getRepAllocationSplitsForTeam,
 } from '@/lib/db';
+import { clubRequestIsReimbursement, type ClubRequestType } from '@/lib/coach-club-money';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import {
   buildMonthGrid, monthKeyOf,
   type CategoryEvent, type GridLine, type PriorLine,
@@ -80,6 +82,55 @@ export const GET = withObservability(async (req: Request,
     .order('created_at');
 
   const allExpenses = (expensesRaw ?? []) as Array<Record<string, unknown>>;
+
+  /* ── 2b. Club money (money redesign P4, 2026-08-17) ───────────────────────────────────────────
+     ⚠⚠ NONE OF THIS REACHED THIS REPORT BEFORE. See the long note at the rollup call for what was
+     missing and why; this is the read.
+
+     ⚠ SKIPPED ENTIRELY WHEN A MONEY TAG IS FILTERING. "Spend by tag" is a cut of the tagged
+     EXPENSES, and club money carries no tags — folding it in would make every tag's total include
+     the same untagged club bill, so the filtered figures would not sum to the unfiltered one and
+     the cut would be meaningless. Same rule the expenses half applies one block up.
+
+     ⚠ SPLITS ARE SEASON-SCOPED, matching every other read on this page and the P4 correction to the
+     Club tab itself. Requests are approved-only: a pending one is money the club may still decline
+     and belongs to no settled figure anywhere. */
+  /* ⚠⚠ ONE WAVE, AND IT REUSES THE SHARED READER (`/simplify`, 2026-08-17 — all four lenses landed
+     on this block). The first draft stood up its own `rep_allocation_splits` +
+     `rep_allocation_installments` queries and then a THIRD wave to turn filing ids into words —
+     re-implementing `getRepAllocationSplitsForTeam`, which had been rewritten in this very release
+     and already returns exactly this shape with the names joined. Three extra sequential round
+     trips on a report screen's critical path, on a route whose own comments already call out being
+     "a long serial chain of awaits".
+
+     Both legs depend only on `teamId` / `programYear.id` / `filterTagId`, all known here, so they
+     ride one `Promise.all`. */
+  const [clubSplits, clubReqRes] = await Promise.all([
+    filterTagId
+      ? Promise.resolve([] as Awaited<ReturnType<typeof getRepAllocationSplitsForTeam>>)
+      : getRepAllocationSplitsForTeam(teamId, programYear.id),
+    filterTagId
+      ? Promise.resolve({ data: [] as Array<Record<string, any>> })
+      : supabaseAdmin
+          .from('rep_team_payment_requests')
+          .select('id, request_type, amount, description, reviewed_at, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
+          .eq('team_id', teamId)
+          .eq('program_year_id', programYear.id)
+          .eq('status', 'approved'),
+  ]);
+
+  const clubApprovedRequests = ((clubReqRes.data ?? []) as Array<Record<string, any>>).map(r => ({
+    id: r.id as string,
+    requestType: r.request_type as ClubRequestType,
+    amount: Number(r.amount ?? 0),
+    description: (r.description as string) ?? '',
+    categoryId: (r.budget_category_id as string | null) ?? null,
+    categoryName: (r.budget_categories?.name as string) ?? null,
+    itemId: (r.budget_item_id as string | null) ?? null,
+    itemName: (r.budget_items?.name as string) ?? null,
+    reviewedAt: (r.reviewed_at as string | null) ?? null,
+    createdAt: r.created_at as string,
+  }));
 
   // Money-tag library (team + org-shared) for the filter chip row, and which tags each expense
   // carries. When a tag filter is active, the actuals-side of the report only sees tagged expenses.
@@ -156,6 +207,11 @@ export const GET = withObservability(async (req: Request,
         ?? (exp.category as string | null),
     );
   }
+  /* ⚠ AND FROM CLUB MONEY (P4), for exactly the reason above: a club bill filed under a category the
+     team has neither budgeted for nor spent against otherwise would arrive with an id this map
+     cannot name, and split that category into an id row and a name row. */
+  for (const s of clubSplits) learnCategory(s.budgetCategoryId, s.budgetCategoryName);
+  for (const r of clubApprovedRequests) learnCategory(r.categoryId, r.categoryName);
 
   const toRollupLine = (l: Record<string, unknown>, direction: 'in' | 'out'): RollupLine => ({
     id:           l.id as string,
@@ -320,10 +376,82 @@ export const GET = withObservability(async (req: Request,
     }
   }
 
+  /* ══ CLUB MONEY — absent from this report entirely until 2026-08-17 (money redesign P4) ═══════
+     ⚠⚠ THIS IS A FIX, NOT A FEATURE. This route read the plan, `rep_team_expenses`,
+     `rep_team_money_in`, realised fundraiser entries and dues — and neither `rep_allocation_*` nor
+     `rep_team_payment_requests`. So on a club-run team, every dollar of the club's bill the team
+     PAID and every cost the club AGREED TO COVER were missing from the one screen that answers
+     "how did we do against plan?" — frequently the season's single largest line. The owner found it
+     by asking why a request did not name a budget category.
+
+     It could not have been fixed by reading harder: club money carried no team-side classification
+     at all. Migration 250 adds it, a coach files it, and this is where it arrives.
+
+     ⚠ NO DOUBLE COUNT IS POSSIBLE. Approving a request posts a ledger transfer and creates NO
+     `rep_team_expenses` row (the two tables are decoupled by design — DATA_DICTIONARY, this table's
+     gotcha 3), and an allocation instalment has never had an expense row either. Club money is not
+     reachable from any other feed on this page.
+
+     ⚠⚠ THE THREE KINDS DO NOT ALL LAND ON THE SAME SIDE, and the odd one is the whole rule:
+       · a PAID allocation instalment  → a cost
+       · an approved `payment_to_org`  → a cost (the team sent the club money)
+       · an approved `charge_to_org`   → a REFUND, netting into the item it repaid — NEVER income.
+     The club covering a $325 entry fee means the team spent $325 less, not that it earned $325.
+     Booking it as revenue would make the season look $650 better than it is, which is the exact
+     arithmetic `rep_team_money_in`'s own table comment spells out for the same shape.
+
+     ⚠ UNFILED CLUB MONEY STILL COUNTS. A row with no item lands in the report's existing
+     "Not itemized" bucket rather than being dropped — the money moved, and hiding it would trade
+     one silence for another. The Club tab says on the row that filing it is what puts it in a
+     category. */
+  const clubSpend: RollupSpend[] = [];
+  const clubRefunds: RollupRefund[] = [];
+  for (const split of clubSplits) {
+    const placed = {
+      categoryId: split.budgetCategoryId, categoryName: split.budgetCategoryName,
+      itemId: split.budgetItemId, itemName: split.budgetItemName,
+    };
+    for (const inst of split.installments) {
+      // Only what has actually been PAID — this report is settled money, like every other feed on it.
+      if (!inst.paidAt) continue;
+      clubSpend.push({
+        id: `club-allocation-${inst.id}`,
+        description: split.allocationDescription || 'Club allocation',
+        ...placed,
+        amount: inst.amount,
+        // The day the team paid it, so it lands in the right month on the grid.
+        paidDate: orgDayKey(inst.paidAt),
+        direction: 'out' as const,
+      });
+    }
+  }
+  for (const r of clubApprovedRequests) {
+    const placed = { categoryId: r.categoryId, categoryName: r.categoryName, itemId: r.itemId, itemName: r.itemName };
+    // Approval posts the transfer, so a request is settled on the day it was DECIDED.
+    const settledOn = orgDayKey(r.reviewedAt ?? r.createdAt);
+    /* ⚠ THE COST-vs-REIMBURSEMENT RULE IS IMPORTED, NOT RE-DERIVED HERE (`/simplify`, 2026-08-17).
+       `clubRequestIsReimbursement` carries the whole justification for it and was, embarrassingly,
+       dead code: the one route that needed it had re-written the same branch by hand. An
+       abstraction whose own caller does not call it is worse than no abstraction. */
+    if (clubRequestIsReimbursement(r.requestType)) {
+      // The club paying the team back — NETS into the cost it repaid, never revenue.
+      clubRefunds.push({
+        id: `club-request-${r.id}`, description: r.description, ...placed,
+        amount: r.amount, receivedDate: settledOn,
+      });
+    } else {
+      // The team paying the club — an ordinary cost.
+      clubSpend.push({
+        id: `club-request-${r.id}`, description: r.description, ...placed,
+        amount: r.amount, paidDate: settledOn, direction: 'out' as const,
+      });
+    }
+  }
+
   const report = rollupMoneyReport({
     lines: rollupLines,
-    spend: [...rollupSpend, ...incomeSpend, ...derivedSpend],
-    refunds,
+    spend: [...rollupSpend, ...incomeSpend, ...derivedSpend, ...clubSpend],
+    refunds: [...refunds, ...clubRefunds],
   });
   /* ⚠ THE MONTH GRID AND EVERY COST FIGURE BELOW READ THE EXPENSES HALF, and only that half. The
      grid is a money-OUT shape — a prior-season column, an un-itemized buffer row, a payment
@@ -405,6 +533,21 @@ export const GET = withObservability(async (req: Request,
     const d = paidDate(exp);
     if (d) monthSet.add(d.slice(0, 7));
   }
+  /* ⚠⚠ AND CLUB MONEY — THE THIRD FEED POINT, MISSED ON THE FIRST PASS (`/review`, money lens,
+     2026-08-17). This report renders club costs in THREE independent places: the statement (via the
+     rollup), the Months grid (`gridActuals`), and this cumulative chart. The first two were wired
+     up; this one was not, so on a club-run team the chart a coach reads sat DIRECTLY ABOVE a
+     statement whose totals it contradicted — and the club's bill is frequently the season's single
+     largest line, which is the exact scenario the whole change exists for.
+
+     ⚠ COSTS ONLY, and that is consistent rather than lazy: this chart has never netted refunds
+     (`actualByMonth` sums `paidAmount(exp)` from raw expenses and `rep_team_money_in` reaches it
+     nowhere), so feeding club REIMBURSEMENTS in would make club money the one kind that nets here.
+     The statement and the grid both net them; the chart nets none. That inconsistency is older than
+     this release and is logged as debt rather than half-fixed under cover of this one. */
+  for (const c of clubSpend) {
+    if (c.paidDate) monthSet.add(c.paidDate.slice(0, 7));
+  }
 
   // If no months, default to current month
   if (monthSet.size === 0) monthSet.add(new Date().toISOString().slice(0, 7));
@@ -435,6 +578,12 @@ export const GET = withObservability(async (req: Request,
     if (!d) continue;
     const m = d.slice(0, 7);
     actualByMonth.set(m, (actualByMonth.get(m) ?? 0) + paidAmount(exp));
+  }
+  // The other half of the fix above — the months were being collected and then spent nothing into.
+  for (const c of clubSpend) {
+    if (!c.paidDate) continue;
+    const m = c.paidDate.slice(0, 7);
+    actualByMonth.set(m, (actualByMonth.get(m) ?? 0) + c.amount);
   }
 
   let cumBudget = 0;
@@ -518,6 +667,30 @@ export const GET = withObservability(async (req: Request,
       gridActuals.push({ categoryName: cat, date: exp.expense_paid_at as string, amount: amt });
       pushDetail('actual', cat, exp.expense_paid_at as string, { id, description, amount: amt, paid: true });
     }
+  }
+
+  /* ⚠⚠ AND SO DOES CLUB MONEY, FOR EXACTLY THE SAME REASON (money redesign P4, 2026-08-17).
+     This loop was nearly missed: `gridActuals` is built from the RAW `expenses` array, so adding
+     club costs to the rollup alone would have put them on the Statement and the Categories view and
+     left them off Months — one screen reporting two different totals for one season, which is the
+     defect the note below records having already happened once with refunds.
+
+     ⚠ The money-back half needs nothing here: an approved *from the club* request is a REFUND, so
+     it arrives through `report.expenses.categories` in the loop underneath, netted against the item
+     it repaid, exactly like a vendor refund. Only the COST half has to be added by hand, because
+     only the cost half bypasses this array.
+
+     ⚠ `gridScheduled` is deliberately NOT fed. An unpaid club instalment has a due date and would
+     fit — but the grid's Scheduled row is built from `rep_team_expenses` commitments, and the
+     Payment schedule already shows club instalments beside them. Adding them to one and not the
+     other is how two surfaces start disagreeing; adding them to both is a P5 question, not a P4
+     one. Said out loud so the omission reads as a decision rather than an oversight. */
+  for (const c of clubSpend) {
+    if (!c.paidDate) continue;
+    gridActuals.push({ categoryName: c.categoryName, date: c.paidDate, amount: c.amount });
+    pushDetail('actual', c.categoryName, c.paidDate, {
+      id: c.id, description: c.description, amount: c.amount, paid: true,
+    });
   }
 
   /* ⚠ MONEY BACK REACHES THE MONTH GRID TOO, as a NEGATIVE actual on the month it arrived — or

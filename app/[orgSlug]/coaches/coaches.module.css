@@ -3261,9 +3261,20 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 /* A category's total and a line's amount — matched to the grid's category figure. */
 .ledgerNumStrong { font-size: var(--money-catnum-size); font-weight: var(--money-cat-weight); color: var(--white-90); }
-/* A nil is not news. Dropping it to the quietest ink leaves the colour to the figures that
-   actually need reading — the same call the Dues balance column makes. */
-.ledgerNumMuted { color: var(--white-30); }
+/* A nil is not news. Dropping it to a quiet ink leaves the colour to the figures that actually
+   need reading — the same call the Dues balance column makes.
+
+   ⚠⚠ IT WAS `--white-30`, WHICH IN THE WARM THEME IS `rgba(70,55,30,0.2)` — about 1.1:1 against the
+   report's ground, i.e. an em-dash a sighted reader cannot see at all. Found 2026-08-17 when club
+   money reached this report for the first time (money redesign P4) and made the refund sub-row
+   render on the layout fixture; the rule itself is older than that change and was simply never
+   measured, because nothing on the fixture had produced one of these rows before.
+
+   ⚠ MOVE THE INK, NOT THE MEANING. `--white-45` is still the quietest step on the ledger and still
+   reads as "nothing to see here" beside the live figures — it is just now actually visible. A
+   placeholder a reader cannot perceive is not quiet, it is missing, and the column then looks like
+   it failed to render rather than like it has nothing to say. */
+.ledgerNumMuted { color: var(--white-45); }
 
 .ledgerTotal {
   display: grid;
@@ -9891,4 +9902,240 @@ button.gdChip[aria-pressed='true'] {
   color: var(--home-olive, var(--logic-lime));
   min-height: var(--tap-min, 44px);
   padding: 0.2rem 0;
+}
+
+/* ═══ THE CLUB TAB — one relationship, one screen (money redesign P4, 2026-08-17) ═══════════════
+   Allocations + Payments merged. What is NEW here is the standing band and the filing row; every
+   table, badge and modal below them reuses the shared recipes the two old screens already used, so
+   the merge did not fork the Money hub's visual language. */
+
+/* A required-field marker. Was an inline `style={{ color: 'var(--danger-light)' }}` repeated on
+   three fields of the old requests form — one rule instead, so the marker cannot drift per field. */
+.req { color: var(--danger-light); }
+
+/* ── The standing band ──────────────────────────────────────────────────────
+   ⚠ THREE FIGURES, NOT `.summaryGrid`. The shared summary grid is auto-fit and was carrying FOUR
+   tiles on one old screen and THREE on the other; merged, an auto-fit row would reflow 3 → 2 + 1 at
+   the widths this hub actually gets, orphaning whichever figure landed alone. These three are one
+   sentence — owed, awaiting, settled — so they hold one row and stack all-or-nothing at 760. */
+.clubBand {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--home-line, var(--border-2));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.clubBandCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: var(--home-card, var(--white-4));
+}
+.clubBandLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-50));
+}
+.clubBandFigure {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: var(--home-ink, var(--white-90));
+}
+/* ⚠ THE HUE IS NEVER THE ONLY CARRIER. Each figure's own label says what it is ("Still to pay the
+   club", "Waiting on the club"), and the third states its direction in a word beside the number —
+   so these two tints are reinforcement, not information. Both use the contrast-tuned badge inks
+   rather than the raw --*-light values, which fail the contrast floor in the warm theme. */
+.clubBandOut  { color: var(--badge-danger-ink); }
+.clubBandWait { color: var(--badge-warning-ink); }
+.clubBandDirection {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.35rem;
+  color: var(--home-dim, var(--white-50));
+}
+.clubBandSub {
+  font-size: 0.75rem;
+  color: var(--home-dim, var(--white-50));
+}
+.clubBandOverdue {
+  color: var(--badge-danger-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.clubBandOverdue svg { vertical-align: -1px; margin-right: 1px; }
+/* The sentence under the band. ⚠ It is the one line this screen cannot do without: a pending
+   request sits inches from money that has genuinely moved, and this says which is which. */
+.clubBandNote {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--home-dim, var(--white-50));
+  margin: 0 0 1.75rem;
+}
+.clubBandNote strong { color: var(--badge-warning-ink); }
+@media (max-width: 760px) {
+  .clubBand { grid-template-columns: 1fr; }
+}
+
+/* ── The two halves ─────────────────────────────────────────────────────────
+   Each is a titled block with its own toolbar. The title is an h3 sitting INSIDE `.panelToolbar`
+   so the export/create controls land on the same baseline as it — the toolbar's own flex row does
+   the work, and no second header component is introduced. */
+.clubBlock { margin-bottom: 2.25rem; }
+.clubBlock:last-of-type { margin-bottom: 0; }
+.clubBlockTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--home-ink, var(--white-90));
+}
+
+/* ── The filing (category · item) ───────────────────────────────────────────
+   The whole reason this phase touched the schema: until a club record names one of the team's own
+   budget words, none of its money reaches Budget vs. Actual. */
+.clubFiling { font-size: 0.78rem; color: var(--home-ink-soft, var(--white-70)); }
+.clubFilingCat { color: var(--home-dim, var(--white-50)); }
+.clubFilingRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+  background: var(--home-fill, var(--white-4));
+}
+.clubFilingLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-50));
+}
+/* ⚠ THE CONSEQUENCE OF LEAVING IT UNFILED IS STATED WHERE THE GAP IS, not only in the modal a coach
+   may never open. An unfiled bill looks complete otherwise — it has a name, an amount and a
+   schedule — so nothing on the row would say why it is missing from the report. */
+.clubFilingHint {
+  flex-basis: 100%;
+  font-size: 0.73rem;
+  color: var(--home-dim, var(--white-50));
+}
+
+/* ── A request awaiting the club ────────────────────────────────────────────
+   ⚠⚠ MARKED THREE WAYS THAT DO NOT DEPEND ON COLOUR: the left edge, the chip in the Status column
+   ("Awaiting the club" — who is holding it, not merely that it is pending), and the sentence above
+   the table. The same triple the register's scheduled rows use, deliberately, because this is the
+   same money seen from the other screen. */
+.clubPendingNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.6rem 0.8rem;
+  margin: 0 0 0.75rem;
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.22);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--home-ink-soft, var(--white-75));
+}
+.clubPendingNote svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--badge-warning-ink); }
+.clubPendingNote strong { color: var(--badge-warning-ink); }
+/* ⚠ `box-shadow: inset`, NOT `border-left`. A border on a <td> changes the cell's box and knocks
+   the row's first column out of line with every other row in the table; an inset shadow paints
+   inside the existing box and costs no layout. Applied to the first cell only, so at 640 — where
+   the shared table recipe restacks rows into cards — the mark lands on the card's leading edge
+   rather than on each stacked line. */
+.clubRowPending > td { background: rgba(var(--warning-rgb), 0.07); }
+.clubRowPending > td:first-child { box-shadow: inset 3px 0 0 var(--badge-warning-ink); }
+/* ⚠⚠ THE TINT DARKENS THE GROUND, SO THE QUIET INKS ON THIS ROW HAVE TO MOVE UP A STEP — found by
+   `check:layout` in the WARM theme only, at phone widths, where "Not filed" and the row's Edit
+   label landed at 4.28:1 against a 4.50 floor. Two things worth keeping about this:
+
+   · **The static contrast gates never see it.** They read the dark palette; the warm theme's amber
+     wash over a warm card is a ground that only exists at render time. `check:layout` is the only
+     thing that catches this class, which is why it runs on every money screen.
+   · **MOVE THE INK, NEVER THE TINT.** Lightening the wash would weaken one of the three
+     non-colour marks this row depends on (edge, chip, sentence) to fix a problem the ink can
+     solve on its own. `--home-ink-soft` is a step up from `--home-dim`, not a jump to full ink, so
+     the row still reads as quieter than its neighbours. */
+.clubRowPending .mutedInline,
+.clubRowPending .clubFiling { color: var(--home-ink-soft, var(--white-70)); }
+.clubRowPending button { color: var(--home-ink-soft, var(--white-70)); }
+.clubReviewedOn {
+  font-size: 0.72rem;
+  color: var(--home-dim, var(--white-50));
+  white-space: nowrap;
+}
+
+/* ── The club's written reason on a declined request ────────────────────────
+   Was four inline style literals in the old panel (its own colour-mix, radius and padding). */
+.clubDeclineReason {
+  background: color-mix(in srgb, var(--danger-light) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger-light) 20%, transparent);
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+}
+.clubDeclineTitle {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--badge-danger-ink);
+}
+.clubDeclineBody {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft, var(--white-70));
+}
+
+/* ── Which way is the money going? ──────────────────────────────────────────
+   ⚠ WAS ~30 LINES OF INLINE STYLE OBJECTS PER BUTTON in the old panel, including the selected
+   state's border, background and colour computed in three ternaries each. The pair is now a class
+   with a `data-side` hook, which is also what let the two buttons be REORDERED: "From the club" now
+   comes first because it is far and away the common case, and reordering inline-styled buttons
+   meant moving two 30-line literals rather than two lines. */
+.clubDirectionPair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.clubDirectionPick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 2px solid var(--home-line, var(--border-2));
+  background: var(--home-card, var(--white-3));
+  color: var(--home-dim, var(--white-55));
+  font-size: 0.83rem;
+  text-align: left;
+  cursor: pointer;
+  min-height: var(--tap-min, 44px);
+}
+.clubDirectionHead { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; }
+.clubDirectionSub { font-size: 0.75rem; font-weight: 400; opacity: 0.85; }
+/* ⚠ THE ARROW AND THE WORDS CARRY THE MEANING; the tint only confirms it. Same rule as the row
+   badges — red-against-green is the one pairing a deutan reader cannot separate, and the two
+   buttons say "From the club" and "To the club" in as many words. */
+.clubDirectionPick[data-side="in"].clubDirectionOn {
+  border-color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.1);
+  color: var(--badge-success-ink);
+}
+.clubDirectionPick[data-side="out"].clubDirectionOn {
+  border-color: var(--badge-danger-ink);
+  background: rgba(var(--danger-rgb), 0.1);
+  color: var(--badge-danger-ink);
+}
+.clubDirectionOn .clubDirectionSub { color: inherit; }
+@media (max-width: 520px) {
+  .clubDirectionPair { grid-template-columns: 1fr; }
 }

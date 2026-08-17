@@ -115,6 +115,29 @@ export interface SettlementCashInput {
   /** The coach's intention to keep something for next season. Capped at the surplus, and refused
    *  against owed-back money: a coach may not hold back what the team owes families. */
   holdBack: number;
+  /**
+   * How many club requests this season are still awaiting the club's answer.
+   *
+   * ⚠⚠ IT IS NOT MONEY — it never enters the pot, and it must not. A pending request is money the
+   * club may still decline, and every settled figure on this sheet deliberately excludes it. It is
+   * here for ONE reason: it BLOCKS the close (see `closeOutBlockers`).
+   *
+   * ⚠ WHY A BLOCKER AND NOT A WARNING (owner ruling 2026-08-17, money redesign P4). Seasons are
+   * independent — the Club tab shows the working season and nothing else, with no carry-over and no
+   * cross-season view. That ruling is right, and it leaves one hole: a season that ends with a
+   * request the club never answered leaves it in a season nobody looks at again. Rather than
+   * re-open history to plug it, the loop is closed on the way OUT — beside the families who still
+   * owe, which is the same shape of unfinished business.
+   *
+   * ⚠ THE ESCAPE IS ENTIRELY IN THE COACH'S HANDS, which is what makes a hard block fair: they can
+   * chase the club, or withdraw the request. The refusal copy must name the second — a coach facing
+   * an unresponsive club office otherwise cannot close their season at all, and that would be a
+   * worse defect than the one this prevents.
+   *
+   * Optional so every existing caller and test keeps compiling with the pre-P4 behaviour; absent
+   * means "none", which is what a team with no club has.
+   */
+  pendingClubRequests?: number;
 }
 
 export interface SettlementRow {
@@ -182,6 +205,8 @@ export interface Settlement {
    *  A forward-looking split spends money still owed BY a family, and the sheet must say whose
    *  (plan §4.5). Zero when the cash is genuinely there. */
   awaitingCash: number;
+  /** Club requests still awaiting an answer. Not money — see `SettlementCashInput`. */
+  pendingClubRequests: number;
 }
 
 /**
@@ -202,17 +227,38 @@ export interface Settlement {
  *     share, so a family paid out EARLY can owe value back at close-out, and one negative row
  *     makes `payable` exceed the cash even with every due collected.
  *
- * The soft conditions — a budget still planning to spend, club money the sheet cannot attribute —
- * deliberately do NOT appear here: they are the coach's judgement and only ever warn.
+ * ⚠ A THIRD CONDITION SINCE 2026-08-17 (money redesign P4, owner ruling), and it is the only one
+ * that is NOT about the arithmetic:
+ *   • `pendingClubRequests` — a request the club has never answered. It is excluded from every
+ *     figure on this sheet (it is money the club may still decline), so the split is correct with
+ *     or without it. What it would do is DISAPPEAR: seasons are independent by ruling, the Club tab
+ *     shows the working season only, and a closed season's open loop is then in a place nobody
+ *     looks at again. The loop gets closed on the way out instead of by re-opening history.
+ *     ⚠ The escape is the coach's — chase the club or withdraw the request — and the refusal copy
+ *     has to say so, or an unresponsive club office locks a team out of closing its season.
+ *
+ * The remaining soft conditions — a budget still planning to spend — deliberately do NOT appear
+ * here: they are the coach's judgement and only ever warn. (Club money the sheet "cannot attribute"
+ * was in that list and is gone: migration 247 gave club money a season, so there is nothing left
+ * to fail to attribute.)
  */
-export function closeOutBlockers(s: Pick<Settlement, 'pot' | 'awaitingCash'>): {
+export function closeOutBlockers(s: Pick<Settlement, 'pot' | 'awaitingCash' | 'pendingClubRequests'>): {
   duesOutstanding: number;
   cashShort: number;
+  pendingClubRequests: number;
   canClose: boolean;
 } {
   const duesOutstanding = s.pot.expectedIn > 0.005 ? s.pot.expectedIn : 0;
   const cashShort = s.awaitingCash > 0.005 ? s.awaitingCash : 0;
-  return { duesOutstanding, cashShort, canClose: duesOutstanding === 0 && cashShort === 0 };
+  // `?? 0` rather than a required field: a team with no club has no such records, and every caller
+  // that predates P4 (including the unit tests that exercise the arithmetic) means exactly zero.
+  const pendingClubRequests = Math.max(0, Math.trunc(s.pendingClubRequests ?? 0));
+  return {
+    duesOutstanding,
+    cashShort,
+    pendingClubRequests,
+    canClose: duesOutstanding === 0 && cashShort === 0 && pendingClubRequests === 0,
+  };
 }
 
 /**
@@ -374,6 +420,10 @@ export function deriveSettlement(input: {
     },
     unallocated: toDollars(Math.max(0, remainingC)),
     awaitingCash: toDollars(Math.max(0, payableC - cashAvailableC)),
+    /* ⚠ CARRIED THROUGH UNTOUCHED, and deliberately not converted to cents anywhere above: it is a
+       COUNT of open conversations, not money. Nothing in the arithmetic reads it; only the close
+       gate does. */
+    pendingClubRequests: Math.max(0, Math.trunc(cash.pendingClubRequests ?? 0)),
   };
 }
 

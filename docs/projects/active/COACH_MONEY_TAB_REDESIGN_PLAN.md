@@ -37,11 +37,116 @@ https://claude.ai/code/artifact/ff5112d8-8e90-40f9-8e67-3aa668b668e2
 
 **Still open — confirm at the mockup review, none blocks the direction:**
 
-- **The club tab's name** — *Club* (warm, what coaches say) vs *Org* (what the product's own
-  badges already say: "From Org"). §6. Gets settled in the P4 mockup pass.
+- ~~**The club tab's name**~~ — **RULED 2026-08-17: `Club`** (see the P4 ruling log below).
 - **The register's default for the scheduled overlay** — recommendation: **on**, with the Today
-  rule separating settled from projected (§4.4).
+  rule separating settled from projected (§4.4). *(Shipped **on** in P3.)*
 - **Payables opens on the Schedule view** — recommended yes; mild, reversible.
+
+---
+
+## 0b. ⚖⚖ The P4 ruling log — owner, 2026-08-17, at the mockup review
+
+**Mockup:** https://claude.ai/code/artifact/43cf2381-74d3-4ada-afd9-461ac51c0d9c (two passes — the
+second is the binding one; the owner overturned two of the first pass's recommendations).
+
+**Six rulings. Three of them widened the phase, and two of those came from the owner reading the
+first mockup and disagreeing with it.**
+
+1. ⚖ **The tab is named `Club`**, and the name carries through: the request-type badges stop saying
+   **Pay Org** / **From Org** and say **To club** / **From club**, on the rows, the type picker and
+   the empty-state cards. Argued from the code, not from taste — coach-facing prose in the portal
+   already runs 57 uses of *club* to 38 of *org*, the empty states and the help guide say *club*,
+   and **the register's own chip and filter on these exact rows already read `Club` / `from Club`**
+   (P3). Naming the tab *Org* would have left the book and the workspace calling one relationship
+   two things. §6's open row is closed. *(Considered and dismissed: the Club plan tier shares the
+   word. A coach inside a team workspace never sees plan names and the two never share a screen.)*
+
+2. ⚖⚖ **SEASONS ARE INDEPENDENT — nothing from a past season, no exception.** Owner, verbatim:
+   *"our default for all data is it is independent on each season and only brought into view on a
+   case by case basis, so default to not show anything from past seasons."* This **overturned the
+   mockup's own recommendation**, which had proposed carrying still-undecided requests across
+   season boundaries so a pending one could not vanish. Both club lists are working-season only,
+   with no marker and no carry-over.
+   - ⚠ **The hole that recommendation existed to plug is real and is closed elsewhere:** a season
+     that ends with a request the club never answered leaves it nowhere a coach looks. So an
+     unanswered club request becomes a **season close-out blocker**, beside the families who still
+     owe — the checklist that already exists, not a window into last year.
+   - ⚠⚠ **This also fixes a live defect, and the ask was narrower than the evidence.** The brief
+     asked only whether the *request* list should be season-scoped. Reading the code found that
+     **neither club list was** — allocations were not either — and that they were the **last two
+     surfaces in the money area still reading team-lifetime**. Cash on hand, the register and the
+     season close-out pot were all corrected by P3; these two were not, so on any team past its
+     first year the Allocations tile and the Money overview already described the same team and
+     disagreed. Nothing showed them side by side. The merged tab is exactly the screen that would.
+
+3. ⚖⚖ **A PENDING REQUEST NOW APPEARS IN THE REGISTER'S SCHEDULED OVERLAY.** This **reverses §4.4's
+   "⛔ Never qualifies: anything pending a decision"** and §8's "a pending request never enters the
+   plan or the register", *for the overlay only*. The owner asked the question the mockup should
+   have asked itself: if the switch is called *include what's scheduled*, a coach planning wants to
+   see what they have asked for.
+   - **What made it right rather than a loosening:** the overlay **already carries a sponsor
+     pledge** — money that may never arrive at all — and P3's own review ruled that in. A pledge the
+     sponsor may not honour and a request the club may decline are the same species of uncertainty.
+     The distinction being drawn was not one the screen could defend.
+   - 🔒 **What does NOT change, and is still load-bearing:** a pending request touches **no settled
+     balance, no Cash on hand, no Budget Plan and no report**. §4.2's identity is untouched — the
+     overlay runs *past* Today with projected balances, so nothing about it can move the figure at
+     Today.
+   - **Shape:** a request has no due date (nothing records when the club will answer), so it sorts
+     to the **end of the scheduled block** and says *No date* — the existing rule for a dateless
+     forward row (§46 D). It carries an **Awaiting the club** chip, and the forward total's caption
+     states how much of it is still a question rather than folding it in silently.
+
+4. ⚖⚖ **CLUB MONEY GETS A CATEGORY AND ITEM, AND REACHES BUDGET VS. ACTUAL.** The owner's question —
+   *"shouldn't the request [name] which budget category/item each request should be tied to so it
+   will be mapped properly?"* — found the largest defect in the phase, and it is bigger than the
+   question. **`budget-vs-actual/route.ts` reads neither `rep_allocation_installments` nor
+   `rep_team_payment_requests`.** Not one hit for either name. So on a club-run team, every dollar
+   of the club's bill the team pays and every cost the club agrees to cover are **absent from the
+   report entirely** — frequently the season's single largest line, missing from the one screen that
+   answers *"how did we do against plan?"*. The same shape as P3's three Cash-on-hand defects.
+   - **Cause:** club money carried no team-side classification at all. `rep_allocation_splits` had
+     none; `rep_team_payment_requests.budget_line_id` is a **trap** — it points at the CLUB's
+     `org_budget_lines`, no coach surface has ever written it, and it could not carry a team's
+     vocabulary if one did.
+   - **Fix: migration 250** puts `budget_item_id` + `budget_category_id` on both tables, the request
+     form gains the shared picker, and a coach files their own share of an allocation when the bill
+     arrives (the club cannot — they do not know this team's words, and two teams may file one
+     shared cost differently). Nullable, no backfill: only a coach can say what a bill was for, and
+     guessing would put invented classifications into a report a treasurer reconciles.
+   - ⚠⚠ **The picker offers the money-OUT side on ALL THREE kinds, including a request where money
+     comes IN.** That is the refund rule (mig 246 + P2): the direction flips the money, never the
+     list, because what a reimbursement is FOR is a cost. `rep_team_money_in`'s own table comment
+     already states the consequence of the alternative — *"counted twice, a $325 reimbursement makes
+     a season look $650 better than it is."*
+   - ⚠ **Two new tables therefore point at `budget_items`,** so both are registered in
+     `BUDGET_ITEM_REFERENCES` in the same commit. That list belongs to the concurrent
+     `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md`; its guard test fails the build on an unregistered FK,
+     which is the guard doing its job. Shipping without them would have re-created that project's
+     founding defect on two brand-new tables.
+
+5. ⚖ **The merged tab appears BETWEEN SEASONS, read-only.** Today neither club tab renders at all
+   once a season finishes (`showOrgTabs` requires a live season), so a coach between seasons can see
+   the club's money on the register but cannot open the tab to see what those instalments were or
+   how a request was decided. That predates the history-in-place ruling. These are **records**, not
+   instruments — nothing here recomputes — so they render in place with no Make a request, no Mark
+   paid and no pencil. ⚠ **Not a conflict with ruling 2:** this is the team's own working season,
+   which between seasons *is* the finished one. No `?year=`, nothing cross-season.
+
+6. ⚖ **The demo tour gains a sentence, not a ninth step.** The existing Money step's narration names
+   what the club billed this team and what the team asked back.
+
+**⚠ Two claims in `COACH_MONEY_SPLIT_P4_BUILD_PROMPT.md` were FALSE and are recorded here so no
+later reader trusts them** (both found by reading the code, per AGENCY_RULES' "argue from what the
+code does"):
+- **§6 "the coach sandbox seeds NO allocations and NO requests"** — false since commit `13a8ad03`
+  (2026-08-16, *"the coach sandbox shows what its club bills it, and what it asks back"*), a day
+  before the prompt was written. The 12U team carries an allocation with instalments and a set of
+  requests, already season-stamped for mig 247. Only the judgement half was outstanding.
+- **§5 / Owner QA §46 §I "between seasons the request form is still offered and the server refuses
+  it"** — the 409 is real, but **the UI is unreachable**: the hub drops both org-only tabs when the
+  season is finished, and a deep link falls back to the Money overview. There was no button to hide.
+  The real defect was the inverse (ruling 5).
 
 ---
 
@@ -611,21 +716,138 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
    scheduled overlay given the "nothing pending a decision" rule. §4.4 lists recorded sponsor pledges
    as qualifying — a pledge is an arrangement the team has, not a decision someone else may refuse —
    so this is ruled, not drift. It never touches the settled balance either way.
-4. **P4 — Club.** Its own short mockup pass (name settled: Club vs Org), then the merge; demo seed
-   gains club money. *Owner QA: the combined story + the register's club rows.*
-   **Build prompt:** `COACH_MONEY_SPLIT_P4_BUILD_PROMPT.md` (fresh chat). ⛔ **Its first deliverable is
-   the MOCKUP, not code** — this phase is gated on the owner seeing the combined screen, and the tab's
-   name is decided there.
+4. ✅ **P4 — Club. BUILT ON DEV 2026-08-17** — Owner QA **§49**, migration **250** applied to dev.
+   The merge (band + two blocks + one empty state), the name, the filing, the report, the season
+   scoping, the between-seasons record and the close-out blocker.
+   **Build prompt:** `COACH_MONEY_SPLIT_P4_BUILD_PROMPT.md`. **Rulings: §0b above** — read that
+   first; it is the record of what the owner decided and what it overturned.
 
-   ⚠ **P4 inherits two questions P3 left open on purpose:** whether the merged tab lists club requests
-   for the WORKING SEASON only (mig 247 gave them a season and every cash figure reads it, but the
-   LIST was left team-lifetime so a pending request could not silently vanish), and gating the request
-   form BETWEEN SEASONS (the form is still offered and the server now refuses it — Owner QA §46 §I).
+   **⚖⚖ THE PHASE GREW THREE TIMES, AND EVERY TIME IT WAS THE OWNER PUSHING BACK ON THE MOCKUP.**
+   The merge itself is the small half. What the review added:
+   - ⚠⚠ **Budget vs. Actual contained NO club money at all** — found by answering the owner's
+     question *"shouldn't the request name which budget category/item?"*. The report reads the plan,
+     expenses, arrivals, fundraising and dues, and neither `rep_allocation_installments` nor
+     `rep_team_payment_requests`. On a club-run team that is frequently the season's largest line,
+     missing from the one screen that compares spending to plan. **Migration 250** gives both tables
+     a team-side `budget_item_id`/`budget_category_id`, the request form gains the shared picker, a
+     coach files their own share of a club bill, and the report reads all three. The same shape as
+     P3's three Cash-on-hand defects: a figure a coach trusts, quietly missing an input.
+   - ⚠⚠ **Neither club list was season-scoped** — the ask was only about REQUESTS, and the evidence
+     was wider: allocations were team-lifetime too, and the pair were the last such readers in the
+     money area. On any team past its first year the Allocations tile and the Money overview
+     described the same team and disagreed; nothing put them side by side, which is why it survived.
+   - ⚠ **The tab vanished between seasons** rather than going read-only, which predates and
+     contradicts the history-in-place ruling.
 
-   ⚠⚠ **And one hard dependency:** the register's club rows link into the two tabs P4 deletes
-   (a settled allocation → Allocations, an approved request → Payments), as does the Overview's
-   next-30 window. Those links, and the register's `from Club` filter, must follow the merge —
-   `npm run check:register` is the proof the money still reconciles afterwards.
+   **Three decisions taken during the build, so anything after this inherits them:**
+   - ⚠⚠ **The picker offers the money-OUT side on ALL club money, including a request where the
+     money comes IN.** A `charge_to_org` is a reimbursement, and what a reimbursement is FOR is a
+     cost — the refund rule (mig 246 + P2): the direction flips the money, never the list. On the
+     report it therefore NETS into the item it repaid rather than counting as revenue.
+     `rep_team_money_in`'s own table comment already states the consequence of the alternative:
+     *"counted twice, a $325 reimbursement makes a season look $650 better than it is."*
+   - **The filing lives on the SPLIT, not the allocation, and not the instalment.** The parent is the
+     club's object spanning every team; the instalments are one bill's payment schedule. One filing
+     per bill, filed by the coach — the club does not know this team's vocabulary, and two teams may
+     legitimately file one shared cost differently.
+   - **Club money is excluded from a money-tag cut of the report.** Club records carry no tags, so
+     folding them in would put the same untagged bill inside every tag's total.
+
+   **⚠⚠ One defect caught during the build, before any review, and it is the shape this file has
+   warned about twice:** the report's **month grid is built from the raw expenses array**, not from
+   the rollup — so adding club money to the rollup alone put it on the Statement and Categories and
+   left it **off Months**. One screen, two different totals for one season. That is the identical
+   defect the refund note in that file records having already shipped once. Club COSTS are now
+   pushed to the grid explicitly; club REFUNDS need nothing, because they arrive through the
+   rollup's own refund loop. ⚠ An UNPAID club instalment is deliberately kept OFF the grid's
+   Scheduled row (the Payment schedule and Next-30 already carry it) — stated so the omission reads
+   as a decision.
+
+   **⚠ The close-out blocker is a hard block, and it is the one thing in this phase most likely to
+   need reversing.** An unanswered club request now refuses the season close, beside the families who
+   still owe. It exists because seasons are independent by ruling, so a closed season's open loop
+   lands where nobody looks again. The escape is the coach's — chase the club or withdraw — and both
+   the checklist line and the server's refusal name it. **If the walk finds it too strict it is a
+   one-line change to a warning** (`closeOutBlockers`, `lib/season-settlement.ts`).
+
+   **⚠⚠ Two claims in the build prompt were FALSE**, both found by reading the code (§0b records
+   them): the demo world was already seeded with club money a day before the prompt was written, and
+   the "between seasons the form is still offered" defect described a screen that could not be
+   reached. Owner QA §46 §I is annotated accordingly.
+
+   **Deliberate baseline edit:** `coach-allocations` + `coach-payment-requests` → `coach-club`, the
+   mirror of P1's `coach-expenses` → `coach-transactions` + `coach-payables`.
+   **`check:register` passes** — the closing balance still equals Cash on hand to the cent with all
+   three derived sources present. ⚠ **Budget vs. Actual has no equivalent automated identity**, which
+   is why §49 §C is hand-walked.
+
+   **`/simplify` (4 lenses) — 6 applied, 2 skipped.** The valuable half was a duplication three
+   lenses landed on independently: the "collect filing ids → select `budget_items` +
+   `budget_categories` → build two Maps" block had been hand-written in **three** routes, while the
+   register one directory over carries a comment saying exactly why that is a trap (*"two ways of
+   turning an item id into a word is how the two halves of a table start disagreeing"*). All three
+   now take the names from a PostgREST join, `getRepAllocationSplitsForTeam` returns them, and the
+   report **calls that reader instead of re-implementing it** — which also collapsed three
+   sequential round trips into one wave on a report screen's critical path. Also: the per-bill
+   figures are memoised (the merge put a form in the same component as the bill list, so every
+   keystroke was re-scanning every instalment — the identical trap two sibling panels carry warnings
+   about), one selection builder replaces two, and `clubRequestReportRole` — which was **dead code
+   documenting a rule its own caller re-derived by hand** — became `clubRequestIsReimbursement` and
+   is now called. ⚠ The union → predicate change was forced by `budget-line-kind-guard`: the union
+   made its caller write `=== 'cost'`, and removing the literal was the honest answer rather than
+   claiming an exemption. **Skipped:** a pluralisation helper (the four sentences differ by audience
+   on purpose), and enforcing the money-out direction inside `resolveBudgetItem` — no other caller
+   passes a direction, and a strict server check would refuse an ordinary edit of a record whose
+   word had since moved sides, which the picker deliberately still offers.
+
+   **⚠⚠ `/review` (high-risk tier, 5 lenses) — 8 real defects, all fixed in the same pass. Three of
+   them moved or exposed money, and TWO were pre-existing:**
+   - ⚠⚠ **High, pre-existing — marking a club instalment paid could post the ledger transfer TWICE.**
+     Both doors (the coach's and the club admin's) read the instalment, confirm it is unpaid, post a
+     real double-entry transfer, then stamp `paid_at` — and the stamp filtered on `id` alone. A
+     double-tap on a slow connection, or the tab open on two devices, and both requests passed the
+     check, both posted, both returned 200. The instalment read as paid ONCE while the ledgers had
+     moved the money TWICE. Fixed at the writer (`.is('paid_at', null)` + a null return), so both
+     callers 409 instead of reporting success. It does **not** unwind the losing request's transfer —
+     making the RPC and the stamp atomic is a bigger change than a review carries; what is closed is
+     the double post. **This is the same shape the 2026-08-16 review fixed on payment requests; the
+     sibling endpoint had simply never been given the same treatment.**
+   - ⚠⚠ **High — the report's CUMULATIVE CHART never got club money.** This report renders club costs
+     in **three** independent places and the first pass wired two: the statement (rollup) and the
+     Months grid. The chart above the statement kept reading raw expenses only, so on a club-run team
+     it sat directly above numbers it contradicted — and the club's bill is frequently the season's
+     largest line. ⚠ Costs only: this chart has never netted refunds of any kind, so feeding club
+     reimbursements in would make club money the one kind that nets there. **That the altitude lens
+     had already called the two-feed shape a defect risk, and a third feed then turned up, is the
+     finding worth remembering.**
+   - ⚠⚠ **High — a finished season's club requests were still writable.** The GET moved to
+     `resolveCoachTeamRead` (which admits a finished season so the tab can render it read-only), but
+     the edit/withdraw route kept its old hand-rolled chain with no season resolution at all. Since
+     `startNextRepSeason` completes a season **without** checking for open club requests — only the
+     settlement close-out does — a pending request outlives its season, and a direct PATCH/DELETE
+     still rewrote or destroyed a record every screen showed as locked history. The client's
+     `isReadOnly` was the only thing in the way, which is not a gate. Both handlers now resolve a
+     LIVE season **and** re-assert `program_year_id` in the WHERE clause — "a live season exists" is
+     not the same claim as "this record belongs to it".
+   - **Medium — the new filing modal had no discard guard.** It looks trivial, but a coach can create
+     a brand-new budget word inside it, so tapping the backdrop threw away work that existed nowhere
+     else — while its sibling window in the same component prompts.
+   - **Medium — a save that lost the race left the row lying.** When the club approves mid-edit the
+     server 409s correctly, but the list underneath kept the *Awaiting the club* chip on a request
+     already decided. The failure path refreshes now; the window keeps the coach's typing.
+   - **Low ×3 — comments that had become false**, including the register overlay's own control still
+     saying *"nothing pending a decision is ever in it"* one release after the owner reversed that,
+     and `BUDGET_ITEM_REFERENCES`' doc still counting "four tables" at six.
+   - **Plus a test gap the regression lens named:** `closeOutBlockers` gained a third condition with
+     no case of its own, in a file whose existing cash-shortfall test is literally labelled *"the
+     regression case"* from the last time that happened. Three cases added.
+
+   **Not fixed, logged as debt:** `paidDate()` slices a timestamp in UTC while the club feeds use the
+   org's day key, so an ordinary expense and a club bill paid the same evening near midnight can land
+   in different months. Pre-existing, narrow, and correcting it would move existing expense rows
+   between months — a behaviour change beyond this phase. Likewise the report's **three** cost feed
+   points (rollup / month grid / cumulative chart): the deep fix is to derive all of them from the
+   rollup the way refunds already are, which means re-deriving the pre-existing expenses feed too.
 
 ⚠ P1–P3 all touch one form and one tab bar — **run them serially, never as parallel sessions**
 (the lesson the taxonomy plan's §7.1 is built on).

@@ -84,6 +84,13 @@ export const PATCH = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Failed to create accounting transfer' }, { status: 500 });
   }
 
+  /* ⚠⚠ ZERO ROWS MEANS SOMEBODY GOT THERE FIRST — see the writer's own note. The pre-check above
+     ran BEFORE the transfer, and the transfer is a round trip, so a second request can pass that
+     check while this one is mid-flight. Reporting success here is what let one instalment move the
+     money twice. */
   const updated = await markRepAllocationInstallmentPaid(installId, ctx.user.id, null);
+  if (!updated) {
+    return NextResponse.json({ error: 'That instalment has already been marked paid.' }, { status: 409 });
+  }
   return NextResponse.json({ installment: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/allocations/[splitId]/installments/[installId]' });

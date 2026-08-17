@@ -251,7 +251,12 @@ export const GET = withObservability(async (req: Request,
     lanes: [
       { id: 'collections_due', title: 'Dues Coming Due',     emptyMessage: 'No player dues due in this window.',      items: duesItems },
       { id: 'team_payables',   title: 'Team Payables',       emptyMessage: 'No expense payments due in this window.', items: expenseItems },
-      { id: 'org_payables',    title: 'Org Allocations Due', emptyMessage: 'No org allocation payments due.',         items: allocItems },
+      /* ⚠ "Club", not "Org" (owner ruling 2026-08-17, money redesign P4). This lane title survived
+         the merge as the last coach-facing string still calling the relationship by the schema's
+         word, on the Money Overview — one tab away from a tab now called Club. The lane `id` is
+         DELIBERATELY unchanged: it is a wire value the Overview panel keys its rows on, and
+         renaming it would be a silent behaviour change dressed as copy. */
+      { id: 'org_payables',    title: 'Club Bills Due',      emptyMessage: 'Nothing owed to your club in this window.', items: allocItems },
     ],
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables' });

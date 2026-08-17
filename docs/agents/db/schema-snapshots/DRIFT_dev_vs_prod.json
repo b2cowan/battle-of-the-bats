@@ -1,11 +1,11 @@
 {
   "generated": "2026-08-17",
-  "total": 232,
+  "total": 244,
   "counts": {
     "tables": 3,
-    "columns": 42,
-    "indexes": 155,
-    "constraints": 23,
+    "columns": 46,
+    "indexes": 159,
+    "constraints": 27,
     "rls": 9
   },
   "items": [
@@ -63,6 +63,14 @@
     },
     {
       "key": "column:only-dev:budget_items.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_splits.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_splits.budget_item_id",
       "sig": ""
     },
     {
@@ -170,6 +178,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_payment_requests.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_payment_requests.budget_item_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_payment_requests.program_year_id",
       "sig": ""
     },
@@ -215,6 +231,14 @@
     },
     {
       "key": "constraint:only-dev:budget_items.budget_items_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_splits.rep_allocation_splits_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_splits.rep_allocation_splits_budget_item_id_fkey",
       "sig": ""
     },
     {
@@ -275,6 +299,14 @@
     },
     {
       "key": "constraint:only-dev:rep_team_money_in.rep_team_money_in_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_payment_requests.rep_team_payment_requests_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_payment_requests.rep_team_payment_requests_budget_item_id_fkey",
       "sig": ""
     },
     {
@@ -499,6 +531,14 @@
     },
     {
       "key": "index:only-dev:rep_allocation_installments_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_splits_budget_category_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_splits_budget_item_idx",
       "sig": ""
     },
     {
@@ -807,6 +847,14 @@
     },
     {
       "key": "index:only-dev:rep_team_payment_requests_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_budget_category_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_budget_item_idx",
       "sig": ""
     },
     {

@@ -1730,7 +1730,12 @@ export function PlayerDuesPanel({
                   ? 'Everything is in — the season is ready to close'
                   : closeOut.duesOutstanding > 0
                     ? `${fmt(closeOut.duesOutstanding)} of dues still to come in`
-                    : `${fmt(closeOut.cashShort)} more than the team holds is needed to pay everyone`
+                    : closeOut.cashShort > 0
+                      ? `${fmt(closeOut.cashShort)} more than the team holds is needed to pay everyone`
+                      /* The third blocker (P4). Named here too — this strip is what a coach reads
+                         before they open the sheet, and "not ready" with no reason is the exact
+                         defect the strip exists to prevent. */
+                      : `${closeOut.pendingClubRequests === 1 ? 'A club request is' : `${closeOut.pendingClubRequests} club requests are`} still waiting on the club`
                 : seasonOutstanding > 0.005
                   ? owedBackTotal > 0.005
                     ? `The team is holding ${fmt(owedBackTotal)} of families’ money · ${fmt(seasonOutstanding)} of dues still to come in`
@@ -1950,6 +1955,28 @@ export function PlayerDuesPanel({
                               : 'The team is holding enough to pay every refund'}
                           </span>
                         </li>
+                        {/* ⚠⚠ A CLUB REQUEST THE CLUB NEVER ANSWERED — the third BLOCKER, and the
+                            only one that is not about the arithmetic (money redesign P4, owner
+                            ruling 2026-08-17). A pending request is excluded from every figure on
+                            this sheet, so the split is right with or without it. What it would do
+                            is DISAPPEAR: seasons are independent by ruling, so a closed season's
+                            open loop sits where nobody looks again.
+
+                            ⚠ THE LINE NAMES BOTH WAYS OUT. A coach cannot make the club answer, so
+                            a blocker with no stated remedy would lock a team out of closing its
+                            season whenever a club office went quiet. "Chase it or withdraw it" is
+                            the whole reason this is allowed to block at all. */}
+                        {closeOut && closeOut.pendingClubRequests > 0 && (
+                          <li data-state="blocked">
+                            <AlertTriangle size={14} aria-hidden />
+                            <span>
+                              {closeOut.pendingClubRequests === 1
+                                ? 'One club request is still waiting for an answer'
+                                : `${closeOut.pendingClubRequests} club requests are still waiting for an answer`}
+                              {' — '}chase the club or withdraw {closeOut.pendingClubRequests === 1 ? 'it' : 'them'} on <strong>Money → Club</strong>
+                            </span>
+                          </li>
+                        )}
                         {/* ⚠ A season still spending is not a season with a surplus — but this
                             WARNS and never blocks, and the hold-back is how a coach answers it. */}
                         {settlement.unspentPlan > 0.005 && settlement.pot.surplus > 0.005 && (

@@ -24,35 +24,44 @@ export type CoachMoneySection =
   | 'fundraisers'
   | 'transactions'
   | 'payables'
-  | 'allocations'
-  | 'payment-requests'
+  | 'club'
   | 'budget-vs-actual';
 
 /**
  * ⚠ `expenses` IS GONE FROM THE UNION ON PURPOSE (Money split P1, 2026-08-16). One screen holding
  * happened-lists AND owed-lists became two tabs — Transactions and Payables — so the old id names
- * no tab at all. Removing it from the type rather than aliasing it is what makes the compiler find
- * every caller; the ones that should keep working do so through `legacyMoneyAddress` below.
+ * no tab at all.
+ *
+ * ⚠ AND SO ARE `allocations` / `payment-requests` (money redesign P4, 2026-08-17) — the mirror
+ * move. Two tabs became ONE (`club`), so both old ids name no tab either. Removing them from the
+ * type rather than aliasing them is what makes the compiler find every caller; the ones that should
+ * keep working do so through `legacyMoneyAddress` below.
  */
-export type LegacyMoneySection = 'expenses';
+export type LegacyMoneySection = 'expenses' | 'allocations' | 'payment-requests';
 
 /**
- * Where a saved `?section=expenses` address lands now.
+ * Where a saved address that names a retired tab lands now.
  *
- * ⚠⚠ THE SUB-VIEW DECIDES THE TAB, NOT JUST THE SECTION. The old screen's four sub-tabs divided
- * cleanly into happened (Expenses, Money in) and owed (Payables, Payment schedule), and that
- * division is exactly where the split was made — so `&tab=payables` and `&tab=schedule` have to
- * cross to the OTHER tab, while the two happened-side values stay put. A mapping that read the
- * section alone would land half of every bookmarked link on a screen that cannot show what it
+ * ⚠⚠ FOR `expenses`, THE SUB-VIEW DECIDES THE TAB, NOT JUST THE SECTION. The old screen's four
+ * sub-tabs divided cleanly into happened (Expenses, Money in) and owed (Payables, Payment schedule),
+ * and that division is exactly where the split was made — so `&tab=payables` and `&tab=schedule`
+ * have to cross to the OTHER tab, while the two happened-side values stay put. A mapping that read
+ * the section alone would land half of every bookmarked link on a screen that cannot show what it
  * pointed at.
  *
+ * ⚠ FOR THE TWO CLUB IDS THERE IS NOTHING TO DECIDE, and that is the point of the merge: both halves
+ * of the relationship are on one screen, so both addresses resolve to it with no sub-view and no
+ * loss. A deep link to the old Payments tab does not need to scroll anywhere — the requests are
+ * visible on the same page as the bills.
+ *
  * Pure and framework-free (node scripts import this module), and the ONE home for the rule — the
- * legacy standalone route and the hub's own address normaliser both call it.
+ * legacy standalone routes and the hub's own address normaliser all call it.
  */
 export function legacyMoneyAddress(
   section: string | null | undefined,
   tab: string | null | undefined,
 ): { section: CoachMoneySection; tab?: string } | null {
+  if (section === 'allocations' || section === 'payment-requests') return { section: 'club' };
   if (section !== 'expenses') return null;
   if (tab === 'payables') return { section: 'payables', tab: 'commitments' };
   if (tab === 'schedule') return { section: 'payables', tab: 'schedule' };

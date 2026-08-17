@@ -151,6 +151,15 @@ export async function loadSeasonSettlement(opts: {
   const orgFunding = approvedThisSeason('charge_to_org');
   const orgPayments = approvedThisSeason('payment_to_org');
 
+  /* ⚠⚠ NOT MONEY — A COUNT OF OPEN CONVERSATIONS, and it BLOCKS the close (money redesign P4,
+     owner ruling 2026-08-17). A pending request stays out of every figure above, exactly as it
+     always has: the club may still decline it. But seasons are independent by ruling — the Club tab
+     shows the working season and nothing else — so a season closed with a request the club never
+     answered leaves that request in a place nobody looks at again. The loop is closed on the way
+     out rather than by re-opening history. The escape is entirely the coach's: chase the club, or
+     withdraw the request. */
+  const pendingClubRequests = requests.filter(r => r.status === 'pending').length;
+
   // ⚠ RECORDED ARRIVALS, BOTH KINDS (mig 243). Income the coach logged and money that came back are
   // both cash the team is holding, and this pot counted neither — so every family's refund was
   // computed from a smaller pot than the team actually had. The report's income/refund distinction
@@ -217,6 +226,7 @@ export async function loadSeasonSettlement(opts: {
       duesReceived, fundraisingRaised, orgFunding, recordedIn, cashOut,
       payoutsTotal: amountsTotal(payouts),
       holdBack: Number(surplusRow?.hold_back_amount ?? 0),
+      pendingClubRequests,
     },
     participants,
   });
@@ -390,6 +400,10 @@ export class SettlementSeasonNotClosableError extends Error {
     public readonly expectedIn: number,
     /** The payouts' shortfall against cash on hand — non-zero when a family was overpaid early. */
     public readonly awaitingCash: number,
+    /** Club requests the club has never answered (P4). ⚠ Whatever renders this MUST name the two
+     *  ways out — chase the club, or withdraw the request — or an unresponsive club office locks a
+     *  team out of closing its season with no stated remedy. */
+    public readonly pendingClubRequests: number = 0,
   ) {
     super('SETTLEMENT_SEASON_NOT_CLOSABLE');
     this.name = 'SettlementSeasonNotClosableError';
@@ -458,7 +472,9 @@ export async function recordSettlementPayouts(opts: {
   const isCloseOut = opts.playerIds == null || opts.playerIds.length > 1;
   const blockers = closeOutBlockers(before);
   if (isCloseOut && !blockers.canClose) {
-    throw new SettlementSeasonNotClosableError(blockers.duesOutstanding, blockers.cashShort);
+    throw new SettlementSeasonNotClosableError(
+      blockers.duesOutstanding, blockers.cashShort, blockers.pendingClubRequests,
+    );
   }
 
   const rowById = new Map(before.rows.map(r => [r.playerId, r]));

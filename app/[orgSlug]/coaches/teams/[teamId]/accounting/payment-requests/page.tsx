@@ -1,5 +1,5 @@
 import { moneyLegacyRedirectPage } from '@/lib/coach-money-legacy-redirect';
 
-// Legacy standalone route — permanent redirect into the Money hub's tab (see the factory's doc).
-// The panel itself lives in ./panel, imported by the hub.
-export default moneyLegacyRedirectPage('payment-requests');
+// Legacy standalone route → the Money hub's CLUB tab (money redesign P4, 2026-08-17). See the twin
+// note on ../allocations/page.tsx — the two retired together, into one screen.
+export default moneyLegacyRedirectPage('club');

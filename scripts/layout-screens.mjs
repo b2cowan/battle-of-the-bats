@@ -157,8 +157,14 @@ export const SCREENS = [
      filter chips, the split summary cards and the "no sponsors this season" fallback all compose
      at every width, which the unfiltered `coach-fundraisers` entry above never shows. */
   { id: 'coach-sponsors-list',     session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&kind=sponsor`, ready: 'h1' },
-  { id: 'coach-payment-requests',  session: 'coach', path: (c) => `${team(c)}/accounting?section=payment-requests`, ready: 'h1' },
-  { id: 'coach-allocations',       session: 'coach', path: (c) => `${team(c)}/accounting?section=allocations`,      ready: 'h1' },
+  /* ⚠ TWO SCREENS BECAME ONE (money redesign P4, 2026-08-17) — a deliberate baseline edit, the
+     mirror of the one P1 made when `coach-expenses` became `coach-transactions` +
+     `coach-payables`. `coach-payment-requests` and `coach-allocations` named two tabs that no
+     longer exist; the merged Club tab carries both, and it is the harder measurement of the two it
+     replaced: a standing band of three figures, two titled blocks with their own toolbars, a
+     collapsible bill with an instalment table inside it, and a request table with a filing column.
+     The old ids' saved addresses still resolve here, but the SCREEN under test is the merged one. */
+  { id: 'coach-club',              session: 'coach', path: (c) => `${team(c)}/accounting?section=club`,             ready: 'h1' },
 
   // ── A team BETWEEN SEASONS — its working season has finished ────────────────
   /**

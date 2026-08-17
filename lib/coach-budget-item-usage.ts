@@ -91,6 +91,20 @@ export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
   { table: 'rep_team_expenses', column: 'budget_item_id', categoryColumn: 'budget_category_id', categoryNameColumn: 'category', label: 'recorded costs' },
   { table: 'rep_team_money_in', column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'money in' },
   { table: 'org_budget_lines',  column: 'item_id',        categoryColumn: 'category_id',        label: 'club budget lines' },
+  /* ⚠ THE FIFTH AND SIXTH ARRIVED WITH MIGRATION 250 (money redesign P4), and they are here in the
+     same commit as that migration ON PURPOSE — this list is the thing the 2026-08-17 defect was
+     about. `rep_team_money_in` was the third table, added by mig 243, and NOT added here; every
+     income and refund filed against an absorbed word lost its item silently. Club money is now the
+     fourth and fifth kind of record that can point at a coach's budget word, and it reaches Budget
+     vs. Actual through that pointer alone — so a fold or a publish that re-pointed the other four
+     and skipped these would leave the season's LARGEST line on a club-run team filed under a word
+     that no longer exists.
+
+     ⚠ The filing lives on `rep_allocation_splits`, not on `rep_cost_allocations`: the parent is the
+     CLUB's object spanning every team it was divided across, and two teams may legitimately file
+     one shared cost under different words. The split is this team's share, and the coach files it. */
+  { table: 'rep_team_payment_requests', column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club requests' },
+  { table: 'rep_allocation_splits',     column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club bills' },
 ] as const;
 
 /** How many records of each kind point at these words — the count every guard and the fold need. */

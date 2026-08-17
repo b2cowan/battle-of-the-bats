@@ -545,10 +545,10 @@ describe('a season that is done collecting cannot overdraw the team', () => {
  * cases pin it.
  */
 describe('closeOutBlockers — the one definition of "can this season close?"', () => {
-  const sheet = (expectedIn: number, awaitingCash: number) =>
-    ({ pot: { expectedIn }, awaitingCash }) as Parameters<typeof closeOutBlockers>[0];
+  const sheet = (expectedIn: number, awaitingCash: number, pendingClubRequests = 0) =>
+    ({ pot: { expectedIn }, awaitingCash, pendingClubRequests }) as Parameters<typeof closeOutBlockers>[0];
 
-  it('opens only when BOTH conditions are clear', () => {
+  it('opens only when ALL conditions are clear', () => {
     assert.equal(closeOutBlockers(sheet(0, 0)).canClose, true);
   });
 
@@ -578,5 +578,41 @@ describe('closeOutBlockers — the one definition of "can this season close?"', 
   it('half-cent noise does not block a season (same deadband as the rest of the sheet)', () => {
     assert.equal(closeOutBlockers(sheet(0.004, 0.004)).canClose, true);
     assert.equal(closeOutBlockers(sheet(0.006, 0)).canClose, false);
+  });
+
+  /* ── The THIRD condition (money redesign P4, owner ruling 2026-08-17) ─────────────────────────
+     ⚠ These exist because this file's own history says they have to: the cash-shortfall case above
+     is labelled "the regression case", added after a one-condition gate shipped with every test
+     green. A third condition arriving with no case of its own is the same gap wearing a new number,
+     and `/review` flagged exactly that.
+
+     ⚠ It is the only blocker that is NOT money. A pending club request is excluded from every
+     figure on the sheet — the split is correct with or without it — so nothing else in this suite
+     can fail if it is mis-wired. Only these cases can. */
+  it('⚠⚠ AN UNANSWERED CLUB REQUEST ALONE BLOCKS IT — a count among two dollar amounts', () => {
+    // Every family square, every refund funded: a gate reading only the two money conditions opens
+    // here, and the season closes with an open loop nobody can see again (seasons are independent).
+    const b = closeOutBlockers(sheet(0, 0, 1));
+    assert.equal(b.canClose, false, 'an unanswered club request must stop the close');
+    assert.equal(b.pendingClubRequests, 1);
+    assert.equal(b.duesOutstanding, 0, 'must not conflate it with money — the screen words them differently');
+    assert.equal(b.cashShort, 0);
+  });
+
+  it('all three reasons are reported together, so the checklist can state each', () => {
+    const b = closeOutBlockers(sheet(150, 200, 2));
+    assert.equal(b.canClose, false);
+    assert.equal(b.duesOutstanding, 150);
+    assert.equal(b.cashShort, 200);
+    assert.equal(b.pendingClubRequests, 2);
+  });
+
+  it('a team with no club (the field absent entirely) closes exactly as before', () => {
+    // The field is optional so every pre-P4 caller and every standalone team means "none" — if this
+    // ever became required-and-truthy, every standalone team would be locked out of closing.
+    const noClub = ({ pot: { expectedIn: 0 }, awaitingCash: 0 }) as Parameters<typeof closeOutBlockers>[0];
+    const b = closeOutBlockers(noClub);
+    assert.equal(b.canClose, true);
+    assert.equal(b.pendingClubRequests, 0);
   });
 });

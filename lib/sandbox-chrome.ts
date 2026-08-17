@@ -564,7 +564,15 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          the plan's done-means and in Owner QA §46. **If this identity is ever relaxed, this sentence
          is the first thing to change.** Do not soften it to "roughly" instead — the whole design is
          that it is exact; soften the DESIGN or leave the sentence alone. */
-      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land.',
+      /* ⚠ THE CLUB CLAUSE IS NEW WITH P4 (2026-08-17), and it is one sentence on an existing step
+         rather than a ninth step — the tour is already eight, and CLAUDE.md's demo rule asks
+         *should a demo moment show this?*, not *does it deserve its own stop*. A Club-plan prospect
+         is shopping for precisely this relationship and the demo had no sentence for it.
+         ⚠ EVERY FIGURE IN IT IS PINNED BY `MIDSEASON_CLUB_MONEY`: a $900 share in three
+         instalments (two settled, one ahead), $180 the club agreed to pay back, and a $95 request
+         still undecided. If that seed changes, this sentence changes with it — and the pending $95
+         is also what makes the "may still say no" clause visible in the scheduled rows above. */
+      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. The club\'s own side has a screen of its own: $900 of shared permits billed across three instalments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes.',
       nextLabel: 'Next: playing time',
     },
     {

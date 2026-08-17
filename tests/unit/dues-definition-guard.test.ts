@@ -68,11 +68,17 @@ const DEFINITION_HOMES = new Set([
   'lib/coach-dues-remaining.ts',
 ]);
 
-/** ORG-ALLOCATION surfaces — a DIFFERENT money domain (rep_allocation_installments). Allocations
- *  have no payment record; their paid stamp is still the input, so a stamp-sum there is correct
- *  today. If allocations ever gain a payment record, delete this list and let the test fail. */
+/** CLUB-MONEY surfaces — a DIFFERENT money domain (`rep_allocation_installments`). A club
+ *  instalment has no payment record; its paid stamp IS the input, so a stamp-sum there is correct
+ *  today. If club instalments ever gain a payment record, delete this list and let the test fail.
+ *
+ *  ⚠ THE PATH MOVED, THE EXEMPTION DID NOT WIDEN (money redesign P4, 2026-08-17). This named
+ *  `accounting/allocations/panel.tsx`; Allocations and Payments merged into one Club tab, so the
+ *  same code is at `accounting/club/panel.tsx`. Renaming the entry is the whole edit — the guard
+ *  firing on the new path was it working, and the temptation to "fix" it by loosening the pattern
+ *  is what the list exists to avoid. */
 const ALLOCATION_DOMAIN = new Set([
-  'app/[orgSlug]/coaches/teams/[teamId]/accounting/allocations/panel.tsx',
+  'app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx',
 ]);
 
 /** A positive filter on the paid stamp followed by a sum — the classic inline paid-derivation.

@@ -59,7 +59,7 @@ import {
 /**
  * Count what is filed against a set of words, TOGETHER — one answer for the whole set.
  *
- * ⚠ COUNTS EVERY TABLE IN THE LIST, ALWAYS. A guard that counts three of the four is the original
+ * ⚠ COUNTS EVERY TABLE IN THE LIST, ALWAYS. A guard that counts all but one of them is the original
  * bug wearing a newer comment — which is why this takes no "which tables" parameter.
  */
 export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetItemUsage> {
@@ -84,7 +84,7 @@ export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetIte
  * lens, 2026-08-17).
  *
  * ⚠⚠ THIS EXISTS BECAUSE THE OBVIOUS SHAPE WAS QUADRATIC. The manage screen wants a count beside
- * every one of the team's own words, and asking `countBudgetItemUsage` once per word issued FOUR
+ * every one of the team's own words, and asking `countBudgetItemUsage` once per word issued ONE QUERY PER REFERENCED TABLE
  * queries per word — forty round trips for a team with ten words of its own, on every open of the
  * modal and again after every rename, remove or fold. The tables here are libraries, not ledgers,
  * and the ids are already in hand: read the item column once per table and tally in JavaScript.
@@ -138,7 +138,7 @@ export async function countBudgetItemUsageByItem(
 
   /* ⚠ THROUGH `sumBudgetItemUsage`, so a single word's counts read in `BUDGET_ITEM_REFERENCES`
      order and drop their empty kinds exactly as the set-wide counter's do. The confirmation adds
-     these up again in the browser; two different orderings of the same four kinds would show a
+     these up again in the browser; two different orderings of the same kinds would show a
      coach one sentence in the tooltip and another on the button. */
   const usage: Record<string, BudgetItemUsage> = {};
   for (const id of itemIds) {
@@ -175,12 +175,12 @@ export async function countBudgetItemUsageByItem(
  * row — its item AND its category — as a side effect of a coach here tidying their vocabulary.
  * Cross-tenant corruption, triggered by someone with no relationship to the row.
  *
- * ⚠ `org_id` IS NOT NULL ON ALL FOUR TABLES (verified against the committed dev snapshot), so this
+ * ⚠ `org_id` IS NOT NULL ON EVERY REFERENCED TABLE (verified against the committed dev snapshot — including the two club tables migration 250 added), so this
  * filter cannot silently skip a legitimate row. And if it ever did, the caller's re-count before the
  * delete would see the leftovers and refuse to remove the words — the fold stops rather than
  * blanking what it could not move.
  *
- * ⚠ No `team_id` filter, though: one of the four (`org_budget_lines`) has no team column, and org
+ * ⚠ No `team_id` filter, though: one of them (`org_budget_lines`) has no team column, and org
  * scoping is the boundary that actually matters here. The table stays in the loop rather than being
  * skipped as "impossible" — it was called impossible once already, and it was not.
  */
@@ -196,7 +196,7 @@ export async function repointBudgetItemReferences(
   /** The words being folded away — ids AND names, because an auto-filled label has to follow. */
   sources: Array<{ id: string; name: string }>,
   target: BudgetItemRepointTarget,
-  /** The org whose records may be touched. Every one of the four tables carries it, NOT NULL. */
+  /** The org whose records may be touched. Every referenced table carries it, NOT NULL. */
   orgId: string,
 ): Promise<{ ok: true } | { ok: false; movedLabels: string[]; failedLabel: string; error: string }> {
   const sourceIds = sources.map(s => s.id);

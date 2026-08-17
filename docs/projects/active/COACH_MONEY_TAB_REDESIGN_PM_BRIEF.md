@@ -1,8 +1,92 @@
 # PM Brief — the Money screens redesign: the split, the register, and the club tab
 
-**Status: direction approved by the owner 2026-08-16. Phases 1 and 2 built on dev the same day
-(Owner QA §41 and §43); phases 3–4 open.**
+**Status: ALL FOUR PHASES BUILT ON DEV — P1+P2 2026-08-16, P3+P4 2026-08-17.**
+Owner QA **§41 · §43 · §46 · §49**, all four owed, and the owner is walking them together in that
+order. Migrations 246, 247 and 250 are applied to dev only.
 **Plan:** [COACH_MONEY_TAB_REDESIGN_PLAN.md](COACH_MONEY_TAB_REDESIGN_PLAN.md)
+
+## Phase 4 — what shipped to dev, in customer terms
+
+**Two tabs became one, and club money finally reaches the report.** *Allocations* (what the club
+bills the team) and *Payments* (what the team asks of the club) were two halves of one relationship,
+and a coach had to hold both in their head to answer the only question either existed for: **where
+do we stand with the club?** They are now a single tab called **Club**, which also gives back the
+tab the split added — eight for a club-run team, seven standalone, exactly the count before this
+project started.
+
+**But the merge is the smaller half of what shipped.** The owner's question at the mockup review —
+*shouldn't a request name which budget category and item it's tied to?* — found that **Budget vs.
+Actual contained no club money at all.** Not the allocations the team pays, not the costs the club
+agrees to cover. On a club-run team the club's bill is frequently the single largest line of the
+season, and the screen whose whole job is *"how did we do against plan?"* had never seen a dollar of
+it. The cause was exactly what the question pointed at: club money carried no category or item
+anywhere, so even a report that went looking would have had nothing to file it under.
+
+### What a coach sees and does differently
+
+- **One screen for the club relationship**, opening with three figures: **still to pay the club**,
+  **waiting on the club**, and what has **settled this season**. Underneath, what the club has
+  billed (obligations, with due dates) and what the team has asked (the conversation) — in that
+  order, because that is how the money flows.
+- **Both club records now say what they're for.** A request asks *"What is it for?"* on the same
+  search box the money form and the Budget Plan already use, and a coach files the club's bill under
+  one of their own budget words when it arrives. That single field is what puts club money on the
+  report — and until something is filed, the screen says so on the row rather than leaving a coach
+  to wonder why their report looks light.
+- **The word "Org" is gone from these screens.** The badges read **To club** and **From club**; a
+  request awaiting a decision reads **Awaiting the club** rather than *Pending*, because that says
+  whose move it is. It matches what the ledger has called this money since Phase 3.
+- **Money asked for now shows in the forward view.** A request the club hasn't answered appears on
+  **Transactions** when *include what's scheduled* is on — at the foot of the list, marked as
+  undecided, with no date, because nothing records when a club will reply. It stays out of cash on
+  hand and out of the budget plan. **This reverses a rule this project wrote down**; the owner's
+  argument was that the forward view already carries a sponsor pledge, which is also money that may
+  never arrive.
+- **Last season is not on this screen.** Both lists show the working season and nothing else — the
+  owner's ruling that seasons are independent, applied without exception.
+- **The screen survives the end of a season, read-only.** Previously both tabs vanished the moment a
+  season finished, so a coach could see the club's money on the ledger but could not open the
+  workspace behind it. It is a record now, rendered in place with every button withdrawn.
+- **A loose end stops a season closing.** A request the club never answered blocks the season
+  close-out, beside the families who still owe — because with seasons independent, closing would
+  leave it somewhere nobody looks again. The coach can chase the club or withdraw the request, and
+  both the checklist and the refusal say so.
+
+### Why it matters
+
+The reporting gap is the part with money attached. A treasurer reconciling a club-run team's season
+against its plan was reading a report missing its biggest line, with nothing on screen saying so.
+That is now fixed, and the fix is a field a coach fills in once per record rather than a new
+workflow.
+
+The merge itself buys back a tab and removes a question a coach shouldn't have had to ask — *which
+of these two screens has the thing I'm looking for?*
+
+### Tradeoffs made honestly
+
+- **Club money that has never been filed still counts, in the report's "Not itemized" row.** The
+  money moved; hiding it would trade one silence for another. Existing records could not be
+  backfilled — only a coach can say what a bill was for, and guessing would put invented
+  classifications into a report someone reconciles.
+- **A request where the club covers a cost files against the team's *spending* words, not its income
+  ones**, and on the report it reduces that cost rather than counting as revenue. This is the same
+  rule a refund follows, and it is the one design call most likely to look wrong at first glance —
+  the QA walk flags it for exactly that reason. Getting it backwards would make a season look twice
+  as good as it is.
+- **The season-close blocker is a hard block, not a warning.** A coach cannot make a club office
+  reply, so the only escape is withdrawing the request. It is flagged in the QA walk as the item to
+  argue with, and reversing it to a warning is a one-line change.
+- **Budget vs. Actual has no automated identity check** the way the ledger does, so whether club
+  money lands under the right heading is walked by eye.
+
+### Impact
+
+No pricing or plan-gating change. **One database change (migration 250)** — both club record types
+gain a category and item field. It is additive and optional, so it cannot fail a release, but the
+code reads the new fields and must not reach production ahead of it. Coach QA walk is **§49**, and
+it asks for the whole money quarter (**§38 → §41 → §43 → §46 → §49**) to be walked in that order,
+since each phase reshaped the screens the one before it describes.
+
 
 ## Phase 2 — what shipped to dev, in customer terms
 

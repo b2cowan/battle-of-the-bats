@@ -1576,6 +1576,16 @@
   },
   {
     "tablename": "rep_allocation_splits",
+    "indexname": "rep_allocation_splits_budget_category_idx",
+    "indexdef": "CREATE INDEX rep_allocation_splits_budget_category_idx ON public.rep_allocation_splits USING btree (budget_category_id)"
+  },
+  {
+    "tablename": "rep_allocation_splits",
+    "indexname": "rep_allocation_splits_budget_item_idx",
+    "indexdef": "CREATE INDEX rep_allocation_splits_budget_item_idx ON public.rep_allocation_splits USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_allocation_splits",
     "indexname": "rep_allocation_splits_org_id_idx",
     "indexdef": "CREATE INDEX rep_allocation_splits_org_id_idx ON public.rep_allocation_splits USING btree (org_id)"
   },
@@ -2728,6 +2738,16 @@
     "tablename": "rep_team_payment_requests",
     "indexname": "rep_team_payment_requests_accounting_entry_id_idx",
     "indexdef": "CREATE INDEX rep_team_payment_requests_accounting_entry_id_idx ON public.rep_team_payment_requests USING btree (accounting_entry_id)"
+  },
+  {
+    "tablename": "rep_team_payment_requests",
+    "indexname": "rep_team_payment_requests_budget_category_idx",
+    "indexdef": "CREATE INDEX rep_team_payment_requests_budget_category_idx ON public.rep_team_payment_requests USING btree (budget_category_id)"
+  },
+  {
+    "tablename": "rep_team_payment_requests",
+    "indexname": "rep_team_payment_requests_budget_item_idx",
+    "indexdef": "CREATE INDEX rep_team_payment_requests_budget_item_idx ON public.rep_team_payment_requests USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_payment_requests",

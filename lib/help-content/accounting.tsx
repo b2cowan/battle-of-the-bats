@@ -219,7 +219,7 @@ const accountingHelp: HelpPageContent = {
       content: (
         <>
           <p>When your org incurs shared costs (diamond fees, insurance, association fees), you can allocate a portion of those costs to each rep team. Allocations are created from the <strong>Org Budget</strong> tool and managed under <strong>Rep Teams → Allocations</strong>.</p>
-          <p>Each allocation is split across the teams you choose, with its own installment schedule. The allocation appears in the coach&apos;s Org Allocations view so they can track what their team owes and mark installments paid.</p>
+          <p>Each allocation is split across the teams you choose, with its own installment schedule. The allocation appears on the coach&apos;s <strong>Money → Club</strong> tab so they can track what their team owes and mark installments paid. They also file their share under one of their own budget words, which is what puts it on their Budget vs. Actual — that classification is theirs, not yours, and two teams may file the same shared cost differently.</p>
           <p>Allocations are created by <strong>owners and treasurers</strong> only — coaches and admins can view and acknowledge them, but cannot create or change them.</p>
         </>
       ),

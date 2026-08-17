@@ -5221,6 +5221,19 @@ coach can now change a PENDING payment request.** Mockups: artifacts `2c74c60d` 
 `0e714ace` (rows + record window). Adversarial review run 2026-08-16 — four defects found and fixed,
 three of them money-integrity; parts **D** and **E** are the ones that exercise them.
 
+⚠⚠ **ANNOTATED 2026-08-17 (money redesign P4, §49) — NOT renumbered. THE TWO SCREENS THIS SECTION
+WALKS ARE NOW ONE TAB CALLED `Club`.** Everything below still applies and is still worth walking;
+read *"Money → Allocations"* and *"Money → Payments"* as **the two blocks of the Club tab**, one
+above the other on one screen. Four specific corrections, all in §49's parts:
+- **A's last bullet is obsolete in the best way** — "neither screen links to the other any more" was
+  true of two tabs; there is nothing left to link.
+- **B's summary tiles are gone.** Seven tiles across the two screens became **three figures** about
+  the relationship. The per-list counts survive beside their own rows.
+- **H's badge check still matters and the WORDS changed**: *Pay Org* / *From Org* now read
+  **To club** / **From club**, and *Pending* reads **Awaiting the club**. Re-check the warm-theme
+  contrast on the new labels — the tints are unchanged, the strings are not.
+- **The record window, D, E and F are untouched** — deliberately. §49 §H re-walks them.
+
 **Why this section exists:** you asked what Allocations and Payments even were. They turned out to be
 the two Money screens that never explained themselves — and pulling on that found a table drawn
 unlike its siblings, a one-tap irreversible delete, and a report label saying what an empty column
@@ -6461,13 +6474,17 @@ check.
       figure**, exactly as the screen does, and its Status reads *Settled — no team cash*. An empty
       cell there is the defect this checks for.
 
-**⚖ One known limit, accepted and owned by P4 — say if you disagree.** On a team **between seasons**,
-the club **payment-request** form is still offered (that screen's write gate has never known about
-finished seasons) and the server now **refuses** the save, because a request has to name a season.
-Before this release the save *succeeded* and created a record belonging to no season — which is the
-bug migration 247 exists to fix — so this is a clearer refusal on a safer outcome, not a new hole.
-Hiding the button properly belongs to **P4**, which rebuilds that screen. Worth one look: the refusal
-should read as a sentence, not as an error.
+**⚖ One known limit, accepted and owned by P4 — ~~say if you disagree~~ CLOSED 2026-08-17, and the
+claim below was WRONG about the product.** It said that between seasons the club payment-request form
+was still offered while the server refused it. The 409 was real, but **the screen was unreachable**:
+the Money hub dropped both org-only tabs the moment a season finished, and a deep link fell back to
+the Overview. There was no button to hide.
+
+⚠ **The actual defect was the opposite one, and P4 fixed that instead** (§49 §F): a coach between
+seasons could see the club's money on the register but could not open the workspace behind it to read
+what those instalments were or how a request was decided — the record did not go read-only, it
+vanished. The merged Club tab now renders between seasons with every write control withdrawn. **Walk
+§49 §F rather than this paragraph.**
 
 ---
 
@@ -6550,6 +6567,303 @@ one on this screen — which is why everything above it is about reading the sen
 
 ---
 
+## §48 · Tryouts Set up becomes one checklist, and the guide owns "Do this next"
+
+**Built on dev 2026-08-17 · not on production · no migration.**
+Mockup (approved, binding): artifact `7b578986` §1–§5. Design log entry 2026-08-17.
+
+**What changed, in one breath:** the "Run your tryout" header is one quiet line until you open
+**How tryouts work** — the lime "Do this next" prompt now lives *inside* that guide, under the four
+steps, with a ring marking the step you're on. Step 1's three stacked cards (Tryout Day / Evaluation
+scorecard / Evaluators) are now ONE **Get set up** card with three checklist rows. **Open day-of
+check-in** left Set up for the Tryout day tab (it was already there — the setup copy was a
+duplicate), and **Reveal names** moved to the top of Decide, where the guide always said it
+happened. Tabs opened ahead of your actual stage now lead with a small **"Do this first"** note —
+they never lock.
+
+**On a team with NO tryout yet (the empty state this was designed around):**
+
+- [ ] The section starts closed: title + "How tryouts work" + the four tabs, no lime banner.
+- [ ] Open the guide: four steps, then **Do this next → Add your tryout dates**, and step 1's
+      number wears the ring. "Take me there" lands on Set up.
+- [ ] The **Tryout dates** row is expanded on arrival (it's the first required thing); the other
+      two are closed — **a collapsed row carries no buttons** (owner revision after first look):
+      tick, title, tag, status, chevron, nothing else. Expanding a row is how you reach its
+      actions. The header counts **0 of 2 required done**.
+- [ ] Click **Tryout day** anyway: the tab opens (nothing is greyed out), and the panel leads with
+      *"You haven't set your tryout dates yet — that's step 1"* + **Go to Set up**. Same idea on
+      Decide and Build team, each in its own words.
+- [ ] **Add session** opens with BOTH times pre-filled to round hours — start at the **next full
+      hour**, end at **start + 2 hours** — never the current wall-clock minutes, and no "outside
+      the usual window" warning until you actually pick a date. ⚠ Press **Cancel without touching
+      anything** — silent close. Clear the end time and Cancel — **still silent** (clearing our
+      prefill isn't your work). Then in **Edit** on a saved session, clear its end time and Cancel
+      — this one **must ask**, because that end time was yours.
+- [ ] **Change the start time: the end moves with it, keeping the length** — a 3–5pm prefill moved
+      to 6pm reads 6–8pm (works in Edit too). Clear the end first and change the start: the end
+      stays empty rather than reappearing.
+- [ ] **A backwards session refuses to save.** Set the end before the start (or equal to it) —
+      Add and Edit both answer *"The end time must be after the start time"* instead of saving.
+      The API refuses it too, so this isn't just the form being polite. ⚠ **One 6:00–5:00 p.m.
+      session already exists on dev from before the rule** — open it, fix the end, and confirm
+      the edit path forces it right.
+- [ ] **The page stops flickering.** The tab strip is there from first paint (progress marks fill
+      in), row statuses show a quiet "…" instead of flashing "No sessions yet" over data still
+      loading, and — the one you reported — **switching to another window and back no longer
+      bounces the dates row through "Loading sessions…"**. It was this page only: its focus-driven
+      overview refresh re-armed the sessions loader via an unstable error-handler identity, a
+      wiring defect, not a rendering fact of life.
+- [ ] Any "are you sure" dialog in the portal (this discard ask, turning off an evaluator link,
+      Reveal names) now wears the **coach modal look** — dark rounded card, sentence-case title,
+      normal buttons — not the tournament admin's mono/uppercase. The admin Rep Teams panel keeps
+      the admin look; worth one glance in warm too.
+- [ ] Save a session — the row collapses to a dated receipt and the counter moves. ⚠ **The guide's
+      "Do this next" should move on to the scorecard without a reload** — this is the overview
+      refresh; if it still says "add your dates," that wiring is broken.
+
+**On the demo 11U (or any team mid-tryout):**
+
+- [ ] All three rows arrive as one-line receipts ("Sat Aug 29 · 9:00 AM + 1 more" / "6 categories ·
+      scored 1–5" / "3 helpers invited") — the finished coach scans three lines, not three screens.
+      Expanding a row reopens the full manager, exactly as it was.
+- [ ] **Reveal names now sits at the top of Decide** (button while blind, "Names revealed" chip
+      after). The confirm copy is unchanged and still one-way. ⚠ After revealing, the decision
+      board should show names **without a reload**.
+- [ ] The blind-evaluation note inside the dates row now points at the Decide tab — as does the
+      help guide (three passages moved with it) and the guide's own "Reveal names to decide" step.
+
+⚠ **The rendered layout sweep is HALF-BLIND here** (the §22 lesson): collapsed rows hide their
+managers from it, and the baseline still expects the old three-card labels — `check:layout` was
+deliberately NOT re-baselined while other sessions are mid-change in that file. Your eyes on the
+expanded rows are the coverage.
+
+**Warm skin (tryouts run in sunlight):** the done-marks and "Take me there" keep solid lime + dark
+ink; the tags and notes go olive-tint. Worth one glance at the checklist in warm before calling it.
+
+## §49 · Where the team stands with its club — one tab, and money that finally reaches the report (money redesign, Phase 4)
+
+**Built on dev 2026-08-17 · not on production · migration 250 applied to DEV ONLY.**
+Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §5 + the P4 ruling log at §0b.
+Mockup (approved, binding — two passes, the second is the one that was built):
+https://claude.ai/code/artifact/43cf2381-74d3-4ada-afd9-461ac51c0d9c
+
+⚠⚠ **WALK THIS ONE LAST, AND WALK THE MONEY QUARTER IN THIS ORDER:** **§38 → §41 → §43 → §46 →
+§49**. That is the order the work was built in, and each one reshapes the screens the one before it
+describes. This is the last section before that whole walk, so a defect from an earlier phase will
+most likely surface *here*, on the screens P4 changed — if something looks wrong on Transactions or
+Budget vs. Actual, check whether §46 or §43 already described it differently before assuming P4
+broke it.
+
+⚠ **Annotations, not renumbering.** **§35** describes *Org Allocations* and *Payment Requests* as two
+tabs; they are **one tab called Club** now. Every rule §35 pins still holds and is worth walking —
+the record window, editing while pending, the withdraw confirmation, the read-only assistant, the
+badge contrast — but read "the Allocations screen" and "the Payments screen" as *the two blocks of
+the Club tab*. **§46 §I's last bullet is now closed**: it recorded that between seasons the request
+form was still offered while the server refused it. That turned out to be **wrong about the UI** —
+the tabs did not render at all between seasons — and the real defect was the opposite one, fixed
+here (part **F**).
+
+---
+
+**Why this section exists — and the part of it that is not a merge at all.**
+
+Two tabs were two halves of one relationship, and a coach had to hold both in their head to answer
+the only question either existed for: *where do we stand with the club?* That is the merge, and it
+is the smaller half of this release.
+
+The larger half came from **your question at the mockup review** — *shouldn't a request name which
+budget category and item it's tied to?* Reading the code to answer it found that **Budget vs. Actual
+contained no club money at all.** Not the allocations the team pays; not the costs the club agrees
+to cover. On a club-run team the club's bill is frequently the single largest line of the season,
+and the screen whose whole job is *"how did we do against plan?"* had never seen a dollar of it. The
+cause was exactly what you pointed at: club money carried no category or item anywhere, so even a
+report that went looking would have had nothing to file it under.
+
+Two more things changed under your rulings, and both reverse something this plan had written down:
+
+- **Seasons are independent, full stop.** The mockup proposed carrying still-undecided requests
+  across season boundaries so one could not silently vanish; you overturned it. Both club lists are
+  now the working season and nothing else. ⚠ **This also fixed a live defect the brief had not
+  asked about:** *neither* club list was season-scoped — allocations were not either — so on any
+  team past its first year the old Allocations tile and the Money overview described the same team
+  and disagreed. Nothing put them side by side, which is the only reason nobody noticed.
+- **A pending request now appears on the register's forward view.** This reverses the plan's own
+  *"nothing pending a decision ever appears"*. Your argument was the one the screen could not answer:
+  the forward view already carries a sponsor **pledge**, which is also money that may never arrive.
+
+**Fixture: `qa-money-lab`**, signed in as `qa-money-head@dev.local`. **QA Mid Season U14** is the
+club-rich team (3 allocations, 2 overdue, 5 requests in all three states). ⚠ Those records were
+written straight to the database, so the **club's own ledger has no matching entries** — do not use
+this team to check club-side reconciliation. **QA Money U13** is the register-rich one.
+
+---
+
+### A · The tab, and the one question it answers
+
+- [ ] **Money → Club.** The tab bar now reads **Overview · Budget Plan · Player Dues · Fundraising ·
+      Transactions · Payables · Club · Budget vs. Actual** — **eight tabs**, which is exactly the
+      count before the split added one. On a standalone team there are **seven** and no Club tab.
+- [ ] Three figures across the top: **Still to pay the club**, **Waiting on the club**, **Settled
+      this season**. Read them and ask whether they answer *"where do we stand?"* better than the
+      seven tiles the two old tabs carried between them.
+- [ ] ⚠ Under the band, one sentence says **waiting on the club isn't your money yet**. Confirm it
+      reads as a caution and not as a disclaimer — it is the line this whole screen turns on.
+- [ ] Below: **What the club has billed us**, then **What we've asked the club**. Obligations with
+      due dates first, the conversation second. Say if you would rather they were the other way up.
+
+### B · ⚠⚠ The filing — the field your question added
+
+- [ ] Open a club bill. Inside it, a **Files under** row: `Category · Item`, with **File it** (or
+      **Change**). An unfiled bill says so on the row, with the consequence in words: *until it's
+      filed, this bill doesn't appear on Budget vs. Actual.*
+- [ ] File one. ⚠ **One filing per BILL, not per instalment** — the instalments are its payment
+      schedule. Confirm you agree that is the right grain.
+- [ ] **Make a request.** It now asks **What is it for?** on the same search box the money form and
+      the Budget Plan use, and the consequence line above the buttons names the word you picked.
+- [ ] ⚠⚠ **Pick "From the club" and look at the item list. It offers your SPENDING words, not your
+      income ones — and that is deliberate.** A club covering a $325 entry fee is paying you back
+      for a cost, so it files against that cost. It is the same rule as a refund: the direction
+      flips the money, never the list. **This is the one design call in the release most likely to
+      look wrong at first glance — please push back if it reads wrong to you.**
+
+### C · ⚠⚠ Club money on the report — the fix, and the numbers will move
+
+- [ ] **Money → Budget vs. Actual** on the club-run team. **Club money is on it now.** A paid club
+      instalment reports as a **cost** under whatever you filed it as; so does an approved *To the
+      club* request.
+- [ ] ⚠⚠ **An approved *From the club* request NETS AGAINST the cost it repaid — it is not income.**
+      Find one and check the item it was filed under went DOWN rather than a revenue row going up.
+      Counting it as income would make the season look twice as good as it is.
+- [ ] **Anything you have not filed still counts**, in the report's existing **Not itemized** row.
+      The money moved; hiding it would trade one silence for another.
+- [ ] ⚠ **Your season figures on a club-run team will have changed**, and that is the correction, not
+      a new number. Take one team you know and satisfy yourself the new total is the true one.
+- [ ] ⚠⚠ **Budget vs. Actual → Months.** A paid club instalment appears in **the month it was
+      paid**, and its cell drills in to the bill by name. **Check the Months total for a category
+      against the same category on Categories — they must agree.** *(Caught during the build and
+      worth re-walking: the month grid is built from a different source than the statement, so club
+      money reaching one and not the other would have had one screen reporting two different totals
+      for one season.)*
+- [ ] ⚠ **An UNPAID club instalment is deliberately NOT on the Months grid's Scheduled row** — it is
+      on the **Payment schedule** and in **Next 30 days**, as before. Flag it if you expected it in
+      both; it is a stated omission, not an oversight.
+- [ ] **Spend by tag** (a money tag chip on the report): club money is **excluded** from a tag cut,
+      because club records carry no tags. Confirm the tag totals still sum sensibly.
+
+### D · ⚠ A request the club hasn't answered
+
+- [ ] On the Club tab a pending request sits **at the top**, with a marked left edge and a chip that
+      reads **Awaiting the club** — not "Pending". It says whose move it is.
+- [ ] **Money → Transactions**, *include what's scheduled* **on**. The pending request is on the
+      book, at the **foot** of the scheduled block, saying **No date** — nothing records when a club
+      will answer.
+- [ ] ⚠⚠ **Turn the switch OFF. It disappears completely, and Cash on hand never moved.** That is the
+      rule that survived the reversal: undecided money may reach a projection and nothing else.
+- [ ] A **declined** request appears on the register **nowhere**, either way. It is a closed
+      conversation, not money.
+- [ ] Ask yourself the question you asked me: does seeing it in the forward view help you plan, or
+      does it read as money you have?
+
+### E · ⚠ Last season is gone from this screen, on purpose
+
+- [ ] On a team with more than one season, the Club tab shows **this season only** — bills and
+      requests both. Nothing from a past year, no marker, no carry-over.
+- [ ] Compare the band's **Still to pay** against the **Money overview**. They must agree. *(Before
+      this release they could not, on any team past its first year.)*
+
+### F · ⚠ Between seasons — this is new
+
+- [ ] Open a team whose season has **finished**. **The Club tab is there**, and it is **read-only**:
+      no *Make a request*, no *Mark paid*, no *File it*, no pencil.
+- [ ] Before this release the tab **vanished entirely** at season's end — so a coach could see the
+      club's money on the register but could not open the workspace behind it. Confirm that reading
+      it as a record is the right answer.
+
+### G · ⚠⚠ A loose end now stops a season closing — say if this is too strict
+
+- [ ] **Player Dues → close out the season** on a team with a **pending** club request. The
+      checklist gains a line: *one club request is still waiting for an answer — chase the club or
+      withdraw it on Money → Club*, and the season **will not close**.
+- [ ] Withdraw the request (or have it answered) and the season closes.
+- [ ] ⚠⚠ **This is a deliberate trade and it is the one to argue with me about.** It exists because
+      seasons are independent: close with an unanswered request and it lands somewhere nobody looks
+      again. But a coach cannot make a club office reply — the only escape is withdrawing. **If you
+      would rather it warned than blocked, say so; it is a one-line change.**
+
+### H · Everything §35 established, still true
+
+- [ ] Tap a pending request → it opens editable; a reviewed one → read-only, with a **decline
+      reason at the top** when there is one. **Pencil** vs **eye** on the row.
+- [ ] Change something and close → it asks. Open and close without typing → **no prompt**.
+- [ ] **Withdraw request** sits in the window, asks first, and says nothing is kept. While that
+      question is up, **Save and Cancel are both dead**.
+- [ ] A read-only money assistant (`qa-money-read@dev.local`) sees the whole tab, opens every record
+      **read-only including pending ones**, and gets no create, no Mark paid, no File it.
+- [ ] `qa-money-off@dev.local` cannot reach the tab at all.
+
+### H2 · ⚠⚠ What the review found — the three worth walking yourself
+
+*Adversarial review (5 lenses) found 8 real defects, all fixed. Three of them are worth your hands,
+and **two were pre-existing** — they are not damage this phase did, they are damage it uncovered.*
+
+- [ ] ⚠⚠ **Mark a club instalment paid, then immediately tap it again / have it open on a phone and a
+      laptop and tap both.** You should get a plain *"already marked paid"* refusal, not two
+      successes. *(Pre-existing, on BOTH this screen and the club-admin one: the transfer between the
+      team's and the club's books was posted BEFORE the instalment was stamped, and the stamp did not
+      check whether someone had got there first — so one instalment could move the money twice while
+      reading as paid once. The double post is closed; a transfer already posted by the losing tap is
+      not unwound, which is why this walk matters.)*
+- [ ] ⚠⚠ **Budget vs. Actual → the cumulative spending chart**, on the club-run team. **The chart's
+      total and the statement's total below it must agree.** *(The report draws club costs in three
+      separate places and the first build wired two — the chart sat directly above numbers it
+      contradicted.)*
+- [ ] ⚠ **On a team between seasons, confirm a club request genuinely cannot be changed** — not just
+      that the buttons are hidden. *(The screen hid them; the server did not. A request the club
+      never answered survives into the next season, and it was still editable and deletable through
+      a direct link. Now refused.)*
+- [ ] **Open a club bill's *File it*, pick a different word, then tap outside the window.** It should
+      ask before discarding — the same as the request window does. *(It used to drop the choice
+      silently, including a brand-new budget word created inside it.)*
+- [ ] **Have the club approve a request while you have it open, then hit Save.** It should refuse
+      with a sentence, AND the row behind should stop saying *Awaiting the club*.
+
+### I · The words, the addresses, the files
+
+- [ ] ⚖ **"Org" is gone from these rows.** The badges read **To club** / **From club**; so does the
+      request form's picker and the export file. Confirm you prefer it — it was **Pay Org** /
+      **From Org**, and the register's own chip has said *Club* since P3.
+- [ ] Old bookmarks still land: a saved link to the Allocations tab or the Payments tab opens
+      **Club**, and the address in the bar is rewritten to the new one.
+- [ ] **Money → Overview**: the rail's two club rows are now **one**, reading outstanding + how many
+      are awaiting an answer.
+- [ ] **Transactions**: a club row's **Open** goes to the Club tab, and club rows now carry a
+      **Category and Item** where they used to be blank.
+- [ ] **Export** both blocks. Each file gains **Category** and **Item** columns; the requests file
+      says *To the club* / *From the club* and *Awaiting the club*.
+- [ ] **Help → Money → "Money between your team and your club"** describes one screen, the filing,
+      and the season-close rule. Nothing in it still describes two tabs.
+- [ ] **The demo:** the coach sandbox tour's Money step (step 5) gains a closing sentence about the
+      club — $900 of permits across three instalments, $180 the club agreed to pay back, and a $95
+      share still waiting. Walk it and confirm every figure is true of what a prospect sees.
+
+### J · The checks, and what they do and do not prove
+
+- [ ] `npm run check:register` **passes** — the closing balance still equals Cash on hand to the
+      cent, with all three derived sources present. That is the proof the money still reconciles
+      after the merge; it does **not** prove anything about the report.
+- [ ] ⚠ **Budget vs. Actual has no equivalent automated identity**, which is why part **C** is
+      hand-walked. Your eyes are the only check that club money lands under the right heading.
+- [ ] `check:layout` measures the merged tab with every modal **closed**, so it proves the band, the
+      blocks and both tables lay out at four widths and proves nothing about the two forms.
+
+---
+
+**If §A, §B and §C read correctly, this section passes.** D–G are the rulings that changed
+behaviour elsewhere; H is the inherited surface that must not have regressed; I is the vocabulary
+and the plumbing. **§C and §G are the two worth a second opinion.**
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |
@@ -6576,6 +6890,14 @@ its readers assume is populated would ship the same defect wearing a new name. E
 is zero — every team is created with a program year — but **check it before promoting** rather than
 discovering it mid-release. Both the Cash on hand figure and the season close-out pot read the column,
 so the code must not reach production ahead of it.
+
+⚠ **§49 adds migration 250** — club money says what it was for
+(`budget_item_id` + `budget_category_id` on `rep_team_payment_requests` **and**
+`rep_allocation_splits`). **Additive and nullable, so it cannot halt a release** — unlike 247 there
+is no backfill, deliberately: only a coach can say what a club bill was FOR, and guessing would put
+invented classifications into a report a treasurer reconciles. Unfiled club money reads in Budget vs.
+Actual's existing *Not itemized* row until someone files it. ⚠ **The code must not reach production
+ahead of it**: the merged Club tab and the report both read the new columns unconditionally.
 
 ⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **229**
 (house-league venue references, 2026-08-08) is applied to **dev only** — §8's code reads the new

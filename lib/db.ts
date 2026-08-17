@@ -8814,11 +8814,35 @@ export async function updateRepCostAllocationDescription(
   return mapRepCostAllocation(data);
 }
 
+/**
+ * Settle one club-allocation instalment.
+ *
+ * ⚠⚠ RETURNS `null` WHEN SOMEBODY GOT THERE FIRST — and that is the whole point of the `.is()`
+ * below (`/review`, concurrency lens, 2026-08-17). Both callers do the same check-then-act: read the
+ * instalment → confirm it is unpaid → **post a real double-entry transfer between the team's and the
+ * org's ledgers** → mark it paid. The transfer is a database round trip, so there is a wide window
+ * in which a second request still reads `paid_at: null`.
+ *
+ * With the update filtered on `id` alone, both requests posted a transfer and both then wrote
+ * `paid_at`, the second simply overwriting the first. The instalment read as paid ONCE while the
+ * ledgers had moved the money TWICE — no error, no 409, both responses 200. A coach double-tapping
+ * *Mark paid* on a slow connection, or with the tab open on two devices, was enough.
+ *
+ * ⚠ The guard belongs HERE rather than in either route, because BOTH doors have the race: the
+ * coach's Club tab and the club admin's own allocations screen. This is the same shape the payment
+ * requests' PATCH/DELETE were hardened into by the 2026-08-16 review; this sibling had never been
+ * given the same treatment. Zero rows updated means "already paid" — every caller must say so
+ * rather than reporting success.
+ *
+ * ⚠ It does NOT unwind the transfer the losing request already posted. Making these two steps
+ * atomic needs the RPC and the stamp in one transaction, which is a bigger change than this review
+ * carries; what this closes is the DOUBLE post, which is the half that moved money.
+ */
 export async function markRepAllocationInstallmentPaid(
   installmentId: string,
   paidBy: string,
   accountingEntryId: string | null,
-): Promise<RepAllocationInstallment> {
+): Promise<RepAllocationInstallment | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_allocation_installments')
     .update({
@@ -8827,10 +8851,11 @@ export async function markRepAllocationInstallmentPaid(
       accounting_entry_id: accountingEntryId,
     })
     .eq('id', installmentId)
+    .is('paid_at', null)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  return mapRepAllocationInstallment(data);
+  return data ? mapRepAllocationInstallment(data) : null;
 }
 
 export async function getRepAllocationInstallment(
@@ -10757,50 +10782,82 @@ export interface RepAllocationSplitWithInstallments {
   splitValue: number;
   paymentSchedule: string;
   notes: string | null;
+  /** What the coach filed this share under, in the TEAM's taxonomy (mig 250). Null until filed. */
+  budgetCategoryId: string | null;
+  budgetItemId: string | null;
+  /** ⚠ The NAMES come with the row, joined — see the note on the reader below. */
+  budgetCategoryName: string | null;
+  budgetItemName: string | null;
   installments: RepAllocationInstallment[];
 }
 
+/**
+ * A team's share of every club allocation **in one season**, with the words behind its ids.
+ *
+ * ⚠⚠ `programYearId` IS REQUIRED, AND ITS ABSENCE WAS A LIVE DEFECT (money redesign P4,
+ * 2026-08-17). This read was team-LIFETIME while Cash on hand, the register and the season
+ * close-out pot were all season-scoped — so on any team past its first year the Allocations tab's
+ * own "Total allocated" tile and the Money overview described the same team and disagreed. Nothing
+ * put the two on one screen, which is the only reason it went unnoticed; the merged Club tab is
+ * exactly the screen that would. Same defect, same day, same fix as the request list.
+ *
+ * ⚠ TWO QUERIES, NOT 2+N AND NOT 3. This used to fire one installments query PER SPLIT inside a
+ * loop, and read the description of EVERY cost allocation in the database — no org filter, no id
+ * filter. It then briefly grew a THIRD wave to look up budget words by id. All three joins now ride
+ * the splits select, which PostgREST resolves server-side.
+ *
+ * ⚠⚠ THE NAMES ARE JOINED HERE RATHER THAN LOOKED UP BY EACH CALLER, and that is the point
+ * (`/simplify`, reuse + simplification lenses, 2026-08-17). Three routes had each hand-rolled the
+ * same "collect ids → select budget_items + budget_categories → build two Maps" block, and the
+ * register route one directory over carries a comment saying exactly why that is a trap: *"two ways
+ * of turning an item id into a word is how the two halves of a table start disagreeing."* One
+ * reader, one answer.
+ */
 export async function getRepAllocationSplitsForTeam(
   teamId: string,
+  programYearId: string,
 ): Promise<RepAllocationSplitWithInstallments[]> {
   const { data: splitData, error: splitError } = await supabaseAdmin
     .from('rep_allocation_splits')
-    .select('*')
+    .select('*, rep_cost_allocations(description), budget_items(name), budget_categories(name)')
     .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
     .order('created_at');
   if (splitError) throw splitError;
-  const splits = splitData ?? [];
+  const splits = (splitData ?? []) as Array<Record<string, any>>;
+  if (splits.length === 0) return [];
 
-  const { data: allocData, error: allocError } = await supabaseAdmin
-    .from('rep_cost_allocations')
-    .select('id, description');
-  if (allocError) throw allocError;
-  const allocMap: Record<string, string> = {};
-  for (const a of allocData ?? []) allocMap[a.id] = a.description;
+  const { data: instData, error: instError } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('*')
+    .in('split_id', splits.map(s => s.id as string))
+    .order('installment_number');
+  if (instError) throw instError;
 
-  const result: RepAllocationSplitWithInstallments[] = [];
-  for (const s of splits) {
-    const { data: instData, error: instError } = await supabaseAdmin
-      .from('rep_allocation_installments')
-      .select('*')
-      .eq('split_id', s.id)
-      .order('installment_number');
-    if (instError) throw instError;
-    result.push({
-      id: s.id,
-      allocationId: s.allocation_id,
-      allocationDescription: allocMap[s.allocation_id] ?? '',
-      teamId: s.team_id,
-      programYearId: s.program_year_id,
-      amount: Number(s.amount),
-      splitMethod: s.split_method,
-      splitValue: Number(s.split_value),
-      paymentSchedule: s.payment_schedule,
-      notes: s.notes ?? null,
-      installments: (instData ?? []).map(mapRepAllocationInstallment),
-    });
+  const bySplit = new Map<string, RepAllocationInstallment[]>();
+  for (const raw of instData ?? []) {
+    const inst = mapRepAllocationInstallment(raw);
+    const list = bySplit.get(inst.splitId);
+    if (list) list.push(inst); else bySplit.set(inst.splitId, [inst]);
   }
-  return result;
+
+  return splits.map(s => ({
+    id: s.id,
+    allocationId: s.allocation_id,
+    allocationDescription: (s.rep_cost_allocations?.description as string) ?? '',
+    teamId: s.team_id,
+    programYearId: s.program_year_id,
+    amount: Number(s.amount),
+    splitMethod: s.split_method,
+    splitValue: Number(s.split_value),
+    paymentSchedule: s.payment_schedule,
+    notes: s.notes ?? null,
+    budgetCategoryId: s.budget_category_id ?? null,
+    budgetItemId: s.budget_item_id ?? null,
+    budgetCategoryName: (s.budget_categories?.name as string) ?? null,
+    budgetItemName: (s.budget_items?.name as string) ?? null,
+    installments: bySplit.get(s.id) ?? [],
+  }));
 }
 
 // ── 6M: Due reminder helpers ──────────────────────────────────────────────────

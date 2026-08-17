@@ -39,10 +39,13 @@ const INDEX_STEPS: { step: string; keys: RowKey[] }[] = [
   /* ⚠ FOUR ROWS UNDER SPEND SINCE THE MONEY SPLIT (2026-08-16), and the group is still the widest
      — see the two-column note above: it stays atomic, so a step that grows keeps growing in one
      column rather than breaking across both. */
-  { step: 'Spend',   keys: ['payables', 'transactions', 'allocations', 'paymentRequests'] },
+  /* ⚠ THREE ROWS AGAIN AFTER THE CLUB MERGE (money redesign P4, 2026-08-17): the two club rows —
+     "Org Allocations" and "Payment Requests" — became one, because the tabs did. The group went
+     4 → 3 and is no longer the widest. */
+  { step: 'Spend',   keys: ['payables', 'transactions', 'club'] },
   { step: 'Review',  keys: ['budgetVsActual'] },
 ];
-const MORE_KEYS: RowKey[] = ['fundraisers', 'sponsorships', 'allocations', 'paymentRequests', 'budget', 'budgetVsActual'];
+const MORE_KEYS: RowKey[] = ['fundraisers', 'sponsorships', 'club', 'budget', 'budgetVsActual'];
 
 const danger = (text: string) => <span className={styles.railStatDanger}>{text}</span>;
 
@@ -165,26 +168,30 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       ? danger(`${s.expenses.upcomingDueCount} coming due`)
       : 'Nothing due'),
   },
-  allocations: {
+  /* ⚠ ONE ROW WHERE TWO WERE (P4). The stat has to carry both halves of the relationship now, so it
+     leads with the money OWED — the only figure with a due date attached — and appends what is still
+     with the club when there is any. A pending request is deliberately a COUNT, never a dollar sum
+     in this position: the rail's other money figures are all cash the team actually holds or owes,
+     and a dollar amount here would read as a fourth one. */
+  club: {
     dot: styles.railDotBlue,
-    name: 'Org Allocations',
-    // Same rule again: the amount owed is the fact, the overdue count qualifies it.
+    name: 'Club',
     stat: s => {
-      if (s.allocations.count === 0) return 'None assigned';
+      const pending = s.paymentRequests.pendingCount;
+      const awaiting = pending > 0
+        ? <> · <b>{pending}</b> awaiting</>
+        : null;
+      if (s.allocations.count === 0) {
+        return pending > 0 ? <><b>{pending}</b> awaiting the club</> : 'Nothing owed or asked';
+      }
       return (
         <>
           <b>{fmt(s.allocations.outstanding)}</b> outstanding
           {s.allocations.overdueCount > 0 && <> · {danger(`${s.allocations.overdueCount} overdue`)}</>}
+          {awaiting}
         </>
       );
     },
-  },
-  paymentRequests: {
-    dot: styles.railDotRust,
-    name: 'Payment Requests',
-    stat: s => s.paymentRequests.pendingCount > 0
-      ? <><b>{s.paymentRequests.pendingCount}</b> pending</>
-      : 'None pending',
   },
   budgetVsActual: {
     dot: styles.railDotOlive,

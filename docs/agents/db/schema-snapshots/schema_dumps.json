@@ -8948,6 +8948,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_allocation_splits",
+        "pos": 12,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_splits",
+        "pos": 13,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_budget_lines",
         "pos": 1,
         "column_name": "id",
@@ -13817,6 +13835,24 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 19,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 20,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_plan_template_tags",
         "pos": 1,
         "column_name": "template_id",
@@ -18438,6 +18474,20 @@
       },
       {
         "table_name": "rep_allocation_splits",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_splits_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_splits",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_splits_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_splits",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -18804,34 +18854,27 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
@@ -18840,6 +18883,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -18860,20 +18910,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
@@ -18882,6 +18925,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -19091,21 +19141,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19113,6 +19156,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19912,6 +19962,20 @@
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "rep_team_payment_requests_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_budget_item_id_fkey"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -22213,6 +22277,16 @@
       },
       {
         "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_budget_category_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_budget_category_idx ON public.rep_allocation_splits USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_budget_item_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_budget_item_idx ON public.rep_allocation_splits USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
         "indexname": "rep_allocation_splits_org_id_idx",
         "indexdef": "CREATE INDEX rep_allocation_splits_org_id_idx ON public.rep_allocation_splits USING btree (org_id)"
       },
@@ -23365,6 +23439,16 @@
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_accounting_entry_id_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_accounting_entry_id_idx ON public.rep_team_payment_requests USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_budget_category_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_budget_category_idx ON public.rep_team_payment_requests USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_budget_item_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_budget_item_idx ON public.rep_team_payment_requests USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_payment_requests",

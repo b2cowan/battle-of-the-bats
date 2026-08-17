@@ -116,14 +116,24 @@ export const POST = withObservability(async (req: Request,
     }
     if (e instanceof SettlementSeasonNotClosableError) {
       return NextResponse.json({
-        // Two ways to be un-closable, and they need different words: money still to arrive, or
-        // money already handed out that the payouts can no longer cover.
+        /* THREE ways to be un-closable, and each needs its own words: money still to arrive, money
+           already handed out that the payouts can no longer cover, or a club request nobody has
+           answered.
+           ⚠ THE THIRD MESSAGE NAMES BOTH WAYS OUT (P4). A coach cannot make the club answer, so a
+           refusal that only stated the problem would leave a team unable to close its season
+           whenever a club office went quiet — with nothing on screen saying that withdrawing the
+           request is a legitimate answer. */
         error: e.expectedIn > 0.005
           ? `Families still owe ${fmt(e.expectedIn)} — the season can't be closed until the dues are in.`
-          : `Paying everyone needs ${fmt(e.awaitingCash)} more than the team is holding — a family has already been paid more than their share.`,
+          : e.awaitingCash > 0.005
+            ? `Paying everyone needs ${fmt(e.awaitingCash)} more than the team is holding — a family has already been paid more than their share.`
+            : e.pendingClubRequests === 1
+              ? 'A club request is still waiting for the club\'s answer. Closing the season now would leave it where you can\'t see it — chase the club, or withdraw it on Money → Club.'
+              : `${e.pendingClubRequests} club requests are still waiting for the club's answer. Closing the season now would leave them where you can't see them — chase the club, or withdraw them on Money → Club.`,
         code: 'SETTLEMENT_SEASON_NOT_CLOSABLE',
         expectedIn: e.expectedIn,
         awaitingCash: e.awaitingCash,
+        pendingClubRequests: e.pendingClubRequests,
       }, { status: 409 });
     }
     if (e instanceof SettlementExceedsRefundError) {

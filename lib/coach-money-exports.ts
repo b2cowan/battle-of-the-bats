@@ -339,8 +339,15 @@ export function fundraiserRows(
 // What the club has billed this team, one INSTALLMENT per row rather than one allocation: a
 // treasurer reconciling a bank statement is matching individual payments, not totals.
 
+/* ⚠ THE FILING COLUMNS ARE NEW (mig 250, money redesign P4) and they are the reason a treasurer can
+   reconcile this file against Budget vs. Actual at all: until a club record names one of the team's
+   own budget words, none of its money reached that report. An unfiled row exports an empty pair
+   rather than a placeholder — a spreadsheet is filtered and sorted, and "Not filed" as text would
+   sort in among the real category names. */
 export const ALLOCATION_COLUMNS: ExportColumnDef[] = [
   { label: 'Allocation', key: 'allocation', format: 'text' },
+  { label: 'Category',   key: 'category',   format: 'text' },
+  { label: 'Item',       key: 'item',       format: 'text' },
   { label: 'Due date',   key: 'dueDate',    format: 'date' },
   { label: 'Amount',     key: 'amount',     format: 'currency' },
   { label: 'Status',     key: 'status',     format: 'text' },
@@ -350,6 +357,8 @@ export const ALLOCATION_COLUMNS: ExportColumnDef[] = [
 export function allocationRows(
   splits: Array<{
     allocationDescription: string;
+    budgetCategoryName?: string | null;
+    budgetItemName?: string | null;
     installments: Array<{ dueDate: string; amount: number; paidAt: string | null }>;
   }>,
   today: string,
@@ -359,6 +368,10 @@ export function allocationRows(
     for (const i of s.installments) {
       rows.push({
         allocation: s.allocationDescription,
+        // One filing per BILL, repeated on each of its instalment rows — a spreadsheet reader
+        // filters on a column, and a value present on only the first row of a group filters wrong.
+        category: s.budgetCategoryName ?? '',
+        item: s.budgetItemName ?? '',
         dueDate: i.dueDate,
         amount: i.amount,
         status: i.paidAt ? 'Paid' : i.dueDate < today ? 'Overdue' : 'Due',
@@ -373,27 +386,44 @@ export function allocationRows(
 
 export const PAYMENT_REQUEST_COLUMNS: ExportColumnDef[] = [
   { label: 'Raised',      key: 'created',     format: 'date' },
-  { label: 'Type',        key: 'type',        format: 'text' },
+  { label: 'Direction',   key: 'type',        format: 'text' },
   { label: 'Description', key: 'description', format: 'text' },
+  // See the note on ALLOCATION_COLUMNS — same two columns, same reason.
+  { label: 'Category',    key: 'category',    format: 'text' },
+  { label: 'Item',        key: 'item',        format: 'text' },
   { label: 'Amount',      key: 'amount',      format: 'currency' },
   { label: 'Method',      key: 'method',      format: 'text' },
   { label: 'Status',      key: 'status',      format: 'text' },
   { label: 'Reviewed',    key: 'reviewed',    format: 'date' },
 ];
 
+/** What a status reads as in the file. ⚠ `pending` says WHO is holding it, matching the screen —
+ *  a treasurer opening this spreadsheet a month later needs the same answer the tab gave. */
+const REQUEST_STATUS_LABEL: Record<string, string> = {
+  pending:  'Awaiting the club',
+  approved: 'Approved',
+  denied:   'Declined',
+};
+
 export function paymentRequestRows(
   requests: Array<{
     requestType: 'payment_to_org' | 'charge_to_org'; amount: number; description: string;
+    budgetCategoryName?: string | null; budgetItemName?: string | null;
     paymentMethod: string | null; status: string; createdAt: string; reviewedAt: string | null;
   }>,
 ): ExportRow[] {
   return requests.map(r => ({
     created: r.createdAt.slice(0, 10),
-    type: r.requestType === 'payment_to_org' ? 'Paying the club' : 'Claiming from the club',
+    // ⚠ "Club", not "Org" (owner ruling 2026-08-17) — the file a coach hands their treasurer must
+    // use the same word the screen does, and this pair was the last place saying otherwise.
+    type: r.requestType === 'payment_to_org' ? 'To the club' : 'From the club',
     description: r.description,
+    category: r.budgetCategoryName ?? '',
+    item: r.budgetItemName ?? '',
     amount: r.amount,
     method: r.paymentMethod ?? '',
-    status: r.status.charAt(0).toUpperCase() + r.status.slice(1),
+    status: REQUEST_STATUS_LABEL[r.status]
+      ?? (r.status.charAt(0).toUpperCase() + r.status.slice(1)),
     reviewed: r.reviewedAt ? r.reviewedAt.slice(0, 10) : '',
   }));
 }

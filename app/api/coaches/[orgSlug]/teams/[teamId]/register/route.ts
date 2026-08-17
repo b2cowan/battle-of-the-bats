@@ -28,9 +28,16 @@ import { buildBook, REGISTER_SOURCE_LABEL, type RegisterRow } from '@/lib/coach-
  * Working season only — no `?year=` here or anywhere near it
  * (`tests/unit/coach-history-endpoint-guard.test.ts` is the contract).
  *
- * ⛔ NOTHING PENDING A DECISION EVER APPEARS. An unapproved club request is money the club may
- * decline; putting it on the book — even as a projection — would let a coach plan around money that
- * does not exist. The standing "a pending request never enters the plan" ruling, applied here.
+ * ⚖⚖ **THIS FILE USED TO SAY "NOTHING PENDING A DECISION EVER APPEARS." THAT IS NO LONGER TRUE, and
+ * the change is an owner ruling (2026-08-17, money redesign P4), recorded here rather than quietly
+ * edited away.** A club request awaiting an answer now appears in the FORWARD view — never on the
+ * settled book, never in Cash on hand, never in the Budget Plan, never on the report. The argument
+ * that overturned it was that this book already carries a sponsor PLEDGE in the same view, and a
+ * pledge a sponsor may not honour is the same species of uncertainty as a request a club may
+ * decline. The full reasoning sits on the loop that emits the row.
+ *
+ * 🔒 The rule that survives intact: **nothing undecided may touch a settled figure.** The identity
+ * above is an identity at TODAY, and everything projected sits strictly beyond it.
  */
 /** The two instalment shapes the second wave reads, named so the query and its consumer agree. */
 type AllocationInstallmentRow = {
@@ -79,17 +86,20 @@ export const GET = withObservability(async (_req: Request,
       .eq('rep_fundraisers.program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_allocation_splits')
-      .select('id, rep_cost_allocations ( description )')
+      .select('id, budget_item_id, budget_category_id, rep_cost_allocations ( description )')
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
     /* ⚠ SEASON-SCOPED AS OF MIGRATION 247. This used to be team-LIFETIME, which is precisely why a
-       register scoped to the working season could not reproduce Cash on hand. */
+       register scoped to the working season could not reproduce Cash on hand.
+       ⚠⚠ AND NO LONGER `.eq('status','approved')` (owner ruling 2026-08-17): a PENDING request now
+       reaches the forward view, so the filter moved into the loop below — where it also drops a
+       DECLINED one, which belongs on neither half of this book. Filtering here instead would make
+       "which statuses does the register admit?" a fact split across two places. */
     supabaseAdmin
       .from('rep_team_payment_requests')
-      .select('id, request_type, amount, description, status, reviewed_at, created_at')
+      .select('id, request_type, amount, description, status, budget_item_id, budget_category_id, reviewed_at, created_at')
       .eq('team_id', teamId)
-      .eq('program_year_id', programYear.id)
-      .eq('status', 'approved'),
+      .eq('program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_roster_players')
       .select('id, player_first_name, player_last_name')
@@ -108,7 +118,28 @@ export const GET = withObservability(async (_req: Request,
     if (e.budgetItemId) itemIds.add(e.budgetItemId);
     if (e.budgetCategoryId) categoryIds.add(e.budgetCategoryId);
   }
-  const splits = (splitsRes.data ?? []) as unknown as Array<{ id: string; rep_cost_allocations: { description: string } | null }>;
+  const splits = (splitsRes.data ?? []) as unknown as Array<{
+    id: string; budget_item_id: string | null; budget_category_id: string | null;
+    rep_cost_allocations: { description: string } | null;
+  }>;
+  const clubRequests = (requestsRes.data ?? []) as Array<{
+    id: string; request_type: string; amount: number; description: string; status: string;
+    budget_item_id: string | null; budget_category_id: string | null;
+    reviewed_at: string | null; created_at: string;
+  }>;
+  /* ⚠ CLUB MONEY FILES ITSELF NOW (mig 250, money redesign P4). These two columns were the reason
+     club rows on this book had a blank Category and Item — and, one screen over, the reason NO club
+     money reached Budget vs. Actual at all. They join the SAME name lookup as the expenses rather
+     than growing a third: a row is a row, and two ways of turning an item id into a word is how the
+     two halves of a table start disagreeing. */
+  for (const s of splits) {
+    if (s.budget_item_id) itemIds.add(s.budget_item_id);
+    if (s.budget_category_id) categoryIds.add(s.budget_category_id);
+  }
+  for (const r of clubRequests) {
+    if (r.budget_item_id) itemIds.add(r.budget_item_id);
+    if (r.budget_category_id) categoryIds.add(r.budget_category_id);
+  }
 
   /**
    * ⚠ THE SECOND WAVE IS ONE WAVE. All four of these depend on the FIRST wave and on nothing from
@@ -319,20 +350,24 @@ export const GET = withObservability(async (_req: Request,
 
   // ── Derived: the Club — what it billed, and what it settled ───────────────
   {
-    const splitDesc = new Map(splits.map(s => [s.id, s.rep_cost_allocations?.description ?? 'Club allocation']));
+    const splitById = new Map(splits.map(s => [s.id, s]));
     for (const i of (allocInstRes.data ?? []) as AllocationInstallmentRow[]) {
+      const split = splitById.get(i.split_id);
       rows.push({
         id: `allocation-${i.id}`,
         date: i.paid_at ? orgDayKey(i.paid_at) : i.due_date,
         kind: 'club',
-        description: splitDesc.get(i.split_id) ?? 'Club allocation',
-        categoryName: null,
-        itemName: null,
+        description: split?.rep_cost_allocations?.description ?? 'Club allocation',
+        /* ⚠ THE FILING IS THE SPLIT'S, NOT THE INSTALMENT'S. One bill, one classification — the
+           instalments are its payment schedule, and four instalments carrying four answers is
+           exactly what filing on the split prevents. */
+        categoryName: split?.budget_category_id ? catName.get(split.budget_category_id) ?? null : null,
+        itemName: split?.budget_item_id ? itemName.get(split.budget_item_id) ?? null : null,
         moneyOut: Number(i.amount ?? 0),
         moneyIn: 0,
         scheduled: !i.paid_at,
         movesCash: true,
-        open: { kind: 'workspace', section: 'allocations' },
+        open: { kind: 'workspace', section: 'club' },
         /* ⚠ NO MARK PAID HERE, deliberately. An allocation is settled on the Club's own screen,
            against the club's ledger — routing it through the money form would create a second,
            unlinked record of money the club has already accounted for. */
@@ -343,25 +378,56 @@ export const GET = withObservability(async (_req: Request,
     }
   }
 
-  for (const r of (requestsRes.data ?? []) as Array<{ id: string; request_type: string; amount: number; description: string; reviewed_at: string | null; created_at: string }>) {
+  /**
+   * ⚖⚖ A REQUEST THE CLUB HAS NOT ANSWERED NOW APPEARS HERE, IN THE FORWARD VIEW ONLY (owner ruling
+   * 2026-08-17, money redesign P4). This REVERSES the plan's own §4.4 *"⛔ never qualifies: anything
+   * pending a decision"*, and the reversal is the owner's, argued from what this book already does:
+   *
+   *   the forward view **already carries a sponsor PLEDGE** — money that may never arrive at all,
+   *   ruled in by P3's own review — so a pledge a sponsor may not honour and a request the club may
+   *   decline are the same species of uncertainty. The distinction was not one the screen could
+   *   defend, and the switch is called *include what's scheduled*: a coach planning wants to see
+   *   what they have asked for.
+   *
+   * 🔒 WHAT DOES NOT CHANGE, AND IS STILL LOAD-BEARING: a pending request touches **no settled
+   * balance, no Cash on hand, no Budget Plan and no report**. `scheduled: true` is what keeps it
+   * strictly past the Today rule — this file's headline identity is an identity AT TODAY, and the
+   * overlay runs beyond it. `check:register` is the proof: it fails if a projection leaks into the
+   * settled close.
+   *
+   * ⚠ NO DATE, AND THAT IS HONEST RATHER THAN MISSING. Nothing records when a club will answer. The
+   * book already sorts a dateless forward row to the END of the scheduled block and prints *No
+   * date* — the rule an undated unpaid expense follows — so a pending request lands last and its
+   * amount still reaches the forward total.
+   *
+   * ⚠ NO MARK PAID: a coach cannot settle a request the club has not agreed to.
+   *
+   * ⚠ A DECLINED REQUEST APPEARS NOWHERE, on or off. It is not money that moved and not money that
+   * might; it is a closed conversation, and its home is the Club tab's record.
+   */
+  for (const r of clubRequests) {
+    if (r.status !== 'approved' && r.status !== 'pending') continue;
+    const pending = r.status === 'pending';
     const incoming = r.request_type === 'charge_to_org';
     const amount = Number(r.amount ?? 0);
     rows.push({
       id: `request-${r.id}`,
       // Approval posts the transfer, so an approved request is SETTLED on the day it was decided.
-      date: orgDayKey(r.reviewed_at ?? r.created_at),
+      date: pending ? null : orgDayKey(r.reviewed_at ?? r.created_at),
       kind: 'club',
       description: r.description,
-      categoryName: null,
-      itemName: null,
+      categoryName: r.budget_category_id ? catName.get(r.budget_category_id) ?? null : null,
+      itemName: r.budget_item_id ? itemName.get(r.budget_item_id) ?? null : null,
       moneyOut: incoming ? 0 : amount,
       moneyIn: incoming ? amount : 0,
-      scheduled: false,
+      scheduled: pending,
       movesCash: true,
-      open: { kind: 'workspace', section: 'payment-requests' },
+      open: { kind: 'workspace', section: 'club' },
       markPaid: null,
       sourceLabel: REGISTER_SOURCE_LABEL.club,
-      detail: incoming ? 'Approved by the club' : 'Paid to the club',
+      detail: pending
+        ? 'Awaiting the club — they may still decline it'
+        : incoming ? 'Approved by the club' : 'Paid to the club',
     });
   }
 

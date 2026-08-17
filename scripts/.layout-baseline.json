@@ -1,6 +1,126 @@
 {
-  "generated": "2026-08-17T13:02:38.733Z",
+  "generated": "2026-08-17T18:54:29.316Z",
   "entries": {
+    "coach-club|768|tap-floor|button·Import": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Help: Money": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Export": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Make a request": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Account": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Overview": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Schedule": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Practice plans": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Lineups": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Tournaments": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Development": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Insights": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Money": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Chat": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Email families": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Roster": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Tryouts": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Staff": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Documents": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Settings": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|a·Help": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Sign out": {
+      "reason": "The desktop nav rail, at its standing portal-wide size. Not this screen: every coach page reports the identical set, and the 44px floor is enforced at the phone breakpoint where it is a touch target. Recorded here because coach-club is a NEW screen id (money redesign P4 merged coach-allocations + coach-payment-requests into it) and inherits its siblings' accepted chrome rather than re-arguing it.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Import": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Help: Money": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Export": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Make a request": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·Edit Diamond permit reimbursement": {
+      "reason": "The row's Edit / View control, at the 24px size recorded as a deliberate exception in Owner QA §35 — it is drawn once per row and the whole row is tappable, so the control is an affordance rather than the touch target. Carried over unchanged when the two club tabs merged.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·View Team share of league fee": {
+      "reason": "The row's Edit / View control, at the 24px size recorded as a deliberate exception in Owner QA §35 — it is drawn once per row and the whole row is tappable, so the control is an affordance rather than the touch target. Carried over unchanged when the two club tabs merged.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-club|1440|tap-floor|button·View Extra practice jerseys": {
+      "reason": "The row's Edit / View control, at the 24px size recorded as a deliberate exception in Owner QA §35 — it is drawn once per row and the whole row is tappable, so the control is an affordance rather than the touch target. Carried over unchanged when the two club tabs merged.",
+      "detail": "24px tall (floor 44)"
+    },
     "coach-budget|361|tap-floor|button·Review": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "25px tall (floor 44)"

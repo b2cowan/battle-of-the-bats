@@ -30,8 +30,11 @@ const FundraisersPanel = dynamic(() => import('./fundraisers/panel').then(m => m
    wholesale with the register, at which point the shared body shrinks to Payables' own. */
 const TransactionsPanel = dynamic(() => import('./expenses/panel').then(m => m.TransactionsPanel), { ssr: false });
 const PayablesPanel = dynamic(() => import('./expenses/panel').then(m => m.PayablesPanel), { ssr: false });
-const OrgAllocationsPanel = dynamic(() => import('./allocations/panel').then(m => m.OrgAllocationsPanel), { ssr: false });
-const PaymentRequestsPanel = dynamic(() => import('./payment-requests/panel').then(m => m.PaymentRequestsPanel), { ssr: false });
+/* ⚠ ONE TAB WHERE TWO WERE (money redesign P4, 2026-08-17). Allocations and Payments were two
+   halves of one relationship — money the club bills the team, money the team asks of the club — and
+   a coach had to hold both to answer the only question either existed for. Merged into `./club`,
+   which pays back the tab P1 added: 8 org-linked, 7 standalone, exactly today's count. */
+const ClubPanel = dynamic(() => import('./club/panel').then(m => m.ClubPanel), { ssr: false });
 const BudgetVsActualPanel = dynamic(() => import('./budget-vs-actual/panel').then(m => m.BudgetVsActualPanel), { ssr: false });
 
 type PanelProps = {
@@ -43,15 +46,14 @@ type PanelProps = {
    *  clicks on whatever tab the coach is actually looking at. */
   tabActive?: boolean;
 };
-const ORG_ONLY_SECTIONS = new Set<SectionId>(['allocations', 'payment-requests']);
+const ORG_ONLY_SECTIONS = new Set<SectionId>(['club']);
 const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget', Component: BudgetPlanPanel },
   { id: 'dues', Component: PlayerDuesPanel },
   { id: 'fundraisers', Component: FundraisersPanel },
   { id: 'transactions', Component: TransactionsPanel },
   { id: 'payables', Component: PayablesPanel },
-  { id: 'allocations', Component: OrgAllocationsPanel },
-  { id: 'payment-requests', Component: PaymentRequestsPanel },
+  { id: 'club', Component: ClubPanel },
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
 ];
 
@@ -233,11 +235,21 @@ export default function CoachesAccountingPage({
   // for a read-only money assistant; Import (a write) does not — that split lives in the menus.
   const canViewMoney = !!page.capabilities && page.capabilities.money !== 'off';
 
-  const showOrgTabs = !!summary?.orgLinked && !page.isReadOnly;
-  // A coach can land on an org-only tab (bookmark, shared link) from a moment when it WAS
-  // available — the org later unlinked, or the season since closed. Rather than a dead end
-  // (tab bar shows no active tab, nothing renders below it), fall back to Overview, the same
-  // way the old per-route cards simply didn't offer the link at all.
+  /* ⚠⚠ NO LONGER GATED ON A LIVE SEASON (owner ruling 5, money redesign P4, 2026-08-17). This read
+     `!!summary?.orgLinked && !page.isReadOnly` — so both club tabs VANISHED the moment a season
+     finished, and a coach between seasons could see the club's money on the register but could not
+     open the workspace to read what those instalments were or how a request was decided. The record
+     did not go read-only; it disappeared.
+
+     That predates the history-in-place ruling, and it fails its test: club money is a RECORD, not an
+     instrument — nothing here recomputes, nothing runs live — so it renders in place with every
+     write control withdrawn. The panel takes `isReadOnly` from the SERVER (which resolves the
+     working season) rather than guessing, and the two write routes still refuse a finished season
+     outright. ⚠ Not a cross-season view: the working season between seasons IS the finished one. */
+  const showOrgTabs = !!summary?.orgLinked;
+  // A coach can still land on the club tab from a moment when it WAS available — the org later
+  // unlinked. Rather than a dead end (tab bar shows no active tab, nothing renders below it), fall
+  // back to Overview, the same way the old per-route cards simply didn't offer the link at all.
   const effectiveSection: SectionId =
     ORG_ONLY_SECTIONS.has(activeSection) && !showOrgTabs ? 'overview' : activeSection;
   const tabs: { id: SectionId; label: string }[] = [
@@ -251,13 +263,12 @@ export default function CoachesAccountingPage({
        money flows that way: a commitment on Payables settles INTO Transactions. */
     { id: 'transactions', label: 'Transactions' },
     { id: 'payables', label: 'Payables' },
-    // Trimmed from "Org Allocations"/"Payment Requests": inside Money the shorter words are
-    // unambiguous, and the two longest labels were what pushed the row past the column.
-    // Each panel's own page title keeps the full name.
-    ...(showOrgTabs ? [
-      { id: 'allocations' as const, label: 'Allocations' },
-      { id: 'payment-requests' as const, label: 'Payments' },
-    ] : []),
+    /* ⚠ ONE WORD, AND IT IS THE ONE COACHES USE (owner ruling 1, 2026-08-17). "Allocations" and
+       "Payments" named two lists; "Club" names the relationship both lists are about — and the
+       register's own chip and filter on these exact rows have read `Club` / `from Club` since P3,
+       so naming the tab anything else would leave the book and the workspace calling one thing two
+       things. This is also the tab the split promised back: 8 org-linked, 7 standalone. */
+    ...(showOrgTabs ? [{ id: 'club' as const, label: 'Club' }] : []),
     { id: 'budget-vs-actual', label: 'Budget vs. Actual' },
   ];
 
@@ -292,10 +303,8 @@ export default function CoachesAccountingPage({
       expense: sectionHref('transactions', { filter: 'expense', scheduled: '1' }),
       club:    sectionHref('transactions', { filter: 'club', scheduled: '1' }),
     },
-    ...(showOrgTabs ? {
-      allocations: sectionHref('allocations'),
-      paymentRequests: sectionHref('payment-requests'),
-    } : {}),
+    // One destination where two were (P4). Both rail rows collapse into it — see MoneyRail.
+    ...(showOrgTabs ? { club: sectionHref('club') } : {}),
   };
 
   // Wide column: Money is now a tabbed hub whose panels include the densest tables in the

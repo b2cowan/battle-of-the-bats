@@ -73,7 +73,14 @@ export const PATCH = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Failed to create accounting transfer' }, { status: 500 });
   }
 
+  /* ⚠⚠ SAME RACE AS THE COACH'S DOOR, AND THE SAME ANSWER (`/review`, 2026-08-17). The pre-check
+     runs before the transfer; the transfer is a round trip; a second request can slip through that
+     window and post a second pair of ledger entries for one instalment. The writer refuses the
+     second stamp now, and a zero-row result has to be reported rather than dressed as success. */
   const updated = await markRepAllocationInstallmentPaid(installId, ctx!.user.id, null);
+  if (!updated) {
+    return NextResponse.json({ error: 'That installment has already been marked paid.' }, { status: 409 });
+  }
 
   return NextResponse.json({ installment: updated });
 }, { route: '/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]' });

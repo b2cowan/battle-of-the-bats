@@ -2369,8 +2369,18 @@ function MoneyRecordsPanel({
               </select>
             )}
             {/* ⚠ THE OVERLAY IS ON BY DEFAULT (plan §4.4). Off, the book is only what has already
-                happened; on, it runs past Today into what is scheduled. Nothing pending a DECISION
-                is ever in it — an unapproved club request is money the club may still decline. */}
+                happened; on, it runs past Today into what is scheduled.
+
+                ⚠⚠ THIS COMMENT USED TO END "Nothing pending a DECISION is ever in it — an
+                unapproved club request is money the club may still decline." THAT IS NO LONGER
+                TRUE (owner ruling 2026-08-17, money redesign P4): a club request awaiting an answer
+                DOES appear here, at the foot of the scheduled block, saying *No date* and chipped
+                *Awaiting the club*. The argument that overturned it was that this overlay already
+                carries a sponsor PLEDGE — money that may never arrive either.
+
+                🔒 What survives: nothing undecided may touch a SETTLED figure. Turn this off and the
+                pending row is gone; Cash on hand never saw it either way. The full reasoning lives
+                on the loop that emits the row, in the register route. */}
             <button
               type="button"
               className={`${styles.moneyFilterChip} ${showScheduled ? styles.moneyFilterChipActive : ''}`}
@@ -2744,7 +2754,7 @@ function MoneyRecordsPanel({
                         <td className={`${styles.td} ${styles.cardActionCell}`}>
                           {scheduleMarkPaidButton(row)}
                           {row.source === 'org' && !row.paid && (
-                            <Link href={moneySectionHref(base, 'allocations', undefined)} className={styles.linkBtn}>Open allocations</Link>
+                            <Link href={moneySectionHref(base, 'club', undefined)} className={styles.linkBtn}>Open Club</Link>
                           )}
                         </td>
                       </tr>
