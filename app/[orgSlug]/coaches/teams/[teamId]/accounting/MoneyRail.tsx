@@ -21,7 +21,8 @@ import styles from './overview-dashboard.module.css';
 /** A row IS a destination, so the row keys are the destination keys — minus the two
  *  hrefs that are deep-links into a surface rather than the surface itself. Derived
  *  rather than re-listed, so a row can never name a tab that isn't addressable. */
-type RowKey = Exclude<keyof DashboardHrefs, 'budgetStarter' | 'budgetGenerate' | 'payablesSchedule'>;
+type RowKey = Exclude<keyof DashboardHrefs,
+  'budgetStarter' | 'budgetGenerate' | 'payablesSchedule' | 'registerFrom'>;
 
 /** Journey order for the setup index; the operate rail keeps the order it shipped with.
  *
@@ -140,9 +141,19 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
   transactions: {
     dot: styles.railDotRust,
     name: 'Transactions',
-    stat: s => (s.expenses.loggedCount === 0
-      ? 'None logged'
-      : <><b>{fmt(s.expenses.paidTotal)}</b> paid</>),
+    /**
+     * ⚠ THE ROW SPEAKS IN THE REGISTER'S OWN TWO COLUMNS (money redesign P3), and that is NOT the
+     * two-unrelated-facts problem the note above describes. "$4,120 paid · 3 due" crammed two
+     * questions about two different screens onto one line; out-and-in is ONE question — what has
+     * moved this season — answered the way the book itself answers it.
+     *
+     * ⚠ It also stopped being true as "paid". `expenses.paidTotal` is the season's SPEND, which
+     * includes costs a family paid the vendor directly, so it never was what the register's Money
+     * out column adds to. And the tab now holds arrivals as well, which that figure cannot see.
+     */
+    stat: s => (s.moneyIn.total === 0 && s.moneyOut.total === 0
+      ? 'Nothing yet'
+      : <><b>{fmt(s.moneyOut.total)}</b> out · <b>{fmt(s.moneyIn.total)}</b> in</>),
   },
   payables: {
     dot: styles.railDotRust,

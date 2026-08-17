@@ -6,6 +6,7 @@ import {
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepTeamExpenses,
+  getRepTeamMoneyIn,
   getSeasonFundraiserEntries,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
@@ -19,6 +20,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
+import { cashOnHandCents, toDollars } from '@/lib/coach-register';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -36,9 +38,23 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 // budget line is also now a COST or EXPECTED FUNDING; funding never counts toward what the
 // season costs, only toward what players don't have to fund. All of it in one shared module.
 //
-// Note: rep_team_payment_requests has no program-year scoping — approved sums are
-// team-lifetime. Acceptable under single-active-season semantics (documented in
-// COACH_MONEY_HUB_REDESIGN_PLAN.md).
+// ⚠⚠ THIS ROUTE AND `/register` ARE A MATCHED PAIR (money redesign P3, 2026-08-17). The register's
+// whole design rests on its running balance at Today BEING this route's `onHand`, decomposed into
+// the movements that produced it — so a source counted here and not there, or there and not here,
+// breaks that identity silently while both figures still look plausible. **Touch one, read the
+// other.** Three things were already broken when the register was built, and all three are fixed
+// here rather than worked around in the screen:
+//
+//   1. ⚠⚠ RECORDED INCOME AND MONEY BACK WERE NOT COUNTED AT ALL. `rep_team_money_in` (mig 243) was
+//      read by nothing behind this figure, so a coach could record $500 arriving and watch Cash on
+//      hand not move. It reached Budget vs. Actual as revenue and stopped there. The writer's own
+//      comment said the opposite ("CASH ON HAND, NOT COLLECTIONS") — the reader was never wired.
+//   2. THE DUES FIGURE WAS THE CAPPED ONE. `duesCollected` is capped at each schedule total so an
+//      overpayment cannot distort a BALANCE, which is right for the Collections tile and wrong for
+//      cash: the money physically arrived and the team is holding it. Cash now uses the uncapped
+//      receipts (`duesReceived`), exactly as the season close-out pot always has.
+//   3. CLUB REQUESTS WERE TEAM-LIFETIME. They carried no season at all; migration 247 gives them
+//      one, so a team in its second year stops reading last year's club money as this year's cash.
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -60,6 +76,7 @@ export const GET = withObservability(async (_req: Request,
     fundraisersRes,
     splitsRes,
     requestsRes,
+    moneyInRecords,
   ] = await Promise.all([
     getRepPlayerDuesSchedules(programYear.id),
     getRepTeamExpenses(programYear.id),
@@ -81,10 +98,13 @@ export const GET = withObservability(async (_req: Request,
       .select('id, amount')
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
+    // Season-scoped since migration 247 — see note 3 in the header.
     supabaseAdmin
       .from('rep_team_payment_requests')
       .select('request_type, amount, status')
-      .eq('team_id', teamId),
+      .eq('team_id', teamId)
+      .eq('program_year_id', programYear.id),
+    getRepTeamMoneyIn(programYear.id),
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
@@ -173,6 +193,19 @@ export const GET = withObservability(async (_req: Request,
   // Money handed back to families is real money out (mig 234).
   const payoutsTotal = amountsTotal(seasonPayouts);
 
+  // ── Recorded arrivals: income and money back (mig 243) ───────────────────
+  // ⚠⚠ BOTH KINDS RAISE CASH, and neither is "collections". Income is money the team earned or was
+  // given; money back is the team's own cash returning. They are opposites on the REPORT — a refund
+  // nets into the row it repaid rather than counting as revenue — but on a cash line they are the
+  // same event: a dollar arrived. Splitting them here keeps the report's distinction available to
+  // any caller that needs it without letting the cash figure lose either one.
+  let recordedIncome = 0;
+  let recordedMoneyBack = 0;
+  for (const m of moneyInRecords) {
+    if (m.kind === 'money_back') recordedMoneyBack += m.amount;
+    else recordedIncome += m.amount;
+  }
+
   // ── Fundraising: drives and sponsors, counted apart ──────────────────────
   const fundraisers = (fundraisersRes.data ?? []) as Array<{ id: string; is_active: boolean; kind?: string | null }>;
   let fundraisingRaised = 0;
@@ -255,11 +288,46 @@ export const GET = withObservability(async (_req: Request,
     : { count: 0 };
 
   // ── Totals + stage ───────────────────────────────────────────────────────
-  const moneyInTotal = duesCollected + fundraisingRaised + orgFunding;
+  // ⚠ THE UNCAPPED RECEIPTS, for the reason in note 2 of the header: `duesCollected` is capped at
+  // each schedule's total so an overpayment cannot distort a balance, and it is also computed
+  // per SCHEDULE — so a payment recorded against a player who has no schedule is invisible to it.
+  // Neither is right for cash. This is the same figure the season close-out pot has always used.
+  const duesReceived = amountsTotal(seasonPayments);
+  const moneyInTotal = duesReceived + fundraisingRaised + orgFunding + recordedIncome + recordedMoneyBack;
   // Money OUT is a CASH question — out-of-pocket costs never left the team's account, and money
   // handed back to families did. Headroom stays a BUDGET question, so it keeps the full spend.
   const moneyOutTotal = expensesCashPaid + allocationsPaid + orgPayments + payoutsTotal;
   const headroom = effectiveTotal > 0 ? effectiveTotal - expensesPaid : null;
+
+  /**
+   * ⚠⚠ CASH ON HAND COMES FROM THE REGISTER'S OWN ARITHMETIC, and this list IS the contract.
+   *
+   * It used to be `r2(moneyInTotal - moneyOutTotal)` — a float subtraction of two float sums, sitting
+   * a whole route away from the function that decides what the register's closing balance is. The two
+   * agreed only because someone kept them agreeing, which is precisely how this figure came to be
+   * wrong in three separate ways before 2026-08-17. Handing the same categories to
+   * `cashOnHandCents` makes them ONE arithmetic in integer cents: a source added here and not to
+   * `/register` (or the reverse) is now a visibly missing entry rather than a silent penny-drift.
+   *
+   * ⚠ `movesCash: true` ON EVERY ENTRY, and that is not a rubber stamp. These are the cash figures
+   * already — `expensesCashPaid` has out-of-pocket costs stripped out of it upstream, which is the
+   * same decision the register expresses per row with `movesCash: false`. Passing the BUDGET spend
+   * here instead would subtract money the team is still holding.
+   *
+   * ⚠ Nothing here is `scheduled`. This route reports what has moved; the projection lives on the
+   * register, where a coach can see the rows it is made of.
+   */
+  const onHand = toDollars(cashOnHandCents([
+    { moneyIn: duesReceived,       moneyOut: 0,                 movesCash: true, scheduled: false },
+    { moneyIn: fundraisingRaised,  moneyOut: 0,                 movesCash: true, scheduled: false },
+    { moneyIn: orgFunding,         moneyOut: 0,                 movesCash: true, scheduled: false },
+    { moneyIn: recordedIncome,     moneyOut: 0,                 movesCash: true, scheduled: false },
+    { moneyIn: recordedMoneyBack,  moneyOut: 0,                 movesCash: true, scheduled: false },
+    { moneyIn: 0,                  moneyOut: expensesCashPaid,  movesCash: true, scheduled: false },
+    { moneyIn: 0,                  moneyOut: allocationsPaid,   movesCash: true, scheduled: false },
+    { moneyIn: 0,                  moneyOut: orgPayments,       movesCash: true, scheduled: false },
+    { moneyIn: 0,                  moneyOut: payoutsTotal,      movesCash: true, scheduled: false },
+  ]));
 
   const stage: 'plan' | 'collect' | 'operate' =
     schedules.length > 0 ? 'operate'
@@ -270,9 +338,14 @@ export const GET = withObservability(async (_req: Request,
     stage,
     orgLinked: !isTeamWorkspaceOrg(ctx!.org),
     moneyIn: {
+      /** The COLLECTIONS figure — capped per schedule. Not what the cash line adds up. */
       duesCollected: r2(duesCollected),
+      /** What actually arrived from families, uncapped — the cash line's dues input. */
+      duesReceived: r2(duesReceived),
       fundraisingRaised: r2(fundraisingRaised),
       orgFunding: r2(orgFunding),
+      recordedIncome: r2(recordedIncome),
+      recordedMoneyBack: r2(recordedMoneyBack),
       total: r2(moneyInTotal),
     },
     moneyOut: {
@@ -283,7 +356,7 @@ export const GET = withObservability(async (_req: Request,
       orgPayments: r2(orgPayments),
       total: r2(moneyOutTotal),
     },
-    onHand: r2(moneyInTotal - moneyOutTotal),
+    onHand,
     headroom: headroom == null ? null : r2(headroom),
     budget: {
       seasonTotal,

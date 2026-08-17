@@ -11,6 +11,7 @@ import {
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepTeamExpenses,
+  getRepTeamMoneyIn,
   writeRepDuesPayout,
   removeRepDuesPayout,
   getOrCreateRepTeamLedger,
@@ -79,7 +80,7 @@ export async function loadSeasonSettlement(opts: {
 
   const [
     rosterPlayers, schedules, payments, credits, payouts, expenses,
-    surplusRes, adjustmentsRes, fundraisersRes, splitsRes, requestsRes, linesRes,
+    surplusRes, adjustmentsRes, splitsRes, requestsRes, linesRes, moneyInRecords,
   ] = await Promise.all([
     getRepRosterPlayers(pyId),
     getRepPlayerDuesSchedules(pyId),
@@ -89,16 +90,20 @@ export async function loadSeasonSettlement(opts: {
     getRepTeamExpenses(pyId),
     supabaseAdmin.from('rep_season_surplus').select('*').eq('program_year_id', pyId).maybeSingle(),
     supabaseAdmin.from('rep_season_refund_adjustments').select('player_id, kind, amount, note').eq('program_year_id', pyId),
-    supabaseAdmin.from('rep_fundraisers').select('id').eq('program_year_id', pyId),
+    /* ⚠ THE FUNDRAISER-ID QUERY IS GONE. It existed to feed a "does this season have any?" ternary
+       that was itself removed when the entries read became unconditional — so it had been fetching
+       a list nobody read, one round trip on every load of this sheet and on every write that
+       recomputes it. */
     supabaseAdmin.from('rep_allocation_splits').select('id').eq('program_year_id', pyId),
-    supabaseAdmin.from('rep_team_payment_requests').select('request_type, amount, status').eq('team_id', programYear.teamId),
+    supabaseAdmin.from('rep_team_payment_requests').select('request_type, amount, status')
+      .eq('team_id', programYear.teamId).eq('program_year_id', pyId),
     supabaseAdmin.from('rep_budget_lines').select('total_amount, line_kind').eq('program_year_id', pyId),
+    getRepTeamMoneyIn(pyId),
   ]);
 
   // The second wave. All three depend only on ids the first wave returned and on NOTHING from
   // each other, so they go together — awaiting them one at a time cost two extra round trips on
   // every read of this sheet, and a write pays for the sheet twice.
-  const fundraiserIds = (fundraisersRes.data ?? []).map((f: { id: string }) => f.id);
   const splitIds = (splitsRes.data ?? []).map((s: { id: string }) => s.id);
   const [installments, entriesRes, allocInstallsRes] = await Promise.all([
     getRepDuesInstallmentsBySchedules(schedules.map(s => s.id)),
@@ -106,8 +111,8 @@ export async function loadSeasonSettlement(opts: {
     // but nothing has arrived, and this pot is what families are paid out of: counting a promise
     // here could have funded a real refund of money the team never received (review, 2026-08-15).
     // Called unconditionally: it already returns [] for a season with no fundraisers, and the
-    // `fundraiserIds.length` ternary it replaced made the surrounding Promise.all infer one union
-    // type across all three results instead of a tuple.
+    // "are there any?" ternary it replaced made the surrounding Promise.all infer one union type
+    // across all three results instead of a tuple. That ternary's own query is gone above.
     getRealisedFundraiserEntries(pyId),
     splitIds.length
       ? supabaseAdmin.from('rep_allocation_installments').select('amount, paid_at').in('split_id', splitIds)
@@ -128,40 +133,36 @@ export async function loadSeasonSettlement(opts: {
   const fundraisingRaised = amountsTotal(
     (entriesRes as Array<{ amountRaised: number }>).map(e => ({ amount: e.amountRaised ?? 0 })));
 
-  // ⚠ CLUB PAYMENT REQUESTS ARE DELIBERATELY OUT OF THE POT, and this is the one place in the
-  // sheet where a real figure is knowingly excluded rather than derived.
+  // ⚠⚠ CLUB MONEY IS IN THE POT NOW (owner ruling 2026-08-17, money redesign P3).
   //
-  // `rep_team_payment_requests` carries NO program year — only a team — so an approved request
-  // cannot be attributed to a season at all. The Money hub sums them team-lifetime and says so in
-  // a comment, which is a fair compromise for a dashboard that only ever shows the live season.
-  // It is NOT fair here, for two reasons this sheet has and the hub does not:
+  // It was excluded for years, and the exclusion was RIGHT while it lasted: `rep_team_payment_requests`
+  // carried no program year, so an approved request could not be attributed to a season, and this
+  // figure sets a CASH PAYOUT CEILING — a team in its third season would have carried two earlier
+  // seasons' club funding into a surplus it never received. This sheet is also read in a FINISHED
+  // season, where approving a request next year would have rewritten last year's settled pot every
+  // time someone opened it. The comment here named the fix and called it beyond that pass:
+  // *"a program year on the payment-requests table (a migration + a backfill)."*
   //
-  //   1. this figure would set a CASH PAYOUT CEILING — a team in its third season would carry two
-  //      earlier seasons' club funding into a surplus it never received, and a coach could hand
-  //      families money this season never had;
-  //   2. this sheet is readable in a FINISHED season, and an archive must show what the coach
-  //      could see AT THE TIME. Approving a request next year would silently rewrite last year's
-  //      settled pot every time someone opened it.
-  //
-  // So the pot is the team's OWN money — dues, fundraising, spending, payouts — which is exactly
-  // the arithmetic the owner worked through. Where a team HAS club money, the card says plainly
-  // that it is not counted, rather than quietly swallowing it.
-  // ⚠ OPEN QUESTION FOR THE OWNER: how should club funding be attributed to a season? Answering
-  // it properly means a program year on the payment-requests table (a migration + a backfill),
-  // which is beyond this pass. Until then, excluded and stated.
+  // Migration 247 is that migration. Both hazards close with it — the query below is season-scoped,
+  // so a finished season's pot holds what THAT season was given and nothing later can reach it.
   const requests = (requestsRes.data ?? []) as Array<{ request_type: string; amount: number; status: string }>;
-  const approvedLifetime = (type: string) => amountsTotal(
+  const approvedThisSeason = (type: string) => amountsTotal(
     requests.filter(r => r.status === 'approved' && r.request_type === type).map(r => ({ amount: r.amount ?? 0 })));
-  const clubMoneyUncounted = Math.round(
-    (approvedLifetime('charge_to_org') + approvedLifetime('payment_to_org')) * 100) / 100;
-  const orgFunding = 0;
+  const orgFunding = approvedThisSeason('charge_to_org');
+  const orgPayments = approvedThisSeason('payment_to_org');
+
+  // ⚠ RECORDED ARRIVALS, BOTH KINDS (mig 243). Income the coach logged and money that came back are
+  // both cash the team is holding, and this pot counted neither — so every family's refund was
+  // computed from a smaller pot than the team actually had. The report's income/refund distinction
+  // has no bearing here: the question is only whether a dollar arrived.
+  const recordedIn = amountsTotal(moneyInRecords);
 
   // ── Money out (CASH only) ──────────────────────────────────────────────────────────────────
   const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses);
   const allocationsPaid = amountsTotal(
     ((allocInstallsRes.data ?? []) as Array<{ amount: number; paid_at: string | null }>)
       .filter(i => i.paid_at).map(i => ({ amount: i.amount ?? 0 })));
-  const cashOut = Math.round((expensesCashPaid + allocationsPaid) * 100) / 100;
+  const cashOut = Math.round((expensesCashPaid + allocationsPaid + orgPayments) * 100) / 100;
 
   // ── Per player ─────────────────────────────────────────────────────────────────────────────
   const hasSchedule = new Set(schedules.map(s => s.playerId));
@@ -213,7 +214,7 @@ export async function loadSeasonSettlement(opts: {
   const surplusRow = surplusRes.data as { hold_back_amount?: number; notes?: string | null } | null;
   const settlement = deriveSettlement({
     cash: {
-      duesReceived, fundraisingRaised, orgFunding, cashOut,
+      duesReceived, fundraisingRaised, orgFunding, recordedIn, cashOut,
       payoutsTotal: amountsTotal(payouts),
       holdBack: Number(surplusRow?.hold_back_amount ?? 0),
     },
@@ -349,7 +350,6 @@ export async function loadSeasonSettlement(opts: {
     rows,
     families,
     unspentPlan: Math.max(0, Math.round((plan - expensesPaid) * 100) / 100),
-    clubMoneyUncounted,
     notes: surplusRow?.notes ?? null,
   };
 }

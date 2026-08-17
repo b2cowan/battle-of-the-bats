@@ -33,6 +33,10 @@ const REQUIRED_IMPORTERS = [
   'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/adjustments/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/payouts/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables/route.ts',
+  // The register (money redesign P3): its scheduled overlay quotes what each instalment still owes,
+  // beside the payments that have already arrived. Same figure as the payment schedule, and it must
+  // come from the same place — the two screens sit one tab apart.
+  'app/api/coaches/[orgSlug]/teams/[teamId]/register/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/ask/route.ts',
   'lib/insights-digest.ts',
   'lib/insight-findings.ts',
@@ -50,6 +54,18 @@ const DEFINITION_HOMES = new Set([
   // lives, and the settlement assembly beside it is the one place the sheet is built.
   'lib/season-settlement.ts',
   'lib/coach-season-settlement.ts',
+  /**
+   * Money redesign P3: "what does this instalment still owe?" — the per-player assembly around
+   * `deriveDuesPosition` (group the instalments, group the payments, hand both to the model with
+   * that player's credits and payouts). It derives no arithmetic of its own; it is the one place
+   * the ASSEMBLY lives, which is the part two screens were writing out by hand.
+   *
+   * ⚠ It became a home the moment it had two callers. The payment schedule quoted this figure with
+   * its own copy of the loop, and the register needed the identical answer one tab away — the exact
+   * shape that shipped "quote the face value" the first time, when a $300 instalment a family was
+   * $200 into was advertised at $300.
+   */
+  'lib/coach-dues-remaining.ts',
 ]);
 
 /** ORG-ALLOCATION surfaces — a DIFFERENT money domain (rep_allocation_installments). Allocations
@@ -97,8 +113,8 @@ describe('dues definitions have one home', () => {
         // credit model — the season-surplus route quotes only what that assembly hands it, which
         // is the whole point of Pass 3 (the route it replaced hand-built its own breakdown, and
         // was twice the place the money went wrong).
-        /from '@?\.?\.?\/?.*(dues-(status|payments|credits)|coach-season-settlement)/.test(src),
-        `${f} quotes a dues figure but imports none of lib/dues-status, lib/dues-payments, lib/dues-credits, lib/coach-season-settlement`,
+        /from '@?\.?\.?\/?.*(dues-(status|payments|credits|remaining)|coach-season-settlement)/.test(src),
+        `${f} quotes a dues figure but imports none of lib/dues-status, lib/dues-payments, lib/dues-credits, lib/coach-dues-remaining, lib/coach-season-settlement`,
       );
     }
   });

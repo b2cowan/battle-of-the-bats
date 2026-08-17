@@ -399,8 +399,12 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     /* ⚠ THE CATALOG ID IS UNCHANGED (Money split P1, 2026-08-16). It is a stable key the help
        system and the plan-gating tests address this dataset by; the SCREEN it names has split, and
        the label and summary follow the screen. The downloaded files keep their own dataset
-       segments (`expenses`, `payables`, `money-in`, `payment-schedule`) for the same reason — a
-       coach's downloads folder already holds a season of them. */
+       segments (`expenses`, `payables`, `payment-schedule`) for the same reason — a coach's
+       downloads folder already holds a season of them.
+       ⚠ `money-in` IS NO LONGER ONE OF THEM (money redesign P3). That list held income AND refunds,
+       so the file did too; the register splits them into two filters, and the two files that come
+       out — `income` and `refund` — each finally mean what their heading says. `register` is the
+       whole book, balance column and all. */
     id: 'coaches-expenses-payables',
     label: 'Coaches Portal — Transactions & payables',
     module: 'coaches',
@@ -420,7 +424,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export what is on screen on Transactions or Payables — the Expenses list, Money in, your commitments, or the payment schedule — honouring the money-tag filter.',
+      'Export what is on screen on Transactions or Payables — the whole dated register with its running balance, or just one kind of it (expenses, income, refunds, dues, fundraising, club), plus your commitments and the payment schedule. Honours every filter you have set.',
   },
   {
     id: 'coaches-fundraisers',

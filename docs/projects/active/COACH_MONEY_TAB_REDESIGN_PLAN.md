@@ -467,13 +467,150 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
    about the form. Its 16 "new" findings were traced to the portal's unread-notification badge —
    `coach-roster`, untouched by P2, produces the identical six — so they are fixture drift in shared
    chrome, deliberately **not** re-baselined.
-3. **P3 — The Register.** The date-sorted book with running balance; derived rows from Dues /
-   Fundraising / Club; balance ≡ Cash on hand (build-blocking test); filter strip; scheduled
-   overlay with projected balances and Mark paid; Overview's panel becomes its window; exports
-   move; **the arrivals list finally retires the name "Money in"** (the rename P1 deliberately
-   deferred until the register's separate Income and Refunds filters make the word true).
-   *Owner QA: the balance reconciliation and the overlay.*
-   **Build prompt:** `COACH_MONEY_SPLIT_P3_BUILD_PROMPT.md` (fresh chat).
+3. ✅ **P3 — The Register. BUILT ON DEV 2026-08-17** — Owner QA **§46**, migration **247** applied to
+   dev. The date-sorted book with running balance; derived rows from Dues / Fundraising / Club;
+   filter strip; scheduled overlay with projected balances and Mark paid; Overview's next-30 panel
+   becomes its window; the exports move; **the arrivals list finally retires the name "Money in"**.
+   **Plan:** `COACH_MONEY_REGISTER_P3_PLAN.md` · **build prompt:** `COACH_MONEY_SPLIT_P3_BUILD_PROMPT.md`.
+
+   **⚖⚖ THE BUILD-BLOCKING TEST WAS UNPASSABLE, AND THE FAULT WAS NOT IN THE REGISTER.** §4.2 says
+   the balance at Today must equal Cash on hand. Reading the code before building found that figure
+   already wrong in three ways, and all three were put to the owner before a line was written:
+   - ⚠⚠ **Recorded income and money back reached NO cash figure in the product.**
+     `money-summary/route.ts` never read `rep_team_money_in` (mig 243). A coach recorded $500
+     arriving and Cash on hand did not move; it reached Budget vs. Actual as revenue and stopped.
+     The writer's own comment said the opposite ("CASH ON HAND, NOT COLLECTIONS") — the reader was
+     simply never wired. **A live money defect, independent of this phase.**
+   - **The dues input was the CAPPED figure** — capped per schedule so an overpayment cannot
+     distort a balance, which is right for the Collections tile and wrong for cash, and computed
+     per schedule so a payment against a player without one was invisible to it.
+   - **Club money had no season at all.** `rep_team_payment_requests` carried only a team, so
+     approved requests were summed **team-lifetime** into a figure whose every other input was
+     season-scoped. `lib/coach-season-settlement.ts` had refused to count club money for years for
+     exactly this reason, printed a caveat on the close-out card, and named the fix in a comment.
+
+   **Owner rulings, 2026-08-17:** *fix the cash figure AND the close-out pot from one definition*,
+   and *give club money a real season now* (migration 247 + backfill) rather than showing
+   out-of-season rows or printing a caveat. So the pot now counts recorded arrivals and club money —
+   **family refund amounts at season close-out go up**, because the pot had been understating what
+   the team held — and `clubMoneyUncounted` retires with the warning line it fed.
+
+   **Three design decisions taken during the build, so P4 inherits them rather than re-litigating:**
+   - ⚠⚠ **An out-of-pocket cost sits on the book and does not move the balance.** It is real
+     spending on a real record, but no team cash moved (`expenseTotals().cashPaid` has always
+     excluded it). The row shows its amount in **Money out**, carries a *No team cash* chip, and
+     repeats the previous balance beside it. Hiding it would lose an expense; moving the balance
+     would break the identity the whole screen rests on.
+   - **Money handed back to families is a derived row.** §4.2's list of derived sources omitted it;
+     without it the balance is off by every payout the team has made.
+   - **A fundraising row is dated by the day it was recorded**, because `rep_fundraiser_entries` has
+     no date column at all. Said on the row rather than guessed at.
+
+   **Also done here, both explicitly deferred to P3 by P1:** the inline "when was this paid?" prompt
+   is gone (every Mark paid goes through the money form now — P1 said in as many words that "the
+   register absorbs that row in P3"), and the two money faces finally **share one read cache** —
+   `/expenses`, `/budget-items` and `/budget-plan` ran twice for a coach who opened both tabs, and
+   thereafter on every save. ⚠ The write paths now **bump before they reload**: a cache keyed per
+   revision would otherwise replay the pre-save answers into the screen that just saved.
+
+   **The claim has a permanent check:** `npm run check:register` reads `/register` and
+   `/money-summary` for one team and fails if the closing balance and Cash on hand disagree, if the
+   rows do not sum to it, if a projection leaks into the settled close, or if any row carries both
+   directions. It also **exits non-zero when the fixture is too thin to prove anything** — a team
+   without all three derived sources cannot fail the way this used to. The UAT fixture gained an
+   out-of-pocket cost, an income row and a refund so it can.
+
+   **`/simplify` (4 lenses) — 8 applied, 4 skipped. The most valuable finding was a comment that
+   lied:**
+   - ⚠⚠ **This file's own header claimed the two cash figures "reconciled to" one shared function,
+     and they did not.** `money-summary` hand-rolled `r2(moneyIn − moneyOut)` over nine float totals
+     and never imported the register's arithmetic at all — the identity was held together by prose
+     and by a check script nobody runs in CI. It now hands its category totals to `cashOnHandCents`
+     as movements and takes the answer, so **the two figures are one arithmetic in integer cents**
+     and a source added to one and not the other is a visibly missing argument rather than a silent
+     penny-drift. ⚠ The season close-out pot remains a third, separate arithmetic — that is now
+     *stated* in the header rather than glossed, because folding a pure dependency-free module that
+     runs under plain `node --test` into this was a bigger, riskier change than the finding was
+     worth.
+   - ⚠⚠ **The shared dues-remainder derivation had been extracted for two callers and wired into
+     one.** The payment schedule still carried its own hand-written copy of the per-player loop —
+     the exact thing the new module's header warns about — so the two screens quoted a family the
+     same figure only by two authors agreeing. Wired up; the guard test that polices "dues
+     definitions have one home" caught the swap and now names the new home.
+   - **"Bump before load" was a comment repeated at three write sites** rather than one function —
+     the identical shape this same file's `goToTab` wrapper exists to prevent, and says so. One
+     `refreshAfterWrite`, so the fourth write path cannot get the order wrong.
+   - **The register route made four sequential round trips where two do.** Three later `await`s
+     (item names, club instalments, dues instalments) each sat in their own `if` block and depended
+     only on the first wave. One second wave now.
+   - **The register's derived view was rebuilt on every keystroke of the money form** — the modal is
+     an overlay, so the book beneath it re-filters and re-sorts on every character typed. Memoised.
+   - **Three near-identical dues row builders** became one `duesRow` helper: where a dues row links,
+     what its chip says, and whether it can be settled here are properties of the workspace, and
+     were being restated three times with nothing keeping them in step.
+   - **Dead on arrival:** the `money-in` export dataset (split into `income` and `refund` files) and
+     the `.inlinePrompt` stylesheet block (its control retired) — both deleted, both leaving a note
+     saying what replaced them and, for the CSS, the two specificity lessons that outlive the rules.
+   - **Skipped with reasons:** sharing `toCents`/`toDollars` with `season-settlement.ts` (three pure
+     modules keep a local copy by existing convention, and this one additionally coerces PostgREST
+     strings — "sharing" would smuggle a money-behaviour change into a cleanup); a shared formatter
+     between two diagnostic scripts (the twin belongs to the concurrent item-integrity project);
+     unifying `RegisterHalf` with the panel's `MarkPaidAction` (three values, more machinery than
+     the duplication costs); and merging `/register` with `/money-summary` (the lens agreed two
+     routes is right — the summary is on every Money page's critical path and would pay for per-row
+     assembly it never renders).
+
+   **`/review` (high-risk tier, 5 lenses) — five real defects, all fixed in the same pass. Notably,
+   the money reconciliation itself came back CLEAN:** two lenses independently traced every register
+   row producer against every term feeding the cash figure — dues receipts, realised fundraising,
+   club funding and payments, recorded income and money back, cash-paid expenses, allocations,
+   payouts — and found no double count, nothing missing, and no cross-team or capability hole. The
+   defects were all around the edges:
+   - ⚠⚠ **High — nothing decided which response won.** Every write on this screen reloads twice (once
+     explicitly, once because the revision bump re-fires the load effect) and neither load carried a
+     request sequence. That has been true here since long before P3 — but the register turned a
+     sub-list refresh into a WHOLE-SCREEN one, so the symptom changed: a coach marking two
+     commitments paid a few seconds apart could have the first write's slower response land last and
+     **watch the payment they just made revert to Scheduled in front of them.** Both loads now stamp
+     each call and discard anything that is no longer the newest — the pattern `MoneyNextThirtyDays`
+     one file over has used for exactly this since it shipped. ⚠ The guard sits after every body is
+     READ and before anything is WRITTEN; a guard with awaits after it guards only what it precedes.
+   - ⚠⚠ **Medium — a comment that lied, again, and this time it was mine.** The new demo tour step
+     claimed its "the number at the top is the team's cash" sentence "cannot quietly stop being true
+     without that check going red" — but `check:register` needs a dev server and a Playwright
+     session, so it is not in `verify:changed` and nothing in the build re-runs it. The narration was
+     promising a guarantee nobody had wired up, which is precisely the demo-drift failure CLAUDE.md
+     describes. The claim is corrected in place rather than the sentence softened: the identity IS
+     exact, and the comment now says where the check actually lives and that it is run by hand.
+   - **Medium — the export blanked a balance the screen deliberately shows.** On an out-of-pocket
+     row the register repeats the previous figure (the whole point: the column stays readable and the
+     chip says why), but the file emptied that cell — a gap in the one place this design says not to
+     leave one. The Status column already carries `Settled — no team cash`.
+   - **Medium — the Overview's "Money In" caption named three terms for a figure that now holds
+     five.** A coach with sponsor income or a refund saw a total larger than the caption beneath it
+     explained, on the card whose job is to explain it. Both captions now state the question they
+     answer rather than a term list that was already one edit behind. (Its neighbour was wrong the
+     same way *before* this release — it never mentioned money handed back to families.)
+   - **Medium — the shared read cache evicted by key rather than by identity.** A read orphaned by a
+     bump and failing afterwards would delete the healthy replacement a later caller had installed.
+     No stale data either way; it simply stopped saving the request it exists to save.
+
+   **Refuted and dropped (2):** a claim that a repeated identical deep link from the Overview window
+   would be ignored — reaching a second window row means passing back through Overview, whose address
+   carries no filter, so the value round-trips through absent and the effect re-fires; and a
+   `?filter=club` deep link on a standalone team, which has no club lane to generate the link.
+
+   **⚖ One finding accepted rather than fixed, and it belongs to P4.** Between seasons, the club
+   payment-request form is still offered (that panel's write gate has never been season-aware) and
+   the server now refuses the write, because a request must name a season. Before migration 247 it
+   *succeeded* and created a seasonless record — which is the bug being fixed — so this is a worse
+   message on a safer outcome. Gating that screen properly is P4's, which rebuilds it; recorded in
+   Owner QA §46 §I so the walk sees it rather than discovering it.
+
+   **Advisory, not a defect:** a lens asked whether a recorded sponsor **pledge** belongs in the
+   scheduled overlay given the "nothing pending a decision" rule. §4.4 lists recorded sponsor pledges
+   as qualifying — a pledge is an arrangement the team has, not a decision someone else may refuse —
+   so this is ruled, not drift. It never touches the settled balance either way.
 4. **P4 — Club.** Its own short mockup pass (name settled: Club vs Org), then the merge; demo seed
    gains club money. *Owner QA: the combined story + the register's club rows.*
 

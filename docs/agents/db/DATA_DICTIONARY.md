@@ -3983,13 +3983,17 @@ mark-paid actions accept one, so it may be back-dated to any real past day (neve
 3. **Approve posts a ledger transfer but creates NO `rep_team_expense`** — the two finance tables are decoupled.
 4. **`budget_line_id` → `org_budget_lines` (ORG Accounting), NOT `rep_budget_lines`** (dual-budget-line trap). Accepted from the coach and surfaced on read, but **not used in the approval/transfer logic** — a categorization hint only, often NULL.
 5. **`status` (CHECK `pending|approved|denied`, default `pending`) is a one-way machine** — both approve and deny 409 if `status != pending`; no reopening. `denial_reason` is required (app-layer) on deny. `reviewed_by`/`reviewed_at` stamped on the decision. Coaches may DELETE (cancel) only their own **pending** requests.
-6. **`created_by` is NOT NULL** (the requesting coach); `reviewed_by` nullable until decided. **NO Stripe columns** — settlement is internal double-entry only (`payment_method` is a free-text label, not a Stripe ref). **CHECK `amount > 0`**; indexes `(org_id, status)`, `(team_id, status)`.
+6. **`created_by` is NOT NULL** (the requesting coach); `reviewed_by` nullable until decided. **NO Stripe columns** — settlement is internal double-entry only (`payment_method` is a free-text label, not a Stripe ref). **CHECK `amount > 0`**; indexes `(org_id, status)`, `(team_id, status)`, `(team_id, program_year_id, status)`.
+7. **⚠⚠ THIS TABLE HAD NO SEASON UNTIL MIGRATION 247 (2026-08-17), and two readers were wrong because of it.** The coach's **Cash on hand** summed approved requests **team-lifetime** while every other input to that figure was scoped to the working program year — so a team in its second season read the previous season's club money as this season's cash. And the **season close-out pot** (`lib/coach-season-settlement.ts`) excluded club money outright, printing a caveat on the card, because it could not attribute it; its comment named this migration as the fix. Both read `program_year_id` now. **Anything that sums this table must scope by season.**
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
 <!-- dict:col:rep_team_payment_requests.org_id -->
 <!-- dict:col:rep_team_payment_requests.team_id -->
 **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) — scope; status-indexed both ways.
+
+<!-- dict:col:rep_team_payment_requests.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, **ON DELETE CASCADE**; **mig 247**) — the season this club request belongs to (gotcha 7). Backfilled by matching the request's `created_at` calendar year against the team's program-year `year`, then falling back to the team's `active` year, then its newest — `rep_program_years` carries no date range, so a year match is the finest grain available. Made NOT NULL in the same migration, which **fails loudly** rather than leaving a nullable column its readers assume is populated.
 
 <!-- dict:col:rep_team_payment_requests.request_type -->
 **`request_type`** (text, NOT NULL; CHECK `payment_to_org|charge_to_org`) — transfer direction (gotcha 1).

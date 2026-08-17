@@ -276,48 +276,15 @@
   }
 }
 
-/* inlinePrompt — a one-question answer taking the place of the button that asked it, inside a
-   dense list row. Built for "when was this paid?" (2026-08-16): the answer is a single date, it
-   is almost always today, and a modal over a table would be more ceremony than the decision
-   deserves.
-   ⚠ THE BUTTONS ARE GRANDCHILDREN, deliberately. `.cardActionCell > button` above stretches a
-   trailing control to full width at 640 — correct for one button, wrong for a date field and two
-   actions, which must stay a row. Wrapping them in this element puts them out of that selector's
-   reach, so the phone treatment is stated here instead of fought with.
-   ⚠ The descendant selectors below are (0,1,1) and so outrank the .btnPrimary / .btnGhost
-   single-class rules declared later in this file — asserted rather than assumed, because equal
-   specificity resolving by source order is exactly how a sizing rule becomes a silent no-op. */
-.inlinePrompt {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.inlinePrompt input {
-  /* Wide enough for a rendered date in every locale the picker offers, and no wider: this sits in
-     a table cell that has other work to do. */
-  width: 9.5rem;
-  padding: 0.2rem 0.4rem;
-  font-size: 0.78rem;
-}
-
-@media (max-width: 640px) {
-  .inlinePrompt {
-    width: 100%;
-  }
-  .inlinePrompt input {
-    flex: 1 1 8rem;
-    min-height: var(--tap-min, 44px);
-  }
-  /* The same floor the stacked row applies to a lone action — a control that is reachable on a
-     phone in one list and not in another is the worse half of the pair. */
-  .inlinePrompt button {
-    min-height: var(--tap-min, 44px);
-    padding: 0.45rem 0.7rem;
-    font-size: 0.82rem;
-  }
-}
+/* ⚠ `.inlinePrompt` IS GONE (money redesign P3, 2026-08-17), with the control it dressed. It styled
+   the inline "when was this paid?" answer that replaced a row's Mark Paid button; every Mark paid
+   opens the money form now, so the class had no markup left anywhere in the portal. Its two hard-won
+   notes are worth keeping even though the rules are not, because the next dense-row control will hit
+   both: `.cardActionCell > button` stretches a lone trailing control to full width at 640, so a
+   multi-part control must be WRAPPED to get out of that selector's reach; and descendant selectors
+   like `.wrapper input` are (0,1,1) and outrank the single-class `.btnPrimary`/`.btnGhost` rules
+   declared later in this file — equal specificity resolving by source order is exactly how a sizing
+   rule becomes a silent no-op here. */
 
 /* wrap640 — a name that is nowrap+ellipsis on a desktop row but must WRAP on a phone,
    because the truncation point arrives early enough to hide which record it is. Was
@@ -4160,6 +4127,41 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .tagManagerActions button:hover { color: var(--white-90); background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
 
+/* ── "Use a shared word instead" — the team-chosen fold (budget item integrity P3) ─────────────
+   A tick list of the team's own words, one shared word to replace them with, and the consequences
+   stated before the button. ⚠ THE INK STAYS PRIMARY on the tinted panels below rather than taking
+   the tint's own colour: the warm portal theme is a light ground, and amber-on-amber passes the
+   dark-only static gates while failing the rendered contrast sweep. Move the tint, never the ink. */
+.foldPick { cursor: pointer; }
+.foldPick input { flex: none; accent-color: var(--logic-lime, currentColor); }
+.foldPick[data-disabled="true"] { cursor: not-allowed; opacity: 0.45; }
+.foldCount { flex: none; font-size: 0.72rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
+.foldConfirm {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--home-radius-sm, 9px);
+  background: var(--white-05);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.foldConfirm p { margin: 0; }
+.foldHeadsUp {
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--home-radius-sm, 9px);
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.10);
+  border: 1px solid rgba(var(--home-amber-rgb, 161, 98, 7), 0.28);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.foldHeadsUp p { margin: 0; }
+.foldHeadsUp p + p { margin-top: 0.25rem; }
+
 /* Award icon picker (Coach Tags & Player Awards Phase 2) — trigger button + choice grid,
    reused by the award-type manager and the give-award form's "+ New" inline create row. */
 .awardEmojiPickBtn {
@@ -7002,11 +7004,73 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .moneyFilterChipOrg { border-color: rgba(var(--blueprint-blue-rgb), 0.45); color: var(--tag-org-fg); }
 .moneyFilterChipOrgActive { background: var(--tag-org-active-bg); border-color: var(--tag-org-active-bg); color: var(--pitch-black); font-weight: 700; }
 .moneyFilterCount { opacity: 0.6; font-size: 0.68rem; }
+/* ⚠ THE PHONE TAP FLOOR, the same fix `.viewToggleBtn` took on 2026-08-15 and for the same reason.
+   These chips were metadata filters when the rule was written — a nice-to-have above a list. The
+   register makes them the screen's PRIMARY control: they replaced its sub-tabs outright (money
+   redesign P3), so a finger has to land on them the way it used to land on a tab. Desktop keeps the
+   portal's grandfathered compact heights. On the shared class, so the money-tag chips gain it too.
+
+   ⚠ ≤768, NOT ≤640 like `.viewToggleBtn`, and the difference is deliberate. That rule was written
+   for a control that had a tab row above it doing the same job; these chips ARE the tab row now,
+   and 768 is a tablet held in two hands. The predecessors they replace — `Expenses (2)` and
+   `Money in (0)` — sat in the baseline at 27px at this exact width with no reason recorded, so
+   inheriting their height would have been inheriting an argument nobody had made. */
+@media (max-width: 768px) {
+  .moneyFilterChip { min-height: var(--tap-min, 44px); }
+}
 .moneyTagSummary {
   background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
   border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
 }
 .moneyTagSummary strong { color: var(--logic-lime); }
+
+/* ── The register (money redesign P3) ────────────────────────────────────────────────────────
+   One dated book: a scheduled block above Today, the settled book below it, and a running
+   balance beside every row.
+
+   ⚠⚠ THE SETTLED/PROJECTED DISTINCTION IS NEVER CARRIED BY COLOUR ALONE (plan §4.4, and the
+   standing warm-palette rule: amber and danger sit at ΔE ~1.0 for deutan vision). A scheduled
+   row is marked THREE independent ways — a dashed left rule, italic figures, and its own
+   "Scheduled" chip in the row. Any one of them read alone still answers the question. */
+.registerRowScheduled {
+  border-left: 2px dashed var(--border-2);
+  font-style: italic;
+}
+.registerRowScheduled .registerAmt { font-style: italic; }
+/* The Today boundary — a full-width rule the book is read across, not a row of data. */
+.registerToday td {
+  background: var(--white-4);
+  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--white-55); font-weight: 700;
+  padding: 0.35rem 0.7rem;
+}
+.registerAmt { font-variant-numeric: tabular-nums; }
+.registerAmtIn { color: var(--success-light); }
+/* ⚠ A BALANCE THAT DID NOT MOVE, on the one row that spends money without spending the team's:
+   an out-of-pocket cost. Repeating the previous figure (rather than blanking it) keeps the column
+   readable top to bottom, and the muting plus the row's own chip say why it stood still. */
+.registerBalanceUnmoved { color: var(--white-40); }
+.registerChip {
+  display: inline-block; border-radius: 999px; padding: 0.05rem 0.4rem;
+  font-size: 0.68rem; font-style: normal; white-space: nowrap;
+  background: var(--white-8); border: 1px solid var(--border-2); color: var(--white-55);
+}
+/* The book's second control row — the budget word, the overlay switch, the money tags. */
+.registerControls {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.8rem;
+}
+.registerSelect {
+  background: var(--white-8); border: 1px solid var(--border-2); color: var(--white-80);
+  border-radius: 8px; padding: 0.3rem 0.5rem; font-size: 0.78rem;
+}
+/* What the book closes at, said once above it. */
+.registerClose {
+  display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; align-items: baseline;
+  background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
+  border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
+}
+.registerCloseFig { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--logic-lime); }
+.registerCloseProjected { color: var(--white-55); font-style: italic; }
 
 /* ── Player Development 3B — hub grid, session run screen, team board ──
    Hub composes as a section-card GRID on desktop per the 2026-07-09 multi-domain layout

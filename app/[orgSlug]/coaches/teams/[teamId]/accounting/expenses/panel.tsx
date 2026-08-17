@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, use, Fragment, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
@@ -29,20 +29,24 @@ import {
   // Aliased: this panel already has a local `scheduleRows` holding the filtered schedule ROWS,
   // and the import is the function that turns them into export rows.
   SCHEDULE_COLUMNS, scheduleRows as scheduleExportRows,
-  MONEY_IN_COLUMNS, moneyInRows,
+  REGISTER_COLUMNS, registerExportRows,
 } from '@/lib/coach-money-exports';
+import {
+  REGISTER_FILTERS, REGISTER_KIND_LABEL, balanceIsMeaningful, matchesFilter,
+  type RegisterBookRow, type RegisterFilter,
+} from '@/lib/coach-register';
 import styles from '../../../../coaches.module.css';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
-  RepTeamMoneyIn, MoneyInKind, MoneyInSource,
+  RepTeamMoneyIn,
 } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { isFundingKind } from '@/lib/coach-budget-totals';
-import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { useMoneyRevision, useBumpMoneyRevision, useSharedMoneyRead } from '@/lib/coach-money-refresh';
 import { formatStoredDate, tournamentToday, orgDayKey } from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
 import {
-  MONEY_IN_KIND_ROW, MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
+  MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
 } from '@/lib/coach-money-in';
 
 function fmt(n: number) {
@@ -119,7 +123,7 @@ function KindCompare({ otherHref, onPayables }: { otherHref: string; onPayables:
 }
 
 /**
- * Income or money back? — the comparison under the Money in empty state (mig 243).
+ * Income or money back? — the comparison under the register's empty state (mig 243).
  *
  * ⚠⚠ THE THIRD CARD IS THE POINT, and it is not about money in at all. A coach says
  * *"a parent paid me back"* for two opposite things, and the one that already exists — a cost the
@@ -221,12 +225,23 @@ function payableStatus(
  */
 type MoneyFace = 'transactions' | 'payables';
 
-/** The sub-views, per face. `expenses`/`money-in` live on Transactions; `commitments`/`schedule`
- *  on Payables. One union rather than two so the `?tab=` reader stays a single check. */
-type ExpenseTab = 'expenses' | 'money-in' | 'commitments' | 'schedule';
+/**
+ * The sub-views, per face. `commitments`/`schedule` live on Payables; Transactions has exactly ONE.
+ *
+ * ⚠⚠ TRANSACTIONS HAS NO SUB-TABS ANY MORE (money redesign P3, plan §4.3). Its two lists —
+ * Expenses and Money in — are gone, replaced by one dated book with a filter strip. They were never
+ * two different things: a coach reading their books asks "what happened, in order", and splitting
+ * that by direction meant neither list could ever carry a running balance, because half the money
+ * was on the other one.
+ *
+ * ⚠ The union keeps `register` as a member rather than the face becoming tab-less, because the
+ * `?tab=` reader, the export label and the empty states are all one check across both faces — and a
+ * face with no tab at all would have needed every one of them to learn a second shape.
+ */
+type ExpenseTab = 'register' | 'commitments' | 'schedule';
 
 const FACE_TABS: Record<MoneyFace, ExpenseTab[]> = {
-  transactions: ['expenses', 'money-in'],
+  transactions: ['register'],
   /* ⚠ SCHEDULE FIRST, AND IT IS THE DEFAULT (plan §0, recommended and adopted). A coach opening
      Payables is asking "what do we owe and when" — a dated list answers that; a list of
      commitments in entry order does not. Commitments is where a record is MANAGED, which is the
@@ -399,9 +414,10 @@ const FORM_COPY: Record<FormKindTag, {
 };
 
 /** The sub-view a coach is standing on decides how the form opens. On either Payables view that is
- *  always a commitment — the tab has exactly one kind of record in it, which is the point of it. */
+ *  always a commitment — the tab has exactly one kind of record in it, which is the point of it.
+ *  ⚠ The register opens on a paid EXPENSE, not on income: the book holds both directions, and the
+ *  form's two pills are one click apart, so the door opens on the far commoner of the two. */
 function kindForTab(tab: ExpenseTab): { kind: EntryKind; timing: CostTiming } {
-  if (tab === 'money-in') return { kind: 'income', timing: 'paid' };
   if (tab === 'commitments' || tab === 'schedule') return { kind: 'expense', timing: 'payable' };
   return { kind: 'expense', timing: 'paid' };
 }
@@ -506,12 +522,13 @@ function MoneyRecordsPanel({
   const [error, setError] = useState('');
   const [tab, setTab] = useState<ExpenseTab>(FACE_TABS[face][0]);
 
-  /* ⚠ LEAVING THE TAB IS A CANCEL (/review, 2026-08-16). An open "when was this paid?" prompt is
-     anchored to a row id, so switching to Payables and back used to reopen it — with its old date
-     — on a visit the coach had started for another reason. Cleared through ONE wrapper rather than
-     at each `setTab` call site, because the point of failure is the call site added next. */
+  /* ⚠ THE WRAPPER SURVIVES ITS ONE JOB, DELIBERATELY. It existed to cancel the inline "when was
+     this paid?" prompt on a view change (/review, 2026-08-16) — an open prompt was anchored to a row
+     id, so leaving and returning reopened it with its old date on a visit started for another
+     reason. That prompt is gone (money redesign P3), but the lesson is about the NEXT piece of
+     per-row state a view picks up, and one wrapper is what makes "clear it on the way out"
+     checkable rather than remembered at each call site. */
   const goToTab = useCallback((next: ExpenseTab) => {
-    setPaidPrompt(null);
     setTab(next);
   }, []);
 
@@ -537,6 +554,25 @@ function MoneyRecordsPanel({
      sponsor — the form greys those out and says why, and the server refuses them regardless. */
   const [moneyIn, setMoneyIn] = useState<RepTeamMoneyIn[]>([]);
   const [derivedKeys, setDerivedKeys] = useState<Set<string>>(new Set());
+
+  /* ── The register (money redesign P3) ──────────────────────────────────────────────────────
+     The whole season's book, assembled server-side, with each row's balance already attached.
+     ⚠ THE BALANCE IS NOT RECOMPUTED HERE. The screen's headline claim is that its closing balance
+     IS Cash on hand, and that figure is produced by a different route from the same records — a
+     second arithmetic in the browser is exactly how the two would start disagreeing by a cent on a
+     screen whose entire point is that they don't. */
+  const [book, setBook] = useState<{
+    scheduled: RegisterBookRow[]; settled: RegisterBookRow[];
+    cashOnHand: number; projectedBalance: number | null; orgLinked: boolean;
+  } | null>(null);
+  const [registerFilter, setRegisterFilter] = useState<RegisterFilter>('all');
+  /** Narrowing by one budget word. Shares the balance rule with the type filter — any narrowing
+   *  at all takes the Balance column away. */
+  const [registerItemId, setRegisterItemId] = useState('');
+  /* ⚠ ON BY DEFAULT (plan §4.4, recommended and adopted). The book then answers "what happened"
+     and "what's coming" in one read, and the Today rule plus the projected styling keep the two
+     halves unmistakable. Colour never carries that distinction alone. */
+  const [showScheduled, setShowScheduled] = useState(true);
 
   // One form, three answers, two modes (add / edit) — see BLANK_RECORD and EntryKind.
   const [formOpen, setFormOpen] = useState(false);
@@ -577,10 +613,10 @@ function MoneyRecordsPanel({
   /** Was the last save refused for a future date? Its own flag rather than a longer sentence,
    *  because the answer needs a LINK to the commitment door and a thrown message cannot carry one. */
   const [futureDateRefused, setFutureDateRefused] = useState(false);
-  const [marking, setMarking] = useState<Record<string, boolean>>({});
-  /** The row being asked "when was this paid?", and the answer so far. One at a time: the question
-   *  replaces that row's Mark Paid button rather than opening a dialog over the table. */
-  const [paidPrompt, setPaidPrompt] = useState<{ id: string; action: string; date: string } | null>(null);
+  /* ⚠ `marking` AND `paidPrompt` ARE GONE with the inline date prompt they served (money redesign
+     P3) — see the note where `doAction` used to be. Every Mark paid opens the money form now, and
+     the form has its own busy state, so a second per-row one would have been a spinner nothing
+     could turn off. */
 
   // Money tags (Phase 3): the team + org-shared expense-tag library, which tags each expense
   // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
@@ -787,12 +823,12 @@ function MoneyRecordsPanel({
     setSettling(null);
     setFormSplit(false);
     setFutureDateRefused(false);
-    /* ⚠ THE ROW PROMPT CLEARS WITH EVERYTHING ELSE (/review, 2026-08-16). It was left out when it
-       was added, and this function exists precisely to stop state persisting into the next record:
-       a coach who opened "when was this paid?" on one row, went and added a different cost, then
-       saved, found the confirm box reopened on the first row afterwards — holding a date they had
-       typed before doing something else entirely. */
-    setPaidPrompt(null);
+    /* ⚠ THE RULE THIS FUNCTION IS FOR, restated because its most recent example has just been
+       deleted: state added for one row must clear here, or it persists into the NEXT record. The
+       inline "when was this paid?" prompt was left out when it was added, and a coach who opened it
+       on one row, added a different cost and saved found it reopened on the first row afterwards,
+       holding a date they had typed before doing something else entirely (/review, 2026-08-16).
+       The prompt went with the register (P3); the trap is still here for whatever is added next. */
   }
 
   /** Open the form to ADD, opening on whatever the current sub-tab is about (Q8). */
@@ -907,43 +943,96 @@ function MoneyRecordsPanel({
   }), [budgetLines]);
   const tagById = new Map(expenseTags.map(t => [t.id, t]));
 
+  /** One request per URL per revision, across both money faces — see the provider. */
+  const sharedRead = useSharedMoneyRead();
+
+  /**
+   * ⚠⚠ MONOTONIC REQUEST SEQUENCES — THE LAST RESPONSE TO ARRIVE MUST NOT WIN (/review, 2026-08-17).
+   *
+   * Every write on this screen reloads TWICE: once explicitly, and once more because bumping the
+   * money revision re-fires the load effect. That has always been true here (the pre-P3 code did
+   * `await load(); bumpMoneyRevision();` — same two loads, opposite order), and it was survivable
+   * while a load only refreshed a sub-list. The register made it the WHOLE SCREEN, so the symptom
+   * changed: a coach marking two commitments paid a few seconds apart can have the first write's
+   * slower response land after the second's, and **the payment they just made reverts to Scheduled
+   * in front of them** until something else refreshes it.
+   *
+   * The fix is the one this portal already uses one file over (`MoneyNextThirtyDays`): stamp each
+   * call, and let a response that is no longer the newest drop on the floor. It costs nothing and
+   * it makes "which answer wins" a fact rather than a race.
+   *
+   * ⚠ A ref, not state — bumping a counter must never itself cause a render.
+   */
+  const loadSeq = useRef(0);
+  const scheduleSeq = useRef(0);
+
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
     setLoading(true);
     setError('');
     try {
-      /* ⚠ PAYABLES DOES NOT READ THE ARRIVALS (/simplify, efficiency lens, 2026-08-16). The two
-         tabs are two mounted instances of this component, so every fetch here runs twice for a
-         coach who opens both — and once both are mounted, EVERY save re-runs them all in both,
-         for the rest of the session. Money in has no reader on the Payables face: it renders no
-         arrivals list, no arrivals export, and its form is always a commitment, so the derived-row
-         warning that reads `derivedKeys` cannot fire either. Skipping it there halves the
-         duplication this split actually introduced. The other three are genuinely needed by both. */
-      const [res, catRes, planRes, inRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
-        fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+      /* ⚠⚠ THE THREE SHARED READS GO THROUGH `sharedRead`, WHICH IS THE OTHER HALF OF P1'S
+         `/simplify` FINDING (money plan §10 P1, deferred to here). Transactions and Payables are two
+         mounted instances of this component, so `/expenses`, `/budget-items` and `/budget-plan` ran
+         TWICE for a coach who opened both — and thereafter every save re-ran all six, for the rest
+         of the session. The provider now collapses them to one request per URL per revision, and a
+         bump is what clears it, so the cache can never be staler than the screen already was.
+
+         ⚠ THE OTHER TWO STAY ON A PLAIN FETCH, deliberately. The arrivals and the register are read
+         by the Transactions face ALONE — Payables renders neither, and its form is always a
+         commitment so the derived-row warning cannot fire either — so there is no second caller to
+         share with, and putting them in a shared cache would only make them harder to re-read on
+         their own. The register is also the heaviest read on the screen: it touches every money
+         table the season has. */
+      const [res, catRes, planRes, inRes, bookRes] = await Promise.all([
+        sharedRead(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
+        sharedRead(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
+        sharedRead(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
         face === 'transactions'
           ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in`)
           : null,
+        face === 'transactions'
+          ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/register`)
+          : null,
       ]);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      const data = await res.json();
+      /* ⚠ EVERY BODY IS READ BEFORE ANYTHING IS WRITTEN, so the staleness check below has exactly
+         one place to sit. Reading a body is another await, and a guard with awaits after it guards
+         only the statements it happens to precede. */
+      const inData = inRes?.ok ? await inRes.json() : null;
+      const bookData = bookRes ? await bookRes.json().catch(() => ({})) : null;
+
+      /* ⚠⚠ FROM HERE DOWN IS THE WRITING, AND ONLY THE NEWEST LOAD MAY DO IT. A slower earlier
+         response landing last is how a payment a coach just made reverts to Scheduled in front of
+         them. Bailing here also skips the `finally`'s spinner reset — correct, because the newer
+         load owns the spinner now. */
+      if (seq !== loadSeq.current) return;
+
+      if (!res.ok) throw new Error((res.data.error as string) ?? 'Failed to load');
+      const data = res.data as {
+        expenses?: RepTeamExpense[]; expenseTags?: RepTeamTag[];
+        tagsByExpenseId?: Record<string, string[]>;
+      };
       setExpenses(data.expenses ?? []);
       setExpenseTags(data.expenseTags ?? []);
       setTagsByExpenseId(data.tagsByExpenseId ?? {});
       /* Best-effort, like the taxonomy beside it: a money-in read that fails must not blank the
          expenses list a coach came here for. The tab shows its own empty state instead. */
-      if (inRes?.ok) {
-        const inData = await inRes.json();
+      if (inData) {
         setMoneyIn(inData.moneyIn ?? []);
         setDerivedKeys(new Set<string>(inData.derivedKeys ?? []));
       }
+      /* ⚠ NOT BEST-EFFORT. The other reads here decorate a list; this one IS the list. A silent
+         failure would render an empty book on a team with a season of money in it — the worst
+         possible answer on a screen a coach opens to reconcile their books. */
+      if (bookRes) {
+        if (!bookRes.ok) throw new Error(bookData?.error ?? 'Failed to load the register');
+        setBook(bookData);
+      }
       if (catRes.ok) {
-        const catData = await catRes.json();
-        setCategories(catData.categories ?? []);
+        setCategories((catRes.data.categories as BudgetCategoryWithItems[]) ?? []);
       }
       if (planRes.ok) {
-        const planData = await planRes.json();
+        const planData = planRes.data;
         const plan = planData.plan as RepBudgetPlan | undefined;
         /* ⚠ BOTH DIRECTIONS NOW (mig 243). This used to drop money-in lines, which was correct
            while they carried no category or item; they carry both from this release, and an income
@@ -964,8 +1053,8 @@ function MoneyRecordsPanel({
     }
     // `face` decides whether the arrivals fetch runs at all, so it belongs here — a panel is one
     // face for its whole life, so this never actually re-fires; leaving it out would just be a lie
-    // to the next reader (and to the linter).
-  }, [orgSlug, teamId, face]);
+    // to the next reader (and to the linter). `sharedRead` is stable from the provider.
+  }, [orgSlug, teamId, face, sharedRead]);
 
   // Re-read (never remount) when the hub's Import menu commits payables while this panel is
   // mounted but off-screen — an in-progress expense form on another tab must survive it.
@@ -983,6 +1072,7 @@ function MoneyRecordsPanel({
    */
   const bumpMoneyRevision = useBumpMoneyRevision();
   useEffect(() => { load(); }, [load, moneyRevision]);
+
 
   // The roster behind "Paid by" — fetched the first time the Add Expense form opens, not on
   // every mount (the same lazy rule this panel already applies to the schedule tab, and the
@@ -1009,12 +1099,16 @@ function MoneyRecordsPanel({
   // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
   // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
   const loadSchedule = useCallback(async () => {
+    // Its own sequence, for the reason spelled out over `loadSeq` — this list is reloaded twice per
+    // write as well, and it is the one screen whose entire job is to be current.
+    const seq = ++scheduleSeq.current;
     setScheduleLoading(true);
     setScheduleError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables?days=0&includePaid=1`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (seq !== scheduleSeq.current) return;
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       const lanes = (data.lanes ?? []) as Array<{ id: string; items: Omit<ScheduleRow, 'source'>[] }>;
       const rows: ScheduleRow[] = [
         ...(lanes.find(l => l.id === 'team_payables')?.items ?? []).map(i => ({ ...i, source: 'team' as const })),
@@ -1024,7 +1118,7 @@ function MoneyRecordsPanel({
     } catch (e: any) {
       setScheduleError(e.message ?? 'Failed to load the payment schedule.');
     } finally {
-      setScheduleLoading(false);
+      if (seq === scheduleSeq.current) setScheduleLoading(false);
     }
   }, [orgSlug, teamId]);
 
@@ -1035,6 +1129,82 @@ function MoneyRecordsPanel({
      refreshed; this table did not, until the coach happened to switch sub-views and back. Silent
      stale money on the screen whose entire job is to be current. */
   useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule, moneyRevision]);
+
+  /**
+   * WHAT EVERY WRITE ON THIS SCREEN DOES AFTERWARDS. One function, three callers.
+   *
+   * ⚠⚠ THE ORDER IS THE WHOLE REASON IT EXISTS (money redesign P3). The three shared reads are
+   * cached per revision now, so a `load()` run BEFORE the invalidation replays the answers the save
+   * has just made wrong — the screen settles back to exactly what it looked like before the coach
+   * pressed Save. The bump clears the cache, so it has to come first.
+   *
+   * ⚠ AND IT IS A WRAPPER RATHER THAN A COMMENT AT EACH CALL SITE, because this file has already
+   * learned that lesson once: `goToTab` above says in as many words that the point of failure is
+   * "the call site added next." Three copies of a warning is not a guard — the fourth write path
+   * would simply not read them.
+   */
+  const refreshAfterWrite = useCallback(async () => {
+    bumpMoneyRevision();
+    await load();
+    // The schedule is its own fetch and only the tab showing it needs to pay for the re-read.
+    if (tab === 'schedule') await loadSchedule();
+  }, [bumpMoneyRevision, load, loadSchedule, tab]);
+
+  /**
+   * THE BOOK, AS THE FILTER STRIP IS SHOWING IT — derived once per change of its actual inputs.
+   *
+   * ⚠ MEMOISED BECAUSE THE MONEY FORM LIVES IN THIS COMPONENT. The modal is an overlay: the register
+   * beneath it is not unmounted, so every keystroke in a description or an amount re-renders the
+   * whole panel. Unmemoised, that re-filtered and re-sorted the entire season's book — five sources
+   * merged into one unpaginated table — on every character typed into a form that has nothing to do
+   * with it. The old screen paid less for this because each of its two lists was half the size.
+   *
+   * ⚠ THE FILTER PREDICATE LIVES INSIDE, not beside. Hoisting it out would make it a new function
+   * identity on every render and silently defeat the memo it is an input to.
+   */
+  const {
+    showBalance, bookSettled, bookScheduled, bookEmpty, registerItemNames,
+  } = useMemo(() => {
+    /* ⚠⚠ WHEN A FILTER HIDES ROWS, THE BALANCE COLUMN HIDES WITH IT (plan §4.3). A running balance
+       over a subset is a number that looks like cash and isn't — a coach reading "Expenses only"
+       would see a column of figures descending from zero and have every reason to read it as the
+       team's position. The column is REMOVED rather than blanked, so there is no empty space
+       inviting the question. `balanceIsMeaningful` is the one rule, shared with the export. */
+    const balanceShown = balanceIsMeaningful(registerFilter, registerItemId, filterTagId);
+    const matches = (r: RegisterBookRow) => {
+      if (!matchesFilter(r, registerFilter)) return false;
+      if (registerItemId && r.itemName !== registerItemId) return false;
+      /* Money tags live on expenses, so a tag filter narrows the book to the rows that can carry one
+         — every other row simply has no such label, which is a match of zero, not a match of all. */
+      if (filterTagId) {
+        if (r.open?.kind !== 'expense') return false;
+        if (!(tagsByExpenseId[r.open.id] ?? []).includes(filterTagId)) return false;
+      }
+      return true;
+    };
+    const settled = (book?.settled ?? []).filter(matches);
+    /* The overlay is a coach's switch, so an OFF strip drops the whole block rather than dimming it —
+       "include what's scheduled" has to mean the book is only what happened. */
+    const scheduled = showScheduled ? (book?.scheduled ?? []).filter(matches) : [];
+    return {
+      showBalance: balanceShown,
+      bookSettled: settled,
+      bookScheduled: scheduled,
+      bookEmpty: settled.length === 0 && scheduled.length === 0,
+      /* The words actually ON the book, not the whole library: a filter offering a category the
+         season never spent against is a control that can only ever empty the screen. */
+      registerItemNames: [...new Set(
+        [...(book?.settled ?? []), ...(book?.scheduled ?? [])]
+          .map(r => r.itemName).filter((n): n is string => !!n),
+      )].sort((a, b) => a.localeCompare(b)),
+    };
+  }, [book, registerFilter, registerItemId, filterTagId, showScheduled, tagsByExpenseId]);
+
+  /** The two id lookups a register row needs to find its record. Same reasoning as the memo above:
+   *  rebuilding two Maps over every expense and arrival on each keystroke is work the form's text
+   *  inputs were making this screen do for nothing. */
+  const expenseById = useMemo(() => new Map(expenses.map(e => [e.id, e])), [expenses]);
+  const moneyInById = useMemo(() => new Map(moneyIn.map(m => [m.id, m])), [moneyIn]);
 
   // ?tab=schedule — where a Scheduled cell in the month grid (or the Money hub's
   // "See full schedule" link) lands. Reactive on the search param, not mount-only: under
@@ -1050,6 +1220,21 @@ function MoneyRecordsPanel({
   useEffect(() => {
     if (wantedTab && (FACE_TABS[face] as string[]).includes(wantedTab)) goToTab(wantedTab as ExpenseTab);
   }, [wantedTab, face]);
+
+  /* ?filter= and ?scheduled= — where the Overview's next-30-days window lands (plan §4.5).
+     ⚠ SAME REACTIVITY RULE AS `?tab=` ABOVE, for the same reason: this panel stays mounted across
+     visits under the hub, so clicking a second window row must re-narrow the book rather than
+     silently do nothing because the effect already fired once.
+     ⚠ The face gate matters here too — Payables reads the same query keys and has no register. */
+  const wantedFilter = seasonSearchParams.get('filter');
+  const wantedScheduled = seasonSearchParams.get('scheduled');
+  useEffect(() => {
+    if (face !== 'transactions') return;
+    if (wantedFilter && REGISTER_FILTERS.some(f => f.id === wantedFilter)) {
+      setRegisterFilter(wantedFilter as RegisterFilter);
+    }
+    if (wantedScheduled === '1') setShowScheduled(true);
+  }, [wantedFilter, wantedScheduled, face]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
   // select it immediately. Adds it to the loaded library so it shows up without a full reload.
@@ -1134,8 +1319,7 @@ function MoneyRecordsPanel({
         await saveMoneyIn();
         setFormOpen(false);
         resetForm();
-        await load();
-        bumpMoneyRevision();
+        await refreshAfterWrite();
         return;
       }
       /* ⚠ `isPayableForm`, NEVER `formKind`, AND THE DISTINCTION IS NOT COSMETIC. `formKind` is only
@@ -1325,9 +1509,7 @@ function MoneyRecordsPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
       setFormOpen(false);
       resetForm();
-      await load();
-      if (tab === 'schedule') await loadSchedule();
-      bumpMoneyRevision();
+      await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
     } finally {
@@ -1357,9 +1539,7 @@ function MoneyRecordsPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete');
       setFormOpen(false);
       resetForm();
-      await load();
-      if (tab === 'schedule') await loadSchedule();
-      bumpMoneyRevision();
+      await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
       setConfirmDelete(false);
@@ -1368,121 +1548,19 @@ function MoneyRecordsPanel({
     }
   }
 
-  /**
-   * Mark a half — or a whole cost — paid, ON A DATE THE COACH CHOOSES (2026-08-16).
-   *
-   * ⚠ IT USED TO STAMP `now()` SILENTLY, both on the row and on the ledger entry it posts. A bill
-   * settled three weeks ago therefore landed in this month's column of the month grid, and nothing
-   * could move it: the amount locks the moment it posts, and the stated remedy — delete and enter
-   * it again — reverses real money to correct a date. Asking is the fix; `paidPrompt` holds the
-   * row being asked about, so the question is one tap and the answer defaults to today.
-   */
-  async function doAction(expenseId: string, action: string, paidDate?: string) {
-    setMarking(prev => ({ ...prev, [expenseId + action]: true }));
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expenseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ...(paidDate ? { paidDate } : {}) }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed');
-      setPaidPrompt(null);
-      await load();
-      // Marking a payable paid changes the schedule too — refresh it so the row doesn't sit
-      // there still reading "unpaid" until the coach navigates away and back.
-      if (tab === 'schedule') await loadSchedule();
-      // ...and it changes the report, which is a different tab of the same mounted hub.
-      bumpMoneyRevision();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setMarking(prev => ({ ...prev, [expenseId + action]: false }));
-    }
-  }
+  /* ⚠ THE INLINE "WHEN WAS THIS PAID?" PROMPT IS GONE, AND SO IS `doAction` (money redesign P3).
+     They served ONE caller: the plain unpaid expense on the old Transactions list, which P1 kept
+     deliberately — it was not a commitment, only its date was missing, and a modal for one field
+     would have been more ceremony than the decision deserved. P1 said in as many words that "the
+     register absorbs this row in P3, and this control goes with it." It has. Every Mark paid on
+     the register — a commitment half or a plain cost — now opens the money form pre-filled and
+     asks when, which is the one door a transaction is ever born through (plan §3).
 
-  /**
-   * "When was this paid?" — the inline date prompt, now used by ONE caller: the plain unpaid
-   * expense on the Transactions list.
-   *
-   * ⚠ IT KEPT THAT ONE DELIBERATELY (Money split P1, 2026-08-16). The plan routes Mark paid on a
-   * COMMITMENT (and on a schedule half) through the *Add money* form, so a transaction is only
-   * ever born in one place — see `openSettle`. An unpaid lump expense is not a commitment: it is a
-   * happened-list row that already carries its own item, amount and description, so the only thing
-   * missing is the date, and a modal to collect one field would be more ceremony than the decision
-   * deserves. It is also the walk §38 was QA'd on two days ago, and there was no ruling to change
-   * it. The register absorbs this row in P3, and this control goes with it.
-   *
-   * ⚠⚠ WHY IT WAS EXTRACTED, kept because the lesson outlives the callers (/review, 2026-08-16):
-   * the server took a chosen date on all three actions from the start, but the date picker was
-   * built inline on the lump-sum button only — so the two halves still stamped today, on the
-   * records where back-dating matters MOST. A shared control is what made "all three" checkable
-   * instead of remembered.
-   *
-   * Resting state is the caller's own button; armed, it becomes the date + confirm + cancel.
-   */
-  function markPaidControl(opts: {
-    id: string;
-    action: MarkPaidAction;
-    label: string;
-    /** Names the record in the date field's accessible label — a row can offer two of these. */
-    describes: string;
-    className: string;
-    style?: React.CSSProperties;
-  }) {
-    const busy = !!marking[opts.id + opts.action];
-    const armed = paidPrompt?.id === opts.id && paidPrompt.action === opts.action;
-    if (!armed) {
-      return (
-        <button
-          className={opts.className}
-          style={opts.style}
-          disabled={busy}
-          onClick={ev => {
-            ev.stopPropagation();
-            setPaidPrompt({ id: opts.id, action: opts.action, date: tournamentToday() });
-          }}
-        >
-          {opts.label}
-        </button>
-      );
-    }
-    return (
-      /* ⚠ THE QUESTION REPLACES THE BUTTON rather than opening a dialog: the answer is one field,
-         it is nearly always today, and a modal over a table for a single date is more ceremony than
-         the decision deserves. `max` is the org's today — the server refuses a future date anyway,
-         but the picker should not offer one. */
-      <span className={styles.inlinePrompt} onClick={ev => ev.stopPropagation()}>
-        {/* ⚠ NO autoFocus. At ≤640 this goes full width and wraps to two lines with 44px targets,
-            so the row grows the instant it opens; focusing the field then scrolls it under the
-            thumb that just tapped, right before the next tap lands. */}
-        <input
-          className={styles.input}
-          type="date"
-          aria-label={`Date ${opts.describes} was paid`}
-          max={tournamentToday()}
-          value={paidPrompt!.date}
-          onChange={ev => setPaidPrompt(p => (p ? { ...p, date: ev.target.value } : p))}
-        />
-        <button
-          className={`${styles.btnPrimary} ${styles.compactAction}`}
-          disabled={!paidPrompt!.date || busy}
-          onClick={() => doAction(opts.id, opts.action, paidPrompt!.date)}
-        >
-          {busy ? '…' : 'Paid'}
-        </button>
-        {/* ⚠ DISABLED ONCE THE REQUEST IS AWAY. Cancel cannot recall a PATCH that has already left,
-            so offering it mid-flight told the coach the payment was called off while it went
-            through underneath them. */}
-        <button
-          className={`${styles.btnGhost} ${styles.compactAction}`}
-          disabled={busy}
-          onClick={() => setPaidPrompt(null)}
-        >
-          Cancel
-        </button>
-      </span>
-    );
-  }
+     ⚠ The lesson that outlived the control, kept because it will apply again: the server took a
+     chosen date on all three actions from the start, but the picker was built inline on the
+     lump-sum button alone — so the two halves silently stamped today, on the records where
+     back-dating matters MOST. Sharing the control is what made "all three" checkable rather than
+     remembered. */
 
   /* The per-row tag editor that used to live here is gone (owner review 2026-08-15). Tags are a
      field on the record's own form now, so a row offers ONE door to a record rather than a general
@@ -1801,7 +1879,7 @@ function MoneyRecordsPanel({
           createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
           createItemMode="coach"
           allowCreateCategory
-          manageHint="You can rename it or move it across from Budget Plan → Manage our items."
+          manageHint="Rename or remove it later from Budget Plan → Manage our items — but it stays on this side."
           /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a description that
              is empty, or one still holding the name of the item being switched AWAY from — text this
              control put there and nobody has touched. That test is `isItemLabel`, shared with the
@@ -1848,15 +1926,20 @@ function MoneyRecordsPanel({
     );
   }
 
-  const allIndependent = expenses.filter(e => e.expenseType === 'expense');
+  /* ⚠ ONLY THE COMMITMENTS ARE SPLIT OUT NOW. The plain-expense list was the other half of this
+     pair and the register replaced it — the book does not group by expense TYPE, because a coach
+     reading their books in date order does not care which of the two shapes a cost was recorded
+     as; they care what left the account and when. */
   const allPayables = expenses.filter(e => e.expenseType === 'tournament_payable');
   const tagMatch = (e: RepTeamExpense) => !filterTagId || (tagsByExpenseId[e.id] ?? []).includes(filterTagId);
-  const independentExpenses = allIndependent.filter(tagMatch);
   const tournamentPayables = allPayables.filter(tagMatch);
 
   // Filter chip row: tags actually used by the current tab's expenses, with counts (mirrors the
   // game "vs tag" report). Selecting one narrows the list + shows a tag total.
-  const activeAll = tab === 'expenses' ? allIndependent : allPayables;
+  /* Which records the tag chips are counted over. On the register that is EVERY expense, both
+     kinds: the book carries a commitment's settled halves beside an ordinary cost, so counting only
+     one type would offer a chip whose number disagreed with the rows it then produced. */
+  const activeAll = tab === 'commitments' ? allPayables : expenses;
   /** Which face is this, said once — every branch below reads these rather than re-testing. */
   const onPayables = face === 'payables';
   const tagCounts = new Map<string, number>();
@@ -1865,7 +1948,7 @@ function MoneyRecordsPanel({
     .map(id => tagById.get(id))
     .filter((t): t is RepTeamTag => !!t)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const filteredActive = tab === 'expenses' ? independentExpenses : tournamentPayables;
+  const filteredActive = tournamentPayables;
   /* ⚠ THE COMMITMENT LIST EXCLUDES NOTHING — a settled commitment stays on Payables, because
      "what did we owe this season, and did we pay it?" is a question the tab has to answer after
      the fact as well as before it. The Schedule view's own Unpaid/Paid/All filter is where that
@@ -1874,15 +1957,20 @@ function MoneyRecordsPanel({
   const scheduleRows = (schedule ?? []).filter(r =>
     scheduleFilter === 'all' ? true : scheduleFilter === 'paid' ? !!r.paid : !r.paid);
 
-  /* An arrival stores ids, and its names travel WITH it — one join in the reader, so this list,
-     the export and Budget vs. Actual cannot answer "what is this called" three different ways. A
-     row whose item was later deleted keeps its money and reads as the honest gap it now is. */
-  function nameForMoneyIn(m: RepTeamMoneyIn): { category: string; item: string } {
-    return {
-      category: m.budgetCategoryName ?? 'No category',
-      item: m.budgetItemName ?? 'Not itemized',
-    };
-  }
+  /* ⚠ "from Club" COMES OUT ON A STANDALONE TEAM. A filter that can never match anything is a dead
+     control, and on a team with no club it would also imply a relationship the team does not have. */
+  const registerFilters = REGISTER_FILTERS.filter(f => f.id !== 'club' || book?.orgLinked !== false);
+  /* What the downloaded file is called, and its filename segment.
+     ⚠ `expenses` AND `money-in` STAY AS SEGMENTS where the filter reproduces the retired dataset —
+     a coach's downloads folder already holds a season of files under those words, and the export
+     catalog lists them. The register's own file is `register`. */
+  const registerExportLabel = registerFilter === 'all'
+    ? 'Register'
+    : REGISTER_FILTERS.find(f => f.id === registerFilter)!.label;
+  const registerExportDataset = registerFilter === 'expense' ? 'expenses'
+    : registerFilter === 'all' ? 'register'
+    : registerFilter;
+
   /**
    * A schedule row's Mark paid — a named helper, not an inline block in the JSX (/simplify).
    *
@@ -1905,6 +1993,117 @@ function MoneyRecordsPanel({
       >
         Mark paid
       </button>
+    );
+  }
+
+  /**
+   * ONE ROW OF THE REGISTER.
+   *
+   * ⚠ THE ROW DECIDES ITS OWN DOOR, and there are three. A RECORDED row (a cost, a commitment
+   * half, income, money back) opens the money form and is fully editable. A DERIVED row — dues,
+   * fundraising, the club — is edited where it was MADE, so it navigates to that workspace instead:
+   * the register is a view, and "one row, one source" holds precisely because it cannot write. A
+   * SCHEDULED money-out row additionally offers Mark paid, which opens the money form pre-filled
+   * and asks when — the same single door P1 built.
+   *
+   * ⚠ `movesCash` IS NOT COSMETIC. On an out-of-pocket cost the balance stands still, and the row
+   * has to say so in words rather than leaving a coach to notice a column that did not add up.
+   */
+  function registerRow(r: RegisterBookRow) {
+    const record = r.open?.kind === 'expense' ? expenseById.get(r.open.id) : undefined;
+    const arrival = r.open?.kind === 'money-in' ? moneyInById.get(r.open.id) : undefined;
+    const openRecord = record ? () => openEdit(record) : arrival ? () => openEditMoneyIn(arrival) : null;
+    const tappable = canWriteMoney && !!openRecord;
+    const workspaceHref = r.open?.kind === 'workspace'
+      ? moneySectionHref(base, r.open.section, undefined)
+      : null;
+    /* A settle needs the RECORD, for its item and its half's own amount. A row whose commitment is
+       not in this panel's list shows no button rather than opening a form with blanks in it. */
+    const settle = r.markPaid && record && canWriteMoney ? r.markPaid : null;
+    return (
+      <tr
+        key={r.id}
+        className={`${styles.tr} ${tappable ? styles.rowTappable : ''} ${r.scheduled ? styles.registerRowScheduled : ''}`}
+        onClick={tappable ? () => { if (window.getSelection()?.toString()) return; openRecord!(); } : undefined}
+      >
+        <td className={styles.td} data-label="Date">
+          {/* ⚠ formatStoredDate, never a hand-roll — this column mixes bare dates with paid stamps
+              held at org noon, and both hand-rolls have printed the wrong day already. */}
+          {r.date ? fmtDate(r.date) : <span className={styles.mutedInline}>No date</span>}
+        </td>
+        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+          {r.description}
+          {r.scheduled && <> <span className={styles.registerChip}>Scheduled</span></>}
+          {/* ⚠⚠ INCOME AND A REFUND SHARE THE MONEY-IN COLUMN AND ARE OPPOSITES, so the two of them
+              — and only the two of them — carry their kind on the row. A $325 grant and a $325
+              vendor credit are otherwise identical here, and telling them apart is the one thing
+              only the coach can do. Every other kind is already named: an expense by the column it
+              sits in, a derived row by the workspace chip beside it.
+              ⚠ This is a LIST labelling its rows, which the report still may not do — a refund nets
+              into the row it repaid there, leaving nothing to tag (owner ruling 2026-08-15). */}
+          {(r.kind === 'income' || r.kind === 'refund') && (
+            <> <span className={styles.registerChip}>{REGISTER_KIND_LABEL[r.kind]}</span></>
+          )}
+          {r.sourceLabel && <> <span className={styles.registerChip}>{r.sourceLabel}</span></>}
+          {!r.movesCash && <> <span className={styles.registerChip}>No team cash</span></>}
+          {r.detail && (
+            <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem', fontStyle: 'normal' }}>
+              {r.detail}
+            </span>
+          )}
+          {record && tagChips(record.id)}
+        </td>
+        <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+          {r.categoryName ?? '—'}
+        </td>
+        <td className={styles.td} data-label="Item" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+          {r.itemName ?? '—'}
+        </td>
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`} data-label="Money out">
+          {r.moneyOut ? fmt(r.moneyOut) : ''}
+        </td>
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.moneyIn ? styles.registerAmtIn : ''}`} data-label="Money in">
+          {r.moneyIn ? fmt(r.moneyIn) : ''}
+        </td>
+        {showBalance && (
+          <td
+            className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.movesCash ? '' : styles.registerBalanceUnmoved}`}
+            data-label="Balance"
+            /* The chip in the What column says it in words; this says it to a screen reader
+               standing on the figure itself, which is where the question actually occurs. */
+            title={r.movesCash ? undefined : 'A family paid this directly — the team’s cash did not move'}
+          >
+            {fmt(r.balance)}
+          </td>
+        )}
+        <td className={`${styles.td} ${styles.cardActionCell}`}>
+          {settle && (
+            <button
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              onClick={ev => { ev.stopPropagation(); openSettle(record!, settle.half === 'expense' ? null : settle.half); }}
+            >
+              Mark paid
+            </button>
+          )}
+          {canWriteMoney && openRecord && !settle && (
+            <RowEditButton label={`Edit ${r.description}`} onClick={openRecord} />
+          )}
+          {workspaceHref && (
+            /* ⚠ A DERIVED ROW NAVIGATES, IT DOES NOT EDIT. The chip beside the description names the
+               workspace; this is the way there. */
+            /* A real control, not a bare inline link: it sits in the same action cell as Mark paid
+               and the row pencil, and a 15px hit target beside two buttons is the row's one
+               affordance a finger cannot find. */
+            <Link
+              href={workspaceHref}
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              onClick={ev => ev.stopPropagation()}
+            >
+              Open
+            </Link>
+          )}
+        </td>
+      </tr>
     );
   }
 
@@ -1946,9 +2145,12 @@ function MoneyRecordsPanel({
   // would be the same door twice, one line apart. On the standalone route there is no such menu,
   // so the button stays (rule 8: single-dataset screens keep plain buttons).
   /** Is there a tag filter to draw on the left of the toolbar? */
-  /* Money tags live on expenses, so neither the schedule (two sources, by due date) nor Money in
-     has anything for the filter to narrow. */
-  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule' && tab !== 'money-in';
+  /* Money tags live on expenses, so the schedule (two sources, by due date) has nothing for the
+     filter to narrow. On the register the chips move DOWN into the book's own control row — the
+     toolbar's left-hand slot is the type strip now, and two filter bars sharing one line is the
+     three-bands-of-chrome problem the toolbar merge removed. */
+  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule';
+  const tagFilterInToolbar = showTagFilter && tab === 'commitments';
 
   const expenseHeaderActions = !embedded && canWriteMoney ? (
     <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
@@ -2002,42 +2204,45 @@ function MoneyRecordsPanel({
       <div className={styles.panelToolbar}>
         {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
             content — see the note on that class. */}
-        {/* ⚠ FOUR SUB-TABS BECAME TWO AND TWO (Money split P1, 2026-08-16). The old strip mixed
-            happened-lists and owed-lists in one row, which is exactly the confusion the tab split
-            resolves — so each face carries only its own pair.
+        {/* ⚠ FOUR SUB-TABS BECAME TWO AND ONE (Money split P1 then P3). P1 divided the old strip's
+            happened-lists from its owed-lists along the tab boundary; P3 collapsed the happened side
+            into a single book, so Payables keeps a pair and Transactions has none.
 
-            ⚠ "MONEY IN" KEEPS ITS NAME FOR NOW (owner call, 2026-08-16), against the plan's §6,
-            which retires it. That name dies properly in P3, where the register's separate INCOME
-            and REFUNDS filters make "Income" true of the rows under it. Here the list still holds
-            both kinds — a refund is not income, which this very screen's empty state teaches in
-            bold — so renaming it one phase early would have put two of every four rows under a
-            heading the product itself contradicts. */}
-        <div className={`${styles.viewToggle} ${styles.panelToolbarTabs}`}>
-          {onPayables ? (
-            <>
-              <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('schedule')}>
-                Schedule
+            ⚖ AND THE NAME "MONEY IN" IS RETIRED HERE, which is the rename P1 deliberately deferred
+            (owner call, 2026-08-16, against the plan's own §6). That list held income AND money
+            back, and this screen's own empty state teaches in bold that a refund is not income — so
+            calling it "Income" one phase early would have put two of every four rows under a heading
+            the product contradicts. The register's separate **Income** and **Refunds** filters make
+            the word true of the rows beneath it, so the compromise has nothing left to protect. */}
+        {onPayables ? (
+          <div className={`${styles.viewToggle} ${styles.panelToolbarTabs}`}>
+            <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('schedule')}>
+              Schedule
+            </button>
+            <button className={`${styles.viewToggleBtn} ${tab === 'commitments' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('commitments')}>
+              Commitments ({allPayables.length})
+            </button>
+          </div>
+        ) : (
+          /* ⚠⚠ FILTERS, NOT SUB-TABS (plan §4.3, ruled 2026-08-16). Transactions carried Expenses
+             and Money in as a second tab row; the register is ONE book, so the strip narrows what
+             is on it instead of choosing between two lists. That is what lets a running balance
+             exist at all — neither of the old lists could carry one, because half the money was
+             always on the other. */
+          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }} role="group" aria-label="Show">
+            {registerFilters.map(f => (
+              <button
+                key={f.id}
+                className={`${styles.moneyFilterChip} ${registerFilter === f.id ? styles.moneyFilterChipActive : ''}`}
+                aria-pressed={registerFilter === f.id}
+                onClick={() => setRegisterFilter(f.id)}
+              >
+                {f.label}
               </button>
-              <button className={`${styles.viewToggleBtn} ${tab === 'commitments' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('commitments')}>
-                Commitments ({allPayables.length})
-              </button>
-            </>
-          ) : (
-            <>
-              <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('expenses')}>
-                Expenses ({allIndependent.length})
-              </button>
-              {/* ⚠ MONEY IN LIVES BESIDE MONEY OUT, on the screen that owns the one form they share
-                  (mig 243). A refund had to land here — it must work for a standalone team with no
-                  club anywhere near it, which is why it is not on any org-money screen — and income
-                  followed it, because the two are answers to the same question on the same form. */}
-              <button className={`${styles.viewToggleBtn} ${tab === 'money-in' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('money-in')}>
-                Money in ({moneyIn.length})
-              </button>
-            </>
-          )}
-        </div>
-        {showTagFilter && (
+            ))}
+          </div>
+        )}
+        {tagFilterInToolbar && (
           <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
             <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
             {usedTagIds.map(t => {
@@ -2058,18 +2263,26 @@ function MoneyRecordsPanel({
               have offered "expenses and payables" as one undifferentiated lump. */}
           <MoneyExportButton
             label={tab === 'schedule' ? 'Payment schedule'
-              : tab === 'money-in' ? 'Money in'
-              : tab === 'commitments' ? 'Commitments' : 'Expenses'}
+              : tab === 'register' ? registerExportLabel
+              : 'Commitments'}
             formats={['xlsx', 'csv']}
-            build={() => (tab === 'money-in'
+            build={() => (tab === 'register'
               ? {
-                  dataset: 'money-in',
-                  title: 'Money in',
-                  columns: MONEY_IN_COLUMNS,
-                  rows: moneyInRows(moneyIn, nameForMoneyIn),
+                  /* ⚠ THE FILE IS WHATEVER THE STRIP IS SHOWING, and that is how the two retired
+                     datasets survive: `Expenses` is the register on its Expenses filter, and the old
+                     `Money in` file becomes Income and Refunds separately — two files that finally
+                     mean what their headings say. The filename segment follows the filter, so a
+                     coach's downloads folder keeps `…-expenses-…` where it always had one. */
+                  dataset: registerExportDataset,
+                  title: registerExportLabel,
+                  columns: REGISTER_COLUMNS,
+                  /* Scheduled first, then settled — the order on screen. A file that re-sorted the
+                     rows would put a projection in the middle of the settled book with a balance
+                     that belongs to neither. */
+                  rows: registerExportRows([...bookScheduled, ...bookSettled], showBalance),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
-                  emptyMessage: 'No income or money back has been recorded yet.',
+                  emptyMessage: 'Nothing has been recorded on this book yet.',
                 }
               : tab === 'schedule'
               ? {
@@ -2101,13 +2314,13 @@ function MoneyRecordsPanel({
             // available right up until you press it — the dialog would still explain itself,
             // but the button should not have invited the click.
             disabled={tab === 'schedule' ? scheduleRows.length === 0
-              : tab === 'money-in' ? moneyIn.length === 0
+              : tab === 'register' ? bookEmpty
               : filteredActive.length === 0}
           />
           {expenseToolbarActions}
         </div>
       </div>
-      {showTagFilter && (
+      {tagFilterInToolbar && (
         <div className={styles.tagComboLegend} style={{ margin: '-0.5rem 0 0.7rem' }}>
           <span className={styles.tagComboLegendItem}>
             <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
@@ -2122,9 +2335,9 @@ function MoneyRecordsPanel({
           clears that choice on a tab change. Filter the Payables list, switch to Money in, and the
           payables count and total sat there captioning a list they had nothing to do with
           (/review, regression lens). */}
-      {filterTag && showTagFilter && (
+      {filterTag && tagFilterInToolbar && (
         <div className={styles.moneyTagSummary}>
-          vs <strong>{filterTag.name}</strong>: {filteredActive.length} {tab === 'expenses' ? 'expense' : 'commitment'}{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
+          vs <strong>{filterTag.name}</strong>: {filteredActive.length} commitment{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
         </div>
       )}
 
@@ -2132,88 +2345,143 @@ function MoneyRecordsPanel({
         <p className={styles.muted}>Loading…</p>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
-      ) : tab === 'expenses' ? (
-        independentExpenses.length === 0 ? (
-          <>
-            <CoachEmptyState
-              icon={<Receipt size={22} aria-hidden />}
-              headline="No expenses yet"
-              description="Log what the team has actually spent, one at a time."
-              primaryAction={canWriteMoney ? {
-                label: 'Add Expense',
-                icon: <Plus size={15} aria-hidden />,
-                // Names the outcome even though the toolbar button doesn't: an empty state is
-                // teaching, and "Add" alone would answer none of the question it just posed.
-                onClick: () => openAdd({ kind: 'expense', timing: 'paid' }),
-              } : undefined}
-            />
-            <KindCompare
-              otherHref={moneySectionHref(base, onPayables ? 'transactions' : 'payables', undefined)}
-              onPayables={onPayables}
-            />
-          </>
-        ) : (
-          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Description</th>
-                  <th className={styles.th}>Category</th>
-                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                  <th className={styles.th}>Status</th>
-                  <th className={styles.th}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {independentExpenses.map(e => (
-                  /* The whole row opens the editor for a write coach — the portal's row-edit
-                     convention (owner ruling 2026-08-15): the pencil is the SEMANTIC control, the
-                     row is the pointer/touch shortcut, and once this stacks into cards the row is
-                     the only visible door. A click that ends a text selection is someone copying
-                     an amount, not tapping a row, so it is ignored. */
-                  <tr
-                    key={e.id}
-                    className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
-                    onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEdit(e); } : undefined}
-                  >
-                    <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">
-                      {e.description}
-                      {/* ⚠ THE PER-ROW TAG EDITOR IS GONE (owner review 2026-08-15). Tags are edited
-                          in the record's own form now, so a row no longer offers a second, narrower
-                          door to the same record. The chips stay, read-only — they cost nothing on
-                          rows without them, which is also why Tags never became a column. */}
-                      {tagChips(e.id)}
-                    </td>
-                    <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
-                    <td className={styles.td} data-label="Status">
-                      {e.expensePaidAt ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
-                          <CheckCircle2 size={12} /> Paid {fmtDate(e.expensePaidAt)}
-                        </span>
-                      ) : (
-                        <span className={`${styles.badge} ${styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>Unpaid</span>
-                      )}
-                    </td>
-                    {/* Trailing action cell. Left unlabelled and always present so the table
-                        keeps square rows; card mode drops it when it renders nothing (a
-                        read-only money coach) rather than drawing a blank line. */}
-                    <td className={`${styles.td} ${styles.cardActionCell}`}>
-                      {!e.expensePaidAt && canWriteMoney && markPaidControl({
-                        id: e.id,
-                        action: 'markExpensePaid',
-                        label: 'Mark Paid',
-                        describes: e.description,
-                        className: `${styles.btnSecondary} ${styles.compactAction}`,
-                      })}
-                      {canWriteMoney && <RowEditButton label={`Edit ${e.description}`} onClick={() => openEdit(e)} />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      ) : tab === 'register' ? (
+        /* ── THE REGISTER (money redesign P3, plan §4) ──────────────────────────────────────
+           One dated book of every dollar the season moved, with the balance beside it. The two
+           lists this replaces — Expenses and Money in — could never carry a running balance
+           between them, because each held half the money.
+
+           ⚠⚠ THE CLOSING BALANCE IS CASH ON HAND. Not "about the same as"; the same number, from
+           the same records, and the reason this screen reaches past what the coach typed here into
+           dues, fundraising and the club. If the two ever disagree, the register is wrong by
+           construction — see the header on /api/coaches/.../register. */
+        <>
+          <div className={styles.registerControls}>
+            {registerItemNames.length > 0 && (
+              <select
+                className={styles.registerSelect}
+                value={registerItemId}
+                onChange={ev => setRegisterItemId(ev.target.value)}
+                aria-label="Narrow to one budget item"
+              >
+                <option value="">Every budget item</option>
+                {registerItemNames.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            )}
+            {/* ⚠ THE OVERLAY IS ON BY DEFAULT (plan §4.4). Off, the book is only what has already
+                happened; on, it runs past Today into what is scheduled. Nothing pending a DECISION
+                is ever in it — an unapproved club request is money the club may still decline. */}
+            <button
+              type="button"
+              className={`${styles.moneyFilterChip} ${showScheduled ? styles.moneyFilterChipActive : ''}`}
+              aria-pressed={showScheduled}
+              onClick={() => setShowScheduled(s => !s)}
+            >
+              Include what&apos;s scheduled
+            </button>
+            {showTagFilter && !tagFilterInToolbar && (
+              <>
+                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+                {usedTagIds.map(t => {
+                  const isOrg = t.teamId === null;
+                  const active = filterTagId === t.id;
+                  const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
+                  return (
+                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
+                      {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
-        )
+
+          {/* What the book closes at, said once above it rather than only at the foot of a long
+              table. ⚠ It disappears with the Balance column, for the same reason: a "cash on hand"
+              figure printed over a filtered book would be the one number a coach would trust. */}
+          {showBalance && book && (
+            /* The coach demo's tour stops here (step 5) — it is the one line in Money that says
+               what the whole book is FOR, so the anchor belongs on the figure, not the table. */
+            <div className={styles.registerClose} data-sandbox-tour="register-balance">
+              <span>
+                Cash on hand <span className={styles.registerCloseFig}>{fmt(book.cashOnHand)}</span>
+              </span>
+              {showScheduled && book.projectedBalance !== null && (
+                <span className={styles.registerCloseProjected}>
+                  {fmt(book.projectedBalance)} once everything scheduled has happened
+                </span>
+              )}
+            </div>
+          )}
+
+          {bookEmpty ? (
+            <>
+              <CoachEmptyState
+                icon={<Receipt size={22} aria-hidden />}
+                headline={registerFilter === 'all' && !registerItemId && !filterTagId
+                  ? 'Nothing on the books yet'
+                  : 'Nothing matches that'}
+                description={registerFilter === 'all' && !registerItemId && !filterTagId
+                  ? 'Every dollar this season moves — what you spend, what arrives, dues, fundraising and anything settled with the club — lands here in date order.'
+                  : 'Try a wider filter, or turn on what is scheduled.'}
+                primaryAction={canWriteMoney && registerFilter === 'all' && !registerItemId && !filterTagId ? {
+                  label: 'Add Expense',
+                  icon: <Plus size={15} aria-hidden />,
+                  onClick: () => openAdd({ kind: 'expense', timing: 'paid' }),
+                } : undefined}
+                secondaryAction={canWriteMoney && registerFilter === 'all' && !registerItemId && !filterTagId ? {
+                  label: 'Add Income',
+                  icon: <Plus size={15} aria-hidden />,
+                  onClick: () => openAdd({ kind: 'income', timing: 'paid' }),
+                } : undefined}
+              />
+              {/* ⚠ THE TEACHING LIVES ON THE EMPTY STATE, NOT ON THE FORM (owner ruling 2026-08-16,
+                  P2 §5). Both comparisons belong here now that one book holds both directions: which
+                  tab a commitment goes on, and the three-way distinction a coach describes with one
+                  sentence — income, money back, and a family paying the vendor direct. */}
+              {registerFilter === 'all' && !registerItemId && !filterTagId && (
+                <>
+                  <KindCompare
+                    otherHref={moneySectionHref(base, 'payables', undefined)}
+                    onPayables={false}
+                  />
+                  <MoneyInCompare />
+                </>
+              )}
+            </>
+          ) : (
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Date</th>
+                    <th className={styles.th}>What</th>
+                    <th className={styles.th}>Category</th>
+                    <th className={styles.th}>Item</th>
+                    {/* ⚠ TWO COLUMNS, EACH POSITIVE — never one signed column (plan §2, superseded
+                        draft 2). The column a figure sits in IS its direction, which is what lets
+                        one book mix them without a minus sign or a per-row label. */}
+                    <th className={`${styles.th} ${styles.thNum}`}>Money out</th>
+                    <th className={`${styles.th} ${styles.thNum}`}>Money in</th>
+                    {showBalance && <th className={`${styles.th} ${styles.thNum}`}>Balance</th>}
+                    <th className={styles.th}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Scheduled first, soonest at the top, then the Today rule, then the settled
+                      book newest-first. */}
+                  {bookScheduled.map(r => registerRow(r))}
+                  {bookScheduled.length > 0 && (
+                    <tr className={styles.registerToday}>
+                      <td colSpan={showBalance ? 8 : 7}>Today — {fmtDate(tournamentToday())}</td>
+                    </tr>
+                  )}
+                  {bookSettled.map(r => registerRow(r))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       ) : tab === 'commitments' ? (
         tournamentPayables.length === 0 ? (
           /* ⚠ THE SECONDARY ACTION HERE IS THE MANDATORY PHONE MITIGATION (ruling 2026-08-13,
@@ -2394,85 +2662,6 @@ function MoneyRecordsPanel({
                 </Fragment>
               );
             })}
-              </tbody>
-            </table>
-          </div>
-        )
-      ) : tab === 'money-in' ? (
-        /* ── Money in (mig 243) ───────────────────────────────────────────────────────────
-           Income and money back in one list, because they arrive through one form and a coach
-           auditing the season needs to see every arrival together.
-
-           ⚠ THE KIND IS A COLUMN, and that does not contradict the report's no-row-labels ruling.
-           Budget vs. Actual carries no "money back" chip because a refund NETS into the row it
-           repaid and there is nothing left to tag. Here they are two different events sharing one
-           table, and a coach has to be able to tell a $325 grant from a $325 reimbursement — which
-           is the one distinction only they can make. */
-        moneyIn.length === 0 ? (
-          <>
-            <CoachEmptyState
-              icon={<Receipt size={22} aria-hidden />}
-              headline="No money in yet"
-              description="Record what the team earned or was given — and anything that came back on something it already paid for."
-              primaryAction={canWriteMoney ? {
-                label: 'Add Income',
-                icon: <Plus size={15} aria-hidden />,
-                onClick: () => openAdd({ kind: 'income', timing: 'paid' }),
-              } : undefined}
-              secondaryAction={canWriteMoney ? {
-                label: 'Add Money Back',
-                icon: <Plus size={15} aria-hidden />,
-                onClick: () => openAdd({ kind: 'refund', timing: 'paid' }),
-              } : undefined}
-            />
-            <MoneyInCompare />
-          </>
-        ) : (
-          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Received</th>
-                  <th className={styles.th}>What</th>
-                  <th className={styles.th}>Kind</th>
-                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                  <th className={styles.th}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {moneyIn.map(m => {
-                  const { category, item } = nameForMoneyIn(m);
-                  return (
-                    <tr
-                      key={m.id}
-                      className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
-                      onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEditMoneyIn(m); } : undefined}
-                    >
-                      {/* ⚠ formatStoredDate, never a hand-roll. `received_date` is a `date` and a
-                          money row mixes dates with timestamps — both hand-rolls have printed
-                          garbage on three screens already. */}
-                      <td className={styles.td} data-label="Received">{formatStoredDate(m.receivedDate)}</td>
-                      <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
-                        {item}
-                        <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
-                          {category}{m.description ? ` · ${m.description}` : ''}
-                        </span>
-                      </td>
-                      <td className={styles.td} data-label="Kind">
-                        <span className={`${styles.badge} ${m.kind === 'income' ? styles.badgeActive : styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>
-                          {MONEY_IN_KIND_ROW[m.kind]}
-                        </span>
-                      </td>
-                      {/* ⚠ POSITIVE ON BOTH KINDS. The Kind column carries the direction; a minus
-                          sign here would be the second notation for a thing the report already
-                          shows in brackets, and would read as an amount rather than an effect. */}
-                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(m.amount)}</td>
-                      <td className={`${styles.td} ${styles.cardActionCell}`}>
-                        {canWriteMoney && <RowEditButton label={`Edit ${item}`} onClick={() => openEditMoneyIn(m)} />}
-                      </td>
-                    </tr>
-                  );
-                })}
               </tbody>
             </table>
           </div>

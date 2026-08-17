@@ -42,9 +42,9 @@ export type LegacyMoneySection = 'expenses';
  * ⚠⚠ THE SUB-VIEW DECIDES THE TAB, NOT JUST THE SECTION. The old screen's four sub-tabs divided
  * cleanly into happened (Expenses, Money in) and owed (Payables, Payment schedule), and that
  * division is exactly where the split was made — so `&tab=payables` and `&tab=schedule` have to
- * cross to the OTHER tab, while `&tab=money-in` stays put and only changes which view opens. A
- * mapping that read the section alone would land half of every bookmarked link on a screen that
- * cannot show what it pointed at.
+ * cross to the OTHER tab, while the two happened-side values stay put. A mapping that read the
+ * section alone would land half of every bookmarked link on a screen that cannot show what it
+ * pointed at.
  *
  * Pure and framework-free (node scripts import this module), and the ONE home for the rule — the
  * legacy standalone route and the hub's own address normaliser both call it.
@@ -56,8 +56,11 @@ export function legacyMoneyAddress(
   if (section !== 'expenses') return null;
   if (tab === 'payables') return { section: 'payables', tab: 'commitments' };
   if (tab === 'schedule') return { section: 'payables', tab: 'schedule' };
-  if (tab === 'money-in') return { section: 'transactions', tab: 'money-in' };
-  // `tab=expenses`, anything unrecognised, or no sub-view at all: the happened side, its default.
+  /* ⚠ `tab=money-in` NO LONGER NAMES A VIEW (money redesign P3). The arrivals list is gone; the
+     register holds income and money back as two separate FILTERS of one book. A bookmark that said
+     "money in" meant both kinds, so the only non-lossy landing is the whole book — sending it to the
+     Income filter would hide exactly the refunds that list was half made of. Same for `tab=expenses`
+     and anything unrecognised: the happened side, unfiltered. */
   return { section: 'transactions' };
 }
 

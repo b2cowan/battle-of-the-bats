@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -97,11 +97,22 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'description is required and must be 500 characters or fewer' }, { status: 400 });
   }
 
+  /* ⚠⚠ A REQUEST BELONGS TO A SEASON (mig 247, NOT NULL). Before it did, the coach's Cash on hand
+     summed approved requests team-LIFETIME while every other input to that figure was season-scoped,
+     and the season close-out pot had to exclude club money entirely because it could not attribute
+     it. Both read this column now, so an insert that skipped it would be refused by the database —
+     which is the point: the season is part of what the record IS, not a decoration on it. */
+  const programYear = await getActiveRepProgramYear(team.id);
+  if (!programYear) {
+    return NextResponse.json({ error: 'This team has no active season to file the request against.' }, { status: 409 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('rep_team_payment_requests')
     .insert({
       org_id:         team.orgId,
       team_id:        team.id,
+      program_year_id: programYear.id,
       request_type:   requestType,
       amount,
       description:    description.trim(),

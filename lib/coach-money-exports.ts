@@ -24,8 +24,8 @@ import {
 import { duesStatusLabel } from './dues-status';
 import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals';
 import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
-import { MONEY_IN_KIND_ROW, MONEY_IN_SOURCE_LABEL } from './coach-money-in';
-import type { RepBudgetLineWithPeriods, RepTeamExpense, RepTeamMoneyIn } from './types';
+import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
+import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 
 export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -188,43 +188,70 @@ export function expenseRows(
   }));
 }
 
+/* ⚠ THE `MONEY_IN` DATASET IS GONE (money redesign P3, 2026-08-17), and it is not lost — it is
+   SPLIT. It exported income and money back as one file with a Kind column telling them apart, which
+   was the honest shape while one list held both. The register separates them into two filters, so
+   the same rows now come out as `income` and `refund` files that each mean what their heading says,
+   built by `registerExportRows` below from whatever the strip is showing. Do not reinstate a
+   combined arrivals export: a heading covering two opposite events is exactly the naming problem
+   this release closed. */
+
+// ── The register ────────────────────────────────────────────────────────────────────────────
+
 /**
- * The Money in sub-tab: income and money back, in the order a coach reads them (mig 243).
+ * The register's own file — and it REPLACES the Expenses and Money-in datasets rather than joining
+ * them (money redesign P3).
  *
- * ⚠ THE KIND IS A COLUMN HERE, and that is not a contradiction of the report's no-row-labels rule.
- * Budget vs. Actual carries no "money back" chip because a refund NETS into the row it repaid and
- * there is nothing left to label. This is the record LIST — two different events sharing one table,
- * where a coach auditing their own books has to be able to tell them apart.
+ * ⚠ THE FILE IS WHATEVER THE STRIP IS SHOWING. Both retired datasets survive as a filtered export
+ * of this one: `Expenses` is the register on its Expenses filter, `Money in` is Income and Refunds
+ * as two separate files that finally mean what their headings say. A menu above the tab bar could
+ * never have offered that, which is the argument this module's header already makes.
+ *
+ * ⚠ THE BALANCE COLUMN LEAVES WITH THE SCREEN'S. A running balance over a filtered subset is a
+ * number that looks like cash and isn't — and a spreadsheet is exactly where such a column gets
+ * summed, sorted and quoted to a club treasurer with no filter chip in sight.
  */
-export const MONEY_IN_COLUMNS: ExportColumnDef[] = [
-  { label: 'Received',  key: 'received',    format: 'date' },
-  { label: 'Kind',      key: 'kind',        format: 'text' },
-  { label: 'Category',  key: 'category',    format: 'text' },
-  { label: 'Item',      key: 'item',        format: 'text' },
-  { label: 'Amount',    key: 'amount',      format: 'currency' },
-  { label: 'From',      key: 'from',        format: 'text' },
-  { label: 'Note',      key: 'description', format: 'text' },
+export const REGISTER_COLUMNS: ExportColumnDef[] = [
+  { label: 'Date',      key: 'date',     format: 'date' },
+  { label: 'What',      key: 'what',     format: 'text' },
+  { label: 'Kind',      key: 'kind',     format: 'text' },
+  { label: 'Category',  key: 'category', format: 'text' },
+  { label: 'Item',      key: 'item',     format: 'text' },
+  // ⚠ TWO COLUMNS, POSITIVE IN BOTH. A single signed column is the superseded draft the register
+  // exists instead of (plan §2), and in a spreadsheet it is worse still: whatever lands in one
+  // column gets summed by someone.
+  { label: 'Money out', key: 'moneyOut', format: 'currency' },
+  { label: 'Money in',  key: 'moneyIn',  format: 'currency' },
+  { label: 'Balance',   key: 'balance',  format: 'currency' },
+  { label: 'Status',    key: 'status',   format: 'text' },
 ];
 
-export function moneyInRows(
-  records: RepTeamMoneyIn[],
-  /** Resolved names for the taxonomy ids, as the panel already holds them for the picker. */
-  nameFor: (r: RepTeamMoneyIn) => { category: string; item: string },
+export function registerExportRows(
+  rows: Array<RegisterBookRow>,
+  /** False when the screen is filtered — the column comes out blank, exactly as it is hidden. */
+  showBalance: boolean,
 ): ExportRow[] {
-  return records.map(r => {
-    const { category, item } = nameFor(r);
-    return {
-      received: r.receivedDate,
-      kind: MONEY_IN_KIND_ROW[r.kind],
-      category,
-      item,
-      // ⚠ POSITIVE, both kinds — the Kind column carries the direction. A negative here would be
-      // summed against the income column by whatever spreadsheet this lands in.
-      amount: r.amount,
-      from: r.receivedFrom ? MONEY_IN_SOURCE_LABEL[r.receivedFrom] : '',
-      description: r.description ?? '',
-    };
-  });
+  return rows.map(r => ({
+    date: r.date ?? '',
+    what: r.description,
+    kind: REGISTER_KIND_LABEL[r.kind],
+    category: r.categoryName ?? '',
+    item: r.itemName ?? '',
+    moneyOut: r.moneyOut || '',
+    moneyIn: r.moneyIn || '',
+    /* ⚠ THE FIGURE, NOT A BLANK, ON A ROW THAT MOVED NO TEAM CASH (/review, 2026-08-17). This read
+       `showBalance && r.movesCash ? … : ''`, which emptied the Balance cell on exactly the
+       out-of-pocket row the SCREEN deliberately fills in — the register's own rule is that the
+       balance repeats unchanged there, because "repeating the previous figure rather than blanking
+       it keeps the column readable top to bottom." A coach exporting the book they are looking at
+       got a gap where the screen shows a number, in the one place this design says not to. The
+       Status column carries the explanation instead: `Settled — no team cash`. */
+    balance: showBalance ? r.balance : '',
+    /* The two facts a column of figures cannot carry: whether this has happened yet, and whether it
+       moved the team's cash at all. Without the second, an out-of-pocket cost reads in a spreadsheet
+       as money that left the account. */
+    status: r.scheduled ? 'Scheduled' : r.movesCash ? 'Settled' : 'Settled — no team cash',
+  }));
 }
 
 /** The payment-schedule sub-tab: one dated commitment per row, across both lanes. */

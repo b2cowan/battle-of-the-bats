@@ -86,7 +86,26 @@ export interface SettlementCashInput {
   /** The FULL amount raised, which is what the books receive. The players' rebates are credits,
    *  and appear on the owed-to-families line — never as a deduction from income. */
   fundraisingRaised: number;
+  /**
+   * Club funding the club approved for this SEASON.
+   *
+   * ⚠ THIS WAS HARD-CODED TO ZERO UNTIL 2026-08-17, and the sheet printed an apology for it.
+   * `rep_team_payment_requests` carried no program year, so an approved request could not be
+   * attributed to a season at all — counting it would have let a team in its third season pay
+   * families out of money an earlier season received. Migration 247 gives those records a season,
+   * so the pot can finally hold them and the caveat on the card retires.
+   */
   orgFunding: number;
+  /**
+   * Income and money back the coach RECORDED (`rep_team_money_in`, mig 243).
+   *
+   * ⚠⚠ ALSO MISSING UNTIL 2026-08-17, and this one was silently wrong rather than openly excluded:
+   * money a coach recorded as arriving reached no cash figure in the product, so this pot — the
+   * thing that decides what each family is actually refunded — was UNDERSTATING what the team held
+   * by every dollar of sponsor income and every refund the team had received. Both kinds raise cash;
+   * their difference is a REPORT distinction, not a cash one.
+   */
+  recordedIn: number;
   /** Cash that left the team's account: paid expenses the TEAM paid, allocation installments,
    *  approved payments to the org. ⚠ Excludes out-of-pocket costs a family covered directly —
    *  that money never left the team, and subtracting it would understate what the team holds. */
@@ -121,11 +140,12 @@ export interface SettlementRow {
 }
 
 export interface SettlementPot {
-  /** duesReceived + fundraisingRaised + orgFunding − cashOut − payoutsTotal. */
+  /** duesReceived + fundraisingRaised + orgFunding + recordedIn − cashOut − payoutsTotal. */
   cashHeld: number;
   duesReceived: number;
   fundraisingRaised: number;
   orgFunding: number;
+  recordedIn: number;
   cashOut: number;
   payoutsTotal: number;
   /** Σ owed-back across every family — their money, held by the team. */
@@ -209,9 +229,11 @@ export function deriveSettlement(input: {
   const duesReceivedC      = toCents(cash.duesReceived);
   const fundraisingRaisedC = toCents(cash.fundraisingRaised);
   const orgFundingC        = toCents(cash.orgFunding);
+  const recordedInC        = toCents(cash.recordedIn);
   const cashOutC           = toCents(cash.cashOut);
   const payoutsTotalC      = toCents(cash.payoutsTotal);
-  const cashHeldC = duesReceivedC + fundraisingRaisedC + orgFundingC - cashOutC - payoutsTotalC;
+  const cashHeldC = duesReceivedC + fundraisingRaisedC + orgFundingC + recordedInC
+    - cashOutC - payoutsTotalC;
 
   // Per-player, before anything is summed — the row IS the definition.
   const parts = participants.map(p => {
@@ -332,6 +354,7 @@ export function deriveSettlement(input: {
       duesReceived:      toDollars(duesReceivedC),
       fundraisingRaised: toDollars(fundraisingRaisedC),
       orgFunding:        toDollars(orgFundingC),
+      recordedIn:        toDollars(recordedInC),
       cashOut:           toDollars(cashOutC),
       payoutsTotal:      toDollars(payoutsTotalC),
       owedBack:          toDollars(owedBackC),
@@ -415,10 +438,11 @@ export interface SettlementSheet extends Settlement {
   /** Planned season costs not yet spent. Not part of the arithmetic — but a coach reading this
    *  sheet in October is looking at cash the season still needs, and the card says so. */
   unspentPlan: number;
-  /** Approved club funding and payments to the club that the pot does NOT count, because they
-   *  carry no season and cannot be attributed to one. Zero for a team with no club money — and
-   *  when it is not zero the card says so, rather than swallowing it. */
-  clubMoneyUncounted: number;
+  /* ⚠ `clubMoneyUncounted` IS GONE (money redesign P3, 2026-08-17). It carried the amount of club
+     money the pot could not honestly claim, and the sheet printed it as a warning, because those
+     records had no season. Migration 247 gave them one, so the money is simply IN the pot now —
+     `pot.orgFunding` — and a field whose only job was to apologise for an absence has nothing left
+     to say. The warning line on the dues panel went with it. */
   notes: string | null;
   /** A finished season renders as a RECORD: the screen offers no payouts, no hold-back and no
    *  row menu. Set by the route from the season-read rail, absent on a write response. */

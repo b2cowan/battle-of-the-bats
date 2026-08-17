@@ -1958,19 +1958,12 @@ export function PlayerDuesPanel({
                             <span>The season still plans to spend {fmt(settlement.unspentPlan)} — hold that back first</span>
                           </li>
                         )}
-                        {/* ⚠ Money the pot cannot honestly claim. Club funding and payments to the
-                            club carry no season of their own, so they cannot be attributed to THIS
-                            one — counting them would let a team in its third season share money an
-                            earlier season received. Said out loud rather than silently dropped. */}
-                        {settlement.clubMoneyUncounted > 0.005 && (
-                          <li data-state="warn">
-                            <AlertTriangle size={14} aria-hidden />
-                            <span>
-                              {fmt(settlement.clubMoneyUncounted)} of club funding isn&apos;t counted — it
-                              isn&apos;t recorded against a single season
-                            </span>
-                          </li>
-                        )}
+                        {/* ⚠ THE CLUB-MONEY WARNING IS GONE, and its absence is the fix (money
+                            redesign P3, 2026-08-17). It said "$X of club funding isn't counted — it
+                            isn't recorded against a single season", which was true: those records
+                            carried no season, so the pot could not claim them. Migration 247 gave
+                            them one, so the money is simply IN the pot now. Do not reinstate a
+                            caveat for a gap that no longer exists. */}
                       </ul>
                       {/* The one piece of guidance the retired strip carried that the checklist
                           does not: where an early payout now happens, said once. */}

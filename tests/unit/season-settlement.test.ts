@@ -27,6 +27,8 @@ const U15_CASH = {
   duesReceived: 6050,       // UNCAPPED — the $50 overpayment physically arrived
   fundraisingRaised: 2500,  // the FULL amount raised: the books receive all of it
   orgFunding: 0,
+  // Recorded income and money back — both raise the cash the team holds (mig 243, wired 2026-08-17).
+  recordedIn: 0,
   cashOut: 6350,
   payoutsTotal: 0,
   holdBack: 0,
@@ -330,7 +332,7 @@ describe('degenerate worlds stay honest', () => {
 
   it('a season with no money at all', () => {
     const s = deriveSettlement({
-      cash: { duesReceived: 0, fundraisingRaised: 0, orgFunding: 0, cashOut: 0, payoutsTotal: 0, holdBack: 0 },
+      cash: { duesReceived: 0, fundraisingRaised: 0, orgFunding: 0, recordedIn: 0, cashOut: 0, payoutsTotal: 0, holdBack: 0 },
       participants: [player({ playerId: 'a' })],
     });
     assert.equal(s.pot.surplus, 0);
@@ -384,6 +386,7 @@ describe('Σ refunds + what stays with the team + hold-back = the cash the team 
         duesReceived: money(9000),
         fundraisingRaised: money(4000),
         orgFunding: rnd() < 0.2 ? money(1000) : 0,
+        recordedIn: rnd() < 0.3 ? money(600) : 0,
         cashOut: money(9000),
         payoutsTotal: Math.round(participants.reduce((s, p) => s + p.paidOut * 100, 0)) / 100,
         holdBack: rnd() < 0.3 ? money(800) : 0,
@@ -433,7 +436,7 @@ describe('a season that is done collecting cannot overdraw the team', () => {
     // them about $167 of it back.
     const s = deriveSettlement({
       cash: {
-        duesReceived: 1000, fundraisingRaised: 0, orgFunding: 0,
+        duesReceived: 1000, fundraisingRaised: 0, orgFunding: 0, recordedIn: 0,
         cashOut: 500, payoutsTotal: 400, holdBack: 0,
       },
       participants: [
@@ -486,6 +489,7 @@ describe('a season that is done collecting cannot overdraw the team', () => {
         duesReceived: money(9000),
         fundraisingRaised: money(4000),
         orgFunding: rnd() < 0.2 ? money(1000) : 0,
+        recordedIn: rnd() < 0.3 ? money(600) : 0,
         cashOut: money(9000),
         payoutsTotal: Math.round(participants.reduce((s, p) => s + p.paidOut * 100, 0)) / 100,
         holdBack: rnd() < 0.3 ? money(800) : 0,
@@ -518,7 +522,7 @@ describe('a season that is done collecting cannot overdraw the team', () => {
     // A guard that never opens would pass the test above and ship a button nobody can press.
     const s = deriveSettlement({
       cash: {
-        duesReceived: 6050, fundraisingRaised: 2500, orgFunding: 0,
+        duesReceived: 6050, fundraisingRaised: 2500, orgFunding: 0, recordedIn: 0,
         cashOut: 6350, payoutsTotal: 0, holdBack: 0,
       },
       participants: u15Players(),

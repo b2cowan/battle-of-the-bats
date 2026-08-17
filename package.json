@@ -29,6 +29,7 @@
     "check:layout:init": "node scripts/check-layout-invariants.mjs --init",
     "check:layout:report": "node scripts/check-layout-invariants.mjs --report",
     "check:layout:prune": "node scripts/check-layout-invariants.mjs --prune",
+    "check:register": "node scripts/check-register-balance.mjs",
     "check:css-purity": "node scripts/check-css-module-purity.mjs",
     "check:demos": "node scripts/check-demos.mjs",
     "tick:demos": "node scripts/check-demos.mjs --tick",

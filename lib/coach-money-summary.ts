@@ -8,8 +8,27 @@
 export interface MoneySummary {
   stage: 'plan' | 'collect' | 'operate';
   orgLinked: boolean;
-  moneyIn: { duesCollected: number; fundraisingRaised: number; orgFunding: number; total: number };
+  /**
+   * ⚠⚠ `total` IS THE CASH LINE, AND `duesCollected` IS NOT ONE OF ITS TERMS (money redesign P3,
+   * 2026-08-17). Two figures answer two different questions and had been quietly conflated:
+   *   · `duesCollected` — capped at each schedule's total, per schedule. The COLLECTIONS number.
+   *   · `duesReceived`  — every payment dollar that arrived, uncapped and schedule-less payments
+   *     included. The CASH number, and what `total` adds.
+   * `recordedIncome` and `recordedMoneyBack` are new terms, not a re-slicing: money a coach recorded
+   * as arriving was previously counted in NO cash figure anywhere in the product.
+   */
+  moneyIn: {
+    duesCollected: number; duesReceived: number; fundraisingRaised: number; orgFunding: number;
+    recordedIncome: number; recordedMoneyBack: number; total: number;
+  };
   moneyOut: { expensesPaid: number; allocationsPaid: number; orgPayments: number; total: number };
+  /**
+   * Cash on hand.
+   *
+   * ⚠ THE REGISTER'S RUNNING BALANCE AT TODAY IS THIS NUMBER, decomposed into the movements that
+   * produced it (`/api/coaches/.../register`). They are computed by two routes from the same
+   * records; a source added to one and not the other breaks the identity silently.
+   */
   onHand: number;
   headroom: number | null;
   budget: {
@@ -98,6 +117,15 @@ export interface DashboardHrefs {
   /** Payables, on its payment-schedule view (the tab's own default, addressed explicitly so a
    *  caller that means "the schedule" survives a change of default). */
   payablesSchedule: string;
+  /**
+   * The register, opened on one kind with the scheduled overlay ON (money redesign P3, plan §4.5).
+   *
+   * ⚠ THIS IS WHAT MAKES THE NEXT-30-DAYS PANEL A WINDOW rather than a summary. Every row there is
+   * money that has not moved yet, and every one of them is ALREADY on the register's scheduled
+   * block — so "View" should land the coach on that row in context, with the settled book beneath
+   * it, instead of on a workspace where they have to find it again.
+   */
+  registerFrom: Record<'dues' | 'expense' | 'club', string>;
 }
 
 /**

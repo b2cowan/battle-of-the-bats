@@ -158,15 +158,20 @@ describe('the chrome (S4)', () => {
   /**
    * The coach tour (Phase 3), pinned by the two things that would fail QUIETLY.
    *
-   * Until 2026-08-05 this asserted `[]` — the correct "not built yet" state. Now that seven steps
+   * Until 2026-08-05 this asserted `[]` — the correct "not built yet" state. Now that the steps
    * exist, the same slot pins the contract they have to keep: a step that lands somewhere the
    * visitor can already be standing, or that points at a person the seed no longer creates, reads
    * as a dead button rather than as an error, and nothing else in the build would catch either.
+   *
+   * ⚠ THE COUNT IS A RATCHET, NOT A CEILING. It went 7 → 8 on 2026-08-17 when the register shipped
+   * and the tour gained a step for it (money redesign P3). Raising it is a deliberate act — the
+   * assertion exists so that a step VANISHING is loud, which is the failure that reads as a
+   * shorter, blander demo rather than as a bug.
    */
   test('the coach tour walks its own org, and no step can be a no-op', () => {
     const coachOrg = getDemoOrgByKind('coach')!;
     const steps = sandboxTourSteps('coach', coachOrg);
-    assert.equal(steps.length, 7, 'the approved spine is seven beats');
+    assert.equal(steps.length, 8, 'the approved spine is eight beats');
 
     const teamIds = new Set<string>(Object.values(DEMO_COACH_TEAM_IDS));
     for (const step of steps) {

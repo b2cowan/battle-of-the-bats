@@ -651,6 +651,64 @@ if (!existingExp?.length) {
   ok('expenses already present');
 }
 
+/**
+ * ⚠⚠ THE OUT-OF-POCKET COST, AND IT IS HERE FOR THE REGISTER'S ONE HARD CLAIM.
+ *
+ * A cost a family paid the vendor DIRECTLY is real spending on a real record, but no team cash
+ * moved — so it belongs on the dated book with its amount and must NOT move the running balance
+ * (money redesign P3). That row is the single most likely way for "the balance IS cash on hand" to
+ * come apart, and until this fixture carried one, `scripts/check-register-balance.mjs` could pass
+ * without ever having seen the case it exists to guard. Seeded separately from the block above so
+ * it lands on fixtures that already have expenses.
+ *
+ * ⚠ IT CARRIES A `paid_by_player_id`, WHICH IS WHAT MAKES IT THE THING. Without one it is an
+ * ordinary paid cost and proves nothing.
+ */
+const { data: existingOop } = await db.from('rep_team_expenses')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id).not('paid_by_player_id', 'is', null).limit(1);
+if (!existingOop?.length && players?.length) {
+  const oop = await db.from('rep_team_expenses').insert({
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    expense_type: 'expense', description: 'Umpire fees — a parent paid the association direct',
+    category: cats?.[0]?.name ?? null, amount: 180,
+    expense_paid_at: new Date().toISOString(), paid_by_player_id: players[0].id,
+  });
+  if (oop.error) console.log(`  ! out-of-pocket cost skipped (${oop.error.message})`);
+  else ok('out-of-pocket cost seeded — the register row whose balance must NOT move');
+} else {
+  ok('out-of-pocket cost already present (or roster empty)');
+}
+
+/**
+ * ⚠⚠ ONE INCOME ROW AND ONE REFUND, for the same reason.
+ *
+ * Recorded arrivals (`rep_team_money_in`, mig 243) reached NO cash figure in the product until
+ * 2026-08-17 — the money-summary route never read the table — so a fixture without them lets both
+ * the register and Cash on hand agree while both are wrong. These two rows are what make the
+ * balance check able to fail.
+ */
+const { data: existingIn } = await db.from('rep_team_money_in')
+  .select('id').eq('program_year_id', py.id).limit(1);
+if (!existingIn?.length) {
+  const today = new Date().toISOString().slice(0, 10);
+  const mi = await db.from('rep_team_money_in').insert([
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      entry_kind: 'income', amount: 400, received_date: today,
+      description: 'Concession takings, home opener',
+    },
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id,
+      entry_kind: 'money_back', amount: 125, received_date: today,
+      description: 'Cancelled umpire assignment refunded', received_from: 'vendor',
+    },
+  ]);
+  if (mi.error) console.log(`  ! arrivals skipped (${mi.error.message})`);
+  else ok('an income row and a refund seeded — the two the cash figure used to miss entirely');
+} else {
+  ok('arrivals already present');
+}
+
 const { data: existingFr } = await db.from('rep_fundraisers')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
 
@@ -709,9 +767,9 @@ const { data: existingPr } = await db.from('rep_team_payment_requests')
 
 if (!existingPr?.length) {
   const pr = await db.from('rep_team_payment_requests').insert([
-    { org_id: org.id, team_id: team.id, request_type: 'charge_to_org', amount: 450, description: 'Diamond permit reimbursement', status: 'pending',  created_by: user.id, notes: 'Receipt attached in Documents.' },
-    { org_id: org.id, team_id: team.id, request_type: 'payment_to_org', amount: 200, description: 'Team share of league fee',     status: 'approved', created_by: user.id, reviewed_at: new Date().toISOString() },
-    { org_id: org.id, team_id: team.id, request_type: 'charge_to_org', amount: 90,  description: 'Extra practice jerseys',        status: 'denied',   created_by: user.id, reviewed_at: new Date().toISOString(), denial_reason: 'Outside the approved equipment budget.' },
+    { org_id: org.id, team_id: team.id, program_year_id: py.id, request_type: 'charge_to_org', amount: 450, description: 'Diamond permit reimbursement', status: 'pending',  created_by: user.id, notes: 'Receipt attached in Documents.' },
+    { org_id: org.id, team_id: team.id, program_year_id: py.id, request_type: 'payment_to_org', amount: 200, description: 'Team share of league fee',     status: 'approved', created_by: user.id, reviewed_at: new Date().toISOString() },
+    { org_id: org.id, team_id: team.id, program_year_id: py.id, request_type: 'charge_to_org', amount: 90,  description: 'Extra practice jerseys',        status: 'denied',   created_by: user.id, reviewed_at: new Date().toISOString(), denial_reason: 'Outside the approved equipment budget.' },
   ]);
   if (pr.error) console.log(`  ! payment requests skipped (${pr.error.message})`);
   else { money.requests = 3; ok('payment requests seeded (pending, approved, denied)'); }

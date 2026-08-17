@@ -11,7 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
-import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
+import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -93,35 +93,36 @@ export const GET = withObservability(async (req: Request,
       getRepDuesCreditsByProgramYear(programYear.id),
       getRepDuesPayoutsByProgramYear(programYear.id),
     ]);
-    const paidOutByPlayer = totalsByPlayer(seasonPayouts);
-
-    // Per-player derivation → how much of each unpaid installment is already covered — by cash
-    // AND by credits (owner model 2026-08-14): a bill fundraising covered is not coming due for
-    // anyone, and a partly-earned one quotes only what is left to send.
-    const creditsByPlayer = groupByPlayer(seasonCredits);
-    const instsByPlayer = new Map<string, any[]>();
-    for (const i of installments ?? []) {
-      const pid = i.player_id ?? schedulePlayerMap.get(i.schedule_id);
-      if (!pid) continue;
-      if (!instsByPlayer.has(pid)) instsByPlayer.set(pid, []);
-      instsByPlayer.get(pid)!.push(i);
-    }
-    const paysByPlayer = new Map<string, any[]>();
-    for (const p of payRows ?? []) {
-      if (!paysByPlayer.has(p.player_id)) paysByPlayer.set(p.player_id, []);
-      paysByPlayer.get(p.player_id)!.push(p);
-    }
-    const remainingById = new Map<string, number>();
-    for (const [pid, insts] of instsByPlayer) {
-      const { toSendById } = deriveDuesPosition({
-        installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
-        payments: (paysByPlayer.get(pid) ?? []).map((p: any) => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
-        credits: creditsByPlayer.get(pid) ?? [],
-        paidOut: paidOutByPlayer.get(pid) ?? 0,
-        mode: programYear.creditApplication,
-      });
-      for (const [id, toSend] of toSendById) remainingById.set(id, toSend);
-    }
+    /**
+     * How much of each unpaid installment is already covered — by cash AND by credits (owner model
+     * 2026-08-14): a bill fundraising covered is not coming due for anyone, and a partly-earned one
+     * quotes only what is left to send.
+     *
+     * ⚠⚠ THE SHARED DERIVATION, NOT A SECOND COPY OF IT (money redesign P3, 2026-08-17). This was
+     * ~28 lines of per-player grouping and `deriveDuesPosition` calls written out here, and the
+     * register's scheduled overlay needed the identical answer. `lib/coach-dues-remaining.ts` was
+     * extracted for both — and its own header warns that a second hand-written copy is "exactly how
+     * the 'quote the face value' defect got shipped the first time." This route was that copy until
+     * it was wired up. **The dues lane on the payment schedule and the dues rows on the register now
+     * quote a family the same figure by construction, not by two authors agreeing.**
+     */
+    const remainingById = duesRemainingByInstallment({
+      installments: (installments ?? []).map((i: any) => ({
+        id: i.id,
+        playerId: i.player_id ?? schedulePlayerMap.get(i.schedule_id) ?? '',
+        installmentNumber: i.installment_number,
+        amount: Number(i.amount),
+        dueDate: i.due_date ?? null,
+        paidAt: i.paid_at ?? null,
+      })),
+      payments: (payRows ?? []).map((p: any) => ({
+        id: p.id, playerId: p.player_id, amount: Number(p.amount),
+        receivedDate: p.received_date, createdAt: p.created_at,
+      })),
+      credits: seasonCredits,
+      payouts: seasonPayouts,
+      mode: programYear.creditApplication,
+    });
 
     const windowed = (installments ?? []).filter((i: any) =>
       (i.due_date ?? '') <= cutoffStr && (includePaid || !i.paid_at));

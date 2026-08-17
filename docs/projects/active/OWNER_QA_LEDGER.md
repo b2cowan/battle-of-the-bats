@@ -5507,6 +5507,11 @@ BEFORE this code does.** Plans: `COACH_MONEY_IN_TAXONOMY_PLAN.md` (which absorbe
 > exist and §41 E covers what replaced them: the *"already paid / promised, not paid yet"* switch,
 > and anything asserting a paid amount is locked (the owner reversed that lock the same day).
 > **Walk §38 first, then §41.**
+>
+> ⚠ **AND ONE MORE LAYER, 2026-08-17 (§46).** The two lists this walk moves between — **Expenses**
+> and **Money in** — no longer exist: Transactions is ONE dated book with a filter strip. §B's
+> *"it appears on the new Money in tab"* reads as **the Income filter**; §G's row-tap and §C's
+> netting are unchanged. **Still not renumbered, still owed, still substantively true.**
 
 ⚠ **Walk §29 first if you have not.** This is built directly on the category + item work and shares
 its picker; a defect there shows up here wearing different clothes.
@@ -5826,6 +5831,13 @@ wearing two meanings. P1 makes that line the tab boundary: **Transactions** reco
 *Payables* sub-tab is now **Payables → Commitments**, and its *Payment schedule* sub-tab is
 **Payables → Schedule**. **Do not renumber §38** — its walk is otherwise unchanged and still owed.
 
+⚠ **AND THIS SECTION HAS ITSELF BEEN OVERTAKEN IN TWO PLACES (§46, 2026-08-17).** §A's *"Transactions
+holds two views: Expenses and Money in"* is gone — one dated book with a filter strip replaces both,
+which is what §A said P3 would do. And §D's last bullet — *"an unpaid expense keeps its old inline
+date prompt"* — **is now false**: that control was kept deliberately in P1 with the note that "the
+register absorbs that row in P3", and it has. Every Mark paid opens the money form. **Not renumbered;
+the rest of this walk stands, including C2's Critical.**
+
 **Fixture: `qa-money-lab`** (already seeded — do not rebuild), signed in as
 `qa-money-head@dev.local`. An automated walk already proves the mechanics end to end (commitment
 with a split → settle the deposit back-dated → one entry on the books, dated as chosen, balance
@@ -6081,6 +6093,11 @@ box** (below). Where §38 says the record form asks a **category** and then an *
 dropdowns, read **one search box**. **Do not renumber either section**; nothing else in their walks
 changed.
 
+⚠ **THE SCREEN UNDER THIS FORM CHANGED AGAIN ON 2026-08-17 (§46).** Every reference here to the
+**Expenses** list or the **Money in** list is now the one dated register, reached the same way from
+the same tab. The form itself — the pills, the tick box, the search box, the consequence line, the
+`More` fold — is untouched, so every check in this section still applies exactly as written.
+
 **Why this section exists:** the form asked a coach to hold three ideas at once when only two of
 them are directions, made them guess our filing system before it would show them a word, and told
 them what an edit would actually DO in four different places — none of which appeared on an ordinary
@@ -6195,6 +6212,11 @@ Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P1. Mockup: artifact `484b5971`.
 2026-08-17, one day after it shipped. A team's own word is now **rename or remove**, and §43's §C
 bullet about moving one across should be read as retired. **Do not renumber §43.**
 
+⚠ **A third action arrived after this was written — see §47.** Where this section says a used word
+can only be renamed, that is still the only way to *keep* it; **§47's fold is now the way one goes
+away**, carrying its records onto a shared word first. The refusal you walk below is unchanged and
+still correct; it simply has a second remedy to offer now, and its wording says so.
+
 **Why this section exists:** every link into a budget word blanks rather than breaks when the word
 is deleted, so the money survives and its classification vanishes into *Not itemized* with nothing
 said to anybody. Three doors did that. Two had been open for weeks; the third was created by the
@@ -6277,6 +6299,255 @@ in warm caught.
       place Standard and Club words are mixed together, and "ask your club to change one" is wrong
       advice for a standard word.
 
+⚠ **This screen gained a third button after this section was written — see §47.** *Use a shared word
+instead* now sits above your own words. It uses the same tags, in a third place: beside the target
+picker, once you have chosen one. Nothing above changed; there is simply one more row to look at.
+
+## §46 · One dated book, and a balance that is finally the truth (money redesign, Phase 3)
+
+**Built on dev 2026-08-17 · not on production · migration 247 applied to DEV ONLY.**
+Plan: `COACH_MONEY_REGISTER_P3_PLAN.md` (and `COACH_MONEY_TAB_REDESIGN_PLAN.md` §4).
+**Walk §38, §41 and §43 first** — this reshapes the screen all three describe.
+
+⚠ **§38 and §41 both predate this and are still owed. Annotated, deliberately not renumbered.**
+Where either names the **Expenses** list or the **Money in** list on Transactions, those two views
+are **gone**: one dated book with a filter strip replaces them. §38's *Money in* walk (B, G) and
+§41's *"Transactions holds two views"* (A) read against **All / Income / Refunds** filters now.
+Everything else in both walks is unchanged, including every rule they pin.
+
+⚠ **§41 D's last bullet is now false, and this is where it went.** It said an unpaid expense on
+Transactions keeps its **inline date prompt** — P1 kept that deliberately and said in as many words
+that *"the register absorbs that row in P3."* It has: **every** Mark paid, on a plain cost or a
+commitment half, now opens the money form pre-filled and asks when.
+
+---
+
+**Why this section exists — and the part that is not a screen at all.**
+
+A coach doing the team's books could never ask *"where did the money go, in order?"* The answer was
+spread across four lists that each knew one kind of money, and neither of the two on Transactions
+could carry a running balance, because half the money was always on the other one.
+
+But the register's design rests on one claim — **the balance at the bottom IS your cash on hand** —
+and reading the code before building it found that **cash on hand was already wrong, in three ways**:
+
+1. ⚠⚠ **Recorded income and refunds were counted in NO cash figure anywhere.** Record $500 arriving
+   and the headline number did not move. It reached Budget vs. Actual as revenue and stopped there.
+2. **The dues input was the capped one** — right for the Collections tile, wrong for cash, and blind
+   to a payment recorded against a player with no schedule.
+3. **Club money had no season at all**, so a team in its second year read last year's club money as
+   this year's cash.
+
+All three are fixed, from one definition. **The same arithmetic decides what families are refunded
+at season close-out**, so that sheet moves too — it had been understating the pot.
+
+**Fixture: `qa-money-lab`** (already seeded — do not rebuild), signed in as
+`qa-money-head@dev.local`. **QA Money U13** is the data-rich team.
+
+⚠ **An automated check proves the headline claim** (`npm run check:register`) against the UAT
+fixture, which now carries all three derived sources, an out-of-pocket cost, an income row and a
+refund. **Your eyes are the proof for whether the book READS as one**, which is what no script can
+check.
+
+### A · The book
+
+- [ ] **Money → Transactions.** One table: **Date · What · Category · Item · Money out · Money in ·
+      Balance**, newest first. The two sub-tabs are gone.
+- [ ] ⚠⚠ **The figure above the table says `Cash on hand $X`. Open the Money Overview and compare it
+      to the big number there. They must be the same to the cent.** If they are not, stop —
+      everything else in this section is decoration on a broken claim.
+- [ ] Read the Balance column down the settled rows. Each one is the balance **after** that row.
+- [ ] ⚠ **Rows you never typed here are on it**: dues payments arriving, the bottle drive, the
+      sponsor, club allocations. Each carries a chip naming its workspace, and **Open** takes you
+      there. Confirm that reads as *"the whole picture"* rather than as clutter.
+- [ ] Tap a row you **did** record. The money form opens, fully editable. Tap a derived row — it
+      does **not** open the form; it offers **Open**.
+- [ ] ⚠ **Income and Refunds both sit in the Money in column**, and each carries its own chip. A
+      $400 grant and a $125 vendor credit must be tellable apart at a glance.
+
+### B · ⚠⚠ The row that does not move the balance
+
+*The one place a column and the balance disagree on purpose. Worth doing carefully.*
+
+- [ ] Find the cost a family paid the vendor **directly** (record one if the fixture lacks it: an
+      expense with **Paid by** set to a player, under **More**).
+- [ ] On the book it shows its **amount in Money out**, carries a **No team cash** chip, and the
+      **Balance beside it is unchanged** from the row below.
+- [ ] Ask yourself whether that reads as honest or as an arithmetic error. It is the deliberate
+      trade: hiding the row would lose a real expense; moving the balance would break §A's claim.
+- [ ] **Player Dues** still shows that family **exactly one** credit.
+
+### C · The filters
+
+- [ ] The strip reads **All · Expenses · Income · Refunds · from Dues · from Fundraising · from
+      Club**. On a standalone team (no club) the last one is **absent**, not empty.
+- [ ] ⚠⚠ **Pick any filter but All. The Balance column disappears, and so does the Cash on hand
+      line above it.** A running balance over some of the rows is a number that looks like your cash
+      and isn't. Go back to **All** and both return.
+- [ ] The **budget item** dropdown offers only words actually on this book — not the whole library.
+- [ ] The **money tag** chips narrow it too, and take the balance with them.
+
+### D · What's coming
+
+- [ ] **Include what's scheduled** is **on** when you arrive. A block sits **above a "Today" rule**,
+      soonest first, with projected balances.
+- [ ] ⚠ **A scheduled row is marked three ways that do not depend on colour**: a dashed left edge,
+      italic figures, and a **Scheduled** chip. Cover the colour and it should still be obvious.
+- [ ] Above the table, a second figure says what the balance becomes **once everything scheduled has
+      happened**. Check it against the rows.
+- [ ] Turn the switch **off**. The whole block goes, and the book is only what happened.
+- [ ] ⛔ **A pending club request appears nowhere**, on or off. Money the club may still decline must
+      never be planned around.
+- [ ] **Mark paid** on a scheduled money-out row opens the money form pre-filled, asking **when**.
+      Back-date it and confirm it lands in that month on Budget vs. Actual → Months.
+- [ ] An **unpaid expense with no date at all** sorts to the **end** of the scheduled block and says
+      *No date*, rather than vanishing.
+
+### E · The window from Overview
+
+- [ ] **Money → Overview → Next 30 days.** A row's **View** now opens **Transactions**, filtered to
+      that kind, with the scheduled rows showing — not Payables. Ask whether landing on the book
+      beats landing on the workspace.
+- [ ] An **overdue dues** row still says **Remind** and still opens Player Dues. That one is an
+      action, and it lives there.
+- [ ] The foot link reads **See the whole book →** and opens the register unfiltered.
+- [ ] The Overview's **Transactions** rail row now reads *"$X out · $Y in"* rather than *"$X paid"*.
+
+### F · The exports
+
+- [ ] Export from **All**: the file is the register, balance column and all.
+- [ ] Export from **Expenses**: the same dataset the old Expenses export produced, still named
+      `…-expenses-…`.
+- [ ] ⚖ Export from **Income**, then from **Refunds**: **two files where there used to be one**
+      called *Money in*, and each now means what its heading says. Confirm that is the improvement
+      it was meant to be.
+- [ ] ⚠ **A filtered export's Balance column is blank**, exactly as the screen hides it.
+
+### G · ⚖ The words
+
+- [ ] **"Money in" is gone as a name.** It survived P1 deliberately (owner call, against the plan's
+      §6) because that list held income AND refunds and the screen's own empty state teaches that a
+      refund is not income. The register's separate filters make the word true. **Confirm you agree,
+      now that you can see it in place.**
+- [ ] The empty state (use **QA Money U11**) teaches both comparisons: expense vs commitment, and
+      income vs money back vs a family paying direct.
+
+### H · The money that changed underneath
+
+- [ ] ⚠⚠ **Cash on hand may have gone UP** on any team with recorded income or refunds. That is the
+      correction, not a new number. Check one team you know and satisfy yourself the new figure is
+      the true one.
+- [ ] **Player Dues → season close-out** (use **QA Season End U15**). The pot now counts recorded
+      arrivals **and** club money, so **refund amounts may be larger**. The card no longer carries
+      the *"$X of club funding isn't counted"* warning — that gap is closed, not hidden.
+- [ ] ⚠ Confirm nothing about a **dues schedule** changed. Not a dollar, on any of it.
+
+### I · The gates that must still hold
+
+- [ ] Sign in as `qa-money-read@dev.local`. The book **reads** in full and offers **no** Add, no
+      Mark paid, no pencil.
+- [ ] Sign in as `qa-money-off@dev.local`. Transactions is unreachable.
+- [ ] A **finished** season's Transactions renders as a record.
+- [ ] **Help → Money → Transactions** describes the book, the filters, the overlay and the
+      no-team-cash row. Nothing in it still describes two lists.
+- [ ] **The demo:** the coach sandbox tour has a **new fifth step** — *Read the season one row at a
+      time* — that lands on this screen and claims the top figure is the team's cash to the cent.
+      Walk it and confirm the sentence is true of what a prospect sees.
+- [ ] ⚠⚠ **Mark two commitments paid a few seconds apart**, then look at the book without touching
+      anything. Both must stay settled. (`/review` found the screen had nothing deciding which of two
+      overlapping refreshes won, so the first payment could revert to *Scheduled* in front of you.
+      Fixed — this is the walk that proves it, and it needs the two writes to be close together.)
+- [ ] **Export the register with an out-of-pocket cost on it.** That row's **Balance cell carries the
+      figure**, exactly as the screen does, and its Status reads *Settled — no team cash*. An empty
+      cell there is the defect this checks for.
+
+**⚖ One known limit, accepted and owned by P4 — say if you disagree.** On a team **between seasons**,
+the club **payment-request** form is still offered (that screen's write gate has never known about
+finished seasons) and the server now **refuses** the save, because a request has to name a season.
+Before this release the save *succeeded* and created a record belonging to no season — which is the
+bug migration 247 exists to fix — so this is a clearer refusal on a safer outcome, not a new hole.
+Hiding the button properly belongs to **P4**, which rebuilds that screen. Worth one look: the refusal
+should read as a sentence, not as an error.
+
+---
+
+**If §A and §B read correctly, this section passes.** C and D are the controls; E–G are what moved
+around them; H is the money that changed underneath and is the part worth a second opinion.
+
+## §47 · Falling in line with the club, when the team decides to (budget item integrity, P3 — the fold)
+
+**Built on dev 2026-08-17 · not on production · no migration.**
+Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P3. Mockup: artifact `484b5971` §4.
+**Walk §44 and §45 first** — both are still owed, and this is the third act of the same story.
+
+**Why this exists:** §44 stopped publishing from absorbing other teams' words, and §45 made the
+survivors tellable apart. What was missing was the honest version of the thing §44 removed: a coach
+who *wants* to use the club's word instead of their own now has a way to say so — and it is the only
+door in the product through which a word with records behind it ever disappears. Everywhere else
+refuses. Here the records are carried across **first**, and the word only goes if they all made it.
+
+⚠⚠ **THE PART A SCREEN CANNOT PROVE, AND WHERE I WOULD LOOK HARDEST.** The claim is
+*"no money changes — only what it's filed under."* Four different kinds of record point at a budget
+word, and each of them stores the **category** beside the item. A fold across categories that moved
+the word and left the heading behind would balance perfectly at the season level and quietly stop
+lining your costs up with the plan they belong to. That is checked automatically
+(`node scripts/check-budget-item-fold.mjs`, which builds its own words and records, folds them and
+reads Budget vs. Actual before and after), but **it is worth your eyes on one real team**.
+
+⚠ **The rendered layout sweep proves nothing here.** The whole flow is inside a modal, and the sweep
+measures it closed. It reported the same six notification-badge findings it reports on every screen
+and nothing else.
+
+**Build the world first — dev has almost no team-invented vocabulary.** On a team with a budget:
+
+- [ ] **Budget Plan → Add Line.** Invent two words of your own on the **same side**, in **two
+      different categories** — say *Public grants* under Fundraising and *Company grants* under
+      Sponsorship. Put a budget line on each. Then record a cost and some money in against them from
+      **Transactions**, so all three kinds of record are in play.
+- [ ] Have your club publish (or already share) a word on that same side — the target you will fold
+      onto. A **Standard** word works too, and should behave identically.
+- [ ] **Note your Budget vs. Actual totals before you start.** They are the thing that must not move.
+
+**The fold itself — Budget Plan → Manage our items:**
+
+- [ ] The screen now offers **Use a shared word instead**. It is not there at all if your club and
+      the standard list have nothing to fold onto — a picker that can only say "nothing here" is a
+      dead end, not a feature.
+- [ ] Tick your first word. **The rest of the list narrows to that side of the books** — the other
+      side greys out with a reason on hover. Confirm that reads as an explanation rather than a bug.
+- [ ] Tick the second one too, then choose the club's word. **A tag appears beside the box** saying
+      whether it is **Club** or **Standard**.
+- [ ] ⚠ **Read the confirmation before pressing anything.** It should name the counts **by kind**
+      ("2 budget lines, 3 recorded costs and 1 money in"), say your words are removed afterwards, and
+      say no money changes. **The number on the button is the same number.**
+- [ ] ⚠⚠ **The heads-up is the point of this walk.** Because one of your words sat under a different
+      category, the confirmation must say so by name — *"Company grants sits under Sponsorship. Its
+      records will move to Fundraising, where Grants lives."* **If that sentence is missing, stop.**
+- [ ] Press it. Your two words are gone from the list, the club's word is untouched, and the line
+      above tells you what moved.
+- [ ] **Budget vs. Actual.** The season totals are **exactly** what they were. Nothing reads
+      *Not itemized*. The money that was under Sponsorship is now under Fundraising, and it is the
+      same money — this is the one screen where a wrong answer is visible.
+- [ ] ⚠ **Back on the Budget Plan, read the LINE NAMES** (a `/review` finding — it was wrong before
+      it was fixed). A line you never typed a description for took its name from the word you folded
+      away; it must now read the **surviving** word. A line you *did* name yourself must read
+      **exactly what you typed** — the fold has no business rewriting your own text. Both, please:
+      one of them being right is not evidence.
+- [ ] **Money → Transactions → Add**, open the item search. Your folded words are **not** offered any
+      more, and nothing shows a blank half. (This is the check that catches a stale list — the money
+      form is a different tab holding its own copy of the vocabulary.)
+
+**The refusals, worth one pass each:**
+
+- [ ] A word with nothing filed against it: the button says **Remove N words** rather than claiming
+      to move records that do not exist.
+- [ ] The club's own words and the standard ones have no tick box — you can only fold **your own**.
+- [ ] Sign in as a coach with money set to **read**. *Manage our items* is not reachable.
+
+**What I would tell you not to expect:** there is no way to fold across income and expenses, and no
+way to undo a fold. Renaming remains the reversible option, and the fold is the only irreversible
+one on this screen — which is why everything above it is about reading the sentence first.
+
 ---
 
 | Gate | Sections | Also needs |
@@ -6297,6 +6568,14 @@ must reach production **with or before** §43's — two of the three doors it cl
 ⚠ **§43 adds migration 246 to the dev-only queue** (every budget item carries a side, and the column
 is NOT NULL). It must reach production before the money form promotes, or the picker filters on a
 column half the rows do not have.
+
+⚠⚠ **§46 adds migration 247** — club money gets a season (`rep_team_payment_requests.program_year_id`,
+NOT NULL). **Release-manager note, and this one can HALT:** the migration backfills every existing
+request by year, then refuses to finish if any row is left unattributed, because a nullable column
+its readers assume is populated would ship the same defect wearing a new name. Expected orphan count
+is zero — every team is created with a program year — but **check it before promoting** rather than
+discovering it mid-release. Both the Cash on hand figure and the season close-out pot read the column,
+so the code must not reach production ahead of it.
 
 ⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **229**
 (house-league venue references, 2026-08-08) is applied to **dev only** — §8's code reads the new

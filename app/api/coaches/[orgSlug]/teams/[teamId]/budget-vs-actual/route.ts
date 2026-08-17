@@ -259,8 +259,8 @@ export const GET = withObservability(async (req: Request,
    *
    * ⚠ THE ITEM NAME IS NOT OPTIONAL HERE. An earlier draft passed null on the reasoning that the
    * budget line would supply it; an arrival on an item the plan never mentions has no budget line,
-   * so its row rendered as "Not itemized" on the report while the Money in tab two clicks away
-   * showed its real name — the same fact, two answers.
+   * so its row rendered as "Not itemized" on the report while the register two clicks away showed
+   * its real name — the same fact, two answers.
    */
   const placeArrival = (m: (typeof moneyInRecords)[number]) => ({
     categoryId:   m.budgetCategoryId,

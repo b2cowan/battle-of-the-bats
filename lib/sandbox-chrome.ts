@@ -533,10 +533,42 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // nobody, so this sentence must never imply a family's bill moved (see MIDSEASON_SPONSOR:
       // the three pins the clause above depends on survive precisely because it does not).
       said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it. Which bill that lands on is your call, set once — Player Dues prints the answer under the table, and Team settings is where it changes. Money coming in is not all one thing either: beside the bottle drive sits a $750 sponsor, recorded as one arrival rather than a roster of blank rows, and marked received — a pledge would sit in the plan and count as nothing in the books until the cheque lands.',
+      nextLabel: 'Next: where the money actually went',
+    },
+    {
+      /**
+       * ⚠ A NEW STEP, because the product gained a screen the story had no sentence for (money
+       * redesign P3, 2026-08-17). CLAUDE.md's demo rule asks two questions of every user-facing
+       * change: are the existing sentences still true, and *should a demo moment show this?* The
+       * answers here were yes and yes — nothing above described the Expenses or Money-in lists, so
+       * nothing went stale, but a dated book whose closing balance IS the team's cash is the most
+       * shop-window thing in Money and the tour walked straight past it.
+       *
+       * ⚠ IT IS THE STEP AFTER THE REPORT, DELIBERATELY. Budget vs. Actual answers "are we on
+       * plan?"; this answers "where did it actually go, and what is left?" — and a prospect who has
+       * just seen the plan is the one who wants the second question. Reversing them would make the
+       * register look like a longer version of the report.
+       */
+      n: 5,
+      label: 'Read the season one row at a time',
+      href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'transactions'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="register-balance"]',
+      /* ⚠⚠ THE CLAIM IN THE FIRST SENTENCE IS LOAD-BEARING, AND ITS CHECK IS NOT AUTOMATIC.
+         "The number at the top is the team's cash, to the cent" is exactly the identity
+         `npm run check:register` proves — but that script needs a running dev server and a
+         Playwright session, so it is NOT in `verify:changed` and nothing in the build re-runs it.
+         (An earlier draft of this comment said the sentence "cannot quietly stop being true without
+         that check going red", which was itself the drift CLAUDE.md's demo rule describes: a
+         narration promising a guarantee nobody had wired up.) It is run by hand, and it is listed in
+         the plan's done-means and in Owner QA §46. **If this identity is ever relaxed, this sentence
+         is the first thing to change.** Do not soften it to "roughly" instead — the whole design is
+         that it is exact; soften the DESIGN or leave the sentence alone. */
+      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land.',
       nextLabel: 'Next: playing time',
     },
     {
-      n: 5,
+      n: 6,
       label: 'Ask who has been on the field',
       href: team(DEMO_COACH_TEAM_IDS.midSeason, '/history/playing-time'),
       exactPath: true,
@@ -547,7 +579,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       nextLabel: 'Next: what a parent sees',
     },
     {
-      n: 6,
+      n: 7,
       label: 'Read what a parent gets',
       href: team(DEMO_COACH_TEAM_IDS.midSeason, `/roster/${DEMO_COACH_SHOWCASE.midSeasonPlayerId}`),
       exactPath: true,
@@ -559,7 +591,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       nextLabel: 'Next: a finished year',
     },
     {
-      n: 7,
+      n: 8,
       label: 'Open a season that is already over',
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,

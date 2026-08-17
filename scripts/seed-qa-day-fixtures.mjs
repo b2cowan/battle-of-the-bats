@@ -1226,7 +1226,8 @@ async function seedMoneyLab() {
   const { data: havePr } = await db.from('rep_team_payment_requests').select('id').eq('team_id', u13.id).limit(1);
   if (!havePr?.length) {
     die('payment request', (await db.from('rep_team_payment_requests').insert({
-      org_id: org.id, team_id: u13.id, request_type: 'charge_to_org',
+      // ⚠ A request belongs to a SEASON since mig 247 (NOT NULL).
+      org_id: org.id, team_id: u13.id, program_year_id: cur.id, request_type: 'charge_to_org',
       amount: 450, description: 'Share of the spring dome block', status: 'pending',
       created_by: users[0].user.id,
     })).error);

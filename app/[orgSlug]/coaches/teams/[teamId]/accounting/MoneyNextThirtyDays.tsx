@@ -15,15 +15,21 @@ interface Props {
   hrefs: {
     dues: string;
     /**
-     * ⚠ PAYABLES, NOT TRANSACTIONS (Money split P1, 2026-08-16). Every row in this panel is money
-     * that has NOT moved yet — that is what "next 30 days" means — so a row's View has to open the
-     * tab that manages what is owed. It used to open the combined screen, where the coach landed
-     * on the list of what had already been spent and had to find the payables sub-tab themselves.
+     * ⚠⚠ THIS PANEL IS NOW A WINDOW INTO THE REGISTER (money redesign P3, plan §4.5), which is the
+     * third answer this link has had and the first one that is a place rather than a workaround.
+     * It opened the old combined screen (landing the coach on what had already been SPENT, when
+     * every row here is money that has not moved). P1 pointed it at Payables — right at the time,
+     * because that tab manages what is owed. But the register's scheduled overlay already holds
+     * every one of these rows, dated, with the settled book beneath them: it is the same window,
+     * only wider. So a row opens the book filtered to its own kind, and the coach sees what is
+     * coming AND what the balance will be when it lands.
+     *
+     * ⚠ ONE EXCEPTION, DELIBERATELY: an OVERDUE dues row still opens Player Dues, because its
+     * action is "Remind" — a workflow that lives there and has no equivalent on a book.
      */
-    payables: string;
-    allocations?: string;
-    /** The full, unwindowed commitment list (Payables, schedule view). */
-    fullSchedule: string;
+    registerFrom: Record<'dues' | 'expense' | 'club', string>;
+    /** The whole book, overlay on — everything scheduled, unfiltered. */
+    fullBook: string;
   };
 }
 
@@ -178,9 +184,11 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
   }, [lanes]);
 
   function actionFor(row: LedgerRow): { href: string; label: string } | null {
-    if (row.lane === 'dues') return { href: hrefs.dues, label: row.overdue ? 'Remind' : 'View' };
-    if (row.lane === 'payable') return { href: hrefs.payables, label: 'View' };
-    return hrefs.allocations ? { href: hrefs.allocations, label: 'View' } : null;
+    // Overdue dues keep their own door: Remind is a workflow, and it lives on Player Dues.
+    if (row.lane === 'dues' && row.overdue) return { href: hrefs.dues, label: 'Remind' };
+    if (row.lane === 'dues') return { href: hrefs.registerFrom.dues, label: 'View' };
+    if (row.lane === 'payable') return { href: hrefs.registerFrom.expense, label: 'View' };
+    return { href: hrefs.registerFrom.club, label: 'View' };
   }
 
   return (
@@ -260,8 +268,11 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
       )}
 
       <div className={styles.foot}>
-        <Link href={hrefs.fullSchedule} className={styles.footLink}>
-          See the full payment schedule →
+        {/* ⚠ THE BOOK, NOT THE SCHEDULE. This window shows 30 days of what is coming; the register
+            shows all of it, and the season behind it, in one column. The payment schedule survives
+            on Payables, where commitments are managed — one place to see, separate doors to act. */}
+        <Link href={hrefs.fullBook} className={styles.footLink}>
+          See the whole book →
         </Link>
       </div>
     </div>

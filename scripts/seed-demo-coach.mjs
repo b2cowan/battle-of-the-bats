@@ -1050,7 +1050,9 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
 
     die('insert 12U payment requests', (await db.from('rep_team_payment_requests').insert(
       MIDSEASON_CLUB_MONEY.requests.map(r => ({
-        id: randomUUID(), org_id: org.id, team_id: team.id,
+        // ⚠ A request belongs to a SEASON since mig 247 (NOT NULL) — before that the coach's Cash
+        // on hand summed them team-lifetime while every other input to it was season-scoped.
+        id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
         request_type: r.requestType, amount: r.amount, description: r.description,
         payment_method: r.paymentMethod, notes: r.notes, status: r.status,
         created_by: coach.id,

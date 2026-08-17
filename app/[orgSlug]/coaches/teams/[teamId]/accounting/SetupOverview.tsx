@@ -141,14 +141,24 @@ export default function SetupOverview({ summary, hrefs, rosterHref, canWrite, sh
               <span className={styles.summaryCardValue} style={{ color: summary.moneyIn.total > 0 ? 'var(--success)' : undefined }}>
                 {fmt(summary.moneyIn.total)}
               </span>
-              <span className={styles.moneySummarySub}>dues + fundraising{summary.moneyIn.orgFunding > 0 ? ' + org' : ''} received</span>
+              {/* ⚠ THE CAPTION NAMED THREE TERMS AND THE FIGURE NOW HOLDS FIVE (/review, 2026-08-17).
+                  It read "dues + fundraising + org received" while `moneyIn.total` gained recorded
+                  income and money back — so a coach with a sponsor payment or a refund saw a total
+                  visibly larger than the caption underneath it explained, on the one card whose job
+                  is to explain it. Stated as the question it answers rather than as a term list: the
+                  list was already one edit behind, and enumerating it again would only reset that
+                  clock. (The Money-hub rail took the same treatment for the same reason.) */}
+              <span className={styles.moneySummarySub}>everything received this season</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Money Out</span>
               <span className={styles.summaryCardValue} style={{ color: summary.moneyOut.total > 0 ? 'var(--danger)' : undefined }}>
                 {fmt(summary.moneyOut.total)}
               </span>
-              <span className={styles.moneySummarySub}>expenses{summary.orgLinked ? ' + org payments' : ''} paid</span>
+              {/* Its neighbour's twin, and it was already incomplete before this release — the
+                  figure has always included money handed back to families, which "expenses + org
+                  payments" never mentioned. Same fix, so the pair reads consistently. */}
+              <span className={styles.moneySummarySub}>everything that left the account</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>On Hand</span>

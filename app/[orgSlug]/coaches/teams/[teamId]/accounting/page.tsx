@@ -283,6 +283,15 @@ export default function CoachesAccountingPage({
     // Payables already opens on the schedule; naming it anyway keeps the caller's INTENT in the
     // link, so a change of default view can never silently redirect "see the full schedule".
     payablesSchedule: sectionHref('payables', { tab: 'schedule' }),
+    /* ⚠ `scheduled=1` IS NOT REDUNDANT even though the overlay defaults to on. A coach who turned
+       it off would otherwise follow a link about money that has not moved yet and land on a book
+       that deliberately excludes it — the link would appear broken, and the row they clicked would
+       be the one thing missing. The address states the intent. */
+    registerFrom: {
+      dues:    sectionHref('transactions', { filter: 'dues', scheduled: '1' }),
+      expense: sectionHref('transactions', { filter: 'expense', scheduled: '1' }),
+      club:    sectionHref('transactions', { filter: 'club', scheduled: '1' }),
+    },
     ...(showOrgTabs ? {
       allocations: sectionHref('allocations'),
       paymentRequests: sectionHref('payment-requests'),
