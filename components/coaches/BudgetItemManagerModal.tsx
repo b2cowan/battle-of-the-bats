@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pencil, ArrowLeftRight } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
@@ -27,6 +27,9 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
  * a row's direction from what was actually filed against it, so nothing already recorded moves a
  * cent. Both facts are on screen, because a coach cannot consent to what they have not been told.
  */
+/** One word with its category beside it — what both lists in this modal are made of. */
+interface Row { item: BudgetItem; categoryName: string }
+
 export default function BudgetItemManagerModal({
   orgSlug,
   teamId,
@@ -48,16 +51,20 @@ export default function BudgetItemManagerModal({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  /** Flattened, with each word's category beside it — the same shape the picker searches. */
-  const rows = categories.flatMap(c =>
-    c.items.map(item => ({ item, categoryName: c.name })),
-  );
-  const ours = rows.filter(r => r.item.teamId === teamId);
-  const theirs = rows.filter(r => r.item.teamId !== teamId);
+  /** Flattened and split, with each word's category beside it — the same shape the picker searches.
+   *  ⚠ MEMOISED, and sorted here rather than at render: the rename `<input>`'s state lives in this
+   *  component, so without this every keystroke while renaming re-flattens and re-sorts the whole
+   *  library twice. `BudgetItemPicker`, built in the same release, already does exactly this. */
+  const byCategoryThenName = (a: Row, b: Row) =>
+    a.categoryName.localeCompare(b.categoryName) || a.item.name.localeCompare(b.item.name);
 
-  const sortRows = <T extends { item: BudgetItem; categoryName: string }>(list: T[]) =>
-    [...list].sort((a, b) =>
-      a.categoryName.localeCompare(b.categoryName) || a.item.name.localeCompare(b.item.name));
+  const { ours, theirs } = useMemo(() => {
+    const rows: Row[] = categories.flatMap(c => c.items.map(item => ({ item, categoryName: c.name })));
+    return {
+      ours:   rows.filter(r => r.item.teamId === teamId).sort(byCategoryThenName),
+      theirs: rows.filter(r => r.item.teamId !== teamId).sort(byCategoryThenName),
+    };
+  }, [categories, teamId]);
 
   async function patch(item: BudgetItem, body: Record<string, unknown>) {
     setError('');
@@ -114,7 +121,7 @@ export default function BudgetItemManagerModal({
                 on Budget vs. Actual and on everything already recorded against it. Moving a word to the
                 other side changes only which list it&rsquo;s offered in; <strong>no money moves.</strong>
               </p>
-              {sortRows(ours).map(({ item, categoryName }) => (
+              {ours.map(({ item, categoryName }) => (
                 <div key={item.id} className={styles.tagManagerRow}>
                   {renamingId === item.id ? (
                     <>
@@ -184,7 +191,7 @@ export default function BudgetItemManagerModal({
                 These belong to everybody — the standard library and whatever your club shares with
                 every team — so they&rsquo;re read-only here. Ask your club to change one.
               </p>
-              {sortRows(theirs).map(({ item, categoryName }) => (
+              {theirs.map(({ item, categoryName }) => (
                 <div key={item.id} className={styles.tagManagerRow}>
                   <span className={`${styles.tagManagerName} ${styles.mutedInline}`}>
                     {categoryName} · {item.name}

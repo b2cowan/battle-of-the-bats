@@ -6688,12 +6688,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   line-height: 1.35;
   color: var(--home-dim, var(--white-40));
 }
-.kindEgs {
-  margin: 0.45rem 0.15rem 0;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: var(--home-dim, var(--white-40));
-}
+/* ⚠ `.kindEgs` IS GONE (/simplify, 2026-08-16). It styled the examples line under the money form's
+   kind switch; the teaching copy moved to the empty states and the help guide (P2 §5), so
+   `FORM_COPY.examples` and both its render sites went — and this rule was left behind. */
 
 /* ── "This is a refund", beside the two pills (Money form P2, 2026-08-16) ──────────────────
    The tick sits UNDER the pill pair rather than inside it: it is not a third option — it modifies

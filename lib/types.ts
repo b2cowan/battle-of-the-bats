@@ -2418,6 +2418,16 @@ export interface BudgetCategory {
   items?: BudgetItem[];
 }
 
+/**
+ * Which side of the books a budget word belongs to (mig 243, mandatory since mig 246).
+ *
+ * ⚠ DECLARED HERE RATHER THAN IN `lib/coach-budget-items.ts`, which owns the behaviour around it —
+ * that module imports this one, so the type has to sit on this side of the edge or the import
+ * becomes a cycle. `coach-budget-items` re-exports it, so callers can take both from the module
+ * whose rules they are already using.
+ */
+export type BudgetItemDirection = 'in' | 'out';
+
 export interface BudgetItem {
   id: string;
   categoryId: string;
@@ -2433,11 +2443,21 @@ export interface BudgetItem {
    *  "Misc" answers nothing — the coach picker no longer offers these, though historic lines keep
    *  pointing at them. */
   isMisc: boolean;
-  /** mig 243 — which way this word usually points. ⚠ A PICKER HINT THAT SORTS, never a constraint:
-   *  everything stays reachable in both directions, and the report takes a row's direction from
-   *  what was actually filed against it, never from here. Null on every club- and coach-created
-   *  item by design — guessing wrong is worse than not guessing. */
-  direction: 'in' | 'out' | null;
+  /**
+   * Which side of the books this word belongs to: `in` = money the team receives, `out` = money it
+   * spends. Added mig 243, **made mandatory by mig 246**.
+   *
+   * ⚠⚠ THIS COMMENT USED TO SAY THE OPPOSITE, and it was already false when /simplify found it.
+   * Mig 243 called it "a picker HINT that sorts, never a constraint", null on every club- and
+   * coach-created item by design. The owner's 2026-08-16 ruling — *a coach clicking income must not
+   * be offered expense items* — made it the thing the item list is FILTERED by, so mig 246
+   * backfilled every untagged row and set the column NOT NULL. Not nullable any more; a reader
+   * writing a `null` branch is defending against a state the database cannot produce.
+   *
+   * ⚠ The REPORT still never reads this. A row's direction comes from what was actually filed
+   * against it, which is why moving an item to the other side re-files nothing and moves no money.
+   */
+  direction: BudgetItemDirection;
   createdAt: string;
 }
 

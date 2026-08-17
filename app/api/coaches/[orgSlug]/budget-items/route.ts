@@ -7,6 +7,7 @@ import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
+  mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
   type BudgetItemTier, type OwnedBudgetItem,
 } from '@/lib/coach-budget-items';
 
@@ -14,25 +15,10 @@ import {
  *  before the local additions, and the additions read as additions. */
 const TIER_ORDER: Record<BudgetItemTier, number> = { platform: 0, club: 1, team: 2 };
 
-function mapItem(row: Record<string, unknown>): BudgetItem {
-  return {
-    id:              row.id as string,
-    categoryId:      row.category_id as string,
-    orgId:           row.org_id as string | null,
-    teamId:          (row.team_id as string | null) ?? null,
-    name:            row.name as string,
-    suggestedAmount: row.suggested_amount as number | null,
-    sortOrder:       row.sort_order as number,
-    isDefault:       row.is_default as boolean,
-    isMisc:          row.is_misc as boolean,
-    /* mig 243 — a hint the picker SORTS by, never a filter. A coach recording income meets income
-       words first and still reaches every other one, because guessing wrong is worse than not
-       guessing: a refund legitimately points at either, and concession takings really can be filed
-       against a word tagged `out`. Null on everything a club or a coach created. */
-    direction:       (row.direction as 'in' | 'out' | null) ?? null,
-    createdAt:       row.created_at as string,
-  };
-}
+/* ⚠ THE MAPPER MOVED TO `lib/coach-budget-items.ts` (/simplify, 2026-08-16). It was copied
+   byte-for-byte into three routes, and the copy that used to sit here carried a comment calling
+   `direction` a nullable sorting hint — thirty lines above the POST handler in this same file that
+   now REQUIRES it and filters by it. Aliased to `mapItem` so the call sites below read unchanged. */
 
 async function resolveCoachContext(orgSlug: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -67,9 +53,18 @@ export const GET = withObservability(async (req: Request,
   const denied = denyUnless(assignments.some(a => canViewMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  // Only a team this coach is actually assigned to can widen the list.
+  /* ⚠⚠ MONEY ACCESS IS CHECKED ON **THIS** TEAM, NOT ON ANY TEAM (/review, security lens,
+     2026-08-16). Being assigned was the only test, while the gate above merely asked whether the
+     coach could see money on SOME team they coach — so a head coach on team A (money: write by
+     default) who is also an assistant on team B with `money: 'off'` could read team B's whole budget
+     vocabulary, suggested amounts included, by naming team B here. Assistant money access is
+     three-state and per team precisely so a head coach can withhold it; a gate that leaks across
+     teams makes that setting a suggestion. Fails closed: no matching assignment ⇒ the team tier is
+     dropped, which is what the parameter already did for a team the coach does not coach at all. */
   const askedTeamId = new URL(req.url).searchParams.get('teamId');
-  const teamId = askedTeamId && assignments.some(a => a.teamId === askedTeamId) ? askedTeamId : null;
+  const teamId = askedTeamId
+    && assignments.some(a => a.teamId === askedTeamId && canViewMoney(a.capabilities))
+    ? askedTeamId : null;
   /* The team's SPORT decides which of the standard words it is offered (mig 241) — a basketball
      club has no use for Diamond Permits, and since mig 240 the item is the NAME of every budget
      row, so the wrong vocabulary is the coach's whole plan. Without a team named we cannot know
@@ -201,17 +196,13 @@ export const POST = withObservability(async (req: Request,
      without one would appear under neither pill: a coach could invent a word and immediately be
      unable to find it. The column is NOT NULL, so a create that skipped this would fail at the
      write anyway; refusing here is what turns that into a sentence rather than a 500. */
-  const direction: 'in' | 'out' | null =
-    body.direction === 'in' || body.direction === 'out' ? body.direction : null;
+  const direction = parseBudgetItemDirection(body.direction);
 
   if (!catId) {
     return NextResponse.json({ error: 'categoryId is required' }, { status: 400 });
   }
   if (!direction) {
-    return NextResponse.json(
-      { error: 'direction is required and must be "in" or "out" — an item has to belong to one side' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: BUDGET_ITEM_DIRECTION_REQUIRED }, { status: 400 });
   }
   if (!name || name.length > 80) {
     return NextResponse.json({ error: 'name is required and must be 80 characters or fewer' }, { status: 400 });
@@ -219,8 +210,15 @@ export const POST = withObservability(async (req: Request,
   // ⚠ REQUIRED, AND CHECKED AGAINST THIS COACH'S OWN ASSIGNMENTS. An item has to belong to a team
   // now, and accepting an unowned one would quietly recreate the org-wide behaviour this replaced —
   // silently, on a path that already works.
-  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
-    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
+  /* ⚠⚠ AND MONEY-WRITE IS CHECKED ON **THIS** TEAM (/review, security lens, 2026-08-16). Being
+     assigned was the only test here, while the gate at the top of the handler asked only whether the
+     coach could write money on SOME team — so a head coach on team A could add words to team B's
+     vocabulary while holding `money: 'off'` on team B. The sibling PATCH route written in this same
+     release does `a.teamId === teamId && canWriteMoney(...)`; this is the older door catching up. */
+  if (!teamId || !assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities))) {
+    return NextResponse.json({
+      error: 'teamId is required and must be a team whose finances you can edit',
+    }, { status: 400 });
   }
 
   // Verify category is accessible (platform default or this org's, team/both scope)
@@ -248,9 +246,17 @@ export const POST = withObservability(async (req: Request,
      show — they asked for an income word and got an expense one, which then vanishes from the list
      the moment the inline form closes. Same name, same side is the same word; same name, other
      side is a different word that happens to be spelled alike. */
+  /* ⚠ ONE PREDICATE, TWO FETCHES (/simplify, 2026-08-16). The pre-check below and the race-recovery
+     branch further down both ask "is this the same word?", and they were asking it in two
+     hand-written copies — so a change to what counts as the same name (trimming, casing) would have
+     had to land twice, with the race path the one nobody tests by hand. The FETCHES stay separate:
+     the recovery branch must re-read after a failed insert, or it would hand back the stale answer
+     that caused the collision. */
+  const sameWord = (i: Record<string, unknown>) =>
+    i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase();
+
   const visible = await listVisibleBudgetItems(ctx.org.id, teamId);
-  const sameName = visible.filter(i =>
-    i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase());
+  const sameName = visible.filter(sameWord);
   const already = sameName.find(i => (i.direction as string | null) === direction);
   if (already) return NextResponse.json({ item: mapItem(already) }, { status: 200 });
 
@@ -293,9 +299,8 @@ export const POST = withObservability(async (req: Request,
       /* ⚠ THE WINNER ONLY COUNTS IF IT POINTS THE SAME WAY (mig 246) — same reasoning as the
          pre-check above: handing back the other side's word answers the coach with an item their
          picker will not show. A winner on the other side is the collision case, not the race case. */
-      const winner = (await listVisibleBudgetItems(ctx.org.id, teamId)).find(i =>
-        i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase()
-        && (i.direction as string | null) === direction);
+      const winner = (await listVisibleBudgetItems(ctx.org.id, teamId))
+        .find(i => sameWord(i) && (i.direction as string | null) === direction);
       if (winner) return NextResponse.json({ item: mapItem(winner) }, { status: 200 });
       return NextResponse.json({
         error: `“${name}” already exists on your list on the other side. A word belongs to one side — `

@@ -4,15 +4,8 @@
   gap: 0.75rem;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-@media (max-width: 520px) {
-  .row { grid-template-columns: 1fr; }
-}
+/* ⚠ `.row` IS GONE (/simplify, 2026-08-16). It was the two-column grid holding the category and
+   item `<select>`s; both were replaced by the single combobox, and the rule outlived its markup. */
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 

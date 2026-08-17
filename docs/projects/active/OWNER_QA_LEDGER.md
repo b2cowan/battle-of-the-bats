@@ -6097,6 +6097,17 @@ typing) is in the mockup above and is a one-line change.
 **Fixture: `qa-money-lab`** (already seeded — do not rebuild), signed in as
 `qa-money-head@dev.local`.
 
+⚠ **The dev database holds only TWO team-created items in total** (verified against the live dev DB
+2026-08-16: 70 items, 63 expense / 7 income, 2 team-owned, 0 club-published). So §C's **Manage our
+items** button may not appear on this fixture at all — the door is gated on the team owning at least
+one word. **Create one first** (record anything and type a name the list does not have), then walk
+§C. A green walk over a team with no words of its own proves nothing about that screen.
+
+⚠⚠ **`/review` found five defects after the build and all but one are fixed — three of them are
+things this walk should confirm rather than assume.** Watch specifically for: the item you invent
+inside the form keeping its name (§B), the family being named rather than called *"that family"*
+(§D), and a rename made in §C showing up on the money form's picker without a reload.
+
 ### A · Two pills and a tick box
 
 - [ ] **Money → Transactions → Add.** The top of the form is two buttons — **Expense** and

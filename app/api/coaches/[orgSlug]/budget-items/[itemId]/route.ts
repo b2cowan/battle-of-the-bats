@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
-import type { BudgetItem } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import {
+  mapBudgetItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
+} from '@/lib/coach-budget-items';
 
 /**
  * A TEAM'S OWN WORDS, CORRECTABLE (Money form P2, owner ruling 2026-08-16).
@@ -32,22 +34,6 @@ import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
  * the picker, which is why the form keeps showing a record's OWN item even when it now points the
  * other way: a saved row must never lose its item because a word moved.
  */
-function mapItem(row: Record<string, unknown>): BudgetItem {
-  return {
-    id:              row.id as string,
-    categoryId:      row.category_id as string,
-    orgId:           row.org_id as string | null,
-    teamId:          (row.team_id as string | null) ?? null,
-    name:            row.name as string,
-    suggestedAmount: row.suggested_amount as number | null,
-    sortOrder:       row.sort_order as number,
-    isDefault:       row.is_default as boolean,
-    isMisc:          row.is_misc as boolean,
-    direction:       (row.direction as 'in' | 'out' | null) ?? null,
-    createdAt:       row.created_at as string,
-  };
-}
-
 // PATCH /api/coaches/[orgSlug]/budget-items/[itemId]
 //   { teamId, name?, direction? }
 export const PATCH = withObservability(async (req: Request,
@@ -102,10 +88,14 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   if ('direction' in body) {
-    if (body.direction !== 'in' && body.direction !== 'out') {
-      return NextResponse.json({ error: 'direction must be "in" or "out"' }, { status: 400 });
+    /* ⚠ THE SAME PARSER AND THE SAME SENTENCE AS BOTH CREATE DOORS (/simplify, 2026-08-16). This
+       route shipped with its own hand-rolled check and its own wording — a rule that had drifted
+       into three spellings on the day it was written. */
+    const direction = parseBudgetItemDirection(body.direction);
+    if (!direction) {
+      return NextResponse.json({ error: BUDGET_ITEM_DIRECTION_REQUIRED }, { status: 400 });
     }
-    updates.direction = body.direction;
+    updates.direction = direction;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -131,5 +121,5 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ item: mapItem(data) });
+  return NextResponse.json({ item: mapBudgetItem(data) });
 }, { route: '/api/coaches/[orgSlug]/budget-items/[itemId]' });

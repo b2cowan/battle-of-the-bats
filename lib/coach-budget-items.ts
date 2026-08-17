@@ -27,8 +27,62 @@
 
 import { supabaseAdmin } from './supabase-admin';
 import { normalizeSportId } from './sports';
+import type { BudgetItem, BudgetItemDirection } from './types';
 
 export type BudgetItemTier = 'platform' | 'club' | 'team';
+
+/**
+ * WHICH SIDE OF THE BOOKS A WORD BELONGS TO (mig 243, mandatory since mig 246).
+ *
+ * ⚠ NOT NULLABLE, and that is the migration's whole point — see the note on `BudgetItem.direction`.
+ * Re-exported from here because this module owns every RULE about it (the parser, the refusal
+ * sentence, the mapper), so a caller reaching for those takes the type from the same door.
+ */
+export type { BudgetItemDirection };
+
+/**
+ * Read a direction off an untrusted request body.
+ *
+ * ⚠ ONE PARSER, THREE WRITE DOORS (/simplify, altitude + reuse lenses, 2026-08-16). The coach item
+ * POST, the club-admin item POST and the coach item PATCH each hand-rolled this check on the day
+ * they were written, and the three had **already drifted on arrival**: two normalised-then-tested
+ * for null with one sentence, the third tested for inequality with a different one. A rule with
+ * three spellings on its first day has no chance of surviving its fourth call site.
+ */
+export function parseBudgetItemDirection(raw: unknown): BudgetItemDirection | null {
+  return raw === 'in' || raw === 'out' ? raw : null;
+}
+
+/** The one sentence every door refuses with, so a coach meets one wording wherever they are. */
+export const BUDGET_ITEM_DIRECTION_REQUIRED =
+  'direction is required and must be "in" or "out" — an item has to belong to one side';
+
+/**
+ * A `budget_items` row → the shape every client reads.
+ *
+ * ⚠ ONE MAPPER, THREE ROUTES (/simplify, 2026-08-16). This was copied byte-for-byte into the coach
+ * items route, the club-admin items route and (by this very release) the new coach item PATCH — and
+ * the duplication had already gone wrong in the way duplication does: two of the copies carried a
+ * comment describing `direction` as a nullable sorting hint, thirty lines above validation in the
+ * same file that now REQUIRES it and filters by it. A reader trusts the comment beside the field.
+ * It lives here because this module already owns `budgetItemTier` and `itemVisibleToTeam` for the
+ * same reason — one definition, every surface.
+ */
+export function mapBudgetItem(row: Record<string, unknown>): BudgetItem {
+  return {
+    id:              row.id as string,
+    categoryId:      row.category_id as string,
+    orgId:           row.org_id as string | null,
+    teamId:          (row.team_id as string | null) ?? null,
+    name:            row.name as string,
+    suggestedAmount: row.suggested_amount as number | null,
+    sortOrder:       row.sort_order as number,
+    isDefault:       row.is_default as boolean,
+    isMisc:          row.is_misc as boolean,
+    direction:       row.direction as BudgetItemDirection,
+    createdAt:       row.created_at as string,
+  };
+}
 
 /** Anything with the ownership columns and the sport tag — all any reader here needs. */
 export interface OwnedBudgetItem {

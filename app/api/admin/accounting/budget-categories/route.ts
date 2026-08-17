@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { mapBudgetItem } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -26,20 +27,14 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
     // org's own budget tools, where a single team's private vocabulary has no business appearing;
     // the club sees those on the dedicated team-items screen, where each carries the team that owns
     // it and can be published to everyone.
-    items:      ((row.budget_items ?? []) as Record<string, unknown>[]).filter(item => !item.team_id).map(item => ({
-      id:              item.id as string,
-      categoryId:      item.category_id as string,
-      orgId:           item.org_id as string | null,
-      teamId:          (item.team_id as string | null) ?? null,
-      name:            item.name as string,
-      suggestedAmount: item.suggested_amount as number | null,
-      sortOrder:       item.sort_order as number,
-      isDefault:       item.is_default as boolean,
-      isMisc:          item.is_misc as boolean,
-      // mig 243 — the money-in/money-out hint. Platform rows only; a club's own items are null.
-      direction:       (item.direction as 'in' | 'out' | null) ?? null,
-      createdAt:       item.created_at as string,
-    })).sort((a, b) => {
+    /* ⚠ THE FOURTH COPY OF THE MAPPER LIVED HERE, INLINE (/simplify, 2026-08-16) — the three the
+       cleanup pass set out to merge were the named ones; this one hid inside a `.map()` and was
+       found only because tightening `BudgetItem.direction` to non-null made it a type error. Its
+       comment claimed "platform rows only; a club's own items are null", which mig 246 ended. */
+    items:      ((row.budget_items ?? []) as Record<string, unknown>[])
+      .filter(item => !item.team_id)
+      .map(mapBudgetItem)
+      .sort((a, b) => {
       if (a.isMisc !== b.isMisc) return a.isMisc ? 1 : -1;
       return a.sortOrder - b.sortOrder;
     }),

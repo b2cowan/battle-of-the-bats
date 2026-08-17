@@ -265,6 +265,22 @@ const BLANK_RECORD = {
    *  reports group on. Empty until the coach chooses — nothing is assumed for them. */
   budgetCategoryId: '',
   budgetItemId: '',
+  /**
+   * The chosen item's NAME, as the picker reported it (/review, 2026-08-16 — Critical).
+   *
+   * ⚠⚠ WITHOUT THIS, AN ITEM CREATED INSIDE THE FORM HAS NO NAME HERE. The picker keeps its own
+   * copy of the library and appends an inline-created item to that copy alone — this panel's
+   * `categories` does not learn about it until the next full reload, which happens on SAVE. So
+   * every reader that looked the name up by id got nothing for exactly the item a coach had just
+   * invented: the picker rendered "Equipment · " with a blank half, and — the real damage — the
+   * description rule could not recognise its own pre-fill, so picking a DIFFERENT item afterwards
+   * left the first item's name sitting on the record. "Bat bag" saved against Umpire fees: the
+   * name/thing mismatch this whole taxonomy exists to prevent, reintroduced through the create path.
+   *
+   * ⚠ NOT SENT TO THE SERVER and not stored: the item id is the record. This is the form
+   * remembering what it was told, instead of asking a list that lags behind it.
+   */
+  budgetItemName: '',
   amount: '',
   notes: '',
   paymentMethod: '',
@@ -437,6 +453,10 @@ function formFromMoneyIn(m: RepTeamMoneyIn): typeof BLANK_RECORD {
     description: m.description ?? '',
     budgetCategoryId: m.budgetCategoryId ?? '',
     budgetItemId: m.budgetItemId ?? '',
+    /* An arrival carries its item's NAME as well as its id — the reader joins it — so the form can
+       be seeded directly. A cost cannot: `RepTeamExpense` stores ids only, and `chosenItemName`
+       falls back to the library lookup for those, which is always loaded for a saved record. */
+    budgetItemName: m.budgetItemName ?? '',
     amount: String(m.amount),
     notes: m.notes ?? '',
     receivedDate: m.receivedDate,
@@ -608,6 +628,45 @@ function MoneyRecordsPanel({
    */
   const formSide: 'in' | 'out' = entryKind === 'income' ? 'in' : 'out';
   /**
+   * The item a set of form values points at, or null.
+   *
+   * ⚠ ONE LOOKUP, THREE READERS (/simplify, 2026-08-16). The category→item find→find chain was
+   * written out three times in this file — in the picker field, in the refund consequence sentence,
+   * and in `setEntrySide` — and the third copy had already dropped one branch of the shared rule.
+   * It takes the values rather than reading `form` because `setEntrySide` runs inside a functional
+   * updater, where the render-scope `form` is the stale one.
+   */
+  const itemFor = useCallback((values: Pick<typeof BLANK_RECORD, 'budgetCategoryId' | 'budgetItemId'>) =>
+    (categories.find(c => c.id === values.budgetCategoryId)?.items ?? [])
+      .find(i => i.id === values.budgetItemId) ?? null,
+  [categories]);
+  /**
+   * What the chosen item is CALLED — the form's own memory first, the library second.
+   *
+   * ⚠⚠ THE ORDER IS THE FIX (/review, Critical). The library lookup alone cannot name an item the
+   * coach created inside this form, because the picker adds it to its own copy and this panel does
+   * not reload until the save. `budgetItemName` is what the picker actually handed us, so it is
+   * right in exactly the case the lookup is wrong; the lookup still covers a record opened from a
+   * list, which carries ids and no name (`RepTeamExpense` stores no item name).
+   */
+  const chosenItemName = useCallback((values: typeof BLANK_RECORD) =>
+    values.budgetItemName || itemFor(values)?.name || '',
+  [itemFor]);
+  /**
+   * Is this description still just the item's own pre-filled name?
+   *
+   * ⚠⚠ THE RULE THAT DECIDES WHETHER A COACH'S TYPING SURVIVES, and it had two definitions. The
+   * picker's `onChange` and `setEntrySide` each spelled it out, and they disagreed: only one
+   * treated an EMPTY description as untouched. That happened not to matter because the two paths
+   * clear different things — which is precisely the kind of accident that stops being true when a
+   * third caller arrives.
+   */
+  const isItemLabel = useCallback((values: typeof BLANK_RECORD) => {
+    const previousName = chosenItemName(values);
+    return values.description.trim() === ''
+      || (previousName !== '' && values.description.trim() === previousName);
+  }, [chosenItemName]);
+  /**
    * Press a pill.
    *
    * ⚠ THE ITEM CLEARS AND THE DESCRIPTION FOLLOWS IT. Since mig 246 the picker offers one side's
@@ -620,18 +679,14 @@ function MoneyRecordsPanel({
   function setEntrySide(side: 'in' | 'out') {
     if (side === formSide) return;
     setFormKind(side === 'in' ? 'income' : 'expense');
-    setForm(f => {
-      const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
-        .find(i => i.id === f.budgetItemId) ?? null;
-      const untouched = previous !== null && f.description.trim() === previous.name;
-      return {
-        ...f,
-        budgetCategoryId: '',
-        budgetItemId: '',
-        category: '',
-        description: untouched ? '' : f.description,
-      };
-    });
+    setForm(f => ({
+      ...f,
+      budgetCategoryId: '',
+      budgetItemId: '',
+      budgetItemName: '',
+      category: '',
+      description: isItemLabel(f) ? '' : f.description,
+    }));
   }
   /** Opened by Mark paid — the money door standing over a commitment, not the commitment's form. */
   const isSettling = !!settling;
@@ -933,8 +988,15 @@ function MoneyRecordsPanel({
   // every mount (the same lazy rule this panel already applies to the schedule tab, and the
   // payee picker to its own search). Best-effort: a failure just means the picker offers only
   // "The team", never a broken form.
+  /* ⚠⚠ GATED ON `entryKind`, NEVER THE RAW `formKind` (/review, 2026-08-16 — High). `formKind` is
+     written only by `openAdd` and the refund tick, and `resetForm` deliberately leaves it alone —
+     so it goes STALE the moment a coach opens Add Income, cancels, and then edits a cost. The
+     effective kind of a saved record is `entryKind`, derived from the record itself.
+     The stale gate meant the roster never loaded for the rest of that session, and this release is
+     what made it visible: the consequence line names the family from `roster`, so an out-of-pocket
+     cost read "the team owes that family" in the one sentence built to say WHICH household. */
   useEffect(() => {
-    if (!formOpen || formKind !== 'expense' || roster.length > 0) return;
+    if (!formOpen || entryKind !== 'expense' || roster.length > 0) return;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -942,7 +1004,7 @@ function MoneyRecordsPanel({
         setRoster(players.filter((p: { status?: string }) => !p.status || p.status === 'active'));
       })
       .catch(() => {});
-  }, [formOpen, formKind, roster.length, orgSlug, teamId]);
+  }, [formOpen, entryKind, roster.length, orgSlug, teamId]);
 
   // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
   // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
@@ -1577,8 +1639,7 @@ function MoneyRecordsPanel({
          design rests on — and it leaves nobody owed anything, which is the half a coach confuses
          with "a family paid the vendor directly". */
       if (entryKind === 'refund') {
-        const item = categories.find(c => c.id === form.budgetCategoryId)?.items
-          .find(i => i.id === form.budgetItemId)?.name;
+        const item = chosenItemName(form);
         return line(<>
           <strong>When you save:</strong> {money} comes back in{when}, and{' '}
           {item ? <><strong>{item}</strong> drops by {money}</> : <>the item you chose drops by {money}</>}
@@ -1594,13 +1655,18 @@ function MoneyRecordsPanel({
     // ── A cost. Four states, and the out-of-pocket one is why this exists ──
     if (form.paidByPlayerId) {
       const player = roster.find(p => p.id === form.paidByPlayerId);
-      const family = player
+      const named = player
         ? [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')
-        : 'that family';
+        : '';
+      /* ⚠ THE FALLBACK IS A WHOLE PHRASE, NOT A NAME (/review, 2026-08-16). It used to substitute
+         the string "that family" into "<name>'s family", which read "that family's family" the
+         moment the roster had not loaded — the exact state the stale roster gate above used to
+         produce. A missing name now costs the possessive, not the grammar. */
       return line(<>
         <strong>When you save: no team cash moves.</strong> {money} counts in the budget as usual,
-        and the team owes <strong>{family}</strong>’s family {money} — saved as a credit you can put
-        against their dues or pay out any time.
+        and the team owes{' '}
+        {named ? <><strong>{named}</strong>’s family</> : <>that family</>} {money} — saved as a
+        credit you can put against their dues or pay out any time.
       </>);
     }
     if (form.paidDate) {
@@ -1673,8 +1739,10 @@ function MoneyRecordsPanel({
    */
   function budgetItemField() {
     const category = categories.find(c => c.id === form.budgetCategoryId) ?? null;
-    const items = category?.items ?? [];
-    const chosenItem = items.find(i => i.id === form.budgetItemId) ?? null;
+    // Through the shared lookup, so the three readers of "which item is chosen?" stay one rule.
+    // Through the shared resolver, so a word created inside this form is named here too rather
+    // than falling back to a bare "This".
+    const chosenName = chosenItemName(form);
     const wantIn = entryKind === 'income';
 
     /* Does the team's plan actually budget for this? Derived here purely to SAY so at entry time —
@@ -1722,7 +1790,7 @@ function MoneyRecordsPanel({
             categoryId:      form.budgetCategoryId,
             categoryName:    category?.name ?? form.category,
             itemId:          form.budgetItemId,
-            itemName:        chosenItem?.name ?? '',
+            itemName:        chosenItemName(form),
             suggestedAmount: null,
           } : null}
           /* ⚠ A REFUND CHOOSES FROM THE EXPENSE LIST — see `formSide`. The tick box flips which way
@@ -1734,36 +1802,32 @@ function MoneyRecordsPanel({
           createItemMode="coach"
           allowCreateCategory
           manageHint="You can rename it or move it across from Budget Plan → Manage our items."
-          onChange={v => setForm(f => {
-            /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a description
-               that is empty, or one still holding the name of the item being switched AWAY from —
-               text this control put there and nobody has touched. Preserved verbatim from the two
-               selects this replaced: it is the reason the description field is usually already
-               answered by the time a coach reaches it. */
-            const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
-              .find(i => i.id === f.budgetItemId) ?? null;
-            const untouched = f.description.trim() === ''
-              || (previous !== null && f.description.trim() === previous.name);
-            return {
-              ...f,
-              budgetCategoryId: v.categoryId,
-              budgetItemId:     v.itemId ?? '',
-              // The free-text `category` column every legacy reader still uses. The server derives
-              // its own from the item, so this can never be the thing they disagree about.
-              category:         v.categoryName,
-              description:      untouched ? v.itemName : f.description,
-            };
-          })}
+          /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a description that
+             is empty, or one still holding the name of the item being switched AWAY from — text this
+             control put there and nobody has touched. That test is `isItemLabel`, shared with the
+             pill switch so the two cannot drift. */
+          onChange={v => setForm(f => ({
+            ...f,
+            budgetCategoryId: v.categoryId,
+            budgetItemId:     v.itemId ?? '',
+            // ⚠ REMEMBER THE NAME THE PICKER JUST GAVE US — see `budgetItemName` on BLANK_RECORD.
+            // An item created inside this form exists in no list this panel can read yet.
+            budgetItemName:   v.itemName,
+            // The free-text `category` column every legacy reader still uses. The server derives
+            // its own from the item, so this can never be the thing they disagree about.
+            category:         v.categoryName,
+            description:      isItemLabel(f) ? v.itemName : f.description,
+          }))}
         />
         {/* Honest at entry time, exactly as the old category warning was — one level finer, and
             now describing a row the coach will actually see rather than a list they might not. */}
         {unplanned && fieldWarning(
           wantIn
-            ? `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as income you didn’t plan for.`
-            : `${chosenItem?.name ?? 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
+            ? `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as income you didn’t plan for.`
+            : `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
         )}
         {derived && fieldWarning(
-          `${chosenItem?.name ?? 'This row'}’s actual already comes from your fundraisers and sponsors. Record the money there — logging it here as well would count it twice.`,
+          `${chosenName || 'This row'}’s actual already comes from your fundraisers and sponsors. Record the money there — logging it here as well would count it twice.`,
         )}
         {/* ⚠ "PICK AN ITEM TOO" IS GONE, AND THAT IS THE POINT OF ONE CONTROL. It existed because
             the two chained selects let a coach answer half the question — a category with no item —

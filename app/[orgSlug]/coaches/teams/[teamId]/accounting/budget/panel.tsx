@@ -14,7 +14,7 @@ import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal'
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
-import { useMoneyRevision } from '@/lib/coach-money-refresh';
+import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
@@ -766,6 +766,8 @@ export function BudgetPlanPanel({
   // but off-screen — the panel re-READS rather than remounting, so a half-filled line form on
   // another tab is never thrown away. Outside the hub the revision is a constant 0.
   const moneyRevision = useMoneyRevision();
+  /** Tells the other mounted money tabs to re-read — see the note on the item manager's `onChanged`. */
+  const bumpMoneyRevision = useBumpMoneyRevision();
   useEffect(() => { load(); }, [load, moneyRevision]);
 
   // Deep link from the Money hub / Dues page: ?generate=1 opens the Generate
@@ -1278,6 +1280,15 @@ export function BudgetPlanPanel({
      not changed. */
   const allLines = useMemo(() => plan?.lines ?? [], [plan]);
   const groups   = useMemo(() => groupLines(allLines), [allLines]);
+  /** How many of the words in this team's picker the team itself created — the gate on the
+   *  "Manage our items" door, since the modal can only ever change those.
+   *  ⚠ UP HERE WITH THE OTHER MEMOS, ABOVE THE EARLY RETURNS. It is memoised for the same reason
+   *  they are — the line-edit form's state lives in this component, so an un-memoised version
+   *  re-scans every category on every keystroke — and a hook below `if (ctxLoading) return` would
+   *  change hook order between renders. */
+  const ownItemCount = useMemo(
+    () => categories.reduce((n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0),
+    [categories, teamId]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
@@ -1327,11 +1338,6 @@ export function BudgetPlanPanel({
 
   // Rule 5, one name one weight: every page's main create is the FILLED LIME button. Add Line
   // was outlined while New Fundraiser one tab away was filled — the same job, two weights.
-  /** How many of the words in this team's picker the team itself created — the gate on the manage
-   *  door, since the modal can only ever change those. */
-  const ownItemCount = categories.reduce(
-    (n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0);
-
   const addLineButton = moneyCanWrite ? (
     <>
       <button type="button" className={shared.btnPrimary} onClick={openAdd}>
@@ -2457,7 +2463,13 @@ export function BudgetPlanPanel({
           teamId={teamId}
           categories={categories}
           onClose={() => setItemManagerOpen(false)}
-          onChanged={() => { void load(); }}
+          /* ⚠⚠ THE BUMP IS NOT OPTIONAL (/review, concurrency lens, 2026-08-16). `load()` refreshes
+             THIS panel only, and the hub keeps every visited tab mounted — so a rename made here
+             left the money form's own picker, one tab over, showing the old name and the old side
+             for the rest of the session, silently suppressing the "on the other side" badge this
+             same release built. Every other money write path in the hub bumps this; the new modal
+             simply had not joined them. */
+          onChanged={() => { void load(); bumpMoneyRevision(); }}
         />
       )}
 

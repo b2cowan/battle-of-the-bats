@@ -413,6 +413,55 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
    income word, and no such record exists — so under **Income** the tick is disabled with the reason
    rather than hidden, because the Money-in door is exactly where a coach reaches for a refund.
 
+   **`/simplify` (4 lenses) — 8 applied, 4 skipped.** The mapper from a `budget_items` row to the
+   client shape existed in **four** byte-for-byte copies; two carried comments calling `direction` a
+   nullable sorting hint, thirty lines above validation in the same file that now requires it. One
+   shared mapper, one shared parser, one shared refusal sentence, and `BudgetItem.direction` tightened
+   to non-nullable — which is what surfaced the fourth copy (it was inline inside a `.map()` and only
+   a type error could find it). Also: one shared "is this description still the item's own name?"
+   test (the two copies had already diverged), one shared item lookup replacing three, two
+   per-keystroke scans memoised, two dead CSS rules. **Skipped with reasons:** extracting a shared
+   combobox hook (a refactor of a shipped component, outside this diff), sharing the rename row with
+   the tag manager (the two modals' other actions differ — a worse abstraction), a shared dropdown
+   stylesheet (the picker spans two stylesheet worlds and cannot import either), and parallelising
+   the item PATCH's ownership read with its auth check (that would run the read for unauthorised
+   callers). Both lenses that looked also agreed `direction` does **not** deserve the build-enforced
+   literal-ban guard `line_kind` has — that guard exists because line kinds grew 2→3, and direction
+   is permanently binary.
+
+   **`/review` (high-risk tier, 5 lenses) — five real defects, all fixed in the same pass:**
+   - ⚠⚠ **Critical — an item created inside the form lost its name, and took a description with it.**
+     The picker appends an inline-created word to its own copy of the library; this panel does not
+     reload until the save, so every reader that looked the name up by id got nothing for exactly the
+     word a coach had just invented. The box rendered "Equipment · " with a blank half — and worse,
+     the description rule could not recognise its own pre-fill, so choosing a *different* word
+     afterwards left the first one's name on the record. **"Bat bag" saved against Umpire fees:** the
+     name/thing mismatch this taxonomy exists to prevent, reintroduced through the create path. The
+     form now remembers the name the picker handed it rather than asking a list that lags.
+   - **High — the roster never loaded, so the family was never named.** The fetch behind *Paid by* was
+     gated on the raw kind state, which `resetForm` deliberately never clears — so opening Add Income
+     once, cancelling, then editing an out-of-pocket cost starved it for the rest of the session. This
+     release is what made it visible: the consequence line reads the roster, so the one sentence built
+     to say WHICH household said *"the team owes that family's family"* — wrong name and broken
+     grammar in the same line. Gated on the derived kind now, and the fallback is a whole phrase.
+   - **Medium-High (pre-existing, fixed) — money access leaked across teams.** Both the item list and
+     the item create asked "can this coach see/write money on SOME team?" and then accepted any team
+     they were merely assigned to. Assistant money access is three-state and per team precisely so a
+     head coach can withhold it — so a head coach on one team could read another team's budget
+     vocabulary and add words to it while holding `money: 'off'` there. The PATCH route written in
+     this release already scoped it correctly; the older doors now match.
+   - **Medium — a rename was invisible one tab over.** The item manager refreshed its own screen but
+     never bumped the shared money revision, so the money form's picker kept the old name and the old
+     side for the rest of the session — silently suppressing the "on the other side" badge this same
+     release built. Every other money write path bumps it; the new modal had not joined them.
+   - **Advisory, NOT fixed, out of scope and pre-existing:** publishing a club-wide item absorbs
+     same-named duplicates and re-points budget lines and expenses before deleting them — but not
+     `rep_team_money_in`, whose FK is `ON DELETE SET NULL`. Any income or refund filed against the
+     absorbed twin silently loses its item. It predates this work (it arrived with mig 243), but
+     mig 246 makes it *more* reachable, because the uniqueness index does not include direction, so
+     two same-named words on opposite sides can now legitimately coexist and be merged. **Logged as
+     debt; needs its own fix.**
+
    **What the checks do and do not prove:** `check:layout` measures the three screens with the modal
    **closed**, so it proves the tab bars and lists still lay out at four widths and proves nothing
    about the form. Its 16 "new" findings were traced to the portal's unread-notification badge —
@@ -421,12 +470,24 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
 3. **P3 — The Register.** The date-sorted book with running balance; derived rows from Dues /
    Fundraising / Club; balance ≡ Cash on hand (build-blocking test); filter strip; scheduled
    overlay with projected balances and Mark paid; Overview's panel becomes its window; exports
-   move. *Owner QA: the balance reconciliation and the overlay.*
+   move; **the arrivals list finally retires the name "Money in"** (the rename P1 deliberately
+   deferred until the register's separate Income and Refunds filters make the word true).
+   *Owner QA: the balance reconciliation and the overlay.*
+   **Build prompt:** `COACH_MONEY_SPLIT_P3_BUILD_PROMPT.md` (fresh chat).
 4. **P4 — Club.** Its own short mockup pass (name settled: Club vs Org), then the merge; demo seed
    gains club money. *Owner QA: the combined story + the register's club rows.*
 
 ⚠ P1–P3 all touch one form and one tab bar — **run them serially, never as parallel sessions**
-(the lesson the taxonomy plan's §7.1 is built on). Fixture: **`qa-money-lab`** is already prepared
+(the lesson the taxonomy plan's §7.1 is built on).
+
+⚠ **THAT RULE IS ABOUT THIS PLAN'S OWN PHASES, AND ONE OTHER PROJECT IS DELIBERATELY EXEMPT.**
+`COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` (the three doors that delete a budget word out from under the
+records pointing at it — found by P2's `/review`) **runs beside P3 on purpose**: it owns the two
+admin item routes, the item manager modal, the picker's internals and its own migration, while P3
+owns the Transactions face, the Overview panel and the exports. Neither edits the other's files —
+the boundary is tabulated in that plan's §6, checked file by file rather than assumed. ⚠ Its first
+phase must reach production **with or before** this plan's P2, because two of those doors are live
+and migration 246 is already in the queue. Fixture: **`qa-money-lab`** is already prepared
 (2026-08-16) — do not rebuild it; P3 will want one team with derived rows from all three sources
 (the demo 14U qualifies).
 
