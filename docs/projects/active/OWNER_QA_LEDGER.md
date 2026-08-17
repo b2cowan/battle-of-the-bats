@@ -5640,6 +5640,8 @@ G and H are the guards around them.
 
 ## §39 · The team is the account — staff membership (M1, Phase 1)
 
+> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+
 **Built on dev 2026-08-16 · not on production · migration 245 APPLIED TO DEV ONLY.**
 Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P1. Decision mockups: artifact `aa758bcb`.
 Passed `/simplify` (18 findings applied) and the full `/review` funnel (5 lenses; 1 Critical +
@@ -5725,6 +5727,8 @@ ships the same day, the way the invisible-help-text defect did on 2026-08-03.
 this is now most of the newest work, not two odds and ends:
 
 ## §40 · The season toggle comes out — history is delivered in place (M1, Phase 2)
+
+> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
 
 **Committed `fd7c2c3e` 2026-08-16 · not on production · NO migration, no new table, no new API route.**
 Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P2. Decision mockups: artifact `aa758bcb` §10.
@@ -5991,6 +5995,8 @@ silently, so it is worth doing carefully.*
 ---
 
 ## §42 · The practices you ran — the practice-plans shelf (M1, Phase 3)
+
+> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
 
 **Built on dev 2026-08-16 · not on production · NO migration.** Plan:
 `COACH_PRACTICE_PLANS_SHELF_PLAN.md`. Mockups: artifact `f42be4f3`. Owner gate for the shelf passed
@@ -7172,6 +7178,8 @@ your decision queue, not for walking.
 
 ## §52 · The closed money book — how a finished season added up (M1, Phase 4)
 
+> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+
 **Built on dev 2026-08-17 · not on production · NO migration, and no new API route.**
 Plan: `COACH_MONEY_PAST_SEASON_BOOK_PLAN.md`. Mockups: artifact `3cbb9ecd`. The owner design gate
 passed 2026-08-17 before any of it was built. Walk **§42 first** — this is the second shelf on the
@@ -7253,6 +7261,226 @@ lands **over** and another **under**. Any rolled-forward team serves for section
       confirm you still agree — and note it is deliberately the **opposite** call to playing time,
       which stays live-season-only for the same recomputation reason.
 - [ ] **Help → Money** gained a topic: *What happens to the books when the season ends*.
+
+---
+
+## §53 · HISTORY, END TO END — the one walkthrough for §39 · §40 · §42 · §52
+
+**Consolidated 2026-08-17. This REPLACES walking §39, §40, §42 and §52 separately — walk this
+instead.** Nothing is dropped: every check from all four lives below, re-ordered. The four original
+sections stay in place as the per-phase record of what each was for and why; this is the route
+through them.
+
+**Why it exists:** the four phases of history-in-place shipped separately and each grew its own
+section, so the same expensive actions were written four times — the helper sign-in appears in three
+of them, the between-seasons team in all four, and two checks are word-for-word duplicates. Walked
+as written, that is roughly a dozen sign-ins and as many team switches to cover 81 checks.
+
+**What changed in the ordering, and why:**
+- **Grouped by SIGN-IN, then by TEAM** — those are the only genuinely expensive operations. Five
+  sign-ins instead of ~12.
+- **The LIVE season goes first.** Most of the finished-season checks are really comparisons
+  ("unchanged", "still there", "not offered here"), and they are worth far more once you have just
+  seen the live baseline with your own eyes.
+- **Destructive last.** Removing and re-adding a coach (§39 A) changes the fixture, so it sits at the
+  end where it cannot disturb anything above it.
+- **Judgement calls last.** Every ⚖ item — the wording, the two rulings to confirm in place — is
+  collected in Phase 8, to be answered once you have seen the whole thing rather than screen by
+  screen.
+- **Two duplicates collapsed:** *"nothing points the portal at a past year"* (§42 E and §52 E, the
+  same check) and *"the live screens are unchanged"* (§42 C and §52 E). Each is now asked once, in
+  Phase 1, where the live season is already on screen.
+
+**Fixtures — both already seeded, do not rebuild.** In the UAT coach world: the ordinary team (a
+live season, with a finished one behind it — called **the live team** below) and **UAT Between
+Seasons** (finished seasons only, no live year — **the between-seasons team**). Reseed with the
+coach fixture script if anything looks empty; the money and practices shelves both need their
+season to actually hold content, and an empty shelf proves nothing.
+
+⚠ **§39 · §40 · §42 are ALREADY ON PRODUCTION** (2026-08-17, job 257) — by your explicit call to ship
+ahead of the walk. §52 is on dev only. So Phases 1–8 can be walked against the live site except for
+the money book, which needs dev.
+
+---
+
+### Phase 0 · Preflight (2 minutes)
+
+- [ ] Sign in as the head coach. Confirm you can name **which team is which** — the live team and
+      the between-seasons team — before you start; nearly every check below is "this one, not that
+      one".
+- [ ] Open the between-seasons team's **Season's End** and confirm it has content: a wrap-up card,
+      a practices shelf and a money shelf. If a shelf is missing, the fixture needs reseeding — stop
+      and do that, or Phases 2 and 5 will pass over an absence.
+
+### Phase 1 · The live team, as head coach — the baseline (§40 A · §40 D · §40 E · §42 C · §42 D · §52 E)
+
+*Everything here is about what the live season still looks like. Do it first so the comparisons later mean something.*
+
+- [ ] **No season dial anywhere.** No dropdown in the sidebar, no chip beside the page title.
+- [ ] On a phone or narrow window, open **More** — no *"This team's seasons"* list.
+- [ ] The masthead still names the season and the team, as before.
+- [ ] **Insights** shows *both* reports that a finished season hides: *"Where is playing time
+      going?"* and *"Who are we up against?"*. (If either is missing here, it is missing for a
+      capability reason, not a season one — and the Phase 2 check that they are absent would then
+      prove nothing.)
+- [ ] **A stale bookmark is harmless.** Paste a URL for this team with `?year=` set to one of its
+      finished seasons. You get **this** season's roster, not the finished one.
+- [ ] **The live money screens are unchanged** — Budget, Dues, Fundraisers, Transactions, Payables,
+      Club and Budget vs Actual all behave exactly as they did. *(Asked once here; it was written
+      into both §42 and §52.)*
+- [ ] **The live practice screens are unchanged** — Practice plans and any individual practice.
+- [ ] Open an upcoming practice → **Start this plan from…**. Three tabs: *A template*, *A previous
+      practice*, **A past season**.
+- [ ] Open **A past season**. Each row names the **season it came from** and its date. ⚠ A row you
+      could mistake for this year's work is the one way this list can do harm — say if any reads
+      ambiguously.
+- [ ] Pick one. Tonight's plan fills in with the blocks and words; **the groups are empty** (last
+      year's players are not on this year's roster); **nothing was added to your template library**.
+- [ ] Go and look at the practice you copied from — **unchanged**.
+- [ ] This season's own practices are **not** offered under that tab (they are already the *previous
+      practice* tab), so nothing appears twice.
+- [ ] ⚠ On a team planning its **first practice of a brand-new season with no templates yet**, the
+      *Start this plan from…* button is still offered. This is the coach the feature exists for.
+
+### Phase 2 · The live team, reaching LAST year — the case every phase exists for (§42 C · §52 C)
+
+*This is the heart of it. Everything above is reachable while a season is finished; this is what breaks the day a new one starts.*
+
+- [ ] **Insights → How are we doing? →** scroll to **Past seasons**. Each row has a **Season
+      Wrapped →** link. Open one for an **older** season.
+- [ ] That page carries **the practices you ran** for **that** year — not this year's.
+- [ ] Open one. It is that year's plan, read-only. Come back: you are still on that year's page.
+- [ ] The same page carries **How the season added up** for **that** year.
+- [ ] ⚠ Now open the live **Money → Budget vs Actual** on the same team. It still shows the
+      **current** season. A route answering for the wrong year would look perfectly healthy on
+      either screen alone — it is the pair that catches it.
+
+### Phase 3 · The between-seasons team, as head coach — the portal (§40 B · §40 C · §40 D · §39 C · §39 D)
+
+- [ ] Open the team. You land on **Season's End**.
+- [ ] The sidebar is **your normal menu in your normal order** — the only change is the first slot.
+- [ ] **Settings opens** (it used to say *"Settings unavailable"*). **Staff opens** and lists current
+      staff. **Chat** and **Email families** open.
+- [ ] You can **invite next season's assistant** from Staff before that season exists.
+- [ ] Open **Roster**, **Schedule**, **Money**, **Documents**, **Insights** — each shows the finished
+      season, read-only. **None offers a way to add, edit or delete anything.**
+- [ ] Open **Development → Drills**. It says the season has finished and the screen comes back with
+      the next one — it does not pretend to be empty.
+- [ ] The **drill library** and the **plan-template room** are otherwise unchanged: still
+      live-season tools, still not browsable while you are reading a finished season, and **Add from
+      a past season** still works in both. This phase copied the words of a past practice forward; it
+      made no library season-aware.
+- [ ] **Insights** has **no** *"Where is playing time going?"* and **no** *"Who are we up against?"*
+      — both recompute or describe today, so neither can honestly serve a finished season.
+- [ ] There **is** a *"Who's showing up?"* tile — attendance is a record. Open it: it reports, and
+      offers no way to **take** attendance.
+- [ ] **Who's earning it?** — award counts read as a record, with no way to give or remove one.
+- [ ] Empty states are past tense and promise nothing (*"No results were recorded"*, not *"No
+      results yet"*).
+- [ ] **Compare every season** from Season's End takes you to the same list you used in Phase 2.
+- [ ] The note on an older season's page reads *"This season's story is kept here. Your menu is
+      showing the season the team is on now."*
+- [ ] A finished season's roster and results are **unchanged** by any staff change — a removed
+      person's name still appears where it did.
+- [ ] A finished season shows **no Staff door** — intended.
+
+### Phase 4 · The between-seasons team — the practices shelf (§42 A · §42 B)
+
+- [ ] **Practice plans** names the season, says it has finished, says planning resumes with the next
+      one, and states that everything written is still here. **Nothing offers to switch seasons.**
+- [ ] Its door reads **The practices you ran** and it works — confirm it lands on a list that
+      actually holds them.
+- [ ] On **Season's End**, below the wrap-up: **The practices you ran**, **closed**. Open it — the
+      count matches the rows; each row reads *date · name* with what the plan was.
+- [ ] ⚠ The **called-off** practice is **not there**. Sharpest check in this phase: it still holds a
+      full plan, so a shelf that forgot the rule would show a night that never happened, complete
+      with who was assigned where — and would look correct doing it.
+- [ ] The **no-plan** practice **is** there and says so (*"No plan written — your note about how it
+      went"*).
+- [ ] Open a row with a plan: exactly as written, with no edit, delete, *Run practice* or *Save as
+      template*.
+- [ ] The back link says **Season's End** and returns you to the season you were reading. ⚠ Then
+      reach the same plan the other way — Insights → *Is everyone getting attention?* → *Practices
+      you've run* → *Open the plan* — and confirm **that** back link says *Practices you've run*.
+      One page, two callers, each returning you where you came from.
+
+### Phase 5 · The between-seasons team — the money book (§52 A · §52 B) — **dev only**
+
+- [ ] Below the practices shelf: **How the season added up**, **closed on arrival**.
+- [ ] Its shut face already answers the question — *"$52.00 over"* or similar.
+- [ ] Open it: categories with **Planned · Actual · Difference**, and a **Total** row.
+- [ ] One category reads **over**, another **under**. ⚠ Check the **word**, not the colour — olive
+      and the danger tone are nearly identical to a red-green colourblind reader, so the wording has
+      to carry it alone.
+- [ ] ⚠ The figures match the same season's **Budget vs Actual** tab opened directly. Most important
+      check here: there is one arithmetic, and if these two disagree the phase has re-created the
+      defect §51 just fixed.
+- [ ] **Nothing in it is clickable** — no row expands, no figure opens the budget, no month grid, no
+      chart. On the live screen those same cells are doors.
+- [ ] The **Money in** line shows what came in that season, or is absent if nothing was recorded.
+- [ ] None of the other six money tabs is reachable for a closed year by any route you can find.
+
+### Phase 6 · The other three sign-ins (§39 B · §42 D · §42 A · §42 E · §52 D)
+
+*Three people, in descending order of access. Do them back to back — it is the same two screens each time.*
+
+**6a · The assistant WITH money access**
+- [ ] Give the current assistant **Money** access they did not have last season. Open a finished
+      season's money — **they can read it**. ⚖ This is the widening you ruled: current permissions,
+      everywhere.
+- [ ] Same for **guardian contacts** — granted today ⇒ visible in past rosters too.
+- [ ] On Season's End they see **both shelves**.
+- [ ] Open a practice: there is **no** *Start this plan from…* at all — writing a plan is the head
+      coach's, and so is every source that feeds one.
+- [ ] They can see the **compare list** (every current member can, not just head coaches).
+
+**6b · The assistant WITHOUT money access** (attendance and lineups only)
+- [ ] On Season's End: the **practices shelf is there**, the **money section is absent**. This pair
+      is the point — two shelves, two different keys, one page.
+- [ ] Open the finished season's **Money** tab: still refused, as before.
+
+**6c · The helper** (schedule access, nothing else)
+- [ ] **Practice plans** shows the true half — the season has finished, the plans are kept — but
+      **no door**. Deliberate: the list behind it needs record access, and offering the link would
+      trade a false sentence for a refusal.
+- [ ] Type the URL of a past practice plan directly. **Refused.**
+- [ ] They land on the finished-season notice rather than a broken page.
+
+### Phase 7 · Remove and re-add — **destructive, do this last** (§39 A)
+
+- [ ] Open **Staff**. One list — no season attached, no per-season staff anywhere.
+- [ ] Remove the sacrificial assistant. The dialog says **"every screen, every season"**.
+- [ ] As that person: the team is gone from their portal — every page, and any old season too.
+- [ ] The finished season's **record** still names them as having coached it. Removal closes a door;
+      it does not rewrite history.
+- [ ] Re-add them (invite → accept). Access returns **with the grants they had before**.
+- [ ] *Optional, only if you can spare a dev checkout (carried from §39 E):* provision a **fresh
+      standalone Premium team**. Its brand-new head coach can open Settings, Staff and the rest from
+      the first minute — a team with no history behind it must not depend on any of this.
+
+### Phase 8 · The words, and the rulings to confirm in place
+
+*Answer these now you have seen everything, not screen by screen.*
+
+- [ ] The between-seasons message on **Practice plans** — is it the true thing, said kindly?
+- [ ] **The practices you ran** and **How the season added up** as the two section names; **A past
+      season** as the third picker tab; **under** / **over** as the difference wording.
+- [ ] ⚖ **Two collapsed shelves now sit on Season's End.** Say if that reads as clutter rather than
+      as a tidy shelf — the binding rule is that live content stays the primary focus.
+- [ ] ⚖ **The money shelf's shut face** shows spending against plan, not the team's overall surplus.
+      Confirm that is the figure you want at a glance.
+- [ ] ⚖ **Past money figures are shown CORRECTED, not as they looked at the time** — your ruling of
+      2026-08-17. An older season now adds up more accurately than the coach saw then. Deliberately
+      the **opposite** call to playing time, which stays live-season-only for the same recomputation
+      reason. Confirm you still agree now you can see it.
+- [ ] ⚖ **Salvaged from the retired §37 D2 — and the answer is now the opposite:** a **current
+      assistant** sees the compare list. The head-coach-only restriction was reverted when
+      membership became the access truth.
+- [ ] **Help** gained two topics: *What happens to your plans when the season ends* (Practice plans)
+      and *What happens to the books when the season ends* (Money).
+- [ ] **The demo still tells the truth.** Take the coach demo's **guided tour** to its last step —
+      it ends by pointing at the practices further down that page. The moments dock's **Season's
+      End** chip says the same thing in one line.
 
 ---
 
