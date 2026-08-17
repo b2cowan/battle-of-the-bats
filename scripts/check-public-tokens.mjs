@@ -96,6 +96,7 @@ const SCOPES = {
     // is split between operator chrome and consumer preference screens.
     files: [
       'components/rep-teams/TryoutDayCard.module.css',
+      'components/rep-teams/TryoutRubricCard.module.css',
       'components/rep-teams/TryoutFlowHeader.module.css',
       'components/rep-teams/TryoutSetupChecklist.module.css',
       'components/rep-teams/TryoutCheckIn.module.css',

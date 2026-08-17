@@ -4,6 +4,81 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-17 — A WEIGHT IS SHOWN AS ITS SHARE, never as its raw number — and the reset is the toggle
+
+**Owner trigger:** *"it is not clear that the 1's represent the weight of each category."* Mockup
+(approved, binding, all recommendations): `claude.ai/code/artifact/a43106bf-9b2a-4f5a-b7c1-ae9ee37a182d`.
+
+⚠⚠ **NAMING THE FIELD WOULD HAVE FIXED THE SENTENCE AND LEFT THE PROBLEM.** The tryout composite is a
+weight-**normalised** mean (`Σ(avg × w) / Σw`), so only a category's *share of the total* ever reaches
+a player's score — **six 1s and six 3s are the identical scorecard**, and "Weight: 1" beside "Weight: 1"
+still says nothing about the ranking. The raw weight is the wrong half of the fraction. **Generalise:
+before labelling a number a user cannot read, check whether the number they need is the one you are
+showing.** Every row now prints its share as whole percents summing to exactly 100 (largest remainder —
+a footer should never have to explain 99%).
+
+**Decision, four parts.** (1) A **"Count every category equally"** switch, ON by default, hides the
+weight controls entirely on the common path and prints the even split; its state is **DERIVED from the
+stored weights** (all equal and > 0), so the switch needs no column and no migration. (2) Switch off →
+a **stepper + proportion bar + live percent** per row. (3) **What the screen shows is what gets saved:**
+while the switch is on the even split is displayed *whatever the rows are carrying*, and saving writes
+it. The first cut displayed the remembered tuning under an "equal" switch and was corrected — that is
+the exact class of lie this entry exists to remove. (4) A zero share is named in words — **Notes only ·
+not ranked** — because it is a real, useful behaviour (scored by helpers, excluded from the ranking)
+that was reachable only by typing `0` into an unlabelled box.
+
+⚠ **TWO SILENT BEHAVIOURS BECAME SENTENCES.** All-zero weights fall back to an even mean — the coach
+believed they had switched ranking off; now warned at the moment it becomes true. And **reweighting
+after scoring silently re-orders the board** a coach may have been reading all morning; the builder now
+says so, shown only when scores actually exist (a new `hasScores` flag on the read). The route already
+refused to *delete* a scored category; this is the same protection for the change it cannot refuse.
+
+⚠ **THE FIELD HAD NO ACCESSIBLE NAME AT ALL** — a `title` tooltip and nothing else, so assistive tech
+announced "spin button". Not a preference, a defect. **Standing test: a control whose only label is
+`title` is unlabelled.**
+
+**OWNER RULING (same day) — THE TOGGLE IS THE RESET, AND IT DISCARDS.** Turning weighting off, tuning,
+then back on is the fastest way to **start over from an even split**, so the product treats it as
+exactly that rather than as an accident to recover from: the tuning is discarded, not remembered. The
+dialog says so in its own words (*"Start over with an even split?"* / **Reset to equal** / **Keep my
+weighting**) and fires **only when there is real shaping to lose** — an uneven split or a notes-only
+row. **All-equal-but-not-1 flips straight through**, because resetting it changes nothing the coach can
+see and *a dialog with nothing at stake is how users learn to dismiss dialogs unread.* It goes through
+the shared coach-skinned `useConfirm()` → `FeedbackModal` (the ruling directly below), `tone: 'warning'`
+so the confirm is lime — this is a tool, not a delete.
+
+**Four more, from the same screen:** the note collapses to *+ Add a note for evaluators* (six
+always-open inputs were most of the modal's height, which is why Save fell below the fold at four
+categories); rows gain **move up / move down**, because that order *is* the order evaluators tap through
+on a phone in glare; the scale picker becomes a real **segmented control** with a consequence line,
+having been two dashed `.addBtn` "add something" affordances with an inline-style selected border; and
+head/foot **pin** with a running summary beside Save. A **live helper preview** sits beside the fields
+(≥900px) — the coach is authoring a form somebody else fills in, once a year, and it is also the only
+thing that makes the "note for evaluators" field explain itself.
+
+⚠⚠ **AND THE PREVIEW SENT US TO A DEFECT ON THE LIVE FIELD SCREEN.** Owner, on seeing the 1–10
+preview: *"would it make sense to make these buttons an even 5 on each row?"* — and the honest answer
+was that the **real** scorer had the worse version of the same problem. `TryoutScorerSurface` laid its
+scale out with `flex-wrap` + `flex: 1 1 auto`, so a 1–10 card gave a volunteer **six thin buttons then
+four stretched ones** — tap targets of different sizes carrying no information — **at a wrap point that
+moved with the viewport**, so a coach's phone and an evaluator's phone disagreed about the layout of
+the same scorecard, outdoors, in glare. Both surfaces are now `repeat(5, minmax(0, 1fr))`: 1–5 is one
+row, 1–10 is an even 5 + 5, every number the same target on every device (five columns clear the 44px
+tap floor to a 280px viewport, so the `min-width` that could overflow a narrow grid came off).
+**Two rules out of one question:** a *preview must never tidy up a layout the real screen does not
+produce* — a flattering preview is worse than none; and **"wrap and stretch" is not a layout decision,
+it is the absence of one.** Where the count is known, say the columns. ⚠ The field scorer is **in no
+rendered sweep at all**, which is why this survived — it was never measured by anything but eyes.
+
+**Applies to:** `components/rep-teams/TryoutRubricCard.tsx` + its **new** `.module.css` (registered in
+the token guardrail's `operator` scope, fully tokenised — that scope is at 0 grandfathered literals and
+stayed there), the tryout-rubric GET, and the coaches help guide. **BUILT on dev 2026-08-17**; owner QA
+§50. ⚠ **`check:layout` was NOT re-baselined and proves nothing here** — the builder exists only inside
+a modal the rendered sweep never opens, beneath a checklist row collapsed by default. The team-settings
+lesson arriving one level deeper. [[design-principles]]
+
+---
+
 ### 2026-08-17 — The coach portal's confirm dialogs stop wearing the tournament-admin skin
 
 **Owner finding:** *"the css for these 'are you sure' modals match the tournament admin and not the

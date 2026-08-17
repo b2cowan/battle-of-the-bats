@@ -117,10 +117,19 @@
 }
 .catLabel { font-size: 1rem; font-weight: 700; }
 .catHint { font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-top: 0.2rem; }
-.scale { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+/* FIVE COLUMNS ALWAYS (owner call 2026-08-17): 1–5 is one row, 1–10 is an even 5 + 5. This was
+   flex-wrap with `flex: 1 1 auto`, which on a 1–10 card gave a volunteer six thin buttons and then
+   four fat ones — different tap-target sizes carrying no meaning, at a wrap point that moved with
+   the phone, on the one screen that gets used outdoors in glare. A grid makes every number the
+   same target on every device. Five columns clear the 44px tap floor down to a 280px viewport. */
+.scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
 .scaleBtn {
-  min-width: 48px; height: 48px;
-  flex: 1 1 auto;
+  min-width: 0; height: 48px;
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 10px;
   background: rgba(255,255,255,0.04);

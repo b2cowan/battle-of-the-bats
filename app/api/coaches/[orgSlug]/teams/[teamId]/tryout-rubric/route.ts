@@ -42,7 +42,17 @@ export const GET = withObservability(async (_req: Request,
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
   const rubric = await getRepTryoutRubric(tryout.id);
-  return NextResponse.json({ rubric, starter: getRubricStarter(r.assignment.teamSport), scaleOptions: [5, 10] });
+  // Whether ANY score exists yet — the builder says so beside the weighting controls, because
+  // reweighting after scoring starts silently re-orders a board the coach has been reading all
+  // morning. PUT already refuses to REMOVE a scored category; this is the same protection for
+  // the change it can't refuse.
+  const scores = await getRepTryoutScores(tryout.id);
+  return NextResponse.json({
+    rubric,
+    starter: getRubricStarter(r.assignment.teamSport),
+    scaleOptions: [5, 10],
+    hasScores: scores.length > 0,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-rubric' });
 
 /** Create/replace the tryout's scorecard. */

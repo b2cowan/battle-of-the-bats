@@ -6864,6 +6864,112 @@ and the plumbing. **§C and §G are the two worth a second opinion.**
 
 ---
 
+## §50 ✅ The scorecard says what a category is worth (tryout weights) — **OWNER QA PASSED 2026-08-17**
+
+**Built on dev 2026-08-17 · ✅ QA PASSED same day · awaiting production · no migration.**
+Mockup (approved, binding): artifact `a43106bf`. Plan + PM brief:
+`COACH_TRYOUT_SCORECARD_WEIGHTS_PLAN.md`. Design log entry 2026-08-17.
+
+**What changed, in one breath:** the Evaluation scorecard builder showed a column of unlabelled
+`1`s. Because the ranking divides by the total weight, that number could never mean anything on its
+own — six 1s and six 3s are the same scorecard. Every row now shows its **share of a player's
+score** as a percent, behind a **Count every category equally** switch that is on by default and
+hides the controls entirely on the common path. Three behaviours that were always in the code but
+never on the screen now say themselves: **notes only** (a zero share), the **silent fallback** when
+everything is zeroed, and the fact that reweighting **re-orders a board** you may be mid-tryout on.
+
+Reach it: **Tryouts → Get set up → Evaluation scorecard → Edit scorecard**.
+
+### A · The switch, and the number that replaced the 1s
+
+- [ ] Open the builder on the starter set. The switch is **ON**, there are **no weight controls at
+      all**, every row reads **20%**, and the footer says **Weighted equally · 20% each**.
+- [ ] Switch **OFF**: steppers appear at 1 each and the rows still read 20%. Nothing jumps.
+- [ ] Step **Hitting** up to 3. Every share re-computes live and they still total **exactly 100** —
+      check the arithmetic yourself on a 3-category card, where rounding has somewhere to hide.
+- [ ] Step a category down to **0** → **Notes only · not ranked**, its bar is replaced by the chip,
+      and the remaining shares redistribute to fill the gap.
+- [ ] Step **every** category to 0 → the amber warning appears saying the board will fall back to
+      counting them all equally. ⚠ This is the case the product used to handle **silently**.
+
+### B · The reset — the ruling you made on 17 Aug
+
+- [ ] With tuning in place, switch **ON** → the confirm appears: *"Start over with an even split?"*,
+      naming your current split, with **Reset to equal** / **Keep my weighting**.
+- [ ] **Keep my weighting** → nothing changes, the switch stays off. Escape and a click outside do
+      the same.
+- [ ] **Reset to equal** → every share evens out and the switch goes on.
+- [ ] Switch **OFF then straight back ON** having changed nothing → **no confirm at all**. A dialog
+      with nothing at stake is how coaches learn to dismiss dialogs unread.
+- [ ] The dialog wears the **coaches-portal** skin (sentence case, sans, 8px buttons) — not the
+      tournament-admin one. Confirm button is **lime**, not danger red: this is a tool, not a delete.
+
+### C · The rows
+
+- [ ] Notes are **collapsed**: *+ Add a note for evaluators*. Add one → it renders as a one-line
+      read-back with **Edit**. The starter's Attitude note should already be in that state.
+- [ ] **Move up / move down** on each row; disabled at the ends. Reorder and confirm the order
+      sticks after Save → reopen.
+- [ ] The name placeholder now reads **Category name** — it used to say *"e.g. Hitting"* **on the
+      Hitting row**.
+- [ ] Delete a category with no scores → gone. (Deleting a **scored** one still refuses — unchanged.)
+
+### D · The preview, the frame, and the phone
+
+- [ ] On a wide screen the **What your helpers will see** panel sits beside the fields. Rename a
+      category, add a note, change the scale → the preview follows.
+- [ ] Switch to **1–10**: the hint changes to *"1–10 separates similar players more finely"* and the
+      preview's tap row grows to ten, laid out **5 + 5**. The scale picker is now a **segmented
+      control**, not the two dashed "add"-style buttons it used to borrow.
+
+⚠⚠ **This part changes the REAL field scorer, not just the preview** (owner call, on seeing the
+1–10 preview): the volunteer scoring screen laid its numbers out by wrapping to whatever fitted,
+with buttons that stretched to fill the leftover space. At 1–10 that gave **six thin buttons then
+four fat ones** — tap targets of different sizes carrying no meaning — and the wrap point **moved
+with the phone**, so a coach's device and an evaluator's device disagreed. Both screens are now a
+fixed **five columns**: 1–5 is one row, 1–10 is an even 5 + 5, every number the same target
+everywhere.
+
+- [ ] **Open the real scoring screen on a phone** (Tryout day → *Score players*, or a helper's
+      link) with a **1–10** scorecard: two even rows of five, all ten buttons identical. Try a
+      narrow phone and a large one — the layout must not change shape between them.
+- [ ] Same screen with a **1–5** scorecard: one row of five, unchanged from before.
+- [ ] Tap targets still comfortable one-handed in gloves/sun. ⚠ This screen is **not in the
+      automated rendered sweep at all**, so nothing measured this but you.
+- [ ] Add categories until the list is long: the **title stays put, Save stays put**, and only the
+      middle scrolls. Footer summary stays legible while you do it.
+- [ ] **On a phone:** bottom sheet, the preview sits under the fields, and Save is reachable without
+      scrolling past every category.
+
+### E · The two states you can only see with real data
+
+- [ ] **Score a player**, then reopen the builder → a quiet line beside the weighting controls:
+      *"Players have already been scored — changing how categories count re-orders your board."*
+      It must be **absent** before anyone is scored.
+- [ ] Save with custom shares, close, reopen → the switch is **off** and your shares are intact.
+      Save with the switch **on**, reopen → switch on, 20% each.
+- [ ] The **collapsed card** (the checklist row, before you open the builder) shows each category's
+      percent — or **Notes only** — where it used to say `weight 1`, and its meta line says
+      *weighted equally* / *custom weighting*.
+
+### F · Warm skin, and what the gates did not prove
+
+- [ ] Repeat **A** and **B** with the portal in **warm**. The switch's on-track and the segmented
+      selection stay **true lime with dark ink**; the share bars are **olive** on a paper track; the
+      notes-only chip and the warning are warm amber. Outdoors if you can.
+- [ ] ⚠ **`check:layout` proves nothing here and was not re-baselined.** The builder only exists
+      inside a modal the rendered sweep never opens, and its checklist row is collapsed by default.
+      **Your walk is the only coverage this screen has.**
+- [ ] ⚠ `check:schema-parity` fails on dev — **pre-existing drift from other sessions' migrations**,
+      verified by re-running with these files stashed. Nothing here touches the database.
+
+---
+
+**If §A and §B read correctly, this section passes.** C and D are the same modal's ergonomics; E is
+the pair of states that need real scores behind them; F is the skin and the honest limits.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |

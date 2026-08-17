@@ -286,7 +286,7 @@ const coachesHelp: HelpPageContent = {
             <>
               <HelpSteps>
                 <li><strong>Add your sessions.</strong> In the <strong>Get set up</strong> checklist, open <strong>Tryout dates</strong> and add each date and time (and location/field). They appear on your <strong>team schedule</strong> as read-only tryout markers.</li>
-                <li><strong>Build your scorecard.</strong> On the <strong>Evaluation scorecard</strong> row, list what you&apos;re rating — for example Hitting, Fielding, Throwing, Speed — each with a weight, on a 1–5 or 1–10 scale. A starter set is filled in for you; adjust it to how you evaluate.</li>
+                <li><strong>Build your scorecard.</strong> On the <strong>Evaluation scorecard</strong> row, list what you&apos;re rating — for example Hitting, Fielding, Throwing, Speed — on a 1–5 or 1–10 scale. A starter set is filled in for you; adjust it to how you evaluate. Every category counts the same unless you say otherwise: turn off <strong>Count every category equally</strong> and each one shows its <strong>share of a player&apos;s score</strong> as you set it. Drop a share to zero and that category becomes <strong>notes only</strong> — still scored by your helpers, but it doesn&apos;t affect the ranking.</li>
                 <li><strong>Keep it fair with Blind evaluation.</strong> It&apos;s on by default: players show as <strong>bib numbers only</strong>, with names hidden until you deliberately reveal them (see <em>Making your picks</em> below).</li>
               </HelpSteps>
               <HelpNote variant="info" title="A date outside the usual window">Pick a tryout date outside the standard provincial tryout window and you&apos;ll get a friendly heads-up — safe to ignore if your team isn&apos;t affiliated.</HelpNote>
@@ -507,10 +507,14 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tryout-scorecard-edit',
           question: 'Can I change my scorecard after scoring has started?',
-          answerText: 'You can rename a category and change its weight any time. To protect scores already given, you can’t remove a category that players have been scored on — keep it (renaming is fine) or start a fresh tryout. Adding new categories is always allowed.',
-          keywords: ['scorecard', 'rubric', 'edit', 'change', 'category', 'weight', 'delete'],
+          answerText: 'You can rename a category, reorder it, and change its share any time. Once anyone has been scored the builder says so, because changing how categories count re-orders your board. To protect scores already given, you can’t remove a category that players have been scored on — keep it (renaming is fine) or start a fresh tryout. Adding new categories is always allowed.',
+          keywords: ['scorecard', 'rubric', 'edit', 'change', 'category', 'weight', 'share', 'reorder', 'order', 'delete'],
           answer: (
-            <p>You can <strong>rename</strong> a category and change its <strong>weight</strong> any time. To protect scores already given, you can&apos;t <strong>remove</strong> a category that players have been scored on — keep it (renaming is fine). Adding new categories is always allowed.</p>
+            <>
+              <p>You can <strong>rename</strong> a category, <strong>reorder</strong> it, and change its <strong>share</strong> any time. Adding new categories is always allowed.</p>
+              <p>Once anyone has been scored the builder tells you so, because changing how categories count <strong>re-orders your board</strong> — the ranking is recalculated from the shares as they stand now.</p>
+              <p>To protect scores already given, you can&apos;t <strong>remove</strong> a category that players have been scored on — keep it (renaming is fine).</p>
+            </>
           ),
         },
       ],

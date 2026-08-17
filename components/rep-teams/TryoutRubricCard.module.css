@@ -1,0 +1,481 @@
+/* Evaluation scorecard builder — owner-approved mockup 2026-08-17
+   (claude.ai/code/artifact/a43106bf-9b2a-4f5a-b7c1-ae9ee37a182d).
+
+   Why this file exists: the builder used to borrow TryoutDayCard's modal recipe wholesale. It
+   has since grown its own structure — a pinned head/foot, a weighting switch, per-row share
+   controls and a live evaluator preview — so it carries its own sheet rather than bending a
+   sibling's. The card OUTSIDE the modal (the checklist row body) still uses TryoutDayCard's
+   list recipe on purpose: it is the same one-line-row idiom as the sessions list beside it.
+
+   Skins: dark coaches/admin by default; the warm block at the foot is flat-additive and keyed
+   on the coach shell's marker, so the ADMIN Rep Teams panel (no marker) stays byte-identical.
+   ⚠ Every figure here is the portal's own sans with tabular-nums — never --font-data. The mono
+   data face is the tournament-admin idiom (ruling 2026-08-17). */
+
+/* ── Modal shell ─────────────────────────────────────────────────────────── */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  z-index: 200;
+}
+.modal {
+  width: 100%; max-width: 520px;
+  max-height: 92vh;
+  background: #141414; /* token-exempt: modal surface tone, no --surface-family match */
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* Head and foot are PINNED — only the field area scrolls, so Save is reachable at any
+   category count and the running total is legible at the moment of saving. */
+.head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.05rem 1.4rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.title { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0; }
+.closeBtn {
+  flex: 0 0 auto;
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 8px; background: transparent;
+  color: rgba(255,255,255,0.5); cursor: pointer;
+}
+.closeBtn:hover { color: var(--white-90); background: rgba(255,255,255,0.06); }
+
+.body { flex: 1 1 auto; overflow-y: auto; padding: 1.1rem 1.4rem 1.3rem; }
+
+.foot {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  padding: 0.85rem 1.4rem 1rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.summary {
+  font-size: 0.78rem; line-height: 1.4;
+  color: rgba(255,255,255,0.45);
+  font-variant-numeric: tabular-nums;
+}
+.summary b { color: rgba(255,255,255,0.7); font-weight: 700; }
+.footActions { display: flex; gap: 0.5rem; margin-left: auto; }
+
+/* Wide viewports put the helper preview beside the fields (the approved mockup); narrow
+   stacks it underneath, where it is the last thing in the scroll. */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+@media (min-width: 900px) {
+  .modal { max-width: 840px; }
+  .grid { grid-template-columns: minmax(0, 1fr) 250px; }
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+.field { margin-bottom: 1rem; }
+.fieldLast { margin-bottom: 0; }
+.label {
+  display: block; font-size: 0.8rem; font-weight: 700;
+  color: rgba(255,255,255,0.7); margin-bottom: 0.35rem;
+}
+.labelSoft { font-weight: 500; color: rgba(255,255,255,0.4); }
+.hint { font-size: 0.76rem; color: rgba(255,255,255,0.45); margin: 0.35rem 0 0; line-height: 1.45; }
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.58rem 0.72rem;
+  color: var(--white-90); font-size: 0.9rem;
+  box-sizing: border-box; font-family: inherit;
+}
+.input:focus { outline: none; border-color: var(--logic-lime); }
+
+/* Rating scale — a CHOICE control, not the dashed "add" affordance it used to borrow. */
+.seg {
+  display: inline-flex; gap: 3px; padding: 3px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 9px;
+}
+.segBtn {
+  font-family: inherit; font-size: 0.82rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0.34rem 0.9rem; border: 0; border-radius: 6px;
+  background: transparent; color: rgba(255,255,255,0.5); cursor: pointer;
+}
+.segBtn:hover { color: var(--white-90); }
+.segOn { background: var(--logic-lime); color: var(--pitch-black); }
+.segOn:hover { color: var(--pitch-black); }
+
+/* ── The weighting switch ────────────────────────────────────────────────── */
+.toggleRow {
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
+.track {
+  flex: 0 0 auto; position: relative;
+  width: 40px; height: 23px; margin-top: 1px; padding: 0;
+  border: 1px solid rgba(255,255,255,0.24); border-radius: 999px;
+  background: transparent; cursor: pointer;
+}
+.track::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  transition: transform 150ms ease, background 150ms ease;
+}
+.trackOn { background: var(--logic-lime); border-color: var(--logic-lime); }
+.trackOn::after { transform: translateX(17px); background: var(--pitch-black); }
+.toggleText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.toggleLabel { font-size: 0.84rem; font-weight: 700; color: var(--white-90); }
+.toggleHint { font-size: 0.75rem; color: rgba(255,255,255,0.45); line-height: 1.45; }
+
+/* Two notes that only appear when they are true. */
+.noteWarn,
+.noteInfo {
+  display: flex; gap: 0.45rem; align-items: flex-start;
+  margin-top: 0.6rem; padding: 0.5rem 0.65rem;
+  font-size: 0.78rem; line-height: 1.45;
+  border-radius: 8px;
+}
+.noteWarn {
+  color: var(--warning-light);
+  border: 1px solid rgba(var(--warning-rgb),0.32);
+  border-left: 3px solid var(--warning-light);
+  background: rgba(var(--warning-rgb),0.08);
+}
+.noteInfo {
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-left: 3px solid rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.03);
+}
+
+/* ── Category rows ───────────────────────────────────────────────────────── */
+.cats { display: flex; flex-direction: column; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+.cat {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.55rem 0.6rem 0.55rem 0.55rem;
+}
+.catTop { display: flex; align-items: center; gap: 0.45rem; }
+.grip { flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; }
+.gripBtn {
+  width: 22px; height: 15px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: rgba(255,255,255,0.45); cursor: pointer;
+}
+.gripBtn:hover:not(:disabled) { color: var(--white-90); border-color: rgba(255,255,255,0.2); }
+.gripBtn:disabled { opacity: 0.25; cursor: default; }
+.catName { flex: 1 1 auto; min-width: 0; }
+.iconBtn {
+  flex: 0 0 auto;
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; background: transparent;
+  color: rgba(255,255,255,0.5); cursor: pointer;
+}
+.iconBtn:hover { color: var(--danger-light); border-color: rgba(var(--danger-rgb),0.45); }
+
+/* The share line — the whole point of the redesign. Indented to clear the reorder column so
+   the bars line up with each other rather than with the name field. */
+.share {
+  display: flex; align-items: center; gap: 0.6rem;
+  /* Clears the reorder column exactly, so every bar lines up with every other bar rather than
+     with the name field above it. */
+  margin: 0.5rem 0 0 calc(22px + 0.45rem);
+}
+.stepper {
+  display: inline-flex; align-items: center; flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden;
+}
+.stepBtn {
+  width: 26px; height: 26px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-family: inherit; font-size: 0.95rem; font-weight: 700; line-height: 1;
+  cursor: pointer;
+}
+.stepBtn:hover:not(:disabled) { background: rgba(var(--logic-lime-rgb),0.1); color: var(--white-90); }
+.stepBtn:disabled { opacity: 0.3; cursor: default; }
+.stepVal {
+  min-width: 30px; line-height: 26px; text-align: center;
+  font-size: 0.8rem; font-weight: 700; color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-right: 1px solid rgba(255,255,255,0.12);
+}
+.bar {
+  flex: 1 1 auto; min-width: 30px; height: 6px;
+  border-radius: 999px; background: rgba(var(--logic-lime-rgb),0.12);
+  overflow: hidden;
+}
+.barFill {
+  display: block; height: 100%;
+  background: var(--logic-lime); border-radius: 999px;
+  transition: width 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pct {
+  flex: 0 0 auto; min-width: 3.1rem; text-align: right;
+  font-size: 0.82rem; font-weight: 800; color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+}
+.pctEqual { font-weight: 700; color: rgba(255,255,255,0.7); }
+.pctMuted { font-weight: 700; color: rgba(255,255,255,0.45); }
+/* A zero-weighted category is still scored and still shown per player — it just doesn't move
+   the ranking. Said in words, because a coach cannot infer it from a 0. */
+.notesOnly {
+  flex: 1 1 auto; align-self: center; max-width: max-content;
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.74rem; font-weight: 700;
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb),0.1);
+  border: 1px solid rgba(var(--warning-rgb),0.38);
+  border-radius: 999px; padding: 0.1rem 0.55rem;
+}
+
+/* Note collapses to a link — six always-open inputs were most of the modal's height. */
+.noteLine { margin: 0.45rem 0 0 calc(22px + 0.45rem); }
+.noteBtn {
+  font-family: inherit; font-size: 0.76rem; font-weight: 600;
+  color: var(--logic-lime); background: transparent;
+  border: 0; padding: 0; cursor: pointer; text-align: left;
+}
+.noteBtn:hover { text-decoration: underline; text-underline-offset: 2px; }
+.noteRead {
+  display: flex; gap: 0.4rem; align-items: baseline;
+  font-size: 0.78rem; line-height: 1.45; color: rgba(255,255,255,0.7);
+}
+.noteReadLabel { flex: 0 0 auto; color: rgba(255,255,255,0.45); }
+.noteReadText { flex: 1 1 auto; min-width: 0; }
+
+.addBtn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding: 0.48rem 0.8rem;
+  font-family: inherit; font-size: 0.83rem; font-weight: 600;
+  border: 1px dashed rgba(255,255,255,0.22);
+  border-radius: 8px; background: transparent;
+  color: rgba(255,255,255,0.8); cursor: pointer;
+}
+.addBtn:hover { border-color: var(--logic-lime); color: var(--white-90); }
+
+.formError { color: var(--danger-light); font-size: 0.82rem; margin: 0.85rem 0 0; }
+
+/* ── Helper preview ──────────────────────────────────────────────────────── */
+/* The coach is authoring a form somebody ELSE fills in, on a phone, once a year. This is the
+   only place in the builder that shows the result — and the only thing that makes the
+   "note for evaluators" field explain itself. */
+.preview { min-width: 0; }
+.previewCap {
+  display: block; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45); margin-bottom: 0.5rem;
+}
+.phone {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; overflow: hidden;
+  background: rgba(255,255,255,0.02);
+}
+.phoneHead {
+  padding: 0.7rem 0.8rem 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.phoneBib {
+  font-size: 0.9rem; font-weight: 800; color: var(--logic-lime);
+  font-variant-numeric: tabular-nums;
+}
+.phoneName { font-size: 0.9rem; font-weight: 700; color: var(--white-90); margin-left: 0.4rem; }
+.phoneBody { padding: 0.65rem 0.8rem 0.85rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.pCatLabel { font-size: 0.84rem; font-weight: 700; color: var(--white-90); }
+.pCatHint { font-size: 0.72rem; color: rgba(255,255,255,0.45); line-height: 1.4; margin-top: 0.12rem; }
+/* Five columns, matching the real field scorer exactly — 1–5 is one row, 1–10 is an even 5 + 5.
+   A preview that tidied up a layout the phone doesn't produce would be worse than no preview. */
+.pScale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 0.45rem;
+}
+.pScale span {
+  min-width: 0; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 7px;
+  font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+}
+.phoneFoot {
+  padding: 0.5rem 0.8rem 0.7rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.7rem; line-height: 1.45; color: rgba(255,255,255,0.4);
+}
+.previewEmpty {
+  font-size: 0.78rem; color: rgba(255,255,255,0.4);
+  padding: 0.8rem; text-align: center;
+}
+
+/* ── The card body (outside the modal) ───────────────────────────────────── */
+.readMeta { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 0.6rem; }
+.readShare {
+  flex: 0 0 auto; white-space: nowrap;
+  font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+}
+.readShareMuted { color: rgba(255,255,255,0.45); font-weight: 600; }
+
+/* ── Phone: the modal becomes a bottom sheet ─────────────────────────────── */
+@media (max-width: 640px) {
+  .scrim { align-items: flex-end; padding: 0; }
+  .modal { max-width: none; border-radius: 14px 14px 0 0; max-height: 90vh; }
+  .foot { flex-direction: column; align-items: stretch; }
+  .footActions { margin-left: 0; }
+  .footActions > * { flex: 1 1 auto; }
+}
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
+   Flat-additive: never edits a dark declaration, so the admin Rep Teams panel (which renders
+   this component with no shell marker) is byte-identical. lime-as-FILL stays true lime with
+   dark ink; lime-as-text/border darkens to olive automatically via the warm remap. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modal,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phone {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
+  background: rgba(var(--home-line-rgb), 0.50);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .head,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .foot,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phoneHead {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phoneFoot {
+  border-color: var(--home-line);
+}
+
+/* Ink tiers */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .toggleLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pct,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepVal,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pCatLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phoneName,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn:hover,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .gripBtn:hover:not(:disabled),
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn:hover,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn:hover {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteRead,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pctEqual,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .summary b,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .readShare,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteInfo {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .toggleHint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .labelSoft,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .summary,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .gripBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pctMuted,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteReadLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .previewCap,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .previewEmpty,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pCatHint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phoneFoot,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .readMeta,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .readShareMuted {
+  color: var(--home-dim);
+}
+
+/* Surfaces and hairlines */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .seg,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .toggleRow,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteInfo {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .cat,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepper,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pScale span {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepVal {
+  border-left-color: var(--home-line);
+  border-right-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .track {
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn:hover {
+  background: var(--home-olive-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepBtn:hover:not(:disabled) {
+  background: var(--home-olive-soft);
+}
+
+/* Lime AS FILL keeps true lime + dark ink (the ratified ink-on-lime CTA); the share bar and
+   its track darken to olive so they read on paper. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segOn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .trackOn {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segOn:hover {
+  color: var(--home-lime-ink);
+}
+/* ⚠ ORDER IS LOAD-BEARING: `.track::after` and `.trackOn::after` have IDENTICAL specificity, so
+   the OFF knob must be declared FIRST or it silently repaints the ON knob too. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .track::after {
+  background: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .trackOn::after {
+  background: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bar {
+  background: var(--home-olive-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .barFill {
+  background: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .phoneBib {
+  color: var(--home-olive);
+}
+
+/* Status accents → the warm equivalents (solid enough to read in glare) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notesOnly,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteWarn {
+  color: var(--home-amber);
+  background: rgba(var(--home-amber-rgb), 0.10);
+  border-color: rgba(var(--home-amber-rgb), 0.45);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noteWarn {
+  border-left-color: var(--home-amber);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn:hover {
+  color: var(--home-live);
+  border-color: rgba(var(--home-live-rgb), 0.40);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .formError {
+  color: var(--home-live);
+}
