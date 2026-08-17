@@ -1,11 +1,11 @@
 {
   "generated": "2026-08-17",
-  "total": 90,
+  "total": 93,
   "counts": {
     "tables": 3,
-    "columns": 41,
-    "indexes": 15,
-    "constraints": 22,
+    "columns": 42,
+    "indexes": 16,
+    "constraints": 23,
     "rls": 9
   },
   "items": [
@@ -170,6 +170,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_payment_requests.program_year_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_staff_memberships.capabilities",
       "sig": ""
     },
@@ -274,6 +278,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_payment_requests.rep_team_payment_requests_program_year_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_org_id_fkey",
       "sig": ""
     },
@@ -302,7 +310,7 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:budget_items_unique_scope_name",
+      "key": "index:only-dev:budget_items_unique_scope_side_name",
       "sig": ""
     },
     {
@@ -335,6 +343,10 @@
     },
     {
       "key": "index:only-dev:rep_team_money_in_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_program_year_idx",
       "sig": ""
     },
     {

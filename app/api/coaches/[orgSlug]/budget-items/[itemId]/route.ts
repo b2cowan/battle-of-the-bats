@@ -5,18 +5,22 @@ import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import {
-  mapBudgetItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
+  mapBudgetItem, countBudgetItemUsage, describeBudgetItemUsage,
 } from '@/lib/coach-budget-items';
 
 /**
- * A TEAM'S OWN WORDS, CORRECTABLE (Money form P2, owner ruling 2026-08-16).
+ * A TEAM'S OWN WORDS — rename, or remove (Money form P2; scope narrowed by owner ruling 2026-08-17).
  *
- * Migration 246 made an item's direction part of what it IS — the picker filters by it, so a word
- * on the wrong side is a word a coach cannot reach from the form they need it on. That turned "you
- * can change it afterwards" from a nicety into the thing that makes the filter safe to ship, and
- * there was nowhere in the product to do it: a coach's item could not be renamed or re-pointed from
- * anywhere, and the club-admin editor refuses team-owned rows outright ("only that team can rename
- * it") against a team surface that did not exist.
+ * Migration 246 made an item's direction part of what it IS — the picker filters by it — so "you
+ * can change it afterwards" stopped being a nicety and became the thing that makes the filter safe
+ * to ship. Nowhere in the product could do it: a coach's item could not be renamed from anywhere,
+ * and the club-admin editor refuses team-owned rows outright ("only that team can rename it")
+ * against a team surface that did not exist.
+ *
+ * ⚠⚠ TWO ACTIONS, AND DELIBERATELY NOT A THIRD. This route shipped on 2026-08-16 able to move a
+ * word between income and expenses, and that ability was retracted the next day: a category can
+ * belong to one side of the books, so a moved word can land under a heading that makes no sense for
+ * it. See the refusal in PATCH, and the usage guard in DELETE.
  *
  * ⚠⚠ THIS TEAM'S OWN ITEMS ONLY, AND THAT IS NOT A CONVENIENCE GATE. A platform word is ours; a
  * club-published word names budget rows on every other team in the org, so a coach renaming one
@@ -24,18 +28,12 @@ import {
  * one-way tier rule (lib/coach-budget-items.ts) says a published item can never be taken back —
  * this is the same rule, applied to editing rather than ownership.
  *
- * ⚠ RENAMING IS RETROACTIVE, BY DESIGN. The item NAMES the row (mig 240), so every budget line and
- * every recorded cost already pointing at it reads the new word immediately. That is what a coach
- * fixing a typo wants; the screen says so before they save.
- *
- * ⚠ MOVING A WORD ACROSS MOVES NO MONEY. Budget vs. Actual takes a row's direction from what was
- * actually filed against it, never from this column — so an income entry filed against a word that
- * later becomes an expense keeps its own direction on the report. The one visible consequence is
- * the picker, which is why the form keeps showing a record's OWN item even when it now points the
- * other way: a saved row must never lose its item because a word moved.
+ * ⚠ RENAMING IS RETROACTIVE, BY DESIGN, and that is why it is the remedy every refusal here offers.
+ * The item NAMES the row (mig 240), so every budget line, cost and money-in record already pointing
+ * at it reads the new word immediately — it reaches everything and loses nothing.
  */
 // PATCH /api/coaches/[orgSlug]/budget-items/[itemId]
-//   { teamId, name?, direction? }
+//   { teamId, name? }
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; itemId: string }> },) => {
   const { orgSlug, itemId } = await params;
@@ -87,15 +85,21 @@ export const PATCH = withObservability(async (req: Request,
     updates.name = name;
   }
 
+  /* ⚠⚠ A WORD NEVER CHANGES SIDES (owner ruling 2026-08-17) — and this route SHIPPED the ability to
+     do it, on 2026-08-16, one day earlier. It is retracted rather than kept quiet.
+     The reason is the categories: a category can belong to one side of the books, so a word moved
+     across can land under a heading that makes no sense for it — "Diamond permits" sitting in
+     Sponsorship. The case is rare enough that removing the word and adding it properly is the honest
+     answer, and a word with history behind it cannot be removed anyway, which makes the wrong-side
+     word a five-second problem rather than a data one.
+     ⚠ A `direction` in the body is now REFUSED rather than ignored. Silently dropping it would let a
+     stale client believe it had moved a word, and the coach would find out from the picker. */
   if ('direction' in body) {
-    /* ⚠ THE SAME PARSER AND THE SAME SENTENCE AS BOTH CREATE DOORS (/simplify, 2026-08-16). This
-       route shipped with its own hand-rolled check and its own wording — a rule that had drifted
-       into three spellings on the day it was written. */
-    const direction = parseBudgetItemDirection(body.direction);
-    if (!direction) {
-      return NextResponse.json({ error: BUDGET_ITEM_DIRECTION_REQUIRED }, { status: 400 });
-    }
-    updates.direction = direction;
+    return NextResponse.json({
+      error: 'A word stays on the side it was created on. Categories can belong to income or to '
+        + 'expenses, so moving one across can leave it filed under a heading that makes no sense. '
+        + 'Remove it and add it on the other side instead.',
+    }, { status: 400 });
   }
 
   if (Object.keys(updates).length === 0) {
@@ -110,9 +114,9 @@ export const PATCH = withObservability(async (req: Request,
     .single();
 
   if (error) {
-    /* The uniqueness index is per (category, org, team), so this fires when the new name already
-       belongs to one of this team's own words in the same category — including one on the other
-       side, which is the collision the create path names too. Say which, rather than "duplicate". */
+    /* Since migration 248 the index is (category, org, team, SIDE, name), so this fires only when
+       the new name already belongs to one of this team's own words in the same category ON THE SAME
+       SIDE. The other side is a different word now and no longer collides. */
     if (error.code === '23505') {
       return NextResponse.json({
         error: `Your team already has a word called “${updates.name}” in this category.`,
@@ -122,4 +126,72 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   return NextResponse.json({ item: mapBudgetItem(data) });
+}, { route: '/api/coaches/[orgSlug]/budget-items/[itemId]' });
+
+/**
+ * Remove a word this team invented (owner ruling 2026-08-17).
+ *
+ * ⚠⚠ REFUSED WHILE ANYTHING IS FILED AGAINST IT, and that guard is the whole feature. All four
+ * links into a budget word are `ON DELETE SET NULL`, so an unguarded delete does not fail — it
+ * blanks the item on every budget line, cost and money-in record pointing at it, which then read as
+ * "Not itemized" with nothing said to anyone. Counting through `countBudgetItemUsage` rather than
+ * naming tables here is deliberate: that list is the single place the four are enumerated, and a
+ * guard that counts three of them is the original publish bug wearing a newer comment.
+ *
+ * ⚠ RENAMING IS THE OFFERED WAY OUT, and the refusal says so — it reaches every record and loses
+ * none of them, which is exactly what someone fixing a typo actually wants.
+ *
+ * ⚠ THE TEAM'S OWN WORDS ONLY. A standard word is ours and a club-published one names budget rows
+ * on every other team in the org; the same one-way tier rule the PATCH above enforces.
+ */
+// DELETE /api/coaches/[orgSlug]/budget-items/[itemId]?teamId=…
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; itemId: string }> },) => {
+  const { orgSlug, itemId } = await params;
+
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (ctx.org.slug !== orgSlug) return forbidden();
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  if (!assignments.length) return forbidden();
+
+  /* ⚠ THE TEAM RIDES IN THE QUERY, and is checked the same way the PATCH checks its body — the item
+     must not authorise itself, or any coach in the org could remove any team's word. */
+  const teamId = new URL(req.url).searchParams.get('teamId')?.trim() ?? '';
+  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
+    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
+  }
+  const denied = denyUnless(
+    assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities)),
+    'You do not have access to team finances. Ask the head coach to grant it.',
+  );
+  if (denied) return denied;
+
+  const { data: item } = await supabaseAdmin
+    .from('budget_items')
+    .select('id, org_id, team_id, name')
+    .eq('id', itemId)
+    .maybeSingle();
+
+  if (!item || item.org_id !== ctx.org.id || item.team_id !== teamId) {
+    return NextResponse.json({
+      error: 'You can only remove words your own team created. Standard words and the ones your club '
+        + 'shares belong to everybody.',
+    }, { status: 403 });
+  }
+
+  const usage = await countBudgetItemUsage([itemId]);
+  if (usage.total > 0) {
+    return NextResponse.json({
+      error: `“${item.name}” is in use — ${describeBudgetItemUsage(usage)} are filed against it. `
+        + `Removing it would leave every one of them unclassified. Rename it instead, which reaches `
+        + `them all and loses nothing.`,
+    }, { status: 409 });
+  }
+
+  const { error } = await supabaseAdmin.from('budget_items').delete().eq('id', itemId);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return new NextResponse(null, { status: 204 });
 }, { route: '/api/coaches/[orgSlug]/budget-items/[itemId]' });

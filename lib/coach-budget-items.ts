@@ -32,6 +32,82 @@ import type { BudgetItem, BudgetItemDirection } from './types';
 export type BudgetItemTier = 'platform' | 'club' | 'team';
 
 /**
+ * ⚠⚠ EVERYTHING THAT POINTS AT A BUDGET WORD — the single list every guard counts from.
+ *
+ * All four foreign keys are `ON DELETE SET NULL`, which is deliberate for a genuine deletion (a
+ * record keeps its money and reads as the honest gap it now is) and catastrophic for a MERGE: the
+ * rows must be re-pointed first, or the money survives with its classification silently gone.
+ *
+ * **This list exists because that is exactly how it went wrong.** The publish route was written
+ * when two of these existed, named them both in a careful comment about re-pointing before
+ * deleting, and was never revisited when `rep_team_money_in` arrived with migration 243 — so every
+ * income and refund filed against an absorbed word lost its item, quietly, on a path that reported
+ * success. `org_budget_lines` is the fourth, and today it is safe only by ACCIDENT: publish absorbs
+ * team-owned rows only, and the Org Budget can pick nothing but club and platform words. Nothing
+ * stated that, which is the same silence the third one lived in.
+ *
+ * ⚠ `tests/unit/budget-item-references-guard.test.ts` reads the committed schema snapshot and FAILS
+ * THE BUILD when a foreign key to `budget_items` exists that this list does not cover. Adding a
+ * table here is one edit; forgetting one is a red build instead of silent data loss two releases
+ * later.
+ */
+export interface BudgetItemReference {
+  /** The table holding the link. */
+  table: string;
+  /** The column pointing at `budget_items.id`. */
+  column: string;
+  /** What a coach calls these records, for the sentence a refusal has to write. */
+  label: string;
+}
+
+export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
+  { table: 'rep_budget_lines',  column: 'item_id',        label: 'budget lines' },
+  { table: 'rep_team_expenses', column: 'budget_item_id', label: 'recorded costs' },
+  { table: 'rep_team_money_in', column: 'budget_item_id', label: 'money in' },
+  { table: 'org_budget_lines',  column: 'item_id',        label: 'club budget lines' },
+] as const;
+
+/** How many records of each kind point at these words — the count every guard and the fold need. */
+export interface BudgetItemUsage {
+  /** Total across every table. Zero means the word is safe to remove. */
+  total: number;
+  /** Per-kind, in `BUDGET_ITEM_REFERENCES` order, dropping the kinds with nothing in them. */
+  byKind: Array<{ label: string; count: number }>;
+}
+
+/**
+ * Count what is filed against one or more words.
+ *
+ * ⚠ COUNTS EVERY TABLE IN THE LIST, ALWAYS. A guard that counts three of the four is the original
+ * bug wearing a newer comment — which is why this takes no "which tables" parameter.
+ */
+export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetItemUsage> {
+  if (itemIds.length === 0) return { total: 0, byKind: [] };
+
+  const counts = await Promise.all(BUDGET_ITEM_REFERENCES.map(async ref => {
+    const { count } = await supabaseAdmin
+      .from(ref.table)
+      .select('id', { count: 'exact', head: true })
+      .in(ref.column, itemIds);
+    return { label: ref.label, count: count ?? 0 };
+  }));
+
+  return {
+    total:  counts.reduce((n, c) => n + c.count, 0),
+    byKind: counts.filter(c => c.count > 0),
+  };
+}
+
+/** "2 budget lines, 6 recorded costs and 1 money in" — the phrase every refusal and confirmation
+ *  builds its sentence around, so the four kinds are never named four different ways. */
+export function describeBudgetItemUsage(usage: BudgetItemUsage): string {
+  const parts = usage.byKind.map(k => `${k.count} ${k.label}`);
+  if (parts.length === 0) return 'nothing';
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
+/**
  * WHICH SIDE OF THE BOOKS A WORD BELONGS TO (mig 243, mandatory since mig 246).
  *
  * ⚠ NOT NULLABLE, and that is the migration's whole point — see the note on `BudgetItem.direction`.

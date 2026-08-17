@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { countBudgetItemUsage, describeBudgetItemUsage } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -103,7 +104,7 @@ export const DELETE = withObservability(async (req: Request,
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('budget_items')
-    .select('id, org_id, team_id, is_misc')
+    .select('id, org_id, team_id, is_misc, name')
     .eq('id', itemId)
     .eq('category_id', catId)
     .single();
@@ -129,6 +130,24 @@ export const DELETE = withObservability(async (req: Request,
   }
   if (existing.is_misc) {
     return NextResponse.json({ error: 'Misc items cannot be deleted' }, { status: 403 });
+  }
+
+  /* ⚠⚠ AND IT MUST NOT BE IN USE (owner ruling 2026-08-17). This route had guards for platform
+     words, for another team's word and for Misc — and nothing at all for the case with the widest
+     blast radius: a club-published word that every team in the organization has been filing against
+     all season. All four links into a budget item are ON DELETE SET NULL, so the delete does not
+     fail; it blanks the item on every one of those records at once, across every team, and reports
+     204. A club admin tidying their list could erase a season of classification for six coaches and
+     never know.
+     ⚠ Renaming is the offered way out precisely because it is the safe one: it reaches every record
+     and loses none of them. */
+  const usage = await countBudgetItemUsage([itemId]);
+  if (usage.total > 0) {
+    return NextResponse.json({
+      error: `“${existing.name}” is in use — ${describeBudgetItemUsage(usage)} are filed against it. `
+        + `Deleting it would leave every one of them unclassified. Rename it instead, which reaches `
+        + `them all and loses nothing.`,
+    }, { status: 409 });
   }
 
   const { error } = await supabaseAdmin

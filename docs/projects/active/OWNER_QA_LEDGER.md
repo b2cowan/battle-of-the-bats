@@ -6185,6 +6185,67 @@ inside the form keeping its name (§B), the family being named rather than calle
 
 ---
 
+## §44 · Nobody deletes a word out from under the records using it (budget item integrity, P1)
+
+**Built on dev 2026-08-17 · not on production · migration 248 applied to DEV ONLY.**
+Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P1. Mockup: artifact `484b5971`.
+**Walk §43 first** — this changes one thing that section describes.
+
+⚠ **§43 tells you to press a "move to the other side" button. It is gone** — owner ruling
+2026-08-17, one day after it shipped. A team's own word is now **rename or remove**, and §43's §C
+bullet about moving one across should be read as retired. **Do not renumber §43.**
+
+**Why this section exists:** every link into a budget word blanks rather than breaks when the word
+is deleted, so the money survives and its classification vanishes into *Not itemized* with nothing
+said to anybody. Three doors did that. Two had been open for weeks; the third was created by the
+money form release the week before.
+
+**Fixture:** any coach team, plus a club-admin login. ⚠ **You must create your own words first** —
+dev holds almost no team-created vocabulary, and every check below is invisible without one.
+
+### A · Publishing stops deleting
+
+- [ ] As a coach on **team A**, add a word of your own — say *Provincials entry* under Tournaments.
+      Record a cost against it. As a coach on **team B**, add a word with the **same name**, and
+      record money against that one too.
+- [ ] As **owner or treasurer**, go to **Accounting → Budget → team items** and publish team A's word.
+- [ ] ⚠⚠ **Team B's word is still there, and so is its money.** Before today it was deleted and
+      team B's costs were silently re-filed — and anything they had recorded as *money in* lost its
+      item entirely. Check team B's Budget vs. Actual: nothing under *Not itemized* that wasn't
+      before.
+- [ ] The confirmation now says how many other teams have a word by that name and that **theirs are
+      untouched**. Read it and say whether it tells you what you'd want to know.
+
+### B · A club can't pull a word out from under its teams
+
+- [ ] Publish a word, then have a coach record a cost against it.
+- [ ] As owner/treasurer, try to **delete** that club word. It refuses, and names what is filed
+      against it — budget lines, recorded costs, money in.
+- [ ] ⚠ **Before today this succeeded silently**, blanking the item on every one of those records
+      across every team in the club. Widest of the three doors and it had no guard at all.
+- [ ] Delete a club word nothing points at. It still goes.
+
+### C · A team can remove its own words
+
+- [ ] **Money → Budget Plan → Manage our items.** Each of your own words now has a pencil and a
+      **bin** — the move-across arrow is gone.
+- [ ] Remove a word nothing is filed against. It goes.
+- [ ] Record a cost against another of your words, then try to remove it. Refused, naming exactly
+      what is holding it, and pointing at **rename** as the way to fix a name without losing
+      anything.
+- [ ] Standard and club words below still show read-only, with the reason.
+
+### D · Income and expense words may share a name
+
+- [ ] Add *Grant* as an **Income** word. Then add *Grant* as an **Expense** word, same category.
+      **Both are accepted** — before today the second was refused with a message offering a remedy
+      that no longer exists.
+- [ ] Open the money form. On **Income** you see the income *Grant*; on **Expense** the expense one.
+      Never both at once, so the pair cannot be confused at the point of choice.
+- [ ] Try to add a second *Grant* on the **same** side. Still refused — that is a real duplicate.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |
@@ -6196,6 +6257,9 @@ inside the form keeping its name (§B), the family being named rather than calle
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
 | Group **2D** | §8 — house-league fields + double-booking | mig **229** applied to **prod** before promoting |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |
+
+⚠ **§44 adds migration 248** (a word's side joins its identity) to the dev-only queue, and its code
+must reach production **with or before** §43's — two of the three doors it closes are live today.
 
 ⚠ **§43 adds migration 246 to the dev-only queue** (every budget item carries a side, and the column
 is NOT NULL). It must reach production before the money form promotes, or the picker filters on a

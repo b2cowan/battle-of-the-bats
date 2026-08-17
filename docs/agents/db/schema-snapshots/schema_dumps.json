@@ -13808,6 +13808,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 18,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_plan_template_tags",
         "pos": 1,
         "column_name": "template_id",
@@ -18795,14 +18804,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -18865,34 +18874,27 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
@@ -18901,6 +18903,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -19082,21 +19091,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19104,6 +19106,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19924,6 +19933,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_team_payment_requests_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_program_year_id_fkey"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -20862,8 +20878,8 @@
       },
       {
         "tablename": "budget_items",
-        "indexname": "budget_items_unique_scope_name",
-        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_scope_name ON public.budget_items USING btree (category_id, org_id, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(name)) WHERE (org_id IS NOT NULL)"
+        "indexname": "budget_items_unique_scope_side_name",
+        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_scope_side_name ON public.budget_items USING btree (category_id, org_id, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), direction, lower(name)) WHERE (org_id IS NOT NULL)"
       },
       {
         "tablename": "chat_message_reactions",
@@ -22779,6 +22795,11 @@
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_payment_requests_pkey ON public.rep_team_payment_requests USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_program_year_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_program_year_idx ON public.rep_team_payment_requests USING btree (team_id, program_year_id, status)"
       },
       {
         "tablename": "rep_team_payment_requests",

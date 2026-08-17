@@ -12,16 +12,26 @@ import { withObservability } from '@/lib/observability';
  * ruling 2026-08-15: *"we shouldn't populate 1 team's list with another team. Perhaps we can have an
  * org create ones that they want to send to all teams but not from team to team."*
  *
- * ⚠ IT ABSORBS THE DUPLICATES, and that is the point rather than a nicety. Publishing "Provincials
- * entry" while two other teams have each invented their own would leave three items with identical
- * names in one category — the picker showing the same words three times and Budget vs. Actual
- * splitting one item's spending across three rows. That is precisely the fragmentation the tiers
- * exist to prevent, arriving through the door meant to fix it. So every same-named item in the same
- * category is repointed at the published one and removed.
+ * ⚠⚠ IT PROMOTES, AND IT DELETES NOTHING (owner ruling 2026-08-17 — **clubs never absorb teams**).
  *
- * ⚠ REPOINT BEFORE DELETE, ALWAYS. `rep_budget_lines.item_id` is ON DELETE SET NULL, so deleting a
- * duplicate first would silently strip the item off a coach's budget line and leave the row nameless
- * under "Not itemized" — losing the very classification this whole change exists to establish.
+ * It used to absorb every same-named word on every other team: re-point their budget lines and
+ * costs at the survivor, then delete their rows. The reasoning was sound and the implementation was
+ * careful, and it still lost real money records three ways:
+ *
+ *   1. It re-pointed two of the FOUR tables that point at a word. `rep_team_money_in` arrived with
+ *      migration 243, after this code, so every income and refund filed against an absorbed word
+ *      had its item silently blanked — the exact "reappears under Not itemized and nothing tells
+ *      anyone" failure the old comment here warned about, through the gap in its own list.
+ *   2. It matched on `lower(name)` alone. Since migration 246 a word also has a SIDE, so "Grant" as
+ *      income for one team and "Grant" as an expense for another were treated as one word — merged,
+ *      with the survivor's side winning.
+ *   3. The admin pressed it seeing "used by N lines", a count that only ever counted budget lines.
+ *
+ * The ruling removes the REASON for the deletion rather than repairing it: a coach can now tell a
+ * club word from their own (the tier tag in the picker), so two rows with one name stopped being a
+ * defect. **A merge that never runs cannot orphan a record.** Where a team does want to fall in
+ * line, they fold their own words into a shared one themselves — see the team-side merge, where the
+ * person pressing the button is the one whose records move.
  *
  * ⚠ THERE IS NO UNPUBLISH. An item a team is already planning against cannot be taken back from it;
  * the reverse operation has no safe meaning.
@@ -57,7 +67,21 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'That item is already published to every team.' }, { status: 409 });
   }
 
-  // Every other team's item with the same name in the same category — the rows about to be absorbed.
+  /* Promote, and stop. Clearing `team_id` is what makes the word visible to every team in the club;
+     nothing else in the organization is read, changed or removed.
+
+     ⚠ THE TEAM THAT INVENTED IT KEEPS ITS RECORDS UNTOUCHED, because they were never pointing at a
+     copy — they point at this row, which has simply changed tier. No re-pointing is needed here and
+     none should be added: the only re-pointing this product does is the one a coach asks for. */
+  const { error: promoteError } = await supabaseAdmin
+    .from('budget_items').update({ team_id: null }).eq('id', item.id);
+  if (promoteError) return NextResponse.json({ error: promoteError.message }, { status: 500 });
+
+  /* How many other teams happen to have a word by this name — REPORTED, NEVER ACTED ON. The admin
+     asked to share a word; telling them who else already has one lets them go and ask those coaches
+     to fold theirs in, which is the only way words merge now. Matching stays deliberately loose
+     (name and category, ignoring the side) precisely because it no longer decides anything: this is
+     a hint for a human, not a rule for a delete. */
   const { data: twins } = await supabaseAdmin
     .from('budget_items')
     .select('id, name, team_id')
@@ -66,61 +90,14 @@ export const POST = withObservability(async (req: Request,
     .not('team_id', 'is', null)
     .neq('id', item.id);
 
-  const duplicates = ((twins ?? []) as Array<{ id: string; name: string }>)
-    .filter(t => t.name.trim().toLowerCase() === (item.name as string).trim().toLowerCase());
-
-  // 1. Promote. Clearing team_id is what makes it visible to every team in the club.
-  const { error: promoteError } = await supabaseAdmin
-    .from('budget_items').update({ team_id: null }).eq('id', item.id);
-  if (promoteError) return NextResponse.json({ error: promoteError.message }, { status: 500 });
-
-  // 2. Repoint every duplicate's budget lines AND expenses at the survivor, then remove them.
-  let linesMoved = 0;
-  let costsMoved = 0;
-  if (duplicates.length > 0) {
-    const dupIds = duplicates.map(d => d.id);
-    // Two different tables, neither result feeding the other — no reason to wait for one to
-    // finish before starting the other.
-    const [lineMove, costMove] = await Promise.all([
-      supabaseAdmin.from('rep_budget_lines')
-        .update({ item_id: item.id }).in('item_id', dupIds).select('id'),
-      supabaseAdmin.from('rep_team_expenses')
-        .update({ budget_item_id: item.id }).in('budget_item_id', dupIds).select('id'),
-    ]);
-
-    /* ⚠⚠ THE DELETE IS THE DESTRUCTIVE HALF, AND IT ONLY RUNS IF THE REPOINT WORKED. Both link
-       columns are ON DELETE SET NULL, so removing a duplicate whose rows were NOT successfully
-       moved silently strips the item off another team's budget lines and recorded costs — they
-       reappear under "Not itemized" and nothing tells anyone. Reporting success while that happens
-       is worse than refusing: the surviving item is already published (harmless on its own, and a
-       coach can still pick it), so we stop here and say what did and did not happen rather than
-       finishing a job we know went wrong halfway. */
-    if (lineMove.error || costMove.error) {
-      return NextResponse.json({
-        error: `“${item.name}” is now available to every team, but the other teams’ copies could not be merged into it, so nothing was removed. Their budget lines and costs are untouched. Try publishing again.`,
-      }, { status: 500 });
-    }
-
-    linesMoved = lineMove.data?.length ?? 0;
-    costsMoved = costMove.data?.length ?? 0;
-
-    const { error: deleteError } = await supabaseAdmin
-      .from('budget_items').delete().in('id', dupIds);
-    if (deleteError) {
-      // The repoint succeeded, so nothing is stranded — the duplicates are simply still there,
-      // now pointing at nothing. Say so rather than reporting a clean publish.
-      return NextResponse.json({
-        error: `“${item.name}” is published and every line was moved onto it, but the other teams’ duplicate entries could not be removed. They are now unused; try publishing again to clear them.`,
-      }, { status: 500 });
-    }
-  }
+  const alsoHaveIt = ((twins ?? []) as Array<{ id: string; name: string }>)
+    .filter(t => t.name.trim().toLowerCase() === (item.name as string).trim().toLowerCase())
+    .length;
 
   return NextResponse.json({
     ok: true,
     published: { id: item.id, name: item.name },
-    /** What the confirmation tells the admin: this was not just a visibility flip. */
-    absorbed: duplicates.length,
-    linesMoved,
-    costsMoved,
+    /** Teams with a word of the same name, for the admin's information. Nothing was done to them. */
+    alsoHaveIt,
   });
 }, { route: '/api/admin/accounting/team-budget-items/[itemId]/publish' });

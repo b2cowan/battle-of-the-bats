@@ -95,7 +95,23 @@ refusal existed only because the index could not tell the two apart.
 
 ## 4. What gets built
 
-### P1 — Stop the bleeding (small, before anything promotes)
+### ✅ P1 — Stop the bleeding. **BUILT ON DEV 2026-08-17** — Owner QA **§44**, migration **248**
+
+All four items below shipped together, plus §4 P4's shared list, which came forward because three
+of the four guards needed it on day one rather than as a later tidy-up.
+
+**Proven against the live dev database, not by reading the index:** a team may now hold *Grant* as
+income and *Grant* as an expense (both accepted), while a second *Grant* on the same side — differing
+only in case — is still refused. Probe rows cleaned up after.
+
+**The line-kind guard caught two things this change made stale**, which is exactly what it is for:
+the publish route left `KIND_AGNOSTIC` because it no longer reads budget lines at all, and the new
+usage counter joined it with its reason (it counts rows and sums nothing — a funding line and a cost
+line count identically when the question is "is anything pointing at this?").
+
+**Deliberately included beyond the four:** a team can now **remove** its own word. It was ruled but
+had no numbered step, and removing the move-across button without it would have left the manage
+screen offering rename alone — a screen that can create words and never clear them.
 
 1. **Publishing promotes and nothing else.** Delete the twin scan, the repoint and the delete. Doors
    1 and 3 close together. The response reports the promotion; the admin list keeps its "also added
@@ -119,13 +135,18 @@ refusal existed only because the index could not tell the two apart.
    record type and **warns when the category changes**. Repoints all four tables, then removes the
    folded words.
 
-### P4 — Make forgetting impossible
+### ✅ P4 — Make forgetting impossible. **BUILT WITH P1 2026-08-17**
 
-7. **One named list of everything that points at a budget word**, in `lib/coach-budget-items.ts`,
-   driving every guard and the fold. Plus a unit test that reads the committed schema snapshot and
+7. **One named list of everything that points at a budget word** (`BUDGET_ITEM_REFERENCES` in
+   `lib/coach-budget-items.ts`) driving every guard and, later, the fold. Plus
+   `tests/unit/budget-item-references-guard.test.ts`, which reads the committed schema snapshot and
    **fails the build when a foreign key to `budget_items` exists that the list does not cover** — the
-   shape `budget-line-kind-guard` and `coach-history-endpoint-guard` already set. This is the step
-   that stops the fifth table repeating the third one's story.
+   shape `budget-line-kind-guard` and `coach-history-endpoint-guard` already set.
+   ⚠ **Pulled forward from last to first** because three of P1's four guards needed it immediately;
+   shipping them against hand-listed tables would have rebuilt the original bug in three new places.
+   It also asserts every such key is still `ON DELETE SET NULL` (the premise every guard comment
+   rests on) and that at least four exist, so an empty snapshot cannot make the suite pass over
+   nothing.
 
 ---
 

@@ -64,16 +64,14 @@ export default function TeamBudgetItems({ orgSlug, canWrite }: { orgSlug: string
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Could not publish');
-      /* Say what actually happened, not "Saved" — absorbing another team's row is a real change to
-         a plan that team wrote, and an admin should read it back rather than infer it. ⚠ COSTS ARE
-         NAMED TOO: publishing repoints recorded spending as well as budget lines, and reporting
-         only the lines would understate what just moved on another team's books. */
-      const moved = [
-        data.linesMoved ? `${data.linesMoved} budget line${data.linesMoved === 1 ? '' : 's'}` : null,
-        data.costsMoved ? `${data.costsMoved} recorded cost${data.costsMoved === 1 ? '' : 's'}` : null,
-      ].filter(Boolean).join(' and ');
-      setNotice(data.absorbed > 0
-        ? `“${item.name}” is now available to every team. It replaced ${data.absorbed} other team’s copy of the same name${moved ? `, and ${moved} moved onto it` : ''}.`
+      /* ⚠⚠ PUBLISHING DELETES NOTHING NOW (owner ruling 2026-08-17), so this sentence stopped
+         reporting a merge. It used to read "it replaced N other team's copy, and 6 budget lines and
+         3 recorded costs moved onto it" — an honest account of a merge that should never have been
+         happening, and one that undercounted anyway (money-in records moved with nobody counting).
+         What an admin needs now is the opposite: who ELSE has a word by this name, so they can ask
+         those coaches to fold theirs in. Nothing was done to them. */
+      setNotice(data.alsoHaveIt > 0
+        ? `“${item.name}” is now available to every team. ${data.alsoHaveIt} other team${data.alsoHaveIt === 1 ? ' has' : 's have'} a word of their own by this name — theirs are untouched, and each can swap to yours from their own budget page.`
         : `“${item.name}” is now available to every team.`);
       await load();
     } catch (e: unknown) {

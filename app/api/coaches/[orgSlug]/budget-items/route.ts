@@ -8,6 +8,7 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
+  countBudgetItemUsage,
   type BudgetItemTier, type OwnedBudgetItem,
 } from '@/lib/coach-budget-items';
 
@@ -113,6 +114,19 @@ export const GET = withObservability(async (req: Request,
         return a.name.localeCompare(b.name);
       }),
   }));
+
+  /* ⚠ `usage=1` IS FOR THE MANAGE SCREEN ALONE, and it is opt-in for that reason: the picker mounts
+     this route on every money form and every budget line, and none of those need to know how many
+     records are filed against a word. Only this team's OWN words are counted — they are the only
+     ones the manage screen can remove, so counting the rest would be four queries nobody reads. */
+  if (teamId && new URL(req.url).searchParams.get('usage') === '1') {
+    const ownIds = categories.flatMap(c => c.items.filter(i => i.teamId === teamId).map(i => i.id));
+    const usage: Record<string, number> = {};
+    await Promise.all(ownIds.map(async id => {
+      usage[id] = (await countBudgetItemUsage([id])).total;
+    }));
+    return NextResponse.json({ categories, usage });
+  }
 
   return NextResponse.json({ categories });
 }, { route: '/api/coaches/[orgSlug]/budget-items' });
@@ -260,20 +274,12 @@ export const POST = withObservability(async (req: Request,
   const already = sameName.find(i => (i.direction as string | null) === direction);
   if (already) return NextResponse.json({ item: mapItem(already) }, { status: 200 });
 
-  /* ⚠ THE TEAM'S OWN WORD IS THE ONE COLLISION THAT CANNOT BE RESOLVED BY CREATING. The uniqueness
-     index is per (category, org, team), so this team already holding "Bats" as an expense leaves no
-     room for a second "Bats" of its own — and a bare 409 would strand the coach with no idea what
-     to do. Naming the conflict and the door is the difference between a refusal and a dead end.
-     A platform's or the club's word is a different owner, so a team-owned twin on the other side is
-     free to exist — and the two never appear in one list, because the pill shows one side at a time. */
-  const ownCollision = sameName.find(i => (i.team_id as string | null) === teamId);
-  if (ownCollision) {
-    return NextResponse.json({
-      error: `“${name}” already exists on your list as `
-        + `${(ownCollision.direction as string | null) === 'in' ? 'money coming in' : 'an expense'}. A word belongs to `
-        + `one side — move it across from Budget Plan → Manage our items, or give this one a different name.`,
-    }, { status: 409 });
-  }
+  /* ⚠⚠ THE SAME-NAME-OTHER-SIDE REFUSAL IS GONE (owner ruling 2026-08-17, migration 248). It existed
+     for exactly one release: the mig-240 index keyed on (category, org, team, name) with no side, so
+     a team wanting "Grant" as income AND "Grant" as the fee to apply for one had nowhere to put the
+     second — and the remedy the message offered ("move it across") has itself been retracted.
+     Migration 248 puts the side in the key, so the two are simply different words. They can never be
+     confused at the point of choice, because the picker offers one side at a time. */
 
   const { data, error } = await supabaseAdmin
     .from('budget_items')
@@ -302,9 +308,11 @@ export const POST = withObservability(async (req: Request,
       const winner = (await listVisibleBudgetItems(ctx.org.id, teamId))
         .find(i => sameWord(i) && (i.direction as string | null) === direction);
       if (winner) return NextResponse.json({ item: mapItem(winner) }, { status: 200 });
+      /* Since migration 248 the index includes the side, so a 23505 with no same-side winner means
+         the race genuinely lost to something this read cannot see. Rare, and honest about it. */
       return NextResponse.json({
-        error: `“${name}” already exists on your list on the other side. A word belongs to one side — `
-          + `move it across from Budget Plan → Manage our items, or give this one a different name.`,
+        error: `“${name}” could not be added just now — something else created a word by that name at `
+          + `the same moment. Try again.`,
       }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });

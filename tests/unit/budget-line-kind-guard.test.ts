@@ -61,11 +61,18 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
       + 'all (they have no category or item by design), so the kind cannot change the answer.',
   },
   {
-    path: 'app/api/admin/accounting/team-budget-items/[itemId]/publish/route.ts',
-    reason: 'Repoints lines from an absorbed duplicate ITEM onto the published one. It touches '
-      + 'item_id and nothing else — no amount, no kind, no total — and money-in lines carry no '
-      + 'item, so none of them can be in the set it moves.',
+    path: 'lib/coach-budget-items.ts',
+    reason: 'COUNTS rows filed against a budget ITEM, to decide whether a word may be removed and '
+      + 'to write the refusal sentence. It reads no amount and sums nothing — the question is "is '
+      + 'anything pointing at this?", where a funding line and a cost line count exactly the same. '
+      + 'Partitioning by kind here would tell a coach their word is unused because the only thing '
+      + 'holding it happens to be money coming in.',
   },
+  /* ⚠ THE PUBLISH ROUTE LEFT THIS LIST ON 2026-08-17, and its removal is the point. It was here
+     because it re-pointed budget lines off an absorbed duplicate — the merge that silently blanked
+     `rep_team_money_in` for every income and refund filed against the word it deleted. Publishing
+     promotes and touches nothing else now, so it reads no line table at all and needs no exemption.
+     The "stale exception" half of this guard is what caught the entry, which is exactly its job. */
   {
     path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/route.ts',
     reason: 'Creates a line and is where the kind is CHOSEN — it validates the value it writes.',

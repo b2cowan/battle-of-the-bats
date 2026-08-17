@@ -13806,6 +13806,15 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "rep_team_payment_requests",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
     "table_name": "rep_team_plan_template_tags",
     "column_name": "template_id",
     "data_type": "uuid",

@@ -1,6 +1,6 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { Pencil, ArrowLeftRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -50,6 +50,27 @@ export default function BudgetItemManagerModal({
   const [renameDraft, setRenameDraft] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  /**
+   * How many records are filed against each of this team's own words.
+   *
+   * ⚠ FETCHED HERE RATHER THAN PASSED IN, because the panel behind this modal reads the taxonomy on
+   * every money form and every budget line and has no business counting usage for all of them. The
+   * count is opt-in on the list route (`usage=1`) and only this screen asks for it.
+   *
+   * ⚠ IT DISABLES THE BUTTON; THE SERVER IS WHAT REFUSES. This can go stale — a coach in another tab
+   * can file a cost against a word between this fetch and the click — so the delete route counts
+   * again and returns the real sentence. The button state is a courtesy, never the guard.
+   */
+  const [usage, setUsage] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}&usage=1`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d?.usage) setUsage(d.usage); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId, categories]);
 
   /** Flattened and split, with each word's category beside it — the same shape the picker searches.
    *  ⚠ MEMOISED, and sorted here rather than at render: the rename `<input>`'s state lives in this
@@ -88,6 +109,26 @@ export default function BudgetItemManagerModal({
     }
   }
 
+  /** Remove one of this team's own words. The server refuses if anything is filed against it and
+   *  says what — shown as-is, because that sentence is written for the coach. */
+  async function remove(item: BudgetItem) {
+    setError('');
+    setBusyId(item.id);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/budget-items/${item.id}?teamId=${teamId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not remove that word');
+      }
+      onChanged();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not remove that word');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   function sideChip(item: BudgetItem) {
     const isIn = item.direction === 'in';
     return (
@@ -118,8 +159,10 @@ export default function BudgetItemManagerModal({
             <>
               <p className={styles.formHint}>
                 Renaming one changes what it&rsquo;s called <strong>everywhere</strong> — on your plan,
-                on Budget vs. Actual and on everything already recorded against it. Moving a word to the
-                other side changes only which list it&rsquo;s offered in; <strong>no money moves.</strong>
+                on Budget vs. Actual and on everything already recorded against it. A word can only be
+                removed while <strong>nothing is filed against it</strong>; once something is, rename it
+                instead. A word stays on the side it was made on — put one in the wrong place and the
+                fix is to remove it and add it again.
               </p>
               {ours.map(({ item, categoryName }) => (
                 <div key={item.id} className={styles.tagManagerRow}>
@@ -163,16 +206,22 @@ export default function BudgetItemManagerModal({
                         >
                           <Pencil size={14} aria-hidden />
                         </button>
-                        {/* One control, because there are exactly two sides — a "move it" button
-                            says what pressing it does; a dropdown of two would not. */}
+                        {/* ⚠⚠ THE "MOVE TO THE OTHER SIDE" BUTTON IS RETRACTED (owner ruling
+                            2026-08-17). It shipped here on 2026-08-16 and lasted one day: a category
+                            can belong to one side of the books, so a moved word can land under a
+                            heading that makes no sense for it. Removing the word and adding it on the
+                            other side is the honest answer, and a word with history cannot be removed
+                            anyway — which makes a wrong-side word a five-second problem rather than a
+                            data one. The server refuses a `direction` outright now, so a stale client
+                            is told rather than silently ignored. */}
                         <button
-                          title={item.direction === 'in'
-                            ? `Move ${item.name} to the expense side`
-                            : `Move ${item.name} to the money-in side`}
-                          disabled={!!busyId}
-                          onClick={() => patch(item, { direction: item.direction === 'in' ? 'out' : 'in' })}
+                          title={usage[item.id]
+                            ? `${item.name} can’t be removed — ${usage[item.id]} records are filed against it`
+                            : `Remove ${item.name}`}
+                          disabled={!!busyId || !!usage[item.id]}
+                          onClick={() => remove(item)}
                         >
-                          <ArrowLeftRight size={14} aria-hidden />
+                          <Trash2 size={14} aria-hidden />
                         </button>
                       </div>
                     </>

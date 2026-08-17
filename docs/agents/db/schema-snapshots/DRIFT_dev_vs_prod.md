@@ -2,14 +2,14 @@
 
 **Generated:** 2026-08-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 90 divergence(s)** across dev/prod.
+**⚠️ 93 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 3 | 0 | — |
-| Columns | 40 | 0 | 1 |
-| Indexes | 14 | 1 | 0 |
-| Constraints | 22 | 0 | — |
+| Columns | 41 | 0 | 1 |
+| Indexes | 15 | 1 | 0 |
+| Constraints | 23 | 0 | — |
 | RLS / CHECK | 9 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -22,7 +22,7 @@
 _none_
 
 ## Columns
-### Only in DEV (40)
+### Only in DEV (41)
 - `budget_categories.sports`
 - `budget_items.direction`
 - `budget_items.sports`
@@ -53,6 +53,7 @@ _none_
 - `rep_team_money_in.received_from`
 - `rep_team_money_in.team_id`
 - `rep_team_money_in.updated_at`
+- `rep_team_payment_requests.program_year_id`
 - `rep_team_staff_memberships.capabilities`
 - `rep_team_staff_memberships.coach_role`
 - `rep_team_staff_memberships.created_at`
@@ -71,9 +72,9 @@ _none_
 - `rep_fundraiser_entries.player_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (14)
+### Only in DEV (15)
 - `budget_items_team_idx`
-- `budget_items_unique_scope_name`
+- `budget_items_unique_scope_side_name`
 - `idx_rep_team_expenses_balance_entry`
 - `idx_rep_team_expenses_budget_item`
 - `idx_rep_team_expenses_deposit_entry`
@@ -82,6 +83,7 @@ _none_
 - `rep_team_fundraiser_tags_pkey`
 - `rep_team_fundraiser_tags_tag_idx`
 - `rep_team_money_in_pkey`
+- `rep_team_payment_requests_program_year_idx`
 - `rep_team_staff_memberships_org_user_idx`
 - `rep_team_staff_memberships_pkey`
 - `rep_team_staff_memberships_team_idx`
@@ -94,7 +96,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (22)
+### Only in DEV (23)
 - `budget_items.budget_items_team_id_fkey`
 - `rep_team_expenses.rep_team_expenses_balance_entry_id_fkey`
 - `rep_team_expenses.rep_team_expenses_budget_category_id_fkey`
@@ -111,6 +113,7 @@ _none_
 - `rep_team_money_in.rep_team_money_in_pkey`
 - `rep_team_money_in.rep_team_money_in_program_year_id_fkey`
 - `rep_team_money_in.rep_team_money_in_team_id_fkey`
+- `rep_team_payment_requests.rep_team_payment_requests_program_year_id_fkey`
 - `rep_team_staff_memberships.rep_team_staff_memberships_org_id_fkey`
 - `rep_team_staff_memberships.rep_team_staff_memberships_pkey`
 - `rep_team_staff_memberships.rep_team_staff_memberships_revoked_by_fkey`
