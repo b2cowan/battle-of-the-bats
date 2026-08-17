@@ -1,9 +1,9 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-06-22 (Finding #26: Club Repackaging entitlement decoupling reviewed pre-build — reuse `club_included`, cap via a new `organizations.team_limit` column NOT `org_overrides`, no per-team rows for org-owned teams; verify-zero confirmed against live dev+prod.) — prev 2026-06-08 (Finding #25: full dev+prod re-snapshot via new `scripts/refresh-db-snapshots.mjs`; 50 dev/prod divergences catalogued in `schema-snapshots/DRIFT_dev_vs_prod.md`. Schema now **103 tables** both envs.) — prev 2026-06-04 (H8 Findings #22–24: extend `org_overrides` not a new table, embed-not-flag hot path, reuse billing-suspension columns).  
+> **Last reviewed:** 2026-08-17 (**Quarterly health check** — Findings #33–#39. Full-schema audit of 165 tables against the live dev+prod snapshots: FK integrity is strong (471 constraints, only 18 ID-shaped columns unconstrained, all deliberate); index coverage is the weak spot (154 FK columns with no usable index, incl. 25+ `org_id`); the one real architectural debt is **identity-by-email-string**. Prod carries 20,857 rows across 162 tables with **86 completely empty** — the schema is well ahead of the business, which is the context for every severity below.) — prev 2026-06-22 (Finding #26: Club Repackaging entitlement decoupling reviewed pre-build — reuse `club_included`, cap via a new `organizations.team_limit` column NOT `org_overrides`, no per-team rows for org-owned teams; verify-zero confirmed against live dev+prod.) — prev 2026-06-08 (Finding #25: full dev+prod re-snapshot via new `scripts/refresh-db-snapshots.mjs`; 50 dev/prod divergences catalogued in `schema-snapshots/DRIFT_dev_vs_prod.md`. Schema now **103 tables** both envs.) — prev 2026-06-04 (H8 Findings #22–24: extend `org_overrides` not a new table, embed-not-flag hot path, reuse billing-suspension columns).  
 > **Schema source (authoritative):** `docs/agents/db/schema-snapshots/*.json` — regenerated for **dev AND prod** by `node scripts/refresh-db-snapshots.mjs` (run after every migration). It also emits `DRIFT_dev_vs_prod.md` and refreshes `memory/reference_db_schema.md`. **Decide column existence from these snapshots / live `information_schema`, never from migrations** (see `docs/agents/db/DATA_DICTIONARY.md` rules).  
-> **Tables reviewed:** 85 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)  
+> **Tables reviewed:** 165 across 10 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM, other) — re-counted 2026-08-17; the "85" that stood here was three months stale.  
 > **Validation:** `docs/validate_db_state.sql` — checks 17–18 added (pools); check 19 added (games FK duplicates). Will FAIL on prod until migrations 081 Part B and 082 applied.
 
 ---
@@ -13,17 +13,136 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 1 | 7 | 1 |
-| Medium | 0 | 4 | 2 |
-| Low | 0 | 4 | 3 |
-| Advisory | 8 | 1 | 0 |
+| High | 2 | 7 | 1 |
+| Medium | 2 | 5 | 2 |
+| Low | 2 | 4 | 3 |
+| Advisory | 9 | 1 | 0 |
 
-> **Newest (2026-06-30):** #30 Dedicated tryout surface (Phase 2A) — `rep_tryouts` (1:1 subsystem-root) + `rep_tryout_sessions`; calendar via read-time projection (no fake `rep_team_events` row); candidate bib/check-in on `rep_tryout_registrations`; both new tables RLS-enabled-no-policies; ⚠ verify `rep_tryout_registrations` RLS is ON (pre-existing PII-leak check). Owner to ratify in the Phase 2A plan. (Advisory/pre-build)
+> **Newest (2026-08-17, quarterly health check):** #33 FK columns with no usable index, 25+ of them `org_id` — this log's own standing rule, silently untrue — **fixed on dev the same day, migration 249, 139 indexes, ⚠ prod-pending; the standing gate that stops it recurring is still open**; #34 twin tables (`org_budget_periods` ≡ `rep_budget_periods` column-for-column; `rep_dues_payments` ≡ `rep_dues_payouts` but for one date-column name); #35 **identity is a string** — guardian/coach identity travels as a normalized email across 30 tables with no person entity (**High**, the one real architectural debt); #36 opponent + venue links recomputed from free text on rep events only; #37 six polymorphic `(type, id)` pairs and 18 unconstrained ID columns — all deliberate, but no orphan check exists; #38 preference/opt-out sprawl (8 tables + 1 column); #39 schema is ahead of the business (86 of 162 prod tables empty).
+> **Prior (2026-06-30):** #30 Dedicated tryout surface (Phase 2A) — `rep_tryouts` (1:1 subsystem-root) + `rep_tryout_sessions`; calendar via read-time projection (no fake `rep_team_events` row); candidate bib/check-in on `rep_tryout_registrations`; both new tables RLS-enabled-no-policies; ⚠ verify `rep_tryout_registrations` RLS is ON (pre-existing PII-leak check). Owner to ratify in the Phase 2A plan. (Advisory/pre-build)
 > **Prior (2026-06-28):** #27 rep game scoring should be team-relative (`team_score`/`opponent_score`) not home/away-assumed — **High, fix now while pre-launch/cheap**; #28 lineup/stats analytics readiness — model sound, keep future stats in own leaf tables (Advisory); #29 Phase-4 lineup templates → new dedicated table, not the event-bound `rep_team_lineups` (Advisory).
 
 ---
 
 ## Open Findings
+
+---
+
+### [2026-08-17] — Finding #35: Identity is a STRING — guardian/coach identity travels as a normalized email across 30 tables; there is no person entity
+
+**Severity:** High (architectural debt; the single largest one in the schema)
+**Finding:** This is the honest answer to "are we only joining by IDs?" — **no, and the exception is people.** Everything *structural* is ID-joined and clean. But a human being has no row anywhere in this schema. Their identity is a lowercased email string, re-matched at read time in every module:
+- `family_links.invited_email` ↔ `rep_roster_players.guardian_email` — matched in JS in `lib/family-guardian.ts` (`rosterContact.get(raw.player_id) === raw.invited_email`), not by FK. `claimed_email` exists as a *second* email column precisely because the coach-typed address and the address the guardian actually signed up with diverge.
+- `family_consents` upserts on `(org_id, guardian_email, basis, scope, source_id)` — consent, a legal record about a minor's guardian, is keyed by a text address.
+- `family_email_optouts(org_id, email)`, `organization_members.invited_email`, `early_access_leads.email_normalized`, `basic_coach_teams.primary_coach_email`, `teams.coach_email`/`email`, `league_registrations.guardian_email`, `rep_tryout_registrations.guardian_email`, `email_sends.recipient_email`. **30 tables carry a text identity column.**
+- Consequence today: the same guardian with two children on two teams is two unrelated rows; a guardian who changes their email silently loses their history, their consent record and their opt-out; and "have we ever contacted this person" cannot be answered by a join. Finding #7 (2026-05-23) closed the narrow version of this as Accepted Risk ("`contacts` is tournament-scoped only") — **that finding was scoped too small.** The issue is not that contacts are per-module; it is that identity is not an entity anywhere.
+**Tables affected:** `family_links`, `family_consents`, `family_email_optouts`, `rep_roster_players`, `rep_tryout_registrations`, `league_registrations`, `basic_coach_team_players`, `organization_members`, `contacts`, `teams`, `early_access_leads`, `email_sends`, +18 more
+**Recommendation:**
+- **Do not build a platform-wide `people` table.** Cross-org identity resolution is a privacy hazard (it would let one club's data confirm a guardian exists at another) and a migration far larger than the product currently justifies.
+- **Do build `org_people` — org-scoped, additive, non-breaking:** `id`, `org_id` (NOT NULL, FK, indexed), `email_normalized` (NOT NULL), `first_name`, `last_name`, `phone`, timestamps, `UNIQUE (org_id, email_normalized)`. Then add a **nullable** `person_id` FK to the tables above and backfill. Existing email columns stay as the as-typed record; `person_id` becomes the join key. Nothing breaks on day one; each module cuts over when it next gets touched.
+- **Sequence it behind the money work.** The trigger to build it is the first feature that must answer "everything about this family across the org" — a guardian portal, a household statement, or CASL-grade consent/audit. Until then this is a documented, deliberate carry.
+- **Meanwhile, add the guardrail that costs nothing:** every write path that stores an email must run it through the one existing normalizer (`normalizeGuardianEmail`). Today `early_access_leads` has a dedicated `email_normalized` column while `family_links` normalizes in application code only — two different disciplines for the same job.
+**Status:** Open — recommendation issued 2026-08-17. Supersedes and widens Finding #7 (Accepted Risk, 2026-05-23), which addressed only the tournament-scoping of `contacts`.
+
+---
+
+### [2026-08-17] — Finding #33: 154 foreign-key columns have no usable index — 25+ of them are `org_id`, violating this log's own standing rule
+
+**Severity:** Medium (High by rule; Medium by present impact — see the volume note)
+**Finding:** Audited all 471 FK constraints on dev (452 on prod) against every index definition in the snapshots, counting a column covered only when it is the **leading** column of a **non-partial** index. Result: **154 FK columns on dev / 143 on prod have no usable index** (audit columns pointing at `auth.users` excluded — those are never joined and are correctly unindexed). Among them:
+- **`org_id` on 25+ tables** — `rep_roster_players`, `rep_team_events`, `rep_team_expenses`, `rep_team_money_in`, `rep_dues_payments`, `rep_dues_payouts`, `rep_fundraisers`, `rep_program_years`, `rep_tryout_registrations`, `rep_budget_lines`, `rep_team_announcements`, `game_change_notices`, `notification_preferences`, `family_recap_views`, and more. The mandate at the top of the `/dba` agent says *"Every `org_id` column must be indexed."* It is silently untrue in 25+ places and nothing checks it.
+- **The hottest tournament tables:** `games.tournament_id`, `teams.tournament_id`, `teams.division_id`, `teams.pool_id`, `divisions.tournament_id`, `pools.division_id`, `diamonds.tournament_id`, `rules.tournament_id`, `resources.tournament_id`, `announcements.tournament_id`. ⚠ `games` *appears* to have tournament_id coverage but both such indexes are **partial** (`WHERE score_submitted_at IS NOT NULL`, `WHERE generator_locked = true`) and cannot serve `WHERE tournament_id = $1`. A naive audit that ignores the WHERE clause reports these as covered — mine did on the first pass.
+- **`team_id` on 18 rep tables** and **`program_year_id` on 14** — the two columns every coach-portal read filters on.
+- `rep_dues_credits` has **no index at all beyond its PK** — neither `player_id` nor `program_year_id`, on a table read by every dues screen.
+**Volume note (this is why it is Medium, not High):** prod holds **20,857 rows across 162 tables**; the largest business table is `rep_team_event_attendance` at 1,077 rows and the largest tournament table is `games` at 83. Postgres will sequential-scan these faster than it would use an index. **There is no performance problem today and claiming one would be false.** The finding is that the gap is invisible, grows silently with the first real customer, and is cheapest to close now while every table is small enough that index creation is instant and non-blocking.
+**Tables affected:** 78 tables (full list reproducible from the snapshots — see the audit method above)
+**Recommendation:**
+- **One additive migration, three tiers, `CREATE INDEX IF NOT EXISTS` throughout** (not `CONCURRENTLY` — at these row counts a plain create is instantaneous and `CONCURRENTLY` cannot run in a transaction):
+  1. **Tenancy** — every unindexed `org_id`. These back RLS `USING` clauses; they are the rule.
+  2. **Coach-portal hot path** — `team_id` and `program_year_id` on the rep tables, plus `rep_dues_credits(player_id)` and `rep_dues_credits(program_year_id)`. Prefer composite `(team_id, program_year_id)` where reads always pair them — it covers the `team_id` prefix too, so it is one index rather than two.
+  3. **Tournament sub-tables** — plain `tournament_id` on `games`, `teams`, `divisions`, `diamonds`, `rules`, `resources`, `announcements`; plus `teams(division_id)`, `pools(division_id)`.
+- **Add a standing gate.** The rule failed because nothing enforced it. Add an `org_id`-index check to `docs/agents/db/validate_db_state.sql` (and ideally a check script in `verify:changed`) that fails when any table with an `org_id` column lacks a leading-column index on it. Without this the next 25 will accumulate exactly the same way.
+- Snapshots + `DATA_DICTIONARY` refresh in the same unit of work.
+**Status:** **Addressed (dev) 2026-08-17 — migration 249** (`249_every_foreign_key_can_be_followed_backwards.sql`), 139 indexes, tiered as recommended. Dev index count 554 → **693** (exact match to the statement count — no silent skips). Verified live post-apply: **zero** tables now have an `org_id` column without a leading `org_id` index, and a full live FK re-audit leaves only 2 columns uncovered — `rep_tryout_scores.program_year_id` and `rep_tryout_evaluator_sessions.program_year_id`, both trailing columns of the deliberate composite `(team_id, program_year_id)`.
+Two exclusions, both intentional and documented in the migration header: `rep_player_continuity_links` (its four side columns are covered by `coalesce()` expression indexes per Finding #31 — plain per-column indexes would be redundant), and the two telemetry buffers `request_metrics_raw` / `request_metrics_rollup` (their `org_id` is a metric label with no FK, never filtered on alone, and they are the hottest write paths in the app).
+⚠ **Two audit traps recorded because both produced a wrong answer on a first pass:** (1) a **partial** index only covers a plain equality lookup when its predicate is exactly `<col> IS NOT NULL` — `games` has two indexes led by `tournament_id` but both are otherwise-predicated, so `games.tournament_id` was genuinely unindexed while appearing covered; (2) a verify regex of `\(org_id[,)]` also matches `COALESCE(org_id, …)` buried mid-composite, which let `request_metrics_rollup` pass a draft check with no usable `org_id` index at all. The shipped verify query anchors on `USING btree \(org_id[,)]`.
+**⚠ PROD-PENDING** — dev-only apply; prod is a separate explicit owner step (expect ~139 dev-only index rows in `DRIFT_dev_vs_prod.md` until then; prod is at 540 indexes vs dev 693).
+**Recurrence gate: BUILT** (2026-08-17, same unit of work) — `scripts/check-index-coverage.mjs` (`npm run check:indexes`), wired into `verify:changed` after the parity gate. Reads the committed snapshots offline (no network, no credentials), enforces the `org_id` rule on **dev only** — prod legitimately lags between a migration and its prod apply, and prod catch-up is already gated by `check-prod-migration-drift` + `check-schema-parity`; gating on prod here would block every commit until the owner runs an apply. Deliberate exemptions live in `scripts/.index-coverage-exceptions.json` and must carry a written reason (today: the two telemetry buffers). Current state: **87/89 org_id columns covered, 2 accepted exceptions.**
+**The gate was proven to fail before it was trusted to pass** — run against the prod snapshot it reports 27 uncovered tables and exits 1; against dev it exits 0. A gate verified only in its passing state is the same green tick whether or not it works (the empty-fixture lesson, applied to schema).
+
+---
+
+### [2026-08-17] — Finding #34: Twin tables — `org_budget_periods` ≡ `rep_budget_periods` column-for-column; `rep_dues_payments` ≡ `rep_dues_payouts` but for one date-column name
+
+**Severity:** Medium
+**Finding:** Direct column-set comparison from the dev snapshot:
+- **`org_budget_periods` (7 cols) vs `rep_budget_periods` (7 cols): identical.** `id, budget_line_id, period_label, period_date, amount, sort_order, created_at` — zero columns unique to either. The only difference is which parent table `budget_line_id` points at.
+- **`org_budget_lines` (11) vs `rep_budget_lines` (13): 10 columns shared.** Differences are the scope key only (`season_year` vs `team_id` + `program_year_id`) plus `line_kind`.
+- **`rep_dues_payments` (13) vs `rep_dues_payouts` (13): 12 columns shared.** The sole difference is `received_date` vs `paid_date`. **A sign flip has been modelled as a second table** — same shape, same FKs, same `accounting_entry_id` link, opposite direction.
+This is the concrete answer to "are we storing similar values across tables": yes, in the money module, and it is structural rather than accidental.
+**Tables affected:** `org_budget_lines`, `org_budget_periods`, `rep_budget_lines`, `rep_budget_periods`, `rep_dues_payments`, `rep_dues_payouts`
+**Recommendation:**
+- **Do not migrate these now.** All six are live, carry real (if small) data, and the coach money work is mid-flight (P2 on dev, P3 planned). Merging a live financial table during an active build is how a money bug ships.
+- **Do impose the rule that stops it growing:** the next money surface does **not** get its own table because its rows point a different direction or hang off a different parent. `rep_team_money_in` already has an `entry_kind` discriminator doing exactly this job correctly — that is the pattern to copy.
+- **When the money book (P4) is scoped, put consolidation in its scope explicitly:** `rep_dues_payments` + `rep_dues_payouts` → one table with a `direction` CHECK and one `occurred_at`; the two `*_budget_periods` tables → one `budget_periods` with a nullable parent pair or a scope discriminator. Both are mechanical at current row counts (125 and 0 rows respectively).
+- Note the precedent already set: migration 246 gave `budget_items` a NOT NULL `direction` rather than splitting income and expense items into two tables. That decision was right; these two pairs predate it.
+**Status:** Open — recommendation issued 2026-08-17; execute inside the money-book (P4) scope, not before.
+
+---
+
+### [2026-08-17] — Finding #36: Opponent and venue are resolved from free text forever — `rep_team_events` never stores the ID it just resolved
+
+**Severity:** Medium
+**Finding:** Two related gaps, both on `rep_team_events` and both invisible because the app recomputes around them:
+- **Opponent:** `rep_team_events.opponent` is free text with no FK. `rep_team_opponents` (`normalized_name`) and `rep_team_opponent_aliases` (`normalized_alias`) exist to fold spellings together, and `lib/coach-opponents.ts` re-derives the grouping **on every read** by normalizing the event's text and looking it up. The resolved identity is never written back. So a coach who merges two opponent spellings, or renames one, has that judgement stored only in the alias table — and every scouting-book read pays to replay it. The alias table is a good design for *resolving* free text; the gap is that resolution never becomes a stored fact.
+- **Venue:** `league_games` and `league_practices` both carry `org_venue_id` + `org_venue_facility_id` FKs; tournament `games` carries `diamond_id` + `venue_facility_id`. **`rep_team_events` carries only `location`, `location_address` and `field_number` as text** — it is the one scheduling surface in the product still entirely on free-text venue, despite the game-location-source-of-truth work having settled this question for the other two modules.
+**Tables affected:** `rep_team_events`, `rep_team_opponents`, `rep_team_opponent_aliases`, `org_venues`, `org_venue_facilities`
+**Recommendation:**
+- **Opponent:** add nullable `opponent_id` (FK → `rep_team_opponents.id`, ON DELETE SET NULL, indexed) to `rep_team_events`. Stamp it whenever the resolver identifies an opponent; keep the `opponent` text as the as-typed record (same discipline as Finding #35's email columns). Reads prefer `opponent_id` and fall back to text resolution for unstamped rows — no backfill required, no flag day.
+- **Venue:** add nullable `org_venue_id` + `org_venue_facility_id` FKs to `rep_team_events`, mirroring `league_practices` exactly. Text stays for the ad-hoc case (a parking-lot practice is not a venue row). This is what makes "which of our fields do we actually use" answerable across all three modules instead of two.
+- Both are additive and independent. Neither should block the money work; take them the next time either surface is opened.
+**Status:** Open — recommendation issued 2026-08-17.
+
+---
+
+### [2026-08-17] — Finding #37: Six polymorphic `(type, id)` pairs and 18 unconstrained ID columns — all deliberate, but nothing detects an orphan
+
+**Severity:** Low
+**Finding:** Audited every `uuid` column ending in `_id` against the FK constraint set. **Only 18 lack a FK** (excluding audit/actor columns, which point at `auth.users` and are consistently unconstrained by design). That is a genuinely good result across 165 tables — the schema's referential integrity is strong and this finding should not be read as alarm. The 18 break down as:
+- **Six intentional polymorphic pairs**, where a FK is structurally impossible: `accounting_ledgers(entity_type, entity_id)`, `accounting_entries(source_module, source_entity_id)`, `chat_rooms(surface, ref_id, ref_sub_id)`, `fan_follows(entity_type, entity_id)`, `billing_retained_records(record_type, record_id)`, `family_consents(source_table, source_id)`.
+- **Two correlation keys that reference nothing** and are correct as-is: `games.bracket_id`, `league_practices.recurrence_group_id`.
+- **One pointer into a JSON array:** `chat_poll_votes.option_id` targets an option inside `chat_messages.metadata` — no FK possible by construction.
+- **Six cross-module "source" pointers that COULD be constrained and are not:** `rep_team_events.source_tournament_game_id` → `games.id`, `rep_team_events.source_basic_event_id` → `basic_coach_team_events.id`, `rep_roster_players.source_basic_player_id` → `basic_coach_team_players.id`, `team_workspaces.source_tournament_team_id` → `teams.id`, `team_workspace_claims.tournament_team_id` → `teams.id`. Each has a unique index but no referential guarantee, so deleting the source silently leaves a dangling pointer.
+- **One real money gap:** `league_registrations.fee_entry_id` points at `accounting_entries.id` with no FK — a financial link with no integrity guarantee, and the only one of its kind (every other `accounting_entry_id` column in the schema is properly constrained).
+**Tables affected:** the 18 listed above
+**Recommendation:**
+- **Fix the one that is simply missing:** add `league_registrations.fee_entry_id` → `accounting_entries(id)` ON DELETE SET NULL, indexed. Pre-check for existing orphans first.
+- **Leave the six source pointers unconstrained but document why.** They are deliberately weak links — a tournament game deleted upstream should not cascade into a coach's season, and SET NULL would erase the provenance trail. Record this in `DATA_DICTIONARY.md` as a decision rather than leaving it to look like an oversight.
+- **Add orphan detection to `docs/agents/db/validate_db_state.sql`** for the six polymorphic pairs and the six source pointers — a `NOT EXISTS` count per pair. Polymorphic references are fine when something watches them; today nothing does.
+**Status:** Open — recommendation issued 2026-08-17.
+
+---
+
+### [2026-08-17] — Finding #38: Preference and opt-out sprawl — eight tables plus a column answer one question
+
+**Severity:** Low
+**Finding:** "What may we send this person, and how?" is currently spread across `notification_preferences` (user × org × event_type × 3 channels), `tournament_notification_preferences` (user × tournament × event_type), `fan_alert_prefs` (user, two booleans), `user_notification_settings` (user, global pause), `user_marketing_opt_outs` (user), `user_preferences` (user, theme + coach hints), `family_email_optouts` (org × email), and `organizations.email_marketing_opt_out` — plus two near-identical push tables, `push_subscriptions` and `fan_push_subscriptions`, differing mainly in that the fan one is tournament-scoped and anonymous. Each was individually reasonable; together they mean any new send path has to consult a growing list of unrelated stores to decide "may I". The `notify()` chokepoint mitigates this in code, which is why it has not bitten yet.
+**Tables affected:** `notification_preferences`, `tournament_notification_preferences`, `fan_alert_prefs`, `user_notification_settings`, `user_marketing_opt_outs`, `user_preferences`, `family_email_optouts`, `push_subscriptions`, `fan_push_subscriptions`, `organizations`
+**Recommendation:** No migration now — the row counts are trivial and the chokepoint holds. Two cheap disciplines: (1) any new preference goes into an **existing** table, never a new one — `notification_preferences` already has the right shape (subject × scope × event × channel) to absorb most of them; (2) before the next messaging feature ships, confirm every one of these stores is consulted by `notify()` — the failure mode here is not performance, it is a send path that misses one opt-out table and mails someone who asked not to be mailed. Revisit consolidation if a preference-centre UI is ever scoped.
+**Status:** Open — recommendation issued 2026-08-17.
+
+---
+
+### [2026-08-17] — Finding #39: The schema is ahead of the business — 86 of 162 prod tables hold zero rows
+
+**Severity:** Advisory
+**Finding:** Live counts (`pg_stat_user_tables`, 2026-08-17): **prod = 162 tables, 20,857 rows, 86 tables completely empty**; dev = 165 tables, 52,103 rows, 39 empty. The largest business table on prod is `rep_team_event_attendance` (1,077); the largest tournament table is `games` (83); `teams` is 53. Two of the top three prod tables by row count are infrastructure (`request_metrics_rollup` 14,326, `platform_audit_log` 3,610) — i.e. **the platform currently stores more telemetry about itself than customer data.** This is the direct answer to "do we have too many tables": 165 is not an unreasonable number for a genuinely modular multi-tenant platform, and the module boundaries are clean and consistently prefixed — but slightly over half of it has never held a row in production.
+**Tables affected:** schema-wide
+**Recommendation:**
+- **This is not a defect and needs no migration.** A pre-revenue platform building ahead of demand is a deliberate strategy, and the modules were built to owner direction. Recording it because it is the correct lens for every other finding in this review: *nothing here is a performance problem, and any recommendation framed as one would be wrong.*
+- **What it does change is the cost of fixing things.** Every structural change in this log — the index sweep (#33), the twin-table merges (#34), the `org_people` entity (#35) — is close to free right now and gets permanently more expensive with the first real customer. Ordering matters more than urgency.
+- **The one thing worth watching:** empty tables are untested tables. `check:layout`'s empty-fixture lesson (a green sweep over an empty fixture proves nothing) applies to the schema too — a module with zero prod rows has never had its constraints, cascades or RLS exercised by real data. Prefer seeding a realistic fixture over trusting an empty table's clean bill of health.
+**Status:** Open (informational) — recorded 2026-08-17.
 
 ---
 
@@ -375,7 +494,7 @@ Dev has only the auto-named versions (`games_*_fkey`), which is correct for dev.
 **Finding:** The `contacts` table has a `tournament_id` column, making it tournament-module-specific. The league and rep team modules likely store contact info inline (e.g. `league_registrations.guardian_email`, `rep_roster_players.guardian_email`). As the platform grows, a shared `org_contacts` or `people` table may be needed to avoid duplicate contact records across modules.  
 **Tables affected:** `contacts`, `league_registrations`, `rep_roster_players`, `rep_tryout_registrations`  
 **Recommendation:** No immediate action needed. Monitor: if guardian/contact deduplication becomes a user request, plan a shared contacts table. Flag this before building any cross-module communication or CRM feature.  
-**Status:** Accepted Risk — Same basis as Finding #2. These are intentional module boundaries, not scoping bugs. Revisit if/when a cross-module CRM or contacts feature is planned.
+**Status:** Accepted Risk — Same basis as Finding #2. These are intentional module boundaries, not scoping bugs. Revisit if/when a cross-module CRM or contacts feature is planned. ⚠ **Superseded and widened by Finding #35 (2026-08-17):** this finding scoped the problem too small. The issue is not that contacts are per-module — it is that a person has no row anywhere in the schema, and identity travels as an email string across 30 tables. Read #35, not this one.
 
 ---
 
@@ -529,6 +648,7 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 | 21 | Residual duplicate FK constraints on `games.division_id` and `games.away_team_id` (prod) | Low | Migration 082 — prod only (2026-05-24) |
 | 15 | `team_entitlements` dual nullable FKs | Medium | Closed — Incorrect finding (2026-05-24). Migration 065 already enforces NOT NULL on both `org_id` and `rep_team_id`. Schema snapshot was wrong. |
 | 16 | `team_org_links` no direct `org_id` — 2-hop | Medium | Accepted Risk (2026-05-24) — `linked_org_id` direct FK covers parent org lookups; team-side lookups are service-role mediated |
+| 33 | 139 FK columns with no usable index (25+ `org_id`) | Medium | Migration 249 — **dev only** (2026-08-17); ⚠ prod-pending; recurrence gate still open |
 
 ---
 
@@ -543,4 +663,7 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 - [x] Finding #10 (`league_practices` dev sync) — migration 077 applied to dev 2026-05-24 ✅
 - [x] `league_practices` org_id — migration 078 applied to dev + prod 2026-05-24 ✅
 - [x] Findings #11 + #12 (prod constraint + index cleanup) — migration 080 applied to prod 2026-05-24 ✅
-- [ ] Quarterly health check (next: 2026-08-01)
+- [x] Quarterly health check — **completed 2026-08-17** (Findings #33–#39)
+- [ ] Quarterly health check (next: 2026-11-17)
+- [ ] Before the money book (P4) is built — Finding #34's twin-table consolidation belongs in its scope
+- [ ] Before any guardian portal / household statement / consent-audit feature — Finding #35 (`org_people`) is its prerequisite

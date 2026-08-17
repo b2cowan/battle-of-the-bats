@@ -1,0 +1,7 @@
+{
+  "_readme": "Tables with an org_id column that deliberately has no leading index. Enforced by scripts/check-index-coverage.mjs. Every entry needs a REASON — an exception without one is an unindexed tenancy column wearing a politer face. The target is that this list stays at two.",
+  "accepted": {
+    "request_metrics_raw": "Telemetry write buffer. org_id here is a LABEL on a metric, not a tenant relationship — it carries no FK, is never filtered on alone, and the table is drained by flushed_at. This is one of the two hottest write paths in the app; an index would tax every request to make no read faster.",
+    "request_metrics_rollup": "Same as request_metrics_raw. Its org_id does appear inside idx_request_metrics_rollup_bucket, but wrapped in COALESCE() as the 4th element of a composite — that is not a usable lookup index, and the near-miss is exactly what trap 2 in the gate's header describes."
+  }
+}

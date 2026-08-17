@@ -1,10 +1,10 @@
 {
   "generated": "2026-08-17",
-  "total": 93,
+  "total": 232,
   "counts": {
     "tables": 3,
     "columns": 42,
-    "indexes": 16,
+    "indexes": 155,
     "constraints": 23,
     "rls": 9
   },
@@ -306,11 +306,103 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:accounting_entries_linked_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:accounting_entries_payee_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:announcements_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:assistant_invite_tokens_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:assistant_invite_tokens_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:billing_retained_records_intent_id_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:budget_items_team_idx",
       "sig": ""
     },
     {
       "key": "index:only-dev:budget_items_unique_scope_side_name",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:diamonds_source_org_venue_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:diamonds_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:divisions_contact_member_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:divisions_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_leads_converted_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_links_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_recap_views_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:fan_push_subscriptions_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:game_change_notices_game_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:game_change_notices_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:game_change_notices_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:game_change_notices_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:games_away_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:games_diamond_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:games_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:games_home_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:games_tournament_id_idx",
       "sig": ""
     },
     {
@@ -334,6 +426,322 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_divisions_season_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_email_log_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_email_log_season_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_games_away_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_games_home_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_notification_log_season_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_teams_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_teams_season_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:notification_preferences_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_budget_lines_category_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_budget_lines_item_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_internal_notes_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_member_rep_group_scopes_group_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_catalog_change_requests_target_version_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:pool_slots_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:pools_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_installments_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_splits_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_splits_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_budget_lines_category_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_budget_lines_item_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_budget_lines_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_budget_lines_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_cost_allocations_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_cost_allocations_source_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_document_templates_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_credits_expense_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_credits_fundraiser_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_credits_payment_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_credits_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_credits_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payments_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payments_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payments_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payments_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payouts_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payouts_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payouts_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payouts_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_entries_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_entries_credit_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_entries_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_entries_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraisers_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraisers_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_documents_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_documents_template_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_installments_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_installments_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_schedules_budget_line_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_schedules_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_schedules_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_dues_schedules_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_tryout_baselines_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_tryout_baselines_tryout_registration_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_program_years_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_roster_players_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_roster_players_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_roster_players_tryout_registration_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_season_refund_adjustments_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_season_refund_adjustments_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_season_refund_adjustments_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_announcements_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_announcements_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_coaches_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_event_attendance_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_event_attendance_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_recurrence_parent_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_budget_category_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_event_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_paid_by_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_payee_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_expenses_team_id_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_fundraiser_tags_pkey",
       "sig": ""
     },
@@ -342,7 +750,71 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_game_moments_event_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_game_moments_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_game_moments_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_game_moments_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_import_events_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_import_events_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_lineup_templates_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_lineups_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_money_in_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_money_in_budget_category_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_money_in_org_id_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_money_in_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_money_in_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponent_observations_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_accounting_entry_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_budget_line_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_program_year_id_idx",
       "sig": ""
     },
     {
@@ -363,6 +835,90 @@
     },
     {
       "key": "index:only-dev:rep_team_staff_memberships_team_user_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_teams_group_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_evaluator_sessions_team_id_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_registrations_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_registrations_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_rubrics_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_scores_team_id_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:resources_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rule_items_rule_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rules_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_entitlements_rep_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_org_links_rep_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_workspace_claims_team_workspace_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_workspaces_active_program_year_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_workspaces_billing_owner_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:teams_division_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:teams_pool_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:teams_tournament_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_archives_winner_team_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_roster_players_source_player_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournaments_default_contact_member_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:venue_facilities_source_org_facility_id_idx",
       "sig": ""
     },
     {
