@@ -5,13 +5,26 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Trophy } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
-import { hasRecordAccess } from '@/lib/coach-capabilities';
+import { canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import { formatInOrgZone } from '@/lib/timezone';
 import styles from '../../../coaches.module.css';
+
+/** One row of "The practices you ran" — the season-scoped list C3 added (P3). */
+type SeasonPractice = {
+  eventId: string;
+  name: string;
+  startsAt: string;
+  hasPlan: boolean;
+  planSummary: string | null;
+  hasRecap: boolean;
+  tags: { id: string; name: string }[];
+};
 
 /**
  * Season's End — the landing surface for a finished season (Batch 3, P0 #1; approved mockups =
@@ -27,6 +40,12 @@ import styles from '../../../coaches.module.css';
  *
  * Reached three ways, all of them deliberate: the nav's first slot once the working season has
  * finished, the Overview's redirect for the same state, and a per-year link from the compare list.
+ *
+ * ⚠ **P3 C3 (2026-08-16) MADE THIS PAGE A DOOR AS WELL AS A DESTINATION.** It grows one collapsed
+ * section — the practices that season, each row opening the read-only plan page that already
+ * ships. That is why this page is the shelf's home: it already describes ONE NAMED SEASON, so
+ * nothing here can be mistaken for the live year, and no live season renders it, so the busy
+ * screens pay nothing. The section carries a NARROWER gate than the page — see `mayReadPractices`.
  */
 export default function SeasonEndPage({
   params,
@@ -61,6 +80,24 @@ export default function SeasonEndPage({
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
   const [rolloverOpen, setRolloverOpen] = useState(false);
+  /**
+   * "The practices you ran" (P3 C3). `null` until answered, so an empty season renders the section
+   * saying so rather than a permanent spinner.
+   *
+   * ⚠ Fetched separately from Wrapped, and deliberately: it carries a NARROWER gate (see
+   * `mayReadPractices`), so folding it into the Wrapped payload would have widened it to everyone
+   * who may read a season's story — including the money-only assistant that route's own note
+   * describes.
+   */
+  const [practices, setPractices] = useState<SeasonPractice[] | null>(null);
+  const [practicesTruncated, setPracticesTruncated] = useState(false);
+  /**
+   * ⚠ The season id comes back FROM THE ROUTE, never from `yearParam` or the nav. This page renders
+   * with no year at all in the everyday between-seasons case, and every row's link has to name the
+   * season it belongs to — taking it from the answer is the only source that is right in both
+   * cases and cannot drift from the rows beside it.
+   */
+  const [practiceSeasonId, setPracticeSeasonId] = useState<string | null>(null);
 
   /**
    * ⚠ The guards below run at RENDER time, and effects fire regardless of which branch renders —
@@ -70,6 +107,16 @@ export default function SeasonEndPage({
    * the broken-page outcome the honest screen exists to replace.
    */
   const mayReadWrapped = page.hasAccess && (!page.capabilities || hasRecordAccess(page.capabilities));
+  /**
+   * ⚠ **THE PRACTICES SECTION IS NARROWER THAN THE PAGE IT SITS ON** (plan §5 risk 2). Season's End
+   * gates on `hasRecordAccess`; the read route behind every one of these rows has always ALSO
+   * required `canViewSchedule`, precisely so a helper who runs one station cannot type the URL. Its
+   * header records that the gate and the entry point must move together — so this second entry
+   * point carries the same pair, and the section is simply absent for anyone the plans are not for.
+   * The server refuses them regardless; this is the door, not the lock.
+   */
+  const mayReadPractices = page.hasAccess
+    && (!page.capabilities || (canViewSchedule(page.capabilities) && hasRecordAccess(page.capabilities)));
 
   useEffect(() => {
     if (loading || !mayReadWrapped || seasonStillUnderWay) return;
@@ -87,6 +134,32 @@ export default function SeasonEndPage({
       .finally(() => { if (!cancelled) setFetching(false); });
     return () => { cancelled = true; };
   }, [loading, mayReadWrapped, seasonStillUnderWay, orgSlug, teamId, yearParam]);
+
+  /**
+   * The practices this season, for the collapsed section below (P3 C3).
+   *
+   * ⚠ It fails QUIETLY — a failure leaves `practices` null and the section absent. This is a quiet
+   * shelf below the season's story, not the story itself: a red error line under the Wrapped card
+   * because a secondary list did not load would make a working page read as a broken one, which is
+   * the exact shape the honest-refusal work on this page was written to remove.
+   *
+   * ⚠ Same `?year=` the Wrapped fetch carries, from the same source. Two fetches on one page that
+   * resolve the season differently is how a page ends up describing two years at once.
+   */
+  useEffect(() => {
+    if (loading || !mayReadPractices || seasonStillUnderWay) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-practices${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((json: { practices?: SeasonPractice[]; truncated?: boolean; season?: { programYearId?: string } }) => {
+        if (cancelled) return;
+        setPractices(json.practices ?? []);
+        setPracticesTruncated(!!json.truncated);
+        setPracticeSeasonId(json.season?.programYearId ?? null);
+      })
+      .catch(() => { /* quiet by design — see above */ });
+    return () => { cancelled = true; };
+  }, [loading, mayReadPractices, seasonStillUnderWay, orgSlug, teamId, yearParam]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -219,6 +292,72 @@ export default function SeasonEndPage({
               <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
             </Link>
           </section>
+
+          {/* ── "The practices you ran" (P3 C3) ──────────────────────────────────────────────
+              ⚠ **COLLAPSED BY DEFAULT, and that is a binding design constraint rather than a
+              taste** (CLAUDE.md ruling §1.6: a history shelf that makes the live screen noisier is
+              a failed design). It costs a live season nothing at all — no live season renders this
+              page — and it stays below the season's story here, because Season Wrapped is what a
+              coach opens this page for.
+
+              ⚠ It is on SEASON'S END and nowhere else. The obvious home, a drawer on the Practice
+              plans hub, was rejected in the mockup session (plan §3): it was the only proposal that
+              put weight on a screen a coach opens on a Tuesday, and it would have sat directly
+              above the Plan templates door as a second entrance to one library. Season's End is
+              already a page about ONE NAMED SEASON, which is also how it answers "which year am I
+              reading?" without a label — the chip that used to answer that was a switcher. */}
+          {practices && practices.length > 0 && (
+            <CoachCollapseSection
+              sectionId="season-practices"
+              title="The practices you ran"
+              meta={`${practices.length}${practicesTruncated ? '+' : ''}`}
+              defaultOpen={false}
+            >
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                Every practice this season that has a plan or a note about how it went. Read-only —
+                open one and it reads exactly as you wrote it.
+              </p>
+              {/* ⚠ THE TRUNCATION IS STATED, never silent (plan §5 risk 1). A list headed "the
+                  practices you ran" that quietly stops short tells a coach they ran fewer than
+                  they did — the one way this section can lie about a season. */}
+              {practicesTruncated && (
+                <p className={styles.formHint}>
+                  Showing the {practices.length} most recent — this season held more than that.
+                </p>
+              )}
+              <div className={styles.lineupFrontList}>
+                {practices.map(p => (
+                  <Link
+                    key={p.eventId}
+                    /* ⚠ The season AND where the coach came from, both explicit. The year is what
+                       lets the plan page resolve a season the team may no longer be on; `from` is
+                       what sends the back link here instead of to the Development report, which
+                       answers for a different year. */
+                    href={`${base}/history/development/practices/${p.eventId}`
+                      + `?from=season-end${practiceSeasonId ? `&year=${encodeURIComponent(practiceSeasonId)}` : ''}`}
+                    className={styles.seasonDoorRow}
+                  >
+                    <span>
+                      {formatInOrgZone(p.startsAt, { month: 'short', day: 'numeric' })} · {p.name}
+                      {/* ⚠ A practice with a recap and NO plan is a legitimate row — the shared
+                          read is "either, not both" on purpose, because a coach who wrote nothing
+                          beforehand and everything afterwards produced exactly the record this
+                          section exists to show. It must never be offered under a label promising
+                          a plan, so the row says which it is. Neither 404s: the route behind them
+                          refuses only a cancelled practice, a foreign season and a non-practice. */}
+                      <small>
+                        {p.hasPlan
+                          ? p.planSummary ?? 'Plan'
+                          : 'No plan written — your note about how it went'}
+                        {p.tags.length > 0 ? ` · ${p.tags.map(t => t.name).join(' · ')}` : ''}
+                      </small>
+                    </span>
+                    <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
+                  </Link>
+                ))}
+              </div>
+            </CoachCollapseSection>
+          )}
 
           {showStartNext && closed && (
             <>

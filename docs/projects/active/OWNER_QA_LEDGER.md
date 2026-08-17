@@ -5935,6 +5935,109 @@ the thing no script can check.
 
 ---
 
+## §42 · The practices you ran — the practice-plans shelf (M1, Phase 3)
+
+**Built on dev 2026-08-16 · not on production · NO migration.** Plan:
+`COACH_PRACTICE_PLANS_SHELF_PLAN.md`. Mockups: artifact `f42be4f3`. Owner gate for the shelf passed
+2026-08-16 before any of it was built. Walk **§40 first** — this sits inside the world that section
+established, and its two fixtures are §40's.
+
+**Why this section exists:** the product was denying it had kept a coach's practice plans. A coach
+between seasons opened *Practice plans* and read that a finished season keeps "not the plans" and
+that they should "switch back to your current season" — both false, the second one describing a
+control deleted the same week. That was most of the perceived gap. What was genuinely missing was
+narrower: the day a NEW season opens, last year's practices become unreachable, because the list
+that led to them resolves the season the team is on now.
+
+⚠ **Two teams, and the second one is the point.** Everything in §40 walks a team between seasons,
+where the finished season IS the working one. The gap this phase closes only opens once a team has
+rolled forward, so **a walk that skips the rolled-forward team has not tested this phase.**
+
+**Fixtures (both from §40 — do not rebuild):** the UAT coach fixture's *UAT Between Seasons* team,
+reseeded 2026-08-16 with three practices in its finished season — one with a plan **and** a note,
+one with a note and **no plan**, and one **called off** carrying a full plan. Any rolled-forward
+team with a finished season behind it serves for the second half.
+
+### A · The screen that was lying
+
+- [ ] Open a between-seasons team → **Practice plans**. It names the season, says it has finished
+      and that planning resumes with the next one, and states plainly that everything written is
+      still here. **Nothing anywhere offers to switch seasons.**
+- [ ] The door reads **The practices you ran** and it works. ⚠ Confirm it lands on a list that
+      actually contains them — a link that 404s is the same bug wearing a politer face.
+- [ ] Sign in as a **helper** (schedule access, nothing else) on that team and open the same page.
+      The true half is still there; **the door is not**. This is deliberate: the list behind it
+      needs record access, and offering the link would trade a false sentence for a refusal.
+
+### B · The shelf, on the season's own page
+
+- [ ] Open that season's **Season's End**. Below the wrap-up and the *Look back any time* door,
+      **The practices you ran** is present and **closed**. ⚖ It must arrive collapsed — the live
+      content is always the primary focus (the binding constraint of every shelf phase). Say if it
+      still feels like too much on the page.
+- [ ] Open it. The count on the header matches the rows. Each row reads *date · name* with what
+      the plan was, plus any tags.
+- [ ] The **called-off** practice is **not there**. ⚠ This is the sharpest check in the section: it
+      still carries its full plan in the database, so a shelf that forgot the rule would show a
+      night that never happened, complete with who was assigned where — and it would look perfectly
+      correct doing it.
+- [ ] The **no-plan** practice **is** there and says so ("No plan written — your note about how it
+      went"). Open it: the plan area says none was written, and *How it went* carries the note.
+- [ ] Open a row with a plan. It reads exactly as written — no edit, no delete, no *Run practice*,
+      no *Save as template*, nothing to press.
+- [ ] The back link says **Season's End** and returns you to the season you were reading. ⚠ Then
+      reach the same plan the other way — Insights → *Is everyone getting attention?* → *Practices
+      you've run* → *Open the plan* — and confirm the back link there says **Practices you've run**.
+      One page, two callers, and each must return you where you came from.
+
+### C · The case the whole phase exists for
+
+- [ ] On a **rolled-forward** team (live season, finished season behind it): Insights → *How are we
+      doing?* → the compare list → **Season Wrapped** for the older year. The practices shelf is on
+      that page, and it lists **that** year's practices — not this year's.
+- [ ] Open one. It is that year's plan. Come back: you are still on that year's Season's End.
+- [ ] ⚠ Now check the live season is untouched: **Practice plans** and any individual practice look
+      and behave exactly as they did before this shipped. Nothing was added to either screen.
+
+### D · Starting tonight from last year
+
+- [ ] On the rolled-forward team, open an upcoming practice → **Start this plan from…**. There are
+      now **three** tabs: *A template*, *A previous practice*, **A past season**.
+- [ ] Open **A past season**. Each row names the **season it came from** and its date. ⚠ A row you
+      could mistake for this year's work is the one way this list can do harm — say if any row
+      reads ambiguously.
+- [ ] Pick one. Tonight's plan fills in with the blocks and the words. **The groups are empty** —
+      last year's players are not on this year's roster — and **nothing was added to your template
+      library**.
+- [ ] Go and look at the practice you copied from: it is **unchanged**.
+- [ ] The live season's own practices are **not** offered under this tab (they are already the
+      *A previous practice* tab) — no practice appears twice.
+- [ ] ⚠ On a team planning its **first practice of a brand-new season, with no templates yet**, the
+      *Start this plan from…* button is still offered. This is the coach the feature exists for,
+      and until the build caught it they would have seen no button at all.
+- [ ] Sign in as an **assistant** and open a practice. There is no *Start this plan from…* at all —
+      writing a plan is the head coach's, and so is every source that feeds one.
+
+### E · The gates that must still hold
+
+- [ ] As a **helper**, type the URL of a past practice plan directly. Refused.
+- [ ] The drill library and the plan-template room are **unchanged**: still live-season tools, still
+      not browsable while reading a finished season, *Add from a past season* still working. This
+      phase copies the words of a past practice; it made no library season-aware.
+- [ ] Nothing anywhere points the portal at a past year. No season chip, no switcher, no second nav.
+
+### F · The words
+
+- [ ] The between-seasons message on **Practice plans** — is it the true thing, said kindly?
+- [ ] **The practices you ran** as the section name on Season's End, and **A past season** as the
+      third tab. Say if either grates.
+- [ ] **Help → Practice plans** gained a topic: *What happens to your plans when the season ends*.
+      Its *If last week worked, start from it* topic now says three ways in, not two.
+- [ ] The coach demo's guided tour, final step: it now ends by pointing at the practices further
+      down that page. Confirm it reads true beside what is actually on screen.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |

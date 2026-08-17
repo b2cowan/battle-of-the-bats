@@ -31,6 +31,10 @@ import path from 'path';
  *     quietly re-learning `?year=`.
  *  6. **THE COMPARE LIST BELONGS TO EVERY CURRENT MEMBER** (the head-coach restriction was reverted
  *     with Design A), and Season's End is reachable from it per year.
+ *  7. **THE PRACTICES SHELF IS NARROWER THAN THE PAGE IT SITS ON** (P3 C3, 2026-08-16), and it
+ *     reaches a season the team has ROLLED PAST. Two probes, and the second is the one the whole
+ *     phase exists for: everything above walks a team between seasons, where the finished season IS
+ *     the working one and no year is needed. The gap C3 closes opens the day the next season does.
  *
  * Computed styles / real DOM / data-level assertions only — never screenshots.
  * Self-provisions via service-role with the `capmember-` marker; pre-cleans, tears down, and
@@ -65,6 +69,12 @@ const HEAD_EMAIL = `${MARK}-head@dev.local`;
 const ASSIST_EMAIL = `${MARK}-assistant@dev.local`;
 /** Removed from the team mid-test — property 1's subject. */
 const REVOKED_EMAIL = `${MARK}-revoked@dev.local`;
+/**
+ * ⚠ A HELPER: the schedule and a practice plan, and NOTHING that makes a season's record theirs
+ * (P3 C3's subject). They exist here because the practices shelf's gate is narrower than the page
+ * it sits on, and only a real sign-in can prove the pair holds end to end.
+ */
+const HELPER_EMAIL = `${MARK}-helper@dev.local`;
 const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 const PHONE_ODD = { width: 361, height: 740 };
@@ -74,6 +84,7 @@ let orgId = '';
 let headUserId = '';
 let assistUserId = '';
 let revokedUserId = '';
+let helperUserId = '';
 
 /**
  * ⚠ TWO TEAMS, and the pair is the fixture's whole point.
@@ -90,6 +101,9 @@ let betweenYearId = '';
 let betweenPlayerId = '';
 let betweenFundraiserId = '';
 let olderYearId = '';
+/** A practice carrying a plan in the finished working season — the helper's refusal needs a real
+ *  id, or a 403 could be a 404 wearing a different number. */
+let betweenPracticeId = '';
 
 let rolledTeamId = '';
 let rolledLiveYearId = '';
@@ -109,7 +123,8 @@ const OLDER_YEAR = THIS_YEAR - 2;
 async function cleanup() {
   const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
   const marked = (users?.users ?? []).filter(u =>
-    u.email === HEAD_EMAIL || u.email === ASSIST_EMAIL || u.email === REVOKED_EMAIL);
+    u.email === HEAD_EMAIL || u.email === ASSIST_EMAIL || u.email === REVOKED_EMAIL
+    || u.email === HELPER_EMAIL);
 
   const { data: teams } = await admin.from('rep_teams').select('id').like('name', `${MARK}%`);
   for (const t of teams ?? []) {
@@ -200,6 +215,7 @@ test.beforeAll(async () => {
   headUserId = await makeCoach(HEAD_EMAIL);
   assistUserId = await makeCoach(ASSIST_EMAIL);
   revokedUserId = await makeCoach(REVOKED_EMAIL);
+  helperUserId = await makeCoach(HELPER_EMAIL);
 
   // ── The BETWEEN-SEASONS team: two finished seasons, no live one ──
   // Two, not one, so the compare list has a row that is NOT the season on screen — otherwise its
@@ -237,6 +253,16 @@ test.beforeAll(async () => {
     money: 'write', rosterPii: true, schedule: true, attendance: true, tryouts: false,
   });
   revokedMembershipId = await makeMembership(betweenTeamId, revokedUserId, 'assistant_coach', null);
+  /**
+   * ⚠ THE HELPER PRESET, spelled out rather than left to defaults — an assistant's omitted key
+   * GRANTS the duty, and a single missing `false` here would flip `hasRecordAccess` true and turn
+   * the refusal probes green for the wrong reason.
+   */
+  await makeMembership(betweenTeamId, helperUserId, 'assistant_coach', {
+    schedule: true, scheduleManage: false, attendance: false, lineups: false, rosterPii: false,
+    notes: false, money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
+    staffChat: false,
+  });
 
   // A player in the finished working season, with real guardian data.
   const { data: player, error: playerErr } = await admin.from('rep_roster_players').insert({
@@ -261,6 +287,25 @@ test.beforeAll(async () => {
   });
   if (feErr) throw feErr;
 
+  /**
+   * ── The practices the P3 C3 shelf reads ──────────────────────────────────────────────────
+   * A minimal but REAL plan: one block, because "has a plan" means at least one block everywhere
+   * in this feature (a goal typed and abandoned is not a plan), and the read route hands the whole
+   * jsonb back.
+   */
+  const onePlan = {
+    id: `${MARK}-plan`,
+    blocks: [{ id: `${MARK}-b1`, title: 'Cut-offs', duration: { minutes: 20 }, stations: [] }],
+  };
+  const { data: betweenPractice, error: bpErr } = await admin.from('rep_team_events').insert({
+    program_year_id: betweenYearId, team_id: betweenTeamId, org_id: orgId,
+    event_type: 'practice', name: `${MARK} Between practice`,
+    starts_at: new Date(Date.UTC(LAST_YEAR, 5, 11, 22, 0)).toISOString(),
+    status: 'scheduled', practice_plan: onePlan, practice_recap: 'Went long on cut-offs.',
+  }).select('id').single();
+  if (bpErr) throw bpErr;
+  betweenPracticeId = betweenPractice!.id;
+
   // ── The ROLLED-FORWARD team: live season + a finished one behind it ──
   rolledTeamId = await makeTeam(`${MARK} Rolled 12U`, `${MARK}-rolled-12u`);
   rolledLiveYearId = await makeYear(rolledTeamId, THIS_YEAR, 'active');
@@ -283,6 +328,28 @@ test.beforeAll(async () => {
     });
     if (error) throw error;
   }
+
+  /**
+   * ⚠ **THE TRAP FOR THE P3 C3 PROBE**, and it is a PAIR. The past season gets a practice that
+   * happened and one that was CALLED OFF, both carrying a full plan — cancelling only flips
+   * `status`, it never clears the plan. A shelf that forgot the exclusion renders perfectly and
+   * shows a coach a night that never took place, complete with who was assigned where.
+   */
+  const { error: rolledPracticeErr } = await admin.from('rep_team_events').insert([
+    {
+      program_year_id: rolledPastYearId, team_id: rolledTeamId, org_id: orgId,
+      event_type: 'practice', name: `${MARK} Past practice`,
+      starts_at: new Date(Date.UTC(LAST_YEAR, 5, 11, 22, 0)).toISOString(),
+      status: 'scheduled', practice_plan: onePlan,
+    },
+    {
+      program_year_id: rolledPastYearId, team_id: rolledTeamId, org_id: orgId,
+      event_type: 'practice', name: `${MARK} Cancelled practice`,
+      starts_at: new Date(Date.UTC(LAST_YEAR, 5, 18, 22, 0)).toISOString(),
+      status: 'cancelled', practice_plan: onePlan,
+    },
+  ]);
+  if (rolledPracticeErr) throw rolledPracticeErr;
 });
 
 test.afterAll(async () => {
@@ -678,6 +745,67 @@ test.describe('the look-back layer — Season’s End, Wrapped, the compare list
     await olderLink.click();
     await expect(page).toHaveURL(new RegExp(`season-end\\?year=${olderYearId}`));
     await expect(main(page).getByRole('heading', { name: "Season's End" })).toBeVisible({ timeout: 30_000 });
+  });
+
+  /**
+   * ⚠⚠ **THE PRACTICES SHELF, AND THE GATE THAT IS NARROWER THAN THE PAGE IT SITS ON** (P3 C3).
+   *
+   * Season's End gates on `hasRecordAccess`. The read route behind every row of the new section has
+   * always ALSO required `canViewSchedule`, so a parent volunteer who turns up to run one station
+   * cannot type the URL — and its own header records that the gate and the entry point must move
+   * together. This walks the pair at runtime, which is the half no source scan can prove: the
+   * assistant (record access) gets the section AND the plan behind it; the helper is refused both.
+   *
+   * ⚠ The assistant's presence is asserted FIRST. A "the helper is refused" test that would pass
+   * just as happily against a section broken for everyone proves nothing.
+   */
+  test('the practices shelf opens for a coach and is refused to a helper', async ({ page }) => {
+    await signIn(page, ASSIST_EMAIL);
+    const asAssistant = await apiGet(page, `${betweenApi()}/season-practices`);
+    expect(asAssistant.status,
+      'an assistant with record access reads the finished season’s practices — assert this before '
+      + 'the refusal below, or that refusal could pass against a broken route').toBe(200);
+    const body = asAssistant.body as { practices?: unknown[]; season?: { isReadOnly?: boolean } };
+    expect(body.season?.isReadOnly, 'the route must declare a finished season a record').toBe(true);
+    expect(Array.isArray(body.practices), 'the payload must carry a practices array').toBe(true);
+
+    await signIn(page, HELPER_EMAIL);
+    const list = await apiGet(page, `${betweenApi()}/season-practices`);
+    expect(list.status,
+      'a helper with schedule access but NO record access must not read the season’s practices — '
+      + 'the shelf carries the plan door’s pair, not Season’s End’s looser gate').toBe(403);
+
+    // …and the plan behind a row, which is the door the pair was invented to keep shut.
+    const plan = await apiGet(page,
+      `${betweenApi()}/events/${betweenPracticeId}/practice-plan/read`);
+    expect(plan.status, 'a helper must not read a past practice plan by typing its URL').toBe(403);
+  });
+
+  /**
+   * ⚠⚠ **THE CASE THE WHOLE PHASE EXISTS FOR.** Everything else here walks a team between seasons,
+   * where the finished season IS the working one and nothing needed a year. The gap C3 closes is
+   * narrower: the day the NEXT season opens, last year's practices stop being reachable, because
+   * the list that led to them resolves the working season. So this asks the rolled-forward team's
+   * Season's End for its PAST year and expects that year's practice — a route that ignored the
+   * parameter would answer with the live season's, render perfectly, and be wrong.
+   */
+  test('a rolled-forward team still reads the season it has left behind', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    const res = await apiGet(page, `${rolledApi()}/season-practices?year=${rolledPastYearId}`);
+    expect(res.status).toBe(200);
+    const body = res.body as {
+      season?: { programYearId?: string; isReadOnly?: boolean };
+      practices?: { eventId: string; name: string }[];
+    };
+    expect(body.season?.programYearId,
+      'the answer must be about the season that was ASKED for, not the team’s live one')
+      .toBe(rolledPastYearId);
+    expect(body.season?.isReadOnly, 'the season asked for has finished').toBe(true);
+    expect(body.practices?.some(p => p.name === `${MARK} Past practice`),
+      'last season’s practice must come back — this is the reachability the phase exists to '
+      + 'restore').toBe(true);
+    expect(body.practices?.some(p => p.name === `${MARK} Cancelled practice`),
+      'a CANCELLED practice did not happen and must never appear in the record').toBe(false);
   });
 
   test('Season’s End keeps its door back to the compare list', async ({ page }) => {

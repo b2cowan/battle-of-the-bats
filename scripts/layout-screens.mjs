@@ -35,6 +35,7 @@
 
 const team = (c) => `/${c.orgSlug}/coaches/teams/${c.teamId}`;
 /** The team whose WORKING season has finished — see the block above `coach-season-end`. */
+const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
 
 export const SCREENS = [
   // ── The portal's own front doors ────────────────────────────────────────────
@@ -169,6 +170,24 @@ export const SCREENS = [
      tabbed hub (Money). Both must render with no write control and no empty-state CTA. */
   { id: 'coach-finished-roster',   session: 'coach', path: (c) => `${finished(c)}/roster`,           ready: 'h1' },
   { id: 'coach-finished-money',    session: 'coach', path: (c) => `${finished(c)}/accounting`,       ready: 'h1' },
+  /**
+   * ⚠⚠ **A COLLAPSED SECTION IS INVISIBLE TO THIS SWEEP** — the same trap `coach-settings-money`
+   * below documents, arriving on a second page. The practices shelf (P3 C3) is closed by default
+   * BY RULING, so `coach-season-end` above measures its 44px summary row and nothing inside it: a
+   * green sweep there would prove only that Season's End still has an <h1>.
+   *
+   * `?section=` is a REAL arrival URL — `CoachCollapseSection` opens, scrolls to and flashes the
+   * named section — so this sweeps the genuine open state rather than a fixture-only mode.
+   */
+  { id: 'coach-finished-practices', session: 'coach', path: (c) => `${finished(c)}/season-end?section=season-practices`, ready: 'h1' },
+  /**
+   * ⚠ The BOTTOM of the whole look-back layer, and it had no rendered coverage at all until P3 C3
+   * gave it a second caller and a year. It is one level DOWN from a door, which is precisely where
+   * Chunk F's expensive defects all lived.
+   */
+  { id: 'coach-finished-plan',      session: 'coach', ready: 'h1',
+    path: (c) => `${finished(c)}/history/development/practices/${c.finishedPracticeEventId}`
+      + `?from=season-end&year=${c.finishedYearId}` },
 
   // ── The season around it ────────────────────────────────────────────────────
   { id: 'coach-announcements', session: 'coach', path: (c) => `${team(c)}/announcements`, ready: 'h1' },

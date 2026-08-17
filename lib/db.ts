@@ -7619,6 +7619,39 @@ export async function getRepTeamPracticePlansAcrossSeasons(
 }
 
 /**
+ * Does this team have a practice plan from any season OTHER than the one given? (P3 C2.)
+ *
+ * ⚠ **Exists so a door appears exactly when it can deliver.** "Start this plan from…" is offered
+ * only when there is something to start from, and until C2 that meant a template or another
+ * practice THIS season — so the coach the third source exists for (first practice of a brand-new
+ * season, no templates yet) would never have seen the button at all. This is the cheap signal that
+ * fixes it: no jsonb crosses the wire and nothing is parsed, unlike
+ * `getRepTeamPracticePlansAcrossSeasons`, which the everyday plan screen must not pay for.
+ *
+ * ⚠ It answers a deliberately COARSER question than the list it gates: a plan row with no blocks
+ * counts here and is dropped by the route that builds the rows (a goal typed and abandoned is not a
+ * plan). So the tab can be offered over an empty list — which the dialog states in words, the same
+ * posture its two sibling sources already take. The opposite error, a hidden tab over rows that do
+ * exist, is the one worth spending a query to avoid.
+ *
+ * ⚠ Filtered in JS rather than with `.neq`, on purpose: a practice whose `program_year_id` is NULL
+ * is "not this season" to the route that lists them, and `NULL <> x` is NULL in SQL, so a `.neq`
+ * would quietly disagree with the list it is supposed to predict.
+ */
+export async function hasRepTeamPastSeasonPracticePlans(
+  teamId: string, excludeProgramYearId: string | null,
+): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('id, program_year_id')
+    .eq('team_id', teamId)
+    .not('practice_plan', 'is', null)
+    .limit(400);
+  if (error) throw error;
+  return (data ?? []).some(r => r.program_year_id !== excludeProgramYearId);
+}
+
+/**
  * "Practices you've run" — one season's practices that carry a plan OR a recap, newest first
  * (Practice Plans Phase 3, the Development report's third section).
  *

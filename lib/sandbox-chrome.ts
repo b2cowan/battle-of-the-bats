@@ -564,7 +564,11 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,
       anchor: '[data-sandbox-tour="season-recaps"]',
-      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, and the record of it is still here: the same menu, every screen read-only, exactly as it ended. Try one.',
+      // ⚠ The last clause is new with P3 C3 (2026-08-16), and it is here because the product
+      // gained something on the very screen this step ends on — the practices shelf. A demo whose
+      // narration stops at what shipped last month is the drift CLAUDE.md's demo rule describes:
+      // every page still renders, and the story told over the top of them quietly goes short.
+      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, and the record of it is still here: the same menu, every screen read-only, exactly as it ended. Further down, the practices that year are still here too — open one and it reads exactly as it was written.',
     },
   ];
 }

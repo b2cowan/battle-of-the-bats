@@ -44,6 +44,21 @@ type PreviousPlan = {
   plan: PracticePlan | null;
 };
 
+/**
+ * A past SEASON's practice offered by "Start this plan from…" — the picker's third source (P3 C2).
+ *
+ * ⚠ It carries `seasonName` and it is not optional design detail: this is the one source in the
+ * picker whose rows are NOT from the season the coach is planning, so a row that cannot say which
+ * year it came from is a row mistakable for this year's work.
+ */
+type PastSeasonPlan = {
+  eventId: string;
+  name: string;
+  startsAt: string | null;
+  seasonName: string | null;
+  plan: PracticePlan;
+};
+
 /** A template offered by "Start this plan from…" — the other half of the one picker (Phase 3). */
 type PlanTemplateOption = {
   id: string;
@@ -65,6 +80,8 @@ type LoadState = {
   goals: PracticeFocusGoal[];
   attendance: { playerId: string; status: RepAttendanceStatus }[];
   previousPlans: PreviousPlan[];
+  /** Is the picker's third source worth offering? One boolean off the plan GET (P3 C2). */
+  hasPastSeasonPlans: boolean;
   sessions: RepTeamEvaluationSession[];
   /** The game-week scouting bridge (Scouting Book P3) — null when the week has no booked
    *  opponent with book content, which is most weeks. */
@@ -137,9 +154,21 @@ export default function CoachPracticePlanPage({
   const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [copyOpen, setCopyOpen] = useState(false);
-  /** Which source the one picker is showing (frame 05). A template, or a previous practice. */
-  const [copySource, setCopySource] = useState<'template' | 'previous'>('template');
+  /** Which source the one picker is showing (frame 05). A template, a previous practice, or — from
+   *  P3 C2 — a practice from a past season. */
+  const [copySource, setCopySource] = useState<'template' | 'previous' | 'past'>('template');
   const [copyQuery, setCopyQuery] = useState('');
+  /**
+   * The past-season rows, FETCHED ONLY WHEN THE TAB IS FIRST OPENED (P3 C2).
+   *
+   * ⚠ Deliberately not folded into this page's plan GET. That read walks every practice the team
+   * has ever run and parses each one's jsonb; putting it on the everyday load would make opening
+   * ANY practice pay for a list most coaches never ask for. `null` = never asked; `[]` = asked and
+   * there is nothing, which the dialog states rather than leaving as a spinner.
+   */
+  const [pastPlans, setPastPlans] = useState<PastSeasonPlan[] | null>(null);
+  const [pastLoading, setPastLoading] = useState(false);
+  const [pastError, setPastError] = useState('');
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen);
@@ -271,14 +300,60 @@ export default function CoachPracticePlanPage({
     }
   }
 
-  function applyPrevious(previous: PreviousPlan) {
-    if (!previous.plan || !data) return;
+  /**
+   * The third source's rows, fetched the first time the tab is opened (P3 C2).
+   *
+   * ⚠ Re-fetches after a FAILURE but not after a success — a coach who lost the list to a dropped
+   * connection can reach it by tapping the tab again, while an ordinary reopen costs nothing.
+   */
+  const loadPastPlans = useCallback(async () => {
+    setPastLoading(true);
+    setPastError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/practice-plans/past-seasons`);
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? 'Past seasons couldn’t be loaded');
+      }
+      const body: { practices?: PastSeasonPlan[] } = await res.json();
+      setPastPlans(body.practices ?? []);
+    } catch (e) {
+      setPastError(errorMessage(e, 'Past seasons couldn’t be loaded'));
+    } finally {
+      setPastLoading(false);
+    }
+  }, [orgSlug, teamId]);
+
+  function openCopySource(source: 'template' | 'previous' | 'past') {
+    setCopySource(source);
+    setCopyQuery('');
+    // `pastPlans === null` means never asked. An empty array is an ANSWER and is not re-asked.
+    if (source === 'past' && pastPlans === null && !pastLoading) void loadPastPlans();
+  }
+
+  /**
+   * Copy one practice's words onto tonight — the shared body of BOTH practice sources (P3 C2 made
+   * it shared rather than growing a second copy of it).
+   *
+   * A COPY, always (D7). Nothing about this writes to the source practice or to a series.
+   * ⚠ `copyPracticePlanForReuse` deliberately drops any `templateId`: this coach started from a
+   * PRACTICE, not from a template, and claiming otherwise would inflate that template's count.
+   *
+   * ⚠ It also drops every player id the CURRENT roster does not hold — which is what makes a
+   * past-season source safe without a single extra line. Last October's groups name last October's
+   * players; none of them are on this year's roster rows, so the structure arrives and the people
+   * do not, exactly as a coach would expect and exactly as the drill import already behaves.
+   */
+  function applyPlanCopy(source: PracticePlan) {
+    if (!data) return;
     const rosterIds = new Set(data.roster.map(p => p.id));
-    // A COPY, always (D7). Nothing about this writes to the source practice or to a series.
-    // ⚠ `copyPracticePlanForReuse` deliberately drops any `templateId`: this coach started from a
-    // PRACTICE, not from a template, and claiming otherwise would inflate that template's count.
-    updatePlan(copyPracticePlanForReuse(previous.plan, rosterIds, newPracticePlanId));
+    updatePlan(copyPracticePlanForReuse(source, rosterIds, newPracticePlanId));
     setCopyOpen(false);
+  }
+
+  function applyPrevious(previous: PreviousPlan) {
+    if (!previous.plan) return;
+    applyPlanCopy(previous.plan);
   }
 
   /**
@@ -556,6 +631,7 @@ export default function CoachPracticePlanPage({
 
   const canWrite = data?.canWrite ?? false;
   const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
+  const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
   // Read once here so the picker below (which renders outside the `!data` guard) never has to
   // null-check the load state mid-JSX.
   const templates = data?.templates ?? [];
@@ -645,15 +721,21 @@ export default function CoachPracticePlanPage({
                     <Play size={14} aria-hidden /> Run practice
                   </Link>
                 )}
-                {/* ⚠ ONE control, two sources (frame 05) — not a second door. The "copy from a
-                    previous practice" half already shipped in 1a; this widens it. Offered when
-                    there is anything at all to start from. */}
-                {canWrite && (previousWithPlans.length > 0 || templates.length > 0) && (
+                {/* ⚠ ONE control, now THREE sources (frame 05; P3 C2 added the third) — never a
+                    second door. Offered when there is anything at all to start from, which from
+                    P3 C2 includes a past season: without that clause the coach planning the first
+                    practice of a brand-new season, with no templates yet, saw no button at all —
+                    and they are precisely who the third source exists for. */}
+                {canWrite && (previousWithPlans.length > 0 || templates.length > 0 || hasPastSeasonPlans) && (
                   <button type="button" className={styles.btnSecondary}
                     onClick={() => {
-                      setCopyQuery('');
-                      setCopySource(templates.length > 0 ? 'template' : 'previous');
                       setCopyOpen(true);
+                      // Land on the fullest source the coach has, in order of nearness to tonight.
+                      openCopySource(
+                        templates.length > 0 ? 'template'
+                          : previousWithPlans.length > 0 ? 'previous'
+                            : 'past',
+                      );
                     }}>
                     <Copy size={14} aria-hidden /> Start this plan from…
                   </button>
@@ -795,11 +877,14 @@ export default function CoachPracticePlanPage({
         </div>
       )}
 
-      {/* ── "Start this plan from…" — ONE picker, TWO sources (frame 05) ──
+      {/* ── "Start this plan from…" — ONE picker, THREE sources (frame 05; P3 C2) ──
           The "previous practice" half is slice 1a's control, widened rather than joined by a
           rival door: a coach reaching for last Tuesday and a coach reaching for their standard
           Tuesday are answering the same question, and two buttons would make them choose a
-          filing system before they could answer it. */}
+          filing system before they could answer it. "A past season" arrives on exactly that
+          argument — a coach reaching for last October is asking the same question again, and
+          before C2 the only answer was to import the practice into the template library first
+          (five steps, and a library permanently grown to reuse one night). */}
       {copyOpen && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Start this plan from"
           onClick={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
@@ -811,25 +896,36 @@ export default function CoachPracticePlanPage({
               </button>
             </div>
 
-            {/* Both tabs are always offered when both sources exist; a source with nothing in it
-                says so inside rather than vanishing, so the two routes stay learnable. */}
+            {/* All three tabs are always offered; a source with nothing in it says so inside
+                rather than vanishing, so the routes stay learnable. ⚠ "A past season" is offered
+                even when this team has none — its empty state is the sentence that teaches a
+                first-year coach the feature exists for next autumn. */}
             <div className={styles.ppSourceTabs} role="tablist" aria-label="Where to start from">
               <button type="button" role="tab" className={styles.ppSourceTab}
                 aria-selected={copySource === 'template'} data-on={copySource === 'template' ? 'on' : undefined}
-                onClick={() => { setCopySource('template'); setCopyQuery(''); }}>
+                onClick={() => openCopySource('template')}>
                 A template
               </button>
               <button type="button" role="tab" className={styles.ppSourceTab}
                 aria-selected={copySource === 'previous'} data-on={copySource === 'previous' ? 'on' : undefined}
-                onClick={() => { setCopySource('previous'); setCopyQuery(''); }}>
+                onClick={() => openCopySource('previous')}>
                 A previous practice
+              </button>
+              <button type="button" role="tab" className={styles.ppSourceTab}
+                aria-selected={copySource === 'past'} data-on={copySource === 'past' ? 'on' : undefined}
+                onClick={() => openCopySource('past')}>
+                A past season
               </button>
             </div>
 
+            {/* ⚠ Every source repeats the same bargain in its own words — a coach must never have
+                to guess whether copying a past practice EDITS it. It does not. */}
             <p className={styles.formHint} style={{ padding: '0.5rem 0' }}>
               {copySource === 'template'
                 ? 'This copies the template onto tonight. The template is left exactly as it is, and anything you change here stays here.'
-                : 'This copies the plan onto tonight. The practice you copy from is left exactly as it is, and anything you change here stays here.'}
+                : copySource === 'previous'
+                  ? 'This copies the plan onto tonight. The practice you copy from is left exactly as it is, and anything you change here stays here.'
+                  : 'This copies what you wrote onto tonight. The finished season is left exactly as it is, nothing is added to your templates, and the groups come across empty — last year’s players aren’t on this year’s roster.'}
             </p>
 
             <input className={styles.input} value={copyQuery} onChange={e => setCopyQuery(e.target.value)}
@@ -858,19 +954,58 @@ export default function CoachPracticePlanPage({
                     </button>
                   ))
                 )
-              ) : previousWithPlans.length === 0 ? (
-                <p className={styles.formHint}>No other practice this season has a plan yet.</p>
+              ) : copySource === 'previous' ? (
+                previousWithPlans.length === 0 ? (
+                  <p className={styles.formHint}>No other practice this season has a plan yet.</p>
+                ) : (
+                  previousWithPlans
+                    .filter(p => !copyQuery.trim() || p.name.toLowerCase().includes(copyQuery.trim().toLowerCase()))
+                    .map(previous => (
+                      <button key={previous.eventId} type="button" className={styles.ppPickRow}
+                        onClick={() => applyPrevious(previous)}>
+                        <span className={styles.ppPickBody}>
+                          <span className={styles.ppPickName}>{previous.name}</span>
+                          <span className={styles.ppPickMeta}>
+                            {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
+                            {previous.plan!.blocks.length === 1 ? '' : 's'}
+                          </span>
+                        </span>
+                      </button>
+                    ))
+                )
+              ) : pastLoading ? (
+                <p className={styles.formHint}>Looking back…</p>
+              ) : pastError ? (
+                <p className={styles.errorText} role="alert">
+                  {pastError}{' '}
+                  <button type="button" className="btn btn-ghost"
+                    style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
+                    onClick={() => void loadPastPlans()}>
+                    Try again
+                  </button>
+                </p>
+              ) : (pastPlans ?? []).length === 0 ? (
+                <p className={styles.formHint}>
+                  Nothing from a previous season yet — the practices you plan this year will be here
+                  next year.
+                </p>
               ) : (
-                previousWithPlans
+                (pastPlans ?? [])
                   .filter(p => !copyQuery.trim() || p.name.toLowerCase().includes(copyQuery.trim().toLowerCase()))
-                  .map(previous => (
-                    <button key={previous.eventId} type="button" className={styles.ppPickRow}
-                      onClick={() => applyPrevious(previous)}>
+                  .map(past => (
+                    <button key={past.eventId} type="button" className={styles.ppPickRow}
+                      onClick={() => applyPlanCopy(past.plan)}>
                       <span className={styles.ppPickBody}>
-                        <span className={styles.ppPickName}>{previous.name}</span>
+                        <span className={styles.ppPickName}>{past.name}</span>
+                        {/* ⚠ THE SEASON LEADS THE META LINE, ahead of the date. These are the only
+                            rows in this dialog that are not from the season being planned, and a
+                            row a coach could mistake for this year's work is the one way this
+                            source can do harm. A season whose row has since gone says so rather
+                            than showing a bare date that reads as recent. */}
                         <span className={styles.ppPickMeta}>
-                          {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
-                          {previous.plan!.blocks.length === 1 ? '' : 's'}
+                          {past.seasonName ?? 'An earlier season'}
+                          {past.startsAt ? ` · ${fmtDate(past.startsAt)}` : ''}
+                          {' · '}{past.plan.blocks.length} block{past.plan.blocks.length === 1 ? '' : 's'}
                         </span>
                       </span>
                     </button>

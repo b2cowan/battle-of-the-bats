@@ -38,6 +38,7 @@ import {
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
+  SEASONS_END_PRACTICE_PLANS, SEASONS_END_PRACTICE_RECAPS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
   OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_MONEY_IN,
   OFFSEASON_DUES,
@@ -584,8 +585,11 @@ function materializePracticePlan(plan, playerIds) {
 }
 
 /** Materialize games + practices from a world state; returns event ids by game key.
- *  `plansByPracticeKey` attaches an already-materialized practice plan to named practices. */
-async function insertSeasonEvents(team, pyId, state, plansByPracticeKey = new Map()) {
+ *  `plansByPracticeKey` attaches an already-materialized practice plan to named practices.
+ *  `recapsByPracticeKey` attaches "how it went" — ⚠ INDEPENDENT of the plan on purpose: the
+ *  product's own rule is "either, not both", so a practice may carry a note with no plan, and the
+ *  seeded world has to be able to express that or the demo can only ever show half the feature. */
+async function insertSeasonEvents(team, pyId, state, plansByPracticeKey = new Map(), recapsByPracticeKey = new Map()) {
   const eventIdByKey = new Map();
   const rows = [];
   for (const g of state.games) {
@@ -610,6 +614,7 @@ async function insertSeasonEvents(team, pyId, state, plansByPracticeKey = new Ma
       starts_at: p.startsAtIso, ends_at: p.endsAtIso,
       location: DEMO_HOME_DIAMOND, status: 'scheduled',
       practice_plan: plansByPracticeKey.get(p.key) ?? null,
+      practice_recap: recapsByPracticeKey.get(p.key) ?? null,
     });
   }
   await insertAll('rep_team_events', rows);
@@ -1105,7 +1110,15 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   await wipeProgramYearChildren(team.id, pyId);
   const playerIds = await insertRoster(team, pyId, SEASONS_END_ROSTER);
 
-  const eventIdByKey = await insertSeasonEvents(team, pyId, state);
+  /**
+   * ⚠ The 13U season carries WRITTEN PLANS and RECAPS from 2026-08-16 (P3 C3). Without them the new
+   * "The practices you ran" shelf on Season's End renders as an absence on the demo path — the shop
+   * window showing a finished season that apparently kept nothing, which is the exact false
+   * impression C1 was fixing elsewhere in the product that same day.
+   */
+  const eventIdByKey = await insertSeasonEvents(team, pyId, state,
+    new Map(SEASONS_END_PRACTICE_PLANS.map(plan => [plan.practiceKey, materializePracticePlan(plan, playerIds)])),
+    new Map(SEASONS_END_PRACTICE_RECAPS.map(r => [r.practiceKey, r.recap])));
   await insertAttendance(team, pyId, state, eventIdByKey, playerIds);
 
   // Saved lineups: order A three times (all wins, all scored) → Wrapped's lineup fact is TRUE.
@@ -1180,7 +1193,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // The close — the REAL lifecycle transition the product performs, nothing hand-written.
   die('close 13U season', (await db.from('rep_program_years')
     .update({ status: 'completed' }).eq('id', pyId)).error);
-  console.log(`✓ 13U season's end — 26 games (18-6-2), awards, family recap, year ${state.year} CLOSED (active → completed)`);
+  console.log(`✓ 13U season's end — 26 games (18-6-2), ${SEASONS_END_PRACTICE_PLANS.length} practice plans + ${SEASONS_END_PRACTICE_RECAPS.length} recaps, awards, family recap, year ${state.year} CLOSED (active → completed)`);
 }
 
 // ── report ───────────────────────────────────────────────────────────────────────────────────

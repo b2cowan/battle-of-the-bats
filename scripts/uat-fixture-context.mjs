@@ -53,7 +53,7 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
  *                    practiceEventId:string, gameEventId:string, fundraiserId:string,
  *                    sponsorId:string, finishedTeamId:string, finishedYearId:string,
- *                    baseUrl:string}>}
+ *                    finishedPracticeEventId:string, baseUrl:string}>}
  */
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -167,6 +167,27 @@ export async function resolveUatContext() {
     );
   }
 
+  /**
+   * ⚠ A practice from the FINISHED season that carries a plan — the read-only past-plan page has no
+   * other way to be addressed, and until P3 C3 (2026-08-16) that page had NO rendered coverage at
+   * all despite being the bottom of the whole look-back layer.
+   *
+   * ⚠ It asserts rather than falling back. A soft `?? null` here would build a URL with `undefined`
+   * in it, which renders as a 404 that the sweep reports as a layout failure — the drift this
+   * file's own typedef note warns about, one level further down.
+   */
+  const pastPractice = await db.from('rep_team_events')
+    .select('id').eq('program_year_id', pastYear.data.id).eq('event_type', 'practice')
+    .not('practice_plan', 'is', null).neq('status', 'cancelled')
+    .order('starts_at', { ascending: false }).limit(1).maybeSingle();
+  if (pastPractice.error) throw new FixtureError(`finished-season practice lookup failed: ${pastPractice.error.message}`);
+  if (!pastPractice.data) {
+    throw new FixtureError(
+      'The between-seasons team has no practice carrying a plan, so the practices shelf and the '
+      + 'read-only plan page cannot be swept. Repair: node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   return {
     orgSlug: org.data.slug,
     orgId: org.data.id,
@@ -179,6 +200,8 @@ export async function resolveUatContext() {
     /** A team whose WORKING season has finished — Season's End, the compare list, read-only records. */
     finishedTeamId: pastTeam.data.id,
     finishedYearId: pastYear.data.id,
+    /** A practice in that finished season carrying a plan — the read-only past-plan page (P3 C3). */
+    finishedPracticeEventId: pastPractice.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

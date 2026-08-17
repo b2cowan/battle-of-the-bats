@@ -1,0 +1,103 @@
+import { NextResponse } from 'next/server';
+import { resolveCoachHistoryRead } from '@/lib/coach-team-read';
+import { getRepTeamPracticesWithPlanOrRecap, getRepTeamEventTagsByKind } from '@/lib/db';
+import { denyUnless, canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
+import { summarizePracticePlan } from '@/lib/rep-practice-plan';
+import { withObservability } from '@/lib/observability';
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * "The practices you ran" — ONE finished season's practices, for its own Season's End page
+ * (P3 C3, owner-approved 2026-08-16 from the mockup session; `COACH_PRACTICE_PLANS_SHELF_PLAN.md`
+ * §2 C3).
+ *
+ * ⚠⚠ **A HISTORY ENDPOINT — the second one to exist, and the first added since the owner deleted
+ * the archive as a place.** It may be handed a season by name. The three questions
+ * `HISTORY_ENDPOINTS` demands, answered here as well as at the list, because a route that can be
+ * pointed at a year must carry its own justification:
+ *
+ *   1. **Record or instrument? RECORD.** A practice plan renders entirely from its own jsonb —
+ *      Phase 2's copy-on-add means editing a drill today cannot rewrite what June's practice says.
+ *      Nothing here runs a tryout, moves money, messages a family or configures the team. The
+ *      instruments around it (the drill library, the plan-template library, the tag vocabulary)
+ *      stay live-season-only, and those decided absences are untouched.
+ *   2. **Does the whole subtree carry the year? YES, and it is one level deep BY CONSTRUCTION.**
+ *      This route lists; a row opens `events/[eventId]/practice-plan/read` (which takes the same
+ *      year); that page's only link goes back. There is no second level for a Chunk-F-class defect
+ *      to hide on.
+ *   3. **Could the coach tell which season they are reading? YES, STRUCTURALLY.** Season's End is a
+ *      page about one named season and titles itself that way. That is the only shape that answers
+ *      without a label — which matters, because the chip that used to answer it was a season
+ *      switcher wearing a label.
+ *
+ * ⚠ **THE GATE IS THE READ ROUTE'S, NOT SEASON'S END'S** (plan §5 risk 2). Season's End itself
+ * gates on `hasRecordAccess` alone; the plan door beside it has always ALSO required
+ * `canViewSchedule`, precisely so a helper who turns up to run one station cannot type the URL. Its
+ * header says the gate and the entry point must move together — this IS a second entry point, so
+ * it carries the same pair. Widening it here would have quietly reopened that door from the side.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * ⚠ **NO SILENT CAP** (plan §5 risk 1). `getRepTeamPracticesWithPlanOrRecap` caps its read, and a
+ * list headed "the practices you ran" that truncates without saying so tells a coach they ran fewer
+ * practices than they did. Season-scoping alone does not fix that — it only makes hitting the cap
+ * unlikely. So the read asks for ONE MORE than it will show, and the answer says which it was.
+ */
+const MAX_ROWS = 200;
+
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
+  const { orgSlug, teamId } = await params;
+
+  // The year goes THROUGH the resolver, never around it — resolving it separately is how a route
+  // ends up running its access check against the team rather than the requested season (the defect
+  // the wrapped route records). Absent `?year=`, this is the team's WORKING season, which is the
+  // everyday case: a team between seasons reading its own finished year.
+  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
+  const resolved = await resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
+  if ('error' in resolved) return resolved.error;
+  const { programYear, capabilities, isReadOnly } = resolved;
+
+  const denied = denyUnless(
+    canViewSchedule(capabilities) && hasRecordAccess(capabilities),
+    'You do not have access to past practice plans.',
+  );
+  if (denied) return denied;
+
+  /**
+   * ⚠ **A CANCELLED PRACTICE DID NOT HAPPEN** and never appears — enforced inside the shared read
+   * (`.neq('status', 'cancelled')`), which is where it belongs: the Development report's list, the
+   * read route behind each row and this list all inherit one definition. A called-off night showing
+   * up complete with who was assigned where is the "planned quietly becomes done" trap.
+   *
+   * ⚠ **PLAN OR RECAP, not both** — the same deliberate rule the shared read states. A coach who
+   * wrote no plan but sat down afterwards and said how it went produced exactly the record this
+   * section exists to show.
+   */
+  const events = await getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: MAX_ROWS + 1 });
+  const truncated = events.length > MAX_ROWS;
+  const shown = truncated ? events.slice(0, MAX_ROWS) : events;
+
+  // What each practice was ABOUT, in the team's own vocabulary — the same 'focus' tags the report's
+  // list filters by, so the two surfaces describe a night with the same words.
+  const tagsByEvent = await getRepTeamEventTagsByKind(shown.map(e => e.id), 'focus')
+    .catch(() => ({} as Record<string, { id: string; name: string }[]>));
+
+  return NextResponse.json({
+    season: { programYearId: programYear.id, name: programYear.name, isReadOnly },
+    /** True when the season held more practices than this answer carries. The page SAYS SO. */
+    truncated,
+    practices: shown.map(e => ({
+      eventId: e.id,
+      name: e.name || 'Practice',
+      startsAt: e.startsAt,
+      // ⚠ The row's own honesty flag. A practice with a recap and no plan is a legitimate row here,
+      // and the page must not offer it under a label that promises a plan.
+      hasPlan: (e.practicePlan?.blocks.length ?? 0) > 0,
+      planSummary: e.practicePlan ? summarizePracticePlan(e.practicePlan) : null,
+      hasRecap: !!e.practiceRecap,
+      tags: tagsByEvent[e.id] ?? [],
+    })),
+  });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-practices' });

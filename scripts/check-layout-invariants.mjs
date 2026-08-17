@@ -145,7 +145,9 @@ if (has('--changed') && !onlyIds) {
     // mapping below — it is here only so the path builder does not interpolate `undefined`.
     // `finishedTeamId` maps to the same `[teamId]` folder as `teamId` — the between-seasons screens
     // are the SAME routes rendered against a team with no live season, which is the point of them.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', fundraiserId: '__ID__' };
+    // `finishedPracticeEventId` maps to the same `[eventId]` folder as the two live event screens —
+    // it is the SAME route rendered against a practice in a season that has ended.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')

@@ -1579,6 +1579,89 @@ export const SEASONS_END_BATTING_ORDERS: Record<'A' | 'B', readonly number[]> = 
   B: [5, 9, 3, 7, 6, 0, 10, 1, 8, 4, 2, 11],
 };
 
+/**
+ * ⚠ **THE DEMO'S 13U SEASON HAD TWELVE PRACTICES AND NOT ONE WRITTEN PLAN, so P3 C3's new shelf
+ * would have rendered as an absence on the shop window** (added 2026-08-16 with that phase). This
+ * is the drift CLAUDE.md's demo rule exists to catch: the product gained something and the seeded
+ * world did not follow, which `npm run check:demos` cannot tell you — it proves the world is intact,
+ * never that it is complete.
+ *
+ * Three, not twelve. The section is COLLAPSED by default and must stay quiet; a prospect opening it
+ * should find a coach's real record, not a wall. And the mix is chosen so the shelf shows what it
+ * is actually for:
+ *   · two plans WITH a note about how it went — the ordinary row, and the payoff for writing one;
+ *   · one practice with a note and NO plan, because "either, not both" is a deliberate rule and the
+ *     row must not be offered under a label promising a plan.
+ *
+ * ⚠ Weeks 3, 6 and 9 of twelve — spread through the season rather than clustered, so the dates read
+ * as a year of coaching rather than a fortnight of it.
+ */
+export const SEASONS_END_PRACTICE_PLANS: readonly DemoPracticePlan[] = [
+  {
+    practiceKey: 'EP-3',
+    goal: 'Stop giving away the extra base.',
+    practiceTypes: ['Fielding'],
+    equipment: ['Buckets', 'Cones'],
+    blocks: [
+      {
+        id: 'demo-13u-w3-warmup', title: 'Warm-up and throwing', minutes: 15,
+        description: 'Dynamic work, then long toss out to the grass.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-13u-w3-cuts', title: 'Cuts and relays', minutes: 35,
+        description: 'Two lines from the corner, cut man on the grass every throw.',
+        goal: 'Somebody is calling the cut every single time.',
+        coachingPoints: ['Line the throw up early', 'Loud, then get out of the way'],
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-13u-w3-sits', title: 'Situations', minutes: null, restOfPractice: true,
+        description: 'Runner on second, one out. Play it out, then talk about it.',
+        playerIndexes: null,
+      },
+    ],
+  },
+  {
+    practiceKey: 'EP-9',
+    goal: 'Two-strike approach, all the way down the order.',
+    practiceTypes: ['Hitting'],
+    equipment: ['Tees', 'Screens', 'Short bats'],
+    blocks: [
+      {
+        id: 'demo-13u-w9-warmup', title: 'Warm-up', minutes: 12,
+        description: 'Band work and easy throwing.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-13u-w9-rounds', title: 'Hitting rounds', minutes: 40,
+        description: 'Three groups: tee, front toss, live off the machine.',
+        goal: 'Every hitter takes a round starting 0-2.',
+        coachingPoints: ['Shorten up, stay on the plate', 'One plan per round'],
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-13u-w9-run', title: 'Baserunning', minutes: 15,
+        description: 'Leads and reads at second.',
+        playerIndexes: null,
+      },
+    ],
+  },
+];
+
+/**
+ * What the coach wrote afterwards. ⚠ **About the PRACTICE, never about a child** (D17's hard
+ * guardrail) — the demo's own copy has to obey the rule the product enforces, because a prospect
+ * reading a seeded example is being shown what to write.
+ *
+ * EP-6 deliberately carries a note and NO plan: the "either, not both" row.
+ */
+export const SEASONS_END_PRACTICE_RECAPS: ReadonlyArray<{ practiceKey: string; recap: string }> = [
+  { practiceKey: 'EP-3', recap: 'Best hour of the year on the cuts. Keep the second line shorter next time — the throws got long.' },
+  { practiceKey: 'EP-6', recap: 'No plan written for this one; the diamond was wet so we moved to the outfield and played.' },
+  { practiceKey: 'EP-9', recap: 'The 0-2 rounds were worth the whole night. Do this again in the first week next season.' },
+];
+
 export const SEASONS_END_AWARD_TYPES = [
   { name: 'Player of the Game', emoji: '🏅' },
   { name: 'Most Improved', emoji: '📈' },

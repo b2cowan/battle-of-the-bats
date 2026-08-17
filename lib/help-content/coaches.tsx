@@ -2892,7 +2892,7 @@ const coachesHelp: HelpPageContent = {
       // "rotation" / "stations" / "groups" are the terms a coach searches for, and none of them
       // appear in a heading — search never reads the prose, so they have to live here.
       keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'practice plans page', 'practice plans list', 'needs a plan', 'which practices need a plan', 'blocks', 'add a block', 'stations', 'rotation', 'rotations', 'carousel', 'rotate toggle', 'stop rotating', 'stations side by side', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'start this plan from', 'rest of practice', 'kit', 'equipment', 'who runs it', 'players moved', 'where did my players go', 'run practice', 'how it went', 'practice notes', 'write up a practice', 'after the practice', 'what this practice is about', 'kind of practice', 'practice tags'],
-      searchText: 'practice plan plans plan a practice tuesday night practice plans page list of practices needs a plan no plan plan set which practices still need a plan coming up recent practices blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done run practice at the field',
+      searchText: 'practice plan plans plan a practice tuesday night practice plans page list of practices needs a plan no plan plan set which practices still need a plan coming up recent practices blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice start this plan from a past season start from last year reuse last october past season practices three ways in what happens to my plans when the season ends are my plans kept do i lose my practice plans finished season practice plans the practices you ran season’s end practices read a past plan called off cancelled practice does not appear notes only no plan written helper cannot read past plans print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done run practice at the field',
       content: (
         <p>A <strong>practice plan</strong> belongs to one practice: the blocks, stations and groups for that night. <strong>Practice plans</strong> in the sidebar lists your practices and shows which ones still need a plan — or open the practice on your <strong>Schedule</strong> and plan it from there.</p>
       ),
@@ -2958,7 +2958,24 @@ const coachesHelp: HelpPageContent = {
           id: 'premium-practice-reuse',
           title: 'If last week worked, start from it',
           content: (
-            <p><strong>Start this plan from…</strong> offers a <strong>template</strong> or a <strong>previous practice</strong> — one control, two ways in. Either way it copies onto tonight and leaves the original exactly as it was, so you change the one block that needs changing. See <em>Plan templates</em> below.</p>
+            <>
+              <p><strong>Start this plan from…</strong> offers a <strong>template</strong>, a <strong>previous practice</strong> or <strong>a past season</strong> — one control, three ways in. Whichever you pick, it copies onto tonight and leaves the original exactly as it was, so you change the one block that needs changing. See <em>Plan templates</em> below.</p>
+              <p><strong>A past season</strong> lists the practices you ran in previous years, each named with the season it came from and its date, so you can start tonight from the session that worked last October without adding anything to your template library. The groups arrive empty — last year&rsquo;s players aren&rsquo;t on this year&rsquo;s roster — and the finished season is not changed in any way.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-practice-finished-season',
+          title: 'What happens to your plans when the season ends',
+          content: (
+            <>
+              <p><strong>Every plan is kept, in full.</strong> When your season finishes, the <strong>Practice plans</strong> page tells you so and stops offering to plan — there&rsquo;s nothing left to plan for — but nothing you wrote has gone anywhere.</p>
+              <p><strong>Where to find them.</strong> That season&rsquo;s <strong>Season&rsquo;s End</strong> page has a section called <strong>The practices you ran</strong>, closed until you open it. Each row opens the plan exactly as you wrote it, read-only, together with what you said afterwards about how it went. The same list also sits under <em>&ldquo;Is everyone getting attention?&rdquo;</em> in Insights, as <strong>Practices you&rsquo;ve run</strong>.</p>
+              <p>A practice you <strong>called off</strong> never appears — it didn&rsquo;t happen, so it isn&rsquo;t part of the record. A practice where you wrote no plan but did write a note afterwards <em>does</em> appear, and says so.</p>
+              <HelpNote variant="info" title="Who can read a finished season’s plans">
+                <p>The same people who can read the rest of the team&rsquo;s record — your assistant coaches. A <strong>helper</strong> brought in to run one station has the schedule and tonight&rsquo;s plan, and nothing from a season that has finished.</p>
+              </HelpNote>
+            </>
           ),
         },
         {
@@ -3289,7 +3306,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Using one',
           content: (
             <>
-              <p>On the practice, <strong>Start this plan from…</strong> offers a template <em>or</em> a previous practice — one control, two ways in. Pick a template and the plan appears with a line at the top saying where it came from.</p>
+              <p>On the practice, <strong>Start this plan from…</strong> offers a template, a previous practice <em>or</em> a past season — one control, three ways in. Pick a template and the plan appears with a line at the top saying where it came from.</p>
               <p><strong>Once it&rsquo;s loaded, it&rsquo;s yours — edit anything.</strong> Changing tonight&rsquo;s practice never changes the template, and editing the template later never changes a practice already written from it. (The one thing that stays read-only inside it is a station that came from <em>your drills</em>, for the same reason it always does.)</p>
             </>
           ),

@@ -226,6 +226,122 @@ describe('the look-back layer', () => {
    * "is this a record?" off the working season. It also must not silently answer a bare visit with
    * some other year's story — the hidden season choice P2 exists to delete.
    */
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE PRACTICES SHELF (P3 C3, owner-approved 2026-08-16 from the gated mockup session).
+   *
+   * ⚠ The binding constraint of every shelf phase is that the LIVE screens stay as they were
+   * (CLAUDE.md §1.6: a shelf that makes the live screen noisier is a failed design). These pin the
+   * three properties that make that true, plus the two ways the shelf could quietly lie.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  it('the practices shelf is COLLAPSED by default', () => {
+    assert.match(
+      seasonEnd, /sectionId="season-practices"[\s\S]{0,300}defaultOpen=\{false\}/,
+      'the practices section must arrive closed. The current season is always the primary focus '
+      + '(owner ruling, CLAUDE.md §1.6) — an open shelf pushes Season Wrapped, which is what a '
+      + 'coach opens this page for, below the fold.',
+    );
+  });
+
+  /**
+   * ⚠ Season's End gates on `hasRecordAccess`; the plan door has ALWAYS also required
+   * `canViewSchedule`, so a helper who runs one station cannot type the URL. A second entry point
+   * inheriting the LOOSER gate is how a closed door gets reopened from the side.
+   */
+  it('the practices shelf carries the plan door’s gate, not Season’s End’s', () => {
+    assert.match(
+      seasonEnd, /const mayReadPractices = [\s\S]{0,220}canViewSchedule\([\s\S]{0,60}hasRecordAccess\(/,
+      'the section must require BOTH schedule and record access. Season\'s End alone is wider, and '
+      + 'the read route behind every row refuses the difference — a section rendered over a route '
+      + 'that will refuse it is the broken-page outcome this page exists to avoid.',
+    );
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
+      'utf8',
+    );
+    assert.match(
+      code(route), /canViewSchedule\(capabilities\) && hasRecordAccess\(capabilities\)/,
+      'the LIST route must enforce the same pair. The client half above is the door; this is the '
+      + 'lock, and a helper must be refused whether or not the section rendered.',
+    );
+  });
+
+  /**
+   * ⚠⚠ A LIST HEADED "the practices you ran" THAT TRUNCATES SILENTLY LIES ABOUT A SEASON — it
+   * tells a coach they ran fewer practices than they did, which is the one dishonesty this shelf
+   * is capable of. Season-scoping makes hitting the cap unlikely; it does not make the cap honest.
+   */
+  it('the practices shelf states its truncation instead of hiding it', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
+      'utf8',
+    );
+    assert.match(
+      code(route), /limit: MAX_ROWS \+ 1[\s\S]{0,200}truncated = events\.length > MAX_ROWS/,
+      'the route must ask for one MORE row than it shows, so it can tell a full page from a '
+      + 'truncated one. Reading exactly the cap makes the two indistinguishable.',
+    );
+    assert.match(
+      seasonEnd, /practicesTruncated && \(/,
+      'the page must render the truncation notice. A flag computed and never shown is the silent '
+      + 'cap with extra steps.',
+    );
+  });
+
+  /**
+   * ⚠ A cancelled practice DID NOT HAPPEN. The exclusion lives in the shared read so the report's
+   * list, this shelf and the route behind every row inherit ONE definition — a second copy is how
+   * a called-off night ends up in the record complete with who was assigned where.
+   */
+  it('a cancelled practice cannot reach the shelf, and the rule has one home', () => {
+    const db = readFileSync(join(process.cwd(), 'lib', 'db.ts'), 'utf8');
+    assert.match(
+      db, /export async function getRepTeamPracticesWithPlanOrRecap[\s\S]{0,1600}\.neq\('status', 'cancelled'\)/,
+      'the shared read must exclude cancelled practices. Cancelling only flips `status`; it never '
+      + 'clears the plan or the recap, so without this the record asserts a night that never took '
+      + 'place.',
+    );
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
+      'utf8',
+    );
+    assert.match(
+      code(route), /getRepTeamPracticesWithPlanOrRecap\(/,
+      'the shelf must read through the shared function rather than querying events itself — that '
+      + 'is what keeps the cancelled rule, and the plan-or-recap rule, in one place.',
+    );
+  });
+
+  /**
+   * ⚠ The back link hard-coded ONE destination while it had one caller. C3 gave it a second, and a
+   * hard-coded link would have returned a coach reading a finished season to a report about the
+   * team's WORKING one — silently, because both pages render perfectly.
+   */
+  it('the past-plan page returns to whichever list sent the coach, carrying the season', () => {
+    const plan = readFileSync(
+      join(COACH_PAGES, 'history', 'development', 'practices', '[eventId]', 'page.tsx'), 'utf8',
+    );
+    assert.match(
+      plan, /searchParams\.get\('from'\) === 'season-end'/,
+      'the origin must be explicit. Inferring it from the presence of `year` drops the everyday '
+      + 'between-seasons case, where Season\'s End shows the team\'s own working season and '
+      + 'carries no year at all.',
+    );
+    assert.match(
+      code(plan), /cameFromSeasonEnd \? \(\s*<CoachBackLink href=\{`\$\{base\}\/season-end/,
+      'a coach who arrived from Season\'s End must be sent back to Season\'s End.',
+    );
+    assert.match(
+      code(plan), /practice-plan\/read`\s*\+ \(yearParam \?/,
+      'the read must carry the year, or a plan from a season the team has rolled past 404s.',
+    );
+    assert.match(
+      seasonEnd, /\?from=season-end\$\{practiceSeasonId \? `&year=/,
+      'Season\'s End must send both halves — the year the row belongs to, and where it came from.',
+    );
+  });
+
   it('Season’s End distinguishes the working season from a year it was handed', () => {
     assert.match(seasonEnd, /const showingWorkingSeason = !yearParam \|\| yearParam === page\.season\?\.programYearId;/,
       'Season\'s End must know whether the year on screen IS the working one — the page\'s copy '

@@ -814,6 +814,78 @@ if (!pastGames?.length) {
   ok('finished-season games seeded (4 finalized, 2-1-1)');
 }
 
+/**
+ * ── 15. The finished season's PRACTICES (P3 C3) ──────────────────────────────
+ *
+ * ⚠⚠ **WITHOUT THESE, THE RENDERED SWEEP PROVES NOTHING ABOUT THE PRACTICES SHELF.** Section 14
+ * gave the fixture a between-seasons team with finished seasons, a roster and games — enough for
+ * Season's End, the compare list and Season Wrapped. The shelf renders only when the season HELD
+ * practices carrying a plan or a recap, so on the fixture as it stood the section was absent and a
+ * green sweep said only that an empty state draws correctly. That is the same "green over an empty
+ * fixture" trap this file's own section-14 header exists to warn about.
+ *
+ * Three rows, each covering a case the shelf must get right:
+ *   · a practice with a plan AND a recap — the ordinary row;
+ *   · a practice with a RECAP but no plan — legitimate ("either, not both"), and it must not be
+ *     offered under a label that promises a plan;
+ *   · a CANCELLED practice carrying a full plan — which must never appear at all. Cancelling only
+ *     flips `status`, so a shelf that forgot the exclusion would show a night that never happened,
+ *     and it would look perfectly correct doing it.
+ *
+ * ⚠ Dates are fixed to the SEASON'S OWN year, never to "now" — a rendered baseline keyed on the
+ * screen's text must not drift every time the sweep runs (the probe practice taught this already).
+ */
+const { data: pastPractices } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', finishedYear.id).eq('event_type', 'practice').limit(1);
+if (!pastPractices?.length) {
+  const pastPlan = {
+    version: 1,
+    goal: 'Cleaner decisions in the last ten minutes.',
+    practiceTypes: ['Skills'],
+    equipment: ['Cones', 'Bibs'],
+    blocks: [
+      {
+        id: 'uat-past-blk-1', title: 'Warm-up', duration: { minutes: 15 },
+        description: 'Dynamic warm-up, then partner work at walking pace.',
+        goal: 'Everyone moving and talking before the first drill.',
+        coachingPoints: ['Heads up', 'Call for it early'],
+      },
+      {
+        id: 'uat-past-blk-2', title: 'Decisions under pressure', duration: { minutes: 30 },
+        description: 'Small grid, two touches, defenders added every round.',
+        goal: 'Pick the pass before the ball arrives.',
+      },
+    ],
+  };
+  const rows = [
+    {
+      name: 'Season practice — plan and notes', day: 4,
+      practice_plan: pastPlan, practice_recap: 'Best session of the year. Keep the grid smaller next time.',
+      status: 'scheduled',
+    },
+    {
+      name: 'Season practice — notes only', day: 11,
+      practice_plan: null, practice_recap: 'No plan written — we ran the warm-up and played.',
+      status: 'scheduled',
+    },
+    {
+      name: 'Season practice — called off', day: 18,
+      practice_plan: pastPlan, practice_recap: null, status: 'cancelled',
+    },
+  ].map(r => ({
+    program_year_id: finishedYear.id, team_id: pastTeam.id, org_id: org.id,
+    event_type: 'practice', name: r.name,
+    starts_at: new Date(Date.UTC(finishedYear.year, 6, r.day, 22, 0)).toISOString(),
+    location: 'UAT Fields', field_number: '1',
+    status: r.status, practice_plan: r.practice_plan, practice_recap: r.practice_recap,
+  }));
+  const ins = await db.from('rep_team_events').insert(rows);
+  if (ins.error) { console.error('✗ finished-season practices insert', ins.error.message); process.exit(1); }
+  ok('finished-season practices seeded (plan+recap, recap-only, cancelled)');
+} else {
+  ok('finished-season practices already present');
+}
+
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);

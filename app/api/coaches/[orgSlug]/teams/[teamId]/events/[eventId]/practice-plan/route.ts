@@ -7,6 +7,7 @@ import {
   getRepTeamEventById,
   getRepTeamEventAttendance,
   getRepTeamEventsWithPracticePlans,
+  hasRepTeamPastSeasonPracticePlans,
   getRepTeamEvaluationSessionsForEvent,
   getRepRosterPlayers,
   getRepTeamStaffForYear,
@@ -126,7 +127,7 @@ export const GET = withObservability(async (_req: Request,
     .then(all => all.filter(p => p.status === 'active'));
   const [
     players, goals, attendance, previousEvents, sessions, staff, drills,
-    templates, focusTags, eventTagMap, scoutingBridge,
+    templates, focusTags, eventTagMap, scoutingBridge, hasPastSeasonPlans,
   ] = await Promise.all([
     playersPromise,
     // ⚠ Gated at the SOURCE: an assistant without `notes` never receives focus text, so no client
@@ -163,6 +164,26 @@ export const GET = withObservability(async (_req: Request,
     // the plan read — the book's own glance surfaces gate exactly the same way. Fails soft
     // internally (null), so it can never take the plan screen down with it.
     getScoutingBridgeForPractice(teamId, programYear.id, event.startsAt),
+    /**
+     * ⚠ **THE ONLY THING ON THIS ROUTE THAT LOOKS PAST THE LIVE SEASON, and it is one boolean**
+     * (P3 C2). "Start this plan from…" is offered only when there is something to start from, and
+     * that test used to mean a template or another practice THIS season — so the coach the third
+     * source exists for (first practice of a brand-new season, no templates yet) would never have
+     * been shown the button. This answers "is there anything under 'A past season'?" without
+     * fetching or parsing a single past plan; the rows themselves come from a separate route the
+     * dialog calls only when that tab is opened.
+     *
+     * ⚠ HEAD-COACH-ONLY, so nobody else pays the query — the tab it gates is head-coach-only too.
+     *
+     * ⚠ This route is therefore on `CROSS_SEASON_PLAN_READERS` in the history-endpoint guard, and
+     * that is the point of listing it: a boolean is still a read that reaches outside the working
+     * season, and a guard keyed on one function name would have gone blind to a second. What it is
+     * NOT is a route that can be HANDED a season — the decided-absence test above it still holds,
+     * and must: this file also owns the PUT and the PATCH.
+     */
+    canWriteDevelopment(caps)
+      ? hasRepTeamPastSeasonPracticePlans(teamId, programYear.id).catch(() => false)
+      : Promise.resolve(false),
   ]);
 
   // Roster ORDER, always — never sorted by anything, and no sort affordance is ever offered
@@ -240,6 +261,8 @@ export const GET = withObservability(async (_req: Request,
     })),
     sessions,
     scoutingBridge,
+    /** Is the picker's third source worth offering? See the read that produces it. */
+    hasPastSeasonPlans,
     staffSuggestions: tagSuggestions.staff,
     equipmentSuggestions: tagSuggestions.equipment,
     // ⚠ Sent to anyone who can READ the plan (`schedule`), which is deliberate: an assistant sees

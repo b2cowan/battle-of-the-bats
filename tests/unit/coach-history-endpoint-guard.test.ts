@@ -57,12 +57,6 @@ const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
  * ⚠⚠ **THE LOOK-BACK LAYER, ENUMERATED.** Routes permitted to resolve a season the CALLER names.
  * Everything else resolves the team's working season and cannot address another one at all.
  *
- * There is exactly one, and that is the design rather than an accident of the current build:
- *
- *   · `wrapped` — Season Wrapped for one finished season, and the payload behind the Season's End
- *     page. Reached from the compare list at the bottom of the results report, which is the only
- *     surface in the portal that links to a season other than the working one.
- *
  * ⚠ Adding an entry re-opens the question the owner closed. Three questions first — and note the
  * SECOND one is what the deleted archive kept failing:
  *   1. Is this a RECORD or an INSTRUMENT? Instruments (anything that runs a tryout, moves money,
@@ -73,16 +67,60 @@ const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
  *   3. Would the coach be able to tell which season they are reading? The page-title season chip
  *      is gone; a surface that can show two different years needs its own answer to that.
  *
- * ⚠ The gated shelf phases (P3 practice plans, P4 the money book) are each an owner mockup session
- * BEFORE any build. Neither may add itself here on the way past.
+ * ── The entries, each with its three answers ──
+ *
+ * · `wrapped` — Season Wrapped for one finished season, and the payload behind the Season's End
+ *   page. Reached from the compare list at the bottom of the results report, which is the only
+ *   surface in the portal that links to a season other than the working one.
+ *
+ * · `season-practices` — the practices that season, for the collapsed shelf on that season's own
+ *   Season's End page (P3 C3, owner-approved 2026-08-16 from the gated mockup session).
+ *     1. **RECORD.** A plan renders entirely from its own jsonb — Phase 2's copy-on-add means
+ *        editing a drill today cannot rewrite what June's practice says. Nothing here runs a
+ *        tryout, moves money, messages a family or configures the team, and the instruments beside
+ *        it (drill library, plan-template library, tag vocabulary) keep their decided absences.
+ *     2. **YES, and it is one level deep BY CONSTRUCTION.** The section lists; a row opens the plan
+ *        (the entry below, which takes the same year); that page's only link goes back. There is no
+ *        second level for a Chunk-F-class defect to hide on.
+ *     3. **YES, STRUCTURALLY.** Season's End is a page about one named season and titles itself
+ *        that way — the only shape that answers without a label, which matters because the chip
+ *        that used to answer it was a season switcher wearing one.
+ *
+ * · `events/[eventId]/practice-plan/read` — ONE past plan, read-only, GET-only (owner ruling
+ *   2026-08-01; re-approved with P3 C3, which gave it a second entry point and the year back).
+ *     1. **RECORD.** Same jsonb answer as above; there is no write verb in the file at all.
+ *     2. **YES — it IS the bottom of the subtree.** Its page has exactly one link out, and that
+ *        link carries both the season and where the coach came from.
+ *     3. **YES.** It is only ever reached from a list that has already named the season, and the
+ *        page it serves leads with the practice's own date.
+ *   ⚠ Its gate (`canViewSchedule && hasRecordAccess`) and its entry points must move TOGETHER —
+ *   that pair exists so a helper who runs one station cannot type the URL, which is why
+ *   `season-practices` carries the same pair rather than Season's End's looser one.
+ *
+ * ⚠ P4 (the money past-season book) is still an owner mockup session BEFORE any build. It may not
+ * add itself here on the way past.
  */
-const HISTORY_ENDPOINTS = ['wrapped'];
+const HISTORY_ENDPOINTS = [
+  'wrapped',
+  'season-practices',
+  'events/[eventId]/practice-plan/read',
+];
 
 /**
- * Pages permitted to read `?year=` — the client half of rule 1. One page, for the same reason.
- * Paths are relative to `app/[orgSlug]/coaches`, with `/page.tsx` dropped.
+ * Pages permitted to read `?year=` — the client half of rule 1. Paths are relative to
+ * `app/[orgSlug]/coaches`, with `/page.tsx` dropped.
+ *
+ * · `season-end` — the page the compare list links to per year.
+ * · `history/development/practices/[eventId]` — the read-only past plan (P3 C3). It reads a year
+ *   for one reason: its second caller can hand it one. Season's End may be showing a year the team
+ *   is no longer on, so a row opened from there names an event outside the working season. Its
+ *   three answers are the `.../practice-plan/read` entry above — the page and its route are one
+ *   decision, and both are listed so neither can move without the other.
  */
-const HISTORY_PAGES = ['teams/[teamId]/season-end'];
+const HISTORY_PAGES = [
+  'teams/[teamId]/season-end',
+  'teams/[teamId]/history/development/practices/[eventId]',
+];
 
 /**
  * Routes that ask the CROSS-SEASON capability question — `resolveCoachTeamCapabilities`, i.e.
@@ -123,9 +161,11 @@ const CROSS_SEASON_READERS = [
  * each derives which seasons it touches from the TEAM'S OWN DATA, is never handed one, reads
  * records, and writes only into the LIVE season. None can be pointed at a year.
  *
- * ⚠ Keyed on that ONE named function rather than on "reads more than one year", for the reason
+ * ⚠ Keyed on NAMED FUNCTIONS rather than on "reads more than one year", for the reason
  * CROSS_SEASON_READERS states above and this repo has paid for: a guard with a noisy signal gets
- * edited until it passes, which is worse than no guard.
+ * edited until it passes, which is worse than no guard. There are TWO names because a second way to
+ * hold this power arrived with P3 C2 — and a guard keyed on one name would have gone blind to it,
+ * which is the failure mode this file has a whole test about.
  */
 const CROSS_SEASON_PLAN_READERS = [
   // The two imports — a coach's own history becomes their starting library (owner, 2026-08-01).
@@ -134,6 +174,17 @@ const CROSS_SEASON_PLAN_READERS = [
   // The two libraries — "used 8×" counts what the team has actually run, across every season.
   'development/drills',
   'development/plan-templates',
+  // The picker's third source (P3 C2) — the rows a coach copies one past night's words from.
+  'practice-plans/past-seasons',
+  /**
+   * ⚠ The LIVE plan route, for ONE BOOLEAN: "is there anything under 'A past season'?", so the
+   * button that opens the picker is offered exactly when it can deliver. No past plan is fetched or
+   * parsed. It is listed anyway, because the honest question this list asks is "which routes reach
+   * outside the working season", and the answer has to include the cheap reaches too. Note it also
+   * appears in the decided-absences block below, which forbids it being handed a season — the two
+   * are different powers and this file holds both statements about the same file on purpose.
+   */
+  'events/[eventId]/practice-plan',
 ];
 
 function routeFiles(dir: string, out: string[] = []): string[] {
@@ -236,8 +287,9 @@ const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistor
 /** Reads across seasons without being handed one — see CROSS_SEASON_READERS. */
 const READS_ACROSS_SEASONS = /resolveCoachTeamCapabilities\s*\(/;
 
-/** Reads EVERY season's practice plans — see CROSS_SEASON_PLAN_READERS. */
-const READS_EVERY_SEASONS_PLANS = /getRepTeamPracticePlansAcrossSeasons\s*\(/;
+/** Reads (or merely probes) EVERY season's practice plans — see CROSS_SEASON_PLAN_READERS. */
+const READS_EVERY_SEASONS_PLANS =
+  /getRepTeamPracticePlansAcrossSeasons\s*\(|hasRepTeamPastSeasonPracticePlans\s*\(/;
 
 describe('a year parameter is a decision — the coach API', () => {
   it('finds the coach API routes at all (guards against a vacuous pass)', () => {
@@ -362,7 +414,7 @@ describe('a year parameter is a decision — the coach pages', () => {
    * a season mode. Both used to be invisible: every row renders, and the page is answering about a
    * year the coach cannot see named anywhere.
    */
-  it('only Season’s End reads a year off the URL', () => {
+  it('only the enumerated look-back pages read a year off the URL', () => {
     const actual = pages
       .filter(f => /searchParams\.get\(\s*['"]year['"]\s*\)/.test(readFileSync(f, 'utf8')))
       .map(f => f
@@ -373,9 +425,10 @@ describe('a year parameter is a decision — the coach pages', () => {
       .sort();
     assert.deepEqual(actual, [...HISTORY_PAGES].sort(),
       'A coach page learned to read `?year=`. There is no season dial to carry: pages render the '
-      + 'team\'s WORKING season. Season\'s End is the exception because the compare list links to '
-      + 'one finished season by id — a page joining it needs the owner decision that puts its '
-      + 'endpoint in HISTORY_ENDPOINTS too.');
+      + 'team\'s WORKING season. The listed pages are exceptions because something already named a '
+      + 'finished season by id before they were reached — the compare list for Season\'s End, and '
+      + 'Season\'s End itself for the past-plan page. A page joining them needs the owner decision '
+      + 'that puts its endpoint in HISTORY_ENDPOINTS too, with the three answers written there.');
   });
 
   /** The dial itself, pinned absent — the three controls that were deleted. */
