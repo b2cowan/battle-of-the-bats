@@ -845,12 +845,27 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
      no case of its own, in a file whose existing cash-shortfall test is literally labelled *"the
      regression case"* from the last time that happened. Three cases added.
 
-   **Not fixed, logged as debt:** `paidDate()` slices a timestamp in UTC while the club feeds use the
-   org's day key, so an ordinary expense and a club bill paid the same evening near midnight can land
-   in different months. Pre-existing, narrow, and correcting it would move existing expense rows
-   between months — a behaviour change beyond this phase. Likewise the report's **three** cost feed
-   points (rollup / month grid / cumulative chart): the deep fix is to derive all of them from the
-   rollup the way refunds already are, which means re-deriving the pre-existing expenses feed too.
+   **⚠⚠ ONE PIECE OF "DEBT" RECORDED HERE WAS WRONG, AND IS RETRACTED (2026-08-17, same day).** This
+   entry claimed `paidDate()` slicing a timestamp in UTC while the club feeds use `orgDayKey()` meant
+   an expense and a club bill paid the same evening could land in different months, and that fixing
+   it would move existing rows. **Both halves are false, and the reason is a write-side convention
+   the read side does not restate:** `expense_paid_at` / `deposit_paid_at` / `balance_paid_at` are
+   written at **ORG NOON** (`orgDayAsStoredInstant`, `lib/db.ts`), precisely so a naive UTC slice
+   lands on the coach's own calendar day — twelve hours from either midnight, which no timezone the
+   platform serves can cross. Club timestamps carry no such anchoring (`new Date().toISOString()` at
+   click time), which is exactly why they need `orgDayKey()`. **Two different treatments of two
+   differently-stored columns, both correct.** Recorded rather than deleted because the mistake is
+   instructive: the read path looks inconsistent and only the writer explains why it isn't.
+
+   **Still open, and genuinely debt — the report builds "actual spending" THREE times.** The
+   statement (the rollup), the Months grid and the cumulative chart each assemble it from raw records
+   independently. Two of the three already disagree, both pre-existing and both live: the chart
+   **never nets money that came back** (the statement and the grid do), and it collapses a split
+   commitment into its deposit's month (the grid dates each half correctly). The club miss was the
+   third instance of one mechanism, not a one-off. ⚠ A fourth, structural: the grid buckets
+   categories by **name**, the statement by **id**, so two id-distinct same-named categories merge in
+   one view and not the other. **Proposal + evidence:**
+   https://claude.ai/code/artifact/bd12805c-98a5-465a-931b-1273b8adcb70
 
 ⚠ P1–P3 all touch one form and one tab bar — **run them serially, never as parallel sessions**
 (the lesson the taxonomy plan's §7.1 is built on).
