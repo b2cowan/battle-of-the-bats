@@ -203,10 +203,14 @@ CREATE TABLE IF NOT EXISTS org_person_emails (
 CREATE UNIQUE INDEX IF NOT EXISTS org_person_emails_org_email_uniq
   ON org_person_emails (org_id, email_normalized);
 
--- Exactly one CURRENT address per person. Together with the unique index above
--- this holds the invariant that org_people.email_normalized is always mirrored
--- here by the person's single is_current row — the two tables cannot disagree
--- about which address is live.
+-- AT MOST one CURRENT address per person. ⚠ Be precise about what is enforced and
+-- what is convention (corrected in review, 2026-08-17): this index guarantees a
+-- person cannot have TWO current addresses. It does NOT guarantee one exists, nor
+-- that its email_normalized matches org_people.email_normalized — that match is a
+-- convention upheld by this backfill and by every future writer, and it is CHECKED
+-- (not enforced) by the Phase 1 report's integrity section, which fails the run on
+-- any mismatch. A Phase 2+ writer that updates one table without the other will be
+-- caught by the report, not refused by the database.
 CREATE UNIQUE INDEX IF NOT EXISTS org_person_emails_one_current_uniq
   ON org_person_emails (person_id)
   WHERE is_current;
@@ -262,6 +266,15 @@ CREATE INDEX IF NOT EXISTS family_links_person_id_idx
 --      ambiguity (A→B and A→C) are refused outright and reported, because
 --      resolving them means choosing, and choosing wrong shows one parent
 --      another parent's children.
+--      ⚠ CONVERGENCE (A→B and C→B — two invited addresses claimed by the same
+--      account) is ACCEPTED and collapses A, B and C into ONE person. Named
+--      honestly here because it is a merge on evidence weaker than an exact
+--      email match (found in review, 2026-08-17): usually it is one parent whose
+--      coach typed two different addresses for them, but a shared household
+--      account claiming two parents' invites would merge those parents. Zero
+--      occurrences on either database today. Whether convergence should instead
+--      be refused-and-reported like ambiguity is an OWNER DECISION recorded in
+--      the plan; do not change the behaviour here without it.
 --
 --   c. NEWEST NON-BLANK WINS, PER FIELD INDEPENDENTLY. A person's name comes
 --      from the most recent source row that actually carried a name; their phone
@@ -327,6 +340,11 @@ WITH observed AS (
 ),
 
 -- ── rule (b): one alias hop, never a chain ─────────────────────────────────────
+-- ⚠ The hop's TARGET must itself be a well-shaped address, or the hop is refused and
+-- invited_email keeps minting its own person. Without this guard (added in review,
+-- 2026-08-17), one malformed claimed_email made the whole group's canonical address
+-- fail the shape gate below — silently deleting a VALID guardian and orphaning every
+-- child row that used their address.
 alias_raw AS (
   SELECT f.org_id,
          lower(btrim(f.invited_email)) AS from_email,
@@ -336,6 +354,7 @@ alias_raw AS (
      AND btrim(f.claimed_email) <> ''
      AND btrim(f.invited_email) <> ''
      AND lower(btrim(f.claimed_email)) IS DISTINCT FROM lower(btrim(f.invited_email))
+     AND lower(btrim(f.claimed_email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
 ),
 -- Refuse ambiguity: one old address that points at two different new ones is not
 -- evidence, it is a contradiction. Left unresolved, reported.
@@ -403,6 +422,7 @@ WITH observed AS (
    WHERE f.claimed_email IS NOT NULL AND btrim(f.claimed_email) <> ''
 ),
 alias_raw AS (
+  -- Identical to the first copy above, including the shape guard on to_email.
   SELECT f.org_id,
          lower(btrim(f.invited_email)) AS from_email,
          lower(btrim(f.claimed_email)) AS to_email
@@ -411,6 +431,7 @@ alias_raw AS (
      AND btrim(f.claimed_email) <> ''
      AND btrim(f.invited_email) <> ''
      AND lower(btrim(f.claimed_email)) IS DISTINCT FROM lower(btrim(f.invited_email))
+     AND lower(btrim(f.claimed_email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
 ),
 alias_unambiguous AS (
   SELECT org_id, from_email, min(to_email) AS to_email

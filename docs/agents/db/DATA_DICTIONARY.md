@@ -4313,8 +4313,13 @@ Families area (Phase 2) is the first reader, behind its own capability.
 **current** address and their identity within the org. Always produced by the one rule in
 `lib/guardian-email.ts` (trim + lowercase, **nothing cleverer** — no dot-stripping or plus-tag
 folding, which are provider-specific guesses that would MERGE two distinct families). Mirrored by
-this person's single `is_current` row in `org_person_emails`; the two cannot disagree because
-that table carries a partial unique index on `(person_id) WHERE is_current`.
+this person's single `is_current` row in `org_person_emails` — **but ⚠ that mirror is a CONVENTION,
+not a constraint** (corrected in review 2026-08-17; the first version of this entry claimed the two
+"cannot disagree"). The partial unique index on `(person_id) WHERE is_current` guarantees **at most
+one** current row, not that one exists or that it matches this column. Every writer must maintain
+both sides; the Phase 1 report's integrity section (`scripts/report-families-backfill.mjs`) checks
+the match and fails the run on any mismatch — that report is the enforcement until a constraint or
+trigger exists.
 
 <!-- dict:col:org_people.first_name -->
 <!-- dict:col:org_people.last_name -->
@@ -4350,9 +4355,12 @@ can see WHY two addresses are one person.
    attach that looks only at `org_people.email_normalized` silently loses every parent who
    changed address — the exact bug this table exists to prevent. Same for the Phase 3 opt-out
    check (see `org_people` gotcha 4).
-3. **Exactly one current address per person** (`org_person_emails_one_current_uniq`, partial on
-   `is_current`). Together with gotcha 1 this holds the invariant that `org_people
-   .email_normalized` is always mirrored here.
+3. **At most one current address per person** (`org_person_emails_one_current_uniq`, partial on
+   `is_current`). ⚠ **This is weaker than it looks** (corrected in review 2026-08-17): it forbids a
+   second current row, but nothing at the schema level guarantees a current row *exists* or that it
+   *matches* `org_people.email_normalized`. That mirror is a convention every writer must uphold,
+   checked (run-failing) by the Phase 1 report's integrity section — see the `org_people
+   .email_normalized` entry.
 4. **A former address only ever arrives from evidence, never a guess.** The one automatic source
    today is a `family_links` row whose `claimed_email` differs from its `invited_email` — the
    same human opened a signed invitation sent to A and signed in as B. Ambiguous hops (A→B and

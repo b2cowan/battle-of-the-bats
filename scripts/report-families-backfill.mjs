@@ -367,6 +367,11 @@ SELECT
                         AND e.email_normalized = lower(btrim(c.guardian_email))))         AS consents_with_no_person`;
 
 // Integrity: the invariants the migration claims to hold.
+//
+// ⚠ ALL FOUR source tables get a cross-org check. The first version of this query checked
+// roster and league only — found in review 2026-08-17. The two it skipped (tryout,
+// family_links) are exactly the sources the report elsewhere calls the point of the
+// project; a cross-org attachment there would have printed "✓ All invariants hold".
 const Q_INTEGRITY = `
 SELECT
   (SELECT count(*) FROM org_people p
@@ -377,8 +382,12 @@ SELECT
     JOIN org_people p ON p.id = e.person_id WHERE p.org_id <> e.org_id)                   AS address_org_mismatch,
   (SELECT count(*) FROM rep_roster_players r JOIN org_people p ON p.id = r.person_id
     WHERE p.org_id <> r.org_id)                                                           AS roster_cross_org_attachment,
+  (SELECT count(*) FROM rep_tryout_registrations t JOIN org_people p ON p.id = t.person_id
+    WHERE p.org_id <> t.org_id)                                                           AS tryout_cross_org_attachment,
   (SELECT count(*) FROM league_registrations l JOIN org_people p ON p.id = l.person_id
     WHERE p.org_id <> l.org_id)                                                           AS league_cross_org_attachment,
+  (SELECT count(*) FROM family_links f JOIN org_people p ON p.id = f.person_id
+    WHERE p.org_id <> f.org_id)                                                           AS family_link_cross_org_attachment,
   (SELECT count(*) FROM league_registrations WHERE org_id IS NULL)                        AS league_rows_without_org`;
 
 // ── render ────────────────────────────────────────────────────────────────────
@@ -400,9 +409,20 @@ async function main() {
       Q_SHARED_ADDRESS, Q_CROSS_SOURCE, Q_CROSS_MODULE, Q_HOUSEHOLDS, Q_DOB_COVERAGE,
       Q_TRYOUT_ONLY, Q_ALIAS, Q_PREFERENCE, Q_INTEGRITY].map(q));
 
+  // The pass/fail verdict is computed BEFORE the output branch so both modes carry it.
+  // The first version returned early in --json mode without ever setting the exit code —
+  // automation gating on this script would have read exit 0 over a broken backfill
+  // (found in review 2026-08-17). A report that cannot fail is not a gate.
+  const badInvariants = Object.entries(integrity[0] ?? {}).filter(([, v]) => n(v) !== 0);
+  const unexplained = unattached.reduce((s, r) => s + n(r.unexplained), 0);
+  const failed = badInvariants.length > 0 || unexplained > 0;
+  if (failed) process.exitCode = 1;
+
   if (AS_JSON) {
     console.log(JSON.stringify({
-      target: TARGET, perOrg, dupPhone, dupChild, unattached, malformed, sharedAddr,
+      target: TARGET, ok: !failed,
+      failures: failed ? { invariants: Object.fromEntries(badInvariants), unexplained } : null,
+      perOrg, dupPhone, dupChild, unattached, malformed, sharedAddr,
       crossSource, crossModule, households: households[0], dobCoverage,
       tryoutOnly: tryoutOnly[0], alias: alias[0], preference: preference[0],
       integrity: integrity[0],
@@ -515,13 +535,10 @@ async function main() {
   console.log(H('6 · INTEGRITY  (every number here must be zero)'));
   console.log(table(integrity));
 
-  const bad = Object.entries(integrity[0] ?? {}).filter(([, v]) => n(v) !== 0);
-  const unexplained = unattached.reduce((s, r) => s + n(r.unexplained), 0);
   console.log('');
-  if (bad.length || unexplained) {
-    console.log(`  ✖ ${bad.map(([k, v]) => `${k}=${v}`).join(', ')}${unexplained ? `${bad.length ? ', ' : ''}unexplained-unattached=${unexplained}` : ''}`);
+  if (failed) {
+    console.log(`  ✖ ${badInvariants.map(([k, v]) => `${k}=${v}`).join(', ')}${unexplained ? `${badInvariants.length ? ', ' : ''}unexplained-unattached=${unexplained}` : ''}`);
     console.log('  These are BACKFILL BUGS, not data-quality findings. Fix before Phase 2.');
-    process.exitCode = 1;
   } else {
     console.log('  ✓ All invariants hold. This says the backfill did what it claims —');
     console.log('    it does NOT say the matching rules are right. That is section 2 to 4, and');
