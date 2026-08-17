@@ -88,20 +88,32 @@ Verify yourself before building:
 
 **The hazard:** Phase 1 must edit two things that every schema project edits — `docs/agents/db/DATA_DICTIONARY.md` and the generated `docs/agents/db/schema-snapshots/*`. **You cannot stage half a file.** If another session holds edits in either, committing yours commits their unfinished work too.
 
-**State as of 2026-08-17 (verify, do not assume):** one active session on club money allocations. Snapshots dirty, `DATA_DICTIONARY.md` dirty, `lib/coach-budget-item-usage.ts` dirty, `supabase/migrations/250_club_money_says_what_it_was_for.sql` untracked (adds `budget_category_id` + `budget_item_id` to `rep_team_payment_requests` and `rep_allocation_splits`). **The dictionary went from clean to dirty during a two-minute check** — that session is live, not parked.
-
 **Decision rule:**
-- Dictionary and snapshots **clean** → proceed.
+- `DATA_DICTIONARY.md` and `schema-snapshots/` **clean** → proceed.
 - Either **dirty** → this is a **coordination point, not a code problem.** Tell the owner and ask whether to wait. Do not silently commit another session's work, and do not "fix" a `check:dictionary` failure by documenting a column you did not add.
 
-**Migration numbering:** the highest committed is 249; **250 exists untracked** and belongs to the other session. Families starts at **251** — re-check before writing, because they may add more.
+### Baseline verified 2026-08-17, post-release — you are starting from green
 
-**Expect these gates to be RED before you touch anything, and none of them are yours:**
-- `check:dictionary` — the other session's undocumented columns.
-- `check:schema-parity` — ~244 divergences, dev ahead of prod.
-- `check:prod-migration-drift` — **3 tables and 16 columns exist on dev and have never been applied to prod** (the accumulated coach-money work).
+The coach-money backlog (migrations 236–250) **shipped to prod** in release `5ae39f10`, and every schema-critical path was re-verified clean afterwards:
 
-⚠ **The consequence for you: parity and drift are useless as signals during this build.** Do not read either as evidence that your own work is clean. `typecheck`, the test suite, `check:indexes` and `check:snapshots` were all green on 2026-08-17 — **those are your signals.**
+| Signal | State |
+|---|---|
+| `check:snapshot-freshness` · `check:indexes` · `check:dictionary` · `check:schema-parity` · `check:prod-migration-drift` | **all 5 PASS** |
+| Live index count | **dev 697 = prod 697** |
+| Live table count | **dev 165 = prod 165** |
+| Test suite | **2103 pass, 0 fail** |
+| `typecheck` | clean |
+| `DATA_DICTIONARY.md`, `schema-snapshots/`, `lib/`, `supabase/migrations/` | all clean in git |
+
+⚠⚠ **This inverts the previous guidance, so read it carefully.** An earlier draft of this section told you parity and drift were useless as signals because they were already red for unrelated reasons. **That is no longer true.** The baseline is fully green, which means:
+
+> **Any gate that goes red during this build is YOURS.** Do not wave one through as "someone else's backlog" — that excuse expired with the release.
+
+The one exception you *should* expect: once you apply the Families migration to **dev only**, `check:prod-migration-drift` will correctly report prod as behind. That is the intended state (prod is a separate explicit owner step), not a defect — but it should report **only your tables and columns**. If it names anything else, something is wrong and you should stop.
+
+**Migration numbering:** highest is **250** (committed in the release). Families starts at **251** — re-check before writing.
+
+**Working tree at handoff:** 9 modified files, all docs and plans from the post-release truth-up (`CLAUDE.md`, `TODO.md`, `OWNER_QA_LEDGER.md`, several plan files). **No code, no schema, no dictionary, no snapshots** — none of them collide with Phase 1. `TODO.md` is among them; you touch it only at the end, so re-check it then.
 
 Standing rules: work on `dev`; re-check the branch before committing; stage **explicit pathspecs only**, never `git add -A`; after committing run `git show --stat HEAD` and confirm only your files landed.
 
