@@ -462,6 +462,46 @@ export function denyUnless(
       });
 }
 
+/**
+ * "You named a team — do you coach it, and may you touch its money?" — the two questions every
+ * money WRITE door in the coach API asks before it does anything.
+ *
+ * ⚠⚠ ONE FUNCTION, FOUR DOORS (`/simplify` + `/review`, 2026-08-17). Add a word, rename one, remove
+ * one and fold one had each hand-written this pair, and **they had already drifted**: three answered
+ * a blocked coach *"You do not have access to team finances. Ask the head coach to grant it."*, and
+ * the fourth answered *"teamId is required and must be a team whose finances you can edit"* — which
+ * is developer wording, merges two different problems into one sentence, and never tells the coach
+ * the one thing that would fix it. Same person, same missing permission, two different answers
+ * depending on which button they pressed.
+ *
+ * ⚠ THE TWO FAILURES STAY DISTINCT, which is why this returns two different statuses. **400** means
+ * the request named no team, or a team this person does not coach — a caller mistake. **403** means
+ * they coach it and their money access is off — a permission fact, and the only one with a remedy
+ * worth printing. Collapsing them was the bug in the fourth door, not the fix.
+ *
+ * ⚠ AND IT IS CHECKED ON **THIS** TEAM, NOT ON ANY TEAM. Money access is three-state and per team
+ * precisely so a head coach can withhold it; two of these doors once asked whether the coach could
+ * write money on SOME team they coach, which let a head coach on team A reach into team B's
+ * vocabulary while holding `money: 'off'` there. Found by review and fixed door by door — this is
+ * the shape that stops it being possible to get wrong a fifth time.
+ */
+export function denyUnlessTeamMoneyWrite(
+  assignments: ReadonlyArray<{ teamId: string; capabilities: CoachCapabilities }>,
+  teamId: string | null | undefined,
+): Response | null {
+  const team = teamId?.trim();
+  if (!team || !assignments.some((a) => a.teamId === team)) {
+    return new Response(
+      JSON.stringify({ error: 'teamId is required and must be a team you coach' }),
+      { status: 400, headers: { 'content-type': 'application/json' } },
+    );
+  }
+  return denyUnless(
+    assignments.some((a) => a.teamId === team && canWriteMoney(a.capabilities)),
+    'You do not have access to team finances. Ask the head coach to grant it.',
+  );
+}
+
 // ── Roster PII / notes redaction ─────────────────────────────────────────────
 const PII_FIELDS = [
   'playerDateOfBirth',

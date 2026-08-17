@@ -3,7 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { denyUnlessTeamMoneyWrite } from '@/lib/coach-capabilities';
 import {
   countBudgetItemUsage, describeBudgetItemUsage, repointBudgetItemReferences,
   itemVisibleToTeam, offeredForSport, mapBudgetItem,
@@ -54,17 +54,9 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json().catch(() => ({}));
   const teamId: string = typeof body.teamId === 'string' ? body.teamId.trim() : '';
   /* ⚠ THE TEAM IS NAMED AND CHECKED — the item must never authorise itself, or any coach in the org
-     could fold away any team's words. And money-write is then checked on THAT team rather than on
-     any team this coach happens to hold: assistant money access is three-state and per team
-     precisely so a head coach can withhold it, and this door removes words, which is as far from
-     read-only as this area gets. */
-  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
-    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
-  }
-  const denied = denyUnless(
-    assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities)),
-    'You do not have access to team finances. Ask the head coach to grant it.',
-  );
+     could fold away any team's words. Through the shared gate, so all four money-write doors in this
+     directory answer a blocked coach with the same two sentences (see `denyUnlessTeamMoneyWrite`). */
+  const denied = denyUnlessTeamMoneyWrite(assignments, teamId);
   if (denied) return denied;
 
   /* ⚠ DEDUPED. The same word twice is harmless to the re-point and would double every count in the

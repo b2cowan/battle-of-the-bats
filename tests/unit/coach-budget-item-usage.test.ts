@@ -4,6 +4,7 @@ import {
   BUDGET_ITEM_REFERENCES, NO_BUDGET_ITEM_USAGE, describeBudgetItemUsage, sumBudgetItemUsage,
   type BudgetItemUsage,
 } from '../../lib/coach-budget-item-usage.ts';
+import { itemOfferedToClub, itemVisibleToTeam } from '../../lib/coach-budget-item-tiers.ts';
 
 /**
  * THE SENTENCE THE FOLD IS JUDGED ON.
@@ -94,5 +95,53 @@ describe('the reference list carries what the fold has to move', () => {
     assert.equal(new Set(labels).size, labels.length,
       'Two references share a label, so sumBudgetItemUsage would merge them into one count and the '
       + 'confirmation would under-report where a coach\'s records actually live.');
+  });
+});
+
+/**
+ * WHICH WORDS A CLUB MAY FILE ITS OWN BUDGET AGAINST.
+ *
+ * ⚠⚠ THIS RULE HAD NO ENFORCEMENT AT ALL UNTIL 2026-08-17 (`/review`, security lens). The club's
+ * taxonomy endpoint dropped team-owned rows, so the planner only ever OFFERED standard and club
+ * words — but the save behind it stored whatever `itemId` arrived, unchecked. A club could therefore
+ * file its budget against any word in the database, including another club's team-private one, and
+ * the cost surfaced somewhere else: that row counts as usage, so the owning team's coach is refused
+ * when they try to remove their own unused word, naming records they cannot see or reach.
+ *
+ * ⚠ TESTED HERE RATHER THAN THROUGH THE ROUTES because the club budget-plan routes require the
+ * accounting module, and the UAT fixture org is on a plan without it —
+ * `scripts/check-budget-item-fold.mjs` says so out loud rather than skipping quietly. The predicate
+ * is the thing both the list and the save now read, so it is the thing worth pinning.
+ */
+describe('itemOfferedToClub — a club plan uses shared words, never a team’s', () => {
+  const OURS = 'org-a';
+  const THEIRS = 'org-b';
+
+  test('a standard word belongs to everybody', () => {
+    assert.equal(itemOfferedToClub({ org_id: null, team_id: null }, OURS), true);
+  });
+
+  test('the club’s own shared word is offered', () => {
+    assert.equal(itemOfferedToClub({ org_id: OURS, team_id: null }, OURS), true);
+  });
+
+  test('⚠ a word one of OUR OWN teams invented is REFUSED', () => {
+    /* The club cannot see, rename or remove it, and the owning team can — so a club plan filed
+       against it names a word the club does not control. */
+    assert.equal(itemOfferedToClub({ org_id: OURS, team_id: 'team-1' }, OURS), false);
+  });
+
+  test('⚠⚠ another club’s word is REFUSED, at every tier', () => {
+    assert.equal(itemOfferedToClub({ org_id: THEIRS, team_id: null }, OURS), false);
+    assert.equal(itemOfferedToClub({ org_id: THEIRS, team_id: 'team-9' }, OURS), false);
+  });
+
+  test('it is strictly narrower than the team rule it sits beside', () => {
+    /* ⚠ THE PAIR IS THE POINT. A team may pick its own words; a club may not pick any team's. If
+       these two ever agreed on a team-owned word, the club tier would have absorbed the team tier —
+       the exact direction the owner ruling forbids ("clubs never absorb teams"). */
+    const teamWord = { org_id: OURS, team_id: 'team-1' };
+    assert.equal(itemVisibleToTeam(teamWord, OURS, 'team-1'), true);
+    assert.equal(itemOfferedToClub(teamWord, OURS), false);
   });
 });

@@ -5,7 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { mapBudgetItem } from '@/lib/coach-budget-items';
+import { mapBudgetItem, itemOfferedToClub, type OwnedBudgetItem } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -14,7 +14,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
+function mapCategory(row: Record<string, unknown>, orgId: string): BudgetCategoryWithItems {
   return {
     id:         row.id as string,
     orgId:      row.org_id as string | null,
@@ -31,8 +31,14 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
        cleanup pass set out to merge were the named ones; this one hid inside a `.map()` and was
        found only because tightening `BudgetItem.direction` to non-null made it a type error. Its
        comment claimed "platform rows only; a club's own items are null", which mig 246 ended. */
+    /* ⚠⚠ THROUGH THE SHARED PREDICATE SINCE 2026-08-17 (`/review`), not a local `!item.team_id`.
+       This list is what the club's budget planner offers, and the SAVE behind that planner accepted
+       anything at all — so the club could file its budget against a word this list would never have
+       shown it, including another club's team-private one. Both sides read `itemOfferedToClub` now:
+       a list offering what a write path refuses, or a write path accepting what the list hides, is
+       the same drift one tier down (`itemVisibleToTeam`) exists to prevent. */
     items:      ((row.budget_items ?? []) as Record<string, unknown>[])
-      .filter(item => !item.team_id)
+      .filter(item => itemOfferedToClub(item as OwnedBudgetItem, orgId))
       .map(mapBudgetItem)
       .sort((a, b) => {
       if (a.isMisc !== b.isMisc) return a.isMisc ? 1 : -1;
@@ -63,7 +69,7 @@ export const GET = withObservability(async (req: Request) => {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  let categories = (data ?? []).map(mapCategory);
+  let categories = (data ?? []).map(row => mapCategory(row, ctx!.org.id));
 
   // Filter by scope: 'org' and 'team' categories also include 'both'
   if (scope === 'org') {
@@ -109,5 +115,5 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ category: mapCategory(data) }, { status: 201 });
+  return NextResponse.json({ category: mapCategory(data, ctx!.org.id) }, { status: 201 });
 }, { route: '/api/admin/accounting/budget-categories' });

@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { canViewMoney, canWriteMoney, denyUnless, denyUnlessTeamMoneyWrite } from '@/lib/coach-capabilities';
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
@@ -231,13 +231,15 @@ export const POST = withObservability(async (req: Request,
   /* ⚠⚠ AND MONEY-WRITE IS CHECKED ON **THIS** TEAM (/review, security lens, 2026-08-16). Being
      assigned was the only test here, while the gate at the top of the handler asked only whether the
      coach could write money on SOME team — so a head coach on team A could add words to team B's
-     vocabulary while holding `money: 'off'` on team B. The sibling PATCH route written in this same
-     release does `a.teamId === teamId && canWriteMoney(...)`; this is the older door catching up. */
-  if (!teamId || !assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities))) {
-    return NextResponse.json({
-      error: 'teamId is required and must be a team whose finances you can edit',
-    }, { status: 400 });
-  }
+     vocabulary while holding `money: 'off'` on team B.
+     ⚠⚠ AND IT NOW ANSWERS IN THE SAME WORDS AS ITS THREE SIBLINGS (`/simplify` + `/review`,
+     2026-08-17). This door used to reply "teamId is required and must be a team whose finances you
+     can edit" — developer wording that merged "you don't coach that team" with "you coach it but
+     can't touch its money", and never mentioned the one remedy: ask the head coach. Rename, remove
+     and fold all said the right thing; only the oldest door did not. **This changes a message on a
+     shipped screen**, deliberately, because two answers to one permission question is the defect. */
+  const deniedTeam = denyUnlessTeamMoneyWrite(assignments, teamId);
+  if (deniedTeam) return deniedTeam;
 
   // Verify category is accessible (platform default or this org's, team/both scope)
   const { data: cat, error: catErr } = await supabaseAdmin

@@ -3,7 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { denyUnlessTeamMoneyWrite } from '@/lib/coach-capabilities';
 import {
   mapBudgetItem, countBudgetItemUsage, describeBudgetItemUsage,
 } from '@/lib/coach-budget-items';
@@ -51,13 +51,7 @@ export const PATCH = withObservability(async (req: Request,
      own owning team, but taking that as the authorisation would let any coach in the org edit any
      team's word — the row would authorise itself. The caller states which team it is acting as, we
      verify they coach it, and only then does the item's own ownership have to agree. */
-  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
-    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
-  }
-  const denied = denyUnless(
-    assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities)),
-    'You do not have access to team finances. Ask the head coach to grant it.',
-  );
+  const denied = denyUnlessTeamMoneyWrite(assignments, teamId);
   if (denied) return denied;
 
   const { data: item } = await supabaseAdmin
@@ -159,13 +153,7 @@ export const DELETE = withObservability(async (req: Request,
   /* ⚠ THE TEAM RIDES IN THE QUERY, and is checked the same way the PATCH checks its body — the item
      must not authorise itself, or any coach in the org could remove any team's word. */
   const teamId = new URL(req.url).searchParams.get('teamId')?.trim() ?? '';
-  if (!teamId || !assignments.some(a => a.teamId === teamId)) {
-    return NextResponse.json({ error: 'teamId is required and must be a team you coach' }, { status: 400 });
-  }
-  const denied = denyUnless(
-    assignments.some(a => a.teamId === teamId && canWriteMoney(a.capabilities)),
-    'You do not have access to team finances. Ask the head coach to grant it.',
-  );
+  const denied = denyUnlessTeamMoneyWrite(assignments, teamId);
   if (denied) return denied;
 
   const { data: item } = await supabaseAdmin

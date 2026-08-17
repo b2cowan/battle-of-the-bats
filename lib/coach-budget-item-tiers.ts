@@ -70,3 +70,27 @@ export function itemVisibleToTeam(item: OwnedBudgetItem, orgId: string, teamId: 
   if (item.org_id !== orgId) return false;       // another club's, at any tier
   return !item.team_id || item.team_id === teamId;
 }
+
+/**
+ * May the CLUB itself file its own budget against this word?
+ *
+ * Standard words and the club's own — **never a team's**, and never another club's. A club budget
+ * line is org-wide; filing it against one team's private vocabulary would put a word on the club's
+ * plan that the club cannot see, rename or remove, and that the owning team can.
+ *
+ * ⚠⚠ THIS EXISTS BECAUSE THE LIST ENFORCED IT AND THE WRITE PATH DID NOT (`/review`, 2026-08-17).
+ * The club's taxonomy endpoint has always dropped team-owned rows, so the planner only ever OFFERED
+ * standard and club words — but the save took the chosen word straight from the request and stored
+ * it unchecked. Any club could therefore file its budget against **any** word in the database,
+ * including another club's team-private one. Nothing broke loudly; the cost landed on the other
+ * club's coach, as a refusal to remove a word naming records they cannot see and did not create.
+ *
+ * ⚠ ONE PREDICATE, LIST AND WRITE. That is the whole point — a list offering what a write path
+ * refuses (or, as here, a write path accepting what the list would never show) is exactly the drift
+ * `itemVisibleToTeam` was written to stop, one tier up.
+ */
+export function itemOfferedToClub(item: OwnedBudgetItem, orgId: string): boolean {
+  if (!item.org_id) return true;                 // platform default — everybody's
+  if (item.org_id !== orgId) return false;       // another club's, at any tier
+  return !item.team_id;                          // the club's own, never a team's
+}

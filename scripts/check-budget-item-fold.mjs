@@ -82,7 +82,7 @@ async function main() {
   const [homeCat, otherCat] = cats;
   console.log(`Categories: “${homeCat.name}” (the club word's) and “${otherCat.name}” (the far one)\n`);
 
-  const made = { items: [], lines: [], expenses: [], moneyIn: [] };
+  const made = { items: [], lines: [], expenses: [], moneyIn: [], orgLines: [] };
   const browser = await chromium.launch();
   const page = await browser.newContext({
     storageState: JSON.parse(readFileSync(SESSION, 'utf8')),
@@ -299,12 +299,63 @@ async function main() {
       data: { teamId, sourceIds: [club.id], targetId: club.id, },
     });
     check('the club’s word cannot be folded away by a team', clubSourceRes.status() >= 400, `got ${clubSourceRes.status()}`);
+
+    /* ── 7 · The club's own budget line may not adopt a team's word ────────────────────────────
+       ⚠⚠ THIS WAS UNCHECKED UNTIL 2026-08-17. The club planner has always OFFERED standard and
+       club words only, but the save took whatever it was sent — so a club could file its budget
+       against any word in the database, including another club's team-private one. The damage
+       surfaced somewhere else entirely: that row counts as usage, so the owning team's coach is
+       refused when they try to remove their own unused word, naming records they cannot see. */
+    const admin = await browser.newContext({
+      storageState: JSON.parse(readFileSync(path.join(ROOT, 'tests/uat/.auth/org-owner.json'), 'utf8')),
+      baseURL: BASE,
+    });
+    const teamWord = await newItem(`Fold probe club-line bait ${stamp}`, homeCat.id, true);
+    const lineUrl = `${BASE}/api/admin/accounting/budget-plan/lines?orgSlug=${orgSlug}`;
+    const baitRes = await admin.request.post(lineUrl, {
+      data: {
+        seasonYear: new Date().getFullYear(), description: 'Fold probe — club line',
+        totalAmount: 100, categoryId: homeCat.id, itemId: teamWord.id,
+      },
+    });
+
+    /* ⚠⚠ THIS FIXTURE CANNOT REACH THE CLUB BUDGET ROUTES, AND SAYING SO IS THE POINT. The UAT org
+       is on the **tournament** plan, which carries no accounting module, so the club's budget-plan
+       routes refuse at the door (403) before any of this change's validation runs. A silent pass
+       here would read exactly like coverage — which is how a probe in this repo once guarded
+       nothing. The RULE those routes now share (`itemOfferedToClub`) is proven instead in
+       `tests/unit/coach-budget-item-usage.test.ts`, where it needs no entitlement at all. */
+    if (baitRes.status() === 403) {
+      console.log('  ⃠ SKIPPED — the club budget-plan routes need the accounting module, and this');
+      console.log('    fixture org is on the tournament plan. NOT a pass: the club-line validation');
+      console.log('    was not exercised here. Its rule is unit-tested; the route wiring is not.');
+    } else {
+      check('a club budget line is REFUSED a team-owned word', baitRes.status() === 400,
+        `got ${baitRes.status()}`);
+
+      const okRes = await admin.request.post(lineUrl, {
+        data: {
+          seasonYear: new Date().getFullYear(), description: 'Fold probe — club line (valid)',
+          totalAmount: 100, categoryId: otherCat.id, itemId: club.id,
+        },
+      });
+      const okLine = await okRes.json().catch(() => ({}));
+      check('a club budget line still accepts a CLUB word', okRes.ok(), `got ${okRes.status()}`);
+      /* ⚠ AND THE HEADING COMES FROM THE WORD, not from the request. The call above deliberately
+         sends the WRONG category; the saved row must carry the club word's own. */
+      check('the heading is derived from the word, not the request',
+        okLine.line?.category_id === homeCat.id,
+        okLine.line?.category_id === otherCat.id ? 'kept the request’s wrong category' : 'ok');
+      if (okLine.line?.id) made.orgLines.push(okLine.line.id);
+    }
+    await admin.close();
   } finally {
     // ── Clean up, always. A probe that leaves rows behind poisons the next run's counts. ───────
     await browser.close();
     if (made.moneyIn.length)  await db.from('rep_team_money_in').delete().in('id', made.moneyIn);
     if (made.expenses.length) await db.from('rep_team_expenses').delete().in('id', made.expenses);
     if (made.lines.length)    await db.from('rep_budget_lines').delete().in('id', made.lines);
+    if (made.orgLines.length) await db.from('org_budget_lines').delete().in('id', made.orgLines);
     if (made.items.length)    await db.from('budget_items').delete().in('id', made.items);
     console.log('\nProbe rows removed.');
   }

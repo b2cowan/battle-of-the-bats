@@ -64,9 +64,15 @@ its item *and* its category — as a side effect of a coach here tidying their o
 fold is now scoped to the acting org** (`org_id` is NOT NULL on all four tables, so nothing
 legitimate can be skipped, and the re-count before the delete catches it if anything ever is).
 
-⚠ **THE UNVALIDATED ADMIN WRITER IS STILL THERE.** It is outside this project and predates it, but
-it is a real cross-tenant write hole: nothing stops an org admin storing another org's item id on
-their own row. **Worth its own fix** — route it through the same resolver the coach side uses.
+✅ **AND THE UNVALIDATED ADMIN WRITER IS NOW FIXED TOO** (owner-directed 2026-08-17, after the
+walkthrough at artifact `5f30bad4`). Both club budget-line doors resolve the word through
+`resolveOrgBudgetItem`, and the club's taxonomy list reads the same predicate the save does
+(`itemOfferedToClub`) so the two cannot drift — a list offering what a write refuses, or a write
+accepting what the list hides, is the same defect one tier down. **The category is derived from the
+word on both doors as well**, closing the second half nobody had named: the two columns were set
+independently, so a club line could sit under one heading with its word living under another.
+⚠ Live data checked before tightening: 4 club budget lines on dev, **none** pointing at any word, so
+nothing existing could be refused by the new rule.
 
 ⚠ **Publishing is the ONLY code path in the product that deletes a budget item** (grepped
 repo-wide). One door to guard — which is what makes §4 cheap.
@@ -232,12 +238,16 @@ Fundraising, where the club's word lives"*; the list simply could not express it
 - ⏭ **SKIPPED — folding the pre-count into the re-point's own affected-row count.** It would save
   four queries on a rare, deliberate action, at the cost of deriving *the one number this whole
   feature is judged on* from a different mechanism than the one the confirmation used. Not worth it.
-- ⏭ **SKIPPED — extracting the coach/team/money-write auth block, now spelled a THIRD time in this
-  directory** (list POST, item PATCH, item DELETE, and this route). It is a real duplication and it
-  should be extracted — but the three existing copies word their refusals slightly differently, so
-  unifying them changes user-facing text on committed routes outside this diff, in a working copy a
-  parallel session is also writing to. **Left deliberately; the next change in this directory should
-  do it.**
+- ✅ **DONE 2026-08-17, owner-directed** — the coach/team/money-write auth block was spelled a
+  FOURTH time by this phase (list POST, item PATCH, item DELETE, fold POST) and the four had already
+  drifted: three answered a blocked coach *"You do not have access to team finances. Ask the head
+  coach to grant it."*, while the oldest answered *"teamId is required and must be a team whose
+  finances you can edit"* — developer wording that **merged two different failures into one
+  sentence** and never named the one remedy. One `denyUnlessTeamMoneyWrite` now serves all four.
+  ⚠ **The two failures stay two statuses on purpose:** 400 for "no team named, or not one you
+  coach" (a caller mistake) and 403 for "you coach it, your money access is off" (a permission fact
+  with a remedy worth printing). Collapsing them was the defect, not the fix.
+  ⚠ **This deliberately changes a message on a shipped screen** — that was the whole complaint.
 
 **`/review` (2026-08-17, high-risk tier, 5 lenses) — 7 confirmed, all fixed. It found a real defect
 again, which every review pass on this money area now has:**

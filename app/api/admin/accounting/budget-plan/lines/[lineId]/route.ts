@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveOrgBudgetItem } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -29,7 +30,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Ctx) => 
   // Verify the line belongs to this org
   const { data: existing, error: fe } = await supabaseAdmin
     .from('org_budget_lines')
-    .select('id, org_id')
+    .select('id, org_id, item_id')
     .eq('id', lineId)
     .eq('org_id', ctx!.org.id)
     .maybeSingle();
@@ -56,8 +57,23 @@ export const PATCH = withObservability(async (req: Request, { params }: Ctx) => 
     patch.total_amount = amount;
   }
 
-  if ('categoryId' in body) patch.category_id = body.categoryId ?? null;
-  if ('itemId'     in body) patch.item_id      = body.itemId     ?? null;
+  /* ⚠⚠ THE WORD IS AUTHORISED, AND THE CATEGORY FOLLOWS IT (`/review`, security lens, 2026-08-17).
+     Both columns were previously set straight from the request, independently and unchecked — so a
+     club could file its budget against another club's team-private word, and could leave the line's
+     heading disagreeing with the word underneath it. The two rules are one rule: an item belongs to
+     exactly one category, so whenever the row ends up with an item, that item decides the heading.
+     ⚠ RESOLVED AGAINST THE ROW'S EVENTUAL ITEM, not just the body's. Patching only the category on a
+     line that already has a word would otherwise re-open the same mismatch by the back door. */
+  const effectiveItemId = 'itemId' in body ? (body.itemId ?? null) : (existing.item_id ?? null);
+  const linked = await resolveOrgBudgetItem(effectiveItemId, ctx!.org.id);
+  if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
+
+  if ('itemId' in body) patch.item_id = linked.item?.id ?? null;
+  if (linked.item) {
+    patch.category_id = linked.item.categoryId;
+  } else if ('categoryId' in body) {
+    patch.category_id = body.categoryId ?? null;
+  }
   if ('notes'      in body) patch.notes        = body.notes      ?? null;
   if ('sortOrder'  in body) patch.sort_order   = body.sortOrder  ?? 0;
 

@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveOrgBudgetItem } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -48,13 +49,25 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
   }
 
+  /* ⚠⚠ THE WORD IS AUTHORISED, AND UNTIL 2026-08-17 IT WAS NOT (`/review`, security lens). This
+     route stored whatever `itemId` arrived — no ownership check, no tier check — while every
+     coach-side write path went through a resolver. Any club could therefore file its budget against
+     another club's team-private word, and the cost landed on that team's coach as an unremovable,
+     unexplainable word. The list here has always offered standard + club words only; this is the
+     save finally agreeing with it.
+     ⚠ AND THE CATEGORY COMES FROM THE ITEM, not from the request. An item belongs to exactly one
+     category, so accepting both independently let the two levels of the club's report disagree
+     about the same row — the very thing the coach-side routes derive it to prevent. */
+  const linked = await resolveOrgBudgetItem(itemId, ctx!.org.id);
+  if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
+
   const { data, error } = await supabaseAdmin
     .from('org_budget_lines')
     .insert({
       org_id:       ctx!.org.id,
       season_year:  year,
-      category_id:  categoryId  ?? null,
-      item_id:      itemId      ?? null,
+      category_id:  linked.item ? linked.item.categoryId : (categoryId ?? null),
+      item_id:      linked.item?.id ?? null,
       description:  desc,
       total_amount: amount,
       notes:        notes       ?? null,

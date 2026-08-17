@@ -36,10 +36,10 @@ import type { BudgetItem, BudgetItemDirection } from './types';
    graph joined the browser bundle. It would not have thrown and nothing would have reported it. Read
    that file's header before moving anything back. */
 export {
-  budgetItemTier, itemVisibleToTeam, ITEM_TIER_LABEL,
+  budgetItemTier, itemVisibleToTeam, itemOfferedToClub, ITEM_TIER_LABEL,
   type BudgetItemTier, type OwnedBudgetItem,
 } from './coach-budget-item-tiers';
-import { itemVisibleToTeam, type OwnedBudgetItem } from './coach-budget-item-tiers';
+import { itemVisibleToTeam, itemOfferedToClub, type OwnedBudgetItem } from './coach-budget-item-tiers';
 
 /* ⚠⚠ THE REFERENCE LIST AND THE USAGE PHRASING MOVED TO `coach-budget-item-usage.ts` (2026-08-17)
    AND ARE RE-EXPORTED HERE, so every existing caller keeps one door. Same reason as the tier split
@@ -371,6 +371,62 @@ export async function resolveBudgetItem(
   );
   if (!data || wrongSport || !itemVisibleToTeam(data as OwnedBudgetItem, orgId, teamId)) {
     return { ok: false, error: 'That budget item is not available to this team.' };
+  }
+
+  const row = data as Record<string, unknown>;
+  return {
+    ok: true,
+    item: {
+      id: row.id as string,
+      categoryId: row.category_id as string,
+      name: row.name as string,
+      categoryName: ((row.budget_categories as { name?: string } | null)?.name) ?? null,
+    },
+  };
+}
+
+/**
+ * The same resolution, one tier up: authorise an item id a CLUB is filing its own budget against.
+ *
+ * ⚠⚠ THIS IS THE MISSING CHECK, ADDED 2026-08-17 (`/review`, security lens). The club's budget-line
+ * routes took `itemId` from the request body and stored it with **no validation at all** — no
+ * ownership, no tier, nothing — while every coach-side write path went through `resolveBudgetItem`
+ * above. So a club could file its budget against any word in the database, including another club's
+ * team-private one, and the damage surfaced somewhere else entirely: that stray row counts as usage
+ * of the word, so the owning team's coach is refused when they try to remove it, with a sentence
+ * naming records they cannot see, on a screen they cannot open, in a club they have never heard of.
+ *
+ * ⚠ THE CATEGORY IS DERIVED HERE TOO, for the same reason it is derived for a coach: an item belongs
+ * to exactly one category, so trusting a separately-supplied one lets the two levels of the report
+ * disagree about the same row. The club routes accepted both independently before this.
+ *
+ * ⚠ NO SPORT GATE, and that is the difference from `resolveBudgetItem`. A club spans sports; its own
+ * plan is not written from one team's vocabulary, and the club taxonomy endpoint does not filter by
+ * sport either. Adding one here would refuse a word the club's own list had just offered.
+ */
+export async function resolveOrgBudgetItem(
+  itemId: unknown,
+  orgId: string,
+): Promise<BudgetItemResult> {
+  if (itemId === null || itemId === undefined || itemId === '') return { ok: true, item: null };
+  if (typeof itemId !== 'string') {
+    return { ok: false, error: 'itemId must be a budget item id, or null' };
+  }
+
+  const { data } = await supabaseAdmin
+    .from('budget_items')
+    .select('id, category_id, org_id, team_id, name, budget_categories(name)')
+    .eq('id', itemId)
+    .maybeSingle();
+
+  // One message for "another club's", "a team's own" and "no such item" — the same reasoning the
+  // coach-side resolver uses: separating them confirms the existence of rows the caller cannot see.
+  if (!data || !itemOfferedToClub(data as OwnedBudgetItem, orgId)) {
+    return {
+      ok: false,
+      error: 'That budget item is not available to this organization. A club plan can use standard '
+        + 'items and the ones your club shares — never a word one of its teams invented.',
+    };
   }
 
   const row = data as Record<string, unknown>;
