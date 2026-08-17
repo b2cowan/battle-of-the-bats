@@ -64,15 +64,26 @@ Rationale: this is the twin-table problem (Finding #34) reappearing at the UX la
 
 `org_person_emails` (`person_id`, `email_normalized`, `is_current`, `first_seen_at`, `last_seen_at`, `UNIQUE (org_id, email_normalized)`). Former addresses stay **searchable** — this is what makes a merge safe and a phone call short, and it is how the "changed their email" failure gets closed rather than papered over.
 
-### 3.3 The person↔child relationship — reuse `family_links`, do not invent
+### 3.3 The person↔child relationship — ⚠ CORRECTED 2026-08-17, my first proposal was wrong
 
-`family_links` already carries `org_id`, `rep_team_id`, `player_id`, `role`, `relationship`, and supports co-guardians. **Add `person_id`** and let it become the relationship table.
+**My original proposal was to reuse `family_links` as the relationship table. Verified against the live schema, that does not work, and it fails precisely on the scope the owner added.**
 
-⚠ **But `family_links` only exists for *invited* families (12 rows vs 70 named guardians).** Most guardians exist only as roster columns. So:
+Three facts checked rather than assumed:
 
-- Mint `org_people` from **all** sources: `rep_roster_players.guardian_email`, `rep_tryout_registrations.guardian_email`, `league_registrations.guardian_email`, `family_links.invited_email`/`claimed_email`, `basic_coach_team_players.contact_email`.
-- Add nullable `person_id` to each of those tables.
-- **Reads union the two paths** (typed-on-the-row, and linked-via-family_links) exactly as `rep_player_continuity_links` resolves its dual-source sides. Established precedent in this codebase; do not invent a third pattern.
+| Claim in my first draft | Reality | Consequence |
+|---|---|---|
+| `family_links` can be the person↔child link | **`family_links.rep_team_id` is NOT NULL** | It is **rep-team-bound by construction** and cannot represent a guardian↔child relationship for a **house league** child. Reusing it breaks half the Club+League scope. |
+| `basic_coach_team_players.contact_email` is a source | **`basic_coach_teams` has NO `org_id`** — the free coach product hangs off `team_workspaces`, not an org | An **org-scoped** `org_people` has no org to scope those rows to. **Not a source.** Excluded. |
+| League registrations are org-scoped like the rest | **`league_registrations` has NO `org_id`** — it reaches org 2-hop via `season_id → league_seasons.org_id` | Minting requires the join, and the new `person_id` column should arrive **with a denormalized `org_id`** to satisfy the 1-hop tenant rule (Findings #4/#5 precedent). |
+
+**Corrected design — the relationship is `person_id` on each source row:**
+
+- Mint `org_people` from four sources: `rep_roster_players.guardian_email`, `rep_tryout_registrations.guardian_email`, `league_registrations.guardian_email` (via the season join), and `family_links.invited_email`/`claimed_email`.
+- Add nullable `person_id` to each. **On `league_registrations`, add `org_id` in the same migration** (NOT NULL after backfill, indexed).
+- **`family_links` keeps its current job** — portal access for a rep team's guardians — and simply gains `person_id` so an invited guardian resolves to the same person. It is not promoted into a general relationship table.
+- A child's guardians are therefore "every source row for that child carrying a `person_id`", unioned across rep and league. **This is simpler than my original proposal and is the only shape that spans both modules.**
+
+⚠ `family_links` covers only the **12 invited** families against **70 named** guardians — it was never going to be the spine regardless.
 
 ### 3.4 What does NOT change
 
