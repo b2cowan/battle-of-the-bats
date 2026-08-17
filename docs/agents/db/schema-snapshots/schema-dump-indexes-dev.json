@@ -626,6 +626,11 @@
   },
   {
     "tablename": "family_links",
+    "indexname": "family_links_person_id_idx",
+    "indexdef": "CREATE INDEX family_links_person_id_idx ON public.family_links USING btree (person_id) WHERE (person_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_links",
     "indexname": "family_links_pkey",
     "indexdef": "CREATE UNIQUE INDEX family_links_pkey ON public.family_links USING btree (id)"
   },
@@ -996,6 +1001,16 @@
   },
   {
     "tablename": "league_registrations",
+    "indexname": "league_registrations_org_id_idx",
+    "indexdef": "CREATE INDEX league_registrations_org_id_idx ON public.league_registrations USING btree (org_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_person_id_idx",
+    "indexdef": "CREATE INDEX league_registrations_person_id_idx ON public.league_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registrations",
     "indexname": "league_registrations_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_registrations_pkey ON public.league_registrations USING btree (id)"
   },
@@ -1213,6 +1228,36 @@
     "tablename": "org_payees",
     "indexname": "org_payees_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
+  },
+  {
+    "tablename": "org_people",
+    "indexname": "org_people_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_people_org_email_uniq ON public.org_people USING btree (org_id, email_normalized)"
+  },
+  {
+    "tablename": "org_people",
+    "indexname": "org_people_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_one_current_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_org_email_uniq ON public.org_person_emails USING btree (org_id, email_normalized)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_person_id_idx",
+    "indexdef": "CREATE INDEX org_person_emails_person_id_idx ON public.org_person_emails USING btree (person_id)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_pkey ON public.org_person_emails USING btree (id)"
   },
   {
     "tablename": "org_public_site_content",
@@ -2101,6 +2146,11 @@
   },
   {
     "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_person_id_idx",
+    "indexdef": "CREATE INDEX rep_roster_players_person_id_idx ON public.rep_roster_players USING btree (person_id) WHERE (person_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_pkey",
     "indexdef": "CREATE UNIQUE INDEX rep_roster_players_pkey ON public.rep_roster_players USING btree (id)"
   },
@@ -2958,6 +3008,11 @@
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_org_id_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_org_id_idx ON public.rep_tryout_registrations USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_person_id_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_person_id_idx ON public.rep_tryout_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
   },
   {
     "tablename": "rep_tryout_registrations",

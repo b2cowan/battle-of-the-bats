@@ -3629,6 +3629,15 @@
         "column_default": null
       },
       {
+        "table_name": "family_links",
+        "pos": 25,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "family_recap_views",
         "pos": 1,
         "column_name": "id",
@@ -5366,6 +5375,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_registrations",
+        "pos": 23,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 24,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -6404,6 +6431,159 @@
         "table_name": "org_payees",
         "pos": 8,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_people",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_people",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_people",
+        "pos": 3,
+        "column_name": "email_normalized",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_people",
+        "pos": 4,
+        "column_name": "first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_people",
+        "pos": 5,
+        "column_name": "last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_people",
+        "pos": 6,
+        "column_name": "phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_people",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_people",
+        "pos": 8,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 3,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 4,
+        "column_name": "email_normalized",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 5,
+        "column_name": "is_current",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 6,
+        "column_name": "first_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 7,
+        "column_name": "last_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_emails",
+        "pos": 9,
+        "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -11189,6 +11369,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_roster_players",
+        "pos": 31,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_season_refund_adjustments",
         "pos": 1,
         "column_name": "id",
@@ -14708,6 +14897,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_tryout_registrations",
+        "pos": 31,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_tryout_rubrics",
         "pos": 1,
         "column_name": "id",
@@ -17816,6 +18014,13 @@
       },
       {
         "table_name": "family_links",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "family_links_person_id_fkey"
+      },
+      {
+        "table_name": "family_links",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
@@ -18152,6 +18357,20 @@
       },
       {
         "table_name": "league_registrations",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_org_id_fkey"
+      },
+      {
+        "table_name": "league_registrations",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_person_id_fkey"
+      },
+      {
+        "table_name": "league_registrations",
         "column_name": "season_id",
         "foreign_table": "league_seasons",
         "foreign_column": "id",
@@ -18310,6 +18529,27 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "org_payees_team_id_fkey"
+      },
+      {
+        "table_name": "org_people",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_people_org_id_fkey"
+      },
+      {
+        "table_name": "org_person_emails",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_person_emails_org_id_fkey"
+      },
+      {
+        "table_name": "org_person_emails",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_emails_person_id_fkey"
       },
       {
         "table_name": "org_public_site_content",
@@ -18840,14 +19080,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -18868,14 +19108,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -18910,14 +19150,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -18952,14 +19192,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -19141,14 +19381,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -19234,6 +19474,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_roster_players_org_id_fkey"
+      },
+      {
+        "table_name": "rep_roster_players",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "rep_roster_players_person_id_fkey"
       },
       {
         "table_name": "rep_roster_players",
@@ -20186,6 +20433,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_tryout_registrations_org_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_registrations_person_id_fkey"
       },
       {
         "table_name": "rep_tryout_registrations",
@@ -21327,6 +21581,11 @@
       },
       {
         "tablename": "family_links",
+        "indexname": "family_links_person_id_idx",
+        "indexdef": "CREATE INDEX family_links_person_id_idx ON public.family_links USING btree (person_id) WHERE (person_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_links",
         "indexname": "family_links_pkey",
         "indexdef": "CREATE UNIQUE INDEX family_links_pkey ON public.family_links USING btree (id)"
       },
@@ -21697,6 +21956,16 @@
       },
       {
         "tablename": "league_registrations",
+        "indexname": "league_registrations_org_id_idx",
+        "indexdef": "CREATE INDEX league_registrations_org_id_idx ON public.league_registrations USING btree (org_id)"
+      },
+      {
+        "tablename": "league_registrations",
+        "indexname": "league_registrations_person_id_idx",
+        "indexdef": "CREATE INDEX league_registrations_person_id_idx ON public.league_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_registrations",
         "indexname": "league_registrations_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_registrations_pkey ON public.league_registrations USING btree (id)"
       },
@@ -21914,6 +22183,36 @@
         "tablename": "org_payees",
         "indexname": "org_payees_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
+      },
+      {
+        "tablename": "org_people",
+        "indexname": "org_people_org_email_uniq",
+        "indexdef": "CREATE UNIQUE INDEX org_people_org_email_uniq ON public.org_people USING btree (org_id, email_normalized)"
+      },
+      {
+        "tablename": "org_people",
+        "indexname": "org_people_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
+      },
+      {
+        "tablename": "org_person_emails",
+        "indexname": "org_person_emails_one_current_uniq",
+        "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
+      },
+      {
+        "tablename": "org_person_emails",
+        "indexname": "org_person_emails_org_email_uniq",
+        "indexdef": "CREATE UNIQUE INDEX org_person_emails_org_email_uniq ON public.org_person_emails USING btree (org_id, email_normalized)"
+      },
+      {
+        "tablename": "org_person_emails",
+        "indexname": "org_person_emails_person_id_idx",
+        "indexdef": "CREATE INDEX org_person_emails_person_id_idx ON public.org_person_emails USING btree (person_id)"
+      },
+      {
+        "tablename": "org_person_emails",
+        "indexname": "org_person_emails_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_person_emails_pkey ON public.org_person_emails USING btree (id)"
       },
       {
         "tablename": "org_public_site_content",
@@ -22802,6 +23101,11 @@
       },
       {
         "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_person_id_idx",
+        "indexdef": "CREATE INDEX rep_roster_players_person_id_idx ON public.rep_roster_players USING btree (person_id) WHERE (person_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_roster_players",
         "indexname": "rep_roster_players_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_roster_players_pkey ON public.rep_roster_players USING btree (id)"
       },
@@ -23659,6 +23963,11 @@
         "tablename": "rep_tryout_registrations",
         "indexname": "rep_tryout_registrations_org_id_idx",
         "indexdef": "CREATE INDEX rep_tryout_registrations_org_id_idx ON public.rep_tryout_registrations USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_tryout_registrations",
+        "indexname": "rep_tryout_registrations_person_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_registrations_person_id_idx ON public.rep_tryout_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
       },
       {
         "tablename": "rep_tryout_registrations",
@@ -24910,6 +25219,30 @@
       {
         "kind": "RLS",
         "table_name": "org_payees",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_people",
+        "detail": "org_people_email_normalized_check",
+        "check_clause": "((email_normalized = lower(btrim(email_normalized))) AND (email_normalized <> ''::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_people",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_person_emails",
+        "detail": "org_person_emails_email_normalized_check",
+        "check_clause": "((email_normalized = lower(btrim(email_normalized))) AND (email_normalized <> ''::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_person_emails",
         "detail": "ENABLED",
         "check_clause": null
       },

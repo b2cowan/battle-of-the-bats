@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { normalizeGuardianEmailRequired } from './guardian-email';
 
 /**
  * Scope-ceiling interest capture for org-less Basic coach teams (free-tier Phase 4d).
@@ -58,10 +59,6 @@ const FEATURE_VALUES: Record<BasicCoachInterestOption, string> = {
   practice_plans: 'team_practice_plans',
 };
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
 function cleanText(value: string | null | undefined, maxLength: number): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed ? trimmed.slice(0, maxLength) : null;
@@ -92,7 +89,7 @@ export async function submitBasicCoachTeamScopeInterest(params: {
 }): Promise<void> {
   if (params.interests.length === 0) throw new Error('Choose at least one area.');
 
-  const email = normalizeEmail(params.userEmail);
+  const email = normalizeGuardianEmailRequired(params.userEmail);
   if (!email) throw new Error('A signed-in coach email is required.');
 
   const { data: team, error: teamError } = await supabaseAdmin

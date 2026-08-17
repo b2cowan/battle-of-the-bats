@@ -1,12 +1,201 @@
 {
   "generated": "2026-08-17",
-  "total": 0,
+  "total": 47,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 2,
+    "columns": 22,
+    "indexes": 11,
+    "constraints": 10,
+    "rls": 2
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:org_people.org_people_email_normalized_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_person_emails.org_person_emails_email_normalized_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_links.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.email_normalized",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.first_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.last_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.phone",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_people.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.email_normalized",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.first_seen_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.is_current",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.last_seen_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_emails.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_roster_players.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryout_registrations.person_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_links.family_links_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registrations.league_registrations_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registrations.league_registrations_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_people.org_people_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_people.org_people_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_emails.org_person_emails_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_emails.org_person_emails_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_emails.org_person_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_roster_players.rep_roster_players_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_tryout_registrations.rep_tryout_registrations_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_links_person_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_person_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_people_org_email_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_people_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_emails_one_current_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_emails_org_email_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_emails_person_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_roster_players_person_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_registrations_person_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_people",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_person_emails",
+      "sig": ""
+    }
+  ]
 }

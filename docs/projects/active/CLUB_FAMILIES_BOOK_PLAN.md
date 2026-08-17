@@ -1,6 +1,8 @@
 # The Families Book — club-admin family records
 
-**Status:** Planning session held 2026-08-17. Owner-approved scope decisions recorded below. **Nothing built.**
+**Status:** Planning 2026-08-17. **Phase 1 BUILT on dev 2026-08-17** (migration 251) — records minted,
+nothing in the product reads them. **Awaiting the owner's read of the §5-P1 report** (`node
+scripts/report-families-backfill.mjs`). Phases 2–5 not started. Read §5.1 before starting Phase 2.
 **Tiers:** Club **and League** (owner decision 2026-08-17 — see §1.2).
 **Access:** a dedicated Families capability, off by default (owner decision 2026-08-17).
 **Mockups:** `claude.ai/code/artifact/f089153c-8583-4c5c-b8c3-d70c5278602b`
@@ -110,9 +112,56 @@ Three facts checked rather than assumed:
 
 Ordered so the riskiest thing — minting people from drifting addresses — is proven against real club data before anything depends on it.
 
-### P1 — Build the records, show nobody
-Mint `org_people` + `org_person_emails` across rep, tryout, league and basic-coach sources. Add nullable `person_id` columns. Nothing in the product reads any of it.
-**Exit criterion:** a report the owner and I read together — families created, suspected duplicates, children we could not confidently attach. **If those numbers look wrong we fix matching before a screen exists.**
+### P1 — Build the records, show nobody ✅ BUILT ON DEV 2026-08-17 (migration 251)
+Mint `org_people` + `org_person_emails` across rep, tryout, league and family-link sources (**not**
+basic-coach — see §3.3). Add nullable `person_id` columns, plus `org_id` on `league_registrations`.
+Nothing in the product reads any of it.
+**Exit criterion:** a report the owner and I read together — `node scripts/report-families-backfill.mjs`
+(`--prod` for production, `--json` for machine use). **If those numbers look wrong we fix matching
+before a screen exists.**
+
+### 5.1 What Phase 1 actually established — read this before starting Phase 2
+
+**⚠ THE EXIT CRITERION IS NOT YET MET, and a green report does not meet it.** This plan's premise was
+that minting people from drifting addresses would be *proven against real club data* before anything
+depended on it. **There is no real club data.** Production holds exactly one organization carrying
+families and it is the Riverdale Ridge demo club; dev holds that same club plus five test/QA orgs. So
+the run below proves the MECHANISM, not the MATCHING.
+
+**The report script is therefore the deliverable, not its current numbers.** Re-run it against the
+first real club; *that* is when Phase 2 may start.
+
+Run of 2026-08-17 (dev): **117 people across 5 orgs, 117 addresses, every integrity invariant zero.**
+
+| Finding | Number | What it means |
+|---|---|---|
+| Roster children with no guardian at all | **64 of 163 (39%)** | Nothing to match. An unattached row is the honest outcome, not a failure to try harder — but it caps what any Families screen can show. |
+| Guardians in more than one source | 12 | All `family_link ↔ rep_roster` in the demo club. |
+| **Parents with children in BOTH rep and house league** | **0** | ⚠ **The entire commercial premise of the Club+League decision is unexercised.** No org on either database has both. |
+| Suspected duplicates (surname+phone, shared child) | 0 | Nothing to review yet. |
+| Malformed guardian addresses | 2 | Correctly minted nothing. |
+| Address changes witnessed (invited→claimed) | 0 | No `claimed_email` exists anywhere, so the former-address path is untested by real data. |
+| People whose only source is a tryout | 28 | Kept, deliberately — see the `rep_tryout_registrations.person_id` dictionary entry. |
+
+**⚠⚠ THE FINDING NOBODY ASKED FOR, AND THE ONE THAT SHOULD CHANGE A PHASE: the CHILD has the same
+identity problem the PARENT had.** Birth dates are recorded on **1 of 163 roster rows and 0 of 30
+tryout rows** (league is better: 21 of 23). So "the same child" can only be judged by name within an
+org. Consequences that are not optional to accept:
+
+- **"Same surname + a shared child" (§4) is much weaker than this plan assumed** — it is a name match,
+  and it is offered as a proposal for a human precisely because it cannot be more than that.
+- **Sibling counts are an INFERENCE, not a fact.** A child registered twice under a nickname reads as
+  two siblings; two same-named children in one club read as one.
+- **P5's sibling discount and household payment plan rest on that inference.** They should not be
+  built until child identity has had its own decision — the same conversation this project just had
+  about parents. That is a new open question, added as §8.5.
+
+Two smaller decisions taken during the build, both recorded in `DATA_DICTIONARY.md` rather than here:
+**no contact preference is stored on the person in Phase 1** (they already live in two ledgers keyed
+on the same `(org, email)`; copying them is the twin-table problem in the one place where being wrong
+means emailing someone who opted out — Phase 3 attaches them, strictest-wins), and **`person_id` is
+resolved through `org_person_emails`, never through `org_people` alone**, so a row carrying a parent's
+old address lands on the same person.
 
 ### P2 — Look them up
 Families area behind the new capability. Search (any child, any guardian, any current *or former* email, phone). Family page: children across rep + league, household balance, contact, consent, forms, history. **Read-only.** Plus the duplicate review queue — P1's numbers will demand it.
@@ -165,6 +214,13 @@ Full catalogue with rationale in the mockup artifact. Phase tags summarised:
 2. **Does the family ever see their own record?** A parent-facing version is a short step once the record exists, and it is how a club stops being the middleman for "what do you hold about me". Not in this project — but it changes what to build if it is coming.
 3. **Household balance: live or stored?** Live is always correct and never drifts; stored is faster and survives a child leaving a roster. **Recommendation: assemble live** at current club sizes; revisit only if measured slow.
 4. **Retention/erasure rules** — deferred deliberately (§6).
+5. **⚠ NEW, raised by Phase 1 (§5.1): what identifies a CHILD?** Birth dates are effectively absent
+   from rep rows, so children are matched by name within an org. That is enough for Phase 2's lookup
+   and for a *proposed* duplicate, and **not** enough for P5's sibling discount or household payment
+   plan, which pay out real money against an inference. Decide before P5: make a birth date required
+   somewhere, adopt an explicit child record (`rep_player_continuity_links` already links a player
+   across seasons and may be the seam), or accept the inference in writing with its failure modes
+   named. **Do not let this be settled by whoever builds P5 first.**
 
 ---
 

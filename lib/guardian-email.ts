@@ -1,5 +1,13 @@
 /**
- * lib/guardian-email.ts — ONE normalization rule for the de-facto family identity.
+ * lib/guardian-email.ts — ONE normalization rule for the de-facto family identity,
+ * and now for every email address the platform stores as a lookup key.
+ *
+ * ⚠ It keeps the "guardian" name because that is where the rule was learned, not because
+ * its scope is guardians. Two more copies of the same trim+lowercase had already appeared
+ * (the early-access lead capture and the Basic-coach interest capture, each with its own
+ * private `normalizeEmail`); they now call this. Do not write a fourth. Two spellings of one
+ * rule is how two spellings of one person become two people — which is the entire premise of
+ * the Families Book (migration 251, `org_people.email_normalized`).
  *
  * Chunk D substrate (0.1). A guardian's email is how the platform recognizes a family across
  * tables that deliberately hold no account: `rep_roster_players`, `rep_tryout_registrations`,

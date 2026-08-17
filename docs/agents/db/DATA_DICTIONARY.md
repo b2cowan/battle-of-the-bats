@@ -1902,6 +1902,11 @@ record can differ, and changing it is **never** applied retroactively — the sa
 <!-- dict:col:rep_roster_players.guardian_phone -->
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; **all nullable as of mig 139** (Coach Premium Upgrade Phase 3c — so a free team's roster carries over on upgrade without fabricating guardian data). The manual roster-add route still requires first/last/email app-side, so in practice only **migrated rows** (or edits that clear the field) are null. `guardian_email` indexed (`email_idx`, non-unique). TS types are already `string | null` and every reader is null-safe (dues reminders skip null emails; displays/exports coalesce). `guardian_phone` nullable.
 
+<!-- dict:col:rep_roster_players.person_id -->
+**`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — which adult this child's guardian actually IS, rather than which address someone typed. **Nullable forever**: 64 of 163 live roster rows name no guardian at all, and a child with no attachable guardian must stay a usable roster row. `guardian_email` is untouched beside it, as the honest record of what was entered.
+
+⚠ **Resolve it through `org_person_emails`, never through `org_people.email_normalized`** — a row still carrying a parent's OLD address must land on the same person as one carrying their new address. ⚠ Attaching a person is **not an edit anyone made**: the backfill deliberately does not bump `updated_at`, because touching it would make whole rosters look freshly changed to every surface that reads recency (mig 214's precedent). Nothing in the product reads this column yet.
+
 <!-- dict:col:rep_roster_players.status -->
 **`status`** (text, NOT NULL, default `'active'`; CHECK `active|inactive`) — `inactive` is the de-facto delete (gotcha 1).
 
@@ -2935,6 +2940,9 @@ record can differ, and changing it is **never** applied retroactively — the sa
 <!-- dict:col:rep_tryout_registrations.guardian_email -->
 <!-- dict:col:rep_tryout_registrations.guardian_phone -->
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — first/last/email NOT NULL; `guardian_email` targets all transactional emails + is indexed (gotcha 8); all copied to the roster on accept.
+
+<!-- dict:col:rep_tryout_registrations.person_id -->
+**`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. ⚠ **A candidate who never made the team still gets a person record, deliberately.** The club already holds their data, mig 214 already files a `family_consents` row for them, and "export everything you hold about me" cannot answer for a family with no record. A candidate who later makes the roster resolves to the **same** person, because the person is keyed on the address — so the only records this creates are for people who *only* ever tried out.
 
 <!-- dict:col:rep_tryout_registrations.status -->
 **`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|offered|waitlisted|accepted|declined|withdrawn`) — transitions in code (gotchas 3–5). `waitlisted` added **mig 168** (Phase 2B.3 decision board: Offer→offered, Waitlist→waitlisted, Not this season→declined); distinct from `pending_review` (undecided) so 2B.5 can auto-promote from the waitlist.
@@ -4150,6 +4158,13 @@ The follower half — the tier boundary the whole two-tier model rests on — is
 <!-- dict:col:family_links.revoked_at -->
 **`approved_by_user_id` / `approved_at` / `declined_at` / `revoked_at`** (uuid → `auth.users` / timestamptz ×3, nullable) — the decision trail, **and the adoption metrics (plan 1.13)**: requested → approved / declined / revoked, with abandonment being a `requested` row that never moved. Counted from these stamps rather than a parallel counter table, so the numbers can never drift from the rows they describe.
 
+<!-- dict:col:family_links.person_id -->
+**`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — the person behind the link, resolved from `claimed_email` when there is one and `invited_email` otherwise.
+
+⚠ **`family_links` was NOT promoted into a general person↔child relationship table, and an early draft of the Families Book plan was wrong to propose it.** `rep_team_id` is **NOT NULL**, so this table is **rep-team-bound by construction** and cannot represent a house-league child's guardian at all — reusing it would have broken half the Club+League scope. It keeps its existing job (portal access for a rep team's guardians) and merely gains this column. It also covers only the 12 invited families against 70 named guardians; it was never going to be the spine.
+
+**What it uniquely contributes:** this is the one source that can witness the SAME person under TWO addresses — a row whose `claimed_email` differs from its `invited_email` means the same human opened a signed invitation sent to A and signed in as B. That becomes a former-address row in `org_person_emails`. Ambiguous and chained hops are refused rather than resolved.
+
 <!-- dict:col:family_links.created_at -->
 <!-- dict:col:family_links.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — `created_at` doubles as "requested at".
@@ -4243,6 +4258,139 @@ previously had no opt-out of its own, and its lawful basis was purely relational
 <!-- dict:col:family_email_optouts.source -->
 <!-- dict:col:family_email_optouts.created_at -->
 **`opted_out_at` / `source` / `created_at`** (timestamptz NOT NULL / text NOT NULL default `'announcement_footer'` / timestamptz NOT NULL) — when and from which surface. `source` is for the record only; an opt-out suppresses ALL family email from the org regardless of where it arrived from.
+
+## `org_people`
+<!-- dict:table:org_people -->
+
+**Purpose:** the **person record for an adult the club names but who never signs in** — added by
+**mig 251** (Families Book Phase 1; Finding #35). Before it, a guardian had **no row anywhere**:
+their identity was a text email typed onto each child's record, re-typed per child, per season,
+per program. 70 distinct guardians were named on roster rows and exactly one had a login.
+
+**Nothing in the product reads this table yet.** Phase 1 mints the records and shows nobody; the
+Families area (Phase 2) is the first reader, behind its own capability.
+
+**Gotchas:**
+
+1. **ORG-SCOPED, NEVER PLATFORM-WIDE, and that is a PRIVACY decision rather than a technical
+   one.** The same parent at two clubs is **deliberately two records**. A platform-wide person
+   would let one club's data confirm that a guardian exists at another — a leak dressed as a
+   convenience. Do not "improve" this by de-duplicating across orgs.
+2. **`UNIQUE (org_id, email_normalized)` IS the matching rule**, expressed where a caller cannot
+   forget it. Auto-matching happens on **exact normalized email only**; same-surname+phone and
+   same-surname+shared-child are *proposed* for human review and **never merged automatically**.
+   A wrong merge shows one parent another parent's children — strictly worse than a duplicate.
+3. **⚠ NO CONTACT PREFERENCE IS STORED HERE, deliberately.** `family_email_optouts` and
+   `family_consents` are already keyed `(org_id, email)` — the *same* key this table uses — so a
+   person inherits both by join, with no second copy that can drift. Storing a resolved
+   preference here would be the twin-table problem (Finding #34) in the one place where being
+   wrong means emailing someone who opted out. Attaching preferences to the person is a Phase 3
+   decision (plan §6), and when it happens **the strictest preference must win** — a
+   "newest wins" default silently re-subscribes people who asked not to be contacted.
+4. **⚠ THE TRAP PHASE 3 MUST NOT WALK INTO:** once `org_person_emails` holds FORMER addresses, an
+   opt-out recorded against a former address must suppress sends to the CURRENT one. Today's
+   suppression check looks up `(org, email)`, so an email change would quietly undo an opt-out.
+   The check has to run through the **person**, not the address it was filed under.
+5. **No existing email column was dropped or rewritten.** Every `guardian_email` stays exactly as
+   typed — the honest record of what was entered — which is what keeps every phase reversible.
+6. **Service-role only** — RLS enabled, **zero policies** (the mig 091/212/214 posture). This
+   table concentrates contact details for minors' guardians across an entire club; there is no
+   client-side read path and there must never be one.
+7. **`basic_coach_team_players` is NOT a source and cannot become one.** `basic_coach_teams` has
+   no `org_id` — the free coach product hangs off `team_workspaces` — so an org-scoped person
+   record has no org to scope those rows to.
+
+<!-- dict:col:org_people.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:org_people.org_id -->
+**`org_id`** (uuid, NOT NULL, FK → `organizations`, CASCADE) — tenancy. Indexed by *leading*
+`org_people_org_email_uniq`; a separate plain index would be redundant (mig 249's rule is
+"org_id leads an index", not "org_id has its own").
+
+<!-- dict:col:org_people.email_normalized -->
+**`email_normalized`** (text, NOT NULL; CHECK `= lower(btrim(...))` and non-empty) — the person's
+**current** address and their identity within the org. Always produced by the one rule in
+`lib/guardian-email.ts` (trim + lowercase, **nothing cleverer** — no dot-stripping or plus-tag
+folding, which are provider-specific guesses that would MERGE two distinct families). Mirrored by
+this person's single `is_current` row in `org_person_emails`; the two cannot disagree because
+that table carries a partial unique index on `(person_id) WHERE is_current`.
+
+<!-- dict:col:org_people.first_name -->
+<!-- dict:col:org_people.last_name -->
+<!-- dict:col:org_people.phone -->
+**`first_name` / `last_name` / `phone`** (text, nullable) — resolved by the backfill as
+**newest non-blank wins, PER FIELD INDEPENDENTLY**: the name comes from the most recent source
+row that carried a name, the phone from the most recent row that carried a phone, which may be a
+different row. Resolving the whole record from one "winning" row would let a recent registration
+that omitted the phone erase a phone number the club holds. ⚠ This rule applies to **name and
+phone only** — see gotcha 3 for why it must never be applied to a preference.
+
+<!-- dict:col:org_people.created_at -->
+<!-- dict:col:org_people.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — when **we** wrote the
+row. When the person was first and last *seen* on a source row lives on `org_person_emails`
+(`first_seen_at` / `last_seen_at`), which is the answer anyone actually wants.
+
+## `org_person_emails`
+<!-- dict:table:org_person_emails -->
+
+**Purpose:** every address ever seen for a person — **current and former, all searchable**. Added
+by **mig 251**. This is what closes the "they changed their email and became a stranger" failure
+rather than papering over it: their history, consent and opt-out stop being filed under an
+address that is no longer theirs. It is also what makes a later merge *safe*, because a reviewer
+can see WHY two addresses are one person.
+
+**Gotchas:**
+
+1. **An address belongs to at most ONE person per org** (`org_person_emails_org_email_uniq`).
+   That is what makes resolution unambiguous — a source row's typed address lands on exactly one
+   person whether it is their current address or one they abandoned three seasons ago.
+2. **⚠ RESOLUTION GOES THROUGH THIS TABLE, NEVER THROUGH `org_people` ALONE.** A search or an
+   attach that looks only at `org_people.email_normalized` silently loses every parent who
+   changed address — the exact bug this table exists to prevent. Same for the Phase 3 opt-out
+   check (see `org_people` gotcha 4).
+3. **Exactly one current address per person** (`org_person_emails_one_current_uniq`, partial on
+   `is_current`). Together with gotcha 1 this holds the invariant that `org_people
+   .email_normalized` is always mirrored here.
+4. **A former address only ever arrives from evidence, never a guess.** The one automatic source
+   today is a `family_links` row whose `claimed_email` differs from its `invited_email` — the
+   same human opened a signed invitation sent to A and signed in as B. Ambiguous hops (A→B and
+   A→C) and chains (A→B, B→C) are **refused outright** and reported, because resolving them means
+   choosing, and choosing wrong shows one parent another parent's children.
+5. **Service-role only** — RLS enabled, zero policies. Same posture and same reasoning as
+   `org_people`.
+
+<!-- dict:col:org_person_emails.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:org_person_emails.org_id -->
+**`org_id`** (uuid, NOT NULL, FK → `organizations`, CASCADE) — **denormalized** so the tenant is
+1 hop from the address, which is how search reads this table (Findings #4/#5). Leads
+`org_person_emails_org_email_uniq`, satisfying the tenancy-index rule.
+
+<!-- dict:col:org_person_emails.person_id -->
+**`person_id`** (uuid, NOT NULL, FK → `org_people`, CASCADE) — separately indexed so the FK can
+be followed backwards ("every address for this person" — mig 249's rule).
+
+<!-- dict:col:org_person_emails.email_normalized -->
+**`email_normalized`** (text, NOT NULL; same CHECK as `org_people`) — normalized by
+`lib/guardian-email.ts`. UNIQUE with `org_id`.
+
+<!-- dict:col:org_person_emails.is_current -->
+**`is_current`** (boolean, NOT NULL, default true) — true for the one address mirroring
+`org_people.email_normalized`; false for a former address. **A former address stays fully
+searchable** — that is the point of keeping it.
+
+<!-- dict:col:org_person_emails.first_seen_at -->
+<!-- dict:col:org_person_emails.last_seen_at -->
+**`first_seen_at` / `last_seen_at`** (timestamptz, NOT NULL, default now()) — when this address
+was first and last seen on any source row, taken from those rows' own `updated_at`. **Distinct
+from `created_at`/`updated_at`**, which record when we wrote this row.
+
+<!-- dict:col:org_person_emails.created_at -->
+<!-- dict:col:org_person_emails.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
 
 ## `family_recap_views`
 <!-- dict:table:family_recap_views -->
@@ -4548,6 +4696,12 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 **Fields** (boilerplate `id`, `updated_at` omitted; **no `created_at` — see `registered_at`**):
 
+<!-- dict:col:league_registrations.org_id -->
+**`org_id`** (uuid, **NOT NULL**, FK → `organizations` ON DELETE CASCADE, indexed `league_registrations_org_id_idx`; **mig 251**) — **denormalized tenancy, added because this was the one family-bearing table that could not name its own tenant.** It previously reached an org only 2-hop via `season_id → league_seasons.org_id`, so every tenant-scoped read of it was a join, against the standing 1-hop rule (Findings #4/#5). Backfilled from the season; verified total before the NOT NULL (all live rows reached an org), so a row that somehow could not would have failed the migration rather than silently becoming untenanted. ⚠ **Keep it in step with `season_id`** — moving a registration to a season in another org (not a flow that exists today) would have to move this too.
+
+<!-- dict:col:league_registrations.person_id -->
+**`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. **This column is why League was brought into the Families Book alongside Club:** a household with one child in house league and one on a rep team is invisible in *both* modules today, and a shared person is the only thing that could join them. A family is read as the union of the rep and league rows carrying the same `person_id`. ⚠ As of 2026-08-17 **no organization on either database has both** rep and league families, so that union is unexercised by real data — see `scripts/report-families-backfill.mjs`.
+
 <!-- dict:col:league_registrations.season_id -->
 **`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — parent season; scopes all admin queries + the public status lookup. Indexed (`season_idx`, `status_idx(season_id, status)`).
 
@@ -4575,7 +4729,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`guardian_first_name` / `guardian_last_name`** (text, NOT NULL) — the responsible adult; capped 80 on the public form.
 
 <!-- dict:col:league_registrations.guardian_email -->
-**`guardian_email`** (text, NOT NULL; indexed `guardian_idx`, **non-unique**) — **the de-facto family identity** for this account-less module (gotcha 1). All lifecycle emails go here; the public status page looks up by it (lowercased at lookup, stored as-submitted → mixed-case dups possible).
+**`guardian_email`** (text, NOT NULL; indexed `guardian_idx`, **non-unique**) — **the de-facto family identity** for this account-less module (gotcha 1). All lifecycle emails go here; the public status page looks up by it. ⚠ **Corrected 2026-08-17:** this entry used to say "stored as-submitted → mixed-case dups possible". That stopped being true at **mig 214**, which normalized every existing row and routed the write path through `normalizeGuardianEmailRequired` ([lib/db.ts:2840](../../../lib/db.ts#L2840)). Since **mig 251** the row also carries `person_id`, and the person — not this column — is the identity a household is assembled from.
 
 <!-- dict:col:league_registrations.guardian_phone -->
 **`guardian_phone`** (text, nullable) — capped 30 on the public form; no format validation.

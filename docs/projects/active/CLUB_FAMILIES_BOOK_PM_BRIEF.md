@@ -1,7 +1,23 @@
 # The Families Book — PM brief
 
 **Plan:** `CLUB_FAMILIES_BOOK_PLAN.md` · **Mockups:** `claude.ai/code/artifact/f089153c-8583-4c5c-b8c3-d70c5278602b`
-**Status:** planned 2026-08-17, nothing built · **Tiers:** Club and League · **Access:** a Families permission, off by default
+**Status:** planned 2026-08-17 · **Phase 1 built on dev 2026-08-17** — the family records exist and
+nothing shows them; awaiting the owner's read of the Phase 1 report · **Tiers:** Club and League ·
+**Access:** a Families permission, off by default
+
+> **What Phase 1 changed for a customer: nothing, on purpose.** No screen, no menu, no permission, no
+> change to what a coach or admin does. Behind the scenes, every parent named anywhere in a club now
+> has one record instead of an email address re-typed onto each child's row.
+>
+> **Two things the owner should know before approving Phase 2** (detail in the plan, §5.1):
+> 1. **There is no real club data to test this against yet** — one demo club on production, test orgs
+>    on dev. The report proves the machinery works; it cannot yet prove the matching is right. The
+>    report is re-runnable, and the first real club is when this actually gets answered.
+> 2. **Two in five children on a roster name no parent at all** (64 of 163), and **birth dates are
+>    almost never recorded**, so "these two children are siblings" is currently a guess based on a
+>    shared email address. That is fine for looking a family up. It is **not** fine for a sibling
+>    discount, which is one of the headline commercial promises here — that needs its own decision
+>    first.
 
 ---
 

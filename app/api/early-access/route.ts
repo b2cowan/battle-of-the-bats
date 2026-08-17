@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { isSendableGuardianEmail, normalizeGuardianEmailRequired } from '@/lib/guardian-email';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLAN_OPTIONS = new Set(['league', 'club']);
 const FEATURE_OPTIONS = new Set([
   'house_league',
@@ -34,7 +34,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const name = cleanText(body.name, 120);
-  const email = cleanText(body.email, 180).toLowerCase();
+  const email = normalizeGuardianEmailRequired(cleanText(body.email, 180));
   const organizationName = cleanText(body.organizationName, 160);
   const role = cleanText(body.role, 120);
   const sports = cleanText(body.sports, 160);
@@ -48,7 +48,7 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Name is required.' }, { status: 400 });
   }
 
-  if (!EMAIL_RE.test(email)) {
+  if (!isSendableGuardianEmail(email)) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
   }
 
