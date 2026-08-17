@@ -1,6 +1,14 @@
 # PM Brief — budget items: what a word is, and who may take it away
 
-**Status: design ruled by the owner 2026-08-16/17. Not built.**
+**Status: design ruled by the owner 2026-08-16/17. Phase 1 built on dev 2026-08-17 (Owner QA §44);
+the tags and the team-chosen merge are open.**
+
+**Phase 1 shut all three doors.** Publishing a team's word to the club now promotes it and deletes
+nothing. A club word can no longer be deleted while any team has anything filed against it — the
+refusal names what is holding it and points at rename. A team can remove its own words under the
+same guard. And a word's side became part of what identifies it, so *Grant* the cheque and *Grant*
+the application fee can live side by side. **One thing shipped last week was retracted:** a team's
+own word can be renamed or removed, never moved between income and expenses.
 **Plan:** [COACH_BUDGET_ITEM_INTEGRITY_PLAN.md](COACH_BUDGET_ITEM_INTEGRITY_PLAN.md)
 **Mockup:** https://claude.ai/code/artifact/484b5971-5f79-42a4-9c1e-e5165bfaf15a
 
