@@ -110,7 +110,22 @@ Three facts checked rather than assumed:
 
 ## 5. Phases
 
-Ordered so the riskiest thing — minting people from drifting addresses — is proven against real club data before anything depends on it.
+⚠ **REORDERED 2026-08-17 (owner-approved), after Phase 1 shipped.** Two corrections, both of which
+this plan had already argued for and then contradicted itself on:
+
+1. **The original ordering was "proven against real club data before anything depends on it."** There
+   is no real club data (§5.1) and waiting for some is not a plan. The gate is replaced: **seed a
+   deliberately messy fixture club** and prove matching against manufactured failure cases — the same
+   parent under three spellings, one who changed address mid-season, siblings split across a rep team
+   and house league, a shared family inbox on two surnames, an opt-out reappearing under a new
+   address. Because production is empty, we are free to build a broken club and iterate against it as
+   often as we like. That fixture becomes the permanent test bed for every screen after it.
+2. **⚠ The old P2/P3/P4 contradicted §2 of this same plan.** §2 says *"a lookup tool is opened when
+   something goes wrong, a worklist is opened every Monday — build the worklists first and let the
+   family page be where a worklist row lands"*, and the approved mockups open with the worklist and
+   bundle the actions into the first release. The phase list then shipped a read-only directory
+   first, which is the textbook feature that gets built and goes unused. **The mockups win.** The
+   usual reason for a read-only half-step — de-risking against live customers — does not apply here.
 
 ### P1 — Build the records, show nobody ✅ BUILT ON DEV 2026-08-17 (migration 251)
 Mint `org_people` + `org_person_emails` across rep, tryout, league and family-link sources (**not**
@@ -163,21 +178,90 @@ means emailing someone who opted out — Phase 3 attaches them, strictest-wins),
 resolved through `org_person_emails`, never through `org_people` alone**, so a row carrying a parent's
 old address lands on the same person.
 
-### P2 — Look them up
-Families area behind the new capability. Search (any child, any guardian, any current *or former* email, phone). Family page: children across rep + league, household balance, contact, consent, forms, history. **Read-only.** Plus the duplicate review queue — P1's numbers will demand it.
+### P2 — The Families area, worklist-first (the mockups' first release)
 
-### P3 — Act on them
-Message the household · record a payment against the family · edit contact details · record consent · add an internal note · export their data. **Every one writes through the existing path (§1.3).**
+One release, built in the mockups' own order. Chunks are sequenced, not parallel.
 
-### P4 — Worklists
-Owes money · missing forms · no consent · not back this season · can't be reached. Filters + bulk actions. This is the release that turns it from a thing you look at into a thing you use.
+**A · The messy fixture club.** Seed a throwaway org carrying the failure cases listed above. Half a
+day, and it unlocks every chunk after it — today the duplicate queue and the cross-programme
+household have *nothing* to render (§5.1). Do not seed it into either public demo world.
 
-### P5 — Household money
-Sibling discount · financial assistance · household payment plan · move a credit between siblings. **Deliberately last:** each changes what a family is charged, and none should ship until the record beneath it is trusted.
+**B · The area, behind its capability.** A dedicated Families capability, **off by default**.
+⚠ Check it on **the specific family being opened**, not "is this an admin" — the coach
+player-documents leak needed **both** `documents` **and** `rosterPii`, and one check that looked
+sufficient was not. This screen concentrates far more than that one did.
 
-**P1 and P2 are independently useful** — if the project stalled after P2, a club would still have something it has never had. That is the test a phased plan should pass.
+**C · The worklist as the landing.** Not an A–Z list: *owes money · missing forms · no consent · not
+back this season · possible duplicates*, with search in the toolbar rather than as the front door.
+⚠ Several mockup columns cannot be honestly filled from today's data — see §5.2 before building.
+
+**D · The family page**, where a worklist row lands. Children across rep **and** league, household
+balance (**read only in this chunk** — see the money note below), current *and former* contact
+details, consent, outstanding forms, history.
+
+**E · The duplicate review queue.** "Not the same person" **must be remembered**, or the pair
+resurfaces weekly and the reviewer stops trusting the queue. On merge, the **strictest** contact
+preference wins.
+
+**F · Three actions, each through the existing write path (§1.3).** Message the household · record a
+payment against the family · export their data.
+
+> ⚠ **Money sequencing.** The household balance and "record a payment" reach into the money module,
+> which has just shipped a large redesign with QA walks still owed. Build the balance as a **read**
+> in chunk D; add the payment **write** in chunk F, after those walks land. Two doors, one
+> mechanism — if a shared write path does not exist, **extract one; never fork**.
+
+### P3 — Household money and the quiet extras (the mockups' second release)
+Sibling discount · financial assistance · household payment plan · move a credit between siblings ·
+bounced/undeliverable flag · internal notes with an author and a date.
+
+⚠ **The first four are BLOCKED on the child-identity decision (§8.5)** — they pay real money against
+an inference the data does not currently support. The last two are not, and can go earlier if useful.
+
+**P1 and P2 are independently useful** — if the project stalled after P2, a club would have something
+it has never had. That is the test a phased plan should pass.
 
 ---
+
+### 5.2 ⚠ Where the mockups promise more than the data can currently keep
+
+The mockups are the spec and are not in question. But several cells in them are *assumed* to be
+fillable, and a screen that renders an em-dash where a number should be is a worse product than one
+that never offered the column. **Settle each of these in the mockup session, before chunk C.**
+
+**Two I confirmed while building Phase 1 — treat as facts:**
+
+- **"Team emails · On / Club newsletter · Opted out" is TWO channels; the data has ONE switch.** The
+  opt-out list is deliberately org-wide and channel-less — migration 214's own words: *"an opt-out
+  suppresses ALL family email from this org, which is the honest reading of a parent clicking
+  unsubscribe in a team email."* Showing two toggles means either building per-channel preferences
+  (a real change, with a consent story) or showing one honest switch. **Do not fake the second row.**
+- **A household balance is NOT symmetric across the two programmes.** Rep children have real dues
+  (schedules, installments, credits). A house-league child has a *paid / not paid* flag against a
+  registration fee. The mockup shows dollar amounts for house-league children. Decide whether league
+  gains real dues, or whether the balance says something different for a league child.
+
+**Five to verify from the code before promising them:**
+
+1. **"Last contacted · 3 Aug · dues reminder"** — is there a per-family record of what was sent, or
+   only per-batch? This column and the "What we've sent them" panel stand or fall together.
+2. **"Amara — 2024 · House league"** — a child's history spanning rep *and* league. Rep-to-rep across
+   seasons is already linked; **rep-to-league is not, and cannot be without the child-identity
+   decision (§8.5).** Likely resolution: show them as separate rows rather than claiming they are one
+   child. That is honest and still useful — but it is a design call, not an omission to discover
+   mid-build.
+3. **"also an assistant coach, Hawks U11"** — the mockup's own caption calls this one of the three
+   things that make the person record worth having. It needs a person↔staff match that Phase 1 did
+   not build. Cheap to add, but it is work.
+4. **"Guardians · Primary / Co-guardian / Portal access"** — only ever populated for families who
+   were *invited*. Twelve rows against 117 people. Most families will show one guardian and no portal
+   access, which is correct and looks empty.
+5. **Forms and consent per child** — rep document templates exist; whether house league has an
+   equivalent is unverified.
+
+⚠ And the constraint that governs all of them: **64 of 163 roster children name no guardian at all.**
+Two in five rows in the worklist's own source data cannot join a family. Design the empty state for
+that first, not last.
 
 ## 6. Feature catalogue
 
