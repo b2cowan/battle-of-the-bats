@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import { ClipboardList, Library } from 'lucide-react';
-import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import { useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -136,10 +136,11 @@ export default function CoachPastPracticePlanPage({
   const { orgSlug, teamId, eventId } = use(params);
   const { loading: ctxLoading } = useCoaches();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  // Page-header ruling 2026-08-11: the archive chip is the SHARED one, in the h1, like every other
-  // page in the portal — this page had hand-rolled its own read-only span, which meant it also had
-  // no way OUT of the archive from the chip (the shared component is the exit too).
-  const page = useCoachSeasonPage(orgSlug, teamId);
+  // ⚠ No season lookup: the route below resolves the season and hands it back on the payload, which
+  // is the only honest source — this page renders a record that may belong to a season other than
+  // the one the coach's nav is on. The `useCoachSeasonPage` call that sat here fed the page-title
+  // season chip, and that chip was deleted with the dial on 2026-08-16; P3 C1 removed the call the
+  // chip left behind.
 
   const [data, setData] = useState<LoadState | null>(null);
   const [loading, setLoading] = useState(true);

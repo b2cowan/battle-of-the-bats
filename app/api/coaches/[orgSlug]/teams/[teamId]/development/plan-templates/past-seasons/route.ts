@@ -15,8 +15,14 @@ import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-template
  * ⚠ **A cross-season READ that writes nothing into a finished season**, exactly like its drill
  * sibling, and deliberately NOT on `resolveCoachTeamRead` for the same reason: that resolver
  * answers with ONE season — the team's working one — and this route deliberately reads across all
- * of them, into the LIVE library. It is a CROSS-SEASON READER, which the guard test lists
- * separately from the two history endpoints because the two are different powers.
+ * of them, into the LIVE library.
+ *
+ * ⚠ **THE CLAIM THAT THE GUARD LISTS THIS ROUTE WAS FALSE UNTIL 2026-08-16 (P3 C1).** It said so
+ * for months while `coach-history-endpoint-guard.test.ts` was keyed on `resolveCoachTeamCapabilities`
+ * — which this route does not call — so nothing enforced it and a later session would have read this
+ * sentence and believed a build-enforced record existed. It is true now: the guard has a second,
+ * narrow detector keyed on `getRepTeamPracticePlansAcrossSeasons`, with its own enumerated list,
+ * and this file is on it.
  *
  * ⚠ Head-coach-only — everything this list can do is feed a library write.
  *

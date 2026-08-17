@@ -58,7 +58,9 @@ export const GET = withObservability(async (req: Request,
   const includeRetired = url.searchParams.get('all') === '1';
 
   // ⚠ ONE read of the team's plans, shared by both jobs below. `getRepTeamPracticePlansAcrossSeasons`
-  // is the deliberate cross-season read; everything else on this route is live-season only.
+  // is the deliberate cross-season read; everything else on this route is live-season only. Since
+  // 2026-08-16 (P3 C1) it is ENUMERATED in the guard test's cross-season plan-reader list, so a
+  // route gaining or losing this power fails the build.
   const [drills, plans] = await Promise.all([
     getDrillsForTeam(ctx.org.id, teamId, { includeRetired }),
     getRepTeamPracticePlansAcrossSeasons(teamId).catch(() => []),

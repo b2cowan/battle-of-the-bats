@@ -2,7 +2,6 @@
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Info, TrendingUp } from 'lucide-react';
-import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { formatShortDate } from '@/lib/measurable-format';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -78,10 +77,10 @@ export default function DevelopmentReportPage({
 
 function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  // Chunk F — which SEASON is on screen. The board route this page reads has been on the
-  // season-read rail since Chunk F; the page simply never passed the parameter, so a coach opening
-  // the report from an archived season silently got the live one.
-  const page = useCoachSeasonPage(orgSlug, teamId);
+  // ⚠ No season lookup here, and none is needed: the board route resolves the team's WORKING
+  // season on its own, and P2 deleted the dial that could have named another (2026-08-16). The
+  // `useCoachSeasonPage` call this page carried until P3 C1 read a season nothing on the screen
+  // then used — a dead call is how a page quietly re-grows a season mode.
 
   const [data, setData] = useState<ReportData | null>(null);
   const [noSeason, setNoSeason] = useState(false);

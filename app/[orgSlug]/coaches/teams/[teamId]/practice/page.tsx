@@ -9,7 +9,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
-import { canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { canManageSchedule, canWriteDevelopment, hasRecordAccess } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -29,12 +29,20 @@ import type { RepTeamEvent } from '@/lib/types';
  * `parsePracticePlan` on every row), so readiness is computed from the list this page already has
  * to fetch. Do not add a per-practice probe here — the whole point is that the answer is free.
  *
- * ⚠ LIVE SEASON ONLY, and deliberately so. Practice plans are not archive-readable: the Schedule
- * panel already hides the plan section behind `!page.isReadOnly`, and neither plan route sits in
- * `APPROVED_SEASON_AWARE_ROUTES`. The nav entry lives in the live-season group, so it is
- * archive-invisible for free — but the SEASON SWITCHER can rewrite this page's own URL with a
- * `?year=`, which is why the read-only guard below is not redundant. Listing a past season's
- * practices would hand the coach a list of rows that every one of them denies on open.
+ * ⚠ **PLANNING IS A LIVE-SEASON ACT; THE PLANS THEMSELVES ARE A RECORD, AND THIS PAGE USED TO DENY
+ * THAT** (P3 C1, 2026-08-16). This hub is the live planner and stays one: it lists the season's
+ * practices so the coach can write tonight's plan, which is meaningless once the season is over.
+ * But its between-seasons state told the coach a finished season keeps "not the plans" and to
+ * "switch back to your current season", and BOTH clauses were false — every plan is kept and
+ * readable, and the season switcher was deleted on 2026-08-16, so a between-seasons team has no
+ * current season to switch to. P1's `CoachNotOnTeam` sweep covered this page's two children and
+ * missed the hub itself; P2 then made the nav door always-visible, which made that false sentence
+ * the first thing a between-seasons coach reads about their plans.
+ *
+ * ⚠ It is deliberately NOT `CoachNotOnTeam`. That component's words are right for a live instrument
+ * with nothing to show; this screen genuinely HAS something to show and must hand over the door to
+ * it. Its sibling `practice/[eventId]` keeps `CoachNotOnTeam` — one past practice reached by URL is
+ * the instrument case.
  */
 
 /** A practice is "on now" for a window either side of its start — used only to decide whether the
@@ -165,18 +173,41 @@ export default function CoachesPracticePlansPage({
     );
   }
 
-  // ⚠ Not redundant with the nav being live-season-only: the season switcher rewrites THIS path
-  // with a ?year=, so a coach can land here in an archive without ever seeing a nav entry for it.
+  /**
+   * ⚠ **THE BETWEEN-SEASONS SCREEN, AND IT MUST SAY THE TRUE THING** (P3 C1). This is now an
+   * ordinary state a coach lands in through the nav — not the archive-only corner it was written
+   * for — so both of its old sentences were live falsehoods: the plans ARE kept, and there is no
+   * season to switch back to.
+   *
+   * ⚠ `programYearName` falls back to an EMPTY STRING, never null, so the headline below uses `||`
+   * rather than `??` — a nullish fallback would render " has finished".
+   *
+   * ⚠ **THE DOOR CARRIES THE READ ROUTE'S OWN GATE, not this page's.** The Practice plans hub opens
+   * on `schedule` alone, so the parent volunteer who runs one station on a Tuesday reaches this
+   * screen — and the list behind the door (the Development report) requires record access, exactly
+   * as the past-plan route does. Offering them the link anyway would swap a false sentence for a
+   * link that 403s, which is the same bug wearing a politer face (CLAUDE.md, standing rule). They
+   * get the true half without a door instead.
+   */
   if (page.isReadOnly) {
+    const canReadRecord = caps ? hasRecordAccess(caps) : false;
     return (
       <div className={styles.page}>
         {header}
         <CoachEmptyState
-          quiet
+          // ⚠ `quiet` is the no-CTA variant and must not carry one (CoachEmptyState §iii) — so the
+          // two branches differ in weight as well as in words, rather than one shape doing both.
+          quiet={!canReadRecord}
           icon={<NotebookPen size={20} aria-hidden />}
-          headline="Practice plans are a live-season tool"
-          description="A finished season keeps its schedule, attendance and records — but not the plans, which only ever described what was about to happen."
-          payoff="Switch back to your current season to plan a practice."
+          headline={`${page.programYearName || 'This season'} has finished`}
+          description="A plan sets up a practice that's about to happen, so there's nothing left to plan here. Planning starts again with your next season."
+          payoff="Everything you wrote is still here — every plan, exactly as you wrote it, and what you said afterwards about how it went."
+          blocker={canReadRecord
+            ? undefined
+            : 'Opening a past plan needs access to the team’s records. Ask your head coach.'}
+          primaryAction={canReadRecord
+            ? { label: 'The practices you ran', icon: <BookMarked size={15} aria-hidden />, href: `${base}/history/development` }
+            : undefined}
         />
       </div>
     );

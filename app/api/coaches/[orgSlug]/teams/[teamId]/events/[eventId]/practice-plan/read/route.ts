@@ -9,12 +9,15 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/lib/coach-capabilities';
 
 /**
- * ⚠ **THE NEW ARCHIVE DOOR — one read-only past plan, and nothing else** (owner ruling
- * 2026-08-01, `COACH_PRACTICE_PLANS_PLAN.md` §10.8 ruling 1).
+ * ⚠ **ONE READ-ONLY PAST PLAN, AND NOTHING ELSE** (owner ruling 2026-08-01,
+ * `COACH_PRACTICE_PLANS_PLAN.md` §10.8 ruling 1).
  *
- * The archive is OPT-IN. This is the single route in Practice Plans that opts in, and it is on the
- * approved list in `tests/unit/coach-history-endpoint-guard.test.ts` because that decision was taken
- * explicitly — the build failing until the list was edited is what forced the question.
+ * ⚠ **THIS HEADER WAS STALE AND IS NOW CORRECTED** (P3 C1, 2026-08-16). It described a `?year=`
+ * this route no longer takes and claimed membership of an approved list it is no longer on: P2
+ * deleted the archive as a place and moved this route onto `resolveCoachTeamRead`, which resolves
+ * the team's WORKING season and cannot be pointed at another one. The plan a coach opens is
+ * whichever season their team is on — which is the right answer for the one entry point that
+ * exists today, the "Practices you've run" list inside the Development report.
  *
  * ── Why a SEPARATE route from the practice-plan GET beside it ──
  * That route is the live editor's: it also holds the PUT and the PATCH, it hands back drills,
@@ -33,9 +36,8 @@ import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/li
  *   · **No write of any kind.** There is no other verb in this file.
  *
  * ── The container rule ──
- * An archive is a container, and the unit of work is every page reachable from the door. This
- * route is the whole subtree: the page it serves links only back to the list it came from, and
- * carries the viewed season on that link.
+ * The unit of work is every page reachable from the door, never the door alone. This route IS the
+ * whole subtree: the page it serves has exactly one link out, back to the list it came from.
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
@@ -67,9 +69,8 @@ export const GET = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);
-  // ⚠ Matched against the RESOLVED season, not the active one. This is the whole difference
-  // between a door and a dead end: `?year=` decides which season, and an event from any other one
-  // is a 404 — the caller must not learn that the id exists.
+  // ⚠ Matched against the RESOLVED season, not the active one. An event from any other season is a
+  // 404 — the caller must not learn that the id exists.
   if (!event || event.programYearId !== programYear.id || event.teamId !== teamId) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

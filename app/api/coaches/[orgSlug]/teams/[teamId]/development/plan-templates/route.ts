@@ -30,7 +30,8 @@ import {
  *
  * ⚠ The ONE deliberate cross-season read is `getRepTeamPracticePlansAcrossSeasons`, which counts
  * how many plans each template has started. It reads the team's own records and writes nothing
- * into a finished season.
+ * into a finished season — and since 2026-08-16 (P3 C1) that read is ENUMERATED, in the guard
+ * test's cross-season plan-reader list. A route gaining or losing it fails the build.
  */
 /**
  * ⚠ The SHARED coach-team prefix, not a fourth hand-copy of it — and deliberately the variant that

@@ -103,6 +103,39 @@ const CROSS_SEASON_READERS = [
   'tryout-report',  // the returning-improvement aggregate (ruling R8, 2026-08-02)
 ];
 
+/**
+ * ⚠⚠ **THE SECOND CROSS-SEASON POWER: reading EVERY SEASON'S PRACTICE PLANS** — enumerated here
+ * from 2026-08-16 (P3 C1 of COACH_PRACTICE_PLANS_SHELF_PLAN.md).
+ *
+ * ⚠ **This list exists because three route headers claimed it already did.** Both `past-seasons`
+ * routes said in as many words that "the guard test lists this separately", and neither was listed:
+ * `CROSS_SEASON_READERS` above is keyed on `resolveCoachTeamCapabilities`, which none of these
+ * routes call, so the guard could not see them. No live harm — the harm was that a future session
+ * would read those comments and believe a build-enforced record existed. Now one does.
+ *
+ * ⚠ **FOUR routes, not the two the plan predicted.** The plan line said "initially the two
+ * `past-seasons` routes"; the code says otherwise, and the code wins. Both library LIST routes hold
+ * the same power, for a quieter reason — they walk every season's plans to count how often each
+ * drill and each template has actually been used ("used 8×"). That is the same read of the same
+ * records; leaving it off would have shipped a list that failed on its first run.
+ *
+ * Every entry shares one shape, and it is what makes this power narrower than a history endpoint:
+ * each derives which seasons it touches from the TEAM'S OWN DATA, is never handed one, reads
+ * records, and writes only into the LIVE season. None can be pointed at a year.
+ *
+ * ⚠ Keyed on that ONE named function rather than on "reads more than one year", for the reason
+ * CROSS_SEASON_READERS states above and this repo has paid for: a guard with a noisy signal gets
+ * edited until it passes, which is worse than no guard.
+ */
+const CROSS_SEASON_PLAN_READERS = [
+  // The two imports — a coach's own history becomes their starting library (owner, 2026-08-01).
+  'development/drills/past-seasons',
+  'development/plan-templates/past-seasons',
+  // The two libraries — "used 8×" counts what the team has actually run, across every season.
+  'development/drills',
+  'development/plan-templates',
+];
+
 function routeFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
@@ -203,6 +236,9 @@ const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistor
 /** Reads across seasons without being handed one — see CROSS_SEASON_READERS. */
 const READS_ACROSS_SEASONS = /resolveCoachTeamCapabilities\s*\(/;
 
+/** Reads EVERY season's practice plans — see CROSS_SEASON_PLAN_READERS. */
+const READS_EVERY_SEASONS_PLANS = /getRepTeamPracticePlansAcrossSeasons\s*\(/;
+
 describe('a year parameter is a decision — the coach API', () => {
   it('finds the coach API routes at all (guards against a vacuous pass)', () => {
     assert.ok(files.length > 40, `expected the coach API tree, found ${files.length} route files`);
@@ -234,6 +270,20 @@ describe('a year parameter is a decision — the coach API', () => {
       + 'than a history endpoint — it derives which seasons it touches from the team\'s own data '
       + 'rather than from the request — but it is still a route reaching outside the working '
       + 'season, and it is listed on purpose. Add it to CROSS_SEASON_READERS with the reason.');
+  });
+
+  it('the cross-season PLAN readers are the ones we know about, and no more', () => {
+    const actual = files
+      .filter(f => READS_EVERY_SEASONS_PLANS.test(readFileSync(f, 'utf8')))
+      .map(routeName)
+      .sort();
+    assert.deepEqual(actual, [...CROSS_SEASON_PLAN_READERS].sort(),
+      'A coach route started reading EVERY season\'s practice plans. That is narrower than a '
+      + 'history endpoint — it derives its seasons from the team\'s own data rather than from the '
+      + 'request, and it writes only into the live season — but it is still a route reaching '
+      + 'outside the working season, and it is listed on purpose. If the new caller genuinely '
+      + 'shares that shape, add it to CROSS_SEASON_PLAN_READERS with the reason. If it wants to be '
+      + 'HANDED a season instead, it is a history endpoint and needs the three questions answered.');
   });
 
   /**

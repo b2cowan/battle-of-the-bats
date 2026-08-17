@@ -27,8 +27,17 @@ import { collectImportableDrills } from '@/lib/rep-drill-usage';
  *
  * It therefore deliberately does NOT use `resolveCoachTeamRead`: that resolver answers with ONE
  * season — the team's working one — and this route deliberately reads across all of them, into the
- * LIVE library. It is a CROSS-SEASON READER, which the guard test lists separately from the two
- * history endpoints precisely because the two are different powers.
+ * LIVE library.
+ *
+ * ⚠ **THE CLAIM THAT THE GUARD LISTS THIS ROUTE WAS FALSE UNTIL 2026-08-16 (P3 C1)** — the same
+ * stale sentence its plan-template sibling carried, for the same reason: the guard's cross-season
+ * list is keyed on `resolveCoachTeamCapabilities`, which this route never calls. It is true now,
+ * through a second detector keyed on `getRepTeamPracticePlansAcrossSeasons`.
+ *
+ * ⚠ Known tail, deliberately NOT fixed here: this route still gates through
+ * `getCoachingAssignmentsForUser` (the legacy assignment lookup) rather than team membership — the
+ * second instance of COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md §8.3's `tryout-report` tail. The
+ * projection invariant makes the two agree today.
  *
  * ⚠ A team is PERMANENT — only its program year turns over — so a team's drill library already
  * survives a season rollover untouched. What genuinely needed rescuing was the PLANS, which live on
