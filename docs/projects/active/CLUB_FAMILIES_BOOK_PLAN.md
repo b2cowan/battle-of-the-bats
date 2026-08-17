@@ -2,10 +2,14 @@
 
 **Status:** Planning 2026-08-17. **Phase 1 BUILT on dev 2026-08-17** (migration 251) — records minted,
 nothing in the product reads them. **Awaiting the owner's read of the §5-P1 report** (`node
-scripts/report-families-backfill.mjs`). Phases 2–5 not started. Read §5.1 before starting Phase 2.
+scripts/report-families-backfill.mjs`). **Phase 2 mockup session DONE 2026-08-17** (design only, no
+code) — all seven §5.2 gaps resolved in writing, see §5.3. Phases 2–5 not built. Read §5.1 + §5.3
+before building Phase 2.
 **Tiers:** Club **and League** (owner decision 2026-08-17 — see §1.2).
 **Access:** a dedicated Families capability, off by default (owner decision 2026-08-17).
-**Mockups:** `claude.ai/code/artifact/f089153c-8583-4c5c-b8c3-d70c5278602b`
+**Mockups (concept):** `claude.ai/code/artifact/f089153c-8583-4c5c-b8c3-d70c5278602b`
+**Mockups (Phase 2, buildable — supersedes the concept set where they disagree):**
+`claude.ai/code/artifact/e7cc6d9c-343e-45eb-8b94-fb9984f2b949` — see §5.3 for the decisions it embodies.
 **Problem statement + evidence:** `claude.ai/code/artifact/e0600ea7-29ed-45dd-97a7-132f68c26c9a`
 **Origin:** Finding #35 in `docs/agents/db/DB_ARCHITECTURE_REVIEW.md` (quarterly DBA health check, 2026-08-17).
 
@@ -262,6 +266,46 @@ that never offered the column. **Settle each of these in the mockup session, bef
 ⚠ And the constraint that governs all of them: **64 of 163 roster children name no guardian at all.**
 Two in five rows in the worklist's own source data cannot join a family. Design the empty state for
 that first, not last.
+
+### 5.3 Phase 2 mockup session outcome (2026-08-17) — the seven gaps, resolved
+
+**✅ OWNER APPROVED 2026-08-17** — including thin-states-first as the design discipline, after
+pressure-testing it (the ruling that emerged: thin is not a cleanup state, it is every new club's
+arrival state; there is no single "flip" to the ideal — the family page is useful in week one via
+multi-child households, worklists sharpen during season one, retention/duplicates/former addresses
+become possible only from year two, and the cross-programme household may appear in week one at a
+real combined club — our measured zero is an artifact of no test org running both programmes).
+
+**Artifact:** `claude.ai/code/artifact/e7cc6d9c-343e-45eb-8b94-fb9984f2b949` (five screens, each in a
+thin state and a populated state; thin designed first). Every §5.2 item was verified against the
+code before being drawn. The decisions, which chunk C–F must build to:
+
+| # | Gap | Decision | Ground |
+|---|---|---|---|
+| 1 | Two email toggles | **One line: "Club email · On / Opted out", org-wide.** No per-channel rows. | Opt-out ledger is deliberately channel-less (mig 214). |
+| 2 | Household balance | **Asymmetric and labelled**: rep = ledger lines summing to "Owing — rep dues"; league child = one Paid/Not-paid line, fee shown as context, **never summed**. | League money is `registration_fee_paid` (hand-toggled boolean) + display-only `league_seasons.registration_fee`. No amounts/installments/payments exist. |
+| 3 | "Last contacted" | **Column and "What we've sent them" panel are DEAD — nothing can fill them.** Owes-money lens keeps a **"Chased"** column (dues-reminder stamps per installment: reminded when / never / "not tracked" for league). A real per-recipient family send log is **named new work for P3's messaging chunk**. | No per-recipient record of family email exists anywhere: announcements store counts only (deliberate minimization), league email logs per-batch, the one per-recipient log (mig 100) is platform marketing mail. |
+| 4 | Cross-programme child history | **Separate rows; joined through the PARENT; never claims two same-named children are one child.** Rep season rollup stays (continuity links are real). Merge preview states "a merge joins the parent records only". | Birth dates on 1/163 rep rows; child identity is a name guess (§8.5). |
+| 5 | "Also an assistant coach" | **CUT from Phase 2.** Catalogued as its own small P3 piece. | Staff are keyed by `user_id`, not stored email; the guardian↔staff identity join does not exist, and `auth.users.email` normalization is unguaranteed — careless matching risks a wrong identity claim. |
+| 6 | Guardians panel emptiness | **One guardian + "Portal access · Never invited" is the DESIGNED state.** Each guardian labelled with provenance (named on roster / tryout / registration). Second guardian shown whenever source rows already carry one (a read); adding one is P3. | 12 of 117 people were ever invited. |
+| 7 | Forms & consent | **Panel is "rep teams only"**, no rows for league children, absent entirely on a league-only family. | Rep has `rep_document_templates`/`rep_player_documents`; league has NOTHING durable — and ⚠ **the league waiver checkbox is required at submit but NEVER STORED** (no column exists). Recording acceptance at registration is flagged as its own small fix, worth doing before/alongside chunk A. |
+
+**Also settled by verification:**
+- **Nav:** Families is a **hub tile** (peer of House League / Rep Teams — it spans both, so it belongs
+  to neither) + its own section with two pages (worklist, duplicate queue). The concept mockups'
+  tab strip was a simplification. Tile hidden entirely without the capability, like every other tile.
+- **Capability:** a new module-level key in the **org-member capability map** (the JSONB override map
+  on `organization_members`, checked via `hasCapability`) — one new row in the existing owner-only
+  Role-default/Grant/Revoke table in the Manage Member modal. **Role default is off for EVERY role**;
+  owners hold it by the existing owner short-circuit. NOT the coach grant system.
+- **The two-check rule is stated on the mockup as a build constraint:** every Families read answers
+  both "holds the capability" AND "family belongs to this org"; export carries both.
+- **New worklist lens the concept set missed:** **"No family on file"** — rows are CHILDREN (64/163
+  today), each linking to the roster row where the guardian gets typed (one door per write). On
+  today's data this is the landing lens; designed as such.
+- **Worklist "Bounced" pill cut** (no delivery-failure data until the P4 bounce flag).
+- **Family-page actions in P2 are exactly three** (message / record rep payment / export), each
+  through the existing write path; payment plan, assistance, notes stay P3 (§8.5 blocks two of them).
 
 ## 6. Feature catalogue
 
