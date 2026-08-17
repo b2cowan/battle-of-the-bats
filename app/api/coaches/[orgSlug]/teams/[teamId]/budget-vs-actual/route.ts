@@ -21,7 +21,7 @@ import {
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 
 /** A category row without the raw records behind each item — see the note at the payload. */
 function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
@@ -33,7 +33,44 @@ function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
-// Returns a full budget-vs-actual report for the active program year.
+// Returns a full budget-vs-actual report for the team's WORKING program year — or, since
+// 2026-08-17 (P4, `COACH_MONEY_PAST_SEASON_BOOK_PLAN.md`), for a season the caller names.
+//
+/**
+ * ⚠⚠ **A HISTORY ENDPOINT — the fourth, and the LAST money surface that will ever be one**
+ * (owner-approved 2026-08-17 from the P4 design session).
+ *
+ * ⚠ **REUSED, NOT REBUILT, and that is the load-bearing decision.** The closed money book could
+ * have been a new "season statement" route. It is not, because that would be a SECOND walk of the
+ * same records — which is exactly the defect `14af00f0` fixed two days earlier, when the statement,
+ * the Months grid and the cumulative chart turned out to be three independent walks and two of them
+ * disagreed about what a season had spent. There is ONE arithmetic (`lib/coach-budget-rollup.ts`)
+ * and it stays one. A season's figures must not depend on which screen asked.
+ *
+ * ── The three questions `HISTORY_ENDPOINTS` demands, answered here as well as at the list ──
+ *   1. **Record or instrument? RECORD.** This route computes over money records a closed season can
+ *      no longer change; it moves no money, bills nobody and configures nothing. It is GET-only and
+ *      performs no write of any kind. ⚠ It is the ONLY one of Money's seven tabs that passes this
+ *      question — Payables marks things paid, Club creates and withdraws requests, Dues records
+ *      payments, Fundraisers logs amounts, Budget and Transactions are editors. Those six stay on
+ *      the working season, and pointing them at a closed year is the archive-as-a-place the owner
+ *      deleted.
+ *   2. **Does the whole subtree carry the year? ONLY BECAUSE THE READER FLATTENS IT.** The LIVE
+ *      panel is not a leaf — its rows expand, its Months cells link into the budget editor, and its
+ *      "no date yet" figure opens a chooser (two of those links were dead for two days and nobody
+ *      noticed). The past-season reader on Season's End renders the statement FLAT: figures, no
+ *      drill-ins, so there is no second level for a Chunk-F-class defect to hide on. ⚠ That is a
+ *      constraint on the CALLER, which is why it is written here too — this route cannot enforce it.
+ *   3. **Could the coach tell which season they are reading? YES, STRUCTURALLY.** The only caller
+ *      that passes a year is Season's End, a page about one named season that titles itself so.
+ *
+ * ⚠ **Figures are CORRECTED, not preserved** (owner ruling 2026-08-17). This report is DERIVED, and
+ * its arithmetic changed on 2026-08-17 — so a past season now adds up differently, and more
+ * accurately, than the coach saw at the time. That is the objection that made playing-time analytics
+ * live-season-only PERMANENTLY, and the distinction is what the derivation is over: playing time
+ * re-interprets lineups, this adds up money records that a closed season cannot change. A corrected
+ * total is the same story added up properly. ⚠ This does NOT reopen playing time.
+ */
 //
 // ⚠ THE REPORT IS TWO LEVELS: CATEGORY → ITEM (owner ruling 2026-08-15), and a cost reaches them
 // three ways that coexist — its ITEM (mig 240), its category id, or its free-text `category` matched
@@ -45,7 +82,10 @@ function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
+  // The year goes THROUGH the resolver, never around it — that is what makes the access check run
+  // against the requested SEASON rather than the team. Absent `?year=`, this is the team's working
+  // season, which is every existing caller: the live Budget vs Actual panel and its exports.
+  const resolved = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');

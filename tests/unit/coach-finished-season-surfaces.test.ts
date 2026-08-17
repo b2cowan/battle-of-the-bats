@@ -441,6 +441,93 @@ describe('the look-back layer', () => {
     );
   });
 
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE CLOSED MONEY BOOK (P4, owner-approved 2026-08-17) — the second and LAST shelf.
+   *
+   * ⚠ Its whole risk is one sentence: the statement's figures are DOORS on the live screen, and a
+   * record must not be an entrance to a live editor. The route cannot enforce that — it hands back
+   * the full payload the live panel needs — so the constraint lives on the caller, and therefore
+   * here.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  it('the money shelf is COLLAPSED, and its shut face already answers the question', () => {
+    assert.match(
+      seasonEnd, /sectionId="season-statement"[\s\S]{0,400}defaultOpen=\{false\}/,
+      'the statement must arrive closed. The live content is always the primary focus (CLAUDE.md '
+      + '§1.6) — a shelf that makes the screen noisier is a failed design however useful it is.',
+    );
+    assert.match(
+      seasonEnd, /meta=\{statement\.expenses\.variance === 0[\s\S]{0,200}under[\s\S]{0,40}over/,
+      'the shut face must carry the under/over summary. "Did we come in under?" is usually the '
+      + 'whole question, and answering it on the closed face is what keeps the section shut.',
+    );
+  });
+
+  /**
+   * ⚠⚠ THE ONE THAT MATTERS. Two of the live statement's own drill-in links were dead for two days
+   * in the week this shipped and nobody noticed — which is exactly how little attention a wrong
+   * destination attracts here.
+   */
+  it('nothing in the closed money book is a link into a live editor', () => {
+    const shelf = seasonEnd.slice(
+      seasonEnd.indexOf('sectionId="season-statement"'),
+      seasonEnd.indexOf('{showStartNext && closed && ('),
+    );
+    assert.ok(shelf.length > 400, 'expected to find the statement shelf to inspect');
+    for (const forbidden of ['<Link', 'href=', 'moneySectionHref', 'onClick']) {
+      assert.equal(
+        code(shelf).includes(forbidden), false,
+        `the statement shelf renders "${forbidden}". It must be FLAT — figures and nothing else. On `
+        + 'the live screen these same cells open the budget editor and a month chooser; a closed '
+        + 'season must not be a door into an instrument it cannot write to.',
+      );
+    }
+  });
+
+  /**
+   * ⚠ THREE gates now live on this page — the page, the practices shelf, the money shelf — and they
+   * are three DIFFERENT questions. An assistant with attendance and lineups but no money access
+   * reads the practices and must not read the books.
+   */
+  it('the money shelf keys on money access, not on the practices shelf’s gate', () => {
+    assert.match(
+      seasonEnd, /const mayReadMoney = [\s\S]{0,160}canViewMoney\(page\.capabilities\)/,
+      'the statement must gate on canViewMoney. Inheriting the practices shelf\'s gate would show '
+      + 'the team\'s books to every assistant who can read a practice plan.',
+    );
+    assert.equal(
+      /const mayReadMoney = [\s\S]{0,160}canReadPastPracticePlans/.test(seasonEnd), false,
+      'the two shelves must not share a gate — they answer different questions about the reader.',
+    );
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'budget-vs-actual', 'route.ts'),
+      'utf8',
+    );
+    assert.match(
+      code(route), /denyUnless\(canViewMoney\(capabilities\)/,
+      'and the route must enforce it. The client half above is the door; this is the lock.',
+    );
+  });
+
+  /**
+   * ⚠ ONE ARITHMETIC. A second "season statement" endpoint would be a second walk of the same
+   * records — the defect fixed on 2026-08-17, when the statement, the Months grid and the chart
+   * turned out to be three independent walks and two of them disagreed.
+   */
+  it('the closed book reads the LIVE statement route, not a copy of it', () => {
+    assert.match(
+      seasonEnd, /fetch\(`\/api\/coaches\/\$\{orgSlug\}\/teams\/\$\{teamId\}\/budget-vs-actual\$\{yearParam/,
+      'the shelf must call budget-vs-actual with the year. A season\'s figures must not depend on '
+      + 'which screen asked — there is one rollup, and it stays one.',
+    );
+    assert.match(
+      code(seasonEnd), /setStatement\(null\);\s*fetch\(/,
+      'and it must clear before refetching, for the reason the practices shelf already records: a '
+      + 'cancelled flag stops a stale answer landing, not a stale answer already on screen.',
+    );
+  });
+
   it('Season’s End distinguishes the working season from a year it was handed', () => {
     assert.match(seasonEnd, /const showingWorkingSeason = !yearParam \|\| yearParam === page\.season\?\.programYearId;/,
       'Season\'s End must know whether the year on screen IS the working one — the page\'s copy '

@@ -116,6 +116,14 @@ let revokedRecordRowId = '';
 /** Real guardian data, so the PII probe distinguishes "redacted" from "was never there". */
 const GUARDIAN_EMAIL = `${MARK}-guardian@dev.local`;
 
+/**
+ * ⚠ The rolled-forward team's PAST season budget, deliberately a different figure from its live
+ * one — a route that ignored `?year=` would answer with the live season's total and look perfectly
+ * healthy doing it. The two numbers ARE the assertion (P4).
+ */
+const PAST_SEASON_BUDGET = 4321;
+const LIVE_SEASON_BUDGET = 8765;
+
 const THIS_YEAR = new Date().getFullYear() + 1;
 const LAST_YEAR = THIS_YEAR - 1;
 const OLDER_YEAR = THIS_YEAR - 2;
@@ -140,6 +148,10 @@ async function cleanup() {
       await admin.from('rep_fundraisers').delete().eq('program_year_id', y.id);
       await admin.from('rep_roster_players').delete().eq('program_year_id', y.id);
       await admin.from('rep_team_coaches').delete().eq('program_year_id', y.id);
+      // ⚠ Budget lines too (P4). A season row cannot be deleted while one references it, so a
+      // missed child here does not fail loudly — it surfaces later as the afterAll "teams left
+      // behind" assertion, looking like something else entirely.
+      await admin.from('rep_budget_lines').delete().eq('program_year_id', y.id);
     }
     // M1: memberships are team-scoped, not season-scoped — clear them before the team goes.
     await admin.from('rep_team_staff_memberships').delete().eq('team_id', t.id);
@@ -350,6 +362,25 @@ test.beforeAll(async () => {
     },
   ]);
   if (rolledPracticeErr) throw rolledPracticeErr;
+
+  /**
+   * ⚠ Budget lines on BOTH of the rolled-forward team's seasons, with different totals — the trap
+   * for P4's probe. The closed money book is only proved by a figure that could not have come from
+   * the live season.
+   */
+  const { error: budgetErr } = await admin.from('rep_budget_lines').insert([
+    {
+      org_id: orgId, team_id: rolledTeamId, program_year_id: rolledPastYearId,
+      description: `${MARK} last season's diamonds`, total_amount: PAST_SEASON_BUDGET,
+      sort_order: 0, line_kind: 'cost',
+    },
+    {
+      org_id: orgId, team_id: rolledTeamId, program_year_id: rolledLiveYearId,
+      description: `${MARK} this season's diamonds`, total_amount: LIVE_SEASON_BUDGET,
+      sort_order: 0, line_kind: 'cost',
+    },
+  ]);
+  if (budgetErr) throw budgetErr;
 });
 
 test.afterAll(async () => {
@@ -806,6 +837,53 @@ test.describe('the look-back layer — Season’s End, Wrapped, the compare list
       + 'restore').toBe(true);
     expect(body.practices?.some(p => p.name === `${MARK} Cancelled practice`),
       'a CANCELLED practice did not happen and must never appear in the record').toBe(false);
+  });
+
+  /**
+   * ⚠⚠ **THE CLOSED MONEY BOOK'S GATE IS THE NARROW ONE** (P4, 2026-08-17). Season's End now
+   * carries TWO shelves keyed on two different questions: the practices shelf on
+   * `canReadPastPracticePlans`, the statement on `canViewMoney`. The assistant in this fixture holds
+   * money WRITE today (their record row says money:off — the recorded widening, property 2), so they
+   * read both. The HELPER holds neither and reads nothing.
+   *
+   * ⚠ The head coach's 200 is asserted first: a refusal test that would pass just as happily against
+   * a route broken for everyone proves nothing.
+   */
+  test('the statement opens for money-trusted staff and is refused without money access', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    const asHead = await apiGet(page, `${betweenApi()}/budget-vs-actual`);
+    expect(asHead.status, 'a head coach reads the finished season’s statement').toBe(200);
+    expect((asHead.body as { report?: unknown }).report,
+      'the payload must carry the report the shelf renders').toBeTruthy();
+
+    await signIn(page, HELPER_EMAIL);
+    const asHelper = await apiGet(page, `${betweenApi()}/budget-vs-actual`);
+    expect(asHelper.status,
+      'a helper has no money access and must not read the team’s books').toBe(403);
+  });
+
+  /**
+   * ⚠⚠ **THE CASE THE PHASE EXISTS FOR**, and the money half of it. Everything else here walks a
+   * team between seasons, where the finished season IS the working one and no year is needed. The
+   * gap P4 closes opens the day the next season does — so this asks the ROLLED-FORWARD team for the
+   * season it has left behind and checks the answer is about THAT year.
+   */
+  test('a rolled-forward team can still read the money of the season it has left behind', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+    const past = await apiGet(page, `${rolledApi()}/budget-vs-actual?year=${rolledPastYearId}`);
+    expect(past.status).toBe(200);
+    const pastBody = past.body as { totalBudget?: number };
+
+    // …and the live season answers differently, or the assertion above proves only that a route
+    // returns 200 for any year it is handed.
+    const live = await apiGet(page, `${rolledApi()}/budget-vs-actual`);
+    expect(live.status).toBe(200);
+    const liveBody = live.body as { totalBudget?: number };
+    expect(pastBody.totalBudget,
+      'the past season carries the budget seeded against it — a route ignoring `?year=` would '
+      + 'answer with the live season’s instead').toBe(PAST_SEASON_BUDGET);
+    expect(liveBody.totalBudget,
+      'and the live season keeps its own, so the two are genuinely distinguishable').not.toBe(PAST_SEASON_BUDGET);
   });
 
   test('Season’s End keeps its door back to the compare list', async ({ page }) => {

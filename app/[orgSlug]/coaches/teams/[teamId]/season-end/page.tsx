@@ -10,10 +10,35 @@ import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
-import { canReadPastPracticePlans, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canReadPastPracticePlans, canViewMoney, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import { formatInOrgZone } from '@/lib/timezone';
 import styles from '../../../coaches.module.css';
+
+/**
+ * The closed money book (P4) — one statement section, flattened.
+ *
+ * ⚠ These are the ONLY fields the shelf reads out of the budget-vs-actual payload, and the narrow
+ * type is the point: that payload also carries the month grid, the by-activity lens, the unbudgeted
+ * list and every drill-in the live panel needs. A record must not become an entrance to a live
+ * editor, so what is not typed here is not rendered here.
+ */
+type SeasonStatementCategory = {
+  categoryId: string | null;
+  categoryName: string;
+  budgeted: number;
+  actual: number;
+  variance: number;
+};
+type SeasonStatement = {
+  expenses: { categories: SeasonStatementCategory[]; budgeted: number; actual: number; variance: number };
+  revenue: { categories: SeasonStatementCategory[]; actual: number };
+};
+
+/** ⚠ Two decimal places, matching the live statement — the same season must not read as two
+ *  different figures depending on which screen a coach opened. Sign is printed by the caller. */
+const fmtMoney = (n: number) =>
+  `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** One row of "The practices you ran" — the season-scoped list C3 added (P3). */
 type SeasonPractice = {
@@ -46,6 +71,17 @@ type SeasonPractice = {
  * ships. That is why this page is the shelf's home: it already describes ONE NAMED SEASON, so
  * nothing here can be mistaken for the live year, and no live season renders it, so the busy
  * screens pay nothing. The section carries a NARROWER gate than the page — see `mayReadPractices`.
+ *
+ * ⚠ **P4 (2026-08-17) ADDED THE SECOND AND LAST SHELF** — the closed money book, this season's
+ * statement, flattened. Both shelves are collapsed by default and both are absent during a live
+ * season; what separates them is WHO, and that is the thing to keep straight: practices key on
+ * `canReadPastPracticePlans`, money on `canViewMoney`. An assistant with attendance and lineups but
+ * no money access reads one and not the other. Three gates now live on this page (the page itself,
+ * plus one per shelf) — a fourth section must state which of them it belongs to, or it will inherit
+ * whichever it happens to be pasted beside.
+ *
+ * ⚠ There is no P5. The look-back layer is closed at two shelves by ruling; a third needs a new
+ * owner decision, not a phase that is already approved.
  */
 export default function SeasonEndPage({
   params,
@@ -98,6 +134,8 @@ export default function SeasonEndPage({
    * cases and cannot drift from the rows beside it.
    */
   const [practiceSeasonId, setPracticeSeasonId] = useState<string | null>(null);
+  /** The closed money book (P4). `null` until answered; the section is absent either way. */
+  const [statement, setStatement] = useState<SeasonStatement | null>(null);
 
   /**
    * ⚠ The guards below run at RENDER time, and effects fire regardless of which branch renders —
@@ -117,6 +155,16 @@ export default function SeasonEndPage({
    */
   const mayReadPractices = page.hasAccess
     && (!page.capabilities || canReadPastPracticePlans(page.capabilities));
+  /**
+   * ⚠ **THE MONEY SHELF'S GATE IS A DIFFERENT ONE AGAIN** (P4). Two shelves now sit on this page
+   * with two different keys, and that is deliberate rather than untidy: the practices shelf asks
+   * "is the team's record yours, and do you belong at practice?", while the money book asks the one
+   * question money has always asked. An assistant trusted with attendance and lineups but not with
+   * the books reads the practices and never sees the statement. The route refuses them either way;
+   * this is the door, not the lock.
+   */
+  const mayReadMoney = page.hasAccess
+    && (!page.capabilities || canViewMoney(page.capabilities));
 
   useEffect(() => {
     if (loading || !mayReadWrapped || seasonStillUnderWay) return;
@@ -173,6 +221,35 @@ export default function SeasonEndPage({
       .catch(() => { /* quiet by design — see above */ });
     return () => { cancelled = true; };
   }, [loading, mayReadPractices, seasonStillUnderWay, orgSlug, teamId, yearParam]);
+
+  /**
+   * The closed money book (P4) — this season's statement.
+   *
+   * ⚠ Clears before fetching, for the reason `/review` established on the practices shelf: the
+   * `cancelled` flag stops an old answer overwriting a new one, and does nothing about the old
+   * answer already on screen. Wrapped hides itself while refetching, so on a year change its answer
+   * can land first and render the new season's card above the PREVIOUS season's money.
+   *
+   * ⚠ Fails QUIET, same posture as the practices shelf: a secondary shelf that could not load must
+   * not make a working page read as broken.
+   *
+   * ⚠ It asks the LIVE Budget vs Actual route with a year — deliberately not a second endpoint.
+   * One arithmetic; a season's figures must not depend on which screen asked (the defect fixed in
+   * `14af00f0`, where three walks of the same records disagreed).
+   */
+  useEffect(() => {
+    if (loading || !mayReadMoney || seasonStillUnderWay) return;
+    let cancelled = false;
+    setStatement(null);
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((json: { report?: SeasonStatement }) => {
+        if (cancelled || !json.report) return;
+        setStatement(json.report);
+      })
+      .catch(() => { /* quiet by design — see above */ });
+    return () => { cancelled = true; };
+  }, [loading, mayReadMoney, seasonStillUnderWay, orgSlug, teamId, yearParam]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -377,6 +454,94 @@ export default function SeasonEndPage({
                   </Link>
                 ))}
               </div>
+            </CoachCollapseSection>
+          )}
+
+          {/* ── "How the season added up" — the closed money book (P4) ────────────────────────
+              ⚠ **COLLAPSED, and its SHUT FACE already answers the question.** Most of the time
+              "did we come in under?" is the whole enquiry, so the summary chip carries it and the
+              coach never opens the section. Same binding constraint as the practices shelf above:
+              the live content is the primary focus, and a shelf that makes the screen noisier is a
+              failed design however useful the history is.
+
+              ⚠ **FLAT — NO CELL IS A LINK, and that is the build's one real constraint** (plan §7).
+              On the LIVE Budget vs Actual screen these same figures are doors: rows expand, month
+              cells open the budget editor, the undated figure opens a chooser. A record must not be
+              an entrance to a live instrument — and two of those doors were quietly broken for two
+              days last week, which is how little anyone would notice if this one led somewhere
+              wrong. There is deliberately no level down here at all.
+
+              ⚠ Gated on MONEY access, not record access — a different key from the shelf above it.
+              See `mayReadMoney`. */}
+          {statement && statement.expenses.categories.length > 0 && (
+            <CoachCollapseSection
+              sectionId="season-statement"
+              title="How the season added up"
+              meta={statement.expenses.variance === 0
+                ? 'On plan'
+                : `${fmtMoney(statement.expenses.variance)} ${statement.expenses.variance > 0 ? 'under' : 'over'}`}
+              defaultOpen={false}
+            >
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                What this season planned to spend, and what it actually spent. Read-only — the
+                season is closed.
+              </p>
+              <div className={styles.tableWrap}>
+                <table className={styles.devBoardTable}>
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th style={{ textAlign: 'right' }}>Planned</th>
+                      <th style={{ textAlign: 'right' }}>Actual</th>
+                      <th style={{ textAlign: 'right' }}>Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statement.expenses.categories.map(cat => (
+                      <tr key={cat.categoryId ?? cat.categoryName}>
+                        <td>{cat.categoryName}</td>
+                        <td data-label="Planned" style={{ textAlign: 'right' }}>{fmtMoney(cat.budgeted)}</td>
+                        <td data-label="Actual" style={{ textAlign: 'right' }}>{fmtMoney(cat.actual)}</td>
+                        {/* ⚠ The word carries the meaning, never the colour alone — olive and the
+                            danger tone sit ~1.0 ΔE apart for a deuteranope, so "under"/"over" is
+                            what a coach reads, and the tint only reinforces it. */}
+                        <td data-label="Difference" style={{ textAlign: 'right' }}>
+                          {cat.variance === 0
+                            ? '—'
+                            : `${fmtMoney(cat.variance)} ${cat.variance > 0 ? 'under' : 'over'}`}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td><strong>Total</strong></td>
+                      <td data-label="Planned" style={{ textAlign: 'right' }}>
+                        <strong>{fmtMoney(statement.expenses.budgeted)}</strong>
+                      </td>
+                      <td data-label="Actual" style={{ textAlign: 'right' }}>
+                        <strong>{fmtMoney(statement.expenses.actual)}</strong>
+                      </td>
+                      <td data-label="Difference" style={{ textAlign: 'right' }}>
+                        <strong>
+                          {statement.expenses.variance === 0
+                            ? '—'
+                            : `${fmtMoney(statement.expenses.variance)} ${statement.expenses.variance > 0 ? 'under' : 'over'}`}
+                        </strong>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {/* What came IN that season — one quiet line, so the statement is not read as the
+                  whole story. Absent when the team recorded no money coming in at all: a "$0.00"
+                  here would read as a failure rather than as "nothing was recorded". */}
+              {statement.revenue.actual > 0 && (
+                <p className={styles.formHint}>
+                  Money in: {fmtMoney(statement.revenue.actual)}
+                  {statement.revenue.categories.length > 0
+                    ? ` — ${statement.revenue.categories.map(c => c.categoryName).join(', ')}`
+                    : ''}
+                </p>
+              )}
             </CoachCollapseSection>
           )}
 

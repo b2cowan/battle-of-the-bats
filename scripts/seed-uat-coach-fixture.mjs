@@ -1036,6 +1036,70 @@ if (!pastPractices?.length) {
   ok('finished-season practices already present');
 }
 
+/**
+ * ── 16. The finished season's MONEY (P4) ─────────────────────────────────────
+ *
+ * ⚠⚠ **WITHOUT THIS, THE CLOSED MONEY BOOK RENDERS EMPTY AND A GREEN SWEEP PROVES NOTHING.** The
+ * between-seasons team has finished seasons, games and (since P3) practices — but never a dollar.
+ * "How the season added up" only draws when the season HAS a plan and some spending, so on the
+ * fixture as it stood the section was simply absent and the sweep would have measured its absence.
+ * The identical trap P3's practices seeding documents, one phase later.
+ *
+ * A plan and its actuals, deliberately NOT equal: one category lands OVER, the other UNDER. A
+ * statement where every row is exact would prove the table renders and nothing about whether it
+ * tells the truth about a difference — and "over" is the reading the wording has to get right,
+ * since the colour alone cannot carry it (olive↔danger is ~1.0 ΔE for a deuteranope).
+ */
+const { data: pastLines } = await db.from('rep_budget_lines')
+  .select('id').eq('program_year_id', finishedYear.id).limit(1);
+if (!pastLines?.length) {
+  /* ⚠ Descriptions taken from `FIXTURE_ITEMS` above, deliberately. `taxonomyFor` falls back to the
+     FIRST category for a name it does not know — silently — so an invented description here would
+     file the whole finished season under one arbitrary heading and the statement would look
+     plausible while proving nothing about category grouping. */
+  const planned = [
+    { description: 'Diamond permits',      total_amount: 2800, sort_order: 1 },
+    { description: 'Spring classic entry', total_amount: 3000, sort_order: 2 },
+    { description: 'Winter dome block',    total_amount: 1600, sort_order: 3 },
+  ].map(r => ({
+    ...r, line_kind: 'cost', org_id: org.id, team_id: pastTeam.id,
+    program_year_id: finishedYear.id, ...taxonomyFor(r.description),
+  }));
+  const insLines = await db.from('rep_budget_lines').insert(planned);
+  if (insLines.error) { console.error('✗ finished-season budget insert', insLines.error.message); process.exit(1); }
+
+  // Actuals: permits came in under, entries exact, uniforms OVER — one of each reading.
+  /* ⚠ Each cost names the PLANNED LINE it belongs under, and inherits that line's taxonomy — a cost
+     reaches its category through its item, its category id, or a free-text name, and seeding the
+     modern shape is what makes the statement's rows land under real headings rather than all
+     collapsing into "No category". */
+  const spent = [
+    // Facilities: planned 2,800 + 1,600 = 4,400 · paid 1,500 + 1,240 + 1,712 = 4,452 → OVER by 52.
+    { under: 'Diamond permits',      description: 'Diamond permits — April block', amount: 1500, month: 3, day: 12 },
+    { under: 'Diamond permits',      description: 'Diamond permits — June block',  amount: 1240, month: 5, day: 9 },
+    { under: 'Winter dome block',    description: 'Dome hire — pre-season',        amount: 1712, month: 2, day: 28 },
+    // Tournaments: planned 3,000 · paid 2,900 → UNDER by 100. One of each reading on one statement.
+    { under: 'Spring classic entry', description: 'Spring classic entry',          amount: 2900, month: 4, day: 20 },
+  ].map(r => {
+    const tax = taxonomyFor(r.under);
+    return {
+      org_id: org.id, team_id: pastTeam.id, program_year_id: finishedYear.id,
+      // ⚠ 'expense' — the column carries a CHECK of ('expense','tournament_payable'), not free text.
+      expense_type: 'expense', description: r.description, amount: r.amount,
+      budget_category_id: tax.category_id, budget_item_id: tax.item_id,
+      /* ⚠ PAID, and dated to the SEASON'S own year rather than to "now" — a rendered baseline keyed
+         on the screen's text must not drift each time the sweep runs. An instant at org NOON, never
+         a bare date: UTC midnight reads as the previous day in every negative offset. */
+      expense_paid_at: new Date(Date.UTC(finishedYear.year, r.month, r.day, 16, 0)).toISOString(),
+    };
+  });
+  const insSpend = await db.from('rep_team_expenses').insert(spent);
+  if (insSpend.error) { console.error('✗ finished-season expenses insert', insSpend.error.message); process.exit(1); }
+  ok('finished-season money seeded (3 planned lines, 4 costs — one category over, one under)');
+} else {
+  ok('finished-season money already present');
+}
+
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);

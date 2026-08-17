@@ -97,13 +97,35 @@ const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
  *   that pair exists so a helper who runs one station cannot type the URL, which is why
  *   `season-practices` carries the same pair rather than Season's End's looser one.
  *
- * ⚠ P4 (the money past-season book) is still an owner mockup session BEFORE any build. It may not
- * add itself here on the way past.
+ * · `budget-vs-actual` — the closed money book: what a finished season PLANNED and what it actually
+ *   spent, for the collapsed statement shelf on that season's own Season's End page (P4,
+ *   owner-approved 2026-08-17 from the gated design session).
+ *     1. **RECORD.** It computes over money records a closed season can no longer change, is
+ *        GET-only and performs no write of any kind. ⚠ It is the ONLY one of Money's SEVEN tabs
+ *        that passes this question. Payables marks commitments paid, Club creates and withdraws
+ *        payment requests, Dues records payments and sends reminders, Fundraisers logs amounts,
+ *        Budget and Transactions are editors — six instruments, which stay on the working season.
+ *        Pointing an instrument at a closed year is the archive-as-a-place the owner deleted.
+ *     2. **YES, because the reader FLATTENS it.** The live panel is not a leaf: rows expand, Months
+ *        cells link into the budget editor, and the "no date yet" figure opens a chooser. The shelf
+ *        renders figures and no drill-ins, so there is no level down. ⚠ This route cannot enforce
+ *        that — `coach-finished-season-surfaces.test.ts` holds the caller to it.
+ *     3. **YES, STRUCTURALLY.** Its only year-passing caller is Season's End, a page about one
+ *        named season that titles itself so.
+ *   ⚠ **Its figures are CORRECTED, not preserved** (owner ruling 2026-08-17): the report is derived,
+ *   and its arithmetic changed that day, so a past season adds up more accurately than the coach saw
+ *   at the time. That is deliberately the OPPOSITE call to playing time, on the grounds of what each
+ *   derivation is over — money records that cannot change, versus lineups being re-interpreted.
+ *   **It is not a precedent for playing time**, whose decided absence below is untouched.
+ *
+ * ⚠ P4 was the LAST gated shelf. There is no P5 — a further entry needs a new owner ruling, not a
+ * phase that is already approved.
  */
 const HISTORY_ENDPOINTS = [
   'wrapped',
   'season-practices',
   'events/[eventId]/practice-plan/read',
+  'budget-vs-actual',
 ];
 
 /**

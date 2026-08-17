@@ -383,8 +383,32 @@ rep_team_staff_memberships (
   render one season's practices under another season's wrap-up; a practice with an abandoned goal
   and no note was labelled as having a note; and the past-plan page had no stale guard at all,
   which `?year=` widened from wrong-event to wrong-SEASON.
-- **P4 — Money past-season book. GATED: mockup session first.** Read-only closed book: budget vs
-  actual + money story; money-capability only.
+- **P4 — Money past-season book. ✅ GATE PASSED and ✅ BUILT ON DEV 2026-08-17 — owner QA §52, no
+  migration, no new route.** Plan of record: `COACH_MONEY_PAST_SEASON_BOOK_PLAN.md` (+ PM brief;
+  mockup artifact `3cbb9ecd`). One collapsed **"How the season added up"** section on Season's End,
+  below the practices shelf.
+
+  ⚠⚠ **The session corrected this plan's own P4 line from the code, twice over.** "Read-only closed
+  book" implied a missing capability: (a) **the entire money book already renders** for a finished
+  season, all seven tabs read-only — a team BETWEEN seasons has it today, and what breaks is the
+  ROLLOVER; (b) **every past season already carries three money figures** in the compare list; and
+  (c) **Budget vs Actual is already the statement**, its three views unified on 2026-08-17.
+
+  ⚠⚠ **And the finding that shrank the build: SIX OF THE SEVEN money tabs are INSTRUMENTS.** Payables
+  marks commitments paid, Club creates and withdraws requests, Dues records payments, Fundraisers
+  logs amounts, Budget and Transactions are editors. Exactly one — Budget vs Actual — is a record of
+  what happened. So the shelf is that statement and nothing else; a season-aware money hub is
+  **recorded as rejected**, being the deleted season dial in money's clothing.
+
+  **Built:** the live `budget-vs-actual` route learns a year (⚠ REUSED, not rebuilt — a second
+  statement endpoint would be a second walk of the same records, the exact defect fixed hours
+  earlier); one `HISTORY_ENDPOINTS` entry with the three answers; the shelf renders **FLAT**, with no
+  cell a link, because on the live screen those same figures are doors into the budget editor.
+
+  ⚖ **Owner ruling 2026-08-17: past figures are CORRECTED, not preserved.** The report is derived and
+  its arithmetic changed that day. Deliberately the opposite call to playing time, on the grounds of
+  what each derivation is over — money records that cannot change, versus lineups being
+  re-interpreted. **Not a precedent for playing time**, whose decided absence is untouched.
 - **Adjacent, logged not built:** wire/warn the settlement-completeness check on season completion
   (books can seal with money outstanding today); documents retention stance → counsel; free-tier
   `basic_coach_*` model untouched by all of this.

@@ -7170,6 +7170,92 @@ your decision queue, not for walking.
 
 ---
 
+## §52 · The closed money book — how a finished season added up (M1, Phase 4)
+
+**Built on dev 2026-08-17 · not on production · NO migration, and no new API route.**
+Plan: `COACH_MONEY_PAST_SEASON_BOOK_PLAN.md`. Mockups: artifact `3cbb9ecd`. The owner design gate
+passed 2026-08-17 before any of it was built. Walk **§42 first** — this is the second shelf on the
+page that section covers, and the two are deliberately gated differently.
+
+**Why this section exists:** a finished season's whole money book renders today — right up to the
+moment the next season starts, when it becomes unreachable. A coach asked at the AGM what last
+season actually cost had no way to answer. This is the last phase of history-in-place; there is no
+P5.
+
+⚠ **The build is far smaller than the phase name suggests, and that is the finding worth checking.**
+Only **one** of Money's seven tabs is a record of what happened — Budget vs Actual. The other six
+are places where money is marked paid, requested, recorded, logged or edited. They stay on the
+working season deliberately. If any of them turns out to be reachable for a closed year, that is a
+defect, not a bonus.
+
+**Fixtures (from §40, reseeded 2026-08-17 — do not rebuild):** the UAT coach fixture's *UAT Between
+Seasons* team now carries a plan and its actuals on its finished season, arranged so one category
+lands **over** and another **under**. Any rolled-forward team serves for section C.
+
+### A · The shut face
+
+- [ ] Open a between-seasons team → **Season's End**. Below *The practices you ran* there is a
+      second closed section, **How the season added up**.
+- [ ] It is **closed on arrival**. ⚖ Two collapsed shelves now sit on this page — say if that reads
+      as clutter rather than as a tidy shelf, because the binding rule is that the live content
+      stays the primary focus.
+- [ ] Its shut face already answers the question — *"$52.00 over"* or similar. ⚖ Confirm that is the
+      figure you would want at a glance. It is the season's **spending** against the **plan**, not
+      the team's overall surplus.
+
+### B · The statement
+
+- [ ] Open it. Categories with **Planned · Actual · Difference**, and a **Total** row.
+- [ ] One category reads **over**, another reads **under**. ⚠ Check the word, not the colour — olive
+      and the danger tone are nearly indistinguishable to a red-green colourblind reader, so the
+      wording has to carry it on its own.
+- [ ] The figures match what the same season's **Budget vs Actual** tab shows when you open it
+      directly. ⚠ This is the single most important check in the section: there is one arithmetic,
+      and if these two disagree the phase has re-created the defect §51 just fixed.
+- [ ] **Nothing in it is clickable.** No row expands, no figure opens the budget, no month grid, no
+      chart. On the live screen those same cells are doors; here they must be plain numbers.
+- [ ] The **Money in** line under the table shows what came in that season, or is absent entirely if
+      nothing was recorded.
+
+### C · The case the phase exists for
+
+- [ ] On a **rolled-forward** team: Insights → *How are we doing?* → the compare list → **Season
+      Wrapped** for an older year. The money section is on that page and shows **that year's**
+      figures, not this year's.
+- [ ] ⚠ Now open the live **Money → Budget vs Actual** tab on the same team. It still shows the
+      **current** season. A route that had started answering for the wrong year would look perfectly
+      healthy on both screens in isolation.
+
+### D · Who sees it
+
+- [ ] Sign in as an assistant **with** money access on a between-seasons team → both shelves.
+- [ ] Sign in as an assistant with attendance and lineups but **no money access** → the practices
+      shelf is there, the money section is **absent**. This is the pair that matters: two shelves,
+      two different keys, on one page.
+- [ ] As that same money-less coach, open the finished season's **Money** tab. Still refused, as
+      before.
+
+### E · The gates that must still hold
+
+- [ ] The live money screens are **unchanged** — Budget, Dues, Fundraisers, Transactions, Payables,
+      Club and Budget vs Actual all behave exactly as they did, on a live season.
+- [ ] None of those six other tabs is reachable for a closed year by any route you can find.
+- [ ] Nothing anywhere points the portal at a past year — no switcher, no second menu.
+
+### F · The words, and one ruling to confirm in place
+
+- [ ] **How the season added up** as the section name; **under** / **over** as the difference
+      wording. Say if either grates.
+- [ ] ⚖ **Past figures are shown CORRECTED, not as they looked at the time** — your ruling on
+      2026-08-17. The statement's arithmetic changed that day, so an older season now adds up
+      differently, and more accurately, than the coach saw then. You approved this on the grounds
+      that money should be right rather than faithful to a bug. Now that you can see it in place,
+      confirm you still agree — and note it is deliberately the **opposite** call to playing time,
+      which stays live-season-only for the same recomputation reason.
+- [ ] **Help → Money** gained a topic: *What happens to the books when the season ends*.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |

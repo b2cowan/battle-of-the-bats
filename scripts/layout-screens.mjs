@@ -203,6 +203,14 @@ export const SCREENS = [
   { id: 'coach-finished-plan',      session: 'coach', ready: 'h1',
     path: (c) => `${finished(c)}/history/development/practices/${c.finishedPracticeEventId}`
       + `?from=season-end&year=${c.finishedYearId}` },
+  /**
+   * ⚠ The closed money book, OPEN (P4). Same reason as the practices shelf above it — collapsed by
+   * ruling, so the default Season's End sweep measures a 44px summary row and nothing inside. This
+   * one carries a TABLE, which is the shape most likely to overflow a 361px phone, so measuring it
+   * shut would miss the only thing worth measuring.
+   */
+  { id: 'coach-finished-money-book', session: 'coach', ready: 'h1',
+    path: (c) => `${finished(c)}/season-end?section=season-statement` },
 
   // ── The season around it ────────────────────────────────────────────────────
   { id: 'coach-announcements', session: 'coach', path: (c) => `${team(c)}/announcements`, ready: 'h1' },
