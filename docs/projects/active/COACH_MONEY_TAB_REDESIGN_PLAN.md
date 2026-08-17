@@ -613,6 +613,19 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
    so this is ruled, not drift. It never touches the settled balance either way.
 4. **P4 — Club.** Its own short mockup pass (name settled: Club vs Org), then the merge; demo seed
    gains club money. *Owner QA: the combined story + the register's club rows.*
+   **Build prompt:** `COACH_MONEY_SPLIT_P4_BUILD_PROMPT.md` (fresh chat). ⛔ **Its first deliverable is
+   the MOCKUP, not code** — this phase is gated on the owner seeing the combined screen, and the tab's
+   name is decided there.
+
+   ⚠ **P4 inherits two questions P3 left open on purpose:** whether the merged tab lists club requests
+   for the WORKING SEASON only (mig 247 gave them a season and every cash figure reads it, but the
+   LIST was left team-lifetime so a pending request could not silently vanish), and gating the request
+   form BETWEEN SEASONS (the form is still offered and the server now refuses it — Owner QA §46 §I).
+
+   ⚠⚠ **And one hard dependency:** the register's club rows link into the two tabs P4 deletes
+   (a settled allocation → Allocations, an approved request → Payments), as does the Overview's
+   next-30 window. Those links, and the register's `from Club` filter, must follow the merge —
+   `npm run check:register` is the proof the money still reconciles afterwards.
 
 ⚠ P1–P3 all touch one form and one tab bar — **run them serially, never as parallel sessions**
 (the lesson the taxonomy plan's §7.1 is built on).
