@@ -2013,7 +2013,7 @@ export function BudgetPlanPanel({
                    literal: the whole-tree guard, and the reason a fourth kind reaches this for
                    free. */
                 direction={isFundingKind(form.lineKind) ? 'in' : 'out'}
-                manageHint="You can rename it or move it across from Manage our items."
+                manageHint="Rename or remove it later from Manage our items — but it stays on this side."
               />
               <p className={styles.kindHint}>
                 These name this line everywhere. Anything else worth saying goes in Notes.

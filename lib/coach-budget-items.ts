@@ -29,7 +29,17 @@ import { supabaseAdmin } from './supabase-admin';
 import { normalizeSportId } from './sports';
 import type { BudgetItem, BudgetItemDirection } from './types';
 
-export type BudgetItemTier = 'platform' | 'club' | 'team';
+/* ⚠⚠ THE TIER RULES MOVED TO `coach-budget-item-tiers.ts` (2026-08-17) AND ARE RE-EXPORTED HERE, so
+   every existing server caller keeps one door. The split is not tidying: THIS module imports
+   `supabase-admin`, which builds the service-role client and runs an environment assertion at module
+   load — so the moment a `'use client'` component imported `budgetItemTier` from here, that whole
+   graph joined the browser bundle. It would not have thrown and nothing would have reported it. Read
+   that file's header before moving anything back. */
+export {
+  budgetItemTier, itemVisibleToTeam, ITEM_TIER_LABEL,
+  type BudgetItemTier, type OwnedBudgetItem,
+} from './coach-budget-item-tiers';
+import { budgetItemTier, itemVisibleToTeam, type OwnedBudgetItem } from './coach-budget-item-tiers';
 
 /**
  * ⚠⚠ EVERYTHING THAT POINTS AT A BUDGET WORD — the single list every guard counts from.
@@ -160,14 +170,6 @@ export function mapBudgetItem(row: Record<string, unknown>): BudgetItem {
   };
 }
 
-/** Anything with the ownership columns and the sport tag — all any reader here needs. */
-export interface OwnedBudgetItem {
-  org_id?: string | null;
-  team_id?: string | null;
-  /** mig 241 — which sports this is offered to. Null/absent = every sport, the common case. */
-  sports?: string[] | null;
-}
-
 /**
  * Is this word part of THIS sport's vocabulary? (mig 241.)
  *
@@ -188,32 +190,6 @@ export function offeredForSport(row: { sports?: string[] | null }, teamSport: st
   if (!row.sports || row.sports.length === 0) return true;
   const sport = normalizeSportId(teamSport);
   return row.sports.some(s => normalizeSportId(s) === sport);
-}
-
-/** Which tier an item belongs to. ONE definition: three surfaces label these and they must agree. */
-export function budgetItemTier(item: OwnedBudgetItem): BudgetItemTier {
-  if (!item.org_id) return 'platform';
-  return item.team_id ? 'team' : 'club';
-}
-
-/** Coach-facing tier names. "Club" is deliberately not "Org" — a coach reads their club's name. */
-export const ITEM_TIER_LABEL: Record<BudgetItemTier, string> = {
-  platform: 'Standard',
-  club:     'Club',
-  team:     'This team',
-};
-
-/**
- * May this team see this item in its picker?
- *
- * ⚠ THE WHOLE RULE IN ONE PREDICATE, because "which items can I pick?" is asked by the item list,
- * the budget-line write path AND the expense write path, and a list that offers what a write path
- * refuses is the drift this exists to stop.
- */
-export function itemVisibleToTeam(item: OwnedBudgetItem, orgId: string, teamId: string): boolean {
-  if (!item.org_id) return true;                 // platform default
-  if (item.org_id !== orgId) return false;       // another club's, at any tier
-  return !item.team_id || item.team_id === teamId;
 }
 
 export interface ResolvedBudgetItem {

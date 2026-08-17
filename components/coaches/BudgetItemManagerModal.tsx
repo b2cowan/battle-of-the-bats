@@ -2,30 +2,37 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 /**
- * OUR OWN WORDS — rename one, or move it to the other side (Money form P2, owner ruling 2026-08-16).
+ * OUR OWN WORDS — rename one, or remove it (Money form P2; scope narrowed by the ruling 2026-08-17).
  *
- * ⚠⚠ THIS SCREEN IS WHAT MAKES THE FILTER SAFE TO SHIP. Migration 246 made an item's direction part
- * of what it is, and the picker now offers only the side you are working on — so a word filed on the
- * wrong side is a word a coach cannot reach from the form that needs it. Until this existed, a
- * coach's own item could not be renamed or re-pointed from anywhere in the product: the club-admin
- * editor refuses team-owned rows outright ("only that team can rename it") against a team surface
- * that did not exist. The ruling's "editable afterwards" had no editor.
+ * ⚠⚠ THIS SCREEN IS WHAT MAKES THE PICKER'S FILTER SAFE TO SHIP. Migration 246 made an item's
+ * direction part of what it is, and the picker offers only the side you are working on — so a word
+ * filed wrongly is a word a coach cannot reach from the form that needs it. Until this existed, a
+ * coach's own item could not be corrected from anywhere in the product: the club-admin editor
+ * refuses team-owned rows outright ("only that team can rename it") against a team surface that did
+ * not exist. The ruling's "editable afterwards" had no editor.
  *
  * ⚠ THE TEAM'S OWN WORDS ONLY, and the read-only rest is SHOWN rather than hidden. A coach hunting
  * for "Diamond permits" needs to learn that it is a standard word and that is why there is no pencil
  * beside it — an editor that simply omitted everything it could not change would read as a list
  * missing half its contents, and the coach would go looking for a second screen that does not exist.
+ * ⚠ That read-only section is the one place the two shared tiers MIX, which is why its rows carry a
+ * tier chip and the team's own rows above do not: their heading already said it.
  *
- * ⚠ RENAMING IS RETROACTIVE AND MOVING IS NOT. The item NAMES the row (mig 240), so a rename reaches
- * every budget line and every recorded cost pointing at it — which is exactly what fixing a typo
- * should do. Moving a word across changes only which list it is offered in: Budget vs. Actual takes
- * a row's direction from what was actually filed against it, so nothing already recorded moves a
- * cent. Both facts are on screen, because a coach cannot consent to what they have not been told.
+ * ⚠ RENAMING IS RETROACTIVE, AND THAT IS WHY IT IS THE REMEDY EVERY REFUSAL OFFERS. The item NAMES
+ * the row (mig 240), so a rename reaches every budget line, cost and money-in record pointing at it
+ * — it changes everything and loses nothing.
+ *
+ * ⚠⚠ MOVING A WORD BETWEEN INCOME AND EXPENSES IS GONE. It shipped here on 2026-08-16 and was
+ * retracted the next day: a category can belong to one side of the books, so a moved word can land
+ * under a heading that makes no sense for it. Removing and re-adding is the honest fix, and a word
+ * with history behind it cannot be removed at all — which is what makes a wrong-side word a
+ * five-second problem rather than a data one.
  */
 /** One word with its category beside it — what both lists in this modal are made of. */
 interface Row { item: BudgetItem; categoryName: string }
@@ -153,7 +160,7 @@ export default function BudgetItemManagerModal({
           {ours.length === 0 ? (
             <p className={styles.formHint}>
               Your team hasn&rsquo;t added any words of its own yet. Add one while building a budget
-              line or recording money — it&rsquo;ll show up here to rename or move across.
+              line or recording money — it&rsquo;ll show up here to rename or remove.
             </p>
           ) : (
             <>
@@ -237,13 +244,23 @@ export default function BudgetItemManagerModal({
                 Standard and club words
               </h4>
               <p className={styles.formHint}>
-                These belong to everybody — the standard library and whatever your club shares with
-                every team — so they&rsquo;re read-only here. Ask your club to change one.
+                These belong to everybody, so they&rsquo;re read-only here. <strong>Standard</strong>
+                words come with FieldLogicHQ; <strong>Club</strong> words are the ones your club shares
+                with every team, and your club can change those.
               </p>
+              {/* ⚠ THE TIER CHIP EARNS ITS PLACE HERE AND NOWHERE ELSE ON THIS SCREEN. This one
+                  section MIXES the two shared tiers under a single heading, so "read-only" is all a
+                  coach can tell without it — and "ask your club to change one" is wrong advice for a
+                  standard word, which the club cannot change either. Above, the team's own words sit
+                  under their own heading, so a chip on every row there would repeat what the heading
+                  already said. The picker tags every row because it mixes all three. */}
               {theirs.map(({ item, categoryName }) => (
                 <div key={item.id} className={styles.tagManagerRow}>
                   <span className={`${styles.tagManagerName} ${styles.mutedInline}`}>
                     {categoryName} · {item.name}
+                  </span>
+                  <span className={`${styles.badge} ${item.orgId ? styles.badgeDraft : styles.badgeArchived}`}>
+                    {ITEM_TIER_LABEL[budgetItemTier({ org_id: item.orgId, team_id: item.teamId })]}
                   </span>
                   {sideChip(item)}
                 </div>

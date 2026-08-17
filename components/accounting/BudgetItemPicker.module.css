@@ -120,6 +120,50 @@
   color: var(--warning);
 }
 
+/* ── Where a word came from: Standard · Club · Our own ─────────────────────
+   ⚠⚠ THIS CHIP IS WHAT PAYS FOR PUBLISHING STOPPING ITS DELETE. Two words with one name are
+   legitimate now (a club's "Grant" beside a team's own), and the merge that used to remove the
+   duplicate is gone — so the list has to say which is which, or a coach picks at random and a
+   season's history splits across both.
+   ⚠ THE WORD IS THE SIGNAL; the colour only reinforces it. These render in a warm theme and a dark
+   one, and 1.6-point contrast failures have shipped in this portal before on colour-only cues.
+   ⚠ `margin-left: auto` sits on the FIRST trailing element, so it is declared here and NOT on
+   `.optOffside` too — two auto margins in one flex row split the space between them and the chips
+   drift apart mid-list. `.optOffside` keeps its own because it is the only trailing element on the
+   rare row that has it and no tier chip is possible without one. */
+.optTier {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  white-space: nowrap;
+}
+.optOffside + .optTier { margin-left: 0.4rem; }
+
+/* Ours — quiet, because it is the common case and the absence of news. */
+.tier_platform {
+  color: var(--white-40, rgba(255,255,255,0.4));
+  background: transparent;
+  border-color: var(--border-2);
+}
+/* The club's — blue, matching the "shared by your organization" chip the tag picker already uses,
+   so one colour means one thing across the portal. */
+.tier_club {
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.10);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+}
+/* The team's own — lime, the same pairing the tag picker's legend sets. */
+.tier_team {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.10);
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+}
+
 .optCreate {
   border-top: 1px solid var(--border-2);
   color: var(--logic-lime);

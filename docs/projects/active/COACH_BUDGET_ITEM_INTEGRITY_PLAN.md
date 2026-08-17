@@ -123,10 +123,36 @@ screen offering rename alone — a screen that can create words and never clear 
 4. **Drop "move to the other side"** — the button in *Manage our items* and the `direction` branch of
    the coach item PATCH. Ruling 5. ⚠ **This retracts something already on dev** (P2, `91d1c2c8`).
 
-### P2 — Tell the rows apart
+### ✅ P2 — Tell the rows apart. **BUILT ON DEV 2026-08-17** — Owner QA **§45**, no migration
 
-5. **Tags in the picker and the manager**: `Standard` · `Club` · `Our own`, on every surface a word is
-   listed. Never colour alone — this list renders in a warm theme and a dark one.
+5. **Tags in the picker and the manager**: `Standard` · `Club` · `Our own`, never colour alone.
+   `ITEM_TIER_LABEL` already existed with exactly these three tiers and had **no caller anywhere** —
+   defined for this and never wired up. `team` was reworded *This team* → *Our own* to match the
+   mockup and the door it is reached through.
+
+   **Two judgement calls worth knowing:**
+   - **The picker tags every row; the manager tags only its read-only section.** The picker mixes all
+     three tiers, so every row needs its answer. The manager already separates the team's own words
+     under their own heading — a chip on each of those repeats what the heading said — while the
+     read-only section is the one place Standard and Club are *mixed*, and "ask your club to change
+     one" is wrong advice for a standard word.
+   - **The input names the tier only when the name is ambiguous.** At rest the box reads
+     "Fundraising · Grant"; a coach re-opening a saved record cannot otherwise see which *Grant* they
+     picked. Appending it always would put "(Standard)" on ninety per cent of rows — noise that
+     teaches a coach to stop reading the end of the field, which is where the signal would be.
+
+   ⚠⚠ **A SERVER MODULE ALMOST WENT INTO THE CLIENT BUNDLE, AND NOTHING WOULD HAVE REPORTED IT.**
+   The tier helpers lived in `lib/coach-budget-items.ts`, which imports `supabase-admin` — the
+   service-role client, constructed with an environment assertion **at module load**. The first
+   `'use client'` import of `budgetItemTier` would have pulled that whole graph into the browser
+   bundle of every screen with an item picker. It would not have thrown (the service key is not a
+   `NEXT_PUBLIC_` variable, and the assertion passes in dev and in production), and typecheck is
+   blind to it. Split into `lib/coach-budget-item-tiers.ts` — pure, imports nothing but types — and
+   re-exported from the server module so there is still one definition of each rule.
+
+   ⚠ **The rendered layout check proves nothing about this phase**: chips live inside a dropdown and
+   a modal, and the sweep measures both closed. The warm theme is the real risk and it is owner-QA
+   only — §45 says so.
 
 ### P3 — The team-chosen merge
 

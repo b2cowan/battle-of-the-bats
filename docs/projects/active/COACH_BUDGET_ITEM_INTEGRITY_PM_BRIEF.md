@@ -1,7 +1,13 @@
 # PM Brief — budget items: what a word is, and who may take it away
 
-**Status: design ruled by the owner 2026-08-16/17. Phase 1 built on dev 2026-08-17 (Owner QA §44);
-the tags and the team-chosen merge are open.**
+**Status: design ruled by the owner 2026-08-16/17. Phases 1 and 2 built on dev 2026-08-17
+(Owner QA §44 and §45); the team-chosen merge is open.**
+
+**Phase 2 made the words tell you where they came from** — *Standard*, *Club* or *Our own*, on
+every list a coach picks from. That is what pays for Phase 1: once publishing stopped deleting other
+teams' copies, the same name can appear twice, and without a tag that reads as a bug rather than a
+feature. When two words genuinely share a name the search box also names the tier after you pick
+one, so a saved record can still be told apart later.
 
 **Phase 1 shut all three doors.** Publishing a team's word to the club now promotes it and deletes
 nothing. A club word can no longer be deleted while any team has anything filed against it — the

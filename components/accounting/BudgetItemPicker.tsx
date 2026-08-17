@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
+import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 import styles from './BudgetItemPicker.module.css';
 
 export interface BudgetItemSelection {
@@ -64,8 +65,10 @@ interface Props {
   /** Draw the control as at fault — the picker is a required field since mig 240. */
   invalid?: boolean;
   disabled?: boolean;
-  /** Where a coach goes to rename a word or move it across. Named in the create confirmation, so
-   *  the answer to "I put it on the wrong side" is on screen at the moment the mistake is made. */
+  /** Where a coach goes to rename or remove a word afterwards. Named in the create panel, so the
+   *  answer to "what if I get this wrong?" is on screen at the moment the choice is made — and
+   *  since 2026-08-17 that answer includes the fact that the SIDE is not one of the things that can
+   *  be changed later, which is exactly when a coach needs to know it. */
   manageHint?: string;
 }
 
@@ -144,9 +147,36 @@ export default function BudgetItemPicker({
   const canCreate = q.length > 0 && !exact && !disabled;
   const optionCount = matches.length + (canCreate ? 1 : 0);
 
-  const selectedLabel = value?.itemId
-    ? `${value.categoryName} · ${value.itemName}`
-    : '';
+  /**
+   * ⚠⚠ WHICH NAMES APPEAR MORE THAN ONCE ON THIS SIDE — the whole reason the tier tags exist.
+   *
+   * Since the item-integrity ruling a club's *Grant* and a team's own *Grant* are two legitimate
+   * rows rather than something to be merged away. That is only safe if a coach can tell them apart,
+   * which is what the chips in the list do. The INPUT is the harder half: at rest it shows
+   * "Fundraising · Grant" and a coach re-opening a saved record cannot see which one they picked.
+   *
+   * ⚠ SO THE INPUT NAMES THE TIER ONLY WHEN IT IS ACTUALLY AMBIGUOUS. Appending it always would put
+   * "(Standard)" on the ninety per cent of rows where nothing is in doubt — noise that teaches a
+   * coach to stop reading the end of the field, which is exactly where the signal would be.
+   */
+  const ambiguousNames = useMemo(() => {
+    const seen = new Map<string, number>();
+    offered.forEach(r => {
+      const key = r.item.name.trim().toLowerCase();
+      seen.set(key, (seen.get(key) ?? 0) + 1);
+    });
+    return new Set([...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k));
+  }, [offered]);
+
+  const selectedLabel = (() => {
+    if (!value?.itemId) return '';
+    const base = `${value.categoryName} · ${value.itemName}`;
+    if (!ambiguousNames.has(value.itemName.trim().toLowerCase())) return base;
+    const chosen = offered.find(r => r.item.id === value.itemId);
+    return chosen
+      ? `${base} (${ITEM_TIER_LABEL[budgetItemTier({ org_id: chosen.item.orgId, team_id: chosen.item.teamId })]})`
+      : base;
+  })();
 
   function openDropdown() {
     const el = inputRef.current;
@@ -318,6 +348,20 @@ export default function BudgetItemPicker({
           {row.item.direction !== direction && (
             <span className={styles.optOffside}>on the other side</span>
           )}
+          {/* ⚠⚠ WHERE THE WORD CAME FROM, ON EVERY ROW (owner mockup 484b5971). Two words with one
+              name are legitimate now — a club's *Grant* beside a team's own — so publishing stopped
+              deleting the duplicate, and this chip is what pays for that: without it a coach meets
+              two identical rows and picks at random, splitting a season's history across both.
+              ⚠ NEVER COLOUR ALONE. Each chip carries its word, because this list renders in a warm
+              theme and a dark one and the three tiers must survive both. */}
+          {(() => {
+            const tier = budgetItemTier({ org_id: row.item.orgId, team_id: row.item.teamId });
+            return (
+              <span className={`${styles.optTier} ${styles[`tier_${tier}`]}`}>
+                {ITEM_TIER_LABEL[tier]}
+              </span>
+            );
+          })()}
         </button>,
       );
     });

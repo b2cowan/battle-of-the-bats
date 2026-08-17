@@ -6246,6 +6246,39 @@ dev holds almost no team-created vocabulary, and every check below is invisible 
 
 ---
 
+## §45 · You can tell whose word it is (budget item integrity, P2 — the tags)
+
+**Built on dev 2026-08-17 · not on production · no migration.**
+Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P2. Mockup: artifact `484b5971` §3.
+**Walk §44 first** — this is the half that makes §44's behaviour make sense.
+
+**Why this exists:** §44 stopped publishing from deleting other teams' words, which means the same
+name can now legitimately appear twice in one list. Without a way to tell them apart, that reads as
+a bug rather than a feature — so every word now says where it came from.
+
+⚠⚠ **THE STATIC CHECKS CANNOT SEE ANY OF THIS.** Chips live inside a dropdown and inside a modal;
+the rendered layout sweep measures both closed. **Your eyes are the only proof here**, and the one
+thing I would look at hardest is the warm theme — the chips borrow the blue and lime the tag picker
+already uses, and this portal has shipped colour-only contrast failures that only a rendered check
+in warm caught.
+
+- [ ] **Money → Transactions → Add**, open the item search. Every row now carries a tag on the
+      right: **Standard** (quiet grey), **Club** (blue), **Our own** (lime).
+- [ ] The words are the signal, not the colours. Squint, or switch to the warm theme — can you still
+      read all three? Say so if any of them washes out.
+- [ ] Add a word of your own with a name the club or the standard list already uses. Search for it:
+      **two rows, same name, different tags.** That is the shape §44 made possible.
+- [ ] ⚠ **When two words share a name, the box names the tier after you pick one** —
+      "Fundraising · Grant (Our own)". When the name is unique it does not, because
+      "(Standard)" on every ordinary row is noise that teaches you to stop reading the end of the
+      field. Check that reads as helpful rather than inconsistent.
+- [ ] **Budget Plan → Manage our items.** Your own words sit under their own heading with no tag —
+      the heading says it. The read-only list below **does** tag each row, because that is the one
+      place Standard and Club words are mixed together, and "ask your club to change one" is wrong
+      advice for a standard word.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |
