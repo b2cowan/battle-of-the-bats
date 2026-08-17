@@ -44,6 +44,80 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-17',
+    title: 'Every dollar has a date, a category, and a season',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Team Money is now two screens. Transactions is what actually happened; Payables is what is still owed. Recording a payment and chasing one are no longer the same job.',
+      },
+      {
+        category: 'new',
+        text: 'Your team now has one dated register — every payment in and out, in order, with a running balance that is the team\'s cash on hand.',
+      },
+      {
+        category: 'new',
+        text: 'Recording money coming in asks three things: who it came from, what it was for, and which season it belongs to. Fundraising, sponsorship and club funding each land in the right place.',
+      },
+      {
+        category: 'new',
+        text: 'Your budget is organised as categories and items, and spending uses the same names — so a budget line and the spending against it can never be labelled differently.',
+      },
+      {
+        category: 'new',
+        text: 'Each budget name shows where it came from: one your team created, one your club shares, or one from the starter list. A name that records are already using can no longer be deleted out from under them.',
+      },
+      {
+        category: 'new',
+        text: 'When a team is ready, it can fold its own budget names into the club\'s shared ones. The team decides when that happens, not the club.',
+      },
+      {
+        category: 'new',
+        text: 'If your team belongs to a club on FieldLogicHQ, a new Club tab shows where you stand with them — what has been approved, what has been paid, and what is outstanding. That money now counts in Budget vs. Actual.',
+      },
+      {
+        category: 'new',
+        text: 'A money record can be corrected. Edit or delete one and every total that used it corrects itself.',
+      },
+      {
+        category: 'new',
+        text: 'Finished seasons now read in place. There is no toggle and no separate archive — open your team and you see the season it is on, with last season\'s results, practice plans and insights where you would expect them.',
+      },
+      {
+        category: 'new',
+        text: 'A finished season keeps the practices you ran, so last year\'s plan can start tonight\'s session.',
+      },
+      {
+        category: 'new',
+        text: 'A tryout scorecard now shows what each category is worth as a share of the total, so you can see at a glance how the ranking is weighted.',
+      },
+      {
+        category: 'new',
+        text: 'Tryout setup is now a single checklist that tells you what is done and what to do next.',
+      },
+      {
+        category: 'improved',
+        text: 'Attendance now has one home, alongside the rest of your reports in Insights.',
+      },
+      {
+        category: 'improved',
+        text: 'The coach sidebar keeps the same order every time you open it.',
+      },
+      {
+        category: 'improved',
+        text: 'Help guides are now a set of short articles rather than one long page, so you can go straight to the answer you need.',
+      },
+      {
+        category: 'fixed',
+        text: 'Different money screens could show different figures for the same season. They now all work from the same numbers.',
+      },
+      {
+        category: 'fixed',
+        text: 'Opening a tryout scorecard could change the weighting a coach had set. It now leaves your settings alone.',
+      },
+    ],
+  },
+  {
     date: '2026-08-14',
     title: 'Team Money keeps the whole record',
     highlights: [

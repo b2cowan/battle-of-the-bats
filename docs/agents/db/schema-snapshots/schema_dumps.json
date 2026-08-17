@@ -28041,6 +28041,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "budget_categories",
+        "pos": 8,
+        "column_name": "sports",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "budget_items",
         "pos": 1,
         "column_name": "id",
@@ -28120,6 +28129,33 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "budget_items",
+        "pos": 10,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "budget_items",
+        "pos": 11,
+        "column_name": "sports",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "budget_items",
+        "pos": 12,
+        "column_name": "direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
       },
       {
         "table_name": "chat_message_reactions",
@@ -35376,6 +35412,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_allocation_splits",
+        "pos": 12,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_splits",
+        "pos": 13,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_budget_lines",
         "pos": 1,
         "column_name": "id",
@@ -36119,7 +36173,7 @@
         "column_name": "player_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -36301,6 +36355,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 13,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'fundraiser'::text"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 14,
+        "column_name": "sponsor_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_player_awards",
@@ -37300,6 +37372,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'last_first'::text"
+      },
+      {
+        "table_name": "rep_program_years",
+        "pos": 15,
+        "column_name": "default_player_credit_percent",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_roster_players",
@@ -38958,6 +39039,69 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_expenses",
+        "pos": 26,
+        "column_name": "deposit_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 27,
+        "column_name": "balance_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 29,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "pos": 30,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 1,
+        "column_name": "fundraiser_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 2,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_game_moments",
         "pos": 1,
         "column_name": "id",
@@ -39615,6 +39759,150 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_money_in",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 5,
+        "column_name": "entry_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 7,
+        "column_name": "received_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 8,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 9,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 10,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 11,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 12,
+        "column_name": "received_from",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 13,
+        "column_name": "accounting_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_opponent_aliases",
         "pos": 1,
         "column_name": "id",
@@ -40002,6 +40290,33 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 18,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 19,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 20,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_plan_template_tags",
         "pos": 1,
         "column_name": "template_id",
@@ -40108,6 +40423,96 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 5,
+        "column_name": "coach_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 6,
+        "column_name": "capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 7,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'active'::text"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 9,
+        "column_name": "revoked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 10,
+        "column_name": "revoked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_tags",
@@ -43629,6 +44034,13 @@
         "constraint_name": "budget_items_org_id_fkey"
       },
       {
+        "table_name": "budget_items",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "budget_items_team_id_fkey"
+      },
+      {
         "table_name": "chat_message_reactions",
         "column_name": "message_id",
         "foreign_table": "chat_messages",
@@ -44526,6 +44938,20 @@
       },
       {
         "table_name": "rep_allocation_splits",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_splits_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_splits",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_splits_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_splits",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -44878,20 +45304,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -44900,20 +45319,27 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -45193,14 +45619,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -45604,10 +46030,38 @@
       },
       {
         "table_name": "rep_team_expenses",
+        "column_name": "balance_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_balance_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_expenses_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_expenses",
+        "column_name": "deposit_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_expenses_deposit_entry_id_fkey"
       },
       {
         "table_name": "rep_team_expenses",
@@ -45650,6 +46104,20 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_expenses_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "column_name": "fundraiser_id",
+        "foreign_table": "rep_fundraisers",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_fundraiser_tags_fundraiser_id_fkey"
+      },
+      {
+        "table_name": "rep_team_fundraiser_tags",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_fundraiser_tags_tag_id_fkey"
       },
       {
         "table_name": "rep_team_game_moments",
@@ -45827,6 +46295,55 @@
         "constraint_name": "rep_team_measurable_types_team_id_fkey"
       },
       {
+        "table_name": "rep_team_money_in",
+        "column_name": "accounting_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_money_in_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_money_in",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_money_in_team_id_fkey"
+      },
+      {
         "table_name": "rep_team_opponent_aliases",
         "column_name": "opponent_id",
         "foreign_table": "rep_team_opponents",
@@ -45912,6 +46429,20 @@
       },
       {
         "table_name": "rep_team_payment_requests",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
         "column_name": "budget_line_id",
         "foreign_table": "org_budget_lines",
         "foreign_column": "id",
@@ -45930,6 +46461,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_team_payment_requests_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_program_year_id_fkey"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -45979,6 +46517,34 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_plan_templates_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_staff_memberships_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "revoked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_staff_memberships_revoked_by_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_staff_memberships_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_staff_memberships_user_id_fkey"
       },
       {
         "table_name": "rep_team_tags",
@@ -46610,6 +47176,16 @@
       },
       {
         "tablename": "accounting_entries",
+        "indexname": "accounting_entries_linked_entry_id_idx",
+        "indexdef": "CREATE INDEX accounting_entries_linked_entry_id_idx ON public.accounting_entries USING btree (linked_entry_id)"
+      },
+      {
+        "tablename": "accounting_entries",
+        "indexname": "accounting_entries_payee_id_idx",
+        "indexdef": "CREATE INDEX accounting_entries_payee_id_idx ON public.accounting_entries USING btree (payee_id)"
+      },
+      {
+        "tablename": "accounting_entries",
         "indexname": "accounting_entries_pkey",
         "indexdef": "CREATE UNIQUE INDEX accounting_entries_pkey ON public.accounting_entries USING btree (id)"
       },
@@ -46649,14 +47225,29 @@
         "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
       },
       {
+        "tablename": "announcements",
+        "indexname": "announcements_tournament_id_idx",
+        "indexdef": "CREATE INDEX announcements_tournament_id_idx ON public.announcements USING btree (tournament_id)"
+      },
+      {
         "tablename": "assistant_invite_tokens",
         "indexname": "assistant_invite_tokens_email_idx",
         "indexdef": "CREATE INDEX assistant_invite_tokens_email_idx ON public.assistant_invite_tokens USING btree (lower(invited_email), status)"
       },
       {
         "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_org_id_idx",
+        "indexdef": "CREATE INDEX assistant_invite_tokens_org_id_idx ON public.assistant_invite_tokens USING btree (org_id)"
+      },
+      {
+        "tablename": "assistant_invite_tokens",
         "indexname": "assistant_invite_tokens_pkey",
         "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_pkey ON public.assistant_invite_tokens USING btree (id)"
+      },
+      {
+        "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_program_year_id_idx",
+        "indexdef": "CREATE INDEX assistant_invite_tokens_program_year_id_idx ON public.assistant_invite_tokens USING btree (program_year_id)"
       },
       {
         "tablename": "assistant_invite_tokens",
@@ -46760,6 +47351,11 @@
       },
       {
         "tablename": "billing_retained_records",
+        "indexname": "billing_retained_records_intent_id_idx",
+        "indexdef": "CREATE INDEX billing_retained_records_intent_id_idx ON public.billing_retained_records USING btree (intent_id)"
+      },
+      {
+        "tablename": "billing_retained_records",
         "indexname": "billing_retained_records_pkey",
         "indexdef": "CREATE UNIQUE INDEX billing_retained_records_pkey ON public.billing_retained_records USING btree (id)"
       },
@@ -46830,13 +47426,18 @@
       },
       {
         "tablename": "budget_items",
+        "indexname": "budget_items_team_idx",
+        "indexdef": "CREATE INDEX budget_items_team_idx ON public.budget_items USING btree (team_id) WHERE (team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "budget_items",
         "indexname": "budget_items_unique_default_name",
         "indexdef": "CREATE UNIQUE INDEX budget_items_unique_default_name ON public.budget_items USING btree (category_id, lower(name)) WHERE (org_id IS NULL)"
       },
       {
         "tablename": "budget_items",
-        "indexname": "budget_items_unique_org_name",
-        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
+        "indexname": "budget_items_unique_scope_side_name",
+        "indexdef": "CREATE UNIQUE INDEX budget_items_unique_scope_side_name ON public.budget_items USING btree (category_id, org_id, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), direction, lower(name)) WHERE (org_id IS NOT NULL)"
       },
       {
         "tablename": "chat_message_reactions",
@@ -46974,9 +47575,34 @@
         "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"
       },
       {
+        "tablename": "diamonds",
+        "indexname": "diamonds_source_org_venue_id_idx",
+        "indexdef": "CREATE INDEX diamonds_source_org_venue_id_idx ON public.diamonds USING btree (source_org_venue_id)"
+      },
+      {
+        "tablename": "diamonds",
+        "indexname": "diamonds_tournament_id_idx",
+        "indexdef": "CREATE INDEX diamonds_tournament_id_idx ON public.diamonds USING btree (tournament_id)"
+      },
+      {
         "tablename": "divisions",
         "indexname": "age_groups_pkey",
         "indexdef": "CREATE UNIQUE INDEX age_groups_pkey ON public.divisions USING btree (id)"
+      },
+      {
+        "tablename": "divisions",
+        "indexname": "divisions_contact_member_id_idx",
+        "indexdef": "CREATE INDEX divisions_contact_member_id_idx ON public.divisions USING btree (contact_member_id)"
+      },
+      {
+        "tablename": "divisions",
+        "indexname": "divisions_tournament_id_idx",
+        "indexdef": "CREATE INDEX divisions_tournament_id_idx ON public.divisions USING btree (tournament_id)"
+      },
+      {
+        "tablename": "early_access_leads",
+        "indexname": "early_access_leads_converted_org_id_idx",
+        "indexdef": "CREATE INDEX early_access_leads_converted_org_id_idx ON public.early_access_leads USING btree (converted_org_id)"
       },
       {
         "tablename": "early_access_leads",
@@ -47170,6 +47796,11 @@
       },
       {
         "tablename": "family_links",
+        "indexname": "family_links_player_id_idx",
+        "indexdef": "CREATE INDEX family_links_player_id_idx ON public.family_links USING btree (player_id)"
+      },
+      {
+        "tablename": "family_links",
         "indexname": "family_links_team_status_idx",
         "indexdef": "CREATE INDEX family_links_team_status_idx ON public.family_links USING btree (rep_team_id, status)"
       },
@@ -47182,6 +47813,11 @@
         "tablename": "family_recap_views",
         "indexname": "family_recap_views_link_season_uniq",
         "indexdef": "CREATE UNIQUE INDEX family_recap_views_link_season_uniq ON public.family_recap_views USING btree (link_id, program_year_id)"
+      },
+      {
+        "tablename": "family_recap_views",
+        "indexname": "family_recap_views_org_id_idx",
+        "indexdef": "CREATE INDEX family_recap_views_org_id_idx ON public.family_recap_views USING btree (org_id)"
       },
       {
         "tablename": "family_recap_views",
@@ -47235,6 +47871,11 @@
       },
       {
         "tablename": "fan_push_subscriptions",
+        "indexname": "fan_push_subscriptions_team_id_idx",
+        "indexdef": "CREATE INDEX fan_push_subscriptions_team_id_idx ON public.fan_push_subscriptions USING btree (team_id)"
+      },
+      {
+        "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_tournament_team_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_tournament_team_idx ON public.fan_push_subscriptions USING btree (tournament_id, team_id)"
       },
@@ -47260,8 +47901,18 @@
       },
       {
         "tablename": "game_change_notices",
+        "indexname": "game_change_notices_game_id_idx",
+        "indexdef": "CREATE INDEX game_change_notices_game_id_idx ON public.game_change_notices USING btree (game_id)"
+      },
+      {
+        "tablename": "game_change_notices",
         "indexname": "game_change_notices_game_idx",
         "indexdef": "CREATE INDEX game_change_notices_game_idx ON public.game_change_notices USING btree (game_id) WHERE ((sent_at IS NULL) AND (superseded_at IS NULL))"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_org_id_idx",
+        "indexdef": "CREATE INDEX game_change_notices_org_id_idx ON public.game_change_notices USING btree (org_id)"
       },
       {
         "tablename": "game_change_notices",
@@ -47279,6 +47930,36 @@
         "indexdef": "CREATE INDEX game_change_notices_recent_sent_idx ON public.game_change_notices USING btree (tournament_id, team_id, sent_at) WHERE (sent_at IS NOT NULL)"
       },
       {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_team_id_idx",
+        "indexdef": "CREATE INDEX game_change_notices_team_id_idx ON public.game_change_notices USING btree (team_id)"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_tournament_id_idx",
+        "indexdef": "CREATE INDEX game_change_notices_tournament_id_idx ON public.game_change_notices USING btree (tournament_id)"
+      },
+      {
+        "tablename": "games",
+        "indexname": "games_away_team_id_idx",
+        "indexdef": "CREATE INDEX games_away_team_id_idx ON public.games USING btree (away_team_id)"
+      },
+      {
+        "tablename": "games",
+        "indexname": "games_diamond_id_idx",
+        "indexdef": "CREATE INDEX games_diamond_id_idx ON public.games USING btree (diamond_id)"
+      },
+      {
+        "tablename": "games",
+        "indexname": "games_division_id_idx",
+        "indexdef": "CREATE INDEX games_division_id_idx ON public.games USING btree (division_id)"
+      },
+      {
+        "tablename": "games",
+        "indexname": "games_home_team_id_idx",
+        "indexdef": "CREATE INDEX games_home_team_id_idx ON public.games USING btree (home_team_id)"
+      },
+      {
         "tablename": "games",
         "indexname": "games_pkey",
         "indexdef": "CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id)"
@@ -47292,6 +47973,11 @@
         "tablename": "games",
         "indexname": "games_score_submitted_at_idx",
         "indexdef": "CREATE INDEX games_score_submitted_at_idx ON public.games USING btree (tournament_id, score_submitted_at DESC) WHERE (score_submitted_at IS NOT NULL)"
+      },
+      {
+        "tablename": "games",
+        "indexname": "games_tournament_id_idx",
+        "indexdef": "CREATE INDEX games_tournament_id_idx ON public.games USING btree (tournament_id)"
       },
       {
         "tablename": "games",
@@ -47344,9 +48030,24 @@
         "indexdef": "CREATE UNIQUE INDEX league_divisions_pkey ON public.league_divisions USING btree (id)"
       },
       {
+        "tablename": "league_divisions",
+        "indexname": "league_divisions_season_id_idx",
+        "indexdef": "CREATE INDEX league_divisions_season_id_idx ON public.league_divisions USING btree (season_id)"
+      },
+      {
+        "tablename": "league_email_log",
+        "indexname": "league_email_log_org_id_idx",
+        "indexdef": "CREATE INDEX league_email_log_org_id_idx ON public.league_email_log USING btree (org_id)"
+      },
+      {
         "tablename": "league_email_log",
         "indexname": "league_email_log_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_email_log_pkey ON public.league_email_log USING btree (id)"
+      },
+      {
+        "tablename": "league_email_log",
+        "indexname": "league_email_log_season_id_idx",
+        "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
       },
       {
         "tablename": "league_games",
@@ -47360,8 +48061,18 @@
       },
       {
         "tablename": "league_games",
+        "indexname": "league_games_away_team_id_idx",
+        "indexdef": "CREATE INDEX league_games_away_team_id_idx ON public.league_games USING btree (away_team_id)"
+      },
+      {
+        "tablename": "league_games",
         "indexname": "league_games_division_idx",
         "indexdef": "CREATE INDEX league_games_division_idx ON public.league_games USING btree (division_id)"
+      },
+      {
+        "tablename": "league_games",
+        "indexname": "league_games_home_team_id_idx",
+        "indexdef": "CREATE INDEX league_games_home_team_id_idx ON public.league_games USING btree (home_team_id)"
       },
       {
         "tablename": "league_games",
@@ -47389,6 +48100,11 @@
         "indexdef": "CREATE UNIQUE INDEX league_notification_log_pkey ON public.league_notification_log USING btree (id)"
       },
       {
+        "tablename": "league_notification_log",
+        "indexname": "league_notification_log_season_id_idx",
+        "indexdef": "CREATE INDEX league_notification_log_season_id_idx ON public.league_notification_log USING btree (season_id)"
+      },
+      {
         "tablename": "league_practices",
         "indexname": "idx_league_practices_org_venue",
         "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -47397,6 +48113,11 @@
         "tablename": "league_practices",
         "indexname": "idx_league_practices_org_venue_facility",
         "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
+      },
+      {
+        "tablename": "league_practices",
+        "indexname": "league_practices_division_id_idx",
+        "indexdef": "CREATE INDEX league_practices_division_id_idx ON public.league_practices USING btree (division_id)"
       },
       {
         "tablename": "league_practices",
@@ -47454,6 +48175,11 @@
         "indexdef": "CREATE INDEX league_registrations_status_idx ON public.league_registrations USING btree (season_id, status)"
       },
       {
+        "tablename": "league_registrations",
+        "indexname": "league_registrations_team_id_idx",
+        "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+      },
+      {
         "tablename": "league_seasons",
         "indexname": "league_seasons_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"
@@ -47465,8 +48191,18 @@
       },
       {
         "tablename": "league_teams",
+        "indexname": "league_teams_division_id_idx",
+        "indexdef": "CREATE INDEX league_teams_division_id_idx ON public.league_teams USING btree (division_id)"
+      },
+      {
+        "tablename": "league_teams",
         "indexname": "league_teams_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_teams_pkey ON public.league_teams USING btree (id)"
+      },
+      {
+        "tablename": "league_teams",
+        "indexname": "league_teams_season_id_idx",
+        "indexdef": "CREATE INDEX league_teams_season_id_idx ON public.league_teams USING btree (season_id)"
       },
       {
         "tablename": "no_login_rate_limits",
@@ -47477,6 +48213,11 @@
         "tablename": "no_login_rate_limits",
         "indexname": "no_login_rate_limits_window_idx",
         "indexdef": "CREATE INDEX no_login_rate_limits_window_idx ON public.no_login_rate_limits USING btree (window_started_at)"
+      },
+      {
+        "tablename": "notification_preferences",
+        "indexname": "notification_preferences_org_id_idx",
+        "indexdef": "CREATE INDEX notification_preferences_org_id_idx ON public.notification_preferences USING btree (org_id)"
       },
       {
         "tablename": "notification_preferences",
@@ -47515,6 +48256,16 @@
       },
       {
         "tablename": "org_budget_lines",
+        "indexname": "org_budget_lines_category_id_idx",
+        "indexdef": "CREATE INDEX org_budget_lines_category_id_idx ON public.org_budget_lines USING btree (category_id)"
+      },
+      {
+        "tablename": "org_budget_lines",
+        "indexname": "org_budget_lines_item_id_idx",
+        "indexdef": "CREATE INDEX org_budget_lines_item_id_idx ON public.org_budget_lines USING btree (item_id)"
+      },
+      {
+        "tablename": "org_budget_lines",
         "indexname": "org_budget_lines_org_year_idx",
         "indexdef": "CREATE INDEX org_budget_lines_org_year_idx ON public.org_budget_lines USING btree (org_id, season_year)"
       },
@@ -47545,6 +48296,11 @@
       },
       {
         "tablename": "org_internal_notes",
+        "indexname": "org_internal_notes_org_id_idx",
+        "indexdef": "CREATE INDEX org_internal_notes_org_id_idx ON public.org_internal_notes USING btree (org_id)"
+      },
+      {
+        "tablename": "org_internal_notes",
         "indexname": "org_internal_notes_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_internal_notes_pkey ON public.org_internal_notes USING btree (id)"
       },
@@ -47552,6 +48308,11 @@
         "tablename": "org_member_rep_group_scopes",
         "indexname": "idx_org_member_rep_group_scopes_member",
         "indexdef": "CREATE INDEX idx_org_member_rep_group_scopes_member ON public.org_member_rep_group_scopes USING btree (member_id)"
+      },
+      {
+        "tablename": "org_member_rep_group_scopes",
+        "indexname": "org_member_rep_group_scopes_group_id_idx",
+        "indexdef": "CREATE INDEX org_member_rep_group_scopes_group_id_idx ON public.org_member_rep_group_scopes USING btree (group_id)"
       },
       {
         "tablename": "org_member_rep_group_scopes",
@@ -47809,6 +48570,11 @@
         "indexdef": "CREATE UNIQUE INDEX platform_catalog_change_requests_pkey ON public.platform_catalog_change_requests USING btree (id)"
       },
       {
+        "tablename": "platform_catalog_change_requests",
+        "indexname": "platform_catalog_change_requests_target_version_id_idx",
+        "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
+      },
+      {
         "tablename": "platform_email_templates",
         "indexname": "platform_email_templates_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -47905,6 +48671,11 @@
       },
       {
         "tablename": "pool_slots",
+        "indexname": "pool_slots_division_id_idx",
+        "indexdef": "CREATE INDEX pool_slots_division_id_idx ON public.pool_slots USING btree (division_id)"
+      },
+      {
+        "tablename": "pool_slots",
         "indexname": "pool_slots_pkey",
         "indexdef": "CREATE UNIQUE INDEX pool_slots_pkey ON public.pool_slots USING btree (id)"
       },
@@ -47912,6 +48683,11 @@
         "tablename": "pool_slots",
         "indexname": "pool_slots_pool_id_slot_number_key",
         "indexdef": "CREATE UNIQUE INDEX pool_slots_pool_id_slot_number_key ON public.pool_slots USING btree (pool_id, slot_number)"
+      },
+      {
+        "tablename": "pools",
+        "indexname": "pools_division_id_idx",
+        "indexdef": "CREATE INDEX pools_division_id_idx ON public.pools USING btree (division_id)"
       },
       {
         "tablename": "pools",
@@ -47932,6 +48708,11 @@
         "tablename": "push_subscriptions",
         "indexname": "push_subscriptions_user_idx",
         "indexdef": "CREATE INDEX push_subscriptions_user_idx ON public.push_subscriptions USING btree (user_id)"
+      },
+      {
+        "tablename": "rep_allocation_installments",
+        "indexname": "rep_allocation_installments_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_allocation_installments_accounting_entry_id_idx ON public.rep_allocation_installments USING btree (accounting_entry_id)"
       },
       {
         "tablename": "rep_allocation_installments",
@@ -47960,8 +48741,28 @@
       },
       {
         "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_budget_category_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_budget_category_idx ON public.rep_allocation_splits USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_budget_item_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_budget_item_idx ON public.rep_allocation_splits USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_org_id_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_org_id_idx ON public.rep_allocation_splits USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
         "indexname": "rep_allocation_splits_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_allocation_splits_pkey ON public.rep_allocation_splits USING btree (id)"
+      },
+      {
+        "tablename": "rep_allocation_splits",
+        "indexname": "rep_allocation_splits_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_allocation_splits_program_year_id_idx ON public.rep_allocation_splits USING btree (program_year_id)"
       },
       {
         "tablename": "rep_allocation_splits",
@@ -47970,8 +48771,28 @@
       },
       {
         "tablename": "rep_budget_lines",
+        "indexname": "rep_budget_lines_category_id_idx",
+        "indexdef": "CREATE INDEX rep_budget_lines_category_id_idx ON public.rep_budget_lines USING btree (category_id)"
+      },
+      {
+        "tablename": "rep_budget_lines",
+        "indexname": "rep_budget_lines_item_id_idx",
+        "indexdef": "CREATE INDEX rep_budget_lines_item_id_idx ON public.rep_budget_lines USING btree (item_id)"
+      },
+      {
+        "tablename": "rep_budget_lines",
+        "indexname": "rep_budget_lines_org_id_idx",
+        "indexdef": "CREATE INDEX rep_budget_lines_org_id_idx ON public.rep_budget_lines USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_budget_lines",
         "indexname": "rep_budget_lines_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_budget_lines_pkey ON public.rep_budget_lines USING btree (id)"
+      },
+      {
+        "tablename": "rep_budget_lines",
+        "indexname": "rep_budget_lines_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_budget_lines_program_year_id_idx ON public.rep_budget_lines USING btree (program_year_id)"
       },
       {
         "tablename": "rep_budget_lines",
@@ -47995,8 +48816,18 @@
       },
       {
         "tablename": "rep_cost_allocations",
+        "indexname": "rep_cost_allocations_org_id_idx",
+        "indexdef": "CREATE INDEX rep_cost_allocations_org_id_idx ON public.rep_cost_allocations USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_cost_allocations",
         "indexname": "rep_cost_allocations_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_cost_allocations_pkey ON public.rep_cost_allocations USING btree (id)"
+      },
+      {
+        "tablename": "rep_cost_allocations",
+        "indexname": "rep_cost_allocations_source_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_cost_allocations_source_entry_id_idx ON public.rep_cost_allocations USING btree (source_entry_id)"
       },
       {
         "tablename": "rep_document_templates",
@@ -48009,9 +48840,39 @@
         "indexdef": "CREATE UNIQUE INDEX rep_document_templates_pkey ON public.rep_document_templates USING btree (id)"
       },
       {
+        "tablename": "rep_document_templates",
+        "indexname": "rep_document_templates_team_id_idx",
+        "indexdef": "CREATE INDEX rep_document_templates_team_id_idx ON public.rep_document_templates USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_dues_credits",
+        "indexname": "rep_dues_credits_expense_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_credits_expense_id_idx ON public.rep_dues_credits USING btree (expense_id)"
+      },
+      {
+        "tablename": "rep_dues_credits",
+        "indexname": "rep_dues_credits_fundraiser_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_credits_fundraiser_entry_id_idx ON public.rep_dues_credits USING btree (fundraiser_entry_id)"
+      },
+      {
+        "tablename": "rep_dues_credits",
+        "indexname": "rep_dues_credits_payment_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_credits_payment_id_idx ON public.rep_dues_credits USING btree (payment_id)"
+      },
+      {
         "tablename": "rep_dues_credits",
         "indexname": "rep_dues_credits_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_dues_credits_pkey ON public.rep_dues_credits USING btree (id)"
+      },
+      {
+        "tablename": "rep_dues_credits",
+        "indexname": "rep_dues_credits_player_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_credits_player_id_idx ON public.rep_dues_credits USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_dues_credits",
+        "indexname": "rep_dues_credits_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_credits_program_year_id_idx ON public.rep_dues_credits USING btree (program_year_id)"
       },
       {
         "tablename": "rep_dues_payments",
@@ -48020,8 +48881,28 @@
       },
       {
         "tablename": "rep_dues_payments",
+        "indexname": "rep_dues_payments_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payments_accounting_entry_id_idx ON public.rep_dues_payments USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_dues_payments",
+        "indexname": "rep_dues_payments_org_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payments_org_id_idx ON public.rep_dues_payments USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_dues_payments",
         "indexname": "rep_dues_payments_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_dues_payments_pkey ON public.rep_dues_payments USING btree (id)"
+      },
+      {
+        "tablename": "rep_dues_payments",
+        "indexname": "rep_dues_payments_player_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payments_player_id_idx ON public.rep_dues_payments USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_dues_payments",
+        "indexname": "rep_dues_payments_team_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payments_team_id_idx ON public.rep_dues_payments USING btree (team_id)"
       },
       {
         "tablename": "rep_dues_payouts",
@@ -48030,8 +48911,38 @@
       },
       {
         "tablename": "rep_dues_payouts",
+        "indexname": "rep_dues_payouts_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payouts_accounting_entry_id_idx ON public.rep_dues_payouts USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
+        "indexname": "rep_dues_payouts_org_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payouts_org_id_idx ON public.rep_dues_payouts USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
         "indexname": "rep_dues_payouts_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_dues_payouts_pkey ON public.rep_dues_payouts USING btree (id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
+        "indexname": "rep_dues_payouts_player_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payouts_player_id_idx ON public.rep_dues_payouts USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_dues_payouts",
+        "indexname": "rep_dues_payouts_team_id_idx",
+        "indexdef": "CREATE INDEX rep_dues_payouts_team_id_idx ON public.rep_dues_payouts USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_fundraiser_entries",
+        "indexname": "rep_fundraiser_entries_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraiser_entries_accounting_entry_id_idx ON public.rep_fundraiser_entries USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_fundraiser_entries",
+        "indexname": "rep_fundraiser_entries_credit_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraiser_entries_credit_id_idx ON public.rep_fundraiser_entries USING btree (credit_id)"
       },
       {
         "tablename": "rep_fundraiser_entries",
@@ -48045,6 +48956,11 @@
       },
       {
         "tablename": "rep_fundraiser_entries",
+        "indexname": "rep_fundraiser_entries_org_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraiser_entries_org_id_idx ON public.rep_fundraiser_entries USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_fundraiser_entries",
         "indexname": "rep_fundraiser_entries_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_pkey ON public.rep_fundraiser_entries USING btree (id)"
       },
@@ -48054,9 +48970,24 @@
         "indexdef": "CREATE INDEX rep_fundraiser_entries_player_idx ON public.rep_fundraiser_entries USING btree (player_id)"
       },
       {
+        "tablename": "rep_fundraiser_entries",
+        "indexname": "rep_fundraiser_entries_team_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraiser_entries_team_id_idx ON public.rep_fundraiser_entries USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_fundraisers",
+        "indexname": "rep_fundraisers_org_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraisers_org_id_idx ON public.rep_fundraisers USING btree (org_id)"
+      },
+      {
         "tablename": "rep_fundraisers",
         "indexname": "rep_fundraisers_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_fundraisers_pkey ON public.rep_fundraisers USING btree (id)"
+      },
+      {
+        "tablename": "rep_fundraisers",
+        "indexname": "rep_fundraisers_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_fundraisers_program_year_id_idx ON public.rep_fundraisers USING btree (program_year_id)"
       },
       {
         "tablename": "rep_fundraisers",
@@ -48150,6 +49081,11 @@
       },
       {
         "tablename": "rep_player_documents",
+        "indexname": "rep_player_documents_org_id_idx",
+        "indexdef": "CREATE INDEX rep_player_documents_org_id_idx ON public.rep_player_documents USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_documents",
         "indexname": "rep_player_documents_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_player_documents_pkey ON public.rep_player_documents USING btree (id)"
       },
@@ -48162,6 +49098,16 @@
         "tablename": "rep_player_documents",
         "indexname": "rep_player_documents_team_idx",
         "indexdef": "CREATE INDEX rep_player_documents_team_idx ON public.rep_player_documents USING btree (team_id, org_id)"
+      },
+      {
+        "tablename": "rep_player_documents",
+        "indexname": "rep_player_documents_template_id_idx",
+        "indexdef": "CREATE INDEX rep_player_documents_template_id_idx ON public.rep_player_documents USING btree (template_id)"
+      },
+      {
+        "tablename": "rep_player_dues_installments",
+        "indexname": "rep_player_dues_installments_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_installments_accounting_entry_id_idx ON public.rep_player_dues_installments USING btree (accounting_entry_id)"
       },
       {
         "tablename": "rep_player_dues_installments",
@@ -48180,6 +49126,11 @@
       },
       {
         "tablename": "rep_player_dues_installments",
+        "indexname": "rep_player_dues_installments_player_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_installments_player_id_idx ON public.rep_player_dues_installments USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_player_dues_installments",
         "indexname": "rep_player_dues_installments_schedule_id_installment_number_key",
         "indexdef": "CREATE UNIQUE INDEX rep_player_dues_installments_schedule_id_installment_number_key ON public.rep_player_dues_installments USING btree (schedule_id, installment_number)"
       },
@@ -48190,13 +49141,33 @@
       },
       {
         "tablename": "rep_player_dues_schedules",
+        "indexname": "rep_player_dues_schedules_budget_line_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_schedules_budget_line_id_idx ON public.rep_player_dues_schedules USING btree (budget_line_id)"
+      },
+      {
+        "tablename": "rep_player_dues_schedules",
+        "indexname": "rep_player_dues_schedules_org_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_schedules_org_id_idx ON public.rep_player_dues_schedules USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_dues_schedules",
         "indexname": "rep_player_dues_schedules_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_player_dues_schedules_pkey ON public.rep_player_dues_schedules USING btree (id)"
       },
       {
         "tablename": "rep_player_dues_schedules",
+        "indexname": "rep_player_dues_schedules_player_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_schedules_player_id_idx ON public.rep_player_dues_schedules USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_player_dues_schedules",
         "indexname": "rep_player_dues_schedules_program_year_id_player_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_player_dues_schedules_program_year_id_player_id_key ON public.rep_player_dues_schedules USING btree (program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_player_dues_schedules",
+        "indexname": "rep_player_dues_schedules_team_id_idx",
+        "indexdef": "CREATE INDEX rep_player_dues_schedules_team_id_idx ON public.rep_player_dues_schedules USING btree (team_id)"
       },
       {
         "tablename": "rep_player_measurables",
@@ -48235,6 +49206,11 @@
       },
       {
         "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_org_id_idx",
+        "indexdef": "CREATE INDEX rep_player_tryout_baselines_org_id_idx ON public.rep_player_tryout_baselines USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_tryout_baselines",
         "indexname": "rep_player_tryout_baselines_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_player_tryout_baselines_pkey ON public.rep_player_tryout_baselines USING btree (id)"
       },
@@ -48250,8 +49226,18 @@
       },
       {
         "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_tryout_registration_id_idx",
+        "indexdef": "CREATE INDEX rep_player_tryout_baselines_tryout_registration_id_idx ON public.rep_player_tryout_baselines USING btree (tryout_registration_id)"
+      },
+      {
+        "tablename": "rep_player_tryout_baselines",
         "indexname": "rep_player_tryout_baselines_year_idx",
         "indexdef": "CREATE INDEX rep_player_tryout_baselines_year_idx ON public.rep_player_tryout_baselines USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_program_years",
+        "indexname": "rep_program_years_org_id_idx",
+        "indexdef": "CREATE INDEX rep_program_years_org_id_idx ON public.rep_program_years USING btree (org_id)"
       },
       {
         "tablename": "rep_program_years",
@@ -48275,6 +49261,11 @@
       },
       {
         "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_org_id_idx",
+        "indexdef": "CREATE INDEX rep_roster_players_org_id_idx ON public.rep_roster_players USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_roster_players",
         "indexname": "rep_roster_players_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_roster_players_pkey ON public.rep_roster_players USING btree (id)"
       },
@@ -48282,6 +49273,16 @@
         "tablename": "rep_roster_players",
         "indexname": "rep_roster_players_src_basic_player_uq",
         "indexdef": "CREATE UNIQUE INDEX rep_roster_players_src_basic_player_uq ON public.rep_roster_players USING btree (program_year_id, source_basic_player_id) WHERE (source_basic_player_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_team_id_idx",
+        "indexdef": "CREATE INDEX rep_roster_players_team_id_idx ON public.rep_roster_players USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_tryout_registration_id_idx",
+        "indexdef": "CREATE INDEX rep_roster_players_tryout_registration_id_idx ON public.rep_roster_players USING btree (tryout_registration_id)"
       },
       {
         "tablename": "rep_roster_players",
@@ -48295,13 +49296,28 @@
       },
       {
         "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_org_id_idx",
+        "indexdef": "CREATE INDEX rep_season_refund_adjustments_org_id_idx ON public.rep_season_refund_adjustments USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
         "indexname": "rep_season_refund_adjustments_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_pkey ON public.rep_season_refund_adjustments USING btree (id)"
       },
       {
         "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_player_id_idx",
+        "indexdef": "CREATE INDEX rep_season_refund_adjustments_player_id_idx ON public.rep_season_refund_adjustments USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
         "indexname": "rep_season_refund_adjustments_program_year_id_player_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_season_refund_adjustments_program_year_id_player_id_key ON public.rep_season_refund_adjustments USING btree (program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_season_refund_adjustments",
+        "indexname": "rep_season_refund_adjustments_team_id_idx",
+        "indexdef": "CREATE INDEX rep_season_refund_adjustments_team_id_idx ON public.rep_season_refund_adjustments USING btree (team_id)"
       },
       {
         "tablename": "rep_season_surplus",
@@ -48315,8 +49331,18 @@
       },
       {
         "tablename": "rep_team_announcements",
+        "indexname": "rep_team_announcements_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_announcements_org_id_idx ON public.rep_team_announcements USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_announcements",
         "indexname": "rep_team_announcements_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_announcements_pkey ON public.rep_team_announcements USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_announcements",
+        "indexname": "rep_team_announcements_team_id_idx",
+        "indexdef": "CREATE INDEX rep_team_announcements_team_id_idx ON public.rep_team_announcements USING btree (team_id)"
       },
       {
         "tablename": "rep_team_announcements",
@@ -48362,6 +49388,11 @@
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_program_year_id_user_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_program_year_id_user_id_key ON public.rep_team_coaches USING btree (program_year_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_coaches",
+        "indexname": "rep_team_coaches_team_id_idx",
+        "indexdef": "CREATE INDEX rep_team_coaches_team_id_idx ON public.rep_team_coaches USING btree (team_id)"
       },
       {
         "tablename": "rep_team_coaches",
@@ -48445,6 +49476,11 @@
       },
       {
         "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_org_id_idx ON public.rep_team_event_attendance USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_event_attendance_pkey ON public.rep_team_event_attendance USING btree (id)"
       },
@@ -48452,6 +49488,11 @@
         "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_player_idx",
         "indexdef": "CREATE INDEX rep_team_event_attendance_player_idx ON public.rep_team_event_attendance USING btree (player_id, event_id)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_program_year_id_idx ON public.rep_team_event_attendance USING btree (program_year_id)"
       },
       {
         "tablename": "rep_team_event_attendance",
@@ -48475,6 +49516,11 @@
       },
       {
         "tablename": "rep_team_events",
+        "indexname": "rep_team_events_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_events_org_id_idx ON public.rep_team_events USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_events",
         "indexname": "rep_team_events_parent_idx",
         "indexdef": "CREATE INDEX rep_team_events_parent_idx ON public.rep_team_events USING btree (parent_event_id)"
       },
@@ -48485,6 +49531,11 @@
       },
       {
         "tablename": "rep_team_events",
+        "indexname": "rep_team_events_recurrence_parent_id_idx",
+        "indexdef": "CREATE INDEX rep_team_events_recurrence_parent_id_idx ON public.rep_team_events USING btree (recurrence_parent_id)"
+      },
+      {
+        "tablename": "rep_team_events",
         "indexname": "rep_team_events_src_basic_event_uq",
         "indexdef": "CREATE UNIQUE INDEX rep_team_events_src_basic_event_uq ON public.rep_team_events USING btree (program_year_id, source_basic_event_id) WHERE (source_basic_event_id IS NOT NULL)"
       },
@@ -48492,6 +49543,11 @@
         "tablename": "rep_team_events",
         "indexname": "rep_team_events_src_tournament_game_uq",
         "indexdef": "CREATE UNIQUE INDEX rep_team_events_src_tournament_game_uq ON public.rep_team_events USING btree (program_year_id, source_tournament_game_id) WHERE (source_tournament_game_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
+        "indexname": "rep_team_events_team_id_idx",
+        "indexdef": "CREATE INDEX rep_team_events_team_id_idx ON public.rep_team_events USING btree (team_id)"
       },
       {
         "tablename": "rep_team_events",
@@ -48510,13 +49566,73 @@
       },
       {
         "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_balance_entry",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_balance_entry ON public.rep_team_expenses USING btree (balance_entry_id) WHERE (balance_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_budget_item",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_budget_item ON public.rep_team_expenses USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "idx_rep_team_expenses_deposit_entry",
+        "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_accounting_entry_id_idx ON public.rep_team_expenses USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_budget_category_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_budget_category_id_idx ON public.rep_team_expenses USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_event_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_event_id_idx ON public.rep_team_expenses USING btree (event_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_org_id_idx ON public.rep_team_expenses USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_paid_by_player_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_paid_by_player_id_idx ON public.rep_team_expenses USING btree (paid_by_player_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_payee_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_payee_id_idx ON public.rep_team_expenses USING btree (payee_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
         "indexname": "rep_team_expenses_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_expenses_pkey ON public.rep_team_expenses USING btree (id)"
       },
       {
         "tablename": "rep_team_expenses",
+        "indexname": "rep_team_expenses_team_id_idx",
+        "indexdef": "CREATE INDEX rep_team_expenses_team_id_idx ON public.rep_team_expenses USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_team_expenses",
         "indexname": "rep_team_expenses_year_idx",
         "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_fundraiser_tags",
+        "indexname": "rep_team_fundraiser_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_fundraiser_tags_pkey ON public.rep_team_fundraiser_tags USING btree (fundraiser_id, tag_id)"
+      },
+      {
+        "tablename": "rep_team_fundraiser_tags",
+        "indexname": "rep_team_fundraiser_tags_tag_idx",
+        "indexdef": "CREATE INDEX rep_team_fundraiser_tags_tag_idx ON public.rep_team_fundraiser_tags USING btree (tag_id)"
       },
       {
         "tablename": "rep_team_game_moments",
@@ -48530,8 +49646,28 @@
       },
       {
         "tablename": "rep_team_game_moments",
+        "indexname": "rep_team_game_moments_event_id_idx",
+        "indexdef": "CREATE INDEX rep_team_game_moments_event_id_idx ON public.rep_team_game_moments USING btree (event_id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
+        "indexname": "rep_team_game_moments_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_game_moments_org_id_idx ON public.rep_team_game_moments USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
         "indexname": "rep_team_game_moments_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_game_moments_pkey ON public.rep_team_game_moments USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
+        "indexname": "rep_team_game_moments_player_id_idx",
+        "indexdef": "CREATE INDEX rep_team_game_moments_player_id_idx ON public.rep_team_game_moments USING btree (player_id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
+        "indexname": "rep_team_game_moments_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_game_moments_program_year_id_idx ON public.rep_team_game_moments USING btree (program_year_id)"
       },
       {
         "tablename": "rep_team_groups",
@@ -48550,8 +49686,18 @@
       },
       {
         "tablename": "rep_team_import_events",
+        "indexname": "rep_team_import_events_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_import_events_org_id_idx ON public.rep_team_import_events USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_import_events",
         "indexname": "rep_team_import_events_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_import_events_pkey ON public.rep_team_import_events USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_import_events",
+        "indexname": "rep_team_import_events_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_import_events_program_year_id_idx ON public.rep_team_import_events USING btree (program_year_id)"
       },
       {
         "tablename": "rep_team_lineup_entries",
@@ -48595,6 +49741,11 @@
       },
       {
         "tablename": "rep_team_lineup_templates",
+        "indexname": "rep_team_lineup_templates_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_lineup_templates_program_year_id_idx ON public.rep_team_lineup_templates USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_lineup_templates",
         "indexname": "rep_team_lineup_templates_team_idx",
         "indexdef": "CREATE INDEX rep_team_lineup_templates_team_idx ON public.rep_team_lineup_templates USING btree (team_id, program_year_id)"
       },
@@ -48620,6 +49771,11 @@
       },
       {
         "tablename": "rep_team_lineups",
+        "indexname": "rep_team_lineups_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_lineups_program_year_id_idx ON public.rep_team_lineups USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_lineups",
         "indexname": "rep_team_lineups_team_idx",
         "indexdef": "CREATE INDEX rep_team_lineups_team_idx ON public.rep_team_lineups USING btree (team_id, program_year_id)"
       },
@@ -48642,6 +49798,41 @@
         "tablename": "rep_team_measurable_types",
         "indexname": "rep_team_measurable_types_team_idx",
         "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "idx_rep_team_money_in_item",
+        "indexdef": "CREATE INDEX idx_rep_team_money_in_item ON public.rep_team_money_in USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "idx_rep_team_money_in_year",
+        "indexdef": "CREATE INDEX idx_rep_team_money_in_year ON public.rep_team_money_in USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_team_money_in_accounting_entry_id_idx ON public.rep_team_money_in USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_budget_category_id_idx",
+        "indexdef": "CREATE INDEX rep_team_money_in_budget_category_id_idx ON public.rep_team_money_in USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_money_in_org_id_idx ON public.rep_team_money_in USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_money_in_pkey ON public.rep_team_money_in USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_money_in",
+        "indexname": "rep_team_money_in_team_id_idx",
+        "indexdef": "CREATE INDEX rep_team_money_in_team_id_idx ON public.rep_team_money_in USING btree (team_id)"
       },
       {
         "tablename": "rep_team_opponent_aliases",
@@ -48680,6 +49871,11 @@
       },
       {
         "tablename": "rep_team_opponent_observations",
+        "indexname": "rep_team_opponent_observations_org_id_idx",
+        "indexdef": "CREATE INDEX rep_team_opponent_observations_org_id_idx ON public.rep_team_opponent_observations USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_observations",
         "indexname": "rep_team_opponent_observations_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_observations_pkey ON public.rep_team_opponent_observations USING btree (id)"
       },
@@ -48705,6 +49901,26 @@
       },
       {
         "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_accounting_entry_id_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_accounting_entry_id_idx ON public.rep_team_payment_requests USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_budget_category_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_budget_category_idx ON public.rep_team_payment_requests USING btree (budget_category_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_budget_item_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_budget_item_idx ON public.rep_team_payment_requests USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_budget_line_id_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_budget_line_id_idx ON public.rep_team_payment_requests USING btree (budget_line_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_org_status_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_org_status_idx ON public.rep_team_payment_requests USING btree (org_id, status)"
       },
@@ -48712,6 +49928,16 @@
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_payment_requests_pkey ON public.rep_team_payment_requests USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_program_year_id_idx ON public.rep_team_payment_requests USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_program_year_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_program_year_idx ON public.rep_team_payment_requests USING btree (team_id, program_year_id, status)"
       },
       {
         "tablename": "rep_team_payment_requests",
@@ -48747,6 +49973,26 @@
         "tablename": "rep_team_plan_templates",
         "indexname": "rep_team_plan_templates_team_idx",
         "indexdef": "CREATE INDEX rep_team_plan_templates_team_idx ON public.rep_team_plan_templates USING btree (team_id, is_active)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_org_user_idx",
+        "indexdef": "CREATE INDEX rep_team_staff_memberships_org_user_idx ON public.rep_team_staff_memberships USING btree (org_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_staff_memberships_pkey ON public.rep_team_staff_memberships USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_team_idx",
+        "indexdef": "CREATE INDEX rep_team_staff_memberships_team_idx ON public.rep_team_staff_memberships USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_team_staff_memberships",
+        "indexname": "rep_team_staff_memberships_team_user_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_staff_memberships_team_user_key ON public.rep_team_staff_memberships USING btree (team_id, user_id)"
       },
       {
         "tablename": "rep_team_tags",
@@ -48815,6 +50061,11 @@
       },
       {
         "tablename": "rep_teams",
+        "indexname": "rep_teams_group_id_idx",
+        "indexdef": "CREATE INDEX rep_teams_group_id_idx ON public.rep_teams USING btree (group_id)"
+      },
+      {
+        "tablename": "rep_teams",
         "indexname": "rep_teams_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX rep_teams_org_id_slug_key ON public.rep_teams USING btree (org_id, slug)"
       },
@@ -48832,6 +50083,11 @@
         "tablename": "rep_tryout_evaluator_sessions",
         "indexname": "rep_tryout_evaluator_sessions_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_tryout_evaluator_sessions_pkey ON public.rep_tryout_evaluator_sessions USING btree (id)"
+      },
+      {
+        "tablename": "rep_tryout_evaluator_sessions",
+        "indexname": "rep_tryout_evaluator_sessions_team_id_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_evaluator_sessions_team_id_program_year_id_idx ON public.rep_tryout_evaluator_sessions USING btree (team_id, program_year_id)"
       },
       {
         "tablename": "rep_tryout_evaluator_sessions",
@@ -48865,6 +50121,11 @@
       },
       {
         "tablename": "rep_tryout_registrations",
+        "indexname": "rep_tryout_registrations_org_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_registrations_org_id_idx ON public.rep_tryout_registrations USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_tryout_registrations",
         "indexname": "rep_tryout_registrations_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_pkey ON public.rep_tryout_registrations USING btree (id)"
       },
@@ -48872,6 +50133,11 @@
         "tablename": "rep_tryout_registrations",
         "indexname": "rep_tryout_registrations_status_idx",
         "indexdef": "CREATE INDEX rep_tryout_registrations_status_idx ON public.rep_tryout_registrations USING btree (program_year_id, status)"
+      },
+      {
+        "tablename": "rep_tryout_registrations",
+        "indexname": "rep_tryout_registrations_team_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_registrations_team_id_idx ON public.rep_tryout_registrations USING btree (team_id)"
       },
       {
         "tablename": "rep_tryout_registrations",
@@ -48887,6 +50153,11 @@
         "tablename": "rep_tryout_rubrics",
         "indexname": "rep_tryout_rubrics_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_tryout_rubrics_pkey ON public.rep_tryout_rubrics USING btree (id)"
+      },
+      {
+        "tablename": "rep_tryout_rubrics",
+        "indexname": "rep_tryout_rubrics_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_rubrics_program_year_id_idx ON public.rep_tryout_rubrics USING btree (program_year_id)"
       },
       {
         "tablename": "rep_tryout_rubrics",
@@ -48917,6 +50188,11 @@
         "tablename": "rep_tryout_scores",
         "indexname": "rep_tryout_scores_reg_idx",
         "indexdef": "CREATE INDEX rep_tryout_scores_reg_idx ON public.rep_tryout_scores USING btree (registration_id)"
+      },
+      {
+        "tablename": "rep_tryout_scores",
+        "indexname": "rep_tryout_scores_team_id_program_year_id_idx",
+        "indexdef": "CREATE INDEX rep_tryout_scores_team_id_program_year_id_idx ON public.rep_tryout_scores USING btree (team_id, program_year_id)"
       },
       {
         "tablename": "rep_tryout_scores",
@@ -49004,14 +50280,29 @@
         "indexdef": "CREATE UNIQUE INDEX resources_pkey ON public.resources USING btree (id)"
       },
       {
+        "tablename": "resources",
+        "indexname": "resources_tournament_id_idx",
+        "indexdef": "CREATE INDEX resources_tournament_id_idx ON public.resources USING btree (tournament_id)"
+      },
+      {
         "tablename": "rule_items",
         "indexname": "rule_items_pkey",
         "indexdef": "CREATE UNIQUE INDEX rule_items_pkey ON public.rule_items USING btree (id)"
       },
       {
+        "tablename": "rule_items",
+        "indexname": "rule_items_rule_id_idx",
+        "indexdef": "CREATE INDEX rule_items_rule_id_idx ON public.rule_items USING btree (rule_id)"
+      },
+      {
         "tablename": "rules",
         "indexname": "rules_pkey",
         "indexdef": "CREATE UNIQUE INDEX rules_pkey ON public.rules USING btree (id)"
+      },
+      {
+        "tablename": "rules",
+        "indexname": "rules_tournament_id_idx",
+        "indexdef": "CREATE INDEX rules_tournament_id_idx ON public.rules USING btree (tournament_id)"
       },
       {
         "tablename": "schedule_facility_lanes",
@@ -49070,6 +50361,11 @@
       },
       {
         "tablename": "team_entitlements",
+        "indexname": "team_entitlements_rep_team_id_idx",
+        "indexdef": "CREATE INDEX team_entitlements_rep_team_id_idx ON public.team_entitlements USING btree (rep_team_id)"
+      },
+      {
+        "tablename": "team_entitlements",
         "indexname": "team_entitlements_workspace_idx",
         "indexdef": "CREATE INDEX team_entitlements_workspace_idx ON public.team_entitlements USING btree (team_workspace_id, status)"
       },
@@ -49090,6 +50386,11 @@
       },
       {
         "tablename": "team_org_links",
+        "indexname": "team_org_links_rep_team_id_idx",
+        "indexdef": "CREATE INDEX team_org_links_rep_team_id_idx ON public.team_org_links USING btree (rep_team_id)"
+      },
+      {
+        "tablename": "team_org_links",
         "indexname": "team_org_links_workspace_idx",
         "indexdef": "CREATE INDEX team_org_links_workspace_idx ON public.team_org_links USING btree (team_workspace_id, status)"
       },
@@ -49105,6 +50406,11 @@
       },
       {
         "tablename": "team_workspace_claims",
+        "indexname": "team_workspace_claims_team_workspace_id_idx",
+        "indexdef": "CREATE INDEX team_workspace_claims_team_workspace_id_idx ON public.team_workspace_claims USING btree (team_workspace_id)"
+      },
+      {
+        "tablename": "team_workspace_claims",
         "indexname": "team_workspace_claims_token_hash_unique",
         "indexdef": "CREATE UNIQUE INDEX team_workspace_claims_token_hash_unique ON public.team_workspace_claims USING btree (claim_token_hash)"
       },
@@ -49115,8 +50421,18 @@
       },
       {
         "tablename": "team_workspaces",
+        "indexname": "team_workspaces_active_program_year_id_idx",
+        "indexdef": "CREATE INDEX team_workspaces_active_program_year_id_idx ON public.team_workspaces USING btree (active_program_year_id)"
+      },
+      {
+        "tablename": "team_workspaces",
         "indexname": "team_workspaces_basic_coach_team_idx",
         "indexdef": "CREATE INDEX team_workspaces_basic_coach_team_idx ON public.team_workspaces USING btree (basic_coach_team_id)"
+      },
+      {
+        "tablename": "team_workspaces",
+        "indexname": "team_workspaces_billing_owner_org_id_idx",
+        "indexdef": "CREATE INDEX team_workspaces_billing_owner_org_id_idx ON public.team_workspaces USING btree (billing_owner_org_id)"
       },
       {
         "tablename": "team_workspaces",
@@ -49155,8 +50471,23 @@
       },
       {
         "tablename": "teams",
+        "indexname": "teams_division_id_idx",
+        "indexdef": "CREATE INDEX teams_division_id_idx ON public.teams USING btree (division_id)"
+      },
+      {
+        "tablename": "teams",
         "indexname": "teams_pkey",
         "indexdef": "CREATE UNIQUE INDEX teams_pkey ON public.teams USING btree (id)"
+      },
+      {
+        "tablename": "teams",
+        "indexname": "teams_pool_id_idx",
+        "indexdef": "CREATE INDEX teams_pool_id_idx ON public.teams USING btree (pool_id)"
+      },
+      {
+        "tablename": "teams",
+        "indexname": "teams_tournament_id_idx",
+        "indexdef": "CREATE INDEX teams_tournament_id_idx ON public.teams USING btree (tournament_id)"
       },
       {
         "tablename": "tournament_archives",
@@ -49172,6 +50503,11 @@
         "tablename": "tournament_archives",
         "indexname": "tournament_archives_tournament_id_unique",
         "indexdef": "CREATE UNIQUE INDEX tournament_archives_tournament_id_unique ON public.tournament_archives USING btree (tournament_id) WHERE (tournament_id IS NOT NULL)"
+      },
+      {
+        "tablename": "tournament_archives",
+        "indexname": "tournament_archives_winner_team_id_idx",
+        "indexdef": "CREATE INDEX tournament_archives_winner_team_id_idx ON public.tournament_archives USING btree (winner_team_id)"
       },
       {
         "tablename": "tournament_notification_preferences",
@@ -49239,6 +50575,11 @@
         "indexdef": "CREATE UNIQUE INDEX tournament_roster_players_pkey ON public.tournament_roster_players USING btree (id)"
       },
       {
+        "tablename": "tournament_roster_players",
+        "indexname": "tournament_roster_players_source_player_id_idx",
+        "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
+      },
+      {
         "tablename": "tournaments",
         "indexname": "idx_tournaments_created_at",
         "indexdef": "CREATE INDEX idx_tournaments_created_at ON public.tournaments USING btree (created_at DESC)"
@@ -49247,6 +50588,11 @@
         "tablename": "tournaments",
         "indexname": "idx_tournaments_results_notified_at",
         "indexdef": "CREATE INDEX idx_tournaments_results_notified_at ON public.tournaments USING btree (results_notified_at DESC) WHERE (results_notified_at IS NOT NULL)"
+      },
+      {
+        "tablename": "tournaments",
+        "indexname": "tournaments_default_contact_member_id_idx",
+        "indexdef": "CREATE INDEX tournaments_default_contact_member_id_idx ON public.tournaments USING btree (default_contact_member_id)"
       },
       {
         "tablename": "tournaments",
@@ -49287,6 +50633,11 @@
         "tablename": "venue_facilities",
         "indexname": "venue_facilities_pkey",
         "indexdef": "CREATE UNIQUE INDEX venue_facilities_pkey ON public.venue_facilities USING btree (id)"
+      },
+      {
+        "tablename": "venue_facilities",
+        "indexname": "venue_facilities_source_org_facility_id_idx",
+        "indexdef": "CREATE INDEX venue_facilities_source_org_facility_id_idx ON public.venue_facilities USING btree (source_org_facility_id)"
       },
       {
         "tablename": "venue_facilities",
@@ -49533,6 +50884,12 @@
         "table_name": "budget_categories",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_items",
+        "detail": "budget_items_direction_check",
+        "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
       },
       {
         "kind": "RLS",
@@ -50360,7 +51717,7 @@
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_line_kind_check",
-        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text]))"
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
       },
       {
         "kind": "CHECK",
@@ -50491,8 +51848,20 @@
       {
         "kind": "CHECK",
         "table_name": "rep_fundraisers",
+        "detail": "rep_fundraisers_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['fundraiser'::text, 'sponsor'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_fundraisers",
         "detail": "rep_fundraisers_player_rebate_percent_check",
         "check_clause": "((player_rebate_percent >= (0)::numeric) AND (player_rebate_percent <= (100)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_fundraisers",
+        "detail": "rep_fundraisers_sponsor_status_check",
+        "check_clause": "(((kind = 'sponsor'::text) AND (sponsor_status = ANY (ARRAY['pledged'::text, 'received'::text]))) OR ((kind = 'fundraiser'::text) AND (sponsor_status IS NULL)))"
       },
       {
         "kind": "RLS",
@@ -50661,6 +52030,12 @@
         "table_name": "rep_program_years",
         "detail": "rep_program_years_credit_application_check",
         "check_clause": "(credit_application = ANY (ARRAY['last_first'::text, 'next_first'::text, 'keep_separate'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_program_years",
+        "detail": "rep_program_years_default_credit_check",
+        "check_clause": "((default_player_credit_percent >= (0)::numeric) AND (default_player_credit_percent <= (100)::numeric))"
       },
       {
         "kind": "CHECK",
@@ -50951,6 +52326,12 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "rep_team_fundraiser_tags",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "rep_team_game_moments",
         "detail": "rep_team_game_moments_body_len",
@@ -51071,6 +52452,30 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_entry_kind_check",
+        "check_clause": "(entry_kind = ANY (ARRAY['income'::text, 'money_back'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_money_in",
+        "detail": "rep_team_money_in_received_from_check",
+        "check_clause": "(received_from = ANY (ARRAY['club'::text, 'vendor'::text, 'sponsor'::text, 'family'::text, 'other'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_money_in",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "rep_team_opponent_aliases",
         "detail": "ENABLED",
@@ -51133,6 +52538,24 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_plan_templates",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_coach_role_check",
+        "check_clause": "(coach_role = ANY (ARRAY['head_coach'::text, 'assistant_coach'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_status_check",
+        "check_clause": "(status = ANY (ARRAY['active'::text, 'revoked'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_staff_memberships",
         "detail": "ENABLED",
         "check_clause": null
       },
