@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ListChecks, Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTryoutRubric, RepTryoutRubricCategory } from '@/lib/types';
+import type { SetupItemStatus } from './TryoutSetupChecklist';
 import styles from './TryoutDayCard.module.css';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
   /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
   canWrite?: boolean;
   onError?: (msg: string) => void;
+  /** Reports {done, summary} to the checklist row whenever the scorecard changes (2026-08-17). */
+  onStatus?: (s: SetupItemStatus) => void;
 }
 
 interface CatDraft { key?: string; label: string; weight: string; instructions: string }
@@ -24,7 +27,7 @@ const toDraft = (c: RepTryoutRubricCategory): CatDraft => ({
  *  guard can't drift from what openBuilder seeded (the one-mapping rule, Chunk A D4). */
 interface BuilderSnapshot { name: string; scaleMax: number; cats: CatDraft[] }
 
-export default function TryoutRubricCard({ apiBase, canWrite = true, onError }: Props) {
+export default function TryoutRubricCard({ apiBase, canWrite = true, onError, onStatus }: Props) {
   const [rubric, setRubric] = useState<RepTryoutRubric | null>(null);
   const [starter, setStarter] = useState<{ scaleMax: number; categories: RepTryoutRubricCategory[] } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,17 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError }: 
   }, [apiBase, fail]);
 
   useEffect(() => { load(); }, [load]);
+
+  const onStatusRef = useRef(onStatus);
+  useEffect(() => { onStatusRef.current = onStatus; }, [onStatus]);
+  useEffect(() => {
+    if (loading) return;
+    const n = rubric?.categories.length ?? 0;
+    onStatusRef.current?.({
+      done: n > 0,
+      summary: n > 0 ? `${n} categor${n === 1 ? 'y' : 'ies'} · scored 1–${rubric!.scaleMax}` : null,
+    });
+  }, [loading, rubric]);
 
   function openBuilder() {
     let seed: BuilderSnapshot;
@@ -132,15 +146,10 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError }: 
 
   const hasRubric = !!rubric && rubric.categories.length > 0;
 
+  // Row-body form (2026-08-17): the checklist row bar owns the title/status; this renders only
+  // the manager — the category list, its actions, and the builder modal.
   return (
-    <div className={styles.card}>
-      <div className={styles.head}>
-        <div>
-          <h3 className={styles.title}><ListChecks size={16} /> Evaluation scorecard</h3>
-          <p className={styles.subtitle}>What you rate players on at tryouts.</p>
-        </div>
-      </div>
-
+    <>
       {hasRubric ? (
         <>
           <div style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))', marginBottom: '0.6rem' }}>
@@ -231,6 +240,6 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError }: 
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

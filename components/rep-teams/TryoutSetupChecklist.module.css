@@ -1,0 +1,119 @@
+/* "Get set up" — Stage 1 as ONE checklist card (owner-approved mockup, 2026-08-17). Dark coaches
+   theme + lime accent, same glass recipe as its tryout siblings (TryoutDayCard.module.css). Rows
+   collapse to one-line receipts; bodies stay mounted (hidden via CSS) so managers keep loading. */
+
+.card {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  padding: 0.9rem 1.15rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.title {
+  font-size: 0.9rem; font-weight: 800; color: var(--white-90); margin: 0;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+/* Portal voice, not the admin data face (owner 2026-08-17): sans + tabular numerals — the same
+   treatment the scoreboard's figures use, never --font-data (that's tournament-admin idiom). */
+.progress {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  font-variant-numeric: tabular-nums;
+}
+.progress b { color: var(--logic-lime); font-weight: 700; }
+
+.row { border-bottom: 1px solid rgba(255,255,255,0.08); }
+.row:last-child { border-bottom: none; }
+
+.rowBar { display: flex; align-items: center; gap: 0.6rem; padding-right: 1.15rem; }
+.rowToggle {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: center; gap: 0.85rem; text-align: left;
+  padding: 0.85rem 0 0.85rem 1.15rem; min-height: 56px;
+  background: transparent; border: none; cursor: pointer; font-family: inherit;
+}
+.rowToggle:hover { background: rgba(255,255,255,0.02); }
+
+.tick {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px dashed rgba(255,255,255,0.25); color: transparent;
+}
+.tickDone { border: none; background: var(--logic-lime); color: var(--pitch-black); }
+
+.rowMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.05rem; }
+.rowTitle {
+  font-size: 0.88rem; font-weight: 700; color: var(--white-90);
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+.rowStatus { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
+.rowStatusFilled { font-size: 0.78rem; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
+
+/* No `composes` — the Turbopack non-transitivity trap; the two tags carry the recipe directly.
+   Sans micro-label, the .nextLabel idiom — mono/2px-radius tags are the ADMIN badge recipe. */
+.tagReq, .tagOpt {
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 0.12rem 0.45rem; border-radius: var(--radius-sm);
+}
+.tagReq { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.12); }
+.tagOpt { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
+
+.chev { flex: 0 0 auto; color: rgba(255,255,255,0.45); display: inline-flex; }
+
+/* Bodies stay MOUNTED while collapsed (the tab-panel pattern) so managers load + report status.
+   Actions live INSIDE the body (owner 2026-08-17) — a collapsed row is just a row. */
+.rowBody { padding: 0 1.15rem 1rem 3.2rem; }
+.rowBodyHidden { display: none; }
+@media (max-width: 560px) {
+  .rowBody { padding-left: 1.15rem; }
+}
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5, same pattern as TryoutDayCard) ──────────────
+   White card on paper, ink text tiers; the done-mark keeps a SOLID lime fill + dark ink (the
+   glare-legible pairing), and tag/tick lime-as-text/border darkens to olive automatically (E3).
+   Flat additive rules — never edit a dark declaration. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .card {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .head,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .row {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rowTitle {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rowStatus,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .progress,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .chev {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rowStatusFilled {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rowToggle:hover {
+  background: var(--home-paper);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tick {
+  border-color: var(--home-line-strong);
+}
+/* SOLID lime done-mark (glare floor) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tickDone {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+/* ⚠ --home-olive-soft / --home-fill, not hairline tokens — a tag ground is a SURFACE (2026-08-03). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagReq {
+  background: var(--home-olive-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagOpt {
+  background: var(--home-fill);
+  color: var(--home-dim);
+}

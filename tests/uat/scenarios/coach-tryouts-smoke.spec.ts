@@ -300,8 +300,12 @@ test('a dirty scorecard builder asks before discarding (naming the stake), a cle
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/tryouts`);
 
-  // The CARD's title is also "Evaluation scorecard" — assert on the MODAL's own heading class.
+  // The checklist ROW's title is also "Evaluation scorecard" — assert on the MODAL's own heading class.
   const builderTitle = main(page).locator('h3[class*="modalTitle"]', { hasText: /evaluation scorecard/i });
+
+  // 2026-08-17: Set up is ONE checklist card — a done row collapses to a receipt, so expand the
+  // scorecard row to reach its manager (the row toggle's name includes the title).
+  await main(page).getByRole('button', { name: /evaluation scorecard/i }).click();
 
   // Clean form → Cancel closes silently, no dialog.
   await main(page).getByRole('button', { name: /edit scorecard/i }).click();

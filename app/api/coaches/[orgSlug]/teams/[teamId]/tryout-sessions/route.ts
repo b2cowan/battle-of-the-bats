@@ -65,6 +65,19 @@ export const POST = withObservability(async (req: Request,
   if (!body.startsAt || isNaN(new Date(body.startsAt).getTime())) {
     return NextResponse.json({ errors: { startsAt: 'A valid date and time is required' } }, { status: 400 });
   }
+  // A session can't end before it starts (owner 2026-08-17 — one was saved reading 6:00–5:00 p.m.).
+  // Wall-clock strings compare as local dates; equal is rejected too (a zero-length session is a
+  // typo). ⚠ Parseability first (/review): NaN <= x is false, so an unparseable endsAt would sail
+  // past the order check and 500 at the insert instead of 400-ing here.
+  if (body.endsAt) {
+    const end = new Date(body.endsAt).getTime();
+    if (isNaN(end)) {
+      return NextResponse.json({ errors: { startsAt: 'A valid end time is required' } }, { status: 400 });
+    }
+    if (end <= new Date(body.startsAt).getTime()) {
+      return NextResponse.json({ errors: { startsAt: 'The end time must be after the start time' } }, { status: 400 });
+    }
+  }
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
   const session = await createRepTryoutSession({

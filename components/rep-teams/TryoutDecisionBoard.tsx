@@ -331,7 +331,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>
           <p className={styles.subtitle}>
             Offer, waitlist, or pass on each player — ranked by score.
-            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — reveal names on the Tryout Day card to decide by name.</>}
+            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — use Reveal names above to decide by name.</>}
           </p>
         </div>
       </div>

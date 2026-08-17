@@ -54,7 +54,7 @@ function computeNext(s: {
   if (!s.hasScorecard) return { label: 'Set up your scorecard', hint: 'Choose what you’ll rate players on before scoring starts.', anchor: 'setup' };
   if (s.candidateCount === 0) return { label: 'Check players in', hint: 'Players appear once they register or you check them in on tryout day.', anchor: 'tryout-day' };
   if (s.scoredCount === 0) return { label: 'Score your players', hint: 'Rate players yourself or invite helpers — the scoreboard ranks them live.', anchor: 'tryout-day' };
-  if (decided === 0 && s.blind) return { label: 'Reveal names to decide', hint: 'Names are hidden for fairness — reveal them on the Tryout Day card when you’re ready to make picks.', anchor: 'setup' };
+  if (decided === 0 && s.blind) return { label: 'Reveal names to decide', hint: 'Names are hidden for fairness — reveal them on the Decide tab when you’re ready to make picks.', anchor: 'decide' };
   if (decided === 0) return { label: 'Make your offers', hint: 'Offer, waitlist, or pass on each ranked player.', anchor: 'decide' };
   if (s.offered > 0) return { label: 'Add accepted players to your roster', hint: 'When a family accepts, confirm them onto your roster with their fees.', anchor: 'decide' };
   if (s.accepted > 0) return { label: 'View your team roster', hint: 'Your accepted players are on the roster, ready for lineups.', anchor: 'roster' };

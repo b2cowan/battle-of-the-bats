@@ -12,10 +12,16 @@ export interface TryoutOverview {
   steps: { setup: Step; tryoutDay: Step; decide: Step; build: Step };
   next: { label: string; hint: string; anchor: FlowAnchor } | null;
   stats: {
+    sessionCount: number; hasScorecard: boolean; evaluatorCount: number;
+    candidateCount: number; checkedInCount: number; scoredCount: number;
+    blind: boolean; locked: boolean;
     offered: number; waitlisted: number; declined: number; accepted: number;
     rosterFromTryouts: number;
   };
 }
+
+export const phaseToTab = (phase: TryoutOverview['phase']): TabKey =>
+  phase === 'tryout_day' ? 'tryout-day' : phase === 'setup' ? 'setup' : phase === 'decide' ? 'decide' : 'build';
 
 interface Props {
   overview: TryoutOverview | null;
@@ -31,11 +37,19 @@ const TABS: { tab: TabKey; step: keyof TryoutOverview['steps']; n: number; label
   { tab: 'build',      step: 'build',     n: 4, label: 'Build team' },
 ];
 
+const PHASE_STEP_N: Record<TryoutOverview['phase'], number> = { setup: 1, tryout_day: 2, decide: 3, build: 4 };
+
 export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTabChange }: Props) {
   const [howOpen, setHowOpen] = useState(false);
-  if (!overview) return null;
 
-  const next = overview.next;
+  // The shell (title + tabs) renders IMMEDIATELY, before the overview arrives — returning null
+  // here made the whole strip pop in late and shoved the page down (the incremental-load
+  // complaint, 2026-08-17). Progress marks and the guide's prompt fill in when the data lands.
+  const next = overview?.next ?? null;
+  const hereN = overview ? PHASE_STEP_N[overview.phase] : 0;
+  const num = (n: number) => (
+    <span className={`${styles.howNum} ${n === hereN ? styles.howNumHere : ''}`}>{n}</span>
+  );
 
   return (
     <>
@@ -47,35 +61,37 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
           </button>
         </div>
 
-        {/* Single next action */}
-        {next ? (
-          <div className={styles.next}>
-            <div className={styles.nextMain}>
-              <div className={styles.nextLabel}>Do this next</div>
-              <p className={styles.nextText}>{next.label}</p>
-              <p className={styles.nextHint}>{next.hint}</p>
-            </div>
-            {next.anchor === 'roster' ? (
-              <a className={styles.nextBtn} href={rosterHref}>{next.label} <ArrowRight size={15} /></a>
-            ) : (
-              <button type="button" className={styles.nextBtn} onClick={() => onTabChange(next.anchor as TabKey)}>
-                Take me there <ArrowRight size={15} />
-              </button>
-            )}
-          </div>
-        ) : (
-          <p className={styles.doneNote}>
-            You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
-          </p>
-        )}
-
-        {/* Re-openable "How tryouts work" overview — for the once-a-year coach */}
+        {/* Re-openable "How tryouts work" overview — for the once-a-year coach. The guide ends with
+            the single next action ("whole journey → your next move on it"), and the ring on the
+            current step's number ties that prompt back to the map. Collapsed, the header is one
+            quiet line — the tab bar's checks/current-dot carry progress on their own (2026-08-17). */}
         {howOpen && (
           <div className={styles.how}>
-            <div className={styles.howStep}><span className={styles.howNum}>1</span><span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
-            <div className={styles.howStep}><span className={styles.howNum}>2</span><span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
-            <div className={styles.howStep}><span className={styles.howNum}>3</span><span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Reach families yourself — or turn on family emails and offers land with a secure reply link.</span></div>
-            <div className={styles.howStep}><span className={styles.howNum}>4</span><span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
+            <div className={styles.howStep}>{num(1)}<span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
+            <div className={styles.howStep}>{num(2)}<span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
+            <div className={styles.howStep}>{num(3)}<span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Reach families yourself — or turn on family emails and offers land with a secure reply link.</span></div>
+            <div className={styles.howStep}>{num(4)}<span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
+
+            {next ? (
+              <div className={styles.next}>
+                <div className={styles.nextMain}>
+                  <div className={styles.nextLabel}>Do this next</div>
+                  <p className={styles.nextText}>{next.label}</p>
+                  <p className={styles.nextHint}>{next.hint}</p>
+                </div>
+                {next.anchor === 'roster' ? (
+                  <a className={styles.nextBtn} href={rosterHref}>{next.label} <ArrowRight size={15} /></a>
+                ) : (
+                  <button type="button" className={styles.nextBtn} onClick={() => onTabChange(next.anchor as TabKey)}>
+                    Take me there <ArrowRight size={15} />
+                  </button>
+                )}
+              </div>
+            ) : overview && (
+              <p className={styles.doneNote}>
+                You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -83,7 +99,7 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
       {/* Stage tabs — one stage on screen at a time; the checks/current-dot double as progress. */}
       <div className={styles.tabBar} role="tablist" aria-label="Tryout stages">
         {TABS.map(t => {
-          const st = overview.steps[t.step];
+          const st = overview?.steps[t.step] ?? 'todo';
           const active = activeTab === t.tab;
           return (
             <button
@@ -99,5 +115,48 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
         })}
       </div>
     </>
+  );
+}
+
+/**
+ * "Do this first" — a tab opened AHEAD of the tryout's actual stage leads with the honest reason
+ * plus one jump back, with the tab's own content still visible below (guide-don't-gate ruling,
+ * 2026-08-17 — tabs are never disabled). Renders nothing on the current/earlier stages.
+ */
+export function TryoutPrereqPrompt({ overview, tab, onTabChange }: {
+  overview: TryoutOverview | null;
+  tab: TabKey;
+  onTabChange: (tab: TabKey) => void;
+}) {
+  if (!overview) return null;
+  const order: TabKey[] = ['setup', 'tryout-day', 'decide', 'build'];
+  if (order.indexOf(tab) <= order.indexOf(phaseToTab(overview.phase))) return null;
+
+  let text: string, target: TabKey, label: string;
+  if (overview.phase === 'setup') {
+    text = overview.stats.sessionCount === 0
+      ? 'You haven’t set your tryout dates yet — that’s step 1.'
+      : 'You haven’t built your scorecard yet — that’s step 1.';
+    target = 'setup'; label = 'Go to Set up';
+  } else if (overview.phase === 'tryout_day') {
+    text = tab === 'build'
+      ? 'Nothing to build from yet — check-in and scoring happen on tryout day.'
+      : 'Nothing to decide yet — scores come in on tryout day.';
+    target = 'tryout-day'; label = 'Go to Tryout day';
+  } else {
+    text = 'No offers out yet — decisions happen in step 3.';
+    target = 'decide'; label = 'Go to Decide';
+  }
+
+  return (
+    <div className={styles.preNote} role="note">
+      <div className={styles.preMain}>
+        <div className={styles.preLabel}>Do this first</div>
+        <p className={styles.preText}>{text}</p>
+      </div>
+      <button type="button" className={styles.preBtn} onClick={() => onTabChange(target)}>
+        {label} <ArrowRight size={14} />
+      </button>
+    </div>
   );
 }

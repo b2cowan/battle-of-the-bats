@@ -4,6 +4,120 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-17 — The coach portal's confirm dialogs stop wearing the tournament-admin skin
+
+**Owner finding:** *"the css for these 'are you sure' modals match the tournament admin and not the
+coaches portal."* Every branded confirm in the product (`ConfirmProvider` → `FeedbackModal`) rendered
+the ADMIN idiom — global `.modal` classes, `--font-data` mono message, `btn-data` mono/uppercase
+buttons — including inside the coach shell, where every other modal is the sentence-case,
+14px-radius, `#141414` recipe (TryoutDayCard's).
+
+**Decision:** ONE dialog, skinned per shell. The admin look stays byte-identical (it lives in the
+global classes); a new `FeedbackModal.module.css` carries the **coaches-portal skin**, scoped on the
+shell's `[data-coach-warm-enabled]` marker — which is present in BOTH dark and warm (the warm gate
+is the marker AND `html[data-user-theme="warm"]`), so one scope covers both skins, with warm
+overrides (`--home-card`/`--home-ink`) on top. Dialog: `#141414`, 14px radius, hairline border.
+Title: sentence case, 1.05rem/800. Message: sans 0.88rem. Buttons: sentence case, 8px radius —
+colours (danger red / lime confirm) unchanged. **The admin Rep Teams panel renders the same
+components with no marker and is untouched.**
+
+**The generalizable rule:** a shared dialog that serves two shells carries each shell's skin keyed
+on the shell's own marker — never a fork of the component, and never one shell's idiom imposed on
+the other. **Applies to:** `components/FeedbackModal.tsx` + new `.module.css` (registered in the
+token-guardrail `shared` scope) — every `useConfirm()` ask and feedback dialog in the coach portal:
+discard guards, evaluator revoke/reissue, reveal names, decision passes. [[design-principles]]
+
+---
+
+### 2026-08-17 — A date-time field seeds to ROUND HOURS, never to "now"
+
+**Owner ruling** (on the Add-session picker opening at the current wall-clock minutes — "not sure
+we will ever have a user use the current time to set this, especially the minutes").
+
+**Decision:** an empty date-time field is SEEDED before the native picker opens: start times seed
+to the **next full hour** (`:00` minutes), and a dependent end time seeds to **start + 2 hours**.
+**Both seed ON OPEN** — the first cut seeded the end on focus, and the owner's walk showed why
+that's wrong twice over: the coach expects the default to be *visible* when the form opens, and a
+baseline that moves mid-flight is how a seeded, untouched form ended up tripping the discard guard.
+Never leave a scheduling field empty for the native picker to default to the current minutes —
+"9:56 PM" is a value no coach will ever mean. Any minute stays *selectable*; only the default moves
+(never restrict `step` to enforce round hours — 6:30 tryouts are real).
+
+**And the end FOLLOWS the start (owner, same day, on seeing 6:00 PM start above a stale 5:00 PM
+end):** changing the start shifts a set end time by the same amount, preserving the session length
+— the calendar convention (a 6–8pm session moved to 4pm becomes 4–6pm). An empty end never
+materializes from a start change, and a start reverted to its seed carries the end back with it,
+so the untouched-seed silent close still holds.
+
+**Three riders that make seeding safe:** (1) the seed sets the discard-guard BASELINE too — a
+prefill is not the coach's work, so an untouched seeded form still closes silently (the Chunk G
+rider); (2) **clearing a seeded value back to empty is not work either** and must not trip the
+guard — in ADD mode only; clearing a SAVED value in edit mode is a real change and stays guarded;
+(3) validation nudges keyed on the date (the tryout-window heads-up) stay QUIET on an untouched
+seed — a warning about a date the coach never chose is noise.
+
+**Applies to:** the tryout Add/Edit-session modal now; the standing default for any future
+date-time field in coach/admin forms. [[design-principles]]
+
+---
+
+### 2026-08-17 — Tryouts: the guide owns "Do this next", and Step 1 is ONE checklist card
+
+**Decision (owner accepted mockup `claude.ai/code/artifact/7b578986-adb0-4212-b996-f09c365297f1`):**
+1. **"Do this next" moves INSIDE the collapsible "How tryouts work" guide**, rendered AFTER the four
+   steps — the guide reads "whole journey → your next move on it" — with a lime ring on the current
+   step's number ("you are here"). The collapsed default is one quiet line: title + toggle + tab bar,
+   no banner. ⚠ This hides the prompt at EVERY phase, not just the empty one; the tab bar's
+   checkmarks + current-step dot are the always-visible progress carriers now — watch that in QA.
+2. **Step 1 (Set up) replaces its three stacked cards** (Tryout Day sessions / Evaluation scorecard /
+   Evaluators) **with ONE "Get set up" checklist card**: three rows, each with a done-mark,
+   REQUIRED/OPTIONAL tag (lime 12% fill vs white 7%), and a one-line status; the card header counts
+   "N of 2 required done". Rows expand in place to the full existing managers (the CollapsibleCard
+   pattern — the three cards' UIs move one level down, unchanged). Done rows collapse to one-line
+   receipts ("Sat Aug 29 · 9:00 AM + 1 more").
+   ⚠ **Receipts, the "N of 2" counter, and the tags speak the PORTAL's type — sans with
+   `tabular-nums` — NOT `--font-data`** (owner, same day: "looks more like tournament admin"). The
+   mono data face is the ADMIN shell's idiom; the coach portal sets times/figures in its own face
+   with tabular numerals (the scoreboard's `.composite`/`.bib` precedent), and its micro-labels
+   follow the sans `.nextLabel` recipe with `--radius-sm`, never the admin's mono 2px-radius
+   badge. The first build shipped mono and was corrected; mockup updated to match.
+   ⚠ **Revised after first live look (owner, same day): action buttons live INSIDE the expanded
+   row, never on the collapsed bar** — the collapsed bar is just a row (tick, title, tag, status,
+   chevron), and expanding it is how you reach its actions. The mockup's inline-CTA variant is
+   superseded; artifact updated to match.
+3. **Stage actions return to their stages:** "Open day-of check-in" → Tryout day tab; "Reveal names"
+   → Decide. The step-1 hierarchy defect was a solid-blue STEP-2 button outshouting step 1's own
+   primary action. The blind-evaluation note stays in the dates row (it explains what "Add session"
+   leads to).
+
+**Rationale:** with nothing created, three voices said "add your dates" (banner, tab, card) and
+"Take me there" pointed at the tab already on screen; three equal-weight islands hid required vs
+optional and spent three screen-heights on three sentences. Alternative considered and rejected:
+three-up grid (keeps equal weight, goes ragged when populated).
+
+**RULED (owner 2026-08-17, after seeing mockup §5): tabs 2–4 stay CLICKABLE — guide, don't gate.**
+Owner asked whether later tabs should be disabled until required setup exists; answer is no. The
+tabs are the map the once-a-year coach learns from, dead controls can't say why they refuse, and a
+strict gate blocks legitimate paths (tryout-morning check-in with no scorecard; registration before
+dates). Instead, a tab opened ahead of the tryout's actual stage LEADS with a compact prompt in the
+same lime voice ("Do this first" — a smaller cousin of the "Do this next" recipe: lime left edge,
+one sentence with the honest reason, one outline-lime jump button), with the tab's own content still
+visible below it, and the stage tab the tryout is actually on keeps its small lime current-dot.
+Stage-specific copy: Tryout day → "You haven't set your tryout dates yet — that's step 1" (or the
+scorecard variant); Decide → "Nothing to decide yet — scores come in on tryout day"; Build team →
+"No offers out yet — decisions happen in step 3."
+
+**Applies to:** `components/rep-teams/TryoutFlowHeader.tsx` + `.module.css` (guide + peek-ahead
+prompt), new `TryoutSetupChecklist.tsx` + `.module.css` (the one card; the three managers are its
+row bodies now, reporting {done, summary} up), new `TryoutRevealControl.tsx` (reveal on Decide),
+the tryouts page, the tryout-overview API (reveal step now anchors Decide), help guide copy, and
+the coach-tryouts UAT smoke spec. Warm skin keeps the TH-5 sunlight-floor recipes (solid lime
+fills for the done-marks + "Take me there"). **BUILT on dev 2026-08-17** — lint/typecheck/token/
+contrast/purity gates green; ⚠ check:layout NOT re-baselined (collapsed rows also hide their
+managers from the rendered sweep — the team-settings lesson), owner QA owed. [[design-principles]]
+
+---
+
 ### 2026-08-16 — THE SEASON DIAL IS DELETED: history is delivered in place, and a year parameter is a DECISION
 
 **Owner ruling (Design A on M1, artifact `aa758bcb` §10), and it OVERRIDES the archive rulings below.**

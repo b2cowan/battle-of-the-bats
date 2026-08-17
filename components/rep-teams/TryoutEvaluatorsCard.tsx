@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Users, Plus, Copy, Check, Ban, RefreshCw } from 'lucide-react';
+import { Plus, Copy, Check, Ban, RefreshCw } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import type { SetupItemStatus } from './TryoutSetupChecklist';
 import styles from './TryoutDayCard.module.css';
 
 interface Evaluator {
@@ -21,6 +22,8 @@ interface Props {
   /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
   canWrite?: boolean;
   onError?: (msg: string) => void;
+  /** Reports {done, summary} to the checklist row whenever the links change (2026-08-17). */
+  onStatus?: (s: SetupItemStatus) => void;
 }
 
 function statusOf(e: Evaluator): { label: string; live: boolean } {
@@ -34,7 +37,7 @@ function expiryLabel(e: Evaluator): string {
   return new Date(e.expiresAt).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
-export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError }: Props) {
+export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError, onStatus }: Props) {
   const confirm = useConfirm();
   const [evaluators, setEvaluators] = useState<Evaluator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +81,21 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
   }, [apiBase, fail]);
 
   useEffect(() => { load(); }, [load]);
+
+  const onStatusRef = useRef(onStatus);
+  useEffect(() => { onStatusRef.current = onStatus; }, [onStatus]);
+  useEffect(() => {
+    if (loading) return;
+    const live = evaluators.filter(e => statusOf(e).live).length;
+    onStatusRef.current?.({
+      done: live > 0,
+      summary: live > 0
+        ? `${live} helper${live === 1 ? '' : 's'} invited`
+        : evaluators.length > 0
+          ? `${evaluators.length} link${evaluators.length === 1 ? '' : 's'} expired or off`
+          : null,
+    });
+  }, [loading, evaluators]);
 
   function openAdd() {
     setName('');
@@ -180,15 +198,10 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
 
   if (loading) return null;
 
+  // Row-body form (2026-08-17): the checklist row bar owns the title/status; this renders only
+  // the manager — the link list, its actions, and the mint/reissue modal.
   return (
-    <div className={styles.card}>
-      <div className={styles.head}>
-        <div>
-          <h3 className={styles.title}><Users size={16} /> Evaluators</h3>
-          <p className={styles.subtitle}>Share a scoring link with an assistant — no account needed.</p>
-        </div>
-      </div>
-
+    <>
       {evaluators.length === 0 ? (
         <p className={styles.empty}>No evaluators yet. Add one to let a helper score players on their own phone.</p>
       ) : (
@@ -283,6 +296,6 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

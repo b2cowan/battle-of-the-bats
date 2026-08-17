@@ -97,6 +97,7 @@ const SCOPES = {
     files: [
       'components/rep-teams/TryoutDayCard.module.css',
       'components/rep-teams/TryoutFlowHeader.module.css',
+      'components/rep-teams/TryoutSetupChecklist.module.css',
       'components/rep-teams/TryoutCheckIn.module.css',
       'components/rep-teams/TryoutAcceptDrawer.module.css',
       'components/rep-teams/TryoutReportCard.module.css',
@@ -163,6 +164,9 @@ const SCOPES = {
     files: [
       'components/InstallAppPrompt.module.css',
       'components/TeamAvatar.module.css',
+      // The product-wide confirm/feedback dialog: global .modal classes carry the admin look,
+      // the module carries the coaches-portal skin — one dialog, every shell.
+      'components/FeedbackModal.module.css',
       'components/notifications/PushPermissionPrompt.module.css',
       'app/system-screens.module.css',
       // The site footer renders on TWO grounds since Chunk C — the marketing site's dark ground

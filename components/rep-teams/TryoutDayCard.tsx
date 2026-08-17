@@ -1,15 +1,21 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { ClipboardList, Plus, Pencil, Trash2, UserCheck, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
-import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import { getSportPack } from '@/lib/sports';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
+import type { SetupItemStatus } from './TryoutSetupChecklist';
 import styles from './TryoutDayCard.module.css';
+
+/**
+ * The "Tryout dates" manager — the body of the first Get-set-up checklist row (2026-08-17; the
+ * standalone card chrome, the Reveal-names control, and the check-in CTA all moved out: reveal
+ * lives on the Decide tab via TryoutRevealControl, check-in on the Tryout day tab, and the row
+ * bar owns the title/status). Sessions still appear on the team schedule.
+ */
 
 interface Props {
   /** The tryout-sessions API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-sessions`.
@@ -17,9 +23,13 @@ interface Props {
   apiBase: string;
   canWrite: boolean;
   sport?: string | null;
-  /** When set, shows an "Open day-of check-in" CTA linking here. */
-  checkInHref?: string;
   onError?: (msg: string) => void;
+  /** Reports {done, summary} to the checklist row whenever sessions change. */
+  onStatus?: (s: SetupItemStatus) => void;
+  /** LIVE blind state from the page's overview (refreshed on reveal). This card fetches its own
+   *  copy once on mount and stays mounted for the whole session, so without this the blind hint
+   *  reads stale after Reveal names fires on the Decide tab (/review 2026-08-17). */
+  blind?: boolean;
 }
 
 interface SessionForm {
@@ -60,14 +70,25 @@ function formatWhen(session: RepTryoutSession): string {
   return s;
 }
 
-export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, onError }: Props) {
+/** The row receipt: both sessions when there are two, "+N more" past that. */
+function receipt(sessions: RepTryoutSession[]): string | null {
+  if (sessions.length === 0) return null;
+  if (sessions.length <= 2) return sessions.map(formatWhen).join('  +  ');
+  return `${formatWhen(sessions[0])} + ${sessions.length - 1} more`;
+}
+
+/** Local wall-clock `YYYY-MM-DDTHH:mm` for a Date — the shape datetime-local wants. */
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onStatus, blind }: Props) {
   const base = apiBase;
 
-  const confirm = useConfirm();
   const [tryout, setTryout] = useState<RepTryout | null>(null);
   const [sessions, setSessions] = useState<RepTryoutSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [revealing, setRevealing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -80,14 +101,30 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
   const [formError, setFormError] = useState<string | null>(null);
 
   useOverlayOpen(modalOpen);
+  // In ADD mode the whole form opens seeded (start + end); clearing a seeded end back to empty is
+  // not the coach's work either, so it must not trip the guard. Edit mode keeps the strict compare:
+  // clearing a SAVED end time is a real change worth protecting.
+  const dirtyForm = !editingId && form.endsAt === '' ? { ...form, endsAt: formBaseline.endsAt } : form;
   const guardedClose = useDiscardGuard({
-    dirty: touched(form, formBaseline),
+    dirty: touched(dirtyForm, formBaseline),
     close: () => setModalOpen(false),
     noun: 'tryout session',
     detail: form.startsAt ? `a session on ${formatWhen({ startsAt: form.startsAt, endsAt: form.endsAt || null } as RepTryoutSession)}` : undefined,
   });
 
-  const fail = useCallback((msg: string) => { onError ? onError(msg) : console.error(msg); }, [onError]);
+  // Latest-ref for onError so `load` never re-arms on a parent re-render (the siblings' pattern).
+  // Without this, the page's focus-driven overview refresh handed down a new onError identity,
+  // re-firing the load effect — the "flashes back to Loading whenever I return to the tab" bug.
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+  const fail = useCallback((msg: string) => { if (onErrorRef.current) onErrorRef.current(msg); else console.error(msg); }, []);
+
+  const onStatusRef = useRef(onStatus);
+  useEffect(() => { onStatusRef.current = onStatus; }, [onStatus]);
+  useEffect(() => {
+    if (loading) return;
+    onStatusRef.current?.({ done: sessions.length > 0, summary: receipt(sessions) });
+  }, [loading, sessions]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,42 +143,28 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
 
   useEffect(() => { load(); }, [load]);
 
-  const isAnonymous = tryout?.isAnonymous ?? true;
-
-  // Reveal is ONE-WAY and confirmed — once names are shown they can't be re-hidden.
-  async function revealNames() {
-    if (!canWrite || revealing) return;
-    const ok = await confirm({
-      title: 'Reveal player names?',
-      message: 'Names will show on the check-in screen, scoreboard, and decision board. This can’t be undone — you can’t switch back to bib-only for this tryout.',
-      confirmText: 'Reveal names',
-      tone: 'warning',
-    });
-    if (!ok) return;
-    setRevealing(true);
-    try {
-      const res = await fetch(`${base}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isAnonymous: false }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to reveal names');
-      setTryout(data.tryout);
-    } catch (e: any) {
-      fail(e.message ?? 'Failed to reveal names.');
-    } finally {
-      setRevealing(false);
-    }
-  }
+  // The prop is authoritative when the page provides it (it tracks reveals live); our own
+  // fetched copy is the fallback for the first paint before the overview lands.
+  const isAnonymous = blind ?? tryout?.isAnonymous ?? true;
 
   function openAdd() {
+    // The form opens fully seeded to ROUND HOURS (owner 2026-08-17): start = the next full hour,
+    // end = start + 2h — never the current wall-clock minutes. Seeding sets the BASELINE too: our
+    // prefill is not the coach's work, so an untouched seeded form still closes silently (the
+    // Chunk G rider).
+    const start = new Date();
+    start.setMinutes(0, 0, 0);
+    start.setHours(start.getHours() + 1);
+    const end = new Date(start);
+    end.setHours(end.getHours() + 2);
+    const seeded: SessionForm = { ...BLANK, startsAt: toLocalInput(start), endsAt: toLocalInput(end) };
     setEditingId(null);
-    setForm(BLANK);
-    setFormBaseline(BLANK);
+    setForm(seeded);
+    setFormBaseline(seeded);
     setFormError(null);
     setModalOpen(true);
   }
+
   function openEdit(s: RepTryoutSession) {
     const loaded: SessionForm = {
       startsAt: toInputValue(s.startsAt),
@@ -159,6 +182,10 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
 
   async function saveSession() {
     if (!form.startsAt) { setFormError('Pick a date and time.'); return; }
+    if (form.endsAt && new Date(form.endsAt).getTime() <= new Date(form.startsAt).getTime()) {
+      setFormError('The end time must be after the start time.');
+      return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -201,7 +228,10 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
     }
   }
 
-  const windowNotice = form.startsAt ? getTryoutWindowNotice(new Date(form.startsAt), { sport }) : null;
+  // No window warning on the UNTOUCHED add-seed — a heads-up about a date the coach never chose
+  // is noise; it appears the moment they pick their real date (and always in edit mode).
+  const startTouched = editingId != null || form.startsAt !== formBaseline.startsAt;
+  const windowNotice = form.startsAt && startTouched ? getTryoutWindowNotice(new Date(form.startsAt), { sport }) : null;
 
   // Venue vocabulary from the sport pack — a basketball tryout shouldn't say "diamond" (WI-9).
   const facility = getSportPack(sport ?? undefined).defaultFacilityType;
@@ -209,76 +239,45 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
   const facilityExample = facility === 'diamond' ? 'e.g. Diamond 3' : facility === 'court' ? 'e.g. Court 2' : 'e.g. Field 3';
 
   return (
-    <div className={styles.card}>
-      <div className={styles.head}>
-        <div>
-          <h3 className={styles.title}><ClipboardList size={16} /> Tryout Day</h3>
-          <p className={styles.subtitle}>Sessions appear on the team schedule.</p>
-        </div>
-        {loading ? null : isAnonymous ? (
-          canWrite && (
-            <button
-              type="button"
-              className={styles.revealBtn}
-              onClick={revealNames}
-              disabled={revealing}
-              title="Reveal player names (one-way — can’t switch back to bib-only)"
-            >
-              <Eye size={14} /> Reveal names
-            </button>
-          )
-        ) : (
-          <span className={styles.revealedChip} title="Names are shown for this tryout">
-            <EyeOff size={13} /> Names revealed
-          </span>
-        )}
-      </div>
-
-      {!loading && isAnonymous && (
-        <p className={styles.blindHint}><strong>Blind evaluation is on</strong> — players show as bib numbers only. Reveal names when you’re ready to make decisions (one-way).</p>
-      )}
-
+    <>
       {loading ? (
         <p className={styles.empty}>Loading sessions…</p>
-      ) : sessions.length === 0 ? (
-        <p className={styles.empty}>No sessions yet. Add the date(s) and time(s) of your tryout.</p>
       ) : (
-        <div className={styles.sessionList}>
-          {sessions.map(s => (
-            <div key={s.id} className={styles.sessionRow}>
-              <div className={styles.sessionMain}>
-                <div className={styles.sessionWhen}>{formatWhen(s)}</div>
-                {(s.location || s.fieldNumber || s.label) && (
-                  <div className={styles.sessionMeta}>
-                    {[s.label, s.location, s.fieldNumber && `Field ${s.fieldNumber}`].filter(Boolean).join(' · ')}
-                  </div>
-                )}
-              </div>
-              {canWrite && (
-                <div className={styles.sessionActions}>
-                  <button type="button" className={styles.iconBtn} onClick={() => openEdit(s)} aria-label="Edit session"><Pencil size={15} /></button>
-                  <button type="button" className={`${styles.iconBtn} ${styles.iconDanger}`} onClick={() => deleteSession(s.id)} disabled={deletingId === s.id} aria-label="Remove session"><Trash2 size={15} /></button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+        <>
+          {isAnonymous && (
+            <p className={styles.blindHint}><strong>Blind evaluation is on</strong> — players show as bib numbers only. Reveal names on the Decide tab when you’re ready to make picks (one-way).</p>
+          )}
 
-      <div className={styles.actions}>
-        {canWrite && (
-          <button type="button" className={styles.addBtn} onClick={openAdd}><Plus size={15} /> Add session</button>
-        )}
-        {checkInHref && (
-          <Link
-            href={checkInHref}
-            className="btn btn-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}
-          >
-            <UserCheck size={15} /> Open day-of check-in
-          </Link>
-        )}
-      </div>
+          {sessions.length > 0 && (
+            <div className={styles.sessionList} style={{ marginTop: '0.6rem' }}>
+              {sessions.map(s => (
+                <div key={s.id} className={styles.sessionRow}>
+                  <div className={styles.sessionMain}>
+                    <div className={styles.sessionWhen}>{formatWhen(s)}</div>
+                    {(s.location || s.fieldNumber || s.label) && (
+                      <div className={styles.sessionMeta}>
+                        {[s.label, s.location, s.fieldNumber && `Field ${s.fieldNumber}`].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
+                  </div>
+                  {canWrite && (
+                    <div className={styles.sessionActions}>
+                      <button type="button" className={styles.iconBtn} onClick={() => openEdit(s)} aria-label="Edit session"><Pencil size={15} /></button>
+                      <button type="button" className={`${styles.iconBtn} ${styles.iconDanger}`} onClick={() => deleteSession(s.id)} disabled={deletingId === s.id} aria-label="Remove session"><Trash2 size={15} /></button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {canWrite && (
+            <div className={styles.actions}>
+              <button type="button" className={styles.addBtn} onClick={openAdd}><Plus size={15} /> Add session</button>
+            </div>
+          )}
+        </>
+      )}
 
       {modalOpen && (
         <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
@@ -291,7 +290,20 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
                 className={styles.input}
                 type="datetime-local"
                 value={form.startsAt}
-                onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))}
+                onChange={e => {
+                  const next = e.target.value;
+                  setForm(f => {
+                    // End FOLLOWS start, keeping the session length (calendar convention,
+                    // owner 2026-08-17) — moving a 6–8pm session to 4pm makes it 4–6pm.
+                    if (!next || !f.startsAt || !f.endsAt) return { ...f, startsAt: next };
+                    const oldStart = new Date(f.startsAt), oldEnd = new Date(f.endsAt), newStart = new Date(next);
+                    if (isNaN(oldStart.getTime()) || isNaN(oldEnd.getTime()) || isNaN(newStart.getTime())) {
+                      return { ...f, startsAt: next };
+                    }
+                    const shiftedEnd = new Date(newStart.getTime() + (oldEnd.getTime() - oldStart.getTime()));
+                    return { ...f, startsAt: next, endsAt: toLocalInput(shiftedEnd) };
+                  });
+                }}
               />
             </div>
 
@@ -341,6 +353,6 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

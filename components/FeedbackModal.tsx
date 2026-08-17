@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { AlertCircle, X, CheckCircle, Info } from 'lucide-react';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
+import styles from './FeedbackModal.module.css';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ export default function FeedbackModal({
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
       <div
-        className="modal"
+        className={`modal ${styles.dialog}`}
         onClick={e => e.stopPropagation()}
         style={{ maxWidth: 480 }}
         role="dialog"
@@ -88,13 +89,13 @@ export default function FeedbackModal({
         <div className="modal-header">
           <div className="flex items-center gap-2">
             {getIcon()}
-            <h3 id={titleId} style={{ margin: 0 }}>{title}</h3>
+            <h3 id={titleId} className={styles.title} style={{ margin: 0 }}>{title}</h3>
           </div>
           <button className="btn btn-ghost btn-data" onClick={onClose}>
             <X size={14} />
           </button>
         </div>
-        <div style={{ padding: '0.75rem 0', fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
+        <div className={styles.message}>
           {message}
           {items && items.length > 0 && (
             <ul style={{
@@ -132,12 +133,12 @@ export default function FeedbackModal({
           )}
         </div>
         <div className="modal-footer">
-          <button ref={cancelRef} className="btn btn-ghost btn-data" onClick={onClose}>
+          <button ref={cancelRef} className={`btn btn-ghost btn-data ${styles.actionBtn}`} onClick={onClose}>
             {onConfirm ? cancelText : 'Close'}
           </button>
           {onConfirm && (
             <button
-              className={`btn btn-${type === 'danger' ? 'danger' : 'lime'} btn-data`}
+              className={`btn btn-${type === 'danger' ? 'danger' : 'lime'} btn-data ${styles.actionBtn}`}
               onClick={() => {
                 onConfirm();
                 onClose();

@@ -5,14 +5,13 @@ import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
 import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import TryoutDayCard from '@/components/rep-teams/TryoutDayCard';
-import TryoutRubricCard from '@/components/rep-teams/TryoutRubricCard';
-import TryoutEvaluatorsCard from '@/components/rep-teams/TryoutEvaluatorsCard';
+import TryoutSetupChecklist from '@/components/rep-teams/TryoutSetupChecklist';
+import TryoutRevealControl from '@/components/rep-teams/TryoutRevealControl';
 import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
 import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
 import TryoutReportCard from '@/components/rep-teams/TryoutReportCard';
 import TryoutBaselineCard from '@/components/rep-teams/TryoutBaselineCard';
-import TryoutFlowHeader, { type TryoutOverview, type TabKey } from '@/components/rep-teams/TryoutFlowHeader';
+import TryoutFlowHeader, { TryoutPrereqPrompt, phaseToTab, type TryoutOverview, type TabKey } from '@/components/rep-teams/TryoutFlowHeader';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 
@@ -24,9 +23,6 @@ function PanelIntro({ text, action }: { text: string; action?: ReactNode }) {
     </div>
   );
 }
-
-const phaseToTab = (phase: TryoutOverview['phase']): TabKey =>
-  phase === 'tryout_day' ? 'tryout-day' : phase === 'setup' ? 'setup' : phase === 'decide' ? 'decide' : 'build';
 
 export default function CoachTryoutsPage({
   params,
@@ -46,19 +42,30 @@ export default function CoachTryoutsPage({
   const [overview, setOverview] = useState<TryoutOverview | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('setup');
   const didAutoSelect = useRef(false);
+  // Bumped when names are revealed from the Decide tab — remounts the decision board so it
+  // refetches with names instead of bibs.
+  const [revealBump, setRevealBump] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
-  const fail = (m: string) => { setFeedbackMsg(m); setFeedbackOpen(true); };
+  // Memoized: this handler flows into every card's data-loading effect chain, and the focus-driven
+  // overview refresh re-renders this page — an unstable identity here re-armed those loaders on
+  // every window focus (the visible refetch flash).
+  const fail = useCallback((m: string) => { setFeedbackMsg(m); setFeedbackOpen(true); }, []);
 
   // Best-effort orientation: fetch on load + on tab focus (e.g. returning from the check-in sub-page).
   // On the FIRST successful load, land the coach on the stage they should be working — but never yank
   // them off a tab they've since chosen.
+  // Sequence token (/review 2026-08-17): this fires from mount, window focus, AND child change
+  // callbacks — overlapping responses resolving out of order must not apply a stale overview.
+  const overviewSeq = useRef(0);
   const loadOverview = useCallback(async () => {
     if (!canTryouts) return;
+    const seq = ++overviewSeq.current;
     try {
       const res = await fetch(`${base}/tryout-overview`);
       if (!res.ok) return;
       const data: TryoutOverview = await res.json();
+      if (seq !== overviewSeq.current) return; // superseded by a newer request
       setOverview(data);
       if (!didAutoSelect.current) { setActiveTab(phaseToTab(data.phase)); didAutoSelect.current = true; }
     } catch { /* non-blocking */ }
@@ -69,6 +76,11 @@ export default function CoachTryoutsPage({
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [loadOverview]);
+
+  // A tab the coach picked themself retires the auto-select for good (/review 2026-08-17): if the
+  // FIRST overview fetch failed, a later successful one (focus, onChanged) would otherwise still
+  // "land" them on the phase tab — yanking them off the tab they had since chosen.
+  const selectTab = useCallback((tab: TabKey) => { didAutoSelect.current = true; setActiveTab(tab); }, []);
 
   const hidden = (tab: TabKey) => (activeTab === tab ? '' : flow.panelHidden);
 
@@ -106,18 +118,19 @@ export default function CoachTryoutsPage({
     <div className={styles.page}>
       {header}
 
-      <TryoutFlowHeader overview={overview} rosterHref={rosterHref} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TryoutFlowHeader overview={overview} rosterHref={rosterHref} activeTab={activeTab} onTabChange={selectTab} />
 
-      {/* Stage 1 — Set up */}
+      {/* Stage 1 — Set up: ONE checklist card (owner-approved mockup 2026-08-17) — the three
+          managers are its row bodies now. Status changes refresh the flow overview so the guide,
+          tab checks, and peek-ahead prompts stay honest. */}
       <div className={hidden('setup')} role="tabpanel">
         <PanelIntro text="Before tryout day: set your dates, build a scorecard of what you'll rate, and (optionally) invite helpers to score." />
-        <TryoutDayCard apiBase={`${base}/tryout-sessions`} canWrite sport={assignment?.teamSport} checkInHref={checkInHref} onError={fail} />
-        <TryoutRubricCard apiBase={`${base}/tryout-rubric`} canWrite onError={fail} />
-        <TryoutEvaluatorsCard apiBase={`${base}/tryout-evaluators`} canWrite onError={fail} />
+        <TryoutSetupChecklist apiBase={base} canWrite sport={assignment?.teamSport} onError={fail} onChanged={loadOverview} blind={overview?.stats.blind} />
       </div>
 
       {/* Stage 2 — Tryout day */}
       <div className={hidden('tryout-day')} role="tabpanel">
+        <TryoutPrereqPrompt overview={overview} tab="tryout-day" onTabChange={selectTab} />
         <PanelIntro
           text="Check players in (names stay hidden for fairness), then score them — the board ranks everyone live."
           action={
@@ -134,10 +147,22 @@ export default function CoachTryoutsPage({
 
       {/* Stage 3 — Decide */}
       <div className={hidden('decide')} role="tabpanel">
-        <PanelIntro text="Offer, waitlist, or pass on each ranked player. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself. (If names are still hidden, reveal them back on the Set up tab first.)" />
+        <TryoutPrereqPrompt overview={overview} tab="decide" onTabChange={selectTab} />
+        {/* Reveal names lives HERE now (2026-08-17) — the stage where the guide says it happens. */}
+        <PanelIntro
+          text="Offer, waitlist, or pass on each ranked player. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself. Names hidden? Reveal them here when you're ready."
+          action={
+            <TryoutRevealControl
+              apiBase={`${base}/tryout-sessions`}
+              canWrite
+              onError={fail}
+              onRevealed={() => { setRevealBump(b => b + 1); loadOverview(); }}
+            />
+          }
+        />
         {/* Phase 3 (frame 06): a confirmed returning candidate's prior tryout, beside this one.
             The board only asks once names are revealed; the server only answers then too (R6). */}
-        <TryoutDecisionBoard apiBase={`${base}/tryout-decisions`}
+        <TryoutDecisionBoard key={revealBump} apiBase={`${base}/tryout-decisions`}
           continuityApiBase={`${base}/development/continuity`}
           memoryApiBase={`${base}/tryout-memory`} active={activeTab === 'decide'}
           canWrite teamId={teamId} onError={fail} />
@@ -147,6 +172,7 @@ export default function CoachTryoutsPage({
           frames 01–02 — replaces the bare four-stat row; the empty-state payoff paragraph
           moved inside the card so this stage has one owner). */}
       <div className={hidden('build')} role="tabpanel">
+        <TryoutPrereqPrompt overview={overview} tab="build" onTabChange={selectTab} />
         <PanelIntro text="Accept players onto your roster with their fees (optional). They're then ready for your lineups." />
         <TryoutReportCard
           apiBase={`${base}/tryout-report`}

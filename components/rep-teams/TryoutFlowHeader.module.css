@@ -18,10 +18,10 @@
 }
 .howBtn:hover { color: var(--white-90); }
 
-/* ── Next-action prompt ─────────────────────────────────────────────────────── */
+/* ── Next-action prompt — lives INSIDE the "how" guide, after the four steps (2026-08-17) ── */
 .next {
   display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
-  margin-top: 1.1rem; padding: 0.75rem 0.9rem;
+  margin-top: 0.9rem; padding: 0.75rem 0.9rem;
   border: 1px solid rgba(var(--logic-lime-rgb),0.28); border-left: 3px solid var(--logic-lime);
   border-radius: 8px; background: rgba(var(--logic-lime-rgb),0.06);
 }
@@ -37,13 +37,37 @@
   background: var(--logic-lime); color: var(--pitch-black); text-decoration: none;
 }
 .nextBtn:hover { background: rgba(var(--logic-lime-rgb), 0.82); }
-.doneNote { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 1.1rem 0 0; }
+.doneNote { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0.9rem 0 0; }
+
+/* ── "Do this first" — a tab opened ahead of the tryout's stage (guide-don't-gate, 2026-08-17).
+   A compact cousin of .next: same lime voice, quieter — one sentence + an outline jump button,
+   never a wall in front of the tab's own content. */
+.preNote {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  margin: 0 0 0.9rem; padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(var(--logic-lime-rgb),0.28); border-left: 3px solid var(--logic-lime);
+  border-radius: 8px; background: rgba(var(--logic-lime-rgb),0.06);
+}
+.preMain { flex: 1 1 auto; min-width: 200px; }
+.preLabel { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime); }
+.preText { font-size: 0.85rem; font-weight: 600; color: var(--white-90); margin: 0.05rem 0 0; }
+.preBtn {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.8rem; border-radius: 8px; cursor: pointer;
+  font-size: 0.78rem; font-weight: 800; font-family: inherit;
+  background: transparent; color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+}
+.preBtn:hover { background: rgba(var(--logic-lime-rgb), 0.08); }
 
 /* ── "How tryouts work" overview ────────────────────────────────────────────── */
 .how { margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.02); }
 .howStep { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; font-size: 0.85rem; line-height: 1.5; }
 .howStep:last-child { margin-bottom: 0; }
 .howNum { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: rgba(var(--logic-lime-rgb),0.15); color: var(--logic-lime); font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-top: 0.05rem; }
+/* "You are here" — the ring ties the guide's Do-this-next prompt back to the step map. */
+.howNumHere { box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.55); }
 .howStep strong { color: var(--white-90); }
 .howStep span { color: rgba(255,255,255,0.6); }
 
@@ -116,10 +140,22 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab:hover {
   color: var(--home-ink-soft);
 }
-/* Next-action prompt: olive-tint container, SOLID lime CTA + dark ink (sunlight floor) */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .next {
+/* Next-action prompt: olive-tint container, SOLID lime CTA + dark ink (sunlight floor).
+   The "Do this first" peek-ahead note takes the same container recipe; its outline button
+   stays lime-as-TEXT/border, which darkens to olive automatically (E3). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .next,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .preNote {
   background: var(--home-olive-soft);
   border-color: rgba(var(--home-olive-rgb), 0.30);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .preNote {
+  border-left-color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .preText {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .preBtn:hover {
+  background: rgba(var(--home-olive-rgb), 0.12);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howNum {
   background: var(--home-olive-soft);
