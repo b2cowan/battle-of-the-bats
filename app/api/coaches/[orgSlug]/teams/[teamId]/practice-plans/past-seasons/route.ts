@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
-import {
-  getActiveRepProgramYear,
-  getRepProgramYears,
-  getRepTeamPracticePlansAcrossSeasons,
-} from '@/lib/db';
+import { getPastSeasonPracticePlans, getRepProgramYears } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
 
@@ -49,27 +45,19 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can write a practice plan.');
   if (denied) return denied;
 
-  const [activeYear, plans, years] = await Promise.all([
-    getActiveRepProgramYear(teamId),
-    getRepTeamPracticePlansAcrossSeasons(teamId).catch(() => []),
+  const [pastPlans, years] = await Promise.all([
+    // ⚠ ONE shared read, which owns the "exclude the live season" rule — the same read the drill
+    // and plan-template imports use. Three hand-rolled copies of it collapsed here (`/simplify`).
+    getPastSeasonPracticePlans(teamId).catch(() => []),
     // Season NAMES, which the plans read cannot supply: it hands back `programYearId` only, and a
     // row a coach cannot date to a season is exactly the row this list must never produce.
     getRepProgramYears(teamId).catch(() => []),
   ]);
 
-  /**
-   * ⚠ The LIVE season is excluded deliberately, for the reason both imports state in their own
-   * words: this season's practices are already the "A previous practice" tab, and offering the same
-   * night under two tabs lets a coach copy it twice under slightly different words. A team with NO
-   * active year sees everything it has ever run — the right answer for exactly the coach most
-   * likely to be looking back.
-   */
-  const pastPlans = activeYear ? plans.filter(p => p.programYearId !== activeYear.id) : plans;
-
   const seasonName = new Map(years.map(y => [y.id, y.name]));
 
   /**
-   * ⚠ The shared read caps at 400 practices across every season, and that cap is left alone HERE on
+   * ⚠ The shared read caps at 400 past-season practices, and that cap is left alone HERE on
    * purpose. This is a PICKER with a search box, not a record: a coach hunting one night types its
    * name. The cap would be dishonest on a list that claims to BE the season's practices, which is
    * why C3's Season's End list states its truncation instead of inheriting this posture.

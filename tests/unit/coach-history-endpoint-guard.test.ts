@@ -281,15 +281,40 @@ function routeName(file: string): string {
     .replace(/\\/g, '/');
 }
 
-/** Does this source name a season the CALLER chose? */
-const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistoryRead\s*\(/;
+/**
+ * Does this source name a season the CALLER chose?
+ *
+ * ⚠ **`(?:FromRequest)?` IS LOad-BEARING, not tidiness.** `resolveCoachHistoryReadFromRequest` is
+ * the wrapper the three history endpoints call (it owns "an empty `?year=` means the working
+ * season"). Without the optional group, `resolveCoachHistoryRead\s*\(` matches none of them — the
+ * `\(` demands a bracket immediately after `Read` — and this rule, the write-side rule below and
+ * the decided-absence block would all have gone quiet at once while still reporting green. That is
+ * the vacuous pass this file has a whole test about, arriving through a rename.
+ */
+const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistoryRead(?:FromRequest)?\s*\(/;
 
 /** Reads across seasons without being handed one — see CROSS_SEASON_READERS. */
 const READS_ACROSS_SEASONS = /resolveCoachTeamCapabilities\s*\(/;
 
-/** Reads (or merely probes) EVERY season's practice plans — see CROSS_SEASON_PLAN_READERS. */
-const READS_EVERY_SEASONS_PLANS =
-  /getRepTeamPracticePlansAcrossSeasons\s*\(|hasRepTeamPastSeasonPracticePlans\s*\(/;
+/**
+ * Reads (or merely probes) practice plans from OUTSIDE the working season — see
+ * CROSS_SEASON_PLAN_READERS.
+ *
+ * ⚠ THREE names, and the count is the maintenance burden this guard accepts on purpose. Keying on
+ * named functions is what keeps the signal quiet enough to survive (see CROSS_SEASON_READERS'
+ * note); the price is that every new way to hold this power must be added here, and a name missing
+ * from this alternation is a route silently leaving the list. The `/simplify` pass on 2026-08-16
+ * proved the risk was real rather than theoretical: extracting `getPastSeasonPracticePlans` would
+ * have blinded this guard to three routes at once had this regex not moved with it.
+ */
+const READS_EVERY_SEASONS_PLANS = new RegExp([
+  // Every season at once, live year included — the "used 8×" counts in both libraries.
+  'getRepTeamPracticePlansAcrossSeasons',
+  // Every season EXCEPT the live one — the three "start from what you already did" imports.
+  'getPastSeasonPracticePlans',
+  // The one-row existence probe behind the picker's third tab.
+  'hasRepTeamPastSeasonPracticePlans',
+].map(fn => `${fn}\\s*\\(`).join('|'));
 
 describe('a year parameter is a decision — the coach API', () => {
   it('finds the coach API routes at all (guards against a vacuous pass)', () => {
@@ -388,7 +413,7 @@ describe('a year parameter is a decision — the coach API', () => {
       for (const verb of WRITE_VERBS) {
         const body = handlerBody(src, verb);
         if (!body) continue;
-        if (/resolveCoachTeamRead\s*\(|resolveCoachHistoryRead\s*\(/.test(body)) {
+        if (/resolveCoachTeamRead\s*\(|resolveCoachHistoryRead(?:FromRequest)?\s*\(/.test(body)) {
           offenders.push(`${rel} → ${verb}`);
         }
       }
@@ -454,7 +479,7 @@ describe('a year parameter is a decision — the coach pages', () => {
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 describe('the decided absences — instruments never become history surfaces', () => {
-  const REACHES_A_NAMED_SEASON = /resolveCoachHistoryRead\s*\(|searchParams\.get\(\s*['"]year['"]\s*\)/;
+  const REACHES_A_NAMED_SEASON = /resolveCoachHistoryRead(?:FromRequest)?\s*\(|searchParams\.get\(\s*['"]year['"]\s*\)/;
 
   /**
    * The drill library (Practice Plans Phase 2). Owner ruling 2026-08-01: a drill library is a

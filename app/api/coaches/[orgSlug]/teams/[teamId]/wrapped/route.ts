@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { resolveCoachHistoryRead } from '@/lib/coach-team-read';
+import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { canLogGameMoment, hasRecordAccess } from '@/lib/coach-capabilities';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
 import { countRecapViewers } from '@/lib/family-engagement';
@@ -25,8 +25,7 @@ export const GET = withObservability(async (req: Request,
   // other year's story — a hidden season choice, which is precisely what P2 deleted, and with the
   // page-title season chip gone there would be nothing on screen to say which year was showing.
   // Absent `?year=`, this is the team's WORKING season, and a season still under way answers 409.
-  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
-  const resolved = await resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
+  const resolved = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { team, programYear } = resolved;
 

@@ -397,6 +397,24 @@ export const hasRecordAccess = (c: CoachCapabilities) =>
  * have reopened that door while looking like an unrelated simplification.
  */
 export const hasNoTeamRecordAccess = (c: CoachCapabilities) => !hasRecordAccess(c);
+/**
+ * **Read a practice plan from a season that has FINISHED** — the look-back layer's own gate.
+ *
+ * ⚠ **THE PAIR IS THE POINT, and it had been kept in step by comment alone.** `hasRecordAccess`
+ * asks "is the team's record yours?"; `canViewSchedule` asks "do you belong at the practice?". A
+ * HELPER turns up to run one station on a Tuesday: they hold the schedule and tonight's plan, and
+ * `hasRecordAccess` is false for them (the preset grants none of its seven duties). Requiring both
+ * is what keeps last season's plans out of their hands without inventing an eighth grant.
+ *
+ * ⚠ **Named on 2026-08-16 (P3 C3 `/simplify`) because it had reached THREE call sites** — the
+ * read route, the season list behind the Season's End shelf, and that shelf's own client-side
+ * door — each carrying a comment insisting the gate and its entry points must move together. That
+ * is precisely the invariant a name makes structural instead of clerical: a fourth entry point now
+ * imports one symbol rather than re-deriving a conjunction, and reordering or dropping half of it
+ * is no longer something a reader has to notice.
+ */
+export const canReadPastPracticePlans = (c: CoachCapabilities) =>
+  canViewSchedule(c) && hasRecordAccess(c);
 /** Run tryout day (sessions, scorecard, decisions). Head-coach-only in V1 — candidate PII. */
 export const canManageTryouts = (c: CoachCapabilities) => c.tryouts;
 

@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
-import {
-  getActiveRepProgramYear,
-  getRepTeamPlanTemplates,
-  getRepTeamPracticePlansAcrossSeasons,
-} from '@/lib/db';
+import { getPastSeasonPracticePlans, getRepTeamPlanTemplates } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-templates';
@@ -21,8 +17,8 @@ import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-template
  * for months while `coach-history-endpoint-guard.test.ts` was keyed on `resolveCoachTeamCapabilities`
  * — which this route does not call — so nothing enforced it and a later session would have read this
  * sentence and believed a build-enforced record existed. It is true now: the guard has a second,
- * narrow detector keyed on `getRepTeamPracticePlansAcrossSeasons`, with its own enumerated list,
- * and this file is on it.
+ * narrow detector (`CROSS_SEASON_PLAN_READERS`) keyed on the named reads that reach outside the
+ * working season — `getPastSeasonPracticePlans`, which this route calls, among them.
  *
  * ⚠ Head-coach-only — everything this list can do is feed a library write.
  *
@@ -45,20 +41,18 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage plan templates.');
   if (denied) return denied;
 
-  const [activeYear, plans, templates] = await Promise.all([
-    getActiveRepProgramYear(teamId),
-    getRepTeamPracticePlansAcrossSeasons(teamId).catch(() => []),
+  const [pastPlans, templates] = await Promise.all([
+    /**
+     * ⚠ The LIVE season is excluded, and the rule now lives in the READ rather than here
+     * (`/simplify` 2026-08-16). This season's plan is already reachable through "Save as template…"
+     * on the practice itself, and offering it in two places would let a coach save it twice under
+     * slightly different words. One shared read, three callers — and the row cap is no longer
+     * spent on this year's practices before the old ones are reached.
+     */
+    getPastSeasonPracticePlans(teamId).catch(() => []),
     getRepTeamPlanTemplates(teamId, { includeRetired: true }).catch(() => []),
   ]);
 
-  /**
-   * ⚠ The LIVE season is excluded deliberately, mirroring the drill import: this season's plan is
-   * already reachable through "Save as template…" on the practice itself, and offering it in two
-   * places would let a coach save it twice under slightly different words. A team with NO active
-   * year sees everything it has ever run — the right answer for exactly the coach most likely to
-   * be looking back.
-   */
-  const pastPlans = activeYear ? plans.filter(p => p.programYearId !== activeYear.id) : plans;
   const have = new Set(templates.map(t => t.name.trim().toLowerCase()));
 
   /**

@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getCoachingAssignmentsForUser,
-  getActiveRepProgramYear,
   getDrillsForTeam,
-  getRepTeamPracticePlansAcrossSeasons,
+  getPastSeasonPracticePlans,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
@@ -32,7 +31,8 @@ import { collectImportableDrills } from '@/lib/rep-drill-usage';
  * ⚠ **THE CLAIM THAT THE GUARD LISTS THIS ROUTE WAS FALSE UNTIL 2026-08-16 (P3 C1)** — the same
  * stale sentence its plan-template sibling carried, for the same reason: the guard's cross-season
  * list is keyed on `resolveCoachTeamCapabilities`, which this route never calls. It is true now,
- * through a second detector keyed on `getRepTeamPracticePlansAcrossSeasons`.
+ * through a second detector (`CROSS_SEASON_PLAN_READERS`) keyed on the named reads that reach
+ * outside the working season — `getPastSeasonPracticePlans` among them.
  *
  * ⚠ Known tail, deliberately NOT fixed here: this route still gates through
  * `getCoachingAssignmentsForUser` (the legacy assignment lookup) rather than team membership — the
@@ -59,23 +59,18 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage drills.');
   if (denied) return denied;
 
-  const [activeYear, plans, drills] = await Promise.all([
-    getActiveRepProgramYear(teamId),
-    getRepTeamPracticePlansAcrossSeasons(teamId).catch(() => []),
+  const [pastPlans, drills] = await Promise.all([
+    /**
+     * ⚠ The LIVE season is excluded, and the rule now lives in the READ rather than here
+     * (`/simplify` 2026-08-16). A station in this season's plan is already reachable through
+     * "Save to my drills…" on the plan itself, and offering the same activity in two places would
+     * let a coach save it twice under slightly different words. This route, its plan-template
+     * sibling and P3's practice picker had three copies of that filter; they now share one, which
+     * also stopped the live season's plans from eating the row cap ahead of genuinely old ones.
+     */
+    getPastSeasonPracticePlans(teamId).catch(() => []),
     getDrillsForTeam(ctx.org.id, teamId).catch(() => []),
   ]);
-
-  /**
-   * ⚠ The LIVE season is excluded deliberately.
-   *
-   * A station in this season's plan is already reachable through "Save to my drills…" on the plan
-   * itself, and offering the same activity in two places would let a coach save it twice under
-   * slightly different words. A team with NO active year sees everything it has ever run, which is
-   * the right answer for exactly the coach most likely to be looking back.
-   */
-  const pastPlans = activeYear
-    ? plans.filter(p => p.programYearId !== activeYear.id)
-    : plans;
 
   const importable = collectImportableDrills(
     pastPlans.map(p => ({ plan: p.plan, startsAt: p.startsAt })),

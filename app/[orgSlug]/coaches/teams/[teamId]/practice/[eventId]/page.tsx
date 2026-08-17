@@ -97,6 +97,36 @@ type LoadState = {
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
+/** The three places a plan can start from (frame 05; "past" added by P3 C2). */
+type CopySource = 'template' | 'previous' | 'past';
+
+/**
+ * ⚠ **ONE record per source, so a fourth cannot arrive half-dressed.** The tab label and the
+ * bargain-sentence under it used to be written in two separate places — a hand-listed row of
+ * buttons and a chained ternary — which meant adding "A past season" was two edits that nothing
+ * tied together, and forgetting the second would have shown the wrong promise under the right tab.
+ *
+ * ⚠ Every hint says the same thing in its own words, deliberately: a coach must never have to
+ * guess whether copying EDITS what they copied from. It does not.
+ */
+const COPY_SOURCES: ReadonlyArray<{ id: CopySource; label: string; hint: string }> = [
+  {
+    id: 'template',
+    label: 'A template',
+    hint: 'This copies the template onto tonight. The template is left exactly as it is, and anything you change here stays here.',
+  },
+  {
+    id: 'previous',
+    label: 'A previous practice',
+    hint: 'This copies the plan onto tonight. The practice you copy from is left exactly as it is, and anything you change here stays here.',
+  },
+  {
+    id: 'past',
+    label: 'A past season',
+    hint: 'This copies what you wrote onto tonight. The finished season is left exactly as it is, nothing is added to your templates, and the groups come across empty — last year’s players aren’t on this year’s roster.',
+  },
+];
+
 /** A save that hasn't landed by now is reported as a failure rather than spinning for ever. */
 const SAVE_TIMEOUT_MS = 15_000;
 
@@ -154,9 +184,8 @@ export default function CoachPracticePlanPage({
   const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [copyOpen, setCopyOpen] = useState(false);
-  /** Which source the one picker is showing (frame 05). A template, a previous practice, or — from
-   *  P3 C2 — a practice from a past season. */
-  const [copySource, setCopySource] = useState<'template' | 'previous' | 'past'>('template');
+  /** Which source the one picker is showing (frame 05) — see COPY_SOURCES. */
+  const [copySource, setCopySource] = useState<CopySource>('template');
   const [copyQuery, setCopyQuery] = useState('');
   /**
    * The past-season rows, FETCHED ONLY WHEN THE TAB IS FIRST OPENED (P3 C2).
@@ -324,7 +353,7 @@ export default function CoachPracticePlanPage({
     }
   }, [orgSlug, teamId]);
 
-  function openCopySource(source: 'template' | 'previous' | 'past') {
+  function openCopySource(source: CopySource) {
     setCopySource(source);
     setCopyQuery('');
     // `pastPlans === null` means never asked. An empty array is an ANSWER and is not re-asked.
@@ -639,6 +668,105 @@ export default function CoachPracticePlanPage({
   // whitespace-only goal reads as a plan on screen while the save path nulls the column.
   const hasPlan = !isPracticePlanEmpty(plan);
 
+  /** The picker's name search, shared by the two practice sources so they cannot drift. */
+  const matchesQuery = (name: string) => {
+    const q = copyQuery.trim().toLowerCase();
+    return !q || name.toLowerCase().includes(q);
+  };
+
+  /**
+   * The picker's list body — one branch per source, each with its own early return.
+   *
+   * ⚠ A plain FUNCTION that is called (`{renderPickList()}`), never a component rendered as
+   * `<RenderPickList />`. The distinction is the one this file's own `SaveAsTemplateDialog` note
+   * is about: a component declared in a render body is a new type every render and remounts its
+   * subtree. A called function just returns nodes into the parent's tree, so nothing remounts and
+   * the search box keeps its focus between keystrokes.
+   */
+  function renderPickList() {
+    if (copySource === 'template') {
+      if (templates.length === 0) {
+        return (
+          <p className={styles.formHint}>
+            No templates yet — save a practice that went well as a template and next Tuesday starts from it.
+          </p>
+        );
+      }
+      // The SAME predicate the drill library and the template room use — one rule, so the three
+      // lists can never drift on what the search box looks at.
+      return filterTagged(templates, copyQuery, null).map(template => (
+        <button key={template.id} type="button" className={styles.ppPickRow}
+          onClick={() => applyTemplate(template)}>
+          <span className={styles.ppPickBody}>
+            <span className={styles.ppPickName}>
+              {template.name}
+              {template.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+            </span>
+            <span className={styles.ppPickMeta}>{templateShapeLabel(template.plan)}</span>
+          </span>
+        </button>
+      ));
+    }
+
+    if (copySource === 'previous') {
+      if (previousWithPlans.length === 0) {
+        return <p className={styles.formHint}>No other practice this season has a plan yet.</p>;
+      }
+      return previousWithPlans.filter(p => matchesQuery(p.name)).map(previous => (
+        <button key={previous.eventId} type="button" className={styles.ppPickRow}
+          onClick={() => applyPrevious(previous)}>
+          <span className={styles.ppPickBody}>
+            <span className={styles.ppPickName}>{previous.name}</span>
+            <span className={styles.ppPickMeta}>
+              {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
+              {previous.plan!.blocks.length === 1 ? '' : 's'}
+            </span>
+          </span>
+        </button>
+      ));
+    }
+
+    // ── A past season: the only source that has to be fetched, so the only one with four states.
+    if (pastLoading) return <p className={styles.formHint}>Looking back…</p>;
+    if (pastError) {
+      return (
+        <p className={styles.errorText} role="alert">
+          {pastError}{' '}
+          <button type="button" className="btn btn-ghost"
+            style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
+            onClick={() => void loadPastPlans()}>
+            Try again
+          </button>
+        </p>
+      );
+    }
+    const past = pastPlans ?? [];
+    if (past.length === 0) {
+      return (
+        <p className={styles.formHint}>
+          Nothing from a previous season yet — the practices you plan this year will be here next year.
+        </p>
+      );
+    }
+    return past.filter(p => matchesQuery(p.name)).map(row => (
+      <button key={row.eventId} type="button" className={styles.ppPickRow}
+        onClick={() => applyPlanCopy(row.plan)}>
+        <span className={styles.ppPickBody}>
+          <span className={styles.ppPickName}>{row.name}</span>
+          {/* ⚠ THE SEASON LEADS THE META LINE, ahead of the date. These are the only rows in this
+              dialog that are not from the season being planned, and a row a coach could mistake
+              for this year's work is the one way this source can do harm. A season whose row has
+              since gone says so rather than showing a bare date that reads as recent. */}
+          <span className={styles.ppPickMeta}>
+            {row.seasonName ?? 'An earlier season'}
+            {row.startsAt ? ` · ${fmtDate(row.startsAt)}` : ''}
+            {' · '}{row.plan.blocks.length} block{row.plan.blocks.length === 1 ? '' : 's'}
+          </span>
+        </span>
+      </button>
+    ));
+  }
+
   return (
     <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
       {header}
@@ -901,117 +1029,30 @@ export default function CoachPracticePlanPage({
                 even when this team has none — its empty state is the sentence that teaches a
                 first-year coach the feature exists for next autumn. */}
             <div className={styles.ppSourceTabs} role="tablist" aria-label="Where to start from">
-              <button type="button" role="tab" className={styles.ppSourceTab}
-                aria-selected={copySource === 'template'} data-on={copySource === 'template' ? 'on' : undefined}
-                onClick={() => openCopySource('template')}>
-                A template
-              </button>
-              <button type="button" role="tab" className={styles.ppSourceTab}
-                aria-selected={copySource === 'previous'} data-on={copySource === 'previous' ? 'on' : undefined}
-                onClick={() => openCopySource('previous')}>
-                A previous practice
-              </button>
-              <button type="button" role="tab" className={styles.ppSourceTab}
-                aria-selected={copySource === 'past'} data-on={copySource === 'past' ? 'on' : undefined}
-                onClick={() => openCopySource('past')}>
-                A past season
-              </button>
+              {COPY_SOURCES.map(source => (
+                <button key={source.id} type="button" role="tab" className={styles.ppSourceTab}
+                  aria-selected={copySource === source.id}
+                  data-on={copySource === source.id ? 'on' : undefined}
+                  onClick={() => openCopySource(source.id)}>
+                  {source.label}
+                </button>
+              ))}
             </div>
 
-            {/* ⚠ Every source repeats the same bargain in its own words — a coach must never have
-                to guess whether copying a past practice EDITS it. It does not. */}
             <p className={styles.formHint} style={{ padding: '0.5rem 0' }}>
-              {copySource === 'template'
-                ? 'This copies the template onto tonight. The template is left exactly as it is, and anything you change here stays here.'
-                : copySource === 'previous'
-                  ? 'This copies the plan onto tonight. The practice you copy from is left exactly as it is, and anything you change here stays here.'
-                  : 'This copies what you wrote onto tonight. The finished season is left exactly as it is, nothing is added to your templates, and the groups come across empty — last year’s players aren’t on this year’s roster.'}
+              {COPY_SOURCES.find(s => s.id === copySource)?.hint}
             </p>
 
             <input className={styles.input} value={copyQuery} onChange={e => setCopyQuery(e.target.value)}
               placeholder={copySource === 'template' ? 'Search templates…' : 'Search practices…'}
               aria-label={copySource === 'template' ? 'Search templates' : 'Search practices'} />
 
-            <div className={styles.ppPickList}>
-              {copySource === 'template' ? (
-                templates.length === 0 ? (
-                  <p className={styles.formHint}>
-                    No templates yet — save a practice that went well as a template and next Tuesday starts from it.
-                  </p>
-                ) : (
-                  // The SAME predicate the drill library and the template room use — one rule, so
-                  // the three lists can never drift on what the search box looks at.
-                  filterTagged(templates, copyQuery, null).map(template => (
-                    <button key={template.id} type="button" className={styles.ppPickRow}
-                      onClick={() => applyTemplate(template)}>
-                      <span className={styles.ppPickBody}>
-                        <span className={styles.ppPickName}>
-                          {template.name}
-                          {template.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-                        </span>
-                        <span className={styles.ppPickMeta}>{templateShapeLabel(template.plan)}</span>
-                      </span>
-                    </button>
-                  ))
-                )
-              ) : copySource === 'previous' ? (
-                previousWithPlans.length === 0 ? (
-                  <p className={styles.formHint}>No other practice this season has a plan yet.</p>
-                ) : (
-                  previousWithPlans
-                    .filter(p => !copyQuery.trim() || p.name.toLowerCase().includes(copyQuery.trim().toLowerCase()))
-                    .map(previous => (
-                      <button key={previous.eventId} type="button" className={styles.ppPickRow}
-                        onClick={() => applyPrevious(previous)}>
-                        <span className={styles.ppPickBody}>
-                          <span className={styles.ppPickName}>{previous.name}</span>
-                          <span className={styles.ppPickMeta}>
-                            {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
-                            {previous.plan!.blocks.length === 1 ? '' : 's'}
-                          </span>
-                        </span>
-                      </button>
-                    ))
-                )
-              ) : pastLoading ? (
-                <p className={styles.formHint}>Looking back…</p>
-              ) : pastError ? (
-                <p className={styles.errorText} role="alert">
-                  {pastError}{' '}
-                  <button type="button" className="btn btn-ghost"
-                    style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
-                    onClick={() => void loadPastPlans()}>
-                    Try again
-                  </button>
-                </p>
-              ) : (pastPlans ?? []).length === 0 ? (
-                <p className={styles.formHint}>
-                  Nothing from a previous season yet — the practices you plan this year will be here
-                  next year.
-                </p>
-              ) : (
-                (pastPlans ?? [])
-                  .filter(p => !copyQuery.trim() || p.name.toLowerCase().includes(copyQuery.trim().toLowerCase()))
-                  .map(past => (
-                    <button key={past.eventId} type="button" className={styles.ppPickRow}
-                      onClick={() => applyPlanCopy(past.plan)}>
-                      <span className={styles.ppPickBody}>
-                        <span className={styles.ppPickName}>{past.name}</span>
-                        {/* ⚠ THE SEASON LEADS THE META LINE, ahead of the date. These are the only
-                            rows in this dialog that are not from the season being planned, and a
-                            row a coach could mistake for this year's work is the one way this
-                            source can do harm. A season whose row has since gone says so rather
-                            than showing a bare date that reads as recent. */}
-                        <span className={styles.ppPickMeta}>
-                          {past.seasonName ?? 'An earlier season'}
-                          {past.startsAt ? ` · ${fmtDate(past.startsAt)}` : ''}
-                          {' · '}{past.plan.blocks.length} block{past.plan.blocks.length === 1 ? '' : 's'}
-                        </span>
-                      </span>
-                    </button>
-                  ))
-              )}
-            </div>
+            {/* ⚠ The branch dispatch lives in `renderPickList` rather than in a ternary chain here.
+                With three sources it had become one 78-line expression whose last four clauses were
+                all secretly the third source's states — the code no longer looked like the "three
+                sources" it implements, and a fourth would have been threaded through by matching
+                brackets. */}
+            <div className={styles.ppPickList}>{renderPickList()}</div>
           </div>
         </div>
       )}

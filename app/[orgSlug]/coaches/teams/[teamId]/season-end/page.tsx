@@ -10,7 +10,7 @@ import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
-import { canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canReadPastPracticePlans, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import { formatInOrgZone } from '@/lib/timezone';
 import styles from '../../../coaches.module.css';
@@ -110,13 +110,13 @@ export default function SeasonEndPage({
   /**
    * ⚠ **THE PRACTICES SECTION IS NARROWER THAN THE PAGE IT SITS ON** (plan §5 risk 2). Season's End
    * gates on `hasRecordAccess`; the read route behind every one of these rows has always ALSO
-   * required `canViewSchedule`, precisely so a helper who runs one station cannot type the URL. Its
-   * header records that the gate and the entry point must move together — so this second entry
-   * point carries the same pair, and the section is simply absent for anyone the plans are not for.
-   * The server refuses them regardless; this is the door, not the lock.
+   * required `canViewSchedule`, precisely so a helper who runs one station cannot type the URL. So
+   * this second entry point calls the SAME named predicate both routes behind it call — the door
+   * and the lock cannot drift, because they are one symbol. The section is simply absent for
+   * anyone the plans are not for; the server refuses them regardless.
    */
   const mayReadPractices = page.hasAccess
-    && (!page.capabilities || (canViewSchedule(page.capabilities) && hasRecordAccess(page.capabilities)));
+    && (!page.capabilities || canReadPastPracticePlans(page.capabilities));
 
   useEffect(() => {
     if (loading || !mayReadWrapped || seasonStillUnderWay) return;

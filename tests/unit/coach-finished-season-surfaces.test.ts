@@ -249,21 +249,43 @@ describe('the look-back layer', () => {
    * `canViewSchedule`, so a helper who runs one station cannot type the URL. A second entry point
    * inheriting the LOOSER gate is how a closed door gets reopened from the side.
    */
+  /**
+   * ⚠ **ASSERTED AS A SHARED SYMBOL, NOT AS A SHAPE** (rewritten by P3 C3's `/simplify`). This test
+   * first matched the raw expression `canViewSchedule(…) && hasRecordAccess(…)` at each site — a
+   * test compensating for duplication rather than one proving a rule. Now the pair has ONE home
+   * (`canReadPastPracticePlans`), and what is worth pinning is that all three sites call it: a
+   * reordered or half-dropped conjunction is no longer expressible.
+   */
   it('the practices shelf carries the plan door’s gate, not Season’s End’s', () => {
+    const routeOf = (...seg: string[]) => readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', ...seg, 'route.ts'), 'utf8');
+
     assert.match(
-      seasonEnd, /const mayReadPractices = [\s\S]{0,220}canViewSchedule\([\s\S]{0,60}hasRecordAccess\(/,
-      'the section must require BOTH schedule and record access. Season\'s End alone is wider, and '
-      + 'the read route behind every row refuses the difference — a section rendered over a route '
-      + 'that will refuse it is the broken-page outcome this page exists to avoid.',
+      seasonEnd, /const mayReadPractices = [\s\S]{0,220}canReadPastPracticePlans\(/,
+      'the section must gate on canReadPastPracticePlans. Season\'s End\'s own gate is wider, and '
+      + 'the route behind every row refuses the difference — a section rendered over a route that '
+      + 'will refuse it is the broken-page outcome this page exists to avoid.',
     );
-    const route = readFileSync(
-      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
-      'utf8',
-    );
+    for (const [label, src] of [
+      ['the season list', routeOf('season-practices')],
+      ['the plan read route', routeOf('events', '[eventId]', 'practice-plan', 'read')],
+    ] as const) {
+      assert.match(
+        code(src), /canReadPastPracticePlans\(capabilities\)/,
+        `${label} must enforce the same predicate. The client half above is the door; these are `
+        + 'the locks, and a helper must be refused whether or not the section rendered.',
+      );
+    }
+
+    /**
+     * ⚠ And the predicate itself still means what its three callers believe: a HELPER holds the
+     * schedule and nothing else, so the conjunction — not either half — is what shuts the door.
+     */
+    const caps = readFileSync(join(process.cwd(), 'lib', 'coach-capabilities.ts'), 'utf8');
     assert.match(
-      code(route), /canViewSchedule\(capabilities\) && hasRecordAccess\(capabilities\)/,
-      'the LIST route must enforce the same pair. The client half above is the door; this is the '
-      + 'lock, and a helper must be refused whether or not the section rendered.',
+      code(caps), /export const canReadPastPracticePlans = \(c: CoachCapabilities\) =>\s*canViewSchedule\(c\) && hasRecordAccess\(c\);/,
+      'canReadPastPracticePlans must stay the conjunction. Relaxing it to either half alone hands '
+      + 'a parent volunteer who ran one station last spring the whole season\'s plans.',
     );
   });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { resolveCoachHistoryRead } from '@/lib/coach-team-read';
+import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { getRepTeamPracticesWithPlanOrRecap, getRepTeamEventTagsByKind } from '@/lib/db';
-import { denyUnless, canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
+import { denyUnless, canReadPastPracticePlans } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { withObservability } from '@/lib/observability';
 
@@ -35,6 +35,8 @@ import { withObservability } from '@/lib/observability';
  * `canViewSchedule`, precisely so a helper who turns up to run one station cannot type the URL. Its
  * header says the gate and the entry point must move together — this IS a second entry point, so
  * it carries the same pair. Widening it here would have quietly reopened that door from the side.
+ * Both now call the one named predicate `canReadPastPracticePlans` (P3 C3 `/simplify`), which is
+ * what makes "the same pair" a fact rather than a promise three files are keeping by hand.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -54,13 +56,12 @@ export const GET = withObservability(async (req: Request,
   // ends up running its access check against the team rather than the requested season (the defect
   // the wrapped route records). Absent `?year=`, this is the team's WORKING season, which is the
   // everyday case: a team between seasons reading its own finished year.
-  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
-  const resolved = await resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
+  const resolved = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { programYear, capabilities, isReadOnly } = resolved;
 
   const denied = denyUnless(
-    canViewSchedule(capabilities) && hasRecordAccess(capabilities),
+    canReadPastPracticePlans(capabilities),
     'You do not have access to past practice plans.',
   );
   if (denied) return denied;

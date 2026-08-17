@@ -130,6 +130,30 @@ export async function resolveCoachHistoryRead(
 }
 
 /**
+ * The same door, reading the year off the REQUEST — what every history endpoint actually wants.
+ *
+ * ⚠ Added 2026-08-16 (`/simplify`) once the third history endpoint appeared and all three had
+ * hand-written the identical two lines: `searchParams.get('year')?.trim()`, then `|| null`. That
+ * pair encodes a real decision — **an empty or whitespace `?year=` means "the working season", not
+ * "not found"** — and a decision spelled out at each call site is one that drifts. A fourth
+ * endpoint (P4's money book is the next candidate) now inherits it.
+ *
+ * ⚠ Adding a caller is still the ARCHITECTURAL decision `resolveCoachHistoryRead` describes; this
+ * wrapper makes the plumbing shared, never the permission. `HISTORY_ENDPOINTS` in
+ * `tests/unit/coach-history-endpoint-guard.test.ts` is where joining the look-back layer is
+ * recorded, and that guard matches this name too — an extraction that hid three routes from it
+ * would be worse than the duplication it removed.
+ */
+export async function resolveCoachHistoryReadFromRequest(
+  req: Request,
+  orgSlug: string,
+  teamId: string,
+): Promise<{ error: Response } | CoachTeamReadContext> {
+  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
+  return resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
+}
+
+/**
  * "May this coach open this team, and with what?" — for the cross-season surfaces that span EVERY
  * season at once rather than resolving one (the compare list, the tryout memory strip).
  *

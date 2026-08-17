@@ -5,8 +5,8 @@ import {
   getRepTeamEventTagsByKind,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { resolveCoachHistoryRead } from '@/lib/coach-team-read';
-import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/lib/coach-capabilities';
+import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
+import { denyUnless, canReadPastPracticePlans, redactRoster } from '@/lib/coach-capabilities';
 
 /**
  * ⚠ **ONE READ-ONLY PAST PLAN, AND NOTHING ELSE** (owner ruling 2026-08-01,
@@ -58,8 +58,7 @@ export const GET = withObservability(async (req: Request,
   // The year goes THROUGH the resolver, never around it — that is what makes the access check run
   // against the requested SEASON rather than against the team. Absent the parameter this is the
   // team's working season, which is how the Development report's own list reaches it.
-  const rawYear = new URL(req.url).searchParams.get('year')?.trim();
-  const seasonCtx = await resolveCoachHistoryRead(orgSlug, teamId, rawYear || null);
+  const seasonCtx = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in seasonCtx) return seasonCtx.error;
   const { programYear, capabilities, isReadOnly } = seasonCtx;
 
@@ -82,9 +81,11 @@ export const GET = withObservability(async (req: Request,
    * and passed on the roster half, so dropping that clause would have locked every ordinary
    * assistant coach out of past plans while this change is supposed to take nothing away.
    * `hasRecordAccess` restores them and still excludes a helper.
+   *
+   * ⚠ The pair is now the NAMED predicate `canReadPastPracticePlans` (P3 C3 `/simplify`), so the
+   * "these must move together" invariant is structural rather than kept by these comments alone.
    */
-  const canOpenPastPlans = canViewSchedule(capabilities) && hasRecordAccess(capabilities);
-  const denied = denyUnless(canOpenPastPlans, 'You do not have access to past practice plans.');
+  const denied = denyUnless(canReadPastPracticePlans(capabilities), 'You do not have access to past practice plans.');
   if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);

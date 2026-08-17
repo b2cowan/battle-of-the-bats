@@ -7619,36 +7619,100 @@ export async function getRepTeamPracticePlansAcrossSeasons(
 }
 
 /**
+ * ⚠ **`rep_team_events.program_year_id` is NOT NULL** — verified against the dev AND prod column
+ * snapshots on 2026-08-16, not inferred from a migration (the dictionary rule). Both helpers below
+ * therefore exclude a season with a plain `.neq`, which is the shape a first draft avoided out of
+ * a NULL-safety worry the schema does not permit. Anything that made the column nullable would
+ * have to revisit both.
+ */
+
+/**
  * Does this team have a practice plan from any season OTHER than the one given? (P3 C2.)
  *
  * ⚠ **Exists so a door appears exactly when it can deliver.** "Start this plan from…" is offered
  * only when there is something to start from, and until C2 that meant a template or another
  * practice THIS season — so the coach the third source exists for (first practice of a brand-new
- * season, no templates yet) would never have seen the button at all. This is the cheap signal that
- * fixes it: no jsonb crosses the wire and nothing is parsed, unlike
- * `getRepTeamPracticePlansAcrossSeasons`, which the everyday plan screen must not pay for.
+ * season, no templates yet) would never have seen the button at all.
+ *
+ * ⚠ **It runs on the everyday plan screen, so it must cost almost nothing** — a boolean, answered
+ * by ONE row. The first draft selected up to 400 rows and reduced them in JS, which is a great
+ * deal of wire and parse for a true/false on the screen a head coach opens most (`/simplify`
+ * 2026-08-16). No `practice_plan` jsonb is selected here either way; that is what separates this
+ * from `getPastSeasonPracticePlans` below, which the plan screen must not pay for.
  *
  * ⚠ It answers a deliberately COARSER question than the list it gates: a plan row with no blocks
  * counts here and is dropped by the route that builds the rows (a goal typed and abandoned is not a
  * plan). So the tab can be offered over an empty list — which the dialog states in words, the same
  * posture its two sibling sources already take. The opposite error, a hidden tab over rows that do
  * exist, is the one worth spending a query to avoid.
- *
- * ⚠ Filtered in JS rather than with `.neq`, on purpose: a practice whose `program_year_id` is NULL
- * is "not this season" to the route that lists them, and `NULL <> x` is NULL in SQL, so a `.neq`
- * would quietly disagree with the list it is supposed to predict.
  */
 export async function hasRepTeamPastSeasonPracticePlans(
-  teamId: string, excludeProgramYearId: string | null,
+  teamId: string, excludeProgramYearId: string,
 ): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
-    .select('id, program_year_id')
+    .select('id')
     .eq('team_id', teamId)
     .not('practice_plan', 'is', null)
-    .limit(400);
+    .neq('program_year_id', excludeProgramYearId)
+    .limit(1);
   if (error) throw error;
-  return (data ?? []).some(r => r.program_year_id !== excludeProgramYearId);
+  return (data ?? []).length > 0;
+}
+
+/**
+ * Every practice plan this team wrote in a season OTHER than its live one, newest first — the one
+ * read behind all three "start from what you already did" surfaces.
+ *
+ * ⚠ **Extracted on 2026-08-16 (`/simplify`) because the identical fetch-then-filter had been
+ * written THREE times**: the drill import, the plan-template import, and P3 C2's practice picker.
+ * Each did `Promise.all([getActiveRepProgramYear, getRepTeamPracticePlansAcrossSeasons])` and then
+ * dropped the live year in JS, each carrying its own copy of the reasoning for doing so. Three
+ * copies of a rule is three places for it to drift; the fourth caller (P4's money book is the next
+ * candidate) now inherits it instead of copying it.
+ *
+ * ⚠ **The exclusion moved INTO the query, and that is a fix, not a tidy-up.** The shared read is
+ * `ORDER BY starts_at DESC` under a row cap, and a live season's practices are by definition the
+ * newest — so filtering afterwards let this year's plans consume the cap and silently push genuinely
+ * old seasons out of the answer. A team deep into a busy season could therefore lose the oldest
+ * practices from an import list that claims to hold everything. Excluding first spends the whole
+ * cap on rows the caller will actually see.
+ *
+ * ⚠ **The LIVE season is excluded for a product reason, not a technical one**, and every caller
+ * shares it: this season's practice is already offered by its own surface ("Save as template…",
+ * "Save to my drills…", the picker's *A previous practice* tab), and offering the same night twice
+ * lets a coach copy it twice under slightly different words. A team with NO active year sees
+ * everything it has ever run — the right answer for exactly the coach most likely to be looking
+ * back, which is why a missing active year means "no exclusion" rather than "no rows".
+ *
+ * ⚠ **It resolves the active year ITSELF, and that costs a round trip the callers used to overlap.**
+ * Deliberate: the exclusion can only move into the query if the query knows what to exclude, and
+ * the alternative — every caller resolving the year and passing it — is the same three-way
+ * duplication in a new coat. All three callers are user-initiated PICKERS ("Add from a past
+ * season", the copy dialog's third tab), not page loads, so one extra ~30ms hop buys a rule with
+ * one home and a cap that is no longer spent on rows nobody sees.
+ */
+export async function getPastSeasonPracticePlans(
+  teamId: string, opts?: { limit?: number },
+): Promise<{ eventId: string; name: string; startsAt: string | null; programYearId: string | null; plan: PracticePlan | null }[]> {
+  const activeYear = await getActiveRepProgramYear(teamId);
+  let q = supabaseAdmin
+    .from('rep_team_events')
+    .select('id, name, starts_at, program_year_id, practice_plan')
+    .eq('team_id', teamId)
+    .not('practice_plan', 'is', null);
+  if (activeYear) q = q.neq('program_year_id', activeYear.id);
+  const { data, error } = await q
+    .order('starts_at', { ascending: false })
+    .limit(opts?.limit ?? 400);
+  if (error) throw error;
+  return (data ?? []).map(r => ({
+    eventId: r.id,
+    name: r.name,
+    startsAt: r.starts_at ?? null,
+    programYearId: r.program_year_id ?? null,
+    plan: parsePracticePlan(r.practice_plan),
+  }));
 }
 
 /**
