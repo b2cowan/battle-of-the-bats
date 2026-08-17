@@ -82,14 +82,28 @@ Verify yourself before building:
 
 ---
 
-## 5. ⚠ Concurrent work — check this FIRST
+## 5. ⚠ Concurrent work — check this FIRST, and do not trust the specifics below
 
-At the time of writing another session had **49 files in flight**, including two that collide with Phase 1:
+**Run `git status --porcelain` before anything else.** The named files here go stale within hours — the *shape* of the hazard is what lasts.
 
-- `docs/agents/db/DATA_DICTIONARY.md` (modified, uncommitted) — **any schema change must update this file**, and you cannot stage half a file. Editing it while another session holds edits means committing their unfinished work with yours.
-- `supabase/migrations/247_club_money_belongs_to_a_season.sql` (untracked) — adds `rep_team_payment_requests.program_year_id`, which is currently **undocumented and failing `check:dictionary`**. That failure is theirs, not yours; do not "fix" it by documenting their column.
+**The hazard:** Phase 1 must edit two things that every schema project edits — `docs/agents/db/DATA_DICTIONARY.md` and the generated `docs/agents/db/schema-snapshots/*`. **You cannot stage half a file.** If another session holds edits in either, committing yours commits their unfinished work too.
 
-**Before you start:** run `git status --porcelain`. If the dictionary is still dirty, that is a **coordination point, not a code problem** — say so to the owner and ask whether to wait. Do not silently commit another session's work.
+**State as of 2026-08-17 (verify, do not assume):** one active session on club money allocations. Snapshots dirty, `DATA_DICTIONARY.md` dirty, `lib/coach-budget-item-usage.ts` dirty, `supabase/migrations/250_club_money_says_what_it_was_for.sql` untracked (adds `budget_category_id` + `budget_item_id` to `rep_team_payment_requests` and `rep_allocation_splits`). **The dictionary went from clean to dirty during a two-minute check** — that session is live, not parked.
+
+**Decision rule:**
+- Dictionary and snapshots **clean** → proceed.
+- Either **dirty** → this is a **coordination point, not a code problem.** Tell the owner and ask whether to wait. Do not silently commit another session's work, and do not "fix" a `check:dictionary` failure by documenting a column you did not add.
+
+**Migration numbering:** the highest committed is 249; **250 exists untracked** and belongs to the other session. Families starts at **251** — re-check before writing, because they may add more.
+
+**Expect these gates to be RED before you touch anything, and none of them are yours:**
+- `check:dictionary` — the other session's undocumented columns.
+- `check:schema-parity` — ~244 divergences, dev ahead of prod.
+- `check:prod-migration-drift` — **3 tables and 16 columns exist on dev and have never been applied to prod** (the accumulated coach-money work).
+
+⚠ **The consequence for you: parity and drift are useless as signals during this build.** Do not read either as evidence that your own work is clean. `typecheck`, the test suite, `check:indexes` and `check:snapshots` were all green on 2026-08-17 — **those are your signals.**
+
+Standing rules: work on `dev`; re-check the branch before committing; stage **explicit pathspecs only**, never `git add -A`; after committing run `git show --stat HEAD` and confirm only your files landed.
 
 Standing rules: work on `dev`; re-check the branch before committing; stage **explicit pathspecs only**, never `git add -A`; after committing run `git show --stat HEAD` and confirm only your files landed.
 
