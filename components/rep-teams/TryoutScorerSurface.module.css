@@ -121,7 +121,14 @@
    flex-wrap with `flex: 1 1 auto`, which on a 1–10 card gave a volunteer six thin buttons and then
    four fat ones — different tap-target sizes carrying no meaning, at a wrap point that moved with
    the phone, on the one screen that gets used outdoors in glare. A grid makes every number the
-   same target on every device. Five columns clear the 44px tap floor down to a 280px viewport. */
+   same target on every device.
+   ⚠ The honest floor, measured rather than assumed: the container chrome here is 90px
+   (.cats 12px×2 + .cat 16px×2 + 2px border + four 8px gaps), so a button is (viewport − 90) ÷ 5.
+   That clears the 44px tap floor from **310px** upward — 46px on a 320px iPhone SE, 54px at 361.
+   BELOW ~310px the buttons shrink under the floor rather than overflowing. That is accepted: no
+   surface in this portal supports a sub-320px viewport. An earlier version of this comment
+   claimed 280px; it was wrong, and the arithmetic is written out here so the next person can
+   check it instead of trusting it. */
 .scale {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

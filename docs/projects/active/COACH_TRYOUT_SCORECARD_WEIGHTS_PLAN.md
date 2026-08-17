@@ -92,8 +92,10 @@ same one-line-row idiom as the sessions list beside it.
 - **Stepper, not a typed percent.** Typed percents must total 100, which forces the product to either
   reject arithmetic the coach believes is fine or silently re-scale what they typed.
 - **Notes-only stays weight `0`** — it is already how the product behaves; no data change, no new concept.
-- **Stored weights are rounded but never capped** on load. Capping a stored `8` would silently change
-  what the scorecard means.
+- **Stored weights are taken EXACTLY as stored** — neither rounded nor capped. ⚠ The first cut rounded
+  them, and `/review` proved that was silent data loss (see §7.1). A stored weight is free-form and
+  non-negative; the stepper adds and subtracts whole steps from whatever it finds and does not need
+  the value pre-flattened.
 
 ## 5. Verification
 
@@ -108,6 +110,77 @@ files stashed. Pre-existing dev-only migration drift from other sessions.
 ⚠ `check:layout` **not re-baselined.** The builder only exists inside a modal the sweep never opens,
 and its checklist row is collapsed by default — the rendered sweep cannot see any of this. Owner QA is
 the only coverage this screen has.
+
+## 7. What `/review` found (high-risk tier, 5 lenses, run on `e1eaa0b0`)
+
+16 claims → 8 after dedup → **6 confirmed, 1 refuted, 1 out of scope.** Security came back clean. All
+six fixes are in the follow-up commit. **Two of the six were defects in this project's own headline
+work** — worth stating plainly, because both were invisible to every gate.
+
+**7.1 — Critical: rounding stored weights on load silently rewrote a coach's split.**
+`toDraft` did `Math.round(c.weight)`. A stored weight is free-form: the API accepts any non-negative
+number, and the pre-redesign builder's `step={1}` never stopped a decimal being *typed* (it governs
+the spinner and native validation, and that form never submitted natively). So `[1.3, 1.4]` — a legal
+~48/52 scorecard — rounded to `[1, 1]`, which made `isEqual` derive the switch **ON**, which meant a
+coach opening the builder to fix a typo and pressing Save wrote `[1, 1]`. **No dirty state and no
+confirm, because from the form's point of view nothing had changed.** The same rounding turned a
+stored `0.4` into `0` — moving a category that was still feeding the ranking into one the screen
+labelled *"Notes only · not ranked"*. It also made the collapsed card (unrounded) and the builder
+(rounded) print different percentages for the same untouched scorecard.
+**Fix:** no rounding. `weight: Math.max(0, c.weight)`.
+**The lesson:** a normalisation applied on READ becomes a WRITE the moment the form saves. The comment
+above it reasoned carefully about not *capping* and never noticed it was rounding.
+
+**7.2 — High: the all-zero warning this project added did not fire.**
+`rankedCount` / `allNotesOnly` / the percentages / the footer count were all computed over the full
+`cats` array, which includes **unnamed rows that `save()` deliberately drops**. Add a category, don't
+name it, step the only real category to 0 → the blank row's weight 1 kept `rankedCount` at 1, the
+warning stayed silent, and the save stored exactly the all-zero rubric the warning exists to catch.
+The same bug diluted every displayed share against a denominator the payload would never have.
+**Fix:** every derived figure is computed over named rows only, and a row shows **no share line at
+all** until it has a name. **The lesson: a fix that reasons over the draft must reason over the rows
+that will actually be SAVED.**
+
+**7.3 — High: this commit put a SECOND confirm dialog on a screen that already had one.**
+`ConfirmProvider` holds a single resolver slot and `FeedbackModal` moves focus but never traps Tab. So
+the discard guard and the new reset-to-equal ask could overwrite each other — dialog A's promise
+stranded forever, the coach's answer landing on a question they were never shown — and the form stayed
+drivable behind the dialog, so the quoted *"your weighting is X, Y, Z"* could stop being true before
+they answered.
+**Fix:** a re-entrancy guard on the toggle; the modal body is a `<fieldset disabled>` while any
+confirm is pending; Save and Cancel disabled with it. ⚠ The fieldset's `border: 0; margin: 0;
+min-width: 0` resets are load-bearing — `min-width: min-content` would push the modal past its own
+max-width.
+
+**7.4 — Medium: an untouched new category could block a valid save.** `addCat` seeded the new row with
+the *first row's* weight while the orphan rule spells the default as `1`, so a new row inheriting a `3`
+read as substance and refused to save. **Fix:** a new row always starts at 1 — the default and the rule
+that reads it have to be the same number.
+
+**7.5 — Medium: a comment claimed a tap floor the arithmetic doesn't support.** The scorer grid comment
+said five columns clear 44px "down to a 280px viewport". Chrome is 90px, so a button is
+`(viewport − 90) ÷ 5`: **38px at 280, 44px at 310, 46px at 320.** **Fix:** the arithmetic is written
+into the comment; sub-320px is explicitly out of scope (no surface in this portal supports it). A media
+query was considered and rejected as engineering for a device nothing else here serves.
+
+**7.6 — Advisory:** the dirty baseline was double-serialised (`snapshot()` returned a string into
+`snapshotEqual`, which stringifies again). Harmless today, a footgun if it ever deep-compares.
+**Fix:** `snapshot()` returns the object.
+
+**Refuted (dropped):** "the remove button lost its danger tone at rest" — `.iconDanger` is a `:hover`
+rule only, in both the old sheet and the new one. No behaviour change.
+
+**Confirmed but OUT OF SCOPE — a pre-existing, portal-wide issue, deliberately not fixed here:**
+`ConfirmProvider` sits above the routed page, so a pending dialog **survives client-side navigation**
+and floats over whatever the coach lands on. This affects **every `useConfirm()` call site in the
+portal** (23+, including discard guards shipped weeks ago) and is not something this commit introduced.
+Fixing it changes every dialog in the product and needs its own change and its own QA.
+
+⚠ **`--changed` on the rendered check reported "nothing to sweep" because the change was already
+COMMITTED — that is a false green, not a pass.** Forced `--only=coach-tryouts` instead; its 6 "NEW"
+findings were then reproduced on an untouched screen (`coach-overview`), proving they are portal chrome
+(notification badge, team switcher), not this work. **Test an untouched screen before believing a
+"NEW" finding.**
 
 ## 6. Owner QA
 

@@ -6867,6 +6867,12 @@ and the plumbing. **§C and §G are the two worth a second opinion.**
 ## §50 ✅ The scorecard says what a category is worth (tryout weights) — **OWNER QA PASSED 2026-08-17**
 
 **Built on dev 2026-08-17 · ✅ QA PASSED same day · awaiting production · no migration.**
+
+⚠⚠ **A SHORT RE-WALK IS OWED — `/review` ran AFTER this passed and changed behaviour in three places.**
+QA passed against `e1eaa0b0`; the review (high-risk tier, 5 lenses) confirmed 6 defects, **two of them
+in this section's own headline work**, and the fixes are in the follow-up commit. Nothing you already
+walked was wrong, but three things now behave differently — **see part G at the foot of this section.**
+Everything above part G stands as walked.
 Mockup (approved, binding): artifact `a43106bf`. Plan + PM brief:
 `COACH_TRYOUT_SCORECARD_WEIGHTS_PLAN.md`. Design log entry 2026-08-17.
 
@@ -6965,8 +6971,39 @@ everywhere.
 
 ---
 
+### G · The short re-walk after `/review` (3 behaviours changed post-QA)
+
+- [ ] **A decimal weight now survives.** ⚠ This is the Critical one. The builder used to ROUND stored
+      weights when opening, which made an uneven split look equal, switched equal-counting on, and
+      silently rewrote the split to 50/50 the next time the coach pressed Save — with no dirty state
+      and no confirm, because the form believed nothing had changed. If you have (or can make) a
+      scorecard with an uneven split, open it, change **only the name**, save, reopen: the split must
+      come back **exactly as you left it**.
+- [ ] **An unnamed row no longer counts.** Add a category and **don't name it**. Its share line should
+      not appear at all — it isn't a category until it has a name. The footer count, the "N ranked"
+      figure and every percentage must ignore it.
+- [ ] ⚠ **The all-zero warning now actually fires in the case that used to defeat it:** with one real
+      category and one blank row, step the real one to **0** → the amber "nothing left to rank on"
+      warning **must** appear. Before the fix it stayed silent and saved an all-zero scorecard —
+      exactly what that warning exists to prevent.
+- [ ] **Adding a category no longer blocks the save.** In custom weighting, set a category to 3, then
+      **Add category** and press Save without touching the new row. It must save (the blank row is
+      dropped), not refuse with "Category N needs a name".
+- [ ] **The form is frozen while a dialog is up.** With the reset confirm open, everything behind it —
+      the toggle, the steppers, the name fields, Save and Cancel — is greyed and unusable, including
+      by keyboard (Tab). Answer the dialog and it all comes back. Double-tap the toggle quickly: you
+      get **one** dialog, never two.
+
+⚠ **Known and deliberately NOT fixed — a pre-existing, portal-wide issue:** a confirm dialog lives
+above the routed page, so navigating away (browser Back, a sidebar link) while one is open leaves it
+floating over the next screen. That is true of **every** confirm in the coach portal, not just this
+one, and fixing it changes all of them — it needs its own change and its own QA. Don't report it here.
+
+---
+
 **If §A and §B read correctly, this section passes.** C and D are the same modal's ergonomics; E is
-the pair of states that need real scores behind them; F is the skin and the honest limits.
+the pair of states that need real scores behind them; F is the skin and the honest limits; **G is the
+short re-walk owed after the review.**
 
 ---
 

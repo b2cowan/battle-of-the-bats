@@ -23,16 +23,30 @@ interface Props {
  *  merely opened its note field has not been edited. */
 interface CatDraft { uid: string; key?: string; label: string; weight: number; instructions: string; noteOpen: boolean }
 
+/** The dirty baseline's shape — the saved fields only, never the UI-only row state. */
+interface BuilderSnapshot {
+  name: string;
+  scaleMax: number;
+  cats: { key?: string; label: string; weight: number; instructions: string }[];
+}
+
 let uidSeq = 0;
 const nextUid = () => `c${++uidSeq}`;
 
 const toDraft = (c: RepTryoutRubricCategory): CatDraft => ({
   uid: nextUid(),
   key: c.key,
-  // Stored weights are free-form non-negative numbers; the stepper works in whole steps. Round
-  // but never CAP — capping a stored 8 would silently change what the scorecard means.
   label: c.label,
-  weight: Math.max(0, Math.round(c.weight)),
+  // ⚠ TAKEN EXACTLY AS STORED — never rounded, never capped. A stored weight is free-form and
+  // non-negative (the API accepts any such number, and the pre-2026-08-17 builder's `step={1}`
+  // never stopped a decimal being typed), so a 1.3/1.4 pair is a legal ~48/52 scorecard. Rounding
+  // it here made the pair look EQUAL, which derived the equal-weighting switch ON, which meant a
+  // coach who opened the builder to fix a typo and pressed Save silently rewrote their split to
+  // 50/50 — with no dirty state and no confirm, because from the form's point of view nothing had
+  // changed. The same rounding turned a 0.4 into a 0, i.e. a category still feeding the ranking
+  // into one the screen labelled "notes only". The stepper adds and subtracts whole steps from
+  // whatever it finds; it does not need the value pre-flattened.
+  weight: Math.max(0, c.weight),
   instructions: c.instructions ?? '',
   noteOpen: false,
 });
@@ -90,17 +104,25 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
   const [equal, setEqual] = useState(true);
   // Whatever openBuilder seeded — the rubric being edited OR the starter draft. Our prefill is
   // not the coach's work, so an untouched seeded form still closes silently (Chunk G rider).
-  const [baseline, setBaseline] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState<BuilderSnapshot | null>(null);
   const [saving, setSaving] = useState(false);
+  // True while THIS modal is waiting on a confirm dialog. The builder now raises TWO of them —
+  // the discard guard and the reset-to-equal ask — and `ConfirmProvider` holds a SINGLE resolver
+  // slot, so a second confirm() raised while the first is open overwrites it: dialog A's promise
+  // never settles and the coach's answer lands on a question they were never shown. It also stops
+  // the form being driven behind the dialog (FeedbackModal does not trap Tab), which is what kept
+  // the quoted "your weighting is X, Y, Z" honest.
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const confirm = useConfirm();
   useOverlayOpen(open);
 
   // ONE shape for the dirty baseline and the live form (the one-mapping rule, Chunk A D4),
-  // minus the UI-only row fields.
+  // minus the UI-only row fields. Returns the OBJECT: snapshotEqual serialises for us, and
+  // handing it a pre-serialised string would silently stop working if it ever deep-compares.
   const snapshot = useCallback(
-    () => JSON.stringify({
+    (): BuilderSnapshot => ({
       name,
       scaleMax,
       cats: cats.map(c => ({ key: c.key, label: c.label, weight: c.weight, instructions: c.instructions })),
@@ -109,12 +131,17 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
   );
 
   const catCount = cats.filter(c => c.label.trim()).length;
-  const guardedClose = useDiscardGuard({
+  const rawGuardedClose = useDiscardGuard({
     dirty: baseline != null && !snapshotEqual(snapshot(), baseline),
     close: () => setOpen(false),
     noun: 'scorecard',
     detail: catCount > 0 ? `${catCount} categor${catCount === 1 ? 'y' : 'ies'} and how they count` : undefined,
   });
+  const guardedClose = async () => {
+    if (awaitingConfirm || saving) return;
+    setAwaitingConfirm(true);
+    try { await rawGuardedClose(); } finally { setAwaitingConfirm(false); }
+  };
 
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -160,17 +187,22 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
     setScaleMax(seedScale);
     setCats(seedCats);
     setEqual(seedCats.length === 0 || isEqual(seedCats));
-    setBaseline(JSON.stringify({
+    setBaseline({
       name: seedName,
       scaleMax: seedScale,
       cats: seedCats.map(c => ({ key: c.key, label: c.label, weight: c.weight, instructions: c.instructions })),
-    }));
+    });
     setFormError(null);
     setOpen(true);
   }
 
+  // ⚠ A NEW ROW ALWAYS STARTS AT 1, never at the first row's weight. save()'s orphan rule reads
+  // "a brand-new row that never got anything but its DEFAULT weight may drop silently", and it
+  // spells that default as 1 — so inheriting a 3 made an untouched new row look like work and
+  // blocked the save with "Category 2 needs a name". The default and the rule that reads it have
+  // to be the same number.
   const addCat = () =>
-    setCats(cs => [...cs, { uid: nextUid(), label: '', weight: cs.length ? cs[0].weight : 1, instructions: '', noteOpen: false }]);
+    setCats(cs => [...cs, { uid: nextUid(), label: '', weight: 1, instructions: '', noteOpen: false }]);
   const removeCat = (uid: string) => setCats(cs => cs.filter(c => c.uid !== uid));
   const patchCat = (uid: string, patch: Partial<CatDraft>) =>
     setCats(cs => cs.map(c => (c.uid === uid ? { ...c, ...patch } : c)));
@@ -192,19 +224,30 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
    *  over" path (owner ruling 2026-08-17) — it DISCARDS the tuning, so it confirms first, but
    *  only when there is real shaping to lose. */
   async function toggleEqual() {
+    // Re-entrancy guard: a second activation while the first ask is open would overwrite the
+    // provider's single resolver slot, stranding the first promise forever.
+    if (awaitingConfirm || saving) return;
     if (equal) { setEqual(false); return; }
-    if (isTuned(cats)) {
-      const pct = shares(cats.map(c => c.weight));
-      const parts = cats.map((c, i) => `${c.label.trim() || `Category ${i + 1}`} ${c.weight > 0 ? `${pct[i]}%` : 'notes only'}`);
+    // Quote only the rows that are actually categories — a blank row has no share to lose.
+    const named = cats.filter(c => c.label.trim());
+    if (isTuned(named)) {
+      const pct = shares(named.map(c => c.weight));
+      const parts = named.map((c, i) => `${c.label.trim()} ${c.weight > 0 ? `${pct[i]}%` : 'notes only'}`);
       const shown = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, +${parts.length - 3} more` : '');
-      const even = 100 % cats.length === 0 ? `${Math.round(100 / cats.length)}% each` : 'an even split';
-      const ok = await confirm({
-        title: 'Start over with an even split?',
-        message: `Your weighting (${shown}) will be replaced with ${even}. You can't undo this.`,
-        confirmText: 'Reset to equal',
-        cancelText: 'Keep my weighting',
-        tone: 'warning',
-      });
+      const even = named.length > 0 && 100 % named.length === 0 ? `${Math.round(100 / named.length)}% each` : 'an even split';
+      setAwaitingConfirm(true);
+      let ok: boolean;
+      try {
+        ok = await confirm({
+          title: 'Start over with an even split?',
+          message: `Your weighting (${shown}) will be replaced with ${even}. You can't undo this.`,
+          confirmText: 'Reset to equal',
+          cancelText: 'Keep my weighting',
+          tone: 'warning',
+        });
+      } finally {
+        setAwaitingConfirm(false);
+      }
       if (!ok) return;
     }
     setCats(cs => cs.map(c => ({ ...c, weight: 1 })));
@@ -257,14 +300,21 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
   const readPct = hasRubric ? shares(rubric!.categories.map(c => c.weight)) : [];
   const readEqual = hasRubric && isEqual(rubric!.categories);
 
-  const evenPct = evenShares(cats.length);
-  const livePct = equal ? evenPct : shares(cats.map(c => c.weight));
-  const rankedCount = cats.filter(c => c.weight > 0).length;
-  const allNotesOnly = !equal && cats.length > 0 && rankedCount === 0;
+  // ⚠ EVERY DERIVED FIGURE COUNTS ONLY THE ROWS THAT WILL ACTUALLY BE SAVED. An unnamed row is
+  // not a category yet — save() drops it — but it still carries a weight, and counting it did two
+  // wrong things: it diluted everyone's displayed share against a denominator the payload would
+  // never have, and it kept the all-notes-only warning SILENT. Concretely: one real category
+  // stepped to 0, plus an untouched blank row at 1, read as "1 ranked" and saved an all-zero
+  // scorecard — the exact silent fallback this warning exists to catch, surviving inside the fix
+  // for it.
+  const namedCats = cats.filter(c => c.label.trim());
+  const namedPct = equal ? evenShares(namedCats.length) : shares(namedCats.map(c => c.weight));
+  const pctByUid = new Map(namedCats.map((c, k) => [c.uid, namedPct[k]]));
+  const rankedCount = namedCats.filter(c => c.weight > 0).length;
+  const allNotesOnly = !equal && namedCats.length > 0 && rankedCount === 0;
   // Only stated when the split divides cleanly — "20% each" over 5 categories is true, "34% each"
   // over 3 is not, and a figure that is almost right is worse than none.
-  const evenEach = cats.length > 0 && 100 % cats.length === 0 ? evenPct[0] : null;
-  const previewCats = cats.filter(c => c.label.trim());
+  const evenEach = namedCats.length > 0 && 100 % namedCats.length === 0 ? Math.round(100 / namedCats.length) : null;
 
   // Row-body form (2026-08-17): the checklist row bar owns the title/status; this renders only
   // the manager — the category list, its actions, and the builder modal.
@@ -322,7 +372,10 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
               </button>
             </div>
 
-            <div className={styles.body}>
+            {/* Everything inside is inert while a confirm dialog is up. FeedbackModal does not
+                trap Tab, so without this the coach could keyboard past the dialog and edit the
+                very rows it was quoting — or trigger the OTHER confirm and strand this one. */}
+            <fieldset className={styles.body} disabled={awaitingConfirm}>
               <div className={styles.grid}>
                 <div>
                   <div className={styles.field}>
@@ -370,7 +423,7 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                         <span className={styles.toggleLabel}>Count every category equally</span>
                         <span className={styles.toggleHint}>
                           {equal
-                            ? `All ${cats.length} categor${cats.length === 1 ? 'y counts' : 'ies count'} the same${evenEach != null ? ` — ${evenEach}% each` : ''}.`
+                            ? `All ${namedCats.length} categor${namedCats.length === 1 ? 'y counts' : 'ies count'} the same${evenEach != null ? ` — ${evenEach}% each` : ''}.`
                             : 'Set each category’s share below. Switching this back on resets them to an even split.'}
                         </span>
                       </span>
@@ -400,6 +453,9 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                     </span>
                     <ul className={styles.cats}>
                       {cats.map((c, i) => {
+                        // A row with no name has no share: it isn't a category until it's named,
+                        // and showing it one would be showing a number the save won't honour.
+                        const pct = pctByUid.get(c.uid);
                         const notesOnly = !equal && c.weight === 0;
                         const rowName = c.label.trim() || `category ${i + 1}`;
                         return (
@@ -427,32 +483,34 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                               </button>
                             </div>
 
-                            <div className={styles.share}>
-                              {!equal && (
-                                <span className={styles.stepper} role="group" aria-label={`${rowName} — share of the total`}>
-                                  <button type="button" className={styles.stepBtn} disabled={c.weight <= 0}
-                                    onClick={() => stepWeight(c.uid, -1)} aria-label={`Less weight for ${rowName}`}>−</button>
-                                  <span className={styles.stepVal}>{c.weight}</span>
-                                  <button type="button" className={styles.stepBtn}
-                                    onClick={() => stepWeight(c.uid, 1)} aria-label={`More weight for ${rowName}`}>+</button>
-                                </span>
-                              )}
-                              {notesOnly ? (
-                                <>
-                                  <span className={styles.notesOnly}>Notes only · not ranked</span>
-                                  <span className={styles.pctMuted}>—</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span className={styles.bar}>
-                                    <span className={styles.barFill} style={{ width: `${livePct[i] ?? 0}%` }} />
+                            {pct != null && (
+                              <div className={styles.share}>
+                                {!equal && (
+                                  <span className={styles.stepper} role="group" aria-label={`${rowName} — share of the total`}>
+                                    <button type="button" className={styles.stepBtn} disabled={c.weight <= 0}
+                                      onClick={() => stepWeight(c.uid, -1)} aria-label={`Less weight for ${rowName}`}>−</button>
+                                    <span className={styles.stepVal}>{c.weight}</span>
+                                    <button type="button" className={styles.stepBtn}
+                                      onClick={() => stepWeight(c.uid, 1)} aria-label={`More weight for ${rowName}`}>+</button>
                                   </span>
-                                  <span className={equal ? `${styles.pct} ${styles.pctEqual}` : styles.pct}>
-                                    {livePct[i] ?? 0}%
-                                  </span>
-                                </>
-                              )}
-                            </div>
+                                )}
+                                {notesOnly ? (
+                                  <>
+                                    <span className={styles.notesOnly}>Notes only · not ranked</span>
+                                    <span className={styles.pctMuted}>—</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className={styles.bar}>
+                                      <span className={styles.barFill} style={{ width: `${pct}%` }} />
+                                    </span>
+                                    <span className={equal ? `${styles.pct} ${styles.pctEqual}` : styles.pct}>
+                                      {pct}%
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            )}
 
                             <div className={styles.noteLine}>
                               {c.noteOpen ? (
@@ -495,9 +553,9 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                       <span className={styles.phoneName}>Player 14</span>
                     </div>
                     <div className={styles.phoneBody}>
-                      {previewCats.length === 0 ? (
+                      {namedCats.length === 0 ? (
                         <p className={styles.previewEmpty}>Name a category to see it here.</p>
-                      ) : previewCats.map(c => (
+                      ) : namedCats.map(c => (
                         <div key={c.uid}>
                           <div className={styles.pCatLabel}>{c.label}</div>
                           {c.instructions.trim() && <div className={styles.pCatHint}>{c.instructions}</div>}
@@ -513,23 +571,23 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                   </div>
                 </div>
               </div>
-            </div>
+            </fieldset>
 
             <div className={styles.foot}>
               <span className={styles.summary}>
-                <b>{cats.length}</b> categor{cats.length === 1 ? 'y' : 'ies'} · scored <b>1–{scaleMax}</b><br />
+                <b>{namedCats.length}</b> categor{namedCats.length === 1 ? 'y' : 'ies'} · scored <b>1–{scaleMax}</b><br />
                 {equal
                   ? `Weighted equally${evenEach != null ? ` · ${evenEach}% each` : ''}`
                   : rankedCount > 0
                     ? <>
                         <b>{rankedCount}</b> ranked · shares total <b>100%</b>
-                        {rankedCount < cats.length && ` · ${cats.length - rankedCount} notes only`}
+                        {rankedCount < namedCats.length && ` · ${namedCats.length - rankedCount} notes only`}
                       </>
                     : 'Nothing ranked'}
               </span>
               <span className={styles.footActions}>
-                <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save scorecard'}</button>
+                <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving || awaitingConfirm}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={save} disabled={saving || awaitingConfirm}>{saving ? 'Saving…' : 'Save scorecard'}</button>
               </span>
             </div>
           </div>

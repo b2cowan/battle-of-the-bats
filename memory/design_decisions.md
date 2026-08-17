@@ -70,6 +70,22 @@ produce* — a flattering preview is worse than none; and **"wrap and stretch" i
 it is the absence of one.** Where the count is known, say the columns. ⚠ The field scorer is **in no
 rendered sweep at all**, which is why this survived — it was never measured by anything but eyes.
 
+⚠⚠ **`/review` (high-risk, 5 lenses) THEN FOUND THAT TWO OF THE ABOVE DID NOT ACTUALLY WORK** — both
+invisible to every gate, both in this ruling's own headline work, and the whole detail is in the plan's
+§7. (1) **A normalisation applied on READ became a WRITE.** The builder rounded stored weights when
+opening; a stored weight is free-form (the API takes any non-negative number and the old `step={1}`
+input never stopped a decimal being *typed*), so a legal 1.3/1.4 split rounded to 1/1, derived the
+equal switch **ON**, and a coach who opened the form to fix a typo silently rewrote their split on
+Save — **no dirty state, no confirm, because from the form's view nothing had changed.** The comment
+above it reasoned carefully about not *capping* and never noticed it was rounding. (2) **The all-zero
+warning this ruling added did not fire**, because every derived figure counted rows that `save()`
+deliberately drops: one unnamed row's weight kept "1 ranked" true, so the warning stayed silent and the
+save stored exactly the all-zero rubric it exists to catch. **Two rules: a value normalised on read is
+a value rewritten on save; and a guard must reason over the rows that will actually be SAVED, not over
+the draft.** Also fixed: a **second** confirm on a screen that already had one could overwrite the
+first's resolver (single-slot provider, no Tab trap) — the modal body is now a disabled `<fieldset>`
+while any dialog is pending.
+
 **Applies to:** `components/rep-teams/TryoutRubricCard.tsx` + its **new** `.module.css` (registered in
 the token guardrail's `operator` scope, fully tokenised — that scope is at 0 grandfathered literals and
 stayed there), the tryout-rubric GET, and the coaches help guide. **BUILT on dev 2026-08-17**; owner QA
