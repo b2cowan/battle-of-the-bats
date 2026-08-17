@@ -60,13 +60,28 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
       + 'depends on. It sums nothing and reads no amount — and a money-in line carries no item at '
       + 'all (they have no category or item by design), so the kind cannot change the answer.',
   },
+  /* ⚠ THIS ENTRY MOVED FROM `lib/coach-budget-items.ts` ON 2026-08-17, and the guard is what noticed.
+     The table names live in the reference list, and the list was split into a pure module so the
+     fold's confirmation could be written in the browser without dragging the service-role client
+     into the bundle. The server module now iterates that list and names no table at all — so its
+     exemption went stale in the same edit that created the new one, and both halves of this guard
+     fired. Neither is a behaviour change; the reason below is the same reason. */
   {
     path: 'lib/coach-budget-items.ts',
-    reason: 'COUNTS rows filed against a budget ITEM, to decide whether a word may be removed and '
-      + 'to write the refusal sentence. It reads no amount and sums nothing — the question is "is '
-      + 'anything pointing at this?", where a funding line and a cost line count exactly the same. '
+    reason: 'COUNTS and RE-POINTS rows filed against a budget ITEM, walking the shared reference '
+      + 'list rather than naming tables itself. It reads no amount and sums nothing — the questions '
+      + 'are "is anything pointing at this?" and "move everything that is", where a funding line and '
+      + 'a cost line are treated identically ON PURPOSE. Partitioning by kind here would fold a word '
+      + 'while leaving its funding lines behind, pointing at a row that is about to be deleted.',
+  },
+  {
+    path: 'lib/coach-budget-item-usage.ts',
+    reason: 'NAMES the tables that point at a budget ITEM, so every guard and the fold count and '
+      + 're-point the same four. It reads no amount and sums nothing — the question is "is anything '
+      + 'pointing at this?", where a funding line and a cost line count exactly the same. '
       + 'Partitioning by kind here would tell a coach their word is unused because the only thing '
-      + 'holding it happens to be money coming in.',
+      + 'holding it happens to be money coming in — and would fold a word while leaving its funding '
+      + 'lines behind, unclassified.',
   },
   /* ⚠ THE PUBLISH ROUTE LEFT THIS LIST ON 2026-08-17, and its removal is the point. It was here
      because it re-pointed budget lines off an absorbed duplicate — the merge that silently blanked

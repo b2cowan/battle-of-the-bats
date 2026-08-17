@@ -1,6 +1,7 @@
 # Budget items — what a word IS, and who may take it away
 
-**Status: DESIGN RULED by the owner 2026-08-16/17 (in conversation), not built.**
+**Status: ALL FOUR PHASES BUILT ON DEV 2026-08-17 — Owner QA §44, §45, §47 (all owed).**
+Design ruled by the owner 2026-08-16/17 (in conversation); nothing in §0 was re-opened building it.
 Mockup (binding): https://claude.ai/code/artifact/484b5971-5f79-42a4-9c1e-e5165bfaf15a
 **PM brief:** [COACH_BUDGET_ITEM_INTEGRITY_PM_BRIEF.md](COACH_BUDGET_ITEM_INTEGRITY_PM_BRIEF.md)
 
@@ -48,10 +49,24 @@ silently disappears from the report.
 dev snapshot 2026-08-16): `rep_budget_lines.item_id`, `rep_team_expenses.budget_item_id`,
 `rep_team_money_in.budget_item_id`, `org_budget_lines.item_id`.
 
-⚠ **`org_budget_lines` is safe today by ACCIDENT, not by design.** Publish only ever absorbs
-team-owned rows, and the Org Budget can only choose club/standard words — so an org line can never
-point at a row publish deletes. Nothing states or enforces that. It is the fourth table nobody
-counted, and it is exactly the shape of the third one that broke.
+⚠⚠ **`org_budget_lines` WAS NOT SAFE, AND THIS PARAGRAPH USED TO SAY IT WAS** (corrected by
+`/review`'s security lens, 2026-08-17). It read: *"safe today by accident — the Org Budget can only
+choose club/standard words, so an org line can never point at a row publish deletes."* **The second
+half is false.** The club's own budget-line writer
+(`app/api/admin/accounting/budget-plan/lines`, POST and PATCH) takes `itemId` straight from the
+request body and inserts it with **no validation whatsoever** — no ownership check, no tier check,
+not even `resolveBudgetItem`, which every coach-side write path goes through. So an owner or
+treasurer in **any** org can point one of their org budget lines at **any** budget item in the
+database, including another org's team-owned word.
+
+P3's fold re-points by item id, so an unscoped update would have rewritten that other tenant's row —
+its item *and* its category — as a side effect of a coach here tidying their own vocabulary. **The
+fold is now scoped to the acting org** (`org_id` is NOT NULL on all four tables, so nothing
+legitimate can be skipped, and the re-count before the delete catches it if anything ever is).
+
+⚠ **THE UNVALIDATED ADMIN WRITER IS STILL THERE.** It is outside this project and predates it, but
+it is a real cross-tenant write hole: nothing stops an org admin storing another org's item id on
+their own row. **Worth its own fix** — route it through the same resolver the coach side uses.
 
 ⚠ **Publishing is the ONLY code path in the product that deletes a budget item** (grepped
 repo-wide). One door to guard — which is what makes §4 cheap.
@@ -154,13 +169,122 @@ screen offering rename alone — a screen that can create words and never clear 
    a modal, and the sweep measures both closed. The warm theme is the real risk and it is owner-QA
    only — §45 says so.
 
-### P3 — The team-chosen merge
-**Build prompt:** `COACH_BUDGET_ITEM_MERGE_BUILD_PROMPT.md` (fresh chat).
+### ✅ P3 — The team-chosen merge. **BUILT ON DEV 2026-08-17** — Owner QA **§47**, no migration
+**Build prompt:** `COACH_BUDGET_ITEM_MERGE_BUILD_PROMPT.md`.
 
 6. **"Use a shared word instead"** on *Manage our items*: multi-select the team's own words, choose one
    standard or club word **on the same side**, confirm, done. The confirmation names the counts by
    record type and **warns when the category changes**. Repoints all four tables, then removes the
    folded words.
+
+⚠⚠ **THE REFERENCE LIST WAS ONE COLUMN SHORT, AND IT WAS THE ORIGINAL BUG ONE COLUMN TO THE RIGHT.**
+`BUDGET_ITEM_REFERENCES` named only the column pointing at `budget_items.id`. But **all four of those
+tables store the CATEGORY beside the item** (`rep_budget_lines.category_id`,
+`rep_team_expenses.budget_category_id` *and* its free-text `category`,
+`rep_team_money_in.budget_category_id`, `org_budget_lines.category_id`), each derived from the chosen
+item at save time precisely so the report's two levels cannot disagree — and **Budget vs. Actual
+prefers the stored category over the item's own** when it places a cost. A fold across categories
+that moved only the item would have left every one of those records filed under the heading its old
+word lived under: the season totals balance perfectly and the costs stop lining up with the plan they
+belong to. The columns are in the list now, and the guard test checks them against the committed
+schema. **The ruled behaviour never changed** — mockup §4 already promised *"its records will move to
+Fundraising, where the club's word lives"*; the list simply could not express it.
+
+**Three further judgement calls worth knowing:**
+
+- **The usage phrasing had to leave the server module.** The confirmation is written in the BROWSER
+  as a coach ticks boxes, so `describeBudgetItemUsage` needed a `'use client'` caller — and importing
+  it from `lib/coach-budget-items.ts` would have pulled `supabase-admin` and its service-role client
+  into the bundle of every screen with an item picker, without throwing and with nothing reporting
+  it. Split into `lib/coach-budget-item-usage.ts` (imports nothing), re-exported from the server
+  module. Exactly the trap P2 hit with the tier helpers, arriving through a different door.
+- **`usage=1` now returns counts per KIND, not a total.** The fold confirms about a *selection*, so
+  the browser sums as the coach ticks; asking the server on every tick would be four queries for an
+  answer it already had. The delete tooltip gained the better sentence for free.
+- **The fold never deletes on a partial re-point, and re-counts before it deletes.** Every link is
+  `ON DELETE SET NULL`, so a delete after a failed move does not error — it blanks precisely the
+  records that did not make it, on a path that had just promised they were safe. A record filed
+  against a source *during* the fold keeps the words alive and says so.
+
+**`/simplify` (2026-08-17) — five fixes applied, two skips worth recording:**
+
+- ✅ **The manage screen was quadratic.** It asked for each of the team's own words separately, and
+  each ask fanned out one query per referencing table — **four round trips per word**, forty for a
+  team with ten, on every open of the modal and again after every change it made.
+  `countBudgetItemUsageByItem` reads each table **once** and tallies in JavaScript: 4N → 4. It walks
+  the same reference list, because a per-word counter that hand-picked its tables would be the
+  original publish bug in a second place.
+- ✅ **The two render trees repeated the whole modal shell** — overlay, frame classes, the
+  stop-propagation wiring, header, body, footer. One `frame(...)` helper now. ⚠ **A function
+  returning markup, deliberately not a nested component**: a component declared inside another gets
+  a fresh identity every render, so React would remount the subtree on each keystroke and the rename
+  input would lose focus mid-word.
+- ✅ **The guard test's category check was validating, not generative** — it proved the columns named
+  in the list still exist, which is precisely what the original bug survived (nobody had written the
+  third table down, so nothing checked it). It now asks the SCHEMA the other question: does a
+  reference table carry a category link the list has not claimed? With a canary, so an unloaded
+  snapshot cannot pass it over nothing.
+- ✅ `BudgetItemRepointTarget` is a `Pick<ResolvedBudgetItem, …>` rather than a second declaration of
+  "an item plus its derived category". The *validation* stays separate on purpose —
+  `resolveBudgetItem` accepts the team's own words, which a fold target may never be.
+- ✅ The modal's zero-usage fallback goes through `NO_BUDGET_ITEM_USAGE` instead of re-spelling it.
+
+- ⏭ **SKIPPED — folding the pre-count into the re-point's own affected-row count.** It would save
+  four queries on a rare, deliberate action, at the cost of deriving *the one number this whole
+  feature is judged on* from a different mechanism than the one the confirmation used. Not worth it.
+- ⏭ **SKIPPED — extracting the coach/team/money-write auth block, now spelled a THIRD time in this
+  directory** (list POST, item PATCH, item DELETE, and this route). It is a real duplication and it
+  should be extracted — but the three existing copies word their refusals slightly differently, so
+  unifying them changes user-facing text on committed routes outside this diff, in a working copy a
+  parallel session is also writing to. **Left deliberately; the next change in this directory should
+  do it.**
+
+**`/review` (2026-08-17, high-risk tier, 5 lenses) — 7 confirmed, all fixed. It found a real defect
+again, which every review pass on this money area now has:**
+
+- 🔴 **Cross-tenant write.** The fold re-pointed by item id alone, on the plan's own (wrong) claim
+  that no other org could point at these words. See §1 above — **now scoped to the acting org.**
+- 🔴 **The Budget Plan would have shown a word that no longer exists.**
+  `rep_budget_lines.description` is NOT NULL and the server fills it from the item's name when the
+  coach types nothing; the plan renders it raw; and the line editor *already* re-syncs it whenever a
+  line's item changes, with a comment saying so. A fold is an item change to the same table and
+  skipped it — so an auto-named line would keep reading *Public grants* while filed under *Grants*.
+  Fixed, and **only where the text still equals the folded word's name** — anything else the coach
+  typed, and no fold rewrites that. The probe now covers both cases.
+- 🔴 **The per-word counter could silently undercount.** `/simplify`'s batched counter reads rows
+  rather than asking the database to count, and a single read is capped — over the cap a word's
+  count reads low, or zero. The manage screen would offer to remove a word with history behind it,
+  and the fold's confirmation would understate what moves. Now paged.
+- 🟠 **Stale counts survived a background refresh.** `categories` changes whenever any mounted money
+  tab writes, and the "counts have arrived" flag was set once and never reset — so a cost filed in
+  another tab left the open confirmation showing the old number. The counts are now carried
+  *with the list they were read against*, so staleness is not something a flag can miss.
+- 🟠 **A failed fold kept its pre-fold promise.** One server refusal leaves the world changed
+  (records moved, words not removed); the screen did not re-read, so retrying offered to move records
+  that had already moved. It re-reads on failure now.
+- 🟡 The backdrop and the ✕ stayed live mid-fold — a coach could click away and never see the
+  confirmation of a fold that completed. Both are dead while it runs.
+- 🟡 The reply mapped the target through the full item shape from a partial row, leaving four fields
+  `undefined`. Nothing reads them today, which is what made it a trap.
+
+**Two narrow races examined and deliberately accepted, documented at the code:** a record filed
+between the count and the re-point is carried across but not counted (the reply names the number the
+coach consented to, which is the better wrong answer); and one filed between the re-count and the
+delete is caught by neither and loses its label. Closing the second properly needs a database
+constraint, not more application checks.
+
+⚠ **A comment was corrected, not just the code:** the note justifying the category move claimed
+Budget vs. Actual always prefers the stored category. It does not — its month attribution prefers the
+stored one, its cost placement prefers the item's. **Two readers, two orders**, which is a stronger
+reason the two columns must agree, not a weaker one.
+
+⚠ **Proven, not assumed:** `scripts/check-budget-item-fold.mjs` builds a club word, two team words in
+**different categories**, and records of all three kinds; folds through the real HTTP route with a
+real coach session; then checks that every record moved, was re-filed under the survivor's heading,
+that both words are gone and that **Budget vs. Actual is unchanged to the cent** — with a canary that
+fails the run if the report shows zero, because "unchanged" over an empty fixture is true of every
+possible bug. Its first run read the wrong response fields and reported `$0.00 → $0.00` against a
+season holding $10,650; the canary exists because of that.
 
 ### ✅ P4 — Make forgetting impossible. **BUILT WITH P1 2026-08-17**
 

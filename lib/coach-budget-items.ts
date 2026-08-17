@@ -39,60 +39,31 @@ export {
   budgetItemTier, itemVisibleToTeam, ITEM_TIER_LABEL,
   type BudgetItemTier, type OwnedBudgetItem,
 } from './coach-budget-item-tiers';
-import { budgetItemTier, itemVisibleToTeam, type OwnedBudgetItem } from './coach-budget-item-tiers';
+import { itemVisibleToTeam, type OwnedBudgetItem } from './coach-budget-item-tiers';
+
+/* ⚠⚠ THE REFERENCE LIST AND THE USAGE PHRASING MOVED TO `coach-budget-item-usage.ts` (2026-08-17)
+   AND ARE RE-EXPORTED HERE, so every existing caller keeps one door. Same reason as the tier split
+   above, and the same trap: the fold's confirmation is written in the BROWSER, so a `'use client'`
+   component now needs `describeBudgetItemUsage` — and importing it from here would have pulled
+   `supabase-admin` and its service-role client into the bundle of every screen with an item picker,
+   without throwing and without anything reporting it. Read that file's header before moving
+   anything back. */
+export {
+  BUDGET_ITEM_REFERENCES, NO_BUDGET_ITEM_USAGE, describeBudgetItemUsage, sumBudgetItemUsage,
+  type BudgetItemReference, type BudgetItemUsage,
+} from './coach-budget-item-usage';
+import {
+  BUDGET_ITEM_REFERENCES, NO_BUDGET_ITEM_USAGE, sumBudgetItemUsage, type BudgetItemUsage,
+} from './coach-budget-item-usage';
 
 /**
- * ⚠⚠ EVERYTHING THAT POINTS AT A BUDGET WORD — the single list every guard counts from.
- *
- * All four foreign keys are `ON DELETE SET NULL`, which is deliberate for a genuine deletion (a
- * record keeps its money and reads as the honest gap it now is) and catastrophic for a MERGE: the
- * rows must be re-pointed first, or the money survives with its classification silently gone.
- *
- * **This list exists because that is exactly how it went wrong.** The publish route was written
- * when two of these existed, named them both in a careful comment about re-pointing before
- * deleting, and was never revisited when `rep_team_money_in` arrived with migration 243 — so every
- * income and refund filed against an absorbed word lost its item, quietly, on a path that reported
- * success. `org_budget_lines` is the fourth, and today it is safe only by ACCIDENT: publish absorbs
- * team-owned rows only, and the Org Budget can pick nothing but club and platform words. Nothing
- * stated that, which is the same silence the third one lived in.
- *
- * ⚠ `tests/unit/budget-item-references-guard.test.ts` reads the committed schema snapshot and FAILS
- * THE BUILD when a foreign key to `budget_items` exists that this list does not cover. Adding a
- * table here is one edit; forgetting one is a red build instead of silent data loss two releases
- * later.
- */
-export interface BudgetItemReference {
-  /** The table holding the link. */
-  table: string;
-  /** The column pointing at `budget_items.id`. */
-  column: string;
-  /** What a coach calls these records, for the sentence a refusal has to write. */
-  label: string;
-}
-
-export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
-  { table: 'rep_budget_lines',  column: 'item_id',        label: 'budget lines' },
-  { table: 'rep_team_expenses', column: 'budget_item_id', label: 'recorded costs' },
-  { table: 'rep_team_money_in', column: 'budget_item_id', label: 'money in' },
-  { table: 'org_budget_lines',  column: 'item_id',        label: 'club budget lines' },
-] as const;
-
-/** How many records of each kind point at these words — the count every guard and the fold need. */
-export interface BudgetItemUsage {
-  /** Total across every table. Zero means the word is safe to remove. */
-  total: number;
-  /** Per-kind, in `BUDGET_ITEM_REFERENCES` order, dropping the kinds with nothing in them. */
-  byKind: Array<{ label: string; count: number }>;
-}
-
-/**
- * Count what is filed against one or more words.
+ * Count what is filed against a set of words, TOGETHER — one answer for the whole set.
  *
  * ⚠ COUNTS EVERY TABLE IN THE LIST, ALWAYS. A guard that counts three of the four is the original
  * bug wearing a newer comment — which is why this takes no "which tables" parameter.
  */
 export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetItemUsage> {
-  if (itemIds.length === 0) return { total: 0, byKind: [] };
+  if (itemIds.length === 0) return NO_BUDGET_ITEM_USAGE;
 
   const counts = await Promise.all(BUDGET_ITEM_REFERENCES.map(async ref => {
     const { count } = await supabaseAdmin
@@ -108,13 +79,171 @@ export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetIte
   };
 }
 
-/** "2 budget lines, 6 recorded costs and 1 money in" — the phrase every refusal and confirmation
- *  builds its sentence around, so the four kinds are never named four different ways. */
-export function describeBudgetItemUsage(usage: BudgetItemUsage): string {
-  const parts = usage.byKind.map(k => `${k.count} ${k.label}`);
-  if (parts.length === 0) return 'nothing';
-  if (parts.length === 1) return parts[0];
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+/**
+ * The same counts, but PER WORD — one query per table, never one per word (/simplify, efficiency
+ * lens, 2026-08-17).
+ *
+ * ⚠⚠ THIS EXISTS BECAUSE THE OBVIOUS SHAPE WAS QUADRATIC. The manage screen wants a count beside
+ * every one of the team's own words, and asking `countBudgetItemUsage` once per word issued FOUR
+ * queries per word — forty round trips for a team with ten words of its own, on every open of the
+ * modal and again after every rename, remove or fold. The tables here are libraries, not ledgers,
+ * and the ids are already in hand: read the item column once per table and tally in JavaScript.
+ *
+ * ⚠ IT STILL WALKS THE SAME LIST, which is the whole point of the list. A per-word counter that
+ * hand-picked its tables would be the original publish bug in a second place — so this and the
+ * set-wide counter above are two shapes of one enumeration, never two enumerations.
+ */
+export async function countBudgetItemUsageByItem(
+  itemIds: string[],
+): Promise<Record<string, BudgetItemUsage>> {
+  if (itemIds.length === 0) return {};
+
+  /** [itemId → its counts, per table] — filled table by table, then folded per word. */
+  const perTable = await Promise.all(BUDGET_ITEM_REFERENCES.map(async ref => {
+    const tally = new Map<string, number>();
+    /**
+     * ⚠⚠ PAGED, AND THE FIRST DRAFT WAS NOT (/review, correctness lens, 2026-08-17).
+     *
+     * The set-wide counter above asks the database to count (`head: true`), so no row limit can
+     * reach it. This one has to read the actual ids to know WHICH word each row belongs to — and a
+     * single read is capped, silently. Over the cap a word's rows simply stop arriving, and the
+     * count beside it reads lower than the truth, or zero: the manage screen would offer to remove
+     * a word with history behind it, and the fold's confirmation — the sentence a coach agrees to
+     * before their words are removed — would understate what moves. The server refuses the removal
+     * either way, but being told "nothing is filed against this" about a word holding nine records
+     * is the failure this whole feature exists to prevent.
+     *
+     * ⚠ The loop stops on a short page, so the common case (tens of rows) is still ONE request per
+     * table, which is the whole point of this function.
+     */
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabaseAdmin
+        .from(ref.table)
+        .select(ref.column)
+        .in(ref.column, itemIds)
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      /* ⚠ THROUGH `unknown`. The column is chosen from the reference list at runtime, so the
+         client's generated types cannot know which one it is and infer an error shape. */
+      const rows = ((data ?? []) as unknown) as Array<Record<string, unknown>>;
+      for (const row of rows) {
+        const id = row[ref.column] as string | null;
+        if (id) tally.set(id, (tally.get(id) ?? 0) + 1);
+      }
+      if (rows.length < PAGE) break;
+    }
+    return { label: ref.label, tally };
+  }));
+
+  /* ⚠ THROUGH `sumBudgetItemUsage`, so a single word's counts read in `BUDGET_ITEM_REFERENCES`
+     order and drop their empty kinds exactly as the set-wide counter's do. The confirmation adds
+     these up again in the browser; two different orderings of the same four kinds would show a
+     coach one sentence in the tooltip and another on the button. */
+  const usage: Record<string, BudgetItemUsage> = {};
+  for (const id of itemIds) {
+    usage[id] = sumBudgetItemUsage(perTable.map(t => {
+      const count = t.tally.get(id) ?? 0;
+      return count > 0 ? { total: count, byKind: [{ label: t.label, count }] } : undefined;
+    }));
+  }
+  return usage;
+}
+
+/**
+ * FOLD ONE OR MORE WORDS INTO ANOTHER — re-point every record, in every table, before anything is
+ * removed. The database half of the team-chosen merge (owner ruling 2026-08-17).
+ *
+ * ⚠⚠ RE-POINT FIRST, AND ONLY DELETE IF EVERY RE-POINT SUCCEEDED. Each link is `ON DELETE SET
+ * NULL`, so a delete after a failed re-point does not error — it quietly unclassifies exactly the
+ * records the fold promised to keep. This function therefore never deletes; it reports what moved
+ * and the caller decides, which is the shape P1's guarded delete already uses.
+ *
+ * ⚠ THE CATEGORY MOVES WITH THE ITEM. Every one of these tables stores the category beside the item,
+ * derived from the item at save time so the report's two levels cannot disagree — and Budget vs.
+ * Actual prefers that stored category over the item's own. Moving only the item would leave a cost
+ * filed under the heading the folded word used to live under while its plan line sits under
+ * another: all the money still there, and none of it lining up.
+ *
+ * ⚠⚠ SCOPED TO THE ACTING ORG, AND THE FIRST DRAFT WAS NOT (/review, security lens, 2026-08-17).
+ * It filtered on the item alone, reasoning that any row pointing at a team-owned word must belong to
+ * that team. **That reasoning was wrong, and the plan had written it down as fact.** The club's own
+ * budget-line writer (`app/api/admin/accounting/budget-plan/lines`) takes `itemId` straight from the
+ * request body and inserts it with **no validation whatsoever** — no ownership check, no tier check,
+ * not even `resolveBudgetItem`. So an owner or treasurer in ANOTHER org can point one of their org
+ * budget lines at this team's word, and an unscoped re-point would then rewrite that other tenant's
+ * row — its item AND its category — as a side effect of a coach here tidying their vocabulary.
+ * Cross-tenant corruption, triggered by someone with no relationship to the row.
+ *
+ * ⚠ `org_id` IS NOT NULL ON ALL FOUR TABLES (verified against the committed dev snapshot), so this
+ * filter cannot silently skip a legitimate row. And if it ever did, the caller's re-count before the
+ * delete would see the leftovers and refuse to remove the words — the fold stops rather than
+ * blanking what it could not move.
+ *
+ * ⚠ No `team_id` filter, though: one of the four (`org_budget_lines`) has no team column, and org
+ * scoping is the boundary that actually matters here. The table stays in the loop rather than being
+ * skipped as "impossible" — it was called impossible once already, and it was not.
+ */
+/* ⚠ THE SAME SHAPE EVERY WRITE PATH ALREADY DERIVES (/simplify, altitude lens). "An item plus the
+   category derived from it" is what `resolveBudgetItem` hands every cost, money-in and budget-line
+   route — the fold needs exactly that, minus the name. Taken as a `Pick` rather than re-declared,
+   so a field the category-derivation rule grows cannot be added to one and forgotten on the other.
+   ⚠ The VALIDATION deliberately stays separate: `resolveBudgetItem` accepts the team's own items,
+   which a fold target may never be. Same shape, different rule. */
+export type BudgetItemRepointTarget = Pick<ResolvedBudgetItem, 'id' | 'categoryId' | 'categoryName' | 'name'>;
+
+export async function repointBudgetItemReferences(
+  /** The words being folded away — ids AND names, because an auto-filled label has to follow. */
+  sources: Array<{ id: string; name: string }>,
+  target: BudgetItemRepointTarget,
+  /** The org whose records may be touched. Every one of the four tables carries it, NOT NULL. */
+  orgId: string,
+): Promise<{ ok: true } | { ok: false; movedLabels: string[]; failedLabel: string; error: string }> {
+  const sourceIds = sources.map(s => s.id);
+  const movedLabels: string[] = [];
+
+  for (const ref of BUDGET_ITEM_REFERENCES) {
+    /**
+     * ⚠⚠ THE AUTO-FILLED LABEL MOVES FIRST, WHILE THE ROWS CAN STILL BE FOUND (/review, data lens,
+     * 2026-08-17). `rep_budget_lines.description` is NOT NULL and the server fills it from the
+     * item's name when a coach types nothing — and the Budget Plan renders it raw. Skipping it left
+     * a line reading *"Public grants"* while filed under *"Grants"*: the folded-away word still on
+     * screen, on the product's main money page.
+     *
+     * ⚠ ONLY WHERE IT STILL EQUALS THE OLD NAME. Anything else is text the coach typed, and no fold
+     * has any business rewriting that. This is the same rule the line editor already applies when a
+     * line's item changes — it just had no way to reach a fold.
+     *
+     * ⚠ BEFORE the item re-point below, not after: once `column` points at the target these rows no
+     * longer match `source.id`, and the rename would find nothing.
+     */
+    if (ref.autoNameColumn) {
+      for (const source of sources) {
+        const { error } = await supabaseAdmin
+          .from(ref.table)
+          .update({ [ref.autoNameColumn]: target.name })
+          .eq(ref.column, source.id)
+          .eq(ref.autoNameColumn, source.name)
+          .eq('org_id', orgId);
+        if (error) return { ok: false, movedLabels, failedLabel: ref.label, error: error.message };
+      }
+    }
+
+    const patch: Record<string, unknown> = {
+      [ref.column]: target.id,
+      [ref.categoryColumn]: target.categoryId,
+    };
+    if (ref.categoryNameColumn) patch[ref.categoryNameColumn] = target.categoryName;
+
+    const { error } = await supabaseAdmin
+      .from(ref.table)
+      .update(patch)
+      .in(ref.column, sourceIds)
+      .eq('org_id', orgId);
+    if (error) return { ok: false, movedLabels, failedLabel: ref.label, error: error.message };
+    movedLabels.push(ref.label);
+  }
+  return { ok: true };
 }
 
 /**

@@ -77,6 +77,100 @@ describe('budget_items references — the list of what points at a word', () => 
       + 'comments are all written around that behaviour — re-read them before changing this.');
   });
 
+  /**
+   * ⚠⚠ THE CATEGORY TRAVELS WITH THE ITEM, and this is the half a reader is most likely to miss.
+   *
+   * Every one of these tables stores the category BESIDE the item, derived from the item at save
+   * time so the report's two levels cannot disagree about one row — and Budget vs. Actual then
+   * prefers that stored category over the item's own when it places a cost. A fold across categories
+   * that moved only the item column would leave those records filed under the heading the folded
+   * word used to live under: all the money still there, and none of it lining up with the plan.
+   *
+   * That is the original bug — a link the mover forgot — one column to the right. So the columns are
+   * named in the same list, and checked against the same committed schema.
+   */
+  const columns = JSON.parse(readFileSync(
+    join(process.cwd(), 'docs/agents/db/schema-snapshots/schema-dump-columns-dev.json'),
+    'utf8',
+  )) as Array<{ table_name: string; column_name: string }>;
+  const columnKeys = new Set(columns.map(c => `${c.table_name}.${c.column_name}`));
+
+  test('every reference names a category column that exists on that table', () => {
+    const missing = BUDGET_ITEM_REFERENCES
+      .flatMap(r => [
+        `${r.table}.${r.categoryColumn}`,
+        ...(r.categoryNameColumn ? [`${r.table}.${r.categoryNameColumn}`] : []),
+      ])
+      .filter(key => !columnKeys.has(key));
+
+    assert.deepEqual(missing, [],
+      'BUDGET_ITEM_REFERENCES names a category column that is not on that table. The fold writes '
+      + 'that column alongside the item so a cross-category merge re-files the records under the '
+      + 'surviving word\'s heading — a name that no longer exists means the update silently writes '
+      + 'nothing, or errors, on a path a coach was told moved their records.');
+  });
+
+  /**
+   * ⚠⚠ AND THE OTHER DIRECTION, WHICH IS THE ONE THAT ACTUALLY CATCHES THINGS (/simplify, altitude
+   * lens, 2026-08-17).
+   *
+   * The check above only proves the strings already written into the list still resolve. That is
+   * *validating*, and validating is what the original bug survived: nobody had written the third
+   * table down, so nothing checked it. The foreign-key test at the top of this file is
+   * **generative** — it reads the schema and fails when something exists that the list does not
+   * name — and that is why it works.
+   *
+   * So this asks the schema the same question one column over: on a table that already points at a
+   * budget word, is there a category link the list has NOT claimed? A second category column
+   * arriving on a covered table would otherwise slip past every check here, and the fold would
+   * quietly leave it pointing at the folded word's old heading — the original bug, in the one place
+   * the list had stopped looking.
+   */
+  test('no reference table has a category link the list has not claimed', () => {
+    const categoryFks = snapshot.filter(r =>
+      r.constraint_type === 'FOREIGN KEY' && r.foreign_table === 'budget_categories');
+    /* ⚠ THE CANARY FIRST. "Nothing unclaimed" is also what an empty search returns, and a check
+       that passes over no data reads exactly like a check that passed. Every one of these tables
+       has a category foreign key today. */
+    const onReferenceTables = categoryFks
+      .filter(f => BUDGET_ITEM_REFERENCES.some(r => r.table === f.table_name));
+    assert.ok(onReferenceTables.length >= BUDGET_ITEM_REFERENCES.length,
+      `expected a category foreign key on each of the ${BUDGET_ITEM_REFERENCES.length} reference `
+      + `tables, found ${onReferenceTables.length} — the snapshot may have failed to load, which `
+      + 'would make the check below pass over nothing.');
+
+    const unclaimed = BUDGET_ITEM_REFERENCES.flatMap(ref => {
+      const claimed = new Set([ref.categoryColumn, ref.categoryNameColumn].filter(Boolean));
+      /* Two ways a table records a heading, and both are live: a foreign key to `budget_categories`,
+         and the free-text `category` name that predates the taxonomy and is still written today. */
+      const links = [
+        ...categoryFks.filter(f => f.table_name === ref.table).map(f => f.column_name),
+        ...columns.filter(c => c.table_name === ref.table && c.column_name === 'category')
+          .map(c => c.column_name),
+      ];
+      return links.filter(col => !claimed.has(col)).map(col => `${ref.table}.${col}`);
+    });
+
+    assert.deepEqual([...new Set(unclaimed)], [],
+      'A table that points at budget_items has a category column BUDGET_ITEM_REFERENCES does not '
+      + 'name. Every record stores its heading beside its item, and Budget vs. Actual reads the '
+      + 'stored one — so a fold that does not move this column leaves those records filed under the '
+      + 'heading the folded word used to live under: all the money present, none of it lining up '
+      + 'with the plan. Add it as categoryColumn (or categoryNameColumn for a free-text name) in '
+      + 'the SAME change that adds the column.');
+  });
+
+  test('the columns snapshot loaded — every table above actually appears in it', () => {
+    // The same canary as below, for the second snapshot: an empty or reshaped columns dump would
+    // make both checks above pass over nothing at all.
+    const absent = BUDGET_ITEM_REFERENCES
+      .map(r => r.table)
+      .filter(t => !columns.some(c => c.table_name === t));
+    assert.deepEqual(absent, [],
+      'A table in BUDGET_ITEM_REFERENCES has no columns in the dev columns snapshot — the snapshot '
+      + 'may have failed to load, which would make the category-column checks pass over nothing.');
+  });
+
   test('the four known references are all present', () => {
     // A canary: if the snapshot ever loads empty or the shape changes, the tests above would pass
     // vacuously and report a clean build over no data at all.

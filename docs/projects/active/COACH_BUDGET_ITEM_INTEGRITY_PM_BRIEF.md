@@ -1,7 +1,21 @@
 # PM Brief — budget items: what a word is, and who may take it away
 
-**Status: design ruled by the owner 2026-08-16/17. Phases 1 and 2 built on dev 2026-08-17
-(Owner QA §44 and §45); the team-chosen merge is open.**
+**Status: design ruled by the owner 2026-08-16/17. All phases built on dev 2026-08-17
+(Owner QA §44, §45 and §47). Nothing open.**
+
+**Phase 3 is the fold — "Use a shared word instead."** A coach on the Budget Plan ticks any number
+of their own words, picks one word their club or FieldLogicHQ already shares, and reads exactly what
+is about to happen: how many records move, broken down by kind; that their own words go afterwards;
+that no money changes. If the shared word sits under a different heading on the report, it says so
+by name before the button. **It is the only place in the product where a word with history behind it
+disappears** — everywhere else refuses — and it is safe because the records are carried onto the new
+word first, and the old ones only go if all of them made it.
+
+⚠ **One thing was wider than the plan said, and it was the same defect one step over.** Every record
+stores its *category* beside its *item*, and the report reads the stored one. A fold that moved only
+the item would have left those records filed under their old heading — every dollar present, and the
+costs no longer lining up with the plan they belong to. That is now moved too, checked automatically
+before and after against Budget vs. Actual, and guarded so a future record type cannot slip past.
 
 **Phase 2 made the words tell you where they came from** — *Standard*, *Club* or *Our own*, on
 every list a coach picks from. That is what pays for Phase 1: once publishing stopped deleting other

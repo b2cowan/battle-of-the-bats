@@ -8,7 +8,7 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
-  countBudgetItemUsage,
+  countBudgetItemUsageByItem,
   type BudgetItemTier, type OwnedBudgetItem,
 } from '@/lib/coach-budget-items';
 
@@ -118,14 +118,18 @@ export const GET = withObservability(async (req: Request,
   /* ⚠ `usage=1` IS FOR THE MANAGE SCREEN ALONE, and it is opt-in for that reason: the picker mounts
      this route on every money form and every budget line, and none of those need to know how many
      records are filed against a word. Only this team's OWN words are counted — they are the only
-     ones the manage screen can remove, so counting the rest would be four queries nobody reads. */
+     ones the manage screen can remove or fold, so counting the rest would be four queries nobody
+     reads.
+     ⚠ PER KIND, NOT JUST A TOTAL. The fold's confirmation names the counts by record type ("2 budget
+     lines, 3 recorded costs and 1 money in") for a SELECTION of words, which the browser adds up as
+     the coach ticks boxes — asking the server again on every tick would be the same four queries
+     over and over for an answer it has already been given. */
   if (teamId && new URL(req.url).searchParams.get('usage') === '1') {
     const ownIds = categories.flatMap(c => c.items.filter(i => i.teamId === teamId).map(i => i.id));
-    const usage: Record<string, number> = {};
-    await Promise.all(ownIds.map(async id => {
-      usage[id] = (await countBudgetItemUsage([id])).total;
-    }));
-    return NextResponse.json({ categories, usage });
+    /* ⚠ ONE QUERY PER TABLE, NOT PER WORD (/simplify, efficiency lens). Asking for each word's own
+       count issued four round trips per word — forty for a team with ten words of its own, every
+       time this screen opened and again after every change it made. */
+    return NextResponse.json({ categories, usage: await countBudgetItemUsageByItem(ownIds) });
   }
 
   return NextResponse.json({ categories });
