@@ -15,8 +15,10 @@ import {
 } from '@/lib/coach-budget-months';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import {
-  rollupMoneyReport, type RollupLine, type RollupSpend, type RollupRefund, type ItemRow,
+  rollupMoneyReport, categoryKey, displayCategoryName,
+  type RollupLine, type RollupSpend, type RollupRefund, type ItemRow,
 } from '@/lib/coach-budget-rollup';
+import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -142,26 +144,11 @@ export const GET = withObservability(async (req: Request,
     ? allExpenses.filter(e => (tagsByExpenseId[e.id as string] ?? []).includes(filterTagId))
     : allExpenses;
 
-  // Compute the "paid amount" for each expense:
-  // - simple expense → amount when expense_paid_at IS NOT NULL
-  // - tournament_payable → deposit when deposit_paid_at + balance when balance_paid_at
-  function paidAmount(exp: Record<string, unknown>): number {
-    if (exp.expense_type === 'tournament_payable') {
-      return (exp.deposit_paid_at ? (exp.deposit_amount as number ?? 0) : 0)
-           + (exp.balance_paid_at  ? (exp.balance_amount  as number ?? 0) : 0);
-    }
-    return exp.expense_paid_at ? (exp.amount as number) : 0;
-  }
-
-  // Effective paid date for sorting/period assignment (earliest paid event)
-  function paidDate(exp: Record<string, unknown>): string | null {
-    const dates: string[] = [];
-    if (exp.expense_paid_at)  dates.push(exp.expense_paid_at  as string);
-    if (exp.deposit_paid_at)  dates.push(exp.deposit_paid_at  as string);
-    if (exp.balance_paid_at)  dates.push(exp.balance_paid_at  as string);
-    if (dates.length === 0) return null;
-    return dates.sort()[0].slice(0, 10);
-  }
+  /* ⚠ "WHAT DID THIS EXPENSE ACTUALLY PAY, AND WHEN" IS NOT A ROUTE CONCERN — it lives in
+     lib/coach-expense-movements.ts, and that module's header carries the whole rule plus the two
+     sibling functions it must not be merged with. It was a local helper here until `/review` pointed
+     out that a local helper is an UNTESTABLE one, and that the very consolidation this release shipped
+     had made this route's own build-blocking check blind to a mistake inside it. */
 
   // ── 3–5. Roll the plan and the spending up to CATEGORY → ITEM ───────────────────────────────
   //
@@ -272,16 +259,16 @@ export const GET = withObservability(async (req: Request,
   const placedFor = (exp: Record<string, unknown>) =>
     placedByExpense.get(exp.id as string) ?? placeCost(exp);
 
-  const rollupSpend: RollupSpend[] = expenses
-    .map(exp => ({ exp, paid: paidAmount(exp) }))
-    .filter(({ paid }) => paid > 0)   // only paid amounts are actuals
-    .map(({ exp, paid }) => ({
-      id:          exp.id as string,
-      description: exp.description as string,
-      ...placedFor(exp),
-      amount:      paid,
-      paidDate:    paidDate(exp),
-    }));
+  /* Only what actually moved, and one record per movement — see `lib/coach-expense-movements.ts`. The
+     rollup's own totals are unchanged by the split (two halves sum to what the merged record carried);
+     what changes is that every dated reading downstream now has the real dates to read.
+     ⚠ The cast is safe by column NAME rather than by mapping: `PaidExpenseRow` names the same
+     snake_case columns the select above asks for, deliberately, so there is no hand-written field
+     translation between the query and the rule for a typo to hide in. */
+  const rollupSpend: RollupSpend[] = expenses.flatMap(exp => {
+    const placed = placedFor(exp);
+    return paidMovements(exp as unknown as PaidExpenseRow).map(mv => ({ ...mv, ...placed }));
+  });
 
   /* ── Money IN, in the same two levels (mig 243) ──────────────────────────────────────────────
      Three feeds, one grouping pass:
@@ -519,8 +506,63 @@ export const GET = withObservability(async (req: Request,
     outstanding: Math.round((expectedDues - collectedDues) * 100) / 100,
   };
 
-  // ── 7. Monthly chart data ─────────────────────────────────────────────
-  // Collect all relevant months from period_dates and paid expense dates
+  /* ══ 7. EVERY ACTUAL MOVEMENT ON THIS REPORT, FLATTENED ONCE ═══════════════════════════════════
+     ⚠⚠ THE ACTUALS ARE READ OFF THE STATEMENT, NOT OFF THE RAW ROWS
+     (COACH_MONEY_ONE_ARITHMETIC_PLAN.md, 2026-08-17). The cumulative chart used to walk
+     `rep_team_expenses` for itself, and the Months grid did too, and club money was added to each by
+     hand — three independent answers to "what did we actually spend?" on one screen. Two of the three
+     already disagreed:
+
+       · the chart never netted MONEY BACK, so a $500 hire with $200 refunded read $500 there and $300
+         in the statement rendered six inches below it;
+       · a commitment paid in two instalments arrived as one payment dated by the earlier half, so a
+         July balance was charted in May;
+       · club money reached the statement and the grid and was silently absent from the chart — found
+         by `/review` the day this route learned to read club money at all, which is what made a patch
+         the wrong answer and this the right one.
+
+     ⚠ AND IT IS FLATTENED **ONCE**, not once per consumer (`/simplify`, 2026-08-17 — three of the
+     four lenses landed here). The first pass gave the chart its own walk of this tree and the grid
+     another 140 lines later, each restating "expenses side only, refunds netted as the statement
+     netted them" in its own comment. Two feeds reading one source is the fix; two feeds reading it
+     through two hand-kept traversals is the same disease one level down, and a third consumer (an
+     export, say) would have been a third copy. **This list is the answer. Consumers sum it.**
+
+     ⚠ THE EXPENSES SIDE ONLY, and refunds exactly as the statement netted them. A refund the rollup
+     sent to the REVENUE side (`sideForRefund` — an item that is revenue and nothing else) must not
+     also come off spending; taking both from `report.expenses` makes that impossible rather than
+     careful. Money back is dated the day it ARRIVED — back-dating it into the month the cost was paid
+     would rewrite a month already reported on and reconciled. */
+  /**
+   * How a category is NAMED and IDENTIFIED on the grid — the statement's own spelling, so the two
+   * views of one report land on one row.
+   *
+   * ⚠ IT IS NO LONGER LOAD-BEARING FOR IDENTITY, and that is the point of the `/simplify` altitude
+   * pass. `categoryKey` used to treat `null` and `NO_CATEGORY_LABEL` as two different categories, so
+   * this helper WAS the fix for the split-bucket defect — meaning the fix was a convention every
+   * future caller had to remember. `categoryKey` normalises the nameless case itself now, so
+   * forgetting this can no longer split a bucket. What survives is the display name.
+   */
+  const gridCategory = (categoryId: string | null, categoryName: string | null) => ({
+    categoryId,
+    categoryName: displayCategoryName(categoryName),
+  });
+
+  const actualMovements = report.expenses.categories.flatMap(cat => {
+    const category = gridCategory(cat.categoryId, cat.categoryName);
+    return cat.items.flatMap(item => [
+      ...item.costs.map(c => ({
+        category, date: c.paidDate, amount: c.amount,
+        id: c.id, description: c.description,
+      })),
+      ...item.refunds.map(b => ({
+        category, date: b.receivedDate, amount: -b.amount,
+        id: b.id, description: `${b.description || item.itemName} — money back`,
+      })),
+    ]);
+  });
+
+  // ── 7b. Monthly chart data ────────────────────────────────────────────────
   const monthSet = new Set<string>();
 
   for (const line of lines) {
@@ -529,24 +571,14 @@ export const GET = withObservability(async (req: Request,
       if (m) monthSet.add(m);
     }
   }
-  for (const exp of expenses) {
-    const d = paidDate(exp);
-    if (d) monthSet.add(d.slice(0, 7));
-  }
-  /* ⚠⚠ AND CLUB MONEY — THE THIRD FEED POINT, MISSED ON THE FIRST PASS (`/review`, money lens,
-     2026-08-17). This report renders club costs in THREE independent places: the statement (via the
-     rollup), the Months grid (`gridActuals`), and this cumulative chart. The first two were wired
-     up; this one was not, so on a club-run team the chart a coach reads sat DIRECTLY ABOVE a
-     statement whose totals it contradicted — and the club's bill is frequently the season's single
-     largest line, which is the exact scenario the whole change exists for.
 
-     ⚠ COSTS ONLY, and that is consistent rather than lazy: this chart has never netted refunds
-     (`actualByMonth` sums `paidAmount(exp)` from raw expenses and `rep_team_money_in` reaches it
-     nowhere), so feeding club REIMBURSEMENTS in would make club money the one kind that nets here.
-     The statement and the grid both net them; the chart nets none. That inconsistency is older than
-     this release and is logged as debt rather than half-fixed under cover of this one. */
-  for (const c of clubSpend) {
-    if (c.paidDate) monthSet.add(c.paidDate.slice(0, 7));
+  // Actual per month — the statement's own movements, gross less what came back.
+  const actualByMonth = new Map<string, number>();
+  for (const mv of actualMovements) {
+    const m = monthKeyOf(mv.date);
+    if (!m) continue;
+    monthSet.add(m);
+    actualByMonth.set(m, (actualByMonth.get(m) ?? 0) + mv.amount);
   }
 
   // If no months, default to current month
@@ -570,21 +602,6 @@ export const GET = withObservability(async (req: Request,
   const totalBudget = lines.reduce((s, l) => s + (l.total_amount as number), 0);
   const periodedBudget = [...budgetByMonth.values()].reduce((s, v) => s + v, 0);
   const undatedBudget = Math.max(0, Math.round((totalBudget - periodedBudget) * 100) / 100);
-
-  // Actual per month: sum of paid expenses by paid date month
-  const actualByMonth = new Map<string, number>();
-  for (const exp of expenses) {
-    const d = paidDate(exp);
-    if (!d) continue;
-    const m = d.slice(0, 7);
-    actualByMonth.set(m, (actualByMonth.get(m) ?? 0) + paidAmount(exp));
-  }
-  // The other half of the fix above — the months were being collected and then spent nothing into.
-  for (const c of clubSpend) {
-    if (!c.paidDate) continue;
-    const m = c.paidDate.slice(0, 7);
-    actualByMonth.set(m, (actualByMonth.get(m) ?? 0) + c.amount);
-  }
 
   let cumBudget = 0;
   let cumActual = 0;
@@ -610,10 +627,26 @@ export const GET = withObservability(async (req: Request,
      all arrive already applied, by the one module that owns them.
      ⚠ Unplanned items are included with a zero budget on purpose: their category exists on this
      screen, and their spending needs a row to land in. */
+  /* The dates each individual budget line is currently split across, by line id.
+     ⚠ PER LINE, WHICH IS NOT WHAT THE ROW CARRIES. `item.periods` is the schedule of every line on
+     the item MERGED (two lines' Nov 30 is one period holding the sum — the SUM ruling made visible),
+     so it cannot say which line owns a date. The chooser below has to, or it would offer a coach two
+     rows it cannot tell apart. */
+  const lineDates = new Map<string, string[]>(allLines.map(l => [
+    l.id as string,
+    ((l.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
+      .map(p => p.period_date as string | null)
+      .filter((d): d is string => !!d)
+      .sort(),
+  ]));
+
   const gridLines: GridLine[] = categoryResults.flatMap(cat => cat.items.map(item => ({
-    id:           `${cat.categoryName}|${item.itemId ?? 'no-item'}`,
+    /* ⚠ KEYED BY THE CATEGORY's IDENTITY, NOT ITS NAME. Two categories may legitimately share a
+       name (`budget_categories.name` has no unique index and an org's list is platform defaults ∪
+       its own customs), and their two item-less rows collided on one id. */
+    id:           `${categoryKey(cat.categoryId, cat.categoryName)}|${item.itemId ?? 'no-item'}`,
     description:  item.itemName,
-    categoryName: cat.categoryName,
+    ...gridCategory(cat.categoryId, cat.categoryName),
     itemId:       item.itemId,
     itemName:     item.itemName,
     totalAmount:  item.budgeted,
@@ -621,6 +654,15 @@ export const GET = withObservability(async (req: Request,
     // every item now arrives with a row, so the row's presence no longer answers that.
     inPlan:       item.inPlan,
     periods:      item.periods.map(p => ({ date: p.date, amount: p.amount })),
+    /* ⚠ THE REAL BUDGET LINES BEHIND THE ROW — the whole point of `GridPlanLine`, whose header
+       carries the ruling. Without these a month cell has only the composite row id, which no editor
+       can resolve, which is how two affordances on this grid did nothing at all for two days. */
+    planLines:    item.lines.map(l => ({
+      id:          l.id,
+      description: l.description,
+      amount:      l.totalAmount,
+      dates:       lineDates.get(l.id) ?? [],
+    })),
   })));
 
   // Actuals: what was paid, on the day it was paid. A payable's deposit and balance are separate
@@ -631,86 +673,81 @@ export const GET = withObservability(async (req: Request,
   // Per-cell drill-in detail, keyed `${categoryKey}|${YYYY-MM}` — the read panels behind an
   // Actual or Scheduled cell. Already-loaded rows, so no extra query.
   const cellDetails: Record<string, Array<{ id: string; description: string; date: string | null; amount: number; paid: boolean }>> = {};
-  function pushDetail(kind: 'actual' | 'scheduled', category: string | null, date: string | null, item: { id: string; description: string; amount: number; paid: boolean }) {
+  /* ⚠ THE SAME CATEGORY IDENTITY THE GRID ITSELF RETURNS, or a cell has detail behind it that its
+     own panel cannot find. This used to key on `(category ?? '').trim().toLowerCase()` while
+     `buildMonthGrid` returned its own key — for a NAMELESS category those were `''` and
+     `'uncategorized'`, so the cell's drill-in resolved to an empty list and the cell rendered as
+     un-clickable. Silent, and only ever wrong for the one bucket nobody seeds. */
+  function pushDetail(
+    kind: 'actual' | 'scheduled',
+    category: { categoryId: string | null; categoryName: string },
+    date: string | null,
+    item: { id: string; description: string; amount: number; paid: boolean },
+  ) {
     const m = monthKeyOf(date);
     if (!m) return;
-    const key = `${kind}|${(category ?? '').trim().toLowerCase()}|${m}`;
+    const key = `${kind}|${categoryKey(category.categoryId, category.categoryName)}|${m}`;
     (cellDetails[key] ??= []).push({ ...item, date });
   }
 
+  /* ══ SCHEDULED KEEPS ITS OWN RAW FEED, AND THAT IS A DECISION ══════════════════════════════════
+     Every ACTUAL figure on this report now comes from the rollup (below). Commitments cannot: the
+     rollup only knows money that has MOVED, and the statement has no "committed" column to grow one
+     from. Deriving Scheduled would mean teaching the rollup a third dimension it exists not to have,
+     which is worse than one honest exception — so it is stated here rather than left as an omission
+     for a reader to mistake for an oversight (COACH_MONEY_ONE_ARITHMETIC_PLAN.md §3, Phase B.5).
+
+     ⚠ IT STILL SHARES THE CATEGORY IDENTITY. A commitment and the payment that settles it must land
+     in the same row, so the events go through `gridCategory` exactly as the actuals do.
+
+     ⚠ CLUB INSTALMENTS ARE DELIBERATELY ABSENT. An unpaid one has a due date and would fit — but
+     this feed is `rep_team_expenses` commitments, and the Payment schedule already shows club
+     instalments beside them. Adding them to one surface and not the other is how two surfaces start
+     disagreeing; adding them to both is its own question, not this one's. */
   for (const exp of expenses) {
-    const cat = placedFor(exp).categoryName;
+    if (exp.expense_type !== 'tournament_payable') continue;
+    const placed = placedFor(exp);
+    const cat = gridCategory(placed.categoryId, placed.categoryName);
     const id = exp.id as string;
     const description = exp.description as string;
-
-    if (exp.expense_type === 'tournament_payable') {
-      const dep = (exp.deposit_amount as number | null) ?? 0;
-      const bal = (exp.balance_amount as number | null) ?? 0;
-      if (dep > 0 && exp.deposit_due_date) {
-        gridScheduled.push({ categoryName: cat, date: exp.deposit_due_date as string, amount: dep });
-        pushDetail('scheduled', cat, exp.deposit_due_date as string, { id: `${id}-deposit`, description: `${description} — deposit`, amount: dep, paid: !!exp.deposit_paid_at });
-      }
-      if (bal > 0 && exp.balance_due_date) {
-        gridScheduled.push({ categoryName: cat, date: exp.balance_due_date as string, amount: bal });
-        pushDetail('scheduled', cat, exp.balance_due_date as string, { id: `${id}-balance`, description: `${description} — balance`, amount: bal, paid: !!exp.balance_paid_at });
-      }
-      if (exp.deposit_paid_at && dep > 0) {
-        gridActuals.push({ categoryName: cat, date: exp.deposit_paid_at as string, amount: dep });
-        pushDetail('actual', cat, exp.deposit_paid_at as string, { id: `${id}-deposit`, description: `${description} — deposit`, amount: dep, paid: true });
-      }
-      if (exp.balance_paid_at && bal > 0) {
-        gridActuals.push({ categoryName: cat, date: exp.balance_paid_at as string, amount: bal });
-        pushDetail('actual', cat, exp.balance_paid_at as string, { id: `${id}-balance`, description: `${description} — balance`, amount: bal, paid: true });
-      }
-    } else if (exp.expense_paid_at) {
-      const amt = exp.amount as number;
-      gridActuals.push({ categoryName: cat, date: exp.expense_paid_at as string, amount: amt });
-      pushDetail('actual', cat, exp.expense_paid_at as string, { id, description, amount: amt, paid: true });
+    const dep = (exp.deposit_amount as number | null) ?? 0;
+    const bal = (exp.balance_amount as number | null) ?? 0;
+    if (dep > 0 && exp.deposit_due_date) {
+      gridScheduled.push({ ...cat, date: exp.deposit_due_date as string, amount: dep });
+      pushDetail('scheduled', cat, exp.deposit_due_date as string, {
+        id: `${id}-deposit`,
+        description: `${description} — deposit`,
+        amount: dep,
+        // Whether the stamp EXISTS — never its date, never an amount. See ALLOWED_STAMP_USES in
+        // tests/unit/money-one-arithmetic-guard.test.ts, which requires it alone on its line so the
+        // exemption cannot quietly cover arithmetic sharing the line with it.
+        paid: !!exp.deposit_paid_at,
+      });
+    }
+    if (bal > 0 && exp.balance_due_date) {
+      gridScheduled.push({ ...cat, date: exp.balance_due_date as string, amount: bal });
+      pushDetail('scheduled', cat, exp.balance_due_date as string, {
+        id: `${id}-balance`,
+        description: `${description} — balance`,
+        amount: bal,
+        paid: !!exp.balance_paid_at,
+      });
     }
   }
 
-  /* ⚠⚠ AND SO DOES CLUB MONEY, FOR EXACTLY THE SAME REASON (money redesign P4, 2026-08-17).
-     This loop was nearly missed: `gridActuals` is built from the RAW `expenses` array, so adding
-     club costs to the rollup alone would have put them on the Statement and the Categories view and
-     left them off Months — one screen reporting two different totals for one season, which is the
-     defect the note below records having already happened once with refunds.
-
-     ⚠ The money-back half needs nothing here: an approved *from the club* request is a REFUND, so
-     it arrives through `report.expenses.categories` in the loop underneath, netted against the item
-     it repaid, exactly like a vendor refund. Only the COST half has to be added by hand, because
-     only the cost half bypasses this array.
-
-     ⚠ `gridScheduled` is deliberately NOT fed. An unpaid club instalment has a due date and would
-     fit — but the grid's Scheduled row is built from `rep_team_expenses` commitments, and the
-     Payment schedule already shows club instalments beside them. Adding them to one and not the
-     other is how two surfaces start disagreeing; adding them to both is a P5 question, not a P4
-     one. Said out loud so the omission reads as a decision rather than an oversight. */
-  for (const c of clubSpend) {
-    if (!c.paidDate) continue;
-    gridActuals.push({ categoryName: c.categoryName, date: c.paidDate, amount: c.amount });
-    pushDetail('actual', c.categoryName, c.paidDate, {
-      id: c.id, description: c.description, amount: c.amount, paid: true,
+  /* ══ AND THE ACTUALS ARE THE SAME LIST THE CHART SUMMED ════════════════════════════════════════
+     ⚠⚠ THE GRID USED TO WALK THE RAW ROWS ITSELF, in three loops: paid expense stamps, then club
+     costs added by hand, then refunds off the rollup. Each new kind of money meant remembering to
+     feed this one too — club money was "nearly missed" here by its own comment, and the cumulative
+     chart above WAS missed, twice. There is nothing left to remember, and nothing left to keep in
+     step either: `actualMovements` (step 7) is flattened once and the chart and this grid are two
+     readings of it. A movement the statement counts is a movement this grid places, in the month the
+     statement dated it, described the way the statement describes it. */
+  for (const mv of actualMovements) {
+    gridActuals.push({ ...mv.category, date: mv.date, amount: mv.amount });
+    pushDetail('actual', mv.category, mv.date, {
+      id: mv.id, description: mv.description, amount: mv.amount, paid: true,
     });
-  }
-
-  /* ⚠ MONEY BACK REACHES THE MONTH GRID TOO, as a NEGATIVE actual on the month it arrived — or
-     Months and the statement would report different figures for the same item on the same screen,
-     which is the exact defect that made the grid read its rows off the rollup in the first place.
-     Taken from the EXPENSES half of the report rather than from the raw records, so the grid nets
-     exactly the refunds the cost rows netted: a refund the rollup sent to the revenue side must
-     not also come off spending here. */
-  for (const cat of report.expenses.categories) {
-    for (const item of cat.items) {
-      for (const back of item.refunds) {
-        gridActuals.push({ categoryName: cat.categoryName, date: back.receivedDate, amount: -back.amount });
-        pushDetail('actual', cat.categoryName, back.receivedDate, {
-          id: back.id,
-          description: `${back.description || item.itemName} — money back`,
-          amount: -back.amount,
-          paid: true,
-        });
-      }
-    }
   }
 
   // Prior season — the comparison column. Only the most recent earlier year, and only when it

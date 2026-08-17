@@ -21,5 +21,6 @@
 - [Help documentation planning rule](help-documentation-planning.md)
 - [Standalone Team workspace](standalone-team-workspace.md)
 - [Coaches Portal unified product](coaches-portal-unified-product.md)
+- [Money arithmetic has one home per question](coach-money-one-arithmetic.md) — cash on hand · the season close-out pot (⛔ deliberately separate) · the report; on Budget vs. Actual a feed that walks the raw records for itself is a DEFECT. Enforced by `tests/unit/money-one-arithmetic-guard.test.ts` + `npm run check:money-report` (which **fails over a fixture too thin to disagree**). ⚠ Two things not to "fix": the two date rules are both correct (org-noon stamps vs click-time instants), and the Months grid's month-splitting of a commitment was always the right one
 - [Free Tier strategy project](project_free_tier_strategy.md)
 - [Dev database schema](reference_db_schema.md) — every table and column, regenerated from the LIVE dev database by `npm run refresh:snapshots`; never hand-edited, and never a substitute for the snapshots when deciding whether a column exists

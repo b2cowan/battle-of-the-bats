@@ -1,8 +1,21 @@
 # PM Brief — one home for the money arithmetic
 
-**Status: direction approved by the owner 2026-08-17. Not built.**
-**Plan:** [COACH_MONEY_ONE_ARITHMETIC_PLAN.md](COACH_MONEY_ONE_ARITHMETIC_PLAN.md)
+**Status: all three phases built on dev 2026-08-17. Awaiting owner QA — Owner QA Ledger §51.**
+No migration.
+**Plan:** [COACH_MONEY_ONE_ARITHMETIC_PLAN.md](COACH_MONEY_ONE_ARITHMETIC_PLAN.md) (§1c is the
+re-verification, §4b is what shipped)
 **Evidence + diagrams:** https://claude.ai/code/artifact/bd12805c-98a5-465a-931b-1273b8adcb70
+
+⚠ **THREE numbers changed, not two.** The section below was written before the work and said two.
+Re-deriving the plan's evidence from the code found the split-commitment collapse in a third place —
+**the statement's own expand-a-row payment schedule**, which reported a July balance against an April
+period beneath a row whose season total was correct. It is corrected the same way, and it is the third
+figure a coach could notice.
+
+⚠ **And two things a coach could see that nobody had reported.** Spending with no category at all
+appeared as **two rows** on the Months grid: the statement called the bucket *No category*, the grid
+filed the money under *Uncategorized*, so a club cost and the refund netting against it sat under two
+headings that never met. Clicking that cell for detail did nothing at all. Both fixed.
 
 ## The idea in one sentence
 

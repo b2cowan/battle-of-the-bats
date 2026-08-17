@@ -448,6 +448,8 @@ const FIXTURE_ITEMS = {
   'Winter dome block':    { category: 'Facilities',  item: 'Dome Time' },
   'Diamond permits':      { category: 'Facilities',  item: 'Diamond Permits' },
   'Spring classic entry': { category: 'Tournaments', item: 'Entry Fees' },
+  // ⚠ DELIBERATELY THE SAME ITEM as 'Spring classic entry' — see the TWO-LINE ITEM block below.
+  'Regional qualifier entry': { category: 'Tournaments', item: 'Entry Fees' },
 };
 /** Both halves of a line's taxonomy, resolved by NAME. ⚠ The category has to be right BEFORE the
  *  item can be: an item lives in exactly one category, so a line filed under the wrong heading
@@ -464,8 +466,10 @@ const { data: existingLines } = await db.from('rep_budget_lines')
 if (!existingLines?.length) {
   const lineRows = [
     { description: 'Winter dome block', total_amount: 5200, notes: '16 sessions, Jan–Mar', line_kind: 'cost',    ...taxonomyFor('Winter dome block'), sort_order: 1 },
-    // Deliberately the SAME item as the line above: the plan and the report must show these
-    // two as ONE row carrying ,400, which is the ruling this fixture has to be able to prove.
+    /* ⚠ THIS COMMENT USED TO CLAIM these two lines shared one item — "the ruling this fixture has to
+       be able to prove". They never did: `FIXTURE_ITEMS` maps every description to its OWN item, so
+       the SUM ruling had no fixture coverage anywhere, for two months. Corrected rather than deleted,
+       because the claim was the useful part. The two-line item it describes is seeded below. */
     { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
     { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
     { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', category_id: null, sort_order: 4 },
@@ -649,6 +653,94 @@ if (!existingExp?.length) {
   else { money.expenses = 3; ok('expenses + a two-part payable seeded'); }
 } else {
   ok('expenses already present');
+}
+
+/**
+ * ⚠⚠ TWO BUDGET LINES ON ONE ITEM — the owner's SUM ruling, which nothing rendered had ever shown.
+ *
+ * The line block above carried a comment claiming it seeded this shape. It did not: every description
+ * maps to its own item, so **the ruling had no fixture coverage at all** — not on the plan page (where
+ * two lines on one item become a group header that opens), not on the report (where the row captions
+ * itself "2 lines"), and not on the Months grid.
+ *
+ * It matters most for the grid. A month cell on a two-line row cannot know whose payment dates a coach
+ * means, so it opens a chooser (owner-approved 2026-08-17) — and **that chooser was reachable on no
+ * fixture in the repo**, which means the rendered layout sweep could not see it and owner QA could not
+ * walk it. A screen swept in its emptiest state is the trap this file exists to end.
+ *
+ * ⚠ NO PERIODS ON THIS ONE, on purpose. Its sibling "Spring classic entry" is also undated, so the
+ * item's row exercises the chooser from the **"No date yet"** cell — the affordance that was dead and
+ * matters more, being the grid's only route out of undated budget. The dated path is covered by
+ * "Winter dome block", which has three periods.
+ *
+ * Guarded on its own so fixtures seeded before this block gain the row on a re-run.
+ */
+const SECOND_LINE_DESC = 'Regional qualifier entry';
+const { data: existingSecondLine } = await db.from('rep_budget_lines')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+  .eq('description', SECOND_LINE_DESC).limit(1);
+if (!existingSecondLine?.length) {
+  const sl = await db.from('rep_budget_lines').insert({
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    description: SECOND_LINE_DESC, total_amount: 900, notes: 'Second line on the same item',
+    line_kind: 'cost', ...taxonomyFor(SECOND_LINE_DESC), sort_order: 5,
+  });
+  if (sl.error) console.log(`  ! second line on one item skipped (${sl.error.message})`);
+  else ok('a SECOND budget line on the "Entry Fees" item — the SUM ruling, and the grid\'s line chooser');
+} else {
+  ok('two-line item already present');
+}
+
+/**
+ * ⚠⚠ A COMMITMENT PAID ACROSS TWO MONTHS — the shape the money report's arithmetic check needs.
+ *
+ * The payable above has its balance UNPAID, which is the right fixture for the Expenses screen and
+ * the wrong one for `scripts/check-money-report-arithmetic.mjs`. That check asserts the statement,
+ * the Months grid and the cumulative chart land on one number, and the way they came apart was a
+ * deposit and a balance paid in DIFFERENT MONTHS: the grid split them, the chart and the statement's
+ * payment schedule collapsed both into the deposit's month. With nothing on the fixture paid twice,
+ * a green run over it proved nothing at all — the same trap `check-register-balance.mjs` guards
+ * against with its "derived sources present" gate.
+ *
+ * ⚠ FIXED DATES, TWO CALENDAR MONTHS APART, both in the past. Relative offsets from "today" would
+ * land in one month for most of any given month, so the case the check exists for would vanish and
+ * reappear depending on the day it ran.
+ *
+ * ⚠ THE PAID STAMPS ARE WRITTEN AT ORG NOON, which is the platform's convention for this column
+ * family and not a detail to normalise away — see `orgDayAsStoredInstant` in lib/timezone.ts and
+ * COACH_MONEY_ONE_ARITHMETIC_PLAN.md §1b. Stored at noon, a naive UTC date slice lands on the
+ * coach's own calendar day from any timezone this platform serves. Seeded at midnight, this row
+ * would drift a month boundary and the check would fail for a reason that is not a defect.
+ *
+ * Guarded on its own so fixtures seeded before this block gain the row on a re-run.
+ */
+const SPLIT_DESC = 'Regional qualifier entry — paid in two parts';
+const { data: existingSplit } = await db.from('rep_team_expenses')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+  .eq('description', SPLIT_DESC).limit(1);
+if (!existingSplit?.length) {
+  /** `YYYY-MM-DD` → the UTC instant of ORG NOON that day, DST-correct. Mirrors
+   *  `orgDayAsStoredInstant`, which a `.mjs` script cannot import from the TypeScript source. */
+  const orgNoon = (day) => {
+    const hourThere = Number(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Toronto', hour: '2-digit', hour12: false,
+    }).formatToParts(new Date(`${day}T12:00:00Z`)).find(p => p.type === 'hour').value);
+    const utcHour = 12 + (12 - hourThere);   // EDT → 16:00Z, EST → 17:00Z
+    return new Date(`${day}T${String(utcHour).padStart(2, '0')}:00:00.000Z`).toISOString();
+  };
+  const depDay = `${py.year}-05-14`;
+  const balDay = `${py.year}-07-09`;
+  const sp = await db.from('rep_team_expenses').insert({
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    expense_type: 'tournament_payable', description: SPLIT_DESC,
+    category: cats?.[1]?.name ?? cats?.[0]?.name ?? null, amount: 900,
+    deposit_amount: 300, deposit_due_date: depDay, deposit_paid_at: orgNoon(depDay),
+    balance_amount: 600, balance_due_date: balDay, balance_paid_at: orgNoon(balDay),
+  });
+  if (sp.error) console.log(`  ! split-month payable skipped (${sp.error.message})`);
+  else ok(`split-month payable seeded ($300 ${depDay} + $600 ${balDay}) — the case the report's arithmetic check needs`);
+} else {
+  ok('split-month payable already present');
 }
 
 /**

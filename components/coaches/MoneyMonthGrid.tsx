@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import {
   buildCashFlow, lensCell, lensTotal, lensReadsPlan, formatMonthLabel, formatMonthLong,
-  type MonthGrid, type MonthKey, type MoneyLens, type CashFlowRow,
+  type MonthGrid, type MonthKey, type MoneyLens, type CashFlowRow, type GridPlanLine,
 } from '@/lib/coach-budget-months';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -87,6 +87,8 @@ export default function MoneyMonthGrid({
   const { monthGrid: grid, cellDetails, moneyIn, todayMonth, priorSeasonLabel } = data;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{ title: string; items: CellDetailItem[]; href: string; hrefLabel: string } | null>(null);
+  /** "Which line's dates?" — only ever open for a row standing for two or more budget lines. */
+  const [chooser, setChooser] = useState<{ item: string; when: string; lines: GridPlanLine[] } | null>(null);
 
   const showPrior = priorSeasonLabel != null;
   const showUndated = grid.totals.undatedBudget > 0.005;
@@ -121,6 +123,48 @@ export default function MoneyMonthGrid({
         : moneySectionHref(base, 'payables', { tab: 'schedule' }),
       hrefLabel: kind === 'actual' ? 'Open Transactions' : 'Open the payment schedule',
     });
+  }
+
+  /** The dates a budget line currently sits on, said the way a coach would say it. */
+  function whenLine(l: GridPlanLine): string {
+    if (l.dates.length === 0) return 'No date yet';
+    if (l.dates.length === 1) return `Currently ${fmtDay(l.dates[0])}`;
+    return `Currently split across ${l.dates.length} dates`;
+  }
+
+  /**
+   * What a PLAN cell does when a coach clicks it — the one answer for both affordances that read the
+   * budget: a month's figure ("Edit this line's payment dates") and the "No date yet" figure ("Give
+   * this money a date").
+   *
+   * ⚠⚠ THE ROW IS AN ITEM AND MAY STAND FOR TWO BUDGET LINES (owner ruling 2026-08-15, and the fix
+   * approved 2026-08-17). Both cells used to hand the budget page the composite ROW id, which no
+   * longer names any line — so it found nothing and returned silently. Both were dead for two days.
+   * Now: one line behind the row, go straight to its dates; two or more, ask which. Never guess, or a
+   * coach silently edits a line they were not looking at; never withdraw the control, or the teams
+   * with the most complex plans lose their only route out of undated budget.
+   *
+   * ⚠ Both cells share this because they are ONE affordance with two labels. Fixing one and not the
+   * other is how they came apart in the first place.
+   */
+  function planCell(line: { description: string; planLines: GridPlanLine[] }, when: string) {
+    const plan = line.planLines;
+    if (plan.length === 1) {
+      // ?periods=1 opens the payment-date split even on a line that is currently a lump sum — the
+      // coach was looking at a month grid, so dates are what they came for.
+      return {
+        href: moneySectionHref(base, 'budget', { line: plan[0].id, periods: '1' }),
+        title: `Edit ${line.description}’s payment dates`,
+      };
+    }
+    if (plan.length > 1) {
+      return {
+        onClick: () => setChooser({ item: line.description, when, lines: plan }),
+        title: `${line.description} has ${plan.length} budget lines — choose whose dates to change`,
+      };
+    }
+    // No budget line at all: a spend-only row. Nothing to edit, so nothing pretends to be clickable.
+    return {};
   }
 
   /** One money cell. Becomes a link or a button only when there is genuinely something behind it. */
@@ -228,10 +272,9 @@ export default function MoneyMonthGrid({
                       {showUndated && (
                         <td className={`${styles.num} ${styles.undated}`}>
                           {cellNode(undatedLive && line.undatedBudget > 0.005 ? line.undatedBudget : null, {
-                            href: canWrite && undatedLive && line.undatedBudget > 0.005
-                              ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' })
-                              : undefined,
-                            title: canWrite ? 'Give this money a date' : undefined,
+                            ...(canWrite && undatedLive && line.undatedBudget > 0.005
+                              ? { ...planCell(line, 'with no date yet'), title: 'Give this money a date' }
+                              : {}),
                           })}
                         </td>
                       )}
@@ -243,10 +286,7 @@ export default function MoneyMonthGrid({
                         const canEdit = canWrite && lens === 'budget' && line.cells[i].budget > 0.005;
                         return (
                           <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
-                            {cellNode(v, {
-                              href: canEdit ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }) : undefined,
-                              title: canEdit ? 'Edit this line’s payment dates' : undefined,
-                            })}
+                            {cellNode(v, canEdit ? planCell(line, `in ${formatMonthLong(m)}`) : {})}
                           </td>
                         );
                       })}
@@ -386,6 +426,45 @@ export default function MoneyMonthGrid({
             <div className={shared.modalFooter}>
               <Link href={detail.href} className={shared.btnSecondary}>{detail.hrefLabel}</Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* "Which line's dates?" — the ambiguous half of the plan-cell affordance (approved 2026-08-17).
+          Only reachable from a row standing for two or more budget lines, so a coach with one line per
+          item never meets it. It also explains the row: somebody who wrote two lines and reads one
+          summed figure learns why, at the moment they are wondering. */}
+      {chooser && (
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setChooser(null)}>
+          <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+            <div className={shared.modalHeader}>
+              <h3 className={shared.modalTitle}>Which line’s dates?</h3>
+              <button className={shared.modalCloseBtn} onClick={() => setChooser(null)} aria-label="Close"><X size={16} /></button>
+            </div>
+            <p className={styles.chooserSub}>
+              {chooser.item} · {chooser.when}
+            </p>
+            <ul className={styles.chooserList}>
+              {chooser.lines.map(l => (
+                <li key={l.id}>
+                  <Link
+                    href={moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
+                    className={styles.chooserChoice}
+                    onClick={() => setChooser(null)}
+                  >
+                    <span className={styles.chooserWho}>
+                      {l.description}
+                      <span className={styles.chooserWhen}>{whenLine(l)}</span>
+                    </span>
+                    <span className={styles.chooserAmt}>{fmt(l.amount)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className={styles.chooserFoot}>
+              {chooser.lines.length} lines on this item are shown as one row. Pick the one whose dates
+              you want to change.
+            </p>
           </div>
         </div>
       )}

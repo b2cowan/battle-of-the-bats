@@ -54,6 +54,32 @@
  * members and adding a fourth must stay one edit in one file, which is what
  * `tests/unit/budget-line-kind-guard.test.ts` enforces over the whole tree.
  *
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * 2026-08-17 — **MONEY ARITHMETIC HAS ONE HOME PER QUESTION**, and this module is the report's.
+ *
+ * The platform works out three money questions. Each has exactly one answer, deliberately:
+ *
+ *   · **"how much cash do we have?"** → `cashOnHandCents` (lib/coach-register.ts). Already one: the
+ *     register and `money-summary` both call it, so a source added to one and not the other is a
+ *     missing argument rather than a silent drift.
+ *   · **"what is left to settle at season's end?"** → `lib/coach-season-settlement.ts`.
+ *     ⛔ **Deliberately separate, and it stays that way.** Pure and dependency-free, it runs under
+ *     plain `node --test`, which is why it is the best-tested money module here. Do not fold it in.
+ *   · **"how did we do against plan?"** → HERE, and only here. Every figure on Budget vs. Actual —
+ *     the statement, the Months grid, the cumulative chart — is a reading of THIS pass. **A feed on
+ *     that report that walks the raw records for itself is a defect, not an optimisation.** It was
+ *     three separate walks until this date; two of the three already disagreed with each other.
+ *
+ * The one honest exception: the report's **Scheduled** lens keeps its own raw feed, because this
+ * module only knows money that has MOVED and the statement has no committed column to grow one from.
+ * It is stated in the route rather than left as an omission.
+ *
+ * ⚠ THE HISTORY AND THE TEETH ARE NOT RESTATED HERE — they live in
+ * `tests/unit/money-one-arithmetic-guard.test.ts` (the rule over the source) and
+ * `scripts/check-money-report-arithmetic.mjs` (the rule over a real season's numbers). Read either
+ * before adding a kind of money to that report.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ *
  * Pure: no IO, no React, no Date. Dates are `YYYY-MM-DD` strings compared as strings, so a coach in
  * Toronto and a server in UTC place a cost in the same period.
  */
@@ -106,7 +132,16 @@ export interface RollupSpend {
   categoryName: string | null;
   itemId: string | null;
   itemName: string | null;
-  /** ALWAYS POSITIVE. A payable's deposit and balance arrive summed, on the earliest date. */
+  /**
+   * ALWAYS POSITIVE.
+   *
+   * ⚠⚠ ONE RECORD PER MOVEMENT — a payable's deposit and balance arrive as TWO of these, each on the
+   * day it was actually paid. **This comment used to say they arrive "summed, on the earliest date",
+   * and that was retired on 2026-08-17 for being a fiction**: no such payment was ever made, and
+   * every feed that read dates off the merged record put a July balance in May. If you are here
+   * because a caller looks like it is doing extra work to split a payable — that IS the work. Do not
+   * merge them back.
+   */
   amount: number;
   /** `YYYY-MM-DD`, or null when nothing recorded a date. */
   paidDate: string | null;
@@ -226,12 +261,61 @@ function r2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** Category identity. The id when there is one; otherwise the lowercased name, so two costs typing
- *  the same category text land together rather than making two rows that look identical. */
-function categoryKey(categoryId: string | null, categoryName: string | null): string {
+/**
+ * What a category is CALLED when it has no name — one spelling, one owner.
+ *
+ * ⚠ THIS RULE WAS WRITTEN OUT FOUR TIMES (`/simplify`, 2026-08-17): here, in `bucketFor`, and twice
+ * in `coach-budget-months`. All four agreed, which is exactly how the last one got away with being
+ * different — the grid said "Uncategorized" where the statement said "No category" and one bucket
+ * read as two rows. A rule spelled four times has no owner; this is the owner.
+ */
+export function displayCategoryName(categoryName: string | null | undefined): string {
+  return (categoryName ?? '').trim() || NO_CATEGORY_LABEL;
+}
+
+/**
+ * Category identity. The id when there is one; otherwise the lowercased name, so two costs typing
+ * the same category text land together rather than making two rows that look identical.
+ *
+ * ⚠⚠ IT NORMALISES THE NAMELESS CASE ITSELF, and that is load-bearing rather than tidy
+ * (`/simplify` altitude pass, 2026-08-17). `null` and `NO_CATEGORY_LABEL` are the SAME category.
+ * Before this, `categoryKey(null, null)` gave `'none'` while `categoryKey(null, 'No category')` gave
+ * `'name:no category'`: **two identities for one fact.** The report's raw feeds only landed on the
+ * right one because a caller remembered to pre-normalise, so the fix for the split-bucket defect was
+ * a CONVENTION — and the next caller that forgot would reintroduce it invisibly. Deciding it here
+ * makes forgetting impossible.
+ *
+ * ⚠ TWO PATHS ARRIVE CARRYING THE LABEL, and the merge is right for both (`/review`, 2026-08-17 —
+ * two lenses read the first reason, correctly noticed it does not cover the second, and concluded
+ * the merge was a regression):
+ *   1. **a name this module already produced.** Every `CategoryRow` comes back carrying the label, so
+ *      anything fed back through — the grid's rows, the report's own movements — has it by then.
+ *   2. **raw free text that happens to BE the label.** A coach can type "No category" into an
+ *      expense's category field, or an import can echo the platform's own placeholder back. That
+ *      never had an id, so before this change it became its own bucket — and since `bucketFor` labels
+ *      the nameless bucket identically, the statement rendered **two rows both called "No category"**
+ *      with nothing to tell them apart. That is the duplicate-heading defect this release exists to
+ *      remove, not a distinction worth keeping: the difference between "typed those two words" and
+ *      "typed nothing" is invisible to a coach, and the drill-in still lists the costs individually.
+ * ⚠ CASE-INSENSITIVELY, for the same reason. An exact-string test merged "No category" and left
+ * "no category" as its own row — two near-identical headings, the same bug one keystroke away.
+ *
+ * ⚠⚠ EXPORTED BECAUSE THE MONTH GRID HAD ITS OWN, WEAKER ANSWER (2026-08-17). `coach-budget-months`
+ * keyed categories by lowercased NAME alone, so the two views of one report bucketed it two
+ * different ways and the same screen could show:
+ *   · **one grid row where the statement shows two** — `budget_categories.name` carries no unique
+ *     index, and an org's list is platform defaults ∪ its own customs, so one name with two ids is
+ *     a shape the product cannot even reject (DATA_DICTIONARY, that table's `name`);
+ *   · **two grid rows where the statement shows one** — spending with no category at all reached the
+ *     grid as `null` (bucket "Uncategorized") while its own rows arrived from here as
+ *     `NO_CATEGORY_LABEL` ("No category"), so a cost and the refund netting against it landed under
+ *     two different headings. That one was live.
+ * One function, both modules. Two reports cannot line up on identity they each derive privately.
+ */
+export function categoryKey(categoryId: string | null, categoryName: string | null): string {
   if (categoryId) return `id:${categoryId}`;
-  const name = (categoryName ?? '').trim().toLowerCase();
-  return name ? `name:${name}` : 'none';
+  const name = displayCategoryName(categoryName).toLowerCase();
+  return name === NO_CATEGORY_LABEL.toLowerCase() ? 'none' : `name:${name}`;
 }
 
 interface Entry {
@@ -267,7 +351,7 @@ export function rollupMoneyReport({ lines, spend, refunds = [] }: MoneyReportInp
     if (!bucket) {
       bucket = {
         categoryId,
-        categoryName: (categoryName ?? '').trim() || NO_CATEGORY_LABEL,
+        categoryName: displayCategoryName(categoryName),
         sides: new Map(),
       };
       buckets.set(key, bucket);

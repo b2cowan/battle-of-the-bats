@@ -7007,6 +7007,169 @@ short re-walk owed after the review.**
 
 ---
 
+## §51 · The report stops telling three stories about one season (money — one arithmetic)
+
+**Built on dev 2026-08-17 · awaiting QA · no migration.** Plan + PM brief:
+`COACH_MONEY_ONE_ARITHMETIC_PLAN.md`. Evidence artifact: `bd12805c`.
+
+**This is a correction, not a feature, and it is almost all invisible.** Budget vs. Actual worked out
+"what did we actually spend?" three separate times — the statement, the **Months** grid, and the
+**cumulative chart rendered directly above the statement** — from three independent readings of the
+same records. Two of the three already disagreed, and both predate any club money. The three feeds
+now read one set of figures, so **there are only three numbers on this screen that move**, and every
+one of them moved because it was wrong:
+
+1. **The chart now subtracts money back.** A $500 hire with $200 refunded charted as $500 while the
+   statement six inches below it said $300.
+2. **The chart now puts each half of a commitment in the month it was actually paid.** A deposit paid
+   in May and a balance paid in July charted as the whole amount in May.
+3. **The statement's own expand-a-row payment schedule** had the same collapse and is corrected the
+   same way. ⚠ **This is the third figure — the plan only anticipated two.**
+
+Nothing else about the screen changes: no new door, no label, no flow, no variance on the register,
+no row labels. The season totals, the Months grid's figures and the by-activity lens are all
+unchanged — that is the claim, and a new build-blocking check is what proves it.
+
+Reach it: **Money → Budget vs. Actual**.
+
+### A · The three numbers that changed — read them together, on one screen
+
+- [ ] Open the report on a team that has **money back** recorded against a cost. Read the chart's
+      last point and the statement's **Total spent** in the same glance. They must be **the same
+      number**. Before this they differed by exactly the refund.
+- [ ] Switch to **Months** and add up the Actual row across the months. Same number again.
+- [ ] Find the month the refund arrived. The chart's line must **dip or flatten** there, the way
+      Months already showed a negative in that cell.
+
+### B · A commitment paid in two parts (the case the fixture never had)
+
+The UAT fixture now seeds one deliberately: *"Regional qualifier entry — paid in two parts"*, $300
+paid in **May**, $600 paid in **July**.
+
+- [ ] On the chart, the May step is **$300** and there is a **second step in July** of $600. Before
+      this the whole $900 stepped up in May and July was flat.
+- [ ] In **Months**, the same two cells — unchanged from before, because Months was the one feed that
+      always got this right. **If Months moved, something is wrong**; that is the regression this
+      change was most at risk of.
+- [ ] Click the **May** Actual cell, then the **July** one. Each names one half — *"— deposit"* /
+      *"— balance"* — with its own date.
+- [ ] In the statement, expand that row's **payment schedule**. The paid figures now sit against the
+      **right periods**. This is the third corrected number.
+
+### C · The one bucket that used to appear twice
+
+- [ ] Find a team with spending that has **no category** — an approved club payment filed to nothing,
+      or an old uncategorised expense. On the statement it reads **No category**.
+- [ ] Switch to **Months**. There must be **exactly one** such row, also called **No category**.
+      ⚠ Before this there were **two** — the grid filed the money under *"Uncategorized"* while its
+      own budget row said *"No category"*, so a cost and the refund netting against it sat under two
+      headings that never met. The season total still reconciled, which is why nobody saw it.
+- [ ] **Click that row's Actual cell.** A detail panel must open listing what is in it. ⚠ Before this
+      the cell was **not clickable at all** for this one bucket — the detail was filed under a third
+      spelling and the panel resolved to nothing. Silent, and only ever wrong here.
+
+### D · Nothing else moved (the part worth being suspicious about)
+
+- [ ] **Budget · Scheduled · Difference** lenses on Months: identical to what you remember.
+      Commitments deliberately still come from their own feed (the rollup only knows money that has
+      **moved**), so the Scheduled column must be untouched.
+- [ ] **Payables → payment schedule**: unchanged. Club instalments still appear there and still do
+      **not** appear in the grid's Scheduled column — a standing decision, not a regression.
+- [ ] The **by-activity** lens and the **season net** end on the same figures as the statement.
+- [ ] **"of which never budgeted"**, headroom, and the funding row: unchanged.
+- [ ] With a **money tag filter** active, the figures still reconcile with each other (club money is
+      correctly excluded from a tag cut, as before).
+
+### E · What the gates did and did not prove
+
+- [ ] ⚠ **A new build-blocking check does most of this walk for you** — `npm run check:money-report`
+      asserts statement = Months = chart, **month by month and category by category**, and it
+      **exits non-zero over a fixture too thin to disagree**. Proven both ways on 2026-08-17: green
+      on the real fixture, exit 2 on a team with none of the three breaking shapes.
+- [ ] ⚠ **`check:layout` on this screen produced ZERO new findings** — the 6 it reports are the
+      portal's notification-badge findings, present on every screen including untouched ones
+      (`coach-roster` was run first and gave the identical 6). **Not re-baselined.**
+- [ ] ⚠ **`check:schema-parity` fails on dev** — pre-existing drift from other sessions' dev-only
+      migrations (236–250). **Nothing in this section touches the database**; every other
+      `verify:changed` gate passes.
+- [ ] ⚠⚠ **The review found that the new check had gone half-blind, and it is worth knowing why before
+      you walk this.** It was built when the three feeds worked independently, so their agreeing was
+      real evidence. Making them share one arithmetic — the whole point of this change — meant they
+      would now agree even if that shared arithmetic were wrong. A second safeguard was added to cover
+      the part the first can no longer see: 18 cases pinning that a payment lands on the right day for
+      the right amount. **Both are needed; neither is evidence for the other.**
+- [ ] ⚠ **What no check can see, and the only reason this section exists:** whether the chart, the
+      statement and Months **tell one story** to someone reading them together. The checks prove the
+      numbers are equal. Only you can say whether the screen now reads as one report.
+
+### F · Two dead links, fixed — and the fixture gap that hid them
+
+**Approved by you 2026-08-17 from mockup `8859dc90`, then built.** ⚠ **It was TWO dead affordances,
+not one.** Both read the plan, both handed the budget page a row identifier that stopped naming a real
+budget line on 2026-08-15 (when the rows began coming from the shared rollup so Months and the
+statement could not group one plan two ways), and both then returned **silently** — no navigation, no
+message. Live for two days.
+
+The rule now: **the link addresses the item, and the item answers for its lines.** One budget line
+behind the row → straight to its payment dates. Two or more → the grid asks which. Never guesses,
+never withdraws the control.
+
+⚠⚠ **The chooser was reachable on NO fixture in this repo, and that is its own finding.** The seeder
+carried a comment claiming it seeded two budget lines on one item — *"the ruling this fixture has to be
+able to prove"* — and it never did: every line was mapped to its own item. So your two-lines-are-one-row
+ruling had **no rendered coverage anywhere** for two months: not the plan page's group row, not the
+report's "2 lines" caption, not the grid. The fixture now has one.
+
+- [ ] **The common case — one budget line.** Money → Budget vs. Actual → **Months**, **Budget** lens,
+      expand **Facilities**. Click **Diamond Permits**' figure in any month → the budget editor opens
+      on that line **with its payment dates already unfolded**. This is what the link did before it
+      broke; nothing new to learn.
+- [ ] **The one that matters more — "No date yet".** Same row, click the figure in the **No date yet**
+      column → same editor, same unfolded dates. ⚠ This is the grid's **only** route out of undated
+      budget, which is why it was the worse of the two to have dead.
+- [ ] **The ambiguous case — two lines on one item.** Expand **Tournaments** and find **Entry Fees**
+      ($2,500, no date yet — it is now two lines). Click its **No date yet** figure → a panel:
+      *"Which line's dates?"*, subtitled **Entry Fees · with no date yet**, listing **Spring classic
+      entry $1,600** and **Regional qualifier entry $900**, each saying **No date yet**, with a closing
+      line explaining that two lines on this item are shown as one row.
+- [ ] Pick either → the editor opens **on that line**, and the panel closes behind you.
+- [ ] Escape, the ✕, and a click outside all close it without navigating.
+- [ ] **On a phone.** The panel is centred, each choice is a comfortable tap target with two lines of
+      text in it, and a long line description **wraps rather than truncating** — the description is the
+      only thing telling two lines on one item apart, so it must never be cut off into ambiguity.
+- [ ] **A read-only coach sees no clickable plan figures at all** — unchanged, and worth one check.
+- [ ] **A spending-only row offers nothing.** "Not itemized" rows have no budget line, so their figures
+      are plain text, not dead links wearing a link's clothes.
+- [ ] ⚠ **`check:layout` cannot open this panel** — it is behind a click, so the rendered sweep sees
+      the two-line row but never the chooser. **Your walk is the only coverage the panel itself has.**
+      (The two-line row added **zero** new findings; two on the plan page are the same accepted
+      desktop-compact Edit button appearing under line names instead of item names, recorded with that
+      reason.)
+
+### F2 · One adjacent finding still open — your decision, not a patch
+- [ ] **Nothing renders the unplanned-costs list.** The report ships a full flat list of unplanned
+      costs to the browser that no screen reads — only its total is used, and that is computed on the
+      server. Dead payload on every load of a season's report; tidying, not a defect a coach can see.
+- [ ] **⚠ "A tournament bill has two halves" is written in three places, and they disagree.** Raised by
+      `/simplify` as the largest finding on this change and **deliberately not acted on.** Three
+      surfaces split a payable into a deposit and a balance, and they are not copies — they answer
+      three different questions: what went on the team's books (which correctly ignores a cost a
+      family fronted), what the budget spent and when (which correctly counts it), and what is
+      committed and still due. **Two of them fall back to different amounts when a half's own figure
+      is missing.** Unifying them means deciding whose fallback is right inside money-*writing* code —
+      your call, not a cleanup — so it is cross-referenced in the code and parked here. Nothing is
+      broken today; the risk is the next person changing one of the three and not the others.
+
+---
+
+**If §A, §B, §C and §F read correctly, this section passes.** D is the "prove nothing else moved"
+half — worth more of your attention than usual, because a refactor that fixes two feeds by regressing
+the third would look exactly like a pass on A and B alone. E is the honest limits. **F is the two dead
+links you approved the fix for, and the chooser in it has no automated coverage at all.** F2 is for
+your decision queue, not for walking.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |

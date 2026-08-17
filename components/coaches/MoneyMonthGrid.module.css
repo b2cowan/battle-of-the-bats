@@ -194,6 +194,56 @@
   margin-top: 0.2rem;
 }
 
+/* ── "Which line's dates?" ───────────────────────────────────────────────────
+   The ambiguous half of the plan-cell affordance: a row standing for two or more budget lines asks
+   which one before opening an editor. Deliberately the drill-in list's shape and rhythm — a coach
+   meets both panels from the same grid, so a second visual language would read as a second feature.
+   The difference is that every row here is a TARGET, so it gets a hit area and a hover. */
+
+.chooserSub {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--home-dim, var(--white-45));
+}
+
+.chooserList { list-style: none; margin: 0; padding: 0; }
+.chooserList li + li { border-top: 1px solid var(--home-line, var(--border)); }
+
+.chooserChoice {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  /* Comfortably past the 44px tap floor with two lines of text inside it. */
+  padding: 0.6rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+}
+.chooserChoice:hover { background: var(--home-raise, rgba(255, 255, 255, 0.05)); }
+.chooserChoice:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 1px;
+}
+
+.chooserWho {
+  display: flex;
+  flex-direction: column;
+  /* The typed description is the only thing telling two lines on one item apart, so it never
+     truncates into ambiguity — it wraps. */
+  min-width: 0;
+}
+.chooserWhen { font-size: 0.72rem; color: var(--home-dim, var(--white-45)); }
+.chooserAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+.chooserFoot {
+  margin: 0.7rem 0 0;
+  font-size: 0.75rem;
+  color: var(--home-dim, var(--white-45));
+}
+
 /* ── the content breakpoint ──────────────────────────────────────────────── */
 /* 640 only (with 900 reserved for the shell) — the two canonical breakpoints.
    The grid does NOT reflow: it is a comparison, so it keeps its columns and scrolls.

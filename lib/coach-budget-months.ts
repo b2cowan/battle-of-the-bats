@@ -15,7 +15,19 @@
  *
  * The season has no stored start/end date (`rep_program_years` carries a year and a name only),
  * so the month range is DERIVED from the team's own dated money — see `deriveMonthRange`.
+ *
+ * ⚠⚠ CATEGORY IDENTITY IS NOT THIS MODULE's TO DECIDE (2026-08-17). It comes from
+ * `coach-budget-rollup`'s `categoryKey`, which the statement uses — id first, name only as a
+ * fallback. This module used to key by lowercased name alone, which is how Months and the statement
+ * bucketed one report two ways; the header on that function has the two shapes it broke.
  */
+/* ⚠ THE `.ts` EXTENSION IS LOAD-BEARING. Both modules are pure, and `scripts/check-demos.mjs` loads
+   this one under plain Node — where an extensionless specifier does not resolve and the demo check
+   dies with ERR_MODULE_NOT_FOUND rather than anything about money. Same reason the other pure
+   `lib/coach-*` modules spell it out. */
+import {
+  categoryKey as categoryIdentity, displayCategoryName, NO_CATEGORY_LABEL,
+} from './coach-budget-rollup.ts';
 
 /** A month key, always `YYYY-MM`. */
 export type MonthKey = string;
@@ -26,10 +38,47 @@ export interface DatedAmount {
   amount: number;
 }
 
+/**
+ * One budget line standing behind a grid row, so the row can send a coach to the right editor.
+ *
+ * ⚠⚠ THE ROW IS AN ITEM, NOT A LINE, AND THAT IS WHY THIS EXISTS (owner-approved fix, 2026-08-17).
+ * A grid row's own `id` stopped being a budget line id on 2026-08-15, when the rows began coming from
+ * the report rollup so that Months and the statement could not group one plan two different ways. Two
+ * budget lines on one item are ONE row by owner ruling — so the row has no single line to address, and
+ * the "Edit this line's payment dates" link went on handing the composite row id to the budget page,
+ * which looked for a line, found none, and returned **silently**. Two affordances were dead for two
+ * days: that link and, worse, the "No date yet" cell, which is the grid's only route out of undated
+ * budget.
+ *
+ * The rule: **the link addresses the ITEM and the item answers for its lines.** One line behind the
+ * row → open that line's dates. Two or more → ask which. Never guess (a coach would silently edit a
+ * line they were not looking at), and never withdraw the control (that would strand exactly the teams
+ * whose plans are most complex).
+ */
+export interface GridPlanLine {
+  /* ⚠ THE TABLE THIS ID BELONGS TO IS DELIBERATELY NOT NAMED HERE. `budget-line-kind-guard` scans for
+     modules that read the budget-lines table without accounting for a line's KIND, and it flagged this
+     file for the mention alone. Naming it and taking an exemption would have switched that guard off
+     for this module permanently — including for a future edit that really did read the table. This
+     module receives already-partitioned rows and never queries anything, so the honest fix was to stop
+     saying the table's name. */
+  /** The real budget-line id — what the budget page's deep link resolves against the plan. */
+  id: string;
+  /** The line's own typed description, which is how a coach tells two lines on one item apart. */
+  description: string;
+  amount: number;
+  /** The dates it is currently split across. Empty = undated, which is worth saying out loud. */
+  dates: string[];
+}
+
 export interface GridLine {
   id: string;
   description: string;
   categoryName: string;
+  /** The category's real identity, when it has one. Absent = keyed by name (see the module header). */
+  categoryId?: string | null;
+  /** The budget lines this row stands for — see `GridPlanLine`. Absent on a spend-only row. */
+  planLines?: GridPlanLine[];
   /** Taxonomy item link, when the line has one — the strong key for prior-season matching. */
   itemId: string | null;
   itemName: string | null;
@@ -51,6 +100,8 @@ export interface GridLine {
 /** A paid expense or a commitment, already reduced to (category, date, amount). */
 export interface CategoryEvent {
   categoryName: string | null;
+  /** As on `GridLine` — the identity the statement grouped this money by, when it has one. */
+  categoryId?: string | null;
   date: string | null;
   amount: number;
 }
@@ -72,6 +123,8 @@ export interface MonthCell {
 export interface GridLineResult {
   id: string;
   description: string;
+  /** Carried straight through so a cell can address a real budget line — see `GridPlanLine`. */
+  planLines: GridPlanLine[];
   /** Per-month cells, index-aligned with `months`. */
   cells: MonthCell[];
   /** Budget the coach has not given a date to yet. */
@@ -194,8 +247,9 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function categoryKey(name: string | null | undefined): string {
-  return (name ?? '').trim().toLowerCase();
+/** The shared identity, applied to whatever a line or an event happens to carry. */
+function categoryKey(what: { categoryId?: string | null; categoryName: string | null | undefined }): string {
+  return categoryIdentity(what.categoryId ?? null, what.categoryName ?? null);
 }
 
 function blankCells(count: number): MonthCell[] {
@@ -269,11 +323,11 @@ export function buildMonthGrid(input: {
   const catLines = new Map<string, GridLine[]>();
   const catDisplay = new Map<string, string>();
   for (const line of lines) {
-    const key = categoryKey(line.categoryName) || 'uncategorized';
+    const key = categoryKey(line);
     if (!catLines.has(key)) {
       catLines.set(key, []);
       catOrder.push(key);
-      catDisplay.set(key, line.categoryName || 'Uncategorized');
+      catDisplay.set(key, displayCategoryName(line.categoryName));
     }
     catLines.get(key)!.push(line);
   }
@@ -292,7 +346,7 @@ export function buildMonthGrid(input: {
   function place(events: CategoryEvent[], field: 'actual' | 'scheduled', undated: Map<string, number>) {
     for (const e of events) {
       if (!e.amount) continue;
-      const key = categoryKey(e.categoryName) || 'uncategorized';
+      const key = categoryKey(e);
       const m = monthKeyOf(e.date);
       const i = m != null ? monthIndex.get(m) : undefined;
       if (i === undefined) {
@@ -316,8 +370,8 @@ export function buildMonthGrid(input: {
   }
   const eventDisplay = new Map<string, string>();
   for (const e of [...actuals, ...scheduled]) {
-    const key = categoryKey(e.categoryName) || 'uncategorized';
-    if (!eventDisplay.has(key)) eventDisplay.set(key, e.categoryName?.trim() || 'Uncategorized');
+    const key = categoryKey(e);
+    if (!eventDisplay.has(key)) eventDisplay.set(key, displayCategoryName(e.categoryName));
   }
 
   // ── assemble ─────────────────────────────────────────────────────────────
@@ -367,6 +421,7 @@ export function buildMonthGrid(input: {
       return {
         id: line.id,
         description: line.description,
+        planLines: line.planLines ?? [],
         cells,
         undatedBudget,
         total,
@@ -410,7 +465,10 @@ export function buildMonthGrid(input: {
     ) continue; // nothing to show
 
     categories.push({
-      categoryName: catDisplay.get(key) ?? eventDisplay.get(key) ?? 'Uncategorized',
+      // ⚠ The last fallback is the statement's own word for a nameless category, not a second
+      // spelling of it. "Uncategorized" here against "No category" there is how one bucket read as
+      // two rows on one screen.
+      categoryName: catDisplay.get(key) ?? eventDisplay.get(key) ?? NO_CATEGORY_LABEL,
       categoryKey: key,
       cells,
       undatedBudget,

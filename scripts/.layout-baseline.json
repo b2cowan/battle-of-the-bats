@@ -7832,6 +7832,14 @@
     "coach-transactions|1440|tap-floor|button·Edit Umpire fees — a parent paid the ass": {
       "reason": "Money redesign P3, 2026-08-17. A register row's own action, at the desktop width. Identical to the entries it replaces on this very screen (button·Mark Paid 33px, button·Edit Scorekeeping tablet 24px), and it carries .block640 so it becomes a full-width, full-touch control the moment the table stacks into cards. Pointer input at 1440.",
       "detail": "24px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Spring classic entry": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door. ⚠ THE LINE-NAMED VARIANTS (Spring classic entry / Regional qualifier entry) are the SAME control: an item with TWO budget lines opens into per-LINE rows, so the same 24px Edit button appears labelled by the line instead of the item. The fixture gained its first two-line item on 2026-08-17 (the SUM ruling had never been rendered anywhere), which is why these surface now. Same standing desktop-compact decision, same phone-breakpoint compliance — not new debt.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-budget|1440|tap-floor|button·Edit Regional qualifier entry": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door. ⚠ THE LINE-NAMED VARIANTS (Spring classic entry / Regional qualifier entry) are the SAME control: an item with TWO budget lines opens into per-LINE rows, so the same 24px Edit button appears labelled by the line instead of the item. The fixture gained its first two-line item on 2026-08-17 (the SUM ruling had never been rendered anywhere), which is why these surface now. Same standing desktop-compact decision, same phone-breakpoint compliance — not new debt.",
+      "detail": "24px tall (floor 44)"
     }
   }
 }
