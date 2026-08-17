@@ -155,6 +155,7 @@ screen offering rename alone — a screen that can create words and never clear 
    only — §45 says so.
 
 ### P3 — The team-chosen merge
+**Build prompt:** `COACH_BUDGET_ITEM_MERGE_BUILD_PROMPT.md` (fresh chat).
 
 6. **"Use a shared word instead"** on *Manage our items*: multi-select the team's own words, choose one
    standard or club word **on the same side**, confirm, done. The confirmation names the counts by
