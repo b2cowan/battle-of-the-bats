@@ -346,13 +346,43 @@ rep_team_staff_memberships (
 
   **Owner QA: §40** (§36/§37 retired unwalked with a salvage note; §37 D2 retired outright with the
   restriction it gated).
-- **P3 — Practice plans shelf. GATED: mockup session first** (ruling §1.6 — quiet-integration
-  constraint). Re-homes the read-only past-plan view + copy-forward.
-  **Session prompt ready:** `docs/projects/active/COACH_PRACTICE_PLANS_SHELF_MOCKUP_PROMPT.md` — it
-  opens by testing the QUESTION (what moment is this actually for?), because the copy-forward path
-  already exists and "build nothing" is an acceptable outcome. The real gap is narrower than the
-  plan line suggests: the read-only past-plan page ships TODAY and reaches a finished season while
-  the team is between seasons — what is missing is reaching it once the next season starts.
+- **P3 — Practice plans shelf. ✅ GATE PASSED and ✅ BUILT ON DEV 2026-08-16 — owner QA §42, no
+  migration.** C1 committed `58d96ce0` on its own; C2+C3 `0e485b1a`; `/simplify` `a04e7c96`;
+  `/review` fixes `d3e18f4e`. Plan of record:
+  `docs/projects/active/COACH_PRACTICE_PLANS_SHELF_PLAN.md` (+ PM brief; build prompt
+  `COACH_PRACTICE_PLANS_SHELF_BUILD_PROMPT.md`; mockup artifact `f42be4f3`). What the BUILD then
+  corrected in that plan is recorded in its §7b — including two findings this line got wrong: C1's
+  door had to be gated on record access (the hub opens on `schedule` alone, so a helper reaches it
+  and the list behind it would have refused them), and the new cross-season list holds FOUR routes,
+  not the two predicted — both library LIST routes walk every season's plans to count "used 8×".
+
+  ⚠⚠ **The session corrected this plan's own P3 line from the code.** "Re-homes the read-only
+  past-plan view + copy-forward" implied a missing capability; both ship. What it found instead:
+  (a) **a LIVE DEFECT** — `practice/page.tsx`'s between-seasons state says a finished season keeps
+  *"not the plans"* and tells the coach to *"switch back to your current season"*; the plans ARE
+  kept (the Development report links to them) and the switcher was deleted in P2. That page was
+  missed by P1's `CoachNotOnTeam` sweep and P2 made its nav door always-visible, so it is now the
+  first thing a between-seasons coach reads. (b) The plan screen's copy picker reads
+  `getRepTeamEventsWithPracticePlans(programYear.id)` — **live season only** — so reuse costs five
+  steps through the template library. (c) Both `past-seasons` routes claim in their own headers to
+  be listed in the guard test as cross-season readers; **neither is** (`CROSS_SEASON_READERS` is
+  keyed on `resolveCoachTeamCapabilities`, which neither calls).
+
+  **Approved shape, all three built:** C1 truth-up (shipped alone, no allow-list change) · C2 a
+  third "A past season" source in `Start this plan from…` (cross-season reader, no
+  `HISTORY_ENDPOINTS` entry, and it makes claim (c) true) · C3 a collapsed "practices you ran"
+  section on Season's End (two `HISTORY_ENDPOINTS` entries + one `HISTORY_PAGES`, three questions
+  answered at the list). **Rejected and recorded:** a drawer on the Practice plans hub — the only
+  shape that costs the live screen (~90px, ~1.4 practice rows at 390px) and a second door to the
+  template library.
+
+  ⚠ **`/review` then found four defects in the shelf itself, all fixed in `d3e18f4e` and pinned by
+  tests** — each one a screen telling a coach the wrong thing while rendering perfectly: the copy
+  picker's past-season list survived a TEAM switch (and its "already asked" check refused to
+  refresh, so team B was offered team A's practices, copied through the autosave); the shelf could
+  render one season's practices under another season's wrap-up; a practice with an abandoned goal
+  and no note was labelled as having a note; and the past-plan page had no stale guard at all,
+  which `?year=` widened from wrong-event to wrong-SEASON.
 - **P4 — Money past-season book. GATED: mockup session first.** Read-only closed book: budget vs
   actual + money story; money-capability only.
 - **Adjacent, logged not built:** wire/warn the settlement-completeness check on season completion

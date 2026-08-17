@@ -1,8 +1,42 @@
 # PM Brief — the Money screens redesign: the split, the register, and the club tab
 
-**Status: direction approved by the owner 2026-08-16. Phase 1 built on dev the same day (Owner QA
-§41); phases 2–4 open.**
+**Status: direction approved by the owner 2026-08-16. Phases 1 and 2 built on dev the same day
+(Owner QA §41 and §43); phases 3–4 open.**
 **Plan:** [COACH_MONEY_TAB_REDESIGN_PLAN.md](COACH_MONEY_TAB_REDESIGN_PLAN.md)
+
+## Phase 2 — what shipped to dev, in customer terms
+
+The form behind every money record asked three questions badly. It is now **two buttons and a tick
+box**: **Expense** or **Income**, with **This is a refund** beside them. A refund is not a third kind
+of money — it is money coming back on something the team paid for — so ticking it flips which way
+the money moves and leaves the list of words alone.
+
+- **Finding the right item is now typing, not hunting.** The category and item dropdowns became
+  **one search box**: four letters of "diamond" finds *Facilities · Diamond permits*. A word that
+  isn't there yet can be added without leaving the form — and the same box is now on the Budget
+  Plan and the club's Org Budget, so the question is asked one way in the whole product.
+- **Every word now belongs to one side of the books**, and the list follows the button you pressed:
+  choosing **Income** no longer offers you *Diamond permits*. **Owner ruling** — it replaces an
+  earlier decision that the direction should only re-order the list. Words a club or coach created
+  had no side at all, so this needed a data change to be safe (below), plus a place to correct one.
+- **New: Budget Plan → Manage our items.** Rename a word your team invented, or move it to the
+  other side. Renaming changes what it's called everywhere; moving it across moves no money.
+  Standard and club-shared words are shown read-only, with the reason.
+- **Every state of the form now says what saving will do, in dollars**, on one line above the
+  buttons — money leaving, money arriving, or nothing moving yet. **On a cost a family paid out of
+  pocket it names that family and the credit they're owed.** This is what replaced the old
+  read-only lock, so it carries the same weight.
+- **Paid by folds away under More**, which is safe *only because* that line above the buttons
+  cannot be collapsed. The fold's own label names what's inside, so the question is findable without
+  opening it.
+- **The save button says Save** on both a new record and an edit. Marking something paid still says
+  **Mark Paid** — there the outcome is the point.
+- **"A cost" is now "Expense"** on the Budget Plan too. One word, one meaning.
+
+**Impact:** no pricing or plan-gating change. **One database change (migration 246)** — every budget
+item is given a side and the field becomes mandatory, so no future item can be created without one;
+it must reach production before this promotes. Coach QA walk is **§43**, and it flags the item
+filter as the one decision worth reversing if browsing feels narrow rather than focused.
 
 ## Phase 1 — what shipped to dev, in customer terms
 

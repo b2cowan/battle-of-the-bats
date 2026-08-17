@@ -69,8 +69,13 @@ export function normalizeBudgetLineKind(raw: string | null | undefined): BudgetL
  *  together could not answer "did our sponsorship hit the number?", because sponsorship money was
  *  in every budget invisibly. Both stay "expected": nothing has arrived, and Budget vs. Actual is
  *  where expectation meets what was really raised. */
+/* ⚠ `cost` READS "Expense", NOT "A cost" (owner ruling 2026-08-16, Money form P2). One word, one
+   meaning: the money form's pill and the Budget Plan's line kind were naming the same thing two
+   different ways, so a coach met "A cost" on the plan and "Expense" on the record of the very same
+   spending. The SECTION heading below stays "Costs" — that names a group of lines, not the choice,
+   and it reads on four surfaces the rename was not asked to touch. */
 export const LINE_KIND_LABEL: Record<BudgetLineKind, string> = {
-  cost:        'A cost',
+  cost:        'Expense',
   funding:     'Expected fundraising',
   sponsorship: 'Expected sponsorship',
 };

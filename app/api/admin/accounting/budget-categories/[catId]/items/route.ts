@@ -65,8 +65,22 @@ export const POST = withObservability(async (req: Request,
       ? body.suggestedAmount
       : null;
 
+  /* ⚠ WHICH WAY THE WORD POINTS IS REQUIRED (mig 246, owner ruling 2026-08-16). The coach picker
+     FILTERS by it, so a club word created without one would appear in no team's list at all — the
+     club would publish vocabulary nobody could select. The Org Budget screen is a spending plan, so
+     its own picker answers 'out' without asking; the parameter exists so a future revenue surface
+     does not inherit that assumption silently. */
+  const direction: 'in' | 'out' | null =
+    body.direction === 'in' || body.direction === 'out' ? body.direction : null;
+
   if (!name || name.length > 80) {
     return NextResponse.json({ error: 'name is required and must be 80 characters or fewer' }, { status: 400 });
+  }
+  if (!direction) {
+    return NextResponse.json(
+      { error: 'direction is required and must be "in" or "out" — an item has to belong to one side' },
+      { status: 400 },
+    );
   }
 
   const { data, error } = await supabaseAdmin
@@ -78,6 +92,7 @@ export const POST = withObservability(async (req: Request,
       suggested_amount: suggestedAmount,
       is_default:       false,
       is_misc:          false,
+      direction,
     })
     .select()
     .single();

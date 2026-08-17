@@ -372,10 +372,52 @@ warning. Stays out; if fixed, one shared guard for all money kinds. Logged as de
      win instead: the Payables face no longer fetches the arrivals list, which it never renders.
      A real fix is lifting the shared reads into the existing money-refresh provider — a sensible
      P3 job, since the register changes what Transactions needs anyway.
-2. **P2 — The form.** Pills + refund tick box, the shared searchable picker + inline create on all
-   three surfaces, the consequence line (every state incl. the out-of-pocket sentence naming the
-   family), `More` fold, teaching copy to empty states, `Save`, the Budget Plan form's *Expense*
-   rename. *Owner QA: §38-class walks on the new form.*
+2. ✅ **P2 — The form. BUILT ON DEV 2026-08-16** — Owner QA **§43**, migration **246** applied to dev.
+   Pills + refund tick box, the shared searchable picker + inline create on all three surfaces, the
+   consequence line (every state incl. the out-of-pocket sentence naming the family), `More` fold,
+   teaching copy to empty states, `Save`, the Budget Plan form's *Expense* rename.
+   **Build prompt:** `COACH_MONEY_SPLIT_P2_BUILD_PROMPT.md`.
+
+   **The picker was adoption, as predicted.** `components/accounting/BudgetItemPicker.tsx` already
+   served the Budget Plan and the Org Budget; the money form was the odd one out on two plain
+   `<select>`s. P2 taught the existing control to search and to follow a direction, then moved the
+   money form onto it. No fourth picker.
+
+   **⚖ The one ruling that changed under owner review, and it changed the DATA:**
+   §2 said *"the item list follows the pill — Expense shows money-out items; Income shows money-in
+   items."* Argued from the code before building: `budget_items.direction` was **NULL on every
+   club- and coach-created row by design** (mig 243, and §3.6 of the taxonomy plan explicitly
+   *refused* filtering), so a literal filter would have hidden every word an organization ever
+   invented. Put to the owner as a live mockup (artifact `9efa055e`) with three options.
+   **Owner ruling 2026-08-16:** *"the items coaches add need to be tied to income or expense, they
+   cannot be unlinked or untagged to those. So a coach clicking income should not see expense items
+   or vice versa."* So the objection was answered rather than accepted:
+   - **Migration 246** backfills every untagged item to `out` (money-in items did not exist before
+     mig 243, so the whole prior library is a spending vocabulary — the same reasoning 243 §3d used
+     for platform rows) and makes the column **NOT NULL**. All four writers now pass a side.
+   - **The filter is real**, with two safeguards: a refund chooses from the **expense** list (the
+     tick flips the money, never the list), and a saved record's **own** item is always still
+     offered even after that word moves sides — a picker that blanked a saved row's item would be a
+     worse defect than the one being fixed.
+
+   **⚖ "Editable afterwards" had no editor, so P2 built one.** §2 said a created item's direction is
+   *"editable afterwards"*; nothing in the product could rename or re-point a coach's item, and the
+   club-admin editor refuses team-owned rows outright. **Owner ruled: build it.** It is
+   **Budget Plan → Manage our items** — chosen over Team Settings (budget content a coach writes
+   while working, not configuration) and over Transactions (which P3 reshapes into the register),
+   and matching the shape Transactions already uses for *Manage tags*. A team's own words only;
+   standard and club words are shown read-only with the reason.
+
+   **Also decided during the build, so P3 inherits it:** the refund tick box is **rendered on both
+   pills and live on only one**. A refund of money the team *received* is money going out against an
+   income word, and no such record exists — so under **Income** the tick is disabled with the reason
+   rather than hidden, because the Money-in door is exactly where a coach reaches for a refund.
+
+   **What the checks do and do not prove:** `check:layout` measures the three screens with the modal
+   **closed**, so it proves the tab bars and lists still lay out at four widths and proves nothing
+   about the form. Its 16 "new" findings were traced to the portal's unread-notification badge —
+   `coach-roster`, untouched by P2, produces the identical six — so they are fixture drift in shared
+   chrome, deliberately **not** re-baselined.
 3. **P3 — The Register.** The date-sorted book with running balance; derived rows from Dues /
    Fundraising / Club; balance ≡ Cash on hand (build-blocking test); filter strip; scheduled
    overlay with projected balances and Mark paid; Overview's panel becomes its window; exports

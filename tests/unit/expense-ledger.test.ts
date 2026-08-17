@@ -1,7 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { paidLedgerLegs, ledgerReversalPreview, lockedFields } from '../../lib/expense-ledger.ts';
+import { paidLedgerLegs, ledgerReversalPreview, paidOnDate, whyPaidDateIsRefused, asMoneyAmount } from '../../lib/expense-ledger.ts';
 import type { RepTeamExpense } from '../../lib/types.ts';
+import { orgDayAsStoredInstant, orgDayKey } from '../../lib/timezone.ts';
 
 /**
  * These three functions decide what a coach is TOLD before deleting something, what the server then
@@ -120,48 +121,146 @@ describe('what a record has posted to the books', () => {
   });
 });
 
-describe('which figures a saved record still lets you change', () => {
-  test('nothing is locked before anything is paid', () => {
-    const l = lockedFields(expense());
-    assert.equal(l.amount, false);
-    assert.equal(l.paidOn, null);
+describe('paidOnDate — when a record last posted money', () => {
+  /**
+   * ⚖ THIS SUITE REPLACED THE FIGURE-LOCK TESTS (owner ruling 2026-08-16). They asserted that a
+   * paid amount could not change; that rule is retired, because the books now follow a correction
+   * instead of forbidding it. What survives is the much smaller question the form still asks —
+   * WHEN did this post — which drives the sentence warning that an edit will move the books.
+   */
+  test('nothing has posted before anything is paid', () => {
+    assert.equal(paidOnDate(expense()), null);
   });
 
-  test('a paid expense locks its amount and says when', () => {
-    const l = lockedFields(expense({ expensePaidAt: '2026-08-05T12:00:00Z' }));
-    assert.equal(l.amount, true);
-    assert.equal(l.paidOn, '2026-08-05T12:00:00Z');
+  test('a paid expense reports its stamp', () => {
+    assert.equal(paidOnDate(expense({ expensePaidAt: '2026-08-05T16:00:00Z' })), '2026-08-05T16:00:00Z');
   });
 
-  test('⚠ A PART-PAID PAYABLE KEEPS ITS OPEN HALF EDITABLE', () => {
-    // Freezing the whole row because the deposit settled would strand the coach on exactly the
-    // commitment they still have to manage.
-    const l = lockedFields(payable({ depositPaidAt: '2026-05-07T12:00:00Z' }));
-    assert.equal(l.deposit, true);
-    assert.equal(l.balance, false);
-    assert.equal(l.amount, false, 'the total is not locked while a half is still open');
+  test('it prefers the most decisive stamp a payable carries', () => {
+    const p = payable({ depositPaidAt: '2026-05-07T16:00:00Z', balancePaidAt: '2026-07-01T16:00:00Z' });
+    assert.equal(paidOnDate(p), '2026-07-01T16:00:00Z', 'the later half is the one that finished it');
   });
 
-  test('a payable locks its total only once BOTH halves have paid', () => {
-    const l = lockedFields(payable({
-      depositPaidAt: '2026-05-07T12:00:00Z', balancePaidAt: '2026-07-01T12:00:00Z',
-    }));
-    assert.equal(l.amount, true);
+  test('a part-paid payable still reports the half that did post', () => {
+    assert.equal(paidOnDate(payable({ depositPaidAt: '2026-05-07T16:00:00Z' })), '2026-05-07T16:00:00Z');
   });
 
-  test('an out-of-pocket expense locks its amount like any other paid record', () => {
-    // It posts no ledger entry, but the figure still drives the family's credit — editing it would
-    // leave the debt disagreeing with the cost.
-    const l = lockedFields(expense({ expensePaidAt: '2026-08-05T12:00:00Z', paidByPlayerId: 'p1' }));
-    assert.equal(l.amount, true);
+  test('no record, no stamp — the add form has nothing to warn about', () => {
+    assert.equal(paidOnDate(null), null);
+  });
+});;
+
+/**
+ * WHEN THE MONEY MOVED (2026-08-16) — the guard behind the date defect.
+ *
+ * Until this shipped, nothing on the money form ever asked. A cost recorded as "already paid"
+ * arrived with no paid stamp at all, which meant $0 on Budget vs. Actual, no row in any month, and
+ * no cash movement — and the only remedy stamped `now()`, so a bill settled last month landed in
+ * this month's column permanently. Every door that records a payment now runs these two rules.
+ */
+describe('whyPaidDateIsRefused', () => {
+  const TODAY = '2026-08-16';
+
+  test('a past date is what this exists to allow — the whole point is back-dating', () => {
+    assert.equal(whyPaidDateIsRefused('2026-07-04', TODAY), null);
   });
 
-  test('paidOn prefers the most decisive stamp available', () => {
-    const l = lockedFields(payable({ depositPaidAt: '2026-05-07T00:00:00Z', balancePaidAt: '2026-07-01T00:00:00Z' }));
-    assert.equal(l.paidOn, '2026-07-01T00:00:00Z', 'the later half is the one that finished it');
+  test("the org's own today is allowed, and it is the default every caller sends", () => {
+    assert.equal(whyPaidDateIsRefused(TODAY, TODAY), null);
   });
 
-  test('no record means no locks — the add form is never gated', () => {
-    assert.deepEqual(lockedFields(null), { amount: false, deposit: false, balance: false, paidOn: null });
+  test('tomorrow is refused, and the sentence names the right instrument', () => {
+    const refusal = whyPaidDateIsRefused('2026-08-17', TODAY);
+    assert.ok(refusal, 'a payment that has not happened must not be recordable as one');
+    assert.match(refusal!, /payable/i, 'it has to point at the thing that DOES model a future payment');
+  });
+
+  test('⚠ the boundary is the ORG day, not a UTC instant', () => {
+    // A Toronto club marking a bill paid at 8pm is still on today's date while UTC has rolled over.
+    // Callers pass `tournamentToday()`; this asserts the comparison respects whatever they pass
+    // rather than reaching for a clock of its own.
+    assert.equal(whyPaidDateIsRefused('2026-08-16', '2026-08-16'), null);
+    assert.ok(whyPaidDateIsRefused('2026-08-16', '2026-08-15'), 'ahead of the caller’s today is still ahead');
+  });
+
+  test('a year boundary compares as a date, not as text that happens to sort', () => {
+    assert.equal(whyPaidDateIsRefused('2025-12-31', '2026-01-01'), null);
+    assert.ok(whyPaidDateIsRefused('2026-01-02', '2026-01-01'));
+  });
+
+  test('anything that is not a plain calendar date is refused before it reaches the books', () => {
+    for (const bad of [null, undefined, '', 'yesterday', '2026-8-16', '16/08/2026', 20260816,
+                       '2026-08-16T12:00:00Z']) {
+      assert.ok(whyPaidDateIsRefused(bad, TODAY), `${String(bad)} must not pass`);
+    }
+  });
+});
+
+/**
+ * ⚠⚠ A CHOSEN DAY, STORED AS AN INSTANT — the off-by-one that back-dating opened up.
+ *
+ * `expense_paid_at` is a timestamptz, and every screen turns it back into a day through the ORG's
+ * clock. Write the bare `2026-07-04` and Postgres reads UTC midnight, which is still July 3rd in
+ * Toronto: the coach picks the 4th and the row reports the 3rd. Nothing throws, the month is
+ * usually still right, and it would have survived review — so it is pinned here instead.
+ */
+describe('orgDayAsStoredInstant', () => {
+  test('the stored instant reads back as the SAME day the coach picked', () => {
+    for (const day of ['2026-07-04', '2026-01-01', '2026-12-31', '2026-03-08', '2026-11-01']) {
+      const stamp = orgDayAsStoredInstant(day);
+      assert.ok(stamp, `${day} must convert`);
+      assert.equal(orgDayKey(stamp!), day, `${day} came back as ${orgDayKey(stamp!)}`);
+    }
+  });
+
+  test('the bare date this replaces would have read back a day EARLY', () => {
+    // The bug, asserted so nobody "simplifies" the helper away again.
+    assert.equal(orgDayKey('2026-07-04T00:00:00.000Z'), '2026-07-03');
+  });
+
+  test('it survives both DST switchovers, where a naive hour offset would not', () => {
+    for (const day of ['2026-03-08', '2026-11-01']) {
+      assert.equal(orgDayKey(orgDayAsStoredInstant(day)!), day);
+    }
+  });
+});
+
+/**
+ * ⚠⚠ MONEY IS DOLLARS-AND-CENTS, and "positive" was not the same thing (/review, 2026-08-16).
+ *
+ * Both money doors accepted any number above zero, so `0.004` was a valid cost. The reimbursement
+ * credit an out-of-pocket cost creates is skipped below half a cent — so a coach typing `.04` for
+ * `$4.00` produced a record saying a family had paid it with no debt to that family written
+ * anywhere, silently. That record then satisfied the precondition for the worst failure in this
+ * area: a later amount correction updating nothing and reporting success.
+ */
+describe('asMoneyAmount', () => {
+  test('ordinary money passes through, rounded to the cent', () => {
+    assert.equal(asMoneyAmount(325), 325);
+    assert.equal(asMoneyAmount('1234.56'), 1234.56);
+    assert.equal(asMoneyAmount(0.01), 0.01);
+  });
+
+  test('⚠ a figure that rounds below a cent is NOT money', () => {
+    for (const sub of [0.004, 0.0049, 0.001, 0]) {
+      assert.equal(asMoneyAmount(sub), null, `${sub} must be refused`);
+    }
+  });
+
+  test('a half-cent rounds up rather than vanishing', () => {
+    assert.equal(asMoneyAmount(0.005), 0.01);
+    assert.equal(asMoneyAmount(10.005), 10.01);
+  });
+
+  test('float tails are rounded away, so the row and the credit hold ONE number', () => {
+    // 0.1 + 0.2 is the classic; a cost, its ledger entry and a family's credit must not disagree
+    // in the fourteenth decimal place and then round differently on three screens.
+    assert.equal(asMoneyAmount(0.1 + 0.2), 0.3);
+  });
+
+  test('negatives and nonsense are refused', () => {
+    for (const bad of [-5, 'abc', null, undefined, NaN, Infinity, {}]) {
+      assert.equal(asMoneyAmount(bad), null, `${String(bad)} must be refused`);
+    }
   });
 });

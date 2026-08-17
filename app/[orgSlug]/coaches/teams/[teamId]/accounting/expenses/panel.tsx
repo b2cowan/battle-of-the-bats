@@ -6,6 +6,7 @@ import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, Che
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
@@ -20,7 +21,7 @@ import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
-import { ledgerReversalPreview, paidOnDate } from '@/lib/expense-ledger';
+import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -343,24 +344,22 @@ type CostTiming = 'paid' | 'payable';
  */
 type FormKindTag = 'expense' | 'payable' | 'income' | 'refund';
 
+/* ⚠ `examples` AND `addLabel` ARE GONE (owner ruling 2026-08-16, P2 §5 and §6). The examples were
+   teaching copy on a form — the comparison panels on the two empty states and the help guide say
+   the same thing, at the moment a coach is reading rather than typing. `addLabel` named the outcome
+   on the save button; the consequence line does that in dollars now, and the button says `Save`. */
 const FORM_COPY: Record<FormKindTag, {
   /** Modal title when editing a saved record. */
   editTitle: string;
   /** What the discard guard calls the thing being abandoned. */
   noun: string;
-  /** The examples under the kind switch. */
-  examples: string;
   /** The stated fact shown instead of the switch on an edit. */
   statedFact: string;
-  /** The save button when adding — it names the outcome, so the toolbar button can be "Add". */
-  addLabel: string;
 }> = {
   expense: {
     editTitle: 'Edit expense',
     noun: 'expense',
-    examples: 'Pizza night · a diamond you rented last week · uniforms you bought',
     statedFact: 'An expense — money the team has already spent.',
-    addLabel: 'Add Expense',
   },
   /* ⚠ THE RECORD IS A COMMITMENT; THE TAB IS STILL PAYABLES (plan §6 + prompt §3, 2026-08-16).
      "Commitment" is what a coach calls the thing and what the door says; "Payables" is the
@@ -369,23 +368,17 @@ const FORM_COPY: Record<FormKindTag, {
   payable: {
     editTitle: 'Edit commitment',
     noun: 'commitment',
-    examples: 'A tournament entry due in March · a dome block · an umpire invoice',
     statedFact: 'A commitment — money the team owes but has not paid.',
-    addLabel: 'Add Commitment',
   },
   income: {
     editTitle: 'Edit income',
     noun: 'income entry',
-    examples: 'Tournament registrations you took · concession takings · a grant',
     statedFact: 'Income — money the team earned or was given.',
-    addLabel: 'Add Income',
   },
   refund: {
     editTitle: 'Edit money back',
     noun: 'money-back entry',
-    examples: 'A cancelled entry refunded · a vendor credit · the club paying back a permit you fronted',
     statedFact: 'Money back — a refund, credit or reimbursement of something already recorded.',
-    addLabel: 'Add Money Back',
   },
 };
 
@@ -584,12 +577,17 @@ function MoneyRecordsPanel({
   // with a bookkeeping detail — an EDIT, most often — opens it by itself rather than hiding what
   // the coach came to change. (The deposit/balance split used to be one of these and is now
   // controlled by `formSplit` — see the note there.)
+  /* ⚠ `paidByPlayerId` COUNTS NOW (Money form P2). It moved inside this fold, so a saved
+     out-of-pocket cost opened for editing would otherwise hide the very fact that makes it
+     unusual — behind a toggle labelled as optional. It is the strongest reason a form has to open
+     itself. */
   const detailsSet = Boolean(
-    form.paymentMethod || form.notes || formPayee || formTags.length,
+    form.paymentMethod || form.notes || formPayee || formTags.length || form.paidByPlayerId,
   );
-  /* When this record last posted money, if it has. Drives the "changing this moves the books"
-     sentence and whether the paid date is correctable — it no longer gates anything. */
-  const editedPaidOn = paidOnDate(editing);
+  /* ⚠ `editedPaidOn` IS GONE (Money form P2). It existed for one sentence under the Amount field —
+     "Paid <date>. Changing this updates the team's books too" — which is now one branch of
+     `consequenceLine`, reading `editing.expensePaidAt` where it is needed. A derived value kept
+     alive for a paragraph that moved is how the next reader learns a rule that no longer applies. */
   /* ⚠ THE SAVED RECORD WINS when there is one. The switch is hidden while editing, so `formKind`
      could only ever go stale there — deriving from the record instead means the form cannot render
      a payable's fields for an expense (or vice versa) because a state setter was forgotten. In add
@@ -599,6 +597,42 @@ function MoneyRecordsPanel({
     : editing ? 'expense'
     : formKind;
   const isMoneyInForm = entryKind !== 'expense';
+  /**
+   * WHICH PILL IS PRESSED, and which words the picker may offer (owner ruling 2026-08-16, mig 246).
+   *
+   * ⚠⚠ A REFUND SITS ON THE **EXPENSE** PILL, and this one line is where the whole tick-box design
+   * holds together. The money moves IN on a refund — but the thing it is paying back is something
+   * the team SPENT, so the word it is filed against is an expense word. §2's "the tick box flips
+   * the direction of the money and never changes the list you choose from" is exactly this: the
+   * pill decides the list, the tick decides the direction, and only `income` is on the other side.
+   */
+  const formSide: 'in' | 'out' = entryKind === 'income' ? 'in' : 'out';
+  /**
+   * Press a pill.
+   *
+   * ⚠ THE ITEM CLEARS AND THE DESCRIPTION FOLLOWS IT. Since mig 246 the picker offers one side's
+   * words only, so an item carried across the switch would be a selection sitting in a control that
+   * can never re-offer it — the coach sees a filled field they cannot change back to. Clearing it
+   * costs one re-pick; leaving it costs a save filed against a word from the wrong side of the
+   * books. The description clears with it only when it is still the ITEM'S name, never words the
+   * coach typed — the same rule the picker's own pre-fill has always followed.
+   */
+  function setEntrySide(side: 'in' | 'out') {
+    if (side === formSide) return;
+    setFormKind(side === 'in' ? 'income' : 'expense');
+    setForm(f => {
+      const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
+        .find(i => i.id === f.budgetItemId) ?? null;
+      const untouched = previous !== null && f.description.trim() === previous.name;
+      return {
+        ...f,
+        budgetCategoryId: '',
+        budgetItemId: '',
+        category: '',
+        description: untouched ? '' : f.description,
+      };
+    });
+  }
   /** Opened by Mark paid — the money door standing over a commitment, not the commitment's form. */
   const isSettling = !!settling;
   /**
@@ -1415,10 +1449,17 @@ function MoneyRecordsPanel({
   /**
    * "Paid by" — the out-of-pocket choice, which only an EXPENSE has and only at creation.
    *
-   * ⚠ STAYS ABOVE THE DETAILS DISCLOSURE (Q1). It is the one field on this form that does not
-   * DESCRIBE the record but changes what it MEANS: naming a family turns the entry into money the
-   * team now owes them, saved as a credit against their dues. A consequence that size cannot be
-   * discovered behind an "(optional)" toggle.
+   * ⚠⚠ IT MOVED UNDER `More` (owner ruling 2026-08-16), REVERSING Q1's "stays above the
+   * disclosure". Q1's reasoning was sound and is the reason the ruling comes as a PAIR: this is the
+   * one field that does not describe the record but changes what it MEANS, so it could not be
+   * hidden while nothing else announced it. What changed is that something else now does — the
+   * consequence line above the buttons names the family and the credit, on every state, and it is
+   * not collapsible. **Do not fold this without that line; do not remove that line while this is
+   * folded.**
+   *
+   * ⚠ AND THE FOLD NAMES IT. "Add details (optional)" hid a decision behind a word that promised
+   * nothing was inside; the label lists what is, so a coach recording a cost a parent fronted can
+   * see where the question lives without opening anything.
    *
    * ⚠ CREATION ONLY. Changing it later would move a debt to a different household without touching
    * the credit, so an edit shows it as a stated fact — and only when there is something to state.
@@ -1462,15 +1503,120 @@ function MoneyRecordsPanel({
             </option>
           ))}
         </select>
-        {form.paidByPlayerId && (
-          <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
-            Counts in the budget as usual. <strong>No cash leaves the team</strong> — instead the
-            team owes this family {form.amount ? fmt(Number(form.amount) || 0) : 'the amount'},
-            saved as a credit you can put against their dues or pay out any time.
-          </p>
-        )}
+        {/* ⚠ THE MONEY SENTENCE MOVED TO THE CONSEQUENCE LINE, and is not repeated here. It said
+            the same thing twice, once inside a fold that can be shut — and the whole reason the
+            fold is safe is that the surviving copy cannot be. See `consequenceLine`. */}
       </div>
     );
+  }
+
+  /**
+   * WHAT SAVING WILL DO — one line, above the buttons, on EVERY state (owner ruling 2026-08-16).
+   *
+   * ⚠⚠ THIS IS THE SENTENCE THAT REPLACED THE READ-ONLY LOCK, so it carries the weight the lock
+   * used to. Until 2026-08-15 a posted figure simply refused to be edited; the ruling that nothing
+   * on a saved record is read-only removed the refusal, and what a coach needs in its place is to
+   * be told, before they press the button, that this edit reaches the team's books. Two branches of
+   * it already existed — the commitment's "nothing moves" and the settle's "when you save …" — and
+   * everything else said nothing at all, which is why an out-of-pocket cost could be recorded with
+   * the family's credit mentioned only inside an optional fold.
+   *
+   * ⚠ IT NAMES THE FAMILY. "The team owes this family" was true and useless: a coach recording
+   * three costs in a row needs to know WHICH household is owed, and the roster is already loaded
+   * for the picker two fields up.
+   *
+   * ⚠ ONE FUNCTION, NOT SIX SCATTERED PARAGRAPHS. The old copies sat under the Amount field, inside
+   * `renderPaidBy`, beside the split and under the settle — four places to keep in step, which is
+   * exactly the shape that let "nothing moves" survive on a commitment whose deposit had posted
+   * (found by /review in P1). A fifth state now has one place to be added.
+   */
+  function consequenceLine() {
+    const amount = Number(form.amount) || 0;
+    const money = fmt(amount);
+    const line = (body: ReactNode) => (
+      <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>{body}</p>
+    );
+
+    // ── A settle: the same record turning paid, never a second one beside it ──
+    if (settling) {
+      return line(<>
+        <strong>When you save:</strong> {money} leaves the team’s books on the date above, and{' '}
+        {settling.half
+          ? <>this {settling.half} is settled on your payment schedule. The other half stays as it is.</>
+          : <>this commitment is settled.</>}
+        {' '}Nothing new is added beside it.
+      </>);
+    }
+
+    // ── A commitment: the one form in the portal that moves no money ──
+    if (isPayableForm) {
+      /* ⚠⚠ "NOTHING MOVES" IS ONLY TRUE WHILE NOTHING HAS MOVED (/review, 2026-08-16). The line was
+         rendered for every commitment, including one whose deposit had already posted — where
+         changing a figure DOES move the books. A consequence line that contradicts the screen it
+         sits on is worse than none: it is the sentence a coach trusts instead of checking. */
+      if (editing?.depositPaidAt || editing?.balancePaidAt) {
+        return line(<>
+          <strong>Part of this has been paid.</strong> The rest of the schedule is still just a plan —
+          but changing a figure that has already been paid updates the team’s books too, and cash on
+          hand follows the new number.
+        </>);
+      }
+      const due = formSplit ? (form.depositDueDate || form.balanceDueDate) : form.dueDate;
+      return line(<>
+        <strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no family is
+        affected. This joins your payment schedule{due ? <>, due {fmtDate(due)}</> : null}
+        {' '}— mark it paid when the money actually leaves.
+      </>);
+    }
+
+    // ── An arrival: income, or money back on something ──
+    if (isMoneyInForm) {
+      const when = form.receivedDate ? <> on {fmtDate(form.receivedDate)}</> : null;
+      /* ⚠⚠ A REFUND IS NOT INCOME, and this is the last screen that can say so before it is saved.
+         It REDUCES the row it repays rather than adding one — the netting rule the whole money-back
+         design rests on — and it leaves nobody owed anything, which is the half a coach confuses
+         with "a family paid the vendor directly". */
+      if (entryKind === 'refund') {
+        const item = categories.find(c => c.id === form.budgetCategoryId)?.items
+          .find(i => i.id === form.budgetItemId)?.name;
+        return line(<>
+          <strong>When you save:</strong> {money} comes back in{when}, and{' '}
+          {item ? <><strong>{item}</strong> drops by {money}</> : <>the item you chose drops by {money}</>}
+          {' '}on Budget vs. Actual — it isn’t counted as income, and <strong>nobody is owed anything</strong>.
+        </>);
+      }
+      return line(<>
+        <strong>When you save:</strong> {money} comes in{when}. Cash on hand goes <strong>up</strong>{' '}
+        by {money}.
+      </>);
+    }
+
+    // ── A cost. Four states, and the out-of-pocket one is why this exists ──
+    if (form.paidByPlayerId) {
+      const player = roster.find(p => p.id === form.paidByPlayerId);
+      const family = player
+        ? [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')
+        : 'that family';
+      return line(<>
+        <strong>When you save: no team cash moves.</strong> {money} counts in the budget as usual,
+        and the team owes <strong>{family}</strong>’s family {money} — saved as a credit you can put
+        against their dues or pay out any time.
+      </>);
+    }
+    if (form.paidDate) {
+      /* An edit of something that HAS posted is the case the lock used to cover — say that the
+         books follow, because that is the change the coach cannot see from this screen. */
+      return line(editing?.expensePaidAt
+        ? <><strong>When you save:</strong> this stays paid, dated {fmtDate(form.paidDate)}. Changing
+          the figure or the date updates the team’s books too — cash on hand and the month it lands
+          in both follow what you enter here.</>
+        : <><strong>When you save:</strong> {money} leaves the team’s books on{' '}
+          {fmtDate(form.paidDate)}. Cash on hand goes <strong>down</strong> by {money}.</>);
+    }
+    return line(<>
+      <strong>When you save: nothing moves yet.</strong> This waits as an unpaid cost until you mark
+      it paid, and cash on hand is unchanged until then.
+    </>);
   }
 
   /** The warning line both halves of the field use — one shape, so a category warning and a
@@ -1511,13 +1657,19 @@ function MoneyRecordsPanel({
    * models to keep in step. Only the LABEL changes, and only on the refund branch, where the honest
    * wording is what it is paying you back FOR.
    *
-   * ⚠ THE DIRECTION HINT SORTS, IT NEVER FILTERS (plan §3.6). A coach recording income meets the
-   * income words first and can still reach every other one — a refund legitimately points at
-   * either side, and concession takings really can be filed against a word tagged as a cost.
-   * Filtering here would be the constraint the plan explicitly refused.
+   * ⚠⚠ THE DIRECTION NOW **FILTERS** — this reverses plan §3.6, on the record (owner ruling
+   * 2026-08-16): *"the items coaches add need to be tied to income or expense, they cannot be
+   * unlinked or untagged to those. So a coach clicking income should not see expense items or vice
+   * versa."* §3.6 had it sort and never filter, because a refund legitimately points at either side
+   * and because club- and coach-created words carried no direction at all — filtering then would
+   * have hidden every word an organization ever invented. Both objections are answered rather than
+   * ignored: migration 246 made the column mandatory and backfilled the untagged ones, and the
+   * refund tick box keeps a refund on the EXPENSE list, which is where the word it repays lives.
    *
-   * Not extracted into a component: ONE call site (the merged Add/Edit modal serves every kind and
-   * both modes). Extract it when the recurring-payables group arrives, not in anticipation of it.
+   * ⚠ NO LONGER A HAND-BUILT FIELD. It is `BudgetItemPicker` — the same control the Budget Plan and
+   * the Org Budget have used for months, taught to search and to follow a direction. What stays
+   * here is everything that is about THIS form rather than about picking: the description pre-fill
+   * and the three warnings, which read the plan and the derived-row set this panel already holds.
    */
   function budgetItemField() {
     const category = categories.find(c => c.id === form.budgetCategoryId) ?? null;
@@ -1553,87 +1705,56 @@ function MoneyRecordsPanel({
       && derivedKeys.has(taxonomyKey(form.budgetCategoryId || null, form.budgetItemId)),
     );
 
-    /** The picker's two groups: the direction the coach is working in, then everything else. */
-    const preferred = items.filter(i => i.direction === (wantIn ? 'in' : 'out') || i.direction === null);
-    const rest = items.filter(i => !preferred.includes(i));
-
     return (
       <div className={`${styles.field} ${styles.formGridFull}`}>
         <label className={styles.label}>
           {entryKind === 'refund' ? 'What is it paying you back for? *' : 'What is this? *'}
         </label>
-        <div className={styles.stack640} style={{ gap: '0.6rem' }}>
-          <select
-            className={styles.select}
-            style={{ flex: 1, minWidth: 0 }}
-            aria-label="Category"
-            value={form.budgetCategoryId}
-            onChange={e => setForm(f => {
-              /* ⚠ CLEARING THE ITEM MUST ALSO CLEAR ITS PRE-FILLED NAME. Leaving the description
-                 behind was a real defect: with the item blank, the item-select below can no longer
-                 recognise the text as its own pre-fill, so picking a NEW item leaves the OLD item's
-                 name sitting on the record — "Entry fees" saved against "Umpire fees", which is the
-                 exact name/thing mismatch this whole change exists to remove, reintroduced through
-                 the category control. Words the coach typed themselves are still never touched. */
-              const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
-                .find(i => i.id === f.budgetItemId) ?? null;
-              const untouched = previous !== null && f.description.trim() === previous.name;
-              return {
-                ...f,
-                budgetCategoryId: e.target.value,
-                // Changing the category invalidates the item under it — an item belongs to exactly
-                // one category, so keeping the old one would produce a pair that cannot exist.
-                budgetItemId: '',
-                description: untouched ? '' : f.description,
-                category: categories.find(c => c.id === e.target.value)?.name ?? '',
-              };
-            })}
-          >
-            <option value="">— Category —</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          <select
-            className={styles.select}
-            style={{ flex: 1, minWidth: 0 }}
-            aria-label="Item"
-            disabled={!category}
-            value={form.budgetItemId}
-            onChange={e => {
-              const item = items.find(i => i.id === e.target.value) ?? null;
-              setForm(f => {
-                /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a
-                   description that is empty, or one still holding the name of the item being
-                   switched AWAY from — text this control put there and nobody has touched. */
-                const previous = items.find(i => i.id === f.budgetItemId) ?? null;
-                const untouched = f.description.trim() === ''
-                  || (previous !== null && f.description.trim() === previous.name);
-                return {
-                  ...f,
-                  budgetItemId: e.target.value,
-                  description: untouched ? (item?.name ?? '') : f.description,
-                };
-              });
-            }}
-          >
-            <option value="">— Item —</option>
-            {/* Grouped only when there is genuinely a second group — an optgroup wrapping the
-                whole list is a heading that distinguishes nothing. */}
-            {rest.length === 0
-              ? preferred.map(i => <option key={i.id} value={i.id}>{i.name}</option>)
-              : (
-                <>
-                  <optgroup label={wantIn ? 'Money coming in' : 'Money going out'}>
-                    {preferred.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </optgroup>
-                  <optgroup label="Everything else">
-                    {rest.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </optgroup>
-                </>
-              )}
-          </select>
-        </div>
+        {/* ⚠⚠ THE SHARED PICKER, NOT TWO SELECTS (Money form P2, 2026-08-16). This was the ONE
+            surface still asking the category and the item as two chained dropdowns while the Budget
+            Plan and the Org Budget had used the shared control for months — so the same question
+            was asked two different ways inside one product, and only here did a coach have to guess
+            our filing system before the word they wanted would appear. The picker searches both
+            halves at once: four letters of "diamond" finds Facilities · Diamond permits. */}
+        <BudgetItemPicker
+          categories={categories}
+          value={form.budgetItemId ? {
+            categoryId:      form.budgetCategoryId,
+            categoryName:    category?.name ?? form.category,
+            itemId:          form.budgetItemId,
+            itemName:        chosenItem?.name ?? '',
+            suggestedAmount: null,
+          } : null}
+          /* ⚠ A REFUND CHOOSES FROM THE EXPENSE LIST — see `formSide`. The tick box flips which way
+             the money moves; it never changes the words on offer, because what a refund pays back
+             is something the team SPENT. */
+          direction={formSide}
+          teamId={teamId}
+          createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
+          createItemMode="coach"
+          allowCreateCategory
+          manageHint="You can rename it or move it across from Budget Plan → Manage our items."
+          onChange={v => setForm(f => {
+            /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a description
+               that is empty, or one still holding the name of the item being switched AWAY from —
+               text this control put there and nobody has touched. Preserved verbatim from the two
+               selects this replaced: it is the reason the description field is usually already
+               answered by the time a coach reaches it. */
+            const previous = (categories.find(c => c.id === f.budgetCategoryId)?.items ?? [])
+              .find(i => i.id === f.budgetItemId) ?? null;
+            const untouched = f.description.trim() === ''
+              || (previous !== null && f.description.trim() === previous.name);
+            return {
+              ...f,
+              budgetCategoryId: v.categoryId,
+              budgetItemId:     v.itemId ?? '',
+              // The free-text `category` column every legacy reader still uses. The server derives
+              // its own from the item, so this can never be the thing they disagree about.
+              category:         v.categoryName,
+              description:      untouched ? v.itemName : f.description,
+            };
+          })}
+        />
         {/* Honest at entry time, exactly as the old category warning was — one level finer, and
             now describing a row the coach will actually see rather than a list they might not. */}
         {unplanned && fieldWarning(
@@ -1644,11 +1765,11 @@ function MoneyRecordsPanel({
         {derived && fieldWarning(
           `${chosenItem?.name ?? 'This row'}’s actual already comes from your fundraisers and sponsors. Record the money there — logging it here as well would count it twice.`,
         )}
-        {!form.budgetItemId && form.budgetCategoryId !== '' && fieldWarning(
-          entryKind === 'refund'
-            ? 'Pick an item too — it is what lets the refund reduce the right row.'
-            : 'Pick an item too — it is what lines this up with your budget.',
-        )}
+        {/* ⚠ "PICK AN ITEM TOO" IS GONE, AND THAT IS THE POINT OF ONE CONTROL. It existed because
+            the two chained selects let a coach answer half the question — a category with no item —
+            and leave the form looking finished. A single searchable control cannot reach that
+            state: a selection is always a category AND an item, or it is nothing. The save's own
+            check on `budgetItemId` stays, because the server's does. */}
       </div>
     );
   }
@@ -2422,34 +2543,43 @@ function MoneyRecordsPanel({
                   never appears here. A scheduled income is a budget line; the plan side models it. */}
               {!editing && !editingMoneyIn && isPayableForm ? (
                 <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
-                  {copy.statedFact} {copy.examples}
+                  {copy.statedFact}
                 </p>
               ) : !editing && !editingMoneyIn ? (
+                /* ── TWO PILLS AND A TICK BOX (owner ruling 2026-08-16, form proposal b618c784) ──
+                    This replaced a three-option switch — A cost · Income · Money back on something —
+                    which asked a coach to hold three ideas at once when only two of them are
+                    directions. A refund is not a third kind of money; it is money that came back on
+                    something the team already paid for, which is why it rides on the EXPENSE pill:
+                    the tick flips which way the money moves and leaves the list of words alone.
+                    ⚠ THE DATA STILL HAS THREE, and that is deliberate, not a leak. `expense`,
+                    `income` and `refund` remain three different records with three different
+                    effects — one adds a cost, one adds an arrival, one REDUCES the row it repays.
+                    Only the control changed. */
                 <div className={styles.formGridFull}>
-                  <div className={styles.kindSwitch} role="radiogroup" aria-label="What kind of entry is this?">
-                    {(['expense', 'income', 'refund'] as const).map(k => (
+                  <div className={styles.kindSwitch} role="radiogroup" aria-label="Is this money out or money in?">
+                    {([
+                      { side: 'out' as const, name: 'Expense', sub: 'Money the team spent' },
+                      { side: 'in'  as const, name: 'Income',  sub: 'Money the team earned or was given' },
+                    ]).map(p => (
                       <button
-                        key={k}
+                        key={p.side}
                         type="button"
                         role="radio"
-                        aria-checked={formKind === k}
-                        className={`${styles.kindSwitchOption} ${formKind === k ? styles.kindSwitchOptionOn : ''}`}
-                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Category, item, amount and the
-                           note are common to all three and are exactly the fields already filled
-                           in when a coach realises they picked wrong — clearing them would make
-                           the switch as expensive as cancelling, which is what it exists to
-                           replace. The kind-specific fields stay in state unrendered for the same
-                           reason a payable's deposit does. */
-                        onClick={() => setFormKind(k)}
+                        aria-checked={formSide === p.side}
+                        className={`${styles.kindSwitchOption} ${formSide === p.side ? styles.kindSwitchOptionOn : ''}`}
+                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Amount and the note are common to
+                           both sides and are exactly the fields already filled in when a coach
+                           realises they picked wrong — clearing them would make the switch as
+                           expensive as cancelling, which is what it exists to replace.
+                           ⚠ THE ITEM IS THE ONE THING THAT CANNOT SURVIVE (mig 246). The pill
+                           decides which words are choosable, so a word carried across from the
+                           other side would sit in the picker as a selection the coach can see and
+                           can never re-pick. It clears, and the picker asks again. */
+                        onClick={() => setEntrySide(p.side)}
                       >
-                        <span className={styles.kindName}>
-                          {k === 'expense' ? 'A cost' : k === 'income' ? 'Income' : 'Money back on something'}
-                        </span>
-                        <span className={styles.kindSub}>
-                          {k === 'expense' ? 'Money the team spent'
-                            : k === 'income' ? 'Money the team earned or was given'
-                            : 'A refund, credit or reimbursement of something already recorded'}
-                        </span>
+                        <span className={styles.kindName}>{p.name}</span>
+                        <span className={styles.kindSub}>{p.sub}</span>
                       </button>
                     ))}
                   </div>
@@ -2462,24 +2592,29 @@ function MoneyRecordsPanel({
                       tournament entry met one screen wearing two meanings. A commitment has its
                       own door on Payables now, and its deposit/balance pair and due dates went
                       with it. What is left here is a single question: what happened, and when. */}
-                  <p className={styles.kindEgs}>{copy.examples}</p>
-
-                  {/* ⚠⚠ THE CONFUSABLE PAIR, SAID OUT LOUD AT THE MOMENT OF THE CHOICE
-                      (money-back plan §2). A coach describes BOTH of these as "a parent paid me
-                      back", and they are opposites: money back returns cash the team spent, while
-                      out-of-pocket means the team OWES that family a credit. Merging them credits
-                      a family twice or loses a credit entirely — real money in a real family's
-                      ledger. The other half of the pair is a field on the cost branch, so this is
-                      the one place a coach can see both descriptions at once. */}
-                  {entryKind === 'refund' && (
-                    <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
-                      The team paid for something and some of the money came back — cash on hand goes
-                      up and <strong>nobody is owed anything</strong>.{' '}
-                      Did a family pay a vendor <em>directly</em> instead? That is a different thing:
-                      record it as <strong>a cost</strong> and set <strong>Paid by</strong> to that
-                      family, so the team&apos;s debt to them is tracked.
-                    </p>
-                  )}
+                  <div className={styles.kindTickRow}>
+                    {/* ⚠⚠ RENDERED ON BOTH PILLS, LIVE ON ONLY ONE — and that is the fourth cell of
+                        the grid nobody had named. A refund of money the team RECEIVED (handing a
+                        family back a registration fee) is money going out against an income word,
+                        and no such record exists in this product. Hiding the tick under Income
+                        would leave a coach who opened the Money in door to log a refund — the
+                        obvious door, since a refund IS money arriving — with no control and no
+                        clue; disabling it with the reason turns a dead end into a direction. */}
+                    <label className={`${styles.formCheck} ${formSide === 'in' ? styles.formCheckOff : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={entryKind === 'refund'}
+                        disabled={formSide === 'in'}
+                        onChange={e => setFormKind(e.target.checked ? 'refund' : 'expense')}
+                      />
+                      This is a refund
+                    </label>
+                    {formSide === 'in' && (
+                      <p className={styles.kindTickWhy}>
+                        A refund goes against what the team paid — choose <strong>Expense</strong>.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
@@ -2542,18 +2677,10 @@ function MoneyRecordsPanel({
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                   placeholder="0.00"
                 />
-                {/* ⚠ THE SENTENCE THAT REPLACED THE LOCK. A coach changing a figure that has already
-                    posted should know it is not only this row that moves — and an out-of-pocket cost
-                    is the one where saying so matters most, because the number is what a family is
-                    owed. Shown only when something has actually posted; an unpaid cost moves
-                    nothing and needs no warning. */}
-                {editedPaidOn && (
-                  <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
-                    {editing?.paidByPlayerId
-                      ? <>Paid {fmtDate(editedPaidOn)} by a family. Changing this changes <strong>what the team owes them</strong> on Player Dues.</>
-                      : <>Paid {fmtDate(editedPaidOn)}. Changing this updates the team’s books too — cash on hand follows the new figure.</>}
-                  </p>
-                )}
+                {/* ⚠ THE "THIS MOVES THE BOOKS" SENTENCE LIVES IN THE CONSEQUENCE LINE NOW (ruling
+                    2026-08-16, §3: one line, above the buttons, every state). It sat here as a
+                    fourth copy of the same idea, worded differently from the other three — which is
+                    how one of them ended up contradicting the screen it was on. */}
               </div>
 
               {/* ── A cost's own date, the money-OUT twin of "Date received" (2026-08-16) ─────
@@ -2684,15 +2811,6 @@ function MoneyRecordsPanel({
                 </div>
               )}
 
-              {/* ── Expense-only: who actually paid ─────────────────────────────────────────
-                  ⚠ STAYS ABOVE THE DISCLOSURE (Q1). It is the one field here that does not
-                  DESCRIBE the expense but changes what the record MEANS: naming a family turns the
-                  entry into money the team now owes them, saved as a credit against their dues. A
-                  consequence that size cannot be discovered behind an "(optional)" toggle.
-                  ⚠ CREATION ONLY. Changing it later would move a debt to a different household
-                  without touching the credit — the server refuses it outright. */}
-              {renderPaidBy()}
-
               {/* ── Commitment-only: when it is due ─────────────────────────────────────────
                   ⚠⚠ THIS FIELD DID NOT EXIST, AND THE FORM CLAIMED IT DID. The split group used to
                   say "leave this closed to record one amount due on one date" while offering no
@@ -2780,50 +2898,6 @@ function MoneyRecordsPanel({
                 </div>
               )}
 
-              {/* ── What saving will DO ─────────────────────────────────────────────────────
-                  ⚠⚠ THE CONSEQUENCE LINE IS THE COMMITMENT DOOR'S WHOLE JOB (plan §3). Every other
-                  money form in the portal moves money on save; this one is the single exception,
-                  and a coach cannot be expected to infer that from a screen that looks like all the
-                  others. Saying "nothing moves" out loud is what makes the split legible — and it
-                  is the sentence that stops a coach recording a commitment and then wondering why
-                  cash on hand did not fall. */}
-              {/* ⚠⚠ "NOTHING MOVES" IS ONLY TRUE WHILE NOTHING HAS MOVED (/review, 2026-08-16).
-                  The line was rendered for every commitment, including one whose deposit had
-                  already posted — where changing a figure DOES move the books, and the field's own
-                  hint two rows up says so. A consequence line that contradicts the screen it sits
-                  on is worse than none: it is the sentence a coach trusts instead of checking. */}
-              {isPayableForm && (editing?.depositPaidAt || editing?.balancePaidAt ? (
-                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
-                  <strong>Part of this has been paid.</strong> The rest of the schedule is still
-                  just a plan — but changing a figure that has already been paid updates the team’s
-                  books too, and cash on hand follows the new number.
-                </p>
-              ) : (
-                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
-                  <strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no
-                  family is affected. This joins your payment schedule
-                  {(() => {
-                    const due = formSplit ? (form.depositDueDate || form.balanceDueDate) : form.dueDate;
-                    return due ? <>, due {fmtDate(due)}</> : null;
-                  })()}
-                  {' '}— mark it paid when the money actually leaves.
-                </p>
-              ))}
-
-              {/* The settle's own consequence — the mirror of the one above, and the reassurance
-                  that this is the SAME record turning paid rather than a second one being born
-                  beside it. Coaches asked that question of the old two-door design repeatedly. */}
-              {settling && (
-                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
-                  <strong>When you save:</strong> {fmt(Number(form.amount) || 0)} leaves the team’s
-                  books on the date above, and{' '}
-                  {settling.half
-                    ? <>this {settling.half} is settled on your payment schedule. The other half stays as it is.</>
-                    : <>this commitment is settled.</>}
-                  {' '}Nothing new is added beside it.
-                </p>
-              )}
-
               {/* ── An arrival's note, in the open ───────────────────────────────────────────
                   ⚠ NOT BEHIND THE DETAILS DISCLOSURE, because on this branch it would be a
                   disclosure hiding exactly one field. Payment method, payee and money tags are
@@ -2844,12 +2918,22 @@ function MoneyRecordsPanel({
               {/* ── Shared bookkeeping detail, folded away on both money-out kinds (Q1) ────── */}
               {!isMoneyInForm && (
               <div className={styles.formGridFull}>
+                {/* ⚠⚠ THE LABEL LISTS WHAT IS INSIDE, and that is half the ruling that folded
+                    `Paid by` in here. "Add details (optional)" promised nothing worth opening for,
+                    which is survivable for a payment method and not for the field that decides
+                    whether a family is owed money. The other half is the consequence line above the
+                    buttons, which states the credit whether this is open or shut. */}
                 <CoachFormDisclosure
-                  label="Add details (optional)"
-                  title="Details"
+                  label={isPayableForm ? 'Add details (optional)' : 'More — paid by, payee, tags, notes'}
+                  title="More"
                   meta={detailsSet ? 'Set' : undefined}
                   defaultOpen={detailsSet}
                 >
+                  {/* ── Who actually paid ──────────────────────────────────────────────────
+                      ⚠ FIRST INSIDE THE FOLD, above the bookkeeping fields. It is the only one here
+                      that changes what the record MEANS rather than describing it, so a coach who
+                      opens this for any reason meets it before the payment method. */}
+                  {renderPaidBy()}
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
                       <label className={styles.label}>Payment Method</label>
@@ -2880,6 +2964,12 @@ function MoneyRecordsPanel({
                 </CoachFormDisclosure>
               </div>
               )}
+
+              {/* ── What saving will DO — one line, every state (ruling 2026-08-16 §3) ────────
+                  ⚠ LAST IN THE GRID, DIRECTLY ABOVE THE BUTTONS, and that placement is the ruling
+                  rather than a layout preference: it is the sentence a coach reads in the instant
+                  before they commit, and it is what makes folding `Paid by` away safe. */}
+              {consequenceLine()}
             </div>
 
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
@@ -2967,11 +3057,15 @@ function MoneyRecordsPanel({
               )}
               <button className={styles.btnGhost} onClick={closeForm}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
-                {/* The SAVE button names the outcome, which is what lets the toolbar button be a
-                    plain "Add" (Q8) — and on a settle the outcome is the whole point. */}
-                {saving
-                  ? 'Saving…'
-                  : { settle: 'Mark Paid', edit: 'Save changes', add: copy.addLabel }[formMode]}
+                {/* ⚠ ONE WORD FOR ADD AND EDIT (owner ruling 2026-08-16). It used to name the
+                    outcome — "Add Expense", "Add Money Back", "Save changes" — which was right while
+                    the button was the only thing that knew what the form had become. The consequence
+                    line above it says that now, in dollars, so the button can go back to being a
+                    button.
+                    ⚠ A SETTLE KEEPS "Mark Paid", and the ruling says so explicitly: there the
+                    outcome IS the point, and it is the one state where naming it beats a generic
+                    word. */}
+                {saving ? 'Saving…' : formMode === 'settle' ? 'Mark Paid' : 'Save'}
               </button>
             </div>
           </div>

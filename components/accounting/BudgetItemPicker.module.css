@@ -48,11 +48,102 @@
    needs the same "this is what's missing" treatment every other required control on the form has.
    ⚠ Colour is not the only signal: the form's problem counter names the field in words and moves
    the cursor into it, which is what carries the message for anyone who cannot see the border. */
-.selectBad {
+.selectBad,
+.inputBad {
   border-color: var(--danger);
 }
-.selectBad:focus {
+.selectBad:focus,
+.inputBad:focus {
   border-color: var(--danger);
+}
+
+/* ── The searchable combobox (Money form P2) ──────────────────────────────
+   One control replaced the chained category/item selects. The chosen value renders in the input
+   itself as "Category · Item", weighted so a filled picker reads as an answer rather than as a
+   search box somebody forgot to clear. */
+.comboWrap { position: relative; }
+
+.inputChosen {
+  color: var(--white-90);
+  font-weight: 600;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  /* Same ground as every other combobox menu in the portal (`.tagComboDropdown`) — the tokens are
+     what let the warm theme remap this without the component knowing. */
+  background: var(--card-bg);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: 0.25rem 0;
+}
+
+/* Flipped above the box inside a scrollable modal, where a downward menu would be clipped by the
+   scroll area or hidden behind the sticky footer. */
+.dropdownUp {
+  top: auto;
+  bottom: calc(100% + 4px);
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+}
+
+.optGroup {
+  padding: 0.4rem 0.75rem 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--white-90);
+  cursor: pointer;
+}
+
+.opt:hover,
+.optActive {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+
+.optOffside {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--warning);
+}
+
+.optCreate {
+  border-top: 1px solid var(--border-2);
+  color: var(--logic-lime);
+  font-weight: 600;
+}
+
+.dropEmpty {
+  padding: 0.7rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+/* The side a new word is being filed under — stated, never asked (mig 246). */
+.sideNote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
 }
 
 .select option { background: var(--home-card, #1a1f2e); } /* token-exempt: native <select> option bg outside warm gate, no root token */

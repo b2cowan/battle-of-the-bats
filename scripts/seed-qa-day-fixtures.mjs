@@ -38,6 +38,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { orgDayAsStoredInstant } from '../lib/timezone.ts';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -79,6 +80,18 @@ const isoDate = (d) => {
   return t.toISOString().slice(0, 10);
 };
 const nowIso = new Date().toISOString();
+
+/**
+ * A seeded PAID day, as the instant the column actually wants.
+ *
+ * ⚠⚠ `expense_paid_at` IS A TIMESTAMPTZ, and this script was writing bare `YYYY-MM-DD` into it
+ * (/review, 2026-08-16). Postgres reads that as UTC midnight, which every org-zone reader turns
+ * back into the PREVIOUS day — so a fixture seeded "paid Jul 12" displayed as Jul 11 to a Toronto
+ * tester. It was invisible while the product wrote the same wrong shape; now that a coach's own
+ * paid dates are stored correctly, the fixture would have been the only thing off by a day, and a
+ * tester comparing the screen against this file would have chased a defect that isn't there.
+ */
+const paidStamp = (day) => orgDayAsStoredInstant(day) ?? day;
 
 /** Mirrors lib/coach-opponents.ts normalizeOpponentName — the book's key. Keep in step. */
 function normalizeOpponentName(name) {
@@ -856,6 +869,12 @@ const MONEY = {
     // families by their PLAYERS ("Maya and Sam's family") rather than by a guardian.
     { email: 'qa-money-nopii@dev.local', name: 'QA Money No Contacts', role: 'assistant_coach', caps: { money: 'write', rosterPii: false } },
   ],
+  // ⚠ DELIBERATELY NOT IN `people`, and on no team. The club half of the item-tier ruling —
+  // "Items your teams have added", and Publish to all teams — lives on the ADMIN side of the org,
+  // and until 2026-08-16 this lab had no account that could open it, so that half of the walk
+  // simply could not be run here. Kept off every team's staff list so the four capability accounts
+  // above stay the only thing the coach-side money gates are ever tested with.
+  admin: { email: 'qa-money-admin@dev.local', name: 'QA Money Club Admin' },
 };
 
 /** Month boundary helpers — every date a month-grid column will be compared against. */
@@ -878,7 +897,8 @@ async function seedMoneyLab() {
 
   const users = [];
   for (const p of MONEY.people) users.push({ ...p, user: await ensureUser(p.email, MONEY.password, p.name) });
-  const ourIds = new Set(users.map(u => u.user.id));
+  const adminUser = await ensureUser(MONEY.admin.email, MONEY.password, MONEY.admin.name);
+  const ourIds = new Set([...users.map(u => u.user.id), adminUser.id]);
 
   // ── org ──────────────────────────────────────────────────────────────────────────────────
   const orgFields = {
@@ -903,6 +923,7 @@ async function seedMoneyLab() {
     ok(`org reset ${MONEY.slug}`);
   }
   for (const u of users) await ensureMember(org.id, u.user.id, 'coach', u.name);
+  await ensureMember(org.id, adminUser.id, 'admin', MONEY.admin.name);
 
   // ── categories/items, looked up by name so the fixture never invents its own taxonomy ─────
   const { data: cats } = await db.from('budget_categories').select('id, name');
@@ -988,26 +1009,67 @@ async function seedMoneyLab() {
   const roster = await makeRoster(u13, cur, ['Maya', 'Sam', 'Ari', 'Bo', 'Cleo', 'Dez', 'Eli', 'Fay', 'Gus', 'Hana', 'Ira', 'Jo']);
 
   // ── budget lines, deliberately spread across MONTHS so the grid has columns to fill ──────
-  // ⚠ One line is left with NO periods on purpose. An undated line must NOT be smeared across
-  // the months (that behaviour changed deliberately) — it is the case the cumulative chart note
-  // in the ledger is about, and without one here the check cannot be made.
+  //
+  // ⚠⚠ EVERY COST LINE NAMES A CATEGORY *AND* AN ITEM (mig 240, 2026-08-16). Until then four of
+  // these six carried no item — two by omission, and two because the name was wrong: there is no
+  // "Uniforms" under Team Gear (Uniforms is a TOURNAMENTS item), so that lookup had been silently
+  // returning null. The plan and the report are keyed on category+item now, so an item-less line
+  // renders as "Not itemized" and the fixture exercises none of the design.
+  //
+  // ⚠⚠ REPAIRED, NEVER SKIPPED. This block used to bail out the moment any line existed, so a lab
+  // seeded before mig 240 would stay pre-240 forever while reporting a clean run. A half-old
+  // fixture reporting green is the exact failure the category+item plan's §11.9 exists to end.
+  //
+  // ⚠ TWO LINES ON ONE ITEM, deliberately (the owner's own screen was two lines under Entry Fees).
+  // The plan and the report SUM them into one row reading "Entry Fees · 2 lines · $2,800". Without
+  // a second line the lab cannot demonstrate the ruling at all.
+  //
+  // ⚠ One line is left with NO periods on purpose. An undated line must NOT be smeared across the
+  // months (that behaviour changed deliberately) — it is the case the cumulative chart note in the
+  // ledger is about. It moved OFF the Admin category on 2026-08-16: Admin is ORG-scoped, so a
+  // coach's own planner never offers it and no coach could have created that line.
   const LINES = [
-    { cat: 'Tournaments', item: 'Entry Fees',      desc: 'Tournament entry fees', total: 2400, periods: [[-4, 600], [-3, 600], [-2, 600], [-1, 600]] },
-    { cat: 'Team Gear',   item: 'Uniforms',        desc: 'Uniform order',         total: 1800, periods: [[-5, 1800]] },
-    { cat: 'Facilities',  item: 'Diamond Permits', desc: 'Diamond permits',       total: 1200, periods: [[-4, 300], [-3, 300], [-2, 300], [-1, 300]] },
-    { cat: 'Officials',   item: null,              desc: 'Umpires',               total: 900,  periods: [[-3, 300], [-2, 300], [-1, 300]] },
-    { cat: 'Training',    item: null,              desc: 'Winter training',       total: 1500, periods: [[-6, 500], [-5, 500], [-4, 500]] },
-    { cat: 'Admin',       item: null,              desc: 'Miscellaneous',         total: 300,  periods: [] },
+    { cat: 'Tournaments', item: 'Entry Fees',          desc: 'Tournament entry fees',        total: 2400, kind: 'cost', periods: [[-4, 600], [-3, 600], [-2, 600], [-1, 600]] },
+    { cat: 'Tournaments', item: 'Entry Fees',          desc: 'Provincials entry — deposit',  total: 400,  kind: 'cost', periods: [[-1, 400]] },
+    { cat: 'Team Gear',   item: 'Jerseys',             desc: 'Uniform order',                total: 1800, kind: 'cost', periods: [[-5, 1800]] },
+    { cat: 'Facilities',  item: 'Diamond Permits',     desc: 'Diamond permits',              total: 1200, kind: 'cost', periods: [[-4, 300], [-3, 300], [-2, 300], [-1, 300]] },
+    { cat: 'Officials',   item: 'Umpire Fees',         desc: 'Umpires',                      total: 900,  kind: 'cost', periods: [[-3, 300], [-2, 300], [-1, 300]] },
+    { cat: 'Training',    item: 'Off-Season Training', desc: 'Winter training',              total: 1500, kind: 'cost', periods: [[-6, 500], [-5, 500], [-4, 500]] },
+    { cat: 'Fundraising', item: 'Printing',            desc: 'Bottle drive printing',        total: 300,  kind: 'cost', periods: [] },
+    // ⚠⚠ THE MONEY-IN LINE, and it is load-bearing for "one row, one source" (money-in plan §4.1):
+    // the Spring Bottle Drive's actual is DERIVED onto this row, so the server must refuse a typed
+    // income record against it. Without a funding line the guard has nothing to claim, an income
+    // entry simply saves, and a tester reads an empty fixture as a defect. It also gives the
+    // Fundraising category BOTH halves in the live season, so the by-activity lens has something
+    // two-sided to net — the drive's proceeds against the drive's printing.
+    { cat: 'Fundraising', item: 'Fundraising drive',   desc: 'Spring bottle drive — team share', total: 2000, kind: 'funding', periods: [] },
   ];
-  const { data: haveLines } = await db.from('rep_budget_lines').select('id').eq('program_year_id', cur.id).limit(1);
-  if (!haveLines?.length) {
+  {
+    const { data: existing } = await db.from('rep_budget_lines')
+      .select('id, description, category_id, item_id, line_kind')
+      .eq('program_year_id', cur.id);
+    const byDesc = new Map((existing ?? []).map(l => [l.description, l]));
+    let added = 0, repaired = 0;
     for (const [i, l] of LINES.entries()) {
+      const itemId = itemBy(l.cat, l.item);
+      if (!itemId) die('budget item lookup', { message: `"${l.cat} / ${l.item}" is not in the starting library — the library moved and this fixture has to follow it` });
+      const shape = {
+        category_id: catBy[l.cat] ?? null, item_id: itemId,
+        description: l.desc, total_amount: l.total, line_kind: l.kind, sort_order: i,
+      };
+      const have = byDesc.get(l.desc);
+      if (have) {
+        if (have.category_id !== shape.category_id || have.item_id !== itemId || have.line_kind !== l.kind) {
+          die('budget line repair', (await db.from('rep_budget_lines').update(shape).eq('id', have.id)).error);
+          repaired++;
+        }
+        continue;
+      }
       const ins = await db.from('rep_budget_lines').insert({
-        org_id: org.id, team_id: u13.id, program_year_id: cur.id,
-        category_id: catBy[l.cat] ?? null, item_id: l.item ? itemBy(l.cat, l.item) : null,
-        description: l.desc, total_amount: l.total, sort_order: i,
+        org_id: org.id, team_id: u13.id, program_year_id: cur.id, ...shape,
       }).select('id').single();
       die('budget line', ins.error);
+      added++;
       if (l.periods.length) {
         die('budget periods', (await db.from('rep_budget_periods').insert(
           l.periods.map(([m, amt], n) => ({
@@ -1017,39 +1079,94 @@ async function seedMoneyLab() {
         )).error);
       }
     }
-    ok(`budget seeded — 6 lines / $8,100, five phased across months, ONE deliberately undated`);
-  } else note('budget lines already present');
+    // The Admin / Miscellaneous line is retired with its periods — see the note above.
+    for (const s of (existing ?? []).filter(l => l.description === 'Miscellaneous')) {
+      await db.from('rep_budget_periods').delete().eq('budget_line_id', s.id);
+      die('retire Admin line', (await db.from('rep_budget_lines').delete().eq('id', s.id)).error);
+      repaired++;
+    }
+    ok(`budget — 7 cost lines / $8,500 (TWO on one item) + 1 funding line / $2,000; ${added} added, ${repaired} repaired`);
+  }
 
   // ── expenses: paid, payable, over-plan and unbudgeted ────────────────────────────────────
-  // ⚠ The "Team photos" row has NO category on purpose — an unbudgeted spend is what makes the
-  // report earn its keep, and a fixture where everything reconciles teaches the opposite lesson.
+  //
+  // ⚠⚠ EVERY COST NAMES ITS ITEM (mig 240, 2026-08-16). Until then not one row in this lab carried
+  // an item, so every dollar landed in a category bucket and the report's whole payoff — "what item
+  // did we get charged for that we never budgeted?" — had nothing to answer with. Same repair rule
+  // as the budget lines above: an existing row is UPDATED onto its item, never skipped.
+  //
+  // ⚠ "Team photo day" is the UNBUDGETED beat, and its shape changed with mig 240. It used to carry
+  // no category at all; it now names a real category and item that the plan has no line for, which
+  // is what puts it on the report as its own row with a dash where Budgeted would be. A fixture
+  // where everything reconciles teaches the opposite of the lesson.
+  //
   // ⚠ "Uniform order" is $50 OVER its line, so exactly one row reads over-plan. A sheet where
   // every line comes in under is a sheet that flatters, and the Difference column proves nothing.
   const EXPENSES = [
-    { desc: 'Spring Invitational entry', cat: 'Tournaments', amount: 600,  paid: dayIn(-4, 12) },
-    { desc: 'Summer Classic entry',      cat: 'Tournaments', amount: 600,  paid: dayIn(-2, 8) },
-    { desc: 'Uniform order',             cat: 'Team Gear',   amount: 1850, paid: dayIn(-5, 20) },
-    { desc: 'Diamond permits — spring',  cat: 'Facilities',  amount: 650,  paid: dayIn(-4, 3) },
-    { desc: 'Umpires — midseason',       cat: 'Officials',   amount: 300,  paid: dayIn(-2, 15) },
-    { desc: 'Team photo day',            cat: null,          amount: 180,  paid: dayIn(-1, 9) },
+    { desc: 'Spring Invitational entry', cat: 'Tournaments', item: 'Entry Fees',      amount: 600,  paid: dayIn(-4, 12) },
+    { desc: 'Summer Classic entry',      cat: 'Tournaments', item: 'Entry Fees',      amount: 600,  paid: dayIn(-2, 8) },
+    { desc: 'Uniform order',             cat: 'Team Gear',   item: 'Jerseys',         amount: 1850, paid: dayIn(-5, 20) },
+    { desc: 'Diamond permits — spring',  cat: 'Facilities',  item: 'Diamond Permits', amount: 650,  paid: dayIn(-4, 3) },
+    { desc: 'Umpires — midseason',       cat: 'Officials',   item: 'Umpire Fees',     amount: 300,  paid: dayIn(-2, 15) },
+    { desc: 'Team photo day',            cat: 'Events',      item: 'Photo Day',       amount: 180,  paid: dayIn(-1, 9) },
   ];
-  const { data: haveExp } = await db.from('rep_team_expenses').select('id').eq('program_year_id', cur.id).limit(1);
-  if (!haveExp?.length) {
-    die('expenses', (await db.from('rep_team_expenses').insert(EXPENSES.map(e => ({
-      program_year_id: cur.id, team_id: u13.id, org_id: org.id,
-      expense_type: 'expense', description: e.desc, category: e.cat,
-      amount: e.amount, expense_paid_at: e.paid,
-    })))).error);
-    // A payable with a deposit paid and a balance still owed NEXT month — this is the row the
-    // Payment schedule tab's Unpaid default exists for, and the one that creates a shortfall.
-    die('payable', (await db.from('rep_team_expenses').insert({
-      program_year_id: cur.id, team_id: u13.id, org_id: org.id,
-      expense_type: 'tournament_payable', description: 'Fall Showdown entry', category: 'Tournaments',
-      amount: 600, deposit_amount: 200, deposit_due_date: dayIn(-1, 15), deposit_paid_at: dayIn(-1, 14),
-      balance_amount: 400, balance_due_date: dayIn(1, 10),
-    })).error);
-    ok('expenses seeded — 6 paid (one OVER plan, one UNBUDGETED) + 1 payable with a balance due next month');
-  } else note('expenses already present');
+  // A payable with a deposit paid and a balance still owed NEXT month — this is the row the
+  // Payment schedule tab's Unpaid default exists for, and the one that creates a shortfall. It
+  // shares Entry Fees with the two paid entries, so the item's actual is a deposit plus two costs.
+  const PAYABLE = {
+    desc: 'Fall Showdown entry', cat: 'Tournaments', item: 'Entry Fees',
+    amount: 600, deposit_amount: 200, deposit_due_date: dayIn(-1, 15), deposit_paid_at: dayIn(-1, 14),
+    balance_amount: 400, balance_due_date: dayIn(1, 10),
+  };
+  {
+    const { data: existing } = await db.from('rep_team_expenses')
+      .select('id, description, category, budget_item_id, budget_category_id')
+      .eq('program_year_id', cur.id);
+    const byDesc = new Map((existing ?? []).map(e => [e.description, e]));
+    let added = 0, repaired = 0;
+
+    const taxonomy = (e) => {
+      const itemId = itemBy(e.cat, e.item);
+      if (!itemId) die('expense item lookup', { message: `"${e.cat} / ${e.item}" is not in the starting library` });
+      return { category: e.cat, budget_category_id: catBy[e.cat] ?? null, budget_item_id: itemId };
+    };
+
+    for (const e of EXPENSES) {
+      const tax = taxonomy(e);
+      const have = byDesc.get(e.desc);
+      if (have) {
+        if (have.budget_item_id !== tax.budget_item_id || have.category !== tax.category) {
+          die('expense repair', (await db.from('rep_team_expenses').update(tax).eq('id', have.id)).error);
+          repaired++;
+        }
+        continue;
+      }
+      die('expense', (await db.from('rep_team_expenses').insert({
+        program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+        expense_type: 'expense', description: e.desc, amount: e.amount, expense_paid_at: paidStamp(e.paid), ...tax,
+      })).error);
+      added++;
+    }
+
+    const tax = taxonomy(PAYABLE);
+    const havePayable = byDesc.get(PAYABLE.desc);
+    if (havePayable) {
+      if (havePayable.budget_item_id !== tax.budget_item_id) {
+        die('payable repair', (await db.from('rep_team_expenses').update(tax).eq('id', havePayable.id)).error);
+        repaired++;
+      }
+    } else {
+      die('payable', (await db.from('rep_team_expenses').insert({
+        program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+        expense_type: 'tournament_payable', description: PAYABLE.desc,
+        amount: PAYABLE.amount, deposit_amount: PAYABLE.deposit_amount,
+        deposit_due_date: PAYABLE.deposit_due_date, deposit_paid_at: PAYABLE.deposit_paid_at,
+        balance_amount: PAYABLE.balance_amount, balance_due_date: PAYABLE.balance_due_date, ...tax,
+      })).error);
+      added++;
+    }
+    ok(`expenses — 6 paid (one OVER plan, one UNBUDGETED on Events / Photo Day) + 1 payable; ${added} added, ${repaired} repaired`);
+  }
 
   // ── dues: most paid, two families behind ─────────────────────────────────────────────────
   const { data: haveDues } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', cur.id).limit(1);
@@ -1117,28 +1234,79 @@ async function seedMoneyLab() {
   } else note('payment request already present');
 
   // ── the PRIOR season, so the months view has a prior-season column ───────────────────────
-  const { data: havePrev } = await db.from('rep_budget_lines').select('id').eq('program_year_id', prev.id).limit(1);
-  if (!havePrev?.length) {
-    // ⚠ One of these categories (Fundraising) appears ONLY last season — that is what
-    // produces the "last season only" group the ledger asks you to look for.
-    const PREV = [
-      { cat: 'Tournaments', desc: 'Tournament entry fees', total: 2100 },
-      { cat: 'Team Gear', desc: 'Uniform order', total: 1600 },
-      { cat: 'Fundraising', desc: 'Bottle drive supplies', total: 250 },
-    ];
+  //
+  // ⚠ THIS IS ALSO THE ARCHIVE LEAK FIXTURE. The U13 is the only team here with a completed season
+  // AND a live one, so it is the only place a reader can prove that opening the finished year shows
+  // THAT year's money rather than this year's. Its figures are deliberately unlike the live
+  // season's, so a leak is recognisable on sight rather than requiring arithmetic.
+  //
+  // ⚠ The "last season only" category moved from Fundraising to TRAVEL on 2026-08-16, because
+  // Fundraising now exists in the live season too (it carries the bottle drive's proceeds and its
+  // printing). The beat the ledger asks you to look for is unchanged; only the word is.
+  //
+  // ⚠ Items here as well (mig 240) — an archived season rendering "Not itemized" rows would make
+  // the read-only check unreadable, and the leak check is about recognising figures at a glance.
+  const PREV = [
+    { cat: 'Tournaments', item: 'Entry Fees',    desc: 'Tournament entry fees',  total: 2100 },
+    { cat: 'Team Gear',   item: 'Jerseys',       desc: 'Uniform order',          total: 1600 },
+    { cat: 'Travel',      item: 'Accommodation', desc: 'Provincials hotel block', total: 250 },
+  ];
+  {
+    const { data: existingLines } = await db.from('rep_budget_lines')
+      .select('id, description, category_id, item_id').eq('program_year_id', prev.id);
+    const { data: existingExp } = await db.from('rep_team_expenses')
+      .select('id, description, category, budget_item_id').eq('program_year_id', prev.id);
+    const lineBy = new Map((existingLines ?? []).map(l => [l.description, l]));
+    const expBy = new Map((existingExp ?? []).map(e => [e.description, e]));
+    let added = 0, repaired = 0;
+
     for (const [i, l] of PREV.entries()) {
-      die('prev budget line', (await db.from('rep_budget_lines').insert({
-        org_id: org.id, team_id: u13.id, program_year_id: prev.id,
-        category_id: catBy[l.cat] ?? null, description: l.desc, total_amount: l.total, sort_order: i,
-      })).error);
+      const itemId = itemBy(l.cat, l.item);
+      if (!itemId) die('prior item lookup', { message: `"${l.cat} / ${l.item}" is not in the starting library` });
+      const shape = {
+        category_id: catBy[l.cat] ?? null, item_id: itemId,
+        description: l.desc, total_amount: l.total, line_kind: 'cost', sort_order: i,
+      };
+      const haveLine = lineBy.get(l.desc);
+      if (haveLine) {
+        if (haveLine.item_id !== itemId || haveLine.category_id !== shape.category_id) {
+          die('prev line repair', (await db.from('rep_budget_lines').update(shape).eq('id', haveLine.id)).error);
+          repaired++;
+        }
+      } else {
+        die('prev budget line', (await db.from('rep_budget_lines').insert({
+          org_id: org.id, team_id: u13.id, program_year_id: prev.id, ...shape,
+        })).error);
+        added++;
+      }
+
+      const tax = { category: l.cat, budget_category_id: catBy[l.cat] ?? null, budget_item_id: itemId };
+      const haveExp = expBy.get(l.desc);
+      if (haveExp) {
+        if (haveExp.budget_item_id !== itemId || haveExp.category !== l.cat) {
+          die('prev expense repair', (await db.from('rep_team_expenses').update(tax).eq('id', haveExp.id)).error);
+          repaired++;
+        }
+      } else {
+        die('prev expense', (await db.from('rep_team_expenses').insert({
+          program_year_id: prev.id, team_id: u13.id, org_id: org.id,
+          expense_type: 'expense', description: l.desc,
+          amount: l.total - 50, expense_paid_at: paidStamp(dayIn(-13 + i, 10)), ...tax,
+        })).error);
+        added++;
+      }
     }
-    die('prev expenses', (await db.from('rep_team_expenses').insert(PREV.map((l, i) => ({
-      program_year_id: prev.id, team_id: u13.id, org_id: org.id,
-      expense_type: 'expense', description: l.desc, category: l.cat,
-      amount: l.total - 50, expense_paid_at: dayIn(-13 + i, 10),
-    })))).error);
-    ok('prior season seeded — 3 lines incl. ONE category that exists only last season');
-  } else note('prior season already present');
+    // The retired Fundraising line and its cost — the category is a live-season one now.
+    for (const stale of (existingLines ?? []).filter(l => l.description === 'Bottle drive supplies')) {
+      await db.from('rep_budget_periods').delete().eq('budget_line_id', stale.id);
+      die('retire prev fundraising line', (await db.from('rep_budget_lines').delete().eq('id', stale.id)).error);
+      repaired++;
+    }
+    for (const stale of (existingExp ?? []).filter(e => e.description === 'Bottle drive supplies')) {
+      die('retire prev fundraising cost', (await db.from('rep_team_expenses').delete().eq('id', stale.id)).error);
+    }
+    ok(`prior season — 3 lines incl. ONE category (Travel) that exists only last season; ${added} added, ${repaired} repaired`);
+  }
 
   // ═══ TEAM B — deliberately EMPTY, for the budget starter ═════════════════════════════════
   const u11 = await makeTeam('QA Money U11', 'qa-money-u11', 'U11');
@@ -1198,7 +1366,7 @@ async function seedMoneyLab() {
     die('C expenses', (await db.from('rep_team_expenses').insert(SPENT_C.map(e => ({
       program_year_id: curC.id, team_id: u15.id, org_id: org.id,
       expense_type: 'expense', description: e.desc, category: e.cat,
-      amount: e.amount, expense_paid_at: e.paid,
+      amount: e.amount, expense_paid_at: paidStamp(e.paid),
     })))).error);
 
     // Dues — $600 in three $200 instalments, every due date in the PAST, everyone fully paid,
@@ -1323,7 +1491,7 @@ async function seedMoneyLab() {
     ].map(e => ({
       program_year_id: curD.id, team_id: u14.id, org_id: org.id,
       expense_type: 'expense', description: e.desc, category: e.cat,
-      amount: e.amount, expense_paid_at: e.paid,
+      amount: e.amount, expense_paid_at: paidStamp(e.paid),
     })))).error);
 
     // Dues — $800 in four $200 instalments: #1–#2 past due, #3–#4 still AHEAD, so credits have
@@ -1418,7 +1586,8 @@ async function seedMoneyLab() {
     const pizza = await db.from('rep_team_expenses').insert({
       program_year_id: curD.id, team_id: u14.id, org_id: org.id,
       expense_type: 'expense', description: 'Team pizza night', category: 'Events',
-      amount: 120, expense_paid_at: dayIn(0, 6), paid_by_player_id: rosterD[6].id,
+      budget_category_id: catBy['Events'] ?? null, budget_item_id: itemBy('Events', 'Banquet'),
+      amount: 120, expense_paid_at: paidStamp(dayIn(0, 6)), paid_by_player_id: rosterD[6].id,
     }).select('id').single();
     die('D out-of-pocket expense', pizza.error);
     die('D reimbursement credit', (await db.from('rep_dues_credits').insert({
@@ -1430,6 +1599,52 @@ async function seedMoneyLab() {
     ok('MID SEASON U14 seeded — applied/owed-back/forgiven/departed/paid-out/out-of-pocket all live');
   } else note('mid-season team already present');
 
+  // ⚠⚠ THE OUT-OF-POCKET COST HAS TO NAME AN ITEM (mig 240), because it is one half of the pair
+  // the money-back work turns on: a coach describes BOTH "a family paid the vendor directly" and
+  // "the team got money back" as *"a parent paid me back"*, and they are opposites — one leaves the
+  // team owing that family a credit, the other owes nobody. Testing them against each other means
+  // filing MONEY BACK against the same item this cost names, so an item-less cost makes the pair
+  // untestable. Repaired outside the block above, which is skipped once the team exists.
+  {
+    const { data: pizza } = await db.from('rep_team_expenses')
+      .select('id, budget_item_id').eq('team_id', u14.id).eq('description', 'Team pizza night').maybeSingle();
+    const banquet = itemBy('Events', 'Banquet');
+    if (pizza && banquet && pizza.budget_item_id !== banquet) {
+      die('pizza item repair', (await db.from('rep_team_expenses')
+        .update({ budget_category_id: catBy['Events'] ?? null, budget_item_id: banquet })
+        .eq('id', pizza.id)).error);
+      ok('out-of-pocket cost repaired onto Events / Banquet — the money-back pair is testable');
+    }
+  }
+
+  /* ⚠⚠ ONE SWEEP FOR THE PAID-STAMP SHAPE (/review, 2026-08-16), across every team in this lab.
+     Rows seeded before today hold a bare `YYYY-MM-DD` in a timestamptz column, which reads back as
+     the PREVIOUS day through the org's clock — so a fixture that says "paid Jul 12" showed Jul 11.
+     ⚠ IT REPAIRS THE SHAPE, NEVER THE DAY. The seeded day is whatever `dayIn()` produced when the
+     row was first written, and re-deriving it here would move every date each time the month rolls
+     over — the opposite of the diff-stability this fixture depends on. So: take the day the row
+     already claims and re-express it as the instant that day actually is. Idempotent by
+     construction, because a converted value no longer sits at midnight.
+
+     ⚠ THE SIGNATURE IS UTC MIDNIGHT, not string length — the column is a timestamptz, so Postgres
+     hands back `2026-04-12T00:00:00+00:00` whether it was written from a bare date or not, and a
+     length check (the first attempt at this) matched nothing at all. Exact UTC midnight is what a
+     bare date becomes and what nothing else produces: a real `now()` never lands there, and the
+     corrected value is org noon. */
+  {
+    const { data: rows } = await db.from('rep_team_expenses')
+      .select('id, expense_paid_at').eq('org_id', org.id).not('expense_paid_at', 'is', null);
+    const bare = (rows ?? []).filter(r => {
+      const t = new Date(r.expense_paid_at);
+      return t.getUTCHours() === 0 && t.getUTCMinutes() === 0 && t.getUTCSeconds() === 0;
+    });
+    for (const r of bare) {
+      die('paid stamp reshape', (await db.from('rep_team_expenses')
+        .update({ expense_paid_at: paidStamp(String(r.expense_paid_at).slice(0, 10)) }).eq('id', r.id)).error);
+    }
+    if (bare.length) ok(`paid stamps reshaped to org-noon instants — ${bare.length} row(s) had been reading a day early`);
+  }
+
   console.log('');
   console.log(`  Org            /${MONEY.slug}`);
   for (const u of users) {
@@ -1438,10 +1653,15 @@ async function seedMoneyLab() {
       u.caps.money === 'off' ? 'assistant — money OFF' : 'assistant — money write, NO contacts';
     console.log(`  ${u.email.padEnd(30)} ${MONEY.password}   ${label}`);
   }
+  console.log(`  ${MONEY.admin.email.padEnd(30)} ${MONEY.password}   ORG ADMIN — on no team (item publishing)`);
   console.log(`  Data-rich team  QA Money U13  → /${MONEY.slug}/coaches/teams/${u13.id}`);
+  console.log(`     ·  plan $8,500 across 7 cost lines (TWO on Entry Fees) + $2,000 expected fundraising`);
+  console.log(`     ·  spent $4,380, incl. $180 on Events / Photo Day that nobody budgeted`);
+  console.log(`     ·  a COMPLETED ${yr - 1} season behind it — the archive leak check`);
   console.log(`  Empty team      QA Money U11  → /${MONEY.slug}/coaches/teams/${u11.id}`);
   console.log(`  Season's end    QA Season End U15 → /${MONEY.slug}/coaches/teams/${u15.id}  (refund review)`);
   console.log(`  Mid-season      QA Mid Season U14 → /${MONEY.slug}/coaches/teams/${u14.id}  (credits meet bills)`);
+  console.log(`     ·  Gio's family holds ONE $120 reimbursement credit — the money-back pair's other half`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════

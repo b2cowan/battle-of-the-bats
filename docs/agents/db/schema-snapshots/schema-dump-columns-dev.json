@@ -1687,7 +1687,7 @@
     "column_name": "direction",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 12
   },

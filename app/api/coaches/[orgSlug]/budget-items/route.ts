@@ -196,9 +196,22 @@ export const POST = withObservability(async (req: Request,
     typeof body.suggestedAmount === 'number' && body.suggestedAmount > 0
       ? body.suggestedAmount
       : null;
+  /* ⚠⚠ WHICH WAY THE WORD POINTS IS NOW PART OF WHAT IT IS (mig 246, owner ruling 2026-08-16).
+     The picker FILTERS by it — the Expense pill offers only money-out words — so an item created
+     without one would appear under neither pill: a coach could invent a word and immediately be
+     unable to find it. The column is NOT NULL, so a create that skipped this would fail at the
+     write anyway; refusing here is what turns that into a sentence rather than a 500. */
+  const direction: 'in' | 'out' | null =
+    body.direction === 'in' || body.direction === 'out' ? body.direction : null;
 
   if (!catId) {
     return NextResponse.json({ error: 'categoryId is required' }, { status: 400 });
+  }
+  if (!direction) {
+    return NextResponse.json(
+      { error: 'direction is required and must be "in" or "out" — an item has to belong to one side' },
+      { status: 400 },
+    );
   }
   if (!name || name.length > 80) {
     return NextResponse.json({ error: 'name is required and must be 80 characters or fewer' }, { status: 400 });
@@ -228,11 +241,33 @@ export const POST = withObservability(async (req: Request,
      publishes one, and the picker would then show the same words twice with the reports splitting
      between them. That is the exact fragmentation the tiers exist to prevent, and a 409 would just
      leave the coach stuck beside an item they cannot see the point of. Handing back the existing one
-     is the honest answer: they wanted that item, and now they have it. */
+     is the honest answer: they wanted that item, and now they have it.
+
+     ⚠⚠ THE MATCH IS NOW BY NAME **AND** SIDE (mig 246). Handing back a word that points the other
+     way would answer the coach's question with an item the picker they are standing in cannot
+     show — they asked for an income word and got an expense one, which then vanishes from the list
+     the moment the inline form closes. Same name, same side is the same word; same name, other
+     side is a different word that happens to be spelled alike. */
   const visible = await listVisibleBudgetItems(ctx.org.id, teamId);
-  const already = visible.find(i =>
+  const sameName = visible.filter(i =>
     i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase());
+  const already = sameName.find(i => (i.direction as string | null) === direction);
   if (already) return NextResponse.json({ item: mapItem(already) }, { status: 200 });
+
+  /* ⚠ THE TEAM'S OWN WORD IS THE ONE COLLISION THAT CANNOT BE RESOLVED BY CREATING. The uniqueness
+     index is per (category, org, team), so this team already holding "Bats" as an expense leaves no
+     room for a second "Bats" of its own — and a bare 409 would strand the coach with no idea what
+     to do. Naming the conflict and the door is the difference between a refusal and a dead end.
+     A platform's or the club's word is a different owner, so a team-owned twin on the other side is
+     free to exist — and the two never appear in one list, because the pill shows one side at a time. */
+  const ownCollision = sameName.find(i => (i.team_id as string | null) === teamId);
+  if (ownCollision) {
+    return NextResponse.json({
+      error: `“${name}” already exists on your list as `
+        + `${(ownCollision.direction as string | null) === 'in' ? 'money coming in' : 'an expense'}. A word belongs to `
+        + `one side — move it across from Budget Plan → Manage our items, or give this one a different name.`,
+    }, { status: 409 });
+  }
 
   const { data, error } = await supabaseAdmin
     .from('budget_items')
@@ -244,6 +279,7 @@ export const POST = withObservability(async (req: Request,
       suggested_amount: suggestedAmount,
       is_default:       false,
       is_misc:          false,
+      direction,
     })
     .select()
     .single();
@@ -254,10 +290,17 @@ export const POST = withObservability(async (req: Request,
          at the same moment. The pre-check above hands back an existing item precisely so a coach is
          never stuck beside a name they cannot use; a 409 here would break that promise for whoever
          loses the race, which is the one case the coach can do nothing about. Hand back the winner. */
+      /* ⚠ THE WINNER ONLY COUNTS IF IT POINTS THE SAME WAY (mig 246) — same reasoning as the
+         pre-check above: handing back the other side's word answers the coach with an item their
+         picker will not show. A winner on the other side is the collision case, not the race case. */
       const winner = (await listVisibleBudgetItems(ctx.org.id, teamId)).find(i =>
-        i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase());
+        i.category_id === catId && String(i.name).trim().toLowerCase() === name.toLowerCase()
+        && (i.direction as string | null) === direction);
       if (winner) return NextResponse.json({ item: mapItem(winner) }, { status: 200 });
-      return NextResponse.json({ error: 'An item with this name already exists in this category' }, { status: 409 });
+      return NextResponse.json({
+        error: `“${name}” already exists on your list on the other side. A word belongs to one side — `
+          + `move it across from Budget Plan → Manage our items, or give this one a different name.`,
+      }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

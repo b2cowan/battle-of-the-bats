@@ -23,7 +23,7 @@ import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
 import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
-import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc } from './timezone';
+import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -9439,7 +9439,11 @@ export async function createOutOfPocketExpense(opts: {
   const expense = await createRepTeamExpense({
     ...opts.expense,
     paidByPlayerId: opts.playerId,
-    expensePaidAt: opts.creditDate,
+    // ⚠ AN INSTANT AT ORG NOON, not the bare date — `expense_paid_at` is a timestamptz and a bare
+    // date lands as UTC midnight, which reads as the previous day everywhere west of it. The
+    // credit below keeps the plain date, because `credit_date` is a date column. Latent until
+    // 2026-08-16, when the form started letting a coach back-date a cost a family had paid.
+    expensePaidAt: orgDayAsStoredInstant(opts.creditDate) ?? opts.creditDate,
   });
   try {
     const reimbursementCredit = await createReimbursementCreditForExpense({
@@ -9458,6 +9462,93 @@ export async function createOutOfPocketExpense(opts: {
     // the family is simply never repaid. There is no transaction available here, so the first
     // write undoes itself and the coach sees a plain failure they can retry.
     await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expense.id);
+    throw e;
+  }
+}
+
+/**
+ * THE already-paid door: the cost AND the money leaving the team's books, written together.
+ *
+ * ⚠⚠ WHY THIS IS A FUNCTION AND NOT THREE LINES IN THE ROUTE. Recording a cost as paid is two
+ * facts that must agree — the row's paid stamp, which is what Budget vs. Actual and the month grid
+ * read, and a posted ledger entry, which is what cash on hand reads and what a later delete
+ * reverses. Written apart, a failure between them leaves a cost that counts in the budget with no
+ * money missing from the books, or an entry nothing points at. The same argument as
+ * `createOutOfPocketExpense` above, and it earns the same shape: one door, both writes, and the
+ * first one undoes itself if the second fails.
+ *
+ * ⚠ THE ENTRY IS DATED WHEN THE MONEY MOVED, not when this ran. That is the entire point of the
+ * change — see `whyPaidDateIsRefused` in `lib/expense-ledger.ts` for what was wrong before.
+ *
+ * ⚠ NOT FOR OUT-OF-POCKET. A family paying the vendor moves no team cash, so it posts no entry and
+ * goes through the door above. Passing `paidByPlayerId` here would invent an outflow the account
+ * never had — the same trap `markExpensePaid` already refuses.
+ */
+export async function createPaidExpense(opts: {
+  expense: Parameters<typeof createRepTeamExpense>[0];
+  /** `YYYY-MM-DD`, already validated as real and not in the future. */
+  paidDate: string;
+  team: { id: string; orgId: string; name: string };
+  createdBy: string;
+}): Promise<RepTeamExpense> {
+  /* ⚠ THE STAMP IS AN INSTANT AT ORG NOON, not the bare date. `expense_paid_at` is a timestamptz
+     and every screen turns it back into a day through the org's clock, so the bare string would
+     land as UTC midnight and report the day BEFORE the one the coach picked. The ledger entry
+     below takes the plain date, because `entry_date` really is a date column. */
+  /* ⚠ NO SILENT FALLBACK TO THE BARE DATE. Every caller validates first, so a null here means the
+     validation was skipped or reordered — and quietly writing the unconverted string would put the
+     off-by-one day back with nothing to notice it by. Refusing is the loud version. */
+  const stamp = orgDayAsStoredInstant(opts.paidDate);
+  if (!stamp) throw new Error(`createPaidExpense: "${opts.paidDate}" is not a usable calendar date`);
+
+  const expense = await createRepTeamExpense({ ...opts.expense, expensePaidAt: stamp });
+  /* ⚠⚠ BOTH HALVES UNWIND, NOT JUST THE FIRST (/review, 2026-08-16). The original catch deleted
+     only the expense — so if the entry posted and the link-back then failed, the money stayed out
+     of the books with no record pointing at it and no screen able to find it. An orphaned POSTED
+     entry is the worse of the two halves to leave behind: the expense at least disappears, while
+     the entry silently holds cash on hand down forever. Track what actually got written and undo
+     exactly that. */
+  let posted: { entryId: string; ledgerId: string } | null = null;
+  try {
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    const entry = await createEntry(
+      ledger.id,
+      {
+        entryDate:   opts.paidDate,
+        description: expense.description,
+        amount:      expense.amount,
+        entryType:   'expense',
+        status:      'posted',
+        category:    expense.category ?? 'Team Expense',
+      },
+      opts.createdBy,
+    );
+    posted = { entryId: entry.id, ledgerId: ledger.id };
+    // ⚠ RECORDING THE LINK IS WHAT LETS A DELETE GIVE THE MONEY BACK (mig 236). Without it the
+    // reversal has to match the entry by description, and descriptions are editable.
+    return await updateRepTeamExpense(expense.id, { accountingEntryId: entry.id });
+  } catch (e) {
+    // Void before deleting: the entry is the half that would otherwise survive unreachable.
+    if (posted) {
+      try {
+        await voidEntry(posted.entryId, posted.ledgerId);
+      } catch {
+        /* Swallowed on purpose — the original failure is the one worth reporting, and the throw
+           below still stops the coach from believing this saved. */
+      }
+    }
+    /* ⚠ THE COMPENSATION IS CHECKED. A failed cleanup used to be invisible: the coach saw the
+       original error, retried, and left a paid-looking cost behind that the books never saw.
+       Saying so names the state a support question would otherwise have to guess at. */
+    const { error: undoError } = await supabaseAdmin
+      .from('rep_team_expenses').delete().eq('id', expense.id);
+    if (undoError) {
+      throw new Error(
+        `Recording "${expense.description}" failed and it could not be cleaned up — the cost is '
+        + 'saved but nothing was posted to the books. Delete it and enter it again. (${
+          e instanceof Error ? e.message : String(e)})`,
+      );
+    }
     throw e;
   }
 }
@@ -10065,6 +10156,128 @@ async function reverseLedgerEntriesForExpense(
   }
 
   return { reversed, total };
+}
+
+/**
+ * Make the team's books say what a corrected money record now says (owner ruling 2026-08-16).
+ *
+ * ⚠⚠ THIS IS WHAT REPLACED THE FIGURE LOCK. Until now a paid record's amount could not be edited at
+ * all, because nothing carried the correction through to the books and a row saying $225 beside an
+ * entry saying $325 is worse than refusing the edit. This is the missing half: change the amount or
+ * the date, and the entry that money created moves with it.
+ *
+ * ⚠ CALL IT BEFORE PERSISTING THE ROW, and pass the state the row is ABOUT to have. Every write in
+ * here sets an ABSOLUTE value rather than applying a delta, so a coach who retries after a failure
+ * converges on the right answer instead of moving the books twice. Persisting first would break
+ * that: the retry would compare the new row against itself, see no change, and leave the books
+ * stranded on the old figure with nothing to notice it by.
+ *
+ * ⚠ AN OUT-OF-POCKET COST HAS NO LEDGER ENTRY BUT DOES HAVE A DEBT. A family settled it directly,
+ * so no team cash ever moved — but the team owes them, and that credit has to track the figure or
+ * the household is owed the wrong amount. This is the money-in-a-real-family's-ledger case that the
+ * money-back work turns on, reached here through the edit door.
+ */
+export async function syncExpenseBooksForEdit(opts: {
+  before: RepTeamExpense;
+  /** The record as it will be once saved — not yet persisted. */
+  intended: RepTeamExpense;
+  team: { id: string; orgId: string; name: string };
+}): Promise<void> {
+  const { before, intended, team } = opts;
+
+  /* ── Out of pocket: no entry to move, a debt to keep honest ──
+     A family settled this directly, so no team cash ever moved and there is nothing on the books to
+     correct — but the team OWES them, and that credit has to track the record or a household is
+     owed the wrong amount. */
+  if (before.paidByPlayerId) {
+    const amountMoved = Math.abs(intended.amount - before.amount) > 0.005;
+    const dayMoved = orgDayKey(intended.expensePaidAt ?? '') !== orgDayKey(before.expensePaidAt ?? '');
+    const renamed = intended.description !== before.description;
+    if (!amountMoved && !dayMoved && !renamed) return;
+
+    /* ⚠ THE CREDIT'S DATE MOVES WITH THE COST'S (/review, 2026-08-16). It is not decoration: a
+       family's credits are applied oldest-first, so a stale date can send this one against a
+       different instalment than the coach intended, and it tells them the debt began on a day it
+       did not. ⚠ And its wording follows a rename, or the dues screen names a cost that no longer
+       exists under that description. */
+    const patch: Record<string, unknown> = {};
+    if (amountMoved) patch.amount = Math.round(intended.amount * 100) / 100;
+    if (dayMoved && intended.expensePaidAt) patch.credit_date = orgDayKey(intended.expensePaidAt);
+    if (renamed) patch.description = `Paid out of pocket — ${intended.description}`;
+
+    /* ⚠⚠ A ZERO-ROW UPDATE IS NOT A SUCCESS (/review, 2026-08-16, Critical). Postgres does not
+       error when an UPDATE matches nothing, so without asking what it touched this returned
+       cleanly, the route persisted the new figure, and the coach was told the correction worked —
+       while the family's credit stayed at the old amount, or never existed at all. That is the
+       "real money in a real family's ledger" failure the whole money-back design is built around,
+       reached through the edit door. Refuse rather than guess, exactly as the ledger matcher does. */
+    const { data, error } = await supabaseAdmin
+      .from('rep_dues_credits')
+      .update(patch)
+      .eq('expense_id', before.id)
+      .eq('credit_type', 'reimbursement')
+      .select('id');
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error(
+        'This cost says a family paid it, but the credit the team owed them is missing — so changing '
+        + 'it would leave that family owed the wrong amount. Delete this and enter it again.',
+      );
+    }
+    return;
+  }
+
+  /* Which halves have posted, and what each should now read. `paidLedgerLegs` is the same predicate
+     the delete path reverses with, so "what is on the books" has one definition and not two.
+     ⚠ ONLY LEGS THAT HAD ALREADY POSTED are considered, because `posted` is read from BEFORE. A
+     half being paid in this same request is not in here at all, which is what makes it safe to run
+     this alongside a mark-paid action rather than skipping it (/review, 2026-08-16). */
+  const posted = paidLedgerLegs(before);
+  if (posted.length === 0) return;
+
+  const wants = new Map(paidLedgerLegs(intended).map(l => [l.half, l]));
+  const paidDayFor = (e: RepTeamExpense, half: ExpenseLedgerLeg['half']) => (
+    half === 'expense' ? e.expensePaidAt : half === 'deposit' ? e.depositPaidAt : e.balancePaidAt
+  );
+
+  /* ⚠⚠ RESOLVE EVERY ENTRY BEFORE WRITING ANY OF THEM (/review, 2026-08-16, High).
+     The first version looked up and wrote each leg in turn — so on a payable whose deposit resolved
+     cleanly and whose balance was an ambiguous pre-236 match, the deposit's entry was rewritten and
+     committed, THEN the balance threw, the request returned a refusal, and the row was never
+     persisted. The coach saw a rejected save and no sign that anything had changed, while the books
+     had moved. Looking everything up first means the only failure that can happen after the first
+     write is a transient one, and those converge on retry because every write is absolute. */
+  let ledgerId: string | null = null;
+  const planned: { entryId: string; amount?: number; entryDate?: string }[] = [];
+
+  for (const leg of posted) {
+    const want = wants.get(leg.half);
+    if (!want) continue; // the half stopped being paid — not something an edit does
+
+    const amountMoved = Math.abs(want.amount - leg.amount) > 0.005;
+    const wasOn = paidDayFor(before, leg.half);
+    const nowOn = paidDayFor(intended, leg.half);
+    const dateMoved = orgDayKey(nowOn) !== orgDayKey(wasOn);
+    if (!amountMoved && !dateMoved) continue;
+
+    ledgerId ??= (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
+    /* ⚠ MATCHED ON THE *BEFORE* FIGURES. A pre-236 row is found by description AND amount, so the
+       lookup has to describe the entry as it stands, not as it is about to read. The matcher
+       refuses an ambiguous pair rather than rewriting a guess — the same protection the delete path
+       relies on, and the reason a handful of old records will ask to be re-entered instead. */
+    const entryId = leg.entryId ?? await matchLegacyLedgerEntry(leg, ledgerId);
+    if (!entryId) continue; // already void, or never posted — nothing on the books to correct
+
+    planned.push({
+      entryId,
+      ...(amountMoved ? { amount: want.amount } : {}),
+      ...(dateMoved && nowOn ? { entryDate: orgDayKey(nowOn) } : {}),
+    });
+  }
+
+  for (const { entryId, ...fields } of planned) {
+    await updateEntry(entryId, ledgerId!, fields);
+  }
 }
 
 /**

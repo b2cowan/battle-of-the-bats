@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import styles from './BudgetItemPicker.module.css';
 
@@ -11,10 +11,41 @@ export interface BudgetItemSelection {
   suggestedAmount: number | null;
 }
 
+/**
+ * ONE SEARCHABLE CONTROL, THREE SURFACES (Money form P2, owner ruling 2026-08-16).
+ *
+ * This was two chained `<select>`s: choose a category, then choose an item under it. That shape
+ * asked the coach to remember our filing system before it would show them a word — "Dome block" is
+ * unreachable until you have guessed it lives under Facilities — and it made a twelve-category
+ * library a two-step hunt for something they could have typed four letters of.
+ *
+ * ⚠⚠ THE LIST FOLLOWS THE DIRECTION, AND THAT IS A FILTER NOW, NOT A SORT (owner ruling
+ * 2026-08-16, migration 246). The Expense pill offers money-out words and Income offers money-in
+ * ones — full stop. This REVERSES migration 243's rule, which grouped by direction and deliberately
+ * kept everything reachable both ways, and the reversal only holds because 246 made the column
+ * mandatory: while club- and coach-created words were untagged, filtering would have hidden every
+ * word an organization ever invented.
+ *
+ * ⚠⚠ THE CHOSEN ITEM IS ALWAYS OFFERED, WHICHEVER WAY IT POINTS. A saved record's own word must
+ * never fall out of the list it is displayed in — a word can be moved to the other side after money
+ * was filed against it, and a picker that answered "nothing selected" would let an ordinary edit
+ * silently strip the item off a row and drop it into the unitemized bucket. The filter decides what
+ * a coach may CHOOSE; it never decides what they have already chosen.
+ *
+ * ⚠ CATEGORIES ARE NEVER FILTERED, only grouped. "Tournaments" holding both its entry fees and its
+ * registration revenue is the whole point of the by-activity report.
+ */
 interface Props {
   categories: BudgetCategoryWithItems[];
   value: BudgetItemSelection | null;
   onChange: (v: BudgetItemSelection) => void;
+  /**
+   * Which side of the books this control is choosing for (mig 246).
+   * `out` = money the team spends · `in` = money it receives. Required: every surface knows the
+   * answer — the money form from its pill, the Budget Plan from the line's kind, the Org Budget
+   * because it is a spending plan — and defaulting it would put the wrong words on one of them.
+   */
+  direction: 'in' | 'out';
   // API path for creating new items. Differs between admin and coach contexts:
   //   admin:  /api/admin/accounting/budget-categories
   //   coach:  /api/coaches/[orgSlug]/budget-items
@@ -28,17 +59,26 @@ interface Props {
   // Coach mode only: allow creating a new top-level category inline (posts
   // { newCategoryName } to createItemEndpoint). Owner decision 2026-07-09.
   allowCreateCategory?: boolean;
-  /** Lets a caller point its "you must pick one" message at the first select. */
+  /** Lets a caller point its "you must pick one" message at the search box. */
   selectId?: string;
-  /** Draw the controls as at fault — the picker is a required field since mig 240. */
+  /** Draw the control as at fault — the picker is a required field since mig 240. */
   invalid?: boolean;
   disabled?: boolean;
+  /** Where a coach goes to rename a word or move it across. Named in the create confirmation, so
+   *  the answer to "I put it on the wrong side" is on screen at the moment the mistake is made. */
+  manageHint?: string;
 }
+
+/** An item with its category carried along — what the flat, searchable list is made of. */
+interface Row { item: BudgetItem; categoryId: string; categoryName: string }
+
+const SIDE_WORD = { out: 'an expense', in: 'money coming in' } as const;
 
 export default function BudgetItemPicker({
   categories,
   value,
   onChange,
+  direction,
   createItemEndpoint,
   createItemMode,
   teamId,
@@ -46,18 +86,21 @@ export default function BudgetItemPicker({
   selectId,
   invalid = false,
   disabled = false,
+  manageHint,
 }: Props) {
-  const [selectedCatId, setSelectedCatId] = useState<string>(value?.categoryId ?? '');
-  /* ⚠ NO "MISC" DEFAULT ANY MORE (owner ruling 2026-08-15). Choosing a category used to silently
-     select that category's Misc item, so a coach could complete the picker without ever making the
-     choice — which was harmless while the description named the row and is not now the ITEM does.
-     A report row called "Misc" answers nothing. The item starts unchosen and the form refuses to
-     save until it isn't. */
-  const [selectedItemId, setSelectedItemId] = useState<string>(value?.itemId ?? '');
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  /* `aria-controls` has to name the menu, and this control renders three times on one screen in the
+     Budget Plan's own sheets — a hardcoded id would point every box at the first one's list. */
+  const listboxId = useId();
 
   const [addingItem, setAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemAmount, setNewItemAmount] = useState('');
+  const [newItemCatId, setNewItemCatId] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
@@ -68,66 +111,107 @@ export default function BudgetItemPicker({
 
   // Local categories list that can be extended after a custom item is created
   const [localCategories, setLocalCategories] = useState<BudgetCategoryWithItems[]>(categories);
-
   useEffect(() => { setLocalCategories(categories); }, [categories]);
 
-  const selectedCat = localCategories.find(c => c.id === selectedCatId) ?? null;
-  const itemsForCat: BudgetItem[] = selectedCat?.items ?? [];
+  /* The flat, searchable universe: every item this team may pick, with its category beside it so
+     one string search can match either half of "Facilities · Dome block". */
+  const allRows = useMemo<Row[]>(() => localCategories.flatMap(c =>
+    c.items.map(item => ({ item, categoryId: c.id, categoryName: c.name })),
+  ), [localCategories]);
 
-  function handleCatChange(catId: string) {
-    if (catId === '__addcat__') {
-      setAddingCategory(true);
-      setNewCatName('');
-      setCatError('');
-      return;
-    }
-    setAddingCategory(false);
-    setSelectedCatId(catId);
-    setSelectedItemId('');
-    setAddingItem(false);
-    setSaveError('');
+  /* ⚠ THE SELECTED ITEM SURVIVES THE FILTER — see the header note. Everything else must match the
+     side this control is choosing for. */
+  const offered = useMemo(
+    () => allRows.filter(r => r.item.direction === direction || r.item.id === value?.itemId),
+    [allRows, direction, value?.itemId],
+  );
 
-    /* ⚠ CHOOSING A CATEGORY NO LONGER CHOOSES AN ITEM. It used to auto-select that category's
-       "Misc" row, which meant a coach could leave the picker having made half the decision and not
-       know it. Now the selection is reported with a null item so the caller's own validation can
-       say what is still missing — and the item select below opens on "choose an item". */
-    const cat = localCategories.find(c => c.id === catId);
-    if (cat) {
-      onChange({
-        categoryId:      cat.id,
-        categoryName:    cat.name,
-        itemId:          null,
-        itemName:        '',
-        suggestedAmount: null,
-      });
+  const q = query.trim().toLowerCase();
+  const matches = useMemo(() => {
+    const hit = q
+      ? offered.filter(r => `${r.categoryName} ${r.item.name}`.toLowerCase().includes(q))
+      : offered;
+    // Grouped by category in the library's own order, which is the order the categories arrive in.
+    const order = new Map(localCategories.map((c, i) => [c.id, i]));
+    return [...hit].sort((a, b) => {
+      const ca = order.get(a.categoryId) ?? 0;
+      const cb = order.get(b.categoryId) ?? 0;
+      return ca !== cb ? ca - cb : a.item.name.localeCompare(b.item.name);
+    });
+  }, [offered, q, localCategories]);
+
+  const exact = offered.some(r => r.item.name.toLowerCase() === q);
+  const canCreate = q.length > 0 && !exact && !disabled;
+  const optionCount = matches.length + (canCreate ? 1 : 0);
+
+  const selectedLabel = value?.itemId
+    ? `${value.categoryName} · ${value.itemName}`
+    : '';
+
+  function openDropdown() {
+    const el = inputRef.current;
+    if (el) {
+      // Flip above the box when there is no room below — this control sits inside scrollable
+      // modals, where a downward menu is clipped by the scroll area or hidden behind the footer.
+      const rect = el.getBoundingClientRect();
+      setDropUp(window.innerHeight - rect.bottom < 260 && rect.top > 280);
     }
+    setOpen(true);
   }
 
-  function handleItemChange(itemId: string) {
-    if (itemId === '__add__') {
-      setAddingItem(true);
-      setNewItemName('');
-      setNewItemAmount('');
-      setSaveError('');
-      return;
-    }
-    setAddingItem(false);
-    setSelectedItemId(itemId);
-    const item = itemsForCat.find(i => i.id === itemId);
-    if (item && selectedCat) {
-      onChange({
-        categoryId:      selectedCat.id,
-        categoryName:    selectedCat.name,
-        itemId:          item.id,
-        itemName:        item.name,
-        suggestedAmount: item.suggestedAmount,
-      });
+  function choose(row: Row) {
+    onChange({
+      categoryId:      row.categoryId,
+      categoryName:    row.categoryName,
+      itemId:          row.item.id,
+      itemName:        row.item.name,
+      suggestedAmount: row.item.suggestedAmount,
+    });
+    setQuery('');
+    setActiveIdx(-1);
+    /* ⚠ NO `inputRef.current?.blur()` HERE. It read a ref from a function handed straight to JSX,
+       which React's own lint rule refuses — and it bought nothing: closing the menu is what a coach
+       sees, and the input already renders the chosen "Category · Item" the moment `open` is false. */
+    setOpen(false);
+  }
+
+  function startCreate() {
+    setAddingItem(true);
+    setNewItemName(query.trim());
+    setNewItemAmount('');
+    /* Pre-pick the category when the search names one — typing "travel bus" already answered half
+       the question, and asking it again reads as the form not having listened. */
+    const named = localCategories.find(c => q.includes(c.name.toLowerCase()));
+    setNewItemCatId(named?.id ?? value?.categoryId ?? '');
+    setSaveError('');
+    setOpen(false);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!open) openDropdown();
+      setActiveIdx(i => Math.min(i + 1, optionCount - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIdx >= 0 && activeIdx < matches.length) choose(matches[activeIdx]);
+      else if (activeIdx === matches.length && canCreate) startCreate();
+      else {
+        const m = offered.find(r => r.item.name.toLowerCase() === q);
+        if (m) choose(m);
+        else if (canCreate) startCreate();
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
     }
   }
 
   async function handleSaveCustomItem() {
     const name = newItemName.trim();
-    if (!name || !selectedCatId) return;
+    if (!name || !newItemCatId) return;
     setSaving(true);
     setSaveError('');
 
@@ -136,14 +220,18 @@ export default function BudgetItemPicker({
       let body: Record<string, unknown>;
 
       if (createItemMode === 'admin') {
-        url  = `${createItemEndpoint}/${selectedCatId}/items`;
-        body = { name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null };
+        url  = `${createItemEndpoint}/${newItemCatId}/items`;
+        body = { name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null, direction };
       } else {
         url  = createItemEndpoint;
         // ⚠ `teamId` IS REQUIRED BY THE SERVER (mig 240) — a coach's item belongs to their team and
         // appears in no other team's picker. Omitting it used to mean "org-wide", which is the
         // behaviour this replaced, so the server refuses rather than assuming.
-        body = { categoryId: selectedCatId, teamId, name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null };
+        // ⚠ `direction` IS REQUIRED TOO (mig 246) — a word with no side appears under neither pill.
+        body = {
+          categoryId: newItemCatId, teamId, name, direction,
+          suggestedAmount: newItemAmount ? Number(newItemAmount) : null,
+        };
       }
 
       const res  = await fetch(url, {
@@ -155,19 +243,17 @@ export default function BudgetItemPicker({
       if (!res.ok) throw new Error(data.error ?? 'Failed to create item');
 
       const newItem: BudgetItem = data.item;
+      const cat = localCategories.find(c => c.id === newItemCatId);
 
-      // Inject the new item into localCategories. (Misc items are no longer offered at all, so
-      // there is nothing to keep pinned to the bottom of the list.)
       setLocalCategories(prev => prev.map(c =>
-        c.id !== selectedCatId ? c : { ...c, items: [...c.items, newItem] }
+        c.id !== newItemCatId ? c : { ...c, items: [...c.items, newItem] }
       ));
-
-      setSelectedItemId(newItem.id);
       setAddingItem(false);
+      setQuery('');
 
       onChange({
-        categoryId:      selectedCatId,
-        categoryName:    selectedCat?.name ?? '',
+        categoryId:      newItemCatId,
+        categoryName:    cat?.name ?? '',
         itemId:          newItem.id,
         itemName:        newItem.name,
         suggestedAmount: newItem.suggestedAmount,
@@ -197,17 +283,10 @@ export default function BudgetItemPicker({
       const newCat: BudgetCategoryWithItems = data.category;
       setLocalCategories(prev => [...prev, newCat]);
       setAddingCategory(false);
-      setSelectedCatId(newCat.id);
-      setSelectedItemId('');
-      // A brand-new category has no items yet, so the choice is genuinely half-made: report a null
-      // item and let the caller's validation ask for the other half.
-      onChange({
-        categoryId:      newCat.id,
-        categoryName:    newCat.name,
-        itemId:          null,
-        itemName:        '',
-        suggestedAmount: null,
-      });
+      /* A brand-new category has no items yet, so the coach lands back in the item form with it
+         chosen — the half they came here for is done, and the other half is one field away. */
+      setNewItemCatId(newCat.id);
+      setAddingItem(true);
     } catch (e: unknown) {
       setCatError(e instanceof Error ? e.message : 'Failed to create category');
     } finally {
@@ -215,47 +294,90 @@ export default function BudgetItemPicker({
     }
   }
 
+  // ── The dropdown's rows, with a category heading whenever the group changes ──
+  function renderOptions() {
+    const out: React.ReactNode[] = [];
+    let lastCat: string | null = null;
+
+    matches.forEach((row, i) => {
+      if (row.categoryId !== lastCat) {
+        out.push(<div key={`c-${row.categoryId}`} className={styles.optGroup}>{row.categoryName}</div>);
+        lastCat = row.categoryId;
+      }
+      out.push(
+        <button
+          type="button"
+          key={row.item.id}
+          className={`${styles.opt} ${i === activeIdx ? styles.optActive : ''}`}
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => choose(row)}
+        >
+          <span>{row.item.name}</span>
+          {/* The one word that can be off-side is the one already chosen — say so rather than
+              letting it look like the filter is leaking. */}
+          {row.item.direction !== direction && (
+            <span className={styles.optOffside}>on the other side</span>
+          )}
+        </button>,
+      );
+    });
+    return out;
+  }
+
   return (
     <div className={styles.picker}>
-      {/* Category select */}
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label}>Category</label>
-          <select
+      {!addingItem && !addingCategory && (
+        <div className={styles.comboWrap}>
+          <input
+            ref={inputRef}
             id={selectId}
-            className={`${styles.select} ${invalid ? styles.selectBad : ''}`}
-            value={addingCategory ? '__addcat__' : selectedCatId}
-            onChange={e => handleCatChange(e.target.value)}
+            type="text"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            aria-autocomplete="list"
+            aria-label="Category and item"
+            autoComplete="off"
             disabled={disabled}
-          >
-            <option value="">— select category —</option>
-            {localCategories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-            {allowCreateCategory && <option value="__addcat__">+ Add custom category…</option>}
-          </select>
+            className={`${styles.input} ${invalid ? styles.inputBad : ''} ${value?.itemId && !open ? styles.inputChosen : ''}`}
+            placeholder={direction === 'in'
+              ? 'Search what this is — e.g. “sponsorship”, “grant”'
+              : 'Search what this is — e.g. “diamond”, “entry”'}
+            value={open ? query : (selectedLabel || query)}
+            onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
+            onFocus={() => { setQuery(''); openDropdown(); }}
+            /* ⚠ THE QUERY CLEARS ON THE WAY OUT. Typing "dom" and then clicking away left the box
+               reading "dom" with nothing actually selected — a control that looks answered and
+               isn't, which is the exact failure the old two-select version could not have. The
+               delay lets a click on an option land first (`choose` clears it anyway), and the
+               create flow copies the query into its own field synchronously before this fires. */
+            onBlur={() => setTimeout(() => { setOpen(false); setQuery(''); }, 150)}
+            onKeyDown={onKeyDown}
+          />
+          {open && (
+            <div id={listboxId} className={`${styles.dropdown} ${dropUp ? styles.dropdownUp : ''}`} role="listbox">
+              {matches.length > 0 && renderOptions()}
+              {matches.length === 0 && (
+                <div className={styles.dropEmpty}>
+                  {q
+                    ? <>Nothing on this side matches “{query.trim()}”.</>
+                    : <>Your list has no words for {SIDE_WORD[direction]} yet.</>}
+                </div>
+              )}
+              {canCreate && (
+                <button
+                  type="button"
+                  className={`${styles.opt} ${styles.optCreate} ${activeIdx === matches.length ? styles.optActive : ''}`}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={startCreate}
+                >
+                  + Add “{query.trim()}” to your list
+                </button>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Item select — only shown once a category is picked */}
-        {selectedCat && (
-          <div className={styles.field}>
-            <label className={styles.label}>Item</label>
-            <select
-              className={`${styles.select} ${invalid ? styles.selectBad : ''}`}
-              value={addingItem ? '__add__' : selectedItemId}
-              onChange={e => handleItemChange(e.target.value)}
-              disabled={disabled}
-            >
-              {/* Present until something is chosen — the picker no longer answers for the coach. */}
-              <option value="">— select item —</option>
-              {itemsForCat.map(i => (
-                <option key={i.id} value={i.id}>{i.name}</option>
-              ))}
-              <option value="__add__">+ Add custom item…</option>
-            </select>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Inline custom-category form */}
       {addingCategory && (
@@ -280,7 +402,7 @@ export default function BudgetItemPicker({
             <button
               type="button"
               className="btn btn-ghost"
-              onClick={() => { setAddingCategory(false); setCatError(''); }}
+              onClick={() => { setAddingCategory(false); setAddingItem(true); setCatError(''); }}
               disabled={catSaving}
             >
               Cancel
@@ -300,8 +422,11 @@ export default function BudgetItemPicker({
         </div>
       )}
 
-      {/* Inline custom-item form */}
-      {addingItem && selectedCat && (
+      {/* Inline custom-item form.
+          ⚠ IT CARRIES ITS OWN CATEGORY SELECT NOW. With one search box above, there is no longer a
+          category control for it to inherit from — and an item belongs to exactly one category, so
+          the question has to be asked somewhere. */}
+      {addingItem && (
         <div className={styles.addForm}>
           <div className={styles.addFormRow}>
             <div className={styles.field} style={{ flex: 2 }}>
@@ -311,7 +436,7 @@ export default function BudgetItemPicker({
                 type="text"
                 value={newItemName}
                 onChange={e => setNewItemName(e.target.value.slice(0, 80))}
-                placeholder={`e.g. Batting Cage Rental`}
+                placeholder="e.g. Batting Cage Rental"
                 maxLength={80}
                 autoFocus
                 disabled={saving}
@@ -331,6 +456,38 @@ export default function BudgetItemPicker({
               />
             </div>
           </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Category</label>
+            <select
+              className={styles.select}
+              value={newItemCatId}
+              onChange={e => {
+                if (e.target.value === '__addcat__') {
+                  setAddingItem(false);
+                  setAddingCategory(true);
+                  setNewCatName('');
+                  setCatError('');
+                  return;
+                }
+                setNewItemCatId(e.target.value);
+              }}
+              disabled={saving}
+            >
+              <option value="">— select category —</option>
+              {localCategories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+              {allowCreateCategory && <option value="__addcat__">+ Add custom category…</option>}
+            </select>
+          </div>
+          {/* ⚠⚠ THE SIDE IS STATED, NOT ASKED (mig 246). It comes from the control this was opened
+              from — the coach was already recording an expense, or already on an income line — so
+              asking again would be asking them to answer a question they have just answered, and
+              getting a different answer is how a word ends up somewhere they cannot find it. */}
+          <p className={styles.sideNote}>
+            Saved as <strong>{SIDE_WORD[direction]}</strong> — because that is what you are recording.
+            {manageHint ? ` ${manageHint}` : ''}
+          </p>
           {saveError && <p className={styles.error}>{saveError}</p>}
           <div className={styles.addFormActions}>
             <button
@@ -345,7 +502,7 @@ export default function BudgetItemPicker({
               type="button"
               className="btn btn-lime"
               onClick={handleSaveCustomItem}
-              disabled={saving || !newItemName.trim()}
+              disabled={saving || !newItemName.trim() || !newItemCatId}
             >
               {saving ? 'Saving…' : 'Add Item'}
             </button>

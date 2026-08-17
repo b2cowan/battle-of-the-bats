@@ -266,6 +266,12 @@ export const POST = withObservability(async (req: Request,
           .insert({
             category_id: category.id, org_id: ctx!.org.id, team_id: team.id,
             name, is_default: false, is_misc: false,
+            /* ⚠ ALWAYS 'out', AND THAT IS A FACT ABOUT THIS DOOR, NOT A DEFAULT (mig 246). The
+               importer refuses money-IN lines outright — funding and sponsorship rows are filtered
+               at the read and blocked again at the write — so every line it can possibly create an
+               item for is a cost. A word invented here therefore belongs on the Expense side, and
+               the coach finds it exactly where the row that created it lives. */
+            direction: 'out',
           })
           .select('id, name')
           .single();

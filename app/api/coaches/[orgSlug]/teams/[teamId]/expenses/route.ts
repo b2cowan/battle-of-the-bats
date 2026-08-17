@@ -7,12 +7,14 @@ import {
   getRepTeamExpenses,
   createRepTeamExpense,
   createOutOfPocketExpense,
+  createPaidExpense,
   getRepTeamTagLibrary,
   getRepTeamExpenseTagsMap,
   setRepTeamExpenseTags,
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { whyPaidDateIsRefused, asMoneyAmount } from '@/lib/expense-ledger';
 import { tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
@@ -87,6 +89,8 @@ export const POST = withObservability(async (req: Request,
     paidByPlayerId = null,
     /** mig 240 — what this cost IS: an item from the taxonomy the budget is written in. */
     budgetItemId = null,
+    /** When the money actually left — `YYYY-MM-DD`, or null for a cost not yet paid (2026-08-16). */
+    expensePaidAt = null,
   } = body;
 
   if (!expenseType || !['expense', 'tournament_payable'].includes(expenseType)) {
@@ -95,8 +99,13 @@ export const POST = withObservability(async (req: Request,
   if (!description?.trim()) {
     return NextResponse.json({ error: 'description is required' }, { status: 400 });
   }
-  if (typeof amount !== 'number' || amount <= 0) {
-    return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
+  /* ⚠ ROUNDED, AND FLOORED AT A CENT — not merely "positive" (/review, 2026-08-16). A sub-cent
+     figure was a valid cost, and the reimbursement credit an out-of-pocket cost creates is skipped
+     below half a cent — so `.04` typed for `$4.00` produced a record saying a family paid it with
+     no debt to that family written anywhere, silently. See `asMoneyAmount`. */
+  const money = asMoneyAmount(amount);
+  if (money === null) {
+    return NextResponse.json({ error: 'Enter an amount of at least $0.01.' }, { status: 400 });
   }
 
   /* WHAT THIS COST IS (mig 240). Validated against the taxonomy THIS TEAM can see — platform,
@@ -117,6 +126,22 @@ export const POST = withObservability(async (req: Request,
       { error: 'Pick a category and item — they line this cost up with your budget.' },
       { status: 400 },
     );
+  }
+
+  /* WHEN THE MONEY MOVED (2026-08-16). Optional — a cost can be recorded before it is settled, and
+     a payable is settled through its own halves — but if it is given it has to be a real, past date.
+     ⚠ REFUSED ON A PAYABLE. A payable's money moves through markDepositPaid / markBalancePaid, each
+     posting its own entry; a paid stamp on the parent would claim the whole commitment settled at
+     once and leave two halves that still think they are owed. */
+  if (expensePaidAt != null) {
+    if (expenseType !== 'expense') {
+      return NextResponse.json(
+        { error: 'A payable is settled by paying its deposit and balance, not by dating the whole commitment.' },
+        { status: 400 },
+      );
+    }
+    const refusal = whyPaidDateIsRefused(expensePaidAt, tournamentToday());
+    if (refusal) return NextResponse.json({ error: refusal }, { status: 400 });
   }
 
   // Out-of-pocket (owner Call 5): a family covered this cost directly. Validate the player is on
@@ -167,7 +192,8 @@ export const POST = withObservability(async (req: Request,
     category:       linked.item ? linked.item.categoryName : (category?.trim() || null),
     budgetItemId:     linked.item?.id ?? null,
     budgetCategoryId: linked.item?.categoryId ?? null,
-    amount,
+    // The rounded figure, so the row, the ledger entry and any family credit all hold one number.
+    amount:         money,
     depositAmount:  depositAmount != null ? Number(depositAmount) : null,
     depositDueDate: depositDueDate || null,
     balanceAmount:  balanceAmount != null ? Number(balanceAmount) : null,
@@ -180,16 +206,37 @@ export const POST = withObservability(async (req: Request,
     createdBy:      ctx!.user.id,
   };
 
-  // Out-of-pocket goes through the ONE door that writes the expense and the debt it creates
-  // together — a team-paid expense takes the ordinary path. No cash ledger entry either way
-  // here: the team's account only moves when a payable/expense is marked paid.
+  /* THREE DOORS, and which one is taken is decided entirely by the two facts above.
+       · out of pocket — the expense AND the family's credit, together. No cash entry: the team's
+         money never moved, so it is created already-paid with no posting at all.
+       · already paid   — the expense AND the money leaving the books, together, dated when it
+         actually left (2026-08-16). Before this the form could not say WHEN, so nothing was ever
+         written here and every hand-entered cost arrived unpaid, counting $0 on the report until
+         someone found it and pressed Mark paid.
+       · neither        — a cost recorded but not settled, and a payable, both of which post
+         nothing until their own mark-paid action runs.
+     ⚠ Out-of-pocket wins the tie deliberately: a family paying the vendor directly settles the cost
+     without any team cash moving, so it must never also post a cash entry. */
   const { expense, reimbursementCredit } = paidByPlayer
     ? await createOutOfPocketExpense({
         expense: expenseFields,
         playerId: paidByPlayer.id,
-        creditDate: tournamentToday(),
+        /* ⚠ THE DAY THE FAMILY PAID, not the day it was typed up. It dates both the cost and the
+           credit the team now owes them, and a coach entering a fortnight-old receipt should not
+           have the debt start from today. Falls back to today when the field was left blank. */
+        creditDate: expensePaidAt ?? tournamentToday(),
       })
-    : { expense: await createRepTeamExpense(expenseFields), reimbursementCredit: null };
+    : expensePaidAt != null
+      ? {
+          expense: await createPaidExpense({
+            expense: expenseFields,
+            paidDate: expensePaidAt,
+            team: { id: team.id, orgId: team.orgId, name: team.name },
+            createdBy: ctx!.user.id,
+          }),
+          reimbursementCredit: null,
+        }
+      : { expense: await createRepTeamExpense(expenseFields), reimbursementCredit: null };
 
   if (tagIds.length > 0) {
     await setRepTeamExpenseTags(expense.id, tagIds);

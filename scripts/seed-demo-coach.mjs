@@ -457,9 +457,14 @@ async function budgetItemIds(teamId, pairs) {
     let itemId = hit?.id;
     if (!itemId) {
       itemId = randomUUID();
+      /* ⚠ EVERY WORD POINTS ONE WAY NOW (mig 246) — the column is NOT NULL and the coach picker
+         FILTERS by it, so a seeded item without one would fail the write, and one on the wrong side
+         would be a word the demo's own form cannot offer. Callers tag their money-IN pairs; a cost
+         is the default because all but a handful of them are. */
       die(`create demo budget item ${pair.item}`, (await db.from('budget_items').insert({
         id: itemId, category_id: categoryId, org_id: org.id, team_id: teamId,
         name: pair.item, is_default: false, is_misc: false,
+        direction: pair.direction ?? 'out',
       })).error);
       known.push({ id: itemId, name: pair.item, category_id: categoryId, org_id: org.id, team_id: teamId });
     }
@@ -744,8 +749,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // Ids are minted here, so lines and their phasing are two batched writes rather than twelve.
   // ⚠ Every cost line carries its ITEM (mig 240) — that is what names the row on the plan and on
   // the report, and what the team's spending is matched to.
+  /* ⚠ THE MONEY-IN PAIRS SAY SO (mig 246). A funding line and an income record name words on the
+     money-IN side; a REFUND is the exception that proves it — it points at the COST word it is
+     paying back, which is exactly what the form's refund tick box does. */
   const offSeasonItems = await budgetItemIds(team.id, [
-    ...OFFSEASON_BUDGET_LINES, ...OFFSEASON_FUNDING_LINES, ...state.expenses, ...state.moneyIn,
+    ...OFFSEASON_BUDGET_LINES, ...state.expenses,
+    ...OFFSEASON_FUNDING_LINES.map(l => ({ ...l, direction: 'in' })),
+    ...state.moneyIn.map(m => ({ ...m, direction: m.kind === 'income' ? 'in' : 'out' })),
   ]);
   const budgetLineRows = [
     ...OFFSEASON_BUDGET_LINES.map((line, i) => ({

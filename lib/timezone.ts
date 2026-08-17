@@ -48,6 +48,30 @@ function tzOffsetMinutes(utcDate: Date, timeZone: string): number {
 }
 
 /**
+ * A calendar date somebody CHOSE, as the instant to store in a `timestamptz` column.
+ *
+ * ⚠⚠ WRITING THE BARE DATE IS AN OFF-BY-ONE DAY, EVERY TIME. Postgres reads `2026-07-04` into a
+ * `timestamptz` as UTC midnight, and every reader here turns an instant back into a day through the
+ * ORG's clock (`formatStoredDate` → `orgDayKey`). Toronto is behind UTC, so that instant is still
+ * July **3rd** locally: the coach picks the 4th, saves, and the row says the 3rd. Nothing errors and
+ * the month is usually still right, which is exactly how it would survive review.
+ *
+ * ⚠ NOON, and the choice is the whole point. A date a coach picked carries no time — we know the
+ * day and nothing else — so the stamp has to sit as far from both midnights as it can. Noon is 12
+ * hours from either, which no timezone this platform serves can cross. Any hour near an edge
+ * reintroduces the same bug for some org, quietly.
+ *
+ * Use this wherever a chosen DAY is stored as an INSTANT. Where a real time is known, use
+ * `zonedWallClockToUtc` with it; where the column is a `date`, store the bare string.
+ */
+export function orgDayAsStoredInstant(
+  date: string,
+  timeZone: string = ORG_TIME_ZONE,
+): string | null {
+  return zonedWallClockToUtc(date, '12:00', timeZone);
+}
+
+/**
  * Convert a wall-clock date + time (interpreted in `timeZone`, default
  * `America/Toronto`) into a UTC ISO-8601 string (`…Z`), DST-correct.
  *

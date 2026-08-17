@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, ArrowLeft, Upload, AlertTriangle } from 'lucide-react';
+import { BarChart3, Plus, X, ChevronDown, ChevronRight, ArrowLeft, Upload, AlertTriangle, Settings2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -10,6 +10,7 @@ import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
@@ -514,6 +515,8 @@ export function BudgetPlanPanel({
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
+  /** "Manage our items" — the one door to a team's own vocabulary (mig 246). See `addLineButton`. */
+  const [itemManagerOpen, setItemManagerOpen] = useState(false);
 
   // The optional ESTIMATED TOTAL — what the coach thinks the season costs before it is all
   // itemized. Renamed from "season total" 2026-08-12: the old name said nothing about what it was
@@ -1324,10 +1327,37 @@ export function BudgetPlanPanel({
 
   // Rule 5, one name one weight: every page's main create is the FILLED LIME button. Add Line
   // was outlined while New Fundraiser one tab away was filled — the same job, two weights.
+  /** How many of the words in this team's picker the team itself created — the gate on the manage
+   *  door, since the modal can only ever change those. */
+  const ownItemCount = categories.reduce(
+    (n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0);
+
   const addLineButton = moneyCanWrite ? (
-    <button type="button" className={shared.btnPrimary} onClick={openAdd}>
-      <Plus size={15} aria-hidden /> Add Line
-    </button>
+    <>
+      <button type="button" className={shared.btnPrimary} onClick={openAdd}>
+        <Plus size={15} aria-hidden /> Add Line
+      </button>
+      {/* ⚠⚠ THE ONE DOOR TO A TEAM'S OWN VOCABULARY, AND IT LIVES HERE ON PURPOSE (Money form P2,
+          2026-08-16). Migration 246 made a word's side part of what it is and the picker filters by
+          it, so "I put it on the wrong side" needs an answer somewhere. The Budget Plan is where a
+          word first becomes a row a coach reads, it is the screen the money redesign leaves
+          untouched through P3 and P4, and the shape already exists one tab over — Transactions
+          carries "Manage tags" beside its own create, for exactly the same reason. Team Settings was
+          considered and refused: these are budget content a coach writes while working, not
+          configuration.
+          ⚠ Only when the team HAS words of its own — an empty manager is a button that teaches
+          nothing, the same gate "Manage tags" applies to its own library. */}
+      {ownItemCount > 0 && (
+        <button
+          type="button"
+          className={shared.btnSecondary}
+          onClick={() => setItemManagerOpen(true)}
+          title="Rename one of your team's own items, or move it to the other side"
+        >
+          <Settings2 size={15} aria-hidden /> Manage our items
+        </button>
+      )}
+    </>
   ) : null;
 
   /** The plan as it stands, built at click time. Not write-gated: reading is not writing. */
@@ -1970,6 +2000,14 @@ export function BudgetPlanPanel({
                 createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                 createItemMode="coach"
                 allowCreateCategory
+                /* ⚠ THE LINE'S OWN KIND DECIDES WHICH WORDS IT MAY CHOOSE FROM (mig 246). The
+                   question is already answered one field up — "This line is: Expense / Expected
+                   fundraising / Expected sponsorship" — so the picker takes the answer rather than
+                   asking a second time in different words. Through `isFundingKind`, never a
+                   literal: the whole-tree guard, and the reason a fourth kind reaches this for
+                   free. */
+                direction={isFundingKind(form.lineKind) ? 'in' : 'out'}
+                manageHint="You can rename it or move it across from Manage our items."
               />
               <p className={styles.kindHint}>
                 These name this line everywhere. Anything else worth saying goes in Notes.
@@ -2406,6 +2444,20 @@ export function BudgetPlanPanel({
             setImportMessage(message);
             void load();
           }}
+        />
+      )}
+
+      {/* ── Our own words — rename one, or move it to the other side (mig 246) ────────────
+          ⚠ RELOADS THE TAXONOMY, NOT THE PLAN. A rename changes what every line is CALLED, and the
+          plan's rows read their names from this same fetch — so `load()` is what makes the change
+          visible on the list behind the modal rather than only inside it. */}
+      {itemManagerOpen && moneyCanWrite && (
+        <BudgetItemManagerModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          categories={categories}
+          onClose={() => setItemManagerOpen(false)}
+          onChanged={() => { void load(); }}
         />
       )}
 

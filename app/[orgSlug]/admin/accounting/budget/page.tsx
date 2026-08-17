@@ -686,6 +686,10 @@ export default function OrgBudgetPage() {
                     onChange={handlePickerChange}
                     createItemEndpoint="/api/admin/accounting/budget-categories"
                     createItemMode="admin"
+                    /* ⚠ THE ORG BUDGET IS A SPENDING PLAN, so it answers this without asking (mig
+                       246). Total Budgeted → Allocated to Teams → Collected: every line here is
+                       money going out. A revenue surface would pass 'in'; there isn't one. */
+                    direction="out"
                   />
                 </div>
 

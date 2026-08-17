@@ -6068,6 +6068,112 @@ team with a finished season behind it serves for the second half.
 
 ---
 
+## §43 · The money form learns two pills, one search box, and a straight answer (money redesign, Phase 2)
+
+**Built on dev 2026-08-16 · not on production · migration 246 applied to DEV ONLY.**
+Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §2 + §10 P2. Binding form proposal: artifact `b618c784`.
+Decision mockup for the two questions the ruling left open: artifact `9efa055e`.
+**Walk §38 and §41 first** — this changes the form both of them describe.
+
+⚠ **§38 and §41 both predate this and are still owed.** Where either says the form's first question
+is *"a cost / income / money back on something"*, that switch is gone — read **two pills plus a tick
+box** (below). Where §38 says the record form asks a **category** and then an **item** in two
+dropdowns, read **one search box**. **Do not renumber either section**; nothing else in their walks
+changed.
+
+**Why this section exists:** the form asked a coach to hold three ideas at once when only two of
+them are directions, made them guess our filing system before it would show them a word, and told
+them what an edit would actually DO in four different places — none of which appeared on an ordinary
+new cost. And *Paid by*, the field that decides whether a family is owed money, sat in the open
+because nothing else announced it.
+
+⚠⚠ **The one genuinely reversible decision in here is the filter.** Every budget item now belongs
+to exactly one side, and the picker shows only that side. The owner ruled this (2026-08-16:
+*"a coach clicking income should not see expense items or vice versa"*) against a documented earlier
+decision that direction should sort and never filter. **If browsing feels narrow rather than
+focused, say so now** — the alternative (this side's words first, everything else reachable by
+typing) is in the mockup above and is a one-line change.
+
+**Fixture: `qa-money-lab`** (already seeded — do not rebuild), signed in as
+`qa-money-head@dev.local`.
+
+### A · Two pills and a tick box
+
+- [ ] **Money → Transactions → Add.** The top of the form is two buttons — **Expense** and
+      **Income** — with **This is a refund** beside them. The old three-way switch is gone.
+- [ ] Press **Income**. The refund tick **greys out**, with the reason beside it: *"A refund goes
+      against what the team paid — choose Expense."* Confirm that reads as a direction rather than
+      as a refusal.
+- [ ] Press **Expense**, tick **This is a refund**. The item list **does not change** — it still
+      offers the words you spend against, because what a refund pays back is something you spent.
+- [ ] Switching pills keeps the amount and the note, and **clears the item** (it belongs to the
+      other side now). Confirm losing the item there is acceptable rather than annoying.
+- [ ] ⚠⚠ **The three-way distinction still exists in the data.** Record one of each against the
+      same item — a cost, a refund, and a cost with **Paid by** set to a family — then open that
+      family's dues. **Exactly one credit.** This is the constraint the whole money area rests on.
+
+### B · One search box
+
+- [ ] **What is this?** is a single box, not two dropdowns. Type `dome` — *Facilities · Dome block*
+      appears under its category heading. Type `entry` — the tournament words appear.
+- [ ] Picking one still fills the **description** with the item's name, ready to type over. Typing
+      your own words first still means the pre-fill never overwrites them.
+- [ ] Type a name that doesn't exist — `Batting cage rental`. The list offers **+ Add "…" to your
+      list**; the panel that opens asks for a category and **states the side** ("Saved as an
+      expense — because that is what you are recording"). It does not ask you to choose the side.
+- [ ] On **Income**, search for a spending word — *Diamond permits*. It is **not offered**. Confirm
+      that is the behaviour you want (see the warning above).
+- [ ] Open a saved record whose item you later move to the other side (use §C below). Its own item
+      is **still shown**, marked *on the other side*. It must never blank out.
+
+### C · Manage our items
+
+- [ ] **Money → Budget Plan.** Beside **Add Line** there is now **Manage our items** — but only if
+      your team has invented at least one word of its own.
+- [ ] It lists your team's own words with an **Expense / Money in** chip, a pencil, and a
+      move-across arrow. Under them, read-only, sit the standard and club-published words with the
+      reason they can't be changed.
+- [ ] **Rename one.** The name changes on the budget line and on everything already recorded
+      against it. The modal says so before you do it.
+- [ ] **Move one across.** No money moves — check Budget vs. Actual is unchanged. The word simply
+      appears under the other pill from now on.
+- [ ] Ask whether **Budget Plan** is the right home for this door. It was chosen over Team Settings
+      (this is budget content, not configuration) and over Transactions (which becomes the register
+      in P3). Cheap to move.
+
+### D · What saving will do
+
+- [ ] Every state of the form now carries **one line above the buttons** saying what will happen,
+      in dollars. Check each: a paid cost, a cost with the date cleared, income, a refund, a
+      commitment, and **Mark paid**.
+- [ ] ⚠⚠ **The out-of-pocket one names the family.** Add a cost, open **More**, set **Paid by** to a
+      player. The line reads *"no team cash moves … the team owes <Name>'s family $X."*
+- [ ] The refund line names the **item** it reduces, and says it isn't counted as income.
+- [ ] On a commitment it still says **nothing moves** — and on one whose deposit has already been
+      paid it says the opposite, correctly.
+
+### E · Paid by folds away, and Save is just Save
+
+- [ ] **Paid by** is no longer on the open form. It's the first thing inside **More — paid by,
+      payee, tags, notes**. Confirm the label names it clearly enough to be found without opening.
+- [ ] Open a saved out-of-pocket cost. The fold **opens by itself**, and *Paid by* reads
+      *Set at creation* — it is still not changeable, and must not look like it is.
+- [ ] ⚠ **These two are a pair.** The fold is only safe because the line in §D is not collapsible.
+      If that line ever reads wrong to you, the fold should come back out.
+- [ ] The button says **Save** on both an add and an edit. On **Mark paid** it still says
+      **Mark Paid**.
+
+### F · The rename, everywhere it lands
+
+- [ ] **Budget Plan → Add Line.** The first choice reads **Expense**, not *A cost*. Its two
+      siblings are unchanged.
+- [ ] **Help → Money** describes the pills, the tick box, the search box, the side rule and
+      *Manage our items*. Nothing in it still says *A cost*.
+- [ ] **Org Budget** (club admin → Accounting → Budget) uses the same search box. It never asks
+      which side — it is a spending plan, so it answers for itself.
+
+---
+
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |
@@ -6079,6 +6185,10 @@ team with a finished season behind it serves for the second half.
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
 | Group **2D** | §8 — house-league fields + double-booking | mig **229** applied to **prod** before promoting |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |
+
+⚠ **§43 adds migration 246 to the dev-only queue** (every budget item carries a side, and the column
+is NOT NULL). It must reach production before the money form promotes, or the picker filters on a
+column half the rows do not have.
 
 ⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **229**
 (house-league venue references, 2026-08-08) is applied to **dev only** — §8's code reads the new

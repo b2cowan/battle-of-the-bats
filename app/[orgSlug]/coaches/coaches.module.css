@@ -276,6 +276,49 @@
   }
 }
 
+/* inlinePrompt — a one-question answer taking the place of the button that asked it, inside a
+   dense list row. Built for "when was this paid?" (2026-08-16): the answer is a single date, it
+   is almost always today, and a modal over a table would be more ceremony than the decision
+   deserves.
+   ⚠ THE BUTTONS ARE GRANDCHILDREN, deliberately. `.cardActionCell > button` above stretches a
+   trailing control to full width at 640 — correct for one button, wrong for a date field and two
+   actions, which must stay a row. Wrapping them in this element puts them out of that selector's
+   reach, so the phone treatment is stated here instead of fought with.
+   ⚠ The descendant selectors below are (0,1,1) and so outrank the .btnPrimary / .btnGhost
+   single-class rules declared later in this file — asserted rather than assumed, because equal
+   specificity resolving by source order is exactly how a sizing rule becomes a silent no-op. */
+.inlinePrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.inlinePrompt input {
+  /* Wide enough for a rendered date in every locale the picker offers, and no wider: this sits in
+     a table cell that has other work to do. */
+  width: 9.5rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .inlinePrompt {
+    width: 100%;
+  }
+  .inlinePrompt input {
+    flex: 1 1 8rem;
+    min-height: var(--tap-min, 44px);
+  }
+  /* The same floor the stacked row applies to a lone action — a control that is reachable on a
+     phone in one list and not in another is the worse half of the pair. */
+  .inlinePrompt button {
+    min-height: var(--tap-min, 44px);
+    padding: 0.45rem 0.7rem;
+    font-size: 0.82rem;
+  }
+}
+
 /* wrap640 — a name that is nowrap+ellipsis on a desktop row but must WRAP on a phone,
    because the truncation point arrives early enough to hide which record it is. Was
    hand-copied into two page stylesheets before being promoted here (Chunk A). */
@@ -6651,6 +6694,29 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   line-height: 1.45;
   color: var(--home-dim, var(--white-40));
 }
+
+/* ── "This is a refund", beside the two pills (Money form P2, 2026-08-16) ──────────────────
+   The tick sits UNDER the pill pair rather than inside it: it is not a third option — it modifies
+   the one that is chosen — and giving it a cell in the same grid would have said the opposite.
+   ⚠ The disabled state is a real state here, not an edge case: the tick has nothing to mean beside
+   Income, and its reason renders next to it. `.formCheckOff` dims the label so the control reads as
+   unavailable rather than merely unchecked; the sentence carries the WHY, because colour cannot. */
+.kindTickRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.85rem;
+  margin-top: 0.6rem;
+}
+.formCheckOff { color: var(--home-dim, var(--white-40)); cursor: not-allowed; }
+.formCheckOff input { cursor: not-allowed; }
+.kindTickWhy {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--warning);
+}
+.kindTickWhy strong { color: var(--warning); }
 
 /* ⚠ A LOCKED FIGURE SHOWS ITS VALUE AND ITS REASON — it is never a greyed-out input or an absence.
    A coach has to be able to read the amount they cannot change; hiding it turns "why can't I edit

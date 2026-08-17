@@ -106,7 +106,7 @@ export const PATCH = withObservability(async (req: Request,
     const kindAfter = ('lineKind' in body ? body.lineKind : existing.line_kind) as string | null;
     if (!resolved.item && !isFundingKind(kindAfter)) {
       return NextResponse.json(
-        { error: 'A cost line needs a category and item — they are what name it on your plan and your report.' },
+        { error: 'An expense line needs a category and item — they are what name it on your plan and your report.' },
         { status: 400 },
       );
     }
