@@ -300,9 +300,10 @@ describe('the look-back layer', () => {
       'utf8',
     );
     assert.match(
-      code(route), /limit: MAX_ROWS \+ 1[\s\S]{0,200}truncated = events\.length > MAX_ROWS/,
+      code(route), /limit: MAX_ROWS \+ 1[\s\S]{0,600}truncated = all\.length > MAX_ROWS/,
       'the route must ask for one MORE row than it shows, so it can tell a full page from a '
-      + 'truncated one. Reading exactly the cap makes the two indistinguishable.',
+      + 'truncated one. Reading exactly the cap makes the two indistinguishable. ⚠ It is read off '
+      + 'the RAW result (`all`), before the empty-row filter — see the sibling assertion.',
     );
     assert.match(
       seasonEnd, /practicesTruncated && \(/,
@@ -361,6 +362,82 @@ describe('the look-back layer', () => {
     assert.match(
       seasonEnd, /\?from=season-end\$\{practiceSeasonId \? `&year=/,
       'Season\'s End must send both halves — the year the row belongs to, and where it came from.',
+    );
+  });
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE FOUR DEFECTS `/review` FOUND IN THE SHELF (2026-08-16), pinned so they stay fixed.
+   *
+   * ⚠ Every one of them is a page or a row telling the coach something that is not true about
+   * WHICH SEASON, or about what a practice holds — the two things this whole phase is for. None
+   * would have shown as an error; each renders perfectly while being wrong.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  it('the shelf clears itself before refetching, so it cannot lag a season behind the page', () => {
+    assert.match(
+      code(seasonEnd),
+      /setPractices\(null\);\s*setPracticeSeasonId\(null\);\s*setPracticesTruncated\(false\);\s*fetch\(/,
+      'the practices effect must clear its state BEFORE fetching. Its `cancelled` flag only stops '
+      + 'an old answer overwriting a new one — it does nothing about the old answer already on '
+      + 'screen. Season\'s End hides the Wrapped card while refetching, so on a year change Wrapped '
+      + 'can land first and render the new season beside the PREVIOUS season\'s practices, each row '
+      + 'linking with the previous season\'s id.',
+    );
+  });
+
+  it('a row never claims a note the practice does not have', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
+      'utf8',
+    );
+    assert.match(
+      code(route), /\.filter\(e => \(e\.practicePlan\?\.blocks\.length \?\? 0\) > 0 \|\| !!e\.practiceRecap\)/,
+      'the route must drop practices that carry neither a real plan nor a recap. A plan row is '
+      + 'written the moment a coach types a GOAL — blockless — so "practice_plan IS NOT NULL" is '
+      + 'not the same question as "there is something to read here".',
+    );
+    assert.match(
+      code(route), /const truncated = all\.length > MAX_ROWS;/,
+      'truncation must be read off the RAW result. Asking the filtered list would let a couple of '
+      + 'dropped empty rows retract a truncation notice the season genuinely earned.',
+    );
+    assert.match(
+      code(seasonEnd), /p\.hasRecap\s*\?\s*'No plan written — your note about how it went'\s*:\s*'No plan written'/,
+      'the planless label must READ hasRecap rather than assume it. The flag was on the payload and '
+      + 'unused, while the label asserted a note existed.',
+    );
+  });
+
+  /**
+   * ⚠ These two pages do NOT unmount when only the `[teamId]` / `[eventId]` segment changes — the
+   * team layout renders `{children}` with no key. Every fetch on them therefore needs a generation,
+   * and the picker needs its CACHE invalidated too: it answers "have I asked?" with a null check
+   * that knows nothing about which team it asked for.
+   */
+  it('the picker’s past-season cache belongs to one team, and its fetch carries a generation', () => {
+    const editor = readFileSync(join(COACH_PAGES, 'practice', '[eventId]', 'page.tsx'), 'utf8');
+    assert.match(
+      code(editor), /pastSeqRef\.current \+= 1;\s*setPastPlans\(null\);/,
+      'the cache must reset when the team changes. Without it the "already asked" check refuses to '
+      + 'refetch and offers TEAM A\'s past practices while planning team B — and copying one writes '
+      + 'A\'s words into B\'s plan through the autosave.',
+    );
+    assert.match(
+      code(editor), /const seq = \+\+pastSeqRef\.current;[\s\S]{0,900}seq !== pastSeqRef\.current/,
+      'loadPastPlans must stamp and check a generation, like the main load\'s loadSeqRef beside it.',
+    );
+  });
+
+  it('the past-plan page cannot be painted by a request for a practice the coach has left', () => {
+    const plan = readFileSync(
+      join(COACH_PAGES, 'history', 'development', 'practices', '[eventId]', 'page.tsx'), 'utf8',
+    );
+    assert.match(
+      code(plan), /const myRun = \+\+runRef\.current;[\s\S]{0,900}runRef\.current !== myRun/,
+      'this page had no stale guard at all. Before it could be handed a year the worst case was two '
+      + 'events inside one season; with `?year=` the same race paints one season\'s plan under '
+      + 'another season\'s header and back link.',
     );
   });
 

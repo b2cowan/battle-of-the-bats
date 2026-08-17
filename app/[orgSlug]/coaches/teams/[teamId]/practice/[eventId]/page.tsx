@@ -330,12 +330,34 @@ export default function CoachPracticePlanPage({
   }
 
   /**
-   * The third source's rows, fetched the first time the tab is opened (P3 C2).
+   * ⚠⚠ **THE PAST-SEASON ROWS ARE CACHED, AND THE CACHE BELONGS TO ONE TEAM** (`/review` 2026-08-16).
+   *
+   * This page does NOT unmount when only the `[teamId]` / `[eventId]` segment changes — App Router
+   * re-renders the same leaf in place, which is why the main `load()` above carries `loadSeqRef`.
+   * The picker's cache needs the same discipline for a worse reason: `pastPlans` is keyed on
+   * nothing, so without this it survived a team switch and the "already asked" check
+   * (`pastPlans === null`) then refused to re-fetch — a coach planning team B's Tuesday would have
+   * been offered TEAM A's past practices, and copying one writes A's words into B's plan through
+   * the 900ms autosave. Two failures had to line up, and both were present: a cache with no owner,
+   * and a request with no generation.
+   */
+  const pastSeqRef = useRef(0);
+  useEffect(() => {
+    // A new team invalidates the answer AND any request still in flight for the old one.
+    pastSeqRef.current += 1;
+    setPastPlans(null);
+    setPastLoading(false);
+    setPastError('');
+  }, [orgSlug, teamId]);
+
+  /**
+   * The third source's rows, fetched the first time the tab is opened for THIS team (P3 C2).
    *
    * ⚠ Re-fetches after a FAILURE but not after a success — a coach who lost the list to a dropped
    * connection can reach it by tapping the tab again, while an ordinary reopen costs nothing.
    */
   const loadPastPlans = useCallback(async () => {
+    const seq = ++pastSeqRef.current;
     setPastLoading(true);
     setPastError('');
     try {
@@ -345,18 +367,23 @@ export default function CoachPracticePlanPage({
         throw new Error(d.error ?? 'Past seasons couldn’t be loaded');
       }
       const body: { practices?: PastSeasonPlan[] } = await res.json();
+      // ⚠ Every write below is behind the generation check, the FAILURE included: a dead request
+      // for the team the coach has left must not replace the list they are now reading, and must
+      // not put an error under it either.
+      if (seq !== pastSeqRef.current) return;
       setPastPlans(body.practices ?? []);
     } catch (e) {
-      setPastError(errorMessage(e, 'Past seasons couldn’t be loaded'));
+      if (seq === pastSeqRef.current) setPastError(errorMessage(e, 'Past seasons couldn’t be loaded'));
     } finally {
-      setPastLoading(false);
+      if (seq === pastSeqRef.current) setPastLoading(false);
     }
   }, [orgSlug, teamId]);
 
   function openCopySource(source: CopySource) {
     setCopySource(source);
     setCopyQuery('');
-    // `pastPlans === null` means never asked. An empty array is an ANSWER and is not re-asked.
+    // `pastPlans === null` means never asked FOR THIS TEAM — the effect above resets it on a switch.
+    // An empty array is an ANSWER and is not re-asked.
     if (source === 'past' && pastPlans === null && !pastLoading) void loadPastPlans();
   }
 

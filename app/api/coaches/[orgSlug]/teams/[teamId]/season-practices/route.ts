@@ -76,9 +76,28 @@ export const GET = withObservability(async (req: Request,
    * wrote no plan but sat down afterwards and said how it went produced exactly the record this
    * section exists to show.
    */
-  const events = await getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: MAX_ROWS + 1 });
-  const truncated = events.length > MAX_ROWS;
-  const shown = truncated ? events.slice(0, MAX_ROWS) : events;
+  const all = await getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: MAX_ROWS + 1 });
+
+  /**
+   * ⚠⚠ **A ROW MUST HAVE SOMETHING TO SHOW, and "the column is not null" is not the same question**
+   * (`/review` 2026-08-16). The shared read admits a practice whose `practice_plan` is non-null OR
+   * whose `practice_recap` is non-null — but a plan is stored the moment a coach types a GOAL, with
+   * no blocks at all. The practice hub says so in its own words: a coach who types "work on
+   * cut-offs" and is called away leaves a real, blockless plan behind.
+   *
+   * Such a row, with no recap either, satisfies the read and carries NOTHING a reader can open: the
+   * shelf would have rendered it as "No plan written — your note about how it went" beside a night
+   * nobody wrote a note about. Dropping it here is what makes the two labels below true by
+   * construction rather than by hope — after this filter, a row without a plan always has a recap.
+   */
+  /**
+   * ⚠ `truncated` is read off the RAW result, before the filter. Asking the filtered list whether
+   * it overflowed would let a couple of dropped empty rows pull the count back under the cap and
+   * silently retract a truncation notice the season had genuinely earned.
+   */
+  const truncated = all.length > MAX_ROWS;
+  const events = all.filter(e => (e.practicePlan?.blocks.length ?? 0) > 0 || !!e.practiceRecap);
+  const shown = events.slice(0, MAX_ROWS);
 
   // What each practice was ABOUT, in the team's own vocabulary — the same 'focus' tags the report's
   // list filters by, so the two surfaces describe a night with the same words.

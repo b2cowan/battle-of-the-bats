@@ -1,5 +1,5 @@
 'use client';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ClipboardList, Library } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -170,7 +170,21 @@ export default function CoachPastPracticePlanPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  /**
+   * ⚠⚠ **A RUN GENERATION, because this page can now cross SEASONS as well as events** (`/review`
+   * 2026-08-16). Like its siblings it does not unmount when only the `[eventId]` segment changes,
+   * and it had no guard at all — so a slow answer for the practice a coach just left could replace
+   * the one they are reading. Before C3 the worst case was two events inside one season; adding
+   * `?year=` gave the page a second caller and a second season, so the same race now paints a
+   * 2022 plan under a header and back link that say 2021 — the page disagreeing with itself about
+   * which year it is showing, which is precisely what the look-back discipline exists to prevent.
+   *
+   * ⚠ The generation is stamped INSIDE `load`, not left to whichever caller remembers a predicate —
+   * the awards page's own guard note records why an opt-in version gets forgotten.
+   */
+  const runRef = useRef(0);
   const load = useCallback(async () => {
+    const myRun = ++runRef.current;
     setLoading(true); setError('');
     try {
       const res = await fetch(
@@ -178,11 +192,15 @@ export default function CoachPastPracticePlanPage({
         + (yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''),
       );
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not open that plan.');
-      setData(await res.json());
+      const body = await res.json();
+      if (runRef.current !== myRun) return;
+      setData(body);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not open that plan.');
+      // A stale FAILURE matters as much as a stale success: a dead request for the practice the
+      // coach has left must not replace the plan they are reading with "couldn't open that".
+      if (runRef.current === myRun) setError(e instanceof Error ? e.message : 'Could not open that plan.');
     } finally {
-      setLoading(false);
+      if (runRef.current === myRun) setLoading(false);
     }
   }, [orgSlug, teamId, eventId, yearParam]);
   useEffect(() => { load(); }, [load]);

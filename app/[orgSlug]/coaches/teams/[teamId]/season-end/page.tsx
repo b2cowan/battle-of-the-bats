@@ -149,6 +149,19 @@ export default function SeasonEndPage({
   useEffect(() => {
     if (loading || !mayReadPractices || seasonStillUnderWay) return;
     let cancelled = false;
+    /**
+     * ⚠⚠ **CLEARED BEFORE THE FETCH, NOT ONLY AFTER IT** (`/review` 2026-08-16). The `cancelled`
+     * flag stops an OLD answer overwriting a NEW one; it does nothing about the old answer already
+     * on screen. The Wrapped effect beside this one hides itself with `setFetching(true)`, and the
+     * whole content block waits on that — so when the coach picks a different year from the compare
+     * list, Wrapped's answer can land first and render the new season's card with THIS state still
+     * holding the previous season's practices, and every row linking with the previous season's id.
+     * A page describing two years at once is the exact failure this page's own note warns about;
+     * the two fetches shared their INPUT (`yearParam`) but not their visible output.
+     */
+    setPractices(null);
+    setPracticeSeasonId(null);
+    setPracticesTruncated(false);
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-practices${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
       .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
       .then((json: { practices?: SeasonPractice[]; truncated?: boolean; season?: { programYearId?: string } }) => {
@@ -344,11 +357,19 @@ export default function SeasonEndPage({
                           beforehand and everything afterwards produced exactly the record this
                           section exists to show. It must never be offered under a label promising
                           a plan, so the row says which it is. Neither 404s: the route behind them
-                          refuses only a cancelled practice, a foreign season and a non-practice. */}
+                          refuses only a cancelled practice, a foreign season and a non-practice.
+
+                          ⚠ The planless label READS `hasRecap` rather than assuming it (`/review`
+                          2026-08-16). The route drops rows that carry neither, so this branch
+                          should always be a recap — but the flag was already on the payload and
+                          unused, and a label that asserts a note exists must be the one thing that
+                          checked. The fallback is deliberately quiet: it claims nothing. */}
                       <small>
                         {p.hasPlan
                           ? p.planSummary ?? 'Plan'
-                          : 'No plan written — your note about how it went'}
+                          : p.hasRecap
+                            ? 'No plan written — your note about how it went'
+                            : 'No plan written'}
                         {p.tags.length > 0 ? ` · ${p.tags.map(t => t.name).join(' · ')}` : ''}
                       </small>
                     </span>
