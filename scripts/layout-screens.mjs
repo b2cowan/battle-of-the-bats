@@ -122,7 +122,16 @@ export const SCREENS = [
   { id: 'coach-accounting',        session: 'coach', path: (c) => `${team(c)}/accounting`,                              ready: 'h1' },
   { id: 'coach-budget',            session: 'coach', path: (c) => `${team(c)}/accounting?section=budget`,           ready: 'h1' },
   { id: 'coach-budget-vs-actual',  session: 'coach', path: (c) => `${team(c)}/accounting?section=budget-vs-actual`, ready: 'h1' },
-  { id: 'coach-expenses',          session: 'coach', path: (c) => `${team(c)}/accounting?section=expenses`,         ready: 'h1' },
+  /* ⚠ ONE SCREEN BECAME TWO (Money split P1, 2026-08-16) — a DELIBERATE baseline edit, not drift.
+     `coach-expenses` measured a screen holding four sub-tabs; Transactions and Payables are now
+     separate tabs with two sub-views each, and each has to be addressed on its own or half of what
+     the old entry covered goes unmeasured.
+     ⚠ PAYABLES LANDS ON ITS SCHEDULE, which is the view a coach actually arrives at — measuring
+     `?tab=commitments` instead would prove the list nobody opens first. The commitment list is
+     covered by the sweep the moment a coach switches, and by `coach-expenses`'s successor here
+     only in its default state; that is the same limit every tabbed screen in this file has. */
+  { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=transactions`,    ready: 'h1' },
+  { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=payables`,        ready: 'h1' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.

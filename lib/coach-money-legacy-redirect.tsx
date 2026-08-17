@@ -1,5 +1,5 @@
 import { permanentRedirect } from 'next/navigation';
-import { moneyLegacyRedirectHref, type CoachMoneySection } from './coach-money-links.ts';
+import { legacyMoneyAddress, moneyLegacyRedirectHref, type CoachMoneySection } from './coach-money-links.ts';
 import type { SearchParamsRecord } from './coaches-portal-routes.ts';
 
 /**
@@ -21,6 +21,39 @@ export function moneyLegacyRedirectPage(section: CoachMoneySection) {
   }) {
     const { orgSlug, teamId } = await params;
     permanentRedirect(moneyLegacyRedirectHref(orgSlug, teamId, section, await searchParams));
+  };
+}
+
+/**
+ * The `accounting/expenses` route's own hop — TWO destinations, because the screen it named became
+ * two tabs (Money split P1, 2026-08-16).
+ *
+ * ⚠ It reads the incoming `?tab=` before choosing, and the rule for that lives in
+ * `legacyMoneyAddress` rather than here: the hub's in-page address normaliser has to make the
+ * identical decision for `?section=expenses`, and two copies of a mapping this shape is how a
+ * bookmark to the payment schedule quietly starts landing on the expenses list instead.
+ *
+ * The incoming `tab` is REPLACED, never carried: the old sub-view names do not exist on either new
+ * tab, and forwarding one would leave a panel looking for a view it has no button for.
+ */
+export function moneyLegacyExpensesRedirectPage() {
+  return async function MoneyLegacyExpensesRedirect({
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ orgSlug: string; teamId: string }>;
+    searchParams: Promise<SearchParamsRecord>;
+  }) {
+    const { orgSlug, teamId } = await params;
+    const incoming = await searchParams;
+    const raw = incoming.tab;
+    const target = legacyMoneyAddress('expenses', Array.isArray(raw) ? raw[0] : raw)!;
+    const carried: SearchParamsRecord = { ...incoming };
+    delete carried.tab;
+    permanentRedirect(moneyLegacyRedirectHref(orgSlug, teamId, target.section, {
+      ...carried,
+      ...(target.tab ? { tab: target.tab } : {}),
+    }));
   };
 }
 

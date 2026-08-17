@@ -74,7 +74,7 @@ function AllocationExplainer() {
       </div>
       <p className={`${styles.moneyKindTest} ${styles.moneyKindTestStart}`}>
         <strong>Not the same as an expense:</strong> allocations are money owed to your own club.
-        Anything you owe an outside supplier belongs on Expenses &amp; Payables.
+        Anything you owe an outside supplier belongs on Payables.
       </p>
     </>
   );

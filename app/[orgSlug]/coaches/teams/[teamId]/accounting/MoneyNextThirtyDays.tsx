@@ -14,9 +14,15 @@ interface Props {
   apiUrl: string;
   hrefs: {
     dues: string;
-    expenses: string;
+    /**
+     * ⚠ PAYABLES, NOT TRANSACTIONS (Money split P1, 2026-08-16). Every row in this panel is money
+     * that has NOT moved yet — that is what "next 30 days" means — so a row's View has to open the
+     * tab that manages what is owed. It used to open the combined screen, where the coach landed
+     * on the list of what had already been spent and had to find the payables sub-tab themselves.
+     */
+    payables: string;
     allocations?: string;
-    /** The full, unwindowed commitment list (expenses tab, schedule view). */
+    /** The full, unwindowed commitment list (Payables, schedule view). */
     fullSchedule: string;
   };
 }
@@ -173,7 +179,7 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
 
   function actionFor(row: LedgerRow): { href: string; label: string } | null {
     if (row.lane === 'dues') return { href: hrefs.dues, label: row.overdue ? 'Remind' : 'View' };
-    if (row.lane === 'payable') return { href: hrefs.expenses, label: 'View' };
+    if (row.lane === 'payable') return { href: hrefs.payables, label: 'View' };
     return hrefs.allocations ? { href: hrefs.allocations, label: 'View' } : null;
   }
 

@@ -193,7 +193,7 @@ export default function SetupOverview({ summary, hrefs, rosterHref, canWrite, sh
             apiUrl={payablesApiUrl}
             hideWhenEmpty
             /* This panel is a 30/60/90-day preview; the schedule tab is every commitment (chunk H). */
-            fullScheduleUrl={hrefs.expensesSchedule}
+            fullScheduleUrl={hrefs.payablesSchedule}
           />
         </div>
       )}

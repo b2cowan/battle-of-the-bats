@@ -20,7 +20,7 @@ import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
-import { ledgerReversalPreview, lockedFields } from '@/lib/expense-ledger';
+import { ledgerReversalPreview, paidOnDate } from '@/lib/expense-ledger';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -38,7 +38,7 @@ import type {
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
-import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { formatStoredDate, tournamentToday, orgDayKey } from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
 import {
   MONEY_IN_KIND_ROW, MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
@@ -84,7 +84,15 @@ function KindComparePanel({ cards, test }: { cards: KindCard[]; test: ReactNode 
   );
 }
 
-function KindCompare() {
+/**
+ * Expense or commitment? — under both empty states.
+ *
+ * ⚠ THE TWO NOW LIVE ON DIFFERENT TABS (Money split P1, 2026-08-16), which makes this panel MORE
+ * useful, not less: a coach who reads it on the wrong tab needs to be told where the other one is,
+ * not merely what it is called. So the quick test names the tab, and the panel takes the address of
+ * the one it is not standing on.
+ */
+function KindCompare({ otherHref, onPayables }: { otherHref: string; onPayables: boolean }) {
   return (
     <KindComparePanel
       cards={[
@@ -94,14 +102,16 @@ function KindCompare() {
           examples: 'Pizza night · a diamond you rented last week · uniforms you bought',
         },
         {
-          title: 'Payable',
+          title: 'Commitment',
           body: <>Money you&apos;ve <strong>promised but not paid</strong> — you&apos;re scheduling what&apos;s coming.</>,
           examples: 'A tournament entry due in March · a dome block · an umpire invoice',
         },
       ]}
       test={<>
-        <strong>The quick test:</strong> if it has a due date, it&apos;s a payable. Payables appear on your
-        Payment schedule; expenses don&apos;t.
+        <strong>The quick test:</strong> if it has a due date, it&apos;s a commitment — and it lives on{' '}
+        {onPayables
+          ? <>this tab. Money that has already gone out belongs on <Link href={otherHref} className={styles.linkBtn}>Transactions</Link>.</>
+          : <><Link href={otherHref} className={styles.linkBtn}>Payables</Link>, with your payment schedule.</>}
       </>}
     />
   );
@@ -144,11 +154,21 @@ function MoneyInCompare() {
   );
 }
 
-function fmtDate(s: string | null) {
-  if (!s) return '—';
-  const d = new Date(s.length === 10 ? s + 'T00:00:00' : s);
-  return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-}
+/**
+ * ⚠⚠ THE SHARED FORMATTER, NOT A LOCAL ONE (/review, 2026-08-16). This was a hand-rolled
+ * `new Date(...).toLocaleDateString()` that rendered in the VIEWER'S timezone — so a paid stamp
+ * held at org noon printed the NEXT day for anyone whose device sat at UTC+8 or later, and the
+ * screen beside it (which already used `formatStoredDate`) disagreed about the same row.
+ *
+ * It survived because `expense_paid_at` was almost always "a moment earlier today", where local and
+ * org agree. Letting a coach CHOOSE the date made every paid cost carry one, which is what turned a
+ * latent inconsistency into a wrong day on an ordinary screen.
+ *
+ * `formatStoredDate` handles both shapes this screen passes it — a bare `date` column like a due
+ * date, and a `timestamptz` like a paid stamp — resolving the second through the ORG's calendar.
+ * Keeping the name local so the call sites read the same; the behaviour is now the shared one.
+ */
+const fmtDate = (s: string | null) => formatStoredDate(s);
 
 /**
  * Where a payable stands, as one word — the summary its row shows now that the deposit/balance
@@ -185,9 +205,39 @@ function payableStatus(
   return { label: 'Scheduled', cls: styles.badgeDraft };
 }
 
-type ExpenseTab = 'expenses' | 'payables' | 'money-in' | 'schedule';
+/**
+ * WHICH OF THE TWO TABS THIS PANEL IS BEING (Money split P1, 2026-08-16).
+ *
+ * One screen used to hold four sub-tabs that divided cleanly along a line nobody had drawn:
+ * Expenses and Money in record what HAPPENED, while Payables and the Payment schedule manage what
+ * is OWED. The split makes that line the tab boundary.
+ *
+ * ⚠ THE FACE IS A PROP, NOT A SECOND FILE, and that is a deliberate trade. Both tabs share the
+ * record form, the taxonomy picker, the money-tag library, the importer and every fetch — two
+ * files would mean two copies of the one form this release turns on. The cost is that a coach who
+ * visits both tabs loads the same data twice; the hub only mounts a tab that is actually opened,
+ * so nobody pays for a tab they never open.
+ */
+type MoneyFace = 'transactions' | 'payables';
+
+/** The sub-views, per face. `expenses`/`money-in` live on Transactions; `commitments`/`schedule`
+ *  on Payables. One union rather than two so the `?tab=` reader stays a single check. */
+type ExpenseTab = 'expenses' | 'money-in' | 'commitments' | 'schedule';
+
+const FACE_TABS: Record<MoneyFace, ExpenseTab[]> = {
+  transactions: ['expenses', 'money-in'],
+  /* ⚠ SCHEDULE FIRST, AND IT IS THE DEFAULT (plan §0, recommended and adopted). A coach opening
+     Payables is asking "what do we owe and when" — a dated list answers that; a list of
+     commitments in entry order does not. Commitments is where a record is MANAGED, which is the
+     second thing you want, not the first. */
+  payables: ['schedule', 'commitments'],
+};
 
 type ScheduleFilter = 'unpaid' | 'paid' | 'all';
+
+/** The three ways money-out turns paid. One union, because the settle door and the inline prompt
+ *  both have to name one and a fourth would otherwise be added to only one of them. */
+type MarkPaidAction = 'markExpensePaid' | 'markDepositPaid' | 'markBalancePaid';
 
 /** A commitment on the schedule tab: exactly what the payables API returns, plus which lane it
  *  came from. Reuses `PayableItem` so the hub panel and this tab can't drift apart. */
@@ -219,7 +269,23 @@ const BLANK_RECORD = {
   paymentMethod: '',
   /** Out-of-pocket (owner Call 5, mig 234) — '' = the team paid, the usual case. Expense-only. */
   paidByPlayerId: '',
-  /** Payable-only, all four. */
+  /**
+   * A commitment's ONE due date — the un-split case (Money split P1, 2026-08-16).
+   *
+   * ⚠⚠ THE FORM PROMISED THIS FIELD AND DID NOT HAVE IT. The split group's note read "Leave this
+   * closed to record one amount due on one date", but with it closed there was NO date input at
+   * all: the commitment saved with no due date, showed "No schedule", never reached the payment
+   * schedule and had no Mark paid button anywhere. A coach could record what the team owed and
+   * then never be reminded of it.
+   *
+   * ⚠ IT IS STORED AS THE DEPOSIT HALF, which is not a workaround — it is the convention the bulk
+   * importer has always used for exactly this row ("No explicit split → the whole amount is due on
+   * the one date, stored as the deposit half"). Reusing it means a hand-typed commitment and an
+   * imported one are the same record, so the schedule, the exports and every sum keep working with
+   * nothing new in the data.
+   */
+  dueDate: '',
+  /** Commitment-only, all four — the deposit/balance split when the coach opens it. */
   depositAmount: '',
   depositDueDate: '',
   balanceAmount: '',
@@ -227,6 +293,9 @@ const BLANK_RECORD = {
   /** Money-in only (mig 243): the day it ARRIVED, and — on a refund — who paid it back. */
   receivedDate: '',
   receivedFrom: '',
+  /** A paid cost's own date (2026-08-16) — the money-out twin of `receivedDate`. Expense-only:
+   *  a payable is settled through its halves, each with its own due and paid date. */
+  paidDate: '',
 };
 
 /**
@@ -293,12 +362,16 @@ const FORM_COPY: Record<FormKindTag, {
     statedFact: 'An expense — money the team has already spent.',
     addLabel: 'Add Expense',
   },
+  /* ⚠ THE RECORD IS A COMMITMENT; THE TAB IS STILL PAYABLES (plan §6 + prompt §3, 2026-08-16).
+     "Commitment" is what a coach calls the thing and what the door says; "Payables" is the
+     established in-product word for the WORKSPACE, kept because the schedule, the exports, the
+     help guide and the QA ledger all speak it and renaming those buys nothing. */
   payable: {
-    editTitle: 'Edit payable',
-    noun: 'payable',
+    editTitle: 'Edit commitment',
+    noun: 'commitment',
     examples: 'A tournament entry due in March · a dome block · an umpire invoice',
-    statedFact: 'A payable — money committed but not yet paid.',
-    addLabel: 'Add Payable',
+    statedFact: 'A commitment — money the team owes but has not paid.',
+    addLabel: 'Add Commitment',
   },
   income: {
     editTitle: 'Edit income',
@@ -316,11 +389,23 @@ const FORM_COPY: Record<FormKindTag, {
   },
 };
 
-/** The sub-tab a coach is standing on decides how the form opens. */
+/** The sub-view a coach is standing on decides how the form opens. On either Payables view that is
+ *  always a commitment — the tab has exactly one kind of record in it, which is the point of it. */
 function kindForTab(tab: ExpenseTab): { kind: EntryKind; timing: CostTiming } {
   if (tab === 'money-in') return { kind: 'income', timing: 'paid' };
-  if (tab === 'payables') return { kind: 'expense', timing: 'payable' };
+  if (tab === 'commitments' || tab === 'schedule') return { kind: 'expense', timing: 'payable' };
   return { kind: 'expense', timing: 'paid' };
+}
+
+/**
+ * Does this commitment carry a deposit/balance split, or is it one amount on one date?
+ *
+ * ⚠ THE BALANCE HALF IS THE TELL, not "has any half at all". The un-split case is stored as the
+ * deposit alone (see `dueDate` on `BLANK_RECORD`), so testing for a deposit would call every
+ * simple commitment a split one and hide its due date behind a group the coach never opened.
+ */
+function hasDepositBalanceSplit(e: Pick<RepTeamExpense, 'balanceAmount' | 'balanceDueDate'>): boolean {
+  return e.balanceAmount != null || !!e.balanceDueDate;
 }
 
 /** Turn a saved record back into form strings, for Edit. */
@@ -340,6 +425,15 @@ function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
     depositDueDate: e.depositDueDate ?? '',
     balanceAmount: num(e.balanceAmount),
     balanceDueDate: e.balanceDueDate ?? '',
+    /* The un-split commitment reads its one due date back off the deposit half it was stored in.
+       A split one leaves this empty — its dates are the two halves' own, and the form hides this
+       field entirely rather than showing a third date with nothing to mean. */
+    dueDate: hasDepositBalanceSplit(e) ? '' : (e.depositDueDate ?? ''),
+    /* ⚠ THE STORED INSTANT BECOMES THE ORG'S DAY for the picker (2026-08-16). `expense_paid_at` is
+       a timestamptz held at org noon; a `<input type="date">` wants `YYYY-MM-DD`, and slicing the
+       raw ISO string would hand it the UTC day — the same off-by-one this release exists to close,
+       arriving through the edit form instead of the write. */
+    paidDate: e.expensePaidAt ? orgDayKey(e.expensePaidAt) : '',
   };
 }
 
@@ -357,22 +451,39 @@ function formFromMoneyIn(m: RepTeamMoneyIn): typeof BLANK_RECORD {
   };
 }
 
-/* Which figures on a saved record can no longer change comes from `lockedFields`
-   (lib/expense-ledger.ts) — the same function the API refuses with, so the lock a coach SEES and
-   the lock the server ENFORCES cannot drift. This panel reads it twice: to render the lock with
-   its reason, and to leave locked fields out of the save entirely. */
+/* ⚖ NOTHING ON A SAVED RECORD IS READ-ONLY ANY MORE (owner ruling 2026-08-16). This used to read a
+   shared lock predicate twice — once to grey a posted figure, once to strip it out of the save —
+   and both copies are gone with the rule. The server moves the team's books to match whatever it is
+   given, so the form's job is to say what a change will DO, not to prevent it. */
 
-export function ExpensesPayablesPanel({
-  params: paramsPromise,
-  embedded = false,
-  tabActive = true,
-}: {
+interface MoneyPanelProps {
   params: Promise<{ orgSlug: string; teamId: string }>;
   /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
   embedded?: boolean;
   /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
   tabActive?: boolean;
-}) {
+}
+
+/** The Transactions tab — what has already happened. Two views: the Expenses list and Money in.
+ *  ⚠ P3 REPLACES THIS FACE ENTIRELY with the register (one dated book, running balance). The two
+ *  lists are carried across unreshaped on purpose, so P1 changes where things live and P3 changes
+ *  what they look like — never both in one release. */
+export function TransactionsPanel(props: MoneyPanelProps) {
+  return <MoneyRecordsPanel {...props} face="transactions" />;
+}
+
+/** The Payables tab — what the team owes. The payment Schedule (its landing view) and the
+ *  commitment list, both moved whole from the screen they used to share with the two above. */
+export function PayablesPanel(props: MoneyPanelProps) {
+  return <MoneyRecordsPanel {...props} face="payables" />;
+}
+
+function MoneyRecordsPanel({
+  params: paramsPromise,
+  embedded = false,
+  tabActive = true,
+  face,
+}: MoneyPanelProps & { face: MoneyFace }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
@@ -380,7 +491,16 @@ export function ExpensesPayablesPanel({
   const [expenses, setExpenses] = useState<RepTeamExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<ExpenseTab>('expenses');
+  const [tab, setTab] = useState<ExpenseTab>(FACE_TABS[face][0]);
+
+  /* ⚠ LEAVING THE TAB IS A CANCEL (/review, 2026-08-16). An open "when was this paid?" prompt is
+     anchored to a row id, so switching to Payables and back used to reopen it — with its old date
+     — on a visit the coach had started for another reason. Cleared through ONE wrapper rather than
+     at each `setTab` call site, because the point of failure is the call site added next. */
+  const goToTab = useCallback((next: ExpenseTab) => {
+    setPaidPrompt(null);
+    setTab(next);
+  }, []);
 
   // Structured categories (owner decision 2026-07-08: free-text retired). The picker
   // shares the budget taxonomy so Budget vs. Actual's name-match join can't misfire.
@@ -417,11 +537,37 @@ export function ExpensesPayablesPanel({
   const [editingMoneyIn, setEditingMoneyIn] = useState<RepTeamMoneyIn | null>(null);
   const [form, setForm] = useState(BLANK_RECORD);
   const [formPayee, setFormPayee] = useState<PayeeSelection | null>(null);
+  /**
+   * Is the deposit/balance split open on the commitment form?
+   *
+   * ⚠ CONTROLLED HERE RATHER THAN INSIDE A `CoachFormDisclosure`, which is what it used to be. The
+   * plain "Due date" field has to DISAPPEAR when the split opens — two halves carry their own
+   * dates, and a third date beside them would mean nothing — and a disclosure that owns its own
+   * open state cannot tell the field outside it to go away.
+   */
+  const [formSplit, setFormSplit] = useState(false);
+  /**
+   * The commitment — or the half — this form is SETTLING, when it was opened by Mark paid.
+   *
+   * ⚠⚠ SETTLING IS A PATCH ON THE EXISTING RECORD, NEVER A NEW ONE (plan §8). A transaction and a
+   * commitment both carrying the same $600 is the double-count the whole split exists to prevent,
+   * so this holds the record's own id and the action that settles it; save sends the coach's edits
+   * and the mark-paid action in ONE request, which the route already handles as a pair.
+   */
+  const [settling, setSettling] = useState<
+    { expenseId: string; action: MarkPaidAction; describes: string; half: 'deposit' | 'balance' | null } | null
+  >(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  /** Was the last save refused for a future date? Its own flag rather than a longer sentence,
+   *  because the answer needs a LINK to the commitment door and a thrown message cannot carry one. */
+  const [futureDateRefused, setFutureDateRefused] = useState(false);
   const [marking, setMarking] = useState<Record<string, boolean>>({});
+  /** The row being asked "when was this paid?", and the answer so far. One at a time: the question
+   *  replaces that row's Mark Paid button rather than opening a dialog over the table. */
+  const [paidPrompt, setPaidPrompt] = useState<{ id: string; action: string; date: string } | null>(null);
 
   // Money tags (Phase 3): the team + org-shared expense-tag library, which tags each expense
   // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
@@ -434,16 +580,16 @@ export function ExpensesPayablesPanel({
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
-  // Drives the form's two disclosures (Batch 2, P0 #8). Read on mount by each group, so a form
-  // pre-filled with a schedule or a bookkeeping detail — an EDIT, most often — opens it by itself
-  // rather than hiding what the coach came to change.
-  const scheduleSet = Boolean(
-    form.depositAmount || form.depositDueDate || form.balanceAmount || form.balanceDueDate,
-  );
+  // Drives the form's Details disclosure (Batch 2, P0 #8). Read on mount, so a form pre-filled
+  // with a bookkeeping detail — an EDIT, most often — opens it by itself rather than hiding what
+  // the coach came to change. (The deposit/balance split used to be one of these and is now
+  // controlled by `formSplit` — see the note there.)
   const detailsSet = Boolean(
     form.paymentMethod || form.notes || formPayee || formTags.length,
   );
-  const locks = lockedFields(editing);
+  /* When this record last posted money, if it has. Drives the "changing this moves the books"
+     sentence and whether the paid date is correctable — it no longer gates anything. */
+  const editedPaidOn = paidOnDate(editing);
   /* ⚠ THE SAVED RECORD WINS when there is one. The switch is hidden while editing, so `formKind`
      could only ever go stale there — deriving from the record instead means the form cannot render
      a payable's fields for an expense (or vice versa) because a state setter was forgotten. In add
@@ -453,9 +599,31 @@ export function ExpensesPayablesPanel({
     : editing ? 'expense'
     : formKind;
   const isMoneyInForm = entryKind !== 'expense';
-  const isPayableForm = editing
-    ? editing.expenseType === 'tournament_payable'
-    : entryKind === 'expense' && formTiming === 'payable';
+  /** Opened by Mark paid — the money door standing over a commitment, not the commitment's form. */
+  const isSettling = !!settling;
+  /**
+   * WHAT THE FORM IS DOING, resolved once (/simplify, 2026-08-16).
+   *
+   * ⚠ THE PRIORITY IS THE POINT, and it was being re-derived at four call sites — the modal title,
+   * its subtitle, the Delete gate and the save button each spelled out `settling ? … : editing ? …`
+   * for themselves. A settle sets `editing` too (it stands over a saved record), so ANY site that
+   * tested `editing` first silently got the wrong answer; four copies is four chances to write it
+   * in the wrong order, and a fifth mode would need all four found. Same lesson as `FORM_COPY`
+   * above and `resetForm` below.
+   */
+  const formMode: 'settle' | 'edit' | 'add' =
+    settling ? 'settle' : (editing || editingMoneyIn) ? 'edit' : 'add';
+  /**
+   * ⚠ A SETTLE WEARS THE MONEY FORM, NOT THE COMMITMENT FORM (plan §3). `editing` holds a payable
+   * while settling one, so reading the record alone would have drawn due-date fields and a
+   * deposit/balance split over a question that is only ever "how much left, and when?". The
+   * commitment's own fields are one Cancel away, on its row.
+   */
+  const isPayableForm = isSettling
+    ? false
+    : editing
+      ? editing.expenseType === 'tournament_payable'
+      : entryKind === 'expense' && formTiming === 'payable';
   /** The one place the four-way fork is resolved; every label below reads from `copy`. */
   const formTag: FormKindTag = entryKind !== 'expense' ? entryKind : isPayableForm ? 'payable' : 'expense';
   const copy = FORM_COPY[formTag];
@@ -488,10 +656,18 @@ export function ExpensesPayablesPanel({
 
      ⚠ WHEN EDITING, "dirty" IS MEASURED AGAINST THE SAVED RECORD, not against blank. Comparing an
      edit form to BLANK_RECORD would call every edit dirty the instant it opened — including one the
-     coach opened to read and closed untouched — and the guard would cry wolf until it was ignored. */
-  const formBaseline = editingMoneyIn ? formFromMoneyIn(editingMoneyIn)
-    : editing ? formFromExpense(editing)
-    : BLANK_RECORD;
+     coach opened to read and closed untouched — and the guard would cry wolf until it was ignored.
+
+     ⚠⚠ THE BASELINE IS WHAT THE FORM OPENED WITH, not a re-derivation of it (/review, 2026-08-16).
+     Re-deriving from the record was already wrong for anything an opener PRE-FILLS, and the guard
+     had been crying wolf for exactly that reason: every Add form seeds today's date, and a settle
+     seeds the half's amount and today's date — none of which appear in `BLANK_RECORD` or in
+     `formFromExpense`, so the form read as dirty before a single keystroke. A coach opening Mark
+     paid, thinking better of it and pressing Cancel got "Discard this commitment?" over a form
+     they had not touched. Recording the opening state makes "dirty" mean what it says, whatever a
+     future opener decides to pre-fill. */
+  const [formOpenedWith, setFormOpenedWith] = useState(BLANK_RECORD);
+  const formBaseline = formOpenedWith;
   const baselineTags = editing ? (tagsByExpenseId[editing.id] ?? []) : [];
   const formDirty = touched(form, formBaseline)
     || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
@@ -510,9 +686,24 @@ export function ExpensesPayablesPanel({
     setEditing(null);
     setEditingMoneyIn(null);
     setForm(BLANK_RECORD);
+    // The guard's reference point resets with the form it describes — an opener that pre-fills
+    // overwrites it a line later; anything that does not is genuinely comparing against blank.
+    setFormOpenedWith(BLANK_RECORD);
     setFormTags([]);
     setFormPayee(null);
     setConfirmDelete(false);
+    /* Both new pieces of form state clear with everything else, for the reason this function
+       exists: a settle left half-finished must not turn the NEXT record a coach opens into a
+       payment against the commitment they walked away from. */
+    setSettling(null);
+    setFormSplit(false);
+    setFutureDateRefused(false);
+    /* ⚠ THE ROW PROMPT CLEARS WITH EVERYTHING ELSE (/review, 2026-08-16). It was left out when it
+       was added, and this function exists precisely to stop state persisting into the next record:
+       a coach who opened "when was this paid?" on one row, went and added a different cost, then
+       saved, found the confirm box reopened on the first row afterwards — holding a date they had
+       typed before doing something else entirely. */
+    setPaidPrompt(null);
   }
 
   /** Open the form to ADD, opening on whatever the current sub-tab is about (Q8). */
@@ -520,9 +711,44 @@ export function ExpensesPayablesPanel({
     resetForm();
     setFormKind(opening.kind);
     setFormTiming(opening.timing);
-    /* An arrival is dated the day it landed, and that is almost always today — pre-filled through
-       the ORG's clock, never the runtime's, or a coach entering after 8 PM Eastern gets tomorrow. */
-    setForm(f => ({ ...f, receivedDate: tournamentToday() }));
+    /* An arrival is dated the day it landed, and a payment the day it left — almost always today,
+       either way. Pre-filled through the ORG's clock, never the runtime's, or a coach entering
+       after 8 PM Eastern gets tomorrow.
+       ⚠ ONLY THE DATE THIS FORM WILL ACTUALLY SHOW. Seeding both put a paid date on the commitment
+       door, which does not render one — invisible state that still counted as a change. */
+    const seeded = {
+      ...BLANK_RECORD,
+      ...(opening.kind !== 'expense' ? { receivedDate: tournamentToday() } : {}),
+      ...(opening.kind === 'expense' && opening.timing === 'paid' ? { paidDate: tournamentToday() } : {}),
+    };
+    setForm(seeded);
+    setFormOpenedWith(seeded);
+    setSaveError('');
+    setFormOpen(true);
+  }
+
+  /**
+   * Everything that is true of opening a SAVED record, whichever door was used.
+   *
+   * ⚠ ONE PLACE, TWO CALLERS (/simplify, 2026-08-16). Edit and settle repeated five identical
+   * setup lines with the settle's own two dropped in the middle — which is the shape `resetForm`
+   * already carries a warning about one screen up: the next field added to "open a record" gets
+   * remembered in one of them and quietly persists stale state in the other. The caller supplies
+   * only what actually differs: the form values, and (on a settle) what is being settled.
+   */
+  function openSavedRecord(e: RepTeamExpense, values: typeof BLANK_RECORD) {
+    resetForm();
+    setEditing(e);
+    /* ⚠ THE VALUES COME IN so the form and the guard's baseline are set from ONE object. Letting
+       the caller `setForm` afterwards is how a settle's pre-filled amount ended up counting as an
+       unsaved change: two writes, one of them forgotten. */
+    setForm(values);
+    setFormOpenedWith(values);
+    // Open the split for a commitment that has one, so nothing already recorded is hidden from
+    // the coach who came here to change it — the rule every disclosure on this form follows.
+    setFormSplit(hasDepositBalanceSplit(e));
+    setFormTags(tagsByExpenseId[e.id] ?? []);
+    setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
     setSaveError('');
     setFormOpen(true);
   }
@@ -530,13 +756,37 @@ export function ExpensesPayablesPanel({
   /** Open the form to EDIT a saved record. Type is stated, never switchable (owner ruling) — which
    *  is why `formKind` is not set here: `entryKind` derives it from the record itself. */
   function openEdit(e: RepTeamExpense) {
-    resetForm();
-    setEditing(e);
-    setForm(formFromExpense(e));
-    setFormTags(tagsByExpenseId[e.id] ?? []);
-    setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
-    setSaveError('');
-    setFormOpen(true);
+    openSavedRecord(e, formFromExpense(e));
+  }
+
+  /**
+   * Mark paid, THROUGH THE MONEY DOOR (plan §3, ruled 2026-08-16).
+   *
+   * Opens *Add money* already filled in from the commitment — what it is for, how much, what it is
+   * called — and asks the one thing the record cannot know: when the money actually left. Saving
+   * settles the commitment; it does not add a row beside it.
+   *
+   * ⚠ THE HALF DECIDES THE AMOUNT. A $600 entry paid as a $200 deposit and a $400 balance settles
+   * in two goes, and the form must open showing the $200 — pre-filling the record's total would
+   * invite a coach to confirm a figure four hundred dollars larger than the payment they made.
+   */
+  function openSettle(e: RepTeamExpense, half: 'deposit' | 'balance' | null) {
+    const halfAmount = half === 'deposit' ? e.depositAmount
+      : half === 'balance' ? e.balanceAmount
+      : null;
+    openSavedRecord(e, {
+      ...formFromExpense(e),
+      // Falls back to the record's own total, matching what the server posts when a half carries
+      // no amount of its own — the figure on screen is then the figure that reaches the books.
+      amount: String(halfAmount ?? e.amount),
+      paidDate: tournamentToday(),
+    });
+    setSettling({
+      expenseId: e.id,
+      action: half === 'deposit' ? 'markDepositPaid' : half === 'balance' ? 'markBalancePaid' : 'markExpensePaid',
+      describes: half ? `${e.description} ${half}` : e.description,
+      half,
+    });
   }
 
   /** The same door for an arrival. Its kind is stated too — income and money back are not two
@@ -544,7 +794,9 @@ export function ExpensesPayablesPanel({
   function openEditMoneyIn(m: RepTeamMoneyIn) {
     resetForm();
     setEditingMoneyIn(m);
-    setForm(formFromMoneyIn(m));
+    const values = formFromMoneyIn(m);
+    setForm(values);
+    setFormOpenedWith(values);
     setSaveError('');
     setFormOpen(true);
   }
@@ -570,11 +822,20 @@ export function ExpensesPayablesPanel({
     setLoading(true);
     setError('');
     try {
+      /* ⚠ PAYABLES DOES NOT READ THE ARRIVALS (/simplify, efficiency lens, 2026-08-16). The two
+         tabs are two mounted instances of this component, so every fetch here runs twice for a
+         coach who opens both — and once both are mounted, EVERY save re-runs them all in both,
+         for the rest of the session. Money in has no reader on the Payables face: it renders no
+         arrivals list, no arrivals export, and its form is always a commitment, so the derived-row
+         warning that reads `derivedKeys` cannot fire either. Skipping it there halves the
+         duplication this split actually introduced. The other three are genuinely needed by both. */
       const [res, catRes, planRes, inRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
         fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in`),
+        face === 'transactions'
+          ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-in`)
+          : null,
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
@@ -583,7 +844,7 @@ export function ExpensesPayablesPanel({
       setTagsByExpenseId(data.tagsByExpenseId ?? {});
       /* Best-effort, like the taxonomy beside it: a money-in read that fails must not blank the
          expenses list a coach came here for. The tab shows its own empty state instead. */
-      if (inRes.ok) {
+      if (inRes?.ok) {
         const inData = await inRes.json();
         setMoneyIn(inData.moneyIn ?? []);
         setDerivedKeys(new Set<string>(inData.derivedKeys ?? []));
@@ -612,7 +873,10 @@ export function ExpensesPayablesPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+    // `face` decides whether the arrivals fetch runs at all, so it belongs here — a panel is one
+    // face for its whole life, so this never actually re-fires; leaving it out would just be a lie
+    // to the next reader (and to the linter).
+  }, [orgSlug, teamId, face]);
 
   // Re-read (never remount) when the hub's Import menu commits payables while this panel is
   // mounted but off-screen — an in-progress expense form on another tab must survive it.
@@ -668,18 +932,28 @@ export function ExpensesPayablesPanel({
     }
   }, [orgSlug, teamId]);
 
-  useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule]);
+  /* ⚠⚠ THE SCHEDULE HAS TO WATCH THE REVISION TOO (/review, 2026-08-16). This fired only on a
+     CHANGE of sub-view, so the one screen a coach reads to answer "what is coming due" could sit
+     there stale: Payables now OPENS on the schedule, and the hub's Import ▾ — reachable from any
+     tab — brings in a whole season of commitments and bumps the revision. The list beside it
+     refreshed; this table did not, until the coach happened to switch sub-views and back. Silent
+     stale money on the screen whose entire job is to be current. */
+  useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule, moneyRevision]);
 
   // ?tab=schedule — where a Scheduled cell in the month grid (or the Money hub's
   // "See full schedule" link) lands. Reactive on the search param, not mount-only: under
   // the Money hub this panel can stay mounted across visits, so revisiting with the
   // param freshly set (e.g. clicking "See full schedule" a second time) needs to jump
   // the sub-tab again, not silently do nothing because it already fired once before.
+  /* ⚠⚠ EACH FACE ANSWERS ONLY TO ITS OWN VIEW NAMES (Money split P1, 2026-08-16). Transactions and
+     Payables are two mounted panels reading the SAME `?tab=` key, so an unfiltered reader would
+     have Transactions try to jump to `schedule` — a view it has no button for — leaving it on a
+     sub-view the coach cannot see or leave. Gating on the face's own list makes a param meant for
+     the other tab a no-op here, which is exactly what it should be. */
   const wantedTab = seasonSearchParams.get('tab');
   useEffect(() => {
-    if (wantedTab === 'schedule' || wantedTab === 'payables' || wantedTab === 'expenses'
-      || wantedTab === 'money-in') setTab(wantedTab);
-  }, [wantedTab]);
+    if (wantedTab && (FACE_TABS[face] as string[]).includes(wantedTab)) goToTab(wantedTab as ExpenseTab);
+  }, [wantedTab, face]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
   // select it immediately. Adds it to the loaded library so it shows up without a full reload.
@@ -757,6 +1031,7 @@ export function ExpensesPayablesPanel({
 
   async function saveRecord() {
     setSaveError('');
+    setFutureDateRefused(false);
     setSaving(true);
     try {
       if (isMoneyInForm) {
@@ -778,6 +1053,41 @@ export function ExpensesPayablesPanel({
       const isPayable = isPayableForm;
       const amount = parseFloat(form.amount);
       if (!form.description.trim()) throw new Error('Description is required');
+      /* ⚠⚠ A COMMITMENT NEEDS A DUE DATE, and this is the promise the form used to break. The old
+         split group said "leave this closed to record one amount due on one date" while offering
+         no such date — so a commitment saved that way reached the schedule, the Overview's next-30
+         panel and every reminder as nothing at all. An unscheduled commitment is a note to self,
+         not a payable. */
+      if (isPayable && !formSplit && !form.dueDate) {
+        throw new Error(editing
+          // A record that never had a date is the very state this field exists to end — say that,
+          // rather than repeating the generic prompt at someone who did not create the gap.
+          ? 'This commitment has never had a due date, so it has never reached your payment schedule. Add one to save it.'
+          : 'When is this due? A commitment without a date never reaches your payment schedule.');
+      }
+      if (isPayable && formSplit && !form.depositDueDate && !form.balanceDueDate) {
+        throw new Error('Give the deposit or the balance a due date — that is what puts them on your payment schedule.');
+      }
+      /* ⚠⚠ A SETTLED SPLIT CANNOT GO BACK TO ONE AMOUNT (/review, 2026-08-16, Critical — found in
+         this release, not inherited).
+         Closing the split rewrites the deposit to the TOTAL (see `commitmentSchedule`), which is
+         right on a commitment where nothing has moved and catastrophic on one where the deposit has
+         posted: a $600 entry with a PAID $200 deposit and a $400 balance would have restated that
+         deposit as $600 and `syncExpenseBooksForEdit` would have moved the books by $400 — silently,
+         under a banner still promising "nothing moves". The mirror case was already safe only by
+         luck: clearing a PAID balance is refused server-side because it arrives as null, while
+         CHANGING a paid deposit's figure is an ordinary edit the server has no reason to question.
+         So the guard belongs here, on the shape change, not on the figure.
+         ⚠ It fires ONLY on collapsing a record that IS split. An un-split commitment whose one
+         payment has posted stays fully editable — that is the standing no-read-only ruling, and
+         restating its amount is a correction the books are meant to follow. */
+      if (isPayable && editing && hasDepositBalanceSplit(editing) && !formSplit
+        && (editing.depositPaidAt || editing.balancePaidAt)) {
+        throw new Error(
+          'Part of this has already been paid, so it can’t go back to one amount on one date. '
+          + 'Reopen the split to change the amounts, or delete this and enter it again.',
+        );
+      }
       /* ⚠ THE ASTERISK ON "What is this?" HAS TO MEAN SOMETHING. It was drawn as required and the
          comment above the field asserted it was, but nothing checked — so a coach could save a cost
          with no category and no item at all, and it landed in the "Not itemized" bucket this whole
@@ -790,14 +1100,31 @@ export function ExpensesPayablesPanel({
         throw new Error(isPayable ? 'Enter a valid total amount' : 'Enter a valid amount');
       }
 
+      /* ⚠⚠ A DATE IN THE FUTURE IS NOT A PAYMENT (plan §3, ruled 2026-08-16). *Add money* records
+         what HAPPENED — the whole reason the split exists — so a coach reaching for it to say
+         "we've agreed to pay this in March" is on the wrong screen, and the honest answer names
+         the right one rather than saving a payment that has not occurred.
+         ⚠ The picker's `max` already blocks the calendar, so this catches the TYPED date, which is
+         how the field is filled on a desktop. The server refuses it too; this is the courtesy, and
+         the only place that can offer the door as a link. */
+      if (!isPayable && form.paidDate && form.paidDate > tournamentToday()) {
+        setFutureDateRefused(true);
+        throw new Error(settling
+          ? 'That date is in the future — a payment can only be recorded once the money has left.'
+          : 'That hasn’t happened yet.');
+      }
+      if (settling && !form.paidDate) {
+        throw new Error('When did the money leave? That date is what puts this in the right month.');
+      }
+
       const common = {
         description:   form.description.trim(),
         category:      form.category.trim() || null,
         /* mig 240 — what the cost IS. The server derives the text category from the item, so the
            two keys the report reads can never disagree about one row.
            ⚠ SENT ON EVERY SAVE, INCLUDING AN EDIT OF A PAID RECORD. Re-filing a cost against the
-           right item moves no money and posts nothing, so it is deliberately not one of the
-           figures `lockedFields` freezes — see the API route, which owns that ruling. */
+           right item moves no money and posts nothing — which is why it was editable even under the
+           old figure lock, and is unremarkable now that the figures are too. */
         budgetItemId: form.budgetItemId || null,
         notes:         form.notes.trim() || null,
         paymentMethod: form.paymentMethod.trim() || null,
@@ -807,18 +1134,67 @@ export function ExpensesPayablesPanel({
       };
       const num = (v: string) => (v ? parseFloat(v) : null);
 
-      /* An edit sends only what the coach could actually change. A locked figure is OMITTED rather
-         than echoed back unchanged: the server refuses any locked field it is given, so resending
-         the current amount would turn "I fixed a typo in the description" into a rejection. */
+      /* ⚖ AN EDIT NOW SENDS EVERY FIGURE (owner ruling 2026-08-16). This used to omit anything that
+         had posted, because the server refused it — echoing back an unchanged amount would have
+         turned "I fixed a typo in the description" into a rejection. Nothing refuses now: the
+         server moves the team's books to match whatever it is given, so there is no send-filter
+         left to keep in step with a lock rule, which is one fewer copy of a rule that used to live
+         in three places and failed silently in this one. */
+      /**
+       * A commitment's schedule, as the record actually stores it.
+       *
+       * ⚠⚠ ONE AMOUNT ON ONE DATE IS THE DEPOSIT HALF WITH NO BALANCE — not a special case this
+       * form invented, but the convention the bulk importer has always written ("No explicit split
+       * → the whole amount is due on the one date, stored as the deposit half"). A hand-typed
+       * commitment and an imported one are therefore the same record, which is what lets the
+       * payment schedule, the exports, Mark paid and every existing sum keep working with nothing
+       * new in the data — the standing "not a new object" constraint, honoured in the one place it
+       * could have been broken.
+       */
+      const commitmentSchedule = formSplit
+        ? {
+            depositAmount:  num(form.depositAmount),
+            depositDueDate: form.depositDueDate || null,
+            balanceAmount:  num(form.balanceAmount),
+            balanceDueDate: form.balanceDueDate || null,
+          }
+        : {
+            depositAmount:  amount,
+            depositDueDate: form.dueDate || null,
+            /* Cleared, so closing the split on a commitment that had one really does put it back
+               to one amount on one date. The server refuses this when the balance has already been
+               PAID, which is the right answer — that money left, and a form cannot un-spend it. */
+            balanceAmount:  null,
+            balanceDueDate: null,
+          };
+
       const edits: Record<string, unknown> = { ...common };
-      if (!locks.amount) edits.amount = amount;
-      if (isPayable && !locks.deposit) {
-        edits.depositAmount = num(form.depositAmount);
-        edits.depositDueDate = form.depositDueDate || null;
-      }
-      if (isPayable && !locks.balance) {
-        edits.balanceAmount = num(form.balanceAmount);
-        edits.balanceDueDate = form.balanceDueDate || null;
+      if (settling) {
+        /* ⚠⚠ SETTLING PATCHES THE COMMITMENT — IT NEVER CREATES A ROW BESIDE IT (plan §8). The
+           record transitions to paid and posts to the books exactly as the inline Mark paid does,
+           because it IS that action: the coach's edits and the mark-paid ride in one request, a
+           pairing the route explicitly handles (it posts the figure being STORED, not the one it
+           arrived to find). A POST here would leave a transaction and a commitment each carrying
+           the same $600 — the double count the whole split exists to prevent.
+
+           ⚠ THE HALF DECIDES WHICH FIGURE MOVES. Sending `amount` while settling a deposit would
+           rewrite the commitment's TOTAL with the deposit's figure — a $600 entry silently
+           becoming $200 the moment its deposit was paid. Only the half being settled is sent, and
+           the other half is left out entirely rather than echoed back. */
+        edits.action = settling.action;
+        edits.paidDate = form.paidDate;
+        if (settling.half === 'deposit') edits.depositAmount = amount;
+        else if (settling.half === 'balance') edits.balanceAmount = amount;
+        else edits.amount = amount;
+      } else {
+        edits.amount = amount;
+        if (isPayable) {
+          Object.assign(edits, commitmentSchedule);
+        } else if (editing?.expensePaidAt && form.paidDate) {
+          /* Correcting WHEN it was paid — sent only on a record that HAS posted, because the server
+             refuses a date on something that never moved money. */
+          edits.expensePaidAt = form.paidDate;
+        }
       }
 
       const res = editing
@@ -835,13 +1211,18 @@ export function ExpensesPayablesPanel({
               ...common,
               amount,
               ...(isPayable
-                ? {
-                    depositAmount:  num(form.depositAmount),
-                    depositDueDate: form.depositDueDate || null,
-                    balanceAmount:  num(form.balanceAmount),
-                    balanceDueDate: form.balanceDueDate || null,
-                  }
-                : { paidByPlayerId: form.paidByPlayerId || null }),
+                ? commitmentSchedule
+                : {
+                    paidByPlayerId: form.paidByPlayerId || null,
+                    /* ⚠ WHEN IT WAS PAID, and omitted entirely when the coach cleared the field —
+                       that is how a cost gets recorded BEFORE it is settled, which is the state
+                       every hand-entered cost used to land in whether the coach meant it or not.
+                       ⚠ SENT ON AN OUT-OF-POCKET COST TOO, where it dates the family's credit
+                       rather than a cash entry: a parent who paid the vendor a fortnight ago is
+                       owed from then, and showing a date field that was quietly ignored would be
+                       worse than not showing one. */
+                    ...(form.paidDate ? { expensePaidAt: form.paidDate } : {}),
+                  }),
             }),
           });
 
@@ -891,15 +1272,25 @@ export function ExpensesPayablesPanel({
     }
   }
 
-  async function doAction(expenseId: string, action: string) {
+  /**
+   * Mark a half — or a whole cost — paid, ON A DATE THE COACH CHOOSES (2026-08-16).
+   *
+   * ⚠ IT USED TO STAMP `now()` SILENTLY, both on the row and on the ledger entry it posts. A bill
+   * settled three weeks ago therefore landed in this month's column of the month grid, and nothing
+   * could move it: the amount locks the moment it posts, and the stated remedy — delete and enter
+   * it again — reverses real money to correct a date. Asking is the fix; `paidPrompt` holds the
+   * row being asked about, so the question is one tap and the answer defaults to today.
+   */
+  async function doAction(expenseId: string, action: string, paidDate?: string) {
     setMarking(prev => ({ ...prev, [expenseId + action]: true }));
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expenseId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, ...(paidDate ? { paidDate } : {}) }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed');
+      setPaidPrompt(null);
       await load();
       // Marking a payable paid changes the schedule too — refresh it so the row doesn't sit
       // there still reading "unpaid" until the coach navigates away and back.
@@ -911,6 +1302,90 @@ export function ExpensesPayablesPanel({
     } finally {
       setMarking(prev => ({ ...prev, [expenseId + action]: false }));
     }
+  }
+
+  /**
+   * "When was this paid?" — the inline date prompt, now used by ONE caller: the plain unpaid
+   * expense on the Transactions list.
+   *
+   * ⚠ IT KEPT THAT ONE DELIBERATELY (Money split P1, 2026-08-16). The plan routes Mark paid on a
+   * COMMITMENT (and on a schedule half) through the *Add money* form, so a transaction is only
+   * ever born in one place — see `openSettle`. An unpaid lump expense is not a commitment: it is a
+   * happened-list row that already carries its own item, amount and description, so the only thing
+   * missing is the date, and a modal to collect one field would be more ceremony than the decision
+   * deserves. It is also the walk §38 was QA'd on two days ago, and there was no ruling to change
+   * it. The register absorbs this row in P3, and this control goes with it.
+   *
+   * ⚠⚠ WHY IT WAS EXTRACTED, kept because the lesson outlives the callers (/review, 2026-08-16):
+   * the server took a chosen date on all three actions from the start, but the date picker was
+   * built inline on the lump-sum button only — so the two halves still stamped today, on the
+   * records where back-dating matters MOST. A shared control is what made "all three" checkable
+   * instead of remembered.
+   *
+   * Resting state is the caller's own button; armed, it becomes the date + confirm + cancel.
+   */
+  function markPaidControl(opts: {
+    id: string;
+    action: MarkPaidAction;
+    label: string;
+    /** Names the record in the date field's accessible label — a row can offer two of these. */
+    describes: string;
+    className: string;
+    style?: React.CSSProperties;
+  }) {
+    const busy = !!marking[opts.id + opts.action];
+    const armed = paidPrompt?.id === opts.id && paidPrompt.action === opts.action;
+    if (!armed) {
+      return (
+        <button
+          className={opts.className}
+          style={opts.style}
+          disabled={busy}
+          onClick={ev => {
+            ev.stopPropagation();
+            setPaidPrompt({ id: opts.id, action: opts.action, date: tournamentToday() });
+          }}
+        >
+          {opts.label}
+        </button>
+      );
+    }
+    return (
+      /* ⚠ THE QUESTION REPLACES THE BUTTON rather than opening a dialog: the answer is one field,
+         it is nearly always today, and a modal over a table for a single date is more ceremony than
+         the decision deserves. `max` is the org's today — the server refuses a future date anyway,
+         but the picker should not offer one. */
+      <span className={styles.inlinePrompt} onClick={ev => ev.stopPropagation()}>
+        {/* ⚠ NO autoFocus. At ≤640 this goes full width and wraps to two lines with 44px targets,
+            so the row grows the instant it opens; focusing the field then scrolls it under the
+            thumb that just tapped, right before the next tap lands. */}
+        <input
+          className={styles.input}
+          type="date"
+          aria-label={`Date ${opts.describes} was paid`}
+          max={tournamentToday()}
+          value={paidPrompt!.date}
+          onChange={ev => setPaidPrompt(p => (p ? { ...p, date: ev.target.value } : p))}
+        />
+        <button
+          className={`${styles.btnPrimary} ${styles.compactAction}`}
+          disabled={!paidPrompt!.date || busy}
+          onClick={() => doAction(opts.id, opts.action, paidPrompt!.date)}
+        >
+          {busy ? '…' : 'Paid'}
+        </button>
+        {/* ⚠ DISABLED ONCE THE REQUEST IS AWAY. Cancel cannot recall a PATCH that has already left,
+            so offering it mid-flight told the coach the payment was called off while it went
+            through underneath them. */}
+        <button
+          className={`${styles.btnGhost} ${styles.compactAction}`}
+          disabled={busy}
+          onClick={() => setPaidPrompt(null)}
+        >
+          Cancel
+        </button>
+      </span>
+    );
   }
 
   /* The per-row tag editor that used to live here is gone (owner review 2026-08-15). Tags are a
@@ -1197,6 +1672,8 @@ export function ExpensesPayablesPanel({
   // Filter chip row: tags actually used by the current tab's expenses, with counts (mirrors the
   // game "vs tag" report). Selecting one narrows the list + shows a tag total.
   const activeAll = tab === 'expenses' ? allIndependent : allPayables;
+  /** Which face is this, said once — every branch below reads these rather than re-testing. */
+  const onPayables = face === 'payables';
   const tagCounts = new Map<string, number>();
   for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
   const usedTagIds = [...tagCounts.keys()]
@@ -1204,6 +1681,10 @@ export function ExpensesPayablesPanel({
     .filter((t): t is RepTeamTag => !!t)
     .sort((a, b) => a.name.localeCompare(b.name));
   const filteredActive = tab === 'expenses' ? independentExpenses : tournamentPayables;
+  /* ⚠ THE COMMITMENT LIST EXCLUDES NOTHING — a settled commitment stays on Payables, because
+     "what did we owe this season, and did we pay it?" is a question the tab has to answer after
+     the fact as well as before it. The Schedule view's own Unpaid/Paid/All filter is where that
+     narrowing lives, exactly as it did before the split. */
 
   const scheduleRows = (schedule ?? []).filter(r =>
     scheduleFilter === 'all' ? true : scheduleFilter === 'paid' ? !!r.paid : !r.paid);
@@ -1217,6 +1698,31 @@ export function ExpensesPayablesPanel({
       item: m.budgetItemName ?? 'Not itemized',
     };
   }
+  /**
+   * A schedule row's Mark paid — a named helper, not an inline block in the JSX (/simplify).
+   *
+   * ⚠ THE ROW CARRIES ONLY AN ID; THE SETTLE FORM NEEDS THE RECORD, for its item, its description
+   * and the half's own amount. A row whose commitment has not arrived in this panel's list yet
+   * shows no button rather than opening a form with blanks in it.
+   *
+   * ⚠ Marking paid works on this team's OWN commitments. An org allocation is settled through Org
+   * Allocations, which owns that conversation.
+   */
+  const payablesById = new Map(allPayables.map(p => [p.id, p]));
+  function scheduleMarkPaidButton(row: ScheduleRow) {
+    if (row.paid || !canWriteMoney || row.source !== 'team' || !row.expenseId) return null;
+    const record = payablesById.get(row.expenseId);
+    if (!record) return null;
+    return (
+      <button
+        className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+        onClick={() => openSettle(record, row.half === 'deposit' ? 'deposit' : 'balance')}
+      >
+        Mark paid
+      </button>
+    );
+  }
+
   const summaryHasOrgRows = (schedule ?? []).some(r => r.source === 'org');
   const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
@@ -1233,13 +1739,14 @@ export function ExpensesPayablesPanel({
   // otherwise open a sheet only the server would refuse.
   const expenseToolbarActions = canWriteMoney ? (
     <>
-      {/* ⚠ ONE ADD BUTTON (owner review 2026-08-15, Q8). Two lime buttons side by side forced the
-          expense-or-payable decision at the moment it was least informed, with no way back except
-          cancelling and retyping. The choice now lives at the top of the form, pre-selected from
-          the sub-tab, and flipping it keeps what has been entered. The button stays a plain "Add"
-          because it no longer names one outcome — the SAVE button names it instead. */}
+      {/* ⚠ ONE ADD BUTTON PER TAB, AND EACH NOW NAMES ITS OUTCOME (Money split P1, 2026-08-16).
+          The plain "Add" was right while one screen could produce four different records and the
+          form's own switch made the choice; each tab holds one kind of record now, so the button
+          can say what pressing it makes — and on Payables it must, because "Add" on a tab full of
+          money owed reads as "add money", which is the exact confusion the split removes.
+          Transactions keeps the plain word: it still opens the three-answer form. */}
       <button className={styles.btnPrimary} onClick={() => openAdd()}>
-        <Plus size={14} aria-hidden /> Add
+        <Plus size={14} aria-hidden /> {onPayables ? 'Add a commitment' : 'Add'}
       </button>
       {ownMoneyTags.length > 0 && (
         <button className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
@@ -1272,13 +1779,21 @@ export function ExpensesPayablesPanel({
       {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
           ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
           door the server would refuse. "Tournament" stays retired from the title (D-H9). */}
+      {/* ⚠ THE HELP SUBTOPIC FOLLOWS THE FACE. The one "Expenses & Payables" guide split with the
+          screen (Money split P1) — pointing both tabs at one topic would send a coach asking about
+          a commitment to a page whose first half is about recording what has already been spent. */}
       <CoachPageHeader
         variant={embedded ? 'embedded' : 'standard'}
         icon={Receipt}
-        title={<>Expenses &amp; Payables</>}
+        title={onPayables ? <>Payables</> : <>Transactions</>}
         actions={expenseHeaderActions}
-        helpLabel="Expenses & Payables"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-payables', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        helpLabel={onPayables ? 'Payables' : 'Transactions'}
+        help={{
+          module: 'coaches',
+          sectionIds: ['premium-money'],
+          subtopicId: onPayables ? 'premium-money-payables' : 'premium-money-transactions',
+          fullGuideHref: `/${orgSlug}/coaches/help#premium-money`,
+        }}
       />
 
       {importMessage && (
@@ -1302,23 +1817,40 @@ export function ExpensesPayablesPanel({
       <div className={styles.panelToolbar}>
         {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
             content — see the note on that class. */}
+        {/* ⚠ FOUR SUB-TABS BECAME TWO AND TWO (Money split P1, 2026-08-16). The old strip mixed
+            happened-lists and owed-lists in one row, which is exactly the confusion the tab split
+            resolves — so each face carries only its own pair.
+
+            ⚠ "MONEY IN" KEEPS ITS NAME FOR NOW (owner call, 2026-08-16), against the plan's §6,
+            which retires it. That name dies properly in P3, where the register's separate INCOME
+            and REFUNDS filters make "Income" true of the rows under it. Here the list still holds
+            both kinds — a refund is not income, which this very screen's empty state teaches in
+            bold — so renaming it one phase early would have put two of every four rows under a
+            heading the product itself contradicts. */}
         <div className={`${styles.viewToggle} ${styles.panelToolbarTabs}`}>
-          <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('expenses')}>
-            Expenses ({allIndependent.length})
-          </button>
-          <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
-            Payables ({allPayables.length})
-          </button>
-          {/* ⚠ MONEY IN LIVES BESIDE MONEY OUT, on the screen that owns the one form they share
-              (mig 243). A refund had to land here — it must work for a standalone team with no
-              club anywhere near it, which is why it is not on any org-money screen — and income
-              followed it, because the two are answers to the same question on the same form. */}
-          <button className={`${styles.viewToggleBtn} ${tab === 'money-in' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('money-in')}>
-            Money in ({moneyIn.length})
-          </button>
-          <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('schedule')}>
-            Payment schedule
-          </button>
+          {onPayables ? (
+            <>
+              <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('schedule')}>
+                Schedule
+              </button>
+              <button className={`${styles.viewToggleBtn} ${tab === 'commitments' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('commitments')}>
+                Commitments ({allPayables.length})
+              </button>
+            </>
+          ) : (
+            <>
+              <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('expenses')}>
+                Expenses ({allIndependent.length})
+              </button>
+              {/* ⚠ MONEY IN LIVES BESIDE MONEY OUT, on the screen that owns the one form they share
+                  (mig 243). A refund had to land here — it must work for a standalone team with no
+                  club anywhere near it, which is why it is not on any org-money screen — and income
+                  followed it, because the two are answers to the same question on the same form. */}
+              <button className={`${styles.viewToggleBtn} ${tab === 'money-in' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('money-in')}>
+                Money in ({moneyIn.length})
+              </button>
+            </>
+          )}
         </div>
         {showTagFilter && (
           <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
@@ -1342,7 +1874,7 @@ export function ExpensesPayablesPanel({
           <MoneyExportButton
             label={tab === 'schedule' ? 'Payment schedule'
               : tab === 'money-in' ? 'Money in'
-              : tab === 'payables' ? 'Payables' : 'Expenses'}
+              : tab === 'commitments' ? 'Commitments' : 'Expenses'}
             formats={['xlsx', 'csv']}
             build={() => (tab === 'money-in'
               ? {
@@ -1365,14 +1897,19 @@ export function ExpensesPayablesPanel({
                   emptyMessage: 'There is nothing on the payment schedule yet.',
                 }
               : {
-                  dataset: tab === 'payables' ? 'payables' : 'expenses',
-                  title: tab === 'payables' ? 'Payables' : 'Expenses',
+                  /* ⚠ THE DATASET NAME STAYS `payables` even though the view is now called
+                     Commitments. It is the filename segment a coach's downloads folder already
+                     holds a season of, and the export catalog lists it under that word — renaming
+                     the file would break continuity for a screen label, which is exactly the trade
+                     plan §6 refused when it kept the tab called Payables. */
+                  dataset: tab === 'commitments' ? 'payables' : 'expenses',
+                  title: tab === 'commitments' ? 'Commitments' : 'Expenses',
                   columns: EXPENSE_COLUMNS,
                   rows: expenseRows(filteredActive, tagsByExpenseId, tagById),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
-                  emptyMessage: tab === 'payables'
-                    ? 'No payables have been logged yet.'
+                  emptyMessage: tab === 'commitments'
+                    ? 'No commitments have been recorded yet.'
                     : 'No expenses have been logged yet.',
                 })}
             // Matches every sibling tab. Without it, an Export with nothing behind it reads as
@@ -1402,7 +1939,7 @@ export function ExpensesPayablesPanel({
           (/review, regression lens). */}
       {filterTag && showTagFilter && (
         <div className={styles.moneyTagSummary}>
-          vs <strong>{filterTag.name}</strong>: {filteredActive.length} {tab === 'expenses' ? 'expense' : 'payable'}{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
+          vs <strong>{filterTag.name}</strong>: {filteredActive.length} {tab === 'expenses' ? 'expense' : 'commitment'}{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
         </div>
       )}
 
@@ -1425,7 +1962,10 @@ export function ExpensesPayablesPanel({
                 onClick: () => openAdd({ kind: 'expense', timing: 'paid' }),
               } : undefined}
             />
-            <KindCompare />
+            <KindCompare
+              otherHref={moneySectionHref(base, onPayables ? 'transactions' : 'payables', undefined)}
+              onPayables={onPayables}
+            />
           </>
         ) : (
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
@@ -1474,15 +2014,13 @@ export function ExpensesPayablesPanel({
                         keeps square rows; card mode drops it when it renders nothing (a
                         read-only money coach) rather than drawing a blank line. */}
                     <td className={`${styles.td} ${styles.cardActionCell}`}>
-                      {!e.expensePaidAt && canWriteMoney && (
-                        <button
-                          className={`${styles.btnSecondary} ${styles.compactAction}`}
-                          disabled={!!marking[e.id + 'markExpensePaid']}
-                          onClick={ev => { ev.stopPropagation(); doAction(e.id, 'markExpensePaid'); }}
-                        >
-                          {marking[e.id + 'markExpensePaid'] ? '…' : 'Mark Paid'}
-                        </button>
-                      )}
+                      {!e.expensePaidAt && canWriteMoney && markPaidControl({
+                        id: e.id,
+                        action: 'markExpensePaid',
+                        label: 'Mark Paid',
+                        describes: e.description,
+                        className: `${styles.btnSecondary} ${styles.compactAction}`,
+                      })}
                       {canWriteMoney && <RowEditButton label={`Edit ${e.description}`} onClick={() => openEdit(e)} />}
                     </td>
                   </tr>
@@ -1491,7 +2029,7 @@ export function ExpensesPayablesPanel({
             </table>
           </div>
         )
-      ) : tab === 'payables' ? (
+      ) : tab === 'commitments' ? (
         tournamentPayables.length === 0 ? (
           /* ⚠ THE SECONDARY ACTION HERE IS THE MANDATORY PHONE MITIGATION (ruling 2026-08-13,
              decision 4). Import left the page header on phones, and the importer's paste-a-block
@@ -1502,10 +2040,10 @@ export function ExpensesPayablesPanel({
           <>
             <CoachEmptyState
               icon={<Receipt size={22} aria-hidden />}
-              headline="No payables yet"
+              headline="Nothing committed yet"
               description="Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."
               primaryAction={canWriteMoney ? {
-                label: 'Add Payable',
+                label: 'Add a commitment',
                 icon: <Plus size={15} aria-hidden />,
                 onClick: () => openAdd({ kind: 'expense', timing: 'payable' }),
               } : undefined}
@@ -1515,7 +2053,10 @@ export function ExpensesPayablesPanel({
                 onClick: () => setImportOpen(true),
               } : undefined}
             />
-            <KindCompare />
+            <KindCompare
+              otherHref={moneySectionHref(base, onPayables ? 'transactions' : 'payables', undefined)}
+              onPayables={onPayables}
+            />
           </>
         ) : (
           /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency). It
@@ -1612,14 +2153,19 @@ export function ExpensesPayablesPanel({
                             <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
                               <CheckCircle2 size={11} /> Paid
                             </span>
-                          ) : (
+                          ) : canWriteMoney && (
+                            /* ⚠ MARK PAID GOES THROUGH THE MONEY DOOR (plan §3, ruled 2026-08-16).
+                               This was an inline date prompt; it now opens *Add money* pre-filled
+                               from the commitment, because a payment being born anywhere other
+                               than that one form is how the portal ended up with two records
+                               carrying the same dollars. The inline prompt survives on the plain
+                               unpaid EXPENSE one tab over, which is not a commitment. */
                             <button
                               className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
                               style={{ marginTop: '0.4rem' }}
-                              disabled={!!marking[e.id + 'markDepositPaid']}
-                              onClick={() => doAction(e.id, 'markDepositPaid')}
+                              onClick={ev => { ev.stopPropagation(); openSettle(e, 'deposit'); }}
                             >
-                              {marking[e.id + 'markDepositPaid'] ? '…' : 'Mark deposit paid'}
+                              Mark deposit paid
                             </button>
                           )}
                         </>
@@ -1640,14 +2186,13 @@ export function ExpensesPayablesPanel({
                             <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
                               <CheckCircle2 size={11} /> Paid
                             </span>
-                          ) : (
+                          ) : canWriteMoney && (
                             <button
                               className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
                               style={{ marginTop: '0.4rem' }}
-                              disabled={!!marking[e.id + 'markBalancePaid']}
-                              onClick={() => doAction(e.id, 'markBalancePaid')}
+                              onClick={ev => { ev.stopPropagation(); openSettle(e, 'balance'); }}
                             >
-                              {marking[e.id + 'markBalancePaid'] ? '…' : 'Mark balance paid'}
+                              Mark balance paid
                             </button>
                           )}
                         </>
@@ -1818,18 +2363,12 @@ export function ExpensesPayablesPanel({
                             </span>
                           )}
                         </td>
-                        {/* Marking paid works on this team's OWN payables. An org allocation is
-                            settled through Org Allocations, which owns that conversation. */}
+                        {/* ⚠ MARK PAID GOES THROUGH THE MONEY DOOR HERE TOO (plan §3) — a schedule
+                            half and the same half on its commitment's drawer are the same act, so
+                            they must not offer two different ways to record it. The gating and the
+                            record lookup live in `scheduleMarkPaidButton`. */}
                         <td className={`${styles.td} ${styles.cardActionCell}`}>
-                          {!row.paid && canWriteMoney && row.source === 'team' && row.expenseId && (
-                            <button
-                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-                              disabled={!!marking[row.expenseId + (row.half === 'deposit' ? 'markDepositPaid' : 'markBalancePaid')]}
-                              onClick={() => doAction(row.expenseId!, row.half === 'deposit' ? 'markDepositPaid' : 'markBalancePaid')}
-                            >
-                              Mark paid
-                            </button>
-                          )}
+                          {scheduleMarkPaidButton(row)}
                           {row.source === 'org' && !row.paid && (
                             <Link href={moneySectionHref(base, 'allocations', undefined)} className={styles.linkBtn}>Open allocations</Link>
                           )}
@@ -1856,11 +2395,15 @@ export function ExpensesPayablesPanel({
       {formOpen && (
         <div className={styles.modalOverlay} onClick={closeForm}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
+            {/* ⚠ A SETTLE NAMES THE COMMITMENT IT IS PAYING. The modal is the money form either
+                way, but a coach who tapped Mark paid needs the header to confirm which of three
+                similarly-named entries they are about to settle — the record is pre-filled, so
+                without this the only difference from an ordinary Add is a figure. */}
             <CoachModalHeader
-              title={editing || editingMoneyIn ? copy.editTitle : 'Add'}
-              subtitle={editing || editingMoneyIn
-                ? undefined
-                : 'Record money the team spent, money it owes, or money that came in.'}
+              title={{ settle: 'Record the payment', edit: copy.editTitle, add: 'Add' }[formMode]}
+              subtitle={formMode === 'settle' ? `Settling ${settling!.describes}`
+                : formMode === 'add' ? 'Record money the team spent, or money that came in.'
+                : undefined}
               onClose={closeForm}
             />
             <div className={styles.formGrid}>
@@ -1873,7 +2416,15 @@ export function ExpensesPayablesPanel({
                   back would move a figure from one section of the report to a reduction somewhere
                   else while one posted ledger entry tried to describe both. With Delete available
                   and stating its own consequence, the wrong kind is cheap to fix honestly. */}
-              {!editing && !editingMoneyIn ? (
+              {/* ⚠⚠ THE COMMITMENT DOOR ASKS NO KIND QUESTION AT ALL (Money split P1, 2026-08-16).
+                  Payables holds exactly one kind of record, so the answer is already known by the
+                  time the form opens — and a commitment is ALWAYS money out, which is why income
+                  never appears here. A scheduled income is a budget line; the plan side models it. */}
+              {!editing && !editingMoneyIn && isPayableForm ? (
+                <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
+                  {copy.statedFact} {copy.examples}
+                </p>
+              ) : !editing && !editingMoneyIn ? (
                 <div className={styles.formGridFull}>
                   <div className={styles.kindSwitch} role="radiogroup" aria-label="What kind of entry is this?">
                     {(['expense', 'income', 'refund'] as const).map(k => (
@@ -1903,31 +2454,14 @@ export function ExpensesPayablesPanel({
                     ))}
                   </div>
 
-                  {/* ⚠ PAYABLE IS A TIMING QUESTION ON THE COST SIDE, not a fourth answer — see
-                      the note on `CostTiming`. It appears only under "A cost", because a scheduled
-                      income is a budget line and the plan side already models it. */}
-                  {entryKind === 'expense' && (
-                    <div className={styles.kindSwitch} role="radiogroup" aria-label="Has this been paid?" style={{ marginTop: '0.5rem' }}>
-                      {(['paid', 'payable'] as const).map(t => (
-                        <button
-                          key={t}
-                          type="button"
-                          role="radio"
-                          aria-checked={formTiming === t}
-                          className={`${styles.kindSwitchOption} ${formTiming === t ? styles.kindSwitchOptionOn : ''}`}
-                          onClick={() => setFormTiming(t)}
-                        >
-                          <span className={styles.kindName}>{t === 'paid' ? 'Already paid' : 'Promised, not paid yet'}</span>
-                          <span className={styles.kindSub}>
-                            {t === 'paid'
-                              ? 'Recording what happened'
-                              : 'A payable — it joins your payment schedule'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
+                  {/* ⛔ "PROMISED, NOT PAID YET" IS GONE FROM THIS FORM (Money split P1, ruled
+                      2026-08-16). It was a timing question inside a form that now records only
+                      what HAPPENED — and it was the seam the whole redesign turned on: the same
+                      modal derived a hidden mode from whichever sub-tab opened it, so a coach
+                      recording last night's diamond rental and a coach scheduling March's
+                      tournament entry met one screen wearing two meanings. A commitment has its
+                      own door on Payables now, and its deposit/balance pair and due dates went
+                      with it. What is left here is a single question: what happened, and when. */}
                   <p className={styles.kindEgs}>{copy.examples}</p>
 
                   {/* ⚠⚠ THE CONFUSABLE PAIR, SAID OUT LOUD AT THE MOMENT OF THE CHOICE
@@ -1991,35 +2525,124 @@ export function ExpensesPayablesPanel({
                     it from the budget line is the answer to the typing, not making it optional. */}
               </div>
 
-              {/* ⚠ A LOCKED FIGURE IS SHOWN WITH ITS VALUE AND ITS REASON, never greyed into
-                  silence (owner ruling 2026-08-15). A coach has to be able to read the amount they
-                  cannot change AND be told the way out, or the only remaining move is a support
-                  question. The server enforces the same rule — this is the explanation, not the
-                  guard. */}
-              {locks.amount && !isMoneyInForm ? (
-                <div className={styles.field}>
-                  <label className={styles.label}>{isPayableForm ? 'Total Amount' : 'Amount'}</label>
-                  <div className={styles.lockedField}>
-                    <span>{fmt(Number(form.amount) || 0)}</span>
-                    <span className={styles.lockedTag}>Locked</span>
-                  </div>
+              {/* ⚖ THE LOCK IS GONE (owner ruling 2026-08-16). A posted figure used to render
+                  read-only with "delete this and enter it again", because nothing could carry a
+                  correction through to the team's books. The server does that now, so the field is
+                  simply a field — and a coach who mistyped an amount fixes it the obvious way
+                  instead of reversing real money to correct a typo. What replaced the lock is the
+                  sentence below the figure, which says what saving will DO. */}
+              <div className={styles.field}>
+                <label className={styles.label}>{isPayableForm ? 'Total Amount *' : 'Amount *'}</label>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.amount}
+                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                  placeholder="0.00"
+                />
+                {/* ⚠ THE SENTENCE THAT REPLACED THE LOCK. A coach changing a figure that has already
+                    posted should know it is not only this row that moves — and an out-of-pocket cost
+                    is the one where saying so matters most, because the number is what a family is
+                    owed. Shown only when something has actually posted; an unpaid cost moves
+                    nothing and needs no warning. */}
+                {editedPaidOn && (
                   <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
-                    Paid {locks.paidOn ? fmtDate(locks.paidOn) : ''} — this amount is already on the
-                    team’s books. <strong>To change it, delete this and enter it again.</strong>
+                    {editing?.paidByPlayerId
+                      ? <>Paid {fmtDate(editedPaidOn)} by a family. Changing this changes <strong>what the team owes them</strong> on Player Dues.</>
+                      : <>Paid {fmtDate(editedPaidOn)}. Changing this updates the team’s books too — cash on hand follows the new figure.</>}
                   </p>
-                </div>
-              ) : (
+                )}
+              </div>
+
+              {/* ── A cost's own date, the money-OUT twin of "Date received" (2026-08-16) ─────
+                  ⚠⚠ THE DEFECT THIS CLOSES. "Already paid" used to record no date at all, so the
+                  cost arrived UNPAID: $0 on Budget vs. Actual, absent from every month, no cash
+                  moved — until a separate Mark paid stamped TODAY, putting last month's diamond
+                  rental in this month's column with no way back. The month grid exists to say when
+                  money moved; this is the field that lets a coach say it.
+
+                  ⚖ CORRECTABLE AFTER THE FACT TOO (owner ruling 2026-08-16). It was add-only while
+                  a posted figure was frozen; the entry on the books now moves to the day you pick,
+                  which is what puts the cost in the right month on the report. A record that has
+                  NOT posted has no date to correct — Mark Paid is where that one gets its date, so
+                  the field is offered on a new cost and on a settled one, and not in between.
+
+                  ⚠ NOT ON A COMMITMENT'S OWN FORM. Its money moves through the deposit and the
+                  balance, each with its own dates — a paid stamp on the commitment itself would
+                  claim the whole thing settled while two halves still think they are owed. The
+                  server refuses it. A SETTLE is the opposite case and always shows it: that is the
+                  one question Mark paid exists to ask. */}
+              {!isMoneyInForm && !isPayableForm && (isSettling || !editing || editing.expensePaidAt) && (
                 <div className={styles.field}>
-                  <label className={styles.label}>{isPayableForm ? 'Total Amount *' : 'Amount *'}</label>
+                  {/* ⚠ NO ASTERISK when recording a cost (/review, 2026-08-16): clearing it is the
+                      documented way to record something not settled yet. On a SETTLE it is required
+                      — there is no such thing as a payment with no date — so it takes one. */}
+                  <label className={styles.label}>{isSettling ? 'Date paid *' : 'Date paid'}</label>
                   <input
                     className={styles.input}
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={form.amount}
-                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                    placeholder="0.00"
+                    type="date"
+                    max={tournamentToday()}
+                    value={form.paidDate}
+                    onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
                   />
+                  {/* ⚠ THE HINT DEPENDS ON WHO PAID (/review, 2026-08-16). "Clear this and it waits
+                      as unpaid" is FALSE once Paid by names a family: that cost was settled by them,
+                      the server always creates it paid, and no Mark paid button ever appears — so
+                      the field dates their credit rather than deciding whether one is owed. */}
+                  <p className={styles.formHint}>
+                    {isSettling
+                      ? 'The day the money actually left — back-date it and the cost lands in that month, not this one.'
+                      : form.paidByPlayerId
+                      ? 'The day the family paid it. The team owes them from that date.'
+                      : 'When the money actually left. Not paid yet? Clear this and it waits as an '
+                        + 'unpaid cost until you mark it paid.'}
+                  </p>
+                  {/* ⚠⚠ THE REFUSAL CARRIES THE DOOR, which is the whole reason it is a rendered
+                      element rather than a thrown sentence. Telling a coach "that hasn't happened
+                      yet" and leaving them to find Payables themselves is a dead end wearing a
+                      polite face — the link takes the amount and the item they already typed
+                      straight into the commitment form. */}
+                  {futureDateRefused && !settling && (
+                    <p className={`${styles.formHint} ${styles.formHintConsequence}`} role="alert">
+                      <strong>That hasn’t happened yet</strong> — money can only be recorded once it
+                      has moved. Agreed to pay it later?{' '}
+                      <button
+                        type="button"
+                        className={styles.linkBtn}
+                        onClick={() => {
+                          /* Carries the work across rather than restarting it: the item, the
+                             amount and the description are the same facts either way, and the
+                             typed future date becomes the DUE date, which is what it always was.
+                             ⚠⚠ THE PAYEE AND THE TAGS TRAVEL TOO (/review, 2026-08-16). They live
+                             in their own state, not in `form`, so the spread missed them and
+                             `resetForm` then cleared them — the coach watched their description and
+                             amount survive the hop while "who we owe" vanished without a word, and
+                             the commitment saved with no payee. On a record that exists to say what
+                             the team owes and to whom, that is the worst field to drop silently.
+                             ⚠ `paidByPlayerId` rides along in the spread but is inert: the commitment
+                             branch neither renders it nor sends it. Left alone rather than cleared,
+                             so that stays true by the save path rather than by this handler. */
+                          const carried = { ...form, dueDate: form.paidDate, paidDate: '' };
+                          const carriedPayee = formPayee;
+                          const carriedTags = formTags;
+                          resetForm();
+                          setFormKind('expense');
+                          setFormTiming('payable');
+                          setForm(carried);
+                          setFormPayee(carriedPayee);
+                          setFormTags(carriedTags);
+                          /* The baseline stays BLANK: everything here is work the coach typed, so
+                             walking away from it SHOULD ask before discarding. */
+                          setFormOpen(true);
+                        }}
+                      >
+                        Add it as a commitment instead
+                      </button>
+                      {' '}— it joins your payment schedule, and nothing moves until you mark it paid.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -2070,63 +2693,135 @@ export function ExpensesPayablesPanel({
                   without touching the credit — the server refuses it outright. */}
               {renderPaidBy()}
 
-              {/* ── Payable-only: the deposit / balance split ───────────────────────────────
-                  The eleven-field payable (readiness review #8) opens as three: what it's for,
-                  what kind, and how much. Each half locks on its own once IT has posted — a paid
-                  deposit must never freeze a balance the coach still has to manage. */}
+              {/* ── Commitment-only: when it is due ─────────────────────────────────────────
+                  ⚠⚠ THIS FIELD DID NOT EXIST, AND THE FORM CLAIMED IT DID. The split group used to
+                  say "leave this closed to record one amount due on one date" while offering no
+                  such date — so the simple case, which is most of them, saved with no due date at
+                  all: status "No schedule", absent from the payment schedule and the Overview's
+                  next-30 panel, and no Mark paid button anywhere. The coach had recorded what the
+                  team owed and would never be reminded of it again.
+
+                  ⚠ It is stored as the deposit half — see `commitmentSchedule` in the save, and
+                  the bulk importer, which has always written this row that way. */}
+              {isPayableForm && !formSplit && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Due date *</label>
+                  <input
+                    className={styles.input}
+                    type="date"
+                    value={form.dueDate}
+                    onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                  />
+                  <p className={styles.formHint}>
+                    This is what puts it on your payment schedule and the Overview’s next 30 days.
+                  </p>
+                </div>
+              )}
+
+              {/* ── Commitment-only: the deposit / balance split ────────────────────────────
+                  ⚠ CONTROLLED, NOT A `CoachFormDisclosure` (Money split P1, 2026-08-16). It used
+                  to be one, and could not be: opening the split has to REMOVE the single due date
+                  above, and a disclosure owning its own state cannot reach a field outside it. The
+                  toggle keeps the disclosure's own look and copy so nothing reads as a new control. */}
               {isPayableForm && (
                 <div className={styles.formGridFull}>
-                  <CoachFormDisclosure
-                    label="Split into a deposit and a balance"
-                    title="Payment schedule"
-                    note="Big-ticket costs are often billed as a deposit now and a balance later — tournament entries, dome blocks, uniform orders. Leave this closed to record one amount due on one date."
-                    meta={scheduleSet ? 'Set' : undefined}
-                    defaultOpen={scheduleSet}
-                  >
-                    <div className={styles.formSectionGrid}>
-                      {locks.deposit ? (
-                        <div className={`${styles.field} ${styles.formSectionFull}`}>
-                          <label className={styles.label}>Deposit</label>
-                          <div className={styles.lockedField}>
-                            <span>{fmt(Number(form.depositAmount) || 0)}{form.depositDueDate ? ` · due ${fmtDate(form.depositDueDate)}` : ''}</span>
-                            <span className={styles.lockedTag}>Paid</span>
-                          </div>
+                  {!formSplit ? (
+                    <button type="button" className={styles.discToggle} onClick={() => setFormSplit(true)}>
+                      <span className={styles.discToggleIcon}><Plus size={14} aria-hidden /></span>
+                      Split into a deposit and a balance
+                    </button>
+                  ) : (
+                    <section className={styles.formSection}>
+                      <div className={styles.discHead}>
+                        <h4 className={styles.formSectionTitle}>Payment schedule</h4>
+                        {/* ⚠ CLOSING IT CLEARS THE BALANCE on save, so the button says so rather
+                            than reading as a cosmetic collapse. A half that has already been PAID
+                            is refused by the server — that money left, and no form un-spends it. */}
+                        <button type="button" className={styles.discHide} onClick={() => setFormSplit(false)}>
+                          Use one date instead
+                        </button>
+                      </div>
+                      <p className={styles.discNote}>
+                        Big-ticket costs are often billed as a deposit now and a balance later —
+                        tournament entries, dome blocks, uniform orders. Each half is due on its own
+                        date and is marked paid on its own.
+                      </p>
+                      {/* ⚖ A PAID HALF IS EDITABLE TOO (owner ruling 2026-08-16). Both halves used to
+                          render read-only once settled; now each is an ordinary pair of fields and
+                          the server moves that half's own entry on the books to match. The "Paid"
+                          state is still SAID — it is what tells a coach the edit will reach the
+                          books — it just no longer takes the fields away. */}
+                      <div className={styles.formSectionGrid}>
+                        <div className={styles.field}>
+                          <label className={styles.label}>Deposit Amount</label>
+                          <input className={styles.input} type="number" min={0} step="0.01" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
+                          {editing?.depositPaidAt && (
+                            <p className={styles.formHint}>Paid {fmtDate(editing.depositPaidAt)} — a change moves the books.</p>
+                          )}
                         </div>
-                      ) : (
-                        <>
-                          <div className={styles.field}>
-                            <label className={styles.label}>Deposit Amount</label>
-                            <input className={styles.input} type="number" min={0} step="0.01" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
-                          </div>
-                          <div className={styles.field}>
-                            <label className={styles.label}>Deposit Due Date</label>
-                            <input className={styles.input} type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-                          </div>
-                        </>
-                      )}
-                      {locks.balance ? (
-                        <div className={`${styles.field} ${styles.formSectionFull}`}>
-                          <label className={styles.label}>Balance</label>
-                          <div className={styles.lockedField}>
-                            <span>{fmt(Number(form.balanceAmount) || 0)}{form.balanceDueDate ? ` · due ${fmtDate(form.balanceDueDate)}` : ''}</span>
-                            <span className={styles.lockedTag}>Paid</span>
-                          </div>
+                        <div className={styles.field}>
+                          <label className={styles.label}>Deposit Due Date</label>
+                          <input className={styles.input} type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
                         </div>
-                      ) : (
-                        <>
-                          <div className={styles.field}>
-                            <label className={styles.label}>Balance Amount</label>
-                            <input className={styles.input} type="number" min={0} step="0.01" value={form.balanceAmount} onChange={e => setForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
-                          </div>
-                          <div className={styles.field}>
-                            <label className={styles.label}>Balance Due Date</label>
-                            <input className={styles.input} type="date" value={form.balanceDueDate} onChange={e => setForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </CoachFormDisclosure>
+                        <div className={styles.field}>
+                          <label className={styles.label}>Balance Amount</label>
+                          <input className={styles.input} type="number" min={0} step="0.01" value={form.balanceAmount} onChange={e => setForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
+                          {editing?.balancePaidAt && (
+                            <p className={styles.formHint}>Paid {fmtDate(editing.balancePaidAt)} — a change moves the books.</p>
+                          )}
+                        </div>
+                        <div className={styles.field}>
+                          <label className={styles.label}>Balance Due Date</label>
+                          <input className={styles.input} type="date" value={form.balanceDueDate} onChange={e => setForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
+                        </div>
+                      </div>
+                    </section>
+                  )}
                 </div>
+              )}
+
+              {/* ── What saving will DO ─────────────────────────────────────────────────────
+                  ⚠⚠ THE CONSEQUENCE LINE IS THE COMMITMENT DOOR'S WHOLE JOB (plan §3). Every other
+                  money form in the portal moves money on save; this one is the single exception,
+                  and a coach cannot be expected to infer that from a screen that looks like all the
+                  others. Saying "nothing moves" out loud is what makes the split legible — and it
+                  is the sentence that stops a coach recording a commitment and then wondering why
+                  cash on hand did not fall. */}
+              {/* ⚠⚠ "NOTHING MOVES" IS ONLY TRUE WHILE NOTHING HAS MOVED (/review, 2026-08-16).
+                  The line was rendered for every commitment, including one whose deposit had
+                  already posted — where changing a figure DOES move the books, and the field's own
+                  hint two rows up says so. A consequence line that contradicts the screen it sits
+                  on is worse than none: it is the sentence a coach trusts instead of checking. */}
+              {isPayableForm && (editing?.depositPaidAt || editing?.balancePaidAt ? (
+                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+                  <strong>Part of this has been paid.</strong> The rest of the schedule is still
+                  just a plan — but changing a figure that has already been paid updates the team’s
+                  books too, and cash on hand follows the new number.
+                </p>
+              ) : (
+                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+                  <strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no
+                  family is affected. This joins your payment schedule
+                  {(() => {
+                    const due = formSplit ? (form.depositDueDate || form.balanceDueDate) : form.dueDate;
+                    return due ? <>, due {fmtDate(due)}</> : null;
+                  })()}
+                  {' '}— mark it paid when the money actually leaves.
+                </p>
+              ))}
+
+              {/* The settle's own consequence — the mirror of the one above, and the reassurance
+                  that this is the SAME record turning paid rather than a second one being born
+                  beside it. Coaches asked that question of the old two-door design repeatedly. */}
+              {settling && (
+                <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+                  <strong>When you save:</strong> {fmt(Number(form.amount) || 0)} leaves the team’s
+                  books on the date above, and{' '}
+                  {settling.half
+                    ? <>this {settling.half} is settled on your payment schedule. The other half stays as it is.</>
+                    : <>this commitment is settled.</>}
+                  {' '}Nothing new is added beside it.
+                </p>
               )}
 
               {/* ── An arrival's note, in the open ───────────────────────────────────────────
@@ -2258,7 +2953,10 @@ export function ExpensesPayablesPanel({
             <div className={styles.modalFooter}>
               {/* Delete lives in the FORM's footer, not on the row — the pattern Budget Plan set,
                   and the reason a row needs only one control (owner ruling 2026-08-15). */}
-              {(editing || editingMoneyIn) && canWriteMoney && !confirmDelete && (
+              {/* ⚠ NO DELETE ON A SETTLE. This form is standing over the commitment to record a
+                  payment against it; offering to destroy the record from inside that act is a
+                  different intent entirely, and it is one tap away on the commitment's own row. */}
+              {formMode === 'edit' && canWriteMoney && !confirmDelete && (
                 <button
                   className={styles.deleteRecordBtn}
                   onClick={() => setConfirmDelete(true)}
@@ -2269,13 +2967,11 @@ export function ExpensesPayablesPanel({
               )}
               <button className={styles.btnGhost} onClick={closeForm}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
+                {/* The SAVE button names the outcome, which is what lets the toolbar button be a
+                    plain "Add" (Q8) — and on a settle the outcome is the whole point. */}
                 {saving
                   ? 'Saving…'
-                  : editing || editingMoneyIn
-                    ? 'Save changes'
-                    /* The SAVE button names the outcome, which is what lets the toolbar button be
-                       a plain "Add" (Q8). */
-                    : copy.addLabel}
+                  : { settle: 'Mark Paid', edit: 'Save changes', add: copy.addLabel }[formMode]}
               </button>
             </div>
           </div>

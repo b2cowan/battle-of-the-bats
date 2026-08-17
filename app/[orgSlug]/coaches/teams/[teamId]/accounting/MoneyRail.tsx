@@ -21,7 +21,7 @@ import styles from './overview-dashboard.module.css';
 /** A row IS a destination, so the row keys are the destination keys — minus the two
  *  hrefs that are deep-links into a surface rather than the surface itself. Derived
  *  rather than re-listed, so a row can never name a tab that isn't addressable. */
-type RowKey = Exclude<keyof DashboardHrefs, 'budgetStarter' | 'budgetGenerate' | 'expensesSchedule'>;
+type RowKey = Exclude<keyof DashboardHrefs, 'budgetStarter' | 'budgetGenerate' | 'payablesSchedule'>;
 
 /** Journey order for the setup index; the operate rail keeps the order it shipped with.
  *
@@ -35,7 +35,10 @@ type RowKey = Exclude<keyof DashboardHrefs, 'budgetStarter' | 'budgetGenerate' |
 const INDEX_STEPS: { step: string; keys: RowKey[] }[] = [
   { step: 'Plan',    keys: ['budget'] },
   { step: 'Collect', keys: ['dues', 'fundraisers', 'sponsorships'] },
-  { step: 'Spend',   keys: ['expenses', 'allocations', 'paymentRequests'] },
+  /* ⚠ FOUR ROWS UNDER SPEND SINCE THE MONEY SPLIT (2026-08-16), and the group is still the widest
+     — see the two-column note above: it stays atomic, so a step that grows keeps growing in one
+     column rather than breaking across both. */
+  { step: 'Spend',   keys: ['payables', 'transactions', 'allocations', 'paymentRequests'] },
   { step: 'Review',  keys: ['budgetVsActual'] },
 ];
 const MORE_KEYS: RowKey[] = ['fundraisers', 'sponsorships', 'allocations', 'paymentRequests', 'budget', 'budgetVsActual'];
@@ -127,19 +130,29 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       );
     },
   },
-  expenses: {
+  /**
+   * ⚠ ONE ROW BECAME TWO (Money split P1, 2026-08-16), and the old row is why. "Expenses &
+   * Payables" had to say "<b>$4,120</b> paid · 3 due" — two unrelated facts about two different
+   * questions, sharing one line because they shared one screen. The dues row's rule ("the alert
+   * rides ALONGSIDE the money, never instead of it") was being used to cram a whole second surface
+   * into a qualifier. Now each row answers its own question and neither has to compete.
+   */
+  transactions: {
     dot: styles.railDotRust,
-    name: 'Expenses & Payables',
-    // Same rule as the dues row: what's been spent stays visible when something is due.
-    stat: s => {
-      if (s.expenses.loggedCount === 0) return 'None logged';
-      return (
-        <>
-          <b>{fmt(s.expenses.paidTotal)}</b> paid
-          {s.expenses.upcomingDueCount > 0 && <> · {danger(`${s.expenses.upcomingDueCount} due`)}</>}
-        </>
-      );
-    },
+    name: 'Transactions',
+    stat: s => (s.expenses.loggedCount === 0
+      ? 'None logged'
+      : <><b>{fmt(s.expenses.paidTotal)}</b> paid</>),
+  },
+  payables: {
+    dot: styles.railDotRust,
+    name: 'Payables',
+    /* ⚠ THE COUNT IS THE FACT HERE, not a qualifier on someone else's figure — this row exists to
+       answer "is anything coming due?", so an empty answer is good news and says so plainly rather
+       than reading as missing data. */
+    stat: s => (s.expenses.upcomingDueCount > 0
+      ? danger(`${s.expenses.upcomingDueCount} coming due`)
+      : 'Nothing due'),
   },
   allocations: {
     dot: styles.railDotBlue,

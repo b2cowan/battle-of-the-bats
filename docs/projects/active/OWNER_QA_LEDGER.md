@@ -5877,6 +5877,24 @@ the thing no script can check.
       returns.
 - [ ] Above the buttons: **"When you save: nothing moves."** Save it, then check **Cash on hand**
       on the Overview — unchanged.
+- [ ] Open **Add a commitment** and press **Cancel** without typing anything. It closes silently —
+      **no "Discard this commitment?"** prompt. (It used to ask, on every Money form, because the
+      pre-filled date counted as a change.)
+
+### C2 · ⚠⚠ A settled split cannot go back to one amount
+
+*This is the walk for the one Critical defect `/review` caught in this release. It moved real money
+silently, so it is worth doing carefully.*
+
+- [ ] Take a commitment with a **deposit paid and a balance still owed** (the one from section D
+      below, after you settle its deposit, is exactly this). Note **Cash on hand** first.
+- [ ] Open it. It must **not** say "nothing moves" any more — it says **"Part of this has been
+      paid,"** and warns that changing a paid figure updates the books.
+- [ ] Press **Use one date instead**, give it a date, and Save. It is **refused**: *"Part of this
+      has already been paid, so it can't go back to one amount on one date."*
+- [ ] Confirm the deposit is **still its own amount** (not the commitment's total) and **Cash on
+      hand has not changed**. Before the fix, collapsing the split restated the paid deposit as the
+      full total and moved the books by the difference, under a banner promising nothing would move.
 
 ### D · Mark paid goes through the money door
 
@@ -5884,7 +5902,9 @@ the thing no script can check.
       opens, pre-filled, headed *Settling …*.
 - [ ] ⚠ It shows the **half's** amount, not the commitment's total. On a $600 entry split
       $200/$400, settling the deposit must offer **$200**.
-- [ ] It asks **Date paid**, and states what saving will do. **Back-date it by a couple of weeks.**
+- [ ] It asks **Date paid**, and states what saving will do. Press **Cancel** first, without
+      touching anything — it must close silently, with **no "Discard?" prompt**. Reopen it.
+- [ ] **Back-date it by a couple of weeks.**
 - [ ] Save. ⚠⚠ **Now the count that matters:** the deposit is settled, **one** transaction is on
       the books for **$200 dated the day you chose**, the **balance is still owed at $400**, and
       **no second record** appeared beside the commitment. A transaction *and* a commitment both
@@ -5907,6 +5927,16 @@ the thing no script can check.
 - [ ] Press that link. The commitment form opens **carrying what you already typed** — the item,
       the amount, the description — with your future date now the **due date**. Confirm nothing has
       to be re-entered.
+- [ ] ⚠ Do that again, but first open **Add details** and set a **Payee** and a **tag**. After the
+      hop, both must still be there. They used to be dropped silently, so a commitment saved this
+      way recorded no payee — on the one record whose job is to say who the team owes.
+
+### E2 · The schedule stays current
+
+- [ ] Sit on **Payables → Schedule**. Without leaving it, use **Import ▾ → Commitments** in the
+      Money header and bring in a small schedule. The table must show the new rows **without you
+      switching views**. It used to refresh only when you changed view and came back, so the one
+      screen that answers "what's coming due" could sit there out of date.
 
 ### F · The gates that must still hold
 

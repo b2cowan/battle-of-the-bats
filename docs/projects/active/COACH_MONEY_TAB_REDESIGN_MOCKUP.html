@@ -1,0 +1,477 @@
+<title>The Money Screens, Split</title>
+
+<style>
+  /* ── Tokens ────────────────────────────────────────────────────────────────
+     DELIBERATELY the same set as the four mockups this follows (945391e9,
+     ee76cc79, 27d6d2df, b618c784) — fifth document about one feature; the
+     series reads as one body of work. Dark-first, because the product is. */
+  :root {
+    --ground: #080D16; --card: #111827; --card-2: #0F1623; --card-3: #0B1220;
+    --rule: rgba(255,255,255,0.09); --rule-strong: rgba(255,255,255,0.16);
+    --ink: #E9EEF7; --ink-soft: rgba(233,238,247,0.72); --ink-dim: rgba(233,238,247,0.46);
+    --lime: #D9F99D; --lime-quiet: rgba(217,249,157,0.13);
+    --blue: #7FA8F5; --blue-quiet: rgba(127,168,245,0.13);
+    --good: #4ade80; --bad: #f87171; --warn: #fbbf24; --warn-quiet: rgba(251,191,36,0.12);
+    --shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 18px 40px -28px rgba(0,0,0,0.9);
+    --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --data: ui-monospace, SFMono-Regular, "Cascadia Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --ground: #F6F3EE; --card: #FFFFFF; --card-2: #FBF9F6; --card-3: #F2EEE8;
+      --rule: rgba(42,36,30,0.12); --rule-strong: rgba(42,36,30,0.22);
+      --ink: #1C1814; --ink-soft: rgba(28,24,20,0.74); --ink-dim: #6A635C;
+      --lime: #4F7A16; --lime-quiet: rgba(79,122,22,0.10);
+      --blue: #1E4FA3; --blue-quiet: rgba(30,79,163,0.10);
+      --good: #15803d; --bad: #b91c1c; --warn: #a16207; --warn-quiet: rgba(161,98,7,0.10);
+      --shadow: 0 1px 2px rgba(42,36,30,0.06), 0 12px 28px -22px rgba(42,36,30,0.5);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #F6F3EE; --card: #FFFFFF; --card-2: #FBF9F6; --card-3: #F2EEE8;
+    --rule: rgba(42,36,30,0.12); --rule-strong: rgba(42,36,30,0.22);
+    --ink: #1C1814; --ink-soft: rgba(28,24,20,0.74); --ink-dim: #6A635C;
+    --lime: #4F7A16; --lime-quiet: rgba(79,122,22,0.10);
+    --blue: #1E4FA3; --blue-quiet: rgba(30,79,163,0.10);
+    --good: #15803d; --bad: #b91c1c; --warn: #a16207; --warn-quiet: rgba(161,98,7,0.10);
+    --shadow: 0 1px 2px rgba(42,36,30,0.06), 0 12px 28px -22px rgba(42,36,30,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--sans);
+    font-size: 16px; line-height: 1.55; margin: 0;
+    padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 4vw, 2rem) 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(2.5rem, 5vw, 4rem); }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; border-radius: 3px; }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; font-weight: 680; }
+  h2 { font-size: clamp(1.2rem, 2.4vw, 1.55rem); font-weight: 640; }
+  h3 { font-size: 0.98rem; font-weight: 640; }
+  p { margin: 0; max-width: var(--measure); }
+  strong { font-weight: 640; }
+  em { font-style: italic; }
+
+  .eyebrow { font-size: 0.72rem; font-weight: 640; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 0.85rem; }
+  .lede { font-size: clamp(1.02rem, 1.6vw, 1.15rem); color: var(--ink-soft); }
+  section { display: flex; flex-direction: column; gap: 1.15rem; }
+
+  .card { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); padding: 1.15rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .card.warncard { border-color: var(--warn); background: var(--warn-quiet); box-shadow: none; }
+
+  .tag { font-size: 0.66rem; font-weight: 660; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.48rem; border-radius: 4px; white-space: nowrap; background: var(--lime-quiet); color: var(--lime); border: 1px solid var(--lime); }
+  .tag.now { background: transparent; color: var(--ink-dim); border-color: var(--rule-strong); }
+  .tag.bad { background: transparent; color: var(--bad); border-color: var(--bad); }
+  .tag.later { background: var(--blue-quiet); color: var(--blue); border-color: var(--blue); }
+
+  .note { font-size: 0.87rem; color: var(--ink-soft); max-width: var(--measure); }
+  .note.tight { font-size: 0.82rem; }
+  .dim { color: var(--ink-dim); }
+  .mono { font-family: var(--data); }
+
+  ul.plain { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; max-width: var(--measure); font-size: 0.87rem; color: var(--ink-soft); }
+  ul.plain strong { color: var(--ink); }
+  hr.sep { border: none; border-top: 1px solid var(--rule); margin: 0; }
+  .foot { color: var(--ink-dim); font-size: 0.84rem; }
+
+  .duo { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+  @media (min-width: 960px) { .duo { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+  .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; }
+  .count { border: 1px solid var(--rule); border-radius: 8px; padding: 0.7rem 0.8rem; background: var(--card-2); }
+  .count .n { font-family: var(--data); font-size: 1.5rem; font-weight: 700; line-height: 1; display: block; }
+  .count .n.down { color: var(--good); }
+  .count .l { font-size: 0.75rem; color: var(--ink-dim); margin-top: 0.28rem; display: block; line-height: 1.35; }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.84rem; }
+  th, td { padding: 0.42rem 0.55rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: baseline; }
+  thead th { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-dim); border-bottom: 1px solid var(--rule-strong); }
+  tbody tr:last-child td { border-bottom: none; }
+  caption { text-align: left; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); padding-bottom: 0.5rem; }
+
+  /* ── Tab-bar + register mockups (same visual language as the series) ───── */
+  .screenCap {
+    font-family: var(--data); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-dim);
+  }
+  .barWrap { display: flex; flex-direction: column; gap: 0.55rem; }
+  .tabbar {
+    display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.3rem;
+    background: var(--card-3); border: 1px solid var(--rule); border-radius: 9px;
+  }
+  .tabBtn {
+    flex: 0 0 auto; font-size: 0.78rem; font-weight: 640; color: var(--ink-dim);
+    padding: 0.34rem 0.7rem; border-radius: 6px; white-space: nowrap;
+  }
+  .tabBtn.on { background: var(--lime-quiet); color: var(--lime); border: 1px solid var(--lime); padding: calc(0.34rem - 1px) calc(0.7rem - 1px); }
+  .tabBtn.new { color: var(--blue); border: 1px dashed var(--blue); padding: calc(0.34rem - 1px) calc(0.7rem - 1px); }
+  .subrow { display: flex; gap: 0.3rem; padding-left: 0.3rem; flex-wrap: wrap; }
+  .subBtn {
+    font-size: 0.76rem; font-weight: 640; color: var(--ink-dim);
+    border: 1px solid var(--rule-strong); background: var(--card-2);
+    border-radius: 7px; padding: 0.3rem 0.65rem; white-space: nowrap;
+  }
+  .subBtn.on { background: var(--lime); border-color: var(--lime); color: #0b1120; }
+  :root:not([data-theme="dark"]) .subBtn.on { color: #FFFFFF; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .subBtn.on { color: #FFFFFF; } }
+
+  /* register */
+  .regWrap { border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--card-2); overflow: hidden; }
+  .filterStrip { display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--rule-strong); background: var(--card-3); }
+  .filterStrip .spacer { flex: 1; }
+  .chk { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--ink); font-weight: 640; }
+  .cbox { display: inline-block; width: 0.85rem; height: 0.85rem; border: 1px solid var(--rule-strong); border-radius: 3px; background: var(--card-2); position: relative; }
+  .cbox.on { background: var(--lime); border-color: var(--lime); }
+  .cbox.on::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 900; color: #0b1120; line-height: 1; }
+  :root:not([data-theme="dark"]) .cbox.on::after { color: #FFFFFF; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .cbox.on::after { color: #FFFFFF; } }
+
+  table.reg { min-width: 46rem; font-size: 0.82rem; }
+  table.reg td, table.reg th { padding: 0.45rem 0.6rem; }
+  table.reg .amt { font-family: var(--data); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  table.reg .bal { font-family: var(--data); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; font-weight: 640; }
+  table.reg .what { min-width: 15rem; }
+  table.reg .cat { color: var(--ink-dim); font-size: 0.76rem; white-space: nowrap; }
+  table.reg .dt { white-space: nowrap; color: var(--ink-soft); }
+  tr.sched td { color: var(--ink-soft); border-bottom: 1px dashed var(--rule); }
+  tr.sched .bal { color: var(--blue); font-weight: 640; }
+  tr.today td {
+    background: var(--lime-quiet); border-top: 1px solid var(--lime); border-bottom: 1px solid var(--lime);
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime);
+  }
+  tr.derived .what, tr.derived .cat { color: var(--ink-dim); }
+  .chip { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 4px; padding: 0.06rem 0.3rem; margin-left: 0.4rem; vertical-align: 0.08em; white-space: nowrap; }
+  .chip.kind { color: var(--blue); border: 1px solid var(--blue); }
+  .chip.src { color: var(--ink-dim); border: 1px solid var(--rule-strong); }
+  .chip.act { color: var(--lime); border: 1px solid var(--lime); }
+
+  .decision { border: 1px solid var(--rule-strong); border-radius: 9px; background: var(--card-2); padding: 0.8rem 0.95rem; display: flex; flex-direction: column; gap: 0.4rem; }
+  .decision b.q { font-size: 0.92rem; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Coach Money · redesign · fifth in the series · direction ruled 2026-08-16</p>
+    <h1>The money screens, split</h1>
+    <p class="lede" style="margin-top:1rem">
+      The owner ruled the shape in conversation the same day this was first drawn: the payables
+      split is adopted, the hub's tabs carry the halves, Allocations and Payments merge into one
+      club tab — and <strong>Transactions is a register</strong>: one dated book of every dollar,
+      credits and debits in their own columns, a running balance beside each row, and a switch that
+      lets the book keep going past today. This revision draws that. The money form itself stays as
+      decided in <em>The Money Form, Reconsidered</em> (artifact <span class="mono">b618c784</span>).
+    </p>
+  </header>
+
+  <!-- ══ 1 · THE SEAM ═══════════════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">Why no name ever fit the old screen</p>
+    <h2>It was two screens wearing one name</h2>
+    <div class="card">
+      <div class="scroll">
+        <table>
+          <caption>The four old sub-tabs, sorted by what they actually are</caption>
+          <thead><tr><th>Sub-tab today</th><th>What it holds</th><th>Has cash moved?</th><th>Half</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Expenses</strong></td><td>costs the team paid</td><td>yes</td><td style="color:var(--lime);font-weight:640">happened</td></tr>
+            <tr><td><strong>Money in</strong></td><td>income and refunds that arrived</td><td>yes</td><td style="color:var(--lime);font-weight:640">happened</td></tr>
+            <tr><td><strong>Payables</strong></td><td>commitments — deposits, balances, due dates</td><td>no</td><td style="color:var(--blue);font-weight:640">owed</td></tr>
+            <tr><td><strong>Schedule</strong></td><td>those commitments laid out by due date</td><td>no</td><td style="color:var(--blue);font-weight:640">owed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note tight dim">The seam runs between rows two and three. The ruling: cut along it.</p>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ══ 2 · THE SPLIT ══════════════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">Ruled — recorded for the walkthrough</p>
+    <h2>A promise gets its own door. Money keeps exactly one.</h2>
+    <div class="card">
+      <div class="card-head"><h3>Two objects, two doors, one place money is recorded</h3><span class="tag">Ruled 2026-08-16</span></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th></th><th>Add money</th><th>Payables → Add a commitment</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Records</strong></td><td>Something that happened</td><td>Something owed</td></tr>
+            <tr><td><strong>Its date</strong></td><td>When the money moved — <strong>never in the future</strong></td><td>When it falls due — <strong>usually in the future</strong></td></tr>
+            <tr><td><strong>Cash</strong></td><td>Moves</td><td>Does not move</td></tr>
+            <tr><td><strong>Deposit / balance split</strong></td><td>—</td><td>Here, where it belongs</td></tr>
+            <tr><td><strong>Becomes the other by</strong></td><td>—</td><td><strong>Mark paid</strong>, which opens <em>Add money</em> pre-filled and <strong>asks when</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note tight">
+        This re-makes <strong>"one Add door"</strong> as <em>one door per object</em> — each tab has
+        exactly one Add, and money itself still has one, because Mark paid returns through it. A
+        future date typed on <em>Add money</em> is refused with <em>"that hasn't happened yet — add
+        it as a commitment instead."</em>
+      </p>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ══ 3 · THE TARGET MODEL ═══════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">The shape — one place to see, separate doors to act</p>
+    <h2>Workspaces per relationship. One book where they meet.</h2>
+
+    <div class="barWrap">
+      <span class="screenCap">Today — 8 tabs org-linked, four sub-tabs on one of them</span>
+      <div class="tabbar" aria-label="Money tabs today">
+        <span class="tabBtn">Overview</span><span class="tabBtn">Budget Plan</span><span class="tabBtn">Player Dues</span><span class="tabBtn">Fundraising</span><span class="tabBtn on">Expenses &amp; Payables</span><span class="tabBtn">Allocations</span><span class="tabBtn">Payments</span><span class="tabBtn">Budget vs. Actual</span>
+      </div>
+      <div class="subrow">
+        <span class="subBtn on">Expenses</span><span class="subBtn">Payables</span><span class="subBtn">Money in</span><span class="subBtn">Schedule</span>
+      </div>
+    </div>
+
+    <div class="barWrap">
+      <span class="screenCap">End state — still 8 tabs org-linked (7 standalone); the club merge pays for the split</span>
+      <div class="tabbar" aria-label="Money tabs, end state">
+        <span class="tabBtn">Overview</span><span class="tabBtn">Budget Plan</span><span class="tabBtn">Player Dues</span><span class="tabBtn">Fundraising</span><span class="tabBtn on">Transactions</span><span class="tabBtn new">Payables</span><span class="tabBtn new">Club</span><span class="tabBtn">Budget vs. Actual</span>
+      </div>
+      <div class="subrow">
+        <span class="screenCap" style="align-self:center">Transactions has no sub-tabs — filters instead ↓</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="scroll">
+        <table>
+          <caption>Three layers</caption>
+          <thead><tr><th>Layer</th><th>Screens</th><th>Job</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Plan</strong></td><td>Budget Plan</td><td>what we intend</td></tr>
+            <tr><td><strong>Workspaces</strong></td><td>Player Dues · Fundraising · Club · Payables</td><td>one per relationship — where records are created and workflows live (installments &amp; reminders, drives &amp; sponsors, requests &amp; allocations, commitments &amp; the schedule)</td></tr>
+            <tr><td><strong>Instruments</strong></td><td><strong>Transactions</strong> · Overview · Budget vs. Actual</td><td>the register reads across everything by date; Overview says what needs you now; the report tells the settled story by category</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note tight">
+        The isolation between workspaces is load-bearing and survives: nothing may touch a dues
+        schedule, fundraising rows refuse typed income, a pending request is not money. The register
+        only <strong>reads</strong> — nothing is ever created in it, so it cannot double-count.
+      </p>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ══ 4 · THE REGISTER ═══════════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">The centrepiece — ruled, drawn here for confirmation</p>
+    <h2>Transactions: the team's chequebook, balance beside every row</h2>
+
+    <div class="regWrap">
+      <div class="filterStrip">
+        <span class="subBtn on">All</span>
+        <span class="subBtn">Expenses</span>
+        <span class="subBtn">Income</span>
+        <span class="subBtn">Refunds</span>
+        <span class="subBtn">from Dues</span>
+        <span class="subBtn">from Fundraising</span>
+        <span class="subBtn">from Club</span>
+        <span class="spacer"></span>
+        <span class="chk"><span class="cbox on"></span> Include scheduled</span>
+      </div>
+      <div class="scroll">
+        <table class="reg">
+          <thead>
+            <tr><th>Date</th><th class="what">What</th><th>Category · Item</th><th style="text-align:right">Money out</th><th style="text-align:right">Money in</th><th style="text-align:right">Balance</th></tr>
+          </thead>
+          <tbody>
+            <tr class="sched">
+              <td class="dt">Sep 30</td>
+              <td class="what">Fall Showdown entry — balance<span class="chip act">Mark paid</span></td>
+              <td class="cat">Tournaments · Entry Fees</td>
+              <td class="amt">400.00</td><td class="amt"></td>
+              <td class="bal">3,204.40</td>
+            </tr>
+            <tr class="sched">
+              <td class="dt">Sep 15</td>
+              <td class="what">Dues installment — 11 families<span class="chip src">Player Dues</span></td>
+              <td class="cat">—</td>
+              <td class="amt"></td><td class="amt">1,375.00</td>
+              <td class="bal">3,604.40</td>
+            </tr>
+            <tr class="today">
+              <td colspan="5">Today</td>
+              <td style="text-align:right">Balance $2,229.40 — equals Cash on hand</td>
+            </tr>
+            <tr>
+              <td class="dt">Sep 3</td>
+              <td class="what">Provincials cancelled — entry refunded<span class="chip kind">Refund</span></td>
+              <td class="cat">Tournaments · Entry Fees</td>
+              <td class="amt"></td><td class="amt">400.00</td>
+              <td class="bal">2,229.40</td>
+            </tr>
+            <tr>
+              <td class="dt">Sep 1</td>
+              <td class="what">Dome rental — September block</td>
+              <td class="cat">Facilities · Dome Time</td>
+              <td class="amt">325.00</td><td class="amt"></td>
+              <td class="bal">1,829.40</td>
+            </tr>
+            <tr class="derived">
+              <td class="dt">Aug 28</td>
+              <td class="what">August dues payments — 9 families<span class="chip src">Player Dues →</span></td>
+              <td class="cat">—</td>
+              <td class="amt"></td><td class="amt">1,125.00</td>
+              <td class="bal">2,154.40</td>
+            </tr>
+            <tr class="derived">
+              <td class="dt">Aug 22</td>
+              <td class="what">Spring Bottle Drive — team share<span class="chip src">Fundraising →</span></td>
+              <td class="cat">Fundraising · Fundraising drive</td>
+              <td class="amt"></td><td class="amt">374.40</td>
+              <td class="bal">1,029.40</td>
+            </tr>
+            <tr>
+              <td class="dt">Aug 16</td>
+              <td class="what">Team hoodie order — margin</td>
+              <td class="cat">Fundraising · Merchandise sales</td>
+              <td class="amt"></td><td class="amt">480.00</td>
+              <td class="bal">655.00</td>
+            </tr>
+            <tr>
+              <td class="dt">Aug 12</td>
+              <td class="what">Fall Showdown entry — deposit</td>
+              <td class="cat">Tournaments · Entry Fees</td>
+              <td class="amt">200.00</td><td class="amt"></td>
+              <td class="bal">175.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="duo">
+      <div class="card">
+        <h3>How to read it</h3>
+        <ul class="plain">
+          <li><strong>Newest first, bank-app style</strong> — each row's Balance is the balance <em>after</em> it. Scheduled rows sit above Today with <strong>projected</strong> balances, dashed and blue — never distinguished by colour alone.</li>
+          <li><strong>The balance at Today IS Cash on hand</strong> — same number, guaranteed, because every movement that feeds it has a row here. If they could disagree, the register would be wrong by construction; that is a build-blocking test.</li>
+          <li><strong>Direction lives in two columns.</strong> A refund on an expense is simply money in; an income reversal is money out. Everything has one home — its date. <span class="dim">(This is not the dead "direction column" draft: that was one signed column with a tag on the budget report, running two variance formulas. The register shows no variance, and the report ruling stands.)</span></li>
+          <li><strong>Rows are doors.</strong> A typed record opens the money form. A derived row (dues, fundraising, club — dimmed, chip naming its workspace) navigates there to act; the register never edits it. A scheduled commitment offers <strong>Mark paid</strong> → <em>Add money</em>, pre-filled, asking when.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>The rules it keeps</h3>
+        <ul class="plain">
+          <li>⛔ <strong>Nothing pending a decision appears.</strong> An unapproved request is money the club may decline — it lives on the Club tab only.</li>
+          <li><strong>Filters hide the balance.</strong> A running balance over a filtered subset looks like cash and isn't; the full book is the only place the balance shows.</li>
+          <li><strong>Displaying dues never touches dues.</strong> The schedule of what families owe is read here, managed only on Player Dues.</li>
+          <li><strong>Season-scoped, working season only.</strong> A money history book is its own future session, deliberately.</li>
+          <li><strong>The Overview's next-30-days panel becomes a window into this</strong> — its rows deep-link in with the overlay on.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ══ 5 · CLUB + LANDING ═════════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">The other merge, and where a coach lands</p>
+    <h2>One club tab, and one question per screen</h2>
+
+    <div class="duo">
+      <div class="card">
+        <div class="card-head"><h3>Allocations + Payments → one club tab</h3><span class="tag later">Phase 4 · own mockup pass</span></div>
+        <p class="note">
+          Two tabs today, one relationship: what the club bills the team, what the club has given or
+          agreed to, what the team asks of the club. Merged into one tab telling the story of
+          <strong>where the team stands with the club</strong>, with both existing workflows intact —
+          including everything the recent request-record work fixed (pencil while pending, the
+          confirmation around Withdraw, the race guards). Settled club amounts appear in the register;
+          approved-owed amounts join its scheduled overlay; pending requests appear only here.
+        </p>
+        <p class="note tight">
+          <strong>Open:</strong> the tab's name — <strong>Club</strong> (what coaches say) vs
+          <strong>Org</strong> (what the product's own badges say: "From Org"). Settled at the phase-4
+          mockup pass. This merge also retires the earlier <em>Payments → Requests</em> rename — the
+          tab it renamed no longer exists.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>One question per screen</h3>
+        <div class="scroll">
+          <table style="min-width:26rem">
+            <thead><tr><th>Screen</th><th>Its one question</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Overview</strong> <span class="dim">(still the landing)</span></td><td><em>what needs me now?</em></td></tr>
+              <tr><td><strong>Budget Plan</strong></td><td><em>what do we intend?</em></td></tr>
+              <tr><td><strong>Transactions</strong></td><td><em>what happened — and what's coming?</em></td></tr>
+              <tr><td><strong>Payables</strong></td><td><em>manage what we owe</em></td></tr>
+              <tr><td><strong>Player Dues</strong></td><td><em>where do families stand?</em></td></tr>
+              <tr><td><strong>Fundraising</strong></td><td><em>what did drives and sponsors bring?</em></td></tr>
+              <tr><td><strong>Club</strong></td><td><em>where do we stand with the club?</em></td></tr>
+              <tr><td><strong>Budget vs. Actual</strong></td><td><em>how does it compare to the plan?</em></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note tight dim">
+          Budget vs. Actual's three views stay exactly as they are — one lens control, three
+          questions of one comparison. Said out loud so nobody manufactures a change.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ══ 6 · RULED / OPEN ═══════════════════════════════════════════════ -->
+  <section>
+    <p class="eyebrow">Where the decisions stand</p>
+    <h2>Ruled, and the little that remains</h2>
+
+    <div class="duo">
+      <div class="decision">
+        <b class="q">✅ Ruled 2026-08-16</b>
+        <ul class="plain">
+          <li>The <strong>payables split</strong> — one door per object; money itself keeps one.</li>
+          <li>The hub's tabs carry the halves; the <em>Money in</em> tab name dies.</li>
+          <li><strong>Transactions is the register</strong> — dated book, two amount columns, running balance, filters not sub-tabs, scheduled overlay. Supersedes the two-list draft before it was built.</li>
+          <li><strong>Allocations + Payments merge</strong> into one club tab (phase 4).</li>
+          <li>The forward ledger is the register's overlay, windowed from Overview — not a separate screen.</li>
+        </ul>
+      </div>
+      <div class="decision">
+        <b class="q">◻ Open — confirm at this mockup review</b>
+        <ul class="plain">
+          <li><strong>Scheduled overlay default: on.</strong> Recommended — the Today rule and projected styling keep the halves unmistakable.</li>
+          <li><strong>The club tab's name</strong> — Club vs Org (settled at the phase-4 pass).</li>
+          <li><strong>Payables opens on the Schedule view.</strong> Recommended yes; mild, reversible.</li>
+        </ul>
+        <p class="note tight" style="margin-top:0.3rem">
+          <strong>Build order:</strong> 1 · the two doors → 2 · the form (as decided) → 3 · the
+          register → 4 · the club tab. Each phase leaves the product coherent; the register waits
+          for the form so its rows open the redesigned experience.
+        </p>
+      </div>
+    </div>
+
+    <p class="foot">
+      The money form itself is not re-opened — the decided table from 2026-08-16 (Save ·
+      Expense/Income pills · refund tick box · one searchable picker · consequence line ·
+      Paid&nbsp;by under More · nothing on a saved record read-only) is carried in verbatim. The QA
+      fixture (<span class="mono">qa-money-lab</span>) is already prepared. Fifth in the series
+      after <em>Category and item</em>, <em>Money in, money out</em>, <em>Money back</em> and
+      <em>The Money Form, Reconsidered</em>, and it shares their tokens on purpose.
+    </p>
+  </section>
+
+</div>

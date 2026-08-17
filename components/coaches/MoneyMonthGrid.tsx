@@ -75,7 +75,6 @@ export default function MoneyMonthGrid({
   lens,
   base,
   canWrite,
-  seasonQuery = '',
 }: {
   data: MonthGridPayload;
   lens: MoneyLens;
@@ -84,7 +83,6 @@ export default function MoneyMonthGrid({
   canWrite: boolean;
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
-  seasonQuery?: string;
 }) {
   const { monthGrid: grid, cellDetails, moneyIn, todayMonth, priorSeasonLabel } = data;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -114,10 +112,14 @@ export default function MoneyMonthGrid({
     setDetail({
       title: `${kind === 'actual' ? 'Paid in' : 'Due in'} ${formatMonthLong(month)} · ${categoryName}`,
       items,
+      /* ⚠ THE TWO LENSES NOW LAND ON DIFFERENT TABS (Money split P1, 2026-08-16), which is what
+         the grid was always describing: an "Actual" cell is money that moved and belongs on
+         Transactions, a "Scheduled" cell is money still owed and belongs on the Payables schedule.
+         They used to be one screen with a sub-tab hop between them. */
       href: kind === 'actual'
-        ? moneySectionHref(base, 'expenses', undefined, seasonQuery)
-        : moneySectionHref(base, 'expenses', { tab: 'schedule' }, seasonQuery),
-      hrefLabel: kind === 'actual' ? 'Open Expenses' : 'Open the payment schedule',
+        ? moneySectionHref(base, 'transactions', undefined)
+        : moneySectionHref(base, 'payables', { tab: 'schedule' }),
+      hrefLabel: kind === 'actual' ? 'Open Transactions' : 'Open the payment schedule',
     });
   }
 
@@ -227,7 +229,7 @@ export default function MoneyMonthGrid({
                         <td className={`${styles.num} ${styles.undated}`}>
                           {cellNode(undatedLive && line.undatedBudget > 0.005 ? line.undatedBudget : null, {
                             href: canWrite && undatedLive && line.undatedBudget > 0.005
-                              ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }, seasonQuery)
+                              ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' })
                               : undefined,
                             title: canWrite ? 'Give this money a date' : undefined,
                           })}
@@ -242,7 +244,7 @@ export default function MoneyMonthGrid({
                         return (
                           <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
                             {cellNode(v, {
-                              href: canEdit ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }, seasonQuery) : undefined,
+                              href: canEdit ? moneySectionHref(base, 'budget', { line: line.id, periods: '1' }) : undefined,
                               title: canEdit ? 'Edit this line’s payment dates' : undefined,
                             })}
                           </td>

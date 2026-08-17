@@ -396,8 +396,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
       'Export the season budget plan — category, line, whether it is a cost or expected fundraising, amount, its payment months, and notes.',
   },
   {
+    /* ⚠ THE CATALOG ID IS UNCHANGED (Money split P1, 2026-08-16). It is a stable key the help
+       system and the plan-gating tests address this dataset by; the SCREEN it names has split, and
+       the label and summary follow the screen. The downloaded files keep their own dataset
+       segments (`expenses`, `payables`, `money-in`, `payment-schedule`) for the same reason — a
+       coach's downloads folder already holds a season of them. */
     id: 'coaches-expenses-payables',
-    label: 'Coaches Portal — Expenses & payables',
+    label: 'Coaches Portal — Transactions & payables',
     module: 'coaches',
     page: 'Money → Export ▾',
     file: 'lib/coach-money-exports.ts',
@@ -415,7 +420,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export what is on screen in Expenses & Payables — the Expenses list, the Payables list, or the payment schedule — honouring the money-tag filter.',
+      'Export what is on screen on Transactions or Payables — the Expenses list, Money in, your commitments, or the payment schedule — honouring the money-tag filter.',
   },
   {
     id: 'coaches-fundraisers',

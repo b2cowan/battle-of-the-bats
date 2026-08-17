@@ -2,14 +2,14 @@
 import { useState, useEffect, useCallback, useRef, use, type ComponentType } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
 import { MoneyRefreshProvider } from '@/lib/coach-money-refresh';
 import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
-import { type CoachMoneySection } from '@/lib/coach-money-links';
+import { legacyMoneyAddress, type CoachMoneySection } from '@/lib/coach-money-links';
 import OverviewDashboard from './OverviewDashboard';
 import SetupOverview from './SetupOverview';
 import styles from '../../../coaches.module.css';
@@ -22,7 +22,14 @@ import styles from '../../../coaches.module.css';
 const BudgetPlanPanel = dynamic(() => import('./budget/panel').then(m => m.BudgetPlanPanel), { ssr: false });
 const PlayerDuesPanel = dynamic(() => import('./dues/panel').then(m => m.PlayerDuesPanel), { ssr: false });
 const FundraisersPanel = dynamic(() => import('./fundraisers/panel').then(m => m.FundraisersPanel), { ssr: false });
-const ExpensesPayablesPanel = dynamic(() => import('./expenses/panel').then(m => m.ExpensesPayablesPanel), { ssr: false });
+/* ⚠ TWO TABS, ONE MODULE (Money split P1, 2026-08-16). Transactions and Payables are two faces of
+   the same panel rather than two files: they share the record form, the money-tag library, the
+   taxonomy picker, the importer and every fetch, and copying ~1,500 lines to separate them would
+   put the one form the whole release turns on in two places at once. The hub mounts each face
+   independently, exactly as it mounts Allocations and Payments. P3 replaces the Transactions face
+   wholesale with the register, at which point the shared body shrinks to Payables' own. */
+const TransactionsPanel = dynamic(() => import('./expenses/panel').then(m => m.TransactionsPanel), { ssr: false });
+const PayablesPanel = dynamic(() => import('./expenses/panel').then(m => m.PayablesPanel), { ssr: false });
 const OrgAllocationsPanel = dynamic(() => import('./allocations/panel').then(m => m.OrgAllocationsPanel), { ssr: false });
 const PaymentRequestsPanel = dynamic(() => import('./payment-requests/panel').then(m => m.PaymentRequestsPanel), { ssr: false });
 const BudgetVsActualPanel = dynamic(() => import('./budget-vs-actual/panel').then(m => m.BudgetVsActualPanel), { ssr: false });
@@ -41,7 +48,8 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget', Component: BudgetPlanPanel },
   { id: 'dues', Component: PlayerDuesPanel },
   { id: 'fundraisers', Component: FundraisersPanel },
-  { id: 'expenses', Component: ExpensesPayablesPanel },
+  { id: 'transactions', Component: TransactionsPanel },
+  { id: 'payables', Component: PayablesPanel },
   { id: 'allocations', Component: OrgAllocationsPanel },
   { id: 'payment-requests', Component: PaymentRequestsPanel },
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
@@ -85,7 +93,30 @@ export default function CoachesAccountingPage({
   // `visited` tracks every tab that's ever been opened this visit — once a
   // panel mounts it stays mounted (display:none while inactive), so switching
   // away and back never loses an in-progress form or re-fetches its data.
-  const activeSection = (seasonSearchParams.get('section') as SectionId | null) ?? 'overview';
+  /* ── Saved addresses from before the split (Money split P1, 2026-08-16) ──────────────────────
+     `?section=expenses` names a tab that no longer exists. Every such address still works, and
+     WHICH tab it resolves to depends on the sub-view it carried — the rule lives in
+     `legacyMoneyAddress`, shared with the standalone route's redirect so the two cannot disagree.
+
+     ⚠ THE ADDRESS IS THEN REWRITTEN, not merely interpreted. A coach who arrives from a bookmark
+     and copies the URL out of the bar to send to their treasurer must hand over a link to the tab
+     they are actually looking at — leaving `section=expenses` in the bar would keep minting new
+     copies of a dead address indefinitely. `replace`, not `push`: the old address is not a place
+     worth having a Back button return to. */
+  const router = useRouter();
+  const rawSection = seasonSearchParams.get('section');
+  const legacyAddress = legacyMoneyAddress(rawSection, seasonSearchParams.get('tab'));
+  const legacySection = legacyAddress?.section;
+  const legacyTab = legacyAddress?.tab;
+  useEffect(() => {
+    if (!legacySection) return;
+    const qp = new URLSearchParams(seasonSearchParams.toString());
+    qp.set('section', legacySection);
+    if (legacyTab) qp.set('tab', legacyTab); else qp.delete('tab');
+    router.replace(`${base}/accounting?${qp.toString()}`, { scroll: false });
+  }, [legacySection, legacyTab, seasonSearchParams, router, base]);
+
+  const activeSection = (legacySection ?? (rawSection as SectionId | null)) ?? 'overview';
   // Seed with the section a coach actually LANDS on (a hard refresh, bookmark, or
   // external link straight into e.g. ?section=dues) as well as 'overview' — seeding
   // only 'overview' left a direct link to any other tab rendering a blank pane, since
@@ -214,7 +245,12 @@ export default function CoachesAccountingPage({
     { id: 'budget', label: 'Budget Plan' },
     { id: 'dues', label: 'Player Dues' },
     { id: 'fundraisers', label: 'Fundraising' },
-    { id: 'expenses', label: 'Expenses & Payables' },
+    /* ⚠ TWO TABS WHERE ONE SCREEN WAS (Money split P1, 2026-08-16). "Expenses & Payables" named a
+       screen doing two jobs — recording what happened, and managing what is owed — and the
+       ampersand in its own label was the tell. They sit adjacent and in that order because the
+       money flows that way: a commitment on Payables settles INTO Transactions. */
+    { id: 'transactions', label: 'Transactions' },
+    { id: 'payables', label: 'Payables' },
     // Trimmed from "Org Allocations"/"Payment Requests": inside Money the shorter words are
     // unambiguous, and the two longest labels were what pushed the row past the column.
     // Each panel's own page title keeps the full name.
@@ -240,10 +276,13 @@ export default function CoachesAccountingPage({
     // same door wearing two names.
     fundraisers: sectionHref('fundraisers', { kind: 'fundraiser' }),
     sponsorships: sectionHref('fundraisers', { kind: 'sponsor' }),
-    expenses: sectionHref('expenses'),
+    transactions: sectionHref('transactions'),
+    payables: sectionHref('payables'),
     budgetStarter: sectionHref('budget', { starter: '1' }),
     budgetGenerate: sectionHref('budget', { generate: '1' }),
-    expensesSchedule: sectionHref('expenses', { tab: 'schedule' }),
+    // Payables already opens on the schedule; naming it anyway keeps the caller's INTENT in the
+    // link, so a change of default view can never silently redirect "see the full schedule".
+    payablesSchedule: sectionHref('payables', { tab: 'schedule' }),
     ...(showOrgTabs ? {
       allocations: sectionHref('allocations'),
       paymentRequests: sectionHref('payment-requests'),

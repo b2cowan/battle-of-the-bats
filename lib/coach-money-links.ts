@@ -22,10 +22,44 @@ export type CoachMoneySection =
   | 'budget'
   | 'dues'
   | 'fundraisers'
-  | 'expenses'
+  | 'transactions'
+  | 'payables'
   | 'allocations'
   | 'payment-requests'
   | 'budget-vs-actual';
+
+/**
+ * ⚠ `expenses` IS GONE FROM THE UNION ON PURPOSE (Money split P1, 2026-08-16). One screen holding
+ * happened-lists AND owed-lists became two tabs — Transactions and Payables — so the old id names
+ * no tab at all. Removing it from the type rather than aliasing it is what makes the compiler find
+ * every caller; the ones that should keep working do so through `legacyMoneyAddress` below.
+ */
+export type LegacyMoneySection = 'expenses';
+
+/**
+ * Where a saved `?section=expenses` address lands now.
+ *
+ * ⚠⚠ THE SUB-VIEW DECIDES THE TAB, NOT JUST THE SECTION. The old screen's four sub-tabs divided
+ * cleanly into happened (Expenses, Money in) and owed (Payables, Payment schedule), and that
+ * division is exactly where the split was made — so `&tab=payables` and `&tab=schedule` have to
+ * cross to the OTHER tab, while `&tab=money-in` stays put and only changes which view opens. A
+ * mapping that read the section alone would land half of every bookmarked link on a screen that
+ * cannot show what it pointed at.
+ *
+ * Pure and framework-free (node scripts import this module), and the ONE home for the rule — the
+ * legacy standalone route and the hub's own address normaliser both call it.
+ */
+export function legacyMoneyAddress(
+  section: string | null | undefined,
+  tab: string | null | undefined,
+): { section: CoachMoneySection; tab?: string } | null {
+  if (section !== 'expenses') return null;
+  if (tab === 'payables') return { section: 'payables', tab: 'commitments' };
+  if (tab === 'schedule') return { section: 'payables', tab: 'schedule' };
+  if (tab === 'money-in') return { section: 'transactions', tab: 'money-in' };
+  // `tab=expenses`, anything unrecognised, or no sub-view at all: the happened side, its default.
+  return { section: 'transactions' };
+}
 
 /**
  * Href for a Money-hub tab. `base` is the team root (`/${orgSlug}/coaches/teams/${teamId}`),

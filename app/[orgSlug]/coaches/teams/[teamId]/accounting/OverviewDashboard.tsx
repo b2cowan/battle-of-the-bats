@@ -317,9 +317,9 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
             apiUrl={payablesApiUrl}
             hrefs={{
               dues: hrefs.dues,
-              expenses: hrefs.expenses,
+              payables: hrefs.payables,
               allocations: hrefs.allocations,
-              fullSchedule: hrefs.expensesSchedule,
+              fullSchedule: hrefs.payablesSchedule,
             }}
           />
         )}

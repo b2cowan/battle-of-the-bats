@@ -80,7 +80,14 @@ export interface DashboardHrefs {
    * ALREADY FILTERED — two doors onto an identical view would be a second navigation system.
    */
   sponsorships: string;
-  expenses: string;
+  /**
+   * ⚠ TWO SURFACES WHERE THERE WAS ONE (Money split P1, 2026-08-16), and the rail gains a row to
+   * match. `expenses` used to point at a screen holding both what had happened and what was owed,
+   * which is why its single rail row had to carry two unrelated stats — "$4,120 paid · 3 due" —
+   * squeezed onto one line. They are separate questions and now separate doors.
+   */
+  transactions: string;
+  payables: string;
   allocations?: string;
   paymentRequests?: string;
   // ── deep links, not surfaces ──
@@ -88,8 +95,9 @@ export interface DashboardHrefs {
   budgetStarter: string;
   /** Budget, with the generate-installments flow open. */
   budgetGenerate: string;
-  /** Expenses, on its payment-schedule view. */
-  expensesSchedule: string;
+  /** Payables, on its payment-schedule view (the tab's own default, addressed explicitly so a
+   *  caller that means "the schedule" survives a change of default). */
+  payablesSchedule: string;
 }
 
 /**
