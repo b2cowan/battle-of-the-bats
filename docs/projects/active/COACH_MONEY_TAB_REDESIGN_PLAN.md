@@ -35,12 +35,15 @@ https://claude.ai/code/artifact/ff5112d8-8e90-40f9-8e67-3aa668b668e2
 5. **The "forward ledger" instrument is the register's scheduled overlay**, not a separate screen.
    The Overview's next-30-days panel becomes a window into it.
 
-**Still open — confirm at the mockup review, none blocks the direction:**
+**~~Still open~~ — ALL THREE CLOSED as of 2026-08-17. Nothing in this plan is open.**
+*(Checked against the code, not against this list — it had gone stale on two of the three, which is
+the failure mode this repo's own rules exist about.)*
 
-- ~~**The club tab's name**~~ — **RULED 2026-08-17: `Club`** (see the P4 ruling log below).
-- **The register's default for the scheduled overlay** — recommendation: **on**, with the Today
-  rule separating settled from projected (§4.4). *(Shipped **on** in P3.)*
-- **Payables opens on the Schedule view** — recommended yes; mild, reversible.
+- ~~**The club tab's name**~~ — **RULED 2026-08-17: `Club`** (P4 ruling log, §0b below).
+- ~~**The register's default for the scheduled overlay**~~ — **shipped ON in P3** (`showScheduled`
+  initialises true; the Today rule and the projected styling separate the halves).
+- ~~**Payables opens on the Schedule view**~~ — **adopted in P1** (`FACE_TABS.payables` is
+  `['schedule', 'commitments']`, with the reasoning on the constant).
 
 ---
 
