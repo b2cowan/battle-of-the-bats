@@ -2,8 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { isCoachNavItemVisible, OVERVIEW_LABEL, SEASON_END_LABEL } from '../../lib/coach-nav-visibility.ts';
+import {
+  isCoachNavItemVisible, OVERVIEW_LABEL, SEASON_END_LABEL,
+  COACH_NAV_DEFAULT_CLOSED_GROUPS, coachNavDefaultOpenGroups, isCoachNavGroupOpen,
+} from '../../lib/coach-nav-visibility.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
+import { stripComments } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -92,6 +96,19 @@ const SIDEBAR = read('components/coaches/CoachesSidebar.tsx');
 const BOTTOM = read('components/coaches/CoachesBottomNav.tsx');
 
 /**
+ * The same two files as CODE — comments stripped (tests/unit/_source-code.ts).
+ *
+ * ⚠ The label/heading extractors above deliberately keep the RAW text: they are anchored on the
+ * group literals and stripping would not change what they find. Everything that asserts a rule is
+ * PRESENT or ABSENT uses these instead, because those assertions read prose otherwise — and this
+ * file proved it, twice in one sitting: "no Explore group" failed on the comment recording that
+ * Explore was deleted, and "no phase-varying defaults" failed on the comment explaining why the
+ * coach rail deliberately has none.
+ */
+const SIDEBAR_CODE = stripComments(SIDEBAR);
+const BOTTOM_CODE = stripComments(BOTTOM);
+
+/**
  * ⚠ THE LANDING SLOT IS HOISTED, AND THE EXTRACTOR HAS TO FOLLOW IT (P2, 2026-08-16). Overview and
  * Season's End live in named constants above `TEAM_NAV_GROUPS` because the first slot SWAPS: a team
  * whose working season has finished lands on Season's End instead. Both are still capability-gated
@@ -166,7 +183,10 @@ describe('the two navs tell the same story', () => {
 
   it('the group headings and their order match between the two navs', () => {
     // The sidebar's ungrouped Overview row has no heading, so both lists start at "Season".
-    assert.deepEqual(sidebarGroups, ['Season', 'Progress', 'Money', 'Communication', 'Team', 'Team admin']);
+    // ⚠ FIVE, not six: "Team admin" merged into "Team" (Phase 5b, 2026-08-18). The item list above
+    // is UNCHANGED by that merge — if a diff touches both this line and EXPECTED_ITEMS, something
+    // moved that was not supposed to.
+    assert.deepEqual(sidebarGroups, ['Season', 'Progress', 'Money', 'Communication', 'Team']);
     assert.deepEqual(bottomGroups, sidebarGroups);
   });
 });
@@ -180,10 +200,19 @@ describe('the Explore shelf and its conditional mechanism are gone from both nav
    * `/discover`). Deleting it from one nav and not the other would have kept the shelf alive on
    * phones only, which is precisely the drift the test above exists for.
    */
-  for (const [name, source] of [['sidebar', SIDEBAR], ['bottom nav', BOTTOM]] as const) {
+  // ⚠ CODE, not raw source. Every assertion below is an ABSENCE, and both of these files carry
+  // comments that name Explore and the conditional mechanism in order to record that they are gone.
+  for (const [name, source] of [['sidebar', SIDEBAR_CODE], ['bottom nav', BOTTOM_CODE]] as const) {
     it(`${name} has no "Explore" section and no conditional item state`, () => {
-      assert.equal(/dropSectionLabel}>Explore|sidebarGroupLabel}>Explore/.test(source), false,
+      // ⚠ `sidebarGroupLabel` was the <p> heading and is GONE — the rail's headings are buttons
+      // (`sidebarGroupHeader`) since Phase 5b. Matching only the retired class name would have left
+      // this assertion passing on a string that can no longer appear, which is a guard that has
+      // quietly stopped guarding. Both spellings stay so neither shape can bring the shelf back,
+      // and the label test below catches the heading whatever it is wrapped in.
+      assert.equal(/dropSectionLabel}>Explore|sidebarGroupLabel}>Explore|sidebarGroupHeaderText}>Explore/.test(source), false,
         `${name} still renders an "Explore" heading`);
+      assert.equal(/'Explore'|"Explore"/.test(source), false,
+        `${name} still names an "Explore" group`);
       assert.equal(/conditional\?:|conditional: '/.test(source), false,
         `${name} still carries the conditional mechanism`);
       // ⚠ The READ, not the word — both files mention `hasTournamentHistory` in a comment
@@ -227,5 +256,103 @@ describe('a closed season leaves one door in BOTH navs', () => {
       + 'reviewer looks at, and the sheet is eleven more doors into live instruments on a season '
       + 'that has ended.',
     );
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * THE RAIL'S GROUPS COLLAPSE (Phase 5b, owner-approved 2026-08-18)
+ *
+ * Both invariants below are the kind that break in silence: nothing throws, no screen 404s, the
+ * coach is simply shown less than they should be. Neither is observable from the label lists the
+ * rest of this file pins, so they are asserted against the RULES themselves — which is why the
+ * rules live in `lib/coach-nav-visibility.ts` and not inside the client component.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('the rail collapses on a fixed rule, not on taste', () => {
+  const ALL_GROUPS = ['Season', 'Progress', 'Money', 'Communication', 'Team'];
+
+  it('only Team starts closed', () => {
+    // ⚠ CHANGING THIS IS THE DECISION POINT, and the rule is HOW OFTEN a coach opens the group,
+    // never how many rows it has. A group opened weekly or more never starts closed — the collapse
+    // is meant to shorten the rail, not to make the week's work take an extra click.
+    assert.deepEqual([...COACH_NAV_DEFAULT_CLOSED_GROUPS], ['Team']);
+    assert.deepEqual(
+      coachNavDefaultOpenGroups(ALL_GROUPS),
+      ['Season', 'Progress', 'Money', 'Communication'],
+    );
+  });
+
+  it('every default-closed group is a real heading', () => {
+    // A stale entry here closes nothing and reads as though it does — the rule would look applied
+    // while the rail stayed fifteen rows long.
+    for (const label of COACH_NAV_DEFAULT_CLOSED_GROUPS) {
+      assert.ok(sidebarGroups.includes(label),
+        `"${label}" is in the default-closed set but is not a group the rail renders`);
+    }
+  });
+
+  it('the defaults do not vary by season state', () => {
+    // ⚠ Phase 4 deleted the `conditional` mechanism because a rail that rearranges itself moves
+    // items a coach has already learned the position of. Auto-opening on season state is a softer
+    // form of the same thing and is deliberately NOT built — the admin rail's `defaultOpenFor`
+    // equivalent must not appear here.
+    assert.equal(/defaultOpenFor/.test(SIDEBAR_CODE), false,
+      'the coach rail must not learn phase-varying defaults');
+    assert.equal(/defaultOpenFor/.test(stripComments(read('lib/coach-nav-visibility.ts'))), false,
+      'the coach rail must not learn phase-varying defaults');
+  });
+
+  it('an active item forces its group open, whatever the stored state says', () => {
+    // ⚠⚠ THE ONE THAT MATTERS. Without it a coach closes a group, arrives inside it from a link or
+    // a card, and their own location is missing from the menu they are reading.
+    const shut = new Set<string>();
+    assert.equal(isCoachNavGroupOpen('Team', shut, true), true,
+      'a group holding the current page must be open even when stored state says closed');
+    assert.equal(isCoachNavGroupOpen('Team', shut, false), false);
+    assert.equal(isCoachNavGroupOpen('Team', new Set(['Team']), false), true);
+  });
+
+  it('the rail keeps its own storage key, not the admin rail\'s', () => {
+    // One shared key would let a tournament admin's Setup preference decide whether a coach's Team
+    // group is open — two different portals whose headings merely collide by name.
+    assert.equal(/'fl_nav_groups'/.test(SIDEBAR_CODE), false,
+      'the coach rail must not share the admin rail\'s localStorage key');
+    assert.match(SIDEBAR_CODE, /flhq-coach-nav-groups/);
+  });
+
+  it('the ungrouped landing slot never gets a chevron, and an empty group never gets a heading', () => {
+    // Overview / Season's End is one row, not a shelf — and a team between seasons whose entire
+    // menu is that single door must not have to open anything to reach it.
+    assert.match(SIDEBAR_CODE, /const label = group\.label;\s*\n\s*if \(!label\) return/,
+      'the headingless landing group must short-circuit before the collapsible heading renders');
+    assert.match(SIDEBAR_CODE, /if \(!items\.length\) return null;/,
+      'a group whose items are all hidden from this coach must render no heading at all');
+  });
+
+  it('a closed group surfaces what is asking for attention inside it', () => {
+    // ⚠⚠ Chat's unread badge sits on a row INSIDE Communication. Once that group can close, a coach
+    // who closes it stops seeing that anyone messaged them — nothing errors, the signal just goes
+    // quiet. The heading carries the roll-up, and a folded-row count when there is nothing to say.
+    assert.match(SIDEBAR_CODE, /itemUnread/,
+      'the rail must roll its rows\' attention signals up onto a closed heading');
+    assert.match(SIDEBAR_CODE, /!open && \(unread > 0/,
+      'a closed heading must show the rolled-up unread badge, and the folded-row count otherwise');
+  });
+});
+
+/**
+ * ⚠⚠ **A CLOSED GROUP IS AN UNMEASURED GROUP.** `check:layout` measures what is RENDERED, so the
+ * five doors folded into a closed Team group leave the layout sweep's safety net on every coach
+ * screen. The sweep opens every group before it measures (`scripts/check-layout-invariants.mjs`
+ * seeds the storage key above); this pins the two ends of that arrangement together, because the
+ * failure is invisible — the sweep goes green over fewer screens than it reports.
+ */
+describe('the layout sweep still measures the folded doors', () => {
+  it('the sweep opens every nav group before measuring', () => {
+    const sweep = read('scripts/check-layout-invariants.mjs');
+    assert.match(sweep, /flhq-coach-nav-groups/,
+      'the layout sweep must seed the coach rail\'s groups open, or the five rows folded into a '
+      + 'closed Team group are silently exempt from every layout invariant.');
   });
 });

@@ -838,6 +838,15 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --logic-lime-rgb:     var(--home-olive-rgb);
   --blueprint-blue:     var(--home-olive);
   --blueprint-blue-rgb: var(--home-olive-rgb);
+  /* ⚠⚠ REQUIRED, and it closes a latent warm bug (2026-08-18). --blueprint-light is the
+     theme-aware ink the portal now uses wherever the structural blue was being used as TEXT (the
+     navy is a FILL colour and measured 1.65:1 as ink on a dark rail). But "theme-aware" there means
+     `data-color-mode`, and warm is NOT that surface — it keys off `data-user-theme`, so it never
+     picked up the light-ground value and rendered the DARK-ground periwinkle #859BD5 on cream at
+     2.75:1. Warm remapped its sibling --blueprint-blue and stopped, so every warm surface already
+     using --blueprint-light (HUD eyebrows, archive table heads) has been failing quietly. Olive is
+     what warm renders for accent ink everywhere else, so this is the same answer, not a new one. */
+  --blueprint-light:    var(--home-olive);
   --primary-light:      var(--home-olive);
 
   /* ── Status hues → warm equivalents (base + -light text tier) ── */

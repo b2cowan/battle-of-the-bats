@@ -1382,14 +1382,14 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p>Every tool is in the left sidebar — no turning anything on. It&apos;s <strong>grouped</strong>, and the groups run in the order you&apos;re most likely to need them: the week&apos;s work at the top, the season&apos;s setup at the bottom. <strong>Nothing moves</strong> — every group is always there, in the same place, whether or not your team uses it yet.</p>
+              <p><strong>Each group folds.</strong> Click a heading to open or close it, and we&apos;ll remember how you left it on this device. <strong>Team</strong> starts closed, because it&apos;s the group you set up once rather than open every week — click it to see your Roster and the rest. Two things never hide: the group you&apos;re currently in stays open on its own, and a closed heading tells you what&apos;s inside it — how many items are folded away, or an <strong>unread count</strong> if someone&apos;s messaged you in there.</p>
               <HelpDefs>
                 <HelpDef term="Overview">At the top, on its own.</HelpDef>
                 <HelpDef term="Season">Schedule, <strong>Practice plans</strong>, <strong>Lineups</strong> and <strong>Tournaments</strong> — everything attached to a date.</HelpDef>
                 <HelpDef term="Progress">Development and <strong>Insights</strong> — a season scoreboard, a &ldquo;What stands out&rdquo; list that flags what&apos;s worth your attention, and reports on results, playing time and attendance, including <strong>&ldquo;Who&apos;s showing up?&rdquo;</strong>, your season attendance report. Insights was called <em>Season Review</em>, and <em>History</em> before that.</HelpDef>
                 <HelpDef term="Money">Your budget, dues, and expenses — this was called <em>Accounting</em>. It opens with a guide card showing your next step and your four money numbers.</HelpDef>
                 <HelpDef term="Communication">Chat, Email families.</HelpDef>
-                <HelpDef term="Team">Roster and <strong>Tryouts</strong> — where your season&apos;s players come from. This group was called <em>Squad</em>.</HelpDef>
-                <HelpDef term="Team admin">Staff, Documents, and Settings.</HelpDef>
+                <HelpDef term="Team">Roster, <strong>Tryouts</strong>, Staff, Documents and Settings — your squad and the paperwork behind it. Starts folded. This group was called <em>Squad</em>, and it has absorbed the group that was called <em>Team admin</em>.</HelpDef>
               </HelpDefs>
               <p>Your <strong>Depth chart</strong> isn&apos;t a separate item — it&apos;s a view inside <strong>Roster</strong> (a <strong>List&nbsp;/&nbsp;Depth chart</strong> toggle at the top).</p>
               <p><strong>Attendance isn&apos;t its own sidebar item.</strong> You take attendance on the <strong>Schedule</strong>, inside a game or practice; the season report lives in <strong>Insights</strong> as &ldquo;Who&apos;s showing up?&rdquo;.</p>

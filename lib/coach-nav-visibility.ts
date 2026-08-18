@@ -66,6 +66,56 @@ export function withClosedSeasonNav<T extends { label: string }>(
 }
 
 /**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * THE DESKTOP RAIL'S GROUPS COLLAPSE (Phase 5b, owner-approved mockups 2026-08-18)
+ *
+ * Fifteen rows ran off the bottom of a laptop rail. These two rules live here rather than inside
+ * `CoachesSidebar` for the reason everything else in this file does: they are decisions, they are
+ * invisible when they break, and a rule inside a client component cannot be asserted without
+ * rendering React. `tests/unit/coach-nav-groups.test.ts` pins both.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * The groups that start CLOSED, keyed by their heading.
+ *
+ * ⚠ **DECIDED BY HOW OFTEN A COACH OPENS THE GROUP, NOT BY ITS SIZE.** A group opened weekly or
+ * more never starts closed, however many rows it has — the collapse is meant to shorten the rail,
+ * not to make the week's work take a click. `Team` (roster, tryouts, staff, documents, settings) is
+ * the only group where the trade is favourable: five rows, and a coach visits them when they set
+ * the season up rather than when they run it. That takes the rail from fifteen rows to ten.
+ *
+ * ⚠ **FIXED, NEVER PHASE-VARYING.** The admin sidebar varies its defaults by tournament status
+ * (`defaultOpenFor`); the coach equivalent would be season state, and it is deliberately not built.
+ * Phase 4 deleted the `conditional` mechanism precisely because a rail that rearranges itself moves
+ * items a coach has already learned the position of, and auto-opening is a softer form of the same
+ * thing. A coach's stored preference is the only thing that changes this.
+ */
+export const COACH_NAV_DEFAULT_CLOSED_GROUPS: readonly string[] = ['Team'];
+
+/** The groups that start open — every heading the rail renders, minus the closed ones above. */
+export function coachNavDefaultOpenGroups(allGroupLabels: readonly string[]): string[] {
+  return allGroupLabels.filter(label => !COACH_NAV_DEFAULT_CLOSED_GROUPS.includes(label));
+}
+
+/**
+ * Whether a group renders its items.
+ *
+ * ⚠⚠ **AN ACTIVE ITEM FORCES ITS GROUP OPEN, WHATEVER THE STORED STATE SAYS.** Without this a
+ * coach closes a group, arrives inside it from a link, a card or a search result — and their own
+ * location is missing from the menu they are looking at. The stored preference is a preference
+ * about what to show them *elsewhere*; it was never an instruction to hide where they are.
+ */
+export function isCoachNavGroupOpen(
+  groupLabel: string,
+  openGroups: ReadonlySet<string>,
+  hasActiveItem: boolean,
+): boolean {
+  if (hasActiveItem) return true;
+  return openGroups.has(groupLabel);
+}
+
+/**
  * Whether a coach nav item (keyed by its display label) is visible for the given capabilities.
  *
  * SHARED by CoachesSidebar and CoachesBottomNav so the assistant-coach gate is a SINGLE source of

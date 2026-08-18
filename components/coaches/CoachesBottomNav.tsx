@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Trophy,
+  LayoutDashboard, Calendar, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
   MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
 } from 'lucide-react';
@@ -76,10 +76,14 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Communication', items: [
     { key: '/announcements', icon: Megaphone,     label: 'Email families' },
   ] },
+  // ⚠ **"TEAM ADMIN" IS MERGED INTO "TEAM"** (Phase 5b, owner-approved 2026-08-18) — matching the
+  // sidebar, because the two navs are required to carry the same grouping and the guard test below
+  // asserts them equal. The split asked a coach to know whether Staff was "the team" or
+  // "administering the team". Nothing moved: these four were already consecutive and are in the
+  // same order. ⚠ The sheet does NOT collapse — a coach opens it in order to find something, so
+  // hiding rows behind a chevron here would be a second tap to reach the thing they came for.
   { header: 'Team', items: [
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts' },
-  ] },
-  { header: 'Team admin', items: [
     { key: '/staff',         icon: UserCog,       label: 'Staff' },
     { key: '/documents',     icon: FileText,      label: 'Documents' },
     { key: '/settings',      icon: Settings,      label: 'Settings' },

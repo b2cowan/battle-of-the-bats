@@ -41,6 +41,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { readCode } from './_source-code.ts';
 
 const REPO = join(import.meta.dirname, '..', '..');
 const read = (rel: string) => readFileSync(join(REPO, rel), 'utf8');
@@ -52,29 +53,12 @@ const read = (rel: string) => readFileSync(join(REPO, rel), 'utf8');
  * directions. It failed on a doc comment that merely described the old design, and (much worse) it
  * would have PASSED if someone deleted the suppression code while leaving the paragraph explaining
  * it. A guard that reads prose proves the prose.
+ *
+ * ⚠ The implementation MOVED to `tests/unit/_source-code.ts` (2026-08-18) when the coach nav guard
+ * hit the identical failure and was about to hand-copy it. One home, because the string-aware line
+ * pass is subtle enough that a second copy would drift — and a drifted copy fails QUIET.
  */
-const codeOf = (rel: string) => {
-  const withoutBlocks = read(rel).replace(/\/\*[\s\S]*?\*\//g, ' ');
-  // Line comments, per line, and only when the `//` is not inside a string or URL. Anything
-  // before it on the line that opens an unclosed quote means we are inside a literal, so leave
-  // the line alone rather than truncating it. Guarding only on a preceding `:` (the first
-  // attempt) protected `https://` and nothing else — a doubled slash in a path string or a
-  // regex literal would have silently eaten the rest of the line, WEAKENING an assertion
-  // instead of breaking it. A guard that fails quiet is the thing this file exists to stop.
-  return withoutBlocks.split('\n').map(line => {
-    for (let i = 0; i < line.length - 1; i++) {
-      const c = line[i];
-      if (c === '"' || c === "'" || c === '`') {
-        const close = line.indexOf(c, i + 1);
-        if (close === -1) return line;   // unterminated literal — do not guess
-        i = close;
-        continue;
-      }
-      if (c === '/' && line[i + 1] === '/') return line.slice(0, i);
-    }
-    return line;
-  }).join('\n');
-};
+const codeOf = (rel: string) => readCode(rel);
 
 /** Calls the raw transport. Does NOT match `sendFamilyEmail(` — different identifier. */
 const CALLS_RAW_SEND = /\bsendEmail\s*\(/;

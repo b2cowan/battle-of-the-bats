@@ -636,6 +636,22 @@ for (const session of neededSessions) {
     reducedMotion: 'reduce',
   });
 
+  // ⚠⚠ A CLOSED NAV GROUP IS AN UNMEASURED NAV GROUP. The coach rail's groups collapse and "Team"
+  // starts CLOSED (Phase 5b, 2026-08-18), which would quietly take Roster, Tryouts, Staff,
+  // Documents and Settings out of every layout invariant on every coach screen — the sweep would
+  // stay green while measuring five fewer doors than it reports. Seeding the rail's own storage key
+  // with all five groups open uses the product's own preference path rather than a test-only hook,
+  // so what the sweep measures is a real state a coach can be in. Pinned from the other end by
+  // tests/unit/coach-nav-groups.test.ts, because this failure is invisible.
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem(
+        'flhq-coach-nav-groups',
+        JSON.stringify(['Season', 'Progress', 'Money', 'Communication', 'Team']),
+      );
+    } catch { /* private-mode browsers throw; the sweep then measures the defaults */ }
+  });
+
   for (const w of widths) {
     if (aborted) break;
     const page = await context.newPage();

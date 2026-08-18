@@ -1,23 +1,27 @@
 'use client';
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
+import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
-import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
+import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
-// Grouped so the sidebar reads as plain-language clusters (Squad / Season / Money / Communication /
-// Team admin) rather than a flat build-order list. Overview stays ungrouped at the top. Lineups is a
-// front door for the game-day builder (was menu-invisible). Tryouts / Tournaments are `conditional`:
-// they sit in their group only once the team uses them, otherwise they drop to an "Explore" group.
-// The Depth chart lives INSIDE Roster (a view toggle), so it's intentionally not a nav item. Hrefs
-// keep their existing routes (/accounting, /history) — only the labels change.
+// Grouped so the sidebar reads as plain-language clusters — Season / Progress / Money /
+// Communication / Team — rather than a flat build-order list, and ordered by how often a coach
+// opens them: the week's work at the top, the season's setup at the bottom. Overview stays
+// ungrouped at the very top. The Depth chart lives INSIDE Roster (a view toggle), so it's
+// intentionally not a nav item. Hrefs keep their original routes (/accounting, /history) — the
+// renames were labels only.
+//
+// ⚠ This comment named "Squad", "Team admin" and the `conditional` / "Explore" mechanism long after
+// all four were deleted. The headings are the coach's vocabulary AND the tour's eyebrows
+// (CoachPortalTour.tsx) — when one changes here, both follow.
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * THE TEAM NAV — six groups, fixed, always in the same place (owner-approved 2026-08-15, plan
@@ -111,17 +115,34 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
    *  (owner ruling) — the two travel down together and keep their order, because they are both
    *  "set the season up" tools and one produces the other. The heading is "Team" rather than
    *  "Squad" only because the group no longer holds the game-day tools that made "Squad" mean
-   *  "the playing side of things". */
+   *  "the playing side of things".
+   *
+   *  ⚠ **"TEAM ADMIN" IS MERGED INTO THIS GROUP** (Phase 5b, owner-approved 2026-08-18). It was a
+   *  second heading over three rows that answered the same question as this one — the split asked a
+   *  coach to know whether Staff was "the team" or "administering the team", which is a distinction
+   *  in the builder's head and not in theirs. NOTHING MOVED: Roster, Tryouts, Staff, Documents and
+   *  Settings were already consecutive and are in the same order, so this is one heading deleted and
+   *  no item relocated. */
   { label: 'Team', items: [
-    { label: 'Roster',      href: '/roster',      icon: Users },
-    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList },
-  ] },
-  { label: 'Team admin', items: [
+    { label: 'Roster',        href: '/roster',      icon: Users },
+    { label: 'Tryouts',       href: '/tryouts',     icon: ClipboardList },
     { label: 'Staff',         href: '/staff',       icon: UserCog },
     { label: 'Documents',     href: '/documents',   icon: FileText },
     { label: 'Settings',      href: '/settings',    icon: Settings },
   ] },
 ];
+
+/**
+ * Every group heading the rail can render, in order — the input to the default-open rule.
+ * Module-level and static, so the first client render matches the server's and nothing pops.
+ */
+const TEAM_NAV_GROUP_LABELS = TEAM_NAV_GROUPS.map(g => g.label).filter((l): l is string => !!l);
+
+/** Where a coach's open/closed preference is remembered.
+ *  ⚠ **ITS OWN KEY, deliberately not the admin rail's `fl_nav_groups`.** One shared key would let a
+ *  tournament admin's Setup preference decide whether a coach's Team group is open, in a different
+ *  portal with different headings that merely happen to collide by name. */
+const NAV_GROUPS_STORAGE_KEY = 'flhq-coach-nav-groups';
 
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
@@ -168,19 +189,64 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
 
   const base = `/${orgSlug}/coaches`;
 
+  // ── The rail's groups collapse (Phase 5b) ──────────────────────────────────────────────────
+  // ⚠ Seeded with the DEFAULTS rather than an empty set, unlike the admin rail. Admin's defaults
+  // depend on runtime data (the tournament's status) so it must wait for the client; the coach
+  // defaults are a static constant, which means the server render and the first client render
+  // already agree — and the rail does not flash five headings with no items under them on every
+  // single page load. The stored preference then replaces it a frame later, if there is one.
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    () => new Set(coachNavDefaultOpenGroups(TEAM_NAV_GROUP_LABELS)),
+  );
+  const [groupsReady, setGroupsReady] = useState(false);
+
+  useEffect(() => {
+    if (groupsReady) return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const stored = localStorage.getItem(NAV_GROUPS_STORAGE_KEY);
+        if (stored) setOpenGroups(new Set(JSON.parse(stored) as string[]));
+      } catch {
+        // Private-mode browsers throw on localStorage — keep the defaults already in state.
+      }
+      setGroupsReady(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [groupsReady]);
+
+  function toggleGroup(label: string) {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label); else next.add(label);
+      try { localStorage.setItem(NAV_GROUPS_STORAGE_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
   // ⚠ The `navSignals` / `itemState` pair that used to live here is GONE with the Explore shelf
   // (2026-08-15, plan Phase 4). An item is visible or it is not; nothing relocates itself based on
   // what the team has and hasn't done yet. The assignment row's tournament-history signal followed
   // it out of `lib/db.ts` on 2026-08-16, taking three queries off every coach load with it.
   type NavItem = { label: string; href: string; icon: typeof Users };
-  const renderNavItem = ({ label, href, icon: Icon }: NavItem) => {
+  // ⚠ ONE definition of "the coach is here", shared by the row and by its GROUP HEADING. The
+  // heading needs it to force itself open (lib/coach-nav-visibility.ts), and a heading that
+  // disagreed with its own rows about where the coach is would hide the row it is highlighting.
+  const itemIsActive = ({ href }: NavItem): boolean => {
     const fullHref = `${base}/teams/${currentTeamId}${href}`;
-    const isActive = href === '' ? pathname === fullHref : pathname.startsWith(fullHref);
+    return href === '' ? pathname === fullHref : pathname.startsWith(fullHref);
+  };
+
+  /** What a row is asking for attention with — rolled up onto its heading when the group is shut.
+   *  Chat's unread count is the only such signal today; anything added here surfaces for free. */
+  const itemUnread = (label: string): number => (label === 'Chat' ? chatUnread : 0);
+
+  const renderNavItem = (item: NavItem) => {
+    const { label, href, icon: Icon } = item;
     return (
       <Link
         key={label}
-        href={fullHref}
-        className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
+        href={`${base}/teams/${currentTeamId}${href}`}
+        className={`${styles.sidebarItem}${itemIsActive(item) ? ` ${styles.sidebarItemActive}` : ''}`}
       >
         <Icon size={14} />
         {label}
@@ -262,11 +328,45 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
               // nav (lib/coach-nav-visibility.ts), because these two navs must not drift.
               const items = withClosedSeasonNav(group.items, seasonFinished, SEASON_END_ITEM)
                 .filter(item => navVisible(item.label));
+              // ⚠ A group a coach can open onto NOTHING is worse than no group. Kept from before
+              // the collapse and it matters more now: an assistant cleared for none of Staff,
+              // Documents or Settings must not get a "Team" chevron over an empty shelf.
               if (!items.length) return null;
+
+              // ⚠ The ungrouped landing slot has NO heading and never gets a chevron — Overview
+              // (or Season's End) is one row, not a shelf, and a team between seasons whose whole
+              // menu is that single door must not have to open anything to reach it.
+              const label = group.label;
+              if (!label) return <Fragment key={gi}>{items.map(renderNavItem)}</Fragment>;
+
+              const hasActive = items.some(itemIsActive);
+              const open = isCoachNavGroupOpen(label, openGroups, hasActive);
+              const unread = items.reduce((n, item) => n + itemUnread(item.label), 0);
               return (
                 <Fragment key={gi}>
-                  {group.label && <p className={styles.sidebarGroupLabel}>{group.label}</p>}
-                  {items.map(renderNavItem)}
+                  <button
+                    type="button"
+                    className={`${styles.sidebarGroupHeader}${hasActive ? ` ${styles.sidebarGroupHeaderActive}` : ''}`}
+                    onClick={() => toggleGroup(label)}
+                    aria-expanded={open}
+                  >
+                    <span className={styles.sidebarGroupHeaderText}>{label}</span>
+                    {/* ⚠⚠ A CLOSED GROUP MUST NOT READ AS AN EMPTY ONE, and it must not swallow a
+                        signal. Chat's unread badge lives on a row inside Communication, so without
+                        this a coach who shuts that group simply stops seeing that anyone messaged
+                        them — nothing errors, the signal just goes quiet. Attention wins over the
+                        count when there is any: a folded row-count is information, an unread
+                        message is a reason to open the group. */}
+                    {!open && (unread > 0
+                      ? <ChatUnreadBadge count={unread} className={styles.sidebarGroupBadge} />
+                      : <span className={styles.sidebarGroupCount} aria-label={`${items.length} hidden`}>{items.length}</span>
+                    )}
+                    <ChevronRight
+                      size={12}
+                      className={`${styles.sidebarGroupChevron}${open ? ` ${styles.sidebarGroupChevronOpen}` : ''}`}
+                    />
+                  </button>
+                  {open && items.map(renderNavItem)}
                 </Fragment>
               );
             })}

@@ -710,7 +710,21 @@
 
 /* Group header within the team nav (Squad / Season / Communication / Admin) — a touch dimmer than
    .sidebarSectionLabel, with top spacing so the clusters read as separated. */
-.sidebarGroupLabel {
+/* ── Collapsible nav groups (Phase 5b, 2026-08-18) ──────────────────────────
+   The heading was a <p>; it is a <button> now because it does something. Typography is unchanged
+   from that <p> on purpose — the rail should not look like it grew a control, it should look like
+   the heading it already had became pressable. Mirrors AdminSidebar.module.css so the two rails
+   cannot drift on what a group heading is. */
+.sidebarGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -718,7 +732,43 @@
   color: var(--home-dim, rgba(255,255,255,0.22));
   padding: 0.5rem 1.25rem 0.35rem;
   margin-top: 0.15rem;
+  transition: color 0.15s;
 }
+.sidebarGroupHeader:hover { color: var(--home-ink, rgba(255,255,255,0.55)); }
+.sidebarGroupHeader:focus-visible {
+  outline: 2px solid var(--blueprint-blue);
+  outline-offset: -2px;
+}
+/* Pushes the count/badge and the chevron to the right edge. */
+.sidebarGroupHeaderText { margin-right: auto; }
+/* The coach is inside this group — the heading says so, because a forced-open group otherwise
+   looks identical to one the coach left open themselves.
+     ⚠ NEUTRAL, deliberately not the accent. The first version tinted this heading the same blue as
+   the active row directly beneath it, which stacked two blues on a near-black rail and made the
+   heading harder to read than the resting grey it replaced. The active ROW already shouts the
+   coach's location with a filled background and weight; the heading only has to be legible, so it
+   brightens instead of changing hue (9.1:1). */
+.sidebarGroupHeaderActive { color: var(--white-70); }
+
+.sidebarGroupChevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.sidebarGroupChevronOpen { transform: rotate(90deg); }
+
+/* The folded-row count on a closed heading. Deliberately quieter than the unread badge it gives
+   way to: it is a statement that rows are here, not a request to come and look. */
+/* ⚠ A step brighter than the heading's own dim ink (6.1:1 vs 4.5:1). This is 9.6px type carrying a
+   NUMBER — a digit has no word-shape to fall back on, so a reader either resolves it or gets
+   nothing, and "how many rows are folded in here" is the whole reason it is on screen. */
+.sidebarGroupCount {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--white-55);
+}
+.sidebarGroupBadge { flex-shrink: 0; }
 
 .sidebarItem {
   display: flex;
@@ -736,9 +786,18 @@
   color: var(--home-ink, rgba(255,255,255,0.85));
 }
 
+/* ⚠⚠ INK IS --blueprint-light, NOT --blueprint-blue (2026-08-18). The structural blue is a FILL
+   colour — a dark navy (#1E3A8A) — and as text on this rail it measured **1.65:1** against its own
+   10% tint, which is not "a bit low", it is unreadable. The active row is the one row on the rail a
+   coach must be able to read, and it was the least legible thing on it.
+     --blueprint-light is the codebase's existing answer to exactly this (declared 2026-07-26 for
+   "small labels on a dark ground", and the HUD eyebrow carries the same warning) — it is
+   theme-aware and lands at 6.2:1 here. The BACKGROUND still uses --blueprint-blue-rgb: as a tint it
+   is doing fill work, which is what that token is for.
+     ⚠ The warm override below is REQUIRED, not tidiness — see the note there. */
 .sidebarItemActive {
   background: rgba(var(--blueprint-blue-rgb), 0.1);
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   font-weight: 600;
 }
 
@@ -1283,7 +1342,7 @@
   padding: 0;
   cursor: pointer;
   font: inherit;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
 }
 .setupGuideLink:hover { text-decoration: underline; }
 
@@ -1335,7 +1394,7 @@
 }
 .snapshotHeadLabel { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; }
 .snapshotHeadArrow {
-  color: var(--blueprint-blue); opacity: 0.45; flex-shrink: 0;
+  color: var(--blueprint-light); opacity: 0.45; flex-shrink: 0;
   transition: opacity 0.15s, transform 0.15s;
 }
 
@@ -1467,7 +1526,7 @@
 }
 .lineupTplInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.12rem; text-decoration: none; }
 .lineupTplName { color: var(--white-90); font-weight: 650; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lineupTplInfo:hover .lineupTplName { color: var(--blueprint-blue); }
+.lineupTplInfo:hover .lineupTplName { color: var(--blueprint-light); }
 .lineupTplMeta { color: var(--white-45); font-size: 0.78rem; }
 .lineupTplActions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .lineupTplIconBtn {
@@ -1520,7 +1579,7 @@
 .lineupFrontChip[data-tone="warn"] { color: var(--warning); background: rgba(var(--warning-rgb), 0.12); }
 .lineupFrontAction {
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
-  font-size: 0.82rem; font-weight: 700; color: var(--blueprint-blue);
+  font-size: 0.82rem; font-weight: 700; color: var(--blueprint-light);
 }
 /* The Games pane's single lime action (nearest upcoming game without a lineup) — a styled span
    inside the row Link, so the whole row stays one interactive element. */
@@ -1574,11 +1633,11 @@
 .lineupInsightsLink { margin: 0.9rem 0 0; }
 .lineupInsightsLink a {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  color: var(--blueprint-blue); font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  color: var(--blueprint-light); font-size: 0.82rem; font-weight: 600; text-decoration: none;
   min-height: var(--tap-min, 44px); padding: 0.4rem 0.5rem; margin: 0 -0.5rem;
 }
 .lineupInsightsLink a:hover { text-decoration: underline; }
-.wltInsightsLink { display: inline-block; margin-top: 0.55rem; color: var(--blueprint-blue); font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+.wltInsightsLink { display: inline-block; margin-top: 0.55rem; color: var(--blueprint-light); font-size: 0.78rem; font-weight: 600; text-decoration: none; }
 .wltInsightsLink:hover { text-decoration: underline; }
 
 /* ── Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09) ──
@@ -1607,7 +1666,7 @@
 .insightsCoDot[data-tone="info"] { background: var(--blueprint-blue); }
 .insightsCoDot[data-tone="good"] { background: var(--success); }
 .insightsCoText { flex: 1; font-size: 0.92rem; color: var(--white-90); line-height: 1.45; }
-.insightsCoChip { flex: none; font-size: 0.68rem; font-weight: 600; color: var(--blueprint-blue); white-space: nowrap; margin-top: 0.3rem; }
+.insightsCoChip { flex: none; font-size: 0.68rem; font-weight: 600; color: var(--blueprint-light); white-space: nowrap; margin-top: 0.3rem; }
 .insightsCoQuiet { color: var(--white-45); font-size: 0.85rem; padding: 0.35rem 0.4rem 0.6rem; margin: 0; }
 
 /* ── Ask the Front Office (Phase A) ────────────────────────────────────────
@@ -1631,7 +1690,7 @@
 }
 .askBar:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.6); background: var(--white-10); box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top); }
 .askBar:focus-visible { outline: 2px solid var(--blueprint-blue); outline-offset: 2px; }
-.askBarIcon { color: var(--blueprint-blue); flex: none; }
+.askBarIcon { color: var(--blueprint-light); flex: none; }
 .askBarLabel { font-size: 0.92rem; font-weight: 650; letter-spacing: -0.01em; }
 .askBarHint { margin-left: auto; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--white-55); }
 .askBarChev { transition: transform 0.16s; flex: none; }
@@ -1690,9 +1749,9 @@
 .askReceipt { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; padding: 0.35rem 0; border-top: 1px dashed var(--white-20); font-size: 0.8rem; }
 .askReceiptText { color: var(--white-85); min-width: 0; }
 .askReceiptMeta { font-family: var(--font-data); font-size: 0.72rem; color: var(--white-55); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.askReceiptLink { font-size: 0.74rem; font-weight: 700; color: var(--blueprint-blue); white-space: nowrap; text-decoration: none; }
+.askReceiptLink { font-size: 0.74rem; font-weight: 700; color: var(--blueprint-light); white-space: nowrap; text-decoration: none; }
 .askFoot { margin: 0.6rem 0 0; font-size: 0.7rem; font-style: italic; color: var(--white-55); }
-.askFullReport { margin-top: 0.5rem; font-size: 0.78rem; font-weight: 700; color: var(--blueprint-blue); text-decoration: none; align-self: flex-start; }
+.askFullReport { margin-top: 0.5rem; font-size: 0.78rem; font-weight: 700; color: var(--blueprint-light); text-decoration: none; align-self: flex-start; }
 .askFullReport:hover { text-decoration: underline; }
 
 @media (max-width: 560px) {
@@ -1743,14 +1802,14 @@
 .insightsFlagWarn { color: var(--warning); font-size: 0.75rem; font-weight: 700; }
 .insightsRecGood { color: var(--success); }
 .insightsQuietText { color: var(--white-45); font-size: 0.85rem; margin: 0; }
-.insightsOpsLink { display: inline-block; margin-top: 1rem; color: var(--blueprint-blue); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+.insightsOpsLink { display: inline-block; margin-top: 1rem; color: var(--blueprint-light); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
 .insightsOpsLink:hover { text-decoration: underline; }
 .mutedInline { color: var(--white-45); font-weight: 400; }
 .insightsSeasonStatLbl { font-size: 0.72rem; color: var(--white-35); }
 /* Overview safety-tier bridge line (the one finding that crosses dashboards). */
 .insightsBridge { display: flex; align-items: baseline; gap: 0.4rem; font-size: 0.82rem; color: var(--white-55); margin: 0.6rem 0 0; }
 .insightsBridgeIcon { color: var(--warning); flex-shrink: 0; }
-.insightsBridge a { color: var(--blueprint-blue); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.insightsBridge a { color: var(--blueprint-light); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .insightsBridge a:hover { text-decoration: underline; }
 /* Past seasons — one compact line per year, expandable for the detail stats. */
 .insightsSeasonRow { border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08)); border-radius: 8px; margin-bottom: 0.4rem; background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
@@ -2005,7 +2064,7 @@ a.oneChip:hover { border-color: currentColor; }
   cursor: pointer;
   text-decoration: none;
 }
-.oneAnswer { color: var(--blueprint-blue); }
+.oneAnswer { color: var(--blueprint-light); }
 .oneAnswerMuted { color: var(--white-45); font-weight: 600; }
 .oneAnswer:hover,
 .oneAnswerMuted:hover { text-decoration: underline; }
@@ -2054,7 +2113,7 @@ a.oneChip:hover { border-color: currentColor; }
 .tailMeta { color: var(--white-45); }
 .tailArrow { margin-left: auto; color: var(--white-35); flex-shrink: 0; }
 a.tailRow:hover .tailLabel { color: var(--white-90); }
-a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
+a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 
 /* NOTE: the tournament row's chip is deliberately NOT defined here. That row renders through
    `CoachLiveEventCard` (layout="row"), which owns the lifecycle states and their chip language for
@@ -2169,7 +2228,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   margin-top: 0.5rem;
 }
 .nowSecondary {
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
@@ -2187,7 +2246,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.8rem;
   line-height: 1.5;
 }
-.nowBridge a { color: var(--blueprint-blue); text-decoration: none; }
+.nowBridge a { color: var(--blueprint-light); text-decoration: none; }
 .nowBridge a:hover { text-decoration: underline; }
 
 /* A dashboard read that failed says so on the page, above the tiles it affects — never only
@@ -2220,7 +2279,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   cursor: pointer;
   font: inherit;
   font-weight: 700;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
 }
 .loadErrorRetry:hover { text-decoration: underline; }
 
@@ -2242,7 +2301,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
-.orgInviteIcon { color: var(--blueprint-blue); flex-shrink: 0; }
+.orgInviteIcon { color: var(--blueprint-light); flex-shrink: 0; }
 .orgInviteText { flex: 1; min-width: 12rem; }
 .orgInviteTitle { margin: 0; font-weight: 700; color: var(--white-90); font-size: 0.92rem; }
 .orgInviteBody { margin: 0.15rem 0 0; color: var(--white-55); font-size: 0.82rem; line-height: 1.4; }
@@ -2381,7 +2440,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 
 .summaryCardLink {
   font-size: 0.78rem;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   margin-top: 0.25rem;
   text-decoration: none;
 }
@@ -2499,7 +2558,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 
 /* Right-side verb link while a step is open */
 .setupItemAction {
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
@@ -2601,7 +2660,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 .badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .badgeArchived  { background: var(--white-05); color: var(--home-dim, rgba(255,255,255,0.3)); border: 1px solid var(--border-2); }
-.badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+.badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-light); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 /* A SPONSOR, in the Fundraising list. Blue against the drives' green, because the split the tab
    exists to show is fundraiser-vs-sponsor and colour is the fastest way to read a mixed list.
    ⚠ Its own class rather than reusing `.badgeTryout`, which happens to be the same blue: a
@@ -3554,7 +3613,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   white-space: nowrap;
   transition: color 0.12s;
 }
-.playerNameLink:hover { color: var(--blueprint-blue); text-decoration: underline; }
+.playerNameLink:hover { color: var(--blueprint-light); text-decoration: underline; }
 
 /* Mobile header meta: jersey # + status badges fold into the player row (their own rows hide). */
 .playerCellMeta { display: none; }
@@ -3576,7 +3635,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 
 /* Merged guardian contact cell (email over phone) */
 .guardianStack { display: inline-flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.guardianEmail { color: var(--blueprint-blue); text-decoration: none; }
+.guardianEmail { color: var(--blueprint-light); text-decoration: none; }
 .guardianEmail:hover { text-decoration: underline; }
 .guardianPhone { color: var(--white-45); font-size: 0.78rem; }
 
@@ -4098,7 +4157,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   margin-top: 0.5rem;
   font-size: 0.76rem;
   font-weight: 600;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   cursor: pointer;
   align-self: flex-start;
 }
@@ -4285,7 +4344,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   display: inline-block;
   margin-top: 0.35rem;
   font-size: 0.78rem;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   text-decoration: none;
 }
 .contactLink:hover { text-decoration: underline; }
@@ -4493,7 +4552,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 
 .notAssignedEmailLink {
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   text-decoration: none;
 }
 .notAssignedEmailLink:hover { text-decoration: underline; }
@@ -4603,7 +4662,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   transition: background 0.1s, color 0.1s;
 }
 .viewToggleBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.06)); color: var(--home-ink, rgba(255,255,255,0.8)); }
-.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
+.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-light); font-weight: 600; }
 /* ⚠ THE PHONE TAP FLOOR, WHICH THIS CONTROL NEVER HAD (2026-08-15). At 27px these were the
    smallest tap targets in Money, and the baseline entries covering them carried a reason that
    contradicted itself — "the phone breakpoint is where the 44px floor is enforced, and these clear
@@ -5164,7 +5223,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   transition: color 0.12s, border-color 0.12s;
 }
 .slideTab:hover { color: var(--white-75); }
-.slideTabActive { color: var(--blueprint-blue); border-bottom-color: var(--blueprint-blue); }
+.slideTabActive { color: var(--blueprint-light); border-bottom-color: var(--blueprint-blue); }
 
 .eventTypePill { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -5432,7 +5491,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   padding: 0.32rem 0.7rem; border-radius: 6px;
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
   background: rgba(var(--blueprint-blue-rgb),0.12);
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -5766,7 +5825,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .lineupSummaryToggle {
   background: none;
   border: none;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -5853,7 +5912,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.76rem;
   color: var(--white-45);
 }
-.lineupHint a { color: var(--blueprint-blue); text-decoration: none; }
+.lineupHint a { color: var(--blueprint-light); text-decoration: none; }
 .lineupHint a:hover { text-decoration: underline; }
 .lineupWarn {
   margin: 0;
@@ -5991,7 +6050,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   padding: 0.3rem 0.65rem; border-radius: 6px;
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
   background: rgba(var(--blueprint-blue-rgb),0.12);
-  color: var(--blueprint-blue); cursor: pointer;
+  color: var(--blueprint-light); cursor: pointer;
 }
 .lineupAddBackBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
 
@@ -6147,7 +6206,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    portal-wide). Padding + negative margin give a ≥40px tap target without shifting the layout. */
 .lineupBackLink {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  color: var(--blueprint-blue); text-decoration: none; font-size: 0.82rem;
+  color: var(--blueprint-light); text-decoration: none; font-size: 0.82rem;
   padding: 0.4rem 0.5rem; margin: 0 -0.5rem 0.5rem; /* neg-x extends the tap target, keeps text aligned to the content edge */
 }
 .lineupBackLink:hover { text-decoration: underline; }
@@ -6163,7 +6222,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    it was `.pageSummaryStrip` with different magic numbers, and the page-header ruling 2026-08-11
    made the two the same job on the same pages. The text and link inside keep their own voice. */
 .lineupMetaText { color: var(--white-40); font-size: 0.9rem; }
-.lineupOnScheduleLink { color: var(--blueprint-blue); text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; font-size: 0.9rem; }
+.lineupOnScheduleLink { color: var(--blueprint-light); text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; font-size: 0.9rem; }
 .lineupOnScheduleLink:hover { text-decoration: underline; }
 .lineupReconcileActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
 .lineupNotPlayingTag { font-style: normal; font-size: 0.72rem; color: var(--warning); }
@@ -6313,7 +6372,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .lineupViewBtnActive,
 .lineupViewBtnActive:hover {
   background: rgba(var(--blueprint-blue-rgb), 0.15);
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
 }
 
 /* ── Three views in the width that was sized for TWO ────────────────────────
@@ -7208,7 +7267,18 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    the marker (defined in the globals.css warm block). */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebar { border-right-color: var(--home-line); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarSectionLabel,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupLabel { color: var(--home-dim); }
+/* ⚠ There is deliberately NO per-rule warm override for .sidebarItemActive (or for the forty other
+   rules that moved from --blueprint-blue to --blueprint-light in the same pass). Warm remaps
+   --blueprint-light to olive ONCE, beside its existing --blueprint-blue remap in globals.css, so
+   every one of them follows automatically. Two mechanisms for one colour is how they drift.
+     The two rules below DO need overrides: they ink with white-alpha, which is invisible on paper. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupHeaderActive { color: var(--home-ink); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupHeader { color: var(--home-dim); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupHeader:hover { color: var(--home-ink); }
+/* ⚠ The folded-row count takes the heading's warm ink too. Left on its dark-theme white-alpha it
+   is all but invisible on paper — the same failure the warm badge-contrast work is on record for,
+   and one that only shows up in the warm sweep. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupCount { color: var(--home-dim); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarItem:hover { background: var(--home-olive-soft); color: var(--home-ink); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarLogout:hover { background: var(--home-live-soft); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarDivider { background: var(--home-line); }
@@ -7433,6 +7503,77 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   color: var(--white-55);
 }
 .seasonDoorArrow { color: var(--white-40); flex-shrink: 0; }
+
+/* ── The long shelves: answer first, then the season by month (owner gate 2026-08-18) ──────────
+   A real season is 26 games and 44 practices, and practice rows are two lines each — so the two
+   shelves that grow with the season were the longest thing on a page whose promise is that it is
+   quiet. The answer strip is what makes opening a shelf worth doing. */
+.seasonAnswer {
+  border-left: 2px solid var(--logic-lime);
+  padding: 0.15rem 0 0.15rem 0.7rem;
+  margin: 0 0 0.9rem;
+}
+.seasonAnswerKey {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--white-55);
+}
+.seasonAnswerValue {
+  margin: 0 0 0.3rem;
+  font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.seasonAnswerSub {
+  margin: 0; font-size: 0.8rem; color: var(--white-70);
+  font-variant-numeric: tabular-nums;
+}
+/* The competition split — one line per kind, mark then WORD then record. The word is not
+   decoration: league-green and tournament-amber are near-indistinguishable for a deuteranope. */
+.seasonSplits { display: flex; flex-direction: column; gap: 0.28rem; margin-bottom: 0.35rem; }
+.seasonSplit {
+  display: flex; align-items: center; gap: 0.45rem;
+  font-size: 0.88rem; color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.seasonSplitName { color: var(--white-70); }
+
+/* The month layer. Native <details>, so keyboard and find-in-page work for free. */
+.seasonMonths { display: flex; flex-direction: column; }
+.seasonMonth { border-top: 1px solid var(--border-subtle); }
+.seasonMonth:first-child { border-top: 0; }
+.seasonMonthHead {
+  display: flex; align-items: center; gap: 0.6rem;
+  /* 44px floor — a month row is a real target, reached on a phone. */
+  min-height: 44px; padding: 0.4rem 0.15rem;
+  cursor: pointer; list-style: none;
+  font-size: 0.88rem; font-weight: 600; color: var(--text-primary);
+}
+.seasonMonthHead::-webkit-details-marker { display: none; }
+.seasonMonthHead:hover { color: var(--logic-lime); }
+.seasonMonthName { flex: 0 0 auto; min-width: 7.5rem; }
+.seasonMonthFact {
+  flex: 1; font-weight: 400; font-size: 0.8rem; color: var(--white-55);
+  font-variant-numeric: tabular-nums;
+}
+.seasonMonthChevron { color: var(--white-40); flex-shrink: 0; transition: transform 0.15s ease; }
+.seasonMonth[open] .seasonMonthChevron { transform: rotate(90deg); }
+.seasonMonthRows { padding: 0 0 0.6rem; }
+@media (prefers-reduced-motion: reduce) { .seasonMonthChevron { transition: none; } }
+
+/* One game inside an open month. FLAT — never a link: a record must not be a door into a live
+   tool, which is why there is no game page behind these. */
+.seasonRecordRow {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0 0.45rem 0.55rem;
+  border-left: 2px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.83rem; color: var(--text-primary);
+}
+.seasonRecordRow:last-child { border-bottom: 0; }
+.seasonRecordDate { flex: 0 0 3.4rem; color: var(--white-55); font-variant-numeric: tabular-nums; }
+.seasonRecordMain { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.seasonRecordScore { flex: 0 0 3.2rem; text-align: right; font-variant-numeric: tabular-nums; }
+.seasonRecordOutcome { flex: 0 0 2.6rem; text-align: right; color: var(--white-70); }
 
 /* The reopen offer on a closed season (2026-08-18). Quiet on purpose — it is an undo for a
    mistake, not a way of working — but a real 44px target, because a coach who needs it needs it
@@ -8508,7 +8649,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   gap: 0.3rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   background: rgba(var(--blueprint-blue-rgb), 0.10);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
   border-radius: 999px;
@@ -8553,7 +8694,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border-radius: 6px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
   background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
 }
 .tagCreateChip:disabled { opacity: 0.5; cursor: default; }
 
@@ -8563,7 +8704,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   align-items: center;
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   background: rgba(var(--blueprint-blue-rgb), 0.10);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
   border-radius: 999px;
@@ -8594,7 +8735,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   background: rgba(var(--blueprint-blue-rgb), 0.08);
   font-size: 0.82rem; line-height: 1.45; color: var(--white-80);
 }
-.ppProvenance svg { flex: none; margin-top: 0.15rem; color: var(--blueprint-blue); }
+.ppProvenance svg { flex: none; margin-top: 0.15rem; color: var(--blueprint-light); }
 .ppProvenance strong { color: var(--white-90); font-weight: 700; }
 
 /* The practice-week scouting bridge (Scouting Book P3) — the game-week nudge's lime-spined
@@ -8692,7 +8833,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .reportRecapTitle { font-size: 0.86rem; font-weight: 600; color: var(--white-90); }
 .reportRecapLink {
   margin-left: auto; font-size: 0.78rem; font-weight: 500;
-  color: var(--blueprint-blue); text-decoration: none;
+  color: var(--blueprint-light); text-decoration: none;
   min-height: var(--tap-min, 44px); display: inline-flex; align-items: center;
 }
 .reportRecapLink:hover { text-decoration: underline; }
