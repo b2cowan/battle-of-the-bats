@@ -70,18 +70,18 @@
 }
 
 .label {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.86rem;
   font-weight: 600;
   line-height: 1.35;
 }
 
 .stepDone .label {
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .note {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -147,12 +147,12 @@
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
-.skip:hover { color: var(--white-70); background: var(--white-8); }
+.skip:hover { color: var(--text-secondary); background: var(--white-8); }
 
 .srOnly {
   position: absolute;

@@ -8,7 +8,7 @@
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.55;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .grid {
@@ -49,7 +49,7 @@
   gap: 0.45rem;
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .free {
@@ -67,7 +67,7 @@
 .desc {
   font-size: 0.8rem;
   line-height: 1.45;
-  color: var(--white-50);
+  color: var(--text-tertiary);
 }
 
 .turnOn {
@@ -133,7 +133,7 @@
   border: 1px solid rgba(var(--home-olive-rgb), 0.32);
   border-radius: var(--home-radius);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 
 .premiumHead {
@@ -160,14 +160,14 @@
   font-size: 1.02rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 
 .premiumBody {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.55;
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
 }
 
 .premiumFeatures {
@@ -185,7 +185,7 @@
   gap: 0.45rem;
   font-size: 0.83rem;
   font-weight: 600;
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
 }
 .premiumFeature svg { color: var(--home-olive); flex-shrink: 0; }
 
@@ -208,19 +208,19 @@
 
 .premiumReassure {
   font-size: 0.78rem;
-  color: var(--home-dim);
+  color: var(--text-tertiary);
 }
 
 .premiumPrice {
   font-family: var(--font-data, monospace);
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 .premiumPriceUnit {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--home-dim);
+  color: var(--text-tertiary);
   margin-left: 0.12rem;
 }
 
@@ -249,14 +249,14 @@
   padding: 0.85rem 0.95rem;
   font-size: 0.82rem;
   line-height: 1.45;
-  color: var(--white-55);
+  color: var(--text-tertiary);
   background: var(--white-02, rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border-2);
   border-radius: var(--radius);
   text-decoration: none;
 }
-.orgNudge strong { color: var(--white-70); }
-.orgNudge svg { color: var(--white-40); flex-shrink: 0; }
+.orgNudge strong { color: var(--text-secondary); }
+.orgNudge svg { color: var(--text-tertiary); flex-shrink: 0; }
 .orgNudge:hover { border-color: rgba(var(--logic-lime-rgb), 0.3); }
 .orgNudge:hover svg { color: var(--logic-lime); }
 

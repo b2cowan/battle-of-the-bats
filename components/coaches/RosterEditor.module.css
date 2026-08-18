@@ -21,7 +21,7 @@
 .empty {
   padding: 1.6rem;
   text-align: center;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: var(--surface);
   border: 1px dashed var(--border-2);
   border-radius: var(--radius);
@@ -60,7 +60,7 @@
   width: 30px;
   height: 38px;
   padding: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -69,7 +69,7 @@
 }
 
 .handle:hover:not(:disabled) {
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .handle:disabled {
@@ -102,7 +102,7 @@
 }
 
 .name {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 600;
   overflow: hidden;
@@ -112,7 +112,7 @@
 
 .meta {
   font-size: 0.74rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .rowActions {
@@ -128,7 +128,7 @@
   width: 38px;
   height: 38px;
   padding: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -206,7 +206,7 @@
 .input,
 .textarea {
   font: inherit;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -250,7 +250,7 @@
 .nameInput::placeholder,
 .input::placeholder,
 .textarea::placeholder {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* ── Optional sub-panels (DOB, contact) ── */
@@ -270,14 +270,14 @@
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .panelNote {
   margin: 0;
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .consent {
@@ -286,7 +286,7 @@
   align-items: flex-start;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: var(--white-60);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -348,13 +348,13 @@
 }
 
 .cancelBtn {
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-2);
 }
 
 .cancelBtn:hover:not(:disabled) {
-  color: var(--white);
+  color: var(--text-primary);
   border-color: var(--border);
 }
 

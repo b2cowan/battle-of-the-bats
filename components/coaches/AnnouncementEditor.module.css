@@ -35,12 +35,12 @@
   align-items: center;
   gap: 0.45rem;
   margin: 0;
-  color: var(--white-55);
+  color: var(--text-tertiary);
   font-size: 0.82rem;
   line-height: 1.45;
 }
-.recipientBar strong { color: var(--white-90); font-weight: 800; font-variant-numeric: tabular-nums; }
-.recipientBarIcon { flex-shrink: 0; color: var(--white-40); }
+.recipientBar strong { color: var(--text-primary); font-weight: 800; font-variant-numeric: tabular-nums; }
+.recipientBarIcon { flex-shrink: 0; color: var(--text-tertiary); }
 
 /* The FREE-portal AnnouncementEditor still uses these two stat cards + a verbose note; the
    Premium RepAnnouncementEditor collapsed them to .recipientBar above. Kept so the shared
@@ -61,12 +61,12 @@
 .summaryItem span {
   display: block;
   margin-bottom: 0.15rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.72rem;
 }
 .summaryItem strong {
   display: block;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -76,13 +76,13 @@
   align-items: center;
   gap: 0.4rem;
   margin: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   line-height: 1.45;
 }
 .recipientNoteIcon {
   flex-shrink: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* Roster-gap warning — its own --warning callout (matches the zero-state
@@ -143,7 +143,7 @@
   min-height: 32px;
   margin-left: auto;
   padding: 0 0.65rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -155,7 +155,7 @@
 }
 
 .recipientsWarnAction:hover:not(:disabled) {
-  color: var(--white);
+  color: var(--text-primary);
   border-color: var(--border);
 }
 
@@ -169,7 +169,7 @@
 .logNote {
   margin: 0;
   padding: 0.5rem 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.82rem;
   line-height: 1.55;
 }
@@ -195,7 +195,7 @@
 .draftNote {
   margin: 0;
   padding: 0.55rem 0.75rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
   background: rgba(var(--blueprint-blue-rgb), 0.10);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
   border-radius: var(--radius-sm);
@@ -207,7 +207,7 @@
 .textarea {
   width: 100%;
   font: inherit;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -234,7 +234,7 @@
 
 .input::placeholder,
 .textarea::placeholder {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .formActions {
@@ -247,7 +247,7 @@
 /* Disabled-send explanation; pushes the Send button to the right edge. */
 .formHint {
   margin-right: auto;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -271,13 +271,13 @@
 }
 
 .refreshGhostBtn {
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-2);
 }
 
 .refreshGhostBtn:hover:not(:disabled) {
-  color: var(--white);
+  color: var(--text-primary);
   border-color: var(--border);
 }
 
@@ -313,13 +313,13 @@
 
 .blockTitle {
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 700;
 }
 
 .blockMeta {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
 }
@@ -378,7 +378,7 @@
 }
 
 .name {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.92rem;
   font-weight: 700;
   overflow: hidden;
@@ -387,14 +387,14 @@
 }
 
 .meta {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.73rem;
 }
 
 .preview {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.78rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -421,13 +421,13 @@
   position: absolute;
   top: 0.1rem;
   right: 0;
-  color: var(--white-35);
+  color: var(--text-tertiary);
   transition: transform 0.15s;
 }
 .rowChevron[data-open='true'] { transform: rotate(180deg); }
 .bodyFull {
   margin-top: 0.4rem;
-  color: var(--white-70);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -440,7 +440,7 @@
   gap: 0.3rem;
   min-height: 30px;
   padding: 0 0.6rem;
-  color: var(--white-70);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -449,7 +449,7 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.reuseBtn:hover { color: var(--white); border-color: var(--border); }
+.reuseBtn:hover { color: var(--text-primary); border-color: var(--border); }
 
 @media (max-width: 700px) {
   .summary {

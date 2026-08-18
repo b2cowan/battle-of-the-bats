@@ -21,7 +21,7 @@
 .empty {
   padding: 1.6rem;
   text-align: center;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: var(--surface);
   border: 1px dashed var(--border-2);
   border-radius: var(--radius);
@@ -87,7 +87,7 @@
   border: 1px solid rgba(var(--info-rgb), 0.3);
 }
 .typeChip[data-type='event'] {
-  color: var(--white-50);
+  color: var(--text-tertiary);
   background: var(--white-05, rgba(255, 255, 255, 0.05));
   border: 1px solid var(--border-2);
 }
@@ -101,7 +101,7 @@
 }
 
 .name {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 600;
   overflow: hidden;
@@ -110,13 +110,13 @@
 }
 
 .vs {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
 .meta {
   font-size: 0.74rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* ── WI-2B: read-only real tournament games folded into the schedule ──────────────────────
@@ -149,7 +149,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 600;
 }
@@ -193,14 +193,14 @@
   font-family: var(--font-data);
   font-weight: 800;
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 .result { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; }
 .result_win { color: var(--success); }
 .result_loss { color: var(--danger); }
 .result_tie { color: var(--warning); }
-.readonlyIcon { color: var(--white-40); flex-shrink: 0; }
+.readonlyIcon { color: var(--text-tertiary); flex-shrink: 0; }
 
 .rowActions {
   flex-shrink: 0;
@@ -215,7 +215,7 @@
   width: 38px;
   height: 38px;
   padding: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -299,7 +299,7 @@
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: none;
   border-radius: calc(var(--radius-sm) - 1px);
@@ -317,13 +317,13 @@
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.74rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .formHint {
   margin: 0;
   font-size: 0.74rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .labelRequired {
@@ -335,7 +335,7 @@
 .input,
 .textarea {
   font: inherit;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -360,7 +360,7 @@
 
 .input::placeholder,
 .textarea::placeholder {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* Optional details sub-panel */
@@ -415,13 +415,13 @@
 }
 
 .cancelBtn {
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-2);
 }
 
 .cancelBtn:hover:not(:disabled) {
-  color: var(--white);
+  color: var(--text-primary);
   border-color: var(--border);
 }
 

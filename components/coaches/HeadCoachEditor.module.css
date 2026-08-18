@@ -33,7 +33,7 @@
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .field {
@@ -45,13 +45,13 @@
 .label {
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .formHint {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .labelRequired {
@@ -62,7 +62,7 @@
 
 .input {
   font: inherit;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -78,13 +78,13 @@
 }
 
 .input::placeholder {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .hint {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 /* Quiet routing confirmation — tells the coach where organizer emails actually go.
@@ -94,13 +94,13 @@
   padding: 0.5rem 0.7rem;
   font-size: 0.78rem;
   line-height: 1.45;
-  color: var(--white-60);
+  color: var(--text-secondary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
 }
 .routing strong {
-  color: var(--white);
+  color: var(--text-primary);
   font-weight: 600;
 }
 

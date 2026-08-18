@@ -21,13 +21,13 @@
   height: 1.9rem;
   border: none;
   background: transparent;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   border-radius: 999px;
   cursor: pointer;
   transition: color 0.15s ease, background 0.15s ease;
 }
 .close:hover {
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--white-8);
 }
 
@@ -54,20 +54,20 @@
 .title {
   font-size: 1.2rem;
   font-weight: 800;
-  color: var(--white);
+  color: var(--text-primary);
   margin: 0 0 0.2rem;
   line-height: 1.2;
 }
 
 .sub {
   font-size: 0.88rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
 }
 
 .sub strong {
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 /* A3: the resources block moved to the record page's "From the Organizer" zone

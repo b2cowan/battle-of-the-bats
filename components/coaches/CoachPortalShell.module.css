@@ -30,11 +30,11 @@
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg);
-  /* Re-anchor inherited text colour to the WARM-SCOPED ink. `body { color: var(--white) }`
+  /* Re-anchor inherited text colour to the WARM-SCOPED ink. `body { color: var(--text-primary) }`
      computes to white OUTSIDE the warm scope, so any descendant text that doesn't set its
      own colour token would inherit white and vanish on the cream ground. Resolving --white
      here (inside the marker) makes it ink in warm / white in dark — same rule, both themes. */
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 /* Focused full-page help guide (/coaches/help): marketing nav/footer are suppressed like
@@ -112,7 +112,7 @@
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -129,7 +129,7 @@
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.01em;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .mhTitleText {
@@ -157,7 +157,7 @@
 }
 .mhSwitchBtn svg {
   flex-shrink: 0;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .mhMeta {
@@ -171,7 +171,7 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 /* The Flip stays in the header's top-right lane at every width (owner-ratified 2026-07-25;
@@ -267,7 +267,7 @@
   font-weight: 700;
   letter-spacing: 0.045em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   white-space: nowrap;
   text-decoration: none;
   scroll-snap-align: center;
@@ -278,7 +278,7 @@
   opacity: 0.9;
 }
 .tabPill:hover {
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 .tabPill:active {
   opacity: 0.65;
@@ -333,7 +333,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .switchRow {
@@ -347,7 +347,7 @@
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 650;
-  color: var(--white);
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
 }
@@ -369,7 +369,7 @@
   border-top: 1px solid var(--border-2);
   padding: 0.55rem 0.95rem;
   font-size: 0.74rem;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 /* ── Desktop rail (≥901px; the public TournamentSideRail idiom) ─────────────── */
@@ -406,7 +406,7 @@
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .railTeamName {
@@ -415,7 +415,7 @@
   font-size: 1.02rem;
   font-weight: 800;
   line-height: 1.2;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .railMeta {
@@ -428,7 +428,7 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .teamSelect {
@@ -437,7 +437,7 @@
   font: inherit;
   font-weight: 700;
   font-size: 0.88rem;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2, var(--surface));
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -461,7 +461,7 @@
   gap: 0.65rem;
   padding: 0.55rem 0.75rem;
   border-radius: 8px;
-  color: var(--white-70);
+  color: var(--text-secondary);
   text-decoration: none;
   font-family: var(--font-data, monospace);
   font-size: 0.8rem;
@@ -470,13 +470,13 @@
   transition: background 0.15s, color 0.15s;
 }
 .railLink svg {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .railLink:hover {
   background: var(--white-05);
-  color: var(--white);
+  color: var(--text-primary);
 }
 .railLink:hover svg {
   color: var(--logic-lime);
@@ -485,7 +485,7 @@
 /* Active = soft accent fill + a left accent bar at the rail edge (public-rail idiom;
    --logic-lime resolves to olive under warm, lime under dark — consumer-family accent). */
 .railLinkActive {
-  color: var(--white);
+  color: var(--text-primary);
   background: rgba(var(--logic-lime-rgb), 0.1);
 }
 .railLinkActive svg {
@@ -521,7 +521,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-35);
+  color: var(--text-tertiary);
 }
 
 /* ── Content region ───────────────────────────────────────────────────────── */

@@ -36,7 +36,7 @@
   max-width: 68ch;
   font-size: 0.95rem;
   line-height: 1.55;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 /* Working column + a persistent access rail.
@@ -149,8 +149,8 @@
 
 .presetOptOn { border-color: var(--primary); background: var(--primary-faint); }
 
-.presetName { display: block; font-size: 0.86rem; font-weight: 700; color: var(--white-90); }
-.presetDesc { display: block; font-size: 0.76rem; line-height: 1.45; color: var(--white-45); }
+.presetName { display: block; font-size: 0.86rem; font-weight: 700; color: var(--text-primary); }
+.presetDesc { display: block; font-size: 0.76rem; line-height: 1.45; color: var(--text-tertiary); }
 
 /* The height pins on .inviteForm apply to `input` and `button` descendants, which would
    otherwise squash the radios' own boxes and, worse, force the option rows to 38px and clip
@@ -172,7 +172,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .inviteNote { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--logic-lime); }
@@ -189,7 +189,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .person {
@@ -200,17 +200,17 @@
   flex-wrap: wrap;
 }
 
-.personName { margin: 0; font-weight: 600; color: var(--white-90); }
+.personName { margin: 0; font-weight: 600; color: var(--text-primary); }
 /* A long unbroken club/school address would otherwise set the flex item's min-content width and
    push past the card edge — wrapping is never worse than overflowing. */
-.personEmail { margin: 0; font-size: 0.8rem; color: var(--white-45); overflow-wrap: anywhere; }
+.personEmail { margin: 0; font-size: 0.8rem; color: var(--text-tertiary); overflow-wrap: anywhere; }
 /* ⚠ A LABEL, not a control (owner ruling 2026-08-03 — the two records stay separate). Quiet on
    purpose: it tells a head coach the same person also follows the team, and offers nothing to
    click, because acting on it belongs on the Roster page where family followers are managed. */
-.alsoFollows { margin: 0.15rem 0 0; font-size: 0.74rem; color: var(--white-45); font-style: italic; }
+.alsoFollows { margin: 0.15rem 0 0; font-size: 0.74rem; color: var(--text-tertiary); font-style: italic; }
 
 .personActions { display: flex; align-items: center; gap: 0.6rem; }
-.saveState { font-size: 0.78rem; color: var(--white-45); }
+.saveState { font-size: 0.78rem; color: var(--text-tertiary); }
 .saveStateDone { font-size: 0.78rem; color: var(--logic-lime); }
 /* Card-scoped for the same reason as `.card .inviteError` — this compacts `.btnSecondary`'s own
    padding/font-size, and equal-specificity rules would be decided by bundler emission order. */
@@ -222,7 +222,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 /* A fixed two-column rhythm. The old auto-fill grid re-flowed the access controls
@@ -249,7 +249,7 @@
   background: var(--white-05);
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 .check {
@@ -259,12 +259,12 @@
   cursor: pointer;
 }
 .check input { margin-top: 3px; flex-shrink: 0; }
-.checkLabel { font-size: 0.83rem; color: var(--white-90); }
-.checkHint { display: block; font-size: 0.72rem; color: var(--white-45); }
+.checkLabel { font-size: 0.83rem; color: var(--text-primary); }
+.checkHint { display: block; font-size: 0.72rem; color: var(--text-tertiary); }
 
 .seg { display: flex; flex-direction: column; gap: 0.22rem; }
-.segLabel { font-size: 0.83rem; color: var(--white-90); }
-.segHint { font-size: 0.72rem; color: var(--white-45); }
+.segLabel { font-size: 0.83rem; color: var(--text-primary); }
+.segHint { font-size: 0.72rem; color: var(--text-tertiary); }
 
 .segControl {
   display: inline-flex;
@@ -282,7 +282,7 @@
   font-weight: 500;
   padding: 0.3rem 0.65rem;
   background: transparent;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 /* The group clips its rounded corners with overflow:hidden, which swallows the global focus ring
@@ -329,14 +329,14 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .railGroup { display: flex; flex-direction: column; gap: 0.4rem; }
 
 /* A real heading, styled to the same weight it had as a span — the outline is for assistive tech,
    not a visual change. */
-.railGroupLabel { margin: 0; font-size: 0.83rem; font-weight: 700; color: var(--white-90); }
+.railGroupLabel { margin: 0; font-size: 0.83rem; font-weight: 700; color: var(--text-primary); }
 
 .railList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 
@@ -345,13 +345,13 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.83rem;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 /* Lime as an ICON, not a fill — the accent remap correctly darkens it to olive on
    paper, which is what E3 asks for. */
 .railIconOn { display: grid; place-items: center; flex-shrink: 0; color: var(--logic-lime); }
-.railIconOff { display: grid; place-items: center; flex-shrink: 0; color: var(--white-45); }
+.railIconOff { display: grid; place-items: center; flex-shrink: 0; color: var(--text-tertiary); }
 
 .railFoot {
   margin: 0;
@@ -359,11 +359,11 @@
   border-top: 1px solid var(--border-2);
   font-size: 0.8rem;
   line-height: 1.5;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 /* The rail's two explainer paragraphs (it no longer lists grants — that moved into the page). */
-.railProse { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--white-70); }
+.railProse { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); }
 
 /* ── The one exclusion a head coach would otherwise assume wrong ──────────────
    Until this release everyone on a team's staff list was in the staff chat room
@@ -371,7 +371,7 @@
    that contradicts prior behaviour. It gets the only warning-coloured mark on the
    screen; every other "never" is a lock glyph, because every other "never" is what
    a head coach already expects. */
-.railItemNever { align-items: flex-start; color: var(--white-70); }
+.railItemNever { align-items: flex-start; color: var(--text-secondary); }
 
 .railIconNever {
   display: grid;
@@ -404,7 +404,7 @@
   padding: 0.15rem 0.45rem;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  color: var(--white-45);
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -412,7 +412,7 @@
   margin: 0.7rem 0 0;
   font-size: 0.83rem;
   line-height: 1.5;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 .helperActions {

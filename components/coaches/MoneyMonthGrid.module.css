@@ -37,7 +37,7 @@
 .cellValue {
   display: inline-block;
   min-width: 2.2rem;
-  color: var(--home-ink, var(--white-80));
+  color: var(--text-primary);
 }
 
 /* A cell that leads somewhere looks like it does — and stays a real touch target. */
@@ -59,7 +59,7 @@
   outline-offset: 1px;
 }
 
-.nil { color: var(--home-dim, var(--white-25)); }
+.nil { color: var(--text-tertiary); }
 .pos { color: var(--success-light); }
 .neg { color: var(--danger-light); }
 
@@ -85,8 +85,8 @@
    sit at weight 600 under a 1px rule, which made the closing figure QUIETER than the rows it
    summed while Budget Plan's equivalent was the loudest thing on its screen: the same hierarchy,
    inverted on two tabs of one hub.) */
-.lineRow .cellValue { color: var(--home-ink-soft, var(--white-65)); }
-.totalRow .cellValue { font-weight: 800; color: var(--home-ink, var(--white-90)); }
+.lineRow .cellValue { color: var(--text-secondary); }
+.totalRow .cellValue { font-weight: 800; color: var(--text-primary); }
 .runningRow th,
 .runningRow td { padding-bottom: 0.55rem; }
 .runningRow .cellValue { font-weight: 700; }
@@ -95,9 +95,9 @@
 
 .prior {
   border-right: 1px dashed var(--border-2);
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
-.prior .cellValue { color: var(--home-dim, var(--white-45)); }
+.prior .cellValue { color: var(--text-tertiary); }
 
 /* Budget the coach hasn't dated yet gets its OWN column rather than being spread across
    the months it was never assigned to (owner decision D-H3). Marked with rules and header
@@ -119,9 +119,9 @@
   margin: 0;
   font-size: 0.76rem;
   line-height: 1.5;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
-.note strong { color: var(--home-ink, var(--white-80)); font-weight: 600; }
+.note strong { color: var(--text-primary); font-weight: 600; }
 
 .shortfall {
   display: flex;
@@ -132,9 +132,9 @@
   background: rgba(var(--danger-rgb), 0.08);
   border-radius: 0 8px 8px 0;
   font-size: 0.84rem;
-  color: var(--home-ink-soft, var(--white-70));
+  color: var(--text-secondary);
 }
-.shortfall strong { color: var(--home-ink, var(--white-90)); }
+.shortfall strong { color: var(--text-primary); }
 .shortfall svg { color: var(--danger-light); flex-shrink: 0; margin-top: 0.15rem; }
 
 /* ── "last season only" ──────────────────────────────────────────────────── */
@@ -148,7 +148,7 @@
   margin: 0 0 0.5rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--home-ink, var(--white-85));
+  color: var(--text-primary);
 }
 .priorOnlyList { list-style: none; margin: 0 0 0.5rem; padding: 0; }
 .priorOnlyList li {
@@ -163,11 +163,11 @@
 .priorOnlyCat {
   margin-left: auto;
   font-size: 0.72rem;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 .priorOnlyAmt {
   font-variant-numeric: tabular-nums;
-  color: var(--home-dim, var(--white-55));
+  color: var(--text-tertiary);
   min-width: 5.5rem;
   text-align: right;
 }
@@ -185,7 +185,7 @@
   font-size: 0.85rem;
 }
 .detailDesc { display: flex; flex-direction: column; }
-.detailMeta { font-size: 0.72rem; color: var(--home-dim, var(--white-45)); }
+.detailMeta { font-size: 0.72rem; color: var(--text-tertiary); }
 .detailAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .detailTotal {
   border-bottom: none;
@@ -203,7 +203,7 @@
 .chooserSub {
   margin: 0 0 0.5rem;
   font-size: 0.78rem;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 
 .chooserList { list-style: none; margin: 0; padding: 0; }
@@ -235,13 +235,13 @@
      truncates into ambiguity — it wraps. */
   min-width: 0;
 }
-.chooserWhen { font-size: 0.72rem; color: var(--home-dim, var(--white-45)); }
+.chooserWhen { font-size: 0.72rem; color: var(--text-tertiary); }
 .chooserAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
 .chooserFoot {
   margin: 0.7rem 0 0;
   font-size: 0.75rem;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 
 /* ── the content breakpoint ──────────────────────────────────────────────── */

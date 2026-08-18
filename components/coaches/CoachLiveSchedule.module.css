@@ -27,7 +27,7 @@
   margin: 0;
   padding: 0.7rem 0.9rem;
   text-align: left;
-  color: var(--white);
+  color: var(--text-primary);
   background: rgba(var(--warning-rgb), 0.10);
   border: 1px solid rgba(var(--warning-rgb), 0.55);
   border-radius: var(--radius);
@@ -60,14 +60,14 @@
 }
 
 .changeBody {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.45;
 }
 
 .changeMeta {
-  color: var(--white-45);
+  color: var(--text-tertiary);
   font-size: 0.72rem;
 }
 
@@ -112,7 +112,7 @@
 
 .rowDate {
   flex: 0 0 auto;
-  color: var(--white-80);
+  color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -126,7 +126,7 @@
 }
 
 .oppName {
-  color: var(--white);
+  color: var(--text-primary);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,7 +134,7 @@
 }
 
 .vs {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-weight: 600;
 }
 
@@ -221,7 +221,7 @@
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
@@ -231,7 +231,7 @@
 }
 
 .resultMuted {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-weight: 800;
 }
 
@@ -247,7 +247,7 @@
 }
 
 .sideChip {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 .cancelChip {
@@ -324,7 +324,7 @@
 }
 
 .sideName {
-  color: var(--white);
+  color: var(--text-primary);
   font-weight: 700;
   font-size: 0.92rem;
   overflow: hidden;
@@ -344,17 +344,17 @@
   font-weight: 850;
   font-size: 1.7rem;
   line-height: 1;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .bcSep {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 1.2rem;
   font-weight: 700;
 }
 
 .bcAwaiting {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-family: var(--font-data, monospace);
   font-size: 0.85rem;
   font-weight: 700;
@@ -362,7 +362,7 @@
 }
 
 .bcMeta {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.78rem;
 }
 

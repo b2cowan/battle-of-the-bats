@@ -354,5 +354,19 @@ describe('the layout sweep still measures the folded doors', () => {
     assert.match(sweep, /flhq-coach-nav-groups/,
       'the layout sweep must seed the coach rail\'s groups open, or the five rows folded into a '
       + 'closed Team group are silently exempt from every layout invariant.');
+
+    // ⚠⚠ ASSERT THE SEEDED LABELS, NOT JUST THE KEY. Checking only that the storage-key string
+    // appears leaves this guard green after a heading RENAME — which this codebase explicitly
+    // allows ("group headings are free; item labels are not"). The rail REPLACES its default-open
+    // set with whatever it reads from storage, so a renamed group would come back closed under the
+    // sweep and quietly leave its whole subtree unmeasured again: the exact bug the seeding was
+    // added to fix, reopened by the weakness of its own guard.
+    const seeded = sweep.match(/'flhq-coach-nav-groups',\s*\n?\s*JSON\.stringify\(\[([^\]]*)\]/);
+    assert.ok(seeded, 'could not read the labels the sweep seeds — the seeding was restructured');
+    const seededLabels = [...seeded[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
+    assert.deepEqual(seededLabels, sidebarGroups,
+      'the sweep seeds a different set of group headings than the rail actually renders. Every '
+      + 'heading it misses is a group that stays folded during the sweep, so its rows are measured '
+      + 'by nothing.');
   });
 });

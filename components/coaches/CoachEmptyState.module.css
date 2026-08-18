@@ -69,7 +69,7 @@
 }
 
 .eyebrow {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 700;
@@ -79,7 +79,7 @@
 
 .headline {
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.2;
@@ -92,7 +92,7 @@
 .description,
 .payoff {
   max-width: 42ch;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.88rem;
   line-height: 1.55;
 }
@@ -111,7 +111,7 @@
 .blocker {
   margin: -0.25rem 0 0;
   max-width: 42ch;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.83rem;
   line-height: 1.5;
 }
@@ -166,7 +166,7 @@
 .quiet .medallion {
   width: 36px;
   height: 36px;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   background: var(--white-05);
   border-color: var(--border);
   box-shadow: none;

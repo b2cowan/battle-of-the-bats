@@ -34,9 +34,9 @@
 
 /* Zone 1 — wordmark colors only; the lockup's geometry/markup is the shared BrandLockup.
    --white re-anchors to ink under the warm marker; --logic-lime remaps to olive. */
-.logoField { color: var(--white); }
+.logoField { color: var(--text-primary); }
 .logoLogic { color: var(--logic-lime); }
-.logoHq { color: var(--home-dim, var(--data-gray)); }
+.logoHq { color: var(--text-tertiary); }
 
 /* "COACHES PORTAL" beside the wordmark (2026-08-17 shell slimdown): the sidebar header's
    own micro-label voice, moved up — same size/tracking/dim as .sidebarPortalLabel had, so
@@ -53,7 +53,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--home-dim, rgba(255, 255, 255, 0.25));
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -74,12 +74,12 @@
   width: var(--icon-door-size);
   height: var(--icon-door-size);
   border-radius: var(--icon-door-radius);
-  color: var(--home-dim, var(--data-gray));
+  color: var(--text-tertiary);
   transition: color 0.15s ease, background 0.15s ease;
 }
 
 .iconDoor:hover {
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--home-olive-soft, rgba(255, 255, 255, 0.06));
 }
 

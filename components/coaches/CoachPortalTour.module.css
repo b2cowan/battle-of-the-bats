@@ -54,7 +54,7 @@
 
 .kicker {
   margin: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 700;
@@ -70,10 +70,10 @@
   border-radius: var(--radius-sm, 8px);
   border: 1px solid var(--border);
   background: transparent;
-  color: var(--white-60);
+  color: var(--text-secondary);
   cursor: pointer;
 }
-.close:hover { color: var(--white-90); border-color: var(--white-40); }
+.close:hover { color: var(--text-primary); border-color: var(--white-40); }
 .close:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
 /* Progress dots — one per card the coach can actually see. */
@@ -123,7 +123,7 @@
 
 .headline {
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.05rem;
   font-weight: 800;
   line-height: 1.25;
@@ -131,7 +131,7 @@
 
 .text {
   margin: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.88rem;
   line-height: 1.55;
 }
@@ -170,10 +170,10 @@
   background: none;
   border: none;
   padding: 0;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   font-size: 0.82rem;
   cursor: pointer;
   text-decoration: underline;
 }
-.skip:hover { color: var(--white-70); }
+.skip:hover { color: var(--text-secondary); }
 .skip:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }

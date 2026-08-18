@@ -13,7 +13,7 @@
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .error {
@@ -39,7 +39,7 @@
 .hint {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .lockedNote {
@@ -49,7 +49,7 @@
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.5;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .lockedNote svg {
@@ -76,14 +76,14 @@
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.5;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .reqLine {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .countPill {
@@ -163,7 +163,7 @@
 .name {
   flex: 1;
   min-width: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 600;
   overflow: hidden;
@@ -180,7 +180,7 @@
 
 .fieldInput {
   font: inherit;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
@@ -197,7 +197,7 @@
 }
 
 .fieldInput::placeholder {
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* ── Consent + waiver acknowledgments ── */
@@ -208,7 +208,7 @@
   align-items: flex-start;
   font-size: 0.78rem;
   line-height: 1.45;
-  color: var(--white-60);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -260,7 +260,7 @@
 .readName {
   flex: 1;
   min-width: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.92rem;
   font-weight: 600;
   overflow: hidden;
@@ -270,7 +270,7 @@
 
 .readMeta {
   font-size: 0.76rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* ── Submit ── */

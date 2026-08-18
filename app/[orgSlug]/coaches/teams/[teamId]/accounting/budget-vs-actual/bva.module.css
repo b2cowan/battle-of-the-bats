@@ -23,7 +23,7 @@
    (page-header ruling 2026-08-11): this page now renders the shared CoachPageHeader, so the
    copy that had already drifted once (Export collapsing left) can't drift again. */
 
-.muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
+.muted { color: var(--text-tertiary); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
 
 /* ── Summary banner ──────────────────────────────────────────────────────── */
@@ -47,7 +47,7 @@
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   margin-bottom: 0.2rem;
 }
 
@@ -55,7 +55,7 @@
   display: block;
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--white-90);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -68,7 +68,7 @@
 .summaryHint {
   display: block;
   font-size: 0.72rem;
-  color: var(--white-45, rgba(255,255,255,0.45));
+  color: var(--text-tertiary);
   margin-top: 0.15rem;
 }
 
@@ -94,7 +94,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   margin-bottom: 0.75rem;
 }
 
@@ -110,7 +110,7 @@
   display: block;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--white-85, rgba(255,255,255,0.85));
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -128,7 +128,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   margin: 0 0 0.75rem;
 }
 
@@ -137,7 +137,7 @@
 .chartNote {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 .chartNoteLink {
   background: none;
@@ -163,7 +163,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
 }
 
 /* Four lens names don't fit a phone at full length — the abbreviation is a swap, not a
@@ -216,7 +216,7 @@
 
 
 .expandIcon {
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -245,7 +245,7 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--home-ink-soft, rgba(255,255,255,0.72));
+  color: var(--text-secondary);
 }
 
 /* A band one level in — the "Revenue" / "Costs" split inside an activity block. Sentence case and
@@ -298,7 +298,7 @@
   margin: 0.6rem 0 0;
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--white-45, rgba(255,255,255,0.45));
+  color: var(--text-tertiary);
 }
 
 /* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
@@ -358,7 +358,7 @@
 .emptyState {
   text-align: center;
   padding: 3rem 1rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .emptyHint {
@@ -375,7 +375,7 @@
 
 .notAssigned {
   padding: 2rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

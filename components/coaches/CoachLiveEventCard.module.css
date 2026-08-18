@@ -89,19 +89,19 @@
 .chipDone {
   background: var(--white-8);
   border: 1px solid var(--border-2);
-  color: var(--white-50);
+  color: var(--text-tertiary);
 }
 
 .name {
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--text-primary);
   min-width: 0;
 }
 
 .dates {
   font-size: 0.76rem;
-  color: var(--white-50);
+  color: var(--text-tertiary);
 }
 
 @keyframes coachEventDotPulse {

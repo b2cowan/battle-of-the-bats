@@ -14,11 +14,11 @@
   gap: 0.35rem;
   margin-bottom: 1rem;
   font-size: 0.82rem;
-  color: var(--white-55);
+  color: var(--text-tertiary);
   text-decoration: none;
   transition: color 0.12s;
 }
-.recordBackLink:hover { color: var(--white-90); }
+.recordBackLink:hover { color: var(--text-primary); }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
 .header {
@@ -38,14 +38,14 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0 0 0.25rem;
-  color: var(--white);
+  color: var(--text-primary);
   /* Header stays a row at all widths (Flip pinned right) — an unbreakable long team
      name must wrap, not overflow. Matches TeamHQ's team-name treatment. */
   overflow-wrap: anywhere;
 }
 
 .tournamentName {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.88rem;
   margin: 0;
   overflow-wrap: anywhere;
@@ -101,7 +101,7 @@
   font-size: 1.18rem;
   font-weight: 800;
   letter-spacing: 0.01em;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 /* Cards stacked inside one zone (roster submit + the entry card). */
@@ -169,13 +169,13 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .jumpLink:hover {
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 .jumpLinkActive {
@@ -194,7 +194,7 @@
 .zoneNote {
   margin: -0.2rem 0 0.7rem;
   font-size: 0.8rem;
-  color: var(--white-50);
+  color: var(--text-tertiary);
   line-height: 1.45;
 }
 
@@ -202,7 +202,7 @@
    from this surface), per the coach empty-state decision rule. */
 .organizerNote {
   margin: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.88rem;
   line-height: 1.55;
 }
@@ -246,7 +246,7 @@
 
 .entryChevron {
   margin-left: auto;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   transition: transform 0.15s ease;
 }
 
@@ -270,7 +270,7 @@
 .entryFacts dt {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding-top: 0.05rem;
@@ -278,7 +278,7 @@
 
 .entryFacts dd {
   font-size: 0.88rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -297,7 +297,7 @@
   padding: 0.45rem 0.75rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--bg-2, rgba(255, 255, 255, 0.04));
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -332,7 +332,7 @@
   gap: 0.4rem;
   margin-top: 0.15rem;
   padding: 0.34rem 0.7rem;
-  color: var(--white);
+  color: var(--text-primary);
   background: transparent;
   border: 1px solid var(--white-20);
   border-radius: 999px;
@@ -356,7 +356,7 @@
    strip opens on the season claim rather than on housekeeping copy. */
 .afterglowLede {
   margin: 0 0 -0.45rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.45;
@@ -369,14 +369,14 @@
 
 .afterglowText {
   margin: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.55;
 }
 
 .afterglowOrg {
   margin: 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.82rem;
 }
 
@@ -401,12 +401,12 @@
 .announcementTitle {
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--text-primary);
   margin-bottom: 0.4rem;
 }
 
 .announcementBody {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   line-height: 1.5;
   margin: 0 0 0.5rem;
@@ -415,7 +415,7 @@
 
 .announcementDate {
   font-size: 0.72rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* (The unused legacy .cta* block was removed in A3 — the afterglow strip above is the
@@ -459,7 +459,7 @@
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary);
   background: var(--bg-2, rgba(255, 255, 255, 0.04));
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -508,7 +508,7 @@
   margin: 0;
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .fieldLink,
@@ -528,10 +528,10 @@
   font-family: var(--font-data, monospace);
   font-variant-numeric: tabular-nums;
   font-size: 0.88rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
 }
 
-.fieldCount strong { color: var(--white); }
+.fieldCount strong { color: var(--text-primary); }
 
 .fieldChips {
   display: flex;
@@ -546,7 +546,7 @@
   border-radius: 999px;
   background: var(--bg-2, rgba(255, 255, 255, 0.04));
   border: 1px solid var(--border);
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 .fieldChipMore {
@@ -582,10 +582,10 @@
   font-family: var(--font-data, monospace);
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
 }
 
-.standRecord strong { color: var(--white); }
+.standRecord strong { color: var(--text-primary); }
 
 .standDiff {
   margin: 0;

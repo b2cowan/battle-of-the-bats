@@ -70,9 +70,25 @@
   --black-30:    rgba(0, 0, 0, 0.3);
   --black-40:    rgba(0, 0, 0, 0.4);
 
-  --text-primary:   var(--white);
-  --text-secondary: var(--white-60);
-  --text-tertiary:  var(--white-40);
+  /* ⚠⚠ THE SEMANTIC INK LADDER — the ONE place a text tier is decided (retuned 2026-08-18).
+     Named for the ROLE, never the appearance, which is the whole point: `--white-45` means "white
+     at 45%", so it serves meta TEXT and hairlines at once and neither can move without the other.
+     That naming is why a contrast fix cost ~800 hand edits instead of three. Measured on the dark
+     grounds the operator portals paint (#111827 / #0F172A / #0A0A0A):
+       primary   --white-90  14.46:1  (was --white, pure white: 17.74 but halates on near-black
+                                       at reading length, and 166 coach sites already used 90%)
+       secondary --white-70   9.13:1  (was --white-60, 7.02 — raised so the 80/75/70 sites folding
+                                       in here do not get DIMMER to join the system)
+       tertiary  --data-gray  6.92:1  (was --white-40, 3.79 — the ONLY failing cell in the ladder,
+                                       and the defect this retune exists for. Hue-shifted, not just
+                                       brighter: a cool blue-grey reads as a different ROLE, which
+                                       three steps of the same white never could.)
+     Warm redefines all three below and needed NO change — it already measured 15.06 / 9.03 / 5.39.
+     ⚠ Never "simplify" these back to --white-* aliases. New text uses these names; the alpha ladder
+     is for borders, dividers and tints, which is its actual job. */
+  --text-primary:   var(--white-90);
+  --text-secondary: var(--white-70);
+  --text-tertiary:  var(--data-gray);
 
   --success:     #22C55E;
   --success-rgb: 34, 197, 94;

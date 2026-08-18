@@ -21,7 +21,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .title {
@@ -29,7 +29,7 @@
   font-size: 1.45rem;
   line-height: 1.2;
   letter-spacing: -0.015em;
-  color: var(--white-90);
+  color: var(--text-primary);
 }
 
 .card {
@@ -42,14 +42,14 @@
   gap: 0.35rem;
 }
 
-.when { margin: 0; font-size: 1rem; font-weight: 600; color: var(--white-90); }
-.where { margin: 0; font-size: 0.85rem; color: var(--white-45); }
+.when { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.where { margin: 0; font-size: 0.85rem; color: var(--text-tertiary); }
 
 .lede {
   margin: 0.45rem 0 0;
   font-size: 0.88rem;
   line-height: 1.5;
-  color: var(--white-70);
+  color: var(--text-secondary);
 }
 
 /* Spacing only — the control itself is the run screen's `.ppRunPrimary`, reused rather than
@@ -69,7 +69,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
 }
 
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -85,6 +85,6 @@
 
 .row:last-child { border-bottom: 0; }
 
-.rowDay { font-size: 0.86rem; font-weight: 600; color: var(--white-90); }
+.rowDay { font-size: 0.86rem; font-weight: 600; color: var(--text-primary); }
 /* Wraps rather than overflowing — a school gym's full name is longer than a phone is wide. */
-.rowMeta { font-size: 0.8rem; color: var(--white-45); text-align: right; overflow-wrap: anywhere; }
+.rowMeta { font-size: 0.8rem; color: var(--text-tertiary); text-align: right; overflow-wrap: anywhere; }

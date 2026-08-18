@@ -17,7 +17,7 @@
 .intro {
   margin: 0 0 1.1rem;
   font-size: 0.85rem;
-  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 
@@ -27,20 +27,20 @@
   margin: 0 0 0.45rem;
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--home-ink, rgba(255,255,255,0.9));
+  color: var(--text-primary);
   line-height: 1.3;
 }
 
 .questionHint {
   margin: 0.35rem 0 0;
   font-size: 0.76rem;
-  color: var(--home-dim, rgba(255,255,255,0.45));
+  color: var(--text-tertiary);
 }
 
 .noneNote {
   margin: 0 0 1rem;
   font-size: 0.84rem;
-  color: var(--home-dim, rgba(255,255,255,0.5));
+  color: var(--text-tertiary);
 }
 
 /* ── Worksheet ── */
@@ -50,7 +50,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  color: var(--home-dim, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .wsRow {
@@ -73,13 +73,13 @@
 .wsName {
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--home-ink, rgba(255,255,255,0.88));
+  color: var(--text-primary);
 }
 
 .wsRemove {
   background: none;
   border: none;
-  color: var(--home-dim, rgba(255,255,255,0.35));
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -101,7 +101,7 @@
   display: block;
   margin: 0.5rem 0 0.25rem;
   font-size: 0.78rem;
-  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
 }
 
 .amtRow {
@@ -115,7 +115,7 @@
 .cur {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--home-dim, rgba(255,255,255,0.45));
+  color: var(--text-tertiary);
 }
 
 /* Deliberately no placeholder text on these inputs — a numeric placeholder is a
@@ -126,7 +126,7 @@
   border: 1px solid var(--home-line, rgba(255,255,255,0.12));
   border-radius: 8px;
   padding: 0.5rem 0.65rem;
-  color: var(--home-ink, rgba(255,255,255,0.9));
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
@@ -136,19 +136,19 @@
 
 .mathNote {
   font-size: 0.8rem;
-  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
 }
-.mathNote strong { color: var(--home-ink, rgba(255,255,255,0.9)); }
+.mathNote strong { color: var(--text-primary); }
 
 .blankNote {
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
-  color: var(--home-dim, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .leaveBlank {
   font-size: 0.76rem;
-  color: var(--home-dim, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .rowError {
@@ -161,7 +161,7 @@
 .alsoLabel {
   margin: 1rem 0 0.4rem;
   font-size: 0.8rem;
-  color: var(--home-ink-soft, rgba(255,255,255,0.55));
+  color: var(--text-secondary);
 }
 
 .alsoRow {
@@ -208,7 +208,7 @@
   margin: 0 0 0.4rem;
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--home-ink, rgba(255,255,255,0.92));
+  color: var(--text-primary);
 }
 
 .doneMeta {
@@ -216,9 +216,9 @@
   max-width: 34ch;
   font-size: 0.85rem;
   line-height: 1.5;
-  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
 }
-.doneMeta strong { color: var(--home-ink, rgba(255,255,255,0.9)); }
+.doneMeta strong { color: var(--text-primary); }
 
 .doneActions {
   display: flex;

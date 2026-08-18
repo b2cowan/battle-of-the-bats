@@ -45,7 +45,7 @@
 }
 
 .hqLabel {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-family: var(--font-data, monospace);
   font-size: 0.64rem;
   font-weight: 800;
@@ -57,7 +57,7 @@
 }
 
 .hqItem strong {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.08rem;
   font-weight: 850;
   line-height: 1.2;
@@ -73,7 +73,7 @@
 
 .hqItem p {
   margin: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.76rem;
   line-height: 1.35;
   /* Theme 3 (D-1): long "Next event" labels must wrap, not clip the tile. */
@@ -133,7 +133,7 @@
      ⚠ The original reason was contrast: --home-dim was #8A8177 at ~3.8:1 on a white card, under AA
      for text this size. That token was corrected to #6A635C on 2026-08-02 (5.91:1), so --home-dim
      is now a legitimate choice for this line if the lighter step ever reads better. */
-  color: var(--white-70);
+  color: var(--text-secondary);
   font-size: 1rem;
   font-weight: 750;
 }
@@ -360,7 +360,7 @@
 
 .heroTitle {
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.15rem;
   font-weight: 800;
   line-height: 1.2;
@@ -370,7 +370,7 @@
 
 .heroSub {
   margin: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -380,7 +380,7 @@
    pair reads as "{tournament} / hosted by {org}". */
 .heroSubOrg {
   margin: 0;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   font-size: 0.8rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -388,7 +388,7 @@
 
 .heroCountdown {
   margin: 0.35rem 0 0.6rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
   font-size: 0.92rem;
 }
 
@@ -401,7 +401,7 @@
 
 .heroDates {
   margin: 0 0 0.6rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.8rem;
 }
 
@@ -447,7 +447,7 @@
   align-items: center;
   gap: 0.45rem;
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 800;
 }
@@ -455,7 +455,7 @@
 /* Demoted to a caption once the card leads the hero: the RECORD is the headline here,
    and "Event complete · {dates}" is the timestamp under it, not a title competing with it. */
 .heroResultOnly .heroResultLead {
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -474,7 +474,7 @@
 }
 
 .heroResultRecordLabel {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-family: var(--font-data, monospace);
   font-size: 0.64rem;
   font-weight: 800;
@@ -498,7 +498,7 @@
 
 .heroResultNote {
   margin: 0;
-  color: var(--white-60);
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 

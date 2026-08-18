@@ -17,14 +17,14 @@
   border: 1px solid rgba(var(--home-olive-rgb), 0.32);
   border-radius: var(--home-radius);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 
 /* B3.5 lead — the coach's own numbers, stated as fact above the pitch. Full ink so it reads
    as a page observation rather than as the first line of an ad. */
 .footerLead {
   margin: 0;
-  color: var(--home-ink);
+  color: var(--text-primary);
   font-size: 0.86rem;
   font-weight: 650;
   line-height: 1.45;
@@ -43,7 +43,7 @@
 .footerBody {
   margin: 0;
   max-width: 72ch;
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.55;
 }

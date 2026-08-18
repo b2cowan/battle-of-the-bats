@@ -12,7 +12,7 @@
   border: 1px solid rgba(var(--home-olive-rgb), 0.32);
   border-radius: var(--home-radius);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 
 .copy {
@@ -34,7 +34,7 @@
 
 .copy h3 {
   margin: 0;
-  color: var(--home-ink);
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.01em;
@@ -43,7 +43,7 @@
 .copy p {
   margin: 0;
   max-width: 54rem;
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
   font-size: 0.84rem;
   line-height: 1.55;
 }
@@ -60,7 +60,7 @@
   gap: 0.38rem;
   min-height: 38px;
   padding: 0 0.7rem;
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
   background: var(--home-card);
   border: 1px solid var(--home-line-strong);
   border-radius: var(--home-radius-sm);

@@ -32,7 +32,7 @@
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   text-align: right;
-  color: var(--white-90);
+  color: var(--text-primary);
 }
 
 @media (max-width: 560px) {
@@ -41,10 +41,10 @@
 
 /* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5). Flat additive rules only. ── */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel {
-  color: var(--home-ink-soft);
+  color: var(--text-secondary);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catValue {
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catTrack {
   background: var(--home-line);

@@ -40,7 +40,7 @@
 .cardTitle {
   font-weight: 700;
   font-size: 0.95rem;
-  color: var(--white);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -52,7 +52,7 @@
   gap: 0.3rem 0.75rem;
   margin-top: 0.25rem;
   font-size: 0.78rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 .cardMeta span + span::before {

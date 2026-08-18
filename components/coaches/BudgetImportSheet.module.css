@@ -9,9 +9,9 @@
   margin: 0 0 0.9rem;
   font-size: 0.85rem;
   line-height: 1.55;
-  color: var(--home-ink-soft, var(--white-65));
+  color: var(--text-secondary);
 }
-.intro strong { color: var(--home-ink, var(--white-90)); }
+.intro strong { color: var(--text-primary); }
 
 .backBtn {
   display: inline-flex;
@@ -48,8 +48,8 @@
 .shapeCard:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
 .shapeCardOn { border-color: var(--primary-light); }
 
-.shapeTitle { font-weight: 600; font-size: 0.9rem; color: var(--home-ink, var(--white-90)); }
-.shapeBlurb { font-size: 0.78rem; line-height: 1.5; color: var(--home-dim, var(--white-50)); }
+.shapeTitle { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.shapeBlurb { font-size: 0.78rem; line-height: 1.5; color: var(--text-tertiary); }
 
 /* ── step 2: templates + input ───────────────────────────────────────────── */
 
@@ -70,7 +70,7 @@
   gap: 0.35rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--home-ink, var(--white-85));
+  color: var(--text-primary);
 }
 .templateBtns { display: flex; gap: 0.4rem; }
 
@@ -78,7 +78,7 @@
   margin: 0 0 1rem;
   font-size: 0.75rem;
   line-height: 1.5;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 
 .field { margin: 0.9rem 0 0; display: flex; flex-direction: column; gap: 0.35rem; }
@@ -87,7 +87,7 @@
 .hint {
   margin: 0;
   font-size: 0.74rem;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
 }
 
 /* ── step 3: the review table ────────────────────────────────────────────── */
@@ -117,7 +117,7 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   font-weight: 500;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-tertiary);
   border-bottom: 1px solid var(--border-2);
   background: var(--card-bg);
   position: sticky;
@@ -134,7 +134,7 @@
 .rowNum {
   font-family: var(--font-data, inherit);
   font-size: 0.72rem;
-  color: var(--home-dim, var(--white-40));
+  color: var(--text-tertiary);
 }
 
 .numCol { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -149,7 +149,7 @@
   border: 1px solid var(--border-2);
   border-radius: 6px;
   background: var(--home-card, var(--white-05));
-  color: var(--home-ink, var(--white-90));
+  color: var(--text-primary);
   font: inherit;
   font-size: 0.79rem;
 }
@@ -160,10 +160,10 @@
   display: block;
   margin-top: 0.15rem;
   font-size: 0.7rem;
-  color: var(--home-dim, var(--white-40));
+  color: var(--text-tertiary);
 }
 
-.datesCell { font-size: 0.74rem; color: var(--home-ink-soft, var(--white-60)); white-space: nowrap; }
+.datesCell { font-size: 0.74rem; color: var(--text-secondary); white-space: nowrap; }
 
 .chip {
   display: inline-block;
@@ -186,7 +186,7 @@
   margin-top: 0.2rem;
   font-size: 0.72rem;
   line-height: 1.45;
-  color: var(--home-dim, var(--white-50));
+  color: var(--text-tertiary);
   max-width: 34ch;
 }
 
@@ -197,7 +197,7 @@
   margin: 0 0 0.6rem;
   font-size: 0.78rem;
   line-height: 1.5;
-  color: var(--home-ink-soft, var(--white-65));
+  color: var(--text-secondary);
 }
 .blockedNote svg { color: var(--warning); flex-shrink: 0; margin-top: 0.15rem; }
 

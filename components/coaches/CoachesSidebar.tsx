@@ -205,7 +205,15 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     const frame = window.requestAnimationFrame(() => {
       try {
         const stored = localStorage.getItem(NAV_GROUPS_STORAGE_KEY);
-        if (stored) setOpenGroups(new Set(JSON.parse(stored) as string[]));
+        // ⚠ Array.isArray, not a bare cast. `new Set(JSON.parse(x))` does NOT throw for every kind
+        // of corrupt value: a bare JSON string builds a set of its CHARACTERS ("Team" → T,e,a,m)
+        // and `null`/`""` build an empty one — all three sail past the catch and collapse every
+        // group instead of falling back to the defaults. Only numbers/objects/booleans throw, so
+        // the try/catch alone was covering half the failure space.
+        const parsed: unknown = stored ? JSON.parse(stored) : null;
+        if (Array.isArray(parsed) && parsed.every(v => typeof v === 'string')) {
+          setOpenGroups(new Set(parsed as string[]));
+        }
       } catch {
         // Private-mode browsers throw on localStorage — keep the defaults already in state.
       }

@@ -14,7 +14,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   margin: 0 0 0.85rem;
 }
 
@@ -37,12 +37,12 @@
 .rowLabel {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--white-85);
+  color: var(--text-primary);
 }
 
 .rowSub {
   font-size: 0.78rem;
-  color: var(--white-45);
+  color: var(--text-tertiary);
   margin-top: 0.15rem;
   line-height: 1.5;
 }
@@ -64,7 +64,7 @@
   border-radius: 8px;
   border: 1.5px solid var(--white-20);
   background: transparent;
-  color: var(--white-80);
+  color: var(--text-secondary);
   cursor: pointer;
   font-family: inherit;
 }
@@ -83,13 +83,13 @@
   padding: 0.34rem 0.2rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--white-50);
+  color: var(--text-tertiary);
   cursor: pointer;
   font-family: inherit;
   min-height: 34px;
 }
 
-.linkBtn:hover { color: var(--white-80); }
+.linkBtn:hover { color: var(--text-secondary); }
 
 /* The minted link — shown once, selectable. */
 .linkOut {
@@ -98,7 +98,7 @@
   border-radius: 8px;
   background: var(--white-5);
   border: 1px solid var(--white-10);
-  color: var(--white-75);
+  color: var(--text-secondary);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.72rem;
   word-break: break-all;
@@ -118,14 +118,14 @@
   font-weight: 600;
   background: transparent;
   border: none;
-  color: var(--white-55);
+  color: var(--text-tertiary);
   cursor: pointer;
   font-family: inherit;
   min-height: 34px;
 }
 
 .segBtn + .segBtn { border-left: 1px solid var(--white-10); }
-.segBtnActive { background: var(--white-10); color: var(--white-90); }
+.segBtnActive { background: var(--white-10); color: var(--text-primary); }
 
 /* Requests + followers */
 .request {
@@ -143,7 +143,7 @@
   flex: 1;
   min-width: 10rem;
   font-size: 0.83rem;
-  color: var(--white-80);
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
@@ -159,7 +159,7 @@
   border-radius: 6px;
   background: rgba(var(--warning-rgb), 0.08);
   border: 1px solid rgba(var(--warning-rgb), 0.25);
-  color: var(--white-70);
+  color: var(--text-secondary);
   font-size: 0.78rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -172,7 +172,7 @@
   padding: 0.45rem 0.1rem;
   border-bottom: 1px solid var(--white-5);
   font-size: 0.83rem;
-  color: var(--white-70);
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
@@ -182,7 +182,7 @@
 
 .muted {
   font-size: 0.8rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   margin: 0.5rem 0 0;
   line-height: 1.5;
 }

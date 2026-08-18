@@ -25,7 +25,7 @@
 .title {
   margin: 0;
   font-size: 0.9rem; font-weight: 700;
-  color: var(--white-90);
+  color: var(--text-primary);
   display: inline-flex; align-items: center; gap: 0.35rem;
 }
 .meta {
@@ -54,7 +54,7 @@
   font-size: 1.05rem; font-weight: 700;
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
-  color: var(--white-90);
+  color: var(--text-primary);
 }
 
 /* The audience line — rendered ON the card, per R3's "state the audience on screen" precedent. */
@@ -72,11 +72,11 @@
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .compositeValue {
-  color: var(--home-ink);
+  color: var(--text-primary);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .meta,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .inlineLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .composite,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .note {
-  color: var(--home-dim);
+  color: var(--text-tertiary);
 }

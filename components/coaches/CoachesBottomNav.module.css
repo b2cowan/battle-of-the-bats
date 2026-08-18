@@ -215,7 +215,7 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: var(--white); }
+  .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: var(--text-primary); }
 
   .dropActive {
     background: rgba(79, 163, 224, 0.12);
@@ -289,7 +289,7 @@
     --nav-scroll-shadow: rgba(var(--home-line-rgb), 0.45);
     --nav-scrollbar-thumb: rgba(var(--home-line-rgb), 0.55);
   }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab { color: var(--home-dim); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab.active .iconWrap { background: var(--home-olive-soft); }
   /* A WHITE panel on a CREAM page separated by a hairline barely reads as a panel at all —
      the list appears to sit directly on the screen and run off the top of it, which is a good
@@ -300,8 +300,8 @@
     border-color: var(--home-line);
     box-shadow: 0 -8px 32px rgba(var(--home-line-rgb), 0.24), 0 0 0 1px rgba(var(--home-line-rgb), 0.5);
   }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--home-dim); }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--home-ink-soft); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--text-tertiary); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--text-secondary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropDivider { background: var(--home-line); }

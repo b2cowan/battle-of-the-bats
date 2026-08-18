@@ -4,6 +4,51 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-18 — TEXT NAMES A ROLE, NOT A SHADE — and "zero hardcoded colours" was never the same claim
+
+**Trigger:** owner, on the coach rail — *"can you do something about this blue on blue text? hard to
+read"*, then, on being told the follow-up sweep was ~170 edits: ***"why aren't these colors
+centralized so we don't have to update 170 colors? shouldn't this be a very small set of colors that
+permeate across the app?"*** He was right, and the second question is the decision below.
+
+**WHAT WAS ACTUALLY WRONG (measured on the grounds the portal paints, not estimated):**
+- `--blueprint-blue` — a FILL navy — used as TEXT at **1.65:1**, on the sidebar's active row. Not
+  "a bit low": unreadable, and it was the one row a coach must be able to read.
+- The dark dim tier: `--white-35` 3.22, `--white-40` 3.79, `--white-45` 4.48. **Warm already passed**
+  (5.39–5.91), which is the tell — the dark values were never measured, only eyeballed.
+- `--home-dim` resolves to `--white-45` **in dark**, so 124 further declarations failed while looking
+  like they belonged to the warm palette.
+
+**BINDING RULES:**
+
+1. **The dim tier was DRIFT, not hierarchy.** *Stat labels* render at all three values depending on
+   which screen was built that week. Three steps chosen by eye is not a hierarchy; it collapses.
+2. **`color:` in the coach portal takes `--text-primary` / `--text-secondary` / `--text-tertiary`.**
+   The semantic ladder ALREADY EXISTED and was ALREADY theme-aware — it had simply lost, **149 uses
+   to 1,605**. Retuned in dark only (14.46 / 9.13 / 6.92); warm needed no change at 15.06 / 9.03 /
+   5.39. Retuning a tier is now ONE line, in both themes.
+3. **The alpha ladder keeps borders, dividers, tints and fills.** Three punctuation-only holdouts are
+   named in `tests/unit/coach-semantic-ink.test.ts`; that guard fails the build on new shade-named
+   text. Blue-as-ink is `--blueprint-light` (theme-aware), never `--blueprint-blue`.
+
+4. **⚠⚠ WHY THE JULY TOKEN GUARDRAIL DID NOT PREVENT ANY OF THIS — and why its green number is
+   dangerous.** `check:public-tokens` centralizes colour **by VALUE, never by ROLE**. Its goal is
+   *"a rebrand is a single edit"*, which it genuinely delivers. But it **deliberately does not flag
+   `rgba(255,255,255,A)`** — the alpha ladder is its DESTINATION, not its debt — so a stylesheet
+   reaches zero the moment its literals become `--white-45`, and is never examined again.
+   **Both were true from July: every colour came from a token, AND every text colour was a separate
+   hand-managed decision.** A rebrand was one edit; making meta text readable was 1,176. The
+   fingerprint is still in the code — 65 declarations carried `var(--white-45, rgba(255,255,255,
+   0.45))`, the literal kept as a fallback beside its replacement.
+   **The lesson generalises past colour: a metric reporting zero answers the question it asks, and
+   reads as if it answered the one you assumed.** Before trusting a green gate, say out loud what it
+   does not look at. (Its `tsx` scope has also never reached zero — 410 inline literals.)
+
+**Applies to:** all coach CSS modules (done — 1,176 declarations, 38 files). **NOT done:** the admin
+portal has the identical gap and the identical ladder, and it is where four one-off promotions to a
+readable grey were already made without anyone naming the rule. Public/consumer surfaces are out of
+scope until measured — different grounds, different type sizes.
+
 ### 2026-08-18 — WHO A CLUB MAY EMAIL: transactional mail is exempt, and the exemption is PAID FOR by naming the sender
 
 **Owner decisions, binding.** A family can unsubscribe from their club's email. An audit found ten

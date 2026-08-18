@@ -6,9 +6,9 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.78rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   text-decoration: none;
 }
-.faintLine svg { flex-shrink: 0; color: var(--white-40); }
+.faintLine svg { flex-shrink: 0; color: var(--text-tertiary); }
 .faintLine:hover { color: var(--logic-lime); }
 .faintLine:hover svg { color: var(--logic-lime); }

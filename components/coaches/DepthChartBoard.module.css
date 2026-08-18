@@ -120,7 +120,7 @@
 
 .star {
   width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; /* ≥36 dense-grid target */
-  font-size: 1.35rem; line-height: 1; cursor: pointer; color: var(--white-45); /* warm-remaps to --home-dim so the empty-star outline stays visible on cream */
+  font-size: 1.35rem; line-height: 1; cursor: pointer; color: var(--text-tertiary); /* warm-remaps to --home-dim so the empty-star outline stays visible on cream */
   user-select: none; transition: 0.1s; background: none; border: none; padding: 0;
 }
 .star.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }
@@ -188,7 +188,7 @@
 .sub { font-size: 0.7rem; color: var(--ink-45); margin: 2px 0 0; }
 .miniStar {
   margin-left: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; /* ≥40 mobile target */
-  font-size: 1.6rem; color: var(--white-45); cursor: pointer; background: none; border: none; padding: 0;
+  font-size: 1.6rem; color: var(--text-tertiary); cursor: pointer; background: none; border: none; padding: 0;
 }
 .miniStar.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }
 .miniStar:disabled { cursor: default; opacity: 0.5; }
