@@ -515,15 +515,23 @@ mechanisms. That row is the next unit's migration.
 
 ## 6. Feature catalogue
 
-Full catalogue with rationale in the mockup artifact. Phase tags summarised:
+Full catalogue with rationale in the mockup artifact. Phase tags summarised.
 
-**Money** — household balance (P2) · record a payment against the family (P3) · who-owes-us ranked (P4) · sibling discount (P5) · financial assistance (P5) · household payment plan (P5) · move a credit between siblings (P5).
+> ⚠ **THE P4/P5 TAGS BELOW ARE STALE — there is no Phase 4 or Phase 5.** §5 defines P1, P2 and P3
+> and stops. The tags are survivors of the ordering the owner **reordered on 2026-08-17** (see §5's
+> banner), which collapsed the tail into P3. Worse, they actively contradict §5: the four features
+> tagged "P5" here are the *same four* listed inside the **P3** block, and §8.5's original text says
+> "decide before P5" about a question that was **answered on 2026-08-18**. Corrected below —
+> anything not in P1–P3 is **Later**, meaning nobody has scheduled it, not that a phase exists for
+> it. If you find yourself writing "P4" again, define the phase or say "Later".
 
-**Reaching people** — message the household once (P3) · contact preferences attached to the person (P3, *the correctness fix*) · what we've sent them (P2) · second guardian (P3) · bounced/undeliverable flag (P4).
+**Money** — household balance (P2) · record a payment against the family (P3) · sibling discount (P3, unblocked 2026-08-18 by the confirmed-household ruling) · financial assistance (P3, same) · household payment plan (P3, same) · move a credit between siblings (P3, same) · who-owes-us ranked (**Later**).
+
+**Reaching people** — message the household once (P3) · contact preferences attached to the person (**✅ BUILT 2026-08-18**, ahead of the rest of P3 — it was correctness, not a feature) · what we've sent them (P3, *date only* — owner ruling 2026-08-18) · second guardian (P3) · bounced/undeliverable flag (**Later**).
 
 **Records & obligations** — consent on the record (P2 read / P3 write) · **answer "what do you hold about me" (P3)** · forms outstanding per family (P2) · internal notes with author and date (P3) · erase on request (later — retention rules deserve their own decision).
 
-**Keeping the club** — find anyone by anything (P2) · played last year, not back yet (P4) · tenure and total contributed (P4) · volunteer hours and bonds (**later — own project**, big and near-universal in Canadian minor sport).
+**Keeping the club** — find anyone by anything (P2) · played last year, not back yet (**Later**) · tenure and total contributed (**Later**) · volunteer hours and bonds (**later — own project**, big and near-universal in Canadian minor sport).
 
 ### The one I'd argue hardest for
 **"Export their data" is a small button and a large capability.** Answering a privacy request today means a human searching six places and hoping. It is only possible once a person has a record, and it should be in the first action release, not deferred.
