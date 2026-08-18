@@ -136,8 +136,10 @@ export const POST = withObservability(async (req: Request,
   }
 
   // 6. Insert registration
+  const waiverAcceptedAt = season.waiverText && waiverAccepted ? new Date().toISOString() : null;
   const registration = await createRegistration({
     seasonId:           season.id,
+    orgId:              org.id,
     divisionId:         division.id,
     playerFirstName:    playerFirstName!,
     playerLastName:     playerLastName!,
@@ -152,6 +154,11 @@ export const POST = withObservability(async (req: Request,
     status:             regStatus,
     waitlistPosition,
     source:             'public_form',
+    // Together these make createRegistration file the consent-ledger row (mig 252) —
+    // the route only decides WHETHER acceptance was witnessed; the mechanics live
+    // with the insert.
+    waiverAcceptedAt,
+    waiverText:         season.waiverText ?? null,
   });
 
   // 7. Send confirmation email (fire-and-forget — registration succeeds even if email fails)

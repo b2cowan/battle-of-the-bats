@@ -1,0 +1,73 @@
+/* Families area (P2) — page-local styles, admin dark theme tokens only.
+   Follows the members-page idiom: CSS module per page family, shared here
+   because the three screens are one area with one visual system. */
+
+.page { padding: 2rem; max-width: 72rem; }
+
+.pageHeader { display: flex; align-items: center; gap: 0.85rem; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.6); padding-bottom: 1rem; margin-bottom: 1.25rem; }
+.headerIcon { color: var(--blueprint-blue); display: flex; }
+.pageTitle { margin: 0; font-size: 1.15rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; color: var(--logic-lime); }
+.pageSub { margin: 0.15rem 0 0; font-size: 0.82rem; color: var(--white-50); }
+
+.toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.1rem; }
+.search { flex: 1 1 240px; min-width: 200px; background: var(--dark-navy, rgba(255,255,255,0.04)); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--white-80); }
+.search::placeholder { color: var(--white-30); }
+
+.chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.chip { font-size: 0.72rem; font-weight: 700; padding: 0.32rem 0.65rem; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 999px; color: var(--white-60); background: transparent; cursor: pointer; white-space: nowrap; }
+.chipOn { background: var(--blueprint-blue); color: var(--white); border-color: var(--blueprint-blue); }
+.chipZero { opacity: 0.45; }
+
+.tableScroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 640px; }
+.table th { text-align: left; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--white-30); padding: 0 0.75rem 0.5rem 0; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); }
+.table td { padding: 0.7rem 0.75rem 0.7rem 0; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.16); vertical-align: top; color: var(--white-80); }
+.table tr:last-child td { border-bottom: 0; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.who { font-weight: 700; color: var(--white); }
+.whoLink { color: var(--white); text-decoration: none; }
+.whoLink:hover { color: var(--logic-lime); }
+.kids { font-size: 0.75rem; color: var(--white-50); margin-top: 0.15rem; }
+
+.pill { display: inline-block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.12rem 0.45rem; border-radius: 2px; white-space: nowrap; }
+.pillGood { background: rgba(var(--logic-lime-rgb, 190,242,100), 0.14); color: var(--logic-lime); }
+.pillWarn { background: rgba(var(--warning-rgb), 0.14); color: var(--warning); }
+.pillBad  { background: rgba(var(--danger-rgb), 0.14); color: var(--danger-light); }
+.pillInfo { background: rgba(var(--blueprint-blue-rgb), 0.18); color: var(--blueprint-blue); }
+.pillMute { background: rgba(255,255,255,0.06); color: var(--white-40, rgba(255,255,255,0.4)); }
+
+/* panels (family page) */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.panel { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.9rem 1rem; background: rgba(255,255,255,0.02); }
+.panelHead { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--white-30); margin: 0 0 0.6rem; display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.panelScope { font-size: 0.68rem; text-transform: none; letter-spacing: 0; color: var(--white-30); font-weight: 500; }
+.line { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.4rem 0; font-size: 0.83rem; color: var(--white-80); border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
+.line:first-of-type { border-top: 0; }
+.lineSub { padding-left: 0.9rem; font-size: 0.78rem; color: var(--white-50); }
+.lineTotal { font-weight: 800; color: var(--white); }
+.lineV { color: var(--white-50); font-variant-numeric: tabular-nums; text-align: right; }
+.panelFoot { font-size: 0.72rem; color: var(--white-30); margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); line-height: 1.45; }
+
+.actionbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); }
+
+.empty { border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.4); border-radius: 2px; padding: 2rem 1.5rem; text-align: center; }
+.emptyTitle { margin: 0 0 0.4rem; font-size: 0.98rem; font-weight: 800; color: var(--white); }
+.emptyBody { margin: 0 auto; max-width: 46ch; font-size: 0.82rem; color: var(--white-50); line-height: 1.55; }
+
+/* duplicates */
+.mergeGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+@media (max-width: 700px) { .mergeGrid { grid-template-columns: 1fr; } }
+.mergeSide { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.85rem 1rem; }
+.mergeKeep { border-color: var(--blueprint-blue); background: rgba(var(--blueprint-blue-rgb), 0.08); }
+.mergeName { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 800; color: var(--white); }
+.mergeRow { font-size: 0.8rem; color: var(--white-60); padding: 0.18rem 0; }
+.pairCard { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; background: rgba(255,255,255,0.02); }
+.pairReasons { font-size: 0.72rem; color: var(--white-40, rgba(255,255,255,0.4)); margin: 0 0 0.75rem; }
+
+.msgForm { display: grid; gap: 0.5rem; margin-top: 1rem; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.9rem 1rem; }
+.msgInput { background: rgba(255,255,255,0.04); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--white-80); }
+.msgTextarea { min-height: 110px; resize: vertical; }
+
+.backLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--white-50); text-decoration: none; margin-bottom: 0.9rem; }
+.backLink:hover { color: var(--white-80); }
+.notice { font-size: 0.8rem; color: var(--white-50); margin: 0.75rem 0 0; }

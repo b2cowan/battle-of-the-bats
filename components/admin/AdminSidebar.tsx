@@ -7,7 +7,7 @@ import {
   ChevronRight, CreditCard, Settings,
   Users2, ArrowLeft, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
-  Link2, Plus, MapPin, Mail, Archive, Users, Calendar,
+  Link2, Plus, MapPin, Mail, Archive, Users, Calendar, Contact,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, hasOrgVenueLibrary as hasOrgVenueLibraryPlan, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -64,6 +64,7 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
   const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
+  const isFamilies     = pathname.startsWith(`${base}/families`);
   const isTournaments  = pathname.startsWith(`${base}/tournaments`);
   // Chat unread — hoisted count when the shell provides one; otherwise self-serve, and
   // only poll while the tournament nav is on screen (Chat lives there).
@@ -125,6 +126,10 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
 
   const canSeeRepTeams = userRole
     ? canUseModule('module_rep_teams')
+    : false;
+
+  const canSeeFamilies = userRole
+    ? canUseModule('module_families')
     : false;
   // Enabled for ALL non-canceled admins (not just rep orgs) so a free-tier owner who also
   // coaches gets a coach-view door too (P3-2). The hook returns both rep + Basic presence;
@@ -316,6 +321,25 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
                 `${base}/public-site`,
                 pathname === `${base}/public-site`,
               )}
+            </nav>
+          </div>
+        </>
+      )}
+
+      {/* Families mode — capability off by default for every role; the check mirrors
+          the hub tile so the section can never outlive its door (plan §5.3). */}
+      {isFamilies && canSeeFamilies && (
+        <>
+          {maybeBackLink}
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>Families</div>
+            <nav className={styles.nav}>
+              {navLink('families', Contact, 'Families',
+                `${base}/families`,
+                pathname === `${base}/families`)}
+              {navLink('families-duplicates', Users2, 'Possible duplicates',
+                `${base}/families/duplicates`,
+                pathname.startsWith(`${base}/families/duplicates`))}
             </nav>
           </div>
         </>

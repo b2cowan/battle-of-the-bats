@@ -86,6 +86,17 @@ export type FamilySendResult = SendEmailResult | { status: 'suppressed' };
  * Pass `suppressed` when the caller already loaded the list (a bulk send); omit it and this
  * fetches per recipient. Either way the guard runs — an opted-out address returns
  * `'suppressed'` without a send, so a caller cannot bypass the check by forgetting it.
+ *
+ * ⚠ `personEmails` — SUPPRESSION THROUGH THE PERSON (mig 251's Phase-3 warning, closed at
+ * this choke point 2026-08-17). An opt-out recorded against a FORMER address must silence
+ * the current one; the address-keyed check alone cannot know that. Any caller that knows
+ * the recipient as an org PERSON (the Families area, P3's bulk household message) MUST pass
+ * every address that person has ever used — `org_person_emails` rows, e.g. via
+ * `loadHouseholdRecipients` — and this guard then refuses the send if ANY of them opted
+ * out. Callers that only know a bare address (legacy coach announcements) simply omit it
+ * and keep the address-keyed behaviour. The check lives HERE, not in routes, for the same
+ * reason this module exists at all: compliance that depends on each sender remembering is
+ * compliance that eventually lapses.
  */
 export async function sendFamilyEmail(params: {
   orgId: string;
@@ -93,12 +104,17 @@ export async function sendFamilyEmail(params: {
   subject: string;
   content: FamilyEmailContent;
   suppressed?: Set<string>;
+  personEmails?: string[];
 }): Promise<FamilySendResult> {
   const to = normalizeGuardianEmail(params.to);
   if (!to) return { status: 'suppressed' };
 
   const suppressed = params.suppressed ?? (await getFamilySuppressionList(params.orgId));
   if (suppressed.has(to)) return { status: 'suppressed' };
+  if (params.personEmails?.some(e => {
+    const normalized = normalizeGuardianEmail(e);
+    return normalized !== null && suppressed.has(normalized);
+  })) return { status: 'suppressed' };
 
   return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to));
 }

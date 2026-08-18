@@ -91,6 +91,9 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       ...CORE_MODULES,
       'module_public_site',
       'module_house_league',
+      // Families (mig 251/252): League is first-class — a household spanning house
+      // league and a rep team is the area's whole premise (owner decision 2026-08-17).
+      'module_families',
     ],
     gatingStatus: 'early_access',
   },
@@ -112,6 +115,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       'module_house_league',
       'module_accounting',
       'module_rep_teams',
+      'module_families',
     ],
     gatingStatus: 'early_access',
   },
@@ -134,6 +138,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       'module_house_league',
       'module_accounting',
       'module_rep_teams',
+      'module_families',
     ],
     gatingStatus: 'early_access',
   },

@@ -146,6 +146,7 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   module_accounting:     'Accounting access',
   module_house_league:   'House league management access',
   module_rep_teams:      'Rep team management access',
+  module_families:       'Families — every household’s contact details, consent and balances',
   // --- Action capabilities ---
   create_tournaments:        'Create / delete tournaments',
   manage_registrations:      'Manage registrations',
@@ -167,6 +168,9 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
 const MODULE_CAP_KEYS: Capability[] = [
   'module_tournaments', 'module_communications', 'module_members',
   'module_public_site', 'module_accounting', 'module_house_league', 'module_rep_teams',
+  // Off by default for EVERY role (no role-default ✓ in the table) — the only ways in
+  // are the owner short-circuit and an explicit Grant here (plan §1.2).
+  'module_families',
 ];
 const ACTION_CAP_KEYS: Capability[] = [
   'create_tournaments', 'manage_registrations', 'manage_schedule_structure',

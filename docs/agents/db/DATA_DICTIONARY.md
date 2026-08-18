@@ -4207,7 +4207,7 @@ basis started, and when it was withdrawn. CASL implied consent from membership i
 <!-- dict:col:family_consents.basis -->
 <!-- dict:col:family_consents.basis_started_at -->
 <!-- dict:col:family_consents.withdrawn_at -->
-**`basis` / `basis_started_at` / `withdrawn_at`** (text NOT NULL CHECK `express_link|tryout_form|registration_implied` / timestamptz NOT NULL / timestamptz nullable) — what makes contacting or holding data on this family lawful, and for how long. `express_link` (ticked the boxes on a family link request) is the strongest; `registration_implied` carries the CASL 24-month clock from `basis_started_at`.
+**`basis` / `basis_started_at` / `withdrawn_at`** (text NOT NULL CHECK `express_link|tryout_form|registration_implied|league_registration` / timestamptz NOT NULL / timestamptz nullable) — what makes contacting or holding data on this family lawful, and for how long. `express_link` (ticked the boxes on a family link request) is the strongest; `registration_implied` carries the CASL 24-month clock from `basis_started_at`; `league_registration` (mig 252) is a house-league waiver acceptance, evidence in `consent_text` (see `league_registrations.waiver_accepted_at`).
 
 <!-- dict:col:family_consents.scope -->
 **`scope`** (text, NOT NULL, default `'family_comms'`; CHECK `family_comms|child_data|marketing`) — what was consented TO. Keeping marketing separate from child-data is the unbundling rule made structural.
@@ -4267,8 +4267,14 @@ previously had no opt-out of its own, and its lawful basis was purely relational
 their identity was a text email typed onto each child's record, re-typed per child, per season,
 per program. 70 distinct guardians were named on roster rows and exactly one had a login.
 
-**Nothing in the product reads this table yet.** Phase 1 mints the records and shows nobody; the
-Families area (Phase 2) is the first reader, behind its own capability.
+**Read by the Families area (Phase 2)** — server-side only, behind the Families capability, via
+[lib/org-people.ts](../../../lib/org-people.ts). **Attachment has ONE home:** the org-scoped DB
+function **`families_attach_people(p_org_id uuid)`** (mig 252 — service-role EXECUTE only), which
+re-runs mig 251's idempotent mint-and-attach for one org. The Families area calls it on entry
+(`attachPeopleForOrg`), so rows written by any of the ~10 guardian-email write paths attach the
+moment an admin looks — **no per-route minting exists, deliberately** (ten copies of one matching
+rule is the drift this project exists to close). The function's rules must never diverge from
+mig 251's (shape gate · one alias hop · newest-non-blank-per-field · never reassign).
 
 **Gotchas:**
 
@@ -4399,6 +4405,76 @@ from `created_at`/`updated_at`**, which record when we wrote this row.
 <!-- dict:col:org_person_emails.created_at -->
 <!-- dict:col:org_person_emails.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+## `org_person_match_rejections`
+<!-- dict:table:org_person_match_rejections -->
+
+**Purpose:** the duplicate queue's MEMORY — "not the same person" as a durable decision (mig 253,
+Families P2 chunk E). A rejected pair never resurfaces; without this the same pair returns weekly
+and the reviewer stops trusting the queue (plan §4; same tombstone discipline as
+`rep_player_continuity_links.status='rejected'`). Written by `rejectMatch`
+([lib/families-read.ts](../../../lib/families-read.ts)); read by `buildDuplicatePairs` to exclude
+proposals. **Service-role only** (RLS enabled, no policies — mig 251 posture).
+
+**Gotchas:**
+
+1. **The pair is ORDERED** — `person_a_id < person_b_id`, CHECK-enforced — so one row covers both
+   directions and the unique `(org_id, person_a_id, person_b_id)` cannot be dodged by swapping
+   columns. `rejectMatch` sorts before insert; a 23505 on insert means "already remembered" and is
+   success, not error.
+2. FKs to `org_people` CASCADE: merging or deleting either person clears its tombstones, which is
+   correct — the pair no longer exists to propose.
+
+<!-- dict:col:org_person_match_rejections.id -->
+<!-- dict:col:org_person_match_rejections.org_id -->
+<!-- dict:col:org_person_match_rejections.person_a_id -->
+<!-- dict:col:org_person_match_rejections.person_b_id -->
+**`org_id` / `person_a_id` / `person_b_id`** (uuid NOT NULL, FKs; pair ordered by CHECK) — the
+tenant and the ordered pair. Unique per org.
+
+<!-- dict:col:org_person_match_rejections.rejected_by -->
+<!-- dict:col:org_person_match_rejections.rejected_at -->
+<!-- dict:col:org_person_match_rejections.created_at -->
+**`rejected_by` / `rejected_at` / `created_at`** — which admin said "not the same", when.
+
+## `org_person_merges`
+<!-- dict:table:org_person_merges -->
+
+**Purpose:** the audit record of a person merge (mig 253). One row per merge: who survived, who
+was merged away (their whole `org_people` row snapshotted to `merged_snapshot` jsonb — the merged
+row itself is DELETED after addresses and `person_id` pointers repoint to the keeper). Written
+only by the **`families_merge_people(org, keep, merge, by)` DB function (mig 254 — ONE
+transaction; FOR UPDATE serializes concurrent merges of a pair; service-role EXECUTE only)**,
+called via `mergePeople` ([lib/families-read.ts](../../../lib/families-read.ts)), only from an
+explicit human decision in the review queue — **merging is never automatic** (plan §4).
+**Service-role only** (RLS enabled, no policies).
+
+**Gotchas:**
+
+1. **A merge joins the PARENT records only.** `person_id` moves on the four source tables; no
+   child row, roster entry or registration is modified. Claims about children remain the reader's
+   inference (plan §5.3 gap 4).
+2. **Strictest contact preference wins BY CONSTRUCTION**: preferences stay in
+   `family_email_optouts`/`family_consents` keyed (org, email), and the keeper unions both address
+   sets — an opt-out under any address suppresses the household when checked through the person.
+   Nothing is copied, so nothing can be copied wrong.
+3. **`merged_person_id` has NO FK** — the row it named is gone by design; `merged_snapshot` is the
+   record. `kept_person_id` FK CASCADEs with the surviving person.
+
+<!-- dict:col:org_person_merges.id -->
+<!-- dict:col:org_person_merges.org_id -->
+<!-- dict:col:org_person_merges.kept_person_id -->
+<!-- dict:col:org_person_merges.merged_person_id -->
+**`org_id` / `kept_person_id` / `merged_person_id`** — tenant, survivor (FK CASCADE), and the
+deleted person's former id (no FK — see gotcha 3).
+
+<!-- dict:col:org_person_merges.merged_snapshot -->
+**`merged_snapshot`** (jsonb NOT NULL) — the merged-away `org_people` row in full, at merge time.
+
+<!-- dict:col:org_person_merges.merged_by -->
+<!-- dict:col:org_person_merges.merged_at -->
+<!-- dict:col:org_person_merges.created_at -->
+**`merged_by` / `merged_at` / `created_at`** — which admin merged, when.
 
 ## `family_recap_views`
 <!-- dict:table:family_recap_views -->
@@ -4762,6 +4838,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_registrations.source -->
 **`source`** (text, NOT NULL, default `'public_form'`; CHECK `public_form|admin_manual`) — provenance; `admin_manual` rows skip the capacity/waitlist engine (gotcha 3).
+
+<!-- dict:col:league_registrations.waiver_accepted_at -->
+**`waiver_accepted_at`** (timestamptz, nullable — mig 252) — when the guardian accepted the season waiver on the public form. **NULL = not recorded, never "not accepted":** admin-manual rows (no guardian saw a waiver) and every row written before mig 252 (the form REQUIRED the tick but stored nothing — Families P2 mockup-session finding, plan §5.3 gap 7). **Deliberately never backfilled.** Acceptance also files a `family_consents` ledger row (`basis='league_registration'`, `scope='child_data'`, `consent_text` = the season's waiver text at that moment — the season's copy can be edited later, the ledger row cannot) via `recordLeagueWaiverConsent` ([lib/org-people.ts](../../../lib/org-people.ts)), fire-and-forget from [register/route.ts](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts).
 
 <!-- dict:col:league_registrations.registered_at -->
 **`registered_at`** (timestamptz, NOT NULL, default `now()`) — **the effective create stamp** (no `created_at` column exists); drives default list ordering (newest first). Never written by code; admin-manual rows are not back-dated (gotcha 2).

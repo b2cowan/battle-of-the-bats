@@ -307,6 +307,85 @@ code before being drawn. The decisions, which chunk C–F must build to:
 - **Family-page actions in P2 are exactly three** (message / record rep payment / export), each
   through the existing write path; payment plan, assistance, notes stay P3 (§8.5 blocks two of them).
 
+### 5.4 Phase 2 BUILT ON DEV 2026-08-17 (same session as the mockup approval) — owner QA owed
+
+**All chunks 0/A–F built to the §5.3 decisions. Migrations 252 + 253 applied to DEV only.**
+No route, table or capability existed before this; nothing was removed.
+
+- **Chunk 0 — and a P1 defect found by reading, not running:** mig 251 made
+  `league_registrations.org_id` NOT NULL but `createRegistration()` never set it — **every league
+  registration insert (public form AND admin manual add) failed on dev from the moment 251
+  applied.** Fixed (both callers pass the org). The waiver fix shipped with it: mig 252 adds
+  `waiver_accepted_at`, the public form records acceptance + files a `family_consents` row
+  (`basis='league_registration'`) carrying the season's waiver text as evidence.
+- **Attachment has ONE home (build decision, recorded in the dictionary):** ~10 write paths touch
+  guardian emails; none of them mint people. Mig 252's `families_attach_people(org)` re-runs the
+  idempotent mint-and-attach org-scoped, and the area calls it on entry — no per-route minting,
+  ever. Rules are 251's verbatim; they must never diverge.
+- **Chunk A:** `scripts/seed-families-fixture.mjs` → org `qa-families-fixture` (never the demos).
+  Report verified: the Cole surname+phone pair proposes, **2 rep+league households exist** (the
+  premise's first-ever occurrences), the Petit invited→claimed hop records a former address, and
+  the opt-out sits under that former address (the §5-P1 "dangerous" line is now 1, on purpose).
+- **Chunk B:** `module_families` — off by default for EVERY role, League/Club bands only, **both
+  pinned by `tests/unit/families-access-guard.test.ts`** (editing a role default now fails the
+  build). Hub tile + sidebar section vanish without it (no teaser — absent, not upsold);
+  direct-URL hit gets a no-counts access screen. `PLAN_PRICING_FACTS.md` updated in the same
+  unit (packaging: Families joins League Plus + Club inclusions, no price change).
+- **Chunks C/D/E/F:** worklist (landing lens = "No family on file" when non-empty; **Chased** from
+  installment reminder stamps, "Not tracked" for league; search covers FORMER addresses), family
+  page (asymmetric money — unpaid rep installments + credits shown unnetted, league = Paid/Not
+  paid chip; one email switch; forms panel rep-only and absent for league-only families; history
+  = recorded events only), duplicate queue (mig 253 tombstones + `org_person_merges` audit;
+  merge repoints parents only, strictest-preference-wins by construction), actions = message +
+  export. **Record-a-payment deliberately NOT built** (§5-P2 money note — after the money QA
+  walks).
+- **One correctness first:** the message door refuses the send if ANY address the person ever
+  used is opted out — **suppression through the PERSON**, the exact hole mig 251's header warned
+  Phase 3 about, closed on this door ahead of Phase 3 (the address-keyed choke point
+  `sendFamilyEmail` still runs underneath; nothing bypasses it).
+- **Two honest deviations from the mockups, chosen over forking money/identity logic:** the
+  family page shows "Unpaid installments — rep dues" (not a netted balance — credit application
+  is the money module's policy) and lists rep seasons as adjacent rows without walking
+  continuity links (no linkage claim made either way).
+- Verification: typecheck ✓ · **2,113 unit tests ✓** (6 new) · lint 0 errors · `check:demos` ✓
+  (neither demo exposes the area: tournament sandbox lacks the module, coach sandbox visitors
+  hold no grant) · dictionary + snapshots refreshed (169 tables covered). ⚠ **The Families
+  screens are in NO rendered sweep** — `scripts/layout-screens.mjs` is mid-flight in another
+  session and the sweep has no admin-org fixture wiring; owner QA is the only visual coverage
+  until a follow-up adds them.
+
+**✅ `/simplify` (4 lenses) → `/review` (high-risk, 5 lenses) run same day; all confirmed
+findings FIXED.** The ones worth remembering:
+- ⚠⚠ **A REVOKED guardian was still the household** (review Critical): the co-guardian read
+  filtered on person+child but not link STATUS, and the attach function stamps `person_id` on
+  declined/revoked links like any other — so a guardian a coach explicitly removed still
+  appeared on the page, rode the export, and would have received "Message this family". The
+  `status='verified'` filter is now load-bearing in BOTH readers (page + message recipients),
+  with the custody-dispute case named in the comment.
+- ⚠⚠ **The merge became ONE transaction** — `families_merge_people` (mig 254, FOR UPDATE): the
+  first cut ran five writes from the app and a partial failure left a half-merged, address-less
+  person; now all-or-nothing, and concurrent merges of one pair serialize (loser gets a clean
+  "Person not found").
+- ⚠ **The module catalog / feature-matrix drift detector never learned `module_families`** — the
+  safety net built to catch plan-config drift was structurally blind to the new module; added.
+  Same class: the cancellation-preflight shutdown copy (Partial map = compile-silent omission).
+- ⚠ **All three screens gained stale-response guards** — a slow response from a previous org
+  must never paint guardian PII under the next org's header (the coach hubs' isStale lesson).
+- ⚠ **The consent write is now AWAITED** — fire-and-forget compliance evidence can be torn down
+  mid-flight on Amplify (the after()-drops gotcha); the confirmation email stays
+  fire-and-forget, the ledger row does not.
+- League-only families' waiver consent is now VISIBLE (the panel was gated on rep children;
+  consent is family-level, only the forms half is rep-scoped). Tryout-only people are now
+  reachable (they were skipped by the worklist AND unfindable by search — a person the UI
+  cannot reach cannot answer "what do you hold about me"). `rejectMatch` now org-validates both
+  ids (the one write missing the two-check rule) and refuses self-pairs. Dues-timezone dates go
+  through `formatStoredDate`. Reader-timezone `toLocaleDateString` is gone.
+- **Recorded, deliberately NOT built:** no per-family send rate-limit (announcements have a 24h
+  cap; a household cap is a product decision — P3's messaging chunk), no merge-must-match-a-
+  proposed-pair server check (same-org admin action; the queue UI is the only caller), and
+  `merged_snapshot` retains PII indefinitely by design (audit record; retention is §8.4's
+  deferred decision).
+
 ## 6. Feature catalogue
 
 Full catalogue with rationale in the mockup artifact. Phase tags summarised:
@@ -349,6 +428,24 @@ Full catalogue with rationale in the mockup artifact. Phase tags summarised:
    somewhere, adopt an explicit child record (`rep_player_continuity_links` already links a player
    across seasons and may be the seam), or accept the inference in writing with its failure modes
    named. **Do not let this be settled by whoever builds P5 first.**
+6. **⚠ NEW, raised by the P1 adversarial review (2026-08-17): should alias CONVERGENCE merge?** Two
+   invited addresses claimed by the same signed-in account (A→B and C→B) currently collapse into ONE
+   person. Usually that IS one parent whose coach typed two addresses for them — but a shared
+   household account claiming two parents' invites would merge those parents, and it is a merge on
+   evidence weaker than the exact-email rule everything else honours. Zero occurrences on either
+   database today; the behaviour and its risk are documented at the accepting code in mig 251.
+   Options: keep (convenient, mostly right), or refuse-and-report like ambiguity (strict, consistent
+   with §4). **Decide before the first real club's backfill runs.**
+7. **⚠ NEW, raised by the P1 adversarial review: attachment is a ONE-TIME snapshot, and Phase 2 needs
+   an ongoing attach.** The backfill ran once. A registration taken tomorrow arrives with no person;
+   a coach editing a guardian email afterwards silently de-syncs the row from its person. Left alone,
+   the report reads both as backfill bugs (correctly — they are integrity failures) the moment real
+   data moves. Re-running the migration is NOT the answer — review traced a case where a re-run after
+   a claim lands SPLITS one family into two records. **Phase 2's write paths must attach/re-resolve
+   `person_id` at the moment a guardian email is written** — the same normalize-on-write discipline
+   §4 already demands, one field over. Related, accepted-and-documented rather than open: an address
+   RECYCLED by a genuinely different family attaches to the old family's person (the cost of "one
+   address, one person, forever" within an org); the duplicate queue is where a human unpicks it.
 
 ---
 

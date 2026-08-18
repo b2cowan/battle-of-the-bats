@@ -21,6 +21,7 @@ export default function AdminHelpHubPage() {
   const canHouseLeague  = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_house_league');
   const canRepTeams     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
   const canAccounting   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting');
+  const canFamilies     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_families');
   const canOrgAdmin     = userRole === 'owner' || userRole === 'admin';
 
   const cards: HelpHubCard[] = [
@@ -69,6 +70,13 @@ export default function AdminHelpHubPage() {
       href:  `${helpBase}/accounting`,
       topicCount: 7,
       keywords: ['ledger', 'budget', 'expense', 'revenue', 'allocation', 'actual'],
+    }] : []),
+    ...(canFamilies ? [{
+      title: 'Families',
+      desc:  'Look up any household across rep and house league: who owes, who is missing forms, duplicates, messaging, and data export.',
+      href:  `${helpBase}/families`,
+      topicCount: 5,
+      keywords: ['family', 'families', 'household', 'guardian', 'parent', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],
     }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org Admin & Setup',

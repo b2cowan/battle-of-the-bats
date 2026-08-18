@@ -1260,6 +1260,41 @@
     "indexdef": "CREATE UNIQUE INDEX org_person_emails_pkey ON public.org_person_emails USING btree (id)"
   },
   {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_pair_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pair_uniq ON public.org_person_match_rejections USING btree (org_id, person_a_id, person_b_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_person_a_idx",
+    "indexdef": "CREATE INDEX org_person_match_rejections_person_a_idx ON public.org_person_match_rejections USING btree (person_a_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_person_b_idx",
+    "indexdef": "CREATE INDEX org_person_match_rejections_person_b_idx ON public.org_person_match_rejections USING btree (person_b_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pkey ON public.org_person_match_rejections USING btree (id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_kept_idx",
+    "indexdef": "CREATE INDEX org_person_merges_kept_idx ON public.org_person_merges USING btree (kept_person_id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_org_id_idx",
+    "indexdef": "CREATE INDEX org_person_merges_org_id_idx ON public.org_person_merges USING btree (org_id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_merges_pkey ON public.org_person_merges USING btree (id)"
+  },
+  {
     "tablename": "org_public_site_content",
     "indexname": "org_public_site_content_org_id_key",
     "indexdef": "CREATE UNIQUE INDEX org_public_site_content_org_id_key ON public.org_public_site_content USING btree (org_id)"

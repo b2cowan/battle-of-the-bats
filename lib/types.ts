@@ -971,6 +971,10 @@ export interface LeagueRegistration {
   feeEntryId: string | null;
   adminNotes: string | null;
   source: 'public_form' | 'admin_manual';
+  // When the guardian accepted the season waiver on the public form (mig 252).
+  // null = not recorded: admin-manual rows, and every row written before the
+  // acceptance was stored at all.
+  waiverAcceptedAt: string | null;
   registeredAt: string;
   updatedAt: string;
 }

@@ -26,7 +26,14 @@ export type Capability =
   | 'module_public_site'
   | 'module_accounting'
   | 'module_house_league'
-  | 'module_rep_teams';
+  | 'module_rep_teams'
+  // ⚠ OFF BY DEFAULT FOR EVERY ROLE, deliberately — no ROLE_DEFAULTS entry anywhere,
+  // not even admin. The Families area concentrates every household's contact details,
+  // consent and balances on one searchable screen; the only ways in are the owner
+  // short-circuit and an explicit per-member Grant (owner decision 2026-08-17,
+  // CLUB_FAMILIES_BOOK_PLAN.md §1.2). Adding this to any role's defaults is a
+  // decision for the owner, not a cleanup.
+  | 'module_families';
 
 export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   owner: new Set<Capability>([
@@ -77,6 +84,7 @@ export const ALL_CAPABILITY_KEYS: Capability[] = [
   'org_settings', 'billing',
   'module_tournaments', 'module_communications', 'module_members',
   'module_public_site', 'module_accounting', 'module_house_league', 'module_rep_teams',
+  'module_families',
 ];
 
 export function hasCapability(

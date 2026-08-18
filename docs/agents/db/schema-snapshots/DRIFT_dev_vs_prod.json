@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-17",
-  "total": 47,
+  "generated": "2026-08-18",
+  "total": 82,
   "counts": {
-    "tables": 2,
-    "columns": 22,
-    "indexes": 11,
-    "constraints": 10,
-    "rls": 2
+    "tables": 4,
+    "columns": 38,
+    "indexes": 18,
+    "constraints": 19,
+    "rls": 3
   },
   "items": [
     {
@@ -15,6 +15,10 @@
     },
     {
       "key": "check:only-dev:org_person_emails.org_person_emails_email_normalized_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_person_match_rejections.org_person_match_rejections_ordered",
       "sig": ""
     },
     {
@@ -27,6 +31,10 @@
     },
     {
       "key": "column:only-dev:league_registrations.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.waiver_accepted_at",
       "sig": ""
     },
     {
@@ -98,6 +106,66 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_person_match_rejections.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.person_a_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.person_b_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.rejected_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_match_rejections.rejected_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.kept_person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.merged_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.merged_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.merged_person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.merged_snapshot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_merges.org_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_roster_players.person_id",
       "sig": ""
     },
@@ -135,6 +203,42 @@
     },
     {
       "key": "constraint:only-dev:org_person_emails.org_person_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_match_rejections.org_person_match_rejections_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_match_rejections.org_person_match_rejections_person_a_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_match_rejections.org_person_match_rejections_person_b_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_match_rejections.org_person_match_rejections_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_match_rejections.org_person_match_rejections_rejected_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_merges.org_person_merges_kept_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_merges.org_person_merges_merged_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_merges.org_person_merges_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_merges.org_person_merges_pkey",
       "sig": ""
     },
     {
@@ -182,6 +286,34 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:org_person_match_rejections_pair_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_match_rejections_person_a_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_match_rejections_person_b_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_match_rejections_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_merges_kept_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_merges_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_merges_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_roster_players_person_id_idx",
       "sig": ""
     },
@@ -195,6 +327,14 @@
     },
     {
       "key": "table:only-dev:org_person_emails",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_person_match_rejections",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_person_merges",
       "sig": ""
     }
   ]

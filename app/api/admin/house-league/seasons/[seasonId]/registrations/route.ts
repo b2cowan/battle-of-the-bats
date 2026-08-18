@@ -71,6 +71,7 @@ export const GET = withObservability(async (req: Request,
     feeEntryId:          row.fee_entry_id ?? null,
     adminNotes:          row.admin_notes ?? null,
     source:              row.source,
+    waiverAcceptedAt:    row.waiver_accepted_at ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   }));
@@ -118,6 +119,7 @@ export const POST = withObservability(async (req: Request,
 
   const registration = await createRegistration({
     seasonId,
+    orgId: ctx!.org.id,
     divisionId,
     playerFirstName,
     playerLastName,

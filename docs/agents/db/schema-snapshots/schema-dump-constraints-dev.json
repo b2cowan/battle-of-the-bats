@@ -2270,6 +2270,96 @@
     "update_rule": null
   },
   {
+    "table_name": "org_person_match_rejections",
+    "constraint_name": "org_person_match_rejections_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_match_rejections",
+    "constraint_name": "org_person_match_rejections_person_a_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "person_a_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_match_rejections",
+    "constraint_name": "org_person_match_rejections_person_b_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "person_b_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_match_rejections",
+    "constraint_name": "org_person_match_rejections_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_person_match_rejections",
+    "constraint_name": "org_person_match_rejections_rejected_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "rejected_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_merges",
+    "constraint_name": "org_person_merges_kept_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "kept_person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_merges",
+    "constraint_name": "org_person_merges_merged_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "merged_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_merges",
+    "constraint_name": "org_person_merges_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_merges",
+    "constraint_name": "org_person_merges_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_public_site_content",
     "constraint_name": "org_public_site_content_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3575,7 +3665,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3585,7 +3675,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3635,7 +3725,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3645,7 +3735,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },

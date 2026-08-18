@@ -42,6 +42,11 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
     label: 'Rep Teams',
     description: 'Tryouts, team programs, rosters, coach portal, player documents, and team accounting.',
   },
+  {
+    key: 'module_families',
+    label: 'Families',
+    description: 'Club-admin household records: the family worklist, family pages, duplicate review, household messaging, and per-family data export. Off by default for every role even where the plan carries it.',
+  },
 ];
 
 export type PlanModuleEntitlementMatrix = Record<OrgPlan, Capability[]>;

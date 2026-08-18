@@ -45,6 +45,13 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'accounting', 'ledger', 'budget', 'expense', 'allocation'],
     },
     {
+      title: 'Families',
+      desc: 'Customer-facing guide for the household book: the worklist, family pages, duplicate review, messaging, and data export. League Plus/Club plans, per-member permission.',
+      href: '/platform-admin/help/families',
+      topicCount: 5,
+      keywords: ['customer', 'family', 'families', 'household', 'guardian', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],
+    },
+    {
       title: 'Org Admin & Setup',
       desc: 'Customer-facing guide for members, roles, subscription management, settings, modules, and org setup.',
       href: '/platform-admin/help/org',

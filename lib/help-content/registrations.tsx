@@ -112,6 +112,25 @@ const registrationsHelp: HelpPageContent = {
           <p>Manual entries should still follow your division capacity and waitlist policy. If the division is full, add the player as waitlisted unless your board has approved an exception. When the season auto-generates fees, setting a manual player Active also creates their pending fee entry.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-waiver-recorded',
+          question: 'Is the waiver a family accepts on the public form actually recorded?',
+          answer: (
+            <p>
+              Yes — since August 2026. When a season has waiver text and a guardian ticks the box on
+              the public form, the moment of acceptance and the exact wording they agreed to are both
+              stored with the registration, and the acceptance appears as consent on the family&rsquo;s
+              record. Registrations from before then, and manual registrations you type in yourself
+              (where no guardian saw a waiver), show no acceptance — that means &ldquo;not
+              recorded&rdquo;, not &ldquo;refused&rdquo;.
+            </p>
+          ),
+          answerText:
+            'Yes since August 2026. Public-form acceptance stores the time and the exact waiver wording, and shows as consent on the family record. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
+          keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed'],
+        },
+      ],
     },
     {
       id: 'recipe-message-and-export-registrants',

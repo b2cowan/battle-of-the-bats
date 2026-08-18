@@ -2,7 +2,7 @@
 import { useEffect, useState, type ElementType } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket, Lock } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket, Lock, Contact } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { hasCapability, type Capability } from '@/lib/roles';
@@ -54,6 +54,13 @@ export default function AdminHubClient() {
 
   const canSeeRepTeams = !loading && userRole
     ? canUseModule('module_rep_teams')
+    : false;
+
+  // Off by default for every role — visible only to owners and members explicitly
+  // granted module_families. No teaser tile when absent: the area concentrates
+  // household PII, and a door that cannot open is not advertised (plan §5.3).
+  const canSeeFamilies = !loading && userRole
+    ? canUseModule('module_families')
     : false;
 
   const [attention, setAttention] = useState<AttentionSummary | null>(null);
@@ -205,6 +212,12 @@ export default function AdminHubClient() {
       desc: 'Manage competitive team programs - tryouts, rosters, player documents, schedules, and team finances',
       icon: Users,
       href: `${base}/rep-teams`,
+    },
+    canSeeFamilies && {
+      label: 'Families',
+      desc: 'Every household the club holds - who owes, who is missing forms, who cannot be reached, across rep teams and house league',
+      icon: Contact,
+      href: `${base}/families`,
     },
     canSeeRepTeams && {
       label: 'Coaches Portal',

@@ -2,11 +2,16 @@
 
 **Plan:** `CLUB_FAMILIES_BOOK_PLAN.md` · **Mockups (concept):** `claude.ai/code/artifact/f089153c-8583-4c5c-b8c3-d70c5278602b`
 · **Mockups (Phase 2, buildable):** `claude.ai/code/artifact/e7cc6d9c-343e-45eb-8b94-fb9984f2b949`
-**Status:** planned 2026-08-17 · **Phase 1 built on dev 2026-08-17** — the family records exist and
-nothing shows them; awaiting the owner's read of the Phase 1 report · **Phase 2 mockups done
-2026-08-17** — every screen redrawn to what the data can honestly show (thin states first); three of
-the original screens' promises were found unkeepable and are resolved in the plan's §5.3 ·
-**Tiers:** Club and League · **Access:** a Families permission, off by default
+**Status:** planned 2026-08-17 · **Phase 1 built on dev 2026-08-17** · **Phase 2 mockups done and
+owner-approved 2026-08-17** (three unkeepable promises resolved, plan §5.3) · **Phase 2 BUILT on
+dev 2026-08-17** — the Families area exists: the worklist (landing on "no family on file" when that
+is the day's truth), the family page, the duplicate queue with a permanent memory for "not the same
+person", message-the-household (which now honours an opt-out made under an old email address), and
+one-click export of everything held about a family. Record-a-payment waits for the money QA walks,
+deliberately. Along the way two real defects were found and fixed: league registrations had been
+silently broken on dev since Phase 1's migration, and the league waiver a guardian must tick is now
+actually stored (it never was). Owner QA §54 owed; production needs two migrations first ·
+**Tiers:** Club and League · **Access:** a Families permission, off by default for every role
 
 > **What Phase 1 changed for a customer: nothing, on purpose.** No screen, no menu, no permission, no
 > change to what a coach or admin does. Behind the scenes, every parent named anywhere in a club now

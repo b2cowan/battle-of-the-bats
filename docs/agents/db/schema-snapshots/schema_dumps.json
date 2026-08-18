@@ -5393,6 +5393,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 25,
+        "column_name": "waiver_accepted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -6584,6 +6593,141 @@
         "table_name": "org_person_emails",
         "pos": 9,
         "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 3,
+        "column_name": "person_a_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 4,
+        "column_name": "person_b_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 5,
+        "column_name": "rejected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 6,
+        "column_name": "rejected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 3,
+        "column_name": "kept_person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 4,
+        "column_name": "merged_person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 5,
+        "column_name": "merged_snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 6,
+        "column_name": "merged_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 7,
+        "column_name": "merged_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_merges",
+        "pos": 8,
+        "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -18552,6 +18696,55 @@
         "constraint_name": "org_person_emails_person_id_fkey"
       },
       {
+        "table_name": "org_person_match_rejections",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_person_match_rejections_org_id_fkey"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "column_name": "person_a_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_match_rejections_person_a_id_fkey"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "column_name": "person_b_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_match_rejections_person_b_id_fkey"
+      },
+      {
+        "table_name": "org_person_match_rejections",
+        "column_name": "rejected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_person_match_rejections_rejected_by_fkey"
+      },
+      {
+        "table_name": "org_person_merges",
+        "column_name": "kept_person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_merges_kept_person_id_fkey"
+      },
+      {
+        "table_name": "org_person_merges",
+        "column_name": "merged_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_person_merges_merged_by_fkey"
+      },
+      {
+        "table_name": "org_person_merges",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_person_merges_org_id_fkey"
+      },
+      {
         "table_name": "org_public_site_content",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -19080,14 +19273,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -19122,14 +19315,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -22215,6 +22408,41 @@
         "indexdef": "CREATE UNIQUE INDEX org_person_emails_pkey ON public.org_person_emails USING btree (id)"
       },
       {
+        "tablename": "org_person_match_rejections",
+        "indexname": "org_person_match_rejections_pair_uniq",
+        "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pair_uniq ON public.org_person_match_rejections USING btree (org_id, person_a_id, person_b_id)"
+      },
+      {
+        "tablename": "org_person_match_rejections",
+        "indexname": "org_person_match_rejections_person_a_idx",
+        "indexdef": "CREATE INDEX org_person_match_rejections_person_a_idx ON public.org_person_match_rejections USING btree (person_a_id)"
+      },
+      {
+        "tablename": "org_person_match_rejections",
+        "indexname": "org_person_match_rejections_person_b_idx",
+        "indexdef": "CREATE INDEX org_person_match_rejections_person_b_idx ON public.org_person_match_rejections USING btree (person_b_id)"
+      },
+      {
+        "tablename": "org_person_match_rejections",
+        "indexname": "org_person_match_rejections_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pkey ON public.org_person_match_rejections USING btree (id)"
+      },
+      {
+        "tablename": "org_person_merges",
+        "indexname": "org_person_merges_kept_idx",
+        "indexdef": "CREATE INDEX org_person_merges_kept_idx ON public.org_person_merges USING btree (kept_person_id)"
+      },
+      {
+        "tablename": "org_person_merges",
+        "indexname": "org_person_merges_org_id_idx",
+        "indexdef": "CREATE INDEX org_person_merges_org_id_idx ON public.org_person_merges USING btree (org_id)"
+      },
+      {
+        "tablename": "org_person_merges",
+        "indexname": "org_person_merges_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_person_merges_pkey ON public.org_person_merges USING btree (id)"
+      },
+      {
         "tablename": "org_public_site_content",
         "indexname": "org_public_site_content_org_id_key",
         "indexdef": "CREATE UNIQUE INDEX org_public_site_content_org_id_key ON public.org_public_site_content USING btree (org_id)"
@@ -24884,7 +25112,7 @@
         "kind": "CHECK",
         "table_name": "family_consents",
         "detail": "family_consents_basis_check",
-        "check_clause": "(basis = ANY (ARRAY['express_link'::text, 'tryout_form'::text, 'registration_implied'::text]))"
+        "check_clause": "(basis = ANY (ARRAY['express_link'::text, 'tryout_form'::text, 'registration_implied'::text, 'league_registration'::text]))"
       },
       {
         "kind": "CHECK",
@@ -25243,6 +25471,24 @@
       {
         "kind": "RLS",
         "table_name": "org_person_emails",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_person_match_rejections",
+        "detail": "org_person_match_rejections_ordered",
+        "check_clause": "(person_a_id < person_b_id)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_person_match_rejections",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_person_merges",
         "detail": "ENABLED",
         "check_clause": null
       },

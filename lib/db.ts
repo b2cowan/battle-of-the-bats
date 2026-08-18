@@ -2475,6 +2475,9 @@ export interface LeagueGameInput {
 
 export interface PublicRegistrationInput {
   seasonId: string;
+  // Denormalized tenant — NOT NULL since migration 251, and the insert fails without it.
+  // Both callers (public form, admin manual add) already hold the org in scope.
+  orgId: string;
   divisionId: string | null;
   playerFirstName: string;
   playerLastName: string;
@@ -2489,6 +2492,13 @@ export interface PublicRegistrationInput {
   status?: LeagueRegistrationStatus;
   waitlistPosition?: number | null;
   source?: 'public_form' | 'admin_manual';
+  // Moment the guardian accepted the season waiver on the public form (mig 252).
+  // Stays null for admin-manual rows: no guardian saw a waiver.
+  waiverAcceptedAt?: string | null;
+  // The season's waiver text AT ACCEPTANCE — pass it with waiverAcceptedAt and the
+  // consent-ledger row is filed automatically (see createRegistration). Only the
+  // caller can know acceptance was witnessed; the filing mechanics live in one place.
+  waiverText?: string | null;
 }
 
 // ─── Mappers ──────────────────────────────────────────────────────────────────
@@ -2564,6 +2574,7 @@ function mapLeagueRegistration(row: any): LeagueRegistration {
     feeEntryId:          row.fee_entry_id ?? null,
     adminNotes:          row.admin_notes ?? null,
     source:              row.source,
+    waiverAcceptedAt:    row.waiver_accepted_at ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };
@@ -2828,6 +2839,7 @@ export async function createRegistration(input: PublicRegistrationInput): Promis
     .from('league_registrations')
     .insert({
       season_id:            input.seasonId,
+      org_id:               input.orgId,
       division_id:          input.divisionId ?? null,
       player_first_name:    input.playerFirstName,
       player_last_name:     input.playerLastName,
@@ -2842,10 +2854,30 @@ export async function createRegistration(input: PublicRegistrationInput): Promis
       status:               input.status ?? 'pending_review',
       waitlist_position:    input.waitlistPosition ?? null,
       source:               input.source ?? 'public_form',
+      waiver_accepted_at:   input.waiverAcceptedAt ?? null,
     })
     .select()
     .single();
-  return mapLeagueRegistration(data!);
+  const registration = mapLeagueRegistration(data!);
+
+  // A witnessed waiver acceptance files its consent-ledger row HERE, in the same
+  // seam as the insert — so a future caller (bulk import, partner API) cannot
+  // record acceptance and forget the compliance write. AWAITED, deliberately —
+  // unlike the confirmation email: this is compliance EVIDENCE, and a bare
+  // fire-and-forget can be torn down mid-flight on Amplify once the response
+  // is sent (the documented after()-drops gotcha). The helper swallows its own
+  // errors, so a failed ledger write logs loudly but never fails registration.
+  if (input.waiverAcceptedAt && input.waiverText) {
+    const { recordLeagueWaiverConsent } = await import('./org-people');
+    await recordLeagueWaiverConsent({
+      orgId: input.orgId,
+      guardianEmailNormalized: normalizeGuardianEmailRequired(input.guardianEmail),
+      registrationId: registration.id,
+      waiverText: input.waiverText,
+      acceptedAt: input.waiverAcceptedAt,
+    });
+  }
+  return registration;
 }
 
 export async function updateRegistrationStatus(
