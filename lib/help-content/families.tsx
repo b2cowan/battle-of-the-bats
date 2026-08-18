@@ -210,6 +210,25 @@ const familiesHelp: HelpPageContent = {
           </p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-families-still-emailed',
+          question: 'A parent says they unsubscribed but still got an email. What do I tell them?',
+          answerText: 'Check what kind of email it was, because the two are treated differently on purpose. Announcements — a coach message, a league broadcast, a message from this page — are never sent to a family who has opted out, and that holds even if they unsubscribed under an email address they no longer use. Dues reminders and tryout emails are different: they still go out, because a family cannot switch off a bill or an offer of a roster spot by unsubscribing from announcements. Those emails say so themselves, naming the club and explaining that they are account notices rather than announcements. So the honest answer to the parent is that the unsubscribe is working, and it covers club news and team messages rather than money they owe or a decision about their child. If they received an announcement after opting out, that is worth reporting.',
+          keywords: ['unsubscribed', 'still got email', 'opted out', 'why did they get', 'unsubscribe not working', 'parent complaint', 'dues reminder', 'account notice'],
+          answer: (
+            <>
+              <p>Check <em>what kind</em> of email it was &mdash; the two are treated differently on purpose.</p>
+              <ul>
+                <li><strong>Announcements</strong> &mdash; a coach message, a league broadcast, a message from this page &mdash; are never sent to a family who has opted out. That holds even if they unsubscribed under an address they no longer use.</li>
+                <li><strong>Dues reminders and tryout emails</strong> still go out. A family can&apos;t switch off a bill, or an offer of a roster spot, by unsubscribing from announcements.</li>
+              </ul>
+              <p>Those second ones say so themselves: they name the club and explain that they&apos;re account notices rather than announcements.</p>
+              <p>So the honest answer is that the unsubscribe <em>is</em> working &mdash; it covers club news and team messages, not money owed or a decision about their child. If they received an <strong>announcement</strong> after opting out, that&apos;s worth reporting.</p>
+            </>
+          ),
+        },
+      ],
     },
   ],
 };

@@ -239,16 +239,23 @@ const houseLeagueHelp: HelpPageContent = {
     {
       id: 'ledger-notifications',
       group: 'Running the season',
-      heading: 'The season ledger and notification log',
-      summary: 'Each division has a ledger for fees and a notifications page logging the emails the season has sent.',
-      keywords: ['ledger', 'notifications', 'email log', 'fees', 'accounting'],
-      searchText: 'season ledger division fees accounting notifications email log sent emails approval waitlist decline confirmation history',
+      heading: 'The season ledger and emailing the season',
+      summary: 'Each division has a ledger for fees, and a notifications page that both sends season-wide email and logs what was sent.',
+      keywords: ['ledger', 'notifications', 'email log', 'fees', 'accounting', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
+      searchText: 'season ledger division fees accounting notifications email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it',
       content: (
         <>
           <p>From a division you can open two record-keeping views alongside Registrations, Teams, Schedule, and Standings:</p>
           <ul>
             <li><strong>Ledger</strong> — a per-season view of registration fees and related entries. When the season auto-generates fees on approval, they land here.</li>
-            <li><strong>Notifications</strong> — a log of the emails the season has sent (approvals, waitlist notices, declines), so you can confirm a family was contacted if they say they didn&apos;t receive something.</li>
+            <li><strong>Notifications</strong> — where you email the season, and a log of what it has already sent (approvals, waitlist notices, declines), so you can confirm a family was contacted if they say they didn&apos;t receive something.</li>
+          </ul>
+          <p>When you send a season email you can address everyone, one division, one team, or one registration status. Every one carries your club&apos;s name and an <strong>unsubscribe link</strong>, and a family who has opted out is left out — including one who unsubscribed under an older email address and has since given you a new one.</p>
+          <p>After sending, the confirmation accounts for everyone you addressed:</p>
+          <ul>
+            <li><strong>Delivered</strong> — the email went out.</li>
+            <li><strong>Not sent (unsubscribed)</strong> — the family has opted out of club email. You see how many, never which ones; reaching them has to be a direct conversation.</li>
+            <li><strong>Skipped (no email on file)</strong> — the registration has no usable address. Add one on the registration to include them next time.</li>
           </ul>
         </>
       ),
