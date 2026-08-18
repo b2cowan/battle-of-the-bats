@@ -347,9 +347,27 @@ describe('the look-back layer', () => {
    * ══════════════════════════════════════════════════════════════════════════════════════════
    */
   it('the shelf clears itself before refetching, so it cannot lag a season behind the page', () => {
+    /**
+     * ⚠ **ASSERTED AS "EVERYTHING IS CLEARED", NOT AS A FIXED SEQUENCE** (widened 2026-08-18). The
+     * original regex pinned three setters in one order and broke the moment a fourth arrived with
+     * the summary strip — which is a guard testing its own transcription rather than the property.
+     * The property is that NO practices state survives into a new season's answer, so the check is
+     * that every `setPractices*` clear happens between the effect's start and its `fetch(`.
+     */
+    const practicesEffect = code(seasonEnd).slice(
+      code(seasonEnd).indexOf('setPractices(null);'),
+      code(seasonEnd).indexOf('/season-practices'),
+    );
+    for (const setter of ['setPractices(null)', 'setPracticeSeasonId(null)', 'setPracticesTruncated(false)', 'setPracticesSummary(null)']) {
+      assert.ok(
+        practicesEffect.includes(setter),
+        `${setter} must run BEFORE the practices fetch. Anything left behind is the previous `
+        + 'season\'s answer sitting under the new season\'s card.',
+      );
+    }
     assert.match(
       code(seasonEnd),
-      /setPractices\(null\);\s*setPracticeSeasonId\(null\);\s*setPracticesTruncated\(false\);\s*fetch\(/,
+      /setPractices\(null\);[\s\S]{0,400}fetch\(/,
       'the practices effect must clear its state BEFORE fetching. Its `cancelled` flag only stops '
       + 'an old answer overwriting a new one — it does nothing about the old answer already on '
       + 'screen. Season\'s End hides the Wrapped card while refetching, so on a year change Wrapped '
@@ -555,6 +573,202 @@ describe('the look-back layer', () => {
         );
       }
     }
+  });
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * **THE LONG SHELVES SUMMARISE BEFORE THEY LIST** (owner design gate 2026-08-18, mockup
+   * `bed11050`). A real season is 26 games and 44 practices; the seeded fixture is 4 and 2, which
+   * is why the flat lists looked fine and were not.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+
+  /**
+   * ⚠⚠ **THE SUMMARY IS COMPUTED OVER EVERY ROW THE SEASON HOLDS, NEVER OVER THE PAGE OF ROWS THE
+   * SHELF SHOWS.** Both routes cap their list. A record — or a season's focus — derived from the
+   * rows that happened to fit is a different season's, and it is wrong in the direction nobody
+   * checks: quietly a few games short, on the page a coach opens once a year to find out how the
+   * season went. This is why the arithmetic is on the SERVER and not in the browser.
+   */
+  it('both summaries are computed before the row cap, not after it', () => {
+    const routeOf = (seg: string) => readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', seg, 'route.ts'), 'utf8');
+
+    /**
+     * ⚠ Asserted over the summary OBJECT, not by proximity. The first version of this check tested
+     * that `shown` did not appear within 400 characters of `byType:` — which passed only because an
+     * unrelated field happened to sit between them, and failed the moment that field was removed.
+     * A guard keyed on distance is testing its own transcription; the property is that NOTHING in
+     * the summary reads the capped list.
+     */
+    /**
+     * ⚠ Deliberately NOT called `results` — this file already has a module-level `results` holding
+     * the results PAGE, and an earlier draft of this test shadowed it away, then lost the local
+     * binding in an edit and silently began asserting against the wrong file. A guard reading the
+     * wrong source is the vacuous pass this suite has a whole test about.
+     */
+    const resultsRoute = code(routeOf('season-results'));
+    const summaryBlock = resultsRoute.slice(
+      resultsRoute.indexOf('summary: {'),
+      resultsRoute.indexOf('games: shown.map'),
+    );
+    assert.ok(summaryBlock.length > 200, 'expected to find the results summary block to inspect');
+    assert.equal(
+      summaryBlock.includes('shown'), false,
+      'the results summary reads the capped list. Every figure in it — the record, the competition '
+      + 'split, home/away, scoring — must be computed over `games`, every decided game the season '
+      + 'holds. A record built from the rows that happened to fit is a different season\'s record, '
+      + 'and wrong in the direction nobody checks.',
+    );
+    assert.match(
+      summaryBlock, /WLT_CATEGORIES\s*\n?\s*\.map\(/,
+      'the competition split must be DERIVED from WLT_CATEGORIES, not hand-listed. Writing the '
+      + 'three keys out again recreates exactly the "convention two files must agree by hand" that '
+      + '`lib/coach-season-record.ts` exists to end — and the page\'s own label lookup reads that '
+      + 'list, so a hand-written server copy is the two halves already disagreeing.',
+    );
+
+    const practices = code(routeOf('season-practices'));
+    assert.match(
+      practices, /total: events\.length/,
+      'the practices summary must count `events` (every written-up night), not `shown`.',
+    );
+    assert.match(
+      practices, /getRepTeamEventTagsByKind\(events\.map/,
+      'and the tag read must cover every row too — "what you worked on" computed from the rows '
+      + 'that fit is a different season\'s focus.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **"44" IS NOT THE SEASON'S PRACTICE COUNT, AND THE PAGE MUST NOT IMPLY IT IS.** This shelf
+   * holds nights a coach WROTE SOMETHING ABOUT; a practice nobody wrote up never reaches it. A team
+   * that ran sixty and planned forty-four would otherwise be told, by a bare number on a closed
+   * season's page, that they ran forty-four. Found while drawing the mockup, fixed in the same
+   * change — the kind of small lie that survives every test because nothing contradicts it.
+   */
+  it('the practices shelf says its number is nights WRITTEN UP', () => {
+    assert.match(
+      seasonEnd, /night\{practicesSummary\.total === 1 \? '' : 's'\} written up/,
+      'the practices summary must qualify its count. A bare number reads as the season\'s practice '
+      + 'count, which this shelf does not know.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **THE PRACTICES SUMMARY IS A FLOOR, NOT A TOTAL, AND THE PAGE HAS TO SAY SO** (`/review`,
+   * 2026-08-18). `getRepTeamPracticesWithPlanOrRecap` applies `.limit()` in the QUERY, so a season
+   * past the cap yields a summary that silently undercounts — while `season-results` reads through
+   * `getRepTeamEvents`, which has no limit, and genuinely is the whole season.
+   *
+   * That asymmetry is invisible at every realistic size and wrong at the one that matters, on the
+   * page a coach opens once a year. The `+` is what keeps the number honest, and it is the SECOND
+   * way this one figure learned to overstate itself — the first was reading as "practices run".
+   */
+  it('the practices summary marks itself as a floor when the read was capped', () => {
+    for (const field of ['total', 'withPlan', 'withRecap']) {
+      assert.match(
+        seasonEnd, new RegExp(`practicesSummary\\.${field}\\}\\{practicesTruncated \\? '\\+' : ''\\}`),
+        `${field} must print a "+" when the read was truncated. Every figure on that line comes `
+        + 'from the same capped read, so any one of them left bare claims a total it cannot see.',
+      );
+    }
+    /** ⚠ Including the TAG counts, which come from the same capped read and were briefly the only
+     *  bare number left — two figures one line apart, one flagged as a floor and one not. */
+    assert.match(
+      seasonEnd, /t\.count\}\$\{practicesTruncated \? '\+' : ''\}/,
+      'the tag counts must carry the "+" too — they are drawn from the same capped read as the '
+      + 'counts directly beneath them.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **AN "OF N" ON A RECORD MUST COUNT THE SEASON, NOT THE ROWS THAT ARRIVED** (`/review`,
+   * 2026-08-18). The results list is capped; the summary is not. Using the received row count as
+   * the denominator was wrong twice over on a long season — the caveat could suppress itself
+   * (330 known is not `<` 300 shown) and, when it did render, it named the cap rather than the
+   * season.
+   */
+  it('the results caveats count the whole season, never the rows received', () => {
+    const strip = seasonEnd.slice(
+      seasonEnd.indexOf('const seasonTitle'),
+      seasonEnd.indexOf('THE TRUNCATION IS STATED'),
+    );
+    assert.ok(strip.length > 200, 'expected to find the results answer strip to inspect');
+    assert.equal(
+      /(scoresKnown|homeAwayKnown) < games\.length/.test(code(strip)), false,
+      'a caveat is measuring itself against the CAPPED row list. Every denominator in the answer '
+      + 'strip must come from the summary\'s own uncapped `totalGames`.',
+    );
+    assert.match(
+      code(strip), /homeAwayKnown < resultsSummary\.totalGames/,
+      'the home/away pair must disclose how many games it covers. A neutral site — or a game with '
+      + 'no side recorded — falls into neither bucket, so the pair can quietly describe fewer '
+      + 'games than the season held, exactly as the scoring clause beside it can.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **ONE EVENT VOCABULARY IN THE COACH PORTAL.** A shield is a league game, a trophy a
+   * tournament, swords a scrimmage, a dumbbell a practice — the marks a coach reads every week on
+   * their own schedule. The closed-season page borrows them rather than inventing a second set,
+   * which would be worst possible place to teach one: it is the page opened least often.
+   *
+   * ⚠ A second COPY of the map would drift silently — both screens render perfectly while
+   * disagreeing about what amber means — so the guard is that nobody defines their own.
+   */
+  it('the coach portal has one event-type mark, and no surface redefines it', () => {
+    const offenders: string[] = [];
+    for (const file of pageFilesUnder(COACH_PAGES)) {
+      const src = code(readFileSync(file, 'utf8'));
+      if (/const EVENT_(COLORS|ICONS)\s*[:=]/.test(src)) {
+        offenders.push(file.replace(process.cwd(), '').replace(/\\/g, '/'));
+      }
+    }
+    assert.deepEqual(offenders, [],
+      'A coach surface declared its own event-type icon or colour map. There is one, in '
+      + '`components/coaches/eventTypeMark.tsx`, and the pair moves together on purpose: the icon '
+      + 'says which type, the colour reinforces it, and a second copy drifts on exactly the axis a '
+      + 'coach reads fastest.');
+    assert.match(
+      seasonEnd, /import \{ EventTypeMark \} from '@\/components\/coaches\/eventTypeMark'/,
+      'the closed-season page must use the shared mark rather than naming types in words alone.',
+    );
+  });
+
+  /**
+   * ⚠ **A SHORT SEASON SKIPS THE MONTH LAYER.** Two month rows that each need a click to reveal
+   * four nights is worse than a list of nine — the layer exists to shorten a long season, and below
+   * three months it only adds a step.
+   */
+  it('the month layer is skipped for a season inside two months', () => {
+    assert.match(
+      code(seasonEnd), /if \(groups\.length < MONTH_GROUPING_MIN\) \{/,
+      'SeasonMonths must fall back to a flat list for a short season.',
+    );
+  });
+
+  /**
+   * ⚠ **THE MONTH IS THE ORG'S, NEVER THE READER'S AND NEVER THE RAW STRING'S.** A Saturday-evening
+   * game in Toronto is already the next day in UTC, so slicing the stored instant files the last
+   * night of July under August. This repo has shipped that defect on three screens before.
+   */
+  it('months are grouped in the org’s timezone', () => {
+    assert.match(
+      code(seasonEnd), /const key = orgDayKey\(instantOf\(row\)\)\.slice\(0, 7\)/,
+      'month grouping must go through `orgDayKey`. Slicing the ISO string reads the UTC day, which '
+      + 'is a different month for every evening game near the end of one.',
+    );
+  });
+
+  /**
+   * ⚠ Both shelves must use ONE month component. A month header that expands on one shelf and
+   * navigates on the other — or a count meaning different things — is the drift a shared class
+   * would not have stopped, which is why it is a component.
+   */
+  it('both long shelves group through the same month component', () => {
+    const uses = (code(seasonEnd).match(/<SeasonMonths\b/g) ?? []).length;
+    assert.equal(uses, 2, `expected Results and practices to share SeasonMonths (found ${uses}).`);
   });
 
   /**

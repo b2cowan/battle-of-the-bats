@@ -99,15 +99,67 @@ export const GET = withObservability(async (req: Request,
   const events = all.filter(e => (e.practicePlan?.blocks.length ?? 0) > 0 || !!e.practiceRecap);
   const shown = events.slice(0, MAX_ROWS);
 
-  // What each practice was ABOUT, in the team's own vocabulary — the same 'focus' tags the report's
-  // list filters by, so the two surfaces describe a night with the same words.
-  const tagsByEvent = await getRepTeamEventTagsByKind(shown.map(e => e.id), 'focus')
+  /**
+   * What each practice was ABOUT, in the team's own vocabulary — the same 'focus' tags the report's
+   * list filters by, so the two surfaces describe a night with the same words.
+   *
+   * ⚠ Read for every row THIS ROUTE HOLDS, not just the page of rows below — the summary counts
+   * are drawn from it, and a season's focus computed from the rows that happened to fit is a
+   * different season's focus.
+   *
+   * ⚠⚠ **AND THAT IS NOT THE SAME AS "EVERY ROW THE SEASON HOLDS" — this route is DB-CAPPED and
+   * the results route is not** (`/review`, 2026-08-18; an earlier version of this comment claimed
+   * otherwise and was wrong). `getRepTeamPracticesWithPlanOrRecap` applies `.limit()` in the query
+   * itself, so `all` — and therefore `events`, and therefore every figure in `summary` — stops at
+   * `MAX_ROWS + 1`. `season-results` calls `getRepTeamEvents`, which has no limit at all, so its
+   * summary genuinely is the whole season.
+   *
+   * The consequence is carried honestly rather than papered over: `truncated` rides out beside the
+   * summary and the page prints the count with a `+`, so a 250-practice season reads "201+ nights
+   * written up" and never claims a total it cannot see.
+   */
+  const tagsByEvent = await getRepTeamEventTagsByKind(events.map(e => e.id), 'focus')
     .catch(() => ({} as Record<string, { id: string; name: string }[]>));
+
+  /**
+   * ⚠⚠ **"WHAT YOU WORKED ON" IS FREE, AND IT IS THE BEST THING ON THIS SHELF.** The tags are
+   * already on every row; counting them turns a list nobody reads to the end into a fact about a
+   * season a coach could not get any other way — nineteen hitting nights and six on pitching.
+   *
+   * ⚠ A night tagged twice counts once for each tag, deliberately: the question is "how many
+   * nights touched hitting", not "how do these divide up", so the numbers are not meant to sum to
+   * the practice count and the page must not present them as a breakdown.
+   */
+  const tagCounts = new Map<string, number>();
+  for (const e of events) {
+    for (const t of tagsByEvent[e.id] ?? []) tagCounts.set(t.name, (tagCounts.get(t.name) ?? 0) + 1);
+  }
 
   return NextResponse.json({
     season: { programYearId: programYear.id, name: programYear.name, isReadOnly },
     /** True when the season held more practices than this answer carries. The page SAYS SO. */
     truncated,
+    /**
+     * ⚠⚠ **`total` IS NOT THE SEASON'S PRACTICE COUNT, AND THE PAGE MUST NOT SAY IT IS.** This
+     * shelf lists nights a coach WROTE SOMETHING ABOUT — a plan, or a note afterwards — and a
+     * practice nobody wrote up never reaches it (see the filter above). A team that ran sixty and
+     * planned forty-four would otherwise be told, by a bare number on a closed season's page, that
+     * they ran forty-four. The page reads "44 nights written up" for exactly this reason.
+     *
+     * ⚠⚠ **AND IT IS A FLOOR, NOT A TOTAL, ONCE `truncated` IS SET** — the read above stops at the
+     * cap, so every figure here does too. The page prints a `+` in that case. Two different ways
+     * for one number to overstate what it knows, and both are the same lesson: a count on a record
+     * has to say what it counted.
+     */
+    summary: {
+      total: events.length,
+      withPlan: events.filter(e => (e.practicePlan?.blocks.length ?? 0) > 0).length,
+      withRecap: events.filter(e => !!e.practiceRecap).length,
+      /** Most-used first, then alphabetical so a tie is stable between visits. */
+      tags: [...tagCounts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
+    },
     practices: shown.map(e => ({
       eventId: e.id,
       name: e.name || 'Practice',

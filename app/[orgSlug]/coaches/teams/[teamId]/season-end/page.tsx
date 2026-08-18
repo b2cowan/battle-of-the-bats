@@ -1,5 +1,5 @@
 'use client';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Trophy } from 'lucide-react';
@@ -12,8 +12,10 @@ import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import { canReadPastPracticePlans, canViewMoney, canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
-import { formatInOrgZone } from '@/lib/timezone';
-import { formatRecord } from '@/lib/coach-season-record';
+import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
+import { formatRecord, tallyResults, WLT_CATEGORIES, type WltTally } from '@/lib/coach-season-record';
+import { EventTypeMark } from '@/components/coaches/eventTypeMark';
+import type { RepEventType } from '@/lib/types';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -64,6 +66,142 @@ type SeasonGame = {
   opponentScore: number | null;
   result: 'win' | 'loss' | 'tie' | null;
 };
+
+/** The answer at the top of the Results shelf — computed over EVERY decided game, never the page. */
+type ResultsSummary = {
+  overall: WltTally;
+  byType: { type: RepEventType; tally: WltTally }[];
+  home: WltTally;
+  away: WltTally;
+  /** How many games the home/away pair covers — a neutral site falls into neither. */
+  homeAwayKnown: number;
+  scored: number;
+  allowed: number;
+  scoresKnown: number;
+  /** ⚠ The season's TRUE game count. The row list is capped; this is not, and every "of N" on the
+   *  page must be drawn from here rather than from the rows that happened to arrive. */
+  totalGames: number;
+};
+
+/** The answer at the top of the practices shelf. ⚠ `total` is nights WRITTEN UP, not practices. */
+type PracticesSummary = {
+  total: number;
+  withPlan: number;
+  withRecap: number;
+  tags: { name: string; count: number }[];
+};
+
+/**
+ * ⚠⚠ **A LONG SEASON IS THE ORDINARY CASE, AND A FLAT LIST IS HOW IT BREAKS THIS PAGE** (owner
+ * design gate 2026-08-18, mockup artifact `bed11050`). The seeded fixture has four games and two
+ * practices; a real season is twenty-six and forty-four, and practice rows are two lines each — so
+ * the two shelves that grow with the season were between them the longest thing on a page whose
+ * whole promise is that it is quiet.
+ *
+ * The answer is three layers, each one a place a coach can stop: the shut face (the headline), the
+ * SUMMARY (so opening the shelf is rewarded rather than met with a wall), and then the season BY
+ * MONTH — four to six rows, each carrying a real fact, each opening to its own nights.
+ *
+ * ⚠ Months are not an arbitrary bucket. A coach remembers a season as "that run in July", and a
+ * month row carries something a date-sorted list cannot: that month's record, and what the team
+ * spent it working on.
+ *
+ * ⚠ **NOTHING IS HIDDEN.** Months organise the list; they never shorten it. The truncation notice
+ * the routes carry is unchanged and still shown.
+ */
+const MONTH_GROUPING_MIN = 3;
+
+/** Rows grouped into the org's own months, newest first. */
+function byMonth<T>(rows: T[], instantOf: (row: T) => string): { key: string; label: string; rows: T[] }[] {
+  const groups = new Map<string, { key: string; label: string; rows: T[] }>();
+  for (const row of rows) {
+    /**
+     * ⚠ The ORG's month, never the reader's and never the raw string's. A Saturday-evening game in
+     * Toronto is already the next day in UTC, so slicing the stored instant would file the last
+     * night of July under August — and the month a game belongs to is the one it was played in.
+     * `orgDayKey` is the shared answer to that; the sortable `YYYY-MM` falls straight out of it.
+     */
+    const key = orgDayKey(instantOf(row)).slice(0, 7);
+    let g = groups.get(key);
+    if (!g) {
+      /** ⚠ Formatted only when the group is CREATED. Building the label per row and keeping it
+       *  only for the first threw away one `Intl` format per row of the season. */
+      g = { key, label: formatInOrgZone(instantOf(row), { month: 'long', year: 'numeric' }), rows: [] };
+      groups.set(key, g);
+    }
+    g.rows.push(row);
+  }
+  return [...groups.values()].sort((a, b) => b.key.localeCompare(a.key));
+}
+
+/**
+ * The season, by month — the middle layer of both long shelves.
+ *
+ * ⚠ **ONE COMPONENT, NOT TWO COPIES.** Results and practices ask the same question of a season and
+ * must not answer it two slightly different ways: a month header that expands on one shelf and
+ * navigates on the other, or a count that says "9 games" here and "12" there while meaning
+ * different things, is the drift this repo keeps paying for. What differs between them is one line
+ * of copy (`factFor`) and the row itself.
+ *
+ * ⚠ **A SHORT SEASON SKIPS THE MONTH LAYER ENTIRELY.** Two rows that each need a click to reveal
+ * four nights is worse than a list of nine — the layer exists to shorten a long season, and below
+ * three months it only adds a step.
+ *
+ * ⚠ Native `<details>` deliberately, matching `CoachCollapseSection`: keyboard and screen-reader
+ * behaviour for free, and the rows stay in the DOM so a browser's find-in-page can still reach a
+ * night a coach half-remembers.
+ */
+function SeasonMonths<T>({
+  groups,
+  openMonths,
+  setOpenMonths,
+  factFor,
+  renderRow,
+}: {
+  groups: { key: string; label: string; rows: T[] }[];
+  /** This shelf's own open set — see the note where the two are declared. */
+  openMonths: ReadonlySet<string>;
+  setOpenMonths: React.Dispatch<React.SetStateAction<Set<string>>>;
+  /** The one line that makes a month row worth reading: its record, or what it was about. */
+  factFor: (rows: T[]) => string;
+  renderRow: (row: T) => React.ReactNode;
+}) {
+  if (groups.length < MONTH_GROUPING_MIN) {
+    return <div className={styles.lineupFrontList}>{groups.flatMap(g => g.rows).map(renderRow)}</div>;
+  }
+  const toggle = (key: string) => setOpenMonths(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  return (
+    <div className={styles.seasonMonths}>
+      {groups.map(g => (
+        <details key={g.key} className={styles.seasonMonth} open={openMonths.has(g.key)}>
+          <summary
+            className={styles.seasonMonthHead}
+            onClick={e => { e.preventDefault(); toggle(g.key); }}
+          >
+            <span className={styles.seasonMonthName}>{g.label}</span>
+            <span className={styles.seasonMonthFact}>{factFor(g.rows)}</span>
+            <ChevronRight size={15} className={styles.seasonMonthChevron} aria-hidden />
+          </summary>
+          <div className={styles.seasonMonthRows}>{g.rows.map(renderRow)}</div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * "League" / "Tournament" / "Scrimmage" — the words beside the marks.
+ *
+ * ⚠ Read from `WLT_CATEGORIES`, the same list that decides what counts toward a record, so the
+ * split can never name a competition the record does not count (or miss one it does).
+ */
+function competitionLabel(type: RepEventType): string {
+  return WLT_CATEGORIES.find(c => c.key === type)?.label ?? 'Other';
+}
 
 /** One row of "The roster" — who was on the team that season. */
 type SeasonPlayer = {
@@ -166,7 +304,30 @@ export default function SeasonEndPage({
   /** Results (2026-08-18). */
   const [games, setGames] = useState<SeasonGame[] | null>(null);
   const [gamesTruncated, setGamesTruncated] = useState(false);
-  const [tally, setTally] = useState<{ w: number; l: number; t: number } | null>(null);
+  const [resultsSummary, setResultsSummary] = useState<ResultsSummary | null>(null);
+  const [practicesSummary, setPracticesSummary] = useState<PracticesSummary | null>(null);
+  /**
+   * Which months are open, ONE SET PER SHELF.
+   *
+   * ⚠ Two sets rather than one namespaced by shelf (`/simplify`, 2026-08-18). Both shelves span the
+   * same calendar months, so a single flat set had July on Results toggling July on practices — and
+   * the fix for that was an `idPrefix` prop threaded through the shared component plus string
+   * concatenation on every row. A second `useState` line avoids the collision for free, and the
+   * component stops needing to know which shelf it is.
+   *
+   * ⚠ Independent toggles rather than one-at-a-time: a coach comparing June to July should not have
+   * to close one to read the other, and an accordion that shuts the thing you just read is the
+   * fussiest possible answer to a list being long.
+   */
+  const [openResultMonths, setOpenResultMonths] = useState<Set<string>>(new Set());
+  const [openPracticeMonths, setOpenPracticeMonths] = useState<Set<string>>(new Set());
+  /**
+   * ⚠ Memoised on the ROWS, not on the open set. Without this, opening one month on one shelf
+   * re-groups BOTH shelves — the cost is small at a season's size, but it is work done for a reason
+   * that does not exist, and the dependency makes it obvious that grouping is about the data.
+   */
+  const resultMonths = useMemo(() => byMonth(games ?? [], g => g.startsAt), [games]);
+  const practiceMonths = useMemo(() => byMonth(practices ?? [], p => p.startsAt), [practices]);
   /** The roster (2026-08-18). */
   const [roster, setRoster] = useState<SeasonPlayer[] | null>(null);
 
@@ -242,12 +403,14 @@ export default function SeasonEndPage({
     setPractices(null);
     setPracticeSeasonId(null);
     setPracticesTruncated(false);
+    setPracticesSummary(null);
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-practices${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
       .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((json: { practices?: SeasonPractice[]; truncated?: boolean; season?: { programYearId?: string } }) => {
+      .then((json: { practices?: SeasonPractice[]; truncated?: boolean; summary?: PracticesSummary; season?: { programYearId?: string } }) => {
         if (cancelled) return;
         setPractices(json.practices ?? []);
         setPracticesTruncated(!!json.truncated);
+        setPracticesSummary(json.summary ?? null);
         setPracticeSeasonId(json.season?.programYearId ?? null);
       })
       .catch(() => { /* quiet by design — see above */ });
@@ -289,14 +452,14 @@ export default function SeasonEndPage({
     let cancelled = false;
     setGames(null);
     setGamesTruncated(false);
-    setTally(null);
+    setResultsSummary(null);
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-results${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
       .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((json: { games?: SeasonGame[]; truncated?: boolean; tally?: { w: number; l: number; t: number } }) => {
+      .then((json: { games?: SeasonGame[]; truncated?: boolean; summary?: ResultsSummary }) => {
         if (cancelled) return;
         setGames(json.games ?? []);
         setGamesTruncated(!!json.truncated);
-        setTally(json.tally ?? null);
+        setResultsSummary(json.summary ?? null);
       })
       .catch(() => { /* quiet by design */ });
     return () => { cancelled = true; };
@@ -509,12 +672,57 @@ export default function SeasonEndPage({
             <CoachCollapseSection
               sectionId="season-results"
               title="Results"
-              meta={`${games.length}${gamesTruncated ? '+' : ''} game${games.length === 1 ? '' : 's'}${tally ? ` · ${formatRecord(tally)}` : ''}`}
+              meta={`${games.length}${gamesTruncated ? '+' : ''} game${games.length === 1 ? '' : 's'}${resultsSummary ? ` · ${formatRecord(resultsSummary.overall)}` : ''}`}
               defaultOpen={false}
             >
-              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
-                Every game this season that finished with a result.
-              </p>
+              {/* ── The answer, before the evidence ────────────────────────────────────────
+                  ⚠ **BY COMPETITION, because that is what "how did we do?" means.** A league record
+                  and a tournament record are different claims about a team, and the flat list this
+                  replaced mixed them into one number.
+
+                  ⚠ The mark is the SCHEDULE's own (shield / trophy / swords) — the vocabulary a
+                  coach reads every week — and the WORD stays beside it, because league-green and
+                  tournament-amber are close to a coin-flip for a red-green colour-blind coach. */}
+              {resultsSummary && (
+                <div className={styles.seasonAnswer}>
+                  <p className={styles.seasonAnswerKey}>The season</p>
+                  <div className={styles.seasonSplits}>
+                    {resultsSummary.byType.map(r => (
+                      <span key={r.type} className={styles.seasonSplit}>
+                        <EventTypeMark type={r.type} />
+                        <span className={styles.seasonSplitName}>{competitionLabel(r.type)}</span>
+                        <strong>{formatRecord(r.tally)}</strong>
+                      </span>
+                    ))}
+                  </div>
+                  {/* ⚠⚠ **EVERY "OF N" ON THIS LINE COUNTS THE SEASON, NOT THE ROWS THAT ARRIVED**
+                      (`/review`, 2026-08-18). The denominator was `games.length` — the CAPPED list
+                      the client received — so on a season past the cap the caveat could suppress
+                      itself entirely (330 known is not < 300 shown) and, when it did render, name
+                      the cap instead of the season. `totalGames` is the uncapped count and is the
+                      only honest denominator here. */}
+                  <p className={styles.seasonAnswerSub}>
+                    Home {formatRecord(resultsSummary.home)} · Away {formatRecord(resultsSummary.away)}
+                    {/* ⚠ A game at a NEUTRAL site, or one with no side recorded, is in neither
+                        bucket — so the pair can quietly describe fewer games than the season held.
+                        It discloses that the same way the scoring clause below does; an earlier
+                        version let this one line imply a completeness it did not have. */}
+                    {resultsSummary.homeAwayKnown < resultsSummary.totalGames
+                      ? ` (from ${resultsSummary.homeAwayKnown} of ${resultsSummary.totalGames} with a side recorded)`
+                      : ''}
+                    {/* ⚠ Says what the totals are DRAWN FROM. A result can be recorded with no
+                        score, so "scored 148" over 26 games when only 22 carry numbers would be a
+                        confident wrong answer about the other four. */}
+                    {resultsSummary.scoresKnown > 0 && (
+                      <> · Scored {resultsSummary.scored}, allowed {resultsSummary.allowed}
+                        {resultsSummary.scoresKnown < resultsSummary.totalGames
+                          ? ` (from ${resultsSummary.scoresKnown} of ${resultsSummary.totalGames} with a score)`
+                          : ''}
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
               {/* ⚠ THE TRUNCATION IS STATED, never silent — a list that quietly stops short tells a
                   coach their season held fewer games than it did. */}
               {gamesTruncated && (
@@ -522,39 +730,37 @@ export default function SeasonEndPage({
                   Showing the {games.length} most recent — this season held more than that.
                 </p>
               )}
-              <div className={styles.tableWrap}>
-                <table className={styles.devBoardTable}>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Opponent</th>
-                      <th style={{ textAlign: 'right' }}>Score</th>
-                      <th>Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {games.map(g => (
-                      <tr key={g.eventId}>
-                        <td>{formatInOrgZone(g.startsAt, { month: 'short', day: 'numeric' })}</td>
-                        <td data-label="Opponent">
-                          {g.opponent ?? g.name}
-                          {g.homeAway === 'away' ? ' (away)' : g.homeAway === 'home' ? ' (home)' : ''}
-                        </td>
-                        <td data-label="Score" style={{ textAlign: 'right' }}>
-                          {g.teamScore != null && g.opponentScore != null
-                            ? `${g.teamScore}–${g.opponentScore}`
-                            : '—'}
-                        </td>
-                        {/* ⚠ The WORD carries the outcome, never a colour alone — the olive and
-                            danger tones sit ~1.0 ΔE apart for a deuteranope. */}
-                        <td data-label="Result">
-                          {g.result === 'win' ? 'Win' : g.result === 'loss' ? 'Loss' : 'Tie'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <SeasonMonths
+                groups={resultMonths}
+                openMonths={openResultMonths}
+                setOpenMonths={setOpenResultMonths}
+                /* Each month carries THAT month's record — the fact a date-sorted list never told
+                   anybody, and the reason the month layer earns its place rather than merely
+                   shortening the shelf. */
+                factFor={rows => `${rows.length} game${rows.length === 1 ? '' : 's'} · ${formatRecord(tallyResults(rows))}`}
+                renderRow={g => (
+                  <div key={g.eventId} className={styles.seasonRecordRow}>
+                    <span className={styles.seasonRecordDate}>
+                      {formatInOrgZone(g.startsAt, { month: 'short', day: 'numeric' })}
+                    </span>
+                    <EventTypeMark type={g.eventType as RepEventType} />
+                    <span className={styles.seasonRecordMain}>
+                      {g.opponent ?? g.name}
+                      {g.homeAway === 'away' ? ' (away)' : g.homeAway === 'home' ? ' (home)' : ''}
+                    </span>
+                    <span className={styles.seasonRecordScore}>
+                      {g.teamScore != null && g.opponentScore != null
+                        ? `${g.teamScore}–${g.opponentScore}`
+                        : '—'}
+                    </span>
+                    {/* ⚠ The WORD carries the outcome, never a colour alone — the olive and danger
+                        tones sit ~1.0 ΔE apart for a deuteranope. */}
+                    <span className={styles.seasonRecordOutcome}>
+                      {g.result === 'win' ? 'Win' : g.result === 'loss' ? 'Loss' : 'Tie'}
+                    </span>
+                  </div>
+                )}
+              />
             </CoachCollapseSection>
           )}
 
@@ -618,9 +824,48 @@ export default function SeasonEndPage({
               meta={`${practices.length}${practicesTruncated ? '+' : ''}`}
               defaultOpen={false}
             >
+              {/* ── What the season was actually spent on ─────────────────────────────────
+                  ⚠ **THE BEST THING ON THIS SHELF, AND IT COMES FREE.** The focus tags are already
+                  on every row; counting them turns a list nobody reads to the end into a fact about
+                  a season a coach could not get any other way.
+
+                  ⚠ A night tagged twice counts once for each tag — the question is "how many nights
+                  touched hitting", not "how do these divide up" — so this is NOT presented as a
+                  breakdown and the numbers are not meant to sum to the practice count.
+
+                  ⚠ A team that never tagged a practice gets no tag line at all rather than an empty
+                  one. It degrades to the counts, which are still true. */}
+              {practicesSummary && (
+                <div className={styles.seasonAnswer}>
+                  <p className={styles.seasonAnswerKey}>What you worked on</p>
+                  {/* ⚠ The tag counts come from the SAME capped read as the line below, so they
+                      carry the same `+` (`/review`, 2026-08-18 — they were left bare while their
+                      neighbours were fixed, which is the worse version of the bug: two numbers one
+                      line apart, one of them flagged as a floor and one not). */}
+                  {practicesSummary.tags.length > 0 && (
+                    <p className={styles.seasonAnswerValue}>
+                      {practicesSummary.tags.slice(0, 4)
+                        .map(t => `${t.name} ${t.count}${practicesTruncated ? '+' : ''}`).join(' · ')}
+                      {practicesSummary.tags.length > 4 ? ` · +${practicesSummary.tags.length - 4} more` : ''}
+                    </p>
+                  )}
+                  {/* ⚠⚠ **"WRITTEN UP", NOT "RAN".** This shelf holds nights a coach wrote something
+                      about; a practice nobody wrote up never reaches it. A team that ran sixty and
+                      planned forty-four must not be told by this page that they ran forty-four. */}
+                  {/* ⚠ The `+` is not decoration. The practices read is capped in the query itself
+                      (unlike the results read, which is not), so once the season overflows it every
+                      figure on this line is a FLOOR. A bare "201 nights written up" on a season of
+                      250 is the same class of small lie as the bare count this line already exists
+                      to correct — found by `/review`, 2026-08-18. */}
+                  <p className={styles.seasonAnswerSub}>
+                    {practicesSummary.total}{practicesTruncated ? '+' : ''} night{practicesSummary.total === 1 ? '' : 's'} written up
+                    {' · '}{practicesSummary.withPlan}{practicesTruncated ? '+' : ''} with a plan
+                    {' · '}{practicesSummary.withRecap}{practicesTruncated ? '+' : ''} with a note afterwards
+                  </p>
+                </div>
+              )}
               <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
-                Every practice this season that has a plan or a note about how it went. Read-only —
-                open one and it reads exactly as you wrote it.
+                Read-only — open one and it reads exactly as you wrote it.
               </p>
               {/* ⚠ THE TRUNCATION IS STATED, never silent (plan §5 risk 1). A list headed "the
                   practices you ran" that quietly stops short tells a coach they ran fewer than
@@ -630,8 +875,18 @@ export default function SeasonEndPage({
                   Showing the {practices.length} most recent — this season held more than that.
                 </p>
               )}
-              <div className={styles.lineupFrontList}>
-                {practices.map(p => (
+              <SeasonMonths
+                groups={practiceMonths}
+                openMonths={openPracticeMonths}
+                setOpenMonths={setOpenPracticeMonths}
+                /* What that month was about, in the team's own words — the practices equivalent of
+                   the results shelf's per-month record. */
+                factFor={rows => {
+                  const names = [...new Set(rows.flatMap(r => r.tags.map(t => t.name)))].slice(0, 2);
+                  const count = `${rows.length} night${rows.length === 1 ? '' : 's'}`;
+                  return names.length ? `${count} · ${names.join(', ')}` : count;
+                }}
+                renderRow={p => (
                   <Link
                     key={p.eventId}
                     /* ⚠ The season AND where the coach came from, both explicit. The year is what
@@ -669,8 +924,8 @@ export default function SeasonEndPage({
                     </span>
                     <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
                   </Link>
-                ))}
-              </div>
+                )}
+              />
             </CoachCollapseSection>
           )}
 

@@ -11,6 +11,34 @@
 import type { RepEventType, RepAttendanceStatus } from './types.ts';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games.ts';
 
+/**
+ * The colour per event type — the other half of how a coach recognises one at a glance, alongside
+ * the icon (`components/coaches/eventTypeMark.tsx`, which re-exports this so a caller gets the pair
+ * from one import).
+ *
+ * ⚠ **A TOKEN, NEVER A LITERAL.** The warm portal theme remaps every one of these in `globals.css`,
+ * so a hard-coded hex looks right in the dark theme and wrong in the warm one — a defect class this
+ * repo has paid for repeatedly.
+ *
+ * ⚠⚠ **THE COLOUR NEVER CARRIES THE MEANING ON ITS OWN.** League-green and tournament-amber sit
+ * close enough to be a coin-flip for a red-green colour-blind coach, so every caller keeps the WORD
+ * beside the mark, or keeps the facts that make the row readable without it. The colour reinforces;
+ * it never informs.
+ *
+ * ⚠ It lives HERE rather than beside the icons because it is pure data and this module is where the
+ * rest of the event vocabulary already lives (`EVENT_LABELS`, `EVENT_WORD`, `EVENT_NAME_PREFIX`) —
+ * so it stays testable under plain `node --test` and the vocabulary stays in one place. Only the
+ * icons genuinely need React (`/simplify`, 2026-08-18).
+ */
+export const EVENT_COLORS: Record<RepEventType, string> = {
+  external_tournament: 'var(--evt-external-tournament)',
+  tournament_game:     'var(--evt-tournament-game)',
+  scrimmage:           'var(--evt-scrimmage)',
+  league_game:         'var(--evt-league-game)',
+  practice:            'var(--evt-practice)',
+  team_event:          'var(--evt-team-event)',
+};
+
 /** Display label per event type. THIS IS THE EXPORT'S "Event Type" COLUMN — changing a string here
  *  changes what a coach's exported spreadsheet says, and what the importer must accept. */
 export const EVENT_LABELS: Record<RepEventType, string> = {

@@ -88,20 +88,95 @@ export const GET = withObservability(async (req: Request,
   const truncated = games.length > MAX_ROWS;
   const shown = games.slice(0, MAX_ROWS);
 
+  /**
+   * ⚠⚠ **THE SUMMARY IS COMPUTED OVER EVERY DECIDED GAME, NEVER OVER THE PAGE OF ROWS BELOW IT.**
+   * This is the whole reason it is here rather than in the browser: the row list is capped, and a
+   * record derived from the rows that happened to fit is a different season's record. It would also
+   * be wrong in the direction nobody checks — quietly a few games short, on a page a coach opens
+   * once a year to find out how the season went.
+   */
+  const of = (t: string) => games.filter(g => g.eventType === t);
+  /**
+   * ⚠ **ONLY GAMES THAT CARRY BOTH NUMBERS.** A result can be recorded with no score at all — a
+   * coach who logged a W on the drive home and never went back — and treating that absence as a
+   * nil-nil would quietly drag the season's scoring down by a game nobody mis-recorded. The count
+   * rides out beside the totals so the page can say what they are drawn from.
+   */
+  const withScores = games.filter(g => g.teamScore != null && g.opponentScore != null);
+  const scored = withScores.reduce((s, g) => s + (g.teamScore ?? 0), 0);
+  const allowed = withScores.reduce((s, g) => s + (g.opponentScore ?? 0), 0);
+
   return NextResponse.json({
     season: { programYearId: programYear.id, name: programYear.name, isReadOnly },
     truncated,
     /**
-     * ⚠ Tallied over EVERY decided game, not over the truncated page — a record computed from the
-     * rows that happened to fit is a different season's record.
+     * The answer a coach opens this shelf for, so they never have to read the list to get it.
      *
-     * ⚠ And tallied over all three game types, deliberately unlike Insights: the coach's
-     * scrimmages-count-or-not preference lives in their browser (`wltStorageKey`), and a server
-     * that guessed at it would print one record here and a different one on the screen next door.
-     * The shelf shows the count of games it is listing; the SEASON'S headline record stays where
-     * the coach set that preference.
+     * ⚠ **BY COMPETITION, because that is the question "how did we do?" actually means.** A league
+     * record and a tournament record are different claims about a team, and the flat list mixed
+     * them into one number.
+     *
+     * ⚠ It is the three types the RECORD counts, and nothing else. An `external_tournament` row is
+     * the container for a weekend rather than a game, and never enters `games` at all — so this
+     * split is exhaustive of what is HERE, not of everything tournament-shaped. (An earlier version
+     * of this comment said those rows were folded in with tournament games. They are not —
+     * corrected by `/review`, 2026-08-18.)
+     *
+     * ⚠ Unlike the practices route beside it, this summary really is the whole season:
+     * `getRepTeamEvents` applies no limit, so nothing here is capped.
      */
-    tally: tallyResults(games),
+    summary: {
+      /**
+       * The season's record, and the ONLY copy of it. It used to ride out a second time as a
+       * sibling `tally` field with its own client state — two summaries of one array that had to
+       * agree forever, with nothing tying them together (`/simplify`, 2026-08-18).
+       */
+      /**
+       * ⚠ Tallied over EVERY decided game, not over the truncated page — a record computed from
+       * the rows that happened to fit is a different season's record.
+       *
+       * ⚠ And over all three game types, deliberately unlike Insights: the coach's
+       * scrimmages-count-or-not preference lives in their browser (`wltStorageKey`), and a server
+       * that guessed at it would print one record here and a different one on the screen next
+       * door. The split below is what lets a coach see the scrimmages separately instead.
+       */
+      overall: tallyResults(games),
+      /**
+       * ⚠ **DERIVED FROM `WLT_CATEGORIES`, NOT HAND-LISTED** (`/simplify`, 2026-08-18). This was
+       * three literal keys, while the page's own label lookup read the shared list — which is
+       * exactly the "convention two files must agree by hand" that `lib/coach-season-record.ts`
+       * exists to end, recreated one file away from it. Adding a category there now reaches this
+       * split for free, and the split can no longer name a competition the record does not count.
+       */
+      byType: WLT_CATEGORIES
+        .map(c => ({ type: c.key, tally: tallyResults(of(c.key)) }))
+        /** A season that never scrimmaged shows two lines, not three with a 0–0. */
+        .filter(r => r.tally.w + r.tally.l + r.tally.t > 0),
+      home: tallyResults(games.filter(g => g.homeAway === 'home')),
+      away: tallyResults(games.filter(g => g.homeAway === 'away')),
+      /**
+       * ⚠⚠ **HOW MANY GAMES THE HOME/AWAY PAIR ACTUALLY COVERS** (`/review`, 2026-08-18). A game
+       * can be at a NEUTRAL site, or have no side recorded at all, and those fall into neither
+       * bucket — so a tournament-heavy season could print "Home 6–2 · Away 4–3" while five of its
+       * twenty games were in neither number, with nothing on screen saying so. The scoring line one
+       * clause later already discloses exactly this kind of gap; this is the fact that lets the
+       * home/away line do the same instead of implying a completeness it does not have.
+       */
+      homeAwayKnown: games.filter(g => g.homeAway === 'home' || g.homeAway === 'away').length,
+      scored,
+      allowed,
+      /** How many games those two totals are drawn from — see the note above. */
+      scoresKnown: withScores.length,
+      /**
+       * ⚠⚠ **THE SEASON'S TRUE GAME COUNT, because the client's list is CAPPED and the page has to
+       * compare against something that is not** (`/review`, 2026-08-18). The page used
+       * `games.length` — the rows it received — as the denominator for "from N of M with a score".
+       * On a season past the cap that is wrong twice over: the caveat can be suppressed entirely
+       * (330 known < 300 shown reads false), and when it does render it names the cap rather than
+       * the season. Both are the "quietly a few short" failure this summary exists to prevent.
+       */
+      totalGames: games.length,
+    },
     games: shown.map(e => ({
       eventId: e.id,
       startsAt: e.startsAt,

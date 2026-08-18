@@ -7846,3 +7846,69 @@ its club manages seasons.
    season of 30–40 is a wall of rows. Options put to the owner: a summary strip first (record split
    by league / tournament / scrimmage, home vs away, scoring for and against) with the game list
    beneath; or grouping the list by month; or both. **No change made pending that decision.**
+
+**§57 addendum 2 — the long shelves (built 2026-08-18, owner design gate, mockup `bed11050`):**
+finding 4 of the first walk is now closed. Walk these on top of the steps above.
+
+**I · Results, opened.** It should lead with **the answer**, not the list: the record split by
+competition (League / Tournament / Scrimmage, each with the schedule's own icon beside it), then
+home/away, then scoring. ⚠ Only competitions the season actually played appear — a team that never
+scrimmaged sees two lines, not three.
+
+**J · Then the season by month** — four to six rows, each showing that month's record. Open one and
+its games appear, with the same shield / trophy / swords marks the schedule uses. ⚠ **No row is a
+link**, on purpose: a record must not be a door into a live tool.
+
+**K · Practices, opened.** Leads with **what you worked on** — the focus tags counted across the
+season ("Hitting 19 · Defence 14") — then a line reading **"N nights written up · N with a plan · N
+with a note afterwards"**. ⚠ That wording is deliberate and is a correction: the number is nights you
+**wrote something about**, not the season's practice count, and the old bare number implied
+otherwise. Then months, each showing what it was about. Rows still open the read-only plan.
+
+**L · A short season.** ⚠ On a team whose season sits inside **two months**, the month layer should
+be **absent** and the nights listed flat. The seeded UAT team is exactly this case, so it is the one
+you will see first — the months only appear on a longer season.
+
+**M · A team that never tagged a practice** should lose the tag line and keep the counts. Worth one
+probe: the shelf must degrade to something still true, not to an empty heading.
+
+### Known, deliberate, and worth your eye
+
+- **A third level of opening** (page → shelf → month → night). The summary strip is what pays for
+  it. ⚠ **If you find yourself opening months routinely, the strip is not answering** — that is the
+  signal this design was wrong, and it is worth saying out loud rather than discovering later.
+- **Practice rows carry no type icon.** Every row there is a practice, so it would be decoration.
+- **Colour never carries meaning alone** — the competition word sits beside every mark, and each
+  game row keeps its opponent, score and result.
+- ⚠ **`check:layout` still has not run** (same fixture gap as §57). And note the sweep is doubly
+  blind here: these rows sit inside a collapsed shelf, and now inside a collapsed month within it.
+  **The month rows have had no rendered check at all.**
+
+**§57 addendum 3 — `/simplify` + `/review` on the long shelves (2026-08-18, before any QA walk).**
+Walk the CURRENT build. Nothing about the shape changed; four things about the NUMBERS did, and
+they all point the same way — a count on a record has to say what it counted.
+
+- **Practice counts now show a "+" on a very long season.** The practices read stops at ~200 nights,
+  so a team with more written-up nights than that was being shown a total it could not actually see.
+  Every figure on that line — the nights, the plans, the notes, and the focus-tag counts — now reads
+  as a floor when the read was capped. ⚠ The results summary needs no such mark: that read is
+  genuinely uncapped, and the two behaving differently is deliberate.
+- **"From N of M with a score" now counts the season, not the rows on screen.** On a season past the
+  display cap the caveat could hide itself entirely, or print the cap as if it were the season.
+- **Home/away now says how many games it covers.** A game at a neutral site — or one where nobody
+  recorded a side — is in neither number, so the pair could quietly describe fewer games than the
+  season held. It discloses that the same way the scoring clause beside it always has.
+- ⚠⚠ **Four finished-season screens were deleted from the rendered sweep, and this is the one worth
+  knowing about.** Insights, results, roster and Money on a finished team were all being redirected
+  to the closed-season page by the season gate, finding a heading there, and **reporting green while
+  measuring a page they never opened** — the count made coverage look larger than it was. The live
+  team already covers all four surfaces. The two NEW shelves, which had none, now have their own
+  entries.
+
+⚠ **The rendered baseline is not currently trustworthy and was deliberately NOT regenerated.** The
+sweep's saved login had expired, so an earlier baseline captured sign-in screens instead of coach
+screens; with a fresh session the shelves report one pre-existing finding (the Season Wrapped card's
+**Share your season** button is 29px against a 44px floor — a real accessibility gap, not introduced
+here). Re-baselining now would also bake in another session's in-flight navigation work. **Someone
+should re-run the sweep with a fresh session once both are settled**, and either fix that button or
+record it with a reason.

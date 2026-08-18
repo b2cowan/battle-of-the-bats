@@ -1,6 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
+import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
@@ -84,17 +85,10 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-// Categorical event-type palette + win/loss/tie result colours, tokenized so the warm
-// portal variant can remap them per theme (dark values live in globals.css; the three
-// result hues reuse the existing --success/--danger/--warning semantic tokens).
-const EVENT_COLORS: Record<RepEventType, string> = {
-  external_tournament: 'var(--evt-external-tournament)',
-  tournament_game:     'var(--evt-tournament-game)',
-  scrimmage:           'var(--evt-scrimmage)',
-  league_game:         'var(--evt-league-game)',
-  practice:            'var(--evt-practice)',
-  team_event:          'var(--evt-team-event)',
-};
+// ⚠ `EVENT_COLORS` and `EVENT_ICONS` MOVED OUT on 2026-08-18, to
+// `components/coaches/eventTypeMark.tsx`. The closed-season page needed the same marks for its
+// Results shelf, and a second copy would have drifted on exactly the axis a coach reads fastest.
+// The win/loss/tie result hues below stay here — they are about an OUTCOME, not an event type.
 
 /** Win/loss/tie badge colour (reuses the semantic status tokens; tie falls through to warning). */
 function resultColor(result: string): string {
@@ -115,15 +109,6 @@ function scoreline(event: RepTeamEvent) {
     </>
   );
 }
-
-const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
-  external_tournament: Trophy,
-  tournament_game:     Trophy,
-  scrimmage:           Swords,
-  league_game:         Shield,
-  practice:            Dumbbell,
-  team_event:          Users,
-};
 
 // Attendance statuses, ordered present → not-present → unset. Drives BOTH the per-player icon
 // control and the metric/filter chips (label used by the chips; control is icon-only).

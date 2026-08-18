@@ -179,12 +179,27 @@ export const SCREENS = [
    * layer, in three screens.
    */
   { id: 'coach-season-end',        session: 'coach', path: (c) => `${finished(c)}/season-end`,      ready: 'h1' },
-  { id: 'coach-finished-insights', session: 'coach', path: (c) => `${finished(c)}/history`,          ready: 'h1' },
-  { id: 'coach-finished-results',  session: 'coach', path: (c) => `${finished(c)}/history/results`, ready: 'h1' },
-  /* The record surfaces a finished season still draws, one from each shape: a table (roster) and a
-     tabbed hub (Money). Both must render with no write control and no empty-state CTA. */
-  { id: 'coach-finished-roster',   session: 'coach', path: (c) => `${finished(c)}/roster`,           ready: 'h1' },
-  { id: 'coach-finished-money',    session: 'coach', path: (c) => `${finished(c)}/accounting`,       ready: 'h1' },
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * ⚠⚠ **FOUR SCREENS WERE DELETED HERE ON 2026-08-18, AND THEY WERE REPORTING GREEN WHILE
+   * MEASURING THE WRONG PAGE.**
+   *
+   * `coach-finished-insights` (`/history`), `coach-finished-results` (`/history/results`),
+   * `coach-finished-roster` (`/roster`) and `coach-finished-money` (`/accounting`) all addressed a
+   * FINISHED team. Since the closed-season ruling, a team with no live season has one destination:
+   * `CoachTeamSeasonGate` redirects every other in-team route to `/season-end`. So all four were
+   * being served Season's End — which has an `<h1>`, so `ready` was satisfied, findings were
+   * collected, and the sweep reported on four screens it never opened.
+   *
+   * That is the exact failure mode this file's own notes keep warning about: **a check reporting on
+   * a screen it did not see.** It is worse than a gap, because the count made the coverage look
+   * larger than it was.
+   *
+   * ⚠ Nothing is lost by deleting them. Those four surfaces are live-season-only now, and the LIVE
+   * team already sweeps every one of them (`coach-history`, `coach-history-results`, `coach-roster`,
+   * `coach-accounting`). What a finished season actually draws is the shelves below.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
   /**
    * ⚠⚠ **A COLLAPSED SECTION IS INVISIBLE TO THIS SWEEP** — the same trap `coach-settings-money`
    * below documents, arriving on a second page. The practices shelf (P3 C3) is closed by default
@@ -195,6 +210,23 @@ export const SCREENS = [
    * named section — so this sweeps the genuine open state rather than a fixture-only mode.
    */
   { id: 'coach-finished-practices', session: 'coach', path: (c) => `${finished(c)}/season-end?section=season-practices`, ready: 'h1' },
+  /**
+   * ⚠ **THE TWO SHELVES ADDED ON 2026-08-18 HAD NO RENDERED COVERAGE AT ALL** until these entries,
+   * for exactly the reason the note above gives: they arrive SHUT, so `coach-season-end` measured
+   * their 44px summary rows and nothing inside them. They are also the two shelves that carry the
+   * new month layer, the competition split and the event-type marks — i.e. every pixel this change
+   * actually added.
+   *
+   * ⚠ A month row inside them is shut too, so what these sweep is the shelf's OPEN state: the
+   * answer strip, the month rows and their 44px targets. The rows nested one level further down
+   * are still unmeasured, and that is a real, stated limit rather than an oversight — addressing a
+   * month would need its own URL contract, which `CoachCollapseSection` provides and the month
+   * rows deliberately do not.
+   */
+  { id: 'coach-finished-results-shelf', session: 'coach', ready: 'h1',
+    path: (c) => `${finished(c)}/season-end?section=season-results` },
+  { id: 'coach-finished-roster-shelf',  session: 'coach', ready: 'h1',
+    path: (c) => `${finished(c)}/season-end?section=season-roster` },
   /**
    * ⚠ The BOTTOM of the whole look-back layer, and it had no rendered coverage at all until P3 C3
    * gave it a second caller and a year. It is one level DOWN from a door, which is precisely where
