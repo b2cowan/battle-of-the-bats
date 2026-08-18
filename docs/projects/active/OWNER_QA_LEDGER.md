@@ -5638,9 +5638,16 @@ and they are opposites.*
 **If C, D and E read correctly, this section passes.** A and B are the form; F is the second lens;
 G and H are the guards around them.
 
-## §39 · The team is the account — staff membership (M1, Phase 1)
+## §39 ✅ The team is the account — staff membership (M1, Phase 1) — **CLOSED BY OWNER 2026-08-17**
 
-> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+> ✅ **CLOSED BY THE OWNER 2026-08-17.** Accepted after walking the opening phases of §53 against
+> the repaired fixture — not ticked line by line, and recorded that way on purpose. Two real
+> defects were found and fixed during it (the fixture could not demonstrate a rolled-forward
+> season; Season's End offered a "go to the live season" door the whole menu already is).
+>
+> ⚠ **A page-by-page pass follows, and it is a DIFFERENT exercise** — a design review to trim what
+> a finished season shows, not a re-validation of these checks. Its outcome is tracked as new work,
+> not as this section reopening. See the parent plan's "What the owner asked for next".
 
 **Built on dev 2026-08-16 · not on production · migration 245 APPLIED TO DEV ONLY.**
 Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P1. Decision mockups: artifact `aa758bcb`.
@@ -5726,9 +5733,16 @@ ships the same day, the way the invisible-help-text defect did on 2026-08-03.
 **What still gates on your OK before customers see it** *(re-checked against git, 2026-08-06)* —
 this is now most of the newest work, not two odds and ends:
 
-## §40 · The season toggle comes out — history is delivered in place (M1, Phase 2)
+## §40 ✅ The season toggle comes out — history is delivered in place (M1, Phase 2) — **CLOSED BY OWNER 2026-08-17**
 
-> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+> ✅ **CLOSED BY THE OWNER 2026-08-17.** Accepted after walking the opening phases of §53 against
+> the repaired fixture — not ticked line by line, and recorded that way on purpose. Two real
+> defects were found and fixed during it (the fixture could not demonstrate a rolled-forward
+> season; Season's End offered a "go to the live season" door the whole menu already is).
+>
+> ⚠ **A page-by-page pass follows, and it is a DIFFERENT exercise** — a design review to trim what
+> a finished season shows, not a re-validation of these checks. Its outcome is tracked as new work,
+> not as this section reopening. See the parent plan's "What the owner asked for next".
 
 **Committed `fd7c2c3e` 2026-08-16 · not on production · NO migration, no new table, no new API route.**
 Plan: `COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md` P2. Decision mockups: artifact `aa758bcb` §10.
@@ -5994,9 +6008,16 @@ silently, so it is worth doing carefully.*
 
 ---
 
-## §42 · The practices you ran — the practice-plans shelf (M1, Phase 3)
+## §42 ✅ The practices you ran — the practice-plans shelf (M1, Phase 3) — **CLOSED BY OWNER 2026-08-17**
 
-> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+> ✅ **CLOSED BY THE OWNER 2026-08-17.** Accepted after walking the opening phases of §53 against
+> the repaired fixture — not ticked line by line, and recorded that way on purpose. Two real
+> defects were found and fixed during it (the fixture could not demonstrate a rolled-forward
+> season; Season's End offered a "go to the live season" door the whole menu already is).
+>
+> ⚠ **A page-by-page pass follows, and it is a DIFFERENT exercise** — a design review to trim what
+> a finished season shows, not a re-validation of these checks. Its outcome is tracked as new work,
+> not as this section reopening. See the parent plan's "What the owner asked for next".
 
 **Built on dev 2026-08-16 · not on production · NO migration.** Plan:
 `COACH_PRACTICE_PLANS_SHELF_PLAN.md`. Mockups: artifact `f42be4f3`. Owner gate for the shelf passed
@@ -7176,9 +7197,16 @@ your decision queue, not for walking.
 
 ---
 
-## §52 · The closed money book — how a finished season added up (M1, Phase 4)
+## §52 ✅ The closed money book — how a finished season added up (M1, Phase 4) — **CLOSED BY OWNER 2026-08-17**
 
-> ⚠ **WALK THIS VIA §53, not on its own.** §53 ("History, end to end") is the consolidated route through §39 · §40 · §42 · §52 — the same checks, re-ordered by sign-in and team so the walk costs five sign-ins instead of a dozen. This section stays as the record of what this phase was for and why it was built that way.
+> ✅ **CLOSED BY THE OWNER 2026-08-17.** Accepted after walking the opening phases of §53 against
+> the repaired fixture — not ticked line by line, and recorded that way on purpose. Two real
+> defects were found and fixed during it (the fixture could not demonstrate a rolled-forward
+> season; Season's End offered a "go to the live season" door the whole menu already is).
+>
+> ⚠ **A page-by-page pass follows, and it is a DIFFERENT exercise** — a design review to trim what
+> a finished season shows, not a re-validation of these checks. Its outcome is tracked as new work,
+> not as this section reopening. See the parent plan's "What the owner asked for next".
 
 **Built on dev 2026-08-17 · not on production · NO migration, and no new API route.**
 Plan: `COACH_MONEY_PAST_SEASON_BOOK_PLAN.md`. Mockups: artifact `3cbb9ecd`. The owner design gate
@@ -7264,7 +7292,16 @@ lands **over** and another **under**. Any rolled-forward team serves for section
 
 ---
 
-## §53 · HISTORY, END TO END — the one walkthrough for §39 · §40 · §42 · §52
+## §53 ✅ HISTORY, END TO END — the one walkthrough for §39 · §40 · §42 · §52 — **CLOSED BY OWNER 2026-08-17**
+
+> ✅ **CLOSED BY THE OWNER 2026-08-17.** Accepted after walking the opening phases of §53 against
+> the repaired fixture — not ticked line by line, and recorded that way on purpose. Two real
+> defects were found and fixed during it (the fixture could not demonstrate a rolled-forward
+> season; Season's End offered a "go to the live season" door the whole menu already is).
+>
+> ⚠ **A page-by-page pass follows, and it is a DIFFERENT exercise** — a design review to trim what
+> a finished season shows, not a re-validation of these checks. Its outcome is tracked as new work,
+> not as this section reopening. See the parent plan's "What the owner asked for next".
 
 **Consolidated 2026-08-17. This REPLACES walking §39, §40, §42 and §52 separately — walk this
 instead.** Nothing is dropped: every check from all four lives below, re-ordered. The four original

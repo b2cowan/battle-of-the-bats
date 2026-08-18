@@ -1,7 +1,8 @@
 # Coach membership & history-in-place — Design A on M1
 
-**Status:** APPROVED 2026-08-16 (owner). **P1 committed `8415dcd2`; P2 committed `fd7c2c3e` 2026-08-16**
-(the season toggle and the archive place are out) — both awaiting owner QA, §39 and §40.
+**Status:** APPROVED 2026-08-16 (owner). **P1 `8415dcd2` · P2 `fd7c2c3e` · P3 (C1–C3) — ALL ON PROD
+2026-08-17, Amplify job 257** (the season toggle and the archive place are out; mig **245 applied to
+prod** that day). ✅ **Owner QA §39 · §40 · §42 · §52 — CLOSED BY THE OWNER 2026-08-17** (accepted after the §53 walk, which found and fixed two defects; a page-by-page DESIGN pass follows — see §9).
 **Decision record:** mockup artifact `aa758bcb` (R1, §10 verdict) — owner accepted the recommendation
 verbatim: **Design A** (the season toggle and archive-place are deleted; history is delivered inside
 live tools + Season's End) on **M1** (staff membership lives on the TEAM, not on season rows).
@@ -462,3 +463,38 @@ Recorded rather than fixed, each with the reason:
 5. **The between-seasons fixture's two finished years are chosen from the current calendar year**, so
    a run either side of New Year adds a third rather than reusing the two. Slow accumulation, not
    per-run drift (the games it seeds use fixed dates keyed to the season's own year, deliberately).
+
+## 9. What the owner asked for next (2026-08-17, direction — not yet a plan)
+
+Given at the close of the §53 walk, recorded verbatim in substance while it is fresh. **No design
+work has been done on either, and none should start until the owner's page-by-page pass reports
+back** — they were explicit that the walkthrough comes first and the changes follow from it.
+
+1. **Trim what a finished season shows, substantially.** The page-by-page pass is a DESIGN review
+   with that as its purpose. Expect the outcome to be a list of things to remove or fold away from
+   finished-season surfaces, screen by screen.
+
+2. **⚠⚠ Make the archived-season pages reachable whether or not the team has a current season.**
+
+**⚠ Point 2 is a CHANGE OF DIRECTION, and it should be logged as an owner ruling when it firms up
+rather than absorbed quietly as a detail.** Stating the tension plainly, because the next session
+will otherwise read §1 of this plan and build the opposite:
+
+- Today a finished season's records render **in place** — the ordinary screens, resolving the team's
+  WORKING season. That is why they are complete for a team BETWEEN seasons and why they stop being
+  reachable the day the next season opens. Everything after the rollover goes through the narrow
+  look-back layer: Season's End, Season Wrapped, the compare list, and the two shelves.
+- "Available whether there is a current season or not" means those pages become addressable **by
+  year, independent of what the team is on now** — which is the capability Design A deleted when it
+  removed the season dial (§1.1, §3). It is not the dial itself: a dial steered the WHOLE portal and
+  had no enumerated surface. But it is the same power, and the guard test exists precisely to make
+  granting it a decision someone takes on purpose.
+- The two asks fit together and that is what makes this coherent rather than a reversal: **a much
+  SMALLER archived-season surface can afford to be permanently addressable in a way the whole portal
+  never could.** Trim first, then decide what the trimmed set is allowed to be. Sequencing them the
+  other way round re-opens the archive before anyone has decided how big it is.
+
+**What the next session must not do:** treat point 2 as licence to put `?year=` back across the
+record screens. The enumerated list (`HISTORY_ENDPOINTS`, four entries, each with its three answers)
+is the mechanism for granting it, one surface at a time, and the three questions still have to be
+answered for each — especially the second one, which is what the deleted archive kept failing.
