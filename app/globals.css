@@ -503,6 +503,13 @@ body:has([data-chat-fullbleed]) {
   --logic-lime-fixed:     #D9F99D;
   --logic-lime-fixed-rgb: 217, 249, 157;
 
+  /* Same contract as --logic-lime-fixed, for white: ink that must stay white in EVERY theme.
+     The coach warm gate remaps --white to near-black ink, which is right for text — and wrong
+     for a digit sitting on a filled danger badge, where it landed dark-on-rust at 2.73:1
+     (review 2026-08-17, the bell's unread badge). Reach for this ONLY on a filled ground that
+     itself never lightens; ordinary text keeps --white so it can re-anchor on paper. */
+  --white-fixed:          #FFFFFF;
+
   /* ── Coach sandbox chrome coat (COACH_SANDBOX_SEASON_PHASES_PLAN.md, approved mockups
      2026-08-04). The "See it live" chrome mounts ABOVE the coach shell, so it cannot consume
      the [data-coach-warm-enabled]-scoped --home-* tokens; these are its own copy of the

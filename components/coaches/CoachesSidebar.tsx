@@ -8,9 +8,7 @@ import { useCoaches, resolveWorkingSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withLandingSlot, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
-import NotificationBell from '@/components/notifications/NotificationBell';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -129,7 +127,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { assignments, closedAssignments } = useCoaches();
-  const { currentOrg, userRole } = useOrg();
+  const { userRole } = useOrg();
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
   const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
@@ -167,7 +165,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
 
   const base = `/${orgSlug}/coaches`;
-  const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
   // ⚠ The `navSignals` / `itemState` pair that used to live here is GONE with the Explore shelf
   // (2026-08-15, plan Phase 4). An item is visible or it is not; nothing relocates itself based on
@@ -192,37 +189,22 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
 
   return (
     <nav className={styles.sidebar}>
-      <div className={styles.sidebarHeader}>
-        <div className={styles.sidebarHeaderTop}>
-          <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
-          {currentOrg?.id && (
-            <div className="flex items-center gap-1 ml-auto">
-              <NotificationBell
-                orgId={currentOrg.id}
-                settingsHref={`/account/notifications?focus=coach-${currentOrg.slug ?? orgSlug}`}
-                seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
-              />
-            </div>
-          )}
-        </div>
-        <p className={styles.sidebarOrgName}>
-          {isTeamWorkspace ? teamWorkspaceDisplayName(currentOrg?.name) : (currentOrg?.name ?? orgSlug)}
-        </p>
-        {/* The old "Back to {org}" link (→ the org's PUBLIC page) was removed here (owner
-            call, Batch 3 QA 2026-07-29): the portal is a workspace, not a public sub-page —
-            public surfaces are reached through the Flip doors, and admin-coaches keep their
-            "Admin" door below. */}
-      </div>
+      {/* ⚠ THE SIDEBAR HEADER IS DELETED (owner-approved mockup 2026-08-17, logged in
+          memory/design_decisions.md): "Coaches Portal" and the NotificationBell moved up into
+          CoachTopStrip, and the org name is gone from the rail entirely — the masthead eyebrow
+          already names the club on every team page, so the rail printed it twice within two
+          inches. The rail owns navigation; the strip owns identity. */}
 
       {/* Team switcher — a DROPDOWN, matching the admin shell's tournament switcher (owner
           call, Batch 3 QA 2026-07-29; replaces the old row list). Only earns its place with
-          2+ entries. Closed-season teams sit in a "Season complete" group and open on their
-          read-only Season's End. */}
+          2+ entries, and is the rail's FIRST element — no "My Teams" label (a dropdown showing
+          a team name is self-describing; the accessible name stays on the control). Closed-season
+          teams sit in a "No live season" group and open on their read-only Season's End. */}
       {assignments.length + closedAssignments.length > 1 && (
         <div className={styles.sidebarSection}>
-          <label className={styles.sidebarSectionLabel} htmlFor="coach-team-select">My Teams</label>
           <select
             id="coach-team-select"
+            aria-label="Switch team"
             className={styles.teamSwitcherSelect}
             value={currentTeamId ?? ''}
             onChange={e => {
@@ -260,7 +242,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           (The parallel closed-season menu that used to replace all of this is deleted.) */}
       {currentTeamId && workingSeason && (
         <>
-          <div className={styles.sidebarDivider} />
+          {/* The divider separates the switcher from the nav — with one team there is no
+              switcher, and the nav starts at the very top of the rail with nothing above it. */}
+          {assignments.length + closedAssignments.length > 1 && <div className={styles.sidebarDivider} />}
           <div className={styles.sidebarSection}>
             {/* No team-name heading — with one team the header names it, and with several
                 the switcher dropdown above already shows the current team. */}

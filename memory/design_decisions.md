@@ -4,6 +4,38 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-17 — The coach strip owns identity, the sidebar owns navigation (bell moves up, header deleted)
+
+**Owner trigger:** *"wasted space on the side nav… we show the org name in large print even though it is
+in the top nav… move notifications to one of the top navs and maybe even the words 'coaches portal' to
+the very top nav."* Mockup (approved, binding): `claude.ai/code/artifact/aebdd43d-d020-4735-a6ca-41213ba8c395`.
+
+**Decision, three parts.** (1) The premium coach portal's **top strip gains the portal's identity**:
+wordmark · hairline divider · "COACHES PORTAL" in the sidebar's own quiet uppercase micro-label voice.
+(2) The **NotificationBell moves into the strip's door corner** (bell · account · Workspaces —
+byte-for-byte AdminTopStrip's Zone 3, `panelPlacement="topStrip"`). (3) The **sidebar header block is
+deleted outright** — portal label, bell and org name all leave the rail; the team switcher (2+ teams
+only) becomes the rail's first element with no "My Teams" label (the accessible name stays on the
+control), and the rail's top padding tightens so the reclaimed space is spent on nav.
+
+**This SUPERSEDES one clause of the 2026-07-31 strip ruling** ("NO bell — the portal's NotificationBell
+stays in the sidebar header"). That clause was never a principle about bells — the principle was **no
+duplicate doors** (it killed the chat door), and the bell's home stays singular; the move CONVERGES the
+two operator strips, since admin's has carried its bell in that corner all along. The chat-door half of
+the ruling is untouched and still binding.
+
+**Why the org name can leave the rail:** the masthead eyebrow already names the club on every team
+page, so the rail printed it twice within two inches. Accepted tradeoff, flagged in the mockup: portal
+pages without the masthead (Notifications, the team-picker hub) carry no org line on desktop. Variant B
+(a one-line quiet org whisper above the switcher) was offered and NOT chosen.
+
+**Applies to:** `CoachTopStrip` (+ its module CSS), `CoachesSidebar` + `coaches.module.css` (premium
+org portal shell). The basic portal's rail (`CoachPortalShell`) keeps its own header — its eyebrow is
+that surface's only "Coaches Portal" and its rail has no org stutter. Phones untouched: the More sheet
+already owns mobile notifications (Chunk B P1 #4). [[design-principles]]
+
+---
+
 ### 2026-08-17 — A WEIGHT IS SHOWN AS ITS SHARE, never as its raw number — and the reset is the toggle
 
 **Owner trigger:** *"it is not clear that the 1's represent the weight of each category."* Mockup

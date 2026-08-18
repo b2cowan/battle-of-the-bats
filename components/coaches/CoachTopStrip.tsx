@@ -13,9 +13,15 @@
  * gated on the More-sheet overflow check).
  *
  * Deliberate differences from AdminTopStrip (approved mockup = spec):
- *  • NO bell — the portal's NotificationBell stays in the sidebar header (its
- *    notifications are portal-scoped; the mockup shows no bell in this strip).
+ *  • A "COACHES PORTAL" label sits beside the wordmark (2026-08-17 shell slimdown — the
+ *    sidebar header that used to carry it is deleted; the strip owns identity now).
  *  • NO chat door — owner ruling 2026-07-31, see below.
+ *
+ * The bell JOINED this strip 2026-08-17 (owner-approved mockup, logged in
+ * memory/design_decisions.md), superseding the "no bell" clause of the 2026-07-31 ruling.
+ * That clause existed only because the sidebar header had one; with that header deleted,
+ * the bell's single home is this corner — which is exactly where AdminTopStrip has always
+ * kept its own. The no-duplicate-doors principle behind the old clause is preserved.
  *
  * ⚠ THE CHAT DOOR WAS REMOVED (owner-ruled 2026-07-31; logged in memory/design_decisions.md —
  * do NOT re-add it from the earlier mockup). It was justified here as "your own conversations"
@@ -34,13 +40,22 @@
 import Link from 'next/link';
 import { User } from 'lucide-react';
 import BrandLockup from '@/components/shared/BrandLockup';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { useRoleSummary } from '@/lib/use-role-summary';
+import { useOrg } from '@/lib/org-context';
 import styles from './CoachTopStrip.module.css';
 
-export default function CoachTopStrip() {
+export default function CoachTopStrip({ showBell = true }: {
+  /** False on the portal's WALLS (billing-suspended, not-assigned): a wall keeps only the
+   *  identity + exit doors it always had. The bell is portal FUNCTION — a working notification
+   *  feed on the hard-block billing wall would undercut the wall's whole job (review
+   *  2026-08-17; the notifications API is not billing-gated). */
+  showBell?: boolean;
+}) {
   // The premium portal only renders signed-in, so this may run unconditionally.
   const roleSummary = useRoleSummary(true);
+  const { currentOrg } = useOrg();
 
   return (
     <header className={styles.strip}>
@@ -49,7 +64,17 @@ export default function CoachTopStrip() {
         logicClassName={styles.logoLogic}
         hqClassName={styles.logoHq}
       />
+      <span className={styles.stripDivider} aria-hidden />
+      <span className={styles.stripLabel}>Coaches Portal</span>
       <div className={styles.doors}>
+        {showBell && currentOrg?.slug && currentOrg.id && (
+          <NotificationBell
+            orgId={currentOrg.id}
+            settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}`}
+            seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
+            panelPlacement="topStrip"
+          />
+        )}
         <Link href="/account" className={styles.iconDoor} aria-label="Account">
           <User size={17} strokeWidth={1.8} />
         </Link>

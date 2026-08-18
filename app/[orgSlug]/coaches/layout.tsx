@@ -119,7 +119,9 @@ export default async function CoachesLayout({
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
-            <CoachTopStrip />
+            {/* showBell={false}: this wall hard-blocks portal function, and the notifications
+                API is not billing-gated — a working feed here would undercut the wall. */}
+            <CoachTopStrip showBell={false} />
             <main className={styles.coachesMain}>
               <SubscriptionEndedWall
                 orgName={authCtx.org.name}
@@ -201,8 +203,9 @@ export default async function CoachesLayout({
           <div className={styles.coachesShell}>
             {/* Desktop-only by its own CSS; on a phone the card's doors below carry the same
                 three answers, which is why the wall doesn't mount the team bottom nav (a coach
-                with no teams has nothing for it to list). */}
-            <CoachTopStrip />
+                with no teams has nothing for it to list). showBell={false}: a wall keeps only
+                the identity + exit doors it always had (coach-wall-doors pins that surface). */}
+            <CoachTopStrip showBell={false} />
             <main className={styles.coachesMain}>
               <div className={styles.notAssigned}>
                 <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>

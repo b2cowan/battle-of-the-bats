@@ -38,7 +38,10 @@
   min-width: 16px;
   height: 16px;
   background: var(--danger);
-  color: var(--white);
+  /* Fixed white, not --white: the coach warm gate remaps --white to dark ink, which put this
+     digit dark-on-rust at 2.73:1 (review 2026-08-17). The badge ground is a danger fill in
+     every theme, so its ink is theme-proof white (~6.1:1 on the warm rust). */
+  color: var(--white-fixed);
   font-size: 0.6rem;
   font-weight: 700;
   font-family: var(--font-data);
@@ -89,7 +92,11 @@
      --admin-topstrip-h. It therefore reads --chrome-bar-h — the platform chrome-bar height, which
      IS defined at :root — instead of a hand-copied literal. A literal was correct until the strip
      went 44px → 48px (Stage G), at which point the panel silently opened 4px too high. */
-  top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + 6px);
+  /* + the sandbox banner term: in a "See it live" demo the strip itself drops below the demo
+     banner, and without this term the panel opened at the strip's REAL-customer position —
+     overlapping the banner (review 2026-08-17; the var is set on <html>, so it reaches this
+     body-portaled panel, and resolves to 0px for every real org). */
+  top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + var(--sandbox-chrome-h, 0px) + 6px);
   left: auto;
   right: 16px;
 }

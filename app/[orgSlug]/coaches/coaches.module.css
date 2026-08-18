@@ -634,7 +634,10 @@
   .teamHeaderName { font-size: 0.98rem; max-width: 100%; }
   /* Scrolled state (phone only — desktop keeps the full masthead, same owner call as
      admin): eyebrow + meta fold away, leaving the bare team name on one slim line. */
-  .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  /* justify-content centers the name in the reserved 36px — the parent is a flex COLUMN, and
+     without it the single remaining row pins to the top with the spare height as a dead band
+     below the name (owner-reported 2026-08-17; only this state has leftover room to show it). */
+  .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; justify-content: center; }
   .teamHeaderCollapsed .teamHeaderEyebrow { display: none; }
   .teamHeaderCollapsed .teamHeaderMeta { display: none; }
   .teamHeaderCollapsed .teamHeaderName { font-size: 0.92rem; }
@@ -660,7 +663,9 @@
   border-right: 1px solid var(--home-line, rgba(255,255,255,0.07));
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 0 2rem;
+  /* Top padding halved with the header's deletion (2026-08-17 shell slimdown) — the reclaimed
+     space is spent on nav, not on new air above the switcher. */
+  padding: 0.75rem 0 2rem;
   /* Pinned like AdminSidebar (2026-08-01, rides the D2 scroll-model fix): with the document
      as the scroller, an unpinned sidebar scrolled away on any long page. Height-clipping is
      what makes the overflow rule real, so the nav scrolls its own list independently. */
@@ -674,35 +679,9 @@
   .sidebar { display: none; }
 }
 
-.sidebarHeader {
-  padding: 0 1.25rem 1.25rem;
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
-  margin-bottom: 0.75rem;
-}
-
-/* Row that holds the portal label + notification bell */
-.sidebarHeaderTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.3rem;
-}
-
-.sidebarPortalLabel {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--home-dim, rgba(255,255,255,0.25));
-  margin: 0;
-}
-
-.sidebarOrgName {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--white-90);
-  line-height: 1.2;
-}
+/* The .sidebarHeader block ("Coaches Portal" label + bell + org name) is DELETED — 2026-08-17
+   shell slimdown, owner-approved mockup. The label and bell live in CoachTopStrip; the org
+   name is stated once, in the masthead eyebrow. */
 
 .sidebarBackLink {
   display: flex;
@@ -7220,8 +7199,6 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    ADDITIVE and warm-gated, so dark output is untouched. --home-* tokens are inherited from
    the marker (defined in the globals.css warm block). */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebar { border-right-color: var(--home-line); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarHeader { border-bottom-color: var(--home-line); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarPortalLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarSectionLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupLabel { color: var(--home-dim); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarItem:hover { background: var(--home-olive-soft); color: var(--home-ink); }

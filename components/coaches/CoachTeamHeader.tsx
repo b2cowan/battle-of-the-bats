@@ -179,9 +179,11 @@ function CoachTeamHeaderInner({
       <div className={styles.teamHeaderRow}>
         <div className={styles.teamHeaderLeft}>
           {/* Option B (owner-picked 2026-08-02): NO eyebrow on a standalone team. Its eyebrow could
-              only ever read "Coaches Portal" — which is verbatim what the sidebar immediately to its
-              left already says, above the same team name, so the masthead was a carbon copy of its
-              own neighbour. A club's name IS information, so a club org keeps its eyebrow. */}
+              only ever read "Coaches Portal" — which the shell already says (since the 2026-08-17
+              slimdown in the top strip beside the wordmark; before that, the sidebar header), so the
+              masthead would be a carbon copy of its own chrome. A club's name IS information, so a
+              club org keeps its eyebrow — and since that slimdown it is the ONLY place the club is
+              named (the sidebar org line is deleted). */}
           {!isTeamWorkspace && <span className={styles.teamHeaderEyebrow}>{orgName}</span>}
           <span className={styles.teamHeaderNameRow}>
             <span className={styles.teamHeaderName}>{teamName}</span>
