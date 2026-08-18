@@ -195,3 +195,37 @@ describe('the Explore shelf and its conditional mechanism are gone from both nav
     });
   }
 });
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * **A CLOSED SEASON CLOSES BOTH NAVS, NOT JUST THE VISIBLE HALF** (owner ruling 2026-08-18,
+ * COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.5).
+ *
+ * ⚠⚠ **THIS TEST EXISTS BECAUSE THE TESTS ABOVE STRUCTURALLY CANNOT CATCH IT.** They compare the
+ * two navs' LIVE-season label sets, which are identical whether or not the phone honours the
+ * closed-season rule — so when `withClosedSeasonNav` was applied to the bar's `TEAM_TABS` and NOT
+ * to the More sheet's `MORE_SECTIONS`, desktop showed one door and the phone still listed all
+ * eleven, and every test in this file passed. It was caught by a person reading the diff.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('a closed season leaves one door in BOTH navs', () => {
+  it('the sidebar groups go through withClosedSeasonNav', () => {
+    assert.match(
+      SIDEBAR, /withClosedSeasonNav\(group\.items, seasonFinished, SEASON_END_ITEM\)/,
+      'the desktop groups must collapse to the single closed-season door.',
+    );
+  });
+
+  it('the phone bar AND its More sheet both close', () => {
+    assert.match(
+      BOTTOM, /withClosedSeasonNav\(TEAM_TABS, seasonFinished, SEASON_END_TAB\)/,
+      'the bar must collapse to the single closed-season door.',
+    );
+    assert.match(
+      BOTTOM, /seasonFinished \? null : MORE_SECTIONS\.map\(/,
+      'the More SHEET must close too. This is the half that was missed once: the bar is what a '
+      + 'reviewer looks at, and the sheet is eleven more doors into live instruments on a season '
+      + 'that has ended.',
+    );
+  });
+});

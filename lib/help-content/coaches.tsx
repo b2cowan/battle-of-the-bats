@@ -525,7 +525,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to track team fees',
       summary: 'Charge everyone or one player, then mark each fee paid as money comes in.',
       keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking', 'players still owe', 'unpaid count'],
-      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind remind all send reminder nudge families first payment generate installments from budget plan automatic dues reminders toggle 30 day 7 day players still owe reminders to send by hand unpaid count different numbers counts people not fees why do the numbers differ two numbers unpaid fees across players',
+      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind remind all send reminder nudge families first payment generate installments from budget plan automatic dues reminders toggle 30 day 7 day players still owe reminders to send by hand unpaid count different numbers counts people not fees why do the numbers differ two numbers unpaid fees across players family unsubscribed still got a dues reminder opted out but received email unsubscribe not working account notice transactional dues reminders exempt from unsubscribe',
       content: (
         <>
           <p>Turn on <strong>Fees</strong> from Explore. Fees is a simple way to track who has paid — it records what each player owes and what they&apos;ve paid; it does not collect money online.</p>
@@ -539,6 +539,20 @@ const coachesHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-dues-reminder-unsubscribed',
+          question: 'A family unsubscribed but still got a dues reminder — is that broken?',
+          answerText: 'No, that is deliberate. An unsubscribe covers announcements, not money owed. A family cannot switch off a bill by opting out of team emails, so dues reminders are still sent to a family who has unsubscribed. The reminder itself explains this: it names your club, says what it is about, and tells the family that dues reminders are account notices rather than announcements. Tryout offers, waitlist notes and release notes work the same way, for the same reason — a child should never lose a roster spot because a parent unsubscribed from a newsletter two seasons ago. Announcements are the opposite: an unsubscribed family is left out of every one, and you cannot re-subscribe them on their behalf.',
+          keywords: ['unsubscribed', 'opted out', 'still got email', 'dues reminder', 'why did they get', 'unsubscribe not working', 'opt out ignored', 'transactional', 'account notice'],
+          answer: (
+            <>
+              <p>No — that&apos;s deliberate. <strong>An unsubscribe covers announcements, not money owed.</strong> A family can&apos;t switch off a bill by opting out of team emails, so dues reminders still reach a family who has unsubscribed.</p>
+              <p>The reminder explains itself: it names your club, says what it&apos;s about, and tells the family that dues reminders are account notices rather than announcements. So a parent who notices the difference has an answer in front of them.</p>
+              <p>Tryout offers, waitlist notes and release notes work the same way, for the same reason — a child should never lose a roster spot because a parent unsubscribed from a newsletter two seasons ago.</p>
+              <p>Announcements are the opposite: an unsubscribed family is left out of every one, and you can&apos;t re-subscribe them on their behalf.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-fees-collect-online',
           question: 'Can players pay their fees online through the portal?',
@@ -618,7 +632,12 @@ const coachesHelp: HelpPageContent = {
           id: 'announce-unsubscribe',
           title: 'Families can unsubscribe',
           content: (
-            <p>Every email you send carries an unsubscribe link, and we honour it on every send afterwards. If anyone has opted out you&apos;ll see it as a count beside your recipient number — you see <em>how many</em>, never <em>which families</em>, because that is the point of an opt-out. A family who has opted out can only be reached by talking to them directly.</p>
+            <>
+              <p>Every announcement carries an unsubscribe link, and we honour it on every announcement afterwards — including for a family who unsubscribed years ago under an <strong>older email address</strong> and has since given you a new one. If anyone has opted out you&apos;ll see it as a count beside your recipient number — you see <em>how many</em>, never <em>which families</em>, because that is the point of an opt-out. A family who has opted out can only be reached by talking to them directly.</p>
+              <HelpNote variant="info" title="Dues reminders are the exception">
+                <p>An unsubscribe covers announcements, not money owed. <strong>Dues reminders still reach a family who has opted out</strong> — a bill isn&apos;t something an unsubscribe should silence, and those emails say so themselves. Tryout offers and results work the same way.</p>
+              </HelpNote>
+            </>
           ),
         },
         {
@@ -1037,13 +1056,13 @@ const coachesHelp: HelpPageContent = {
           // content, and the feed itself was unreachable on a phone.
           id: 'faq-premium-notifications-phone',
           question: 'Where are my notifications on my phone?',
-          answerText: 'Tap More in the bar at the bottom of your screen — Notifications is the first row, and it shows a count when something is waiting. The count also appears on the More button itself, so you can see there is something new without opening the menu. Tapping the row opens your full notification list, and Notification settings at the top of that page is where you choose what reaches you. On a computer the same thing lives in the bell at the top of the left-hand menu. Notifications are per organization, so if you coach for two clubs each has its own list. Chat messages are not in here — chat has its own unread badge on the Chat tab.',
+          answerText: 'Tap More in the bar at the bottom of your screen — Notifications is the first row, and it shows a count when something is waiting. The count also appears on the More button itself, so you can see there is something new without opening the menu. Tapping the row opens your full notification list, and Notification settings at the top of that page is where you choose what reaches you. On a computer the same thing lives in the bell in the top-right corner of the screen. Notifications are per organization, so if you coach for two clubs each has its own list. Chat messages are not in here — chat has its own unread badge on the Chat tab.',
           keywords: ['notifications', 'notification', 'where are my notifications', 'notifications on phone', 'no bell', 'bell missing', 'cannot find notifications', 'notification settings', 'alerts', 'unread', 'badge', 'count on more', 'more menu', 'turn off notifications', 'notification bell', 'phone notifications'],
           popular: true,
           answer: (
             <>
               <p>Tap <strong>More</strong> in the bar at the bottom of your screen — <strong>Notifications</strong> is the first row, and it shows a count when something is waiting. That count also appears on the <strong>More</strong> button itself, so you can see there&rsquo;s something new without opening the menu.</p>
-              <p>Tapping the row opens your full notification list, and <strong>Notification settings</strong> at the top of that page is where you choose what reaches you. On a computer the same thing lives in the <strong>bell</strong> at the top of the left-hand menu.</p>
+              <p>Tapping the row opens your full notification list, and <strong>Notification settings</strong> at the top of that page is where you choose what reaches you. On a computer the same thing lives in the <strong>bell</strong> in the top-right corner of the screen.</p>
               <p>Notifications are <strong>per organization</strong> — if you coach for two clubs, each has its own list. <strong>Chat messages aren&rsquo;t in here</strong>: chat has its own unread badge on the <strong>Chat</strong> tab.</p>
             </>
           ),
@@ -1200,8 +1219,8 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'premium-season-end',
       group: 'Premium Coaches Portal',
-      heading: 'When a season ends: Season’s End, your wrap-up, and what carries forward',
-      summary: 'A closed season stays yours — a Season Wrapped highlight card you can share, plus read-only access to every result and money record.',
+      heading: 'Closing the season: the two ways out, and the one page it becomes',
+      summary: 'Your season stays fully live until you close it — then it becomes one page: the story, the results, the roster, the practices and the money.',
       keywords: ['season over', 'season ended', 'season complete', 'end of season', 'season wrapped', 'wrapped', 'share season', 'moments on wrapped', 'from the bench', 'bench notes on the card', 'season recap', 'highlight card', 'locked out', 'lost access', 'not assigned', 'read only', 'past seasons', 'season history', 'close season', 'close out the season', 'start next season', 'rollover', 'new season', 'what carries over', 'winding down', 'awards carry', 'development carry', 'tryout carry', 'unfinished tryout',
         // ⚠ Search matches KEYWORDS, not body text. The season SWITCHER was deleted on 2026-08-16,
         // and these terms stay listed anyway — a coach who learnt them, or who reads the words on an
@@ -1210,6 +1229,11 @@ const coachesHelp: HelpPageContent = {
         'last year', 'last season', 'previous season', 'past season', 'old season', 'archive',
         'switch season', 'season switcher', 'change season', 'view past season', 'look up last year',
         'no season switcher', 'season dropdown gone', 'cannot switch to last year',
+        // 2026-08-18 — the close/reopen doors, and the symptoms of the one page.
+        'close the season', 'just close it', 'no next season', 'aged out', 'team aged out',
+        'reopen season', 'reopen', 'closed by mistake', 'undo close', 'unclose',
+        'why is my menu empty', 'where did my screens go', 'only one page', 'one page',
+        'still owe', 'money waiting to go back', 'close anyway',
         'past roster', 'last year roster', 'old roster', 'past schedule', 'past results',
         'past attendance', 'past lineups', 'past money', 'old documents', 'past tryouts',
         'tryout history', 'turnout', 'returning player', 'tried out before', 'frozen', 'view only',
@@ -1226,7 +1250,7 @@ const coachesHelp: HelpPageContent = {
         'helper cannot see season wrapped', 'why can’t my helper see the season review',
         'helper season end', 'helper this season has finished', 'helper no access after season',
         'who can see season wrapped', 'season review access'],
-      searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record closing the season hands families their player season recap family season recaps line how many connected families opened theirs count never which families needs family contact access hidden when no families were connected seasons end is for coaches head coach and assistant coaches reach it helpers do not helper sees this season has finished thanks for helping out nothing else to open not about names a whole season story is not theirs share button puts a child first name on a picture make a helper an assistant coach to give them the full picture',
+      searchText: 'season over ended complete end of season seasons end page season wrapped close the season just close it two doors quiet door aged out no next season reopen closed by mistake undo close warns unsettled money never blocks families still owe money waiting to go back one page four shelves results the roster the practices you ran how the season added up collapsed shut highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record closing the season hands families their player season recap family season recaps line how many connected families opened theirs count never which families needs family contact access hidden when no families were connected seasons end is for coaches head coach and assistant coaches reach it helpers do not helper sees this season has finished thanks for helping out nothing else to open not about names a whole season story is not theirs share button puts a child first name on a picture make a helper an assistant coach to give them the full picture',
       content: (
         <p>When your season is marked complete, your team doesn&apos;t disappear — it lands on its <strong>Season&apos;s End</strong> page, and that becomes the first item in its menu in place of Overview. If you coach more than one team, you&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>No live season</strong>.</p>
       ),
@@ -1244,15 +1268,22 @@ const coachesHelp: HelpPageContent = {
         },
         {
           id: 'season-end-whats-there',
-          title: 'The whole season is still there',
+          title: 'A closed season is one page',
           content: (
             <>
-              <p><strong>While your team is between seasons</strong>, Roster, schedule and results, attendance, lineups, money records, documents, development and tryouts all stay open, exactly as they were — you just can&apos;t change them, because the season is over. Your menu is the one you always had, in the same order; only its first item changes, from Overview to <strong>Season&apos;s End</strong>. Open anything from it the same way you did during the season.</p>
-              <p><strong>It goes all the way down.</strong> Open Money and you can still read that season&apos;s dues, expenses, budget, budget-vs-actual and fundraiser results — open one of that year&apos;s fundraisers and it lists the players who were on <em>that</em> season&apos;s roster, not this one&apos;s. Open Roster and you can open a player to see their attendance, dues and awards for that season. Open Lineups and you can open a game and see the order you actually batted. Everything is marked <strong>Complete</strong> and nothing offers to be edited.</p>
-              <HelpNote variant="info" title="What isn’t in a finished season, and why">
-                <p>Anything that <em>does</em> something rather than records it. You can&apos;t request a payment, log a new org allocation, run a tryout, or open the drill and plan-template libraries for a season that has already happened — those screens say so and point you back here. Emailing families and Chat stay open, because they reach the people on your team rather than the season: between seasons is exactly when a coach needs them.</p>
+              <p><strong>Nothing ends when the last game does.</strong> Your season stays completely live — every screen, every tool, nothing taken away — for as long as you need it. Money settlement, awards, documents, family emails and next year&apos;s tryout all happen after the last game, and the portal stays out of your way while you do them.</p>
+              <p><strong>It ends when you close it</strong>, and then it becomes <strong>one page</strong>: the season&apos;s story, and four shelves you open only if you want them.</p>
+              <ul>
+                <li><strong>Results</strong> — every game that finished with a result.</li>
+                <li><strong>The roster</strong> — who was on the team that season, including anyone who left part-way through.</li>
+                <li><strong>The practices you ran</strong> — open one and it reads exactly as you wrote it.</li>
+                <li><strong>How the season added up</strong> — what you planned to spend and what you actually spent (with money access).</li>
+              </ul>
+              <p>All four arrive closed, with the answer on the front: <em>26 games · 18–6–2</em>, <em>13 players</em>, <em>$110 under</em>. Most of the time that is the whole question.</p>
+              <HelpNote variant="info" title="Why it isn’t the whole portal any more">
+                <p>It used to be. Every screen rendered a past-tense version of itself and every tool explained it would be back next season — a whole application pretending to be a filing cabinet. One page is easier to hold in your head, and <strong>nothing is deleted</strong>: every record is still stored in full, so if something turns out to be missed it can be added to this page later.</p>
               </HelpNote>
-              <p>What you can see is decided by <strong>the permissions you hold now</strong>, in every season. If your head coach has given you money access on this team, you can read the finished season&apos;s money; if they haven&apos;t, you can&apos;t. It used to depend on what you happened to be granted back then, which meant your access changed depending on which year you opened.</p>
+              <p>What you can see is decided by <strong>the permissions you hold now</strong>. If your head coach has given you money access on this team, you can read the finished season&apos;s money; if they haven&apos;t, you can&apos;t.</p>
             </>
           ),
         },
@@ -1261,8 +1292,8 @@ const coachesHelp: HelpPageContent = {
           title: 'Looking back at an earlier year',
           content: (
             <>
-              <p>There&apos;s <strong>no season switcher</strong> — your screens always describe the season your team is on, so you never have to check which year you&apos;re reading. In the weeks between seasons, that season <em>is</em> the finished one, which is why everything above is still open from your ordinary menu.</p>
-              <p>Once the next season starts, an earlier year is reached in two places, both under <strong>Insights</strong>:</p>
+              <p>There&apos;s <strong>no season switcher</strong> — your screens always describe the season your team is on, so you never have to check which year you&apos;re reading. A closed season&apos;s page names its own year at the top, which is how you always know which one you have open.</p>
+              <p>Every year the team has played is reached in two places, both under <strong>Insights</strong>:</p>
               <ul>
                 <li><strong>&ldquo;How are we doing?&rdquo; &rarr; Past seasons</strong> — every year the team has played, with its record, roster size, tryout acceptance and (with money access) dues and expenses.</li>
                 <li><strong>Season Wrapped</strong> for any of those years, from a link on its row.</li>
@@ -1283,8 +1314,17 @@ const coachesHelp: HelpPageContent = {
           title: 'Getting to next season',
           content: (
             <>
-              <p>On a standalone Premium team, the head coach starts it from Season&apos;s End (or Settings) — the roster and coaching staff carry forward. On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically.</p>
-              <p>And before any of that: once games stop and nothing new is scheduled for a couple of quiet weeks, your Overview asks a gentle <strong>Season check</strong> — <em>is the season over?</em> — so it never just… stops. It always offers <strong>Add an event instead</strong> beside the answer, in case you&apos;re not done after all, and <strong>Not yet</strong> keeps it quiet for the rest of the season. If closing seasons isn&apos;t yours to do, you get the same heads-up without the button: your club closes it, and your Season Wrapped appears when they do.</p>
+              <p>On a standalone Premium team, the head coach has <strong>two ways out of a season</strong>, and both live on the Overview&apos;s <strong>Season check</strong> — the gentle nudge that appears once games stop and nothing new is scheduled for a couple of quiet weeks.</p>
+              <ul>
+                <li><strong>Start next season</strong> — the usual one. Your roster and coaching staff carry forward, and you can bring the budget plan and the dues structure with them. It closes this season on the way.</li>
+                <li><strong>&ldquo;No next season — just close it&rdquo;</strong> — quieter, and there for the team that has aged out or the coach who isn&apos;t ready to plan next year. It ends the season and starts nothing.</li>
+              </ul>
+              <p>Closing tells you first if anything is still outstanding — families who still owe, or money waiting to go back — with a way straight to Money. <strong>It never stops you closing</strong>: you might have settled in cash, or forgiven a balance, and the app can&apos;t see that.</p>
+              <p><strong>Closed it by mistake?</strong> Reopen it from the season&apos;s own page, as long as you haven&apos;t started a new season yet. If you have, you&apos;ll need us to help — which is why the <em>Start next season</em> box tells you plainly, before you press it, that the old season stops being editable.</p>
+              <p>On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically. You get the same Season check heads-up without the buttons.</p>
+              <HelpNote variant="info" title="Starting next season is the first job of the year, not the last of the old one">
+                <p>Next year&apos;s tryout needs a season to live in. If you run tryouts in the summer for the autumn, start the new season first — everything else follows from it.</p>
+              </HelpNote>
             </>
           ),
         },
@@ -1330,8 +1370,8 @@ const coachesHelp: HelpPageContent = {
           title: 'The bar across the top',
           content: (
             <>
-              <p>A <strong>bar across the top</strong> of every team page tells you where you are and how the season is going. On the <strong>left</strong>: your club&rsquo;s name (a standalone team skips this — your team name is already in the sidebar), your <strong>team</strong>, and the season <strong>year</strong> with your <strong>record</strong>. On the <strong>right</strong>: the one thing that matters today — a <strong>Game day</strong> badge with the opponent and time, or <strong>Next</strong> with your next practice or game. A quiet week shows just the year and the record; nothing is invented to fill the space.</p>
-              <p>Open a finished season and the right side reads <strong>Complete</strong> with that season&rsquo;s <strong>final record</strong> instead. It&rsquo;s a read-out, not a menu — to move between seasons, use the chip beside the page title. <strong>⇄ Public site</strong> sits at the far right and flips to your club&rsquo;s public pages (a standalone team has no public site, so it doesn&rsquo;t show). On a phone the bar keeps your team name and folds the rest away as you scroll.</p>
+              <p>A <strong>bar across the top</strong> of every team page tells you where you are and how the season is going. On the <strong>left</strong>: your club&rsquo;s name (a standalone team skips this — it has no club above it), your <strong>team</strong>, and the season <strong>year</strong> with your <strong>record</strong>. On the <strong>right</strong>: the one thing that matters today — a <strong>Game day</strong> badge with the opponent and time, or <strong>Next</strong> with your next practice or game. A quiet week shows just the year and the record; nothing is invented to fill the space.</p>
+              <p>Open a finished season and the right side reads <strong>Complete</strong> with that season&rsquo;s <strong>final record</strong> instead. It&rsquo;s a read-out, not a menu — your screens always show the season your team is on. <strong>⇄ Public site</strong> sits at the far right and flips to your club&rsquo;s public pages (a standalone team has no public site, so it doesn&rsquo;t show). On a phone the bar keeps your team name and folds the rest away as you scroll.</p>
               <HelpNote variant="info" title="What an assistant sees">An assistant coach who hasn&rsquo;t been given schedule access sees the team and season only — the record and what&rsquo;s next come with that access.</HelpNote>
             </>
           ),
@@ -1371,7 +1411,7 @@ const coachesHelp: HelpPageContent = {
           title: 'The bell, and your week in review',
           content: (
             <>
-              <p>Up in the sidebar header, the <strong>bell</strong> is your notification centre. Anything that needs you — like a schedule change or an assistant-coach request — is pinned at the top under <strong>Needs attention</strong> and clears as you handle it; everything else sits below as an <strong>Activity</strong> feed grouped by <strong>Today</strong>, <strong>Yesterday</strong>, and <strong>Earlier</strong>, with repeats bundled into a single line you can open in a tap. The bell opens on <strong>Unread</strong>, so reading something clears it from view — flip to <strong>All</strong> to see everything, or tap <strong>See all</strong> for your full notifications page. Team <strong>chat</strong> stays on the <strong>Chat</strong> tab with its own unread badge, not in the bell.</p>
+              <p>In the <strong>top-right corner</strong> of the screen, the <strong>bell</strong> is your notification centre. Anything that needs you — like a schedule change or an assistant-coach request — is pinned at the top under <strong>Needs attention</strong> and clears as you handle it; everything else sits below as an <strong>Activity</strong> feed grouped by <strong>Today</strong>, <strong>Yesterday</strong>, and <strong>Earlier</strong>, with repeats bundled into a single line you can open in a tap. The bell opens on <strong>Unread</strong>, so reading something clears it from view — flip to <strong>All</strong> to see everything, or tap <strong>See all</strong> for your full notifications page. Team <strong>chat</strong> stays on the <strong>Chat</strong> tab with its own unread badge, not in the bell.</p>
               <p>Once your season is rolling, the bell — and your phone, if you&apos;ve allowed notifications — also brings a weekly <strong>&ldquo;Your week in review&rdquo;</strong>: your team&apos;s top Insights findings in one short note, sent only when something actually stood out (a quiet week sends nothing). Tap it to open <strong>Insights</strong>.</p>
               <p>To change how you&apos;re notified — or switch that weekly review off — open <strong>Notification settings</strong> from the bell (or the link at the top of your notifications page): it opens <strong>one page for every team and organization you&apos;re part of</strong>, with the weekly review right at the top of your coach card.</p>
             </>
@@ -4423,7 +4463,7 @@ const coachesHelp: HelpPageContent = {
         <>
           <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. Each group is <strong>closed until you open it</strong>, and shows what it&rsquo;s currently set to on its own line — so you can read how the team is set up without opening anything.</p>
           <p><strong>Division.</strong> The age group or division your team plays in — it labels your team across the portal and on any public page. If your team belongs to a club or league, your <strong>club admin owns this</strong> and you&rsquo;ll see it here read-only; a standalone team sets it themselves.</p>
-          <p><strong>Season.</strong> Shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes read-only history. (Full walkthrough: <em>How to start your next season</em>.)</p>
+          <p><strong>Season.</strong> Shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes a record you can open any time. (Full walkthrough: <em>How to start your next season</em>.)</p>
           <p><strong>Lineup rules.</strong> Season defaults that game-day <strong>Auto-fill</strong> follows — a cap on innings at one position (which forces rotation), a default pitching cap, and a minimum number of innings for every player. <strong>Leave a field blank to turn that rule off</strong>, and you can override any of them for a single game from the Auto-fill menu. A player&rsquo;s own pitching cap still applies on top of the season default, and <strong>the stricter of the two always wins</strong> — a season cap can never loosen a limit you set on an individual arm.</p>
           <p><strong>Money.</strong> Two things about how dues behave all season. <strong>Automatic Dues Reminders</strong> emails families 30 days and 7 days before each due date — <em>See an example</em> shows the exact email. <strong>Credits reduce</strong> decides where fundraising money lands on a family&rsquo;s payment schedule: the last payment first (the default), the next payment first, or not at all until season&rsquo;s end. Player Dues prints whichever you chose under its table, with a link back here. This group appears for coaches with money access; a coach who can only view the books sees the answers without the controls.</p>
           <p><strong>Sharing</strong> (clubs that have turned it on). Whether your scouting book is readable by the club&rsquo;s other sharing teams. You see theirs while you share yours, and stopping removes your book from their pages immediately.</p>
@@ -4479,7 +4519,7 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-start-next-season',
       group: 'Premium Coaches Portal',
       heading: 'How to start your next season & set your division (Premium)',
-      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
+      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes a one-page record you can open any time.',
       keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
       searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
       content: (
@@ -4491,7 +4531,7 @@ const coachesHelp: HelpPageContent = {
             <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
             <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
           </ul>
-          <p>The previous season becomes <strong>read-only history</strong>. Its story is kept in <strong>Season&rsquo;s End</strong> — the wrap-up card, how many families opened their player&rsquo;s recap — and in the <strong>Past seasons</strong> list at the foot of <strong>Insights &rarr; &ldquo;How are we doing?&rdquo;</strong>, where each year shows its record, roster size, tryout acceptance and (with money access) dues and expenses, and links to its own Season Wrapped. There&rsquo;s no year-over-year comparison on purpose: teams change divisions and opponents each year, so the seasons sit side by side as a scrapbook, not a scoreboard.</p>
+          <p>The previous season <strong>closes</strong>, and becomes one page you can open any time: its wrap-up card, how many families opened their player&rsquo;s recap, and four shut shelves — the results, the roster, the practices you ran and how the money added up. ⚠ You will not be able to change it, which is why the dialog says so before you press. Every year the team has played is also listed in the <strong>Past seasons</strong> list at the foot of <strong>Insights &rarr; &ldquo;How are we doing?&rdquo;</strong>, where each year shows its record, roster size, tryout acceptance and (with money access) dues and expenses, and links to its own Season Wrapped. There&rsquo;s no year-over-year comparison on purpose: teams change divisions and opponents each year, so the seasons sit side by side as a scrapbook, not a scoreboard.</p>
           <p><strong>Your everyday screens follow the team, not the calendar.</strong> Once the new season starts, Roster, Schedule, Money and the rest describe <em>that</em> season — there&rsquo;s no switch that points them back at last year. In the weeks <em>before</em> you start the next one, they&rsquo;re all still showing the finished season, read-only, from your ordinary menu. You land in the new season with a short summary of what carried over and anything worth a second look — confirming carried-over fee due dates, say, or re-collecting waivers.</p>
           <p><strong>Set your division.</strong> Settings is also where you set your team&apos;s <strong>division</strong> (for example, &quot;U13 Tier 1&quot;); it shows on your team overview.</p>
           <p>If your team is <strong>owned by a club or league</strong> (an organization adopted it), your club admin manages seasons and division for you — you&apos;ll see those as read-only.</p>
@@ -4501,11 +4541,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-start-next-season',
           question: 'How do I start a new season without an admin?',
-          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under Insights in the Season menu (this page was called Season Review). If your team is owned by a club or league, the club admin starts seasons for you.',
+          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, listed under Insights → “How are we doing?”. If your team is owned by a club or league, the club admin starts seasons for you.',
           keywords: ['start new season', 'next season', 'no admin', 'rollover', 'head coach'],
           popular: true,
           answer: (
-            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under <strong>Insights</strong> (in the <strong>Season</strong> menu). If your team is owned by a club or league, the club admin starts seasons for you.</p>
+            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, reached from <strong>Insights</strong> → <strong>How are we doing?</strong>. If your team is owned by a club or league, the club admin starts seasons for you.</p>
           ),
         },
         {

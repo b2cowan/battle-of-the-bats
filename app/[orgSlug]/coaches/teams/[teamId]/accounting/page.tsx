@@ -81,8 +81,9 @@ export default function CoachesAccountingPage({
   // covers the page — a different surface, so a different answer.)
   const [dataNotice, setDataNotice] = useState<MoneyDataNotice>(null);
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -153,7 +154,7 @@ export default function CoachesAccountingPage({
     ro.observe(el);
     el.addEventListener('scroll', measure, { passive: true });
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure); };
-  }, [summary, page.isReadOnly]);
+  }, [summary]);
 
   function scrollTabs(dir: -1 | 1) {
     const el = tabBarRef.current;
@@ -230,7 +231,7 @@ export default function CoachesAccountingPage({
     );
   }
 
-  const canWrite = page.canWrite(page.capabilities?.money === 'write');
+  const canWrite = (page.capabilities?.money === 'write');
   // The hub's data doors are money-scoped: no money access, no menus at all. Export survives
   // for a read-only money assistant; Import (a write) does not — that split lives in the menus.
   const canViewMoney = !!page.capabilities && page.capabilities.money !== 'off';
@@ -416,11 +417,11 @@ export default function CoachesAccountingPage({
           {effectiveSection === 'overview' && summary.stage === 'operate' && (
             <OverviewDashboard
               summary={summary}
-              /* Live seasons only: the Next-N-days ledger is an instrument, and its API
-                 resolves the ACTIVE year — in an archive it showed TODAY's payments
-                 (owner ruling 2026-08-11: hide it rather than invent an archived "next
-                 30 days" that never existed). */
-              payablesApiUrl={page.isReadOnly ? undefined : `/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+              /* ⚠ The finished-season suppression here is DELETED (2026-08-18). The Next-N-days
+                 ledger is an instrument whose API resolves the ACTIVE year, and in an archive it
+                 showed TODAY's payments — but this screen is no longer rendered for a season that
+                 has ended, so there is no archive left to hide it from. */
+              payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
               hrefs={moneyHrefs}
             />
           )}
@@ -431,7 +432,7 @@ export default function CoachesAccountingPage({
               hrefs={moneyHrefs}
               rosterHref={`${base}/roster`}
               canWrite={canWrite}
-              showPayables={!page.isReadOnly}
+              showPayables
               payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
             />
           )}

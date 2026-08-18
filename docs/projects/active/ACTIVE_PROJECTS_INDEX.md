@@ -4,6 +4,29 @@
 > files; 157 of them hadn't been touched in over two days and most recorded work that has since
 > shipped to production. This index is the map.
 
+> ## ⚠⚠ RELEASE 2026-08-17 — READ BEFORE TRUSTING ANY PLAN HEADER IN THIS FOLDER
+>
+> **prod HEAD = `5ae39f10` · Amplify master job **257** SUCCEED · tag `release/2026-08-17` · 72
+> commits · migrations **236–250 applied to production**.** `origin/dev` and `origin/master` are
+> **LEVEL**, and the migration queue is **empty through 250** (both live schemas byte-identical:
+> 165 tables / 1930 columns / 697 indexes, 0 divergence).
+>
+> **Individual plan headers in this folder were NOT all rewritten.** ~30 of them still say "BUILT on
+> dev", "DEV ONLY", "prod-pending", "not yet released" or "awaiting production". **Every one of those
+> claims is false as of 2026-08-17** — this banner outranks them. Shipped in this release: the whole
+> **Money redesign P1–P4**, **budget item integrity P1–P3**, **membership + history-in-place M1
+> P1–P3**, **tryout scorecard weights**, the **tryout setup checklist**, **club money screens**,
+> **sponsorships**, the **nav regroup**, the **fundraiser drill-in** and **help batches 7/8/8b**.
+>
+> ⚠ **Owner QA is still owed on nearly all of it** — it shipped ahead of the walk-throughs by the
+> owner's explicit call, so a plan being LIVE does **not** mean it is verified. The single home for
+> what is walked and what is not remains `OWNER_QA_LEDGER.md`.
+>
+> **This is the exact failure mode AGENCY_RULES → Status wording exists to stop** (the 2026-08-10
+> audit found ~25 false "not on prod" claims). If you touch a plan in this folder, re-anchor its
+> status line to the positive fact — "on prod 2026-08-17, job 257" — rather than leaving the
+> perishable negative in place.
+
 ---
 
 ## 0. Sweep 3 — 2026-08-06 (owner-approved) · **109 → 48 files**

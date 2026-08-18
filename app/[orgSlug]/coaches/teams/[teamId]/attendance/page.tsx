@@ -46,8 +46,10 @@ export default function CoachesAttendancePage({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { loading: ctxLoading } = useCoaches();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all, so a capability check is
+  // just a capability check.
   const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -171,14 +173,13 @@ export default function CoachesAttendancePage({
   const solo = view.state === 'solo';
   const nothingYet = view.showNothingYetNote;
   /**
-   * ⚠ A FINISHED SEASON IS A RECORD, AND "TAKE ATTENDANCE" IS AN INSTRUMENT (CLAUDE.md rule 1,
-   * /review 2026-08-15). The shortcut card used to render in an archive exactly as it does in a
-   * live season — inviting a coach to take attendance for a season that has ended, on a button
-   * whose link dropped the year and therefore landed on the LIVE schedule hunting for an event
-   * that is not in it. A silent dead end, and the politer face of a 404. The card, and the CTA
-   * inside the no-schedule empty state, are both live-season-only now.
+   * ⚠ **THE FINISHED-SEASON HALF OF THIS PAGE IS DELETED** (2026-08-18). `canTakeAttendance` was
+   * `!page.isReadOnly`, and it drove three branches: the shortcut card, a past-tense empty state
+   * and a past-tense "nothing recorded" note. Every one of them existed to describe a season that
+   * had ended — and this page is no longer reached for one at all, because a team with no live
+   * season lands on its closed-season page (`CoachTeamSeasonGate`). The live halves are what
+   * remain; the record halves were the twenty-nine special cases that ruling removed.
    */
-  const canTakeAttendance = !page.isReadOnly;
 
   // Six placeholder rows in the real table's shell — one geometry, two renders, so the report
   // does not jump as it settles.
@@ -251,7 +252,7 @@ export default function CoachesAttendancePage({
               headline="No active players on the roster yet"
               description="Attendance lists your active players. Once the roster is set, every game and practice starts counting."
             />
-          ) : canTakeAttendance ? (
+          ) : (
             <CoachEmptyState
               icon={<CalendarCheck size={22} aria-hidden />}
               headline="Nothing to take attendance for yet"
@@ -265,15 +266,6 @@ export default function CoachesAttendancePage({
                  already states for its nested variant: two doors to the same place, one line
                  apart, is one door too many. */
             />
-          ) : (
-            /* Same situation, finished season: a statement of record, in the past tense, with no
-               CTA. "Add one to your schedule" is not an offer that can be honoured here. */
-            <CoachEmptyState
-              quiet
-              icon={<CalendarCheck size={22} aria-hidden />}
-              headline="No attendance was recorded this season"
-              description="Attendance is marked on a game or practice. Nothing on this season's schedule carried any."
-            />
           )}
         </div>
       ) : (
@@ -281,7 +273,7 @@ export default function CoachesAttendancePage({
           {/* Batch 4 — record first, review second. The review found this page explained what it
               would show but never linked to where attendance is actually taken; the round trip
               back from the game panel is the matching half. */}
-          {!canTakeAttendance ? null /* finished season — see `canTakeAttendance` above */ : markTargetLoading ? (
+          {markTargetLoading ? (
             // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
             // might have to take back.
             <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
@@ -315,12 +307,7 @@ export default function CoachesAttendancePage({
                   column of "—" with no explanation first. */}
               {nothingYet && (
                 <p className={att.note}>
-                  {canTakeAttendance
-                    ? 'Nothing recorded yet — totals fill in here as you mark each game and practice.'
-                    /* ⚠ Past tense, and no promise. Nothing will "fill in" on a season that has
-                       already ended, and saying it would would be the same untruth as offering
-                       the "Take attendance" card here. */
-                    : 'No attendance was recorded for this season.'}
+                  Nothing recorded yet — totals fill in here as you mark each game and practice.
                 </p>
               )}
 

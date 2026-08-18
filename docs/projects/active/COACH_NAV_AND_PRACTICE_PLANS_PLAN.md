@@ -690,3 +690,253 @@ mentioned.
 
 - Mockups: `https://claude.ai/code/artifact/ed56fe2c-0749-4c18-b504-3d3b3ee6c7c7`
 - PM brief: `COACH_NAV_AND_PRACTICE_PLANS_PM_BRIEF.md`
+
+---
+
+## 8. Phase 5 (PROPOSED, not approved) — five headings instead of six
+
+**Status: awaiting owner decision.** Mockup: `https://claude.ai/code/artifact/93e1e3ef-0382-408b-ad45-1499e1b02580`
+
+### The question that was asked
+
+> "What are your thoughts on the number of nav categories? I was thinking of keeping Season as is
+> but move Roster and Tryouts into the group with Development and Insights and rename that group to
+> Team or Squad."
+
+### Why that specific merge was argued against
+
+Three reasons, in order of weight:
+
+1. **It breaks §2's ordering rule.** Roster and Tryouts sit low because Roster is a September job and
+   Tryouts is an August job. Development/Insights are a quiet-evening read. Merging them forces one
+   position on four items of very different heat: place the group where Progress sits and **Tryouts
+   is promoted above Money and Chat**, and the top half of the nav stops being "what I touch this
+   week". Place it low and Insights — the door into Season Wrapped and the compare list — is demoted.
+2. **The heading cannot hold.** "Team"/"Squad" over Development + Insights + Roster + Tryouts means
+   *the people on the team, plus how the team is performing, plus people who are not on the team
+   yet*. A heading broad enough for that also admits Staff, Settings, Money and Chat — and a heading
+   that excludes nothing does not help anyone find anything. This is precisely the failure §2
+   diagnosed ("groups described what the DATA WAS ABOUT"). "Squad" was additionally retired in
+   Phase 4 because it stopped meaning "the playing side of things" once Lineups left; putting
+   Insights under it re-breaks the same word.
+3. **It leaves the live naming collision alone.** "Team" and "Team admin" are adjacent today and
+   sound like the same thing — a coach hunting Staff has to guess. The upward merge keeps both
+   headings and separates them by three groups.
+
+### What the instinct was correctly detecting
+
+- **Headings over one or two rows.** Money is a heading over a single item that already says Money;
+  Progress is two; Team is two.
+- **Worse on the phone.** With Overview/Schedule/Roster/Chat lifted out as primary tabs, the More
+  sheet has **three headings over one row each** (Money, Communication, Team).
+- **The sidebar overflows.** 15 rows + 6 headings + the team switcher + Help + the admin door does
+  not fit a laptop viewport (Tryouts clipped in the owner's screenshot). See "not fixed" below.
+
+### Option A — RECOMMENDED: fold `Team` into `Team admin`
+
+> Season · Progress · Money · Communication · **Team** *(Roster, Tryouts, Staff, Documents, Settings)*
+
+Same outcome the owner was after (one fewer heading; Roster and Tryouts no longer a lonely pair),
+without any of the three costs:
+
+- **Heat ordering untouched** — the two groups being merged are already the two coldest and already
+  adjacent. Nothing is promoted or demoted; no item a coach has learned the position of moves.
+- **The collision disappears** — one heading, and all five rows honestly read "set the team up":
+  who's on it, who's trying out for it, who staffs it, its paperwork, its settings.
+- **Progress keeps its meaning** — the "how are we doing" pair stays a distinct mode.
+- **Phone improves more than desktop** — lonely headings drop 3 → 2.
+
+Cost: five rows is the longest group in the nav, and the coldest region gets denser. Judged the right
+place to spend density — the bottom is scanned deliberately, the top is glanced at.
+
+### Option B — held in reserve: fold `Progress` up into `Season`
+
+> Season *(Schedule, Practice plans, Lineups, Tournaments, Development, Insights)* · Money ·
+> Communication · Team
+
+Gets to four headings. Nothing moves on screen — a divider is deleted. Deliberately **not**
+recommended first: six rows under one heading is where a group starts being read rather than seen,
+and this is reversible/decidable after living with Option A.
+
+### Explicitly NOT fixed by any option — the overflow
+
+Removing a heading buys back roughly one row of height. **The clipping is a separate question** and
+should not be used to justify a grouping change. The three candidate answers, none chosen:
+
+- collapse the coldest group by default (setup tools one click away rather than always-on);
+- pin the team switcher and the Help/Admin doors so only the item list scrolls;
+- accept that 17 doors is the honest count and the list is meant to scroll.
+
+⚠ Collapsing has a known side effect recorded elsewhere on this rail: **a collapsed group blinds
+`check:layout`** — its rows are not rendered, so they stop being measured.
+
+### Build notes if approved
+
+- **Both navs move together**, as in Phase 4 — `CoachesSidebar` and `CoachesBottomNav`'s More sheet.
+- `tests/unit/coach-nav-groups.test.ts` pins the group heading list and order in **both** files;
+  its `sidebarGroups` / `bottomGroups` assertions are the decision point and must be edited
+  deliberately.
+- ⚠ **No ITEM label changes in either option.** `isCoachNavItemVisible` is keyed by display label
+  with `default: return true`; renaming Roster or Tryouts hands an ungranted assistant the door.
+  **Group headings are free; item labels are not.** Moving an item between groups is safe — the gate
+  is per-label, not per-group.
+- The portal tour and `lib/help-content/coaches.tsx` name the sidebar groups. Phase 4 already had to
+  correct a tour card naming a group that no longer existed ("Squad") — re-check both in the same
+  unit of work.
+- Layout sweep: the affected screens are shared portal chrome, so expect the finding count to be
+  unchanged; a group merge changes no left edge or width.
+
+### Phase 5b — collapsible groups *(owner-added 2026-08-18; grouping half APPROVED same day)*
+
+**Owner decision recorded:** Option A (fold `Team` into `Team admin`) is **approved**. Option B stays
+in reserve. Added to scope: the groups become **collapsible, mirroring `AdminSidebar`'s tournament
+groups** — do not invent a second mechanism.
+
+⚠ **Corrected count** — an earlier revision of §8 said 17 rows. The sidebar renders **15** item rows
+under 6 headings (the landing slot is ONE row — Overview *or* Season's End, never both), and the
+phone More sheet renders **11** (15 minus the 4 phone primaries). Every height argument below uses
+the corrected figures.
+
+#### The four behaviours to inherit verbatim
+
+`AdminSidebar` + `components/admin/admin-nav-config.ts` already hold all of this:
+
+1. Heading is a `<button>` with a rotating `ChevronRight`, not a `<p>` label.
+2. Open set persisted to `localStorage` (admin's key is `fl_nav_groups` — **the coach portal needs
+   its own key**; one shared key would let a tournament admin's Setup preference decide whether a
+   coach's Team group is open).
+3. ⚠ **`isGroupOpen` returns true when the group contains the active path, regardless of stored
+   state.** This is the rule that stops a coach hiding their own location; it is not optional.
+4. Defaults keyed off phase (`defaultOpenFor: ['draft'|'active'|'completed']`). Coach equivalent
+   would be season state — **deliberately NOT taken**, see below.
+
+#### Recommended defaults — the heat rule decides, not taste
+
+| Group | Rows | Starts | Reason |
+| --- | --- | --- | --- |
+| Season | 4 | open | The reason the portal is open at all. |
+| Progress | 2 | open | Two rows; closing saves nothing. |
+| Money | 1 | open | Closing a one-row group trades a row for a click. |
+| Communication | 2 | open | **Holds the Chat unread badge** — see the defect below. |
+| Team | 5 | **closed** | Longest and coldest; five rows for one click a season. |
+
+**Rule stated once:** a group opened weekly or more never starts closed. One closed group is the
+honest answer — `Team` is the only one where the trade is favourable. All five stay *collapsible*;
+what the default decides is who pays the click.
+
+**15 visible rows → 10.** That, not the grouping change, is what fixes the overflow. The fold-down
+alone was worth ~1 row.
+
+#### ⚠⚠ The Chat unread badge is inside a now-closable group
+
+`CoachesSidebar.tsx:185` renders `<ChatUnreadBadge>` on the **Chat** item, which lives in
+**Communication**. A coach who closes that group stops seeing that anyone messaged them, from a
+sidebar that gives no other signal — nothing errors, the signal just disappears. This is the one
+place the coach portal **must go beyond** the admin pattern, because admin's collapsible groups carry
+no badges.
+
+**Answer in the mockup:** a closed heading carries a **rolled-up badge** when anything inside needs
+attention, and a plain folded-row count otherwise (so a closed group never reads as an empty one).
+
+#### Deliberately NOT built: season-state-varying defaults
+
+The obvious parallel to admin's `defaultOpenFor` is "open Team during tryout season". Rejected for
+now: **Phase 4 deleted the `conditional` mechanism precisely because a sidebar that rearranges itself
+moves items a coach has already learned the position of.** Auto-opening is a gentler form of the same
+thing. Ship the fixed default; a coach's own persisted preference already covers the August case.
+
+#### Two smaller calls
+
+- **Phone: no collapsing.** The More sheet is opened *in order to find something*; folding its
+  contents away works against the moment. Grouping stays identical between the two navs — only
+  presentation differs, the same allowed divergence class as the four primary tabs. ⚠ The
+  `coach-nav-groups.test.ts` heading/order assertions still apply unchanged.
+- **Pin the team switcher + Help/Admin doors** so only the item list scrolls. Small, and makes any
+  future group growth free.
+
+#### ⚠⚠ New verification hazard — a closed group is an unmeasured group
+
+`check:layout` measures what is **rendered**. A group that starts closed removes 5 doors from every
+coach screen in the sweep. Either the sweep opens all groups before measuring, or those five items
+silently leave the safety net. **This is the known failure mode already recorded on this rail
+("collapsing BLINDS check:layout") and it must be handled in the same unit of work, not after.**
+
+#### Still true from §8
+
+⚠ No ITEM label changes in either half. `isCoachNavItemVisible` is keyed by display label with
+`default: return true`. Group headings are free; item labels are not. A group with no visible items
+must drop out entirely rather than render a heading a coach can open onto nothing — `AdminSidebar`
+already does this (`.filter(group => group.items.length > 0)`).
+
+### Phase 5c — the phone bottom bar, evaluated *(owner-asked 2026-08-18)*
+
+**Outcome: the four tabs are KEPT. What the bar gains is a stated rule.** Two findings leave this
+plan for other owners — see the bottom of this section.
+
+#### The bar had a decision but no principle
+
+`TEAM_TABS` carries "owner-picked 2026-06-29" and nothing else. The sidebar got its ordering rule in
+August; the bar never got its counterpart, which is why "should Roster be a primary tab?" reads as an
+open question when it isn't one.
+
+> **Proposed rule:** the bar holds LOOK-UP surfaces, not work surfaces. A phone gets opened for
+> ninety seconds to check one thing — so no two tabs may answer the same question.
+
+#### ⚠ The heat rule does NOT transfer between devices
+
+The premise "Roster is cold in the sidebar, so why is it a phone primary?" is answerable but wrong.
+**Roster-on-desktop is the September EDITING job** (add players, jersey numbers). **Roster-on-phone
+is the LOOKUP job** ("who is #14, what is the parent's number"). Same door, two jobs, two
+frequencies. Cold in one nav and primary in the other is not a contradiction — but it was unstated,
+which is how a future session "fixes" it by demotion.
+
+Under the rule, all four survive and each owns a distinct question — *what's next* (Overview),
+*when* (Schedule), *what's been said* (Chat), *who* (Roster). A fifth tab must pass the same test,
+and none of the candidates does.
+
+#### Answer to "are these available to every coach?" — no, but only one persona loses anything
+
+| Tab | Gate | Head | Assistant (defaults) | **Helper** |
+| --- | --- | --- | --- | --- |
+| Overview | **ungated** (`default: return true`; deliberately — it is where a helper lands) | ✓ | ✓ | ✓ |
+| Schedule | `caps.schedule` | ✓ | ✓ | ✓ (`HELPER_PRESET.schedule: true`) |
+| Chat | `caps.staffChat` | ✓ | ✓ | ✗ |
+| Roster | `hasRecordAccess(caps)` | ✓ | ✓ | ✗ |
+
+**A helper's bar is Overview | Schedule | More** — 3 targets, stretched by `.tab { flex: 1 }`. Not
+broken and arguably correct (both closed doors are ones they cannot use), but it is a real rendered
+state that no document recorded.
+
+#### ⚠⚠ FINDING FOR ANOTHER OWNER — the closed-season change is HALF-APPLIED on phone
+
+`lib/coach-nav-visibility.ts`, `CoachesSidebar.tsx` and `CoachesBottomNav.tsx` are **modified and
+uncommitted** in the shared working copy (another session's `COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN.md`,
+also untracked). `withClosedSeasonNav` replaced `withLandingSlot`: a team with no live season gets
+**one door**.
+
+- **Sidebar: correct.** Applied per group → one door.
+- **Bottom bar: half.** `TEAM_TABS` is filtered → 1 tab. **`MORE_SECTIONS` is NOT** — it is filtered
+  by capability only, so the More sheet still lists **all 11 doors** into a finished season.
+- **Result: desktop says 1 door, phone says 12.** Exactly the drift
+  `tests/unit/coach-nav-groups.test.ts` exists to prevent — and it will NOT catch this, because its
+  sidebar/More comparison runs on the live-season label sets only.
+- **Stale comment:** the block above `TEAM_TABS` still reads *"the same four in every season state —
+  only the landing tab swaps"*, which the code it introduces no longer does.
+- **Undesigned state:** the bar renders **two tabs at ~50% width each**. That is what `flex: 1` does
+  when three tabs are removed, not a design anyone chose.
+
+**Raise with that session before it commits.** Not fixed here — touching another session's in-flight
+files is how the collisions recorded elsewhere in this repo happened.
+
+#### Finding: the real bar gap is ATTENDANCE, not Roster
+
+Taking attendance is the most phone-shaped job in the product and has **no bar door at all** —
+Schedule → find tonight's event → take attendance, three deep and only if the date is already known.
+Same shape as the pre-Phase-1 practice-plans problem.
+
+⚠ **A fifth tab is the wrong fix** — it answers "when?", which Schedule already owns, so it fails
+the rule above. Cheaper candidates, each deserving its own look:
+- the Overview's "one thing to do today" card offering attendance directly on an event day;
+- the Schedule tab landing on *today* rather than the top of the list.
+
+Build prompt: `COACH_NAV_GROUPS_COLLAPSE_BUILD_PROMPT.md` (Phase 5 + 5b; verified against the working tree 2026-08-18).

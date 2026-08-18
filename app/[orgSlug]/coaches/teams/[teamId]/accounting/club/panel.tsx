@@ -614,7 +614,7 @@ export function ClubPanel({
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment && !closed) {
-    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
+    return <CoachNotOnTeam />;
   }
 
   const teamName = assignment?.teamName ?? closed?.teamName ?? '';

@@ -1,7 +1,8 @@
 # Coach Money — sponsorships beside fundraisers
 
-**Status:** both phases + all seven follow-ups BUILT on dev (2026-08-15) · **migrations 237 + 239**
-(both DEV-ONLY — apply to prod before promoting) · owner QA owed, ledger §24 + §25
+**Status:** both phases + all seven follow-ups **ON PROD 2026-08-17, Amplify job 257** ·
+**migrations 237 + 239 applied to production** that session (with 236–250) · owner QA **still OWED**,
+ledger §24 + §25, now run against the live site
 **Binding mockup:** Claude Artifact "Fundraisers & Sponsors" (revision 3c) —
 https://claude.ai/code/artifact/47fdb6e1-dab4-4f4e-876c-558e190a9711
 **PM brief:** [COACH_SPONSORSHIPS_PM_BRIEF.md](COACH_SPONSORSHIPS_PM_BRIEF.md)

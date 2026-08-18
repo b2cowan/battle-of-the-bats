@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
-import { useCoaches, resolveWorkingSeason } from '@/lib/coaches-context';
-import { isCoachNavItemVisible, withLandingSlot, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
+import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
+import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
@@ -148,15 +148,17 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     try { localStorage.setItem(`flhq-coach-last-team:${orgSlug}`, currentTeamId); } catch { /* ignore */ }
   }, [currentTeamId, orgSlug]);
 
-  // The team's WORKING season — its live one, or its newest finished one when it has no live
-  // season. ONE resolution rule, shared with the bottom nav, the masthead and every page
-  // (lib/coach-season-view.ts), so no surface can drift on which season it is describing.
+  // The team's LIVE season, and — when it has none — its newest closed one. ONE resolution rule,
+  // shared with the bottom nav, the masthead and every page (lib/coach-season-view.ts), so no
+  // surface can drift on which season it is describing.
   //
-  // ⚠ Read-only is a fact about the SEASON, never about the team, and "between seasons" is not a
-  // lock-out: the coach keeps their whole nav, the records render, and the live instruments behind
-  // the doors say for themselves that they come back next season.
-  const workingSeason = resolveWorkingSeason(assignments, closedAssignments, currentTeamId);
-  const seasonFinished = workingSeason?.isReadOnly === true;
+  // ⚠ **A CLOSED SEASON IS ONE PAGE** (owner ruling 2026-08-18). The nav a coach between seasons
+  // sees is that page and nothing else — not the whole menu with read-only screens behind it, which
+  // is what the twenty-nine deleted finished-season branches existed to explain.
+  const liveSeason = resolveLiveSeason(assignments, currentTeamId);
+  const closedSeason = resolveClosedSeason(assignments, closedAssignments, currentTeamId);
+  const workingSeason = liveSeason ?? closedSeason;
+  const seasonFinished = !liveSeason && !!closedSeason;
 
   // Assistant Coaches: hide nav areas the current coach isn't cleared for. The gate is shared with
   // the mobile bottom nav (lib/coach-nav-visibility.ts) so it's one source of truth. Head coaches
@@ -258,7 +260,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             {TEAM_NAV_GROUPS.map((group, gi) => {
               // The landing slot swaps with the season's state — ONE rule, shared with the bottom
               // nav (lib/coach-nav-visibility.ts), because these two navs must not drift.
-              const items = withLandingSlot(group.items, seasonFinished, SEASON_END_ITEM)
+              const items = withClosedSeasonNav(group.items, seasonFinished, SEASON_END_ITEM)
                 .filter(item => navVisible(item.label));
               if (!items.length) return null;
               return (

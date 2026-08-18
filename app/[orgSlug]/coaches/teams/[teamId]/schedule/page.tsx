@@ -673,8 +673,9 @@ export default function CoachesSchedulePage({
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
 
   // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
@@ -683,11 +684,12 @@ export default function CoachesSchedulePage({
   // alias (P2): an aliased spelling's events fold into the owner server-side, but the event
   // string a row renders from still normalizes to the alias — without the alias keys, the
   // chip would vanish from exactly the rows a merge was meant to unify.
-  // ⚠ ABSENT IN AN ARCHIVE, per "the archive is OPT-IN": the book is a live-season
-  // INSTRUMENT (owner ruling 2026-08-04) — a frozen season shows no scouting UI. ONE derived
-  // flag gates BOTH the roll-up fetch and the tab/key computation below, so the two can
-  // never diverge (e.g. a tab that opens onto a panel whose data never loads).
-  const scoutingAvailable = !page.isReadOnly;
+  // ⚠ The archive suppression is DELETED (2026-08-18) — the book is a live-season INSTRUMENT
+  // (owner ruling 2026-08-04, untouched), and this screen is no longer rendered for a season that
+  // has ended, so there is no frozen season left to hide it from. The flag stays because it still
+  // gates BOTH the roll-up fetch and the tab computation together, which is what stops a tab
+  // opening onto a panel whose data never loads.
+  const scoutingAvailable = true;
   const [bookByKey, setBookByKey] = useState<Map<string, OpponentBookEntry>>(new Map());
   const loadBook = useCallback(async () => {
     // CLEAR, not just skip: a coach can flip live → archived season on this same mount
@@ -733,17 +735,16 @@ export default function CoachesSchedulePage({
   const [gameDayNowMs] = useState(() => Date.now());
   const gameDayHrefById = useMemo(() => {
     const map = new Map<string, string>();
-    if (page.isReadOnly) return map;
     for (const e of events) {
       const href = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
       if (href) map.set(e.id, href);
     }
     return map;
-  }, [events, page.isReadOnly, orgSlug, teamId, gameDayNowMs]);
+  }, [events, orgSlug, teamId, gameDayNowMs]);
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
-  const canAddEvents = page.canWrite(page.capabilities ? canManageSchedule(page.capabilities) : false);
+  const canAddEvents = (page.capabilities ? canManageSchedule(page.capabilities) : false);
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
   const scheduleHelpRequest = {
@@ -1220,10 +1221,9 @@ export default function CoachesSchedulePage({
     if (!selectedEvent || !isGameEvent) return null;
     if (selectedEvent.status === 'cancelled') return null;
     if (selectedEvent.teamScore == null || selectedEvent.opponentScore == null) return null;
-    // `page.canWrite(...)` inlined on purpose: it is a closure rebuilt every render, so
-    // depending on it would defeat the memo, and depending on `page.isReadOnly` INSTEAD would
-    // leave a dep the body never reads. Same rule, stated where it is read.
-    if (page.isReadOnly || !page.capabilities?.announcementsSend) return null;
+    // ⚠ The read-only half of this condition is gone with the finished-season branches
+    // (2026-08-18); what is left is the grant that decides whether a draft can be sent at all.
+    if (!page.capabilities?.announcementsSend) return null;
 
     // ⚠ A PLAYED game is still `status: 'scheduled'` — the platform has no 'completed' status,
     // it marks a game finished by giving it a result or a score. So "later on the clock" is
@@ -1255,7 +1255,7 @@ export default function CoachesSchedulePage({
         fieldNumber: next.fieldNumber,
       },
     }));
-  }, [selectedEvent, isGameEvent, page.capabilities, page.isReadOnly, page.teamName, events, base]);
+  }, [selectedEvent, isGameEvent, page.capabilities, page.teamName, events, base]);
 
   const slideTabs: { key: 'attendance' | 'lineup' | 'scouting'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
   if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
@@ -2476,16 +2476,14 @@ export default function CoachesSchedulePage({
                 The links section above is left completely alone — some coaches will keep their
                 own document forever, and that is a legitimate outcome (D2).
 
-                ⚠ ABSENT IN AN ARCHIVE (`!page.isReadOnly`), per the binding "the archive is OPT-IN"
-                ruling and the closing task in the plan doc's §11.1. The practice-plan routes resolve
-                the team's ACTIVE program year, so from a completed season "Open the plan →" errored
-                and "Plan this practice →" invited a write into a finished season. Hiding the entry
-                point is the cheapest correct answer: a link that 404s is the same bug wearing a
-                politer face. ⚠ If practice plans are ever ruled READABLE in history, this condition
-                comes off ONLY together with the season-read rail on both routes and both entries in
-                `APPROVED_SEASON_AWARE_ROUTES` / `APPROVED_ARCHIVE_DOORS` — which fail the build
-                until they are edited, and that is the decision point. */}
-            {selectedEvent.eventType === 'practice' && !page.isReadOnly && (
+                ⚠ The archive suppression here is DELETED (2026-08-18), and what it protected still
+                holds: the practice-plan routes resolve the team's ACTIVE program year, so from a
+                closed season "Open the plan →" errored and "Plan this practice →" invited a write
+                into a finished season. This screen is no longer rendered for a closed season at
+                all, so there is nothing left to hide — and READING a past plan has its own home,
+                the practices shelf on the closed-season page, which reaches a year-aware read
+                route rather than this one. */}
+            {selectedEvent.eventType === 'practice' && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
                 {selectedEvent.practicePlan ? (

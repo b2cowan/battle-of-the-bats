@@ -1,38 +1,26 @@
 'use client';
-import Link from 'next/link';
-import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * The "you can't open this here" state for a coach page gated on a LIVE assignment — with the
- * between-seasons truth built in (M1, 2026-08-16).
+ * The "you can't open this here" wall for a coach page gated on a LIVE assignment.
  *
- * Before this existed, a dozen live-instrument pages each hand-rolled the same block and every
- * one told a coach whose season had just ended "You are not assigned to this team" — false, and
- * exactly the sentence a between-seasons head coach reads while wondering if they lost their
- * team. One component, one decision: a member with only a finished season gets the true sentence
- * and the door that actually works (Season's End); everyone else gets the honest not-assigned.
+ * ⚠⚠ **THE "THIS SEASON HAS FINISHED" HALF IS DELETED** (owner ruling 2026-08-18,
+ * COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.5). This component used to answer TWO questions from
+ * twelve call sites: a member whose only season had ended got "This season has finished — it comes
+ * back when the next one starts", and everybody else got the honest not-assigned. That first
+ * sentence was one of the twenty-nine places the portal described a state nobody chose, and it is
+ * gone with the rest: a coach whose team has no live season never reaches these pages at all now,
+ * because `CoachTeamSeasonGate` sends them to the team's closed-season page before any of them
+ * mount.
  *
- * ⚠ Deliberately NOT an access gate — it renders words, decides nothing, and must stay behind
- * the caller's own `!assignment` check. Live-instrument pages stay live-instrument pages; the
- * only thing this changes is which true sentence is on the wall.
+ * What is left is the one true sentence, said once. ⚠ Keep it that way: if a future state needs a
+ * different answer here, it needs a different WALL, not a second branch inside this one — the
+ * branch is exactly how the last one grew.
+ *
+ * ⚠ Deliberately NOT an access gate — it renders words, decides nothing, and must stay behind the
+ * caller's own `!assignment` check.
  */
-export default function CoachNotOnTeam({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
-  const { assignments, closedAssignments } = useCoaches();
-  const closed = resolveClosedAssignment(assignments, closedAssignments, teamId);
-
-  if (closed) {
-    return (
-      <div className={styles.notAssigned}>
-        <h2>This season has finished</h2>
-        <p>
-          This screen is part of running a live season, and it comes back when the next one
-          starts. The finished season&apos;s story is kept in{' '}
-          <Link href={`/${orgSlug}/coaches/teams/${teamId}/season-end`}>Season&apos;s End</Link>.
-        </p>
-      </div>
-    );
-  }
+export default function CoachNotOnTeam() {
   return (
     <div className={styles.notAssigned}>
       <h2>Team not found</h2>

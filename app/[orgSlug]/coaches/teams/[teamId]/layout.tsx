@@ -1,4 +1,4 @@
-import { resolveWorkingSeason } from '@/lib/coach-season-view';
+import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import {
   getCoachPortalAuth,
@@ -14,6 +14,7 @@ import {
   resolveMastheadStatus, type MastheadGameDayConsole, type MastheadScoutingNudge,
 } from '@/lib/coach-masthead-status';
 import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
+import CoachTeamSeasonGate from '@/components/coaches/CoachTeamSeasonGate';
 
 /**
  * The team segment's layout — it exists for ONE reason: the pinned masthead (desktop shell D2/A2).
@@ -57,15 +58,15 @@ export default async function CoachTeamLayout({
   // screen. Nothing can any more, so the extra years were a per-team-entry read whose answers no
   // surface could ever ask for.
   const closedForTeam = closedAll.filter(a => a.teamId === teamId);
-  const workingSeason = resolveWorkingSeason(assignments, closedForTeam, teamId);
+  const live = resolveLiveSeason(assignments, teamId);
+  const closed = resolveClosedSeason(assignments, closedForTeam, teamId);
+  const workingSeason = live ?? closed;
 
   // Record + status ride the season's `schedule` capability — the same gate the Overview's own
   // record and next-up tiles ride (their events fetch is schedule-gated), so an assistant without
   // it sees identity only here, exactly as they do one screen down.
   const mayReadSchedule = workingSeason?.capabilities?.schedule === true;
-  const liveSeason = workingSeason && !workingSeason.isReadOnly && mayReadSchedule
-    ? workingSeason
-    : null;
+  const liveSeason = live && mayReadSchedule ? live : null;
 
   const feed = workingSeason && mayReadSchedule
     ? await getCoachMastheadFeed({
@@ -122,7 +123,23 @@ export default async function CoachTeamLayout({
         // rather say nothing than put one season's game day beside another's year and record.
         statusYearId={liveAssignment?.programYearId ?? null}
       />
-      {children}
+      {/* ⚠⚠ **THE ONE PLACE A FINISHED SEASON IS ANSWERED** (2026-08-18). A team with no live season
+          has one page, so the live tools are not rendered at all rather than rendered read-only —
+          which is what deleted the seventeen read-only branches and twelve "comes back next season"
+          notices that used to say it screen by screen. The decision is made HERE, on the server,
+          from the two lookups the masthead already needed, so no live page paints against a closed
+          season for even a frame.
+
+          ⚠ This layout's docblock says it never gates access, and that is STILL TRUE: "you are not
+          on this team" is a different sentence with a different cause, and every page still owns
+          it. This says only which season the team is on. */}
+      <CoachTeamSeasonGate
+        seasonFinished={!live && !!closed}
+        closedHref={`/${orgSlug}/coaches/teams/${teamId}/season-end`}
+        teamBase={`/${orgSlug}/coaches/teams/${teamId}`}
+      >
+        {children}
+      </CoachTeamSeasonGate>
     </>
   );
 }

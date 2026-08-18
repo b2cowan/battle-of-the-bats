@@ -118,14 +118,44 @@ const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
  *   derivation is over — money records that cannot change, versus lineups being re-interpreted.
  *   **It is not a precedent for playing time**, whose decided absence below is untouched.
  *
- * ⚠ P4 was the LAST gated shelf. There is no P5 — a further entry needs a new owner ruling, not a
- * phase that is already approved.
+ * · `season-results` — the games one finished season played, for the Results shelf on the
+ *   closed-season page (COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.3, owner-approved 2026-08-18).
+ *     1. **RECORD**, and about as pure a one as exists — a played game's date, opponent and score
+ *        are facts that happened. ⚠ It is deliberately not the SCHEDULE, which adds, edits,
+ *        cancels and takes attendance: pointing that at a closed year is the archive-as-a-place the
+ *        owner deleted. This route has no write verb and offers no way to act on its answer.
+ *     2. **YES, because there is no subtree.** The shelf renders rows and no drill-ins — no row
+ *        opens the game, the lineup, the attendance sheet or the scouting book. Same flattening
+ *        the money book accepted, and `coach-finished-season-surfaces.test.ts` holds the caller to
+ *        it because this route cannot.
+ *     3. **YES, STRUCTURALLY.** Its only year-passing caller is the closed-season page, which
+ *        titles itself with that season's name.
+ *
+ * · `season-roster` — who was on the team that season, for the roster shelf beside it (same plan,
+ *   same session).
+ *     1. **RECORD.** Who played that year is settled. The roster PAGE is an instrument — it adds,
+ *        edits, removes and imports, and owns dues, documents and development — and stays live.
+ *     2. **YES, no subtree.** No row opens a player profile, and that is not a simplification: the
+ *        profile is the busiest instrument in the portal, and a record must not be a door into one.
+ *     3. **YES**, and it matters most here — a roster looks identical year to year, so a coach
+ *        reading the wrong one would have no way to notice. The page's title is the whole answer.
+ *   ⚠ Its gate is record access alone, because PLAYER NAMES ARE BASELINE (owner, 2026-08-03) — and
+ *   that ruling covers names and stops there. Not one guardian, medical or emergency-contact field
+ *   leaves that route; its projection is the whole answer.
+ *
+ * ⚠ **THE ARCHIVE-AS-A-PLACE IS STILL DELETED.** Two entries arriving at once is not `?year=`
+ * coming back across the record screens — it is the closed-season page gaining the two shelves the
+ * owner named, on exactly the terms the practices and money shelves already ship on. If a change
+ * finds itself teaching the schedule, the roster page or any live tool to read a year, that is the
+ * opposite of this plan.
  */
 const HISTORY_ENDPOINTS = [
   'wrapped',
   'season-practices',
   'events/[eventId]/practice-plan/read',
   'budget-vs-actual',
+  'season-results',
+  'season-roster',
 ];
 
 /**
@@ -595,13 +625,31 @@ describe('the decided absences — instruments never become history surfaces', (
       + 'PERMANENTLY (owner, 2026-08-16) because its figures are recomputed. Reversing that needs '
       + 'a new ruling and an answer to the recomputation problem.');
 
-    const hub = readFileSync(join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'history', 'page.tsx'), 'utf8');
-    assert.match(hub, /const canLineups = !isRecord &&/,
-      'the Insights hub must hide the playing-time tile AND its fetch on a finished season — the '
-      + 'same flag gates both, which is what stops a live number reaching a finding about a '
-      + 'season that has ended.');
-    assert.match(hub, /const canScouting = !isRecord &&/,
-      'the scouting tile rides the same rule, for the same reason: the book is today\'s book.');
+    /**
+     * ⚠⚠ **THE CLIENT HALF OF THIS RULING MOVED ON 2026-08-18, AND THE RULING DID NOT.** It used
+     * to be asserted on the Insights hub (`canLineups = !isRecord && …`), because the hub rendered
+     * for a finished season and had to hide the tile AND its fetch. It no longer renders for one —
+     * a team with no live season lands on its closed-season page — so the tile cannot be reached
+     * with a finished season on screen at all.
+     *
+     * What must stay true is that the CLOSED-SEASON PAGE never grows a playing-time or scouting
+     * shelf: those are the two decided absences, and this page is now the only surface a coach
+     * reads a finished season on, so it is the only place they could come back.
+     */
+    const closedPage = readFileSync(
+      join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'season-end', 'page.tsx'), 'utf8');
+    for (const [fragment, why] of [
+      ['lineup-analytics', 'playing time is RECOMPUTED from saved lineups, so a finished season '
+        + 'would be shown as today\'s code reads it rather than as the coach read it'],
+      ['/opponents', 'the scouting book is an INSTRUMENT — today\'s book, not a snapshot of a year'],
+    ] as const) {
+      assert.equal(
+        closedPage.includes(fragment), false,
+        `the closed-season page reaches "${fragment}". That is a decided absence (owner rulings `
+        + `2026-08-16 and 2026-08-04): ${why}. This page is the only surface a finished season is `
+        + 'read on now, so it is the only place these could return.',
+      );
+    }
   });
 
   /**

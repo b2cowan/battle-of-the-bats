@@ -640,8 +640,9 @@ export function BudgetPlanPanel({
   // the failure message so reopening it doesn't show a stale reason.
   const closeDelete = useCallback(() => { setDeletingId(null); setDeleteError(''); }, []);
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -1296,7 +1297,7 @@ export function BudgetPlanPanel({
   const fundingLines = allLines.filter(l => isFundingKind(l.lineKind));
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
-  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
+  const moneyCanWrite = (page.capabilities?.money === 'write');
 
   // ONE arithmetic, computed in one place (lib/coach-budget-totals) so the planner, the Money hub
   // and Budget vs. Actual cannot drift apart on the same two numbers. ⚠ The effective total is the

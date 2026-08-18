@@ -758,10 +758,18 @@
   color: var(--danger-light);
 }
 
+/* ⚠ flex-shrink: 0 IS LOAD-BEARING, not tidiness. The rail is a flex column with
+   `overflow-y: auto`, and an empty 1px div is a flex item whose automatic minimum size is ZERO —
+   so on every rail tall enough to overflow (any laptop viewport) BOTH dividers were crushed to 0px
+   and the coach saw two structureless ~37px holes where two hairlines should be. Measured 2026-08-18.
+   Margins are 0.15rem, not 0.5rem: the two .sidebarSection paddings already give the line 8px of
+   clear space on each side, and stacking another 8px on top of that is what made the space between
+   the team switcher and Overview read as dead air. */
 .sidebarDivider {
   height: 1px;
+  flex-shrink: 0;
   background: var(--home-line, rgba(255,255,255,0.06));
-  margin: 0.5rem 0;
+  margin: 0.15rem 0;
 }
 
 /* ── Page layout ────────────────────────────────────────────────────────── */
@@ -7426,6 +7434,26 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .seasonDoorArrow { color: var(--white-40); flex-shrink: 0; }
 
+/* The reopen offer on a closed season (2026-08-18). Quiet on purpose — it is an undo for a
+   mistake, not a way of working — but a real 44px target, because a coach who needs it needs it
+   on a phone at 9pm. */
+.seasonReopenLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-45);
+  cursor: pointer;
+  text-align: left;
+}
+.seasonReopenLink:hover:not(:disabled) { color: var(--white-70); text-decoration: underline; }
+.seasonReopenLink:disabled { cursor: default; opacity: 0.7; }
+
 /* Team switcher / hub: closed-season entries sit in a quiet group, never vanish. */
 .closedTeamRow { opacity: 0.75; }
 
@@ -7436,7 +7464,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .teamSwitcherSelect {
   display: block;
   width: calc(100% - 1.7rem);
-  margin: 0.1rem 0.85rem 0.3rem;
+  /* No stray vertical margin — the .sidebarSection padding owns the switcher’s air, so the
+     gap above and below the control stays symmetric (2026-08-18). */
+  margin: 0 0.85rem;
   background: var(--home-card, var(--bg-2));
   border: 1px solid var(--home-line-strong, var(--white-15));
   border-radius: 7px;

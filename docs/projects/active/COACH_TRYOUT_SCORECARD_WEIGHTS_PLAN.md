@@ -1,6 +1,9 @@
 # Tryout scorecard — weights that read
 
-**Status:** BUILT on dev 2026-08-17 · **✅ OWNER QA PASSED 2026-08-17** (ledger §50) · awaiting production.
+**Status:** **ON PROD 2026-08-17, Amplify job 257** (`e1eaa0b0` + review fixes `766abe2b`) ·
+**✅ OWNER QA PASSED 2026-08-17** (ledger §50) · no migration.
+⚠⚠ **A SHORT RE-WALK IS STILL OWED:** `/review` ran AFTER the pass and changed behaviour in three
+places, so what the owner walked is not exactly what shipped.
 **Binding mockup:** `claude.ai/code/artifact/a43106bf-9b2a-4f5a-b7c1-ae9ee37a182d` — the mockup IS the spec.
 **Trigger:** owner, on the builder screenshot — *"it is not clear that the 1's represent the weight of each category."*
 

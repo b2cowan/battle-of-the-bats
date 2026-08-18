@@ -98,8 +98,9 @@ export default function RosterPage({
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const { currentOrg } = useOrg();
   const { openHelp } = useHelpDrawer();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1) and
-  // `page.canWrite()` folds in read-only, so every write flag below goes through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const searchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -446,7 +447,7 @@ export default function RosterPage({
   // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
   // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
-  const canWriteRoster = page.canWrite(page.capabilities?.rosterWrite);
+  const canWriteRoster = !!page.capabilities?.rosterWrite;
   const canSeePii = !!page.capabilities?.rosterPii;
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.

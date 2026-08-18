@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
-import { useCoaches, resolveWorkingSeason } from '@/lib/coaches-context';
-import { isCoachNavItemVisible, withLandingSlot, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
+import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
+import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
@@ -138,11 +138,15 @@ export default function CoachesBottomNav() {
   const currentTeamId = urlTeamId ?? assignments[0]?.teamId ?? closedAssignments[0]?.teamId ?? null;
   const teamBase      = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
 
-  // The team's WORKING season — ONE resolution rule with the sidebar, the masthead and every page
-  // (lib/coach-season-view.ts). Read-only is a fact about the SEASON, never about the team, and
-  // between seasons the bar keeps every tab it had.
-  const workingSeason = resolveWorkingSeason(assignments, closedAssignments, currentTeamId);
-  const seasonFinished = workingSeason?.isReadOnly === true;
+  // The team's LIVE season — ONE resolution rule with the sidebar, the masthead and every page
+  // (lib/coach-season-view.ts).
+  //
+  // ⚠ **A CLOSED SEASON IS ONE PAGE** (owner ruling 2026-08-18). The bar no longer keeps every tab
+  // between seasons with a read-only screen behind each: it becomes the single door to that page.
+  const liveSeason = resolveLiveSeason(assignments, currentTeamId);
+  const closedSeason = resolveClosedSeason(assignments, closedAssignments, currentTeamId);
+  const workingSeason = liveSeason ?? closedSeason;
+  const seasonFinished = !liveSeason && !!closedSeason;
   const caps = workingSeason?.capabilities;
   // Shared with the desktop sidebar (lib/coach-nav-visibility.ts) — one source of truth for gating.
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
@@ -176,9 +180,11 @@ export default function CoachesBottomNav() {
       className={`${styles.bottomNav}${anyOverlayOpen ? ` ${styles.navHidden}` : ''}`}
       aria-label="Coaches mobile navigation"
     >
-      {/* Four primary team tabs, the same four in every season state — only the landing tab
-          swaps to Season's End once the working season has finished. */}
-      {teamBase && withLandingSlot(TEAM_TABS, seasonFinished, SEASON_END_TAB)
+      {/* The primary team tabs. Four while a season is live; ⚠ ONE once it has closed — the bar
+          becomes the single door to that season's page, because a closed season IS one page and the
+          other three tabs would open live instruments on a season that has ended (owner ruling
+          2026-08-18). The More sheet below closes with it, in the same breath. */}
+      {teamBase && withClosedSeasonNav(TEAM_TABS, seasonFinished, SEASON_END_TAB)
         .filter(({ label }) => navVisible(label))
         .map(({ key, icon: Icon, label }) => {
         const active = tabIsActive(key);
@@ -329,7 +335,18 @@ export default function CoachesBottomNav() {
               };
               return (
                 <>
-                  {MORE_SECTIONS.map(section => {
+                  {/* ⚠⚠ **THE SHEET CLOSES WITH THE SEASON, and this line is why the phone is not
+                      half-converted** (found 2026-08-18 by another session reading this change
+                      mid-flight, before it was committed). `withClosedSeasonNav` above filters
+                      TEAM_TABS, so the BAR correctly became one door — and without this, the More
+                      sheet still listed all eleven, every one of them a live instrument on a
+                      season that has ended. Desktop would have shown one door and the phone
+                      twelve.
+
+                      ⚠ `coach-nav-groups.test.ts` cannot catch this: it compares the two navs'
+                      LIVE-season label sets, which are identical either way. The closed-season
+                      assertion beside it is what holds this. */}
+                  {seasonFinished ? null : MORE_SECTIONS.map(section => {
                     const items = section.items.filter(i => navVisible(i.label));
                     if (!items.length) return null;
                     return (

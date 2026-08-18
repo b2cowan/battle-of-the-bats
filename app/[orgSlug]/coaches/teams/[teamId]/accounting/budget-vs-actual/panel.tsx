@@ -581,14 +581,16 @@ export function BudgetVsActualPanel({
   // PDF export and remembers it, rather than every Money tab requesting it on mount for a file
   // most coaches never ask for.
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all, so a capability check is
+  // just a capability check.
   const page = useCoachSeasonPage(orgSlug, teamId);
   // The tag filter is the only thing this page puts on the wire now — the season went with the
   // dial (P2, 2026-08-16), so this is a plain one-param query rather than a merge.
   const bvaQuery = filterTagId ? `?tagId=${encodeURIComponent(filterTagId)}` : '';
   const assignment = assignments.find(a => a.teamId === teamId);
-  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
+  const moneyCanWrite = (page.capabilities?.money === 'write');
 
   const load = useCallback(async () => {
     setLoading(true);

@@ -10,6 +10,14 @@ import { useCoaches } from '@/lib/coaches-context';
 interface RolloverSummary {
   ok: boolean;
   newSeason: { id: string; name: string; year: number };
+  /**
+   * ⚠ **ADDED 2026-08-18 TO FIX A LINK THAT HAD STOPPED WORKING.** The success view's "See
+   * {season}'s Season Wrapped" button pointed at `/season-end` with no year — and by the time it
+   * is pressed the rollover has already made the NEW season the team's working one, so that page
+   * resolves the new year and says it is still under way. The season the coach just finished was
+   * one field away on the payload the whole time and simply was not mirrored here.
+   */
+  previousSeason: { id: string; name: string; year: number };
   coaches: { copied: number };
   roster: { copied: number; failed: number };
   budget: { carried: boolean; linesCopied: number; periodsCopied: number; failed: number };
@@ -184,7 +192,13 @@ export default function StartNextSeasonModal({
                   coaches context — a client-side hop here would land on Season's End with the
                   old season still reported as active (adversarial review; same reason the
                   Settings call site uses window.location.assign for its onDone). */}
-              <a href={`/${orgSlug}/coaches/teams/${teamId}/season-end`} className={styles.btnSecondary}>
+              {/* ⚠ NAMES THE SEASON IT MEANS. Without the year this lands on the page's
+                  working-season branch — which is now the season that just STARTED — and tells the
+                  coach it is still under way, one press after they finished the one they wanted. */}
+              <a
+                href={`/${orgSlug}/coaches/teams/${teamId}/season-end?year=${encodeURIComponent(summary.previousSeason.id)}`}
+                className={styles.btnSecondary}
+              >
                 See {currentSeasonName}&apos;s Season Wrapped
               </a>
               <button type="button" className={styles.btnPrimary} onClick={onDone}>
@@ -194,9 +208,41 @@ export default function StartNextSeasonModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
+            {/* ── THE CONSEQUENCE, FIRST ────────────────────────────────────────────────────────
+                ⚠⚠ **THIS MOVED, AND ITS PROMISE WAS CORRECTED** (2026-08-18,
+                COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.2). The plan line said this dialog never told
+                a coach the old season stops being editable. The CODE said otherwise: it did — in an
+                amber caution at the very bottom, under two checkboxes and a bullet list, which is
+                why it read as absent. Two things were actually wrong with it, and both are fixed
+                here rather than by adding a second sentence saying the same thing:
+
+                  1. **It was last.** The one fact that would prevent the mistake this product
+                     cannot undo (starting a season by accident — plan §3.4, deliberately unbuilt)
+                     sat below everything a coach scrolls past. It is now the first thing in the
+                     form, above the carry list, which is what §3.2 was asking for.
+                  2. **Half of it stopped being true.** It promised "the Insights archive keeps
+                     every result and money record" — that archive is gone. A closed season is ONE
+                     PAGE, and this now says what that page actually holds.
+
+                ⚠ Not styled as a warning. Rolling forward is the ordinary, expected thing to do at
+                the end of a year; an amber alert box around it made the common case look dangerous
+                and, by doing so, taught coaches to scroll past the box. */}
+            <div style={{
+              background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))',
+              borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
+            }}>
+              <p style={{ margin: '0 0 0.4rem', fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
+                This closes the {currentSeasonName} season.
+              </p>
+              <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
+                <strong>{currentSeasonName}</strong> becomes a record you can open any time — results,
+                roster, practices and money. Nothing is lost, but you will not be able to change it.
+              </p>
+            </div>
+
             <p style={{ margin: '0 0 1rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-              Roll <strong>{currentSeasonName}</strong> into a new season. Your active roster comes with you
-              (you can prune or add after), and the schedule starts fresh.
+              Your active roster comes with you (you can prune or add after), and the schedule starts
+              fresh.
             </p>
 
             <div className={styles.formGrid}>
@@ -247,19 +293,10 @@ export default function StartNextSeasonModal({
               </div>
             )}
 
-            {/* Clear, unmissable caution — starting a season is a one-way lock (no reopen). */}
-            <div style={{
-              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
-              background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: 8, padding: '0.7rem 0.85rem',
-            }}>
-              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
-              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
-                Once you start, <strong>{currentSeasonName}</strong> locks as read-only. You can always look
-                back — its <strong>Season&apos;s End</strong> page keeps the wrap-up, and the Insights archive
-                keeps every result and money record.
-              </span>
-            </div>
+            {/* ⚠ The amber "once you start, {season} locks as read-only" block that stood here is
+                GONE — moved to the TOP of this form and re-written (see the note above). It is not
+                repeated: two statements of one consequence, one of which named an archive that no
+                longer exists, is how a dialog trains a coach to skim. */}
 
             {error && <p className={styles.errorText} style={{ marginTop: '0.9rem' }}>{error}</p>}
 

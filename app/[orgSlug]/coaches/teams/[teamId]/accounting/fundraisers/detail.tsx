@@ -183,12 +183,11 @@ export function FundraiserDetail({
   const [editCreditUnit, setEditCreditUnit] = useState<CreditUnit>('percent');
   const [editTags, setEditTags]             = useState<string[]>([]);
 
-  // Chunk F — which SEASON is on screen, read exactly as the surrounding panels read it.
-  // `page.canWrite()` folds read-only in, so an archived season offers no Settings and no
-  // log/edit control; the API refuses both regardless (the write routes resolve the ACTIVE
-  // year and a past fundraiser 404s), and this is the same answer given before the click.
+  // Which SEASON is on screen, read exactly as the surrounding panels read it. ⚠ The read-only
+  // fold is GONE (2026-08-18) — a closed season does not render this screen at all, so what is
+  // left here is the money grant and nothing else.
   const page = useCoachSeasonPage(orgSlug, teamId);
-  const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
+  const canWriteMoney = (page.capabilities?.money === 'write');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const isSponsor = fundraiser?.kind === 'sponsor';
   /** A sponsor's single arrival — the only row it has. Found by its entry, not by position. */
@@ -708,15 +707,10 @@ export function FundraiserDetail({
             </div>
           )}
 
-          {/* WHOSE names these are — the one fact the archive chip cannot carry, and the exact
-              thing the old page got wrong (it listed the LIVE roster beside a finished season's
-              drive). Not a read-only banner: read-only is the chip's job portal-wide (Chunk F,
-              D-F4), and this says something the chip does not. */}
-          {page.isReadOnly && players.length > 0 && (
-            <p className={styles.muted} style={{ marginTop: '0.85rem' }}>
-              These are the players who were on the roster in {page.programYearName || 'that season'} — amounts can’t be added or edited in a finished season.
-            </p>
-          )}
+          {/* ⚠ The "these are the players who were on the roster in {season}" line that stood here
+              is DELETED (2026-08-18). It answered a question a finished season used to raise on
+              this screen — and this screen is not rendered for a finished season any more. One of
+              the twenty-nine. */}
         </>
       )}
 

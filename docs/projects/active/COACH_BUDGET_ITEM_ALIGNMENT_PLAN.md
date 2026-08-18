@@ -1,9 +1,10 @@
 # Coach Money — the budget speaks in category + item, and so does spending
 
-**Status:** **BUILT on dev 2026-08-15** · owner QA = ledger **§29**
-**Migration:** **240** applied to **dev 2026-08-15**. ⚠ It must reach production before this code
-does — that step lives in the Owner QA Ledger and the release history, not here.
-**Commit anchor:** _stamped when this is committed; the owner's confirmation is the gate._
+**Status:** **ON PROD 2026-08-17, Amplify job 257** · owner QA = ledger **§29**, still OWED and now
+run against the live site.
+**Migration:** **240 applied to production 2026-08-17** (with 236–250 as one sequence). The queue is
+empty through 250 and both schemas are byte-identical — the "must reach production first" step is
+DONE. Deployment state's single home stays the release history + the Owner QA Ledger.
 **Raised by:** the owner, 2026-08-15 — *"the budget should only group by 2 levels, category and item.
 The description should just be a note on the row and not show up on the budget report… the reason we
 have these items as selectable is to make sure we can line up across budget and actual reports,

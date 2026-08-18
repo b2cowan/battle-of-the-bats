@@ -62,8 +62,9 @@ export default function CoachesLineupsPage({
   const { assignments, loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
   // Clock snapshot, once per mount (render must stay pure) — see the schedule page's twin note.
   const [gameDayNowMs] = useState(() => Date.now());
@@ -73,10 +74,10 @@ export default function CoachesLineupsPage({
   // Fail-open like the nav — the server still enforces on every lineup route.
   const canLineups = assignment ? page.capabilities?.lineups : true;
   // Viewing a lineup is a READ; building one is a write, so it folds in read-only (Chunk F).
-  const canBuildLineups = page.canWrite(canLineups);
+  const canBuildLineups = canLineups;
   // Adding a game is a SCHEDULE grant, not a lineup one — so a coach with lineups but no schedule
   // must never be handed an "Add a game" button they can't use. Fails CLOSED.
-  const canAddGames = page.canWrite(page.capabilities ? canManageSchedule(page.capabilities) : false);
+  const canAddGames = (page.capabilities ? canManageSchedule(page.capabilities) : false);
   const periodWord = sportPack.periodLabel.toLowerCase();
   // `label` is required here (unlike the HelpButton-only pages, which fall back to the button's own
   // label): this object also goes straight to openHelp() from the empty states, where there is no
@@ -370,9 +371,10 @@ export default function CoachesLineupsPage({
     const r = ready[e.id];
     const isPrimary = e.id === primaryGameId;
     // Game-Day Mode entry (P1): inside a game's live window the row gains a sibling `Game day`
-    // link (the row itself keeps one destination — the builder). Absent outside the window and
-    // in an archived season: the console is a live-season instrument.
-    const gameDayHref = page.isReadOnly ? null : gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
+    // link (the row itself keeps one destination — the builder). Absent outside the window; the
+    // finished-season half of this condition is gone with the read-only branches (2026-08-18),
+    // since this hub is not rendered for a season that has ended.
+    const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
     // Shared with the Practice plans hub (2026-08-15) — the row's date tile formats in the org's
     // zone inside the component, so the two hubs cannot drift onto different clocks.
     const row = (

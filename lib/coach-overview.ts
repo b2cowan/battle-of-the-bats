@@ -56,7 +56,15 @@ export type AnchorAction =
    */
   | 'open_game_day'
   | 'add_event'
-  | 'close_season'
+  /**
+   * ⚠ **RENAMED FROM `close_season`, BECAUSE THAT IS NOT WHAT IT DID** (2026-08-18,
+   * COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §1). The action labelled "Close out the season" opened the
+   * ROLLOVER sheet and closed nothing on its own — so a team that had aged out had no way to finish
+   * its season at all. The rollover is still the right PRIMARY (most teams do come back), so it
+   * keeps the slot and is now called what it is; ending a season without starting another is the
+   * `close_season_only` answer beside it.
+   */
+  | 'start_next_season'
   | 'setup_step'
   /** Chunk B — opens the portal tour drawer. Not a navigation; the page owns the handler. */
   | 'take_tour';
@@ -70,6 +78,13 @@ export type AnchorAnswer =
   | 'not_yet'
   | 'got_it'
   | 'skip_step'
+  /**
+   * ⚠ **THE QUIET DOOR OUT OF A SEASON** (2026-08-18). Aging out is the rarer case, so it gets
+   * words rather than a button — but it is never hidden behind a menu, because for the coach it
+   * applies to it is the ONLY way to finish. Offered on exactly the same condition as the primary:
+   * both are the same power (`canManageSeasons`), and a coach who may roll forward may also stop.
+   */
+  | 'close_season_only'
   /** Chunk B — the pre-season door the welcome INHERITS when it replaces that card (rule 2). */
   | 'setup_step';
 
@@ -265,13 +280,20 @@ export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null
     // D2 — a state that REPLACES another inherits the replaced card's door. Suppressing the lull
     // card must not cost the coach the "add an event" answer it was offering.
     if (canSchedule) answers.push('add_event');
+    /**
+     * ⚠ **TWO DOORS OUT, ONE LOUD AND ONE QUIET** (2026-08-18). Starting next season is the common
+     * case and keeps the button; "no next season — just close it" is the aged-out team's only way
+     * to finish, so it rides beside it as a text answer rather than being hidden. Both are the
+     * SAME power, so neither is offered to a coach whose club manages its seasons.
+     */
+    if (canClose) answers.push('close_season_only');
     answers.push(canClose ? 'not_yet' : 'got_it');
     return {
       kind: 'season_check',
       shape: 'question',
-      // A coach who cannot close the season keeps the sentence and loses the button — the club
+      // A coach who cannot close the season keeps the sentence and loses both doors — the club
       // closes it, and their Wrapped appears when it does. Already the shipped cue behaviour.
-      primary: canClose ? 'close_season' : null,
+      primary: canClose ? 'start_next_season' : null,
       answers,
     };
   }

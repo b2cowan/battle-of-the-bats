@@ -40,21 +40,12 @@ const CoachesContext = createContext<CoachesContextType>({
 });
 
 /**
- * ONE rule for "is this team in its closed-season (read-only) state for this coach":
- * the team has no active assignment but does have a closed one. Shared by the sidebar,
- * bottom nav, Overview redirect, Season's End and the results archive — the four-way
- * hand-copies of this predicate were exactly how a missed call site could quietly
- * reintroduce the season-end lockout.
+ * ⚠ `resolveClosedAssignment` used to be defined HERE, a second copy of the rule that also lived in
+ * `lib/coach-season-view.ts`. Two implementations of "this team has no live season" is exactly the
+ * shape this comment used to warn about, one file down from where it warned. It is now
+ * `resolveClosedSeason`, defined once beside the live-season resolver it is the counterpart of, and
+ * re-exported below under both names.
  */
-export function resolveClosedAssignment(
-  assignments: CoachingAssignment[],
-  closedAssignments: ClosedCoachingAssignment[],
-  teamId: string | null | undefined,
-): ClosedCoachingAssignment | null {
-  if (!teamId) return null;
-  if (assignments.some(a => a.teamId === teamId)) return null;
-  return closedAssignments.find(a => a.teamId === teamId) ?? null;
-}
 
 export function CoachesProvider({
   children,
@@ -123,19 +114,24 @@ export function useCoaches() {
 }
 
 /**
- * Which season is on screen, and is it a record. The logic itself lives in
- * `lib/coach-season-view.ts` — pure, so it can be unit-tested without React — and is re-exported
- * here because every consumer reaches it through this context anyway.
+ * Which season is on screen. The logic itself lives in `lib/coach-season-view.ts` — pure, so it can
+ * be unit-tested without React — and is re-exported here because every consumer reaches it through
+ * this context anyway.
  *
- * ⚠ It takes no year (P2, 2026-08-16): there is one season, the team's working one, and no control
- * anywhere lets a coach point the portal at a different one. The `useSearchParams()` every page
- * used to feed this hook went with it — several of them existed for nothing else, which is why a
- * handful of pages stopped needing a Suspense boundary in the same change.
+ * ⚠ It takes no year (P2, 2026-08-16): there is one season, the team's live one, and no control
+ * anywhere lets a coach point the portal at a different one.
+ *
+ * ⚠ "Is it a record?" is no longer among the questions (2026-08-18). A live page renders a LIVE
+ * season or is not reached at all; a closed season is one page.
  */
 export {
-  resolveWorkingSeason,
+  resolveLiveSeason,
+  resolveClosedSeason,
+  // The name twelve call sites already use for the same rule — kept so this consolidation is not
+  // also a rename sweep across every page that asks the question.
+  resolveClosedSeason as resolveClosedAssignment,
   resolveCoachSeasonPage,
-  type CoachWorkingSeason,
+  type CoachLiveSeason,
   type CoachSeasonPage,
 } from './coach-season-view';
 

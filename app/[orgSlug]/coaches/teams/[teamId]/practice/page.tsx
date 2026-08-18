@@ -79,13 +79,13 @@ export default function CoachesPracticePlansPage({
   const canSeeSchedule = caps ? caps.schedule : true;
   // Writing a plan is head-coach-only (the same gate the practice-plan PUT enforces), and a past
   // season can never be written to.
-  const canPlan = page.canWrite(caps ? canWriteDevelopment(caps) : false);
+  const canPlan = (caps ? canWriteDevelopment(caps) : false);
   // The templates door gates on what the templates route itself requires, so this page never
   // offers a link that 403s on arrival.
   const canSeeTemplates = caps ? canManageSchedule(caps) : false;
   // Adding a practice is a SCHEDULE-MANAGE act, not a plan one — a coach who can write plans but
   // not schedule must not be handed an "Add a practice" button they cannot use. Fails closed.
-  const canAddPractices = page.canWrite(caps ? canManageSchedule(caps) : false);
+  const canAddPractices = (caps ? canManageSchedule(caps) : false);
 
   const helpRequest = {
     module: 'coaches' as const,
@@ -130,11 +130,11 @@ export default function CoachesPracticePlansPage({
   // a coach who is not on this team renders "Team not found" below, and firing a request that can
   // only 403 is work nobody ever sees the result of.
   useEffect(() => {
-    if (ctxLoading || !page.hasAccess || !canSeeSchedule || page.isReadOnly) return;
+    if (ctxLoading || !page.hasAccess || !canSeeSchedule) return;
     let cancelled = false;
     void Promise.resolve().then(() => load(() => cancelled));
     return () => { cancelled = true; };
-  }, [ctxLoading, page.hasAccess, canSeeSchedule, page.isReadOnly, load]);
+  }, [ctxLoading, page.hasAccess, canSeeSchedule, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!page.hasAccess) {
@@ -174,44 +174,12 @@ export default function CoachesPracticePlansPage({
   }
 
   /**
-   * ⚠ **THE BETWEEN-SEASONS SCREEN, AND IT MUST SAY THE TRUE THING** (P3 C1). This is now an
-   * ordinary state a coach lands in through the nav — not the archive-only corner it was written
-   * for — so both of its old sentences were live falsehoods: the plans ARE kept, and there is no
-   * season to switch back to.
-   *
-   * ⚠ `programYearName` falls back to an EMPTY STRING, never null, so the headline below uses `||`
-   * rather than `??` — a nullish fallback would render " has finished".
-   *
-   * ⚠ **THE DOOR CARRIES THE READ ROUTE'S OWN GATE, not this page's.** The Practice plans hub opens
-   * on `schedule` alone, so the parent volunteer who runs one station on a Tuesday reaches this
-   * screen — and the list behind the door (the Development report) requires record access, exactly
-   * as the past-plan route does. Offering them the link anyway would swap a false sentence for a
-   * link that 403s, which is the same bug wearing a politer face (CLAUDE.md, standing rule). They
-   * get the true half without a door instead.
+   * ⚠ **THE BETWEEN-SEASONS SCREEN THAT STOOD HERE IS DELETED** (2026-08-18). It explained that the
+   * season had finished, that plans are still kept, and pointed at where to read them — a whole
+   * screen whose only job was to describe a state nobody chose. A team with no live season now
+   * lands on its closed-season page, where "The practices you ran" is a shelf, so this page has
+   * nothing left to say about a finished season and does not render for one.
    */
-  if (page.isReadOnly) {
-    const canReadRecord = caps ? hasRecordAccess(caps) : false;
-    return (
-      <div className={styles.page}>
-        {header}
-        <CoachEmptyState
-          // ⚠ `quiet` is the no-CTA variant and must not carry one (CoachEmptyState §iii) — so the
-          // two branches differ in weight as well as in words, rather than one shape doing both.
-          quiet={!canReadRecord}
-          icon={<NotebookPen size={20} aria-hidden />}
-          headline={`${page.programYearName || 'This season'} has finished`}
-          description="A plan sets up a practice that's about to happen, so there's nothing left to plan here. Planning starts again with your next season."
-          payoff="Everything you wrote is still here — every plan, exactly as you wrote it, and what you said afterwards about how it went."
-          blocker={canReadRecord
-            ? undefined
-            : 'Opening a past plan needs access to the team’s records. Ask your head coach.'}
-          primaryAction={canReadRecord
-            ? { label: 'The practices you ran', icon: <BookMarked size={15} aria-hidden />, href: `${base}/history/development` }
-            : undefined}
-        />
-      </div>
-    );
-  }
 
   const all = [...upcoming, ...recent];
   /**

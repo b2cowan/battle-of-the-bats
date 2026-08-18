@@ -83,7 +83,37 @@ describe('resolveOverviewAnchor — the collision this module exists to fix', ()
       seasonWindingDown: true,
     }));
     assert.equal(decision?.kind, 'season_check');
-    assert.equal(decision?.primary, 'close_season');
+    /**
+     * ⚠ **RENAMED, BECAUSE THE OLD NAME DESCRIBED SOMETHING THE PRODUCT DID NOT DO** (2026-08-18).
+     * `close_season` opened the ROLLOVER sheet — the label said one thing and the button did
+     * another, which is why a team that had aged out could not finish its season at all. The
+     * rollover keeps the primary slot under its real name; ending a season WITHOUT starting
+     * another is the answer asserted below.
+     */
+    assert.equal(decision?.primary, 'start_next_season');
+    assert.ok(
+      decision?.answers.includes('close_season_only'),
+      'the aged-out team\'s only way to finish must ride beside the primary. It is quiet on '
+      + 'purpose (the rarer case) but never hidden — for the coach it applies to, it is the whole '
+      + 'door.',
+    );
+  });
+
+  /**
+   * ⚠ Both doors are the SAME power. A coach whose club manages its seasons keeps the sentence and
+   * loses both — offering "just close it" to someone the server will refuse is a control that
+   * exists only to say no.
+   */
+  it('a coach who cannot manage seasons is offered neither door', () => {
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'in_season',
+      hasNextEvent: false,
+      seasonWindingDown: true,
+      canManageSeasons: false,
+    }));
+    assert.equal(decision?.kind, 'season_check');
+    assert.equal(decision?.primary, null);
+    assert.equal(decision?.answers.includes('close_season_only'), false);
   });
 
   it('the season check still offers the door the lull was offering (D2)', () => {

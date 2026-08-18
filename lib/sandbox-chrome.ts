@@ -190,8 +190,14 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       sub: 'last season, closed',
       teamId: DEMO_COACH_TEAM_IDS.seasonsEnd,
       path: teamPath(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
-      saidPublic: 'A finished year, kept: 18-6-2, the recap nine families opened, and the season\'s record still open from the same menu — read-only, exactly as it ended.',
-      saidOperator: 'A finished year, kept: 18-6-2, the recap nine families opened, and the season\'s record still open from the same menu — read-only, exactly as it ended.',
+      /* ⚠ REWRITTEN 2026-08-18 with the closed-season change, and this is the demo drift CLAUDE.md
+         warns about, caught in the same unit of work. Both lines used to say the season's record
+         was "still open from the same menu — read-only, exactly as it ended". That was true of the
+         portal that turned itself into a read-only copy of itself; it is not true of the one page a
+         closed season is now, and every screen would still have rendered perfectly while the
+         sentence was wrong. */
+      saidPublic: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
+      saidOperator: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
       bannerNote: 'A finished year, kept',
     }),
   ];
@@ -604,11 +610,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,
       anchor: '[data-sandbox-tour="season-recaps"]',
-      // ⚠ The last clause is new with P3 C3 (2026-08-16), and it is here because the product
-      // gained something on the very screen this step ends on — the practices shelf. A demo whose
-      // narration stops at what shipped last month is the drift CLAUDE.md's demo rule describes:
-      // every page still renders, and the story told over the top of them quietly goes short.
-      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, and the record of it is still here: the same menu, every screen read-only, exactly as it ended. Further down, the practices that year are still here too — open one and it reads exactly as it was written.',
+      // ⚠⚠ REWRITTEN 2026-08-18. The middle clause — "the same menu, every screen read-only,
+      // exactly as it ended" — described the portal that turned itself into a read-only copy of
+      // itself, and that state is deleted: a closed season is ONE PAGE with four shut shelves, and
+      // the menu belongs to the team's live season. This is exactly the drift CLAUDE.md's demo rule
+      // is about, and it is worth noting it would have survived a build, a sweep and a review:
+      // every page still renders, and only the sentence over the top of them was false.
+      said: 'Last year, kept on one page: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, so this is all of it now: the results, who was on the team, the practices you ran and how the money added up, each folded away until you want it. Open the practices — one reads exactly as it was written.',
     },
   ];
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeftRight, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
-import { resolveWorkingSeason } from '@/lib/coach-season-view';
+import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
 import { mastheadSeasonLabel } from '@/lib/coach-season-label';
 import { formatRecord } from '@/lib/coach-season-record';
 import {
@@ -122,7 +122,19 @@ function CoachTeamHeaderInner({
   const teamName = live?.teamName ?? closed?.teamName ?? null;
   if (!teamName) return null;
 
-  const season = resolveWorkingSeason(assignments, closedAssignments, teamId);
+  // The season the masthead is describing: the LIVE one, or the newest closed one when the team
+  // has none. Both come from the shared resolvers so the header cannot name a different season
+  // from the page under it.
+  const liveSeason = resolveLiveSeason(assignments, teamId);
+  const closedSeason = resolveClosedSeason(assignments, closedAssignments, teamId);
+  const season = liveSeason ?? closedSeason;
+  /**
+   * ⚠ The team has NO LIVE SEASON, which since 2026-08-18 means its portal is one page. The chip
+   * below is the masthead's half of saying so — the only place a finished season is named — and it
+   * is keyed on the RESOLVERS rather than on a flag the season carries, because the flag
+   * (`isReadOnly`) is gone with the twenty-nine read-only branches it existed to drive.
+   */
+  const seasonFinished = !liveSeason && !!closedSeason;
   const year = season?.programYearYear ?? null;
   // Page-header ruling 2026-08-11: the masthead owns the season AND the role, so no page
   // subtitle ever restates either. Both resolve HERE, client-side, for the season on screen.
@@ -194,7 +206,7 @@ function CoachTeamHeaderInner({
           <div className={styles.teamHeaderMeta}>
             {seasonText && <span>{seasonText}</span>}
             {/* An archive's record is stated on the right, beside its Complete chip. */}
-            {!season?.isReadOnly && record && (
+            {!seasonFinished && record && (
               <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>
             )}
           </div>
@@ -204,7 +216,7 @@ function CoachTeamHeaderInner({
             the one thing that changes day to day, which is also what stops a standalone team's bar
             being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
         <div className={styles.teamHeaderRight}>
-          {season?.isReadOnly ? (
+          {seasonFinished ? (
             <>
               {/* Presentational, and the ONE place a finished season is named (see docblock). No
                   status on a season that has ended: it has no next thing, and nothing live may be

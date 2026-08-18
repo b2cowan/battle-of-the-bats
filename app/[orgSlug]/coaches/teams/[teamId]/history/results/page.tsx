@@ -178,12 +178,12 @@ export default function CoachesResultsReportPage({
   // finalized games simply never gets a chip (self-hides per the plan). Derived every render
   // (not synced via an effect) so a tag deleted/merged elsewhere just quietly stops matching.
   //
-  // ⚠ HIDDEN IN A RECORD (2026-08-16). Game tags are a LIVE vocabulary the coach edits today —
-  // renaming, merging and deleting them as the season goes. Offering 2024's games filtered by a
-  // tag invented last week is governing rule 3 broken ("what the coach could see AT THE TIME"),
-  // and it fails silently: every row renders, the counts add up, and the page is quietly
-  // answering a question nobody could have asked that year.
-  const tagChips = page.isReadOnly ? [] : teamTags
+  // ⚠ The record suppression here is DELETED (2026-08-18), and the reason it existed is worth
+  // keeping: game tags are a LIVE vocabulary the coach renames, merges and deletes as the season
+  // goes, so offering a finished season's games filtered by a tag invented last week is a page
+  // quietly answering a question nobody could have asked that year. This page now only ever shows
+  // the live season, so the filter is always about the vocabulary that produced it.
+  const tagChips = teamTags
     .map(tag => ({ tag, count: finalized.filter(e => (tagsByEventId[e.id] ?? []).includes(tag.id)).length }))
     .filter(c => c.count > 0)
     .sort((a, b) => a.tag.name.localeCompare(b.tag.name));
@@ -229,14 +229,8 @@ export default function CoachesResultsReportPage({
           {finalized.length === 0 ? (
             <div className={styles.emptyState}>
               <Trophy size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
-              {/* ⚠ Past tense in a record, and no promise of anything arriving — nothing will.
-                  Same rule the attendance report took on the same day. */}
-              <p className={styles.emptyStateTitle}>{page.isReadOnly ? 'No results were recorded' : 'No results yet'}</p>
-              <p className={styles.emptyStateSub}>
-                {page.isReadOnly
-                  ? 'No game in this season was finalized with a score.'
-                  : 'Once a game gets a score, it shows up here.'}
-              </p>
+              <p className={styles.emptyStateTitle}>No results yet</p>
+              <p className={styles.emptyStateSub}>Once a game gets a score, it shows up here.</p>
             </div>
           ) : (
             <>

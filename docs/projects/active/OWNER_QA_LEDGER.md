@@ -1,15 +1,57 @@
 # Owner QA Ledger — unverified LIVE behaviour, ordered by what it costs if it's wrong
 
-> ## ⚠ Read this first — what this document is now (re-grouped 2026-08-06)
+> # ⚠⚠ EVERY "ON DEV" LABEL BELOW IS STALE AS OF 2026-08-17 — IT IS ALL LIVE
+>
+> **The 2026-08-17 promote (prod HEAD `5ae39f10`, Amplify job 257 SUCCEED, tag
+> `release/2026-08-17`) took `origin/dev` to `origin/master` in full: 72 commits, and migrations
+> **236–250 applied to production** the same session. `origin/dev` and `origin/master` are LEVEL.
+> **There is no staged half any more.** Wherever a heading below says "ON DEV", "not yet released",
+> or "dev only", read **LIVE ON PRODUCTION 2026-08-17** — the individual headings have not all been
+> rewritten, and this banner is the authority over any of them until they are.
+>
+> **What that changes about the work below:** every walk in this ledger is now **damage-finding on
+> the live site**, not gatekeeping before a release. A failure is an incident to fix today.
+>
+> ## 📌 OWNER RULING 2026-08-17 — shipping ahead of QA is ACCEPTED PRACTICE for now
+>
+> **"We don't have any live customers yet so I am ok with this pattern during this phase of the
+> business."** Ship-then-walk is the owner's deliberate choice while the platform is pre-customer,
+> **not** an oversight and **not** something to re-raise each release. An agent that blocks, warns
+> twice, or editorialises about unwalked sections is arguing against a settled ruling.
+>
+> **What this does NOT change:** the walks still matter and this ledger is still the list. Shipping
+> first changes *when* a defect is found, not *whether* it needs finding. Nothing here is retired.
+>
+> ⚠ **The condition, not the conclusion.** This ruling rests on "no live customers." **The first
+> real customer on production ends it** — from that point an unwalked money section is an incident
+> waiting to happen in front of someone who is paying, and the pre-release gate comes back. Whoever
+> notices that threshold has been crossed should say so plainly rather than carrying this paragraph
+> forward on autopilot.
+>
+> **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §27 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
+> §45 §46 §47 §48 §49 §51**, plus **§50's owed re-walk** (§50 PASSED 2026-08-17, then `/review`
+> changed behaviour in three places afterwards). That is the whole Money redesign, all of budget
+> item integrity, and the membership/history-in-place milestone. **Walk the Tier 1 money sections
+> first** — §29 · §38 · §27 · §46 are the ones that move real money in a family's ledger.
+>
+> **The migration queue is EMPTY.** Every migration through **250** is on production; dev and prod
+> schemas are byte-identical (165 tables / 1930 columns / 697 indexes, 0 divergence, verified at
+> promote time from BOTH live databases). Every "dev only" / "PROD-PENDING" migration note below —
+> 228, 229, 236, 237, 239, 246, 250 and the rest — is **cleared**.
+>
+> ---
+>
+> ## ⚠ Read this first — what this document is now (re-grouped 2026-08-06; superseded in part by the banner above)
 >
 > **This is two lists wearing one cover, and you need to know which half you are standing in.**
 >
 > - **The shipped half.** A release went out on 2026-08-03. Everything labelled **LIVE ON
 >   PRODUCTION** is in front of paying customers right now. Checking it is **damage-finding**, and
 >   a failure is an incident to fix today, not a backlog item.
-> - **The staged half.** Since that release, **18 commits of feature work have landed on `dev` and
->   none of it has shipped.** Everything labelled **ON DEV** is real, finished, funnel-passed code
->   that customers have never seen. For these, **your QA is the last gate before the next release.**
+> - ~~**The staged half.**~~ **RETIRED 2026-08-17 — there is no staged half; see the banner above.**
+>   Historical text: "Since that release, 18 commits of feature work have landed on `dev` and none of
+>   it has shipped. Everything labelled **ON DEV** is real, finished, funnel-passed code that
+>   customers have never seen."
 >
 > **Corrected 2026-08-06 — the old framing said the opposite and it mattered.** This document used
 > to claim "only §1.9c and four slices of §5.2 still gate anything; everything else has shipped."
@@ -54,7 +96,7 @@
 > | Label | Meaning |
 > |---|---|
 > | **LIVE ON PRODUCTION** | On `origin/master`. Customers have it now. Damage-finding, not gatekeeping. |
-> | **ON DEV** | Committed to `dev`, never released. **Your QA is the gate.** Some carry a dev-only migration. |
+> | ~~**ON DEV**~~ | **RETIRED 2026-08-17 — no section is on dev any more.** Where a heading still says it, read LIVE ON PRODUCTION 2026-08-17. Its old meaning: "committed to `dev`, never released; your QA is the gate." |
 > | **⛔ CANNOT BE QA'd** | Shipped but switched off, or otherwise unreachable. Leave it. |
 >
 > ### Device batching survives the re-group
@@ -7588,3 +7630,219 @@ Release-manager steps, not QA steps — but if missed, those sections break in p
 that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06; **226 cleared
 2026-08-08** — the coach re-anchor is scheduled on both databases and both demo worlds are live on
 production.)*
+
+## §54 · The Families Book opens — worklist, family page, duplicate queue (P2, chunks 0/A–F)
+
+**Built on dev 2026-08-17, same day as the approved Phase 2 mockups** (`claude.ai/code/artifact/e7cc6d9c-343e-45eb-8b94-fb9984f2b949` — the binding spec; plan §5.3 records the decisions, §5.4 the build). **Migrations 252 + 253 are DEV ONLY.** The messy fixture club is `qa-families-fixture` (reseed: `node scripts/seed-families-fixture.mjs`); the real-shaped world is `riverdale-ridge` (81 people, thin on purpose). ⚠ These screens are in NO rendered sweep — this walk is their only visual coverage.
+
+**A · The permission is really off.** Sign in as a non-owner admin of a Club-band org WITHOUT a Families grant. The admin hub must show **no Families tile at all** (not a locked tease); pasting `/{org}/admin/families` directly must show only "This area needs the Families permission" — **no counts, no names**. Then as owner: Organization Admin → Members → Manage member → Module access — a **Families** row (role default "—" for every role) → Grant. The tile appears for them on next load. The grant is audit-logged like any capability change.
+
+**B · The worklist lands on the day's honest headline.** As owner on `qa-families-fixture`: the landing lens should be **"No family on file · 2"** (Casey + Devon Nguyen-Ortiz), rows are CHILDREN linking to the roster (the fix lives where guardian details already live — no editor here). Then the lenses: Owes money (Reyes $150 never-reminded · Ionescu $300 **Reminded** pill with a date · Whitehall $450 **Never**) — league-only Tran shows "1 registration unpaid" with **Not tracked**, never a dollar figure. Missing forms · 2 (Cole, Ionescu). No consent lens carries its explanatory footnote. **Search "noor.p@old.example"** — a FORMER address — must find Noor Petit.
+
+**C · The family page is honest about both programmes.** Open **Alex Reyes**: three children (Morgan + Riley rep, Milan house league) with the footnote that children are joined through the parent, no sibling claim; money = rep dues dollar lines + "Unpaid installments — rep dues" total, Milan as **Paid** chip with fee as context, never summed; the Chased date in the panel foot. Open **Noor Petit**: contact shows current address + `noor.p@old.example · to <date>`, **Club email · Opted out** with the footnote naming the FORMER address it was recorded under. Open **Dana Whitfield-class league-only family (Thuy Tran)**: NO forms panel at all, short page that reads intentional.
+
+**D · The duplicate queue proposes, remembers, and merges parents only.** Queue shows **1 pair** (Dana Cole vs D. Cole — surname+phone AND surname+shared-child "matched by NAME only"). "Not the same person" → pair gone → **stays gone after reload** (tombstone). Reseed can't resurrect it (same people). To test merge: re-run seed variations or use the pair before rejecting on a fresh org wipe — after merge: one person with both addresses (old one **Searchable · former**), children's rows untouched, and if either side was opted out the household **stays opted out**.
+
+**E · The actions go through the real mechanisms.** Message this family on an opted-out household (Petit) → refuses with "opted out" — **even though the opt-out is filed under the former address** (suppression through the person; first door where this holds). Message a clean family → arrives with the club identified + unsubscribe footer (the existing family-email envelope). **Export their data** downloads one JSON with everything the page shows. ⚠ **There is deliberately NO record-a-payment button** — deferred behind the money QA walks (plan §5-P2); its absence is correct, not a gap.
+
+**F · The waiver is finally stored (chunk 0).** Public league registration on a season with waiver text: submitting records `waiver_accepted_at` and files a consent row (visible on the family page's consent line as "league waiver"). ⚠ Old registrations stay NULL — "not recorded", never backfilled. **And the P1 defect fix rides here: league registration inserts WORK again** (they failed on dev since mig 251 — try one via the public form AND the admin manual add).
+
+⚠ **Release gate:** migrations **252 + 253** join the dev-only queue (with 251). The Families routes read `org_people`/`waiver_accepted_at`/`org_person_match_rejections` unconditionally — code must not reach master ahead of them.
+
+## §55 · The coach shell slimdown — the strip owns identity, the rail owns navigation
+
+**✅ OWNER QA PASSED 2026-08-17 (all parts A–E, including D2's four /review fixes). Committed `075a42d8` 2026-08-18.** The re-baseline flagged at the foot is still owed.
+
+**Built on dev 2026-08-17** (approved mockup, binding spec: `claude.ai/code/artifact/aebdd43d-d020-4735-a6ca-41213ba8c395`; decision logged in `memory/design_decisions.md` same day). Premium org coach portal, **desktop only** — phones are untouched by design. No migration.
+
+**A · The strip says who and where.** On any coach team page ≥901px wide: the top strip reads wordmark · thin divider · **COACHES PORTAL** on the left, and **bell · account icon · Workspaces pill** on the right — the same corner as tournament admin. The bell shows its unread count, opens its panel **dropping from the top-right** (not the old sidebar-left position), and the panel's **Notification settings** and **See all** links both resolve. Check it in **dark and warm** — the label and divider should dim/flip with the theme like the wordmark does.
+
+**B · The sidebar starts with work.** The rail has **no header block at all** — no "Coaches Portal", no bell, no org name. A multi-team coach sees the **team dropdown as the very first thing** (no "My Teams" label above it), then the divider, then Overview. A **single-team** coach sees Overview as the first pixel — no dropdown, no divider above the nav. The gap the owner flagged between the dropdown and Overview should be gone.
+
+**C · The org is still named — once.** On every team page the masthead eyebrow carries the club's name (unchanged). Known and accepted (flagged at mockup): the desktop **Notifications page and the team-picker hub** have no org line now; the strip + masthead carry identity everywhere a coach works.
+
+**D · Nothing else moved.** Nav groups, order, labels, capability gating, Help/Admin/Sign out at the rail's foot — all exactly as learned (guard tests re-run green, including "no season switcher has grown back"). Phone: bottom nav + More sheet unchanged, Notifications row still first in More. The help guide's two "where is the bell" sentences now say top-right; while in there, a **stale season-chip sentence** ("use the chip beside the page title") left over from the pre-§40 world was corrected too.
+
+**D2 · The review's four fixes (adversarial /review 2026-08-17, all confirmed + applied same day).** (1) The bell's **unread badge digit is readable in the warm theme** — it had inherited warm's dark ink on the rust badge at 2.73:1; it is now fixed white in every theme (~6.1:1 on warm rust; dark unchanged — new `--white-fixed` token, the `--logic-lime-fixed` pattern). Check the badge with an unread count in warm. (2+3) **Neither wall grew a bell**: the billing-suspended wall and the "not assigned to any teams" wall keep exactly the strip doors they always had (wordmark · account · Workspaces) — no notification bell on either, because a working feed on a hard-block screen undercuts the wall. (4) In the **"See it live" coach demo**, opening the bell drops the panel cleanly below the strip instead of overlapping the demo banner — and the same one-line fix heals the admin demo's bell, which had the identical overlap on prod. Check by opening the bell inside either demo.
+
+**E · The collapsed phone bar centres its name (owner-reported same day, fixed same day).** On a phone, scroll a team page down: the team bar folds to the bare team name (expected — the 2026-08-02 collapse ruling), and the name now sits **vertically centred** in the slim bar instead of hugging its top edge with a dead band below (the pre-fix state in the owner's screenshot). Scroll back to the top and the full bar returns. ⚠ No automated coverage exists for the collapsed state — the layout sweep never scrolls a page into it; this eyes-on check is its only proof.
+
+⚠ **check:layout is NOT re-baselined for this** — the sidebar header's labels ("COACHES PORTAL", the org name) leave every coach screen's baseline, so the next sweep will report them; that diff is this change, not a regression.
+
+**§54 addendum — post-build `/simplify` + `/review` (2026-08-17, before any QA walk):** all confirmed findings fixed, so walk the CURRENT build. Changes that affect the steps above: **migration 254 joins the dev-only queue** (252 + 253 + 254 — the merge is now one transaction); step D's merge can additionally be probed by double-clicking Merge in two tabs (second gets a clean "Person not found", exactly one audit row); step E's suppression now lives in the shared send path itself; a **revoked guardian is excluded everywhere** (page, export, message — worth one explicit probe: revoke a family link, confirm the person drops off the family page); league-only families now show their waiver consent line; tryout-only people appear under the All lens and in search; all dates render in the org's timezone.
+
+## §56 · An unsubscribe finally means the same thing everywhere (family email audit + fixes)
+
+**Built on dev 2026-08-18.** No migration, no new screen — this is correctness on a promise the
+product already made. Plan: `CLUB_FAMILIES_BOOK_PLAN.md` §5.5. **The audit behind it: ten senders
+put mail in a guardian's inbox and three honoured an unsubscribe.** The other seven never routed
+around the guard on purpose; they were written before it existed and never moved.
+
+⚠ **Most of this is INVISIBLE when it works** — the pass condition is mail that does NOT arrive.
+Walk it with two mailboxes you control.
+
+**A · An opt-out follows the person, not the address.** On `qa-families-fixture`, Noor Petit's
+opt-out is filed under a FORMER address (`noor.p@old.example`). Send that household a message from
+the Families area → still refuses (this worked before). **The new part:** have a rep coach send a
+**team announcement** to a roster that includes Noor's current address, and have a **game update**
+fire (save a score on a followed team). Neither should reach them. Before this change both did —
+they checked only the address in front of them. If you can, add a second opted-out parent whose
+current address differs from the one they unsubscribed under; that is the whole case.
+
+**B · The league season broadcast is no longer the loudest hole.** House league → a season with
+registrations → send a broadcast. Three things to check on arrival: the email now names the **club**
+and the **season**, carries a working **Unsubscribe** link (it previously had none at all), and a
+registrant who has opted out **does not receive it**. The response now reports *sent / skipped /
+suppressed* separately — "skipped" means we could not reach them, "suppressed" means we chose not to.
+⚠ The broadcast's **visual design changed**: it renders in the shared family envelope now, like
+every other club→family email, rather than its own one-off template. That is the change, not a bug.
+
+**C · A bill now says who is asking for the money.** Trigger each of the four dues notices — the
+coach's **Send due reminders**, the coach's **Remind unpaid**, the org-admin **wave**, and (if you
+can force it) the **nightly sweep**. Every one should close with the **club's name**, the team, and
+a line explaining that dues reminders are account notices and are sent even if you unsubscribed.
+Previously they signed off "FieldLogicHQ" — the software vendor, not the club. ⚠ **These still
+reach an opted-out family, and that is your ruling** (2026-08-18: dues are transactional; a family
+cannot mute a bill by unsubscribing from announcements). Same for a **tryout offer/waitlist/release**.
+The "See an example" preview beside Automatic Dues Reminders should show the new footer too.
+
+**D · A typed-in name can no longer inject markup into a bill.** "Remind unpaid" was a fifth
+hand-built copy of the dues email and never escaped names. Put a player on a team with a name
+containing `<b>` or `&`, send Remind unpaid, and the email should show those characters **literally**
+rather than rendering them.
+
+**E · What is deliberately still broken, so you can see it and decide.** The **free-tier coach's
+"Email families"** honours no opt-out, while the paid rep coach's identical announcement does. A
+family's unsubscribe is therefore respected or not depending on what their club pays. This is NOT
+fixable by routing it through the shared sender — a free team has no organization, and both the
+opt-out list and the unsubscribe link are keyed to one. Closing it needs its own per-team opt-out
+record: **a small migration and an owner decision.** ⚠ The 2026-08-18 briefing sized this as
+"small — just route it through"; that was wrong, and this line is the correction.
+
+**F · Also deliberately absent: a send cap on the Families message door.** You can still message the
+same family repeatedly. The cap needs the same stored row as the **date-only message log** you
+approved on 2026-08-18, so both land in the next unit rather than growing two mechanisms.
+
+⚠ **Release gate: unchanged by this section.** No migration was added here. The queue is still
+**251 + 252 + 253 + 254** (Families P1/P2) — code must not reach master ahead of them.
+
+**§56 addendum — post-build `/review` (2026-08-18, before any QA walk):** high-risk tier, five lenses,
+seven findings fixed — so walk the CURRENT build. Changes that affect the steps above:
+
+- **Step C gains the tryout mails.** The biggest finding was that tryout **offer / waitlist / release**
+  emails never got the treatment the dues notices did — they named the club only by luck (an optional
+  argument) and never explained why an unsubscribe hadn't stopped them. All three now carry the same
+  footer. **Walk one of each**, not just a dues notice.
+- **Step B's result line changed.** The broadcast confirmation now reads
+  "N delivered, N not sent (unsubscribed), N skipped (no email on file)" — the three numbers should
+  add up to your audience. Before the fix the unsubscribed ones vanished from the count entirely.
+  Also: a registration whose email is only whitespace now correctly reads as "no email on file"
+  rather than "unsubscribed".
+- **Unsubscribe wording**: the footer now says "Unsubscribe from {club} emails" rather than
+  "team emails" — it ships on league-wide broadcasts, which are not team mail.
+- No behaviour change to who receives what beyond the above; the rest were internal (stable ordering
+  on the opt-out reads so a large club cannot silently skip one, and parallel lookups so opening the
+  coach announcement composer stays fast).
+
+⚠ **Two PRE-EXISTING issues found and deliberately NOT fixed** (they predate this work and need their
+own unit — worth knowing before you test a big season): the league broadcast sends one email at a
+time with no cap, so a season with a few hundred registrations may run long enough to time out; and
+its registration lookup stops at 1000 rows, so a season larger than that would silently miss
+registrants. **If you test with a large season and numbers look short, suspect these before the
+new code.**
+
+## §57 · Closing the season — one page, and the end of read-only-everywhere
+
+**Built 2026-08-18 · plan `COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN.md` · mockups artifact `57e9bfd3`
+· NO migration.**
+
+⚠⚠ **THIS SUPERSEDES PART OF FIVE CLOSED SECTIONS, and this paragraph is here so two accounts of the
+same screens do not stand side by side.** §39, §40, §42, §52 and §53 were all closed 2026-08-17 and
+every one of them describes, in part, a portal that renders a finished season read-only:
+
+- **§40 (history in place)** — its central claim was *"a team between seasons keeps its whole nav in
+  its usual order; records render read-only"*. **That is now false.** A team with no live season has
+  ONE door. The half of §40 that still holds is the absence it protected: no season dial, no second
+  nav, no thirty screens learning a year.
+- **§39 / §42 / §52 / §53** — anywhere they say a screen renders "read-only", "as a record" or
+  "Complete" for a finished season, read this section instead. What they proved about the LIVE
+  behaviour of those screens is untouched.
+- Their walks are **not owed again**. Nothing about a live season changed.
+
+### What to walk
+
+**A · The nudge, and the two doors** (standalone Premium team, head coach)
+On a team whose season has gone quiet, the Overview's **Season check** should now read *"Is the
+{year} season finished?"* with **Start next season** as the button and **"No next season — just
+close {year}"** as a quiet answer beside it. ⚠ The old button said "Close out the season" and opened
+the rollover sheet — it closed nothing, which is the defect this whole section exists for.
+
+**B · Closing** — press the quiet answer. The dialog should name what is outstanding (families still
+owing, money waiting to go back) and **let you close anyway**. Try it with money outstanding: the
+warning is a warning, never a block. "Not yet — take me to Money" should actually land you on Money.
+⚠ A coach without money access should see no money block at all — not a zeroed one.
+
+**C · The page it becomes.** After closing you land on a page **titled with the season's name**
+("2025 Season", not "Season's End"). It holds Season Wrapped, four **shut** shelves — Results, The
+roster, The practices you ran, How the season added up — and one door, "Compare every season".
+⚠ Open each shelf and confirm **nothing inside is a link**: no game opens the schedule, no player
+opens a profile. That is the whole rule for a record.
+
+**D · The deletion.** With that season closed, try to reach Roster, Money, Schedule, Lineups — from
+a bookmark, a typed URL, anything. Every one should land you back on the season's page. ⚠ The
+**menu itself** should be that one door: desktop sidebar AND the phone's bottom bar AND the phone's
+**More sheet** (the More sheet was the half that was nearly missed — check it on a phone).
+
+**E · Reopening.** On the closed season's page, "Closed this by mistake? Reopen {season}" should put
+the team straight back to a normal live portal. ⚠ **Start a new season first, then look again** — the
+offer must be GONE, because giving the old season back would mean deleting the new one. That undo is
+deliberately not built.
+
+**F · Start next season.** The dialog should lead with **"This closes the {year} season"** and say
+plainly that it becomes a record you cannot change. ⚠ Then press **"See {year}'s Season Wrapped"** on
+the success screen — it used to open the season you had just STARTED and announce it was still under
+way. It should open the one you just finished.
+
+**G · Nothing changed for a live season.** The whole point of deleting the middle state is that the
+week after your last game is untouched: money, awards, documents, family emails and tryouts all work
+exactly as before. Walk a live team and confirm nothing has gone quiet.
+
+**H · A club-owned team** should be offered neither door, and should still see the sentence saying
+its club manages seasons.
+
+### Known and deliberate
+
+- **A closed season shows much less than it used to.** Every record is still stored in full; the page
+  can grow a shelf later. If something you actually wanted is missing, that is the feedback.
+- **The phone bar has two tabs on a closed season** (the season's page + More), stretched to half the
+  width each. It works; it was not designed. Flag it if it reads badly.
+- **`npm run check:layout` was NOT run for this section.** The rendered sweep needs a fixture with a
+  closed season and no next one, which does not exist yet — seeding it is the next unit of work.
+  Unit tests (2140, all passing), typecheck and lint all ran. ⚠ Treat the closed-season page's
+  LAYOUT as unverified: the logic is guarded, the pixels are not.
+
+**§57 addendum — the first owner walk (2026-08-18), four findings, three fixed:**
+
+1. **"Compare every season" looped.** It pointed at the compare list under Insights — which a team
+   with no live season cannot reach — so it redirected straight back to the page it was pressed on.
+   **The door is removed from the closed-season page.** ⚠ **Consequence, stated rather than
+   discovered later:** a coach between seasons can now reach their NEWEST closed season and no
+   earlier one. Every year is still there and reachable the moment a new season starts. If that gap
+   bites, the fix is a quiet list of the team's other seasons ON this page — never a second page.
+   (The same door on the "season is still under way" screen is KEPT: that screen is reached by
+   typing the URL on a live team, the link works, and without it the screen dead-ends.)
+2. **The practices shelf's rows looped, for the same reason.** Every row opens the read-only
+   past-plan page, which the gate bounced back. **The gate now allows the closed season's two
+   RECORD surfaces — the page, and that one plan page — and nothing else.** Practice plans stay on
+   the page: they are an owner-approved shelf (2026-08-16) and the rows are records with no way to
+   act on them. ⚠ Re-walk the shelf: a row should open the plan exactly as written, and its back
+   link should return here.
+3. **The club-team sentence was misleading.** It said "when you're on next season's coaching staff,
+   the team reappears here" — vocabulary left from the per-season access model deleted on
+   2026-08-16. Staff is a fact about the TEAM: a coach is on it or they are not, and losing it loses
+   the whole portal, not one year. It now reads: *"Seasons are managed by {club}. When they start
+   the next one, this team's portal opens up again — you don't need to do anything."*
+4. **Results presentation — OPEN, not fixed.** With four seeded games the open shelf is fine; a real
+   season of 30–40 is a wall of rows. Options put to the owner: a summary strip first (record split
+   by league / tournament / scrimmage, home vs away, scoring for and against) with the game list
+   beneath; or grouping the list by month; or both. **No change made pending that decision.**

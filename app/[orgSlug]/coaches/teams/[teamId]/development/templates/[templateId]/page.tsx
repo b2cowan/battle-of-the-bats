@@ -164,7 +164,7 @@ export default function CoachPlanTemplateEditorPage({
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
-    return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
+    return <CoachNotOnTeam />;
   }
 
   const canWrite = data?.canWrite ?? false;

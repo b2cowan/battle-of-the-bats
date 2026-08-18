@@ -73,13 +73,21 @@ export default function CoachesInsightsPage({
    */
   const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
-  const isRecord = page.isReadOnly;
+  /**
+   * ⚠ `isRecord` is GONE (2026-08-18). It hid the playing-time and scouting doors, suppressed the
+   * Ask bar, withheld "today" from the findings engine and swapped nine sentences into the past
+   * tense — every one of them describing a finished season, which this hub is no longer rendered
+   * for. The two RULINGS it enforced are untouched and live where enforcement belongs: playing-time
+   * analytics and the opponent scouting book are live-season-only, build-enforced in
+   * `tests/unit/coach-history-endpoint-guard.test.ts`, which fails if either route learns to serve
+   * a season it was handed.
+   */
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(page.teamSport ?? DEFAULT_SPORT);
   const periodsWord = sportPack.periodLabelPlural.toLowerCase();
   const scoreUnitWord = sportPack.score.unit.toLowerCase();
   /** "that season" vs "this season" — said in several summary lines; decided once. */
-  const seasonWord = isRecord ? 'that season' : 'this season';
+  const seasonWord = 'this season';
 
   /**
    * ⚠⚠ HIDDEN ON A FINISHED SEASON, AND THE GATE IS THE FETCH AS WELL AS THE TILE. Playing-time
@@ -94,7 +102,7 @@ export default function CoachesInsightsPage({
    * fails if that route ever learns to serve a season it was handed. Reversing it needs a new
    * owner ruling AND an answer to the recomputation problem — not an edit here.
    */
-  const canLineups = !isRecord && !!caps?.lineups;
+  const canLineups = !!caps?.lineups;
   /**
    * ⚠ A1 (2026-08-03): this WAS one `canRoster` flag reading roster visibility, and it did two
    * jobs — deciding whether to fetch the attendance report, and whether to offer the door to it.
@@ -174,7 +182,7 @@ export default function CoachesInsightsPage({
    * The per-season facts a coach wants from it — who we played, what the score was — are already
    * behind the results and schedule doors.
    */
-  const canScouting = !isRecord && !!caps?.schedule;
+  const canScouting = !!caps?.schedule;
   const [oppSummary, setOppSummary] = useState<{ total: number; withBook: number } | null>(null);
   useEffect(() => {
     setOppSummary(null);
@@ -426,7 +434,7 @@ export default function CoachesInsightsPage({
     // ⚠ NO "today" IN A RECORD. The engine's one time-relative rule ("$X due in 3 days") gates on
     // this being present, and a deadline countdown against a season that ended is nonsense dressed
     // as urgency. Every other finding is a statement about what happened, which still reads true.
-    todayISO: isRecord ? undefined : (todayISO || undefined),
+    todayISO: todayISO || undefined,
   });
   // Hrefs come from the ONE shared resolver the ask bar's receipts use — the local copy of this
   // map covered five of the same seven destinations, which is how a finding and a receipt end up
@@ -524,22 +532,16 @@ export default function CoachesInsightsPage({
             // Insights is DERIVED — there is nothing to do here, so this teaches (quiet variant,
             // no CTA) and points at the sections that feed it. The report doorways below are the
             // real actions and stay visible.
-            // ⚠ A record gets PAST TENSE and no promise of anything arriving — nothing will, the
-            // season is over. Teaching a coach how to fill in a season that has ended is the same
-            // mistake the results page and the attendance report both corrected the day before.
+            // ⚠ The past-tense record variant is DELETED (2026-08-18) — a season that has ended
+            // does not render this hub at all, so the only empty state left is the true one: a
+            // live season that has not started filling in yet.
             <CoachEmptyState
               quiet
               icon={<BarChart3 size={20} aria-hidden />}
-              headline={isRecord ? 'This season was never filled in' : "Your season hasn't started filling in yet"}
-              description={isRecord
-                ? 'Insights is a season read back to you — record and form, attendance and dues. Nothing was recorded for this one.'
-                : 'Insights is your season read back to you — record and form, playing time, attendance and dues. You never enter anything on this page.'}
-              payoff={isRecord
-                ? 'Every figure here is built from what was recorded elsewhere in the portal during the season. No game result, lineup or attendance was entered, so there is nothing to read back.'
-                : `Every figure is built from what you record elsewhere in the portal. Enter one game result, save one lineup, or take attendance once, and the matching part of this page appears — record, form, ${scoreUnitWord} difference and more.`}
-              blocker={isRecord
-                ? 'Nothing is invented to fill the space, so a season that was never recorded stays honestly blank.'
-                : 'Nothing is invented to fill the space, so a brand-new season is honestly blank here.'}
+              headline="Your season hasn't started filling in yet"
+              description="Insights is your season read back to you — record and form, playing time, attendance and dues. You never enter anything on this page."
+              payoff={`Every figure is built from what you record elsewhere in the portal. Enter one game result, save one lineup, or take attendance once, and the matching part of this page appears — record, form, ${scoreUnitWord} difference and more.`}
+              blocker="Nothing is invented to fill the space, so a brand-new season is honestly blank here."
             />
           )}
 
@@ -548,9 +550,8 @@ export default function CoachesInsightsPage({
             <p className={styles.sectionKicker} id="insights-standout" style={{ margin: '0 0 0.6rem' }}>What stands out</p>
             {findings.length === 0 ? (
               <p className={styles.insightsCoQuiet}>
-                {isRecord
-                  ? 'Nothing stood out in this season’s record.'
-                  : 'Nothing stands out yet — as you log games, lineups and attendance, this is where we’ll flag what’s worth knowing.'}
+                Nothing stands out yet — as you log games, lineups and attendance, this is where
+                we’ll flag what’s worth knowing.
               </p>
             ) : (
               findings.map((f, i) => (
@@ -575,10 +576,10 @@ export default function CoachesInsightsPage({
               must REMOUNT this, never hand it a new team while it still holds the old team's
               answer. Today the page's `loadedFor` gate happens to unmount it anyway, but that is
               the parent's branch structure, not a property of the bar. */}
-          {/* ⚠ NOT ON A FINISHED SEASON. The bar is an INSTRUMENT: it answers from the ACTIVE
-              season, so on a season that has ended every answer would be about a season that has
-              not started. Absent rather than quietly misleading. */}
-          {!isRecord && assignment && (
+          {/* ⚠ The finished-season suppression is DELETED (2026-08-18). The bar is an INSTRUMENT that
+              answers from the ACTIVE season, and this hub is no longer rendered for one that has
+              ended, so the mismatch it guarded against cannot arise. */}
+          {assignment && (
             <CoachAskBar
               key={teamId}
               orgSlug={orgSlug}
@@ -603,9 +604,7 @@ export default function CoachesInsightsPage({
                   ? `${recStr(record)} ${seasonWord}${pastSeasonsClause}`
                   : finalized.length > 0
                     ? `${finalized.length} result${finalized.length === 1 ? '' : 's'} ${seasonWord}${pastSeasonsClause}`
-                    : isRecord
-                      ? 'No result was recorded in this season'
-                      : 'First season under way — your first result shows up here'}
+                    : 'First season under way — your first result shows up here'}
               </span>
             </Link>
             {canLineups && (
@@ -640,9 +639,7 @@ export default function CoachesInsightsPage({
                     ? 'Couldn’t load — refresh to try again'
                     : attendancePct != null
                       ? `${attendancePct}% team rate${attendanceBelow > 0 ? ` · ${attendanceBelow} player${attendanceBelow === 1 ? '' : 's'} below ${attendanceBarPct}%` : ''}`
-                      : isRecord
-                        ? 'No attendance was taken in this season'
-                        : 'Take attendance at a practice or game to start'}
+                      : 'Take attendance at a practice or game to start'}
                 </span>
               </Link>
             )}
@@ -654,9 +651,7 @@ export default function CoachesInsightsPage({
                     ? 'Couldn’t load — refresh to try again'
                     : duesPct != null
                       ? `${duesPct}% collected${duesStats && duesStats.neverPaidCount > 0 ? ` · ${duesStats.neverPaidCount} never paid` : ''} — in Money`
-                      : isRecord
-                        ? 'No dues were set up in this season'
-                        : 'Set up dues in Money to track collections'}
+                      : 'Set up dues in Money to track collections'}
                 </span>
               </Link>
             )}
@@ -665,10 +660,8 @@ export default function CoachesInsightsPage({
                 <span className={styles.insightsDoorQ}>Who&apos;s earning it?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {awardsSummary && awardsSummary.total > 0
-                    ? `${awardsSummary.total} award${awardsSummary.total === 1 ? '' : 's'} given${awardsSummary.leaderName ? ` · ${awardsSummary.leaderName.split(' ')[0]} ${isRecord ? 'led' : 'leads'} with ${awardsSummary.leaderCount}` : ''}`
-                    : isRecord
-                      ? 'No awards were given in this season'
-                      : 'Give your first award after a game to start the leaderboard'}
+                    ? `${awardsSummary.total} award${awardsSummary.total === 1 ? '' : 's'} given${awardsSummary.leaderName ? ` · ${awardsSummary.leaderName.split(' ')[0]} leads with ${awardsSummary.leaderCount}` : ''}`
+                    : 'Give your first award after a game to start the leaderboard'}
                 </span>
               </Link>
             )}
@@ -679,10 +672,8 @@ export default function CoachesInsightsPage({
                 <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {devSummary && (devSummary.withMeasurable > 0 || devSummary.withFocus > 0)
-                    ? `${devSummary.withMeasurable} of ${devSummary.rosterCount} player${devSummary.rosterCount === 1 ? '' : 's'} ${isRecord ? 'had' : 'have'} a measurable · ${devSummary.withFocus} with an ${isRecord ? 'open' : 'active'} focus area`
-                    : isRecord
-                      ? 'No measurables or focus areas were recorded in this season'
-                      : 'Run an evaluation session or add a focus area to start the coverage picture'}
+                    ? `${devSummary.withMeasurable} of ${devSummary.rosterCount} player${devSummary.rosterCount === 1 ? '' : 's'} have a measurable · ${devSummary.withFocus} with an active focus area`
+                    : 'Run an evaluation session or add a focus area to start the coverage picture'}
                 </span>
               </Link>
             )}

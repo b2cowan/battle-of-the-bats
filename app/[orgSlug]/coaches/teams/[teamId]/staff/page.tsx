@@ -47,18 +47,11 @@ export default function CoachStaffPage({
       />
 
       {/*
-        M1 (owner ruling 2026-08-16): staff belongs to the TEAM, not to a season — one list,
-        wherever you opened it from. The old per-season "who may still look at this finished
-        season" mode (Chunk F governing rule 3) is retired with the per-season access model.
-        A stale archive URL still lands here; the panel it finds manages the team's staff.
+        ⚠ The finished-season note that stood here is DELETED (2026-08-18). Staff belongs to the
+        TEAM, not to a season (M1, 2026-08-16), and this note existed only to say so to a coach who
+        had arrived from an archive URL — a state that no longer reaches this page at all, because
+        a team with no live season lands on its closed-season page. One of the twenty-nine.
       */}
-      {page.isReadOnly && isHeadCoach && (
-        <div className={styles.seasonReadAccessNote} role="note">
-          <strong>Staff belongs to the team, not to a season.</strong>{' '}
-          This is your team&apos;s one staff list — changes here apply everywhere at once. Who
-          coached this finished season is part of its record and doesn&apos;t change.
-        </div>
-      )}
 
       {isHeadCoach ? (
         <CoachStaffPanel orgSlug={orgSlug} teamId={teamId} />

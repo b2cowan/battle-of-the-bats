@@ -223,7 +223,7 @@ export default function CoachOpponentCardPage({
   }, [data, filterTag]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
+  if (!assignment) return <CoachNotOnTeam />;
   if (loading) return <div className={styles.loadingState}>Loading…</div>;
   if (error || !data) {
     return (

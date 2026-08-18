@@ -926,13 +926,15 @@ function MoneyRecordsPanel({
     setFormOpen(true);
   }
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all, so a capability check is
+  // just a capability check.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
+  const canWriteMoney = (page.capabilities?.money === 'write');
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
   const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
   /** The category+item pairs this team budgeted for — rebuilt only when the plan reloads, not on

@@ -25,11 +25,24 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const COACH_PAGES = join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]');
 const read = (...seg: string[]) => readFileSync(join(COACH_PAGES, ...seg, 'page.tsx'), 'utf8');
+
+/**
+ * Every `.tsx` under the team segment — pages AND the panels they render, because the read-only
+ * branches this file guards against lived in both (`accounting/dues/panel.tsx` held one).
+ */
+function pageFilesUnder(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) pageFilesUnder(full, out);
+    else if (/\.tsx$/.test(entry)) out.push(full);
+  }
+  return out;
+}
 
 /**
  * ⚠⚠ ABSENCE ASSERTIONS MUST READ CODE, NOT PROSE — found the hard way, by these very tests failing
@@ -51,29 +64,27 @@ function code(source: string): string {
     .replace(/^\s*\/\/.*$/gm, '');
 }
 
-const hub = read('history');
+// ⚠ The Insights hub no longer appears here: every assertion that read it was about the
+// finished-season copy of that page, which is deleted (2026-08-18). The hub's live behaviour is
+// covered by its own tests; what replaced these is "a closed season is one page" below.
 const results = read('history', 'results');
 const awards = read('history', 'awards');
 const certificate = read('history', 'awards', 'certificate');
 const seasonEnd = read('season-end');
 
-describe('a record shows records, and puts the instruments away', () => {
-  it('the awards report offers no way to give, manage or remove an award in a record', () => {
-    for (const control of ['Give an award', 'Manage award types']) {
-      const idx = awards.indexOf(control);
-      assert.ok(idx > 0, `expected the "${control}" control to exist at all`);
-      assert.ok(
-        awards.slice(Math.max(0, idx - 700), idx).includes('!isRecord'),
-        `"${control}" is not gated on the season. A finished season is a record: giving, managing `
-        + 'and removing all ACT on a season and stay live-only. The server refuses them regardless '
-        + '— this is the door, not the lock.',
-      );
-    }
-    assert.match(
-      awards, /\{!isRecord && \(\s*<button\s*\n\s*title="Remove"/,
-      'removing an award UNDOES a night that happened — it must be absent in a record.',
-    );
-  });
+describe('the keepsakes a finished season is opened for', () => {
+  /**
+   * ⚠⚠ **FIVE ASSERTIONS WERE DELETED FROM THIS BLOCK ON 2026-08-18**, and the deletion is the
+   * change rather than a casualty of it. They pinned that a finished season hid "Give an award",
+   * "Manage award types" and the per-row Remove; that four empty states switched to the past tense;
+   * that the Ask bar vanished; that the findings engine lost "today"; and that the results report
+   * dropped its tag filter. Every one described a read-only copy of a live screen — the state the
+   * owner deleted. A closed season is one page, and the live screens are not rendered for it at
+   * all, which is asserted in "a closed season is one page" below.
+   *
+   * ⚠ What survives here is the half that was never about read-only: a certificate is a KEEPSAKE,
+   * and reproducing one is what a coach opens a finished season to do.
+   */
 
   /**
    * ⚠ The keepsake is the deliberate exception, and it is worth pinning so a later tidy-up does not
@@ -99,45 +110,6 @@ describe('a record shows records, and puts the instruments away', () => {
     assert.equal(
       /assignment\.teamName|assignment\.programYearName/.test(code(certificate)), false,
       'the certificate must not read the live assignment for its printed facts.',
-    );
-  });
-
-  /**
-   * ⚠ Past tense, and no promise of anything arriving — nothing will, the season is over. Teaching
-   * a coach how to fill in a season that has ended is the mistake the results page and the
-   * attendance report both corrected first.
-   */
-  it('empty states in a record do not promise a future', () => {
-    assert.match(hub, /isRecord \? 'This season was never filled in'/,
-      'the hub\'s empty state must not teach a coach how to fill in a season that has ended.');
-    assert.match(awards, /isRecord \? 'No awards were given'/,
-      'the awards empty state must not point at a button a record does not have.');
-    assert.match(results, /page\.isReadOnly \? 'No results were recorded' : 'No results yet'/,
-      'the results empty state must be past tense in a record.');
-  });
-
-  it('the hub hides the Ask bar in a record', () => {
-    assert.match(
-      code(hub), /\{!isRecord && assignment && \(\s*<CoachAskBar/,
-      'the Ask bar is an INSTRUMENT: it answers from the ACTIVE season by omission, taking no year '
-      + 'anywhere. On a finished season every answer it gave would be about a different one.',
-    );
-  });
-
-  it('the findings engine gets no "today" in a record', () => {
-    assert.match(
-      hub, /todayISO: isRecord \? undefined/,
-      'the engine\'s one time-relative rule ("$X due in 3 days") gates on todayISO. A deadline '
-      + 'countdown against a season that ended is nonsense dressed as urgency.',
-    );
-  });
-
-  it('the results report hides its tag filter in a record', () => {
-    assert.match(
-      code(results), /const tagChips = page\.isReadOnly \? \[\]/,
-      'game tags are a LIVE vocabulary the coach renames, merges and deletes as the season goes. '
-      + 'Offering a finished season\'s games filtered by a tag invented last week is a page quietly '
-      + 'answering a question nobody could have asked that year.',
     );
   });
 
@@ -472,7 +444,7 @@ describe('the look-back layer', () => {
   it('nothing in the closed money book is a link into a live editor', () => {
     const shelf = seasonEnd.slice(
       seasonEnd.indexOf('sectionId="season-statement"'),
-      seasonEnd.indexOf('{showStartNext && closed && ('),
+      seasonEnd.indexOf('── The one door off this page ──'),
     );
     assert.ok(shelf.length > 400, 'expected to find the statement shelf to inspect');
     for (const forbidden of ['<Link', 'href=', 'moneySectionHref', 'onClick']) {
@@ -528,12 +500,230 @@ describe('the look-back layer', () => {
     );
   });
 
-  it('Season’s End distinguishes the working season from a year it was handed', () => {
-    assert.match(seasonEnd, /const showingWorkingSeason = !yearParam \|\| yearParam === page\.season\?\.programYearId;/,
-      'Season\'s End must know whether the year on screen IS the working one — the page\'s copy '
-      + 'and its promise about the menu both depend on it.');
+  it('the closed-season page distinguishes its own season from a year it was handed', () => {
+    assert.match(seasonEnd, /const showingOwnClosedSeason = !yearParam;/,
+      'the page must know whether it is showing the team\'s OWN closed season or a year the compare '
+      + 'list named. The reopen offer depends on it: reopening acts on the team\'s newest closed '
+      + 'season, so offering it while an OLDER year is on screen would act on a different season '
+      + 'from the one the coach is reading.');
     assert.match(seasonEnd, /if \(seasonStillUnderWay\) \{/,
       'a bare visit while the season is still running must say so, not quietly show the newest '
       + 'finished season\'s Wrapped under a heading that names no year.');
+    assert.match(seasonEnd, /const showReopen = showStartNext && showingOwnClosedSeason;/,
+      'the reopen offer must require BOTH: the team has no live season, and the page is showing '
+      + 'that team\'s own closed season.');
+  });
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * **THE TWO NEW SHELVES** (2026-08-18). Results and the roster join the practices and the money
+   * book, on exactly the same terms — collapsed, and flat.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  for (const [sectionId, label] of [
+    ['season-results', 'Results'],
+    ['season-roster', 'The roster'],
+  ] as const) {
+    it(`the ${label} shelf is COLLAPSED by default`, () => {
+      assert.match(
+        seasonEnd, new RegExp(`sectionId="${sectionId}"[\\s\\S]{0,300}defaultOpen=\\{false\\}`),
+        `the ${label} section must arrive closed. The season's story is what a coach opens this `
+        + 'page for (owner ruling, CLAUDE.md §1.6) — an open shelf pushes it below the fold.',
+      );
+    });
+  }
+
+  /**
+   * ⚠⚠ **FLAT, AND THE ROSTER SHELF IS THE ONE THAT MATTERS MOST.** A player row that opened a
+   * profile would be a record acting as a door into the busiest instrument in the portal — dues,
+   * documents, development, guardians, medical. The route behind it cannot enforce this; only the
+   * caller can, which is why it is asserted here.
+   */
+  it('no row of the results or roster shelf is a link', () => {
+    for (const [sectionId, until] of [
+      ['season-results', 'sectionId="season-roster"'],
+      ['season-roster', '── "The practices you ran"'],
+    ] as const) {
+      const shelf = seasonEnd.slice(seasonEnd.indexOf(`sectionId="${sectionId}"`), seasonEnd.indexOf(until));
+      assert.ok(shelf.length > 400, `expected to find the ${sectionId} shelf to inspect`);
+      for (const forbidden of ['<Link', 'href=', 'onClick']) {
+        assert.equal(
+          code(shelf).includes(forbidden), false,
+          `the ${sectionId} shelf renders "${forbidden}". It must be FLAT — a record must not be an `
+          + 'entrance to a live instrument, and on the live screens these same rows open the game, '
+          + 'the lineup, the attendance sheet and the player profile.',
+        );
+      }
+    }
+  });
+
+  /**
+   * ⚠ The results shelf carries the SCHEDULE grant as well as record access — the same conjunction
+   * the practices shelf carries, because a helper who ran one station holds neither half.
+   */
+  it('the results shelf keys on the schedule grant too', () => {
+    assert.match(
+      seasonEnd, /const mayReadResults = [\s\S]{0,160}canViewSchedule\(page\.capabilities\)/,
+      'results must gate on canViewSchedule as well as record access — who the team played is the '
+      + 'fact the schedule read has always gated.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **NOT ONE FIELD OF GUARDIAN OR MEDICAL DATA MAY LEAVE THE ROSTER READ.** Player names are
+   * baseline (owner, 2026-08-03) and that is why record access alone opens this shelf — the ruling
+   * covers NAMES and stops there. The projection is the whole answer; adding a field to it is a
+   * decision about a minor's private data, not a tidy-up.
+   */
+  it('the season roster read emits names and numbers, and nothing about a family', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-roster', 'route.ts'),
+      'utf8',
+    );
+    for (const forbidden of [
+      'guardianFirstName', 'guardianLastName', 'guardianEmail', 'guardianPhone',
+      'medicalNotes', 'emergencyContactName', 'emergencyContactPhone', 'adminNotes',
+      'playerDateOfBirth',
+    ]) {
+      assert.equal(
+        code(route).includes(forbidden), false,
+        `the season roster route emits "${forbidden}". Record access is the gate here ONLY because `
+        + 'player names are baseline; every field above is behind its own grant on the live roster '
+        + 'and has nothing to do with remembering who played.',
+      );
+    }
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * **THE DELETION** (owner ruling 2026-08-18, COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.5).
+ *
+ * ⚠⚠ These tests replace the whole "a record shows records, and puts the instruments away" block
+ * that stood above them until 2026-08-18 — seven assertions that a finished season rendered
+ * past-tense empty states, hid its write controls and suppressed its live filters. Every one of
+ * them described the state this ruling deletes: seventeen screens carried a finished-season branch
+ * and twelve carried a "comes back next season" notice, and none of them do now.
+ *
+ * They are re-aimed rather than removed, because the property that mattered did not go away — it
+ * MOVED. It used to be "a record must not offer an instrument"; it is now "a closed season must
+ * not render a live screen at all". One gate answers it, and these hold that gate in place.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('a closed season is one page, not a read-only copy of the portal', () => {
+  const gate = readFileSync(
+    join(process.cwd(), 'components', 'coaches', 'CoachTeamSeasonGate.tsx'), 'utf8',
+  );
+  const layout = readFileSync(join(COACH_PAGES, 'layout.tsx'), 'utf8');
+
+  /**
+   * ⚠ The gate must not render `children` for a team with no live season. A prop, a class or an
+   * `aria-disabled` would leave every live page MOUNTED — issuing its fetches, opening its modals
+   * and offering controls the server refuses one at a time. Not mounting is the only version of
+   * this that is true.
+   */
+  it('the gate withholds the live screens rather than dressing them as read-only', () => {
+    assert.match(
+      code(gate), /if \(!redirecting\) return <>\{children\}<\/>;/,
+      'the gate must return children or not — a finished season may not render a live screen in '
+      + 'any form.',
+    );
+    assert.match(
+      code(gate), /RECORD_PATHS\.some\(p =>/,
+      'and it must compare the PATHNAME, so a coach opening an older year with `?year=` is not '
+      + 'bounced back to the default one.',
+    );
+  });
+
+  /**
+   * ⚠⚠ **"ONE PAGE" MEANS ONE PAGE OF THE SEASON, NOT ONE ROUTE — and getting that wrong shipped
+   * a shelf whose every row looped** (found on the first owner walk, 2026-08-18). The practices
+   * shelf's rows open the read-only past-plan page; the gate's first build allowed only
+   * `/season-end`, so every row bounced straight back to the page it was on. It read as a
+   * rendering bug and was a routing one.
+   *
+   * ⚠ The allowance is exactly TWO record surfaces, and this test is what keeps it at two. A third
+   * entry is the twenty-nine branches returning one route at a time — the bar is "a record with no
+   * way to act on it, reached FROM the closed-season page", not "useful".
+   */
+  it('the gate allows the closed season’s record surfaces, and only those', () => {
+    const list = code(gate).match(/const RECORD_PATHS = \[([\s\S]*?)\];/)?.[1] ?? '';
+    assert.ok(list.includes('closedHref'), 'the closed-season page itself must be allowed');
+    assert.ok(
+      list.includes('/history/development/practices/'),
+      'the read-only past-plan page must be allowed — it is what every row of the practices shelf '
+      + 'opens, and without it the shelf loops back to the page it sits on.',
+    );
+    assert.equal(
+      list.split(',').filter(s => s.trim()).length, 2,
+      'exactly two record surfaces. A third is a live screen coming back through the door the '
+      + 'twenty-nine branches used to hold open.',
+    );
+  });
+
+  /**
+   * ⚠ The compare door was REMOVED from the closed-season page (owner, first walk 2026-08-18): it
+   * pointed at the compare list under Insights, which a team with no live season cannot reach — so
+   * for the coach most likely to press it, it redirected back to the page they pressed it on.
+   */
+  it('the closed-season page offers no door that its own gate would bounce', () => {
+    const body = seasonEnd.slice(seasonEnd.indexOf('const seasonTitle'));
+    assert.equal(
+      code(body).includes('/history/results'), false,
+      'the closed-season page links to the compare list again. That list lives under Insights, '
+      + 'which a team with no live season does not have — the link loops, and a link that loops '
+      + 'reads as a broken page rather than as a closed door.',
+    );
+  });
+
+  it('the team layout decides it on the SERVER, from the shared resolvers', () => {
+    assert.match(
+      code(layout), /seasonFinished=\{!live && !!closed\}/,
+      'the layout must pass the decision down, resolved from `resolveLiveSeason` / '
+      + '`resolveClosedSeason`. Deciding it client-side would give a live tool a frame to paint '
+      + 'against a closed season.',
+    );
+  });
+
+  /**
+   * ⚠⚠ THE COUNT IS THE POINT. `isReadOnly` / `isRecord` drove seventeen screens and the twelve
+   * notices rode one component's second branch. This asserts they have not crept back — a single
+   * new `page.isReadOnly` is the thirtieth special case, and the whole ruling was that there should
+   * be none.
+   */
+  it('no coach page has re-grown a finished-season branch', () => {
+    const offenders: string[] = [];
+    for (const file of pageFilesUnder(COACH_PAGES)) {
+      const src = code(readFileSync(file, 'utf8'));
+      if (/page\.isReadOnly|\bisRecord\b|page\.canWrite\(/.test(src)) {
+        offenders.push(file.replace(process.cwd(), '').replace(/\\/g, '/'));
+      }
+    }
+    assert.deepEqual(offenders, [],
+      'A coach page is branching on a finished season again. There is no such state to branch on: '
+      + 'a team with no live season lands on its closed-season page and the live screens are not '
+      + 'rendered at all. If a finished season needs to show something, it needs a SHELF on that '
+      + 'page — not a second version of a live screen.');
+  });
+
+  /**
+   * ⚠ The "this season has finished, it comes back next season" notice is gone from the wall the
+   * twelve live instruments share. What is left is the one true sentence, said once — and the
+   * branch is exactly how the last one grew.
+   */
+  it('the not-on-team wall says one thing', () => {
+    const wall = readFileSync(
+      join(process.cwd(), 'components', 'coaches', 'CoachNotOnTeam.tsx'), 'utf8',
+    );
+    assert.equal(
+      /This season has finished|comes back when the next one starts/.test(code(wall)), false,
+      'the finished-season notice is deleted — a coach whose team has no live season never reaches '
+      + 'these pages now.',
+    );
+    assert.equal(
+      /resolveClosedSeason|resolveClosedAssignment|useCoaches/.test(code(wall)), false,
+      'and it must not read the season at all any more. Reading it is how the second branch would '
+      + 'come back.',
+    );
   });
 });

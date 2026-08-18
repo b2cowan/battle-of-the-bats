@@ -1,20 +1,26 @@
 /**
- * The two pure resolvers behind "which season am I looking at, and is it a record".
+ * The pure resolvers behind "which season am I looking at".
  *
- * Worth testing in isolation because every page's write flags reduce to them, and because the bug
- * they exist to prevent is the one the plan of record got wrong: deciding "read-only" from the
- * TEAM's state rather than the SEASON's, which leaves a rolled-forward team's finished season
- * quietly writable.
+ * ⚠⚠ REWRITTEN 2026-08-18 (COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN). The question these answered used
+ * to be "what is the team's WORKING season, and has it finished?" — because a team between seasons
+ * rendered its whole portal read-only, and `isReadOnly` was what seventeen screens branched on.
+ * That model is deleted. A season is fully LIVE until it is closed, and a closed season is ONE
+ * PAGE, so the two questions are now separate and neither has a "read-only" answer:
  *
- * ⚠ REWRITTEN 2026-08-16 (P2, Design A). The `?year=` half of these resolvers is deleted with the
- * season dial — there is no option list, no `hasChoice`, no `query`, and no per-season capability
- * archaeology. What remains is the question that never depended on the dial: **what is the team's
- * WORKING season, and has it finished?** The tests that asserted switching behaviour died with the
- * feature; the ones below are their surviving half.
+ *   · `resolveLiveSeason` — the team's live season, or null.
+ *   · `resolveClosedSeason` — the team's newest closed season, but ONLY when it has no live one.
+ *
+ * The tests that asserted read-only rendering died with the feature. ⚠ The one property they were
+ * really protecting survives below and still matters: **a rolled-forward team is never itself
+ * "closed"** — the plan of record had that backwards once, and keying off the team's state instead
+ * of the season's would send a mid-season coach to a closed-season page.
+ *
+ * ⚠ The `?year=` half went earlier (P2, 2026-08-16, Design A): no option list, no `hasChoice`, no
+ * `query`, no per-season capability archaeology.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { resolveWorkingSeason, resolveCoachSeasonPage } from '../../lib/coach-season-view.ts';
+import { resolveLiveSeason, resolveClosedSeason, resolveCoachSeasonPage } from '../../lib/coach-season-view.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 
 const HEAD = resolveCoachCapabilities('head_coach', null);
@@ -35,32 +41,14 @@ const closed = (id: string, year: number, capabilities = HEAD) => ({
   programYearStatus: 'completed',
 } as never);
 
-describe('resolveWorkingSeason', () => {
+describe('resolveLiveSeason', () => {
   it('is the live season when the team has one', () => {
-    const s = resolveWorkingSeason([live('y2026', 2026)], [closed('y2025', 2025)], TEAM);
+    const s = resolveLiveSeason([live('y2026', 2026)], TEAM);
     assert.equal(s?.programYearId, 'y2026');
-    assert.equal(s?.isReadOnly, false);
   });
 
-  /**
-   * ⚠ THE CASE THE WHOLE MODEL RESTS ON. A team between seasons is not a lock-out and not an
-   * archive — it is a team whose working season has finished. Every record surface renders it,
-   * read-only, and the nav's first slot becomes Season's End.
-   */
-  it('is the newest finished season when the team has no live one', () => {
-    const s = resolveWorkingSeason([], [closed('y2025', 2025)], TEAM);
-    assert.equal(s?.programYearId, 'y2025');
-    assert.equal(s?.isReadOnly, true);
-  });
-
-  /**
-   * ⚠ A ROLLED-FORWARD TEAM IS NEVER ITSELF "CLOSED". Its finished seasons still exist as records,
-   * but the season on screen is the live one — this is exactly the inversion the plan of record
-   * got backwards, and keying off the team's state would make last year writable.
-   */
-  it('a rolled-forward team is live, even though it has finished seasons behind it', () => {
-    const s = resolveWorkingSeason([live('y2026', 2026)], [closed('y2025', 2025)], TEAM);
-    assert.equal(s?.isReadOnly, false, 'read-only must come from the SEASON, never from the team');
+  it('is null when the team has none — an ordinary state, not a lock-out', () => {
+    assert.equal(resolveLiveSeason([], TEAM), null);
   });
 
   /**
@@ -70,18 +58,38 @@ describe('resolveWorkingSeason', () => {
    * arrival order is arbitrary and must not decide this.
    */
   it('picks the NEWEST live season when a team holds a draft and an active year at once', () => {
-    const s = resolveWorkingSeason([live('y2026', 2026), live('y2027', 2027)], [], TEAM);
+    const s = resolveLiveSeason([live('y2026', 2026), live('y2027', 2027)], TEAM);
     assert.equal(s?.programYearId, 'y2027');
-    assert.equal(s?.isReadOnly, false);
   });
 
   it('ignores other teams’ rows', () => {
     const other = { ...(live('other-y', 2026) as object), teamId: 'team-2' } as never;
-    assert.equal(resolveWorkingSeason([other], [], TEAM), null);
+    assert.equal(resolveLiveSeason([other], TEAM), null);
+  });
+});
+
+describe('resolveClosedSeason', () => {
+  it('is the newest finished season when the team has no live one', () => {
+    const s = resolveClosedSeason([], [closed('y2025', 2025)], TEAM);
+    assert.equal(s?.programYearId, 'y2025');
   });
 
-  it('has no season at all for a team the coach holds nothing on', () => {
-    assert.equal(resolveWorkingSeason([live('y2026', 2026)], [], 'team-nope'), null);
+  /**
+   * ⚠⚠ THE PROPERTY THE WHOLE MODEL RESTS ON. A rolled-forward team's finished seasons still exist
+   * as records, reachable BY NAME from the compare list — but the team is not "between seasons",
+   * and this resolver must not offer one. It is what `CoachTeamSeasonGate` reads to decide whether
+   * to send a coach to the closed-season page, so a wrong answer here would bounce a mid-season
+   * coach out of every live tool they own.
+   */
+  it('is null for a rolled-forward team, even though it has finished seasons behind it', () => {
+    assert.equal(
+      resolveClosedSeason([live('y2026', 2026)], [closed('y2025', 2025)], TEAM), null,
+      'a team with a live season is never "between seasons" — the closed years are reached by name',
+    );
+  });
+
+  it('is null for a team the coach holds nothing on', () => {
+    assert.equal(resolveClosedSeason([], [closed('y2025', 2025)], 'team-nope'), null);
   });
 });
 
@@ -93,8 +101,7 @@ describe('resolveCoachSeasonPage', () => {
    * ⚠ CAPABILITIES ARE THE MEMBER'S CURRENT ONES, IN EVERY SEASON (owner ruling 2026-08-16, M1).
    * Chunk F's governing rule 1 — "resolve the grants from the viewed season's own assignment row"
    * — is retired: it existed because ACCESS itself was historical, and once only current staff hold
-   * access at all, their current grant is the honest one. There is exactly one capability set
-   * anywhere, so this now holds by construction rather than by care.
+   * access at all, their current grant is the honest one.
    */
   it('hands the page the member’s current grants', () => {
     const page = resolveCoachSeasonPage(rolledForward as never, 'org', TEAM);
@@ -102,27 +109,32 @@ describe('resolveCoachSeasonPage', () => {
     assert.equal(page.programYearName, '2026');
   });
 
-  it('canWrite() refuses everything once the season has finished, whatever the grant says', () => {
-    const finished = resolveCoachSeasonPage(betweenSeasons as never, 'org', TEAM);
-    assert.equal(finished.isReadOnly, true);
-    assert.equal(finished.canWrite(true), false, 'nothing is writable in a finished season');
-
-    const liveSeason = resolveCoachSeasonPage(rolledForward as never, 'org', TEAM);
-    assert.equal(liveSeason.canWrite(true), true);
-    assert.equal(liveSeason.canWrite(false), false, 'read-only never GRANTS a capability');
-  });
-
-  it('a coach between seasons still has access, and reads that season', () => {
+  /**
+   * ⚠⚠ `hasAccess` MEANS "THIS COACH HAS A LIVE SEASON HERE", not "is on this team's staff" — the
+   * meaning changed on 2026-08-18 and the difference is the whole deletion. A live page uses it to
+   * decide whether to render its instrument at all; `closedSeason` is what tells a coach between
+   * seasons apart from a genuine stranger, so neither state is described by a read-only copy of a
+   * live screen any more.
+   */
+  it('a coach between seasons has no live season, and their closed one instead', () => {
     const page = resolveCoachSeasonPage(betweenSeasons as never, 'org', TEAM);
-    assert.equal(page.hasAccess, true,
-      'between seasons is an ordinary state, not a lock-out — the whole reason the working season '
-      + 'falls back to the newest finished one');
+    assert.equal(page.season, null);
+    assert.equal(page.hasAccess, false, 'no LIVE season — the live tools do not render');
+    assert.equal(page.closedSeason?.programYearName, '2025',
+      'but they are still staff, and this is what says so — the page they land on is that season');
     assert.equal(page.programYearName, '2025');
   });
 
-  it('reports no access for a team the coach is not on', () => {
+  it('a rolled-forward team is live, and offers no closed season to land on', () => {
+    const page = resolveCoachSeasonPage(rolledForward as never, 'org', TEAM);
+    assert.equal(page.hasAccess, true);
+    assert.equal(page.closedSeason, null);
+  });
+
+  it('reports nothing at all for a team the coach is not on', () => {
     const page = resolveCoachSeasonPage(rolledForward as never, 'org', 'team-nope');
     assert.equal(page.hasAccess, false);
     assert.equal(page.season, null);
+    assert.equal(page.closedSeason, null);
   });
 });

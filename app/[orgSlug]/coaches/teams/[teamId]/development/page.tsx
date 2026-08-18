@@ -36,8 +36,9 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
   const { assignments, loading: assignmentsLoading } = useCoaches();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   // Chunk F: THAT season's grants (governing rule 1), not the coach's current ones.
@@ -51,7 +52,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const [busy, setBusy] = useState(false);
   // ONE source for the write flag, resilient to the sessions GET 404'ing (no active program
   // year must not silently lock the test list for a legit head coach).
-  const canWrite = page.canWrite(caps ? canWriteDevelopment(caps) : false);
+  const canWrite = (caps ? canWriteDevelopment(caps) : false);
 
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
@@ -317,7 +318,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
    * that dead-ends is the same bug wearing a politer face (CLAUDE.md), whether the wall is a
    * finished season or a missing grant.
    */
-  const practiceRoomsOpen = !page.isReadOnly && !!caps && canManageSchedule(caps);
+  const practiceRoomsOpen = !!caps && canManageSchedule(caps);
 
   const drillsDoor = !practiceRoomsOpen ? null : (
     <Link href={`${base}/development/drills`} className={styles.insightsDoor}>

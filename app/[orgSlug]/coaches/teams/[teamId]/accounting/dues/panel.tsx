@@ -414,8 +414,10 @@ export function PlayerDuesPanel({
   const [choiceAmount, setChoiceAmount] = useState('');
   const [choiceSaving, setChoiceSaving] = useState(false);
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all, so a capability check is
+  // just a capability check.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -1100,7 +1102,7 @@ export function PlayerDuesPanel({
 
   // Reminders (both proximity + never-paid) require money = write. Read-only money coaches
   // see the list but no send buttons.
-  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
+  const moneyCanWrite = (page.capabilities?.money === 'write');
 
   // The one sentence the Pay out sheet says when the coach types more than the family has left
   // in credit. The amount and the over-ceiling test now live inside the shared sheet
@@ -1655,20 +1657,13 @@ export function PlayerDuesPanel({
               a family's far-end installments keep shrinking while their next bill does not.
               Move the control, keep the fact. Same shape the Depth Chart uses for lineup caps.
 
-              ⚠⚠ ABSENT ENTIRELY IN AN ARCHIVE, and the reason is worth keeping. This line first
-              shipped showing the policy in a past season too, on the argument that a finished
-              season should still explain its own numbers. It cannot: the settings route this
-              reads resolves the team's ACTIVE program year and ignores the `?year=` the panel
-              sends it, so an archived season would have printed TODAY's policy over LAST year's
-              table — governing rule 3 of the archive ruling ("does it show what the coach could
-              see AT THE TIME, not today?") failed by a surface whose own comment claimed to
-              satisfy it. A record page stating a live setting is worse than a record page
-              stating nothing, so in a read-only season the table simply stands on its own.
-
-              Serving the season's OWN policy would mean joining the season-read rail, and that
-              is a deliberate decision point (the allow-list fails the build until someone edits
-              it) — logged as an open question in the plan rather than taken here. */}
-          {showSeasonTotals && moneySettingsLoaded && !page.isReadOnly && (
+              ⚠ The archive suppression that stood here is DELETED (2026-08-18), and the reason it
+              existed is worth keeping: the settings route this reads resolves the team's ACTIVE
+              program year, so on a finished season it would have printed TODAY's policy over LAST
+              year's table. That state no longer reaches this panel — a team with no live season
+              lands on its closed-season page — so the line is simply the live season's policy,
+              which is the only season this screen now describes. */}
+          {showSeasonTotals && moneySettingsLoaded && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap',
               margin: '0.9rem 0.15rem 0', fontSize: '0.78rem',

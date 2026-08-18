@@ -1,18 +1,19 @@
 'use client';
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Trophy } from 'lucide-react';
-import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedSeason, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
-import { canReadPastPracticePlans, canViewMoney, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canReadPastPracticePlans, canViewMoney, canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import { formatInOrgZone } from '@/lib/timezone';
+import { formatRecord } from '@/lib/coach-season-record';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -51,37 +52,62 @@ type SeasonPractice = {
   tags: { id: string; name: string }[];
 };
 
+/** One row of "Results" — a game that was played and decided. */
+type SeasonGame = {
+  eventId: string;
+  startsAt: string;
+  eventType: string;
+  name: string;
+  opponent: string | null;
+  homeAway: 'home' | 'away' | 'neutral' | null;
+  teamScore: number | null;
+  opponentScore: number | null;
+  result: 'win' | 'loss' | 'tie' | null;
+};
+
+/** One row of "The roster" — who was on the team that season. */
+type SeasonPlayer = {
+  playerId: string;
+  firstName: string;
+  lastName: string | null;
+  number: string | null;
+  primaryPosition: string | null;
+  status: string;
+};
+
 /**
- * Season's End — the landing surface for a finished season (Batch 3, P0 #1; approved mockups =
- * spec). Leads with Season Wrapped, says how the families engaged with it, points at the compare
- * list, and names the honest path to the next season (standalone head coach: start it; club coach:
- * the team reappears when the admin staffs next season).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * **THE CLOSED-SEASON PAGE** — everything a finished season is (owner ruling 2026-08-18,
+ * COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.3; the mockups are the spec).
  *
- * ⚠ **THE LAST PAGE IN THE PORTAL THAT READS A YEAR** (P2, 2026-08-16, Design A). With the season
- * dial deleted, `?year=` survives here and on the `wrapped` route it calls — and nowhere else —
- * because the compare list's per-year "Season Wrapped →" links are the look-back layer's only
- * route to a season that is not the team's working one. Without the parameter this page IS the
- * working season, which is how a coach lands here when their season ends.
+ * The season's story, four collapsed shelves, and the door to the compare list. Nothing else — no
+ * nav for this season, no read-only copies of the live tools. The menu belongs to the TEAM and
+ * always shows the season the team is on now.
  *
- * Reached three ways, all of them deliberate: the nav's first slot once the working season has
- * finished, the Overview's redirect for the same state, and a per-year link from the compare list.
+ * ⚠⚠ **THIS IS NOW THE WHOLE OF A FINISHED SEASON.** It used to be the landing screen of a portal
+ * that had turned itself into a read-only copy of itself — seventeen screens with a finished-season
+ * branch, twelve explaining they would be back next year. All twenty-nine are deleted;
+ * `CoachTeamSeasonGate` sends a coach whose team has no live season here before any of them mount.
+ * If this page is missing something a coach needs, the answer is to add a shelf, never to reopen a
+ * live screen against a closed year.
  *
- * ⚠ **P3 C3 (2026-08-16) MADE THIS PAGE A DOOR AS WELL AS A DESTINATION.** It grows one collapsed
- * section — the practices that season, each row opening the read-only plan page that already
- * ships. That is why this page is the shelf's home: it already describes ONE NAMED SEASON, so
- * nothing here can be mistaken for the live year, and no live season renders it, so the busy
- * screens pay nothing. The section carries a NARROWER gate than the page — see `mayReadPractices`.
+ * ⚠ **IT NAMES THE SEASON IN ITS OWN TITLE**, and that is load-bearing rather than decorative. The
+ * page-title season chip was deleted with the season dial (it was a switcher wearing a label), so
+ * this title is the whole answer to "which year am I reading?" — the question every shelf's third
+ * justification defers to. A roster in particular looks identical from year to year.
  *
- * ⚠ **P4 (2026-08-17) ADDED THE SECOND AND LAST SHELF** — the closed money book, this season's
- * statement, flattened. Both shelves are collapsed by default and both are absent during a live
- * season; what separates them is WHO, and that is the thing to keep straight: practices key on
- * `canReadPastPracticePlans`, money on `canViewMoney`. An assistant with attendance and lineups but
- * no money access reads one and not the other. Three gates now live on this page (the page itself,
- * plus one per shelf) — a fourth section must state which of them it belongs to, or it will inherit
- * whichever it happens to be pasted beside.
+ * ⚠ **THE LAST PAGE IN THE PORTAL THAT READS A YEAR.** `?year=` survives here and on the routes it
+ * calls, and nowhere else, because the compare list's per-year links are the look-back layer's only
+ * route to a season that is not the team's own current one. Without the parameter this page is the
+ * team's newest closed season — which is how a coach lands here when their season ends.
  *
- * ⚠ There is no P5. The look-back layer is closed at two shelves by ruling; a third needs a new
- * owner decision, not a phase that is already approved.
+ * ⚠ **FOUR GATES LIVE ON THIS PAGE**, and a fifth shelf must state which it belongs to rather than
+ * inheriting whichever it is pasted beside: the page itself (`hasRecordAccess`), practices
+ * (`canReadPastPracticePlans` — the plan door's narrower pair), money (`canViewMoney`), results
+ * (record access AND schedule). The roster shelf rides the page's own gate, because player names
+ * are baseline (owner, 2026-08-03) — and that ruling covers names and stops there, which is why the
+ * route behind it emits no guardian or medical field at all.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 export default function SeasonEndPage({
   params,
@@ -89,26 +115,25 @@ export default function SeasonEndPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(params);
-  const { assignments, closedAssignments, loading, refresh } = useCoaches();
+  const { assignments, closedAssignments, loading } = useCoaches();
   const { currentOrg } = useOrg();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const yearParam = searchParams.get('year');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const active = assignments.find(a => a.teamId === teamId) ?? null;
-  // Shared closed-state predicate (lib/coaches-context.tsx) — same rule as the navs.
-  const closed = resolveClosedAssignment(assignments, closedAssignments, teamId);
+  // Shared closed-season predicate (lib/coach-season-view.ts) — the same rule the navs and the
+  // season gate run, so no surface can disagree about whether this team has a live season.
+  const closed = resolveClosedSeason(assignments, closedAssignments, teamId);
   const page = useCoachSeasonPage(orgSlug, teamId);
   /**
-   * ⚠ WHICH season this page is describing is NOT `page.isReadOnly`. That answers for the team's
-   * WORKING season; this page can also be handed a specific past year by the compare list, while
-   * the team is mid-season. Everything below therefore reads the year from the URL when it is
-   * there and falls back to the working season only when it is not.
+   * ⚠ WHICH season this page is describing. Without a year it is the team's own newest closed
+   * season; with one it is whichever the compare list named — which can be an older year while the
+   * team is mid-season. Everything below therefore reads the year from the URL when it is there.
    */
-  const showingWorkingSeason = !yearParam || yearParam === page.season?.programYearId;
-  /** The working season is still under way and no year was named ⇒ there is no end to look at. */
-  const seasonStillUnderWay = showingWorkingSeason && !!page.season && !page.season.isReadOnly;
+  const showingOwnClosedSeason = !yearParam;
+  /** The team is mid-season and no year was named ⇒ there is no end to look at. */
+  const seasonStillUnderWay = showingOwnClosedSeason && !!page.season;
 
   const [wrapped, setWrapped] = useState<SeasonWrappedPayload | null>(null);
   /** Counts only — the route omits this entirely for a coach without guardian-contact access. */
@@ -116,6 +141,8 @@ export default function SeasonEndPage({
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
   const [rolloverOpen, setRolloverOpen] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState('');
   /**
    * "The practices you ran" (P3 C3). `null` until answered, so an empty season renders the section
    * saying so rather than a permanent spinner.
@@ -129,13 +156,19 @@ export default function SeasonEndPage({
   const [practicesTruncated, setPracticesTruncated] = useState(false);
   /**
    * ⚠ The season id comes back FROM THE ROUTE, never from `yearParam` or the nav. This page renders
-   * with no year at all in the everyday between-seasons case, and every row's link has to name the
-   * season it belongs to — taking it from the answer is the only source that is right in both
-   * cases and cannot drift from the rows beside it.
+   * with no year at all in the everyday case, and every row's link has to name the season it
+   * belongs to — taking it from the answer is the only source that is right in both cases and
+   * cannot drift from the rows beside it.
    */
   const [practiceSeasonId, setPracticeSeasonId] = useState<string | null>(null);
   /** The closed money book (P4). `null` until answered; the section is absent either way. */
   const [statement, setStatement] = useState<SeasonStatement | null>(null);
+  /** Results (2026-08-18). */
+  const [games, setGames] = useState<SeasonGame[] | null>(null);
+  const [gamesTruncated, setGamesTruncated] = useState(false);
+  const [tally, setTally] = useState<{ w: number; l: number; t: number } | null>(null);
+  /** The roster (2026-08-18). */
+  const [roster, setRoster] = useState<SeasonPlayer[] | null>(null);
 
   /**
    * ⚠ The guards below run at RENDER time, and effects fire regardless of which branch renders —
@@ -144,27 +177,33 @@ export default function SeasonEndPage({
    * Worse, the 403 lands in the `.catch` and sets the generic "couldn't be loaded" error, which is
    * the broken-page outcome the honest screen exists to replace.
    */
-  const mayReadWrapped = page.hasAccess && (!page.capabilities || hasRecordAccess(page.capabilities));
+  const mayReadWrapped = page.hasAccess || !!closed
+    ? (!page.capabilities || hasRecordAccess(page.capabilities))
+    : false;
   /**
-   * ⚠ **THE PRACTICES SECTION IS NARROWER THAN THE PAGE IT SITS ON** (plan §5 risk 2). Season's End
-   * gates on `hasRecordAccess`; the read route behind every one of these rows has always ALSO
-   * required `canViewSchedule`, precisely so a helper who runs one station cannot type the URL. So
-   * this second entry point calls the SAME named predicate both routes behind it call — the door
-   * and the lock cannot drift, because they are one symbol. The section is simply absent for
-   * anyone the plans are not for; the server refuses them regardless.
+   * ⚠ **THE PRACTICES SECTION IS NARROWER THAN THE PAGE IT SITS ON.** This page gates on
+   * `hasRecordAccess`; the read route behind every one of these rows has always ALSO required
+   * `canViewSchedule`, precisely so a helper who runs one station cannot type the URL. So this
+   * second entry point calls the SAME named predicate both routes behind it call — the door and the
+   * lock cannot drift, because they are one symbol.
    */
-  const mayReadPractices = page.hasAccess
+  const mayReadPractices = mayReadWrapped
     && (!page.capabilities || canReadPastPracticePlans(page.capabilities));
   /**
-   * ⚠ **THE MONEY SHELF'S GATE IS A DIFFERENT ONE AGAIN** (P4). Two shelves now sit on this page
-   * with two different keys, and that is deliberate rather than untidy: the practices shelf asks
-   * "is the team's record yours, and do you belong at practice?", while the money book asks the one
-   * question money has always asked. An assistant trusted with attendance and lineups but not with
-   * the books reads the practices and never sees the statement. The route refuses them either way;
-   * this is the door, not the lock.
+   * ⚠ **THE MONEY SHELF'S GATE IS A DIFFERENT ONE AGAIN** (P4). The practices shelf asks "is the
+   * team's record yours, and do you belong at practice?"; the money book asks the one question
+   * money has always asked. An assistant trusted with attendance and lineups but not with the books
+   * reads the practices and never sees the statement.
    */
-  const mayReadMoney = page.hasAccess
+  const mayReadMoney = mayReadWrapped
     && (!page.capabilities || canViewMoney(page.capabilities));
+  /**
+   * ⚠ **RESULTS RIDE THE SCHEDULE GRANT TOO.** Who the team played and what happened is the fact
+   * the schedule read has always gated, and a helper holds neither half of this pair — the same
+   * conjunction the practices shelf carries, for the same reason.
+   */
+  const mayReadResults = mayReadWrapped
+    && (!page.capabilities || canViewSchedule(page.capabilities));
 
   useEffect(() => {
     if (loading || !mayReadWrapped || seasonStillUnderWay) return;
@@ -188,25 +227,18 @@ export default function SeasonEndPage({
    *
    * ⚠ It fails QUIETLY — a failure leaves `practices` null and the section absent. This is a quiet
    * shelf below the season's story, not the story itself: a red error line under the Wrapped card
-   * because a secondary list did not load would make a working page read as a broken one, which is
-   * the exact shape the honest-refusal work on this page was written to remove.
+   * because a secondary list did not load would make a working page read as a broken one.
    *
-   * ⚠ Same `?year=` the Wrapped fetch carries, from the same source. Two fetches on one page that
-   * resolve the season differently is how a page ends up describing two years at once.
+   * ⚠⚠ **CLEARED BEFORE THE FETCH, NOT ONLY AFTER IT** (`/review` 2026-08-16). The `cancelled` flag
+   * stops an OLD answer overwriting a NEW one; it does nothing about the old answer already on
+   * screen. The Wrapped effect hides itself with `setFetching(true)` and the whole content block
+   * waits on that — so when the coach picks a different year from the compare list, Wrapped's answer
+   * can land first and render the new season's card with THIS state still holding the previous
+   * season's practices, every row linking with the previous season's id.
    */
   useEffect(() => {
     if (loading || !mayReadPractices || seasonStillUnderWay) return;
     let cancelled = false;
-    /**
-     * ⚠⚠ **CLEARED BEFORE THE FETCH, NOT ONLY AFTER IT** (`/review` 2026-08-16). The `cancelled`
-     * flag stops an OLD answer overwriting a NEW one; it does nothing about the old answer already
-     * on screen. The Wrapped effect beside this one hides itself with `setFetching(true)`, and the
-     * whole content block waits on that — so when the coach picks a different year from the compare
-     * list, Wrapped's answer can land first and render the new season's card with THIS state still
-     * holding the previous season's practices, and every row linking with the previous season's id.
-     * A page describing two years at once is the exact failure this page's own note warns about;
-     * the two fetches shared their INPUT (`yearParam`) but not their visible output.
-     */
     setPractices(null);
     setPracticeSeasonId(null);
     setPracticesTruncated(false);
@@ -225,13 +257,7 @@ export default function SeasonEndPage({
   /**
    * The closed money book (P4) — this season's statement.
    *
-   * ⚠ Clears before fetching, for the reason `/review` established on the practices shelf: the
-   * `cancelled` flag stops an old answer overwriting a new one, and does nothing about the old
-   * answer already on screen. Wrapped hides itself while refetching, so on a year change its answer
-   * can land first and render the new season's card above the PREVIOUS season's money.
-   *
-   * ⚠ Fails QUIET, same posture as the practices shelf: a secondary shelf that could not load must
-   * not make a working page read as broken.
+   * ⚠ Clears before fetching and fails quiet, for the reasons the practices shelf above states.
    *
    * ⚠ It asks the LIVE Budget vs Actual route with a year — deliberately not a second endpoint.
    * One arithmetic; a season's figures must not depend on which screen asked (the defect fixed in
@@ -251,9 +277,77 @@ export default function SeasonEndPage({
     return () => { cancelled = true; };
   }, [loading, mayReadMoney, seasonStillUnderWay, orgSlug, teamId, yearParam]);
 
+  /**
+   * Results — the games this season played (2026-08-18).
+   *
+   * ⚠ Clears before fetching, same rule as every shelf beside it: a page describing two years at
+   * once is the failure this page's own note warns about, and results is the shelf where it would
+   * be hardest to spot — one season's scores look exactly like another's.
+   */
+  useEffect(() => {
+    if (loading || !mayReadResults || seasonStillUnderWay) return;
+    let cancelled = false;
+    setGames(null);
+    setGamesTruncated(false);
+    setTally(null);
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-results${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((json: { games?: SeasonGame[]; truncated?: boolean; tally?: { w: number; l: number; t: number } }) => {
+        if (cancelled) return;
+        setGames(json.games ?? []);
+        setGamesTruncated(!!json.truncated);
+        setTally(json.tally ?? null);
+      })
+      .catch(() => { /* quiet by design */ });
+    return () => { cancelled = true; };
+  }, [loading, mayReadResults, seasonStillUnderWay, orgSlug, teamId, yearParam]);
+
+  /** The roster — who was on the team that season (2026-08-18). Same clearing rule. */
+  useEffect(() => {
+    if (loading || !mayReadWrapped || seasonStillUnderWay) return;
+    let cancelled = false;
+    setRoster(null);
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-roster${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((json: { players?: SeasonPlayer[] }) => {
+        if (cancelled) return;
+        setRoster(json.players ?? []);
+      })
+      .catch(() => { /* quiet by design */ });
+    return () => { cancelled = true; };
+  }, [loading, mayReadWrapped, seasonStillUnderWay, orgSlug, teamId, yearParam]);
+
+  async function handleReopen() {
+    setReopening(true);
+    setReopenError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/seasons`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reopen' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setReopenError(data.error ?? 'Could not reopen the season.');
+        return;
+      }
+      /**
+       * ⚠ A FULL navigation, exactly as the rollover's call sites use. Reopening changes which
+       * season the team is on, and only a hard load re-seeds the coaches context — a client-side
+       * hop would land on an Overview built from a context that still says the team has no live
+       * season, which is the stale-guard lesson from the practices shelf one level up.
+       */
+      window.location.assign(base);
+    } catch {
+      setReopenError('Could not reopen the season. Please try again.');
+    } finally {
+      setReopening(false);
+    }
+  }
+
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
-  if (!page.hasAccess) {
+  if (!page.hasAccess && !closed) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -264,8 +358,8 @@ export default function SeasonEndPage({
 
   /**
    * ⚠ **WHERE A HELPER ACTUALLY LANDS** (owner ruling 2026-08-03). Signing in sends them to the
-   * portal root, which redirects a team with no live season straight here; so does the nav's first
-   * slot, and so does the team switcher. This is the screen they see.
+   * portal root, which redirects a team with no live season straight here; so does the nav, and so
+   * does the team switcher. This is the screen they see.
    *
    * Not a gate: the Wrapped route refuses them on its own and the nav hides the door. This is the
    * altitude choice that stops the refusal rendering as a broken page.
@@ -275,11 +369,10 @@ export default function SeasonEndPage({
   }
 
   /**
-   * ⚠ THE SEASON IS STILL RUNNING. Reachable by typing the URL, or from a bookmark made in the
-   * months when a coach could dial into this page from anywhere. It used to answer by quietly
-   * showing the NEWEST FINISHED season's Wrapped instead — a hidden season choice, which is exactly
-   * what P2 deleted, and with the page-title season chip gone nothing on screen would have said
-   * which year it was. So it says so, and points at the list that does hold the finished ones.
+   * ⚠ THE SEASON IS STILL RUNNING. Reachable by typing the URL, or from a bookmark. It must not
+   * quietly show the NEWEST FINISHED season's story instead — that is a hidden season choice, and
+   * with the page-title chip gone nothing on screen would say which year it was. So it says so, and
+   * points at the list that does hold the finished ones.
    */
   if (seasonStillUnderWay) {
     return (
@@ -292,9 +385,9 @@ export default function SeasonEndPage({
         />
         <section className={styles.setupPanel}>
           <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
-            <strong>{page.programYearName}</strong> is still under way. When it finishes, this is
-            where it gets wrapped up — the season&apos;s story, and how many families opened their
-            player&apos;s recap.
+            <strong>{page.programYearName}</strong> is still under way — a season stays live until
+            you close it. When it does, this is where it gets kept: the season&apos;s story, the
+            results, the roster, the practices you ran and how it added up.
           </p>
           <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
             <span>
@@ -310,19 +403,37 @@ export default function SeasonEndPage({
 
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
   const orgName = currentOrg?.name ?? 'your club';
-  // The forward path only renders in the CLOSED-ONLY state; a coach browsing a past season
-  // of a rolled-forward team already has their active season.
+  // The forward path only renders in the CLOSED-ONLY state; a coach browsing a past season of a
+  // rolled-forward team already has their active season.
   const coachRole = active?.coachRole ?? closed?.coachRole ?? 'assistant_coach';
   const showStartNext = !active && !!closed && isTeamWorkspace && coachRole === 'head_coach';
+  /**
+   * ⚠ **REOPEN IS THE SAFE HALF ONLY** (plan §3.4). Offered on exactly the same condition as
+   * "Start next season" — the team has no live season — because with a newer season started, giving
+   * the old one back would mean DELETING the new one. That undo is logged and deliberately not
+   * built; the "this closes {season}" sentence on the rollover dialog is what keeps the gap small.
+   *
+   * ⚠ And only on the team's OWN closed season. A coach reading an older year from the compare list
+   * must never be offered a button that would reopen a different season from the one on screen.
+   */
+  const showReopen = showStartNext && showingOwnClosedSeason;
+
+  /**
+   * ⚠ **THE PAGE NAMES ITS SEASON.** From the Wrapped payload once it lands (it is the only source
+   * that is right for a year the compare list named), falling back to the team's own closed season
+   * so the title does not flicker through a generic label on the everyday path.
+   */
+  const seasonTitle = wrapped?.seasonName ?? closed?.programYearName ?? "Season's End";
 
   return (
     <div className={styles.page}>
-      {/* Page-header ruling 2026-08-11: the page names ITSELF, not the team — this was the same
-          masthead-repeat the Overview had. Chunk B (P1 #17): a coach reaching this months later
-          has the least context of anyone, so the help icon earns its place here. */}
+      {/* Page-header ruling 2026-08-11: the page names ITSELF, not the team. Here that IS the
+          season's name — the one thing on screen that says which year is being read, now that the
+          season chip is gone. Chunk B (P1 #17): a coach reaching this months later has the least
+          context of anyone, so the help icon earns its place. */}
       <CoachPageHeader
         icon={Trophy}
-        title="Season's End"
+        title={seasonTitle}
         helpLabel="Season's End"
         help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
       />
@@ -332,11 +443,40 @@ export default function SeasonEndPage({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : wrapped ? (
-        /* Desktop shell D3 (2026-08-01): the Wrapped card and the recap/doors sit side by
-           side on desktop instead of a 560px strip floating in empty space; stacks ≤900. */
+        /* Desktop shell D3 (2026-08-01): the Wrapped card and the shelves sit side by side on
+           desktop instead of a 560px strip floating in empty space; stacks ≤900. */
         <div className={styles.seasonSpread}>
           <SeasonWrappedCard wrapped={wrapped} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+
+          {/* ── "Ready for next year?" — the ONLY difference between a closed season with a newer
+              one and a closed season without (mockup: one card at the top, otherwise the same
+              page, not a second design). ─────────────────────────────────────────────────────── */}
+          {showStartNext && closed && (
+            <section className={styles.setupPanel}>
+              <p className={styles.setupKicker}>Ready for next year?</p>
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                Your roster and staff carry forward. This season stays right here.
+              </p>
+              <button type="button" className={`btn btn-lime ${styles.setupNextCta}`} onClick={() => setRolloverOpen(true)}>
+                Start next season
+              </button>
+              {/* ⚠ Quiet, and worded as what it IS — an undo for a mistake, not a way of working.
+                  It disappears the moment a new season exists, because from then on there is
+                  nothing safe to offer. */}
+              {showReopen && (
+                <button
+                  type="button"
+                  className={styles.seasonReopenLink}
+                  onClick={handleReopen}
+                  disabled={reopening}
+                >
+                  {reopening ? 'Reopening…' : `Closed this by mistake? Reopen ${closed.programYearName}`}
+                </button>
+              )}
+              {reopenError && <p className={styles.errorText}>{reopenError}</p>}
+            </section>
+          )}
 
           {/* Chunk D 3.5 — did the families read the recaps? COUNTS ONLY: the product does not
               record, and this page cannot show, WHICH family opened one. Absent entirely when
@@ -356,46 +496,121 @@ export default function SeasonEndPage({
             </section>
           )}
 
-          <section className={styles.setupPanel} aria-labelledby="season-end-doors">
-            <p className={styles.setupKicker} id="season-end-doors">Look back any time</p>
-            {/* ⚠ THE SENTENCE MOVED WITH THE MODEL (P2, 2026-08-16). It used to promise the whole
-                record set "from the menu", which was true of a season the ARCHIVE was displaying.
-                What is true now: when this IS the team's working season, the menu is still the
-                coach's own and every record in it opens read-only. When the coach arrived from the
-                compare list to read an OLDER year, the menu belongs to the live season — so the
-                honest offer is this page and the list, not a menu that would answer for a
-                different year. */}
-            <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
-              {showingWorkingSeason
-                ? 'Everything from this season is still here — roster, schedule, attendance, lineups, money records, documents and tryouts. Open any of them from the menu.'
-                : 'This season’s story is kept here. Your menu is showing the season the team is on now.'}
-            </p>
-            {/* ⚠ Every current member of the staff, not just the head coach (owner ruling,
-                reverted with Design A on 2026-08-16 — see the compare list's own note). This door
-                exists FOR that list, so gating one without the other made the link succeed while
-                quietly not delivering. */}
-            <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
-              <span>
-                Compare every season
-                <small>Records, roster size and money summaries, season by season</small>
-              </span>
-              <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
-            </Link>
-          </section>
+          {/* ── "Results" (2026-08-18) ───────────────────────────────────────────────────────
+              ⚠ **COLLAPSED, and its shut face carries the answer** — "26 games" is usually the
+              whole enquiry. Same binding constraint as every shelf here: the season's story is what
+              a coach opens this page for, and a shelf that pushes it below the fold is a failed
+              design however useful the history is.
+
+              ⚠ **FLAT — NO ROW IS A LINK.** On the live schedule these same games are doors: into
+              the event, the lineup, the attendance sheet and the scouting book. A record must not
+              be an entrance to a live instrument, and there is deliberately no level down here. */}
+          {games && games.length > 0 && (
+            <CoachCollapseSection
+              sectionId="season-results"
+              title="Results"
+              meta={`${games.length}${gamesTruncated ? '+' : ''} game${games.length === 1 ? '' : 's'}${tally ? ` · ${formatRecord(tally)}` : ''}`}
+              defaultOpen={false}
+            >
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                Every game this season that finished with a result.
+              </p>
+              {/* ⚠ THE TRUNCATION IS STATED, never silent — a list that quietly stops short tells a
+                  coach their season held fewer games than it did. */}
+              {gamesTruncated && (
+                <p className={styles.formHint}>
+                  Showing the {games.length} most recent — this season held more than that.
+                </p>
+              )}
+              <div className={styles.tableWrap}>
+                <table className={styles.devBoardTable}>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Opponent</th>
+                      <th style={{ textAlign: 'right' }}>Score</th>
+                      <th>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {games.map(g => (
+                      <tr key={g.eventId}>
+                        <td>{formatInOrgZone(g.startsAt, { month: 'short', day: 'numeric' })}</td>
+                        <td data-label="Opponent">
+                          {g.opponent ?? g.name}
+                          {g.homeAway === 'away' ? ' (away)' : g.homeAway === 'home' ? ' (home)' : ''}
+                        </td>
+                        <td data-label="Score" style={{ textAlign: 'right' }}>
+                          {g.teamScore != null && g.opponentScore != null
+                            ? `${g.teamScore}–${g.opponentScore}`
+                            : '—'}
+                        </td>
+                        {/* ⚠ The WORD carries the outcome, never a colour alone — the olive and
+                            danger tones sit ~1.0 ΔE apart for a deuteranope. */}
+                        <td data-label="Result">
+                          {g.result === 'win' ? 'Win' : g.result === 'loss' ? 'Loss' : 'Tie'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CoachCollapseSection>
+          )}
+
+          {/* ── "The roster" (2026-08-18) ────────────────────────────────────────────────────
+              ⚠ **FLAT, and this one matters most.** No row opens a player profile: the profile is
+              the busiest instrument in the portal — dues, documents, development, guardians,
+              medical — and a record must never be a door into one.
+
+              ⚠ Names and numbers only. Player names are baseline (owner, 2026-08-03); that ruling
+              covers NAMES and stops there, and the route behind this emits no guardian, medical or
+              emergency-contact field at all. */}
+          {roster && roster.length > 0 && (
+            <CoachCollapseSection
+              sectionId="season-roster"
+              title="The roster"
+              meta={`${roster.length} player${roster.length === 1 ? '' : 's'}`}
+              defaultOpen={false}
+            >
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                Who was on the team that season.
+              </p>
+              <div className={styles.lineupFrontList}>
+                {roster.map(p => (
+                  <div key={p.playerId} className={styles.seasonDoorRow} style={{ cursor: 'default' }}>
+                    <span>
+                      {p.number ? `#${p.number} · ` : ''}{p.firstName} {p.lastName ?? ''}
+                      {/* ⚠ A player who LEFT part-way through still played for this team, so they
+                          stay on the record and the row says which — quietly dropping them would
+                          rewrite the season, the one thing an archive must never do. */}
+                      {(p.primaryPosition || p.status !== 'active') && (
+                        <small>
+                          {[
+                            p.primaryPosition,
+                            p.status === 'released' ? 'Left during the season'
+                              : p.status !== 'active' ? 'Not active' : null,
+                          ].filter(Boolean).join(' · ')}
+                        </small>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CoachCollapseSection>
+          )}
 
           {/* ── "The practices you ran" (P3 C3) ──────────────────────────────────────────────
               ⚠ **COLLAPSED BY DEFAULT, and that is a binding design constraint rather than a
               taste** (CLAUDE.md ruling §1.6: a history shelf that makes the live screen noisier is
               a failed design). It costs a live season nothing at all — no live season renders this
-              page — and it stays below the season's story here, because Season Wrapped is what a
-              coach opens this page for.
+              page — and it stays below the season's story, because Season Wrapped is what a coach
+              opens this page for.
 
-              ⚠ It is on SEASON'S END and nowhere else. The obvious home, a drawer on the Practice
-              plans hub, was rejected in the mockup session (plan §3): it was the only proposal that
-              put weight on a screen a coach opens on a Tuesday, and it would have sat directly
-              above the Plan templates door as a second entrance to one library. Season's End is
-              already a page about ONE NAMED SEASON, which is also how it answers "which year am I
-              reading?" without a label — the chip that used to answer that was a switcher. */}
+              ⚠ It is on this page and nowhere else. The obvious home, a drawer on the Practice
+              plans hub, was rejected in the mockup session: it was the only proposal that put
+              weight on a screen a coach opens on a Tuesday, and it would have sat directly above
+              the Plan templates door as a second entrance to one library. */}
           {practices && practices.length > 0 && (
             <CoachCollapseSection
               sectionId="season-practices"
@@ -422,7 +637,10 @@ export default function SeasonEndPage({
                     /* ⚠ The season AND where the coach came from, both explicit. The year is what
                        lets the plan page resolve a season the team may no longer be on; `from` is
                        what sends the back link here instead of to the Development report, which
-                       answers for a different year. */
+                       answers for a different year.
+
+                       ⚠ THE ONE LINK ON THIS PAGE THAT GOES ANYWHERE, and it goes to a read-only
+                       plan page, not to a live tool. */
                     href={`${base}/history/development/practices/${p.eventId}`
                       + `?from=season-end${practiceSeasonId ? `&year=${encodeURIComponent(practiceSeasonId)}` : ''}`}
                     className={styles.seasonDoorRow}
@@ -433,8 +651,7 @@ export default function SeasonEndPage({
                           read is "either, not both" on purpose, because a coach who wrote nothing
                           beforehand and everything afterwards produced exactly the record this
                           section exists to show. It must never be offered under a label promising
-                          a plan, so the row says which it is. Neither 404s: the route behind them
-                          refuses only a cancelled practice, a foreign season and a non-practice.
+                          a plan, so the row says which it is.
 
                           ⚠ The planless label READS `hasRecap` rather than assuming it (`/review`
                           2026-08-16). The route drops rows that carry neither, so this branch
@@ -460,19 +677,16 @@ export default function SeasonEndPage({
           {/* ── "How the season added up" — the closed money book (P4) ────────────────────────
               ⚠ **COLLAPSED, and its SHUT FACE already answers the question.** Most of the time
               "did we come in under?" is the whole enquiry, so the summary chip carries it and the
-              coach never opens the section. Same binding constraint as the practices shelf above:
-              the live content is the primary focus, and a shelf that makes the screen noisier is a
-              failed design however useful the history is.
+              coach never opens the section.
 
-              ⚠ **FLAT — NO CELL IS A LINK, and that is the build's one real constraint** (plan §7).
-              On the LIVE Budget vs Actual screen these same figures are doors: rows expand, month
-              cells open the budget editor, the undated figure opens a chooser. A record must not be
-              an entrance to a live instrument — and two of those doors were quietly broken for two
-              days last week, which is how little anyone would notice if this one led somewhere
-              wrong. There is deliberately no level down here at all.
+              ⚠ **FLAT — NO CELL IS A LINK.** On the LIVE Budget vs Actual screen these same figures
+              are doors: rows expand, month cells open the budget editor, the undated figure opens a
+              chooser. A record must not be an entrance to a live instrument — and two of those
+              doors were quietly broken for two days, which is how little anyone would notice if
+              this one led somewhere wrong.
 
-              ⚠ Gated on MONEY access, not record access — a different key from the shelf above it.
-              See `mayReadMoney`. */}
+              ⚠ Gated on MONEY access, not record access — a different key from the shelves above
+              it. See `mayReadMoney`. */}
           {statement && statement.expenses.categories.length > 0 && (
             <CoachCollapseSection
               sectionId="season-statement"
@@ -545,33 +759,41 @@ export default function SeasonEndPage({
             </CoachCollapseSection>
           )}
 
-          {showStartNext && closed && (
-            <>
-              <button type="button" className={`btn btn-lime ${styles.setupNextCta}`} onClick={() => setRolloverOpen(true)}>
-                Start next season
-              </button>
-              <p className={styles.seasonEndNote}>
-                Starting next season carries your roster and staff forward. This season stays right here, read-only.
-              </p>
-            </>
-          )}
+          {/* ── ⚠⚠ THE "COMPARE EVERY SEASON" DOOR IS GONE FROM THIS PAGE (owner, 2026-08-18,
+              from the first walk) — and it is worth recording WHY, because the door had been here
+              since the archive era and looked load-bearing.
+
+              It pointed at the compare list under Insights. Once a closed season became one page,
+              Insights stopped being reachable for a team with no live season — so for the coach
+              most likely to press it, this door redirected straight back to the page they pressed
+              it on. A link that loops is worse than no link: it reads as a broken page rather than
+              as a closed door.
+
+              ⚠ **THE CONSEQUENCE, STATED RATHER THAN DISCOVERED LATER:** a coach between seasons
+              can now reach their NEWEST closed season and no earlier one. Every year is still there
+              and still reachable the moment a new season starts (Insights → "How are we doing?" →
+              per-year link, which lands back on this page with that year). If that gap turns out to
+              matter, the fix is a quiet list of the team's other seasons ON this page — never a
+              second page, and never re-opening a live screen. Logged, not built. */}
 
           {/* ⚠ **NO "GO TO <LIVE SEASON>" BUTTON** — removed 2026-08-17 (owner, from the §53 walk),
               and it is worth saying why so it does not come back. It was a leftover from the archive
-              era, when Season's End was a PLACE the portal could be steered into and a coach needed
-              an exit. Design A deleted that place: the nav is always the LIVE season's nav, so every
-              door in it already goes where this button went.
+              era, when this page was a PLACE the portal could be steered into and a coach needed an
+              exit. The nav is always the team's own; every door in it already goes where that
+              button went. */}
 
-              ⚠ It also contradicted the note directly above it — "Your menu is showing the season the
-              team is on now" — by offering to take the coach somewhere they already were. And it only
-              ever rendered for a ROLLED-FORWARD team (a team between seasons has no live season to
-              offer), i.e. precisely the coach whose sidebar is already the live season. */}
-
+          {/* ⚠ **CORRECTED 2026-08-18 (owner, from the first walk): STAFF IS A FACT ABOUT THE TEAM,
+              NOT ABOUT A SEASON.** This said "when you're on next season's coaching staff, the team
+              reappears here automatically" — vocabulary left over from the per-season access model
+              that M1 deleted on 2026-08-16. A coach is on the team or they are not: lose the team
+              and you lose its whole portal, not one year of it. The old sentence quietly implied a
+              coach might be dropped between seasons and have to be re-added, which is neither how
+              it works nor a comfortable thing to imply to someone whose season has just ended. */}
           {!active && !isTeamWorkspace && (
             <section className={styles.setupPanel}>
               <p className={styles.seasonEndNote}>
-                Seasons are managed by <strong>{orgName}</strong>. When you&apos;re on next season&apos;s
-                coaching staff, the team reappears here automatically.
+                Seasons are managed by <strong>{orgName}</strong>. When they start the next one, this
+                team&apos;s portal opens up again — you don&apos;t need to do anything.
               </p>
             </section>
           )}
@@ -586,11 +808,9 @@ export default function SeasonEndPage({
           currentSeasonName={closed.programYearName}
           defaultNextYear={(closed.programYearYear ?? new Date().getFullYear()) + 1}
           onClose={() => setRolloverOpen(false)}
-          onDone={async () => {
-            setRolloverOpen(false);
-            await refresh();
-            router.push(base);
-          }}
+          /* ⚠ A FULL navigation, not a router push: the rollover just changed which season is
+             active, and only a hard load re-seeds the coaches context. */
+          onDone={() => { window.location.assign(base); }}
         />
       )}
     </div>

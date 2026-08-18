@@ -122,13 +122,14 @@ export function FundraisersPanel({
   /** The team's money-tag vocabulary — the SAME library expenses use (mig 239). */
   const [moneyTags, setMoneyTags] = useState<RepTeamTag[]>([]);
 
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId);
   // Money is three-state (off|read|write); the create route already refuses a read-only
   // coach, so offering the form and failing at submit is a broken affordance.
-  const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
+  const canWriteMoney = (page.capabilities?.money === 'write');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   /**
    * ONE fundraiser open, addressed by `?fundraiser=` — the tab's own sub-view (2026-08-14).

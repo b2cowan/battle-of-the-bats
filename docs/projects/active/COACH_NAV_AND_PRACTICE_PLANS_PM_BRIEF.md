@@ -211,3 +211,203 @@ future change cannot quietly break it.
 - A coach can get from anywhere in the portal to "which practices still need a plan" in one tap.
 - No existing route, label, or permission changes — nothing a coach knows today stops working.
 - Templates stay a single library however they are reached.
+
+---
+
+# Phase 5 (proposed) — the sidebar goes from six headings to five
+
+**Awaiting your decision. Nothing built.** Side-by-side mockup of all four versions:
+`https://claude.ai/code/artifact/93e1e3ef-0382-408b-ad45-1499e1b02580`
+
+## The proposal on the table
+
+Move **Roster** and **Tryouts** *down* to join Staff, Documents and Settings under a single **Team**
+heading — rather than *up* to join Development and Insights.
+
+## What a coach sees differently
+
+The sidebar loses one heading. The bottom of the menu becomes a single group of five — Roster,
+Tryouts, Staff, Documents, Settings — instead of two groups of two and three sitting one above the
+other with near-identical names ("Team" and "Team admin").
+
+**Nothing changes position.** Every door a coach has learned to find stays exactly where it is; one
+divider line and one heading disappear. On a phone the improvement is bigger: the More sheet
+currently has three headings that label a single row each, and this removes one of them.
+
+## Why not the other way round
+
+Moving Roster and Tryouts *up* would put Tryouts — a tool used for about two weeks a year — above
+Money and Chat, which coaches open weekly. The sidebar's ordering rule is "hot at the top, cold at
+the bottom", and that merge is the one version of this change that breaks it. It also keeps both the
+"Team" and "Team admin" headings, which is the confusion worth fixing.
+
+The name is the other problem: a group holding Development, Insights, Roster and Tryouts means
+*the people on the team, plus how the team is performing, plus people who aren't on the team yet*. A
+heading that broad can also hold Staff, Settings, Money and Chat — and a heading that rules nothing
+out doesn't help anyone find anything.
+
+## Tradeoffs
+
+- The bottom group becomes the longest in the nav at five rows. That density is spent in the region
+  coaches scan deliberately rather than glance at.
+- A further cut to **four** headings is available (folding Development and Insights up into Season)
+  and is deliberately held back — six rows under one heading starts to need reading rather than
+  seeing. It stays a one-line change available any time.
+
+## What this does not fix
+
+The sidebar currently runs off the bottom of a laptop screen — Tryouts is clipped. Removing a
+heading buys back about one row. **Treat the overflow as its own decision**: collapse the coldest
+group by default, pin the team switcher and Help/Admin doors so only the list scrolls, or accept
+that fifteen doors is the honest count and the list scrolls.
+
+## How to test it (if built)
+
+1. Open a team → the sidebar shows five headings: Season, Progress, Money, Communication, Team.
+2. Confirm Roster and Tryouts are still first in that last group, in that order, with Staff,
+   Documents and Settings beneath them.
+3. On a phone, open **More** → the same grouping, with Tryouts leading the Team section.
+4. Sign in as an assistant coach with no tryouts or staff permission → those rows are absent and no
+   empty heading is left behind.
+5. Open a team whose season has finished → the first slot still reads **Season's End**, and the
+   groups a finished season can honestly serve are unchanged.
+
+## Success criteria
+
+- One fewer heading on desktop and on phone, with no door moving position.
+- No coach gains or loses access to anything.
+- "Team" and "Team admin" no longer both appear.
+
+## Phase 5b — the groups collapse *(added 2026-08-18)*
+
+**Grouping half approved.** Added to scope: the five groups become collapsible, working the same way
+tournament admin's sidebar already does.
+
+*(Correction to the section above: the sidebar has **15** rows, not 17, and the phone sheet has 11,
+not 10. The argument is unchanged; the figures were wrong.)*
+
+### What a coach sees differently
+
+Each group heading gains a small arrow and can be folded shut. Whatever they open or close stays that
+way next time they sign in. Two behaviours make it safe rather than fiddly:
+
+- **You can never hide where you are.** The group holding the page you're on opens itself, whatever
+  you last set — so a coach can't close a group, arrive there from somewhere else, and find their own
+  location missing from the menu.
+- **A closed group still tells you what's inside.** It shows how many doors are folded away, and if
+  something in there needs attention — an unread message — the badge moves up onto the heading.
+
+### The default, and why only one group starts closed
+
+**Team starts closed. The other four start open.**
+
+The nav's ordering rule is how often a coach opens a group, and it settles this: anything opened
+weekly or more should never start closed. Folding Money or Communication away by default would tax a
+weekly job on every device to save scroll on an August one. Team is the longest group and the
+coldest — five rows recovered for the cost of one click a season.
+
+That takes the sidebar from **fifteen visible rows to ten**, which is what actually fixes it running
+off the bottom of the screen. The grouping change on its own was only ever worth about one row.
+
+All five stay collapsible either way — a coach who never runs tournaments can close Season and keep
+it closed. The default just decides who pays the click.
+
+### The thing that could have gone wrong quietly
+
+Chat's unread count lives inside the Communication group. Once that group can close, a coach who
+closes it stops seeing that anyone has messaged them — nothing breaks, the signal just goes away.
+Hence the rolled-up badge on closed headings. Tournament admin doesn't need this because its groups
+carry no badges; this is the one place the coach portal goes further than the pattern it's copying.
+
+### Held back deliberately
+
+A version that opens **Team** automatically during tryout season would be genuinely useful — but the
+August work removed a mechanism that moved nav items around based on whether a team was using them
+yet, because a sidebar that rearranges itself moves things a coach has already learned the position
+of. Auto-opening is a gentler form of the same thing. A coach's own saved preference covers it.
+
+### Tradeoffs
+
+- One group starting closed is a modest-sounding outcome next to "make them all collapsible" — but
+  it's the only group where the trade is favourable, and pretending otherwise costs weekly clicks.
+- **Phone: no collapsing.** The More sheet is something you open in order to find something; folding
+  its contents away works against that moment. Desktop and phone keep identical grouping — only the
+  presentation differs.
+- Worth doing in the same pass: pinning the team switcher and the Help/Admin doors so only the list
+  of doors scrolls.
+
+### How to test it
+
+1. Open a team → five headings, each with an arrow. Team is folded shut, showing **5** beside it.
+2. Click Team → it opens; sign out and back in → still open.
+3. Close Team again, then reach Roster from a link elsewhere → the Team group is open around it, with
+   Roster highlighted.
+4. Have someone send a chat message, then close the Communication group → the unread count appears on
+   the closed heading.
+5. On a phone, open **More** → same five groups, nothing folded.
+6. Sign in as an assistant coach with no tryouts or staff permission → those rows are gone and the
+   heading's folded count reflects only what they can actually reach.
+
+### Success criteria
+
+- The sidebar fits a laptop screen without clipping, with no door moved and none removed.
+- No coach loses sight of an unread message because of a group they closed.
+- A coach who never touches a group can put it away permanently, and it stays away.
+
+## Phase 5c — the phone's bottom bar, reviewed *(2026-08-18)*
+
+**Outcome: the four tabs stay. What changes is that there's now a written reason for them.**
+
+### Why the bar wasn't the problem
+
+The four tabs — Overview, Schedule, Chat, Roster — were picked in June and nothing ever recorded
+why. The sidebar got its ordering principle in August; the bar never got its counterpart. That's the
+real gap: without a stated reason, the next person to look will rearrange it on instinct.
+
+**The rule to adopt: the bar holds look-up surfaces, not work surfaces.** A phone gets opened for
+ninety seconds to check one thing, so no two tabs may answer the same question. Under that rule all
+four earn their place and each owns a different question — what's next, when, what's been said, who.
+It's also the test any future fifth tab has to pass.
+
+### On Roster specifically
+
+Roster being low in the sidebar and prominent on the phone looks inconsistent but isn't. On a
+laptop, Roster is the September editing session — adding players, fixing a jersey number. On a phone
+it's *who is number 14 and what's their parent's number*. The same door, two different jobs, two
+different frequencies. Worth writing down rather than leaving as something that looks like an
+oversight.
+
+### Are these tabs available to every coach? Not quite
+
+Every head coach and every assistant on the standard permissions sees all four. The one exception is
+a **volunteer helper** — a parent running a station — who loses Chat (they're not in the staff room)
+and Roster (they hold no player records). Their bar is **Overview, Schedule, More**, and the three
+stretch to fill the width.
+
+That's correct behaviour rather than a fault: both closed doors are ones they couldn't use. But it's
+a real state nobody had written down, and it's worth knowing it exists before someone reports it.
+
+### Two things that leave this project
+
+**1. A change landed this week that isn't finished on phones.** A team between seasons now gets one
+door instead of a full menu — right on desktop, half-done on phone, where the menu behind **More**
+still lists all eleven doors into a season that's over. So the same coach sees one door on a laptop
+and twelve on a phone. The automated check meant to keep the two navs in step only compares
+live-season menus, so it won't catch this. The bar also drops to two tabs stretched across half the
+screen each — a state nobody designed. **This belongs to whoever is finishing that work**, and is
+worth raising before it's committed.
+
+**2. The bar's real gap is attendance, not Roster.** Marking who showed up is the most phone-shaped
+job in the product, and there's no door to it in the bar — it's Schedule, find tonight's event, take
+attendance. Three levels deep, and only if you already know the date. That's the same shape of
+problem practice plans had before August.
+
+A fifth tab is the wrong answer — it would overlap Schedule and break the rule above. Two cheaper
+options deserve their own look: the Overview's "one thing to do today" card offering attendance
+directly on event days, or the Schedule tab opening on today rather than at the top of the list.
+
+### Success criteria
+
+- The bar's four tabs are unchanged, with a recorded reason a future reviewer can argue with.
+- The volunteer's three-tab bar is a documented state, not a surprise.
+- The between-seasons mismatch and the attendance gap are owned somewhere, not lost in a mockup.

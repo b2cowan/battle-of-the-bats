@@ -55,7 +55,7 @@ export default function CoachesOpponentsPage({
   }, [orgSlug, teamId]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) return <CoachNotOnTeam orgSlug={orgSlug} teamId={teamId} />;
+  if (!assignment) return <CoachNotOnTeam />;
 
   const q = query.trim().toLowerCase();
   const shown = entries

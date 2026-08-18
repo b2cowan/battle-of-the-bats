@@ -28,29 +28,41 @@ import { hasRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilitie
 
 /** The label the landing slot carries in a live season. */
 export const OVERVIEW_LABEL = 'Overview';
-/** …and what replaces it once the working season has finished. */
+/** …and the one door a team with no live season has. */
 export const SEASON_END_LABEL = "Season's End";
 
 /**
- * Swap the landing slot for Season's End when the team's working season has finished.
+ * ⚠⚠ **A TEAM WITH NO LIVE SEASON HAS ONE DOOR** (owner ruling 2026-08-18,
+ * COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.3/§3.5). This replaced `withLandingSlot`, which SWAPPED
+ * the landing slot for Season's End and left the other fourteen items in place — every one of them
+ * opening a live instrument on a season that had ended, which is what the twenty-nine deleted
+ * read-only branches and "comes back next season" notices existed to apologise for.
+ *
+ * A closed season is one page. So the menu is that page, and the tools are not offered at all
+ * rather than offered and then explained away. Nothing is hidden from the coach: there is nothing
+ * behind those doors until a season is running again, and starting one is on the page itself.
+ *
+ * ⚠ This is NOT the second nav Design A deleted. That was a shorter, differently-ORDERED menu with
+ * its own item set and two correction lists, standing in for the coach's own while a season
+ * switcher steered the portal around. This is the same menu with one item left in it — an absence,
+ * not an alternative.
  *
  * ⚠ **ONE RULE, ONE HOME** — the same reason `isCoachNavItemVisible` below lives here. The sidebar
  * and the bottom nav are required to stay in step (pinned by `tests/unit/coach-nav-groups.test.ts`),
- * and this was two hand-copied ternaries in two files with separately-named constants, which is the
- * shape those two navs have drifted apart in before.
+ * and the rule this replaced was two hand-copied ternaries in two files.
  *
- * ⚠ Matched on the LABEL, not on object identity. The `===` comparison this replaced worked only
- * because both call sites happened to reference a module-level constant — a nav item rebuilt inline
- * (a `.map` that spreads, a memo that clones) would silently stop swapping, and the coach would
- * land on an Overview describing a season that has ended.
+ * ⚠ Matched on the LABEL, not on object identity. A nav item rebuilt inline (a `.map` that spreads,
+ * a memo that clones) would silently stop matching, and the coach would keep a menu of doors into a
+ * season that has finished.
  */
-export function withLandingSlot<T extends { label: string }>(
+export function withClosedSeasonNav<T extends { label: string }>(
   items: T[],
   seasonFinished: boolean,
   seasonEndItem: T,
 ): T[] {
   if (!seasonFinished) return items;
-  return items.map(item => (item.label === OVERVIEW_LABEL ? seasonEndItem : item));
+  // The landing slot's group becomes the single door; every other group renders nothing.
+  return items.some(item => item.label === OVERVIEW_LABEL) ? [seasonEndItem] : [];
 }
 
 /**

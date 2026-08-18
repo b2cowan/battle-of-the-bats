@@ -11,6 +11,7 @@ import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedN
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import CloseSeasonModal from '@/components/coaches/CloseSeasonModal';
 import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 // Loaded on demand, mirroring HelpDrawerProvider's treatment of the help drawer: the tour is a
 // one-time offer most returning coaches have already dismissed, so it shouldn't sit in the
@@ -294,6 +295,8 @@ export default function TeamOverviewPage({
   // Season year + who may close it — from the team GET this page already makes for division.
   const [seasonMeta, setSeasonMeta] = useState<{ year: number | null; canManageSeasons: boolean }>({ year: null, canManageSeasons: false });
   const [rolloverOpen, setRolloverOpen] = useState(false);
+  /** The quiet door out of a season — no next one, just close this (2026-08-18). */
+  const [closeSeasonOpen, setCloseSeasonOpen] = useState(false);
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -1644,6 +1647,13 @@ export default function TeamOverviewPage({
    * these sentences was ruled on separately (the welcome's team-naming, the season check's
    * can/cannot-close split, the lull's tournament variant). Only the arrangement moves.
    */
+  /**
+   * How the coach's own screens name this season in a sentence — the YEAR when the team has one,
+   * because "close 2025" is what a coach says out loud. Falls back to the season's name, which is
+   * whatever the coach (or their club) typed.
+   */
+  const seasonLabel = seasonMeta.year ? String(seasonMeta.year) : assignment.programYearName;
+
   const anchorSlots: {
     tone: 'work' | 'live' | 'decide';
     kicker: React.ReactNode;
@@ -1688,15 +1698,27 @@ export default function TeamOverviewPage({
             ? ([nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), placeLabel].filter(Boolean).join(' · ') || 'On your schedule')
             : null,
         };
+      /**
+       * ⚠ **THE CUE NOW OFFERS WHAT IT ALWAYS DID, UNDER ITS REAL NAME** (2026-08-18, plan §1).
+       * The button said "Close out the season" and opened the ROLLOVER sheet — a label describing
+       * an action the product did not have. It is now called what it is, and the thing it used to
+       * pretend to be sits beside it as the quiet answer.
+       *
+       * ⚠ The sentence no longer promises that closing "unlocks Season Wrapped": nothing is
+       * unlocked, the season simply becomes a record. It says what carries and what happens to the
+       * season being left behind, which is what the coach is actually deciding.
+       */
       case 'season_check':
         return {
           tone: 'decide', kicker: 'Season check', when: null,
-          headline: anchor.primary ? 'Is the season over?' : 'Your season looks finished',
+          headline: anchor.primary
+            ? `Is the ${seasonLabel} season finished?`
+            : 'Your season looks finished',
           meta: <>
-            No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and nothing scheduled.{' '}
+            Nothing has been scheduled for a while.{' '}
             {anchor.primary
-              ? <>Closing it out locks your record and unlocks your <strong>Season Wrapped</strong>.</>
-              : <>{currentOrg?.name ?? 'Your club'} closes the season — your <strong>Season Wrapped</strong> appears here when they do.</>}
+              ? <>Starting next season keeps your roster and staff, and puts this one away as a record.</>
+              : <>{currentOrg?.name ?? 'Your club'} closes the season — this one becomes a record when they do.</>}
           </>,
         };
       case 'lull':
@@ -1757,7 +1779,7 @@ export default function TeamOverviewPage({
     open_schedule: 'Open schedule',
     add_event: 'Add an event',
     view_tournaments: 'View tournaments',
-    close_season: 'Close out the season',
+    start_next_season: 'Start next season',
     setup_step: setupLine?.label ?? 'Get started',
     take_tour: 'Show me around',
   };
@@ -1771,6 +1793,8 @@ export default function TeamOverviewPage({
     not_yet: 'Not yet',
     got_it: 'Got it',
     skip_step: 'Skip this step',
+    // ⚠ Names the season, because this is the one answer on the card that ENDS something.
+    close_season_only: `No next season — just close ${seasonLabel}`,
   };
 
   /**
@@ -1950,7 +1974,7 @@ export default function TeamOverviewPage({
                 A `null` primary is deliberate and means informational — the card keeps its
                 sentence and drops its button, never a disabled control. */}
             {anchor.primary && (
-              anchor.primary === 'close_season' ? (
+              anchor.primary === 'start_next_season' ? (
                 <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
                   {ANCHOR_LABEL[anchor.primary]}
                 </button>
@@ -1978,6 +2002,18 @@ export default function TeamOverviewPage({
                     if (answer === 'not_yet' || answer === 'got_it') {
                       return (
                         <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
+                          {ANSWER_LABEL[answer]}
+                        </button>
+                      );
+                    }
+                    /**
+                     * ⚠ **THE ONLY WAY AN AGED-OUT TEAM CAN FINISH ITS SEASON** (2026-08-18). A
+                     * button, not a link: closing is an action with a confirmation of its own, and
+                     * the dialog behind it is where the unsettled-money warning lives.
+                     */
+                    if (answer === 'close_season_only') {
+                      return (
+                        <button key={answer} type="button" className={styles.oneAnswer} onClick={() => setCloseSeasonOpen(true)}>
                           {ANSWER_LABEL[answer]}
                         </button>
                       );
@@ -2183,6 +2219,24 @@ export default function TeamOverviewPage({
             // would run a second, stale-closured copy in parallel (adversarial review).
             await refreshAssignments();
           }}
+        />
+      )}
+
+      {/* "No next season — just close {year}" from the season-check cue. The QUIET door: it ends
+          the season and starts nothing, which is the one thing the portal could not do before
+          (plan §1 — the button labelled "Close out the season" opened the rollover sheet).
+
+          ⚠ A FULL navigation on success, exactly as the rollover's own call sites use. Closing
+          changes which season the team is on, and only a hard load re-seeds the coaches context —
+          a client-side hop would land on the closed-season page with the season still reported as
+          live, and the page would tell the coach their season is still under way. */}
+      {closeSeasonOpen && (
+        <CloseSeasonModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          seasonName={seasonLabel}
+          onClose={() => setCloseSeasonOpen(false)}
+          onDone={() => { window.location.assign(`${base}/season-end`); }}
         />
       )}
 

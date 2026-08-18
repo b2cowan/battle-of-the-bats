@@ -121,8 +121,9 @@ export default function PlayerDetailPage({
 }) {
   const { orgSlug, teamId, playerId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
-  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
-  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
+  // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
+  // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
   // Positions/pitching vocabulary comes from this team's sport (falls back to the default until the
@@ -626,7 +627,7 @@ export default function PlayerDetailPage({
         </div>
       )}
 
-      {assignment && player && !page.isReadOnly
+      {assignment && player
         && canViewDevelopmentGoals(assignment.capabilities) && (
         <PlayerRecapPreview
           key={playerId}

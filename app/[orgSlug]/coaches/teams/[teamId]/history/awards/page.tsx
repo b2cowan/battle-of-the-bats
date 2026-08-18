@@ -36,7 +36,12 @@ export default function CoachesAwardsReportPage({
    */
   const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
-  const isRecord = page.isReadOnly;
+  /**
+   * ⚠ `isRecord` is GONE (2026-08-18). It hid "Give an award", "Manage award types" and the
+   * per-row Remove control, and swapped four sentences into the past tense — all to describe a
+   * finished season, which this page is no longer rendered for. The keepsake half (printing a
+   * certificate) never depended on it and is untouched.
+   */
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const { loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
@@ -226,23 +231,14 @@ export default function CoachesAwardsReportPage({
         </div>
       ) : (
         <>
-          {/* ⚠⚠ THE INSTRUMENTS GO AWAY IN A RECORD, THE KEEPSAKE STAYS. Giving an award, managing
-              the type library and removing a row all ACT on a season — CLAUDE.md rule 1 keeps them
-              live-only, and the server refuses them regardless (every write verb here resolves the
-              ACTIVE year). Printing a certificate is the opposite: it reproduces something that
-              already happened, which is exactly what a coach opens a finished season to do. */}
           <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {!isRecord && (
-              <>
-                {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
-                {players.length === 0 ? (
-                  <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
-                ) : (
-                  <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
-                )}
-                <button className={styles.tagManageLink} onClick={() => setManageOpen(true)}>Manage award types</button>
-              </>
+            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
+            {players.length === 0 ? (
+              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
+            ) : (
+              <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
             )}
+            <button className={styles.tagManageLink} onClick={() => setManageOpen(true)}>Manage award types</button>
             {/* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
                 "print every award this season" is a stack of mismatched certificates, not a
                 thing a coach wants. ⚠ Carries the year: the certificate names the season it was
@@ -260,12 +256,9 @@ export default function CoachesAwardsReportPage({
           {awards.length === 0 ? (
             <div className={styles.emptyState}>
               <Award size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
-              {/* ⚠ Past tense in a record, and no button to point at — there isn't one. */}
-              <p className={styles.emptyStateTitle}>{isRecord ? 'No awards were given' : 'No awards given yet'}</p>
+              <p className={styles.emptyStateTitle}>No awards given yet</p>
               <p className={styles.emptyStateSub}>
-                {isRecord
-                  ? 'Nobody was recognised with an award in this season.'
-                  : 'Hand out your first one right after a game wraps, or use the button above.'}
+                Hand out your first one right after a game wraps, or use the button above.
               </p>
             </div>
           ) : (
@@ -280,7 +273,7 @@ export default function CoachesAwardsReportPage({
                   {/* ⚠ "this season" is now TRUE. Until 2026-08-16 this line counted every award
                       the team had ever given, because the route filtered by team and not by the
                       season's roster — a wrong number on a live screen, not just an archive one. */}
-                  {awards.length} award{awards.length === 1 ? '' : 's'} given {isRecord ? 'that season' : 'this season'} across {typeChips.length} award type{typeChips.length === 1 ? '' : 's'}
+                  {awards.length} award{awards.length === 1 ? '' : 's'} given this season across {typeChips.length} award type{typeChips.length === 1 ? '' : 's'}
                 </p>
               )}
 
@@ -349,19 +342,17 @@ export default function CoachesAwardsReportPage({
                             >
                               <Printer size={13} aria-hidden />
                             </Link>
-                            {/* ⚠ Removing an award UNDOES a night that has happened — an instrument,
-                                absent in a record. The DELETE route resolves the active year and
-                                would refuse it anyway; this is the door, not the lock. */}
-                            {!isRecord && (
-                              <button
-                                title="Remove"
-                                disabled={busyId === a.id}
-                                onClick={() => handleDelete(a)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
+                            {/* ⚠ Removing an award UNDOES a night that has happened. It is a live
+                                instrument, and the DELETE route resolves the ACTIVE year — so it
+                                cannot reach a closed season whatever this screen renders. */}
+                            <button
+                              title="Remove"
+                              disabled={busyId === a.id}
+                              onClick={() => handleDelete(a)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </td>
                         </tr>
                       ))}

@@ -34,8 +34,8 @@ export default function TeamDocumentsPage({
 }) {
   const params = use(paramsPromise);
   const { loading: assignmentsLoading } = useCoaches();
-  // Which SEASON is on screen — the team's working one. `page.canWrite()` folds in read-only,
-  // so every write flag goes through it.
+  // Which SEASON is on screen — the team's LIVE one, always. ⚠ `page.canWrite()` is GONE
+  // (2026-08-18): a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(params.orgSlug, params.teamId);
   const apiBase = `/api/coaches/${params.orgSlug}/teams/${params.teamId}/documents/templates`;
 

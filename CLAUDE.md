@@ -1,30 +1,49 @@
 @AGENTS.md
 @AGENCY_RULES.md
 
-# Coaches Portal — HISTORY IS DELIVERED IN PLACE (owner ruling 2026-08-16, binding)
+# Coaches Portal — A SEASON IS LIVE UNTIL IT IS CLOSED, AND A CLOSED SEASON IS ONE PAGE (owner ruling 2026-08-18, binding)
 
-**There is no archive, and no season toggle.** A coach opens their team and sees the season the team
-is on — its live one, or its newest finished one when the team is between seasons. Nothing anywhere
-points the portal at a different year. This replaces the "archive is opt-in" ruling of 2026-08-01,
-which governed a PLACE (a season dial, a second nav, ~30 season-aware routes) that is now deleted.
-Plan of record: `docs/projects/active/COACH_MEMBERSHIP_HISTORY_IN_PLACE_PLAN.md`.
+**Two states, and the middle one does not exist.** A season stays **completely live** — every screen,
+every tool, nothing taken away — until the coach closes it. The last game does not end it: money
+settlement, awards, documents, family emails and next year's tryout all happen afterwards. When it is
+closed it becomes **ONE PAGE** (`/teams/{id}/season-end`): Season Wrapped, four collapsed shelves
+(results, roster, practices, money) and the compare door. The same page whether it closed yesterday
+or three years ago. Plan of record:
+`docs/projects/active/COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN.md`.
 
-**Between seasons is an ordinary state, not a lock-out.** A team whose working season has finished
-keeps its whole nav in its usual order; only the landing slot changes (Overview → Season's End).
-Records render read-only. Live instruments say so in their own words
-(`components/coaches/CoachNotOnTeam.tsx`) rather than vanishing.
+⚠⚠ **THIS REPLACED "history is delivered in place" (2026-08-16), which is now WRONG where it says a
+finished season renders through the ordinary screens.** That ruling's real target survives and is
+strengthened: **no season dial, no second nav, no thirty screens learning a year.** What changed is
+the answer to *"what does a finished season look like?"* — it was "all of it, read-only", and it is
+now "one page". Seventeen `isReadOnly`/`isRecord` branches, twelve "comes back next season" notices
+and `page.canWrite()` were all deleted with it.
+
+**⚠ A team with no live season has ONE DOOR, and this is the load-bearing part.** The live tools are
+not rendered at all rather than rendered read-only — `components/coaches/CoachTeamSeasonGate.tsx`
+(mounted by the team layout, decided SERVER-side) sends the coach to that team's closed-season page
+before any live screen mounts, and both navs collapse to that single entry (desktop sidebar, phone
+bar **and the phone More sheet** — the sheet was nearly missed once). Removing a read-only branch
+while leaving its screen reachable is not a tidy-up; it shows write controls the server refuses.
+**Do not add a thirtieth finished-season branch. If a closed season needs to show something, it
+needs a SHELF on that page.**
+
+**Two doors out of a season, both head-coach-and-standalone-only:** *Start next season* (rolls
+forward, closes this one) and *Close the season* (ends it, starts nothing — for the aged-out team).
+**⚖ Unsettled money WARNS, never blocks.** *Reopen* is offered only while the team has no live
+season; undoing an accidental **rollover** is deliberately **not built** (plan §3.4 holds its rule —
+do not implement it on the way past).
 
 **A year parameter is a DECISION.** `HISTORY_ENDPOINTS` in
-`tests/unit/coach-history-endpoint-guard.test.ts` is the whole look-back layer — today, exactly
-`wrapped` (Season Wrapped / Season's End), reached from the compare list at the bottom of Insights →
-"How are we doing?". The build fails when a route or a page learns to read a year, which is the
-decision point. Before proposing an addition, answer three questions:
+`tests/unit/coach-history-endpoint-guard.test.ts` is the whole look-back layer — the closed-season
+page and the routes it calls, and nowhere else. The build fails when a route or a page learns to read
+a year, which is the decision point. Before proposing an addition, answer three questions:
 1. **Record or instrument?** Anything that moves money, runs a tryout, messages families, or
    configures the team stays on the working season.
 2. **Does the whole subtree carry the year?** The unit of work is every page reachable from the
    door, not the door. Chunk F's expensive defects were all one level down.
 3. **Could the coach tell which season they are reading?** The page-title season chip is gone; a
-   surface that can show two different years needs its own answer to that.
+   surface that can show two different years needs its own answer to that. (The closed-season page
+   answers it by titling itself with the season's NAME — "2025 Season".)
 
 **⚠ Every history shelf gets its own owner mockup session before it is built** (P3 practice plans,
 P4 the money book, and anything after them). Binding design constraint for those sessions: **the
@@ -35,7 +54,9 @@ failed design regardless of how useful the history is.
 **If a surface cannot honestly serve a finished season, hide its entry point** rather than letting it
 dead-end — a link that 404s is the same bug wearing a politer face. Standing examples, both
 build-enforced: playing-time analytics (recomputed figures, live-season-only PERMANENTLY) and the
-opponent scouting book (an instrument — today's book, not a snapshot).
+opponent scouting book (an instrument — today's book, not a snapshot). ⚠ Both are now guarded on the
+**closed-season page**, which is the only surface a finished season is read on; the Insights-hub
+assertions that used to hold them moved there when the hub stopped rendering for a finished season.
 
 # Post-edit review
 
@@ -83,9 +104,17 @@ variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `
 roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
 marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
 both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `8fe59ded` (2026-08-14, Amplify job 256 SUCCEED 18:01 ET —
-the Money quarter + the help guide's menu-of-answers format; migrations 230–235 applied to prod
-that day; both doors re-verified 307ing into their worlds post-256).** The preceding prod HEAD was
+into their worlds. **Prod HEAD is now `5ae39f10` (2026-08-17, Amplify job 257 SUCCEED — 72 commits: the Money
+redesign P1–P4, budget item integrity, membership + history-in-place, tryout scorecard weights and
+setup checklist; **migrations 236–250 all applied to prod** that session, leaving the queue empty
+and the two schemas byte-identical; both doors re-verified 307ing into their worlds post-257, and
+`check:demos` reports both worlds presentable). ⚠ This release CHANGED THE COACH DEMO'S STORY —
+the coach sandbox now shows what its club bills it and what it asks back, and the whole money
+vocabulary a coach reads (categories + items, Transactions vs Payables) is new; the dock copy and
+tour narration were adjusted with it, but this is exactly the surface where the demo's sentences go
+quietly stale, so re-read them on the next coach-money change.** The preceding prod HEAD was
+`8fe59ded` (2026-08-14, Amplify job 256 SUCCEED 18:01 ET — the Money quarter + the help guide's
+menu-of-answers format; migrations 230–235 applied to prod that day). The preceding prod HEAD was
 `396bd7cc` (2026-08-12 — two promotes that day: the morning feature release, job 253, then the
 **Next 16.3.0 framework upgrade**, job 254). The three-part go-public decision (`BUSINESS_DECISIONS.md`
 2026-08-07) is fully executed and **the coach door is no longer route-only**. `npm run

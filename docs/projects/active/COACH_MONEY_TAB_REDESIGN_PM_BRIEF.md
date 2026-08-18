@@ -1,8 +1,9 @@
 # PM Brief — the Money screens redesign: the split, the register, and the club tab
 
-**Status: ALL FOUR PHASES BUILT ON DEV — P1+P2 2026-08-16, P3+P4 2026-08-17.**
-Owner QA **§41 · §43 · §46 · §49**, all four owed, and the owner is walking them together in that
-order. Migrations 246, 247 and 250 are applied to dev only.
+**Status: ALL FOUR PHASES ON PROD 2026-08-17, Amplify job 257** (P1+P2 built 08-16, P3+P4 08-17).
+Migrations **246, 247 and 250 applied to production** that same session, as part of the 236–250 run.
+⚠ Owner QA **§41 · §43 · §46 · §49** are all **still OWED** and now run against the **live site** —
+this shipped ahead of the walk-throughs by the owner's explicit call. Walk them in that order.
 **Plan:** [COACH_MONEY_TAB_REDESIGN_PLAN.md](COACH_MONEY_TAB_REDESIGN_PLAN.md)
 
 ## Phase 4 — what shipped to dev, in customer terms
