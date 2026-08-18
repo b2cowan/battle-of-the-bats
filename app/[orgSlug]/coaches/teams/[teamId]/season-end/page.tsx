@@ -556,11 +556,16 @@ export default function SeasonEndPage({
             </>
           )}
 
-          {active && (
-            <Link href={base} className={styles.btnSecondary} style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Trophy size={15} aria-hidden /> Go to {active.programYearName}
-            </Link>
-          )}
+          {/* ⚠ **NO "GO TO <LIVE SEASON>" BUTTON** — removed 2026-08-17 (owner, from the §53 walk),
+              and it is worth saying why so it does not come back. It was a leftover from the archive
+              era, when Season's End was a PLACE the portal could be steered into and a coach needed
+              an exit. Design A deleted that place: the nav is always the LIVE season's nav, so every
+              door in it already goes where this button went.
+
+              ⚠ It also contradicted the note directly above it — "Your menu is showing the season the
+              team is on now" — by offering to take the coach somewhere they already were. And it only
+              ever rendered for a ROLLED-FORWARD team (a team between seasons has no live season to
+              offer), i.e. precisely the coach whose sidebar is already the live season. */}
 
           {!active && !isTeamWorkspace && (
             <section className={styles.setupPanel}>
