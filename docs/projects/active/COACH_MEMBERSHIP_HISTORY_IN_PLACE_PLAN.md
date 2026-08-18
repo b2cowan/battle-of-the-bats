@@ -464,7 +464,20 @@ Recorded rather than fixed, each with the reason:
    a run either side of New Year adds a third rather than reusing the two. Slow accumulation, not
    per-run drift (the games it seeds use fixed dates keyed to the season's own year, deliberately).
 
-## 9. What the owner asked for next (2026-08-17, direction — not yet a plan)
+## 9. What the owner asked for next — ✅ NOW A PLAN (2026-08-18)
+
+⚠⚠ **SUPERSEDED BY THE CLOSE-AND-ARCHIVE PLAN.** The two asks below were designed out on 2026-08-18
+and are now `COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN.md` (mockups `57e9bfd3`, owner-approved). **Read
+that plan, not this section, for what is being built** — this stays as the record of how the
+direction arrived and what the tension with Design A actually was.
+
+⚠ The answer to the tension, for anyone reading this section cold: a season is now **fully LIVE
+until it is CLOSED**, and a closed season is **one page**, reachable regardless of the live season.
+Design A’s real target — no season dial, no second nav, no thirty screens learning a year — is
+untouched; what changed is the answer to *“what does a finished season look like?”*
+
+### The direction as it was given (2026-08-17)
+
 
 Given at the close of the §53 walk, recorded verbatim in substance while it is fresh. **No design
 work has been done on either, and none should start until the owner's page-by-page pass reports
