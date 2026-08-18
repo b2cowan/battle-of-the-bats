@@ -57,7 +57,7 @@ export default function NotificationsPage() {
   const [audience, setAudience] = useState<Audience>('all');
   const [preview,  setPreview]  = useState(false);
   const [sending,  setSending]  = useState(false);
-  const [result,   setResult]   = useState<{ sent: number; skipped: number } | null>(null);
+  const [result,   setResult]   = useState<{ sent: number; skipped: number; suppressed: number } | null>(null);
   const [error,    setError]    = useState<string | null>(null);
 
   const [log,        setLog]        = useState<LogEntry[]>([]);
@@ -93,7 +93,7 @@ export default function NotificationsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to send');
-      setResult({ sent: data.sent, skipped: data.skipped });
+      setResult({ sent: data.sent, skipped: data.skipped, suppressed: data.suppressed ?? 0 });
       setPreview(false);
       setSubject('');
       setMessage('');
@@ -242,7 +242,12 @@ export default function NotificationsPage() {
           marginBottom: '1.5rem',
           fontSize: '0.88rem',
         }}>
+          {/* Every registrant in the audience must be accounted for here. Delivered + skipped
+              stopped summing to the audience the moment opted-out families were split into their
+              own bucket server-side, and an admin who cannot see where the rest went assumes a
+              bug and re-sends. Counts only — never which families opted out. */}
           Email sent — {result.sent} delivered
+          {result.suppressed > 0 && `, ${result.suppressed} not sent (unsubscribed)`}
           {result.skipped > 0 && `, ${result.skipped} skipped (no email on file)`}.
         </div>
       )}

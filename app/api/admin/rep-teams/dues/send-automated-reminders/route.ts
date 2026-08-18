@@ -82,6 +82,7 @@ export const POST = withObservability(async (req: Request) => {
       // the on-screen "See an example" preview, so the sample a coach reads is the send.
       const { subject, html } = duesReminderEmail({
         teamName: team.name,
+        orgName: ctx!.org.name,
         window,
         guardianFirst,
         items,

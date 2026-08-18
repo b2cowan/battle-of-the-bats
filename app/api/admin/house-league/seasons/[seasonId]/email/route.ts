@@ -3,7 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getRegistrationsForSeason, insertLeagueEmailLog, getLeagueEmailLog } from '@/lib/db';
-import { sendEmail, leagueBroadcastHtml, ADMIN_EMAIL } from '@/lib/email';
+import { sendFamilyEmail, getFamilySuppressionList } from '@/lib/family-email';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -86,30 +86,47 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ sent: 0, skipped: 0 });
   }
 
-  const orgName      = ctx!.org.name;
-  const contactEmail = ADMIN_EMAIL;
+  // ⚠ This is a BULK ANNOUNCEMENT to families, so it goes through the one guarded family
+  // sender (2026-08-18) — it used to call `sendEmail` directly, which meant it honoured no
+  // unsubscribe and carried no way to ask for one. The suppression list is fetched once and
+  // shared; it already covers addresses a parent has left behind, so an opt-out filed years
+  // ago under a former address silences this season's broadcast too.
+  const suppressedList = await getFamilySuppressionList(ctx!.org.id);
 
   let sent = 0;
   let skipped = 0;
+  let suppressed = 0;
 
   for (const reg of targets) {
-    if (!reg.guardianEmail) { skipped++; continue; }
-    const html = leagueBroadcastHtml({
-      orgName,
-      seasonName: season.name,
-      subject: subject.trim(),
-      message: message.trim(),
-      contactEmail,
-    });
+    // Trimmed, not just truthy: the guarded sender reports a blank-after-trim address as
+    // 'suppressed', which would file "   " under "opted out" — the exact bucket this route
+    // just went to the trouble of separating from "no email on file".
+    if (!reg.guardianEmail?.trim()) { skipped++; continue; }
     try {
-      await sendEmail(reg.guardianEmail, subject.trim(), html);
-      sent++;
+      const result = await sendFamilyEmail({
+        orgId: ctx!.org.id,
+        to: reg.guardianEmail,
+        subject: subject.trim(),
+        suppressed: suppressedList,
+        content: {
+          teamName: season.name,
+          orgName: ctx!.org.name,
+          title: subject.trim(),
+          body: message.trim(),
+          reason: `you have a registration in ${season.name}`,
+        },
+      });
+      if (result.status === 'sent') sent++;
+      // Counted apart from `skipped`, which means "we could not send". A suppressed
+      // recipient is a family we chose not to mail, and the log should not blur the two.
+      else if (result.status === 'suppressed') suppressed++;
+      else skipped++;
     } catch {
       skipped++;
     }
   }
 
-  console.log(`[email] League broadcast: season=${seasonId} scope=${scope} sent=${sent} skipped=${skipped}`);
+  console.log(`[email] League broadcast: season=${seasonId} scope=${scope} sent=${sent} skipped=${skipped} suppressed=${suppressed}`);
 
   const audienceLabel =
     scope === 'all'    ? 'All active registrants' :
@@ -126,11 +143,14 @@ export const POST = withObservability(async (req: Request,
       scope,
       audience:     audienceLabel,
       countSent:    sent,
-      countSkipped: skipped,
+      // The stored log has two columns and now three outcomes, so "not delivered" is one
+      // number here. The live response below keeps them apart — an admin deciding whether to
+      // phone anyone wants "3 opted out" and "3 had no email on file" to read differently.
+      countSkipped: skipped + suppressed,
     });
   } catch (e) {
     console.error('[email] Failed to write email log:', e);
   }
 
-  return NextResponse.json({ sent, skipped });
+  return NextResponse.json({ sent, skipped, suppressed });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/email' });

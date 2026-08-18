@@ -7,7 +7,8 @@ import {
   getUnpaidDuesReminderTargets,
   type UnpaidDuesReminderTarget,
 } from '@/lib/db';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, escapeHtml as esc } from '@/lib/email';
+import { duesReminderFooterHtml } from '@/lib/dues-reminder-email';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -50,7 +51,7 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { team, assignment } = resolved;
+  const { ctx, team, assignment } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -79,24 +80,35 @@ export const POST = withObservability(async (req: Request,
   let playersReminded = 0;
   const subject = `A reminder about player dues — ${team.name}`;
 
+  // ⚠ THE FIFTH COPY. `lib/dues-reminder-email.ts` exists because three senders carried the dues
+  // email byte-for-byte and drifted; this one was never folded in, and it drifted exactly as
+  // predicted — it lost the escaping and never gained the sender identification. It shares the
+  // FOOTER now, which is the part compliance depends on. The body still differs on purpose (this
+  // notice is "nothing paid yet", not an installment schedule), so merging it fully would change
+  // what a family reads and is a product decision, not a refactor. Do not add a sixth.
+
   for (const [email, items] of byGuardian) {
     const guardianFirst = items[0].guardianFirstName ?? 'there';
+    // ⚠ Player and guardian names are people-entered text going into a third party's inbox, so
+    // they are escaped — they were not until 2026-08-18, which made this the one dues notice a
+    // typed-in name could inject markup into. The shared template has always escaped; this body
+    // is hand-built (see the note above the send) and quietly missed it.
     const rows = items
       .map(
         i =>
           `<li style="margin-bottom:0.5rem;">
-            <strong>${[i.playerFirstName, i.playerLastName].filter(Boolean).join(' ')}</strong> — ${fmt(i.outstanding)} outstanding
+            <strong>${esc([i.playerFirstName, i.playerLastName].filter(Boolean).join(' '))}</strong> — ${fmt(i.outstanding)} outstanding
           </li>`,
       )
       .join('');
 
     const html = `
 <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
-  <p>Hi ${guardianFirst},</p>
-  <p>Our records show no dues payments yet for the following player(s) on <strong>${team.name}</strong>:</p>
+  <p>Hi ${esc(guardianFirst)},</p>
+  <p>Our records show no dues payments yet for the following player(s) on <strong>${esc(team.name)}</strong>:</p>
   <ul style="padding-left:1.25rem;">${rows}</ul>
   <p>If you've already sent payment, please disregard this note or let your coach know so we can update our records. Otherwise, please reach out to your coach to arrange payment.</p>
-  <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>
+  ${duesReminderFooterHtml({ orgName: ctx.org.name, teamName: team.name })}
 </div>`;
 
     await sendEmail(email, subject, html);

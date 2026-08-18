@@ -1,4 +1,5 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { transactionalFamilyFooterHtml } from '@/lib/family-mail-footer';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -814,27 +815,11 @@ export function leagueRegistrationDeclinedHtml(p: {
   `);
 }
 
-export function leagueBroadcastHtml(p: {
-  orgName: string;
-  seasonName: string;
-  subject: string;
-  message: string;
-  contactEmail?: string;
-}) {
-  const bodyLines = p.message
-    .split('\n')
-    .map(l => l.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.6;">${l}</p>` : '<br>')
-    .join('');
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.85rem;font-weight:800;color:#D9F99D;letter-spacing:0.04em;">${p.orgName}</span>
-    <span style="display:block;font-size:0.7rem;color:rgba(241,245,249,0.4);margin-top:0.2rem;letter-spacing:0.04em;">${p.seasonName}</span>
-  </div>
-  <h2 style="color:#F1F5F9;font-size:1.15rem;margin:0 0 1.25rem;font-weight:700;">${p.subject}</h2>
-  <div style="color:rgba(241,245,249,0.8);">${bodyLines}</div>
-</div>`;
-}
+/* `leagueBroadcastHtml` lived here until 2026-08-18. The season broadcast now goes through
+   `lib/family-email.ts` like every other bulk family announcement, so it renders in the shared
+   family envelope — which is what gives it the sender identification and the unsubscribe link
+   it never had. Deleted rather than kept "in case": a second family-email template with no
+   compliance footer is precisely the thing that made this gap possible. */
 
 // ── Rep Teams tryout registration email ──────────────────────────────────────
 
@@ -923,6 +908,7 @@ export function tryoutOfferHtml(p: {
     <p>Hi <strong>${escapeHtml(p.guardianFirstName)}</strong>,</p>
     <p>Great news — we&apos;d love to have <strong>${player}</strong> on <strong>${program}</strong>. We&apos;re offering them a spot on the roster.</p>
     ${responseBlock}
+    ${transactionalFamilyFooterHtml({ orgName: p.orgName, teamName: p.teamName, noticeKind: 'Tryout updates', about: 'a tryout', tone: 'dark' })}
   `);
 }
 
@@ -946,6 +932,7 @@ export function tryoutWaitlistHtml(p: {
     <p>Thank you for trying out for the <strong>${program}</strong> program. <strong>${player}</strong> has been placed on our <strong>waitlist</strong>.</p>
     <p style="color:rgba(241,245,249,0.7);line-height:1.7;">A waitlist spot means the coaching staff would love to have room for ${escapeHtml(p.playerFirstName)} and will reach out if a place opens up. No action is needed from you right now — we&apos;ll be in touch.</p>
     <p style="color:rgba(241,245,249,0.55);font-size:0.9rem;">Questions? Reach the coaching staff at <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
+    ${transactionalFamilyFooterHtml({ orgName: p.orgName, teamName: p.teamName, noticeKind: 'Tryout updates', about: 'a tryout', tone: 'dark' })}
   `);
 }
 
@@ -990,6 +977,7 @@ export function tryoutDeclinedHtml(p: {
     <p>Hi <strong>${escapeHtml(p.guardianFirstName)}</strong>,</p>
     <p>Thank you for registering <strong>${player}</strong> for the <strong>${program}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
     <p style="color:rgba(241,245,249,0.6);">We genuinely appreciate <strong>${escapeHtml(p.playerFirstName)}</strong>&apos;s effort and interest, and we&apos;d welcome them to try out again in the future. Please reach out to <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> with any questions.</p>
+    ${transactionalFamilyFooterHtml({ orgName: p.orgName, teamName: p.teamName, noticeKind: 'Tryout updates', about: 'a tryout', tone: 'dark' })}
   `);
 }
 

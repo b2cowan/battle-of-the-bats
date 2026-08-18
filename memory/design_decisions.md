@@ -4,6 +4,78 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-18 — WHO A CLUB MAY EMAIL: transactional mail is exempt, and the exemption is PAID FOR by naming the sender
+
+**Owner decisions, binding.** A family can unsubscribe from their club's email. An audit found ten
+senders put mail in a guardian's inbox and **three honoured it** — the other seven predate the shared
+guard and never moved. Two rulings settle what the promise means:
+
+1. **Dues reminders and tryout offer/waitlist/release mail are TRANSACTIONAL and skip the opt-out.**
+   A family cannot mute a bill by unsubscribing from announcements, and suppressing a tryout offer
+   would cost a child a roster spot because a parent unsubscribed two seasons ago. ⚠ **The exemption
+   is conditional on identification** — these mails MUST name the club, the team, and say plainly why
+   an unsubscribe did not stop them. Before this they signed off `FieldLogicHQ`, the software vendor,
+   which is the one signature a parent has no relationship with. **An exempt sender that does not
+   name itself is not exempt, it is just unaccountable.**
+2. **Announcements are NOT exempt, whoever sends them.** The house-league season broadcast is now
+   guarded (it carried no unsubscribe link at all). `leagueBroadcastHtml` was DELETED rather than
+   kept — a second family-email template with no compliance footer is exactly what made the gap.
+
+**⚠ THE DESIGN LESSON, which is the durable half:** P2 closed the former-address hole with a
+`personEmails` argument each caller passed. That protected **the one door that remembered**. The fix
+moved the expansion INTO the shared suppression list (`getFamilySuppressionList`), so every sender —
+including ones written later by someone who never reads this — gets it without knowing the concept
+exists. **Compliance carried in a parameter is compliance that lapses; put it in the thing nobody can
+route around.** Same shape as the `sendFamilyEmail` choke point itself, one level down.
+
+**⚠ Known and DELIBERATELY still open:** the **free-tier** coach's "Email families" honours no
+opt-out while the paid coach's identical announcement does — a family's unsubscribe is respected or
+not **depending on what their club pays**. It is NOT fixable by routing it through the guard:
+`basic_coach_teams` has no `org_id`, and both the opt-out list and the unsubscribe token are
+org-keyed. Needs its own per-team opt-out record — a migration and an owner decision.
+
+**Separately, the household ruling:** a household is **CONFIRMED, not inferred**, before any money
+feature acts on it. The family page assembles children from programme ROWS, so one child enrolled in
+two programmes counts as two — fatal for a sibling discount and invisible on screen. A human confirms
+which rows are one child; money features refuse to run on an unconfirmed household. This answers the
+"what identifies a child" question by replacing it.
+
+Plan: `docs/projects/active/CLUB_FAMILIES_BOOK_PLAN.md` §5.5. QA: ledger §56.
+
+---
+
+### 2026-08-18 — A HAIRLINE IN A FLEX COLUMN NEEDS `flex-shrink: 0`, and the air around it is not free
+
+**Owner trigger:** *"a little too much space between the dropdown and overview."* Measured, not
+eyeballed (Playwright computed styles, 1440×900): 36.8px between the team switcher and Overview,
+against 21.6px above the switcher — 70% more air below the control than above it.
+
+⚠⚠ **THE DIVIDER THAT WAS SUPPOSED TO FILL THAT SPACE DID NOT EXIST.** `.sidebarDivider` is an empty
+1px `div`, and the premium coach rail is a flex column with `overflow-y: auto`. An empty flex item's
+automatic minimum size is **zero**, so on every rail tall enough to overflow — i.e. every laptop
+viewport; the rail wants ~1004px and a 1440×900 screen gives it 852 — **both** dividers were crushed
+to 0px. The rail rendered two structureless ~37px holes, and the owner reported the symptom (too much
+space) rather than the cause (the line was gone). **Standing test: a zero-content spacer or hairline
+that is a direct child of a flex container must declare `flex-shrink: 0`, or it silently vanishes
+exactly when the container is full — which is when a divider matters most.** It survived a rendered
+48-screen sweep because no invariant asserts that a decorative element still has its declared height.
+
+**Decision.** (1) `flex-shrink: 0` on `.sidebarDivider`. (2) Its margins drop `0.5rem → 0.15rem`, and
+the switcher select gives up its stray `0.1rem` / `0.3rem` verticals: the two `.sidebarSection`
+paddings already put 8px of clear space on each side of the line, so the old margins were stacking a
+second helping of air on top of air that was already there. Result — 21.8px switcher→Overview (was
+36.8), 10.4px clear on each side of a line the coach can now actually see, and 8px above the switcher.
+
+**Rationale:** the fix the ask implies (delete space) and the fix the evidence demands (restore the
+line) are the same edit, and doing only the first would have left a rail whose two structural breaks
+are invisible forever. **Applies to:** `.sidebarDivider` + `.teamSwitcherSelect` in
+`app/[orgSlug]/coaches/coaches.module.css` — the premium coach rail, both breaks (switcher→nav and
+nav→Help/Sign out). The basic portal's `.railDivider` is immune: it is a `border-top`, not a height,
+which is why this never showed there. Follows the 2026-08-17 shell slimdown, which made the switcher
+the rail's first element and put the gap under a spotlight. [[design-principles]]
+
+---
+
 ### 2026-08-17 — The coach strip owns identity, the sidebar owns navigation (bell moves up, header deleted)
 
 **Owner trigger:** *"wasted space on the side nav… we show the org name in large print even though it is

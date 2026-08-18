@@ -565,28 +565,29 @@ export async function buildDuplicatePairs(orgId: string, preloaded?: World): Pro
 // ── The household's recipients (the message door's narrow read) ───────────────
 
 /**
- * Just enough to message a household: does the person exist in this org, every
- * address they have EVER used (for suppression through the person), and the
- * distinct current addresses of every guardian in the household. Three small
- * reads — deliberately NOT buildFamilyPage, which assembles money/forms/history
- * a send would throw away, and deliberately no attach RPC: messaging starts
- * from a page that already ran it.
+ * Just enough to message a household: does the person exist in this org, and the
+ * distinct current addresses of every guardian in it. Two small reads —
+ * deliberately NOT buildFamilyPage, which assembles money/forms/history a send
+ * would throw away, and deliberately no attach RPC: messaging starts from a page
+ * that already ran it.
+ *
+ * This used to also return every address the person had ever used, so the caller
+ * could hand them to the send guard for suppression-through-the-person. It no
+ * longer needs to: the suppression list itself now expands through the person
+ * (`getFamilySuppressionList`), which covers every sender rather than the ones
+ * that remembered to ask. The read went with the argument.
  */
 export async function loadHouseholdRecipients(orgId: string, personId: string): Promise<{
-  personEmails: string[];
   recipientEmails: string[];
 } | null> {
-  const [person, myAddresses, links] = await Promise.all([
+  const [person, links] = await Promise.all([
     supabaseAdmin.from('org_people')
       .select('id, email_normalized').eq('org_id', orgId).eq('id', personId).maybeSingle(),
-    supabaseAdmin.from('org_person_emails')
-      .select('email_normalized').eq('org_id', orgId).eq('person_id', personId),
     supabaseAdmin.from('family_links')
       .select('person_id, player_id, status').eq('org_id', orgId),
   ]);
   if (person.error) throw person.error;
   if (!person.data) return null;
-  if (myAddresses.error) throw myAddresses.error;
   if (links.error) throw links.error;
 
   // Co-guardians: other persons holding a VERIFIED link on one of this person's
@@ -607,7 +608,6 @@ export async function loadHouseholdRecipients(orgId: string, personId: string): 
   if (coEmails.error) throw coEmails.error;
 
   return {
-    personEmails: (myAddresses.data ?? []).map((a: any) => a.email_normalized),
     recipientEmails: [...new Set([
       person.data.email_normalized,
       ...(coEmails.data ?? []).map((p: any) => p.email_normalized),

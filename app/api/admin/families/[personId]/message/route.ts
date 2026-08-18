@@ -11,9 +11,14 @@ export const dynamic = 'force-dynamic';
  *
  * Two doors, one mechanism (plan §1.3): this sends through sendFamilyEmail —
  * the SAME choke point the coach announcement path uses. Suppression THROUGH
- * THE PERSON lives inside that choke point (its `personEmails` guard), not
- * here: this route's only jobs are the narrow read of who the household is,
- * and a friendly aggregate answer.
+ * THE PERSON lives inside that choke point, not here: this route's only jobs
+ * are the narrow read of who the household is, and a friendly aggregate answer.
+ *
+ * ⚠ NO SEND CAP YET. The announcement path limits a team to N sends per 24h by
+ * counting its own send-log rows; nothing records a per-family send, so there is
+ * nothing here to count. That record is the "date only" message log the owner
+ * chose on 2026-08-18 — the cap and the log want the SAME row, so they land
+ * together in the next unit rather than growing two mechanisms.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ personId: string }> },) => {
@@ -35,8 +40,10 @@ export const POST = withObservability(async (req: Request,
   const household = await loadHouseholdRecipients(ctx.org.id, personId);
   if (!household) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // One list fetch, shared across the household's sends; the choke point
-  // re-runs the guard against it per recipient (address AND through-the-person).
+  // One list fetch, shared across the household's sends; the choke point re-runs
+  // the guard against it per recipient. The list already covers former addresses
+  // (it expands through the person), so there is nothing to hand it about who
+  // this household is.
   const suppressed = await getFamilySuppressionList(ctx.org.id);
   const results = await Promise.all(household.recipientEmails.map(to =>
     sendFamilyEmail({
@@ -51,7 +58,6 @@ export const POST = withObservability(async (req: Request,
         reason: 'your family is registered with this organization',
       },
       suppressed,
-      personEmails: household.personEmails,
     }),
   ));
 

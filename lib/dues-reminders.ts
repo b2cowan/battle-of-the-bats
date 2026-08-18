@@ -124,7 +124,7 @@ async function sweepTeamWave(
   const taggedIds: string[] = [];
   for (const [email, items] of byGuardian) {
     const guardianFirst = items[0].guardianFirstName ?? 'there';
-    const { subject, html } = duesReminderEmail({ teamName: team.teamName, window: wave.window, guardianFirst, items });
+    const { subject, html } = duesReminderEmail({ teamName: team.teamName, orgName: team.orgName, window: wave.window, guardianFirst, items });
     // sendEmail's fetch is unguarded and CAN throw (DNS/reset/timeout), distinct from its
     // 'provider_error' return. Contain it per-guardian: one family's network blip must not
     // abort the batch — that would skip the stamp for families ALREADY emailed above and

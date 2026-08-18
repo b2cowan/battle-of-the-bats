@@ -216,6 +216,11 @@ payment against the family · export their data.
 > mechanism — if a shared write path does not exist, **extract one; never fork**.
 
 ### P3 — Household money and the quiet extras (the mockups' second release)
+
+> **Session prompt written 2026-08-17:** `CLUB_FAMILIES_BOOK_P3_PROMPT.md` — gated on owner QA §54
+> passing, a real trigger, the money QA walks (for the payment write), and the §8.5 child-identity
+> decision (for the household-money four). P3 opens with its own mockup session; chunk A is the
+> through-the-person suppression fix for EVERY sender (mig 251's recorded Phase-3 warning).
 Sibling discount · financial assistance · household payment plan · move a credit between siblings ·
 bounced/undeliverable flag · internal notes with an author and a date.
 
@@ -386,6 +391,128 @@ findings FIXED.** The ones worth remembering:
   `merged_snapshot` retains PII indefinitely by design (audit record; retention is §8.4's
   deferred decision).
 
+### 5.5 P3 session 1 (2026-08-18) — two gates dropped, two decisions made, the email hole closed
+
+**The trigger gate is RETIRED.** P3 was held partly on "wait for a real club to be using the area".
+The owner challenged it and it does not survive: everything expensive in P3 is already held by a
+specific decision underneath (child identity, the send-log posture), so the trigger added nothing on
+top of those while blocking three cheap items it was never aimed at. It is also circular pre-customer
+— waiting for enthusiasm about a half-finished area. **Owner QA is likewise not a gate** (standing
+ruling 2026-08-17, pre-customer). What survives is the two decisions below.
+
+#### Owner decisions, 2026-08-18 — BINDING
+
+1. **Dues reminders are TRANSACTIONAL.** A family cannot mute a bill by unsubscribing from club
+   announcements. The four dues senders and the tryout offer/waitlist/release mails deliberately
+   skip the suppression check — but they MUST identify their sender, which is the trade that makes
+   the exemption honest. Suppressing a tryout offer would cost a child a roster spot because a
+   parent unsubscribed from newsletters two seasons ago.
+2. **A household is CONFIRMED, not inferred, before money moves.** This replaces §8.5's framing.
+   The question "what identifies a child?" asks for a universal identity key and is the wrong
+   question — the four money features need only *"how many children does this family have, and are
+   any two of these rows the same child?"*, answered once, by a human, before any money feature acts.
+   Money features refuse to run on an unconfirmed household. This is the posture the duplicate-parent
+   queue and the returning-player check already use: propose, verify, never assume. **§8.5 is
+   ANSWERED; the four money features are unblocked and go to a mockup session.**
+3. **The message log stores a DATE ONLY** — "last contacted 12 Aug". Not a per-recipient record of
+   what was sent: that needs a retention window and an answer for a family's data export, and it
+   reverses the deliberate count-only minimisation. Closes §8.4's messaging slice.
+
+#### ⚠ Two plan claims the code disproved (add to the list §5.4 started)
+
+- **`rep_player_continuity_links` is NOT the seam for child identity.** §8.5 floats it as the
+  candidate. It links the same team's roster across two seasons and structurally cannot join a rep
+  player to a league registration, or one child across two teams — the exact join a household needs.
+  A good PATTERN to copy (suggested → confirmed | rejected, confidence tier, decided_by audit,
+  rejection tombstones); the wrong table to reuse.
+- **Birth dates are collected far more widely than "~1 roster row in 163" suggests.** That figure
+  describes historic and seeded data. Public rep tryout sign-ups **require** a DOB, the accept RPC
+  **carries it onto the roster row**, and the season roll carries it forward. The gaps are the other
+  doors: public league registration asks without insisting, and manual admin/coach adds never ask.
+  So a DOB is a **confidence signal** for the confirmation screen, not a prerequisite for it.
+
+#### Built this session — the email work (no migration, no new surface)
+
+The audit behind it: **ten senders put mail in a guardian's inbox; three honoured an unsubscribe.**
+The other seven had not routed around the guard on purpose — they predate it and never moved.
+
+- **The suppression list now expands THROUGH THE PERSON** (`getFamilySuppressionList`). It returns
+  every address of every person who opted out under any address they have ever used. ⚠ This replaces
+  P2's `personEmails` argument, which each caller had to remember to pass and therefore protected the
+  single door that did. **Every caller now gets it without knowing the concept exists** — closing
+  mig 251's recorded Phase-3 trap for all senders at once, not one door at a time. Reads are paged
+  (a silent 1000-row cap here means under-suppressing).
+- **The house-league season broadcast is guarded.** It was the audit's clearest exposure: a true bulk
+  announcement to guardians with no unsubscribe link at all. It now renders in the shared family
+  envelope, so it gains sender identification and unsubscribe. `leagueBroadcastHtml` was DELETED — a
+  second family-email template with no compliance footer is what made the gap possible.
+- **All five transactional notices now name the club.** They previously signed off "FieldLogicHQ" —
+  the software vendor, not the club asking for money — and said nothing about why an unsubscribe did
+  not stop them. One shared footer (`duesReminderFooterHtml`) states both.
+- **`remind-unpaid` was a FIFTH hand-built copy of the dues email** and had drifted exactly as the
+  shared template's header predicted: it **never escaped player or guardian names** into a third
+  party's inbox. Escaped now, and it shares the footer. Its body still differs on purpose.
+- **`tests/unit/family-email-guard.test.ts`** pins the audit: a manifest of all ten senders with each
+  one's posture, plus a drift scan that fails when a new file mails a guardian-shaped recipient
+  through the raw transport. ⚠ Its shape assertions read **comment-stripped** source — the first
+  version passed on prose and would have kept passing if the code were deleted and the paragraph left.
+
+#### ⚠ STILL OPEN — the free-tier gap, which is NOT a re-route
+
+**`lib/basic-coach-announcements.ts` (the free coach's "Email families") still honours no opt-out**,
+while the paid coach's identical announcement does — so today whether a family's unsubscribe is
+respected depends on what their club pays. **It cannot be fixed by routing it through the choke
+point:** `basic_coach_teams` has no `org_id`, and both the suppression list and the unsubscribe token
+are org-keyed. A free team has no org to record an opt-out against. (Recorded as a known gap in the
+data dictionary since P2 — this session confirmed it, it did not discover it.) Closing it needs its
+own per-team opt-out record + its own unsubscribe token shape: **a small migration and an owner
+decision, not a cleanup.** Sized as "small" in the 2026-08-18 briefing artifact — that was wrong.
+
+#### Post-build `/review` (2026-08-18, high-risk tier, 5 lenses) — 7 findings fixed
+
+⚠⚠ **The one that matters: the guard test above ran GREEN on a rule it only half-checked.** The
+transactional ruling has two clauses — name the sender AND explain the override — and the test
+asserted them only across the four dues senders. The **tryout** offer/waitlist/release mails had
+neither: they identified the club only when a caller remembered to pass `orgName` (it is optional,
+and `orgBrandHeader` returns `''` without it), and said nothing about why an unsubscribe did not stop
+them. **A test that asserts the easy half of a rule is worse than no test — its green is read as the
+whole rule holding.** Fixed by extracting `lib/family-mail-footer.ts` (pure, dependency-free, because
+the dues module must stay client-importable for the preview and the tryout templates live in the mail
+transport), applying it to all three tryout templates, and widening the test to all FIVE transactional
+senders plus a count assertion that all three tryout templates carry it.
+
+Also fixed:
+- **The paging had no ORDER BY.** Page-by-page reads without a deterministic order are not guaranteed
+  to return each row once; a missed row here is an address we fail to suppress. All three reads now
+  order on a column that is unique within the org. **Paging without ordering is half of paging.**
+- **The admin's broadcast banner could no longer account for everyone.** Splitting "opted out" out of
+  "skipped" server-side left the confirmation reading "12 delivered, 1 skipped" for a 16-family
+  audience. An admin who cannot see where the rest went assumes a bug and re-sends. Counts only,
+  never which families.
+- **A page-load path got more expensive.** `getFamilySuppressionList` is also read when a coach opens
+  the announcement composer (for the reach count). The `.in()` chunks now run in parallel.
+- **A whitespace-only address was filed as "opted out"** — the guarded sender reports a
+  blank-after-trim address as suppressed. The route now trims before its "no email on file" branch.
+- **The unsubscribe line said "team emails"** on a season-wide league broadcast. Now "emails".
+- **The test's comment-stripper was regex-only** and guarded `//` solely when preceded by `:`. A
+  doubled slash in a path string or a regex literal would have silently truncated the line —
+  *weakening* an assertion rather than breaking it. Replaced with a string-aware scan, proven against
+  the exact cases the regex failed.
+
+**Reported, NOT fixed — pre-existing, not introduced here:** the league broadcast sends sequentially
+with no recipient cap (a few hundred registrations ≈ 60–160s, a real serverless-timeout risk;
+`lib/family-notify.ts` already establishes `SEND_CONCURRENCY = 8` and `rep-team-announcements.ts` a
+100-recipient cap), and `getRegistrationsForSeason` has no `.range()`, so a season over 1000
+registrations silently drops registrants from the target list entirely. Both predate this session and
+both deserve their own unit.
+
+#### Deferred to the next unit, deliberately
+
+The message door still has **no send cap** (announcements cap a team at N per 24h by counting their
+own log rows; nothing records a per-family send, so there is nothing to count). The cap and the
+date-only message log want the **same stored row**, so they land together rather than growing two
+mechanisms. That row is the next unit's migration.
+
 ## 6. Feature catalogue
 
 Full catalogue with rationale in the mockup artifact. Phase tags summarised:
@@ -421,7 +548,13 @@ Full catalogue with rationale in the mockup artifact. Phase tags summarised:
 2. **Does the family ever see their own record?** A parent-facing version is a short step once the record exists, and it is how a club stops being the middleman for "what do you hold about me". Not in this project — but it changes what to build if it is coming.
 3. **Household balance: live or stored?** Live is always correct and never drifts; stored is faster and survives a child leaving a roster. **Recommendation: assemble live** at current club sizes; revisit only if measured slow.
 4. **Retention/erasure rules** — deferred deliberately (§6).
-5. **⚠ NEW, raised by Phase 1 (§5.1): what identifies a CHILD?** Birth dates are effectively absent
+5. **✅ ANSWERED 2026-08-18 — see §5.5 decision 2.** The question was the wrong shape: the money
+   features need a **confirmed household**, not a universal child identity. A human confirms which
+   rows are one child before any money feature acts; a DOB is a confidence signal in that screen, not
+   a prerequisite. ⚠ Two claims in the original text below are WRONG and are kept only as the record:
+   `rep_player_continuity_links` cannot serve as the seam (same-team, season-to-season only), and the
+   DOB scarcity figure describes historic data — the public tryout form requires one and it is
+   carried onto the roster. Original text: **what identifies a CHILD?** Birth dates are effectively absent
    from rep rows, so children are matched by name within an org. That is enough for Phase 2's lookup
    and for a *proposed* duplicate, and **not** enough for P5's sibling discount or household payment
    plan, which pay out real money against an inference. Decide before P5: make a birth date required

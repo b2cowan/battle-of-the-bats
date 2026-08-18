@@ -16,6 +16,7 @@
  * `Intl` — no db, no transport — so it is safe on both sides of that line.)
  */
 import { formatStoredDate } from './timezone';
+import { transactionalFamilyFooterHtml } from './family-mail-footer';
 
 export interface DuesReminderEmailItem {
   playerFirstName: string;
@@ -55,16 +56,36 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /**
+ * THE footer every dues notice carries — the sender, and why an unsubscribe did not stop it.
+ *
+ * A thin wrapper over the shared transactional footer (`lib/family-mail-footer.ts`), which the
+ * tryout notices use too. It stays exported because the "no payments yet" reminder builds its own
+ * body and must not grow its own version of this — five copies of the dues email is how the first
+ * four drifted apart.
+ */
+export function duesReminderFooterHtml(p: { orgName?: string | null; teamName: string }): string {
+  return transactionalFamilyFooterHtml({
+    orgName: p.orgName,
+    teamName: p.teamName,
+    noticeKind: 'Dues reminders',
+    about: 'player dues',
+  });
+}
+
+/**
  * `window` is the automatic wave (30 or 7 days ahead); null is the coach's ad-hoc
  * "Send Due Reminders" button, which carries its own subject line.
  */
 export function duesReminderEmail(opts: {
   teamName: string;
+  /** The club, for the footer's sender identification. Optional so the on-screen preview and
+   *  any caller without org context still render; falls back to the team name. */
+  orgName?: string | null;
   window: 30 | 7 | null;
   guardianFirst: string;
   items: DuesReminderEmailItem[];
 }): { subject: string; html: string } {
-  const { teamName, window, guardianFirst, items } = opts;
+  const { teamName, orgName, window, guardianFirst, items } = opts;
   const rows = items
     .map(i => {
       const credit = i.creditApplied ?? 0;
@@ -100,7 +121,7 @@ export function duesReminderEmail(opts: {
   <p>This is a friendly reminder that the following dues installments are ${anyOverdue ? 'due' : 'coming due'} for your player(s) on <strong>${esc(teamName)}</strong>:</p>
   <ul style="padding-left:1.25rem;">${rows}</ul>
   <p>If you've already sent a payment, it may not be recorded yet — just let your coach know. To view your full payment schedule, contact your coach directly.</p>
-  <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>
+  ${duesReminderFooterHtml({ orgName, teamName })}
 </div>`;
   const subject = window
     ? `Upcoming dues reminder (${window} days) — ${teamName}`

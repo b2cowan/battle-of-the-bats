@@ -86,3 +86,63 @@ Five phases. The first builds the records and shows nobody — it ends with a re
 - **This concentrates personal data.** Today each coach sees only their own team's guardians; this puts every family's contact details, consent and balances on one searchable screen. Hence the dedicated, off-by-default permission — and a precedent worth remembering: an earlier guardian-data leak in the coach portal happened because a surface checked *one* permission when it needed two.
 - **A wrong merge is worse than a duplicate** — it shows one parent another parent's children. So only exact email matches are automatic; everything else is proposed for a human, never merged automatically, and a rejected pair is remembered.
 - **Coaches maintain this data but won't see the result.** Open question in the plan: whether a coach gets a read-only hint that a parent has a child on another team, or nothing at all.
+
+---
+
+## Update — 2026-08-18: two gates dropped, two decisions made, one promise repaired
+
+**Phase 3 is no longer waiting on anything except design.** It was held partly on a rule saying
+"don't start until a real club is using the area". The owner challenged that and it did not survive:
+everything genuinely expensive in Phase 3 was already held by a specific decision underneath, so the
+rule added nothing while blocking three cheap items it was never aimed at. Owner QA is likewise not
+a gate pre-customer (standing ruling). **Four of the six Phase 3 pieces are now clear to build**, and
+the two that were held are answered below — so all six go to one mockup session.
+
+### What the owner decided
+
+- **A bill is not an announcement.** Dues reminders and tryout results keep reaching a family that
+  has unsubscribed from club email — a parent cannot mute what they owe, and suppressing a tryout
+  offer would cost a child a roster spot over a newsletter opt-out from two seasons ago. The price of
+  that exemption: those emails must now say plainly **who** is asking and **why** the unsubscribe did
+  not stop them.
+- **A household is confirmed by a person, not guessed by the software.** The sibling discount and its
+  three siblings were blocked on "what identifies a child". That was the wrong question. The family
+  page builds its list of children from programme sign-ups, so one child in two programmes counts as
+  **two** — which would hand a family a third child's discount with nothing on screen looking wrong.
+  Instead, an admin confirms the household once, and money features refuse to act on one nobody has
+  confirmed. Same posture as the duplicate-parent queue: propose, verify, never assume.
+- **The message log remembers a date, not a dossier.** "Last contacted 12 Aug" answers what a club
+  actually asks before phoning a family, without creating a permanent record of who was told what —
+  which would need a retention policy and an answer when a family asks for everything you hold.
+
+### What shipped, and what a customer would notice
+
+An audit found **ten things send email to families, and three of them honoured an unsubscribe.** The
+rest were not ignoring it on purpose; they were written before the shared safeguard existed and never
+moved to it. Fixed this session:
+
+- **An unsubscribe now follows the person, not the address.** A parent who opted out years ago under
+  an old email is no longer reachable under their new one — through every sender, not just the one
+  screen where this already worked.
+- **The house-league season broadcast** was going out with no unsubscribe link at all. It now
+  identifies the club and carries one. Its visual design changed as a result.
+- **Every dues reminder now names the club.** They used to sign off with our software's name, so a
+  family got a bill for real money from a company they have no relationship with.
+- **A player's name can no longer inject markup into a bill** — one of the five dues notices was
+  never escaping typed-in names.
+
+### The honest gap, and a correction
+
+**The free tier still doesn't honour an unsubscribe.** A paid coach's announcement respects it; the
+free coach's identical "Email families" does not — so today whether a family's opt-out is honoured
+depends on what their club pays us. That is the hardest thing here to defend to a customer.
+
+⚠ **I sized this as a small re-route and I was wrong.** Free coach teams don't belong to an
+organization at all, and both the opt-out list and the unsubscribe link are anchored to one — so
+there is nowhere to record a free-tier family's choice. Closing it needs its own small piece of
+storage and its own unsubscribe link: a real, if modest, piece of work, and a decision about whether
+the free tier should carry it.
+
+**Priority:** the free-tier gap is the highest-value remaining item on customer-trust grounds and is
+the one I would take next, alongside the message log and its missing send limit (which share one
+record and should be built together).

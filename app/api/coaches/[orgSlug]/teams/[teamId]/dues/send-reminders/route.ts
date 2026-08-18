@@ -41,7 +41,7 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { team, assignment, programYear } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -80,6 +80,7 @@ export const POST = withObservability(async (req: Request,
     // and the on-screen "See an example" preview, so the sample a coach reads is the send.
     const { subject, html } = duesReminderEmail({
       teamName: team.name,
+      orgName: ctx.org.name,
       window: window ?? null,
       guardianFirst,
       items,
