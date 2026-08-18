@@ -869,6 +869,152 @@ if (!existingPr?.length) {
   ok('payment requests already present');
 }
 
+// ── 13b. A FINISHED season BEHIND the live one — the ROLLED-FORWARD shape ────
+/**
+ * ⚠⚠ **THE SHAPE NEITHER TEAM HAD, AND THE ONE THE WHOLE HISTORY PROGRAMME EXISTS FOR** (added
+ * 2026-08-17, owner QA §53 Phases 1–2).
+ *
+ * The fixture had two teams and neither could show the feature:
+ *   · this team — a LIVE season and no history at all;
+ *   · *UAT Between Seasons* — history and no live season.
+ *
+ * Every history phase (P3's copy-forward picker, P4's money book, the compare list, Season
+ * Wrapped) answers the question **"can I still reach last year now that this year has started?"**
+ * — which needs BOTH at once. Owner QA §53 found it the honest way on its first walk: "A past
+ * season" and the compare list were both correctly, uselessly empty, and the product was behaving
+ * perfectly. A fixture that cannot show the feature is indistinguishable from a feature that does
+ * not work.
+ *
+ * ⚠ It goes on THIS team, never on the between-seasons one — that team's whole job is having no
+ * live year, and the fixture context resolver REFUSES if it grows one.
+ *
+ * Seeded with everything the look-back surfaces read, because a half-filled past season is the
+ * same trap one level down: practices carrying plans (P3's picker and shelf), finalized games and
+ * a roster (Season Wrapped and the compare list's record), and a budget with its actuals (P4's
+ * money book).
+ */
+const priorYearNumber = py.year - 1;
+let { data: priorYear } = await db.from('rep_program_years')
+  .select('id, year, status').eq('team_id', team.id).eq('year', priorYearNumber).maybeSingle();
+if (!priorYear) {
+  const ins = await db.from('rep_program_years')
+    .insert({ team_id: team.id, org_id: org.id, name: `${priorYearNumber} Season`, year: priorYearNumber, status: 'completed' })
+    .select('id, year, status').single();
+  if (ins.error) { console.error('✗ prior season insert', ins.error.message); process.exit(1); }
+  priorYear = ins.data;
+}
+
+/* ⚠ The season's staff RECORD row. Access itself is the TEAM membership (seeded above, and
+   team-scoped), so this row grants nothing — it is the "who coached that year" fact the season
+   names its staff by, and its absence would make the finished season look unstaffed. */
+const { data: priorCoachRow } = await db.from('rep_team_coaches')
+  .select('id').eq('program_year_id', priorYear.id).eq('user_id', user.id).maybeSingle();
+if (!priorCoachRow) {
+  const ins = await db.from('rep_team_coaches').insert({
+    program_year_id: priorYear.id, team_id: team.id, org_id: org.id,
+    user_id: user.id, coach_role: 'head_coach', capabilities: null,
+  });
+  if (ins.error) { console.error('✗ prior-season coach row insert', ins.error.message); process.exit(1); }
+}
+ok(`prior season ${priorYear.year} (completed) sits behind the live ${py.year} — the rolled-forward shape`);
+
+const { data: priorRoster } = await db.from('rep_roster_players')
+  .select('id').eq('program_year_id', priorYear.id).limit(1);
+if (!priorRoster?.length) {
+  const rows = FIRST_NAMES.slice(0, 10).map((name, i) => ({
+    program_year_id: priorYear.id, team_id: team.id, org_id: org.id,
+    player_first_name: name, player_last_name: 'Prior', player_number: String(i + 1),
+    status: 'active', source: 'admin_manual', display_order: i,
+  }));
+  const ins = await db.from('rep_roster_players').insert(rows);
+  if (ins.error) { console.error('✗ prior-season roster insert', ins.error.message); process.exit(1); }
+  ok('prior-season roster seeded (10 players)');
+}
+
+const { data: priorEvents } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', priorYear.id).limit(1);
+if (!priorEvents?.length) {
+  /* ⚠ Dates fixed to the SEASON'S OWN year, never to "now" — a rendered baseline keyed on the
+     screen's text must not drift every time the sweep runs. */
+  const at = (m, d, h) => new Date(Date.UTC(priorYear.year, m, d, h, 0)).toISOString();
+  const games = [
+    { result: 'win',  team_score: 6, opponent_score: 3, opponent: 'Ridgeview' },
+    { result: 'win',  team_score: 4, opponent_score: 1, opponent: 'Lakeside' },
+    { result: 'loss', team_score: 2, opponent_score: 5, opponent: 'Northgate' },
+  ].map((g, i) => ({
+    program_year_id: priorYear.id, team_id: team.id, org_id: org.id,
+    event_type: 'league_game', name: `vs ${g.opponent}`, opponent: g.opponent,
+    home_away: i % 2 === 0 ? 'home' : 'away', starts_at: at(5, 6 + i * 7, 22),
+    status: 'scheduled', result: g.result, team_score: g.team_score, opponent_score: g.opponent_score,
+  }));
+
+  /* Two practices carrying plans — the rows the copy picker offers and the shelf lists — plus one
+     CALLED OFF, which must appear in neither. It keeps its full plan, which is exactly why it is
+     the sharpest check in the walk. */
+  const priorPlan = {
+    version: 1,
+    goal: 'Tighten up the middle infield before playoffs.',
+    practiceTypes: ['Fielding'],
+    equipment: ['Cones', 'Bibs'],
+    blocks: [
+      {
+        id: 'uat-prior-b1', title: 'Warm-up', duration: { minutes: 15 },
+        description: 'Dynamic work, then partner throwing.',
+      },
+      {
+        id: 'uat-prior-b2', title: 'Double plays', duration: { minutes: 35 },
+        description: 'Feeds and turns from both sides of the bag.',
+        goal: 'Clean exchange, every time.',
+      },
+    ],
+  };
+  const practices = [
+    { name: 'Prior season — double plays',   month: 5, day: 10, plan: priorPlan, recap: 'Best session of the year. Keep the feeds shorter next time.', status: 'scheduled' },
+    { name: 'Prior season — hitting rounds', month: 5, day: 17, plan: priorPlan, recap: null, status: 'scheduled' },
+    { name: 'Prior season — rained out',     month: 5, day: 24, plan: priorPlan, recap: null, status: 'cancelled' },
+  ].map(p => ({
+    program_year_id: priorYear.id, team_id: team.id, org_id: org.id,
+    event_type: 'practice', name: p.name, starts_at: at(p.month, p.day, 23),
+    location: 'UAT Fields', status: p.status, practice_plan: p.plan, practice_recap: p.recap,
+  }));
+
+  const ins = await db.from('rep_team_events').insert([...games, ...practices]);
+  if (ins.error) { console.error('✗ prior-season events insert', ins.error.message); process.exit(1); }
+  ok('prior-season events seeded (3 finalized games, 2 practices with plans, 1 called off)');
+}
+
+const { data: priorLines } = await db.from('rep_budget_lines')
+  .select('id').eq('program_year_id', priorYear.id).limit(1);
+if (!priorLines?.length) {
+  const planned = [
+    { description: 'Diamond permits',      total_amount: 2400, sort_order: 1 },
+    { description: 'Spring classic entry', total_amount: 1800, sort_order: 2 },
+  ].map(r => ({
+    ...r, line_kind: 'cost', org_id: org.id, team_id: team.id,
+    program_year_id: priorYear.id, ...taxonomyFor(r.description),
+  }));
+  const insLines = await db.from('rep_budget_lines').insert(planned);
+  if (insLines.error) { console.error('✗ prior-season budget insert', insLines.error.message); process.exit(1); }
+
+  // One category UNDER, one OVER — the money book has to say which in words, not colour alone.
+  const spent = [
+    { under: 'Diamond permits',      description: 'Permits — spring block', amount: 2250, month: 3, day: 8 },
+    { under: 'Spring classic entry', description: 'Spring classic entry',   amount: 1950, month: 4, day: 2 },
+  ].map(r => {
+    const tax = taxonomyFor(r.under);
+    return {
+      org_id: org.id, team_id: team.id, program_year_id: priorYear.id,
+      expense_type: 'expense', description: r.description, amount: r.amount,
+      budget_category_id: tax.category_id, budget_item_id: tax.item_id,
+      expense_paid_at: new Date(Date.UTC(priorYear.year, r.month, r.day, 16, 0)).toISOString(),
+    };
+  });
+  const insSpend = await db.from('rep_team_expenses').insert(spent);
+  if (insSpend.error) { console.error('✗ prior-season expenses insert', insSpend.error.message); process.exit(1); }
+  ok('prior-season money seeded (2 planned lines, 2 costs — one under, one over)');
+}
+
+
 // ── 14. The BETWEEN-SEASONS team ─────────────────────────────────────────────
 /**
  * ⚠⚠ **THE FIXTURE GAP THIS CLOSES HID THREE ROUNDS OF DEFECTS.** Until 2026-08-16 the rendered
@@ -1099,6 +1245,102 @@ if (!pastLines?.length) {
 } else {
   ok('finished-season money already present');
 }
+
+// ── 13c. The other three people — assistant, money-less assistant, helper ────
+/**
+ * ⚠⚠ **OWNER QA CANNOT WALK A REFUSAL IT CANNOT SIGN IN AS** (added 2026-08-17, §53 Phase 6).
+ *
+ * Six of §53's checks are about who is REFUSED — the money book absent for a coach without money
+ * access, the practices door absent for a helper, a typed past-plan URL turned away. Every one of
+ * those is covered by an automated test, which creates its people and tears them down again. That
+ * proves the lock works; it does not let the owner see the door.
+ *
+ * Until this block, the UAT world held exactly ONE coach — a head coach — so a third of the walk's
+ * personas did not exist. The gap was found the same way the rolled-forward one above it was: by
+ * someone starting the walk.
+ *
+ * ⚠ Each is a MEMBERSHIP on both teams (M1: access is the team membership, not the season row), so
+ * they can be signed in as against the live team AND the between-seasons one without further setup.
+ *
+ * ⚠ **Every grant is spelled out, none left to default.** An assistant's omitted key falls back to
+ * ASSISTANT_DEFAULTS, which GRANTS it — so a missing `false` here would quietly hand the money-less
+ * assistant the books and turn the sharpest check in Phase 6 green for the wrong reason.
+ */
+const QA_PEOPLE = [
+  {
+    email: 'uat-asst-money@uat-test-org.local',
+    name: 'UAT Assistant (money)',
+    role: 'assistant_coach',
+    /* Reads the books, and everything an ordinary assistant reads. Phase 6a: this is the coach who
+       proves the widening — money granted TODAY opens a finished season's money. */
+    caps: {
+      schedule: true, scheduleManage: false, attendance: true, lineups: true, rosterPii: true,
+      notes: false, money: 'write', documents: 'read', announcementsSend: false, tryouts: false,
+      staffChat: true,
+    },
+  },
+  {
+    email: 'uat-asst-nomoney@uat-test-org.local',
+    name: 'UAT Assistant (no money)',
+    role: 'assistant_coach',
+    /* ⚠ THE PAIR THAT MATTERS. Attendance and lineups give this coach record access, so the
+       PRACTICES shelf is theirs — and `money: 'off'` means the money book is not. Two shelves on
+       one page, two different keys, and only a real sign-in shows it. */
+    caps: {
+      schedule: true, scheduleManage: false, attendance: true, lineups: true, rosterPii: false,
+      notes: false, money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
+      staffChat: true,
+    },
+  },
+  {
+    email: 'uat-helper@uat-test-org.local',
+    name: 'UAT Helper',
+    role: 'assistant_coach',
+    /* The HELPER preset: the schedule and tonight's plan, and nothing that makes a season's record
+       theirs. `hasRecordAccess` is false for this bundle, which is what shuts both shelves. */
+    caps: {
+      schedule: true, scheduleManage: false, attendance: false, lineups: false, rosterPii: false,
+      notes: false, money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
+      staffChat: false,
+    },
+  },
+];
+
+for (const person of QA_PEOPLE) {
+  let qaUser = userPage.users.find(u => u.email?.toLowerCase() === person.email.toLowerCase());
+  if (!qaUser) {
+    const created = await db.auth.admin.createUser({
+      email: person.email, password: process.env.UAT_COACH_PASSWORD, email_confirm: true,
+    });
+    if (created.error) { console.error(`✗ create ${person.email}`, created.error.message); process.exit(1); }
+    qaUser = created.data.user;
+  }
+
+  const { data: orgRow } = await db.from('organization_members')
+    .select('id, status').eq('organization_id', org.id).eq('user_id', qaUser.id).maybeSingle();
+  if (!orgRow) {
+    const ins = await db.from('organization_members').insert({
+      organization_id: org.id, user_id: qaUser.id, role: 'coach', status: 'active',
+      display_name: person.name, accepted_at: new Date().toISOString(),
+    });
+    if (ins.error) { console.error(`✗ org member ${person.email}`, ins.error.message); process.exit(1); }
+  } else if (orgRow.status !== 'active') {
+    await db.from('organization_members').update({ status: 'active' }).eq('id', orgRow.id);
+  }
+
+  // ⚠ BOTH teams — the walk signs in once per person and visits the live team and the
+  // between-seasons one. A membership on only one of them strands half of Phase 6.
+  for (const tid of [team.id, pastTeam.id]) {
+    const up = await db.from('rep_team_staff_memberships').upsert({
+      org_id: org.id, team_id: tid, user_id: qaUser.id,
+      coach_role: person.role, capabilities: person.caps,
+      status: 'active', revoked_at: null, revoked_by: null,
+    }, { onConflict: 'team_id,user_id' });
+    if (up.error) { console.error(`✗ membership ${person.email}`, up.error.message); process.exit(1); }
+  }
+}
+ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')})`);
+
 
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);

@@ -7291,11 +7291,35 @@ as written, that is roughly a dozen sign-ins and as many team switches to cover 
   same check) and *"the live screens are unchanged"* (§42 C and §52 E). Each is now asked once, in
   Phase 1, where the live season is already on screen.
 
-**Fixtures — both already seeded, do not rebuild.** In the UAT coach world: the ordinary team (a
-live season, with a finished one behind it — called **the live team** below) and **UAT Between
-Seasons** (finished seasons only, no live year — **the between-seasons team**). Reseed with the
-coach fixture script if anything looks empty; the money and practices shelves both need their
-season to actually hold content, and an empty shelf proves nothing.
+**Who you sign in as.** All four share the password `UATPassword2026!`, and all four are members
+of BOTH teams, so a sign-in carries you through every phase without further setup.
+
+| Sign-in | Who they are | Phases |
+|---|---|---|
+| `uat-coach@uat-test-org.local` | head coach | 0–5, 7 |
+| `uat-asst-money@uat-test-org.local` | assistant, money + attendance + lineups | 6a |
+| `uat-asst-nomoney@uat-test-org.local` | assistant, attendance + lineups, **money off** | 6b |
+| `uat-helper@uat-test-org.local` | helper — schedule only, no record access | 6c |
+
+**The two teams, both in `uat-test-org`:**
+
+| | Team | Shape | Phases |
+|---|---|---|---|
+| **the live team** | *UAT Test Team* | live 2026 season, **completed 2025 behind it** | 1 · 2 |
+| **the between-seasons team** | *UAT Between Seasons* | two completed seasons, **no live year** | 3 · 4 · 5 |
+
+⚠⚠ **RESEED BEFORE YOU START** (`node scripts/seed-uat-coach-fixture.mjs`) — it is idempotent and
+repairs only what is missing.
+
+⚠⚠ **THE FIXTURE GAP THIS WALK FOUND ON ITS FIRST RUN, recorded because it will happen again.**
+Phases 1 and 2 both failed on their first attempt, and **the product was behaving perfectly**: the
+live team had a live season and *no history whatsoever*, while the between-seasons team had history
+and *no live season*. So "A past season" and the compare list were both correctly, uselessly empty.
+Every history surface answers **"can I still reach last year now that this year has started?"** —
+which needs BOTH shapes on ONE team, and no fixture team had that. A completed 2025 season now sits
+behind the live team's 2026 (practices with plans, finalized games, a roster, a budget and its
+actuals). **A fixture that cannot show the feature is indistinguishable from a feature that does not
+work** — if a check below reads as empty, suspect the fixture before the code.
 
 ⚠ **§39 · §40 · §42 are ALREADY ON PRODUCTION** (2026-08-17, job 257) — by your explicit call to ship
 ahead of the walk. §52 is on dev only. So Phases 1–8 can be walked against the live site except for
