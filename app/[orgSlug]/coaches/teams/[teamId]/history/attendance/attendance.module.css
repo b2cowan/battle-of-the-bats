@@ -97,3 +97,109 @@
   line-height: 1.6;
   color: var(--white-45);
 }
+
+/* ── The per-player receipts drill-in (Reports Portal P2, 2026-08-19) ──────────────────────
+   Opening a row shows the sessions behind its two fractions. It replaces the mockup's sortable
+   columns and "Missed most practices" badge, which the owner declined on 2026-08-19: every row
+   carries the same affordance, so a coach can investigate anyone without the screen nominating
+   anyone.
+
+   ⚠ The name and the toggle share the cell rather than the toggle taking a fourth column. A
+   fourth column would be empty on most rows on a desktop and, inside `.tableAsCards`, would
+   reflow into a card row of its own with nothing to label it. */
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+/* `.name` already stretches to the row's tap height; it must also take the slack so the caret
+   sits at a predictable left edge instead of hugging names of different lengths. */
+.nameRow .name { flex: 1 1 auto; min-width: 0; }
+
+.receiptsBtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap-min, 44px);
+  min-height: var(--tap-min, 44px);
+  /* ⚠ NO NEGATIVE MARGIN. A `margin-right: -0.35rem` here — pulling the caret flush with the
+     cell's padding edge — put the button 6px outside its own flex container, and the rendered
+     sweep flagged `content-overflow` on EVERY player row at 768 and 1440: "content spills 6px
+     with overflow-x:visible — no scroller owns it". A tidier optical edge is not worth a row that
+     overflows its box on every screen, and the cell's padding already gives the caret room. */
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.receiptsBtn:hover { color: var(--text-primary); background: var(--white-8); }
+.receiptsBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+.receiptsCaret { transition: transform 0.18s ease; }
+.receiptsCaretOpen { transform: rotate(180deg); }
+
+/* The opened row. Tinted rather than bordered so it reads as an extension of the row above it —
+   a panel with its own frame would read as a second table. */
+.receiptsRow > .receiptsCell {
+  background: var(--white-8);
+  padding-top: 0.7rem;
+  padding-bottom: 0.85rem;
+}
+.receiptsHead {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.receiptsNone {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+.receiptsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.receiptsList li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.55rem;
+}
+.receiptsDay {
+  min-width: 4.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.receiptsKind {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border: 1px solid var(--home-line, rgba(255, 255, 255, 0.14));
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+}
+.receiptsDetail { color: var(--text-secondary); }
+.receiptsNote {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+/* Stacked-card widths: the receipts become their own card directly under the player's, so the
+   tint has to survive the reflow and the row needs a little pull-up to read as attached. */
+@media (max-width: 640px) {
+  .receiptsRow { margin-top: -0.5rem; }
+  .receiptsRow > .receiptsCell { padding-left: 0; padding-right: 0; }
+  .receiptsDay { min-width: 0; }
+}

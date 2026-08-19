@@ -346,9 +346,22 @@ if (existingGame) {
  * ⚠ Dates are fixed to the season's own year, never to "now": a rendered baseline keyed on the
  *   screen's text must not drift every time the sweep runs (the same rule the prior season follows).
  * ══════════════════════════════════════════════════════════════════════════════════════════════ */
-const { data: liveFinished } = await db.from('rep_team_events')
-  .select('id').eq('program_year_id', py.id).eq('name', 'vs Ridgeview').maybeSingle();
-if (!liveFinished) {
+/**
+ * ⚠⚠ **THIS GUARD USED `.maybeSingle()` AND THEREFORE NEVER GUARDED ANYTHING** (found and fixed
+ * 2026-08-19, while seeding the P2 reports). "vs Ridgeview" is seeded TWICE on purpose — once as a
+ * league game and once as a tournament game, so the Results tab's per-type breakdown has more than
+ * one row. `.maybeSingle()` on two rows returns an ERROR, the destructure above discarded it, and
+ * `liveFinished` came back null every single time — so **every run of this seeder re-inserted the
+ * whole set of six games.** A fixture reseeded four times claimed a 3-2-1 record and held 24 games.
+ *
+ * The lesson is the one this file's own header states about `error` checks, one level in: a helper
+ * that ERRORS on the shape you gave it looks exactly like a helper that found nothing. `.limit(1)`
+ * cannot error on multiplicity, so it cannot lie about it.
+ */
+const { data: liveFinishedRows, error: liveFinishedErr } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', py.id).eq('name', 'vs Ridgeview').limit(1);
+if (liveFinishedErr) { console.error('✗ live-season games lookup', liveFinishedErr.message); process.exit(1); }
+if (!liveFinishedRows?.length) {
   const at = (m, d) => new Date(Date.UTC(py.year, m, d, 22, 0)).toISOString();
   const liveGames = [
     { result: 'win',  team_score: 6, opponent_score: 3, opponent: 'Ridgeview',  type: 'league_game',     home: true },
@@ -454,6 +467,192 @@ if (!gAtt?.length) {
   else ok('game attendance seeded');
 } else {
   ok('game attendance already present');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   ── 12b. A SEASON OF LINEUPS AND ATTENDANCE, so the two P2 reports have something to say ──────
+
+   ⚠⚠ **THE SAME TRAP AS SECTION 13 AND SECTION 11, ONE MORE TIME.** Until this block existed the
+   live season carried exactly ONE saved lineup (the probe game) and attendance on two events. The
+   Playing Time report's new position-recency matrix would have rendered a single column of one
+   date, and the Attendance report's receipts drill-in would have opened onto "nothing missed" for
+   every player — and `check:layout` would have measured both and reported green, having drawn
+   neither. A rendered sweep over an empty fixture is not evidence (OWNER_QA_LEDGER §58).
+
+   What the shape below is chosen to produce, deliberately — every line here is load-bearing for a
+   surface that would otherwise be blank:
+     · SIX games with saved lineups, each rotating the batting order by a different offset, so the
+       matrix has real spread: most players have played several positions, and some cells are
+       genuinely EMPTY (never played there) — the dash is a state worth rendering.
+     · FIVE practices, four of them exactly a week apart and one deliberately NOT, so the receipts'
+       "every one of these falls on a Tuesday" note is TRUE for one player and FALSE for another.
+       Seeding every practice on the same weekday would have made that note fire for everybody,
+       which would have proved nothing.
+     · Devon Test misses three aligned practices AND one game, because the receipts list spans both
+       and a practices-only fixture cannot show that it does. Devon is the player the layout sweep
+       opens (`coach-attendance-receipts`), resolved BY NAME in scripts/uat-fixture-context.mjs.
+     · A handful of no-replies, so the "Recorded" tile is not a flat 100% — that tile exists to say
+       "these percentages rest on less than you think", and it cannot say it at 100%.
+   ⚠ Dates are fixed to the season's own year, never to "now" — same rule as the games above.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+const { data: seasonGames } = await db.from('rep_team_events')
+  .select('id, starts_at').eq('program_year_id', py.id).neq('id', gameId)
+  .in('event_type', ['league_game', 'tournament_game'])
+  .not('result', 'is', null).order('starts_at', { ascending: true });
+
+if (seasonGames?.length) {
+  /**
+   * ⚠ **THE GUARD IS PER GAME, NOT PER BLOCK — and the block-level version was a real trap.** It
+   * asked "does ANY season lineup exist?" and skipped all six if so. Each game does two separate,
+   * non-atomic writes (the lineup header, then its entries) in a loop that exits on first error, so
+   * a failure on game 4 left three lineups behind — and the next run read those three, called the
+   * whole block "already present", and permanently skipped the missing three. The reports would
+   * then render partial data forever, which is the same class of quiet-wrong-answer this whole
+   * section exists to prevent, just one level down.
+   */
+  const { data: existingLineups } = await db.from('rep_team_lineups')
+    .select('event_id').eq('program_year_id', py.id).neq('event_id', gameId);
+  const seeded = new Set((existingLineups ?? []).map(l => l.event_id));
+  const missing = seasonGames.filter(g => !seeded.has(g.id));
+  if (missing.length) {
+    for (const g of missing) {
+      /* ⚠ The rotation offset is the game's index in the SEASON, never its index in `missing`.
+         Keying it off the repair list would give a game a different grid depending on whether it
+         was seeded in the first run or a later repair — a fixture that is not the same fixture. */
+      const gi = seasonGames.findIndex(x => x.id === g.id);
+      const head = await db.from('rep_team_lineups').upsert({
+        event_id: g.id, program_year_id: py.id, team_id: team.id, org_id: org.id,
+        lineup_mode: 'everyone_bats', inning_count: INNINGS,
+      }, { onConflict: 'event_id' }).select('id').single();
+      if (head.error) { console.error('✗ season lineup upsert', head.error.message); process.exit(1); }
+      /* Each game shifts the rotation by a different amount, so a player's position history varies
+         game to game instead of every game being the same board.
+
+         ⚠⚠ **THE RESTRICTED PLAYERS ARE THE POINT, and the first version had none.** A plain
+         rotation over 12 players and 6 innings walks EVERYONE through all nine positions, so the
+         matrix came back with 108 filled cells and not one dash — and the "never played here"
+         state, which is the one the module's whole honesty rule is about, would have been swept at
+         four widths without ever being drawn. Four players are therefore pinned to a small pool,
+         the way a real team's are. */
+      const RESTRICTED = { 8: ['LF', 'CF', 'RF'], 9: ['LF', 'CF', 'RF'], 10: ['C', '1B'], 11: ['P', 'C'] };
+      const rows = ids.map((pid, i) => {
+        const pool = RESTRICTED[i] ?? FIELD_POSITIONS;
+        const positions = {};
+        for (let inning = 1; inning <= INNINGS; inning++) {
+          const benchStart = ((inning - 1) * 3 + gi * 2) % ids.length;
+          const seat = (i - benchStart + ids.length) % ids.length;
+          positions[String(inning)] = seat < 3 ? 'Bench' : pool[(seat - 3 + gi) % pool.length];
+        }
+        return { lineup_id: head.data.id, player_id: pid, batting_order: i + 1, starter: true, inning_positions: positions };
+      });
+      const ins = await db.from('rep_team_lineup_entries').insert(rows);
+      if (ins.error) { console.error('✗ season lineup entries', ins.error.message); process.exit(1); }
+    }
+    ok(`season lineups seeded (${missing.length} game(s) — the position-recency matrix has spread)`);
+  } else {
+    ok('season lineups already present');
+  }
+}
+
+/**
+ * ⚠ **THE ARM-CARE CAPS, without which that panel's two most important states never render.**
+ *
+ * Arm care shows each pitcher's season workload, their rest, and **the per-game cap the COACH set**
+ * — this product has no weekly or season innings ceiling and must never invent one
+ * (`lib/coach-arm-care.ts`). With no cap set anywhere the column reads "not set" for every row and
+ * the over-cap warning cannot appear at all, so the sweep would measure a panel with its warning
+ * state permanently invisible.
+ *
+ * Both halves of the resolution are exercised deliberately: a SEASON DEFAULT that most pitchers are
+ * judged against, and ONE per-player override that beats it (`resolvePlayerPitcherCap` — a coach who
+ * sets a team ceiling and then gives one pitcher a different number meant that number). The override
+ * is tight enough that that player goes over it, which is the only way the warning is ever drawn.
+ */
+const { data: pySettings, error: pySettingsErr } = await db.from('rep_program_years')
+  .select('lineup_settings').eq('id', py.id).single();
+if (pySettingsErr) { console.error('✗ lineup settings lookup', pySettingsErr.message); process.exit(1); }
+// ⚠ Read fresh rather than off `py`, which selects only id/year/status — a guard testing a field
+// that was never fetched is a guard that is always false, and would re-write on every run.
+if (!pySettings.lineup_settings?.pitcherMaxInningsDefault) {
+  const upd = await db.from('rep_program_years')
+    .update({ lineup_settings: { ...(pySettings.lineup_settings ?? {}), pitcherMaxInningsDefault: 2 } })
+    .eq('id', py.id);
+  if (upd.error) { console.error('✗ lineup settings update', upd.error.message); process.exit(1); }
+  const tight = await db.from('rep_roster_players')
+    .update({ lineup_profile: { pitcher: { maxInnings: 1 } } })
+    .eq('program_year_id', py.id).eq('player_first_name', 'Avery');
+  if (tight.error) { console.error('✗ per-player cap update', tight.error.message); process.exit(1); }
+  ok('arm-care caps seeded (season default 2/game, Avery overridden to 1 so the warning renders)');
+} else {
+  ok('arm-care caps already present');
+}
+
+const { data: livePractices } = await db.from('rep_team_events')
+  .select('id, starts_at').eq('program_year_id', py.id).eq('event_type', 'practice')
+  .like('name', 'Team practice%').order('starts_at', { ascending: true });
+
+let practiceRows = livePractices ?? [];
+if (practiceRows.length === 0) {
+  /* Four a week apart (same weekday) + one three days later (a different weekday). That last one
+     is the whole reason the "same weekday" note can be proven FALSE for someone. */
+  const offsets = [0, 7, 14, 21, 24];
+  const rows = offsets.map((d, i) => ({
+    program_year_id: py.id, team_id: team.id, org_id: org.id,
+    event_type: 'practice', name: `Team practice ${i + 1}`,
+    starts_at: new Date(Date.UTC(py.year, 4, 5 + d, 23, 0)).toISOString(),
+    location: 'UAT Fields', status: 'scheduled',
+  }));
+  const ins = await db.from('rep_team_events').insert(rows).select('id, starts_at');
+  if (ins.error) { console.error('✗ live practices insert', ins.error.message); process.exit(1); }
+  practiceRows = ins.data;
+  ok(`live-season practices seeded (${rows.length}, four a week apart and one off-cycle)`);
+} else {
+  ok(`live-season practices already present (${practiceRows.length})`);
+}
+
+const attendanceEvents = [...practiceRows.map(p => ({ id: p.id, kind: 'practice' })),
+  ...(seasonGames ?? []).map(g => ({ id: g.id, kind: 'game' }))];
+if (attendanceEvents.length) {
+  const { data: haveMarks } = await db.from('rep_team_event_attendance')
+    .select('id').in('event_id', attendanceEvents.map(e => e.id)).limit(1);
+  if (!haveMarks?.length) {
+    const DEVON = 3;   // absent on practices 0,1,2 AND on one game — ALL on the same weekday
+    const OFFCYCLE = 5; // absent on practice 2 and practice 4 — two DIFFERENT weekdays
+    const SILENT = 7;   // never marked either way on two events, so "Recorded" is below 100%
+    /**
+     * ⚠ **DEVON'S GAME ABSENCE MUST FALL ON THE PRACTICE WEEKDAY, and this line is why the note is
+     * actually testable.** The first version simply took the last game, which landed on a Monday
+     * among three Tuesday practices — so `sameWeekday` came back null and the "every one of these
+     * falls on a Tuesday" note would never have rendered for the player the sweep opens. The
+     * fixture looked full and proved nothing, which is the failure this whole block exists against.
+     * Resolved by MATCHING the weekday rather than hard-coding a date, so re-dating either set
+     * cannot quietly break it again.
+     */
+    const weekdayOf = (iso) => new Date(iso).getUTCDay();
+    const practiceWeekday = practiceRows.length ? weekdayOf(practiceRows[0].starts_at) : -1;
+    const alignedGameId = (seasonGames ?? []).find(g => weekdayOf(g.starts_at) === practiceWeekday)?.id ?? null;
+    const marks = [];
+    attendanceEvents.forEach((ev, ei) => {
+      const practiceIdx = ev.kind === 'practice' ? ei : -1;
+      ids.forEach((pid, i) => {
+        let status = 'attending';
+        if (i === SILENT && (practiceIdx === 3 || practiceIdx === 4)) status = 'unknown';
+        else if (i === DEVON && [0, 1, 2].includes(practiceIdx)) status = 'absent';
+        else if (i === DEVON && ev.id === alignedGameId) status = 'absent';
+        else if (i === OFFCYCLE && [2, 4].includes(practiceIdx)) status = 'absent';
+        else if (i === 10 && practiceIdx === 1) status = 'late';
+        marks.push({
+          event_id: ev.id, player_id: pid,
+          program_year_id: py.id, team_id: team.id, org_id: org.id, status,
+        });
+      });
+    });
+    const ins = await db.from('rep_team_event_attendance').insert(marks);
+    if (ins.error) { console.error('✗ season attendance insert', ins.error.message); process.exit(1); }
+    ok(`season attendance seeded (${marks.length} marks — Devon Test has receipts across both kinds)`);
+  } else {
+    ok('season attendance already present');
+  }
 }
 
 // ── 13. MONEY, so the Money hub renders tables instead of empty states ───────

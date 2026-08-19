@@ -1,6 +1,57 @@
 # Coach Insights → Reports & Analytics Portal — Implementation Plan
 
-**Status:** **P1 BUILT on dev 2026-08-18** (owner QA §58 owed) · P2 + P3 not started · mockups owner-approved
+**Status:** **P1 BUILT on dev 2026-08-18** (owner QA §58 PASSED) · **P2 BUILT on dev 2026-08-19**
+(owner QA **§61** owed) · P3 not started · mockups owner-approved
+
+**P2 build notes — THREE OWNER DECISIONS, TWO OF WHICH REVERSE THE APPROVED MOCKUP.** Each was taken
+BEFORE any code, because each was a contradiction between the mockup and a standing rule, and
+"whichever artefact is newer wins" is not how those get resolved here. Full walk script in
+`OWNER_QA_LEDGER.md §61`.
+
+1. ⚠⚠ **The attendance table does NOT sort, and no player is badged** (owner, 2026-08-19). §3 P2.1
+   said "sortable table, missed-most highlight" and the mockup drew both. `history/attendance/panel.tsx`
+   carried the opposite as a standing ruling — *"NO sort affordance on any column, ever. Roster order
+   is the only order… a sortable column is a leaderboard however neutrally it is drawn"* — and it is
+   the same family as [[decision_playing_time_vocabulary]] and the Development report's "checklist,
+   never a ranking". The ruling stands. **What replaced them is the drill-in on EVERY row**, so a
+   coach can investigate anyone without the screen nominating anyone; naming the least-reliable
+   player stays one sentence in *What stands out*. Guarded in source by
+   `tests/unit/coach-attendance-receipts.test.ts` — a behavioural test cannot catch this, because
+   "worst first" is one `.sort()` whose unit tests would all still pass.
+2. ⚠⚠ **Arm care was redrawn: there is no innings budget, because the product has none.** §2 claimed
+   the data "already exists in `lib/lineup-season-analytics.ts`". It does not. The mockup shows
+   "16 of 18 · 2 left" and a bar filling toward **this week's cap**; **this product stores no weekly
+   and no season ceiling** — every cap is PER GAME and is a number the coach set, and
+   `lib/coach-arm-care.ts` refuses to invent one in as many words ("the product proposing a figure
+   as though it were a rule, in the one place where the cost is a child's arm"). The mockup also
+   compared a *season* innings total to a *per-game* cap. Redrawn against records that exist:
+   workload, rest since the last outing, and the coach's own cap. **A real weekly cap is its own
+   project** — it needs a setting, and `lib/lineup-caps.ts` plus the game-day chip must move with it
+   so three surfaces never quote a child different ceilings.
+3. **"RSVP reply rate" is now "Recorded".** §2's P2 line named a reply rate with no stated source,
+   and the mockup captioned it *"replied before event day"*. **Nobody replies** — RSVP is a status
+   the COACH sets, and no reply channel or reply timestamp exists anywhere in the product. The same
+   arithmetic (`known / recorded`, both already on the wire) honestly measures how much of the
+   coach's own sheet is finished, which is worth showing because `known` is the denominator of every
+   other figure on the screen.
+
+**Also corrected while building, not in the plan:**
+- §3 P2.2 said both Playing Time sections "ride the existing lineup-analytics route". They rode the
+  `/ask` route, which P1 deleted — `coach-position-recency.ts` was live and unreachable for a day.
+  The assembly is recovered into `lib/team-season-analytics.ts` (the ONE shared composition) behind
+  an opt-in `?recency=1`, so the game-day card that shares that helper pays nothing for it.
+- The receipts cover **games AND practices**, because the row states a fraction for each and a
+  practices-only list would visibly fail to add up. That widened `getRepTeamPracticeAttendance` into
+  `getRepTeamAttendanceMarks`. ⚠ **`lib/coach-practice-misses.ts` is now orphaned except for its
+  `weekdayOfDay` helper** — its windowed *ranking* was the retired Ask answer, and decision 1 above
+  is what retires the ranking. Deleting it is a small separate call, not made here.
+- The drill-in is addressed by `?player=` rather than held in `useState`, because **a drill-in that
+  arrives closed is invisible to `check:layout`** — the trap §58 records. `scripts/layout-screens.mjs`
+  gains `coach-attendance-receipts`.
+- ⚠ **A pre-existing UAT fixture bug was found and fixed:** the finished-games guard used
+  `.maybeSingle()` on a name seeded TWICE on purpose, so it errored, the error was discarded, and
+  **every seeder run re-inserted all six games**. Any earlier reading of the Results tab on a
+  multiply-seeded fixture was wrong.
 
 **P1 build notes — three places the build departed from this plan, each raised rather than made silently:**
 1. **The findings engine KEPT its money rules.** §3.4 said to delete them. It has a second consumer

@@ -27,14 +27,31 @@ export const GET = withObservability(async (req: Request,
   // `?armCareForEvent=` (Chunk C) rides this existing call rather than adding a second round trip
   // for the Overview's game-day card; the gate is the same `lineups` capability, because the
   // warning is derived entirely from saved lineups.
-  const armCareForEventId = new URL(req.url).searchParams.get('armCareForEvent');
-  const result = await computeTeamSeasonLineupAnalytics(teamId, { team, armCareForEventId });
+  //
+  // ⚠ `?recency=1` (Reports Portal P2) rides it the same way, for the Playing Time report's
+  // position-recency matrix and arm-care panel. Opt-in rather than always-on because the game-day
+  // card above takes this same route and has no use for a matrix — and because pivoting every
+  // position is the one part of this response whose cost grows with the season.
+  //
+  // ⚠⚠ NEITHER PARAMETER NAMES A SEASON, and this route may never learn to. Playing time is
+  // live-season-only PERMANENTLY (owner, 2026-08-16): its figures are RECOMPUTED from saved lineups
+  // every time it is opened, so what it would show for a finished year is what today's code makes
+  // of that year's lineups — not what the coach actually read at the time. Build-enforced by
+  // tests/unit/coach-history-endpoint-guard.test.ts.
+  const searchParams = new URL(req.url).searchParams;
+  const armCareForEventId = searchParams.get('armCareForEvent');
+  const result = await computeTeamSeasonLineupAnalytics(teamId, {
+    team,
+    armCareForEventId,
+    positionRecency: searchParams.get('recency') === '1',
+  });
   if (!result) {
     return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
   }
 
   return NextResponse.json({
     analytics: result.analytics,
+    ...(result.recency ? { recency: result.recency } : {}),
     ...(result.armCare ? { armCare: result.armCare, periodLabelPlural: result.periodLabelPlural } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-analytics' });

@@ -7,10 +7,16 @@ import {
   getRepRosterPlayers,
   getRepTeamLineupTemplates,
 } from './db';
-import { getSportPack, DEFAULT_SPORT } from './sports';
+import { getSportPack, DEFAULT_SPORT, positionLabel } from './sports';
 import { playerDisplayName } from './coach-roster-name';
 import { computeSeasonLineupAnalytics, type SeasonLineupAnalytics } from './lineup-season-analytics';
 import { resolveArmCare, type ArmCareConcern, type ArmCareLineup } from './coach-arm-care';
+import { analyzeLineup } from './lineup-analysis';
+import {
+  computePositionRecencyMatrix,
+  type PositionRecencyGame,
+  type PositionRecencyMatrix,
+} from './coach-position-recency';
 import { orgDayKey, tournamentToday } from './timezone';
 
 /**
@@ -36,6 +42,16 @@ export async function computeTeamSeasonLineupAnalytics(
      */
     armCareForEventId?: string | null;
     /**
+     * Reports Portal P2: also pivot the season's saved lineups into the position-recency matrix.
+     *
+     * ⚠ It lives HERE rather than in its own route because this helper is already holding every
+     * input it needs — the lineups, the events (for calendar days) and the roster. Its previous
+     * assembler was the retired `/ask` route, which loaded all three a SECOND time; the caller
+     * pass-through below exists because of exactly that. Opt-in, because the Overview's game-day
+     * card takes this same helper and has no use for a matrix.
+     */
+    positionRecency?: boolean;
+    /**
      * Anything the CALLER already holds, passed through so this helper doesn't fetch it twice.
      * Same contract as `team` above, extended to the rest of the wave (Ask the Front Office
      * Phase A: its route already loads the season, lineups, events and roster to answer a
@@ -53,6 +69,7 @@ export async function computeTeamSeasonLineupAnalytics(
   analytics: SeasonLineupAnalytics;
   programYearId: string;
   armCare?: ArmCareConcern[];
+  recency?: PositionRecencyMatrix;
   periodLabelPlural?: string;
 } | null> {
   const programYear = opts?.programYear ?? (await getActiveRepProgramYear(teamId));
@@ -88,13 +105,19 @@ export async function computeTeamSeasonLineupAnalytics(
     fieldPositions: sportPack.fieldPositions,
   });
 
-  if (!opts?.armCareForEventId) return { analytics, programYearId: programYear.id };
-
-  // Arm care for one specific game (D-C7). Innings at the pitcher position per player, per saved
-  // lineup, plus each event's calendar day IN THE ORG'S ZONE — "days since their last outing" is a
-  // calendar question, so it must not be answered from a raw UTC slice.
+  // Each event's calendar day IN THE ORG'S ZONE. Both of the readings below ask a calendar question
+  // ("how many days since…"), so neither may be answered from a raw UTC slice.
   const dayByEvent = new Map(events.map(e => [e.id, orgDayKey(e.startsAt)]));
   const pitcherPos = sportPack.pitcherPosition;
+
+  const recency = opts?.positionRecency
+    ? buildPositionRecencyMatrix({ lineups, events, players, sportPack, dayByEvent })
+    : undefined;
+
+  if (!opts?.armCareForEventId) return { analytics, programYearId: programYear.id, recency };
+
+  // Arm care for one specific game (D-C7). Innings at the pitcher position per player, per saved
+  // lineup.
   const armCareLineups: ArmCareLineup[] = pitcherPos
     ? lineups.map(l => ({
         eventId: l.eventId,
@@ -111,6 +134,7 @@ export async function computeTeamSeasonLineupAnalytics(
   return {
     analytics,
     programYearId: programYear.id,
+    recency,
     armCare: resolveArmCare({
       today: tournamentToday(),
       todayEventId: opts.armCareForEventId,
@@ -125,4 +149,70 @@ export async function computeTeamSeasonLineupAnalytics(
     }),
     periodLabelPlural: sportPack.periodLabelPlural,
   };
+}
+
+/**
+ * Shape the season's saved lineups into the pure module's input, and hand it the pivot.
+ *
+ * ⚠ **THIS FUNCTION IS AN ADAPTER, NOT THE ALGORITHM.** The pivot itself
+ * (`computePositionRecencyMatrix`) lives beside `computePositionRecency` in the pure module, where
+ * this module's test suite can reach it — a first cut kept it here, which put the matrix's honesty
+ * rule in the one file no unit test can load. What legitimately belongs here is DB-row shaping:
+ * turning lineups + events + roster rows into games and players.
+ *
+ * ⚠⚠ **THE ASSEMBLY BELOW IS THE HALF THAT WAS DELETED WITH THE ASK BAR, RECOVERED DELIBERATELY.**
+ * `lib/coach-position-recency.ts` is pure and unit-tested and survived; the only code that ever FED
+ * it was the `/ask` route, so the module was live and unreachable for a day. Four of its rules are
+ * carried here and each is load-bearing:
+ *
+ *   1. **Cancelled games are excluded.** A lineup saved for a game that was then called off records
+ *      a PLAN, not a turn anyone took — counting it would tell a coach a player has had a go at a
+ *      position they never actually played.
+ *   2. **Innings come from `analyzeLineup`, not from a hand-count of the position map.** The same
+ *      analyser the season figures use, so the matrix and the table above it can never disagree
+ *      about one player's innings — and a hand-count would ignore the lineup's own `inningCount`,
+ *      counting innings from a game that was later shortened.
+ *   3. **Oldest → newest, with a START-TIME tie-break.** `computePositionRecency` documents that
+ *      ordering as the caller's job. The season-lineups query has no ORDER BY, so on a double-header
+ *      the two halves would otherwise arrive in whatever order Postgres returned them and the "last
+ *      time was…" cell could cite the wrong half.
+ *   4. **Active players only.** A departed player's name in the matrix is a receipt about somebody
+ *      who is not on the team, and `computePositionRecency` drops any lineup entry it cannot name.
+ */
+function buildPositionRecencyMatrix(input: {
+  lineups: Awaited<ReturnType<typeof getRepTeamSeasonLineups>>;
+  events: Awaited<ReturnType<typeof getRepTeamEvents>>;
+  players: Awaited<ReturnType<typeof getRepRosterPlayers>>;
+  sportPack: ReturnType<typeof getSportPack>;
+  dayByEvent: Map<string, string>;
+}): PositionRecencyMatrix {
+  const { lineups, events, players, sportPack, dayByEvent } = input;
+  const positions = sportPack.fieldPositions;
+
+  const eventById = new Map(events.filter(e => e.status !== 'cancelled').map(e => [e.id, e]));
+  const games: PositionRecencyGame[] = lineups
+    .map(l => {
+      const ev = eventById.get(l.eventId);
+      return {
+        eventId: l.eventId,
+        day: ev ? (dayByEvent.get(l.eventId) ?? '') : '',
+        startsAt: ev ? ev.startsAt : '',
+        label: ev ? (ev.opponent ? `vs ${ev.opponent}` : (ev.name || 'Game')) : 'Game',
+        byPlayer: analyzeLineup(l.entries, l.inningCount, positions)
+          .fairPlay.map(f => ({ playerId: f.playerId, positionInnings: f.positionCounts })),
+      };
+    })
+    // A lineup whose event is missing or cancelled has no day and drops out here.
+    .filter(g => g.day)
+    .sort((a, b) => a.day.localeCompare(b.day) || a.startsAt.localeCompare(b.startsAt));
+
+  return computePositionRecencyMatrix({
+    today: tournamentToday(),
+    games,
+    players: players
+      .filter(p => p.status === 'active')
+      .map(p => ({ id: p.id, name: playerDisplayName(p) })),
+    // The Sport Pack names its own positions; this is the only place that vocabulary is resolved.
+    positions: positions.map(code => ({ code, label: positionLabel(sportPack, code) })),
+  });
 }

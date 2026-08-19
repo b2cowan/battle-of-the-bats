@@ -8230,3 +8230,229 @@ only (owner decision, logged in `memory/design_decisions.md` — **nothing moved
 phone-and-tablet debt it exposed is tracked in `COACH_TOUCH_TARGET_DEBT_PLAN.md`).
 
 ---
+
+## §61 · Insights P2 — the sessions behind an attendance number, and where a player has actually stood
+
+**What shipped:** the two report drill-ins from the Insights portal plan's Phase 2 —
+**Attendance** gains four season figures and a per-player receipts drill-in; **Playing Time** gains
+a **position-recency grid** and an **arm-care** panel. No charts (that is P3, untouched).
+Plan: `COACH_INSIGHTS_REPORTS_PORTAL_PLAN.md`. Built on `dev` 2026-08-19.
+
+### ⚠⚠ THREE OWNER DECISIONS WERE TAKEN BEFORE ANY CODE, AND TWO REVERSE THE APPROVED MOCKUP
+
+The mockups are the spec in this repo, so where one contradicted a standing rule the contradiction
+went to the owner rather than being settled by whichever artefact was read last. **If a walk below
+looks "wrong versus the mockup", it is these decisions, not a defect:**
+
+1. **The attendance table does NOT sort and wears NO badge.** The mockup drew it sortable with an
+   amber *"Missed most practices"* chip on a named child. Both declined (2026-08-19): roster order
+   is the only order, because a support read that ranks children by who turns up least is a
+   leaderboard however neutrally it is drawn. **Every row opens the same way instead**, so a coach
+   can look into anyone without the screen nominating anyone. Naming the least-reliable player stays
+   the job of one sentence in *What stands out*.
+2. **Arm care shows no innings budget, because there is none.** The mockup drew *"16 of 18 · 2 left"*
+   as a bar filling toward **this week's cap**. ⚠ **This product has no weekly and no season innings
+   ceiling** — every cap it stores is PER GAME and is a number the coach set — and inventing one
+   would be the product proposing a figure as though it were a rule, in the one place where being
+   wrong costs a child's arm. Redrawn against real records: workload, rest, and the coach's own
+   per-game cap. (The mockup also compared a *season* total to a *per-game* cap. A real weekly cap
+   is its own project: it needs a setting, and the game-day chip must move with it.)
+3. **The "RSVP reply rate" tile is now "Recorded".** The mockup's caption said *"replied before event
+   day"* — **nobody replies**: RSVP here is a status the coach sets, and there is no family reply
+   channel or reply timestamp anywhere in the product. The same arithmetic honestly measures how
+   much of the coach's own sheet is finished, so that is what it says.
+
+### Walk it — Attendance (Insights → Attendance)
+
+- ✅ **Four figures across the top:** Season / Games / Practices / **Recorded**. The first three are
+  attendance rates; **Recorded** is the share of marks that got a definite In or Out rather than
+  being left at No reply. On the UAT fixture it is deliberately **below 100%** — if it reads 100%,
+  the fixture's no-replies are gone and the tile is not being tested.
+- ✅ **The table is in ROSTER ORDER.** No column is clickable, no header sorts, no player is badged.
+  ⚠ *This is decision 1 above, not an unfinished feature.*
+- ✅ **Open a row, then press BACK** — it should close the row and leave you on the table, not
+  throw you out of Insights. (It threw you out until the review caught it.)
+- ✅ **A coach WITHOUT schedule access sees the report and NO chevrons** — receipts are gated on the
+  schedule grant as well as attendance (see the addendum). Every number still shows.
+- ✅ **Every row has a chevron beside the name.** Including players who have missed nothing — open
+  one and it says so. That uniformity is the point: a chevron only where there were absences would
+  be the badge, drawn as an affordance.
+- ✅ **Open Devon Test.** Four missed sessions, most recent first, each with a date and a **Game** or
+  **Practice** chip — and one of them is a **game**, which is the check that the list covers both
+  columns above it rather than practices only.
+- ✅ **The weekday note fires for Devon** ("Every one of these falls on a Tuesday") and **does NOT
+  fire for Frankie**, whose two absences are a Tuesday and a Friday. Both are seeded that way on
+  purpose; if the note appears for everyone, it has stopped meaning anything.
+- ✅ **The open row is in the URL** (`…?section=attendance&player=…`). Reload — it stays open. Send
+  the link to yourself — it opens there. Back closes it. ⚠ This is also what lets `check:layout`
+  measure it open at all.
+- ✅ **The name still goes to the player's profile.** The chevron opens receipts; the name navigates.
+  Two different targets in one row — confirm neither steals the other's tap, on desktop and phone.
+- ✅ **The caret sits INSIDE the row.** It briefly did not — see the rendered-check note below. Worth
+  a glance at 768 and 1440 that no row's content pokes past its right edge.
+- ✅ **No "Email the family" button in the drill-in**, though the mockup drew one. Deliberate: the
+  name one line above already opens the profile where that door lives beside the guardian's address,
+  and it would need the guardian-PII grant this screen's gate does not imply.
+
+### Walk it — Playing Time (Insights → Playing Time)
+
+- ✅ **Position recency:** players down, the sport's positions across, each cell the number of days
+  since that player last stood there. **Dashes are expected and correct** — on the fixture, four
+  players are pinned to a small pool, so roughly 17 cells read "—".
+- ✅ ⚠ **A dash means "no saved lineup ever put them there", not "they can't play it".** Hover a dash
+  and the tooltip says exactly that. If a dash ever turns into a number for a position a player has
+  never actually been written into, something has started reading the roster's *listed* position as
+  though it were a game — that is the one defect this section must never have.
+- ✅ **The tint is never the only channel** — every cell also prints its number, and the legend names
+  each band in words. Check this on the **warm** theme too; the static contrast gates read dark only.
+- ✅ **Nothing on this section ranks or says anyone is owed a turn.** No "longest wait" column, no
+  ordering by staleness. Measurement in context, never a verdict.
+- ✅ **Arm care:** one row per pitcher who has actually thrown. Season innings + games, **rest**
+  (days since their last outing and how long it was), and **your per-game cap**.
+- ✅ **Both halves of the cap resolution are on screen.** **Logan Test** carries the over-cap flag
+  (14 innings across 6 games against the season default of 2 — "over in 3"), and **Avery Test** is
+  the per-player override: cap **1/game**, beating the season default of 2, judged against their own
+  number. If either the flag or the odd-one-out cap is missing, the fixture's caps did not seed.
+- ✅ ⚠ **The sentence under the table is the point of the section:** *"There is no weekly or season
+  innings limit here — the only ceiling shown is the per-game cap you set yourself."* If that line
+  is missing, the figures above it read as a budget, which is decision 2 undone.
+- ✅ **The two new sections read down in the same player order as the table above them.**
+
+### Fixture, and why this section's evidence depends on it
+
+⚠ **Reseed before walking or sweeping:** `node scripts/seed-uat-coach-fixture.mjs`. The live season
+previously carried **one** saved lineup and attendance on two events — both new reports would have
+rendered near-empty and `check:layout` would have reported green over them. The seeder now adds six
+games' lineups (with four players position-restricted, so dashes exist), five practices (four a week
+apart and one off-cycle, so the weekday note can be proven both true and false), a handful of
+no-replies, and the arm-care caps.
+
+⚠⚠ **A REAL FIXTURE BUG WAS FOUND AND FIXED ON THE WAY** — worth knowing because it silently
+corrupted every earlier reading of the Results tab on this fixture. The finished-games guard used
+`.maybeSingle()` on a name (`vs Ridgeview`) that is **seeded twice on purpose** (league +
+tournament, so the per-type breakdown has two rows). Two rows makes `.maybeSingle()` return an
+**error**, the error was discarded, the guard read null — so **every run of the seeder re-inserted
+all six games.** A fixture reseeded four times claimed a 3-2-1 record and held 24 games. Fixed to
+`.limit(1)`, which cannot lie about multiplicity, and the duplicates were cleared.
+
+### What WAS proved, without the browser
+
+The dev server could not be trusted for evidence (see below), so both data paths were run against
+the **live dev database** with the routes' exact reductions. All of it holds:
+
+- **Attendance** — Devon: 4 missed (three practices + one game), `sameWeekday = Tuesday`. Frankie:
+  2 missed, `sameWeekday = null`. Eight players carry a clean record and are still present in the
+  answer with empty lists. Tiles: **Season 95% · Games 98% · Practices 91% · Recorded 98%**.
+- **Position recency** — 91 filled cells, **17 dashes**.
+- **Arm care** — 10 pitchers; Logan over the season-default cap in 3 games; Avery on a per-player
+  cap of 1.
+
+⚠ **One fixture gap, known and left:** the recency values land at **0, 107 and 113 days**, so only
+two of the three tint bands render — **the "1–2 weeks" band is never drawn.** The season's games are
+fixed to April/May by design (a rendered baseline must not drift with the calendar), and giving one
+a recent date would move the Results tab's game log with it. Check that middle band by eye on the
+**coach demo** instead, whose games re-anchor to now.
+
+### Not walked / owed
+
+✅ **`check:layout` RAN, on all three screens at four widths, and it earned its keep.** It caught a
+real defect this change introduced and nothing else:
+
+⚠⚠ **The drill-in caret sat 6px OUTSIDE its own row, on every player, at 768 and 1440.** A negative
+right margin was pulling it flush with the cell's padding edge; the sweep reported `content spills
+6px with overflow-x:visible — no scroller owns it` **24 times** — once per player per width. Fixed
+(the margin is gone; the cell's own padding gives the caret room) and re-run clean. Nothing in the
+code review or the typecheck could have found this: it only exists once a browser has resolved the
+layout.
+
+**The 10 findings that remain are all pre-existing, with evidence:**
+- 6 are the **notification bell** (`div·1` / `button·1 unread notifications`, 4px, @1440) and they
+  appear on **all three screens including the two this change did not touch** — shared chrome another
+  session has not re-baselined (noted at §59).
+- 4 are on the NEW screen id `coach-attendance-receipts` only (`Take attendance` and the help button
+  under the tap floor). They are **byte-identical to four accepted baseline entries on its sibling
+  `coach-attendance`** — same control, same width, same `34px tall (floor 44)` — surfacing purely
+  because a new screen id starts with no baseline rows.
+
+⚠ **Those 4 were deliberately NOT baselined.** All four sibling entries carry `reason: null`, and
+another session is at this moment reducing exactly that unexplained-exception debt
+(`COACH_TOUCH_TARGET_DEBT_PLAN.md`) in the same baseline file. Adding four more unargued rows while
+someone is removing them is the wrong direction, and writing to that file mid-rework risks
+clobbering it. **Baseline them — with the sibling's real reason, not `null` — once the tree is
+quiet.**
+
+**Also in this change, nothing to walk:** the demo sandbox's mid-season team seeded all six of its
+saved lineups from one authored grid, so its new recency grid would have rendered **one number
+repeated** — every screen perfect, the feature invisible. The grid is now rotated per game (bench
+seats and both pitchers untouched, so the playing-time outlier and the arm-care story are
+unchanged), and the tour's playing-time step gained a clause for the two new sections.
+`npm run check:demos` passes (2 presentable) — but it proves the world is *seeded*, never that the
+narration is still *true*, which is why this paragraph exists rather than a green tick.
+
+⚠⚠ **THE DEMO FIX IS IN THE SEEDER, SO IT IS NOT YET IN EITHER SEEDED WORLD.** The rotation applies
+when the mid-season lineups are written; the six already sitting in dev and prod were written from
+the old single grid, so **both demos still render the one-number-repeated matrix until their
+mid-season lineups are re-seeded.** Nothing in `check:demos`, the nightly re-anchor or
+`tick:demos` rewrites a saved lineup — so this does **not** self-heal, on either environment, and
+shipping the code alone leaves the shop window exactly as it was. Re-seed the coach demo's
+mid-season lineups as part of releasing this.
+
+**§61 addendum — `/simplify` then `/review` (2026-08-19, high-risk tier, 5 lenses), before any QA
+walk. Six defects fixed, and three of them are things a walk would probably never have found.**
+
+⚠⚠ **THE CAPABILITY LEAK IS THE ONE TO KNOW ABOUT, and it changes what an assistant sees.** The
+receipts list carries each missed session's DATE and NAME (`vs Thunder`), so across a roster it
+enumerates the season's opponents and calendar — **schedule content, shipped on the attendance
+grant alone.** `attendance` and `schedule` are independently grantable, and the Attendance tab opens
+on `attendance`; an attendance-only assistant would have read the whole fixture list through a
+report about turnout. The codebase had already decided this exact question elsewhere — the
+closed-season results route gates on record access **and** schedule access, calling itself "a second
+entry point to facts the schedule read has always gated." **The receipts now take that same joint
+gate; the FRACTIONS do not.** An attendance-only coach keeps every number and simply has no
+chevrons. ⚠ The route reports it as a FLAG rather than by returning empty lists, because "nobody
+missed anything" and "you may not see what they missed" must never render as the same sentence.
+
+⚠⚠ **THE ALWAYS-BENCHED PLAYER WAS MISSING FROM THE GRID — the one player it exists to surface.**
+A row was created only where a player had actually taken a position, so a player written into every
+saved lineup and never given one had no row at all, and the panel dropped the miss silently. They
+sit at the **top** of the table directly above (it orders most-benched first) and then vanished from
+the grid underneath it. They now get a row of dashes, which is the honest answer. Three tests added.
+
+⚠ **The drill-in's Back button did the opposite of what its own comment promised.** It used
+`replace`, which overwrites the entry the tab was opened with — so Back ejected the coach out of
+Insights entirely instead of closing the row. Now `push`, matching what the Money hub already does
+(a drill-in is a place and pushes; a filter is a setting and replaces). **Worth a deliberate press
+during the walk:** open a row, press Back, expect the closed table.
+
+**Also fixed, quieter but real:**
+- **A stale-team paint.** The Attendance panel had no "which team do these rows describe?" guard —
+  its five sibling panels all do. Panels stay mounted across a team switch, so the frame between the
+  team changing and the data reloading showed the previous team's rows under the new team's name,
+  and the "Take attendance" card combined the NEW team's URL with the OLD team's event id. ⚠ The
+  test that pins this guard **skips any panel that doesn't already have it**, so the protection was
+  opt-in and this panel had silently opted out. Fixed the same way its siblings are.
+- **The receipts could have disagreed with the number they explain.** Anything that wasn't a
+  practice was classified as a game with no fallback, where the roll-up beside it explicitly skips a
+  type it doesn't recognise. One new event type and an absence would appear in a list that the
+  season fraction never counted — which that module's own header calls the single most damaging
+  thing this report can get wrong. Both now apply the same shared bucket list.
+- **The fixture seeder could strand itself half-seeded.** Its lineup guard asked "does ANY season
+  lineup exist?", so a failure partway through meant the next run called the block done and
+  permanently skipped the rest — quiet partial data forever. Now per game, and **proved by deleting
+  one lineup and watching the seeder repair exactly that one**.
+
+**And the rendered check earned its place twice over** — see the note above on the caret that sat
+6px outside its row on every player. Nothing else in the gate could see it.
+
+**What `/simplify` changed (no behaviour difference, verified by re-running the data checks):** the
+recency pivot moved out of the server-only assembler into the pure module beside the function it
+pivots, **which is the only reason the always-benched defect above could be caught by a unit test at
+all** — it had been sitting in the one file the test suite cannot load. Plus one shared "do these
+all fall on the same weekday?" rule instead of two copies, a Map instead of a per-row rescan, and a
+redundant CSS rule dropped.
+
+**Not fixed, stated instead:** a third copy of the "legend row of colour swatches" CSS idiom now
+exists (the other two belong to other features, so unifying them is outside this change), and the
+attendance route makes two queries over the same rows — deriving the totals from the marks instead
+would put a **second copy of a rule four other surfaces share** inside one route, which is the worse
+trade at this row count.

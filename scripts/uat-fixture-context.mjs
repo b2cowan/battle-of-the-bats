@@ -53,7 +53,7 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
  *                    practiceEventId:string, gameEventId:string, fundraiserId:string,
  *                    sponsorId:string, finishedTeamId:string, finishedYearId:string,
- *                    finishedPracticeEventId:string, baseUrl:string}>}
+ *                    finishedPracticeEventId:string, receiptPlayerId:string, baseUrl:string}>}
  */
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -168,6 +168,31 @@ export async function resolveUatContext() {
   }
 
   /**
+   * ⚠ THE PLAYER THE ATTENDANCE RECEIPTS OPEN ON (Reports Portal P2, 2026-08-19).
+   *
+   * The Attendance report's drill-in is addressed by `?player=`, and **a drill-in that arrives
+   * CLOSED is invisible to the layout sweep** — it opens a URL and cannot click. Without an id here
+   * the receipts would never be measured at any width, which is the trap `OWNER_QA_LEDGER §58`
+   * records against this exact portal.
+   *
+   * Resolved BY NAME, like the probe practice above, so reseeding cannot rot it. Devon is the
+   * player the seeder deliberately gives absences to — across BOTH a practice run and a game, and
+   * all on the same weekday — so the row that opens exercises the receipt list, the kind chips and
+   * the "every one of these falls on a …" note in one render. Any other player would open onto
+   * "nothing missed", which measures the empty state and reports it as coverage.
+   */
+  const receiptPlayer = await db.from('rep_roster_players')
+    .select('id').eq('program_year_id', py.data.id)
+    .eq('player_first_name', 'Devon').eq('status', 'active').maybeSingle();
+  if (receiptPlayer.error) throw new FixtureError(`receipts player lookup failed: ${receiptPlayer.error.message}`);
+  if (!receiptPlayer.data) {
+    throw new FixtureError(
+      'No active player "Devon" on the live season, so the attendance receipts drill-in cannot be '
+      + 'swept — it would be measured closed, which measures nothing.',
+    );
+  }
+
+  /**
    * ⚠ A practice from the FINISHED season that carries a plan — the read-only past-plan page has no
    * other way to be addressed, and until P3 C3 (2026-08-16) that page had NO rendered coverage at
    * all despite being the bottom of the whole look-back layer.
@@ -202,6 +227,8 @@ export async function resolveUatContext() {
     finishedYearId: pastYear.data.id,
     /** A practice in that finished season carrying a plan — the read-only past-plan page (P3 C3). */
     finishedPracticeEventId: pastPractice.data.id,
+    /** The roster player whose attendance receipts the sweep opens (`?player=`, Reports Portal P2). */
+    receiptPlayerId: receiptPlayer.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

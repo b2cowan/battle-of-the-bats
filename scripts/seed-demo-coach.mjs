@@ -31,7 +31,7 @@ import {
   DEMO_DUES_SETTINGS,
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
-  MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
+  MIDSEASON_LINEUP_GRID, midseasonLineupGrid, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
   midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
@@ -930,10 +930,15 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       program_year_id: pyId, team_id: team.id, org_id: org.id,
       lineup_mode: 'everyone_bats', inning_count: MIDSEASON_INNING_COUNT,
     })).error);
+    // ⚠ ROTATED PER GAME (2026-08-19). One shared grid across all six meant every player last
+    // played every position on the same day, so the position-recency matrix rendered as one number
+    // repeated. Bench seats and both pitchers are untouched by the rotation — see the function's
+    // header for why the outlier and arm-care stories survive it exactly.
+    const grid = midseasonLineupGrid(g.lineupOrder);
     await insertAll('rep_team_lineup_entries', playerIds.map((pid, i) => ({
       lineup_id: lineupId, player_id: pid, batting_order: i + 1, starter: true,
       inning_positions: Object.fromEntries(
-        MIDSEASON_LINEUP_GRID.map((inning, idx) => [String(idx + 1), inning[i]])),
+        grid.map((inning, idx) => [String(idx + 1), inning[i]])),
     })));
   }
 

@@ -5424,7 +5424,10 @@ export async function getRepPlayerAttendanceSummary(
 // ── Team-wide attendance reliability (Phase 4 F3) ─────────────────────────────
 
 /** Games = competitive events; practices = practice. team_event is neither. */
-const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'scrimmage', 'external_tournament'];
+/** ⚠ EXPORTED so a caller can apply the SAME bucket rule the roll-up applies, rather than
+ *  re-typing the list or assuming "anything that isn't a practice is a game". The attendance
+ *  route's receipts depend on agreeing with these totals exactly. */
+export const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'scrimmage', 'external_tournament'];
 
 export interface RepAttendanceCategoryStat {
   attended: number; // showed up (attending OR late)
@@ -5479,32 +5482,40 @@ export async function getRepTeamAttendanceReliability(
   return byPlayer;
 }
 
-/** One attendance mark on one PRACTICE, with the event detail a receipt needs. */
-export interface RepPracticeAttendanceRow {
+/** One attendance mark on one event, with the event detail a receipt needs. */
+export interface RepAttendanceMarkRow {
   eventId: string;
   eventName: string;
+  /** Named opponent when the event has one — how a GAME receipt reads ("vs Thunder"). */
+  opponent: string | null;
+  eventType: string;
   startsAt: string;
   playerId: string;
   status: RepAttendanceStatus;
 }
 
 /**
- * Per-practice, per-player attendance marks for a season (Ask the Front Office, Phase A).
+ * Per-event, per-player attendance marks for a season — the individual records.
  *
- * Distinct from `getRepTeamAttendanceReliability`, which returns TOTALS. This question has to show
- * its work — a coach told "missed 4 of the last 6" must be able to see the four specific dates —
- * so the individual rows are the point, not an inefficiency. Practices only; cancelled events are
- * excluded here exactly as they are for the reliability roll-up, so the two can never disagree
- * about which sessions counted.
+ * Distinct from `getRepTeamAttendanceReliability`, which returns TOTALS. A drill-in has to show its
+ * work: a coach reading "5/11 practices" must be able to see the six specific sessions behind it,
+ * so the individual rows are the point, not an inefficiency.
+ *
+ * ⚠ **GAMES AND PRACTICES, matching the roll-up's two buckets exactly.** This was practices-only
+ * while its one caller was the retired "who's missed the most practices?" answer. The Attendance
+ * report shows a games fraction beside a practices fraction, and receipts covering only one of them
+ * would be a list that visibly fails to add up to the numbers above it. Same event types and the
+ * same cancelled-event exclusion as the roll-up, so the two can never disagree about which sessions
+ * counted — `ATTENDANCE_GAME_TYPES` is shared rather than re-typed for exactly that reason.
  */
-export async function getRepTeamPracticeAttendance(
+export async function getRepTeamAttendanceMarks(
   programYearId: string,
-): Promise<RepPracticeAttendanceRow[]> {
+): Promise<RepAttendanceMarkRow[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_event_attendance')
-    .select('player_id, status, rep_team_events!inner(id, name, starts_at, event_type, status)')
+    .select('player_id, status, rep_team_events!inner(id, name, opponent, starts_at, event_type, status)')
     .eq('program_year_id', programYearId)
-    .eq('rep_team_events.event_type', 'practice')
+    .in('rep_team_events.event_type', [...ATTENDANCE_GAME_TYPES, 'practice'])
     .eq('rep_team_events.status', 'scheduled');
   if (error) throw error;
   return ((data ?? []) as any[])
@@ -5512,6 +5523,8 @@ export async function getRepTeamPracticeAttendance(
     .map(r => ({
       eventId: r.rep_team_events.id as string,
       eventName: (r.rep_team_events.name ?? '') as string,
+      opponent: (r.rep_team_events.opponent ?? null) as string | null,
+      eventType: r.rep_team_events.event_type as string,
       startsAt: r.rep_team_events.starts_at as string,
       playerId: r.player_id as string,
       status: r.status as RepAttendanceStatus,

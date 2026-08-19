@@ -74,6 +74,25 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
  * and a coach's device does not.
  */
 export function weekdayOfDay(day: string): string | null {
+  return weekdayOfDayImpl(day);
+}
+
+/**
+ * The weekday EVERY one of these days shares, or null — the "all four are Tuesdays" rule.
+ *
+ * ⚠ Shared rather than written twice: `lib/coach-attendance-receipts.ts` asks the same question of a
+ * season's absences that this module asks of a window's, and the two must never disagree about what
+ * counts as a pattern. **Fewer than two days is never a pattern** — one absence on a Tuesday says
+ * nothing about Tuesdays, and that guard is the whole reason this is a rule and not a `map`.
+ */
+export function sameWeekdayAcross(days: string[]): string | null {
+  if (days.length < 2) return null;
+  const names = days.map(weekdayOfDayImpl);
+  const first = names[0];
+  return first && names.every(n => n === first) ? first : null;
+}
+
+function weekdayOfDayImpl(day: string): string | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
   if (!m) return null;
   const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
@@ -127,12 +146,7 @@ export function computePracticeMisses(input: PracticeMissInput): PracticeMissRan
     row.absences.push({ eventId: r.eventId, day: r.day, label: r.label });
   }
 
-  for (const row of rows) {
-    if (row.absences.length < 2) continue;
-    const days = row.absences.map(a => weekdayOfDay(a.day));
-    const first = days[0];
-    row.sameWeekday = first && days.every(d => d === first) ? first : null;
-  }
+  for (const row of rows) row.sameWeekday = sameWeekdayAcross(row.absences.map(a => a.day));
 
   rows.sort((a, b) => b.missed - a.missed || b.known - a.known || a.name.localeCompare(b.name));
 

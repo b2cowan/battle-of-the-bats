@@ -1756,6 +1756,58 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .insightsFlagWarn { color: var(--warning); font-size: 0.75rem; font-weight: 700; }
 .insightsRecGood { color: var(--success); }
 .insightsQuietText { color: var(--text-tertiary); font-size: 0.85rem; margin: 0; }
+
+/* ── Position-recency matrix (Playing Time, Reports Portal P2, 2026-08-19) ──────────────────
+   Players down, the sport's field positions across, each cell holding days since that player
+   last played that spot. It rides `.insightsTable` for its heading and border recipe rather
+   than a parallel table style — the portal has ONE report-table idiom and a matrix is still a
+   report table.
+
+   ⚠⚠ **THE TINT IS A SECOND CHANNEL AND NEVER THE ONLY ONE.** Every cell prints its number, and
+   the legend names each band in words. Colour alone has failed a deuteranope on this palette
+   before (the olive↔danger ΔE 1.0 finding on the budget card), and this is a screen about
+   children's playing time — a coach reading it wrong reads a child's turn wrong.
+
+   ⚠ The bands go from "recently" (warm/lit) to "a while" (quiet). Deliberately NOT a
+   good→bad ramp: a long gap at one position is a fact, not a fault, and the standing
+   playing-time vocabulary forbids this screen returning a verdict. */
+/* Position CODES across the top, with the full label on hover/title. Codes because a row of
+   full labels ("Shortstop", "Right Field") is 9 columns of wrapped text on a phone; the
+   sport pack supplies both, so nothing is invented here. */
+.ptMatrixHead { text-align: center !important; }
+.ptMatrixCell,
+.ptMatrixNever {
+  text-align: center;
+  min-width: 3.1rem;
+  border-radius: 5px;
+}
+.ptMatrixCell[data-band='fresh'] { background: rgba(var(--logic-lime-rgb), 0.30); color: var(--text-primary); font-weight: 700; }
+.ptMatrixCell[data-band='week'] { background: rgba(var(--logic-lime-rgb), 0.16); color: var(--text-primary); }
+.ptMatrixCell[data-band='stale'] { background: rgba(var(--logic-lime-rgb), 0.06); color: var(--text-secondary); }
+/* Never in a saved lineup. Quietest of the four, and it carries no tint at all — an absence
+   should not look like a low score. */
+.ptMatrixNever { color: var(--text-tertiary); }
+
+.ptMatrixLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.ptMatrixLegend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ptMatrixLegend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}
+.ptMatrixLegend i[data-band='fresh'] { background: rgba(var(--logic-lime-rgb), 0.30); }
+.ptMatrixLegend i[data-band='week'] { background: rgba(var(--logic-lime-rgb), 0.16); }
+.ptMatrixLegend i[data-band='stale'] { background: rgba(var(--logic-lime-rgb), 0.06); }
+.ptMatrixLegend i[data-band='never'] { background: none; }
 /* ── A report panel's own toolbar (reports portal P1, 2026-08-18) ──────────
    The action row a tab carries beside the thing it names (Awards' Give / Manage / Print). It exists
    as a class so the 44px TAP FLOOR can be applied to its controls WITHOUT touching `.btnPrimary`

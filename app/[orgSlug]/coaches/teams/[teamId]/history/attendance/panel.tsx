@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
-import { CalendarCheck, ArrowRight, ChevronRight } from 'lucide-react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { CalendarCheck, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
@@ -9,6 +10,7 @@ import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
 } from '@/lib/coach-tournament-games';
 import { resolveAttendanceView } from '@/lib/coach-attendance-view';
+import { formatStoredDate } from '@/lib/timezone';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../../coaches.module.css';
 import att from './attendance.module.css';
@@ -23,17 +25,62 @@ interface CategoryStat {
   recorded: number;
 }
 
+/** One missed session — a receipt line behind a fraction. */
+interface AttendanceAbsence {
+  eventId: string;
+  day: string;
+  label: string;
+  kind: 'game' | 'practice';
+}
+
 interface AttendanceRow {
   playerId: string;
   playerFirstName: string;
   playerLastName: string;
   games: CategoryStat;
   practices: CategoryStat;
+  /** Recorded absences, most recent first. Present for every player; empty for most of them. */
+  absences: AttendanceAbsence[];
+  /** Set only when EVERY absence falls on the same weekday and there are ≥2 — a fact about the
+   *  calendar (a clashing lesson, a shared ride), never about the child. */
+  sameWeekday: string | null;
 }
 
 // "attended / known" — known excludes no-reply so an untracked RSVP never counts against a player.
 function fraction(s: CategoryStat): string | null {
   return s.known > 0 ? `${s.attended}/${s.known}` : null;
+}
+
+const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : null);
+
+/**
+ * The four season figures above the table (Reports Portal P2, 2026-08-19).
+ *
+ * ⚠⚠ **THE FOURTH TILE IS NOT AN "RSVP REPLY RATE", AND THE MOCKUP'S NAME FOR IT WAS WRONG.** It was
+ * drawn as "RSVP reply rate · replied before event day" — but **nobody replies**: RSVP here is a
+ * status the COACH sets on the schedule screen, there is no family reply channel and no reply
+ * timestamp anywhere in the product. Shipping that label would have credited families for a reply
+ * they never sent and blamed them for silence that is actually a half-finished sheet.
+ *
+ * What the same arithmetic honestly measures is the coach's OWN record-keeping: `known / recorded`
+ * — of every player-session you took attendance for, the share that got a definite in-or-out rather
+ * than being left at no reply. That is worth showing precisely because `known` is the denominator
+ * of every other figure on this screen, so a low number here says "these percentages rest on less
+ * than you think". (Owner call, 2026-08-19.)
+ */
+function seasonTotals(rows: AttendanceRow[]) {
+  const t = rows.reduce((acc, r) => ({
+    gAtt: acc.gAtt + r.games.attended, gKnown: acc.gKnown + r.games.known,
+    pAtt: acc.pAtt + r.practices.attended, pKnown: acc.pKnown + r.practices.known,
+    known: acc.known + r.games.known + r.practices.known,
+    recorded: acc.recorded + r.games.recorded + r.practices.recorded,
+  }), { gAtt: 0, gKnown: 0, pAtt: 0, pKnown: 0, known: 0, recorded: 0 });
+  return {
+    season: pct(t.gAtt + t.pAtt, t.gKnown + t.pKnown),
+    games: pct(t.gAtt, t.gKnown),
+    practices: pct(t.pAtt, t.pKnown),
+    marked: pct(t.known, t.recorded),
+  };
 }
 
 export function AttendancePanel({
@@ -51,9 +98,63 @@ export function AttendancePanel({
   const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
+  /**
+   * ⚠⚠ **THE OPEN DRILL-IN LIVES IN THE ADDRESS, NOT IN `useState`** — `?player=`, the same call the
+   * Money hub's fundraiser sub-view made (2026-08-14). Three reasons, and the third is the one that
+   * would have been found late:
+   *   · a coach can send "look at this row" to an assistant, and Back steps out of it;
+   *   · it survives a refresh, so a half-read receipt list is not lost to a stray reload;
+   *   · ⚠ **a drill-in that arrives CLOSED is invisible to `check:layout`.** The sweep opens a URL
+   *     and measures what renders — it cannot click. An open state with no address would never be
+   *     measured at any width, which is precisely the trap OWNER_QA_LEDGER §58 records against this
+   *     portal. `scripts/layout-screens.mjs` addresses it as `coach-attendance-receipts`.
+   *
+   * ⚠⚠ **`push`, NOT `replace` — and the first version got this wrong while its own comment claimed
+   * otherwise.** It used `replace` "so Back steps out of it", which is exactly backwards: `replace`
+   * OVERWRITES the history entry the tab was opened with, so the closed-table URL stops existing and
+   * Back ejects the coach out of Insights entirely instead of closing the row they just opened.
+   *
+   * `push` is also what the house already does with this shape: the Money hub opens its fundraiser
+   * sub-view with a `<Link>` (a push) and reserves `replace` for its FILTER chips, where burying the
+   * page under one entry per chip really would be wrong. **A drill-in is a place; a filter is a
+   * setting.** Opening several rows costs several Back presses, which is the ordinary bargain.
+   */
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const openPlayerId = searchParams.get('player');
+  function toggleReceipts(playerId: string) {
+    const sp = new URLSearchParams(searchParams.toString());
+    if (openPlayerId === playerId) sp.delete('player'); else sp.set('player', playerId);
+    const qs = sp.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
   const [rows, setRows] = useState<AttendanceRow[]>([]);
+  /** Whether the drill-in is available at all — false for a coach without schedule access, whose
+   *  receipts the route withholds. ⚠ Distinct from "nobody missed anything", which it must never
+   *  be rendered as. */
+  const [hasReceipts, setHasReceipts] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  /**
+   * ⚠⚠ **WHICH TEAM THE ROWS ON SCREEN ACTUALLY DESCRIBE** — the guard this panel's five siblings
+   * carry and it did not.
+   *
+   * A coach with several assignments can move between teams **without this panel unmounting**
+   * (panels stay mounted by design, hidden with `display:none`). Both loads here are already guarded
+   * against a superseded RESPONSE landing — but nothing stopped the render that happens *between*
+   * `teamId` changing and the effects re-firing, which committed the PREVIOUS team's rows under the
+   * new team's header. With P2 that window grew teeth: the season tiles state percentages, the
+   * chevrons name players in their `aria-label`, and the "Take attendance" card combines the NEW
+   * team's base URL with the OLD team's event id — a link into another team's schedule.
+   *
+   * Same shape as `playing-time/panel.tsx`, deliberately, so `coach-insights-portal.test.ts`'s
+   * "every panel that guards its paint on a team also guards its writes" assertion now actually
+   * covers this file — it skips any panel with no `loadedFor` at all, so the protection was opt-in
+   * and this panel had silently opted out.
+   */
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   // Batch 4 (f8-2): the report explained what it WOULD show but never said where attendance is
   // actually recorded. This is the event it points at — the next one coming up, or failing that
   // the most recent one played, so the answer to "where do I do this?" is a live link, not prose.
@@ -72,11 +173,19 @@ export function AttendancePanel({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
-      if (!isStale()) setRows(data.players ?? []);
+      if (!isStale()) {
+        setRows(data.players ?? []);
+        setHasReceipts(data.receipts === true);
+      }
     } catch (e: unknown) {
       if (!isStale()) setError(e instanceof Error ? e.message : 'Failed to load attendance.');
     } finally {
-      if (!isStale()) setLoading(false);
+      // ⚠ A stale run must not stamp its own team here — the defect its sibling panel was built to
+      // survive. Guarding the paint but not this write is what strands a panel forever.
+      if (!isStale()) {
+        setLoadedFor(teamId);
+        setLoading(false);
+      }
     }
   }, [orgSlug, teamId]);
 
@@ -166,7 +275,11 @@ export function AttendancePanel({
    * should be executable by a test rather than re-read by the next person.
    */
   const view = resolveAttendanceView({
-    loading, error: !!error, rowCount: rows.length, hasAnyData,
+    // ⚠ `loadedFor !== teamId` counts as still loading. It is true on the very first render after a
+    // team switch — before the effects have re-fired — and that is exactly the frame in which the
+    // previous team's rows would otherwise be painted under this team's name.
+    loading: loading || loadedFor !== teamId,
+    error: !!error, rowCount: rows.length, hasAnyData,
     markTargetLoading, markTargetFailed, hasMarkTarget: !!markTarget,
   });
   const settled = view.state !== 'loading';
@@ -282,6 +395,48 @@ export function AttendancePanel({
             <p className={styles.errorText}>{error}</p>
           ) : (
             <>
+              {/* ── The season figures (Reports Portal P2) ────────────────────────────────────
+                  ⚠ ABSENT rather than zeroed until there is something to state, which is the
+                  Dashboard's own rule for this same band: "a tile with no data is ABSENT, and an
+                  absent tile claims nothing". A row of 0% over a season nobody has marked yet is a
+                  confident wrong answer, and the note below already says nothing is recorded.
+                  ⚠ Reuses the hub's scoreboard recipe (`insightsBand`/`insightsStat`) rather than a
+                  second set of tile classes — the portal has ONE stat band, and a report growing its
+                  own would be the drift `CoachTabBar` was extracted to prevent. */}
+              {settled && hasAnyData && (() => {
+                const t = seasonTotals(rows);
+                return (
+                  <div className={styles.insightsBand}>
+                    <div className={styles.insightsStat}>
+                      <span className={styles.insightsStatLbl}>Season</span>
+                      <span className={styles.insightsStatVal}>{t.season ?? '—'}<small>%</small></span>
+                      <span className={styles.insightsStatCap}>Games and practices</span>
+                    </div>
+                    {t.games != null && (
+                      <div className={styles.insightsStat}>
+                        <span className={styles.insightsStatLbl}>Games</span>
+                        <span className={styles.insightsStatVal}>{t.games}<small>%</small></span>
+                      </div>
+                    )}
+                    {t.practices != null && (
+                      <div className={styles.insightsStat}>
+                        <span className={styles.insightsStatLbl}>Practices</span>
+                        <span className={styles.insightsStatVal}>{t.practices}<small>%</small></span>
+                      </div>
+                    )}
+                    {t.marked != null && (
+                      <div className={styles.insightsStat}>
+                        <span className={styles.insightsStatLbl}>Recorded</span>
+                        <span className={styles.insightsStatVal}>{t.marked}<small>%</small></span>
+                        {/* ⚠ NOT a reply rate — see `seasonTotals`. This is how much of your own
+                            sheet you finished, and it is the denominator of every figure beside it. */}
+                        <span className={styles.insightsStatCap}>Marked in or out, not left blank</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Replaces the second empty state. It sits ABOVE the table because it is the
                   caption for the dashes underneath — read the other way round, a coach meets a
                   column of "—" with no explanation first. */}
@@ -298,9 +453,19 @@ export function AttendancePanel({
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      {/* ⚠ NO sort affordance on any column, ever. Roster order is the only order —
+                      {/* ⚠⚠ NO sort affordance on any column, ever. Roster order is the only order —
                           this is a support read to inform playing-time decisions, and a sortable
-                          column is a leaderboard however neutrally it is drawn. */}
+                          column is a leaderboard however neutrally it is drawn.
+
+                          ⚠ **RE-AFFIRMED, NOT INHERITED (owner ruling, 2026-08-19).** The P2 mockup
+                          drew this table SORTABLE with an amber "Missed most practices" badge on a
+                          named child, and mockups are the spec in this repo — so the contradiction
+                          went to the owner rather than being resolved by whichever artefact was read
+                          last. The ruling stands and the badge is not built. What replaced them is
+                          the drill-in below: every row carries the SAME affordance, so a coach can
+                          investigate anyone without the screen nominating anyone. Naming the
+                          least-reliable player remains the job of ONE sentence in "What stands out",
+                          which fires only above a tracked-sessions bar. */}
                       <th className={styles.th}>Player</th>
                       <th className={`${styles.th} ${styles.thNum}`}>Games</th>
                       <th className={`${styles.th} ${styles.thNum}`}>Practices</th>
@@ -310,16 +475,53 @@ export function AttendancePanel({
                     {/* ⚠ `settled`, not `loading`. Real rows are a CLAIM about this team, and a
                         claim may not be painted until both lookups have landed — otherwise the
                         table appears and is then taken away again. See `settled` above. */}
+                    {/* One Fragment per player holding the row and, when it is open, its receipts —
+                        two <tr> siblings under <tbody>, which is what a table needs. (Not
+                        `flatMap` over single-element arrays: that expressed "one row, maybe two"
+                        as two nested array literals and a flatten.) */}
                     {!settled ? skeletonRows : rows.map(r => {
                       const tracked = r.games.known > 0 || r.practices.known > 0;
                       const games = fraction(r.games);
                       const practices = fraction(r.practices);
+                      const fullName = [r.playerFirstName, r.playerLastName].filter(Boolean).join(' ');
+                      const open = openPlayerId === r.playerId;
+                      const receiptsId = `att-receipts-${r.playerId}`;
                       return (
-                        <tr key={r.playerId} className={styles.tr}>
+                        <Fragment key={r.playerId}>
+                        <tr className={styles.tr}>
                           <td className={`${styles.td} ${att.nameCell}`}>
-                            <Link href={`${base}/roster/${r.playerId}`} className={att.name}>
-                              {[r.playerFirstName, r.playerLastName].filter(Boolean).join(' ')}
-                            </Link>
+                            <div className={att.nameRow}>
+                              <Link href={`${base}/roster/${r.playerId}`} className={att.name}>
+                                {fullName}
+                              </Link>
+                              {/* ⚠ ON EVERY ROW, INCLUDING THE ONES WITH NOTHING TO SHOW — that
+                                  uniformity IS the ruling. A chevron that appeared only where there
+                                  were absences would be the badge the owner declined, drawn as an
+                                  affordance instead of a label.
+                                  Icon-only at every width, so `aria-label` carries the whole name of
+                                  the action (house rule: a mobile icon action names itself). */}
+                              {/* ⚠ `hasReceipts` as well as `hasAnyData`: a coach without schedule
+                                  access has the report but not the receipts, and an affordance that
+                                  opens onto "nothing missed" would be a confident wrong answer. */}
+                              {hasAnyData && hasReceipts && (
+                                <button
+                                  type="button"
+                                  className={att.receiptsBtn}
+                                  aria-expanded={open}
+                                  aria-controls={receiptsId}
+                                  aria-label={open
+                                    ? `Hide the sessions ${fullName} missed`
+                                    : `Show the sessions ${fullName} missed`}
+                                  onClick={() => toggleReceipts(r.playerId)}
+                                >
+                                  <ChevronDown
+                                    size={15}
+                                    aria-hidden
+                                    className={`${att.receiptsCaret}${open ? ` ${att.receiptsCaretOpen}` : ''}`}
+                                  />
+                                </button>
+                              )}
+                            </div>
                           </td>
                           {/* One player untracked among tracked team-mates is a different fact from
                               "nobody has been marked yet", and it says so in words rather than
@@ -340,6 +542,68 @@ export function AttendancePanel({
                             </>
                           )}
                         </tr>
+                        {open && (
+                        /* ── THE RECEIPTS (Reports Portal P2) ────────────────────────────────
+                           The records behind the two fractions above — every session this player
+                           was marked ABSENT for, most recent first.
+
+                           ⚠ **NO CAP, deliberately.** The receipts discipline the Ask build
+                           established says a cited record must stay reachable; the cheapest way to
+                           honour that is not to truncate. A season's absences for one player is a
+                           handful of lines, and this list only exists because the coach opened it.
+
+                           ⚠ **GAMES AND PRACTICES BOTH**, because the row above states a fraction
+                           for each. A practices-only list under a games number would be a receipt
+                           that visibly fails to add up to the thing it explains. */
+                        <tr className={`${styles.tr} ${att.receiptsRow}`}>
+                          <td className={`${styles.td} ${att.receiptsCell}`} colSpan={3} id={receiptsId}>
+                            <p className={att.receiptsHead}>Sessions missed &mdash; the records behind these figures</p>
+                            {r.absences.length === 0 ? (
+                              <p className={att.receiptsNone}>
+                                {tracked
+                                  ? 'Nothing missed — present for every session with a recorded answer.'
+                                  : 'Nothing recorded for this player yet.'}
+                              </p>
+                            ) : (
+                              <>
+                                <ul className={att.receiptsList}>
+                                  {r.absences.map(a => {
+                                    const kind = a.kind === 'practice' ? 'Practice' : 'Game';
+                                    // The event's own words, unless they only repeat the kind.
+                                    const detail = a.label && a.label.toLowerCase() !== kind.toLowerCase()
+                                      ? a.label : null;
+                                    return (
+                                      <li key={a.eventId}>
+                                        {/* formatStoredDate, never a raw slice — the day arrives as
+                                            the ORG's calendar day and must be printed as one. */}
+                                        <span className={att.receiptsDay}>{formatStoredDate(a.day, { withYear: false })}</span>
+                                        <span className={att.receiptsKind}>{kind}</span>
+                                        {detail && <span className={att.receiptsDetail}>{detail}</span>}
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                                {/* A fact about the CALENDAR — a clashing lesson, a shared ride —
+                                    never about the child. It only appears when it is true of every
+                                    absence, so it can't be read as a tendency. */}
+                                {r.sameWeekday && (
+                                  <p className={att.receiptsNote}>
+                                    Every one of these falls on a {r.sameWeekday}.
+                                  </p>
+                                )}
+                              </>
+                            )}
+                            {/* ⚠ NO SECOND "Email the family" DOOR, though the mockup drew one. The
+                                player's name one line above already opens their profile, where that
+                                button lives beside the guardian's address — and a second door to the
+                                same place, one line apart, is one door too many (the rule
+                                CoachPageHeader already states, and the same call the empty state's
+                                dropped "How attendance works" button made). It would also need the
+                                guardian-PII grant, which this screen's own gate does not imply. */}
+                          </td>
+                        </tr>
+                        )}
+                        </Fragment>
                       );
                     })}
                   </tbody>

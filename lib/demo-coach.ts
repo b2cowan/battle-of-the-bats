@@ -377,6 +377,38 @@ export const MIDSEASON_INNING_COUNT = 6;
 export const MIDSEASON_LINEUP_GAMES = 6; // the newest 6 decided games carry a saved lineup
 
 /**
+ * The grid ABOVE, with the field positions rotated for game `gameOrder` (0 = oldest saved lineup).
+ *
+ * ⚠⚠ **WHY THIS EXISTS — the demo had six saved lineups and told one story with them.** All six
+ * games were seeded from the identical grid, so every player last played every position they play
+ * on the SAME day: the mid-season team's new **position-recency matrix** (Insights → Playing Time,
+ * 2026-08-19) rendered as one number repeated across the whole grid. Every screen drew perfectly
+ * and the feature — *"who hasn't played catcher lately?"* — was invisible in the shop window. That
+ * is precisely the drift CLAUDE.md's demo rule exists for, and `check:demos` could not have caught
+ * it: it proves the world is seeded, never that the world still shows what the product gained.
+ *
+ * ⚠ **IT ROTATES ONLY THE FIELD POSITIONS, and every other fact the seed is authored to tell is
+ * arithmetically untouched:**
+ *   · `'Bench'` cells stay exactly where they are → Felix's 2-of-6 fielding, and everyone else's
+ *     share, are identical game to game. The playing-time outlier survives.
+ *   · `'P'` cells stay exactly where they are → Theo pitches 1-3 and Marco 4-6 in every game, both
+ *     AT the 3-inning cap. The arm-care story survives.
+ *   · Each inning still holds the same nine legal positions — the values are permuted among the
+ *     same slots, never invented or dropped.
+ * The two health-check assertions over this grid (the outlier's field share, a pitcher at the cap)
+ * therefore hold by construction rather than by luck.
+ */
+export function midseasonLineupGrid(gameOrder: number): string[][] {
+  return MIDSEASON_LINEUP_GRID.map(inning => {
+    const slots = inning.map((p, i) => (p !== 'Bench' && p !== 'P' ? i : -1)).filter(i => i >= 0);
+    const values = slots.map(i => inning[i]);
+    const out = [...inning];
+    slots.forEach((slot, k) => { out[slot] = values[(k + gameOrder) % values.length]; });
+    return out;
+  });
+}
+
+/**
  * Which roster slot the guided tour points at twice — first as a number on the playing-time table,
  * then as the family whose recap that number belongs to.
  *

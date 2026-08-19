@@ -25,6 +25,7 @@
 /**
  * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
  *            fundraiserId:string, sponsorId:string, finishedTeamId:string,
+ *            receiptPlayerId:string,
  *            finishedYearId:string}} Ctx
  *
  * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
@@ -71,6 +72,19 @@ export const SCREENS = [
      Insights block because what it measures is unchanged: the densest table in the week's work, at
      361px. Its id is deliberately unchanged too, so the baseline it already owns still applies. */
   { id: 'coach-attendance',  session: 'coach', path: (c) => `${team(c)}/history?section=attendance`, ready: 'h1' },
+  /**
+   * ⚠⚠ **THE SAME TAB WITH A ROW OPEN — and it needs its own entry because a drill-in that arrives
+   * CLOSED is invisible to this sweep.** The runner opens a URL and measures what renders; it cannot
+   * click. The receipts list, its date/kind lines and the "every one of these falls on a …" note
+   * would never be measured at any width without this, which is the trap OWNER_QA_LEDGER §58
+   * records against this exact portal.
+   *
+   * ⚠ `receiptPlayerId` resolves to the ONE fixture player the seeder gives absences to — across a
+   * practice run AND a game, all on the same weekday. Pointed at anyone else this would open onto
+   * "nothing missed", measure the empty state, and report it as coverage.
+   */
+  { id: 'coach-attendance-receipts', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=attendance&player=${c.receiptPlayerId}` },
   { id: 'coach-roster',      session: 'coach', path: (c) => `${team(c)}/roster`,      ready: 'h1' },
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
   { id: 'coach-depth-chart', session: 'coach', path: (c) => `${team(c)}/depth-chart`, ready: 'h1' },

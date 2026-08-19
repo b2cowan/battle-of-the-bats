@@ -179,3 +179,111 @@ export function rankPositionsByStaleness(input: {
       return b.daysSince - a.daysSince;
     });
 }
+
+/**
+ * The position-recency MATRIX — every player against every position on the field, each cell holding
+ * how long it has been since a saved lineup put them there (Reports Portal P2, 2026-08-19).
+ *
+ * ⚠⚠ **THIS SHAPE IS A PIVOT OF `computePositionRecency`, NOT A SECOND ANSWER.** That module is the
+ * one place the rule lives, and the rule is what makes the matrix honest: **a player who has never
+ * played a position this season is ABSENT from `byPosition`, never a zero and never a season-long
+ * gap.** A roster's stated primary position is an INTENTION, and an intention is not a record — a
+ * cell filled from one would invent a fact the receipts cannot show. Renderers must draw a missing
+ * key as "never", not as a large number.
+ *
+ * ⚠ It says how long it has been. It never says a player is OWED a turn
+ * (`memory/decision_playing_time_vocabulary.md`: measurement in context, never a verdict).
+ */
+export interface PositionRecencyMatrix {
+  /** The columns, in the SPORT PACK's own order — softball and hockey ask this with their words. */
+  positions: { code: string; label: string }[];
+  /** One row per player who appears in at least one saved lineup. Ordered by name; a caller that
+   *  renders this beside another table should order it to match, so the two read down together. */
+  rows: {
+    playerId: string;
+    name: string;
+    /** position code → their most recent turn there. A position they have never played is ABSENT. */
+    byPosition: Record<string, { daysSince: number; innings: number; day: string }>;
+  }[];
+  /** Games ALREADY PLAYED that had a saved lineup — the honest denominator for "nothing here yet". */
+  gamesRead: number;
+}
+
+export interface PositionRecencyMatrixInput {
+  /** Today, `YYYY-MM-DD`, in the org's zone. Passed in so this stays pure and testable. */
+  today: string;
+  /** Games with a saved lineup, oldest → newest — the same contract `computePositionRecency` states. */
+  games: PositionRecencyGame[];
+  players: PositionRecencyPlayer[];
+  /** The columns, in the SPORT PACK's own order. **The caller supplies the words** — the same rule
+   *  `PositionRecencyGame.label` states, so softball and hockey name their own positions and this
+   *  module never types a list of its own. */
+  positions: { code: string; label: string }[];
+}
+
+/**
+ * Pivot the season into the matrix — one pass per position, accumulated per player.
+ *
+ * ⚠ It lives HERE, beside the function it pivots and beside `rankPositionsByStaleness` (its
+ * structural twin), rather than in the server-only assembler that first held it. The rule it
+ * enforces — *only positions a player HAS played get a key* — is the honesty rule of this whole
+ * module, and a rule that cannot be reached by this module's own test suite is a rule guarded by
+ * nothing. The DB-row adapter that feeds it stays server-side, where it belongs.
+ */
+export function computePositionRecencyMatrix(input: PositionRecencyMatrixInput): PositionRecencyMatrix {
+  const { today, games, players, positions } = input;
+
+  const byPlayer = new Map<string, PositionRecencyMatrix['rows'][number]>();
+  const playedEvents = new Set<string>();
+
+  /**
+   * ⚠⚠ **SEED A ROW FOR EVERYONE WHO WAS IN A LINEUP, INCLUDING THE PLAYER WHO NEVER LEFT THE
+   * BENCH.** The first version built rows only inside the per-position loop below — so a row
+   * existed only for a player who had taken a position. A player written into every saved lineup
+   * and benched all season therefore had no row AT ALL, and the panel (which drops a miss) simply
+   * omitted them.
+   *
+   * That is precisely backwards: they are the most extreme answer this report has, they sit at the
+   * TOP of the table above it (which orders most-benched first), and they were the one player
+   * missing from the grid underneath. A row of dashes is the honest rendering — "no saved lineup
+   * has put them anywhere", which is a fact, not an absence of one.
+   *
+   * ⚠ Seeded from the GAMES, never from the roster: a player who has never appeared in any lineup
+   * still gets no row, because there is nothing recorded about them to show.
+   */
+  const nameById = new Map(players.map(p => [p.id, p.name]));
+  for (const g of games) {
+    // Same "already played" rule `computePositionRecency` applies — a lineup saved for Saturday is
+    // a plan, and a plan must not put anyone in this grid.
+    if (!g.day || daysBetweenDateStrings(g.day, today) < 0) continue;
+    for (const p of g.byPlayer) {
+      const name = nameById.get(p.playerId);
+      // An unnamed row is no row — same rule the appearance list applies.
+      if (!name || byPlayer.has(p.playerId)) continue;
+      byPlayer.set(p.playerId, { playerId: p.playerId, name, byPosition: {} });
+    }
+  }
+
+  for (const { code } of positions) {
+    const r = computePositionRecency({ today, games, players, position: code });
+    for (const a of r.appearances) playedEvents.add(a.eventId);
+    for (const row of r.players) {
+      let entry = byPlayer.get(row.playerId);
+      if (!entry) {
+        entry = { playerId: row.playerId, name: row.name, byPosition: {} };
+        byPlayer.set(row.playerId, entry);
+      }
+      // ⚠ Only positions they HAVE played get a key. The absence IS the answer for the rest.
+      entry.byPosition[code] = { daysSince: row.daysSince, innings: row.lastInnings, day: row.lastDay };
+    }
+  }
+
+  return {
+    positions,
+    // Name order, so the matrix is stable between requests. A caller rendering it beside another
+    // table should re-order it to match that table — never re-sort it by staleness, which would
+    // make a ranking out of a measurement.
+    rows: [...byPlayer.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    gamesRead: playedEvents.size,
+  };
+}

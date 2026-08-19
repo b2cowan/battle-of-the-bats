@@ -600,7 +600,20 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          here mid-tour now sees a tab row the old narration never mentioned, and CLAUDE.md's demo
          rule asks exactly this — *should a demo moment show this?* One clause on an existing step,
          not a ninth step: the tour is already eight. */
-      said: 'Every report this coach has sits behind one row of tabs — results, attendance, playing time, development, awards, the scouting book — and this is the playing-time one. One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Nobody typed any of this in.',
+      /* ⚠ THE LAST TWO CLAUSES ARE NEW (2026-08-19) and they are the demo's sentence about the two
+         sections this tab gained the same day — the position-recency grid and the arm-care panel.
+         CLAUDE.md's demo rule asks *should a demo moment show this?*; a prospect scrolling past two
+         new blocks the narration never mentions is the drift it exists to prevent. One clause on an
+         existing step, not a ninth: the tour is already eight, and the step before this one made
+         the same call for the same reason.
+         ⚠ THE "no weekly budget" CLAUSE IS LOAD-BEARING, not a caveat. The approved mockup drew
+         arm care against a weekly innings cap this product deliberately does not have, and the
+         owner ruled on 2026-08-19 to redraw it against real numbers rather than invent one. If a
+         prospect reads a ceiling into this screen, the demo has mis-sold it in the one place where
+         being wrong costs a child's arm.
+         ⚠ AND THE GRID ONLY VARIES BECAUSE THE SEED WAS FIXED THE SAME DAY: all six saved lineups
+         used one authored grid, so every cell said the same number. See `midseasonLineupGrid`. */
+      said: 'Every report this coach has sits behind one row of tabs — results, attendance, playing time, development, awards, the scouting book — and this is the playing-time one. One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Underneath, a grid of every player against every position: how many days since each of them last stood there, and a dash where no saved lineup ever has — because a position listed on a roster is an intention, not a game anyone played. Then each pitcher\'s rest, against the per-game cap this coach set themselves, which is the only ceiling in here: the product keeps no weekly innings budget of its own and will not invent one. Nobody typed any of this in.',
       nextLabel: 'Next: what a parent sees',
     },
     {
