@@ -25,6 +25,7 @@ import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabil
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
+import { commitmentStanding, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -10000,6 +10001,89 @@ export async function getRepTeamExpenses(programYearId: string): Promise<RepTeam
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamExpense);
+}
+
+/* ── A commitment holds many payments (Payables Rebuild P1, mig 255) ──────────────────────────
+   The PLAN and WHAT HAPPENED, read separately and combined by `commitmentStanding()`. These are
+   the only readers of the two new tables; nothing else queries them directly, because the whole
+   point is that `lib/payable-standing.ts` owns the one answer to "is it paid?".
+
+   ⚠ THESE ARE BULK READS, KEYED BY PROGRAM YEAR, NOT PER-COMMITMENT. Every surface that shows
+   money going out shows a LIST of it — the payment schedule, the register, Budget vs. Actual, the
+   exports — so a per-row fetch here would be one query per commitment on a screen that already
+   loads fifty of them. */
+
+/** Every installment for a season, grouped by commitment, each list already in due-date order. */
+export async function getPayableInstallmentsByExpense(
+  programYearId: string,
+): Promise<Record<string, PayableInstallment[]>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_payable_installments')
+    .select('id, expense_id, installment_number, amount, due_date')
+    .eq('program_year_id', programYearId)
+    .order('due_date', { ascending: true })
+    .order('installment_number', { ascending: true });
+  if (error) throw error;
+  const out: Record<string, PayableInstallment[]> = {};
+  for (const r of data ?? []) {
+    (out[r.expense_id] ??= []).push({
+      id: r.id,
+      expenseId: r.expense_id,
+      installmentNumber: r.installment_number,
+      amount: Number(r.amount),
+      dueDate: r.due_date,
+    });
+  }
+  return out;
+}
+
+/** Every recorded payment for a season, grouped by commitment, oldest first. */
+export async function getPayablePaymentsByExpense(
+  programYearId: string,
+): Promise<Record<string, PayablePayment[]>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_payable_payments')
+    .select('id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id')
+    .eq('program_year_id', programYearId)
+    .order('paid_date', { ascending: true });
+  if (error) throw error;
+  const out: Record<string, PayablePayment[]> = {};
+  for (const r of data ?? []) {
+    (out[r.expense_id] ??= []).push({
+      id: r.id,
+      expenseId: r.expense_id,
+      installmentId: r.installment_id ?? null,
+      amount: Number(r.amount),
+      paidDate: r.paid_date,
+      method: r.method ?? null,
+      note: r.note ?? null,
+      accountingEntryId: r.accounting_entry_id ?? null,
+    });
+  }
+  return out;
+}
+
+/**
+ * Where every commitment in a season stands — the shape almost every caller actually wants.
+ *
+ * ⚠ A commitment with no installments cannot happen (R1: migration 255 backfilled one for every
+ * existing record, and every write path creates at least one). If one ever does, this returns an
+ * empty standing rather than throwing — a money screen that 500s is worse than a money screen
+ * showing a zero somebody can report.
+ */
+export async function getCommitmentStandings(
+  programYearId: string,
+): Promise<Record<string, CommitmentStanding>> {
+  const [installments, payments] = await Promise.all([
+    getPayableInstallmentsByExpense(programYearId),
+    getPayablePaymentsByExpense(programYearId),
+  ]);
+  const out: Record<string, CommitmentStanding> = {};
+  const ids = new Set([...Object.keys(installments), ...Object.keys(payments)]);
+  for (const expenseId of ids) {
+    out[expenseId] = commitmentStanding(installments[expenseId] ?? [], payments[expenseId] ?? []);
+  }
+  return out;
 }
 
 export async function getRepTeamExpense(expenseId: string): Promise<RepTeamExpense | null> {

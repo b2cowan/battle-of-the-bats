@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-18",
-  "total": 82,
+  "generated": "2026-08-19",
+  "total": 137,
   "counts": {
-    "tables": 4,
-    "columns": 38,
-    "indexes": 18,
-    "constraints": 19,
-    "rls": 3
+    "tables": 6,
+    "columns": 63,
+    "indexes": 29,
+    "constraints": 33,
+    "rls": 6
   },
   "items": [
     {
@@ -19,6 +19,18 @@
     },
     {
       "key": "check:only-dev:org_person_match_rejections.org_person_match_rejections_ordered",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_payable_installments.rep_payable_installments_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_payable_installments.rep_payable_installments_installment_number_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_payable_payments.rep_payable_payments_amount_check",
       "sig": ""
     },
     {
@@ -166,6 +178,106 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_payable_installments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.due_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.expense_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.installment_number",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_installments.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.accounting_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.expense_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.installment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.paid_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_roster_players.person_id",
       "sig": ""
     },
@@ -242,6 +354,62 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_expense_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_number_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_accounting_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_expense_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_installment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_roster_players.rep_roster_players_person_id_fkey",
       "sig": ""
     },
@@ -314,6 +482,50 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_payable_installments_expense_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_installments_number_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_installments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_installments_team_due_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_installments_year_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_expense_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_installment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_team_date_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_payable_payments_year_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_roster_players_person_id_idx",
       "sig": ""
     },
@@ -335,6 +547,14 @@
     },
     {
       "key": "table:only-dev:org_person_merges",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_payable_installments",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_payable_payments",
       "sig": ""
     }
   ]

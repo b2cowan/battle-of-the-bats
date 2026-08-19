@@ -1,29 +1,31 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-08-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-08-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 82 divergence(s)** across dev/prod.
+**⚠️ 137 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 4 | 0 | — |
-| Columns | 38 | 0 | 0 |
-| Indexes | 18 | 0 | 0 |
-| Constraints | 19 | 0 | — |
-| RLS / CHECK | 3 | 0 | 0 (RLS state) |
+| Tables | 6 | 0 | — |
+| Columns | 63 | 0 | 0 |
+| Indexes | 29 | 0 | 0 |
+| Constraints | 33 | 0 | — |
+| RLS / CHECK | 6 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (4)
+### Only in DEV (6)
 - `org_people`
 - `org_person_emails`
 - `org_person_match_rejections`
 - `org_person_merges`
+- `rep_payable_installments`
+- `rep_payable_payments`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (38)
+### Only in DEV (63)
 - `family_links.person_id`
 - `league_registrations.org_id`
 - `league_registrations.person_id`
@@ -60,6 +62,31 @@ _none_
 - `org_person_merges.merged_person_id`
 - `org_person_merges.merged_snapshot`
 - `org_person_merges.org_id`
+- `rep_payable_installments.amount`
+- `rep_payable_installments.created_at`
+- `rep_payable_installments.due_date`
+- `rep_payable_installments.expense_id`
+- `rep_payable_installments.id`
+- `rep_payable_installments.installment_number`
+- `rep_payable_installments.org_id`
+- `rep_payable_installments.program_year_id`
+- `rep_payable_installments.source`
+- `rep_payable_installments.team_id`
+- `rep_payable_installments.updated_at`
+- `rep_payable_payments.accounting_entry_id`
+- `rep_payable_payments.amount`
+- `rep_payable_payments.created_at`
+- `rep_payable_payments.created_by`
+- `rep_payable_payments.expense_id`
+- `rep_payable_payments.id`
+- `rep_payable_payments.installment_id`
+- `rep_payable_payments.method`
+- `rep_payable_payments.note`
+- `rep_payable_payments.org_id`
+- `rep_payable_payments.paid_date`
+- `rep_payable_payments.program_year_id`
+- `rep_payable_payments.source`
+- `rep_payable_payments.team_id`
 - `rep_roster_players.person_id`
 - `rep_tryout_registrations.person_id`
 
@@ -70,7 +97,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (18)
+### Only in DEV (29)
 - `family_links_person_id_idx`
 - `league_registrations_org_id_idx`
 - `league_registrations_person_id_idx`
@@ -87,6 +114,17 @@ _none_
 - `org_person_merges_kept_idx`
 - `org_person_merges_org_id_idx`
 - `org_person_merges_pkey`
+- `rep_payable_installments_expense_idx`
+- `rep_payable_installments_number_key`
+- `rep_payable_installments_pkey`
+- `rep_payable_installments_team_due_idx`
+- `rep_payable_installments_year_idx`
+- `rep_payable_payments_entry_idx`
+- `rep_payable_payments_expense_idx`
+- `rep_payable_payments_installment_idx`
+- `rep_payable_payments_pkey`
+- `rep_payable_payments_team_date_idx`
+- `rep_payable_payments_year_idx`
 - `rep_roster_players_person_id_idx`
 - `rep_tryout_registrations_person_id_idx`
 
@@ -97,7 +135,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (19)
+### Only in DEV (33)
 - `family_links.family_links_person_id_fkey`
 - `league_registrations.league_registrations_org_id_fkey`
 - `league_registrations.league_registrations_person_id_fkey`
@@ -115,6 +153,20 @@ _none_
 - `org_person_merges.org_person_merges_merged_by_fkey`
 - `org_person_merges.org_person_merges_org_id_fkey`
 - `org_person_merges.org_person_merges_pkey`
+- `rep_payable_installments.rep_payable_installments_expense_id_fkey`
+- `rep_payable_installments.rep_payable_installments_number_key`
+- `rep_payable_installments.rep_payable_installments_org_id_fkey`
+- `rep_payable_installments.rep_payable_installments_pkey`
+- `rep_payable_installments.rep_payable_installments_program_year_id_fkey`
+- `rep_payable_installments.rep_payable_installments_team_id_fkey`
+- `rep_payable_payments.rep_payable_payments_accounting_entry_id_fkey`
+- `rep_payable_payments.rep_payable_payments_created_by_fkey`
+- `rep_payable_payments.rep_payable_payments_expense_id_fkey`
+- `rep_payable_payments.rep_payable_payments_installment_id_fkey`
+- `rep_payable_payments.rep_payable_payments_org_id_fkey`
+- `rep_payable_payments.rep_payable_payments_pkey`
+- `rep_payable_payments.rep_payable_payments_program_year_id_fkey`
+- `rep_payable_payments.rep_payable_payments_team_id_fkey`
 - `rep_roster_players.rep_roster_players_person_id_fkey`
 - `rep_tryout_registrations.rep_tryout_registrations_person_id_fkey`
 
@@ -125,10 +177,13 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (3)
+### CHECK only in DEV (6)
 - `org_people.org_people_email_normalized_check`
 - `org_person_emails.org_person_emails_email_normalized_check`
 - `org_person_match_rejections.org_person_match_rejections_ordered`
+- `rep_payable_installments.rep_payable_installments_amount_check`
+- `rep_payable_installments.rep_payable_installments_installment_number_check`
+- `rep_payable_payments.rep_payable_payments_amount_check`
 
 ### CHECK only in PROD (0)
 _none_

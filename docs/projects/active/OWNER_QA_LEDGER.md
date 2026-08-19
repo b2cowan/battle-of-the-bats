@@ -28,11 +28,14 @@
 > notices that threshold has been crossed should say so plainly rather than carrying this paragraph
 > forward on autopilot.
 >
-> **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §27 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
+> **§27 ✅ PASSED CLEAN 2026-08-19** — and surfaced four absences that became **§64** (the Payables
+> rebuild). Struck from the list below; §64 added as owed.
+>
+> **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
 > §45 §46 §47 §48 §49 §51**, plus **§50's owed re-walk** (§50 PASSED 2026-08-17, then `/review`
 > changed behaviour in three places afterwards). That is the whole Money redesign, all of budget
 > item integrity, and the membership/history-in-place milestone. **Walk the Tier 1 money sections
-> first** — §29 · §38 · §27 · §46 are the ones that move real money in a family's ledger.
+> first** — §29 · §38 · §46 are the ones that move real money in a family's ledger.
 >
 > **The migration queue is EMPTY.** Every migration through **250** is on production; dev and prod
 > schemas are byte-identical (165 tables / 1930 columns / 697 indexes, 0 divergence, verified at
@@ -2251,7 +2254,7 @@ means a migration and a backfill. Worth deciding before a club-linked team settl
 **two things that were wrong on production**, and the settlement changed shape as a result.
 
 **The dues grid (By installment).** Every cell used to carry an amount *and* a sentence — "paid May
-12", "covered by fundraising", "overdue". The instalment's amount and date now sit **once, in the
+12", "covered by fundraising", "overdue". The installment's amount and date now sit **once, in the
 column heading**, and each cell is a mark plus a figure **only where money is still owed**: tick =
 nothing left to send, ⚠ + amount = late, half-circle + amount = part-way, faint dot = not due yet.
 So every figure left on the grid is money to chase. **The grid no longer says whether cash or
@@ -2287,14 +2290,14 @@ for a season that must refuse. Re-seed with
 **Part A — the grid reads as marks, not sentences**
 - [ ] **By installment** on a mid-season team: no cell carries a sentence; the amount and due date
       appear **once** in each column heading.
-- [ ] A settled instalment is a **tick with no date**, whether the family paid it or fundraising
-      covered it. A part-paid one shows **what is left**, not the full instalment.
+- [ ] A settled installment is a **tick with no date**, whether the family paid it or fundraising
+      covered it. A part-paid one shows **what is left**, not the full installment.
 - [ ] The key under the grid names all four marks. **Colour is never the only signal** — check the
       marks differ in shape, not just hue.
 - [ ] A player on a **different amount or date** from the team still shows their own in the cell.
 - [ ] Footer: **no labels**, just the two season figures under *Due next* and *Balance*, and the
-      player count on the left. The band above still carries each instalment's progress.
-- [ ] **Phone:** the grid becomes a card per player and those cards still spell each instalment out
+      player count on the left. The band above still carries each installment's progress.
+- [ ] **Phone:** the grid becomes a card per player and those cards still spell each installment out
       in words — the marks are a desktop shorthand, not the phone's only answer.
 
 **Part B — the settlement refuses, and says why**
@@ -2334,7 +2337,7 @@ for a season that must refuse. Re-seed with
 
 ⚠ **STILL OPEN, needs your ruling** — raised and not yet decided:
 - The grid's **Due next** column still carries a caption under each figure (the same two-line shape
-  removed from the instalment cells). It was kept because it is the only place saying *when* the
+  removed from the installment cells). It was kept because it is the only place saying *when* the
   next money is due and how much is already late. Decide whether it goes.
 - **Closing the season does not lock the books.** It pays everyone; further edits stay possible. A
   lock is a separate decision (assumed, stated, not ruled).
@@ -4309,7 +4312,7 @@ by hand.*
    Invitational balance still owed with a due date ahead.
    - ⚠ *This team's season year is NEXT year, on purpose — an off-season team is building a season
      it hasn't played. Confirm the masthead year doesn't read as a bug to you.*
-   - **Money → Dues:** two instalments in, one family a payment behind ($225).
+   - **Money → Dues:** two installments in, one family a payment behind ($225).
    - **Schedule:** Sunday skills sessions and cage nights. Open the past Sunday with the plan on
      it → three stations, three groups, a rotation clock. Then the one still AHEAD → the plan
      should be walkable/runnable.
@@ -4610,9 +4613,30 @@ Screens: `/qa-cancel-lab/scorekeeper` · `/qa-cancel-lab/check-in`
 
 ---
 
-## §27 · Correcting a money record — edit, delete, and one Add door
+## §27 ✅ Correcting a money record — edit, delete, and one Add door — **OWNER QA PASSED 2026-08-19**
 
-**Built on dev 2026-08-15 · not on production · ⚠ carries migration 236, which must reach prod
+**✅ OWNER QA PASSED 2026-08-19 — clean, all parts A–I.** Live on production since 2026-08-17
+(job 257); migration 236 applied.
+
+⚠⚠ **THE WALK PASSED AND STILL FOUND FOUR DEFECTS — read this before treating the pass as the end
+of the story.** Everything §27 checks, the product does correctly. What the owner found while
+walking it were four things the product does not do *at all*, which no checklist of existing
+behaviour could have caught:
+
+1. **You cannot pay part of a commitment** unless a deposit/balance split was set up before any
+   money moved. This section's own fixture ("a payable whose deposit is paid and balance is not")
+   is only constructible through that setup-time toggle — which is what exposed it.
+2. **Mark paid cannot be undone.** No un-settle action exists anywhere; the only correction is
+   deleting the whole commitment.
+3. **A paid row on the Schedule view is a dead end** — no pencil, not clickable — while the same
+   record is fully editable from Commitments. Part C's ruling is honoured; the *door* is missing.
+4. **Nothing repeats.** A monthly gym block can only be entered by pasting rows through Import.
+
+Those four are now the **Coach Payables Rebuild** project (`COACH_PAYABLES_REBUILD_PLAN.md`), walked
+as **§64** — which re-checks this section's Parts C, D and E afterwards, because the rebuild
+re-expresses every settled payment and those three parts are how we know the books stayed right.
+
+**Built on dev 2026-08-15 · ⚠ carries migration 236, which must reach prod
 BEFORE this code does.** Plan: `COACH_EXPENSES_EDIT_DELETE_PLAN.md`. Mockups: artifact `d693ab01`.
 
 **Why this section exists:** expenses were the only money record in the portal that could not be
@@ -4958,7 +4982,7 @@ world — the shop window — could not show the distinction at all.
       is a **$750 sponsor, Riverdale Dental**, with a blue Sponsor chip and a Received chip.
 - [ ] Open it: one row, **"Nobody in particular — a club-wide sponsor"**, no credit.
 - [ ] ⚠ **Player Dues must be UNCHANGED**: still **$240 overdue across exactly two families**, still
-      one instalment at **$90 of $120**. The sponsor credits nobody precisely so those stay true —
+      one installment at **$90 of $120**. The sponsor credits nobody precisely so those stay true —
       if either has moved, stop and say so.
 - [ ] Run the guided tour to the **money** step. Its last sentence now names the sponsor and
       explains that a pledge counts in the plan and not in the books. It should read as one thought
@@ -5282,7 +5306,7 @@ unlike its siblings, a one-tap irreversible delete, and a report label saying wh
 already said.
 
 **Fixture:** a **club-run** team (these two tabs do not exist otherwise) with an allocation carrying
-an overdue instalment, and payment requests in all three states. `qa-money-lab` / **QA Mid Season
+an overdue installment, and payment requests in all three states. `qa-money-lab` / **QA Mid Season
 U14** is seeded for exactly this — 3 allocations (2 overdue) and 5 requests. ⚠ Those records were
 written straight to the database, so the **club's own accounting ledger has no matching entries** —
 do not use this team to check club-side reconciliation.
@@ -5299,7 +5323,7 @@ do not use this team to check club-side reconciliation.
 
 - [ ] Summary tiles on **Allocations** and **Payments** **fill the width** instead of crowding left.
       Same on **Fundraising** and its drill-in.
-- [ ] Allocations: an overdue instalment's badge is **red**, matching the Overdue tile above it.
+- [ ] Allocations: an overdue installment's badge is **red**, matching the Overdue tile above it.
 - [ ] Allocations: the **paid / due** figures line up in columns down the list.
 - [ ] Payments: every row is **one line tall**; the type reads **Pay Org** / **From Org** on one line.
 
@@ -6551,7 +6575,7 @@ the Overview. There was no button to hide.
 
 ⚠ **The actual defect was the opposite one, and P4 fixed that instead** (§49 §F): a coach between
 seasons could see the club's money on the register but could not open the workspace behind it to read
-what those instalments were or how a request was decided — the record did not go read-only, it
+what those installments were or how a request was decided — the record did not go read-only, it
 vanished. The merged Club tab now renders between seasons with every write control withdrawn. **Walk
 §49 §F rather than this paragraph.**
 
@@ -6785,7 +6809,7 @@ this team to check club-side reconciliation. **QA Money U13** is the register-ri
 - [ ] Open a club bill. Inside it, a **Files under** row: `Category · Item`, with **File it** (or
       **Change**). An unfiled bill says so on the row, with the consequence in words: *until it's
       filed, this bill doesn't appear on Budget vs. Actual.*
-- [ ] File one. ⚠ **One filing per BILL, not per instalment** — the instalments are its payment
+- [ ] File one. ⚠ **One filing per BILL, not per installment** — the installments are its payment
       schedule. Confirm you agree that is the right grain.
 - [ ] **Make a request.** It now asks **What is it for?** on the same search box the money form and
       the Budget Plan use, and the consequence line above the buttons names the word you picked.
@@ -6798,7 +6822,7 @@ this team to check club-side reconciliation. **QA Money U13** is the register-ri
 ### C · ⚠⚠ Club money on the report — the fix, and the numbers will move
 
 - [ ] **Money → Budget vs. Actual** on the club-run team. **Club money is on it now.** A paid club
-      instalment reports as a **cost** under whatever you filed it as; so does an approved *To the
+      installment reports as a **cost** under whatever you filed it as; so does an approved *To the
       club* request.
 - [ ] ⚠⚠ **An approved *From the club* request NETS AGAINST the cost it repaid — it is not income.**
       Find one and check the item it was filed under went DOWN rather than a revenue row going up.
@@ -6807,13 +6831,13 @@ this team to check club-side reconciliation. **QA Money U13** is the register-ri
       The money moved; hiding it would trade one silence for another.
 - [ ] ⚠ **Your season figures on a club-run team will have changed**, and that is the correction, not
       a new number. Take one team you know and satisfy yourself the new total is the true one.
-- [ ] ⚠⚠ **Budget vs. Actual → Months.** A paid club instalment appears in **the month it was
+- [ ] ⚠⚠ **Budget vs. Actual → Months.** A paid club installment appears in **the month it was
       paid**, and its cell drills in to the bill by name. **Check the Months total for a category
       against the same category on Categories — they must agree.** *(Caught during the build and
       worth re-walking: the month grid is built from a different source than the statement, so club
       money reaching one and not the other would have had one screen reporting two different totals
       for one season.)*
-- [ ] ⚠ **An UNPAID club instalment is deliberately NOT on the Months grid's Scheduled row** — it is
+- [ ] ⚠ **An UNPAID club installment is deliberately NOT on the Months grid's Scheduled row** — it is
       on the **Payment schedule** and in **Next 30 days**, as before. Flag it if you expected it in
       both; it is a stated omission, not an oversight.
 - [ ] **Spend by tag** (a money tag chip on the report): club money is **excluded** from a tag cut,
@@ -6875,11 +6899,11 @@ this team to check club-side reconciliation. **QA Money U13** is the register-ri
 *Adversarial review (5 lenses) found 8 real defects, all fixed. Three of them are worth your hands,
 and **two were pre-existing** — they are not damage this phase did, they are damage it uncovered.*
 
-- [ ] ⚠⚠ **Mark a club instalment paid, then immediately tap it again / have it open on a phone and a
+- [ ] ⚠⚠ **Mark a club installment paid, then immediately tap it again / have it open on a phone and a
       laptop and tap both.** You should get a plain *"already marked paid"* refusal, not two
       successes. *(Pre-existing, on BOTH this screen and the club-admin one: the transfer between the
-      team's and the club's books was posted BEFORE the instalment was stamped, and the stamp did not
-      check whether someone had got there first — so one instalment could move the money twice while
+      team's and the club's books was posted BEFORE the installment was stamped, and the stamp did not
+      check whether someone had got there first — so one installment could move the money twice while
       reading as paid once. The double post is closed; a transfer already posted by the losing tap is
       not unwound, which is why this walk matters.)*
 - [ ] ⚠⚠ **Budget vs. Actual → the cumulative spending chart**, on the club-run team. **The chart's
@@ -6912,7 +6936,7 @@ and **two were pre-existing** — they are not damage this phase did, they are d
 - [ ] **Help → Money → "Money between your team and your club"** describes one screen, the filing,
       and the season-close rule. Nothing in it still describes two tabs.
 - [ ] **The demo:** the coach sandbox tour's Money step (step 5) gains a closing sentence about the
-      club — $900 of permits across three instalments, $180 the club agreed to pay back, and a $95
+      club — $900 of permits across three installments, $180 the club agreed to pay back, and a $95
       share still waiting. Walk it and confirm every figure is true of what a prospect sees.
 
 ### J · The checks, and what they do and do not prove
@@ -7142,7 +7166,7 @@ paid in **May**, $600 paid in **July**.
 - [ ] **Budget · Scheduled · Difference** lenses on Months: identical to what you remember.
       Commitments deliberately still come from their own feed (the rollup only knows money that has
       **moved**), so the Scheduled column must be untouched.
-- [ ] **Payables → payment schedule**: unchanged. Club instalments still appear there and still do
+- [ ] **Payables → payment schedule**: unchanged. Club installments still appear there and still do
       **not** appear in the grid's Scheduled column — a standing decision, not a regression.
 - [ ] The **by-activity** lens and the **season net** end on the same figures as the statement.
 - [ ] **"of which never budgeted"**, headroom, and the funding row: unchanged.
@@ -8628,3 +8652,232 @@ stays its own component rather than being unified with the two other copies else
 All fixes re-verified: typecheck, the same 56 unit tests, CSS module purity, the token-guardrail
 scan, and the three-screen layout sweep all re-ran clean — the sweep's 8 findings are the identical
 pre-existing set named above, unchanged by any of this pass's edits.
+
+---
+
+## §63 · The date range becomes the fourth pill (Money → Transactions)
+
+**Built on dev 2026-08-19.** No migration, no route moved, nothing gated; premium coach portal
+(club-run and standalone alike). Owner-approved mockup:
+`claude.ai/code/artifact/36a3e5d9-d560-45cb-95ee-fd0c4793296e` — **Variant A**, with the mockup's
+three open calls decided as recommended: default stays the old window under the name "Around
+today", the preset choice is remembered per team (a custom range never is), and no quarter-to-date.
+
+**What this was.** The Transactions strip spoke one language three times — Show, Status and Item
+are each a labelled pill that opens a small panel — then switched dialects for the range: two bare
+date pickers that always showed full dates and made every adjustment a two-calendar job. The range
+is now the **fourth pill**: presets one click away, each showing the real dates it means, with the
+custom from/to fields living at the bottom of the same panel, pre-filled with the active window.
+Editing either field IS choosing custom — there is no "custom mode" to enter first.
+
+⚠ **The default view did not move.** A coach who never touches the pill sees exactly yesterday's
+book: 30 days back, 30 ahead, now wearing the name "Around today". If the default rows differ from
+what you remember, that is a defect, not this change.
+
+**Walk it — Money → Transactions on a team with a few months of history:**
+
+- ✅ **The pill face names the window** — "Date · Around today" on arrival, no dates to decode.
+  The strip is four matching pills; the two pickers are gone.
+- ✅ **Open it**: seven presets — Around today · Last 30/60/90 days · This month · Last month ·
+  Whole season — each with the dates it resolves to on the right ("Whole season" says
+  *everything*). The active one carries a dot.
+- ✅ **Pick "Last month"**: the book narrows instantly, and the **Starting balance** line restates
+  where the team stood as of the 1st. Pick "Whole season": every dated row, starting balance from
+  zero.
+- ✅ ⚠ **Anything overdue never leaves.** Find (or create) an overdue commitment older than the
+  window — narrow to "Last 30 days" — the overdue row stays on the book. This is the standing rule
+  the pill inherits, not new behaviour; if an overdue row ever disappears with the window, that is
+  a defect.
+- ✅ **Custom without a mode**: with any preset active, open the panel and nudge just the From
+  date — the fields come pre-filled, the pill switches to dates ("Mar 1 – Jun 15"), the book
+  follows. This is the "Last 30 days, but back to April" move: one edit, not two calendars from
+  scratch.
+- ✅ **The choice sticks, per team**: pick "Whole season", leave Money entirely, come back — still
+  Whole season. Now set a custom range and come back — it opens on your last *preset*, not the
+  custom dates (deliberate: a remembered preset re-anchors to today and cannot go stale; a pinned
+  old window quietly emptying a later visit would read as "the book is broken").
+- ✅ **Phone (≤768)**: four pills wrapping like pills do; the panel opens beneath and the native
+  date fields still get the OS picker. The old second line of two pickers is gone.
+- ⚠ **Words mean what they say, including the sharp edge**: with Status including **Scheduled**, a
+  backward preset ("Last 30 days" ends *today*) shows no future scheduled rows — "Around today"
+  and "This month" are the presets that look ahead. That is the honest reading of the words on the
+  pill, per the standing "a date range a coach sets should mean exactly that date range" ruling —
+  not a bug to file.
+
+**Also in this change, nothing to walk:** the resolver's calendar math carries its own unit tests
+(month ends, December→January rollback, leap February — 8, all green); and the **help guide's
+Transactions section was brought back to the truth** — it now describes the four-dropdown strip
+and the Date window, and while there it was cured of describing the "Include scheduled" toggle the
+Status dropdown replaced earlier this same day (drift from that change, caught in this one's
+sweep). Demo narration checked, not changed: no dock moment or tour step mentions the date
+pickers; `npm run check:demos` reports both worlds presentable.
+
+⚠ **The schema-parity red in `verify:changed` is the same pre-existing one §62 records** (another
+session's person-identity migrations on dev, unapplied to prod) — every other check in the chain
+ran clean for this change: lint 0 errors, full typecheck, CSS module purity, token guardrails,
+contrast, date-correctness, dictionary/index/org-context/observability coverage, demos.
+
+## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
+
+**Not built yet — approved 2026-08-19, build starting.** Plan:
+`COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
+Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
+**Origin: §27, which PASSED CLEAN on 2026-08-19 and surfaced four absences while passing.**
+
+**Why this section exists:** money going out had one boolean — unpaid or paid — and the
+deposit/balance pair was the only concession to money arriving in pieces. A commitment now holds
+**installments** (the plan) and **payments** (what actually happened), which is the same shape Player
+Dues has used since migration 232. Partial payment, over-payment, undo and monthly recurring stop
+being four features and become consequences of one record.
+
+**Fixture:** the coach money lab (QA Money U13), signed in as the money head coach. Before starting,
+have: a commitment with **one** installment, one with **two** (deposit/balance, one half settled),
+one **fully settled**, one **monthly series of six** with two settled, and one cost a **family paid
+out of pocket**. Money → Payables.
+
+⚠ **Walk the parts in order.** Part A proves the migration did not move money; every later part
+assumes it did not.
+
+---
+
+### A · ⚠⚠ Phase 1 — the model lands and NOTHING changes
+
+This is the phase where the books are re-expressed. Its whole test is that nothing moved.
+
+- [ ] **Before the phase ships**, write down: **cash on hand** (Money → Overview), the
+      **Budget vs. Actual** total spent, and the **next 30 days** figure.
+- [ ] After it ships, re-read all three. ⚠ They must be **identical to the cent**. A difference of
+      any size is blocking — stop and report before walking anything else.
+- [ ] The Payables screen looks and behaves **exactly as it did**. Same toggle, same rows, same
+      buttons. (The screen rebuild is Part C, deliberately later.)
+- [ ] Open **Budget vs. Actual → Months**. Every settled payment sits in the same month it did
+      before.
+- [ ] **Export** the payables file and the register file. Same rows, same figures.
+- [ ] A commitment that had an amount but **no due date** — the old "No schedule" state — now
+      appears on the payment schedule with a date. ⚠ If any record vanished from a list it used to
+      be on, that is the failure to report.
+
+### B · ⚠⚠ Recording a payment — the two blocking defects close here
+
+- [ ] Open a commitment for **$600**. **Record a payment** of **$200**. It saves.
+- [ ] The row now reads **$200 of $600 paid**, and **still owing $400**.
+- [ ] Its status is **Partly paid** — not Paid, not Unpaid.
+- [ ] ⚠⚠ Note **cash on hand** first. It must have moved by **exactly $200**, not $600.
+- [ ] Record a **second** payment of $150 on a different date with a different method. Both payments
+      show, dated, in the drawer.
+- [ ] ⚠ **Over-pay deliberately.** Record $400 against the remaining $250. It **saves** — it must not
+      be refused — and the commitment reads **$150 over**.
+- [ ] ⚠⚠ **Undo.** Delete that over-payment. Cash on hand goes back up by **exactly $400**, and the
+      commitment returns to reading $150 still owing.
+- [ ] Undo a payment on a commitment where it was the **only** payment. The commitment returns to
+      completely unpaid, and the schedule shows it as due again.
+- [ ] Record **one payment that covers more than one installment** — $700 against a series of $450
+      installments. Expected: the first installment settles, the second reads **partly paid at $250**,
+      and you were not asked to do that arithmetic.
+- [ ] ⚠ **The family case.** On a cost a **family paid out of pocket**, record a payment. Expected:
+      **no team cash moves**, and on **Player Dues** what the team owes that family changes by the
+      same amount.
+- [ ] Sign in as a **read-only money assistant**: no Record a payment, no Undo, no Edit, and rows
+      that do not offer them.
+
+### C · The screen — one list, no toggle
+
+- [ ] The `Schedule | Commitments` toggle is **gone**.
+- [ ] `Group by` sits **first** in the control strip. Set it to **Commitment**: rows group under a
+      header carrying the commitment, its category, paid-of-total and still-owing.
+- [ ] Switch to **Due date**: the **same rows** re-order under Overdue / month headers. ⚠ Nothing
+      appears that was not there before, and nothing disappears — if the row count changes between
+      the two arrangements, report it.
+- [ ] ⚠ **Defect 3.** Click a **fully paid** row. It **opens** — the drawer, with Edit and Delete.
+      (Today it does nothing at all, which is what sent us here.)
+- [ ] The drawer shows **Scheduled** installments, **Payments recorded**, and **Still owing**, and
+      offers **Record a payment** and **Add an installment**.
+- [ ] Every payment in the drawer has its own **Undo**.
+- [ ] **Status** is a dropdown, not pills — Outstanding, Overdue, Partly paid, Paid, each with a
+      count. It opens on **Outstanding + Overdue**, reading "2 selected".
+- [ ] Tick **Partly paid** on its own: only genuinely part-paid commitments show.
+- [ ] ⚠ **Phone at 390px.** Rows become cards, group headers do not eat the screen, and **the page
+      does not scroll sideways**.
+
+### D · A cost that repeats
+
+- [ ] **Add a commitment** → **Split into installments**. Set **Monthly**, on the **1st**, until a
+      date six months out, **$450 each**.
+- [ ] A numbered list of **six** dated rows appears, amounts badged **Auto**.
+- [ ] **Remove** row 5. The list renumbers and the total drops by $450.
+- [ ] **+ Add** a row back, with your own date and amount.
+- [ ] **Type over** row 3's amount — $525 for a December rate rise. The Auto badge leaves that row
+      only; the others keep theirs.
+- [ ] The reconcile line states the **count and total** and is a **sentence, not a barrier** — it
+      never blocks Save.
+- [ ] Save. **Nothing moves** — cash on hand unchanged — and six payments join the schedule.
+- [ ] ⚠ This sheet should feel like the **dues installment sheet**. If it has learned different
+      words or a different layout for the same job, report it — the consistency is the point.
+
+### E · ⚠⚠ The scope rules — where a linked series can go wrong
+
+Use the six-installment series with **two already settled**.
+
+- [ ] Edit installment 4's amount. You are offered **This payment only** / **This and later payments**
+      / **All unpaid payments**.
+- [ ] Choose **This and later payments**. Installments 4, 5 and 6 change. ⚠⚠ **Installments 1 and 2 —
+      the settled ones — must be untouched, and cash on hand must not move by one cent.**
+- [ ] Choose **All unpaid payments** on another edit. Every unsettled installment changes, **including
+      installment 3 which is earlier than the one you edited**. The settled two still do not move.
+- [ ] ⚠ Make installment 3 **partly paid** (record a small payment against it), then run **All unpaid
+      payments** again. It **must be included** — partly paid counts as unpaid.
+- [ ] ⚠⚠ **The ruling check.** Open a **settled** installment and choose **This payment only**. Its
+      amount **must be editable**, and saving must move the books to match. If it is greyed out,
+      stop — that is the 2026-08-16 ruling being reversed, and §27 Part C being un-done.
+- [ ] Edit a commitment where only **one** installment is unpaid. ⚠ The three-way scope question
+      **must not appear** — it has one possible answer.
+- [ ] **Dates shift, they do not set.** Move installment 3 from the 1st to the 8th under **This and
+      later**. Installments 4, 5 and 6 each move by **seven days** — they do not all land on the 8th
+      of the same month.
+- [ ] **Lower an amount below what has been paid on it.** With a later unpaid installment present:
+      the excess **rolls forward**, and a sentence names **every installment it touched**.
+- [ ] Do the same on the **last** installment, where there is nowhere to roll to: it is **blocked**,
+      and the message names the figure and the reason.
+- [ ] **Delete** installment 5 under **This and later**. 5 and 6 go; **the settled ones are skipped**.
+
+### F · The neighbours
+
+- [ ] **Overview → next 30 days** counts partly-paid installments as still due, for their
+      **remaining** amount, not their full one.
+- [ ] **Budget vs. Actual** shows what has actually been paid, not what is scheduled — and its
+      **Months** view puts each payment in the month it was made.
+- [ ] **Transactions**: a payment appears as **one** row. ⚠⚠ There must be **no second row** beside
+      the commitment (§41 Part D's rule).
+- [ ] **Export** the payables file: it carries the installment and payment columns, and the figures
+      match the screen.
+- [ ] On a **club-run** team, org allocations still appear and still settle through Club.
+- [ ] The **bulk importer** still loads a payables file, and what it creates now has installments.
+- [ ] **Close the season** on a team with a partly-paid commitment. ⚠ Unsettled money **warns, never
+      blocks** — and the closed-season money shelf shows what was paid and what was still owing.
+
+### G · Re-check of §27 — the parts that move money
+
+§27 passed clean on 2026-08-19, **before** the books were re-expressed. These three re-runs are how
+we know the rebuild kept them right.
+
+- [ ] **§27 Part C** — a paid record's amount is still editable and the books still follow;
+      **Paid by** is still not changeable on a saved record.
+- [ ] **§27 Part D** — deleting a paid commitment still quotes the **dollar amount coming back**
+      before you confirm, and cash on hand still moves by **exactly** that amount. On a part-paid
+      one, the figure quoted is **what was actually paid**, not the total.
+- [ ] **§27 Part E** — rename a commitment paid **before** this release, then delete it. The
+      reversal still happens and cash on hand still moves. ⚠ The failure to watch for is unchanged:
+      it deletes quietly, says money came back, and the balance does not change.
+
+### H · The demo, and the words
+
+- [ ] The **coach sandbox** (`riverdale-ridge`) still tells a true story about money — the moments
+      dock's lines and the tour's narration must not describe a screen that no longer exists.
+- [ ] The **in-app help** for Money describes recording a payment and repeating costs, and no longer
+      describes "Mark paid" as the way money is recorded.
+
+---
+
+**Blocking parts: A, B, and E's ruling check.** Part A is the books surviving the migration, Part B
+is the two defects that move real money, and E's settled-installment step is a standing owner ruling
+that this feature could reverse by accident.

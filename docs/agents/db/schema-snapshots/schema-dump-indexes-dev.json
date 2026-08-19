@@ -1910,6 +1910,61 @@
     "indexdef": "CREATE INDEX rep_fundraisers_team_year_idx ON public.rep_fundraisers USING btree (team_id, program_year_id)"
   },
   {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_expense_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_expense_idx ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_number_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_number_key ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_pkey ON public.rep_payable_installments USING btree (id)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_team_due_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_team_due_idx ON public.rep_payable_installments USING btree (team_id, due_date)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_year_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_year_idx ON public.rep_payable_installments USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_entry_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_entry_idx ON public.rep_payable_payments USING btree (accounting_entry_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_expense_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_expense_idx ON public.rep_payable_payments USING btree (expense_id, paid_date)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_installment_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_installment_idx ON public.rep_payable_payments USING btree (installment_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_payments_pkey ON public.rep_payable_payments USING btree (id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_team_date_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_team_date_idx ON public.rep_payable_payments USING btree (team_id, paid_date)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_year_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_year_idx ON public.rep_payable_payments USING btree (program_year_id)"
+  },
+  {
     "tablename": "rep_player_awards",
     "indexname": "rep_player_awards_event_idx",
     "indexdef": "CREATE INDEX rep_player_awards_event_idx ON public.rep_player_awards USING btree (event_id)"

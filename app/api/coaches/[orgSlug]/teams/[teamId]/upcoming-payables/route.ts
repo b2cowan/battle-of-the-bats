@@ -169,37 +169,68 @@ export const GET = withObservability(async (req: Request,
     }).filter((i: any) => i.paid || i.amount > 0.005);
   }
 
-  // ── Lane 2: team expenses (deposit + balance due dates) ──────────────────
+  // ── Lane 2: team commitments (their installments) ────────────────────────
+  //
+  // ⚠⚠ REWRITTEN FOR THE PAYABLES REBUILD (P1, mig 255). This lane used to read the deposit and
+  // balance columns directly and build two rows out of them. Three things were wrong with that and
+  // all three are why the rebuild exists:
+  //
+  //   · A commitment could only ever have TWO dated pieces. A monthly dome block had nowhere to go.
+  //   · `paid` was a boolean per half, so a half-settled piece read as fully UNPAID — and the
+  //     schedule quoted its FULL amount as still due, overstating what the team owed.
+  //   · `if (!h.due …) continue` silently DROPPED a commitment with no due date recorded. That is
+  //     the old "No schedule" state: a real obligation, absent from this list, absent from the
+  //     Overview's next-30, with no way to mark it paid. R1 means it cannot exist any more, so
+  //     nothing here has to skip a row to protect itself.
+  //
+  // The amount shown is now what is STILL OWED on the piece, not its face value — `commitmentStanding`
+  // owns that arithmetic (`memory/coach-money-one-arithmetic.md`: one home per question).
   const { data: expenses } = await supabaseAdmin
     .from('rep_team_expenses')
-    .select('id, description, category, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at')
+    .select('id, description, category')
     .eq('team_id', teamId)
     .eq('program_year_id', programYear.id);
 
+  const standings = await getCommitmentStandings(programYear.id);
+
   const expenseItems: any[] = [];
   for (const e of expenses ?? []) {
-    // A payable's deposit and balance are separate commitments with their own dates and their own
-    // paid state — they belong on the schedule as separate rows, not as one blended entry.
-    const halves: Array<{ suffix: string; amount: unknown; due: string | null; paidAt: string | null }> = [
-      { suffix: 'deposit', amount: e.deposit_amount, due: e.deposit_due_date, paidAt: e.deposit_paid_at },
-      { suffix: 'balance', amount: e.balance_amount, due: e.balance_due_date, paidAt: e.balance_paid_at },
-    ];
-    for (const h of halves) {
-      if (!h.due || Number(h.amount) <= 0) continue;
-      if (h.paidAt && !includePaid) continue;
-      if (h.due > cutoffStr) continue;
-      const d = daysUntil(h.due);
+    const standing = standings[e.id];
+    if (!standing) continue;
+    for (const inst of standing.installments) {
+      const settled = inst.state === 'settled';
+      if (settled && !includePaid) continue;
+      if (inst.dueDate > cutoffStr) continue;
+      const d = daysUntil(inst.dueDate);
+      const only = standing.installments.length === 1;
       expenseItems.push({
-        id:          `${e.id}-${h.suffix}`,
+        id:          inst.id,
         expenseId:   e.id,
-        half:        h.suffix,
-        description: `${e.description} — ${h.suffix}`,
+        installmentId: inst.id,
+        /* ⚠ KEPT so the panel's Mark-paid door and the register's row keys keep working while P2
+           replaces them. A one-installment commitment reports 'deposit', which is exactly the
+           convention the payables form and the bulk importer have always used for a single amount
+           on a single date — so nothing downstream has to learn a new word during P1. */
+        half:        only || inst.installmentNumber === 1 ? 'deposit' : 'balance',
+        installmentNumber: inst.installmentNumber,
+        installmentCount: standing.installments.length,
+        description: only
+          ? e.description
+          : `${e.description} — installment ${inst.installmentNumber} of ${standing.installments.length}`,
         category:    e.category ?? null,
-        amount:      Number(h.amount),
-        dueDate:     h.due,
+        /* What is STILL OWED, not the face value. A $450 piece with $200 against it is $250 due —
+           the old shape could only say "$450, unpaid", which is the figure a coach would have
+           budgeted around. */
+        amount:      settled ? inst.amount : inst.remaining,
+        appliedSoFar: inst.applied,
+        dueDate:     inst.dueDate,
         daysUntilDue: d,
-        overdue:     !h.paidAt && d < 0,
-        paid:        !!h.paidAt,
+        overdue:     !settled && d < 0,
+        paid:        settled,
+        /* ⚠ R4 — partly paid counts as UNPAID here too. It is surfaced as its own flag rather than
+           folded into `paid`, so a caller that only knows the old two-state world still behaves
+           correctly (it reads "not paid", which is true) while the schedule can say "$200 of $450". */
+        partlyPaid:  inst.state === 'partly_paid',
         label:       null,
       });
     }

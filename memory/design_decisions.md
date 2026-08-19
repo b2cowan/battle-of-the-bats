@@ -4,6 +4,41 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-19 — A REPORTING FILTER IS A DROPDOWN AT FOUR OPTIONS, AND `Group by` IS NOT A FILTER
+
+**Owner instruction**, given while walking QA §27 on the coach Payables screen: *"not a fan of the
+paid/unpaid/all toggle, I like what we did with the dropdown options in the transactions view… I
+would like this to be the convention on reporting going forward unless there is a good reason for
+something else."*
+
+The standing convention, binding on every reporting surface:
+
+- **Four or more options, or a list that will grow → a multi-select dropdown** (`MultiSelectDropdown`).
+  Counts on every option, computed **before** the current selection narrows further — the rule the
+  retired Overdue chip already followed, so the numbers never chase their own tail. When a real
+  default is in force the summary reads **"2 selected"**, never "All": a considered starting
+  narrowing is a fact worth stating, and pretending nothing is filtered is how a coach comes to
+  distrust a count.
+- **Two or three fixed, permanent options → pills stay.** A dropdown over two things is a click tax.
+  The test is *fixed and permanent*: three options that will become five are already a dropdown.
+- **⚠ A control that chooses an ARRANGEMENT is not a filter.** It is labelled `Group by`, and it sits
+  **first** in the control strip, ahead of every narrowing control — otherwise it reads as another
+  filter and a coach believes rows were removed when they were only re-ordered.
+- **⚠⚠ Never a tab row where a filter would do.** Two tabs over the *same* records teach a coach that
+  they are two different reports. That is the defect this decision came out of: Payables'
+  `Schedule | Commitments` toggle presented a parent and its children as two views, and the
+  confusion it caused is what surfaced three further defects underneath it.
+
+**Where it came from and where it goes.** Transactions established the shape in the register
+reading-order work (the `Show` / `Status` / `Item` dropdowns, owner calls 2026-08-19 and before);
+Payables is the second screen to adopt it, which is what turns it from a local choice into a
+convention. Sweeps next: **Player Dues, Fundraising, Club, and the Reports portal when it is built**.
+
+Related: `project_coach_payables_rebuild.md`, `reference_collapsible_card.md` (the dropdown is a
+native `<details>` disclosure — free keyboard support, no portal code).
+
+---
+
 ### 2026-08-19 — A SUPPORT READ MAY NOT RANK CHILDREN, AND A CEILING MAY NOT BE INVENTED
 
 Three owner calls taken before a line of Insights P2 was written. Two of them **reverse an approved

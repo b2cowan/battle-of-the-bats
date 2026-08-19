@@ -10235,6 +10235,231 @@
         "column_default": null
       },
       {
+        "table_name": "rep_payable_installments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 2,
+        "column_name": "expense_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 5,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 6,
+        "column_name": "installment_number",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 8,
+        "column_name": "due_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 9,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 2,
+        "column_name": "expense_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 5,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 6,
+        "column_name": "installment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 8,
+        "column_name": "paid_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 9,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 10,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 11,
+        "column_name": "accounting_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 12,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 13,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_player_awards",
         "pos": 1,
         "column_name": "id",
@@ -19221,6 +19446,83 @@
         "constraint_name": "rep_fundraisers_team_id_fkey"
       },
       {
+        "table_name": "rep_payable_installments",
+        "column_name": "expense_id",
+        "foreign_table": "rep_team_expenses",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_installments_expense_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_installments_org_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_installments_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_installments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_installments_team_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "accounting_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_payable_payments_created_by_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "expense_id",
+        "foreign_table": "rep_team_expenses",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_expense_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "installment_id",
+        "foreign_table": "rep_payable_installments",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_installment_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_org_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_team_id_fkey"
+      },
+      {
         "table_name": "rep_player_awards",
         "column_name": "award_type_id",
         "foreign_table": "rep_team_award_types",
@@ -19273,20 +19575,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -19295,20 +19590,27 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -19343,14 +19645,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -23058,6 +23360,61 @@
         "indexdef": "CREATE INDEX rep_fundraisers_team_year_idx ON public.rep_fundraisers USING btree (team_id, program_year_id)"
       },
       {
+        "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_expense_idx",
+        "indexdef": "CREATE INDEX rep_payable_installments_expense_idx ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+      },
+      {
+        "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_number_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_number_key ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+      },
+      {
+        "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_pkey ON public.rep_payable_installments USING btree (id)"
+      },
+      {
+        "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_team_due_idx",
+        "indexdef": "CREATE INDEX rep_payable_installments_team_due_idx ON public.rep_payable_installments USING btree (team_id, due_date)"
+      },
+      {
+        "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_year_idx",
+        "indexdef": "CREATE INDEX rep_payable_installments_year_idx ON public.rep_payable_installments USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_entry_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_entry_idx ON public.rep_payable_payments USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_expense_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_expense_idx ON public.rep_payable_payments USING btree (expense_id, paid_date)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_installment_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_installment_idx ON public.rep_payable_payments USING btree (installment_id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_payable_payments_pkey ON public.rep_payable_payments USING btree (id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_team_date_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_team_date_idx ON public.rep_payable_payments USING btree (team_id, paid_date)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_year_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_year_idx ON public.rep_payable_payments USING btree (program_year_id)"
+      },
+      {
         "tablename": "rep_player_awards",
         "indexname": "rep_player_awards_event_idx",
         "indexdef": "CREATE INDEX rep_player_awards_event_idx ON public.rep_player_awards USING btree (event_id)"
@@ -25981,6 +26338,36 @@
       {
         "kind": "RLS",
         "table_name": "rep_fundraisers",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_payable_installments",
+        "detail": "rep_payable_installments_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_payable_installments",
+        "detail": "rep_payable_installments_installment_number_check",
+        "check_clause": "(installment_number >= 1)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_payable_installments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_payable_payments",
+        "detail": "rep_payable_payments_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_payable_payments",
         "detail": "ENABLED",
         "check_clause": null
       },

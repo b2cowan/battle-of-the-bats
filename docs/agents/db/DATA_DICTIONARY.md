@@ -3933,6 +3933,97 @@ mark-paid actions accept one, so it may be back-dated to any real past day (neve
 
 **Gotcha 6 — deleting an expense reverses its ledger entries, and pre-mig-236 rows are found by MATCHING.** `deleteRepTeamExpense` (lib/db.ts) voids every entry the record posted, reading `lib/expense-ledger.ts` for what counts as posted. Where the link column is NULL (anything paid before 2026-08-15) it falls back to matching on ledger + `description` + `amount` + `entry_type='expense'`. That fallback is sound for **exactly** that set, because no Edit feature existed before then, so a historic row still carries the description its entry was written with — a guarantee that ends for anything edited after 2026-08-15, which is why new rows store the id. **An ambiguous match (two identical paid expenses) REFUSES with a 409 rather than voiding an arbitrary one**; zero matches returns quietly, since an already-void entry means there is nothing to give back. ⚠ An **out-of-pocket** expense (`paid_by_player_id` set) has **no entry to reverse at all** — no team cash ever moved — but deleting it does remove the family's reimbursement credit by FK cascade from `rep_dues_credits.expense_id`.
 
+### `rep_payable_installments`
+<!-- dict:table:rep_payable_installments -->
+
+**Purpose:** the PLAN half of a commitment — what is owed, in dated pieces. Added by **migration 255** (Payables Rebuild P1, owner-approved 2026-08-19). Together with `rep_payable_payments` it replaces the deposit/balance pair on `rep_team_expenses` with the same shape money-IN has used since mig 232: a schedule, and separately the payments recorded against it.
+
+**Gotchas (read first):**
+1. **⚠⚠ THERE IS NO `paid_at` COLUMN, AND THAT IS THE POINT.** "Settled" is not stored — it is what you get when the payments applied to an installment reach its amount, derived on every read by `commitmentStanding()` in `lib/payable-standing.ts`. The dues side already paid for the alternative (mig 232 gotcha 1: `paid_at` became a PROJECTION because a flag stored beside a total starts disagreeing with it). Do **not** add one here as a "cache".
+2. **⚠ Settled means paid IN FULL. Partly paid counts as UNPAID** everywhere — the Status filter, the payment schedule, the Overview's next-30 panel, and the bulk-edit scopes on a repeating cost.
+3. **Every commitment has at least one row here (R1).** Migration 255 backfilled one per non-payable expense, one per un-split payable and two per split payable. This is what killed the old **"No schedule"** state — a payable with an amount and no due date, invisible to the payment schedule, absent from Due next, with no Mark paid control anywhere. Those records were given `created_at::date` as their due date, so they now appear on the schedule; expected, and called out in Owner QA §64 Part A.
+4. **The commitment's total is the SUM of these rows (R2)**, not `rep_team_expenses.amount`. That legacy column survives P1 for the migration's own before/after comparison and is reconciled against this sum, never trusted. ⚠ The dev QA-lab record *Fall Showdown entry* already disagrees ($600 total vs $200+$200 halves) — pre-existing fixture data that migration 255 surfaced rather than created.
+5. **`installment_number` is renumbered on insert/remove**, so "Installment 3 of 6" is read off the row. ⚠ But money applies in **due-date order**, not by number — a coach who moves one earlier has re-ordered the schedule.
+
+<!-- dict:col:rep_payable_installments.id -->
+**`id`** (uuid PK).
+
+<!-- dict:col:rep_payable_installments.expense_id -->
+**`expense_id`** (FK → `rep_team_expenses.id`, NOT NULL, **ON DELETE CASCADE**) — the commitment. An installment has no meaning without it.
+
+<!-- dict:col:rep_payable_installments.org_id -->
+<!-- dict:col:rep_payable_installments.team_id -->
+<!-- dict:col:rep_payable_installments.program_year_id -->
+**`org_id`** / **`team_id`** / **`program_year_id`** (all FK, NOT NULL, CASCADE) — denormalized scope, for the same reason every other `rep_*` money table carries them: every read is scoped by org+team first, and a join to reach the scope is a join that can be forgotten.
+
+<!-- dict:col:rep_payable_installments.installment_number -->
+**`installment_number`** (integer, NOT NULL, `>= 1`; UNIQUE with `expense_id`) — 1-based and contiguous within a commitment (gotcha 5).
+
+<!-- dict:col:rep_payable_installments.amount -->
+**`amount`** (numeric(12,2), NOT NULL, `> 0`) — what this piece is for. Editable after the fact; the payments simply re-apply (gotcha 1).
+
+<!-- dict:col:rep_payable_installments.due_date -->
+**`due_date`** (date, NOT NULL) — the org's day, never a UTC instant. Drives the payment schedule, Overdue, and the Overview's next-30.
+
+<!-- dict:col:rep_payable_installments.source -->
+**`source`** (text, NOT NULL, default `'manual'`) — `'migration_255'` on backfilled rows. ⚠ As everywhere else in this schema, **`source` is not provenance** (`memory/reference_source_column_not_provenance.md`).
+
+<!-- dict:col:rep_payable_installments.created_at -->
+<!-- dict:col:rep_payable_installments.updated_at -->
+**`created_at`** / **`updated_at`** (timestamptz, NOT NULL).
+
+**RLS enabled with NO policies** — service-role only, the `rep_dues_payments` treatment.
+
+### `rep_payable_payments`
+<!-- dict:table:rep_payable_payments -->
+
+**Purpose:** the WHAT-ACTUALLY-HAPPENED half — one row per movement of money against a commitment. Added by **migration 255**. This is the record that made partial payment, over-payment and **undo** possible; before it, money going out carried one boolean per half and none of the three could be expressed.
+
+**Gotchas (read first):**
+1. **⚠⚠ A PAYMENT ATTACHES TO THE COMMITMENT, NOT TO AN INSTALLMENT (R3).** It applies to installments oldest-unpaid-first, **spilling forward** — so one $700 cheque settles a $450 installment and part-pays the next without the coach doing that arithmetic. `installment_id` is the coach's **override** ("this one was for March"), not a second source of truth; an override that over-fills its target still spills forward.
+2. **⚠⚠ UNDO IS DELETING A ROW HERE**, and the books reverse by **this row's `accounting_entry_id`** — never by matching on description. Migration 236 exists precisely because editable descriptions made that guess unsafe; this is the first money-out record that has never had to guess.
+3. **⚠ A NULL `accounting_entry_id` IS LEGITIMATE AND MEANS TWO DIFFERENT THINGS**, which callers that reverse money must tell apart: an **out-of-pocket** cost a family paid (no team cash moved — mig 234, owner Call 5; reversing an entry never written would credit the team for spending it never did), or a record **settled before mig 236**, where the link was never recorded and the description-matching path still serves it.
+4. **⚠ THERE IS DELIBERATELY NO CHECK TYING THE SUM OF PAYMENTS TO THE COMMITMENT'S TOTAL (R6).** Over-payment is **accepted**; the screen says "$50 over". The money genuinely left the account, and refusing to record it teaches coaches to type a figure that is not what happened — which is how a book stops matching a bank statement.
+5. **`paid_date`, not the due date, is what Budget vs. Actual → Months files a cost by.**
+6. Migration 255 backfilled these from settled deposit/balance/expense halves, **carrying the existing ledger entry rather than creating one**. No `accounting_entries` row was written by that migration — verified on dev: 0 orphaned, 0 duplicated.
+
+<!-- dict:col:rep_payable_payments.id -->
+**`id`** (uuid PK).
+
+<!-- dict:col:rep_payable_payments.expense_id -->
+**`expense_id`** (FK → `rep_team_expenses.id`, NOT NULL, **CASCADE**) — the commitment this paid.
+
+<!-- dict:col:rep_payable_payments.org_id -->
+<!-- dict:col:rep_payable_payments.team_id -->
+<!-- dict:col:rep_payable_payments.program_year_id -->
+**`org_id`** / **`team_id`** / **`program_year_id`** (FK, NOT NULL, CASCADE) — denormalized scope.
+
+<!-- dict:col:rep_payable_payments.installment_id -->
+**`installment_id`** (FK → `rep_payable_installments.id`, nullable, **ON DELETE SET NULL**) — the coach's override (gotcha 1). ⚠ SET NULL, never CASCADE: losing the hint must not delete the record of money that left the account.
+
+<!-- dict:col:rep_payable_payments.amount -->
+**`amount`** (numeric(12,2), NOT NULL, `> 0`) — what actually moved (gotcha 4).
+
+<!-- dict:col:rep_payable_payments.paid_date -->
+**`paid_date`** (date, NOT NULL) — the org's day the money left (gotcha 5).
+
+<!-- dict:col:rep_payable_payments.method -->
+<!-- dict:col:rep_payable_payments.note -->
+**`method`** (text, nullable) — free text, suggested from what the coach's own teams have used. **`note`** (text, nullable).
+
+<!-- dict:col:rep_payable_payments.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, SET NULL; **org Accounting domain**) — the ledger row this payment posted (gotchas 2 and 3).
+
+<!-- dict:col:rep_payable_payments.source -->
+**`source`** (text, NOT NULL, default `'manual'`) — `'migration_255'` on backfill. **`'migration_255_wrong_door'`** marks a payable that had been settled through the `markExpensePaid` hole closed on 2026-08-16, whose ledger entry was invisible to every screen; **0 such rows exist on dev**, verified at apply time.
+
+<!-- dict:col:rep_payable_payments.created_by -->
+<!-- dict:col:rep_payable_payments.created_at -->
+**`created_by`** (FK → `auth.users.id`, nullable, SET NULL) / **`created_at`** (timestamptz, NOT NULL).
+
+**RLS enabled with NO policies** — service-role only.
+
+
 ### `rep_team_money_in`
 <!-- dict:table:rep_team_money_in -->
 

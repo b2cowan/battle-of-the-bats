@@ -1,3 +1,42 @@
+# ⛔ SUPERSEDED 2026-08-19 — folded into the Coach Payables Rebuild
+
+> **This plan is archived. Do not build from it.** Its subject — a repeating monthly cost — is now
+> phase P4 of **`docs/projects/active/COACH_PAYABLES_REBUILD_PLAN.md`** (owner decision 2026-08-19).
+>
+> **Why it was superseded.** This plan solved recurrence on top of the old one-boolean model, where
+> a commitment is only ever unpaid or paid. Walking QA §27 on 2026-08-19 found that model cannot
+> express partial payment or an undo at all — so recurrence built here would have been a second
+> mechanism beside two more that still had to be invented. The rebuild makes instalments, partial
+> payment, undo and recurrence one record instead of four features.
+>
+> **What CARRIES FORWARD, unchanged and still correct:**
+> - ⚠ **`lib/coach-monthly-recurrence.ts` and its 43 unit tests are LIVE and reusable.** Committed
+>   `c404bd4b` 2026-08-15 with no callers, deliberately. The rebuild’s P4 generator calls it. It is
+>   month arithmetic and none of it is wasted.
+> - **§3.4 — the ceiling counts the SERIES, not the request** (24 monthly occurrences), refused by
+>   generator *and* route with the same message.
+> - **§3.5 — the server regenerates from the rule** and refuses any date the rule cannot produce, so
+>   "preview before commit" is a guarantee rather than a client-side courtesy.
+> - **§3.6 — do NOT reuse the importer’s duplicate rule.** Every occurrence of a repeat shares one
+>   description by design; that reviewer would flag them all.
+> - **§3.7 — partial failure is reported by date.**
+> - The **review-before-commit** shape itself (a preview table, nothing written until confirm).
+>
+> **What is REVERSED, and must not be carried forward:**
+> - ⚠⚠ **§5.1’s rejection of "this one / this and future / all".** The owner adopted a three-way
+>   scope on 2026-08-19 — *this payment only · this and later payments · all unpaid payments*. §5.1’s
+>   objection (a bulk edit reaching money that already moved) is answered by the new rule that bulk
+>   scopes may **never** touch an instalment settled in full.
+> - ⚠ **§5.2’s frozen rows.** Part-paid now counts as UNPAID and is reachable by bulk scopes; and a
+>   fully settled row stays individually editable, per the standing 2026-08-16 ruling.
+> - **§3.1 — the "deposit half or it is invisible" rule.** Every commitment now has at least one
+>   instalment, so the "No schedule" state stops being representable.
+> - **Monthly-only.** The rebuild offers weekly / every two weeks / monthly.
+> - **A series of separate payables.** Twelve months of gym time is now ONE commitment with twelve
+>   instalments, not twelve linked bills (owner call 2026-08-19).
+
+---
+
 # Coach Money — recurring payables (monthly)
 
 **Status:** planned 2026-08-15 · **§6.1 + §6.5 committed `c404bd4b` 2026-08-15 (the engine only)** ·
