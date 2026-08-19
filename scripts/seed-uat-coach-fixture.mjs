@@ -322,6 +322,80 @@ if (existingGame) {
   ok('game created');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚠⚠ **THE LIVE SEASON HAD NO FINISHED GAMES, AND THAT MADE THE WHOLE INSIGHTS PORTAL UNWALKABLE**
+ * (added 2026-08-19, found on the first owner walk of §58).
+ *
+ * The fixture seeded finished games for the PRIOR season and for the between-seasons team, but never
+ * for the live one — so the season a coach is actually running had no record, no form, no scoring
+ * difference and no game log. Insights reads a season back to the coach; a live season with nothing
+ * to read renders every honest empty state and nothing else.
+ *
+ * ⚠ **AND IT REPORTED GREEN.** `check:layout` renders these screens and measures what it finds, so
+ * seven Insights tabs of empty states swept clean and were reported as covered — the exact
+ * "green sweep over an EMPTY FIXTURE is not evidence" trap this repo has already written down
+ * (memory/project_layout_invariant_sweep.md). The tables, the filter chips and the scoreboard band
+ * — the parts most likely to overflow a phone — had never been measured at all.
+ *
+ * What the shape below is chosen to produce, deliberately:
+ *   · a REAL record with all three outcomes (win / loss / tie), so the record chip and form pips render
+ *   · a ONE-RUN game, which is the only thing that makes the "Close games" tile appear
+ *   · both home and away, so the home/away findings rule has a sample
+ *   · two event TYPES, so the Results per-type breakdown has more than one row
+ *   · TAGS on some games, so the tag filter chips render — without them there is nothing to filter
+ * ⚠ Dates are fixed to the season's own year, never to "now": a rendered baseline keyed on the
+ *   screen's text must not drift every time the sweep runs (the same rule the prior season follows).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+const { data: liveFinished } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', py.id).eq('name', 'vs Ridgeview').maybeSingle();
+if (!liveFinished) {
+  const at = (m, d) => new Date(Date.UTC(py.year, m, d, 22, 0)).toISOString();
+  const liveGames = [
+    { result: 'win',  team_score: 6, opponent_score: 3, opponent: 'Ridgeview',  type: 'league_game',     home: true },
+    { result: 'win',  team_score: 4, opponent_score: 3, opponent: 'Lakeside',   type: 'league_game',     home: false }, // one-run → Close games tile
+    { result: 'loss', team_score: 2, opponent_score: 5, opponent: 'Northgate',  type: 'league_game',     home: false },
+    { result: 'tie',  team_score: 3, opponent_score: 3, opponent: 'Fairhaven',  type: 'league_game',     home: true },
+    { result: 'win',  team_score: 8, opponent_score: 2, opponent: 'Westbrook',  type: 'tournament_game', home: true },
+    { result: 'loss', team_score: 1, opponent_score: 2, opponent: 'Ridgeview',  type: 'tournament_game', home: false }, // one-run
+  ].map((g, i) => ({
+    program_year_id: py.id, team_id: team.id, org_id: org.id,
+    event_type: g.type, name: `vs ${g.opponent}`, opponent: g.opponent,
+    home_away: g.home ? 'home' : 'away', starts_at: at(3, 4 + i * 6),
+    status: 'scheduled', result: g.result, team_score: g.team_score, opponent_score: g.opponent_score,
+  }));
+  const insLive = await db.from('rep_team_events').insert(liveGames).select('id, opponent, event_type');
+  if (insLive.error) { console.error('✗ live-season games insert', insLive.error.message); process.exit(1); }
+  ok(`live-season games seeded (${liveGames.length} finalized, 3-2-1 with two one-run games)`);
+
+  /* Game TAGS — the coach's own vocabulary for grouping games, and the thing the Results tab's
+     filter chips are built from. A chip only appears for a tag with at least one FINISHED game, so
+     these have to be attached to the rows above rather than to the upcoming probe game. */
+  const tagNames = ['Rivalry', 'Playoffs'];
+  const tagIds = {};
+  for (const name of tagNames) {
+    const { data: existingTag } = await db.from('rep_team_tags')
+      .select('id').eq('team_id', team.id).eq('kind', 'game').eq('name', name).maybeSingle();
+    if (existingTag) { tagIds[name] = existingTag.id; continue; }
+    const t = await db.from('rep_team_tags')
+      .insert({ org_id: org.id, team_id: team.id, kind: 'game', name })
+      .select('id').single();
+    if (t.error) { console.error(`✗ tag ${name}`, t.error.message); process.exit(1); }
+    tagIds[name] = t.data.id;
+  }
+  const byOpponent = Object.fromEntries((insLive.data ?? []).map(r => [`${r.opponent}|${r.event_type}`, r.id]));
+  const links = [
+    { event_id: byOpponent['Ridgeview|league_game'], tag_id: tagIds.Rivalry },
+    { event_id: byOpponent['Ridgeview|tournament_game'], tag_id: tagIds.Rivalry },
+    { event_id: byOpponent['Westbrook|tournament_game'], tag_id: tagIds.Playoffs },
+    { event_id: byOpponent['Northgate|league_game'], tag_id: tagIds.Rivalry },
+  ].filter(l => l.event_id);
+  const insTags = await db.from('rep_team_event_tags').insert(links);
+  if (insTags.error) { console.error('✗ event tag links', insTags.error.message); process.exit(1); }
+  ok(`game tags seeded (${tagNames.join(' + ')}, ${links.length} games tagged)`);
+} else {
+  ok('live-season finished games already present');
+}
+
 // ── 11. A saved lineup for it, so the console renders the BOARD ──────────────
 // Without a lineup the console renders its no-lineup fallback instead — a legitimate screen, but
 // the thin one. The board is where the tap targets, the two-column On field / Bench split and the
@@ -1290,6 +1364,30 @@ const QA_PEOPLE = [
       schedule: true, scheduleManage: false, attendance: true, lineups: true, rosterPii: false,
       notes: false, money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
       staffChat: true,
+    },
+  },
+  {
+    email: 'uat-asst-treasurer@uat-test-org.local',
+    name: 'UAT Assistant (treasurer only)',
+    role: 'assistant_coach',
+    /**
+     * ⚠⚠ **MONEY AND NOTHING ELSE — the only persona that can walk the Insights gate change**
+     * (reports portal P1, owner ruling 3, 2026-08-18: no money in Insights, so a coach whose ONLY
+     * duty is money loses that door and keeps the Money hub).
+     *
+     * ⚠ Added because the walk for that ruling was NOT WALKABLE without it, and nothing said so.
+     * `uat-asst-money` looks like the treasurer and is not: it also holds attendance and lineups, so
+     * it keeps Insights for reasons that have nothing to do with money. Signing in as it would have
+     * shown the Insights door present and read as a PASS — confirming the opposite of the ruling.
+     *
+     * ⚠ Every grant is spelled out, none left to default: an assistant's omitted key falls back to
+     * ASSISTANT_DEFAULTS, which GRANTS attendance and lineups — either one of which would silently
+     * hand this persona the door and turn the sharpest check in the walk green for the wrong reason.
+     */
+    caps: {
+      schedule: false, scheduleManage: false, attendance: false, lineups: false, rosterPii: false,
+      notes: false, money: 'write', documents: 'off', announcementsSend: false, tryouts: false,
+      staffChat: false,
     },
   },
   {

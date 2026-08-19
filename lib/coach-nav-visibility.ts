@@ -1,4 +1,6 @@
-import { hasRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilities } from './coach-capabilities';
+import {
+  hasRecordAccess, hasNonMoneyRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilities,
+} from './coach-capabilities';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -184,9 +186,33 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * tryouts. Collapsed onto the shared predicate so the archive door, the nav and the Overview
      * cannot drift apart — they were three copies of one idea.
      */
-    case 'Insights':      return hasRecordAccess(caps);
+    /**
+     * ⚠ **NARROWED FROM `hasRecordAccess` TO ITS MINUS-MONEY SIBLING** (reports portal P1, owner
+     * ruling 3, 2026-08-18: no money anywhere in Insights). The comment above describes the door as
+     * it was when a dues tile, two money findings and a "Where's the money?" doorway were on it.
+     * They are all deleted, so a coach whose ONLY duty is money now opens a portal of player and
+     * team statistics with nothing of theirs on it. The treasurer keeps the Money hub, which is
+     * where every figure they lost already lived.
+     *
+     * ⚠ A helper still loses it, for the original reason — they hold no duty at all — and every
+     * real assistant keeps it, because attendance and lineups are on the assistant defaults.
+     * Pinned by `tests/unit/coach-insights-portal.test.ts`.
+     */
+    case 'Insights':      return hasNonMoneyRecordAccess(caps);
     // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables, and both
     // ride record access since A1; all writes stay head-coach-only server-side (D1).
+    /**
+     * ⚠⚠ **RENAMED TO "Skills & Goals" (owner ruling 5, 2026-08-18) — AND `'Development'` STAYS AS A
+     * FALLTHROUGH, WHICH IS THE LOAD-BEARING HALF.** This switch is keyed by DISPLAY LABEL over
+     * `default: return true`, so any surface that still asks by the old name — a test, the portal
+     * tour, a future caller a rename misses — would fall through and hand an ungranted assistant the
+     * door. Same precedent as Email families / Announcements above.
+     *
+     * The word "Development" now belongs to the coverage REPORT inside Insights, and only there:
+     * this nav item is the workbench where a coach sets focus areas and records measurables, and
+     * the two sharing a name is what sent coaches to the wrong one.
+     */
+    case 'Skills & Goals':
     case 'Development':   return hasRecordAccess(caps);
     case 'Documents':     return caps.documents !== 'off';
     case 'Staff':         return caps.isHeadCoach;

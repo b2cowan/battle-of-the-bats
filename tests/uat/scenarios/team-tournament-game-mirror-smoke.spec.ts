@@ -477,7 +477,7 @@ test.describe('Batch 4 — tournament games get real tools', () => {
    */
   test('Attendance is a report under Insights, and the page still says where to record it', async ({ page }) => {
     await signIn(page);
-    await page.goto(`${base()}/attendance`);
+    await page.goto(`${base()}/history?section=attendance`);
     await page.waitForLoadState('networkidle');
 
     const main = page.locator('main[class*="coachesMain"]');

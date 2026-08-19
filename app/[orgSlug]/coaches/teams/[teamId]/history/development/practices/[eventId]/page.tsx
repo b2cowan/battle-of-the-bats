@@ -7,6 +7,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
   blockRotates, computeBlockClocks, formatDuration, resolveStationTeaching,
   type PracticePlan, type PracticePlanBlock, type PracticeStation,
@@ -226,7 +227,7 @@ export default function CoachPastPracticePlanPage({
           Season&apos;s End
         </CoachBackLink>
       ) : (
-        <CoachBackLink href={`${base}/history/development`}>Practices you&apos;ve run</CoachBackLink>
+        <CoachBackLink href={insightsSectionHref(base, 'development')}>Practices you&apos;ve run</CoachBackLink>
       )}
 
       {loading ? (

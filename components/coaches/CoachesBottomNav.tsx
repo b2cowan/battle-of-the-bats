@@ -64,8 +64,10 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
     { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
     { key: '/tournaments',   icon: Trophy,        label: 'Tournaments' },
   ] },
+  // ⚠ "Development" → "Skills & Goals" (owner ruling 5, 2026-08-18) — matching the sidebar, whose
+  // note carries the reasoning. Route unchanged; the gate keeps the old label as a fallthrough.
   { header: 'Progress', items: [
-    { key: '/development',   icon: TrendingUp,    label: 'Development' },
+    { key: '/development',   icon: TrendingUp,    label: 'Skills & Goals' },
     { key: '/history',       icon: BarChart3,     label: 'Insights' },
   ] },
   { header: 'Money', items: [

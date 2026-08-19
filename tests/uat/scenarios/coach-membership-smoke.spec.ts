@@ -581,12 +581,12 @@ test.describe('no write control survives on a finished working season', () => {
     { path: '/accounting?section=dues', label: 'Dues' },
     { path: '/accounting?section=budget', label: 'Budget' },
     { path: '/accounting?section=fundraisers', label: 'Fundraisers' },
-    { path: '/development', label: 'Development' },
+    { path: '/development', label: 'Skills & Goals' },
     { path: '/lineups', label: 'Lineups' },
     { path: '/tryouts/history', label: 'Tryout history' },
     { path: '/history', label: 'Insights hub' },
-    { path: '/history/results', label: 'Insights results' },
-    { path: '/history/awards', label: 'Awards' },
+    { path: '/history?section=results', label: 'Insights results tab' },
+    { path: '/history?section=awards', label: 'Awards tab' },
     { path: '/roster', label: 'Roster' },
   ];
 
@@ -769,7 +769,7 @@ test.describe('the look-back layer — Season’s End, Wrapped, the compare list
    */
   test('the compare list opens an older season’s Wrapped', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
-    await open(page, `${between()}/history/results`);
+    await open(page, `${between()}/history?section=results`);
 
     const olderLink = main(page).locator(`a[href*="/season-end?year=${olderYearId}"]`).first();
     await expect(olderLink, 'each past season must offer its own Season Wrapped').toBeVisible({ timeout: 30_000 });

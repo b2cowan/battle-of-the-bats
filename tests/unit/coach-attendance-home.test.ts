@@ -90,53 +90,68 @@ describe('the attendance report can never be reachable without Insights also bei
   });
 });
 
-describe('a finished season still reaches its attendance report', () => {
+describe('the attendance report is reachable at all', () => {
   /**
-   * ⚠⚠ THIS BLOCK HAS NOW BEEN REWRITTEN TWICE BY ITS OWN EXPIRY CONDITIONS, WHICH IS THE POINT.
+   * ⚠⚠ THIS BLOCK HAS NOW BEEN REWRITTEN THREE TIMES BY ITS OWN EXPIRY CONDITIONS, WHICH IS THE
+   * POINT — each time because the thing it guards MOVED, never because the property stopped
+   * mattering.
    *
    * Round 1 (until 2026-08-16) required Attendance to appear in the archive's menu, because the
    * archive pointed "Insights" at `/history/results` and that page carries no attendance door.
-   * The test spelled out its own expiry: *"if the archive ever points Insights at the hub, revisit
-   * whether Attendance still needs its own archive door."* It did, so the assertion was replaced
-   * by the ACCESS it was really protecting rather than deleted.
+   * Round 2 (P2, the same day): the archive menu itself was deleted, so "does the archive have this
+   * section?" stopped having meaning; the surviving property was **the Insights hub is Attendance's
+   * only parent, and the hub carries a door to it.**
+   * Round 3 (reports portal P1, 2026-08-18): **the door IS the tab.** Attendance is no longer a
+   * separate page reached by a tile — it is a panel of the Insights portal, so what has to be true
+   * is that the hub RENDERS the tab and MOUNTS the panel. A tab missing from the row is the same
+   * unreachable page the missing tile would have been.
    *
-   * Round 2 (P2, the same day): the archive menu itself is deleted — there is one nav, and a team
-   * whose working season has finished keeps it. So "does the archive have this section?" has no
-   * meaning any more, and the property that survives both rewrites is the one that always
-   * mattered: **the Insights hub is Attendance's only parent, and the hub carries a door to it.**
-   * A page with no nav entry and no door on its parent is unreachable, and nothing else would say
-   * so.
+   * ⚠ The old top-level `/attendance` route still exists as a permanent redirect, and that is a
+   * second thing worth pinning: three surfaces link to it by its old address (the Schedule's
+   * "Season attendance" button, the Overview coaching-pair tile, and every bookmark a coach has
+   * made in a year of using it). Deleting the redirect breaks all three silently.
    */
   const HUB = readFileSync(
     join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'history', 'page.tsx'),
     'utf8',
   );
+  const LEGACY = readFileSync(
+    join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'attendance', 'page.tsx'),
+    'utf8',
+  );
 
-  it('the Insights hub carries the door to the attendance report', () => {
+  it('the Insights portal renders the Attendance tab and mounts its panel', () => {
     assert.match(
-      HUB, /href=\{`\$\{base\}\/attendance`\}/,
-      'the attendance report lost its only door. It is in NEITHER nav (it left the live navs on '
-      + '2026-08-15 and the archive menu died with the archive on 2026-08-16), so this tile is the '
-      + 'single inbound link in the product. Remove it and the page is unreachable.',
+      HUB, /\{ id: 'attendance', label: 'Attendance', gate: /,
+      'the attendance report lost its tab. It is in NEITHER nav (it left the live navs on '
+      + '2026-08-15 and the archive menu died with the archive on 2026-08-16), so this tab is its '
+      + 'only entry point in the product. Remove it and the report is unreachable.',
+    );
+    assert.match(
+      HUB, /\{ id: 'attendance', Component: AttendancePanel \}/,
+      'a tab with no panel in PANELS renders an empty pane — the tab row would still look right.',
     );
   });
 
-  it('the door rides the attendance grant, not record access', () => {
+  it('the tab rides the attendance grant, not record access', () => {
+    /**
+     * ⚠ Read off the TAB TABLE's own gate rather than a `canAttendance` const. The hub's per-tab
+     * config (`TABS`) now carries each tab's grant beside its label, so the gate and the label
+     * cannot be edited apart — which is the property this test was really protecting.
+     */
     assert.match(
-      HUB, /const canAttendance = !!caps\?\.attendance;/,
-      'the tile must be keyed on the grant the REPORT gates on. Keyed on record access it would '
-      + 'be offered to coaches who 403 on arrival — a door drawn onto a refusal.',
+      HUB, /\{ id: 'attendance', label: 'Attendance', gate: c => c\.attendance,/,
+      'the tab must be keyed on the grant the REPORT gates on. Keyed on record access it would be '
+      + 'offered to coaches who 403 on arrival — a door drawn onto a refusal.',
     );
   });
 
-  it('the door is offered in a finished season too', () => {
-    const idx = HUB.indexOf('Who&apos;s showing up?');
-    assert.ok(idx > 0, 'expected the attendance tile to exist at all');
-    assert.equal(
-      /!isRecord/.test(HUB.slice(Math.max(0, idx - 900), idx)), false,
-      'the attendance tile must NOT be hidden on a finished season. Attendance is a RECORD of who '
-      + 'turned up — unlike playing time and the scouting book beside it, which are live-only by '
-      + 'ruling. Hiding it would take a past season\'s report away with nothing to replace it.',
+  it('the old /attendance address still lands on the tab', () => {
+    assert.match(
+      LEGACY, /insightsLegacyRedirectPage\('attendance'\)/,
+      'the top-level /attendance route must keep redirecting into the portal. The Schedule\'s '
+      + '"Season attendance" button, the Overview coaching-pair tile and every coach bookmark used '
+      + 'this address for a year; deleting the redirect 404s all of them at once.',
     );
   });
 });

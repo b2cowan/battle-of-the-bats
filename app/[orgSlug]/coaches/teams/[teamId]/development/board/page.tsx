@@ -69,7 +69,7 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   if (!data) {
     return (
       <div className={styles.page}>
-        <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+        <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
         <p className={styles.detailPlaceholder}>
           {error}{' '}
           <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
@@ -98,7 +98,7 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the coverage framing is REQUIRED wording (binding
           coverage ruling), so it relocates to the first line of the board itself — where the
           roster order it frames actually appears — rather than being deleted with the subtitles. */}

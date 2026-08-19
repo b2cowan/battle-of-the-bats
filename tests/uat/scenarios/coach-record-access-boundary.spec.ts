@@ -415,7 +415,7 @@ test.describe('§1.9b — a helper is refused every record surface', () => {
     ['one player',            () => `${base()}/roster/${playerId}`],
     ['the development board', () => `${base()}/development/board`],
     ['the season review',     () => `${base()}/wrapped`],
-    ['attendance',            () => `${base()}/attendance`],
+    ['attendance',            () => `${base()}/history?section=attendance`],
     ['past practice plans',   () => `${base()}/events/${pastPracticeId}/practice-plan/read?year=${closedYearId}`],
   ];
 

@@ -6,6 +6,7 @@ import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { canManageAwards } from '@/lib/coach-capabilities';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { formatShortDate } from '@/lib/measurable-format';
 import type { RepPlayerAward } from '@/lib/types';
 import styles from '../../../../../coaches.module.css';
@@ -103,7 +104,7 @@ export default function AwardCertificatePage({
   return (
     <div className={cert.screen}>
       <div className={cert.bar}>
-        <CoachBackLink href={`${base}/history/awards`}>Awards</CoachBackLink>
+        <CoachBackLink href={insightsSectionHref(base, 'awards')}>Awards</CoachBackLink>
         <p className={cert.barNote}>
           Letter, landscape — one page per certificate. Turn on background graphics in your
           browser’s print options if the frame doesn’t appear.

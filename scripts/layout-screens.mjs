@@ -66,7 +66,11 @@ export const SCREENS = [
 
   // ── The week ────────────────────────────────────────────────────────────────
   { id: 'coach-schedule',    session: 'coach', path: (c) => `${team(c)}/schedule`,    ready: 'h1' },
-  { id: 'coach-attendance',  session: 'coach', path: (c) => `${team(c)}/attendance`,  ready: 'h1' },
+  /* ⚠ ATTENDANCE MOVED INTO THE INSIGHTS PORTAL (P1, 2026-08-18) — `/attendance` is now a permanent
+     redirect, and this entry addresses the TAB. It stays here rather than moving down to the
+     Insights block because what it measures is unchanged: the densest table in the week's work, at
+     361px. Its id is deliberately unchanged too, so the baseline it already owns still applies. */
+  { id: 'coach-attendance',  session: 'coach', path: (c) => `${team(c)}/history?section=attendance`, ready: 'h1' },
   { id: 'coach-roster',      session: 'coach', path: (c) => `${team(c)}/roster`,      ready: 'h1' },
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
   { id: 'coach-depth-chart', session: 'coach', path: (c) => `${team(c)}/depth-chart`, ready: 'h1' },
@@ -262,17 +266,51 @@ export const SCREENS = [
   { id: 'coach-settings-lineups', session: 'coach', path: (c) => `${team(c)}/settings?section=lineup-rules`, ready: 'h1' },
   { id: 'coach-tryouts',       session: 'coach', path: (c) => `${team(c)}/tryouts`,       ready: 'h1' },
 
-  // ── The archive (Chunk F — opt-in by ruling; these are the approved doors) ───
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * ⚠⚠ **THE INSIGHTS REPORTS PORTAL — EVERY TAB IS ADDRESSED, AND THAT IS NOT OPTIONAL**
+   * (reports portal P1, 2026-08-18).
+   *
+   * The six reports stopped being routes and became PANELS the hub keeps mounted with
+   * `display:none` while inactive. A hidden panel has zero geometry, and this sweep skips
+   * zero-size elements rather than flagging them — so `coach-history` alone would measure the
+   * Dashboard and report green over six unmeasured screens. That is the exact "green sweep over a
+   * screen it did not see" trap the four deleted finished-season entries above document, and the
+   * Money hub paid for it first.
+   *
+   * `?section=` is a REAL arrival URL — a coach lands on it from a bookmark, a tile, the game
+   * console — so these sweep the genuine open state, not a fixture-only mode.
+   *
+   * ⚠ `attendance` is NOT here and that is deliberate: it keeps its long-standing id up in "The
+   * week" (same screen, new address, so its existing baseline still applies).
+   *
+   * ⚠ **STATED GAP, NOT SILENT:** the per-opponent BOOK (`history/opponents/[opponentKey]`) is
+   * still its own route and has NO entry in this file — it had none before this project either.
+   * It is the deepest drill-in in the portal and one level down from a door, which is precisely
+   * where Chunk F's expensive defects all lived. Adding it needs a fixture opponent key the sweep
+   * can address; that is a real piece of work, so it is written down here rather than left to look
+   * like coverage.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
   { id: 'coach-history',             session: 'coach', path: (c) => `${team(c)}/history`,             ready: 'h1' },
-  { id: 'coach-history-development', session: 'coach', path: (c) => `${team(c)}/history/development`, ready: 'h1' },
-  { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history/results`,     ready: 'h1' },
+  { id: 'coach-history-development', session: 'coach', path: (c) => `${team(c)}/history?section=development`, ready: 'h1' },
+  { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history?section=results`,     ready: 'h1' },
   /**
    * ⚠ ADDED 2026-08-16 (archive rail Phase 2) — it was the one Insights door with NO rendered
    * coverage at all, and it had just gained a read-only mode, a season chip and a season-aware
    * certificate link. Its own `/review` had to record "not covered" for a screen this project
    * changed substantially, which is the gap worth closing rather than noting again next time.
    */
-  { id: 'coach-history-awards',      session: 'coach', path: (c) => `${team(c)}/history/awards`,      ready: 'h1' },
+  { id: 'coach-history-awards',      session: 'coach', path: (c) => `${team(c)}/history?section=awards`,      ready: 'h1' },
+  /**
+   * ⚠ THE TWO REPORTS THAT HAVE NEVER BEEN SWEPT AT ALL. Playing Time carries the portal's widest
+   * table (six columns, one per player, with an inline bar in a cell) and the Scouting Book carries
+   * a search field above a list of rows each holding two badges and a record chip — between them
+   * the two shapes most likely to overflow a 361px phone. They had no rendered coverage as routes
+   * either; becoming tabs is simply when it became cheap to add them.
+   */
+  { id: 'coach-history-playing-time', session: 'coach', path: (c) => `${team(c)}/history?section=playing-time`, ready: 'h1' },
+  { id: 'coach-history-scouting',     session: 'coach', path: (c) => `${team(c)}/history?section=scouting`,     ready: 'h1' },
 ];
 
 /** Widths under test. 361 is the narrowest phone the portal supports; 900/640 are its breakpoints. */

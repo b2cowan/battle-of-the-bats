@@ -1123,7 +1123,7 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <>
-              <p>Open <strong>Development</strong> in the Progress menu and tap <strong>New session</strong>. Pick which test you&apos;re running (or set one up on the spot), then work straight down your roster — tap a player, type their number, and it <strong>saves as you go</strong>, with an &ldquo;N of M entered&rdquo; count so you always know where you are. <strong>Leave a player blank to skip them</strong> — an absent player is never given a fake 0. Rows always stay in <strong>roster order</strong> — testing day isn&apos;t a leaderboard.</p>
+              <p>Open <strong>Skills &amp; Goals</strong> in the Progress menu and tap <strong>New session</strong>. Pick which test you&apos;re running (or set one up on the spot), then work straight down your roster — tap a player, type their number, and it <strong>saves as you go</strong>, with an &ldquo;N of M entered&rdquo; count so you always know where you are. <strong>Leave a player blank to skip them</strong> — an absent player is never given a fake 0. Rows always stay in <strong>roster order</strong> — testing day isn&apos;t a leaderboard.</p>
               <p>Every reading lands on that player&apos;s profile exactly as if you&apos;d logged it there, tagged with the session date. The session itself is saved (&ldquo;Jul 17 — 14 players, 2 tests&rdquo;) so you can come back to it, and <strong>deleting a session never deletes the readings</strong> — they just lose the grouping.</p>
               <p>Below your sessions, the Development page has two doors — the <strong>Team board</strong> (everyone&apos;s focus areas and latest numbers at a glance, in roster order) and the coverage report in <strong>Insights</strong> — and then <strong>Your test list</strong> at the foot of the page. If <strong>New session</strong> is switched off, your test list has no active test on it yet. Two or three sessions a season is what makes each player&apos;s trend lines real.</p>
             </>
@@ -1145,13 +1145,13 @@ const coachesHelp: HelpPageContent = {
           id: 'faq-premium-development-history',
           question: 'What happens to development notes at the new season? (previous seasons and bring-forward)',
           popular: true,
-          answerText: 'Nothing is lost. Once a player\'s history is linked (confirmed by you, or linked automatically by Start next season), their Development card gains a Previous seasons list — one dated row per past season ("2026 · U13 Purple — 2 focus areas (1 achieved) · 8 measurables · attendance 92%") that expands in place to show that season\'s focus areas and readings exactly as they were recorded. It is deliberately a scrapbook, not a scoreboard: past seasons sit side by side and the app never computes "better or worse than last year" — youth seasons are not comparable. On a newly linked player, the head coach also gets a one-time offer: bring forward the focus areas they were working on last season? You can look first (View record), bring them forward (they join this season as "Working on it"), or start fresh. Readings never carry over — last season\'s numbers stay in that season\'s archive so this season\'s trend lines stay honest. Either answer is remembered and the offer never re-appears. The Development report in Insights ("Is everyone getting attention?") shows a Returning player column so you can see at a glance whose past seasons are connected.',
+          answerText: 'Nothing is lost. Once a player\'s history is linked (confirmed by you, or linked automatically by Start next season), their Development card gains a Previous seasons list — one dated row per past season ("2026 · U13 Purple — 2 focus areas (1 achieved) · 8 measurables · attendance 92%") that expands in place to show that season\'s focus areas and readings exactly as they were recorded. It is deliberately a scrapbook, not a scoreboard: past seasons sit side by side and the app never computes "better or worse than last year" — youth seasons are not comparable. On a newly linked player, the head coach also gets a one-time offer: bring forward the focus areas they were working on last season? You can look first (View record), bring them forward (they join this season as "Working on it"), or start fresh. Readings never carry over — last season\'s numbers stay in that season\'s archive so this season\'s trend lines stay honest. Either answer is remembered and the offer never re-appears. The Development report in Insights (the Development tab) shows a Returning player column so you can see at a glance whose past seasons are connected.',
           keywords: ['previous seasons', 'archive', 'history', 'last season', 'bring forward', 'carry forward', 'start fresh', 'rollover', 'new season', 'notes disappeared', 'keep notes', 'season history', 'development history', 'scrapbook'],
           answer: (
             <>
               <p>Nothing is lost. Once a player&apos;s history is <strong>linked</strong> (confirmed by you, or linked automatically by <strong>Start next season</strong>), their Development card gains a <strong>Previous seasons</strong> list — one dated row per past season (&ldquo;2026 · U13 Purple — 2 focus areas (1 achieved) · 8 measurables · attendance 92%&rdquo;) that expands in place to show that season&apos;s focus areas and readings exactly as they were recorded. It&apos;s deliberately a <strong>scrapbook, not a scoreboard</strong>: past seasons sit side by side, and the app never computes &ldquo;better or worse than last year&rdquo; — youth seasons aren&apos;t comparable.</p>
               <p>On a newly linked player, the head coach also gets a <strong>one-time offer</strong>: bring forward the focus areas they were working on last season? You can look first (<strong>View record</strong>), <strong>bring them forward</strong> (they join this season as &ldquo;Working on it&rdquo;), or <strong>start fresh</strong>. <strong>Readings never carry over</strong> — last season&apos;s numbers stay in that season&apos;s archive so this season&apos;s trend lines stay honest. Either answer is remembered, and the offer never re-appears.</p>
-              <p>The <strong>Development report in Insights</strong> (&ldquo;Is everyone getting attention?&rdquo;) shows a <strong>Returning player</strong> column, so you can see at a glance whose past seasons are connected.</p>
+              <p>Insights&rsquo; <strong>Development</strong> tab shows a <strong>Returning player</strong> column, so you can see at a glance whose past seasons are connected.</p>
             </>
           ),
         },
@@ -1293,11 +1293,8 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p>There&apos;s <strong>no season switcher</strong> — your screens always describe the season your team is on, so you never have to check which year you&apos;re reading. A closed season&apos;s page names its own year at the top, which is how you always know which one you have open.</p>
-              <p>Every year the team has played is reached in two places, both under <strong>Insights</strong>:</p>
-              <ul>
-                <li><strong>&ldquo;How are we doing?&rdquo; &rarr; Past seasons</strong> — every year the team has played, with its record, roster size, tryout acceptance and (with money access) dues and expenses.</li>
-                <li><strong>Season Wrapped</strong> for any of those years, from a link on its row.</li>
-              </ul>
+              <p><strong>Looking back happens once a season is closed.</strong> While a season is running, every screen — Insights included — describes the season you&rsquo;re in, and there is no list of earlier years anywhere in it. When you close a season, the whole team moves to that season&rsquo;s own page: its wrap-up card, and shelves holding the results, who was on the team, the practices you ran and how the money added up.</p>
+              <p>The one exception is the moment you <strong>start next season</strong>: the confirmation offers a link straight back to the season you just closed, so you can reread it while it&rsquo;s fresh.</p>
               <p>What you won&apos;t find is a way to point Roster, Money or the Schedule at a year the team has already moved past. That&apos;s deliberate: those screens are for running the season you&apos;re in, and a switch that quietly changed which year they described was the easiest way in the whole portal to read the wrong number confidently.</p>
             </>
           ),
@@ -2341,7 +2338,7 @@ const coachesHelp: HelpPageContent = {
           id: 'event-details-tags',
           title: 'Tags (games only)',
           content: (
-            <p>Your own vocabulary for grouping games, e.g. &ldquo;Rivalry&rdquo; or &ldquo;Top in the province.&rdquo; Type in the Tags box: if a tag you&apos;ve used before matches, tap it to apply it; if it&apos;s new, tap <strong>+ Create</strong> to add it to your team&apos;s tag list and apply it in one step. A game can carry as many tags as you like. Use the <strong>Manage tags</strong> link on the same screen to rename a tag, delete one you don&apos;t need, or <strong>merge</strong> two into one (merging keeps all the game history under whichever tag you keep — handy if &ldquo;top team&rdquo; and &ldquo;top in province&rdquo; both crept in for the same idea). Tags are visible to any coach with schedule access on your team. Once you&apos;ve tagged a few games, open <strong>Insights → &ldquo;How are we doing?&rdquo;</strong> to filter the season&apos;s results by tag and see your record just for that group. If your club or league has set up <strong>shared</strong> tags, they appear in <strong>blue</strong> alongside your own — you can apply them, but only an org admin renames or removes them.</p>
+            <p>Your own vocabulary for grouping games, e.g. &ldquo;Rivalry&rdquo; or &ldquo;Top in the province.&rdquo; Type in the Tags box: if a tag you&apos;ve used before matches, tap it to apply it; if it&apos;s new, tap <strong>+ Create</strong> to add it to your team&apos;s tag list and apply it in one step. A game can carry as many tags as you like. Use the <strong>Manage tags</strong> link on the same screen to rename a tag, delete one you don&apos;t need, or <strong>merge</strong> two into one (merging keeps all the game history under whichever tag you keep — handy if &ldquo;top team&rdquo; and &ldquo;top in province&rdquo; both crept in for the same idea). Tags are visible to any coach with schedule access on your team. Once you&apos;ve tagged a few games, open <strong>Insights → the <strong>Results</strong> tab</strong> to filter the season&apos;s results by tag and see your record just for that group. If your club or league has set up <strong>shared</strong> tags, they appear in <strong>blue</strong> alongside your own — you can apply them, but only an org admin renames or removes them.</p>
           ),
         },
         {
@@ -3057,7 +3054,7 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Every plan is kept, in full.</strong> When your season finishes, the <strong>Practice plans</strong> page tells you so and stops offering to plan — there&rsquo;s nothing left to plan for — but nothing you wrote has gone anywhere.</p>
-              <p><strong>Where to find them.</strong> That season&rsquo;s <strong>Season&rsquo;s End</strong> page has a section called <strong>The practices you ran</strong>, closed until you open it. Each row opens the plan exactly as you wrote it, read-only, together with what you said afterwards about how it went. The same list also sits under <em>&ldquo;Is everyone getting attention?&rdquo;</em> in Insights, as <strong>Practices you&rsquo;ve run</strong>.</p>
+              <p><strong>Where to find them.</strong> That season&rsquo;s <strong>Season&rsquo;s End</strong> page has a section called <strong>The practices you ran</strong>, closed until you open it. Each row opens the plan exactly as you wrote it, read-only, together with what you said afterwards about how it went. The same list also sits under on its <strong>Development</strong> tab in Insights, as <strong>Practices you&rsquo;ve run</strong>.</p>
               <p>A practice you <strong>called off</strong> never appears — it didn&rsquo;t happen, so it isn&rsquo;t part of the record. A practice where you wrote no plan but did write a note afterwards <em>does</em> appear, and says so.</p>
               <HelpNote variant="info" title="Who can read a finished season’s plans">
                 <p>The same people who can read the rest of the team&rsquo;s record — your assistant coaches. A <strong>helper</strong> brought in to run one station has the schedule and tonight&rsquo;s plan, and nothing from a season that has finished.</p>
@@ -3097,7 +3094,7 @@ const coachesHelp: HelpPageContent = {
       links: [
         { label: 'Running it at the field', href: '#premium-practice-run' },
         { label: 'Plan templates', href: '#premium-plan-templates' },
-        { label: 'Player Development', href: '#premium-development' },
+        { label: 'Skills & Goals', href: '#premium-development' },
         { label: 'Repeating practices', href: '#premium-repeat-weekly' },
       ],
       faqs: [
@@ -3292,7 +3289,7 @@ const coachesHelp: HelpPageContent = {
         { label: 'Writing the plan', href: '#premium-practice-plans' },
         { label: 'Plan templates', href: '#premium-plan-templates' },
         { label: 'Running it at the field', href: '#premium-practice-run' },
-        { label: 'Player Development', href: '#premium-development' },
+        { label: 'Skills & Goals', href: '#premium-development' },
       ],
       faqs: [
         {
@@ -3429,7 +3426,7 @@ const coachesHelp: HelpPageContent = {
       links: [
         { label: 'Writing the plan', href: '#premium-practice-plans' },
         { label: 'Your drills', href: '#premium-drill-library' },
-        { label: 'Player Development', href: '#premium-development' },
+        { label: 'Skills & Goals', href: '#premium-development' },
       ],
       faqs: [
         {
@@ -3576,17 +3573,17 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'premium-development',
       group: 'Premium Coaches Portal',
-      heading: 'Player Development: focus areas, tests & evaluation sessions (Premium)',
+      heading: 'Skills & Goals: focus areas, tests & evaluation sessions (Premium)',
       summary: 'Track what each player is working on and how they are progressing — a coverage picture, never a ranking.',
       // 'test types' stays in keywords ON PURPOSE after the rename to "Your test list": the
       // player-profile Development section still uses the old label, and a coach who remembers
       // either name must land here. Same reason the failure phrasings ("greyed out", "can't
       // start a session") are listed — search matches keywords, never the prose above.
-      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test list', 'your test list', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test', 'start here', 'new session greyed out', 'cannot start a session', 'retire test', 'change session date', 'session date', 'taken at', 'link session to practice', 'recorded here', 'is everyone getting attention', 'coverage', 'in a plan', 'not in a plan yet', 'practices you’ve run', 'open the plan', 'past practice plan', 'what did we do last season', 'tryout snapshot', 'development baseline', 'where the season started', 'dashed card', 'context not a measurable', 'coach-eyes-only'],
-      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list your test list evaluation session run tests whole roster team board coverage tryout snapshot development baseline where the season started dashed border context not a measurable never a trend never counts as a measurable frozen coach eyes only families never see tryout evaluations start development from tryouts seeded from tryouts who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet not a ranking then go look doors faded dimmed nothing behind it start here add your first test new session greyed out disabled switched off why can i not start a session add a test first retired test retire restore last active test session history stays visible page order layout change the date of a session edit session date wrong date backdate typed them in later taken at link a session to a practice which practice recorded here readings move with the date re-stamp confirm how many readings will move rescheduled practice does not move the session',
+      keywords: ['skills and goals', 'skills & goals', 'development', 'player development', 'evaluation session', 'measurables', 'test list', 'your test list', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test', 'start here', 'new session greyed out', 'cannot start a session', 'retire test', 'change session date', 'session date', 'taken at', 'link session to practice', 'recorded here', 'is everyone getting attention', 'coverage', 'in a plan', 'not in a plan yet', 'practices you’ve run', 'open the plan', 'past practice plan', 'what did we do last season', 'tryout snapshot', 'development baseline', 'where the season started', 'dashed card', 'context not a measurable', 'coach-eyes-only'],
+      searchText: 'skills and goals skills goals player development focus areas goals menu renamed from development what each player is working on measurables tests test types test list your test list evaluation session run tests whole roster team board coverage tryout snapshot development baseline where the season started dashed border context not a measurable never a trend never counts as a measurable frozen coach eyes only families never see tryout evaluations start development from tryouts seeded from tryouts who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet not a ranking then go look doors faded dimmed nothing behind it start here add your first test new session greyed out disabled switched off why can i not start a session add a test first retired test retire restore last active test session history stays visible page order layout change the date of a session edit session date wrong date backdate typed them in later taken at link a session to a practice which practice recorded here readings move with the date re-stamp confirm how many readings will move rescheduled practice does not move the session',
       content: (
         <>
-          <p><strong>Development</strong> is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
+          <p><strong>Skills &amp; Goals</strong> (in the Progress menu) is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
           <HelpDefs>
             <HelpDef term="Focus areas">The one or two things a player is currently working on, in your words.</HelpDef>
             <HelpDef term="Tests">The repeatable measurements you take. <strong>Your test list</strong> defines them, and you decide what&rsquo;s on it.</HelpDef>
@@ -3624,7 +3621,7 @@ const coachesHelp: HelpPageContent = {
           title: 'What it feeds: the board and the coverage report',
           content: (
             <>
-              <p>The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
+              <p>The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and Insights&rsquo; <strong>Development</strong> tab asks whether anyone is slipping through — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard, and its header links straight back here when you want to act on what you read.</p>
               <p><strong>That report also reads your practice plans.</strong> An <strong>In a plan</strong> column shows a quiet tick, or <em>&ldquo;not in a plan yet&rdquo;</em> for anyone whose name hasn&rsquo;t appeared in one — no counts and no scores, because it&rsquo;s a note about where your attention has gone, not a mark against a child. It only appears once you&rsquo;ve written a few plans <em>and</em> named players in at least one of them; naming players is optional, so until you do the question can&rsquo;t honestly be answered and the column stays away.</p>
               <p><strong>Underneath it</strong> you&rsquo;ll find the focus-area <strong>tags</strong> no practice has been about yet, and <strong>Practices you&rsquo;ve run</strong> — filter to &ldquo;Hitting&rdquo; and you get every hitting practice, what was in it, and what you wrote afterwards. <strong>Open the plan</strong> works on a finished season too, read-only, so &ldquo;what did we do last spring?&rdquo; has an answer.</p>
               <HelpNote variant="info" title="Two different kinds of truth, kept apart on purpose">
@@ -3739,113 +3736,41 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'premium-insights',
       group: 'Premium Coaches Portal',
-      heading: 'Insights: how your season is going (Premium)',
-      summary: 'Your season read back to you — record and form, playing time, attendance, dues and development — built entirely from what you have already entered.',
-      keywords: ['insights', 'season insights', 'reports', 'what stands out', 'scoreboard', 'record', 'form', 'playing time', 'fair', 'where is playing time going', 'attendance report', 'season review', 'history', 'ask about your team'],
-      searchText: 'insights season insights how is my season going scoreboard band record form streak run differential close games attendance percentage dues collected what stands out findings flags ask about your team ask bar questions reports doorways is playing time fair where is playing time going who shows up where is the money who is earning it is everyone getting attention nothing to show yet empty insights fills in on its own no numbers invented read only derived',
+      heading: 'Insights: your season’s reports (Premium)',
+      summary: 'One page with a row of report tabs — results, attendance, playing time, development, awards and the scouting book — all built from what you have already entered.',
+      keywords: ['insights', 'season insights', 'reports', 'report tabs', 'dashboard', 'what stands out', 'scoreboard', 'record', 'form', 'playing time', 'attendance report', 'awards report', 'scouting book', 'season review', 'history', 'all reports'],
+      searchText: 'insights season insights reports analytics report tabs dashboard tab results tab attendance tab playing time tab development tab awards tab scouting book tab scoreboard band record form streak run differential close games attendance percentage what stands out findings flags how is my season going where is playing time going who shows up who is earning it is everyone getting attention who are we up against nothing to show yet empty insights fills in on its own no numbers invented derived no money in insights dues moved to money hub ask about your team removed question bar gone no past seasons list compare every season removed look back after closing',
       content: (
         <>
-          <p><strong>Insights</strong> (in the Season menu) is your season read back to you. You never enter anything here — every number is built from the games, lineups, attendance and dues you&rsquo;ve already recorded elsewhere in the portal.</p>
-          <p>It has four parts, top to bottom:</p>
+          <p><strong>Insights</strong> (in the Progress menu) is your season read back to you, as a set of reports on one page. You never enter anything here — every number is built from the games, lineups, attendance and evaluations you&rsquo;ve already recorded elsewhere in the portal.</p>
+          <p><strong>A row of tabs across the top</strong> holds every report, and it stays put as you move between them — so comparing what attendance says with what playing time says is one tap, not a trip back to a menu. Each tab has its own web address, so you can bookmark the one you check every week or send it to another coach.</p>
           <ul>
-            <li><strong>The scoreboard band</strong> — the figures you&rsquo;d recite out loud: record, recent form, scoring difference, close games, attendance rate, dues collected. A block only appears once it has real data behind it.</li>
-            <li><strong>What stands out</strong> — the reports read <em>for</em> you. A pitcher over their arm-care cap, a player who&rsquo;s sat the bench most, dues going overdue. Each one links straight to the report it came from.</li>
-            <li><strong>Ask about your team</strong> — a single bar you tap to ask one of a handful of ready-made questions and get a straight answer, with the records behind it. See <em>Asking about your team</em> below.</li>
-            <li><strong>Report doorways</strong> — question-titled tiles (<em>&ldquo;Where is playing time going?&rdquo;</em>, <em>&ldquo;Who&apos;s showing up?&rdquo;</em>) that open the full report.</li>
+            <li><strong>Dashboard</strong> — where you land. Read on.</li>
+            <li><strong>Results</strong> — every game with a score, your per-type records, and filters by game type and by your own game tags.</li>
+            <li><strong>Attendance</strong> — who&rsquo;s turning up, games and practices counted separately, with the shortcut to take attendance at your next event.</li>
+            <li><strong>Playing Time</strong> — one row per player from your saved lineups: field and bench time, positions played, pitching against the cap you set.</li>
+            <li><strong>Development</strong> — the coverage checklist: who has an active focus area, who was named in a practice plan, when each player was last measured.</li>
+            <li><strong>Awards</strong> — the leaderboard, your award types, and printable certificates.</li>
+            <li><strong>Scouting Book</strong> — every opponent you&rsquo;ve faced, with your record and your notes on each.</li>
           </ul>
+          <p><strong>The Dashboard has two parts.</strong> The <strong>scoreboard</strong> — record, recent form, scoring difference, close games and attendance rate; tap any of them to open the report behind it. And <strong>What stands out</strong> — the reports read <em>for</em> you (a pitcher over their arm-care cap, a player who&rsquo;s sat the bench most, a player with no active focus area), each linking to the tab it came from. That second part is the one to read first: it&rsquo;s the whole point of the page, and it means you don&rsquo;t have to open six reports to find out whether any of them has news.</p>
+          <p><strong>Money is not in Insights.</strong> There is no dues figure, no money flag and no money report here — Insights is your player and team statistics. Everything about money lives on your team&rsquo;s main dashboard and in <strong>Money</strong>, where <em>Player Dues</em> answers what each family still owes and who hasn&rsquo;t paid anything yet.</p>
           <p><strong>Why it may look empty.</strong> Insights fills in on its own as the season runs — nothing is invented to make the page look busy. Enter a game result, save a lineup, or take attendance once, and the matching part appears. A brand-new season is legitimately blank here.</p>
-          <p><strong>What you see depends on your access.</strong> The money report only appears for coaches with money access, playing time needs lineup access, and attendance needs player access — so two coaches on the same team can honestly see different tiles.</p>
-          <p><strong>Insights works on a finished season too.</strong> Switch seasons with the chip beside the page title and the whole page describes that year instead — its scoreboard, what stood out, and the same report tiles. Two are deliberately missing: <em>&ldquo;Where is playing time going?&rdquo;</em> and <em>&ldquo;Who are we up against?&rdquo;</em>. Playing-time figures are recalculated from saved lineups each time you open them, and your opponent notes are the book you keep <em>today</em> — neither can promise to show a past season as you actually saw it back then, so we don&rsquo;t offer them rather than quietly showing you this year&rsquo;s answer under last year&rsquo;s heading.</p>
+          <p><strong>What you see depends on your access.</strong> Playing Time needs lineup access, Attendance needs the attendance duty, Awards and Development need player-record access — so two coaches on the same team can honestly see a different number of tabs. A tab you can&rsquo;t open simply isn&rsquo;t there, rather than being shown locked.</p>
+          <p><strong>Insights is for the season you&rsquo;re running.</strong> Once you close a season, the whole team moves to its <strong>Season&rsquo;s End</strong> page — one page holding that year&rsquo;s results, roster, practices and money — and Insights describes the season you start next. While a season is running there is no list of earlier years anywhere in Insights — that is deliberate, so a report about this season stays about this season.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-lineup-season-analytics',
-          question: 'What does “Where is playing time going?” in Insights show?',
-          answerText: 'Open Insights (in the Season menu) and tap "Where is playing time going?" — a report with one row per player, built from the lineups you have actually saved: innings on the field vs on the bench, back-to-back bench games, every position they have played, and pitching innings against their arm-care cap with a flag on any game over it. Below the table, "Which lineup wins?" lists each batting order you have reused with its win-loss record, counting only games with a score entered. Every number comes only from saved lineups — nothing is invented, and honest empty states show until you have saved a few. The Insights page itself also flags standouts for you under "What stands out" (like a pitcher over their cap, or who has sat the bench most). These read-outs used to sit at the bottom of the Lineups page; the Lineups Games tab keeps a quiet Season insights link that jumps there.',
+          question: 'What does the Playing Time report in Insights show?',
+          answerText: 'Open Insights (in the Progress menu) and choose the Playing Time tab — a report with one row per player, built from the lineups you have actually saved: innings on the field vs on the bench, back-to-back bench games, every position they have played, and pitching innings against their arm-care cap with a flag on any game over it. Below the table, "Which lineup wins?" lists each batting order you have reused with its win-loss record, counting only games with a score entered. Every number comes only from saved lineups — nothing is invented, and honest empty states show until you have saved a few. The Insights page itself also flags standouts for you under "What stands out" (like a pitcher over their cap, or who has sat the bench most). These read-outs used to sit at the bottom of the Lineups page; the Lineups Games tab keeps a quiet Season insights link that jumps there.',
           keywords: ['season analytics', 'analytics', 'fair playing time', 'where is playing time going', 'bench balance', 'position variety', 'arm care', 'pitching load', 'records by lineup', 'lineup record', 'win loss lineup', 'playing time report', 'who sits most', 'reused lineup', 'lineup trends', 'insights', 'is playing time fair', 'which lineup wins', 'what stands out', 'where did season analytics go', 'lineups page analytics'],
           answer: (
             <>
-              <p>Open <strong>Insights</strong> (in the <strong>Season</strong> menu) and tap <strong>&ldquo;Where is playing time going?&rdquo;</strong> — a report with <strong>one row per player</strong>, built from the lineups you&apos;ve saved: innings <strong>on the field vs. on the bench</strong>, <strong>back-to-back</strong> bench games, every <strong>position</strong> they&apos;ve played, and <strong>pitching</strong> innings against their arm-care cap, with a ⚠ flag on any game over it.</p>
+              <p>Open <strong>Insights</strong> (in the <strong>Progress</strong> menu) and choose the <strong>Playing Time</strong> tab — a report with <strong>one row per player</strong>, built from the lineups you&apos;ve saved: innings <strong>on the field vs. on the bench</strong>, <strong>back-to-back</strong> bench games, every <strong>position</strong> they&apos;ve played, and <strong>pitching</strong> innings against their arm-care cap, with a ⚠ flag on any game over it.</p>
               <p>Below the table, <strong>&ldquo;Which lineup wins?&rdquo;</strong> lists each batting order you&apos;ve reused with its win-loss record — counting only games with a score entered.</p>
               <p><strong>Every figure comes only from saved lineups</strong> — nothing is invented, and honest empty states show until you&apos;ve saved a few. The Insights page also flags standouts for you under <strong>&ldquo;What stands out&rdquo;</strong> (a pitcher over their cap, who&apos;s sat the bench most), so you don&apos;t have to go digging.</p>
-            </>
-          ),
-        },
-      ],
-    },
-    {
-      id: 'premium-ask',
-      group: 'Premium Coaches Portal',
-      heading: 'Asking about your team (Premium)',
-      summary: 'Tap one of a handful of ready-made questions and get a straight answer, with the exact records it came from listed underneath.',
-      keywords: ['ask', 'ask about your team', 'ask the front office', 'questions', 'question bar', 'receipts', 'who has not played', 'what does each family owe', 'who missed practices', 'who has not paid', 'search my team'],
-      searchText: 'ask about your team ask the front office question bar tap a question ready-made questions receipts evidence proof who has not played catcher lately position recently what does each family still owe family dues who has not paid anything yet never paid who has missed the most practices attendance is playing time even whose arm needs a rest pitching cap choose a question cannot type free text no typing search box answers from your own records never a guess never outside data nothing recorded yet honest empty state assistant coach cannot see money question current season only',
-      links: [{ label: 'Insights', href: '#premium-insights' }],
-      content: (
-        <>
-          <p>On <strong>Insights</strong>, between <em>What stands out</em> and the report tiles, there&rsquo;s a single bar: <strong>Ask about your team</strong>. Tap it and a short list of ready-made questions opens. Tap one and you get a straight answer in a sentence, with the exact records it came from listed underneath — each linking to the full report.</p>
-          <p>The questions available today:</p>
-          <ul>
-            <li><strong>Who hasn&rsquo;t played a position lately?</strong> — pick a position and see who&rsquo;s waited longest for a turn there, and who&rsquo;s covered it since.</li>
-            <li><strong>What does each family still owe?</strong> — dues rolled up per family, so brothers and sisters count as one conversation instead of two.</li>
-            <li><strong>Who hasn&rsquo;t paid anything yet?</strong></li>
-            <li><strong>Who&rsquo;s missed the most practices?</strong> — over recent practices, with the specific dates.</li>
-            <li><strong>Is playing time even?</strong></li>
-            <li><strong>Whose arm needs a rest?</strong> — against the per-game cap <em>you</em> set. Diamond sports only.</li>
-          </ul>
-          <p><strong>You tap, you don&rsquo;t type.</strong> The bar is a list of questions to choose from, not a search box — that&rsquo;s why it says &ldquo;Choose a question&rdquo;.</p>
-          <p><strong>Every answer is built from your own records.</strong> Nothing is estimated, predicted, or compared against other teams, and no answer ever appears without its evidence. If there&rsquo;s nothing recorded yet, it says so plainly and tells you the one thing that would fill it in — it never shows a zero it can&rsquo;t stand behind.</p>
-          <p><strong>You only see what your access allows.</strong> A question you&rsquo;re not cleared for simply isn&rsquo;t on the list — an assistant without money access has no dues questions at all, rather than a locked one. If your access leaves no questions, the bar doesn&rsquo;t appear.</p>
-          <p><strong>Current season only.</strong> Opening a finished season shows no question bar.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-ask-typing',
-          question: 'Can I type my own question?',
-          answerText: 'Not yet. Today "Ask about your team" is a list of ready-made questions you tap — that is why the bar says "Choose a question" rather than showing a text box. Typing your question in your own words is planned for a later version. The tappable questions will keep working exactly as they do now.',
-          keywords: ['type a question', 'free text', 'search box', 'my own words', 'typing', 'ai', 'chatbot'],
-          answer: (
-            <>
-              <p>Not yet. Today <strong>Ask about your team</strong> is a list of ready-made questions you tap — which is why the bar says <em>&ldquo;Choose a question&rdquo;</em> rather than showing a text box.</p>
-              <p>Typing a question in your own words is planned for a later version. When it arrives, the tappable questions keep working exactly as they do now.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-ask-empty',
-          question: 'Why does a question say “nothing recorded yet”?',
-          answerText: 'Because it is true. Every answer is assembled from what you have recorded — saved lineups, attendance you have taken, dues you have set up. If none of that exists yet for a question, it says so and names the one thing that would fill it in, such as taking attendance at a single practice. It will never show a made-up figure or a zero it cannot stand behind, so a brand-new team is honestly blank here.',
-          keywords: ['nothing recorded', 'empty answer', 'no data', 'blank', 'why no answer', 'new team'],
-          answer: (
-            <>
-              <p>Because it&rsquo;s true. Every answer is assembled from what <em>you&rsquo;ve</em> recorded — saved lineups, attendance you&rsquo;ve taken, dues you&rsquo;ve set up.</p>
-              <p>If none of that exists yet for a question, it says so and names the one thing that would fill it in (take attendance at a single practice, save one lineup). It will never show an invented figure or a zero it can&rsquo;t stand behind — so a brand-new team is honestly blank here.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-ask-missing-question',
-          question: 'An assistant coach can’t see one of the questions — why?',
-          answerText: 'Questions are filtered by each coach\'s own access. An assistant without money access has no dues questions at all — they are absent from the list rather than shown locked, because a question they can never get an answer to is just a dead end. The same applies to lineup and player access. If a coach\'s access leaves no questions at all, the bar itself does not appear for them. Change what they can see under Staff.',
-          keywords: ['assistant cannot see', 'missing question', 'permissions', 'access', 'money access', 'hidden question', 'fewer questions'],
-          answer: (
-            <>
-              <p>Questions are filtered by each coach&rsquo;s own access. An assistant without <strong>money access</strong> has no dues questions at all — they&rsquo;re <em>absent</em> from the list rather than shown locked, because a question you can never get an answer to is just a dead end. The same applies to lineup and player access.</p>
-              <p>If a coach&rsquo;s access leaves no questions at all, the bar doesn&rsquo;t appear for them. Change what they can see under <strong>Staff</strong>.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-ask-family-names',
-          question: 'Why does the dues answer name players instead of families?',
-          answerText: 'Because that coach can see dues but not guardian contact details. Brothers and sisters are still correctly counted as one family — the grouping happens behind the scenes — but the family is labelled with the players\' names instead of the family surname, since those are names that coach already sees on every roster screen. A head coach, or an assistant granted guardian access, sees the family surname.',
-          keywords: ['family name', 'surname', 'guardian access', 'player names dues', 'siblings', 'brothers sisters'],
-          answer: (
-            <>
-              <p>Because that coach can see dues but not <strong>guardian contact details</strong>.</p>
-              <p>Brothers and sisters are still correctly counted as <em>one</em> family — the grouping happens behind the scenes — but the family is labelled with the players&rsquo; names rather than the family surname, since those are names that coach already sees on every roster screen. A head coach, or an assistant granted guardian access, sees the family surname.</p>
             </>
           ),
         },
@@ -3869,7 +3794,7 @@ const coachesHelp: HelpPageContent = {
         'stop sharing', 'why can I see another team', 'club plan scouting'],
       searchText: 'scouting book opponent book opponents who are we up against record against them last meeting tendencies notes on other teams rival scouting tab add to the book observation log book line head coach remove observation helper assistant contribute jersey number not names merge duplicate spelling same team as un-merge also answers to scrimmage not counted exhibition record rule archived season no scouting numbers vs them home away split this season all time average biggest win worst loss from n games what worked lineup share to staff chat game plan snapshot brief staff you play reminder masthead nudge dismiss tag filter chips add another several observations one sitting their tournament so far opponent results this weekend other games same tournament pool standing runs for against refreshed automatic no capture forfeit not counted external tournament missing why no block practice plan panel you play saturday the book while building practice full book link from your club club shared book share our book with the club other teams in my club can see my notes who can read my scouting see another team observations read only cannot edit another team note records per team never averaged all n from team club has more observations on this opponent marker on the opponents list two switches club admin turns it on head coach opts in notes access stop sharing disappears immediately reciprocity see theirs while you share yours never leaves the club another organization cannot see our book club plan only no switch in team settings archived season no club layer',
       content: (
-        <p>The <strong>opponent book</strong> keeps what you know about the teams you play — in the portal instead of a notes app on your phone. Open <strong>Insights → &ldquo;Who are we up against?&rdquo;</strong> for the list: every opponent you&rsquo;ve ever named on a game, your all-time record against them (across seasons), when you last met, and an amber dot wherever something&rsquo;s written.</p>
+        <p>The <strong>opponent book</strong> keeps what you know about the teams you play — in the portal instead of a notes app on your phone. Open <strong>Insights → the <strong>Scouting Book</strong> tab</strong> for the list: every opponent you&rsquo;ve ever named on a game, your all-time record against them (across seasons), when you last met, and an amber dot wherever something&rsquo;s written.</p>
       ),
       subtopics: [
         {
@@ -4551,7 +4476,7 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-season-review-comparison',
           question: 'How do I see if my team is improving year over year?',
-          answerText: "Open Insights (in the Season menu). The scoreboard across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in one-run games. On purpose, Insights does NOT compare seasons against each other — youth teams move up divisions and face different competition each year, so a 'better or worse than last year' arrow would mislead more than it tells. Your past seasons are still kept: open 'How are we doing?' to see every year's record, roster size and (with money access) dues and expenses as a plain archive — a scrapbook, not a scoreboard.",
+          answerText: "Open Insights (in the Progress menu). The scoreboard on its Dashboard tab across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in one-run games. On purpose, Insights does NOT compare seasons against each other — youth teams move up divisions and face different competition each year, so a 'better or worse than last year' arrow would mislead more than it tells. Your past seasons are still kept: open 'How are we doing?' to see every year's record, roster size and (with money access) dues and expenses as a plain archive — a scrapbook, not a scoreboard.",
           keywords: ['improving', 'better than last year', 'this season vs last', 'season comparison', 'winning percentage', 'trend', 'year over year', 'season review', 'insights', 'scoreboard', 'close games', 'form', 'streak', 'past seasons'],
           answer: (
             <>
@@ -4563,44 +4488,43 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-past-seasons-head-coach',
           question: 'Where do I find my team’s earlier years?',
-          answerText: 'You can. Every coach on the team\'s current staff sees the season-by-season list — each year\'s record, roster size, tryout acceptance and, if you handle money, that year\'s dues and expenses. Open Insights, then "How are we doing?", and scroll to "Past seasons". Season\'s End also offers "Compare every season", which is the same list. It was briefly head-coach-only; that restriction has been lifted, because only people currently on the staff can open the team at all. If you cannot see it, either the team has no finished seasons yet, or you are no longer on its staff — ask the head coach.',
-          keywords: ['past seasons', 'past seasons missing', 'cannot see past seasons', 'no past seasons list', 'where is past seasons', 'compare every season', 'season history', 'head coach only', 'assistant cannot see history', 'team history permission', 'previous years', 'earlier years', 'last year', 'scrapbook', 'look up an old season'],
+          answerText: 'While a season is running, you do not — and that is deliberate. Every screen describes the season your team is on, and there is no season-by-season list anywhere in the portal. A finished season keeps its own page instead: close a season and the whole team moves to it, holding that year\'s wrap-up, results, roster, practices and money. One exception: right after you start next season, the confirmation offers a link straight back to the season you just closed. If you need an older year while mid-season, ask your head coach — there is no screen for it today, on purpose, because a list of other years on a live report was noise on the season you are actually running.',
+          keywords: ['past seasons', 'past seasons missing', 'cannot see past seasons', 'no past seasons list', 'where is past seasons', 'compare every season', 'compare seasons gone', 'season history', 'previous years', 'earlier years', 'last year', 'scrapbook', 'look up an old season'],
           answer: (
             <>
-              <p><strong>You can.</strong> Every coach on the team&rsquo;s current staff sees it. Open <strong>Insights</strong>, then <em>&ldquo;How are we doing?&rdquo;</em>, and scroll to <strong>Past seasons</strong> — each year&rsquo;s record, roster size, tryout acceptance and, if you handle money, that year&rsquo;s dues and expenses. <strong>Season&rsquo;s End</strong> offers the same list as <em>&ldquo;Compare every season&rdquo;</em>.</p>
-              <p>It was briefly head-coach-only. That restriction has been lifted: only people currently on the staff can open the team at all, so there was nothing left for it to protect.</p>
-              <p>If you still can&rsquo;t see it, either the team has no finished seasons yet, or you&rsquo;re no longer on its staff — ask the head coach.</p>
+              <p><strong>While a season is running, you don&rsquo;t</strong> — and that&rsquo;s deliberate. Every screen describes the season your team is on, and there&rsquo;s no season-by-season list anywhere in the portal.</p>
+              <p><strong>A finished season keeps its own page.</strong> Close a season and the whole team moves to it: that year&rsquo;s wrap-up, its results, who was on the team, the practices you ran and how the money added up.</p>
+              <p><strong>One exception.</strong> Right after you <strong>start next season</strong>, the confirmation offers a link straight back to the season you just closed.</p>
+              <p>There used to be a &ldquo;Past seasons&rdquo; list at the foot of the Results report and a matching door on Season&rsquo;s End. Both were removed: a report about <em>this</em> season had no business ending in a table of every other one.</p>
             </>
           ),
         },
         {
           id: 'faq-insights-past-season',
           question: 'Can I look at a season that has already finished?',
-          answerText: 'Yes, in three places — and there is no longer a season switcher, so you are never in doubt about which year you are reading. First: while your team is BETWEEN seasons, the whole portal is showing that finished season. You land on Season\'s End, your menu is the one you always had, and Roster, Schedule, Money, Documents and Insights all open read-only. Second: Season Wrapped for any year, from the "Past seasons" list at the foot of Insights → "How are we doing?" — each row links to that season\'s wrap-up. Third: that list itself, which puts every year\'s record, roster size, tryout acceptance and money summary side by side. What you will NOT find is a way to point the whole portal at a year your team has already moved past; once the next season starts, your screens describe the season you are running. Two Insights tiles are deliberately missing on a finished season: "Where is playing time going?" and "Who did we play?". Playing-time figures are recalculated from your saved lineups every time you open them, and your opponent notes are the book you keep today, so neither can promise to show that season as you actually saw it back then. The "Ask about your team" bar is live-season only for the same reason. Attendance has no menu line of its own; it is reached through Insights as "Who\'s showing up?", in every season.',
-          keywords: ['past season insights', 'last year insights', 'finished season insights', 'old season report', 'previous season report', 'insights past season', 'switch season', 'season switcher gone', 'no season chip', 'cannot change season', 'where is the season dropdown', 'why no playing time last year', 'playing time missing', 'opponents missing', 'no ask bar past season', 'attendance past season', 'season wrapped for an old year', 'look back', 'between seasons'],
+          answerText: 'Yes — once it is closed. A closed season IS one page: while your team has no season running, every screen takes you to that season\'s Season\'s End page, holding its wrap-up card and shelves for the results, who was on the team, the practices you ran and how the money added up. It reads the same whether it closed yesterday or three years ago. Right after you start next season, the confirmation offers a link back to the one you just closed. What you will NOT find is a way to reach an older year while a season is running, or to point the portal at a year your team has moved past — those screens are for running the season you are in. Two reports are live-season only and never appear for a finished year: Playing Time and the Scouting Book. Playing-time figures are recalculated from your saved lineups every time you open them, and your opponent notes are the book you keep today, so neither can promise to show that season as you actually saw it back then.',
+          keywords: ['past season insights', 'last year insights', 'finished season insights', 'old season report', 'previous season report', 'insights past season', 'switch season', 'season switcher gone', 'no season chip', 'cannot change season', 'where is the season dropdown', 'why no playing time last year', 'playing time missing', 'opponents missing', 'scouting book past season', 'attendance past season', 'season wrapped for an old year', 'look back', 'between seasons', 'closed season one page'],
           answer: (
             <>
-              <p><strong>Yes — in three places.</strong> There&rsquo;s no season switcher any more, so you&rsquo;re never in doubt about which year you&rsquo;re reading.</p>
-              <p><strong>1. While your team is between seasons</strong>, the whole portal <em>is</em> that finished season. You land on <strong>Season&rsquo;s End</strong>, your menu is the one you always had, and Roster, Schedule, Money, Documents and Insights all open — read-only, with <em>Complete</em> beside the team name.</p>
-              <p><strong>2. Season Wrapped for any year.</strong> Open <strong>Insights → &ldquo;How are we doing?&rdquo;</strong> and scroll to <strong>Past seasons</strong>; each row links to that year&rsquo;s wrap-up.</p>
-              <p><strong>3. That list itself</strong> — every year&rsquo;s record, roster size, tryout acceptance and money summary, side by side.</p>
-              <p><strong>What you won&rsquo;t find</strong> is a way to point the whole portal at a year your team has already moved past. Once the next season starts, your screens describe the season you&rsquo;re running.</p>
-              <p><strong>Two tiles are deliberately missing on a finished season.</strong> <em>&ldquo;Where is playing time going?&rdquo;</em> and <em>&ldquo;Who did we play?&rdquo;</em> don&rsquo;t appear. Playing-time figures are recalculated from your saved lineups each time you open them, and your opponent notes are the book you keep <em>today</em> — neither can promise to show that season as you actually saw it. <strong>Ask about your team</strong> is live-season only for the same reason.</p>
-              <p><strong>Attendance has no menu line of its own</strong> — it&rsquo;s reached through Insights as <em>&ldquo;Who&rsquo;s showing up?&rdquo;</em>, in every season.</p>
+              <p><strong>Yes — once it&rsquo;s closed.</strong> There&rsquo;s no season switcher, so you&rsquo;re never in doubt about which year you&rsquo;re reading.</p>
+              <p><strong>A closed season is one page.</strong> While your team has no season running, every screen takes you to that season&rsquo;s <strong>Season&rsquo;s End</strong> page: its wrap-up card, and shelves holding the results, who was on the team, the practices you ran and how the money added up. That page is the whole season, and it reads the same whether it closed yesterday or three years ago.</p>
+              <p><strong>Right after you start next season</strong>, the confirmation offers a link back to the one you just closed.</p>
+              <p><strong>What you won&rsquo;t find</strong> is a way to reach an older year while a season is running. Once the next season starts, Insights and every other screen describe the season you&rsquo;re running — and the finished one keeps its page.</p>
+              <p><strong>Two reports are for the live season only.</strong> <strong>Playing Time</strong> and the <strong>Scouting Book</strong> never appear for a finished year. Playing-time figures are recalculated from your saved lineups each time you open them, and your opponent notes are the book you keep <em>today</em> — neither can promise to show a past season as you actually saw it.</p>
             </>
           ),
         },
         {
           id: 'faq-results-tag-filter',
           question: 'Can I see my record against just the games I tagged?',
-          answerText: 'Yes, in the season you are currently running. Open Insights, then "How are we doing?" Above the game list, a row of tag chips shows every tag you have used this season, each with how many finished games carry it. Tap one to filter the list down to just those games and see the record for that tag — wins, losses, ties, and runs for/against — in place of the season-wide line. Tap "All" to go back. A tag only gets a chip once it has at least one finished game; if your team has not tagged anything yet, this row does not show at all. Tag filtering is not offered in a finished season: tags are a list you keep editing — renaming, merging and deleting them as you go — so filtering an old season by a tag you invented last week would answer a question nobody could have asked that year. The games themselves, and each game\'s tags, are still listed. See "How do I tag a game?" to start tagging.',
-          keywords: ['filter by tag', 'record by tag', 'vs tag', 'tag chips', 'rivalry record', 'top in the province', 'tag filter', 'how are we doing tags', 'tags past season', 'no tag chips archive', 'why no tag filter'],
+          answerText: 'Yes. Open Insights, then the Results tab. Above the game list, a row of tag chips shows every tag you have used this season, each with how many finished games carry it. Tap one to filter the list down to just those games and see the record for that tag — wins, losses, ties, and runs for/against — in place of the season-wide line. Tap "All" to go back. A tag only gets a chip once it has at least one finished game; if your team has not tagged anything yet, this row does not show at all. See "How do I tag a game?" to start tagging.',
+          keywords: ['filter by tag', 'record by tag', 'vs tag', 'tag chips', 'rivalry record', 'top in the province', 'tag filter', 'results tab tags', 'why no tag filter'],
           answer: (
             <>
-              <p>Yes — in the season you&rsquo;re currently running. Open <strong>Insights</strong>, then <strong>&ldquo;How are we doing?&rdquo;</strong> Above the game list, a row of <strong>tag chips</strong> shows every tag you&apos;ve used this season, each with how many finished games carry it.</p>
+              <p>Yes. Open <strong>Insights</strong>, then the <strong>Results</strong> tab. Above the game list, a row of <strong>tag chips</strong> shows every tag you&apos;ve used this season, each with how many finished games carry it.</p>
               <p>Tap one to filter the list down to just those games and see the record for that tag — wins, losses, ties, and runs for/against — in place of the season-wide line. Tap <strong>All</strong> to go back.</p>
               <p>A tag only gets a chip once it has at least one finished game; if your team hasn&apos;t tagged anything yet, this row doesn&apos;t show at all. See <strong>&ldquo;How do I tag a game?&rdquo;</strong> to start tagging.</p>
-              <p><strong>In a finished season the chips aren&rsquo;t offered.</strong> Tags are a list you keep editing — renaming, merging and deleting them as the season runs — so filtering a past year by a tag you invented last week would answer a question nobody could have asked back then. The games themselves are all still there, and each one still shows the tags it carried.</p>
+              <p>Tags are a list you keep editing — renaming, merging and deleting them as the season runs — which is why the chips describe the season you&rsquo;re in. A finished season keeps its own page instead, with the games it played.</p>
             </>
           ),
         },

@@ -1669,20 +1669,30 @@
 .wltInsightsLink { display: inline-block; margin-top: 0.55rem; color: var(--blueprint-light); font-size: 0.78rem; font-weight: 600; text-decoration: none; }
 .wltInsightsLink:hover { text-decoration: underline; }
 
-/* ── Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09) ──
+/* ── Insights — the reports & analytics portal's Dashboard tab (2026-08-18) ──
    Region 1: borderless scoreboard band (blocks omit without data, re-wrap).
    Region 2: findings strip — the centerpiece (lime-tinted top border).
-   Region 3: question-titled doorway tiles → full report pages (never expand).
-   Season-over-season comparisons retired; every signal is within-season. */
+   Region 3: the all-reports rail — one live line per report.
+   Season-over-season comparisons retired; every signal is within-season.
+   ⚠ The question-titled DOORWAY TILES that used to be region 3 are gone with the reports
+   becoming tabs; `.insightsDoors`/`.insightsDoor*` below now serve the Development hub only. */
 .insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); padding: 0.9rem 0; margin-bottom: 1.2rem; }
-.insightsStat { flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid var(--home-line, rgba(255,255,255,0.07)); min-height: 40px; }
+/* ⚠ A COLUMN FLEX CONTAINER, and that is load-bearing rather than cosmetic. Each tile became an
+   <a> holding <span>s when the tiles learned to link to their report (the mockup's own
+   affordance): inline children would sit on ONE line and every vertical margin below would
+   silently do nothing. Stacking them here is what keeps the label/value/caption geometry the
+   same as when they were block <p>s in a <div>. */
+.insightsStat { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid var(--home-line, rgba(255,255,255,0.07)); min-height: 40px; text-decoration: none; color: inherit; border-radius: 8px; transition: background 0.12s ease; }
 .insightsStat:last-child { border-right: 0; }
-.insightsStatLbl { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 0.3rem; }
-.insightsStatVal { font-family: var(--font-display); font-weight: 800; font-size: 1.65rem; line-height: 1; color: var(--text-primary); font-variant-numeric: tabular-nums; margin: 0; }
+/* A tile is a link now, so it needs to say so on hover — quietly: this is a whole band of them and
+   a loud treatment would turn the scoreboard into a row of buttons. */
+a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
+.insightsStatLbl { display: block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 0.3rem; }
+.insightsStatVal { display: block; font-family: var(--font-display); font-weight: 800; font-size: 1.65rem; line-height: 1; color: var(--text-primary); font-variant-numeric: tabular-nums; margin: 0; }
 .insightsStatVal small { font-size: 0.95rem; color: var(--text-tertiary); font-weight: 700; }
 .insightsStatVal[data-pos="true"] { color: var(--success); }
 .insightsStatVal[data-pos="false"] { color: var(--danger); }
-.insightsStatCap { font-size: 0.68rem; color: var(--text-tertiary); margin: 0.3rem 0 0; }
+.insightsStatCap { display: block; font-size: 0.68rem; color: var(--text-tertiary); margin: 0.3rem 0 0; }
 .insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: var(--home-card, rgba(255,255,255,0.13)); overflow: hidden; margin-top: 0.4rem; }
 .insightsSegBar i { display: block; height: 100%; background: var(--logic-lime); border-radius: 3px 0 0 3px; }
 .insightsCalm { color: var(--text-tertiary); font-size: 0.85rem; padding: 0.9rem 0.1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); margin-bottom: 1.2rem; }
@@ -1698,96 +1708,11 @@
 .insightsCoChip { flex: none; font-size: 0.68rem; font-weight: 600; color: var(--blueprint-light); white-space: nowrap; margin-top: 0.3rem; }
 .insightsCoQuiet { color: var(--text-tertiary); font-size: 0.85rem; padding: 0.35rem 0.4rem 0.6rem; margin: 0; }
 
-/* ── Ask the Front Office (Phase A) ────────────────────────────────────────
-   Sits between "What stands out" (the PUSH voice) and the doorways (the NAVIGATE
-   voice) — the page's one PULL voice, and at rest one line of it.
 
-   ⚠ The bar must NOT read as a text input. Phase A cannot accept typing, so it is
-   styled as a bar with an explicit "Choose a question" hint and a chevron; a caret,
-   an inset field or a placeholder-grey label would all invite a coach to tap and
-   type into nothing. Phase B removes the hint and the geometry stays put.
-
-   Every colour is a token, so the warm gate re-skins this with no rules of its own. */
-.askGroup { display: flex; flex-direction: column; margin: 1.2rem 0; }
-.askBar {
-  display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
-  background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius); box-shadow: var(--shadow-sm), var(--highlight-top);
-  padding: 0.75rem 0.9rem; cursor: pointer; font: inherit; color: var(--text-primary);
-  min-height: 48px;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-}
-.askBar:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.6); background: var(--white-10); box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top); }
-.askBar:focus-visible { outline: 2px solid var(--blueprint-blue); outline-offset: 2px; }
-.askBarIcon { color: var(--blueprint-light); flex: none; }
-.askBarLabel { font-size: 0.92rem; font-weight: 650; letter-spacing: -0.01em; }
-.askBarHint { margin-left: auto; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--text-tertiary); }
-.askBarChev { transition: transform 0.16s; flex: none; }
-.askBar[aria-expanded="true"] { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
-.askBar[aria-expanded="true"] .askBarChev { transform: rotate(180deg); }
-
-.askPanel {
-  display: flex; flex-direction: column; gap: 0.65rem;
-  background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-top: 1px dashed rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 0 0 var(--radius) var(--radius);
-  box-shadow: var(--shadow-sm); padding: 0.8rem 0.9rem 0.9rem; margin-top: -1px;
-}
-.askPanel[hidden] { display: none; }
-
-.askChips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-.askChip {
-  background: var(--bg); border: 1px solid var(--white-20); border-radius: 999px;
-  font: inherit; font-size: 0.78rem; font-weight: 600; color: var(--text-primary);
-  padding: 0.42rem 0.85rem; cursor: pointer; min-height: 34px;
-  transition: border-color 0.12s, background 0.12s, color 0.12s;
-}
-.askChip:hover { border-color: var(--blueprint-blue); }
-.askChip:focus-visible { outline: 2px solid var(--blueprint-blue); outline-offset: 2px; }
-/* The portal's established "on" toggle language (lime fill + ink), NOT the mockup's ad-hoc
-   dark-ink chip — matching the mockup literally would have hard-coded a third chip treatment
-   the theme knows nothing about.
-   ⚠ A lime FILL is only half a rule. The token remap alone yields an olive fill under cream
-   text, which E3 bans, so both chips are ALSO listed in the warm override near the bottom of
-   this file that restores true lime + dark ink. Add any future filled "on" chip to both places
-   or it ships wrong on the default theme. */
-.askChip[aria-pressed="true"] { background: var(--logic-lime); border-color: var(--logic-lime); color: var(--pitch-black); }
-
-.askPosRow { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; padding-top: 0.6rem; border-top: 1px dashed var(--white-20); }
-.askPosLabel { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-right: 0.2rem; }
-.askPosChip {
-  background: var(--bg); border: 1px solid var(--white-20); border-radius: 8px;
-  font: inherit; font-size: 0.74rem; font-weight: 700; color: var(--text-secondary);
-  padding: 0.3rem 0.55rem; min-width: 40px; min-height: 32px; cursor: pointer;
-  font-variant-numeric: tabular-nums;
-}
-.askPosChip:hover { border-color: var(--blueprint-blue); color: var(--text-primary); }
-.askPosChip:focus-visible { outline: 2px solid var(--blueprint-blue); outline-offset: 2px; }
-.askPosChip[aria-pressed="true"] { background: var(--logic-lime); border-color: var(--logic-lime); color: var(--pitch-black); }
-
-.askIdle { margin: 0; font-size: 0.82rem; color: var(--text-tertiary); line-height: 1.5; }
-.askError { margin: 0; font-size: 0.82rem; color: var(--danger); }
-
-.askAnswer {
-  display: flex; flex-direction: column;
-  background: var(--bg); border: 1px solid var(--white-10);
-  border-radius: var(--radius-sm); padding: 0.8rem 0.9rem;
-}
-.askSentence { margin: 0 0 0.65rem; font-size: 0.94rem; font-weight: 620; line-height: 1.5; color: var(--text-primary); text-wrap: pretty; }
-.askReceiptsLabel { margin: 0 0 0.1rem; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); }
-.askReceipt { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; padding: 0.35rem 0; border-top: 1px dashed var(--white-20); font-size: 0.8rem; }
-.askReceiptText { color: var(--text-primary); min-width: 0; }
-.askReceiptMeta { font-family: var(--font-data); font-size: 0.72rem; color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.askReceiptLink { font-size: 0.74rem; font-weight: 700; color: var(--blueprint-light); white-space: nowrap; text-decoration: none; }
-.askFoot { margin: 0.6rem 0 0; font-size: 0.7rem; font-style: italic; color: var(--text-tertiary); }
-.askFullReport { margin-top: 0.5rem; font-size: 0.78rem; font-weight: 700; color: var(--blueprint-light); text-decoration: none; align-self: flex-start; }
-.askFullReport:hover { text-decoration: underline; }
-
-@media (max-width: 560px) {
-  .askBarHintText { display: none; }
-  .askReceipt { flex-direction: column; gap: 0.1rem; }
-  .askReceiptMeta, .askReceiptLink { white-space: normal; }
-}
+/* ⚠ THE "ASK THE FRONT OFFICE" BAR AND ITS ~40 RULES ARE DELETED HERE (owner ruling 2, reports
+   portal, 2026-08-18). The bar offered six ready-made questions and answered them with receipts;
+   every answer it gave is now a PERMANENT fixture in the report that owns it, so a coach reads it
+   without having to know to ask. Phases B and C of ASK_FRONT_OFFICE_PLAN are dead, not parked. */
 
 /* Question-titled doorway tiles. Sparse data = softened (visible, teaching);
    a permission-gated tile is simply absent (never rendered). */
@@ -1831,7 +1756,25 @@
 .insightsFlagWarn { color: var(--warning); font-size: 0.75rem; font-weight: 700; }
 .insightsRecGood { color: var(--success); }
 .insightsQuietText { color: var(--text-tertiary); font-size: 0.85rem; margin: 0; }
-.insightsOpsLink { display: inline-block; margin-top: 1rem; color: var(--blueprint-light); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+/* ── A report panel's own toolbar (reports portal P1, 2026-08-18) ──────────
+   The action row a tab carries beside the thing it names (Awards' Give / Manage / Print). It exists
+   as a class so the 44px TAP FLOOR can be applied to its controls WITHOUT touching `.btnPrimary`
+   and `.tagManageLink`, which are portal-wide primitives used on screens this project does not
+   sweep. `check:layout` flagged those two at 33px and 15px inside this row at 361px and 390px. */
+.insightsPanelToolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+.insightsPanelToolbar > button,
+.insightsPanelToolbar > a { min-height: var(--tap-min, 44px); }
+/* The link-styled members need padding as well as a floor, or the words sit pinned to the top of a
+   44px box that looks like a rendering slip rather than a target. */
+.insightsPanelToolbar > a { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+/* The quiet "go do something about this" link at the foot of a report panel — Playing Time's
+   "Manage lineups →", Development's "Set goals and record measurables in Skills & Goals →".
+   ⚠ It carries the 44px TAP FLOOR because a 0.8rem line of text is ~15-20px tall and a report is
+   read on a phone at the field: `check:layout` flagged both of these at 361px and 390px. Padding
+   rather than a bare `min-height` so the box grows around the text instead of leaving the words
+   pinned to its top edge. */
+.insightsOpsLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); margin-top: 0.5rem; padding: 0.4rem 0; color: var(--blueprint-light); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
 .insightsOpsLink:hover { text-decoration: underline; }
 .mutedInline { color: var(--text-tertiary); font-weight: 400; }
 .insightsSeasonStatLbl { font-size: 0.72rem; color: var(--text-tertiary); }
@@ -1842,7 +1785,9 @@
 .insightsBridge a:hover { text-decoration: underline; }
 /* Past seasons — one compact line per year, expandable for the detail stats. */
 .insightsSeasonRow { border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08)); border-radius: 8px; margin-bottom: 0.4rem; background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
-.insightsSeasonRow summary { list-style: none; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; cursor: pointer; min-height: 40px; }
+/* ⚠ 44px, not 40 — a past-season row is the tap that opens a year, and `check:layout` flags it
+   at 361px and 390px. The 40px was set before the tap floor was enforced on this surface. */
+.insightsSeasonRow summary { list-style: none; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; cursor: pointer; min-height: var(--tap-min, 44px); }
 .insightsSeasonRow summary::-webkit-details-marker { display: none; }
 .insightsSeasonName { font-weight: 700; font-size: 0.88rem; color: var(--text-primary); min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .insightsSeasonMeta { font-size: 0.78rem; color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -1850,6 +1795,9 @@
 .insightsSeasonCaret { color: var(--text-tertiary); transition: transform 0.15s; flex-shrink: 0; }
 .insightsSeasonRow[open] .insightsSeasonCaret { transform: rotate(180deg); }
 .insightsSeasonBody { display: flex; gap: 0.8rem 1.4rem; flex-wrap: wrap; padding: 0 0.7rem 0.7rem; }
+/* The one LINK inside an opened season row ("Season Wrapped →"). A 0.82rem line of text is ~16px
+   tall; this is the door to a whole finished season and is tapped on a phone. */
+.insightsSeasonWrapLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); font-size: 0.82rem; font-weight: 600; }
 
 /* Templates tab header row (hint + the pane's single lime "New template"). */
 .lineupTplHeader { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
@@ -1911,9 +1859,15 @@
 
   /* The needs-lineup toggle stops right-aligning and wraps to its own row. */
   .lineupFilterNeeds { margin-left: 0; }
-  /* Touch targets (2026-06-29 mobile conventions): tabs ≥40px, chips bumped to ≥36px. */
+  /* Touch targets (2026-06-29 mobile conventions): tabs ≥40px, chips at the tap floor.
+     ⚠ 36px was UNDER the 44px floor and `check:layout` had been flagging it — on the Insights
+     Results tab it was found only once the fixture gained tagged games, because a team with no
+     finished games renders no chips and the sweep had nothing to measure. The bump is here, at the
+     phone breakpoint, rather than on the base rule: these are deliberately compact chips at desktop
+     widths (a portal-wide decision with ~25 accepted baseline entries across drills, templates,
+     fundraisers and Lineups), and touch is where the floor earns its keep. */
   .lineupTabs .segBtn { min-height: 40px; }
-  .lineupFilterChip { min-height: 36px; padding: 0.3rem 0.72rem; }
+  .lineupFilterChip { min-height: var(--tap-min, 44px); padding: 0.3rem 0.72rem; }
   /* Insights scoreboard band wraps to a 2-up grid of stat blocks on phones. */
   .insightsStat { flex: 1 1 45%; border-right: 0; padding: 0.45rem 0.8rem; }
 }
@@ -7566,16 +7520,12 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .titlePremiumBadge,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltToggleActive,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .askChip[aria-pressed="true"],
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .askPosChip[aria-pressed="true"],
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltPip[data-r="win"] {
   background: var(--home-lime);
   color: var(--home-lime-ink);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltToggleActive,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .askChip[aria-pressed="true"],
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .askPosChip[aria-pressed="true"] {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltToggleActive {
   border-color: var(--home-lime);
 }
 /* Result pips whose warm fill is NOT lime: the base (no-result) pip sits on a warm
@@ -9111,6 +9061,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   border-radius: 999px;
   color: var(--text-primary);
   font-size: 0.85rem;
+  /* ⚠ Tap floor: this is the only control on the Scouting Book panel, and at 0.85rem the padding
+     above leaves it ~40px on a phone (`check:layout`, 361px/390px). */
+  min-height: var(--tap-min, 44px);
 }
 .scoutSearch::placeholder { color: var(--text-tertiary); }
 .scoutList { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -9542,8 +9495,8 @@ button.gdChip {
   border: 1px solid transparent; cursor: pointer; font-family: inherit; line-height: 1.5;
   min-height: var(--tap-min, 44px); padding-inline: 0.85em;
 }
-/* "On" reads off the ARIA state the button already carries (the .askChip convention in this
-   file), so the pressed look and what a screen reader says can never disagree. Soft tint, not
+/* "On" reads off the ARIA state the button already carries (the .lineupFilterChip convention in
+   this file), so the pressed look and what a screen reader says can never disagree. Soft tint, not
    the filled lime: this chip sits beside the field/uniform chips and must not shout at them. */
 button.gdChip[aria-pressed='true'] {
   background: var(--home-olive-soft, rgba(190, 242, 100, 0.12));

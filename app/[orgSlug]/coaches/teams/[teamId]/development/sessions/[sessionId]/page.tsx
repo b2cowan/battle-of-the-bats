@@ -341,11 +341,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       <CoachPageHeader
         icon={ClipboardCheck}
         title="Evaluation session"
-        helpLabel="Development"
+        helpLabel="Skills & Goals"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
       />
 

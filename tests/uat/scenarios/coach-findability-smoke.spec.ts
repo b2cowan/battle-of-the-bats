@@ -294,7 +294,7 @@ test.describe('P1 #4 — the notification feed is reachable on a phone', () => {
  * because the state cannot be reached by reading the active-season nav — everything else is
  * DISCOVERED below rather than listed.
  */
-const CLOSED_SEASON_DOORS = ['/season-end', '/history/results'];
+const CLOSED_SEASON_DOORS = ['/season-end', '/history?section=results'];
 
 test.describe('P1 #17 — every nav destination carries help', () => {
   test.use({ viewport: DESKTOP });
@@ -397,7 +397,7 @@ test.describe('the read-only assistant sees, never acts', () => {
     // Education, not action (Chunk G rule 4). A read-only surface that grows a button is the leak
     // class that has bitten three chunks running.
     await signIn(page, ASSIST_EMAIL);
-    await open(page, `${base()}/attendance`);
+    await open(page, `${base()}/history?section=attendance`);
     await expect(main(page).getByRole('button', { name: /^Help/i })).toBeVisible({ timeout: 30_000 });
 
     await open(page, `/${ORG_SLUG}/coaches/notifications`);

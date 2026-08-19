@@ -132,7 +132,11 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
     // The landing slot — whichever of the two the season's state calls for.
     'Overview', "Season's End",
     'Schedule', 'Practice plans', 'Lineups', 'Tournaments',
-    'Development', 'Insights',
+    /* ⚠ "Development" → "Skills & Goals" (owner ruling 5, 2026-08-18). Two doors were called
+       Development: this workbench, and the coverage REPORT inside Insights that measures how well
+       it is being used. `isCoachNavItemVisible` gained a case for the new label AND kept the old
+       one as a fallthrough — the pattern this list's own header describes. */
+    'Skills & Goals', 'Insights',
     'Money',
     'Chat', 'Email families',
     'Roster', 'Tryouts',

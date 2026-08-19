@@ -552,13 +552,21 @@ export default function SeasonEndPage({
             you close it. When it does, this is where it gets kept: the season&apos;s story, the
             results, the roster, the practices you ran and how it added up.
           </p>
-          <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
-            <span>
-              Compare every season
-              <small>Records, roster size and money summaries, season by season</small>
-            </span>
-            <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
-          </Link>
+          {/* ⚠⚠ **THE "COMPARE EVERY SEASON" DOOR IS DELETED** (owner, 2026-08-19), and it had to go
+              in the same change as the list it opened. That list lived at the foot of the Insights
+              Results report; the owner removed it as not belonging on a report about THIS season,
+              and a door onto a list that no longer exists is the loop-back defect this page has
+              already been fixed for once (first owner walk, 2026-08-18). Leaving it would have been
+              the more expensive half of the removal.
+
+              ⚠ The door's sub-line had ALSO just lost its money clause for a related reason (it
+              promised "money summaries" after money left Insights) — worth recording because the
+              same door was wrong twice in two days, both times by describing a destination that had
+              changed underneath it.
+
+              ⚠ **KNOWN AND ACCEPTED:** while a season is running there is now no route to a previous
+              season's page. Look-back happens once a season is closed, when this page becomes the
+              team's one door. Re-adding a compare list to a live screen reopens a settled decision. */}
         </section>
       </div>
     );

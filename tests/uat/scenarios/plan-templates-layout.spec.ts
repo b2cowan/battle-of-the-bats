@@ -37,7 +37,7 @@ const TEAM = '3127a094-458f-4b78-8726-17342a8e37a6';
 const EVENT = process.env.PROBE_EVENT_ID ?? '';
 
 const templatesUrl = () => `/${SLUG}/coaches/teams/${TEAM}/development/templates`;
-const reportUrl = () => `/${SLUG}/coaches/teams/${TEAM}/history/development`;
+const reportUrl = () => `/${SLUG}/coaches/teams/${TEAM}/history?section=development`;
 const planUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice/${EVENT}`;
 const hubUrl = () => `/${SLUG}/coaches/teams/${TEAM}/development`;
 

@@ -16,6 +16,7 @@ import {
 } from '@/lib/coach-club-book';
 import type { RepTeamOpponentObservation } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import ScoutTagFilter from '@/components/coaches/ScoutTagFilter';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../../coaches.module.css';
@@ -229,7 +230,7 @@ export default function CoachOpponentCardPage({
     return (
       <div className={styles.page}>
         <p className={styles.errorText}>{error || 'Could not load this opponent'}</p>
-        <CoachBackLink href={`${base}/history/opponents`}>All opponents</CoachBackLink>
+        <CoachBackLink href={insightsSectionHref(base, 'scouting')}>All opponents</CoachBackLink>
       </div>
     );
   }
@@ -368,7 +369,7 @@ export default function CoachOpponentCardPage({
       {/* Page-header ruling 2026-08-11: the way back was a SUBTITLE dressed as a link — it now
           uses the portal's one back-link treatment, above the header like every other drill-in.
           The record chip stays on the title row: it is this opponent's identity, not an action. */}
-      <CoachBackLink href={`${base}/history/opponents`}>All opponents</CoachBackLink>
+      <CoachBackLink href={insightsSectionHref(base, 'scouting')}>All opponents</CoachBackLink>
       <CoachPageHeader
         icon={Telescope}
         title={opponent.displayName}

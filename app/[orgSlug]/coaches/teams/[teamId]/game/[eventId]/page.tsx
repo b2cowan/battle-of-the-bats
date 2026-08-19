@@ -48,6 +48,7 @@ import { generateBestLineup } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { playerDisplayName, playerName } from '@/lib/coach-roster-name';
 import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import { LINEUP_POSITIONS, type LineupSeedEntry } from '@/lib/lineup-grid';
 import { ordinal } from '@/lib/playoff-bracket';
@@ -937,7 +938,7 @@ export default function CoachGameConsolePage({
             </div>
           )}
 
-          <Link href={`${base}/history/playing-time`} className={styles.gdDoorRow}>
+          <Link href={insightsSectionHref(base, 'playing-time')} className={styles.gdDoorRow}>
             <span>Playing time — season report</span><span aria-hidden>›</span>
           </Link>
 

@@ -21,6 +21,7 @@ import { useDismissable, useViewportFit } from '@/lib/overlay-hooks';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
   resolveOverviewAnchor,
   resolveBoard,
@@ -1281,7 +1282,7 @@ export default function TeamOverviewPage({
           sub: s == null || s.share == null
             ? 'Take attendance to see the season trend'
             : 'season average',
-          href: `${base}/attendance`,
+          href: insightsSectionHref(base, 'attendance'),
           tone: s?.share == null ? 'muted' : 'default',
           flag: (s && s.lowCount > 0)
             ? { text: `${s.lowCount} player${s.lowCount === 1 ? '' : 's'} under ${pct(0.7)}`, tone: 'warn' }
@@ -1307,7 +1308,7 @@ export default function TeamOverviewPage({
           sub: p == null || p.verdict === 'insufficient'
             ? 'Save a few lineups to see the balance'
             : `across ${p.games} game${p.games === 1 ? '' : 's'}`,
-          href: `${base}/history/playing-time`,
+          href: insightsSectionHref(base, 'playing-time'),
           tone: p == null || p.verdict === 'insufficient' ? 'muted' : 'default',
           flag: (p && p.belowCount > 0)
             ? { text: `${p.belowCount} player${p.belowCount === 1 ? '' : 's'} well below`, tone: 'warn' }
@@ -1318,7 +1319,7 @@ export default function TeamOverviewPage({
         // The documented fallback when a coach has no lineup access — never a ranked list, so the
         // board cannot reshuffle underneath them week to week.
         return {
-          key, label: 'Development', icon: TrendingUp,
+          key, label: 'Skills & Goals', icon: TrendingUp,
           value: openGoalCount == null ? '…' : openGoalCount === 0 ? 'No goals yet' : String(openGoalCount),
           // Null (still loading) must not borrow the zero copy — the value would read "…" beside a
           // caption that has already decided the answer is none.
@@ -2163,7 +2164,7 @@ export default function TeamOverviewPage({
         <p className={styles.insightsBridge}>
           <span className={styles.insightsBridgeIcon} aria-hidden>⚠</span>
           Worth a look: {armCareFlag.name} went over the pitching cap in {armCareFlag.overCapGames} game{armCareFlag.overCapGames === 1 ? '' : 's'}.{' '}
-          <Link href={`${base}/history/playing-time`}>Season insights →</Link>
+          <Link href={insightsSectionHref(base, 'playing-time')}>Season insights →</Link>
         </p>
       )}
 

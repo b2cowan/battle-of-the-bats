@@ -380,9 +380,41 @@ export const canJoinStaffChat = (c: CoachCapabilities) => c.staffChat;
  * is false still reads their players' names, numbers and positions on the practice plan they are
  * standing on the field to run.
  */
+/**
+ * The record duties that are NOT money — the shared half of the two predicates below.
+ *
+ * ⚠ Private, and it exists so the duty list is written ONCE. Both exported predicates enumerate the
+ * same duties and differ by exactly one clause; as two independent seven-clause unions, an eighth
+ * duty added to `CoachCapabilities` had to be remembered in two places, and forgetting one would
+ * silently open or close a door with nothing to catch it.
+ */
+const hasNonMoneyRecordDuty = (c: CoachCapabilities) =>
+  c.attendance || c.lineups || c.notes || c.documents !== 'off' || c.tryouts;
+
 export const hasRecordAccess = (c: CoachCapabilities) =>
-  c.isHeadCoach || c.attendance || c.lineups || c.notes
-  || c.money !== 'off' || c.documents !== 'off' || c.tryouts;
+  c.isHeadCoach || hasNonMoneyRecordDuty(c) || c.money !== 'off';
+/**
+ * **Does this person hold a record duty that is NOT money?** — the Insights portal's own gate
+ * (reports portal P1, owner ruling 3, 2026-08-18).
+ *
+ * ⚠ **THE ONE PERSONA THIS MOVES IS THE TREASURER, AND MOVING THEM IS THE POINT.** Insights gated
+ * on `hasRecordAccess`, which counts `money !== 'off'` among its seven duties — so an assistant set
+ * up as the team's treasurer and nothing else held the Insights door. That was defensible while a
+ * dues tile, two money findings and a "Where's the money?" doorway lived on the hub: there was
+ * something there for them. The owner then ruled money out of Insights entirely, and the door
+ * became one onto a portal of player and team statistics with nothing of theirs on it. Their home
+ * is the Money hub, which they still hold.
+ *
+ * ⚠ It is `hasRecordAccess` MINUS money's contribution — and the two now SHARE the duty list rather
+ * than each spelling it out, so an eighth duty cannot be added to one and forgotten in the other.
+ * A coach who holds money AND attendance keeps the door; only a coach whose sole duty is money
+ * loses it.
+ *
+ * ⚠ Every OTHER record surface stays on `hasRecordAccess`: the roster page, Season's End and the
+ * development board are records a treasurer has a real claim on. This narrows exactly one door.
+ */
+export const hasNonMoneyRecordAccess = (c: CoachCapabilities) =>
+  c.isHeadCoach || hasNonMoneyRecordDuty(c);
 /**
  * The negation, kept as its own name because it reads better at the two ALTITUDE call sites — the
  * ones choosing which SCREEN to render rather than whether to allow something.

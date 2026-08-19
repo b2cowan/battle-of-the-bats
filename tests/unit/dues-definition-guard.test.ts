@@ -37,7 +37,11 @@ const REQUIRED_IMPORTERS = [
   // beside the payments that have already arrived. Same figure as the payment schedule, and it must
   // come from the same place — the two screens sit one tab apart.
   'app/api/coaches/[orgSlug]/teams/[teamId]/register/route.ts',
-  'app/api/coaches/[orgSlug]/teams/[teamId]/ask/route.ts',
+  /* ⚠ The `/ask` route is GONE from this list because the route is gone (reports portal P1,
+     2026-08-18): the "Ask about your team" bar was retired, and its two dues questions — what each
+     family still owes, and who has not paid anything yet — are answered on the Money hub's Player
+     Dues screen, which is already listed above via its own route. No dues-quoting surface lost its
+     guard; one stopped existing. */
   'lib/insights-digest.ts',
   'lib/insight-findings.ts',
   // The season settlement's assembly — every figure the sheet quotes starts in the shared model.

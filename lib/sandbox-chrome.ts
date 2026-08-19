@@ -5,6 +5,7 @@ import {
 } from './demo-org';
 import { SEE_IT_LIVE_PATH } from './sandbox-door';
 import { moneySectionHref } from './coach-money-links';
+import { insightsSectionHref } from './coach-insights-links.ts';
 
 // The dock ↔ tournament-provider contract constants live in `lib/demo-org.ts` (the neutral module
 // both sides already import — the shared provider must never depend on THIS file). Re-exported
@@ -584,12 +585,22 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
     {
       n: 6,
       label: 'Ask who has been on the field',
-      href: team(DEMO_COACH_TEAM_IDS.midSeason, '/history/playing-time'),
+      /* ⚠ THE PLAYING-TIME TAB, not the tab-less legacy page (reports portal P1, 2026-08-18) — the
+         same rule step 4 states for the Money hub. `exactPath` still binds the PATH; the `?section=`
+         part additionally requires the right TAB, so a visitor standing on the portal's Dashboard is
+         not treated as "already here" and travelled correctly to the panel this sentence describes.
+         Delivering in place on the wrong tab would ring an anchor inside a `display:none` panel. */
+      href: insightsSectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'playing-time'),
       exactPath: true,
       anchor: '[data-sandbox-tour="playing-time"]',
       // Measurement in context, never a verdict — the playing-time vocabulary ruling
       // (owner 2026-08-04, BUSINESS_DECISIONS.md). Counts and a cap; the reader draws the line.
-      said: 'One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Nobody typed any of this in.',
+      /* ⚠ THE OPENING CLAUSE IS NEW (2026-08-18) and it is the demo's sentence about the portal
+         itself. Insights became one page of seven report tabs the same day; a prospect who lands
+         here mid-tour now sees a tab row the old narration never mentioned, and CLAUDE.md's demo
+         rule asks exactly this — *should a demo moment show this?* One clause on an existing step,
+         not a ninth step: the tour is already eight. */
+      said: 'Every report this coach has sits behind one row of tabs — results, attendance, playing time, development, awards, the scouting book — and this is the playing-time one. One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Nobody typed any of this in.',
       nextLabel: 'Next: what a parent sees',
     },
     {

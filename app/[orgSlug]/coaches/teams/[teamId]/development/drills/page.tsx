@@ -422,7 +422,7 @@ export default function CoachDrillsPage({
 
   const header = (
     <>
-      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the blurb's promise ("write it once, four taps after
           that") is already the empty state's description, where a coach with no drills reads it. */}
       <CoachPageHeader

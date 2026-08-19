@@ -11,6 +11,7 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import TestTypesManager from '@/components/coaches/TestTypesManager';
 import { todayLocal } from '@/lib/measurable-format';
 import { canManageSchedule, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
@@ -59,7 +60,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const helpRequest = {
     module: 'coaches' as const,
     sectionIds: ['premium-development'],
-    label: 'Development',
+    label: 'Skills & Goals',
     fullGuideHref: `/${orgSlug}/coaches/help#premium-development`,
   };
 
@@ -373,7 +374,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
       {/* Insights door (3D) — deliberately absent until the report existed (no doors to
           nowhere); same question as the Insights tile: one phrasing, one destination. */}
-      <Link href={`${base}/history/development`} className={`${styles.insightsDoor} ${reportEmpty ? styles.insightsDoorSoft : ''}`}>
+      <Link href={insightsSectionHref(base, 'development')} className={`${styles.insightsDoor} ${reportEmpty ? styles.insightsDoorSoft : ''}`}>
         <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
         <span className={styles.insightsDoorSum}>
           {reportEmpty
@@ -437,8 +438,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           pill on the test list. */}
       <CoachPageHeader
         icon={TrendingUp}
-        title="Development"
-        helpLabel="Development"
+        title="Skills & Goals"
+        helpLabel="Skills & Goals"
         help={helpRequest}
       />
 

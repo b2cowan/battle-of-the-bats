@@ -67,8 +67,17 @@ function code(source: string): string {
 // ⚠ The Insights hub no longer appears here: every assertion that read it was about the
 // finished-season copy of that page, which is deleted (2026-08-18). The hub's live behaviour is
 // covered by its own tests; what replaced these is "a closed season is one page" below.
-const results = read('history', 'results');
-const awards = read('history', 'awards');
+/**
+ * ⚠ **THESE TWO ARE `panel.tsx`, NOT `page.tsx`** (reports portal P1, 2026-08-18). Insights became
+ * one tabbed page, so each report's body moved into a panel the hub mounts, and every `page.tsx`
+ * beside it is now a four-line permanent redirect. Reading the page file here would have passed a
+ * `readFileSync` and then asserted against a redirect stub — every match failing for a reason that
+ * has nothing to do with what these tests are about.
+ */
+const panel = (...seg: string[]) => readFileSync(join(COACH_PAGES, ...seg, 'panel.tsx'), 'utf8');
+const results = panel('history', 'results');
+const awards = panel('history', 'awards');
+/** Still a real page — the certificate is its own printable route, not a tab. */
 const certificate = read('history', 'awards', 'certificate');
 const seasonEnd = read('season-end');
 
@@ -183,14 +192,49 @@ describe('the look-back layer', () => {
       + 'withholds the rows is the "None yet" lie about a team with three archived years.');
   });
 
-  it('Season’s End links to the compare list, and the list links back per season', () => {
-    assert.match(seasonEnd, /Compare every season/,
-      'Season\'s End must keep its door into the cross-season list — it is one of only three ways '
-      + 'a coach reaches a finished season at all.');
-    assert.match(results, /\$\{base\}\/season-end\?year=\$\{y\.id\}/,
-      'each row of the compare list must link to THAT season\'s Wrapped. This is the only link in '
-      + 'the portal that names a season other than the working one, and it is why `?year=` still '
-      + 'exists on Season\'s End and the wrapped route.');
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════════
+   * ⚠⚠ **THE COMPARE LIST IS DELETED, AND THIS TEST NOW GUARDS ITS ABSENCE** (owner, 2026-08-19).
+   *
+   * It previously asserted the opposite — that Season's End kept a "Compare every season" door and
+   * that the Results report ended in a season-by-season list linking to each year's own page. The
+   * owner removed the list ("that doesn't need to be there" — a report about THIS season has no
+   * business ending in a table of every other one), and the door went with it in the same change
+   * because a door onto a list that no longer exists is the loop-back defect this page was already
+   * fixed for once, on the first walk of 2026-08-18.
+   *
+   * ⚠ **THE CONSEQUENCE IS ACCEPTED, NOT OVERLOOKED:** while a season is RUNNING there is now no
+   * route to a previous season's page. Look-back happens once a season closes, when this page
+   * becomes the team's one door. Anyone re-adding a compare list to a live screen is reopening a
+   * settled decision — which is exactly what this test exists to make them notice.
+   * ══════════════════════════════════════════════════════════════════════════════════════════════
+   */
+  it('no live screen has re-grown a cross-season compare list', () => {
+    assert.equal(
+      /Compare every season/.test(seasonEnd), false,
+      'Season\'s End has re-grown its "Compare every season" door. The list it opened is deleted, so '
+      + 'this is a door onto nothing — the loop-back defect this page was already fixed for.',
+    );
+    assert.equal(
+      /Past seasons/.test(results), false,
+      'the Results report has re-grown its past-seasons list. It describes ONE season by decision; a '
+      + 'season-by-season table belongs to the closed-season page, not to a live report.',
+    );
+    /**
+     * ⚠ `?year=` is NOT retired with it, and that is deliberate. Season's End still reads a year —
+     * it is an approved history page in `coach-history-endpoint-guard.test.ts` — and the roll-forward
+     * modal still hands it one so a coach who has just started next season can open the one they
+     * finished. That single caller is now the whole reason the parameter exists; if it ever goes,
+     * the parameter is genuinely dead and should be reconsidered rather than left lying around.
+     */
+    const modal = readFileSync(
+      join(process.cwd(), 'components', 'coaches', 'StartNextSeasonModal.tsx'), 'utf8',
+    );
+    assert.match(
+      modal, /season-end\?year=\$\{encodeURIComponent\(summary\.previousSeason\.id\)\}/,
+      'the roll-forward modal is now the ONLY surface that names a season other than the working '
+      + 'one. Losing it would leave `?year=` on Season\'s End with no caller at all.',
+    );
   });
 
   /**
@@ -881,13 +925,22 @@ describe('a closed season is one page, not a read-only copy of the portal', () =
    * for the coach most likely to press it, it redirected back to the page they pressed it on.
    */
   it('the closed-season page offers no door that its own gate would bounce', () => {
-    const body = seasonEnd.slice(seasonEnd.indexOf('const seasonTitle'));
-    assert.equal(
-      code(body).includes('/history/results'), false,
-      'the closed-season page links to the compare list again. That list lives under Insights, '
-      + 'which a team with no live season does not have — the link loops, and a link that loops '
-      + 'reads as a broken page rather than as a closed door.',
-    );
+    const body = code(seasonEnd.slice(seasonEnd.indexOf('const seasonTitle')));
+    /**
+     * ⚠ **TWO SPELLINGS, BECAUSE THE ADDRESS CHANGED SHAPE** (reports portal P1, 2026-08-18). The
+     * compare list moved from the route `/history/results` to the tab `?section=results`, built by
+     * `insightsSectionHref`. Checking only the old literal would leave this test passing over a
+     * re-added door written the new way — a guard that quietly stops guarding is worse than none,
+     * and this one protects against a link that loops back to the page a coach pressed it on.
+     */
+    for (const spelling of ['/history/results', "insightsSectionHref(base, 'results')"]) {
+      assert.equal(
+        body.includes(spelling), false,
+        `the closed-season page links to the compare list again (as \`${spelling}\`). That list `
+        + 'lives under Insights, which a team with no live season does not have — the link loops, '
+        + 'and a link that loops reads as a broken page rather than as a closed door.',
+      );
+    }
   });
 
   it('the team layout decides it on the SERVER, from the shared resolvers', () => {

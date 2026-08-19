@@ -355,7 +355,7 @@ export default function CoachPlanTemplatesPage({
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the blurb's promise ("next Tuesday starts from it") is
           already the empty state's description, where a coach with no templates reads it. */}
       <CoachPageHeader

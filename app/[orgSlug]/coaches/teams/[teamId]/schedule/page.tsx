@@ -14,6 +14,7 @@ import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { canManageSchedule } from '@/lib/coach-capabilities';
+import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders,
@@ -2651,7 +2652,7 @@ export default function CoachesSchedulePage({
                   </button>
                   {/* Batch 4 (f8-2): the season report and the place attendance is recorded had
                       no link between them in either direction. This is the return trip. */}
-                  <Link href={`${base}/attendance`} className={styles.btnGhost}>
+                  <Link href={insightsSectionHref(base, 'attendance')} className={styles.btnGhost}>
                     Season attendance
                   </Link>
                 </div>

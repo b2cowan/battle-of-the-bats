@@ -7913,6 +7913,127 @@ here). Re-baselining now would also bake in another session's in-flight navigati
 should re-run the sweep with a fresh session once both are settled**, and either fix that button or
 record it with a reason.
 
+---
+
+## §58 · Insights becomes a reports portal — seven tabs, no money, no Ask bar
+
+**What changed for a coach.** Insights was a scoreboard, a findings strip, an "Ask about your team"
+bar and seven question-titled tiles that each navigated away to a separate page. It is now **one
+page with a permanent row of report tabs** — Dashboard · Results · Attendance · Playing Time ·
+Development · Awards · Scouting Book — on the Money hub's exact mechanics. The tab row never leaves,
+each tab is its own shareable address (`?section=`), and a report you have opened keeps its state
+when you come back to it.
+
+**Built on dev 2026-08-18** (P1 of `docs/projects/active/COACH_INSIGHTS_REPORTS_PORTAL_PLAN.md`,
+owner-approved mockups `claude.ai/code/artifact/7d02e402-fd59-4b11-8d88-33fe95fffd8c`). **No
+migration, no new API route, no route deleted** — the six report routes became permanent redirects.
+P2 (attendance drill-in, position-recency matrix, arm care) and P3 (charts) are NOT in this build.
+
+### The walk
+
+**A · The tab row does its job.** Open Insights. Move through all seven tabs. The row must stay put
+and stay measurable: at a narrow window the tabs scroll and **arrows appear only on the side that
+actually has something hidden**. Copy the URL from a tab and paste it in a new window — it must open
+on that tab. Press Back — it must return to the previous tab, not to the team page.
+
+**B · Nothing is lost on a tab switch.** On Results, tap a game-tag chip (**Rivalry** or
+**Playoffs**) to filter. Move to Attendance, then back to Results. ⚠ **The chip must still be
+selected and the table must not re-load.** Panels stay mounted by design; if a tab flashes a spinner
+on return, that is the defect.
+
+⚠⚠ **THE FIXTURE'S LIVE SEASON HAD NO FINISHED GAMES UNTIL 2026-08-19, AND THAT HID TWO THINGS.**
+This step was unwalkable on the first attempt — Results said "No results yet" and there were no
+chips to tap — because the fixture seeded scored games for the PRIOR season and for the
+between-seasons team but never for the season a coach is actually running. Insights reads a season
+back; a live season with nothing in it renders honest empty states and nothing else.
+
+⚠ **And `check:layout` reported GREEN over it.** Seven tabs of empty states render perfectly, so the
+sweep measured them, found nothing, and the coverage was reported as real — the same
+"green sweep over an EMPTY FIXTURE is not evidence" trap already written down in
+`memory/project_layout_invariant_sweep.md`. With the season populated, the sweep immediately found
+the tag chips sitting at 21px against a 44px floor. Fixed at the phone breakpoint, which also fixed
+the same chips on Lineups, the drill library, plan templates and Fundraising; the compact desktop
+size is a standing portal-wide decision and is recorded as such.
+
+**C · The Dashboard is two things, not three.** Five scoreboard tiles — Record, Form, Run diff,
+Close games, Attendance — and **no Dues tile**. Each tile is now a link: tap Record, land on
+Results. Under them, *What stands out*, and **nothing after it**.
+
+⚠ **An "All reports" rail was built here and then deleted on your first look** (2026-08-18) — it
+listed all six reports with a stat each, one line under a tab row listing the same six reports:
+*"the tabs have all the reports, this is redundant."* Its stated job — "see where the news is
+without opening anything" — is what *What stands out* already does, and does better, because it
+names the one thing worth knowing instead of six things in a fixed order. **If the Dashboard ever
+feels thin, the fix is another findings rule, not another index of the tabs.** Three network
+requests per Dashboard load went with it.
+
+**D · Money is gone, and this is the ruling to check hardest.** Anywhere under Insights, there must
+be **no dollar figure at all** — no dues tile, no money flag in *What stands out*, no rail row.
+Money's homes are the team Overview and the Money hub; confirm it moved rather than vanished by
+opening **Money → Player Dues**, where every figure still is.
+
+**E · The Ask bar is gone.** No "Ask about your team" anywhere on the page. Its two dues questions
+are answered on Money → Player Dues; the four about players land in P2's report fixtures.
+
+**F · The rename, everywhere it appears.** The sidebar and the phone More sheet read **Skills &
+Goals**. ⚠ So does the workbench **PAGE TITLE** — that was missed in the first build and caught on
+the owner's walk (2026-08-19): the nav said one thing and the page it opened said "Development",
+which is precisely the door-and-destination mismatch the rename existed to end. Also check the
+**Overview tile**, and the back-link on the evaluation-session, board, drills and templates pages —
+all four name the page they return to.
+
+The Development *tab inside Insights* keeps the word, and that is the point of the rename. On that
+tab, the header line **"Set goals and record measurables in Skills & Goals →"** must open the
+workbench.
+
+**G · Every old address still lands.** Each of these must open the right TAB, not 404:
+`/history/results` · `/history/playing-time` · `/history/development` · `/history/awards` ·
+`/history/opponents` (→ **Scouting Book**) · and the top-level `/attendance`. Then the in-product
+doors: the team Overview's attendance tile and playing-time tile, the team page's *Season insights
+→*, the game console's playing-time row, the Skills & Goals hub's report tile, the Schedule's
+*Season attendance* button, the **"All opponents"** back-link inside an opponent's book, and each
+*What stands out* line.
+
+**H · The treasurer, and only the treasurer.** ⚠⚠ **THE ONE ACCESS CHANGE, AND THE STEP MOST LIKELY
+TO BE WALKED WRONG.** Sign in as **`uat-asst-treasurer`** — money `write`, every other grant off.
+Expect: **Insights absent from the desktop rail, the phone bar AND the phone More sheet**; Money
+still present; Roster, Settings and Skills & Goals still present (this narrows exactly one door, not
+the treasurer's whole portal).
+
+⚠ **Do NOT walk this as `uat-asst-money` — that persona is not a treasurer.** It holds attendance
+and lineups as well as money, so it keeps Insights for reasons that have nothing to do with this
+ruling, and signing in as it shows the door present and reads as a PASS while confirming the
+opposite. The `uat-asst-treasurer` persona was added to the fixture on 2026-08-19 precisely because
+this step was not walkable without it and nothing said so.
+
+Then confirm nobody else moved: `uat-asst-nomoney` (attendance + lineups, no money) and the head
+coach both keep Insights; `uat-helper` still sees neither Insights nor Money.
+
+**I · Phone, at 361px.** Walk all seven tabs. The tab row scrolls rather than truncating; the
+Attendance table reflows to cards; the Awards toolbar buttons and the past-season rows are tappable.
+
+### Known, deliberate, and worth your eye
+
+- **The past-seasons shelf shows no attendance %** — the mockup did, and the cross-season endpoint
+  does not return it. It was left out rather than fabricated; adding it is an endpoint change.
+- ⚠⚠ **The findings engine KEPT its money rules on purpose, and the page keeps them out by never
+  asking for dues.** The Sunday *"week in review"* push is a second consumer of that engine and is
+  **not** Insights — deleting the rules outright would have silently stripped dues warnings from a
+  notification nobody asked to change. **If you want the Sunday push money-free too, say so — it is
+  a one-line change and it is your call, not the build's.**
+- **Awards and Scouting Book had never been measured on a phone before.** Their tap targets were
+  fixed in this build (Give an award, Manage award types, the opponent search box, past-season rows,
+  and the two "go do something" links); they are new fixes, so look at them.
+- ⚠ **`check:layout` is GREEN for every report tab and RED for the portal chrome — and the red is
+  not from this build.** The desktop rail's group headers, the team switcher and the notifications
+  button all fail the 44px floor at 1440px, and **the identical ten findings appear on `coach-roster`,
+  a screen this project never touched.** That is baseline debt from the 2026-08-18 shell slimdown
+  (§55) and nav collapse; it was deliberately NOT absorbed into this change's baseline, because
+  recording another session's debt as "accepted with a reason" is how a guardrail stops guarding.
+- ⚠ **The per-opponent scouting book still has no rendered coverage at all** — it never did. It is
+  the deepest drill-in in the portal and one level down from a door, which is exactly where Chunk F's
+  expensive defects lived. Stated in `scripts/layout-screens.mjs` rather than left to look covered.
+
 ## §59 · The two header rows go on a diet — the team bar slims as you scroll, the page title stops shouting
 
 **Built on dev 2026-08-18.** No migration, no new screen, no route moved. Premium org coach portal.
@@ -8023,3 +8144,25 @@ PHONE-only walk**, since that is the only width that collapses).
 **234px → 190px** on a laptop and **208px → 188px** on a phone, at rest *and* while scrolling.
 Permanently pinned chrome on a laptop is 106px, down from 122 — all of it from the bar being two
 lines instead of three.
+
+**J · Looking back is gone from every live screen (owner, 2026-08-19).** ⚠⚠ **A DELIBERATE
+CAPABILITY REMOVAL, NOT A TIDY-UP — walk it knowing that.**
+
+The Results report used to end in a season-by-season list (record, roster size, tryout acceptance),
+each row opening that year's own page; Season's End carried a matching **"Compare every season"**
+door into it. Both are deleted. The owner's call on seeing the list: a report about *this* season
+has no business ending in a table of every other one. The door went in the same change because a
+door onto a list that no longer exists is the loop-back defect this page was already fixed for once.
+
+Check:
+- ✅ **Insights → Results** ends with the game log. No *Past seasons* heading, no season rows.
+- ✅ **Season's End** (on the live team, which shows the "still under way" note) carries **no
+  "Compare every season" row**.
+- ✅ **Start next season** still offers a link back to the season you just closed — that confirmation
+  is now the ONLY place in the product that names a season other than the working one.
+
+⚠ **The accepted consequence:** while a season is running there is **no route to a previous season's
+page at all**. Look-back happens once a season closes, when the team's one door becomes its Season's
+End page. If that turns out to be too strict in real use, it is a new owner decision — not a
+regression to file. Anyone re-adding a compare list to a live screen is reopening a settled call,
+and `coach-finished-season-surfaces.test.ts` now fails if they do.
