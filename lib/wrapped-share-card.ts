@@ -8,6 +8,10 @@
  */
 import { wrappedShareCardData, type WrappedShareCardData } from '@/lib/season-wrapped';
 import { roundRect, fitText } from '@/lib/share-card';
+// ⚠ THE SHARED FORMATTER. This file DRAWS the record onto the downloadable PNG - the one
+// artifact of Season Wrapped that leaves the app. It hand-rolled its own spelling, so the
+// on-screen card and the image a coach shares disagreed about the same season.
+import { formatRecord } from '@/lib/coach-season-record';
 
 /**
  * What the card may know. An ALIAS of the allow-listed shape in `lib/season-wrapped.ts`, not a
@@ -81,7 +85,7 @@ export async function generateWrappedCardBlob(payload: WrappedCardData): Promise
   // ── Record ──
   const rec = data.record;
   const recText = rec.games > 0
-    ? `${rec.wins}–${rec.losses}${rec.ties > 0 ? `–${rec.ties}` : ''}`
+    ? formatRecord({ w: rec.wins, l: rec.losses, t: rec.ties })
     : 'That’s a wrap';
   ctx.fillStyle = '#FFFFFF';
   ctx.font = `800 ${rec.games > 0 ? 176 : 96}px ${MONO}`;
@@ -124,7 +128,7 @@ export async function generateWrappedCardBlob(payload: WrappedCardData): Promise
     const lf = data.lineupFact;
     tiles.push({
       label: 'LINEUP FACT',
-      value: `${lf.wins}–${lf.losses}${lf.ties ? `–${lf.ties}` : ''}`,
+      value: formatRecord({ w: lf.wins, l: lf.losses, t: lf.ties }),
       sub: `reused ${lf.uses}× · never beaten`,
     });
   }

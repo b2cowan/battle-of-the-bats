@@ -25,9 +25,19 @@
 //  • Attendance rows mirror the attendance route: active players only,
 //    untracked players ride along as 0/0 (the engine never judges them).
 //
-// Scheduling: there is NO app-level cron in this codebase (pg_cron only runs
-// SQL). This module is invoked by the platform-admin trigger route; wiring an
-// automatic Sunday schedule is an explicit owner decision at handoff.
+// Scheduling: pg_cron calls the platform-admin trigger route over HTTP
+// (migration 183) - Sunday 23:00 UTC = 6pm Toronto, plus a Monday 13:00 UTC
+// catch-up that the 6-day dedupe turns into a no-op for teams already served.
+//
+// MONEY STAYS IN THIS PUSH (owner decision 2026-08-19). The "no money in
+// Insights" ruling governs the PAGE - a screen a coach chooses to open. A
+// notification is the opposite: it is the product deciding what is worth
+// interrupting someone for, and an unpaid instalment before a Friday deadline
+// qualifies. Note the ranking means money is not an extra line - it competes
+// for one of three slots, so removing it would have SWAPPED IN the next-ranked
+// finding rather than shortening anything. The one input that would reverse
+// this is the `dues:` argument passed into the findings engine below; the
+// money RULES are shared with the page, which simply stops supplying dues.
 // ─────────────────────────────────────────────────────────────────────────────
 import {
   getInsightsDigestTeams,

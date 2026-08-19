@@ -8166,3 +8166,67 @@ page at all**. Look-back happens once a season closes, when the team's one door 
 End page. If that turns out to be too strict in real use, it is a new owner decision — not a
 regression to file. Anyone re-adding a compare list to a live screen is reopening a settled call,
 and `coach-finished-season-surfaces.test.ts` now fails if they do.
+
+---
+
+## §60 · A record is spelled one way now — `12-4-2`, everywhere a coach reads it
+
+**Built on dev 2026-08-19.** No migration, no new screen, no route moved, nothing gated. Premium org
+coach portal. Decision logged in `memory/design_decisions.md`; mockup:
+`claude.ai/code/artifact/2b289cf9-faa8-4a5c-b27e-3a5b84c98982` (call 3).
+
+**What this was.** The portal spelled a win–loss record **two different ways**, and the new Insights
+reports portal put both on one screen: the team bar said `12–4–2` with a long dash, and the Dashboard
+tile an inch below it said `12-4-2` with a short one. The owner chose the **short dash (hyphen)** —
+it is how a coach types a record, and it is what the public club site already showed.
+
+⚠ **This is a pure spelling change. No number moves.** If any figure below reads differently from what
+you remember, that is a defect, not this change.
+
+**Walk it — the four places a record appears, ideally in one sitting so you can compare:**
+
+- ✅ **Team bar** (top of any team page): the record reads `12-4-2` — short dashes.
+- ✅ **Insights → Dashboard**: the **Record** tile and the **Close games** tile match the bar exactly.
+  This is the pairing the whole call was about; they should now be indistinguishable in style.
+- ✅ **Insights → Results**: the per-type line (`League 8-2-1 · Tournament 4-2-1`) and the tag summary
+  (`vs Thunder: 2-1`) use short dashes.
+- ✅ **Insights → Scouting Book**: opponent record chips likewise.
+- ✅ **Team Overview → "Where you stand"** (only appears once a game has been played, and only for a
+  team in a tournament with standings): `2-1-0 in Pool A`.
+- ✅ **Insights → Playing time**: the per-player record beside a lineup reads with short dashes.
+- ✅ **Season's End → Season Wrapped**: the big record on the card, and the **Lineup fact** tile
+  ("Your lineup went 5-0"), both short-dash.
+- ✅ ⚠ **Season Wrapped → the SHARE button** — download/share the image and read the big record on
+  the PNG itself, plus its **Lineup fact** tile. This one was found by `/review`, not by the original
+  audit: the on-screen card had been corrected while the image that LEAVES THE APP had not, so it is
+  the single most likely place for a stale spelling to have survived.
+- ✅ **Team Overview → "Last season" card** (needs a team with a closed prior season): short dashes.
+  ⚠ This card also used to print a trailing zero (`12-4-0`); it now reads `12-4` like every other
+  surface. **Team HQ is now the only place left showing the trailing zero** — flagged, not a defect.
+
+⚠ **A SCORE IS NOT A RECORD, AND IT DELIBERATELY DID NOT CHANGE.** In the Scouting Book you will
+still see `Last meeting W 5–3`, `Biggest win 6–1`, `worst loss 2–4` with the **long** dash. That is
+correct and intended — a scoreline is a different thing from a season record. If those changed too,
+that is a defect.
+
+**Two things worth knowing while you walk it:**
+
+1. ⚠ **The audit that raised this found two places. There were five.** The brief named the two
+   Insights copies; sweeping the portal for the dash character itself turned up three more nobody
+   knew about — the Overview's "Where you stand" card, the Season Wrapped card (twice), and the
+   playing-time panel. All five now go through one shared definition, so a sixth cannot drift. **The
+   walk above deliberately covers all five, not the two that were reported.**
+
+2. ⚠ **One known inconsistency was left alone on purpose.** The **Team HQ** card prints
+   `12-4-0` — correct dash, but it shows a trailing `-0` where every other surface omits it and
+   shows `12-4`. Dropping the `-0` changes what you see, which is beyond what was decided here.
+   **Flagged for a decision, not a defect to file.** If you want it consistent, that is a one-line
+   call.
+
+**Also in this change, nothing to walk:** the Sunday "week in review" notification keeps its money
+content (owner decision, logged in `BUSINESS_DECISIONS.md` — no product change; the help guides
+already described it correctly), and the layout sweep's 44px tap floor now applies at touch widths
+only (owner decision, logged in `memory/design_decisions.md` — **nothing moved on screen**; the
+phone-and-tablet debt it exposed is tracked in `COACH_TOUCH_TARGET_DEBT_PLAN.md`).
+
+---

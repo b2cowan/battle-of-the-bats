@@ -703,7 +703,11 @@ export default function TeamOverviewPage({
         if (cancelled || !json?.history?.length) return;
         const years = [...json.history].sort((x: { year?: number }, y: { year?: number }) => (y.year ?? 0) - (x.year ?? 0));
         const y = years[0];
-        const record = (y.wins || y.losses || y.ties) ? `${y.wins}–${y.losses}–${y.ties}` : null;
+        // ⚠ THE SHARED FORMATTER, in the file that already imports it. This line hand-rolled the
+        // record with an en dash while the record tile 400 lines below called `formatRecord` - so
+        // ONE screen printed the season two ways. It also always emitted the tie count, showing
+        // `12-4-0` where every other surface shows `12-4`; the shared definition fixes both.
+        const record = (y.wins || y.losses || y.ties) ? formatRecord({ w: y.wins, l: y.losses, t: y.ties }) : null;
         setLastSeason({
           name: (y.name ?? String(y.year ?? '')).trim() || 'Last season',
           record,

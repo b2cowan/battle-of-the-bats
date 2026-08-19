@@ -1279,7 +1279,7 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>The practices you ran</strong> — open one and it reads exactly as you wrote it.</li>
                 <li><strong>How the season added up</strong> — what you planned to spend and what you actually spent (with money access).</li>
               </ul>
-              <p>All four arrive closed, with the answer on the front: <em>26 games · 18–6–2</em>, <em>13 players</em>, <em>$110 under</em>. Most of the time that is the whole question.</p>
+              <p>All four arrive closed, with the answer on the front: <em>26 games · 18-6-2</em>, <em>13 players</em>, <em>$110 under</em>. Most of the time that is the whole question.</p>
               <HelpNote variant="info" title="Why it isn’t the whole portal any more">
                 <p>It used to be. Every screen rendered a past-tense version of itself and every tool explained it would be back next season — a whole application pretending to be a filing cabinet. One page is easier to hold in your head, and <strong>nothing is deleted</strong>: every record is still stored in full, so if something turns out to be missed it can be added to this page later.</p>
               </HelpNote>
@@ -1446,7 +1446,7 @@ const coachesHelp: HelpPageContent = {
             <>
               <p><strong>Insights lets you choose whether scrimmages count</strong> toward your record, and that choice is remembered on the device you set it on. The bar at the top of the page never counts scrimmages — it shows the same record as <strong>Season&rsquo;s End</strong> and your season history, so it reads the same on your phone and on your computer.</p>
               <p>So if the two disagree, scrimmages are switched on in Insights. Either number is honest; they&rsquo;re answering slightly different questions.</p>
-              <p><strong>A cancelled game never counts anywhere</strong>, even if a score was entered before it was called off. And until a game has a result, nothing is counted — a season with no games played yet shows no record at all rather than <em>0–0</em>.</p>
+              <p><strong>A cancelled game never counts anywhere</strong>, even if a score was entered before it was called off. And until a game has a result, nothing is counted — a season with no games played yet shows no record at all rather than <em>0-0</em>.</p>
             </>
           ),
           answerText: 'Insights lets you choose whether scrimmages count toward your record, and that choice is remembered on the device you set it on. The bar at the top of the page never counts scrimmages — it shows the same record as Season\'s End and your season history, so it reads the same on your phone and on your computer. If the two disagree, scrimmages are switched on in Insights. A cancelled game never counts anywhere, even if a score was entered before it was called off. Until a game has a result nothing is counted, so a season with no games played yet shows no record at all rather than 0-0.',

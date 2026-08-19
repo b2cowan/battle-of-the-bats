@@ -4,6 +4,191 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-19 — A SUPPORT READ MAY NOT RANK CHILDREN, AND A CEILING MAY NOT BE INVENTED
+
+Three owner calls taken before a line of Insights P2 was written. Two of them **reverse an approved
+mockup**, and that is the part worth keeping: in this repo mockups are the spec, so a mockup that
+contradicts a standing rule is a contradiction to escalate, never one to settle by reading the newer
+artefact.
+
+#### 1. The attendance table keeps roster order and badges nobody
+
+**Owner decision.** The approved mockup drew the per-player attendance table **sortable**, with an
+amber *"Missed most practices"* chip on a named child. The panel already carried the opposite as a
+standing ruling: *"NO sort affordance on any column, ever. Roster order is the only order — this is
+a support read to inform playing-time decisions, and a sortable column is a leaderboard however
+neutrally it is drawn."*
+
+The ruling stands. **What ships instead is a drill-in on EVERY row** — the same affordance
+everywhere, so a coach can look into anyone without the screen nominating anyone. A chevron shown
+only where absences exist would have been the badge again, drawn as an affordance rather than a
+label. Naming the least-reliable player remains the job of **one sentence** in *What stands out*,
+which fires only above a tracked-sessions bar.
+
+⚠ This is the same family as `decision_playing_time_vocabulary.md` (measurement in context, never a
+verdict) and the Development report's "checklist, never a ranking". **Three surfaces, one rule:** a
+coach tool may show a coach what happened; it may not rank children by it.
+
+⚠⚠ **A BEHAVIOURAL TEST CANNOT HOLD THIS.** "Worst first" is one `.sort()` in a pure module whose
+unit tests would all still pass, one layer below anything a screen review looks at. So the rule is
+asserted **against the source** in `tests/unit/coach-attendance-receipts.test.ts`: the module may
+hold exactly one sort and it must order by calendar day, and the panel may hold no sort control and
+no flag class.
+
+#### 2. Arm care shows no innings budget, because the product has none
+
+**Owner decision.** The mockup drew *"16 of 18 · 2 left"* as a progress bar filling toward **this
+week's cap**, and the Dashboard finding beside it said *"2 innings from his weekly pitching cap"*.
+
+**There is no weekly cap. There is no season cap.** Every ceiling this product stores is **per game**
+and is a number **the coach set** — and `lib/coach-arm-care.ts` states in its own header why it must
+stay that way: inventing one would be *the product proposing a figure as though it were a rule, in
+the one place where the cost is a child's arm*. (The mockup also compared a **season** innings total
+to a **per-game** cap — the same conflation, one row up.)
+
+So the panel was redrawn against records that exist: season workload, **rest** since the last outing,
+and the coach's own per-game cap with a flag only where the coach's own number was passed. The
+sentence under it — *"there is no weekly or season limit here; the only ceiling shown is the cap you
+set yourself"* — **is the section**, not a footnote to it: without it the figures above read as a
+budget being spent down.
+
+⚠ **A real weekly cap is a project, not a phase.** It needs a setting, and `lib/lineup-caps.ts` and
+the game-day console's chip must move with it — three surfaces may never quote a child different
+ceilings.
+
+#### 3. A rate may only be named after something that is actually recorded
+
+**Owner decision.** The mockup's fourth attendance tile read **"RSVP reply rate · replied before
+event day"**. Nobody replies: RSVP here is a status the **coach** sets on the schedule screen, there
+is no family reply channel, and no reply timestamp exists anywhere. Shipping that label would have
+credited families for a reply they never sent and blamed them for silence that is actually a
+half-finished sheet.
+
+The same arithmetic honestly measures the coach's **own** record-keeping, so the tile is now
+**"Recorded"** — the share of marks that got a definite in-or-out. It earns its place because
+`known` is the denominator of every other percentage on the screen: a low *Recorded* means those
+percentages rest on less than they look like.
+
+⚠ **The general form:** before naming a rate after an actor, check that the actor performs the act.
+A plausible label over real arithmetic is harder to catch than a wrong number, because nothing
+disagrees with it.
+
+---
+
+### 2026-08-19 — THE TAP FLOOR IS A TOUCH RULE, AND A RECORD IS SPELLED WITH A HYPHEN
+
+Two rulings from the Insights reports portal's follow-up calls. Both are small; the first one's
+*evidence* is the durable part.
+
+#### 1. 44px applies at touch widths only (≤768px). Above that, the rule is not asked.
+
+**Owner decision.** 44px is a **fingertip** measurement. The layout sweep was applying it at 1440 and
+failing every row of the coach sidebar on every coach screen — home link 22px, notifications 28px,
+account 30px, team switcher 33px, the five group headings 26px, nav rows 39px. Raising them all adds
+~250px to the rail and partly reverses the chrome slimdown that shipped days earlier (`fb8345cf`).
+The rule was failing a design that was deliberately correct.
+
+So the floor now stops at `TAP_FLOOR_MAX_WIDTH` in `scripts/check-layout-invariants.mjs`, argued
+**once**, where the rule is defined. Nothing moved on screen.
+
+⚠ **This does not say the desktop rail is beyond criticism** — it says 44px is the wrong instrument
+for judging it. A pointer-width minimum is a real thing to want; it is a **different number**, argued
+separately.
+
+⚠⚠ **THE DURABLE LESSON IS THE NUMBER NOBODY HAD LOOKED AT.** The brief that raised this — and the
+owner mockup built from it — described "about **twenty-five** desktop controls already recorded as
+accepted exceptions." The real figure was **1,928 accepted `tap-floor` entries, 1,524 with no reason
+written down.** Off by roughly sixty-fold, in the direction that hides work.
+
+And the miss was not evenly spread. **753 of them were at PHONE AND TABLET widths** — where everyone,
+including the recommended option, believed the floor was being enforced. **156 measurements — 70
+distinct controls — under 24px**; the smallest is **13px**. (⚠ Count entries and count controls are
+DIFFERENT numbers and this entry got it wrong on the first pass: 753 measurements cover 345 distinct
+controls, because the same control is measured at several widths and on several screens. Say which
+one you mean, every time.) The option as written ("keep the floor for touch, except desktop")
+described a state that **did not exist**: the floor was not being enforced anywhere in the coach
+portal. Answering the question as asked would have written one tidy desktop exception and left 653
+unargued phone failures untouched, while reporting the guardrail as "made honest again".
+
+> **A baseline count is evidence; a sentence about a baseline count is not.** Two documents and a
+> mockup carried "about twenty-five" without anyone opening the file. Read the artifact, not the
+> summary of it — the summary is where the order-of-magnitude goes missing.
+
+⚠ **AND THE NUMBER IS A FLOOR, NOT A TOTAL — proved the same day.** `/review` reseeded the UAT
+fixture before verifying; the team then had games, the season-record widget rendered for the first
+time since the baseline was captured, and its "Season insights →" link measured **21px on a phone**.
+Always broken, never seen. 753/653 became 755/655. **The empty-fixture trap runs in REVERSE too:**
+the standing warning is that an empty screen hides GREEN falsely — it also HIDES RED. A baseline
+built against a thin fixture records the product as cleaner than it is.
+
+The touch debt is now named and sized in
+`docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md` (+ PM brief). ⚠ **Do not close it by
+bulk-writing reasons onto the entries** — the check counts unexplained entries on purpose. Writing a
+sentence onto 653 of them converts a visible problem into an invisible decision, which is precisely
+how the number reached 1,928.
+
+Also retired with the desktop rule: 1,175 baseline entries, **304 of which carried individually
+written reasons that all said the same thing.** That is the shape to notice — when the same sentence
+has been written 304 times into a data file, the decision belongs in the rule, not the data.
+
+#### 2. A win–loss record is spelled with a HYPHEN: `12-4-2`.
+
+**Owner decision**, choosing against the recommendation. The portal spelled a record two ways — en
+dash on the masthead, Overview, Season's End and opponent chips; hyphen on the Insights Dashboard,
+the Results tab and the public club site — and the reports portal put both on **one screen**, the
+masthead's `12–4–2` an inch above the Dashboard's `12-4-2`.
+
+Hyphen wins: it is how a coach types a record, and it is what the public site already showed, so a
+team's season now reads identically everywhere **in the coach portal**. ⚠ The FAMILY portal was NOT
+swept (the player recap and the family team page still hand-roll an en dash) and is an OPEN CALL, not
+a decided exclusion — the player recap is doubly awkward because a COACH previews that very component
+from the player page. Decide it deliberately rather than by omission, which is how this entry's own
+problem started.
+
+**The implementation note is the reusable part.** The brief framed "hyphen everywhere" as *changing
+four surfaces and abandoning the shared formatter*. That was backwards: the formatter is **one
+function**, so changing its dash updated all four at once, and the two local copies were deleted
+**into** it. The non-recommended option turned out to be the smaller change *and* the one that
+strengthened the single source of truth. ⚠ **Check whether a "more work" objection is counting
+surfaces or counting definitions** — they are not the same number.
+
+⚠ **A SCORE IS NOT A RECORD.** `W 5–3`, `Biggest win 6–1`, `worst loss 2–4` keep the en dash. This
+ruling is about win–loss records only.
+
+⚠⚠ **THE AUDIT FOUND TWO COPIES. THERE WERE SEVEN, AND IT TOOK THREE PASSES TO GET THERE.** The
+brief named the two Insights `recStr` helpers. **Pass 1** — sweeping for the dash character — found
+three more: `CoachStandingsSnapshot` (Overview's "Where you stand"), `SeasonWrappedCard` (two
+spellings), and the playing-time panel. Those three were invisible to a search for the helper's
+*name*, and being JSX-inline (`{wins}–{losses}`) rather than template literals, invisible to a search
+for the *template* shape too. **Pass 2** — `/review`, told to assume one had been missed — found two
+more, and they were the worst of the seven:
+
+1. **`lib/wrapped-share-card.ts`** draws the record onto the **downloadable PNG**. The on-screen
+   Wrapped card had been fixed; the image a coach *shares out of the app* had not. Same feature,
+   same data, two spellings — and the one that reaches families and social media was the stale one.
+2. **The coach Overview's "Last season" card** hand-rolled an en dash **in a file that already
+   imported `formatRecord` and called it 400 lines further down.** One screen, two spellings, from
+   one file that knew better.
+
+All seven now call `formatRecord`.
+
+> **Search for the OUTPUT, not the abstraction** — a duplicate is only findable by its name if
+> whoever wrote it used the name; the dash character was the one thing all seven had in common.
+> **And scope the sweep by BEHAVIOUR, not by folder.** Pass 1 searched `components/coaches`,
+> `app/[orgSlug]/coaches` and `lib/coach-*.ts` — a naming convention. `lib/wrapped-share-card.ts`
+> renders a coach-portal feature and does not carry the prefix, so the tidiest-looking scope was
+> exactly the one that hid the highest-consequence copy.
+
+⚠ **ONE KNOWN INCONSISTENCY LEFT DELIBERATELY UNFIXED.** `TeamHQ` renders `{wins}-{losses}-{ties}`
+and therefore prints `12-4-0` where every other surface prints `12-4`. Correct dash, different
+*content* — dropping the `-0` changes what a coach sees, which is beyond this ruling. Flagged for a
+decision, not silently changed.
+
+The public club site was **not** swept in — different audience, its own conventions, still an open
+call. It happens to already agree.
+
+---
+
 ### 2026-08-19 — THE IDENTITY BAR STAYS PUT. Space comes from making things SMALLER, not from making them vanish
 
 **Owner ruling, on sight, the morning after it shipped to dev:** *"I want to revert one thing, I like

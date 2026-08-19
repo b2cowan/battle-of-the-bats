@@ -18,6 +18,7 @@ import styles from '../../../coaches.module.css';
 import type { RepTeamEvent } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
 import { canManageAwards, canViewMeasurables, type CoachCapabilities } from '@/lib/coach-capabilities';
+import { formatRecord } from '@/lib/coach-season-record';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Insights — the REPORTS & ANALYTICS PORTAL (owner-approved mockups 2026-08-18;
@@ -138,9 +139,6 @@ interface AttendanceRow {
   practices: { attended: number; known: number };
 }
 
-function recStr(r: { w: number; l: number; t: number }) {
-  return `${r.w}-${r.l}${r.t ? `-${r.t}` : ''}`;
-}
 function tally(list: RepTeamEvent[]) {
   return {
     w: list.filter(e => e.result === 'win').length,
@@ -561,7 +559,7 @@ export default function CoachesInsightsPage({
                 {scopedGames > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
                     <span className={styles.insightsStatLbl}>Record</span>
-                    <span className={styles.insightsStatVal}>{recStr(record)}</span>
+                    <span className={styles.insightsStatVal}>{formatRecord(record)}</span>
                     <span className={styles.insightsStatCap}>{scopeCaption}</span>
                   </Link>
                 )}
@@ -589,7 +587,7 @@ export default function CoachesInsightsPage({
                 {closeTotal > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
                     <span className={styles.insightsStatLbl}>Close games</span>
-                    <span className={styles.insightsStatVal}>{recStr(close)}</span>
+                    <span className={styles.insightsStatVal}>{formatRecord(close)}</span>
                     <span className={styles.insightsStatCap}>in one-{scoreUnitWord} games</span>
                   </Link>
                 )}

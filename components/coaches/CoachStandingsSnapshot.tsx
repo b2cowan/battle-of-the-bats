@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
+import { formatRecord } from '@/lib/coach-season-record';
 import styles from './CoachTournamentRecord.module.css';
 
 /** Ordinal for a pool position — 1st / 2nd / 3rd / 4th … (11th–13th are not -st/-nd/-rd). */
@@ -22,7 +23,7 @@ function ordinal(n: number): string {
  *
  * Deliberately a SNAPSHOT of the coach's own position, not a standings table — the
  * full table already exists on the public site and is one tap away. Renders nothing
- * until at least one game has been played (a 0–0–0 row tells a coach nothing), and
+ * until at least one game has been played (a 0-0-0 row tells a coach nothing), and
  * the caller gates it on the organizer not having hidden their public Standings page.
  */
 export default function CoachStandingsSnapshot({
@@ -48,10 +49,14 @@ export default function CoachStandingsSnapshot({
   gamesRemaining: number;
 }) {
   const played = wins + losses + ties;
-  // Nothing to stand on yet — a 0–0–0 line is noise, not information.
+  // Nothing to stand on yet — a 0-0-0 line is noise, not information.
   if (played === 0) return null;
 
-  const record = ties > 0 ? `${wins}–${losses}–${ties}` : `${wins}–${losses}`;
+  // ⚠ THE SHARED FORMATTER (lib/coach-season-record), not a local template. This card spelled
+  // the record by hand with an en dash and was missed by the audit that found the two Insights
+  // copies - it turned up only by sweeping the portal for the character. Same rule, same string,
+  // one definition (owner decision 2026-08-19: hyphen).
+  const record = formatRecord({ w: wins, l: losses, t: ties });
 
   return (
     <div className={`card ${styles.standCard}`}>
@@ -69,7 +74,7 @@ export default function CoachStandingsSnapshot({
       <div className={styles.standBody}>
         <span className={styles.standRank}>{ordinal(rank)}</span>
         <div className={styles.standFacts}>
-          {/* Approved mockups: "2–1–0 in Pool A" — the field size is already implied by the
+          {/* Approved mockups: "2-1-0 in Pool A" — the field size is already implied by the
               ordinal and the full table is one tap away, so "· of N" was noise. */}
           <p className={styles.standRecord}>
             <strong>{record}</strong>

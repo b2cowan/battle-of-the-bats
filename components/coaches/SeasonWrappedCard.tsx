@@ -5,6 +5,7 @@ import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import { generateWrappedCardBlob, shadeHex } from '@/lib/wrapped-share-card';
 import { shareScoreImage } from '@/lib/share-card';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { formatRecord } from '@/lib/coach-season-record';
 
 /**
  * The Season Wrapped highlight card (Batch 3, wow #7 — approved mockups = spec).
@@ -49,7 +50,7 @@ export default function SeasonWrappedCard({ wrapped }: { wrapped: SeasonWrappedP
       {hasRecord ? (
         <>
           <p className={styles.wrappedRecord}>
-            {rec.wins}–{rec.losses}{rec.ties > 0 ? `–${rec.ties}` : ''}
+            {formatRecord({ w: rec.wins, l: rec.losses, t: rec.ties })}
           </p>
           <p className={styles.wrappedSub}>{rec.games} game{rec.games === 1 ? '' : 's'} · league &amp; tournament play</p>
         </>
@@ -99,7 +100,7 @@ export default function SeasonWrappedCard({ wrapped }: { wrapped: SeasonWrappedP
           <div className={`${styles.wrappedTile} ${styles.wrappedTileWide}`}>
             <span className={styles.wrappedTileLabel}>Lineup fact</span>
             <span className={styles.wrappedTileValue}>
-              Your lineup went {wrapped.lineupFact.wins}–{wrapped.lineupFact.losses}{wrapped.lineupFact.ties ? `–${wrapped.lineupFact.ties}` : ''}
+              Your lineup went {formatRecord({ w: wrapped.lineupFact.wins, l: wrapped.lineupFact.losses, t: wrapped.lineupFact.ties })}
             </span>
             <span className={styles.wrappedTileSub}>reused {wrapped.lineupFact.uses}× — never beaten</span>
           </div>

@@ -5,6 +5,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamTag } from '@/lib/types';
+import { formatRecord } from '@/lib/coach-season-record';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 const TYPE_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
@@ -24,9 +25,6 @@ function tally(list: RepTeamEvent[]) {
     l: list.filter(e => e.result === 'loss').length,
     t: list.filter(e => e.result === 'tie').length,
   };
-}
-function recStr(r: { w: number; l: number; t: number }) {
-  return `${r.w}-${r.l}${r.t ? `-${r.t}` : ''}`;
 }
 
 // "How are we doing?" — the season's game log + past seasons as a plain ARCHIVE.
@@ -214,13 +212,13 @@ export function ResultsPanel({
               {activeTag ? (
                 <div className={styles.insightsTagSummary}>
                   <span className={styles.insightsTagSummaryLbl}>vs {activeTag.name}:</span>
-                  <span className={styles.insightsTagSummaryRec}>{recStr(tagRecord!)}</span>
+                  <span className={styles.insightsTagSummaryRec}>{formatRecord(tagRecord!)}</span>
                   <span className={styles.insightsTagSummaryRuns}>{tagRuns!.rf} {scoreUnit} for, {tagRuns!.ra} against</span>
                 </div>
               ) : (
                 <p className={styles.insightsBasis}>
-                  {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${TYPE_LABEL[r.type]} ${recStr(r)}`).join('')}
-                  {closeGames > 0 && <> · {recStr(close)} in one-{scoreUnit} games</>}
+                  {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${TYPE_LABEL[r.type]} ${formatRecord(r)}`).join('')}
+                  {closeGames > 0 && <> · {formatRecord(close)} in one-{scoreUnit} games</>}
                 </p>
               )}
 

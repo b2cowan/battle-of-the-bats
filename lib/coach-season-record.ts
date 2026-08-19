@@ -60,7 +60,19 @@ export function tallyResults(events: readonly { result: string | null }[]): WltT
   };
 }
 
-/** "6–4" or "6–4–1" — the one place the record is turned into a string. */
+/**
+ * "6-4" or "6-4-1" — the one place the record is turned into a string.
+ *
+ * ⚠ HYPHEN, NOT AN EN DASH (owner decision 2026-08-19). This spelled the record with an en dash
+ * while two Insights surfaces spelled it with a hyphen, and the reports portal put both on ONE
+ * screen — the masthead's `12–4–2` sitting an inch above the Dashboard's `12-4-2`. The owner
+ * chose the hyphen: it is how a coach types a record, and it is what the public club site already
+ * shows, so the same team's season now reads identically wherever a family or a coach meets it.
+ *
+ * The fix was to change this one function, NOT to leave four surfaces spelling it by hand — the
+ * whole reason this file exists is that a convention two files must honour by hand is not a source
+ * of truth. Both local `recStr` copies were deleted into this call at the same time.
+ */
 export function formatRecord(tally: WltTally): string {
-  return `${tally.w}–${tally.l}${tally.t ? `–${tally.t}` : ''}`;
+  return `${tally.w}-${tally.l}${tally.t ? `-${tally.t}` : ''}`;
 }

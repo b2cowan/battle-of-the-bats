@@ -61,6 +61,34 @@ const SESSION_FILES = {
 const TAP_FLOOR = 44;
 
 /**
+ * THE TAP FLOOR IS A TOUCH RULE, AND ONLY A TOUCH RULE (owner decision 2026-08-19).
+ *
+ * 44px is a FINGER measurement. Applied at mouse-and-keyboard widths it was not measuring a real
+ * defect, and the portal proved it: EVERY row of the coach sidebar failed at 1440 on EVERY coach
+ * screen - the home link at 22px, notifications 28px, account 30px, the team switcher 33px, the
+ * five group headings 26px, the nav rows themselves 39px. Raising them all adds ~250px to the rail
+ * and partly reverses the chrome slimdown that shipped days earlier (`fb8345cf`), so the rule was
+ * failing a design that was deliberately correct. A gate that is red where nothing is wrong is a
+ * gate that gets baselined into silence - which is exactly what had already happened: 1,173
+ * desktop-width entries sat in the baseline as accepted, 871 of them with no reason written down.
+ *
+ * So the floor now stops at the last touch width. This replaces those 1,173 entries with ONE
+ * reviewable decision, in the place the rule is defined rather than 1,173 times in a data file.
+ *
+ * WHAT THIS DOES NOT SAY. It does not say the desktop rail is beyond criticism - it says 44px is
+ * the wrong instrument for judging it. A pointer-width minimum is a real thing to want; it is a
+ * DIFFERENT number, argued separately, and it would go here.
+ *
+ * AND IT CHANGES NOTHING ABOUT TOUCH. The floor still runs at 361/390/768, where the portal is
+ * carrying 753 baselined failures (653 unargued, 156 of them under 24px - the smallest is 13px).
+ * That debt is REAL, it is now the only thing this rule reports, and it is tracked in
+ * `docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md`. Do not bulk-write reasons onto those to
+ * quiet the count: an entry without a reason is debt that has not been argued yet, and the summary
+ * line keeps that number visible on purpose.
+ */
+const TAP_FLOOR_MAX_WIDTH = 768;
+
+/**
  * Chrome the portal owns on EVERY screen, exempted once here instead of once per screen.
  *
  * ⚠ Each entry needs a reason. This list is the honest version of the note buried in
@@ -340,7 +368,9 @@ function probeInPage(opts) {
   }
 
   // ── R2 · every control clears the tap floor ────────────────────────────────
-  if (wanted('tap-floor')) {
+  // tapFloor arrives as 0 at pointer widths - the caller decides, so the reasoning lives in one
+  // place next to TAP_FLOOR_MAX_WIDTH rather than being re-derived inside the browser.
+  if (wanted('tap-floor') && tapFloor > 0) {
     const sel = 'button, a[href], summary, select, textarea, input:not([type="hidden"]), [role="button"], [role="tab"], [role="switch"], [role="checkbox"]';
     for (const el of Array.from(root.querySelectorAll(sel))) {
       if (!visible(el) || isExempt(el)) continue;
@@ -686,7 +716,11 @@ for (const session of neededSessions) {
         continue;
       }
 
-      const opts = { scopeSel: screen.scope ?? null, tapFloor: TAP_FLOOR, exempt: exemptSelectors, only: null };
+      // The tap floor is a touch rule (see TAP_FLOOR_MAX_WIDTH). Above that width it is not
+      // relaxed to a smaller number - it is not asked, because 44px answers a question about
+      // fingers that a mouse never posed.
+      const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
+      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: null };
       let found = await page.evaluate(probeInPage, opts);
 
       // The classic defect — the last row trapped under the bottom bar — only exists once the
@@ -821,7 +855,7 @@ if (mode === 'report') {
   md += `## The house rules\n\n`;
   md += `| Rule | What it holds |\n|---|---|\n`;
   md += `| \`page-overflow\` | The page never scrolls sideways. |\n`;
-  md += `| \`tap-floor\` | Every control clears ${TAP_FLOOR}px. |\n`;
+  md += `| \`tap-floor\` | Every control clears ${TAP_FLOOR}px — at touch widths (≤${TAP_FLOOR_MAX_WIDTH}px) only. |\n`;
   md += `| \`content-overflow\` | Wide content scrolls inside its own box. |\n`;
   md += `| \`sticky-no-travel\` | Anything sticky can actually stick. |\n`;
   md += `| \`contrast\` | Text is readable against what is painted behind it. |\n`;

@@ -8,6 +8,39 @@
 
 ---
 
+### 2026-08-19 — The Sunday "week in review" push KEEPS its money content — the "no money in Insights" ruling governs the PAGE, not everything the engine produces
+
+**Status:** Decided (owner, 2026-08-19 — chose option A from the three-open-calls mockup, `claude.ai/code/artifact/2b289cf9-faa8-4a5c-b27e-3a5b84c98982`). **No code change required**; the decision is recorded in the digest module's header comment alongside the single input that would reverse it.
+
+**Scope note, stated honestly:** this is a **product-conduct** decision, not a pricing, packaging or positioning one. It is logged here because it is durable, cross-chat, and settles *what the platform proactively tells a coach about money* — a question that was about to be answered by default in two different directions on two surfaces.
+
+**The situation.** The owner's earlier ruling removed money from the coach **Insights page** entirely — no dues tile, no money findings, no money figures. The findings engine that composes those findings has a **second consumer**: the Sunday "week in review" notification (bell + push), which fires Sunday 23:00 UTC (6pm Toronto) with a Monday catch-up. That surface **still sent money**, deliberately — the build raised it for a decision rather than deleting the rules, because the ruling addressed a page and silently stripping dues warnings from a notification nobody asked to change would have been a different decision taken by accident.
+
+**Decision:** the Sunday digest continues to include money findings. The Insights **page** remains money-free. The two surfaces are governed separately and deliberately.
+
+**Rationale:**
+- **A page and a notification are opposite acts.** A page is a screen a coach *chooses to open* — the ruling that cleared money off it was about not making an unasked-for money report the first thing a coach reads. A notification is the product deciding **what is worth interrupting someone for**, and *"the next dues instalment is due Friday and four families haven't paid"* is a strong candidate for that.
+- **Removing money would not have shortened the push.** The digest carries **one good-news item plus the top two attention items**, drawn from a fixed ranking (safety → money → attendance → fairness → development → good news). Money competes for a slot; it is not an appended line. So the real choice was never "shorter push vs longer push" — it was **which fact reaches a coach on a Sunday evening**: an unpaid instalment, or a player drifting out of attendance. Framed that way, the money line wins on consequence.
+- **The narrow blast radius makes it low-risk.** Only head coaches and money-holding assistants can receive a money line at all; an assistant without money access never did, and a helper receives nothing. Nobody gains money visibility they did not already have.
+- **Dues collection is the coaches portal's most-cited value.** The one automatic nudge toward getting a team paid up is a poor thing to delete in pursuit of a tidy rule.
+
+**The reversal point, if this is ever revisited:** it is a **single input** at the digest's per-coach composition step — the dues summary supplied to the engine. The money **rules** stay in the shared findings engine either way; they are pure and tested, and their absence is better expressed by not supplying dues than by deleting the rules. Reversing this does not mean editing the engine.
+
+**Affects:** coach notification content only. **No price, plan, gate, capacity band, SKU or module entitlement moves.** No pricing or marketing copy change.
+
+**Handoff:**
+```
+HANDOFF → /docs (only if a help guide describes what the Sunday digest contains)
+- The guides should not imply the weekly push is money-free just because the Insights page is.
+  Verify before writing; no change if no guide makes the claim.
+HANDOFF → none for /marketing or /billing — nothing customer-facing outside the product,
+  and no gate or price is touched.
+```
+
+**Supersedes:** nothing. **Relates to:** the "no money in Insights" page ruling (design decisions log) — this entry marks the boundary of that ruling rather than reopening it.
+
+---
+
 ### 2026-08-13 — PROPOSED: a coach's OWN money exports belong to the Premium Coaches Portal, not to Club — `club_exports` keeps meaning the ORG's books
 
 **Status:** **Proposed** — recommended, **awaiting ratification**. Raised by a `/review` finding during the Money-hub export placement build; **explicitly not built, not binding, and nothing has been gated or ungated.** The product's shipped behaviour already matches the recommendation, so accepting it changes documentation and makes an existing intent explicit; *declining* it is the option that changes what customers can do.

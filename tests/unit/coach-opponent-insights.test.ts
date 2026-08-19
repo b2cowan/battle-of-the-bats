@@ -60,7 +60,7 @@ describe('computeOpponentInsights — record-derived lines', () => {
       ],
     });
     const homeAway = lines.find(l => l.id === 'home_away');
-    assert.equal(homeAway?.text, '2–0 at home · 0–1 away');
+    assert.equal(homeAway?.text, '2-0 at home · 0-1 away');
     assert.equal(homeAway?.fromGames, 3);
     const averages = lines.find(l => l.id === 'averages');
     assert.equal(averages?.text, 'Averages 4.0 runs for, 2.7 against');
@@ -110,7 +110,7 @@ describe('computeOpponentInsights — record-derived lines', () => {
         meeting({ programYearId: 'py-2025' }),
       ],
     });
-    assert.equal(withHistory.find(l => l.id === 'season_split')?.text, '1–0 this season · 2–1 all-time');
+    assert.equal(withHistory.find(l => l.id === 'season_split')?.text, '1-0 this season · 2-1 all-time');
 
     const allThisSeason = computeOpponentInsights({
       ...DIAMOND,

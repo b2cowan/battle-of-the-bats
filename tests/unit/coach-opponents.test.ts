@@ -243,8 +243,8 @@ describe('buildOpponentBook', () => {
 
 describe('recordChip', () => {
   it('hides ties until one exists', () => {
-    assert.equal(recordChip({ wins: 2, losses: 1, ties: 0 }), '2–1');
-    assert.equal(recordChip({ wins: 1, losses: 1, ties: 1 }), '1–1–1');
+    assert.equal(recordChip({ wins: 2, losses: 1, ties: 0 }), '2-1');
+    assert.equal(recordChip({ wins: 1, losses: 1, ties: 1 }), '1-1-1');
   });
 });
 
@@ -390,16 +390,16 @@ describe('formatGamePlanSnapshot', () => {
       { body: 'Their SS cheats up with runners on', tag: 'Defense' },
       { body: 'Ace works up in the zone', tag: null },
     ],
-    insights: [{ text: '3–1 at home · 1–1 away', fromGames: 6 }],
+    insights: [{ text: '3-1 at home · 1-1 away', fromGames: 6 }],
     maxLength: 4000,
   };
 
   it('carries matchup, record, book line, tagged observations, and the numbers', () => {
     const msg = formatGamePlanSnapshot(baseOpts);
     assert.match(msg, /^Game plan — vs Oakville Thunder\n/);
-    assert.match(msg, /All-time 4–2 · Last meeting W 5–3/);
+    assert.match(msg, /All-time 4-2 · Last meeting W 5–3/);
     assert.match(msg, /The book line\nBeatable when we run early\./);
-    assert.match(msg, /The numbers\n• 3–1 at home · 1–1 away \(from 6 games\)/);
+    assert.match(msg, /The numbers\n• 3-1 at home · 1-1 away \(from 6 games\)/);
     assert.match(msg, /• \[Defense\] Their SS cheats up with runners on/);
     assert.match(msg, /• Ace works up in the zone/);
   });
