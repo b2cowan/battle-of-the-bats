@@ -27,21 +27,29 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * the sidebar's identity exactly as admin's repeats its switcher — hierarchy is what makes
  * that presence rather than noise.
  *
- * - Eyebrow: the club's name; a standalone team workspace shows "Coaches Portal" instead,
- *   so the team's name appears exactly once. Org name arrives as a SERVER prop (never from
- *   client org-context — the default-org gotcha mislabeled multi-org coaches).
- * - Meta line: the season YEAR ("2026 season") — never programYearName, which often embeds
- *   the team's name (a third of the original stutter). A team whose working season has
- *   FINISHED shows a "Complete" chip here — PRESENTATIONAL, and since 2026-08-16 the ONLY
- *   place the portal says so: the page-title chip that used to repeat it was the season
- *   switcher wearing a label, and it died with the archive as a place (P2, Design A).
+ * - ⚠ TWO LINES, NOT THREE, since 2026-08-18 (header vertical-space pass, direction B). The
+ *   club's name was its own eyebrow ABOVE the team name; it is now the first segment of the
+ *   meta line BELOW it. Nothing left the bar — the club is still named on every team page,
+ *   which is the promise made when it left the sidebar in the 2026-08-17 slimdown — but the
+ *   hierarchy is two levels now (one confident name over one quiet line) rather than three.
+ *   This is what fixed the 98px finished-season phone bar, where "Complete" and the final
+ *   record were being pushed onto a third line. Org name arrives as a SERVER prop (never from
+ *   client org-context — the default-org gotcha mislabeled multi-org coaches), and a standalone
+ *   team workspace renders no club segment at all, so its name still appears exactly once.
+ * - Meta line: club · season · record. The season is the YEAR ("2026 season") — never
+ *   programYearName, which often embeds the team's name (a third of the original stutter). A
+ *   team whose working season has FINISHED shows a "Complete" chip here — PRESENTATIONAL, and
+ *   since 2026-08-16 the ONLY place the portal says so: the page-title chip that used to repeat
+ *   it was the season switcher wearing a label, and it died with the archive as a place
+ *   (P2, Design A).
  * - A2 (2026-08-02): the record and the one status that matters today join that line —
  *   "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." A quiet week adds nothing, and a
  *   finished season shows its own final record instead of a status. Both arrive as PROPS from
  *   the team layout's single SSR feed; this component never fetches.
  * - Sticky against the viewport below the fixed top strip (the document is the portal's one
- *   real scroll container); publishes --coach-header-h; desktop never collapses, phone
- *   collapses to the bare team name with admin's 64/12 hysteresis.
+ *   real scroll container); publishes --coach-header-h; DESKTOP NEVER COLLAPSES, phone collapses
+ *   to the bare team name with admin's 64/12 hysteresis. ⚠ A desktop collapse was built on
+ *   2026-08-18 and reverted by the owner on sight the next day — see the effect's own note.
  * - Mounted by the TEAM layout, so it exists only under /teams/{teamId}.
  */
 function CoachTeamHeaderInner({
@@ -95,12 +103,22 @@ function CoachTeamHeaderInner({
   // Phone-only collapse on DOCUMENT scroll — the portal's one real scroll container
   // (probe-verified 2026-08-01: the shell's inner elements never actually scroll; a
   // listener on them structurally never fires).
+  //
+  // ⚠⚠ DESKTOP COLLAPSE WAS BUILT AND REVERTED ON 2026-08-19 — DO NOT RE-PROPOSE IT AS A SPACE
+  // SAVING. The header vertical-space pass (direction A) removed this width gate so the bar
+  // slimmed to ~40px while scrolling at every width; it worked, it was measured (−34px of pinned
+  // chrome), it passed review, and the owner rejected it ON SIGHT: *"I like the size changes we
+  // made but you can leave this header as is when scrolling."* The identity bar staying put is
+  // worth more than the pixels it costs. The pixels that SURVIVED that pass are the ones taken
+  // from the bar's own height (three lines to two) and from the page-title band — space reclaimed
+  // by making things smaller, not by making them disappear and come back.
+  //
+  // One evaluator, run at ATTACH and on BREAKPOINT CHANGE as well as on scroll: a team
+  // switch resets scroll without necessarily firing 'scroll' on this listener, and a
+  // rotation into the phone breakpoint arrives mid-scroll with no scroll event at all —
+  // both left a stale `collapsed` before (/review 2026-08-02).
   useEffect(() => {
     const phone = window.matchMedia('(max-width: 900px)');
-    // One evaluator, run at ATTACH and on BREAKPOINT CHANGE as well as on scroll: a team
-    // switch resets scroll without necessarily firing 'scroll' on this listener, and a
-    // rotation into the phone breakpoint arrives mid-scroll with no scroll event at all —
-    // both left a stale `collapsed` before (/review 2026-08-02).
     const evaluate = () => {
       if (!phone.matches) { setCollapsed(false); return; }
       const y = window.scrollY;
@@ -116,6 +134,34 @@ function CoachTeamHeaderInner({
       phone.removeEventListener('change', evaluate);
     };
   }, [teamId]);
+
+  /**
+   * ⚠ COLLAPSING CAN PULL THE FLOOR OUT FROM UNDER KEYBOARD FOCUS (/review 2026-08-19).
+   *
+   * Two controls live inside the parts a collapse hides — the "Public site" flip and the book
+   * nudge's dismiss button. A keyboard user can be ON one of them and still scroll the page
+   * (space, PageDown, arrows, a screen reader's own scrolling). The moment `collapsed` flips, that
+   * control is `display:none`, which drops it out of the accessibility tree AND out of focus —
+   * the browser silently resets focus to <body>, so the next Tab restarts from the top of the
+   * document with nothing to say where focus went.
+   *
+   * The bar itself becomes the landing spot: it is still on screen, it is the nearest thing that
+   * survived, and `preventScroll` stops the focus move from fighting the scroll that caused it.
+   * `offsetParent === null` is the cheap "did this element actually get hidden" test — it is null
+   * exactly when an ancestor is display:none, which is the case being repaired.
+   *
+   * ⚠ THIS STAYS EVEN THOUGH THE DESKTOP COLLAPSE WAS REVERTED (2026-08-19). The bug is a PHONE
+   * bug and always was — live since 2026-08-02, found only because a review looked at the desktop
+   * version. Reverting the thing that exposed it does not unfix it.
+   */
+  useEffect(() => {
+    if (!collapsed) return;
+    const el = headerRef.current;
+    const active = document.activeElement as HTMLElement | null;
+    if (!el || !active || !el.contains(active)) return;
+    if (active.offsetParent !== null) return; // still visible — the collapse did not hide it
+    el.focus({ preventScroll: true });
+  }, [collapsed]);
 
   const live = assignments.find(a => a.teamId === teamId) ?? null;
   const closed = closedAssignments.find(a => a.teamId === teamId) ?? null;
@@ -186,17 +232,13 @@ function CoachTeamHeaderInner({
     <header
       ref={headerRef}
       role="banner"
+      /* -1: never in the tab order, but focusable as the landing spot when a collapse hides the
+         control that had focus (see the effect above). */
+      tabIndex={-1}
       className={`${styles.teamHeader}${collapsed ? ` ${styles.teamHeaderCollapsed}` : ''}`}
     >
       <div className={styles.teamHeaderRow}>
         <div className={styles.teamHeaderLeft}>
-          {/* Option B (owner-picked 2026-08-02): NO eyebrow on a standalone team. Its eyebrow could
-              only ever read "Coaches Portal" — which the shell already says (since the 2026-08-17
-              slimdown in the top strip beside the wordmark; before that, the sidebar header), so the
-              masthead would be a carbon copy of its own chrome. A club's name IS information, so a
-              club org keeps its eyebrow — and since that slimdown it is the ONLY place the club is
-              named (the sidebar org line is deleted). */}
-          {!isTeamWorkspace && <span className={styles.teamHeaderEyebrow}>{orgName}</span>}
           <span className={styles.teamHeaderNameRow}>
             <span className={styles.teamHeaderName}>{teamName}</span>
             {/* Who you are here — identity, so it rides the identity bar on every page
@@ -204,6 +246,16 @@ function CoachTeamHeaderInner({
             {roleLabel && <span className={styles.teamHeaderRole}>{roleLabel}</span>}
           </span>
           <div className={styles.teamHeaderMeta}>
+            {/* The club, FIRST segment of the meta line (2026-08-18, direction B — it used to be
+                its own eyebrow line above the name). Still absent on a standalone team workspace:
+                its only possible value there is "Coaches Portal", which the top strip already says
+                beside the wordmark, so the bar would be a carbon copy of its own chrome. A club's
+                name IS information, and since the 2026-08-17 slimdown this is the ONLY place the
+                club is named — which is why B MOVED it rather than dropping it.
+                ⚠ It joins the same sibling list as the season and the record, so the dot separator
+                (drawn between siblings, never punctuated into a string) still cannot orphan a dot
+                when this segment is absent. */}
+            {!isTeamWorkspace && <span>{orgName}</span>}
             {seasonText && <span>{seasonText}</span>}
             {/* An archive's record is stated on the right, beside its Complete chip. */}
             {!seasonFinished && record && (

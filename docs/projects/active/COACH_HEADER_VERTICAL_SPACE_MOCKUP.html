@@ -1,0 +1,1113 @@
+<title>Two Header Rows</title>
+<style>
+  /* ── Tokens ────────────────────────────────────────────────────────────────
+     Document shell = a cool slate neutral biased toward the app's blueprint blue,
+     so the memo reads as a sibling of the product rather than a generic doc.
+     Mockup panels always render in the portal's DARK skin (fixed, single-theme by
+     design — they are pictures of a product, not part of this page's theming). */
+  :root {
+    --ground: #F4F6F9;
+    --surface: #FFFFFF;
+    --ink: #131820;
+    --ink-mid: #556070;
+    --ink-dim: #7A8494;
+    --line: #DDE2EA;
+    --line-strong: #C3CBD8;
+    --blue: #2F62BE;
+    --blue-soft: #E7EEFA;
+    --amber: #9A5B00;
+    --amber-soft: #FBF0DE;
+    --green: #3F6B1C;
+    --green-soft: #E9F2DE;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1116;
+      --surface: #151A21;
+      --ink: #E6EBF3;
+      --ink-mid: #9EA9B8;
+      --ink-dim: #78838f;
+      --line: #242C37;
+      --line-strong: #35404E;
+      --blue: #7BA6EE;
+      --blue-soft: #182437;
+      --amber: #E0A44E;
+      --amber-soft: #2C2213;
+      --green: #A5CE6E;
+      --green-soft: #1C2616;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0E1116;
+    --surface: #151A21;
+    --ink: #E6EBF3;
+    --ink-mid: #9EA9B8;
+    --ink-dim: #78838f;
+    --line: #242C37;
+    --line-strong: #35404E;
+    --blue: #7BA6EE;
+    --blue-soft: #182437;
+    --amber: #E0A44E;
+    --amber-soft: #2C2213;
+    --green: #A5CE6E;
+    --green-soft: #1C2616;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 1.25rem 6rem;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  .prose { max-width: 68ch; }
+
+  /* ── Type scale ── */
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.1rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    text-wrap: balance;
+    margin: 0 0 0.6rem;
+  }
+  h2 {
+    font-size: 1.45rem; line-height: 1.2; letter-spacing: -0.015em; font-weight: 750;
+    margin: 0; text-wrap: balance;
+  }
+  h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.005em; margin: 0; }
+  p { margin: 0; }
+  strong { font-weight: 650; }
+  code {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--blue-soft); color: var(--blue);
+    padding: 0.1em 0.35em; border-radius: 4px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  .lede { font-size: 1.15rem; line-height: 1.55; color: var(--ink-mid); }
+
+  header.masthead {
+    display: flex; flex-direction: column; gap: 1rem;
+    padding: 4.5rem 0 2.5rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem;
+    font-family: var(--mono); font-size: 0.74rem; color: var(--ink-dim);
+    padding-top: 0.5rem;
+  }
+
+  section { padding: 3.5rem 0 0; display: flex; flex-direction: column; gap: 1.5rem; }
+  .sec-head { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  /* ── Verdict banner ── */
+  .verdict {
+    display: grid; grid-template-columns: auto 1fr; gap: 0 1.1rem;
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 4px solid var(--blue);
+    border-radius: 10px; padding: 1.15rem 1.35rem;
+  }
+  .verdict .k {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-dim); padding-top: 0.28rem;
+    white-space: nowrap;
+  }
+  .verdict.warn { border-left-color: var(--amber); }
+  .verdict.ok { border-left-color: var(--green); }
+
+  /* ── Screen mockups ────────────────────────────────────────────────────────
+     The vertical axis is TRUE TO SCALE (1px = 1px, taken from live measurements).
+     The horizontal axis is compressed — these frames are not a width spec. */
+  .screens { display: flex; flex-wrap: wrap; gap: 2.5rem; align-items: flex-start; }
+  .screen-block { display: flex; flex-direction: column; gap: 0.6rem; }
+  .screen-cap {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em;
+    color: var(--ink-dim);
+  }
+  .screen-cap b { color: var(--ink); font-weight: 650; }
+
+  .rig { display: flex; gap: 0; align-items: stretch; }
+
+  /* the pixel ruler — measurement, not ornament */
+  .ruler { display: flex; flex-direction: column; width: 62px; flex-shrink: 0; }
+  .ruler .band {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 0.5rem; box-sizing: border-box;
+    font-family: var(--mono); font-size: 0.66rem; color: var(--ink-dim);
+    border-right: 1px solid var(--line-strong);
+    border-top: 1px dashed var(--line-strong);
+  }
+  .ruler .band:last-child { border-bottom: 1px dashed var(--line-strong); }
+  .ruler .band.hi { color: var(--blue); font-weight: 700; }
+  .ruler .band.cut { color: var(--green); font-weight: 700; }
+
+  /* the product frame — fixed dark skin on purpose */
+  .frame {
+    width: 430px; max-width: 62vw; flex-shrink: 0;
+    background: #0A0C0F;
+    border: 1px solid #262C34;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: var(--sans);
+    color: #E8ECF2;
+    background-image:
+      linear-gradient(to right, rgba(74,125,216,0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(74,125,216,0.055) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .frame.phone { width: 250px; }
+
+  .row { box-sizing: border-box; display: flex; align-items: center; }
+  .row-strip {
+    background: #14181D; border-bottom: 1px solid #262C34;
+    padding: 0 0.6rem; gap: 0.5rem;
+  }
+  .row-mast {
+    background: #14181D; border-bottom: 1px solid #262C34;
+    padding: 0.5rem 0.75rem; gap: 0.75rem; justify-content: space-between;
+  }
+  .row-title { padding: 0 0.75rem; gap: 0.55rem; }
+  .row-body { padding: 0 0.75rem 0.75rem; flex-direction: column; align-items: stretch; gap: 0.4rem; }
+
+  .wordmark { font-size: 0.66rem; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; }
+  .wordmark i { font-style: normal; color: #B9DE5C; }
+  .wordmark s { text-decoration: none; color: #7B8492; }
+  .vdiv { width: 1px; height: 11px; background: #39414C; flex-shrink: 0; }
+  .microlabel {
+    font-family: var(--mono); font-size: 0.52rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: #7B8492; white-space: nowrap;
+  }
+  .doors { margin-left: auto; display: flex; gap: 0.4rem; align-items: center; }
+  .door { width: 15px; height: 15px; border-radius: 5px; background: #232A33; flex-shrink: 0; }
+  .door.pill { width: 46px; border: 1px solid rgba(185,222,92,0.42); background: none; }
+
+  .mast-l { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .mast-r { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .m-eyebrow {
+    font-family: var(--mono); font-size: 0.5rem; font-weight: 700;
+    letter-spacing: 0.13em; text-transform: uppercase; color: #7B8492; white-space: nowrap;
+  }
+  .m-name { font-size: 0.86rem; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .m-nameline { display: flex; align-items: center; gap: 0.35rem; }
+  .m-role {
+    font-family: var(--mono); font-size: 0.48rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #AEB7C4;
+    border: 1px solid #39414C; border-radius: 5px; padding: 0.1rem 0.3rem; white-space: nowrap;
+  }
+  .m-meta {
+    font-family: var(--mono); font-size: 0.56rem; color: #7B8492; white-space: nowrap;
+    display: flex; gap: 0.4rem;
+  }
+  .m-meta b { color: #AEB7C4; font-weight: 700; }
+  .chip-live {
+    font-family: var(--mono); font-size: 0.54rem; font-weight: 700; letter-spacing: 0.03em;
+    color: #B9DE5C; background: rgba(185,222,92,0.11);
+    border: 1px solid rgba(185,222,92,0.3); border-radius: 999px;
+    padding: 0.1rem 0.4rem; white-space: nowrap;
+  }
+  .chip-done {
+    font-family: var(--mono); font-size: 0.54rem; font-weight: 700;
+    color: #AEB7C4; background: #1D242C; border: 1px solid #39414C;
+    border-radius: 999px; padding: 0.1rem 0.4rem; white-space: nowrap;
+  }
+  .stack { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+  .stack .k {
+    font-family: var(--mono); font-size: 0.46rem; font-weight: 700; letter-spacing: 0.13em;
+    text-transform: uppercase; color: #7B8492;
+  }
+  .stack .v { font-family: var(--mono); font-size: 0.62rem; font-weight: 700; color: #E8ECF2; }
+  .flip {
+    font-family: var(--mono); font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; color: #AEB7C4;
+    border: 1px solid #39414C; border-radius: 999px; padding: 0.16rem 0.42rem; white-space: nowrap;
+  }
+
+  .tile { width: 34px; height: 34px; border-radius: 7px; background: rgba(74,125,216,0.14); border: 1px solid rgba(74,125,216,0.32); flex-shrink: 0; }
+  .tile.sm { width: 22px; height: 22px; border-radius: 5px; }
+  .h1x { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.01em; }
+  .h1x.sm { font-size: 0.98rem; font-weight: 800; }
+  .qmark { margin-left: auto; font-size: 0.7rem; color: #7B8492; }
+
+  .skel { background: #14181D; border: 1px solid #262C34; border-radius: 5px; }
+  .skel.a { height: 26px; }
+  .skel.b { height: 58px; }
+  .skel.c { height: 44px; }
+
+  /* sidebar sliver, to show where the rail sits */
+  .with-rail { display: flex; align-items: stretch; }
+  .rail {
+    width: 58px; flex-shrink: 0; background: #14181D; border-right: 1px solid #262C34;
+    display: flex; flex-direction: column; gap: 4px; padding: 6px 5px;
+  }
+  .rail .r { height: 8px; border-radius: 3px; background: #232A33; }
+  .rail .r.on { background: rgba(185,222,92,0.28); }
+  .rail .r.sel { background: #2B333D; height: 13px; }
+  .colwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  /* ── Cards / grids ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 1rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.55rem;
+  }
+  .card .num {
+    font-family: var(--mono); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .card .lbl { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+  .card p { font-size: 0.9rem; color: var(--ink-mid); }
+
+  /* ── Tables ── */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.7rem 0.95rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--ink-dim); font-weight: 600; white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 0.63rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; padding: 0.13rem 0.42rem;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .tag.dup { background: var(--amber-soft); color: var(--amber); }
+  .tag.no { background: var(--green-soft); color: var(--green); }
+  .tag.neu { background: var(--blue-soft); color: var(--blue); }
+
+  /* ── Direction blocks ── */
+  .dir {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.5rem 1.6rem; display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .dir-head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; }
+  .dir-key {
+    font-family: var(--mono); font-size: 0.95rem; font-weight: 700; color: var(--blue);
+    border: 1px solid var(--blue); border-radius: 5px; padding: 0 0.4rem; flex-shrink: 0;
+  }
+  .dir-key.stop { color: var(--amber); border-color: var(--amber); }
+  .badge {
+    font-family: var(--mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; padding: 0.16rem 0.45rem; border-radius: 4px; margin-left: auto;
+  }
+  .badge.rec { background: var(--green-soft); color: var(--green); }
+  .badge.stop { background: var(--amber-soft); color: var(--amber); }
+  .badge.hold { background: var(--blue-soft); color: var(--blue); }
+
+  .split { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+  @media (min-width: 860px) { .split.two { grid-template-columns: 1.05fr 1fr; } }
+
+  ul.tight { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  ul.tight li { font-size: 0.93rem; color: var(--ink-mid); }
+  ul.tight li strong { color: var(--ink); }
+
+  .flag {
+    display: flex; gap: 0.7rem; align-items: flex-start;
+    background: var(--amber-soft); border-radius: 8px; padding: 0.75rem 0.9rem;
+    font-size: 0.9rem; color: var(--ink);
+  }
+  .flag .mk { font-family: var(--mono); font-weight: 700; color: var(--amber); flex-shrink: 0; }
+
+  .note { font-size: 0.85rem; color: var(--ink-dim); }
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+  a { color: var(--blue); }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <span class="eyebrow">Coach portal · header exploration → built · 2026-08-18</span>
+  <h1>Two header rows, and what they actually cost</h1>
+  <p class="lede prose">
+    Measured on the running dev build, not estimated. What follows is the real pixel budget above a
+    coach's first line of content, an audit of what the two rows genuinely share, and five directions
+    with their tradeoffs — including the one that reverses a decision made two days ago.
+  </p>
+  <div class="meta">
+    <span>Measured 1440×900 and 390×844</span>
+    <span>UAT fixture · club org · head coach</span>
+    <span>B+C+E on dev · A reverted 08-19 · QA §59 owed</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">The short answer</span>
+    <h2>The two rows share nothing. The duplication was already removed.</h2>
+  </div>
+
+  <div class="verdict prose" style="max-width:none">
+    <span class="k">Finding</span>
+    <p>
+      The FieldLogicHQ strip carries the wordmark, the words “Coaches Portal”, and three personal
+      doors. The team bar carries the club name, the team name, your role, the season, the record and
+      today's live status. <strong>There is not one word in common.</strong> The org name <em>was</em>
+      printed twice — in the sidebar and in the team bar — and the shell slimdown deleted the sidebar
+      copy two days ago. The vertical space is not being spent on repetition; it is being spent on
+      three separate jobs stacked on top of each other.
+    </p>
+    <span class="k" style="padding-top:0.9rem">So</span>
+    <p style="padding-top:0.55rem">
+      There is still real space to reclaim — <strong>234 pixels sit above the first line of content on
+      a desktop screen</strong> — but it comes from making each row denser and letting the team bar
+      shrink while you scroll, not from merging identity into the top strip. That merge was proposed
+      and rejected in August, and doing it now would cost the live status line and the phone.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Decided and built, same day</span>
+    <h2>As built — measured again after the change</h2>
+    <p class="prose" style="color:var(--ink-mid)">
+      The owner approved A, B, C and E, and declined to close D. All four shipped to the dev build on
+      2026-08-18. Same measuring rig as the baseline above.
+    </p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>What</th><th>Before</th><th>After</th><th>Δ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Desktop — chrome above first content</strong></td><td class="num">234px</td><td class="num">190px</td><td class="num">−44</td></tr>
+        <tr><td><strong>Desktop — pinned bars while scrolling</strong></td><td class="num">122px</td><td class="num">88px</td><td class="num">−34</td></tr>
+        <tr><td>Desktop — team bar at rest</td><td class="num">74px</td><td class="num">58px</td><td class="num">−16</td></tr>
+        <tr><td>Desktop — team bar scrolled</td><td class="num">74px (never collapsed)</td><td class="num">40px</td><td class="num">−34</td></tr>
+        <tr><td>Desktop — page-title band</td><td class="num">80px</td><td class="num">52px</td><td class="num">−28</td></tr>
+        <tr><td><strong>Phone — chrome above first content</strong></td><td class="num">208px</td><td class="num">188px</td><td class="num">−20</td></tr>
+        <tr><td>Phone — team bar at rest</td><td class="num">72px</td><td class="num">56px</td><td class="num">−16</td></tr>
+        <tr><td>Phone — finished-season bar</td><td class="num">98px</td><td class="num">82px</td><td class="num">−16</td></tr>
+        <tr><td>Phone — page-title band</td><td class="num">120px</td><td class="num">116px</td><td class="num">−4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict warn" style="max-width:none">
+    <span class="k">Corrections</span>
+    <p>
+      Three estimates on this page came out differently, and the measured numbers above are the ones to
+      trust. <strong>The phone's page title barely moved</strong> — its height is set by the
+      finger-friendly minimum on the help button, not by the icon tile, so shrinking the tile bought 4
+      pixels rather than 28. <strong>The finished-season phone bar is 82px, not the ~72 predicted</strong>
+      — the extra line direction B removed is genuinely gone, but the test team's unusually long name
+      wraps its role badge onto a second line. And <strong>direction A's own share is 18px, not 34</strong>,
+      because B had already taken the bar from 74 to 58 before A collapsed it; together they still
+      deliver the 34 pixels of pinned chrome the page promised.
+    </p>
+    <span class="k" style="padding-top:0.9rem">Unproven</span>
+    <p style="padding-top:0.55rem">
+      The test team has no game this week, so the slim desktop bar had no status to display. The
+      mechanism is in place and verified; whether the status line <em>reads</em> well at 40px needs eyes
+      on a team with a game coming up.
+    </p>
+  </div>
+
+  <div class="verdict ok" style="max-width:none; border-left-color:var(--green)">
+    <span class="k">Review</span>
+    <p>
+      A three-lens adversarial review on 2026-08-19 produced two fixes and one owner ruling.
+      <strong>The biggest finding was not in this change at all:</strong> the smaller heading used on
+      drill-in screens (Money → Fundraisers → one fundraiser) <strong>has never once rendered
+      smaller</strong> — the rule that shrinks it was written the day that shape shipped but placed
+      where it could not take effect, so a drill-in heading always matched its hub exactly. Measured:
+      both at 22.4px, weight 900, 36×36 tile. Now 17.6px / 800 / 28×28 against the hub's 22.4 / 900 /
+      36 — parent and child, for the first time.
+    </p>
+    <span class="k" style="padding-top:0.9rem">Also fixed</span>
+    <p style="padding-top:0.55rem">
+      A keyboard user focused on the public-site link or the reminder's dismiss button, who then
+      scrolled, lost their place entirely when the bar slimmed under them — focus fell to the top of
+      the document with no indication. It now lands on the bar. This had been live on phones since
+      August without being noticed.
+    </p>
+    <span class="k" style="padding-top:0.9rem">Ruled</span>
+    <p style="padding-top:0.55rem">
+      Direction C plus direction A together mean an assistant's role is stated nowhere while scrolled
+      on a desktop. Owner ruling: no change — <em>"users know what role they have and don't need to be
+      reminded every day."</em> Desktop now matches the phone.
+    </p>
+    <span class="k" style="padding-top:0.9rem">Method note</span>
+    <p style="padding-top:0.55rem">
+      Two reviewers disagreed on the heading hierarchy — one read a code comment claiming the sizes
+      were fine and believed it. Rendering the page and reading the computed styles settled it. The
+      comment was the thing that was wrong.
+    </p>
+  </div>
+
+  <div class="verdict" style="max-width:none; border-left-color:var(--amber)">
+    <span class="k">D stays open</span>
+    <p>
+      The owner declined to close direction D: <em>"don't close D forever, I am reconsidering… not
+      opposed to revisiting moving to the single header."</em> The August "do not re-propose" is
+      <strong>lifted</strong>, pending how this build feels in use. Any return still has to answer the
+      five costs listed above — and it now has to beat <strong>88 pixels, not 122</strong>. Worth
+      carrying forward: direction A has proved team identity fits in <strong>40px</strong>, so a merged
+      bar at that height is a genuinely different proposal from the one rejected in August, and probably
+      the version to mock up first.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Reverted the next morning</span>
+    <h2>The bar stays put — space comes from smaller, not from vanishing</h2>
+  </div>
+
+  <div class="verdict warn" style="max-width:none">
+    <span class="k">Ruling</span>
+    <p>
+      <em>"I want to revert one thing, I like the size changes we made but you can leave this header
+      as is when scrolling."</em> — owner, 2026-08-19, on sight. <strong>Direction A is reverted.</strong>
+      The team bar no longer slims as you scroll on a computer; it stays full height at every scroll
+      position. Phones are untouched and still slim to the bare team name, as they have since August.
+      <strong>B, C and E stand unchanged.</strong>
+    </p>
+    <span class="k" style="padding-top:0.9rem">The rule</span>
+    <p style="padding-top:0.55rem">
+      Space taken by making a thing <strong>smaller</strong> is kept. Space taken by making a thing
+      <strong>disappear and come back</strong> is borrowed. The collapse was the second kind — and it
+      was the one change that made a bar whose entire job is to sit still start moving. Direction A is
+      now <strong>data, not a proposal</strong>: built, measured at −34px of pinned chrome, reviewed,
+      and rejected anyway. Do not bring it back as a space saving.
+    </p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Final, after the revert</th><th>Before</th><th>After</th><th>Δ</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Desktop — above first content (at rest AND scrolled)</strong></td><td class="num">234px</td><td class="num">190px</td><td class="num">−44</td></tr>
+        <tr><td><strong>Desktop — pinned while scrolling</strong></td><td class="num">122px</td><td class="num">106px</td><td class="num">−16</td></tr>
+        <tr><td>Desktop — team bar, any scroll position</td><td class="num">74px</td><td class="num">58px</td><td class="num">−16</td></tr>
+        <tr><td>Desktop — page-title band</td><td class="num">80px</td><td class="num">52px</td><td class="num">−28</td></tr>
+        <tr><td><strong>Phone — above first content</strong></td><td class="num">208px</td><td class="num">188px</td><td class="num">−20</td></tr>
+        <tr><td>Phone — team bar at rest / slimmed</td><td class="num">72 / 36px</td><td class="num">56 / 36px</td><td class="num">−16 / —</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict ok" style="max-width:none">
+    <span class="k">Kept</span>
+    <p>
+      Two fixes born of the reverted experiment survive it deliberately. The <strong>keyboard-focus
+      repair</strong> turned out to be a <strong>phone</strong> problem live since August — the desktop
+      build was only what made a reviewer look at it. The <strong>drill-in heading fix</strong> was
+      never related to the collapse at all. A reversal undoes the change, not the defects the change
+      exposed.
+    </p>
+    <span class="k" style="padding-top:0.9rem">Knock-on</span>
+    <p style="padding-top:0.55rem">
+      Direction D — the single merged header, which the owner is still reconsidering — now has to beat
+      <strong>106 pixels</strong>, not the 88 quoted earlier. That figure assumed a collapse that no
+      longer exists.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Measured, not assumed</span>
+    <h2>Where the pixels go today</h2>
+    <p class="prose" style="color:var(--ink-mid)">
+      Live measurement of the Schedule page on the dev build. Heights below are true to scale
+      vertically; the frames are narrowed horizontally and are <em>not</em> a width spec.
+    </p>
+  </div>
+
+  <div class="screens">
+
+    <div class="screen-block">
+      <div class="screen-cap"><b>Desktop 1440×900</b> — club org, head coach, quiet week</div>
+      <div class="rig">
+        <div class="ruler">
+          <div class="band" style="height:48px">48</div>
+          <div class="band hi" style="height:74px">74</div>
+          <div class="band" style="height:32px">32</div>
+          <div class="band" style="height:48px">48</div>
+          <div class="band" style="height:32px">32</div>
+        </div>
+        <div class="frame">
+          <div class="with-rail">
+            <div class="rail">
+              <div class="r sel"></div>
+              <div class="r on"></div><div class="r"></div><div class="r"></div>
+              <div class="r"></div><div class="r"></div><div class="r"></div>
+            </div>
+            <div class="colwrap">
+              <div class="row row-strip" style="height:48px">
+                <span class="wordmark">Field<i>Logic</i><s>HQ</s></span>
+                <span class="vdiv"></span>
+                <span class="microlabel">Coaches Portal</span>
+                <span class="doors"><span class="door"></span><span class="door"></span><span class="door pill"></span></span>
+              </div>
+              <div class="row row-mast" style="height:74px">
+                <span class="mast-l">
+                  <span class="m-eyebrow">Riverdale Ridge</span>
+                  <span class="m-nameline">
+                    <span class="m-name">U13 Rockets</span>
+                    <span class="m-role">Head Coach</span>
+                  </span>
+                  <span class="m-meta"><span>2026 Season</span><span>·</span><b>12–4–1</b></span>
+                </span>
+                <span class="mast-r">
+                  <span class="stack"><span class="k">Next</span><span class="v">Sat 10:00 practice</span></span>
+                  <span class="flip">Public site</span>
+                </span>
+              </div>
+              <div style="height:32px"></div>
+              <div class="row row-title" style="height:48px">
+                <span class="tile"></span>
+                <span class="h1x">Schedule</span>
+                <span class="qmark">?</span>
+              </div>
+              <div style="height:32px"></div>
+              <div class="row row-body" style="height:120px">
+                <span class="skel a"></span>
+                <span class="skel b"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-cap">First content line at <b>y = 234</b> — 26% of the viewport</div>
+    </div>
+
+    <div class="screen-block">
+      <div class="screen-cap"><b>Phone 390×844</b> — no top strip at this width</div>
+      <div class="rig">
+        <div class="ruler">
+          <div class="band hi" style="height:72px">72</div>
+          <div class="band" style="height:16px">16</div>
+          <div class="band" style="height:100px">100</div>
+          <div class="band" style="height:20px">20</div>
+        </div>
+        <div class="frame phone">
+          <div class="row row-mast" style="height:72px">
+            <span class="mast-l">
+              <span class="m-eyebrow">Riverdale Ridge</span>
+              <span class="m-nameline">
+                <span class="m-name">U13 Rockets</span>
+                <span class="m-role">Head</span>
+              </span>
+              <span class="m-meta"><span>2026 Season</span></span>
+            </span>
+          </div>
+          <div style="height:16px"></div>
+          <div class="row row-title" style="height:100px; align-items:flex-start; padding-top:0.35rem; flex-wrap:wrap">
+            <span class="tile sm"></span>
+            <span class="h1x sm">Schedule</span>
+            <span class="qmark">?</span>
+            <span style="flex-basis:100%; height:0"></span>
+            <span class="skel a" style="width:100%; height:34px; margin-top:0.5rem"></span>
+          </div>
+          <div style="height:20px"></div>
+          <div class="row row-body" style="height:80px">
+            <span class="skel b"></span>
+          </div>
+        </div>
+      </div>
+      <div class="screen-cap">First content line at <b>y = 208</b> — and the bar already
+        <b>collapses to 36px</b> once you scroll</div>
+    </div>
+
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="lbl">Desktop, above content</span>
+      <span class="num">234<span style="font-size:0.9rem; color:var(--ink-dim)">px</span></span>
+      <p>48 strip · 74 team bar · 80 page-title band (icon tile, heading and the gap under it) · 32 padding.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Phone, above content</span>
+      <span class="num">208<span style="font-size:0.9rem; color:var(--ink-dim)">px</span></span>
+      <p>No strip. The team bar is already the smallest of the three, and it is the only one that
+         shrinks when you scroll.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Biggest single band</span>
+      <span class="num">80<span style="font-size:0.9rem; color:var(--ink-dim)">px</span></span>
+      <p>The page-title row on desktop — one word the highlighted item in the sidebar has already said.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Closed-season phone bar</span>
+      <span class="num">98<span style="font-size:0.9rem; color:var(--ink-dim)">px</span></span>
+      <p>“Complete” and the final record wrap onto a third line at 390px. The tallest team bar in the
+         product, on the smallest screen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Checked line by line</span>
+    <h2>What is actually duplicated</h2>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fact on screen</th>
+          <th>Top strip</th>
+          <th>Team bar</th>
+          <th>Sidebar</th>
+          <th>Page title</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Club / org name</td><td>—</td><td>Eyebrow (club orgs only)</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+        <tr>
+          <td>“Coaches Portal”</td><td>Beside the wordmark</td><td>—</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+        <tr>
+          <td>Team name</td><td>—</td><td>The bar's headline</td><td>Switcher dropdown, 2+ teams only</td><td>—</td>
+          <td><span class="tag dup">Twice, side by side</span></td>
+        </tr>
+        <tr>
+          <td>Your role</td><td>—</td><td>Chip beside the team name</td><td>“Assistant Coach” label — assistants only</td><td>—</td>
+          <td><span class="tag dup">Twice, for assistants</span></td>
+        </tr>
+        <tr>
+          <td>Season</td><td>—</td><td>Meta line</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+        <tr>
+          <td>Record</td><td>—</td><td>Meta line</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+        <tr>
+          <td>Today's status / game day</td><td>—</td><td>Right slot</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+        <tr>
+          <td>Which screen you are on</td><td>—</td><td>—</td><td>Highlighted nav item</td><td>Heading</td>
+          <td><span class="tag dup">Twice, by design</span></td>
+        </tr>
+        <tr>
+          <td>Notifications, account, workspaces</td><td>Door corner</td><td>—</td><td>—</td><td>—</td>
+          <td><span class="tag no">Stated once</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="prose" style="color:var(--ink-mid)">
+    Three duplicates, and none of them is between the two header rows. Two are horizontal (they cost
+    no vertical space at all) and the third — the screen name appearing both as a highlighted nav item
+    and as a large heading — is the one that is actually costing 80 pixels a screen.
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Five directions</span>
+    <h2>What could change, and what it costs</h2>
+  </div>
+
+  <!-- ─── A ─── -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="dir-key">A</span>
+      <h3>The team bar shrinks as you scroll — on desktop too</h3>
+      <span class="badge stop">REVERTED 08-19 — data, not a proposal</span>
+    </div>
+
+    <div class="split two">
+      <div>
+        <p style="color:var(--ink-mid); font-size:0.95rem">
+          At the top of a page nothing changes: the full bar, club name, team, role, season, record and
+          today's status. Once the coach scrolls past the first screenful it slims to a single line —
+          team name on the left, today's status on the right — and stays pinned there. This is exactly
+          what the phone already does, extended to the desktop and made slightly more generous: where
+          the phone drops to the bare team name, the desktop keeps the status, because there is room.
+        </p>
+        <ul class="tight" style="margin-top:0.9rem">
+          <li><strong>Reclaims 34px</strong> of permanently pinned chrome — while scrolling, which is
+            when the space is actually wanted.</li>
+          <li><strong>Costs nothing at rest.</strong> A coach arriving on a page sees exactly what they
+            see today.</li>
+          <li><strong>Status survives</strong> in both states. A finished season shows the team name and
+            “Complete”.</li>
+          <li><strong>Phone unchanged</strong> — it has done this since August.</li>
+        </ul>
+      </div>
+
+      <div class="screen-block">
+        <div class="screen-cap">Desktop, scrolled</div>
+        <div class="rig">
+          <div class="ruler">
+            <div class="band" style="height:48px">48</div>
+            <div class="band cut" style="height:40px">40</div>
+            <div class="band" style="height:20px">↑34</div>
+          </div>
+          <div class="frame" style="width:380px">
+            <div class="with-rail">
+              <div class="rail">
+                <div class="r sel"></div><div class="r on"></div><div class="r"></div>
+                <div class="r"></div><div class="r"></div>
+              </div>
+              <div class="colwrap">
+                <div class="row row-strip" style="height:48px">
+                  <span class="wordmark">Field<i>Logic</i><s>HQ</s></span>
+                  <span class="vdiv"></span>
+                  <span class="microlabel">Coaches Portal</span>
+                  <span class="doors"><span class="door"></span><span class="door"></span><span class="door pill"></span></span>
+                </div>
+                <div class="row row-mast" style="height:40px">
+                  <span class="m-nameline"><span class="m-name">U13 Rockets</span></span>
+                  <span class="mast-r"><span class="chip-live">Game day</span><span class="stack"><span class="v">Lions, 6:30 p.m.</span></span></span>
+                </div>
+                <div class="row row-body" style="height:100px; padding-top:0.6rem">
+                  <span class="skel a"></span><span class="skel c"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flag">
+      <span class="mk">Check</span>
+      <span>Two screens size themselves against the team bar's live height — the chat window and the
+        practice-plan focus rail. Both need a look before this ships, because their height would now
+        change mid-scroll rather than staying fixed.</span>
+    </div>
+  </div>
+
+  <!-- ─── B ─── -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="dir-key">B</span>
+      <h3>Two lines instead of three</h3>
+      <span class="badge rec">Built · −16px, and 98px phone bar → 82px</span>
+    </div>
+
+    <div class="split two">
+      <div>
+        <p style="color:var(--ink-mid); font-size:0.95rem">
+          Today the bar stacks club name, then team name, then the season line. Fold the club name down
+          into the season line: <em>team name and role</em> on top, <em>club · season · record</em>
+          underneath. Nothing is removed — the club is still named on every team page, which is the
+          promise made when it left the sidebar.
+        </p>
+        <ul class="tight" style="margin-top:0.9rem">
+          <li><strong>Reclaims 11px</strong> on every screen, at rest and on both devices.</li>
+          <li><strong>Fixes the 98px closed-season phone bar</strong> — the tallest bar in the product
+            comes back to normal because “Complete” and the final record stop being pushed onto a third
+            line.</li>
+          <li><strong>Standalone team workspaces see no change</strong> — they never had a club eyebrow.</li>
+        </ul>
+      </div>
+
+      <div class="screen-block">
+        <div class="screen-cap">Desktop, at rest</div>
+        <div class="rig">
+          <div class="ruler">
+            <div class="band" style="height:48px">48</div>
+            <div class="band cut" style="height:63px">63</div>
+          </div>
+          <div class="frame" style="width:380px">
+            <div class="colwrap">
+              <div class="row row-strip" style="height:48px">
+                <span class="wordmark">Field<i>Logic</i><s>HQ</s></span>
+                <span class="vdiv"></span>
+                <span class="microlabel">Coaches Portal</span>
+                <span class="doors"><span class="door"></span><span class="door"></span><span class="door pill"></span></span>
+              </div>
+              <div class="row row-mast" style="height:63px">
+                <span class="mast-l">
+                  <span class="m-nameline">
+                    <span class="m-name">U13 Rockets</span>
+                    <span class="m-role">Head Coach</span>
+                  </span>
+                  <span class="m-meta"><span>Riverdale Ridge</span><span>·</span><span>2026 Season</span><span>·</span><b>12–4–1</b></span>
+                </span>
+                <span class="mast-r">
+                  <span class="stack"><span class="k">Next</span><span class="v">Sat 10:00</span></span>
+                  <span class="flip">Public site</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flag">
+      <span class="mk">Note</span>
+      <span>This adjusts the August ruling that the bar reads <em>eyebrow → name → meta</em> in three
+        steps. The hierarchy survives at two levels — the team name is still the one confident line —
+        but it is a deliberate change to a decision, not a free tidy-up.</span>
+    </div>
+  </div>
+
+  <!-- ─── C ─── -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="dir-key">C</span>
+      <h3>Stop saying the role twice</h3>
+      <span class="badge rec">Built</span>
+    </div>
+    <p style="color:var(--ink-mid); font-size:0.95rem; max-width:68ch">
+      An assistant coach currently reads “Assistant Coach” in the team bar and again in the sidebar,
+      two inches apart, on all forty screens. The bar's chip is the better home — it is always visible
+      and sits beside the team the role belongs to — so the sidebar label goes. A head coach is
+      unaffected either way.
+    </p>
+    <ul class="tight">
+      <li><strong>No vertical gain</strong> — this is honesty, not space. Worth doing because the
+        duplicate is real, worth separating from A and B because it changes nothing about layout.</li>
+      <li>The alternative — dropping the chip and keeping the sidebar label — is worse: the chip is
+        the only thing that tells an assistant <em>why</em> some doors are missing, and the sidebar
+        label disappears on a phone entirely.</li>
+    </ul>
+  </div>
+
+  <!-- ─── D ─── -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="dir-key stop">D</span>
+      <h3>Team identity moves into the FieldLogicHQ strip</h3>
+      <span class="badge stop">Parked, NOT closed — owner reconsidering</span>
+    </div>
+
+    <div class="split two">
+      <div>
+        <p style="color:var(--ink-mid); font-size:0.95rem">
+          The direction the session opened with: one bar carrying wordmark, club, team, role, season
+          and status, with the separate team bar deleted on desktop. It is the biggest single number —
+          <strong>74px reclaimed</strong> — and it is the one direction with a rejection already written
+          against it.
+        </p>
+        <ul class="tight" style="margin-top:0.9rem">
+          <li><strong>Reclaims 74px on desktop. Zero on a phone</strong> — the strip does not exist
+            below 900px, so the team bar has to stay there anyway.</li>
+          <li><strong>Two builds of one thing.</strong> A strip on desktop and a bar on phone means every
+            future change to team identity is made twice, and the rule that this chrome must read the
+            same on every device gets harder to keep, not easier.</li>
+          <li><strong>The status line is the expensive part.</strong> Today it is worked out once when the
+            coach enters a team and rides down with the page for free. The strip sits above the team,
+            where that information isn't available — so it becomes either a fetch on every single page
+            or a new piece of plumbing to carry it up.</li>
+          <li><strong>Two things have nowhere to go</strong> in a 48px strip: the game-week scouting
+            reminder that attaches under the bar, and the game-day link into the bench console.</li>
+          <li><strong>Pages with no team</strong> — the team picker, notifications — would leave the strip
+            half-empty or, worse, showing the last team you were in.</li>
+        </ul>
+      </div>
+
+      <div class="screen-block">
+        <div class="screen-cap">What it would look like</div>
+        <div class="rig">
+          <div class="ruler">
+            <div class="band cut" style="height:48px">48</div>
+            <div class="band" style="height:20px">↑74</div>
+          </div>
+          <div class="frame" style="width:380px">
+            <div class="colwrap">
+              <div class="row row-strip" style="height:48px">
+                <span class="wordmark">Field<i>Logic</i><s>HQ</s></span>
+                <span class="vdiv"></span>
+                <span class="m-name" style="font-size:0.72rem">U13 Rockets</span>
+                <span class="m-meta" style="font-size:0.5rem"><span>Riverdale Ridge · 2026 · 12–4–1</span></span>
+                <span class="doors"><span class="chip-live">Game day</span><span class="door"></span><span class="door"></span><span class="door pill"></span></span>
+              </div>
+              <div class="row row-body" style="height:120px; padding-top:0.7rem">
+                <span class="skel a"></span><span class="skel b"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-cap" style="color:var(--amber)">Phone would keep the 72px bar regardless</div>
+      </div>
+    </div>
+
+    <div class="flag">
+      <span class="mk">Conflict</span>
+      <span><strong>This is the “single-line identity strip” that was tried and rejected on
+        2026-08-02</strong>, and the plan of record marks it “do not re-propose”. The original reason
+        was that a standalone team's name appeared three times in a row; the shell slimdown has since
+        deleted one of those three, so the arithmetic has genuinely changed — but the ruling stands
+        until it is deliberately reversed, and the costs above are independent of the stutter argument.</span>
+    </div>
+  </div>
+
+  <!-- ─── E ─── -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="dir-key">E</span>
+      <h3>Put the page-title band on a diet</h3>
+      <span class="badge rec">Built · 80px → 52px desktop, −4px phone</span>
+    </div>
+
+    <div class="split two">
+      <div>
+        <p style="color:var(--ink-mid); font-size:0.95rem">
+          The largest band above the content is not either header row — it is the 80 pixels the page
+          title takes: a 48px icon tile, a heading at the largest size in the product, and a 32px gap
+          beneath it, to say one word the highlighted sidebar item has already said. Shrinking the tile
+          and the heading a step, and tightening the gap, takes it to roughly 52px <em>without touching
+          the rule that all forty screens open the same way</em> — every slot stays, every screen stays
+          identical to every other, they are simply less loud.
+        </p>
+        <ul class="tight" style="margin-top:0.9rem">
+          <li><strong>Reclaims ~28px on desktop</strong> and a similar amount on a phone.</li>
+          <li><strong>Nothing disappears</strong> — the icon, the heading, the actions and the “?” all
+            keep their slots and their positions.</li>
+          <li>Touches all forty screens at once, so it wants its own review pass rather than riding
+            along with a header change.</li>
+        </ul>
+      </div>
+
+      <div class="screen-block">
+        <div class="screen-cap">Title band, today vs. tightened</div>
+        <div class="rig">
+          <div class="ruler">
+            <div class="band" style="height:80px">80</div>
+            <div class="band cut" style="height:52px">52</div>
+          </div>
+          <div class="frame" style="width:380px">
+            <div class="colwrap">
+              <div class="row row-title" style="height:48px"><span class="tile"></span><span class="h1x">Schedule</span><span class="qmark">?</span></div>
+              <div style="height:32px"></div>
+              <hr class="rule" style="border-color:#262C34">
+              <div class="row row-title" style="height:36px"><span class="tile sm"></span><span class="h1x sm">Schedule</span><span class="qmark">?</span></div>
+              <div style="height:16px"></div>
+              <div class="row row-body" style="height:70px"><span class="skel c"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Adding up</span>
+    <h2>What each combination buys</h2>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Combination</th>
+          <th>Desktop, at rest</th>
+          <th>Desktop, scrolling</th>
+          <th>Phone</th>
+          <th>Reverses a ruling?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong> — bar shrinks on scroll</td>
+          <td class="num">—</td><td class="num">−34px</td><td class="num">—</td>
+          <td><span class="tag no">No</span></td>
+        </tr>
+        <tr>
+          <td><strong>B</strong> — two lines not three</td>
+          <td class="num">−11px</td><td class="num">−11px</td><td class="num">−11px, −26px closed</td>
+          <td><span class="tag neu">Adjusts one</span></td>
+        </tr>
+        <tr>
+          <td><strong>A + B</strong></td>
+          <td class="num">−11px</td><td class="num">−45px</td><td class="num">−11px, −26px closed</td>
+          <td><span class="tag neu">Adjusts one</span></td>
+        </tr>
+        <tr>
+          <td><strong>A + B + E</strong></td>
+          <td class="num">−39px</td><td class="num">−73px</td><td class="num">−35px</td>
+          <td><span class="tag neu">Adjusts one</span></td>
+        </tr>
+        <tr>
+          <td><strong>D</strong> — identity into the strip</td>
+          <td class="num">−74px</td><td class="num">−74px</td><td class="num">0px</td>
+          <td><span class="tag dup">Yes — 2026-08-02</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict ok" style="max-width:none">
+    <span class="k">Recommend</span>
+    <p>
+      <strong>A + B now, C alongside it, E as its own decision afterwards.</strong> Together A and B
+      give a coach 45 fewer pixels of chrome while they read and cost them nothing when they arrive —
+      more than half of what direction D would buy, on both devices instead of one, with the live
+      status line and the finished-season variant untouched and no separate phone build to maintain.
+      E is worth more than either on its own, but it lands on all forty screens and deserves its own
+      look rather than being smuggled in beside a header change.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Before building</span>
+    <h2>The decisions, as made</h2>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <span class="lbl">Decision 1</span>
+      <h3>D is not closed</h3>
+      <p>Owner, 2026-08-18: reconsidering it. The August bar is lifted; the five costs still stand and the target is now 88px.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Decision 2</span>
+      <h3>Does the desktop bar keep the status when it shrinks?</h3>
+      <p>The phone drops to the bare team name. The recommendation keeps “Game day — Lions, 6:30” on
+         desktop, where there is room. The alternative is matching the phone exactly.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Decision 3</span>
+      <h3>Club name sits on line two</h3>
+      <p>Approved and built. Still on every team page, one step quieter.</p>
+    </div>
+    <div class="card">
+      <span class="lbl">Decision 4</span>
+      <h3>E shipped in the same pass</h3>
+      <p>Approved alongside A/B/C. Geometry only, so the “all forty screens open the same way” ruling is intact.</p>
+    </div>
+  </div>
+  <p class="note prose">
+    A+B+C+E are built on the dev branch and awaiting owner QA (ledger §59) — nothing is on production.
+    All measurements taken on the running dev build, 2026-08-18, against the UAT coach fixture at
+    1440×900 and 390×844.
+  </p>
+</section>
+
+</div>

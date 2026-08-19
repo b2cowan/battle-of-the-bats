@@ -4,6 +4,158 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-19 — THE IDENTITY BAR STAYS PUT. Space comes from making things SMALLER, not from making them vanish
+
+**Owner ruling, on sight, the morning after it shipped to dev:** *"I want to revert one thing, I like
+the size changes we made but you can leave this header as is when scrolling."*
+
+⚠⚠ **THIS OVERRIDES DIRECTION A OF THE 2026-08-18 ENTRY BELOW.** The desktop team masthead does **not**
+collapse on scroll. The phone still does, exactly as ruled 2026-08-02 — that behaviour is untouched and
+was never in question. Restored: the `matchMedia('(max-width: 900px)')` gate and the breakpoint listener
+beside it, and every `.teamHeaderCollapsed` rule back inside the ≤900px media query where it started.
+
+**The direction A experiment is now DATA, not a proposal.** It was built, measured (−34px of pinned
+chrome, 74→40px while scrolling), reviewed, and it worked. It was rejected anyway, because a coach's
+identity bar disappearing and returning is worth more than the pixels it costs. **Do not re-propose a
+desktop collapse as a space saving.** The distinction the owner drew is the durable part and it
+generalises past this bar:
+
+> **Space you take by making a thing SMALLER is kept. Space you take by making a thing DISAPPEAR AND
+> COME BACK is borrowed.** The pixels that survived this pass — the bar going from three lines to two,
+> the page-title band going 80px → 52px — are the first kind. The collapse was the second kind, and it
+> was the one direction that read as motion in a bar whose whole job is to sit still.
+
+**What the pass therefore delivers (measured after the revert):** chrome above a coach's first line of
+content **234px → 190px** at 1440×900 and **208px → 188px** at 390×844, at rest AND while scrolling.
+Pinned chrome while scrolling on desktop is 106px (48 + 58), down from 122 — all of it from the bar
+being two lines instead of three.
+
+⚠ **TWO THINGS THE REVERTED EXPERIMENT LEFT BEHIND, BOTH KEPT.** A reversal is not an undo of what the
+work taught:
+1. **The focus repair stays.** A collapse that hides the focused control drops focus to `<body>`; the
+   bar is now the landing spot. **That was always a PHONE bug** (live since 2026-08-02) — the desktop
+   version is merely what made a reviewer look at it. Reverting the thing that exposed a bug does not
+   unfix the bug.
+2. **The nested-header cascade fix stays** (see the entry above) — found in the same review, unrelated
+   to the collapse, and it repairs a shape that had never once rendered correctly.
+
+**Applies to:** `CoachTeamHeader` + the `.teamHeader*` block in `app/[orgSlug]/coaches/coaches.module.css`.
+Directions B (two lines), C (the rail's role heading deleted) and E (page-title density) are **unchanged
+and stand**. [[design-principles]]
+
+---
+
+### 2026-08-19 — AN OVERRIDE DECLARED ABOVE THE RULE IT OVERRIDES IS NOT AN OVERRIDE — and the one that worked hid the two that didn't
+
+**Found by `/review` on the header vertical-space pass** (see the 2026-08-18 entry below). Plan §11.
+
+⚠⚠ **THE COACH PORTAL'S "NESTED" DRILL-IN HEADER HAS NEVER RENDERED SMALLER THAN ITS HUB HEADER** —
+not once since the shape shipped 2026-08-14. `.headerIconNested` and `.pageTitleNested` were declared
+**above** `.headerIcon` / `.pageTitle`. `CoachPageHeader` puts BOTH classes on the same element, the
+two selectors tie on specificity (0,1,0), and a tie is broken by source order — so the base rule, being
+later, won every overlapping property. Measured on a rendered page: the hub `<h1>` and the drill-in
+`<h2>` both computed to **22.4px / weight 900 with a 36×36 tile**. Identical. The whole point of that
+shape — "so the two read as parent and child rather than two page titles arguing" — never happened.
+
+**Decision:** the three nested rules move BELOW the base rules, and the trap is written into the
+stylesheet at the site so a fourth nested override cannot repeat it. Fixed: `17.6px / 800 / 28×28`
+against the hub's `22.4px / 900 / 36×36`.
+
+⚠ **WHY IT SURVIVED FIVE DAYS AND A DESIGN RULING: one of the three overrides worked.**
+`.pageHeaderNested`'s margin happened to sit below `.pageHeader`, so the nested shape was visibly
+*half* right — tighter spacing, same type — and half-right reads as "styled", not as "broken".
+**Generalise: when a group of overrides is written together, they share a fate. If one lands and two
+do not, the one that lands is camouflage.** Check the whole group, not the property you happened to
+look at.
+
+⚠⚠ **AND THE SECOND LESSON IS ABOUT EVIDENCE.** The pass that retuned these numbers added a comment
+asserting *"the step between them is preserved, one size smaller"* — false, and it immediately
+propagated: one review lens **read that comment, believed it, and computed a 27% size gap that did not
+exist**, reporting the hierarchy as healthy. A second lens read the cascade and called it dead. The
+disagreement was settled by rendering the page and reading `getComputedStyle`. **A comment is a claim,
+not evidence. A rendered measurement is evidence.** This is the same shape as the token-guardrail
+lesson (a green gate that measured the wrong thing) — say out loud what your evidence actually is.
+
+**Two more from the same review, both about a bar that now changes height while you read it:**
+- **A collapse that hides the focused control silently drops focus to `<body>`.** `display:none`
+  removes an element from the accessibility tree AND from focus, and a keyboard user can scroll (space,
+  Page Down, arrows, a screen reader's own scrolling) while focus sits on the public-site flip or the
+  nudge's dismiss button. The bar itself is now the landing spot (`tabIndex={-1}`, `preventScroll`);
+  focus outside the bar is never stolen, and focus on content that survives the collapse is kept — all
+  three proven in a browser. ⚠ This was live on PHONES from 2026-08-02 and never caught; extending the
+  collapse to desktop is what made it worth fixing, not what caused it.
+- ⚠ **TWO SAFE-LOOKING CHANGES IN ONE PASS CAN DELETE THE LAST COPY BETWEEN THEM.** The rail's
+  "Assistant Coach" heading was deleted *because* the masthead chip states the role — while the same
+  pass taught that chip to hide on scroll. Neither change is wrong alone; together an assistant's role
+  is stated nowhere on a scrolled desktop. **When you remove a duplicate, check what the survivor is
+  doing in the SAME diff.** Put to the owner with the correction that the justification given ("the
+  chip is always visible") was stronger than the facts; **owner ruling 2026-08-19: no change —
+  *"users know what role they have and don't need to be reminded every day."*** [[design-principles]]
+
+---
+
+### 2026-08-18 — THE CHROME SHRINKS WHILE YOU READ — and "these two rows duplicate each other" was false
+
+**Owner trigger:** *"can we reclaim vertical space by consolidating the team-identity header into the
+FieldLogicHQ top strip… or otherwise reduce the space it takes up."* Mockup (approved, binding for the
+four directions built): `claude.ai/code/artifact/ccc08606-fcc2-41b4-b56f-627a8967a7cd`. Plan:
+`docs/projects/active/COACH_HEADER_VERTICAL_SPACE_PLAN.md`. Ledger §59.
+
+⚠⚠ **THE PREMISE WAS FALSE, AND CHECKING IT WAS THE WHOLE VALUE OF THE SESSION.** The top strip and the
+team masthead share **not one word**: strip = wordmark · "COACHES PORTAL" · bell/account/workspaces;
+masthead = club · team · role · season · record · live status · flip · nudge. The org name *had* been
+printed twice, and the **2026-08-17 shell slimdown already deleted that copy** — so the consolidation
+the ask proposed had, in substance, already happened. **Generalise: before merging two surfaces to
+remove duplication, list what each one actually says. "They look like two of the same thing" is a
+layout observation, not a duplication finding.** The three real duplicates were elsewhere, and two of
+them cost no vertical space at all (team name vs. the rail switcher; role vs. the rail label).
+
+⚠⚠ **PART (1) BELOW — THE DESKTOP COLLAPSE — WAS REVERTED BY THE OWNER ON 2026-08-19.** See the
+entry above: the desktop bar does NOT collapse; the phone still does, as it always has. Parts (2), (3)
+and (4) stand unchanged. The numbers in this entry are the as-built ones from 08-18 and are superseded
+by the post-revert figures above (234→190px at rest on both, 122→106px pinned while scrolling).
+
+**Decision, four parts, all measured on the running build rather than estimated.** Chrome above a
+coach's first line of content: **234px → 190px** at 1440×900, and **122px → 88px** of permanently
+pinned bars once scrolling. (1) **The masthead collapses at EVERY width**, not just on a phone — the
+width gate is gone and the breakpoint listener with it. Collapsed, a phone still shows the bare team
+name; **a desktop keeps the status line beside it**, because there is room and status is the bar's most
+perishable content. That is the one thing the two collapsed states disagree about, and it is deliberate.
+(2) **The masthead is TWO LINES, not three**: the club's eyebrow folds into the meta line as its first
+segment — team + role over club · season · record. Nothing left the bar. (3) The rail's **"Assistant
+Coach" heading is deleted** — the masthead chip is the survivor (it sits beside the team the role
+belongs to, and it is the only one that exists on a phone). (4) **The page-title band is 80px → 52px**:
+36px tile, 1.4rem heading, 1rem gap, with the nested shape stepped down to match.
+
+**This ADJUSTS the 2026-08-02 masthead ruling** (`eyebrow → name → meta`, three levels) to two levels,
+and the same date's "desktop keeps the full masthead" call. **It does NOT touch the 2026-08-11
+page-header ruling**: part (4) is geometry only — every slot, every position, the phone grid and the
+"no subtitle slot exists" construction are exactly as that ruling left them. ⚠ **The tile is what drives
+the title row's height at every heading size**, so shrinking the heading alone would have reclaimed
+nothing; the same arithmetic is why the PHONE's title band barely moved (its height is set by the 44px
+tap floor on the help "?", not by the tile) and why its three mobile overrides — 40px tile, 1.35rem
+title, 1.25rem margin — were **deleted as now-larger-than-desktop**.
+
+**⚠⚠ THE "SINGLE-LINE IDENTITY STRIP" IS BACK ON THE TABLE — owner ruling, same day.** Asked to confirm
+the 2026-08-02 *"do not re-propose"*, the owner instead said: ***"don't close D forever, I am
+reconsidering… not opposed to revisiting moving to the single header."*** So that bar is **lifted,
+pending how this build feels in use**. It is legitimate to propose again; it is NOT legitimate to
+propose without the five costs the plan records (the phone has no strip at all, so it saves 0px there;
+the status feed is SSR'd once per team-section entry from the team layout, which the strip sits above;
+the canonical-record rule; the homeless game-day console link + scouting nudge; and pages with no team).
+And it now has to beat **88px**, not 122px. Note for whoever picks it up: **A proved identity fits in
+40px**, so a merged bar at THAT height is a different proposal from the one rejected in August.
+⚠ Unrelated to the 2026-08-17 **Variant B** decision (an org whisper in the rail on non-masthead pages),
+which none of this touches.
+
+**Applies to:** `CoachTeamHeader` + `CoachPageHeader` + `CoachesSidebar` and their blocks in
+`app/[orgSlug]/coaches/coaches.module.css` — the premium org coach portal, both widths. Side effect
+worth keeping: deleting `.sidebarSectionLabel` also removed a **stale trailing comma** left by the
+2026-08-18 semantic-ink sweep, which had joined that selector to `.sidebarItem:hover` and was painting
+the rail's role heading with a warm hover background it never asked for. [[design-principles]]
+
+---
+
 ### 2026-08-18 — TEXT NAMES A ROLE, NOT A SHADE — and "zero hardcoded colours" was never the same claim
 
 **Trigger:** owner, on the coach rail — *"can you do something about this blue on blue text? hard to

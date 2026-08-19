@@ -463,15 +463,10 @@
   min-width: 0;
 }
 
-.teamHeaderEyebrow {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
+/* ⚠ `.teamHeaderEyebrow` is DELETED (2026-08-18, header vertical-space pass, direction B). The
+   club's name was its own uppercase micro-line above the team name; it is now the first ordinary
+   segment of `.teamHeaderMeta` below it. Nothing left the bar — the hierarchy went from three
+   levels to two, which is what took the finished-season phone bar from 98px back to normal. */
 
 .teamHeaderName {
   /* UI sans, NOT the display face (owner-picked Option 1, 2026-08-02): Barlow Condensed at
@@ -632,13 +627,19 @@
 @media (max-width: 900px) {
   .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
   .teamHeaderName { font-size: 0.98rem; max-width: 100%; }
-  /* Scrolled state (phone only — desktop keeps the full masthead, same owner call as
-     admin): eyebrow + meta fold away, leaving the bare team name on one slim line. */
-  /* justify-content centers the name in the reserved 36px — the parent is a flex COLUMN, and
+  /* ── The SCROLLED state — PHONE ONLY, and deliberately so ──────────────────────────────────
+     Eyebrow, meta and the right slot fold away, leaving the bare team name on one slim line.
+
+     ⚠⚠ THESE RULES SPENT ONE DAY AT TOP LEVEL (2026-08-18, direction A) so the desktop bar
+     collapsed too, and the owner REVERTED IT ON SIGHT: *"I like the size changes we made but you
+     can leave this header as is when scrolling."* Do not move them back out. The desktop bar
+     staying put is the ruling; the space that pass reclaimed came from the bar being two lines
+     instead of three and from the page-title band, not from chrome that vanishes and returns.
+
+     justify-content centers the name in the reserved 36px — the parent is a flex COLUMN, and
      without it the single remaining row pins to the top with the spare height as a dead band
      below the name (owner-reported 2026-08-17; only this state has leftover room to show it). */
   .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; justify-content: center; }
-  .teamHeaderCollapsed .teamHeaderEyebrow { display: none; }
   .teamHeaderCollapsed .teamHeaderMeta { display: none; }
   .teamHeaderCollapsed .teamHeaderName { font-size: 0.92rem; }
   /* A collapsed phone bar is the BARE team name (ruled 2026-08-02) — the role tag folds away
@@ -699,17 +700,15 @@
   padding: 0.5rem 0;
 }
 
-.sidebarSectionLabel {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 0.25rem 1.25rem 0.5rem;
-}
+/* ⚠ `.sidebarSectionLabel` is DELETED (2026-08-18, header vertical-space pass, direction C). Its
+   one consumer was the rail's "Assistant Coach" heading, which restated the masthead's role chip
+   two inches away on every screen. Its warm override went with it — and that override had quietly
+   become wrong: a stale trailing comma left over from the 2026-08-18 semantic-ink sweep had joined
+   this selector to `.sidebarItem:hover`, so in the warm skin the label was painting itself with a
+   hover background it never asked for. */
 
 /* Group header within the team nav (Squad / Season / Communication / Admin) — a touch dimmer than
-   .sidebarSectionLabel, with top spacing so the clusters read as separated. */
+   the rail's other micro-labels, with top spacing so the clusters read as separated. */
 /* ── Collapsible nav groups (Phase 5b, 2026-08-18) ──────────────────────────
    The heading was a <p>; it is a <button> now because it does something. Typography is unchanged
    from that <p> on purpose — the rail should not look like it grew a control, it should look like
@@ -1000,12 +999,19 @@
   .collapseChevron { transition: none; }
 }
 
+/* ⚠ DENSITY RETUNED 2026-08-18 (header vertical-space pass, direction E) — geometry only. Every
+   slot, every position, the phone grid and the "no subtitle slot exists" construction are
+   UNCHANGED; the 2026-08-11 ruling that all forty screens open the same way is untouched. What
+   changed is how loudly they open: the band above the first line of content was 80px on a desktop
+   (a 48px tile + the product's largest heading + a 32px gap) to say one word the highlighted rail
+   item had already said. It is 52px now. Measured, not guessed — the TILE drives this row's height
+   at every title size, so shrinking the heading alone would have reclaimed nothing. */
 .pageHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
 }
 
@@ -1069,22 +1075,12 @@
   .pageHeaderStd .pageHeaderActionsWideOnly { display: none; }
 }
 
-/* ── The NESTED shape: a hub tab that has drilled into one record ───────────
-   Money → Fundraisers → one fundraiser (2026-08-14). The hub's own header is one line up and
-   still names the screen, so this names the RECORD: same slots, same right-pinned actions, same
-   phone grid — one step down in weight so the two headings read as parent and child rather than
-   two page titles arguing. Deliberately NOT a second `.pageHeader*` family: every rule below is
-   an override on the standard one, so a change to the header's geometry reaches both shapes.
-
-   The margin drops to 1rem because a facts line follows it (the rebate % and dates), which the
-   top-level shape never has under a title. */
-.pageHeaderNested { margin-bottom: 1rem; }
-.headerIconNested { width: 36px; height: 36px; border-radius: 9px; }
-.pageTitleNested { font-size: 1.3rem; font-weight: 800; }
-
 .headerIcon {
-  width: 48px;
-  height: 48px;
+  /* 48px until 2026-08-18 (direction E). This is the number that sets the whole title row's
+     height — the heading has never been tall enough to drive it — so it is the one that had to
+     move for the band to shrink. */
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius);
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
@@ -1096,7 +1092,10 @@
 }
 
 .pageTitle {
-  font-size: 1.75rem;
+  /* 1.75rem until 2026-08-18 (direction E). Dropped WITH the tile, not instead of it: left at
+     1.75rem beside a 36px tile the heading would out-measure its own icon and the row would read
+     as a heading with a bullet, rather than the icon-and-title pair the ruling describes. */
+  font-size: 1.4rem;
   font-weight: 900;
   font-family: var(--font-display);
   margin: 0;
@@ -1109,6 +1108,28 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ── The NESTED shape: a hub tab that has drilled into one record ─────────────────────────────
+   Money → Fundraisers → one fundraiser (2026-08-14). The hub's own header is one line up and
+   still names the screen, so this names the RECORD: same slots, same right-pinned actions, same
+   phone grid — one step down in weight so the two headings read as parent and child rather than
+   two page titles arguing. Deliberately NOT a second `.pageHeader*` family: every rule here is an
+   override on the standard one, so a change to the header's geometry reaches both shapes.
+
+   ⚠⚠ THEY MUST STAY BELOW `.pageHeader` / `.headerIcon` / `.pageTitle`, AND THEY DID NOT.
+   These three sat ABOVE `.headerIcon` / `.pageTitle` from the day the nested shape shipped, and
+   because both classes land on the SAME element (`headerIcon headerIconNested`), the two selectors
+   tie on specificity and the LATER one wins. The base rules were later, so the nested tile and
+   title were dead: a drill-in header rendered at exactly the hub header's size — 48px/1.75rem then,
+   36px/1.4rem after the 2026-08-18 density retune. Measured on a rendered page, not reasoned:
+   the h1 and the nested h2 both computed to 22.4px/900 with a 36×36 tile.
+   ⚠ `.pageHeaderNested`'s margin was the one that always worked — it is the only one of the three
+   that already sat below its base rule — which is why the shape looked half-right and nobody
+   caught it. Moving all three together keeps that accident from being load-bearing.
+   Adding a fourth nested override? Put it HERE, below the base rules, or it will do nothing. */
+.pageHeaderNested { margin-bottom: 0.75rem; }
+.headerIconNested { width: 28px; height: 28px; border-radius: 8px; }
+.pageTitleNested { font-size: 1.1rem; font-weight: 800; }
 
 /* The BODY SUMMARY STRIP: the entity facts a page used to print under its title — a template's
    "shape · started N plans", an evaluation session's date, a past practice's when-and-where, the
@@ -1140,12 +1161,15 @@
   font-size: 0.9rem;
 }
 
-/* Mobile: compact the page header so it doesn't read as a hero and steal the first
-   screen of an operating tool — give the records back the top of the viewport. */
+/* Mobile: tighten the gap between the header's two rows.
+   ⚠ THREE RULES STOOD HERE and are DELETED (2026-08-18, direction E). They existed to stop the
+   desktop header reading as a hero on a phone — 40px tile, 1.35rem title, 1.25rem margin — and
+   every one of them is now BIGGER than the desktop value it was overriding. The desktop header is
+   the compact one; a phone needs no further compacting, only the shorter gap that keeps its
+   wrapped actions row close. Leaving them in place would have made the phone header taller than
+   the desktop's, which is exactly the bug this pass was reclaiming pixels to avoid. */
 @media (max-width: 640px) {
-  .pageHeader { margin-bottom: 1.25rem; gap: 0.75rem; }
-  .pageTitle { font-size: 1.35rem; }
-  .headerIcon { width: 40px; height: 40px; }
+  .pageHeader { gap: 0.75rem; }
 }
 
 /* Demoted secondary tips below the team grid */
@@ -7277,7 +7301,6 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
    ADDITIVE and warm-gated, so dark output is untouched. --home-* tokens are inherited from
    the marker (defined in the globals.css warm block). */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebar { border-right-color: var(--home-line); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarSectionLabel,
 /* ⚠ FOUR warm overrides stood here and are DELETED (2026-08-18, the semantic-ink sweep) — the rail's
    group heading, its hover, its active state and the folded-row count. Every one existed for the
    same reason: the base rule inked with white-alpha, which is invisible on paper, so warm had to

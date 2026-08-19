@@ -8,7 +8,13 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * The ONE page header for every standard coach-portal page (ruling 2026-08-11; binding mockup
  * = COACH_PAGE_HEADER_CONSISTENCY_MOCKUP.html). Fixed slots, enforced by construction:
  *
- *   [icon 22 in the 48px tile] [h1 title] [titleChips] … [actions] [help "?"]
+ *   [icon 18 in the 36px tile] [h1 title] [titleChips] … [actions] [help "?"]
+ *
+ * ⚠ Those two numbers were 22-in-48 until 2026-08-18 (header vertical-space pass, direction E).
+ * DENSITY ONLY — the slots, their order, the phone grid and the no-subtitle construction below are
+ * exactly as the 2026-08-11 ruling left them. The band above a coach's first line of content went
+ * from 80px to 52px on a desktop; the tile is what drives that row's height, so the tile is what
+ * moved, and the icon and heading followed it down to keep the pair in proportion.
  *
  * Three shapes, all owned here so no caller hand-rolls a fourth, and selected by ONE `variant`
  * prop so the set stays exhaustive: `standard` (the page header above), `embedded` (a hub tab
@@ -41,7 +47,7 @@ export default function CoachPageHeader({
   helpLabel,
   variant = 'standard',
 }: {
-  /** Section icon, drawn at 22px in the shared 48px tile. Omit only where the ruling omits it (Overview). */
+  /** Section icon, drawn at 18px in the shared 36px tile. Omit only where the ruling omits it (Overview). */
   icon?: ComponentType<{ size?: number | string }>;
   /** The page's name — a string on hub pages, an entity's name on detail pages. */
   title: ReactNode;
@@ -100,7 +106,7 @@ export default function CoachPageHeader({
       <div className={styles.pageHeaderLeft}>
         {Icon && (
           <div className={`${styles.headerIcon}${nested ? ` ${styles.headerIconNested}` : ''}`}>
-            <Icon size={nested ? 18 : 22} />
+            <Icon size={nested ? 15 : 18} />
           </div>
         )}
         <div className={styles.pageTitleWrap}>

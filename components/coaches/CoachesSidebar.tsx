@@ -323,10 +323,13 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           {assignments.length + closedAssignments.length > 1 && <div className={styles.sidebarDivider} />}
           <div className={styles.sidebarSection}>
             {/* No team-name heading — with one team the header names it, and with several
-                the switcher dropdown above already shows the current team. */}
-            {workingSeason.coachRole === 'assistant_coach' && (
-              <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
-            )}
+                the switcher dropdown above already shows the current team.
+
+                ⚠ AND NO ROLE HEADING (2026-08-18, header vertical-space pass, direction C). An
+                "Assistant Coach" label stood here and said the same thing as the masthead's role
+                chip, two inches away, on all forty screens. The chip is the survivor deliberately:
+                it is beside the team the role belongs to, and it is the only one that exists on a
+                phone, where this rail does not render at all. */}
             {/* ⚠ A group renders only when the coach can see something in it, so an assistant's
                 sidebar is shorter — but every item they DO have is always in the same place. That
                 is the whole win of deleting the Explore shelf: position is a function of the

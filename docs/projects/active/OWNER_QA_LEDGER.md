@@ -7912,3 +7912,114 @@ screens; with a fresh session the shelves report one pre-existing finding (the S
 here). Re-baselining now would also bake in another session's in-flight navigation work. **Someone
 should re-run the sweep with a fresh session once both are settled**, and either fix that button or
 record it with a reason.
+
+## §59 · The two header rows go on a diet — the team bar slims as you scroll, the page title stops shouting
+
+**Built on dev 2026-08-18.** No migration, no new screen, no route moved. Premium org coach portal.
+Plan: `docs/projects/active/COACH_HEADER_VERTICAL_SPACE_PLAN.md`. Mockup (approved directions A/B/C/E):
+`claude.ai/code/artifact/ccc08606-fcc2-41b4-b56f-627a8967a7cd`. Decision logged in `memory/design_decisions.md`.
+
+**What this was.** A coach scrolled past **234 pixels of chrome** at 1440×900 before reaching the first
+line of anything useful — a quarter of the screen. It is **190px** now, and **88px** once you scroll.
+⚠ The premise the work started from was FALSE and worth knowing while you walk it: the two header rows
+were never duplicating each other (the 2026-08-17 slimdown had already removed the one real duplicate).
+The pixels came from making each row denser, not from merging them.
+
+**A · The team bar slims as you scroll — on a computer now, not just a phone.** Open any team page at
+full width. At the top: the bar is exactly as before, minus the change in B. **Scroll down**: it should
+shrink to one slim line carrying the **team name on the left and today's status on the right** (Game
+day / Next), and stay pinned there. **Scroll back to the top**: the full bar returns. The public-site
+flip and the game-week book reminder fold away with the rest — both are one scroll up.
+⚠ On a **phone** the collapsed bar is still the **bare team name** (unchanged from §55) — the status
+stays only on the computer, where there is room. That difference is deliberate; it is the one thing the
+two collapsed states disagree about.
+
+**B · The club moved down a line, and the bar is two lines instead of three.** The club's name used to
+be its own small line **above** the team name. It is now the first item on the **quieter line below**:
+team name (+ your role chip) on top, **club · season · record** underneath. Nothing left the bar — the
+club is still named on every team page. A **standalone team** (no club) sees no change at all.
+⚠ Worth eyeing on a **finished season on a phone**, which is where this mattered most: that bar was the
+tallest header in the product (98px) because "Complete" and the final record were being pushed onto a
+third line.
+
+**C · Assistants stop being told their role twice.** Sign in as (or impersonate) an **assistant coach**.
+The sidebar's "ASSISTANT COACH" heading above the nav is **gone**; the role chip beside the team name in
+the bar is the only one left. A **head coach** sees no difference. Nothing else in the rail moved.
+⚠ Side effect worth knowing: that heading's warm-theme rule had quietly picked up a hover background it
+never asked for (a stale trailing comma from the 2026-08-18 ink sweep). It left with the heading.
+
+**D · Every page title is quieter.** All ~40 screens: the icon tile is smaller, the heading is smaller,
+and the gap under it is tighter — **80px of title band is 52px**. Nothing moved: same icon, same
+heading, same actions, same "?" in the same corner, same phone layout. Walk a few of each shape:
+a plain hub (Roster, Schedule), one with actions (Money), and a **drill-in** (Money → Fundraisers → one
+fundraiser), where the smaller heading must still read as a **child** of the hub heading above it, not
+its twin.
+⚠ On a **phone** the title row barely changes — its height is set by the tap-target floor on the "?"
+button, not by the icon. The phone's gain comes from B.
+
+**E · Nothing that measures itself against the bar broke.** Two surfaces size themselves from the team
+bar's live height, and its height now changes **while you scroll** for the first time:
+- **Chat** (a team page → Chat): the message list should fill the screen with the composer visible, no
+  dead band, no nested scrollbar. (This page doesn't scroll the document, so the bar never collapses
+  there — that is expected.)
+- **A practice plan** with the focus rail on a wide screen: scroll down and the rail should re-pin
+  slightly higher as the bar slims, not tuck under it or jump behind it.
+- A `?section=` **deep link** into a collapsible section should still land the section below the
+  chrome, not underneath it.
+
+**Sweep result (2026-08-18, after the build).** `check:layout` was run in full (48 screens × 4 widths)
+and then in detail on three representative screens. **34 new findings — none of them name anything this
+change touched.** No page heading, no icon tile, no team bar. Every one is chrome belonging to work
+other sessions have not re-baselined: the notification bell and the renamed team switcher (§55), the
+five collapsible nav-group headings and the "Skills & Goals" rename, plus the Overview's season-setup
+button and a Schedule row button. ⚠ **Deliberately NOT re-baselined here** — doing so would absorb three
+other sessions' unargued debt under this change's name. ⚠ One screen timed out mid-sweep at 361px and
+was checked directly afterwards: it renders (it is the Insights-portal work in flight) — transient
+compile contention, recorded rather than waved off.
+
+⚠ **check:layout re-baseline owed** (this one and §55's, together): the page-title geometry moves on
+every coach screen and the rail's keys shift again with C, so the next sweep's diff on those keys is
+this change, not a regression.
+⚠ **No automated coverage exists for the collapsed state at any width** — the sweep never scrolls a page
+into it. Step A's eyes-on check is its only proof, same as §55 step E.
+
+**§59 addendum — post-build `/review` (2026-08-19, standard tier, 3 lenses). Two fixes applied, so
+walk the CURRENT build.** Two extra steps join the walk above:
+
+**F · A drill-in header finally looks like a child.** Open **Money → Fundraisers → one fundraiser**
+on a wide screen. The fundraiser's own heading and icon should read **clearly smaller** than the
+"Money" heading above it — parent and child, not two page titles arguing. ⚠ Worth a proper look:
+**this has never once rendered correctly.** The smaller-nested rule was written the day the shape
+shipped (2026-08-14) but sat in the wrong place in the stylesheet and did nothing, so a drill-in
+header has always matched its hub exactly. Same check on **Money → Sponsors → one sponsor**.
+
+**G · Keyboard focus survives the bar collapsing.** On a team page with a **⇄ Public site** link in
+the bar (a club team, not a standalone one): Tab until that link is focused, then scroll down with
+the keyboard (space or Page Down) until the bar slims. Focus should land **on the bar itself** — the
+next Tab continues from there — rather than vanishing to the top of the page. Repeat with the
+game-week book reminder's dismiss "×" if one is showing. ⚠ This was broken on **phones** since
+2026-08-02 and nobody hit it; it is fixed at every width now.
+
+⚠ **The role badge question was raised and RULED, not fixed.** Review flagged that step C (deleting
+the rail's "Assistant Coach" heading) and step A (the bar hiding its role chip on scroll) combine to
+leave an assistant's role stated nowhere while scrolled on a desktop. Owner ruling 2026-08-19:
+*"we don't need that role badge on the side nav, users know what role they have and don't need to be
+reminded every day."* No change. Desktop now matches the phone. Nothing to walk.
+
+**§59 addendum 2 — ⚠⚠ STEP A IS WITHDRAWN (owner ruling 2026-08-19).** *"I want to revert one thing,
+I like the size changes we made but you can leave this header as is when scrolling."* **The desktop
+team bar does NOT collapse — do not walk step A above.** It stays full height at every scroll
+position, exactly as it always did. **Phones are unchanged** and still collapse to the bare team name
+on scroll, as ruled 2026-08-02 and walked at §55 step E.
+
+**What is still true and still worth walking:** step B (the bar is two lines — team + role over
+club · season · record, and a finished season on a phone no longer wears a third line), step C (no
+"ASSISTANT COACH" heading in the rail), step D (every page title quieter, 80px → 52px), step E (chat,
+the practice-plan rail and `?section=` deep links still size correctly), step F (a drill-in header
+finally reads as a child of its hub) and step G (keyboard focus survives the bar collapsing — **now a
+PHONE-only walk**, since that is the only width that collapses).
+
+**Where the numbers landed after the revert:** chrome above a coach's first line of content is
+**234px → 190px** on a laptop and **208px → 188px** on a phone, at rest *and* while scrolling.
+Permanently pinned chrome on a laptop is 106px, down from 122 — all of it from the bar being two
+lines instead of three.
