@@ -129,6 +129,15 @@ export interface RegisterRow {
   /** Above Today: money that has NOT moved yet. Its balance is a projection. */
   scheduled: boolean;
   /**
+   * Whole days past due, for a scheduled row whose date has already passed — null on every other
+   * row (settled, undated, or genuinely still upcoming). Computed by the route from the org's own
+   * "today" so this module never has to know what day it is: a fact handed in, not derived.
+   *
+   * ⚠ NULL, NOT ZERO OR NEGATIVE. A scheduled row due exactly today is not overdue and carries
+   * null here — `0` would read as "overdue by zero days", which is a different claim.
+   */
+  overdueDays: number | null;
+  /**
    * ⚠⚠ FALSE ONLY ON AN OUT-OF-POCKET COST, and it is why this field exists rather than a boolean
    * hidden in the amount. A cost a family paid the vendor direct is real spending on a real record —
    * it belongs on the book — but no TEAM cash moved, so it must not move the balance. The row shows
@@ -210,18 +219,31 @@ export function cashOnHandCents(movements: readonly CashMovement[]): number {
 /**
  * The book, in the order it is READ, with each row's balance attached.
  *
- * Two blocks and a boundary:
- *   · **scheduled**, soonest first (plan §4.1), projected balances continuing on from the settled
- *     close — so the deepest projection sits immediately above Today;
- *   · **settled**, newest first, each row's balance being the balance after it.
+ * ⚠⚠ ONE CHRONOLOGICAL LIST, OLDEST TO NEWEST, TOP TO BOTTOM (reading-order ruling, follow-up to
+ * P3). The book used to read newest-first above a Today boundary, with everything unsettled
+ * bucketed into its own ascending block regardless of how overdue it was. Both choices fought how
+ * a coach actually reads a page: a row's own transaction explained the row ABOVE it, not below,
+ * and a bill three months late sat shelved beside one due next week. Now:
  *
- * ⚠ THE BALANCE IS ACCUMULATED FORWARDS AND RENDERED BACKWARDS. Computing it while walking a
- * newest-first list would give every row the balance BEFORE it — off by one row, on every row, in a
- * way that looks plausible on a screen and is wrong everywhere.
+ *   · every row — settled or overdue — sits at its own true date, oldest at the top;
+ *   · an OVERDUE row (`overdueDays !== null`) never moves the real balance — it carries forward
+ *     whatever real cash existed immediately before it in true date order, exactly the treatment
+ *     `movesCash: false` rows already use, for the same reason (no cash actually moved);
+ *   · genuinely future rows (scheduled, not overdue) sit after Today and keep the existing
+ *     PROJECTION, continuing forward from Cash on hand — unchanged from before.
+ *
+ * `todayIndex` names where in `book` the Today divider belongs (also the auto-scroll target): the
+ * first `todayIndex` rows are the settled + overdue past; everything from `todayIndex` on is the
+ * forward projection.
+ *
+ * ⚠ THE BALANCE IS ACCUMULATED FORWARDS. Two interleaved walks — one through real settled rows,
+ * one through overdue rows merged in by date — both moving strictly oldest to newest, so neither
+ * list is ever built backwards and reversed.
  */
 export function buildBook(rows: readonly RegisterRow[]): {
-  scheduled: RegisterBookRow[];
-  settled: RegisterBookRow[];
+  book: RegisterBookRow[];
+  /** Index into `book` where the Today divider sits — also the auto-scroll landing point. */
+  todayIndex: number;
   /** The closing settled balance — Cash on hand, in dollars. */
   cashOnHand: number;
   /** Where the balance ends up if everything scheduled happens. Null when nothing is scheduled. */
@@ -230,27 +252,92 @@ export function buildBook(rows: readonly RegisterRow[]): {
   // ⚠ `.filter` already returns a fresh array, so sorting it in place cannot reorder the caller's.
   const settledAsc = rows.filter(r => !r.scheduled).sort(byDateAscending);
   const scheduledAsc = rows.filter(r => r.scheduled).sort(byDateAscending);
+  const overdueAsc = scheduledAsc.filter(r => r.overdueDays !== null);
+  const futureAsc = scheduledAsc.filter(r => r.overdueDays === null);
 
   let cents = 0;
-  const settledWithBalance: RegisterBookRow[] = settledAsc.map(r => {
+  const settledCents: { row: RegisterRow; cents: number }[] = settledAsc.map(r => {
     cents += movementCents(r);
-    return { ...r, balance: toDollars(cents) };
+    return { row: r, cents };
   });
   const cashOnHand = toDollars(cents);
 
+  // Merge overdue rows into the settled sequence at their true chronological position. An
+  // overdue row's own balance is whatever real cash had accumulated up to that point — it never
+  // advances the running total itself.
+  const merged: RegisterBookRow[] = [];
+  let si = 0, oi = 0, carriedCents = 0;
+  while (si < settledCents.length || oi < overdueAsc.length) {
+    const s = settledCents[si];
+    const o = overdueAsc[oi];
+    const takeOverdueNext = !!o && (!s || byDateAscending(o, s.row) <= 0);
+    if (takeOverdueNext) {
+      merged.push({ ...o, balance: toDollars(carriedCents) });
+      oi++;
+    } else {
+      carriedCents = s.cents;
+      merged.push({ ...s.row, balance: toDollars(s.cents) });
+      si++;
+    }
+  }
+
   let projected = cents;
-  const scheduledWithBalance: RegisterBookRow[] = scheduledAsc.map(r => {
+  const futureWithBalance: RegisterBookRow[] = futureAsc.map(r => {
     projected += movementCents(r);
     return { ...r, balance: toDollars(projected) };
   });
 
   return {
-    // Soonest first: already ascending. The settled book reverses to newest first.
-    scheduled: scheduledWithBalance,
-    settled: settledWithBalance.reverse(),
+    book: merged.concat(futureWithBalance),
+    todayIndex: merged.length,
     cashOnHand,
-    projectedBalance: scheduledWithBalance.length > 0 ? toDollars(projected) : null,
+    projectedBalance: futureWithBalance.length > 0 ? toDollars(projected) : null,
   };
+}
+
+/**
+ * Narrows the book to a date window. A real, unconditional window — a row outside it is hidden,
+ * full stop, whether it's settled, overdue or future. There is exactly one exemption: an undated
+ * row (an unpaid expense with no due date at all) has no date to compare against a window, and
+ * the register's standing rule is that an undated row never vanishes — it sorts to the end of the
+ * unsettled block instead. That is a fact about dates, not a carve-out for THIS control.
+ *
+ * ⚠⚠ OVERDUE MONEY IS NOT EXEMPTED HERE — a real-data correction. The first version of this
+ * function let every unsettled row ignore the range, on the theory that a coach should never lose
+ * sight of something still owed. In practice that made "2026-07-19–2026-09-17" show rows from
+ * March, which reads as the control being broken, not as a safety net. The actual safety net is
+ * the Overdue count in the filter strip, computed BEFORE this function ever runs — it is always
+ * accurate regardless of the range, and the panel routes a coach who clicks it around this
+ * function entirely (an audit of what's overdue has no business being cropped by a browsing
+ * convenience window). A date range a coach sets should mean exactly that date range.
+ *
+ * ⚠ BALANCE IS NOT RECOMPUTED HERE. Every row already carries the true cumulative figure from
+ * `buildBook`; narrowing by date hides rows from a continuous timeline rather than excluding a
+ * category from a sum, so every visible balance stays honest — unlike a type filter, which has to
+ * fake the arithmetic to keep a column at all and is why THAT narrowing still hides Balance
+ * (`balanceIsMeaningful`).
+ *
+ * ⚠ `startingBalance` READS LIKE A STATEMENT'S OPENING LINE — the true cumulative balance as of
+ * the moment right before the window opens (0 if the window starts before any recorded history).
+ * A coach reading rows from mid-window outward should never have to wonder what came before; the
+ * row this powers says so in dollars rather than "N rows not shown."
+ */
+export function applyDateRange(
+  book: readonly RegisterBookRow[],
+  fromKey: string,
+  toKey: string,
+): { rows: RegisterBookRow[]; startingBalance: number } {
+  const rows: RegisterBookRow[] = [];
+  let lastBeforeRange = 0;
+  for (const r of book) {
+    const inRange = r.date === null || (r.date >= fromKey && r.date <= toKey);
+    if (inRange) {
+      rows.push(r);
+    } else if (r.date !== null && r.date < fromKey) {
+      lastBeforeRange = r.balance;
+    }
+  }
+  return { rows, startingBalance: lastBeforeRange };
 }
 
 /**

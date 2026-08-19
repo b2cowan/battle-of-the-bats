@@ -250,7 +250,8 @@ export function registerExportRows(
     /* The two facts a column of figures cannot carry: whether this has happened yet, and whether it
        moved the team's cash at all. Without the second, an out-of-pocket cost reads in a spreadsheet
        as money that left the account. */
-    status: r.scheduled ? 'Scheduled' : r.movesCash ? 'Settled' : 'Settled — no team cash',
+    status: r.overdueDays != null ? `Overdue · ${r.overdueDays}d`
+      : r.scheduled ? 'Scheduled' : r.movesCash ? 'Settled' : 'Settled — no team cash',
   }));
 }
 

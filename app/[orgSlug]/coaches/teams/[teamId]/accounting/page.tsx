@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use, type ComponentType } from 'react';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachTabBar from '@/components/coaches/CoachTabBar';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
 import { MoneyRefreshProvider } from '@/lib/coach-money-refresh';
 import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
@@ -134,33 +134,6 @@ export default function CoachesAccountingPage({
     setVisited(v => new Set(v).add(activeSection));
   }
 
-  // Is a tab hidden past either edge? The arrows appear only on the side that actually has
-  // something hidden — an arrow on a row that already fits, or pointing at nothing, is a lie.
-  // They are real buttons: an earlier pass made them pointer-events:none decoration, which
-  // looked clickable and silently passed the click through to the tab underneath.
-  // Re-measured on scroll, on resize, and whenever the tab set changes (the two org-only
-  // tabs come and go with the season).
-  const tabBarRef = useRef<HTMLElement>(null);
-  const [tabScroll, setTabScroll] = useState({ left: false, right: false });
-  useEffect(() => {
-    const el = tabBarRef.current;
-    if (!el) return;
-    const measure = () => setTabScroll({
-      left: el.scrollLeft > 1,
-      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
-    });
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    el.addEventListener('scroll', measure, { passive: true });
-    return () => { ro.disconnect(); el.removeEventListener('scroll', measure); };
-  }, [summary]);
-
-  function scrollTabs(dir: -1 | 1) {
-    const el = tabBarRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.6), behavior: 'smooth' });
-  }
 
   // One-shot deep-link triggers a panel reads to auto-open something (Budget's ?starter=1
   // / ?generate=1 / ?line=&periods= edit deep-link, Expenses's ?tab=). They mean nothing once
@@ -365,48 +338,19 @@ export default function CoachesAccountingPage({
         <p className={styles.errorText}>{error}</p>
       ) : summary && (
         <>
-          <div className={styles.moneyTabBarWrap}>
-            {tabScroll.left && (
-              <button
-                type="button"
-                className={`${styles.moneyTabScrollBtn} ${styles.moneyTabScrollLeft}`}
-                onClick={() => scrollTabs(-1)}
-                aria-label="Scroll tabs left"
-              >
-                <ChevronLeft size={16} aria-hidden />
-              </button>
-            )}
-            <nav
-              ref={tabBarRef}
-              className={[
-                styles.moneyTabBar,
-                tabScroll.left ? styles.moneyTabFadeLeft : '',
-                tabScroll.right ? styles.moneyTabFadeRight : '',
-              ].filter(Boolean).join(' ')}
-              aria-label="Money"
-            >
-              {tabs.map(t => (
-                <Link
-                  key={t.id}
-                  href={sectionHref(t.id)}
-                  className={`${styles.moneyTabBtn} ${effectiveSection === t.id ? styles.moneyTabActive : ''}`}
-                  aria-current={effectiveSection === t.id ? 'page' : undefined}
-                >
-                  {t.label}
-                </Link>
-              ))}
-            </nav>
-            {tabScroll.right && (
-              <button
-                type="button"
-                className={`${styles.moneyTabScrollBtn} ${styles.moneyTabScrollRight}`}
-                onClick={() => scrollTabs(1)}
-                aria-label="Scroll tabs right"
-              >
-                <ChevronRight size={16} aria-hidden />
-              </button>
-            )}
-          </div>
+          <CoachTabBar
+            tabs={tabs.map(t => ({ ...t, href: sectionHref(t.id) }))}
+            activeId={effectiveSection}
+            ariaLabel="Money"
+            remeasureKey={summary}
+            /* ⚠ NEVER STICKY (reversed 2026-08-19, reading-order ruling follow-up) — this bar is
+               shared chrome across all seven Money tabs, and pinning it only on Transactions made
+               the ONE piece of navigation that's supposed to behave identically everywhere freeze
+               on exactly one tab and nowhere else — a bigger, more visible inconsistency than the
+               register's own toolbar earning a pin for being the one long, scrollable tab. The
+               register keeps its own sticky filter row and column headers; this bar no longer
+               opts in for any tab. See CoachTabBar's own `sticky` prop doc. */
+          />
 
           {/* Overview forks by stage, but no longer by SHAPE: an operating season gets the
               three story cards and the merged ledger above the rail; a season still being

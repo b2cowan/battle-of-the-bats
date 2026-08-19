@@ -12,7 +12,7 @@ import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
-import { orgDayKey } from '@/lib/timezone';
+import { orgDayKey, tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 import { buildBook, REGISTER_SOURCE_LABEL, type RegisterRow } from '@/lib/coach-register';
 
@@ -212,6 +212,7 @@ export const GET = withObservability(async (_req: Request,
           description: `${e.description} — ${h.half}`,
           moneyOut: amount,
           scheduled: !h.paidAt,
+          overdueDays: null, // tagged for real below, once every row exists
           // A payable is billed to the team by a third party — there is no out-of-pocket leg.
           movesCash: true,
           markPaid: h.paidAt ? null : { expenseId: e.id, half: h.half, amount },
@@ -231,6 +232,7 @@ export const GET = withObservability(async (_req: Request,
       description: e.description,
       moneyOut: e.amount,
       scheduled: !e.expensePaidAt,
+      overdueDays: null, // tagged for real below, once every row exists
       /* ⚠⚠ THE ONE ROW THAT DOES NOT MOVE THE BALANCE. A family paid the vendor direct: the season
          spent the money, the team's cash did not. `expenseTotals().cashPaid` has always excluded
          it — the book agrees with that figure rather than arguing with it. */
@@ -256,6 +258,7 @@ export const GET = withObservability(async (_req: Request,
       moneyOut: 0,
       moneyIn: m.amount,
       scheduled: false,
+      overdueDays: null,
       movesCash: true,
       open: { kind: 'money-in', id: m.id },
       markPaid: null,
@@ -287,6 +290,7 @@ export const GET = withObservability(async (_req: Request,
     moneyOut: r.direction === 'out' ? r.amount : 0,
     moneyIn: r.direction === 'in' ? r.amount : 0,
     scheduled: r.scheduled,
+    overdueDays: null, // tagged for real below, once every row exists
     movesCash: true,
     open: { kind: 'workspace', section: 'dues' },
     /* ⚠ NEVER SETTLED FROM HERE, on any of the three. A dues instalment is marked paid by recording
@@ -340,6 +344,7 @@ export const GET = withObservability(async (_req: Request,
       moneyOut: 0,
       moneyIn: amount,
       scheduled: !realised,
+      overdueDays: null, // a pledge has no due date to be overdue against
       movesCash: true,
       open: { kind: 'workspace', section: 'fundraisers' },
       markPaid: null,
@@ -366,6 +371,7 @@ export const GET = withObservability(async (_req: Request,
         moneyOut: Number(i.amount ?? 0),
         moneyIn: 0,
         scheduled: !i.paid_at,
+        overdueDays: null, // tagged for real below, once every row exists
         movesCash: true,
         open: { kind: 'workspace', section: 'club' },
         /* ⚠ NO MARK PAID HERE, deliberately. An allocation is settled on the Club's own screen,
@@ -421,6 +427,7 @@ export const GET = withObservability(async (_req: Request,
       moneyOut: incoming ? 0 : amount,
       moneyIn: incoming ? amount : 0,
       scheduled: pending,
+      overdueDays: null, // tagged for real below, once every row exists
       movesCash: true,
       open: { kind: 'workspace', section: 'club' },
       markPaid: null,
@@ -455,6 +462,17 @@ export const GET = withObservability(async (_req: Request,
       payouts: duesPayouts,
       mode: programYear.creditApplication,
     });
+    /* ⚠⚠ GROUPED BY INSTALLMENT, NOT ONE ROW PER FAMILY (owner call, 2026-08-19). A team-wide
+       payment schedule mints the SAME installment number and due date for every player on it, so
+       "Installment #2" used to repeat once per family still owing it — seven near-identical rows
+       reading as seven different things when they were one bill with seven answers still open.
+       Grouped by (installment number, due date): a family owing it alone still gets its own row
+       (nothing changes for the common case), and two or more collapse into ONE row naming how
+       many are outstanding, not who — the destination link already goes to the Dues tab in
+       general, never to one family, so nothing about WHERE this goes is lost by grouping. */
+    const installmentGroups = new Map<string, {
+      installmentNumber: number; dueDate: string | null; amount: number; ids: string[]; playerId: string;
+    }>();
     for (const i of all) {
       /* ⚠ A PAID INSTALLMENT IS NOT A ROW HERE. Its money is already on the book as the PAYMENT that
          covered it (`rep_dues_payments`), and adding the installment as well would count the same
@@ -462,18 +480,61 @@ export const GET = withObservability(async (_req: Request,
       if (i.paidAt) continue;
       const owed = remaining.get(i.id) ?? i.amount;
       if (!(owed > 0.005)) continue;
-      rows.push(duesRow({
-        id: `dues-installment-${i.id}`, date: i.dueDate,
-        description: `Installment #${i.installmentNumber}`,
-        amount: owed, direction: 'in', scheduled: true, playerId: i.playerId,
-      }));
+      const key = `${i.installmentNumber}::${i.dueDate ?? ''}`;
+      const g = installmentGroups.get(key)
+        ?? { installmentNumber: i.installmentNumber, dueDate: i.dueDate, amount: 0, ids: [], playerId: i.playerId };
+      g.amount += owed;
+      g.ids.push(i.id);
+      installmentGroups.set(key, g);
+    }
+    for (const g of installmentGroups.values()) {
+      if (g.ids.length === 1) {
+        rows.push(duesRow({
+          id: `dues-installment-${g.ids[0]}`, date: g.dueDate,
+          description: `Installment #${g.installmentNumber}`,
+          amount: g.amount, direction: 'in', scheduled: true, playerId: g.playerId,
+        }));
+        continue;
+      }
+      rows.push({
+        id: `dues-installment-group-${g.installmentNumber}-${g.dueDate ?? 'undated'}`,
+        date: g.dueDate,
+        kind: 'dues',
+        description: `Installment #${g.installmentNumber}`,
+        categoryName: null,
+        itemName: null,
+        moneyOut: 0,
+        moneyIn: g.amount,
+        scheduled: true,
+        overdueDays: null, // tagged for real below, once every row exists
+        movesCash: true,
+        open: { kind: 'workspace', section: 'dues' },
+        markPaid: null,
+        sourceLabel: REGISTER_SOURCE_LABEL.dues,
+        detail: `${g.ids.length} families outstanding`,
+      });
     }
   }
 
-  const book = buildBook(rows);
+  /* ⚠⚠ OVERDUE IS COMPUTED HERE, ONCE, AGAINST THE ORG'S OWN "TODAY" — never inside
+     `coach-register.ts`, which stays pure and takes it as a fact on the row (reading-order
+     ruling, follow-up to P3). Every row above pushed a `null` placeholder; this is where it
+     becomes real. Same `tournamentToday`/`daysBetweenDateStrings` pair the payables routes
+     already use, so "overdue" reads the same everywhere in the portal — deriving it from the
+     runtime clock instead flags things overdue a day early after ~8 PM Toronto, the exact bug
+     those routes were fixed for once already. */
+  const todayKey = tournamentToday();
+  const taggedRows: RegisterRow[] = rows.map(r => ({
+    ...r,
+    overdueDays: r.scheduled && r.date !== null && r.date < todayKey
+      ? daysBetweenDateStrings(r.date, todayKey)
+      : null,
+  }));
+
+  const book = buildBook(taggedRows);
   return NextResponse.json({
-    scheduled: book.scheduled,
-    settled: book.settled,
+    book: book.book,
+    todayIndex: book.todayIndex,
     cashOnHand: book.cashOnHand,
     projectedBalance: book.projectedBalance,
     // The filter strip drops its "from Club" option on a standalone team workspace — an option that

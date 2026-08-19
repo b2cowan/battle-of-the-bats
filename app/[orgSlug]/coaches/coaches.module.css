@@ -6529,7 +6529,34 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
    collapsed straight through this (padding-less, border-less) wrapper, so the wrapper
    measured only its content and the absolutely-positioned arrows — inset by those same
    margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
-.moneyTabBarWrap { position: relative; margin: 0.9rem 0 1.4rem; }
+.coachTabBarWrap { position: relative; margin: 0.9rem 0 1.4rem; }
+
+/* ⚠ OPT-IN, AND CURRENTLY UNUSED (reading-order ruling, follow-up to P3 — reversed 2026-08-19).
+   The register briefly set CoachTabBar's `sticky` prop for the Money hub's Transactions tab, but
+   pinning this SHARED nav bar on exactly one of its seven tabs made the one piece of chrome
+   meant to behave identically everywhere freeze on a single tab and nowhere else — a bigger,
+   more visible inconsistency than the register's own toolbar earning a pin for being the one
+   long, scrollable tab. The register now pins only its own toolbar and column headers; this bar
+   pins on no tab today. Left in place as real, documented opt-in infrastructure (shared with
+   Insights' `/history`, per CoachTabBar's own prop doc) for a future screen that genuinely needs
+   it — not dead code, just not currently exercised.
+
+   If it's ever wired up again: docks under the fixed FieldLogicHQ strip AND the team masthead
+   above it — `--coach-topstrip-top` (this shell's fixed top bar, `.coachesShell`) plus
+   `--coach-header-h` (the masthead's own live-measured height, published by `CoachTeamHeader`
+   onto the page's `<main>` ancestor). ⚠⚠ NOT `--coach-top-strip` — that variable belongs to a
+   different shell (CoachPortalShell, the tournament-record route tree) and is undefined on a team
+   page; it was silently falling back to a guessed 48px here before this was found. A solid
+   background is required — without one, rows scrolling underneath would show through this layer
+   too. */
+.coachTabBarSticky {
+  position: sticky;
+  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
+  z-index: 60;
+  background: var(--bg);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+}
 
 /* ── Panel toolbar (page-level action ruling 2026-08-13, plan §5.3) ─────────────────────────
    A tab's own control row: whatever the tab already had on the left (a view switch, a status
@@ -6539,12 +6566,40 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 
    Actions pin right via .panelToolbarActions' auto margin, so a toolbar with nothing on its
    left still reads as a right-pinned row rather than a left-hugging one. */
+/* ⚠ OPT-IN ONLY — a modifier added to this ONE rendered instance when the Money hub's Transactions
+   tab is active (reading-order ruling, follow-up to P3). `.panelToolbar` itself stays untouched, so
+   the six other tabs sharing the class render exactly as before. Docks under the sticky tab row.
+   ⚠⚠ `top` IS SET INLINE, FROM A MEASURED HEIGHT, NOT HERE — a hand-picked CSS constant is exactly
+   what let rows show through a gap between this layer and the tab row on the real page. This rule
+   supplies everything ELSE sticky needs (position, stacking, an opaque ground); the panel component
+   supplies the number. */
+.panelToolbarSticky {
+  position: sticky;
+  z-index: 55;
+  background: var(--bg);
+  padding-top: 0.4rem;
+  margin-top: -0.4rem;
+}
+
 .panelToolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
   margin-bottom: 0.9rem;
+}
+/* ⚠⚠ MARGIN → PADDING WHEN PINNED (found 2026-08-19, right after the fix it corrects). Giving
+   the sticky column headers the toolbar's usual bottom margin as part of their offset restored
+   the breathing room in normal flow — but margin is empty space, never painted, so once both the
+   toolbar and the header are independently pinned, that empty space became a WINDOW a scrolled
+   row could show through, not solid ground. Converting it to padding on the pinned toolbar keeps
+   the exact same visual gap (padding pushes the table down identically to margin) while making
+   the toolbar's own opaque background extend across it — nothing behind it can show through any
+   more. A compound selector, not a source-order bet: `.panelToolbar`'s own margin-bottom rule
+   sits earlier in this file and would otherwise win the tie. */
+.panelToolbar.panelToolbarSticky {
+  margin-bottom: 0;
+  padding-bottom: 0.9rem;
 }
 .panelToolbarActions {
   display: flex;
@@ -6585,7 +6640,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   .panelToolbarActions button,
   .panelToolbarActions a { min-height: var(--tap-min, 44px); }
 }
-.moneyTabBar {
+.coachTabBar {
   display: flex;
   gap: 0.15rem;
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
@@ -6594,21 +6649,21 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.moneyTabBar::-webkit-scrollbar { display: none; }
+.coachTabBar::-webkit-scrollbar { display: none; }
 /* Fades apply per-edge, so an end-of-row never fades against nothing. */
-.moneyTabFadeRight {
+.coachTabFadeRight {
   mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
   -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
 }
-.moneyTabFadeLeft {
+.coachTabFadeLeft {
   mask-image: linear-gradient(to right, transparent 0, black 40px);
   -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px);
 }
-.moneyTabFadeLeft.moneyTabFadeRight {
+.coachTabFadeLeft.coachTabFadeRight {
   mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
 }
-.moneyTabScrollBtn {
+.coachTabScrollBtn {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -6622,16 +6677,16 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   color: var(--home-olive, var(--logic-lime));
   z-index: 2;
 }
-.moneyTabScrollBtn:hover { color: var(--text-primary); }
-.moneyTabScrollLeft {
+.coachTabScrollBtn:hover { color: var(--text-primary); }
+.coachTabScrollLeft {
   left: 0;
   background: linear-gradient(to right, var(--home-paper, var(--bg)) 55%, transparent);
 }
-.moneyTabScrollRight {
+.coachTabScrollRight {
   right: 0;
   background: linear-gradient(to left, var(--home-paper, var(--bg)) 55%, transparent);
 }
-.moneyTabBtn {
+.coachTabBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6651,8 +6706,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   cursor: pointer;
   transition: color 0.12s ease, border-color 0.12s ease;
 }
-.moneyTabBtn:hover { color: var(--text-secondary); }
-.moneyTabActive {
+.coachTabBtn:hover { color: var(--text-secondary); }
+.coachTabActive {
   color: var(--home-olive, var(--logic-lime));
   border-bottom-color: var(--home-olive, var(--logic-lime));
 }
@@ -6662,7 +6717,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
      under a fixed, viewport-wide header) this tab bar is nested inside .page's own
      padding — a negative-margin bleed here escaped that padding box and caused the
      whole document to scroll sideways by a couple pixels (caught by check:layout). */
-  .moneyTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
+  .coachTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
 }
 
 /* The grey .backLink that used to live here is RETIRED (page-header ruling 2026-08-11):
@@ -7086,6 +7141,30 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
   .allocFigure { min-width: 0; }
 }
 
+/* ── MultiSelectDropdown — a checkbox list in a native <details>, compact enough to sit beside
+   other report controls on one line (register reading-order ruling, follow-up to P3). ────────── */
+.multiSelect { position: relative; }
+.multiSelectSummary {
+  display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; list-style: none;
+  background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-secondary);
+  border-radius: 8px; padding: 0.28rem 0.55rem; font-size: 0.78rem; white-space: nowrap;
+}
+.multiSelectSummary::-webkit-details-marker { display: none; }
+.multiSelectLabel { color: var(--text-tertiary); }
+.multiSelectValue { font-weight: 600; color: var(--text-primary); }
+.multiSelect[open] .multiSelectSummary { border-color: var(--logic-lime); }
+.multiSelectPanel {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 70; min-width: 190px;
+  background: var(--home-card); border: 1px solid var(--border-2); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35); padding: 0.4rem; max-height: 320px; overflow-y: auto;
+}
+.multiSelectOption {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.32rem 0.4rem; border-radius: 6px;
+  font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+}
+.multiSelectOption:hover { background: var(--white-8); }
+.multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
+
 .moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
 .moneyFilterChip {
   background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-tertiary);
@@ -7116,53 +7195,187 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 }
 .moneyTagSummary strong { color: var(--logic-lime); }
 
-/* ── The register (money redesign P3) ────────────────────────────────────────────────────────
-   One dated book: a scheduled block above Today, the settled book below it, and a running
-   balance beside every row.
+/* ── The register (money redesign P3; reading order + sticky controls, follow-up) ─────────────
+   ONE chronological book, oldest at the top — an overdue row interleaved at its true date, a
+   genuinely future row after the Today rule, and a running balance beside every row.
 
    ⚠⚠ THE SETTLED/PROJECTED DISTINCTION IS NEVER CARRIED BY COLOUR ALONE (plan §4.4, and the
    standing warm-palette rule: amber and danger sit at ΔE ~1.0 for deutan vision). A scheduled
-   row is marked THREE independent ways — a dashed left rule, italic figures, and its own
-   "Scheduled" chip in the row. Any one of them read alone still answers the question. */
+   row still reads TWO independent ways without its colour — italic figures, and its own
+   "Scheduled" (or "Overdue · Nd") chip in the row — either alone still answers the question. An
+   overdue row's chip is bold besides. Actual carries a third accent colour purely as a bonus,
+   never the only signal: the ABSENCE of both a chip and italics already marks it, same as today.
+
+   ⚠⚠ `box-shadow: inset` ON THE FIRST `<td>`, NOT `border-left` ON THE `<tr>` (found 2026-08-19 —
+   the accent was visibly bleeding into the sticky column headers on scroll). `border-collapse`
+   folds a row's own border into the table's shared border grid, and that grid is computed against
+   the rows' un-stickied layout positions — so a collapsed border can paint at a coordinate the
+   sticky `<th>`s have since moved away from, exactly the bleed reported live. An inset shadow
+   paints inside the cell's own box and never enters the collapsed-border model at all; this
+   portal already reached for it once for the same reason (`.clubRowPending`, this file). One
+   trade-off, noted rather than silently dropped: the old dashed-vs-solid distinction between
+   Scheduled and Overdue is gone — `box-shadow` has no dashed style — but italics + the chip text
+   were never conditioned on it, so nothing that actually carries meaning was lost. */
 .registerRowScheduled {
-  border-left: 2px dashed var(--border-2);
   font-style: italic;
 }
 .registerRowScheduled .registerAmt { font-style: italic; }
-/* The Today boundary — a full-width rule the book is read across, not a row of data. */
-.registerToday td {
+.registerRowActual > td:first-child { box-shadow: inset 2px 0 0 0 var(--success); }
+.registerRowScheduled > td:first-child { box-shadow: inset 2px 0 0 0 var(--info); }
+.registerRowOverdue > td:first-child { box-shadow: inset 2px 0 0 0 var(--danger-light); }
+.registerChipOverdue {
+  background: rgba(248, 113, 113, 0.14); border-color: rgba(248, 113, 113, 0.4);
+  color: var(--danger-light); font-weight: 700;
+}
+/* ⚠ A STATEMENT LINE, NOT A ROW OF DATA (owner call, replacing both the old "N rows not shown"
+   gap message and the Today divider) — "Starting balance" reads the true cumulative figure right
+   before a date window opens; "Ending balance" repeats the last visible row's own figure so the
+   book is bracketed the way a bank statement is, without making a coach do arithmetic from a
+   count and a net. Neither renders during the Overdue audit view, which isn't a date-range slice. */
+.registerBalanceRow td {
   background: var(--white-4);
-  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--text-tertiary); font-weight: 700;
-  padding: 0.35rem 0.7rem;
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
+  font-weight: 700;
+}
+.registerBalanceLabel {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .registerAmt { font-variant-numeric: tabular-nums; }
 .registerAmtIn { color: var(--success-light); }
-/* ⚠ A BALANCE THAT DID NOT MOVE, on the one row that spends money without spending the team's:
-   an out-of-pocket cost. Repeating the previous figure (rather than blanking it) keeps the column
-   readable top to bottom, and the muting plus the row's own chip say why it stood still. */
+/* ⚠ A BALANCE THAT DID NOT MOVE — on an out-of-pocket cost AND on an overdue row, for the same
+   reason: no team cash actually moved. Repeating the previous figure (rather than blanking it)
+   keeps the column readable top to bottom; the muting plus the row's own chip say why it stood
+   still. */
 .registerBalanceUnmoved { color: var(--text-tertiary); }
 .registerChip {
   display: inline-block; border-radius: 999px; padding: 0.05rem 0.4rem;
   font-size: 0.68rem; font-style: normal; white-space: nowrap;
   background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-tertiary);
 }
-/* The book's second control row — the budget word, the overlay switch, the money tags. */
+/* ⚠ ONE LINE, NOT TWO (reading-order ruling) — the row used to carry a second line below the
+   description for a caption ("Recorded on this date"). `detail` folds inline now instead. */
+.registerDateCell { white-space: nowrap; }
+/* ⚠⚠ ACCOUNTING-LEDGER DENSITY, NOT LIST-ROW DENSITY (owner call — "fit like QuickBooks or
+   Excel", real data showing dozens of rows a season). The panel's shared `.td` is sized for a
+   handful of list rows per screen (0.88rem type, 0.7rem padding); a book meant to show many rows
+   at once needs its own, tighter numbers, not a small trim off the shared ones. Font-size AND
+   line-height are both set explicitly — line-height inherited from the page was doing more of
+   the unwanted height than the padding was. Scoped to `.registerRowCompact` only; every other
+   table in the portal keeps the shared row height untouched. */
+.registerRowCompact.tr td {
+  padding-top: 0.28rem;
+  padding-bottom: 0.28rem;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+.registerRowCompact .registerChip { padding: 0.02rem 0.32rem; font-size: 0.62rem; }
+/* ⚠ DESKTOP ONLY. The action button/link is a shared class (Mark paid, Edit, elsewhere in the
+   portal too) that ALSO carries `.block640`'s phone rule (44px tap floor) — this selector is
+   more specific than `.block640` alone, so without the media guard it would win at phone widths
+   too and silently shrink a coach's tap target below the accessibility floor. At ≤640px the
+   register already reflows to `.tableAsCards` regardless, where `.block640`'s own rule is the
+   one that should apply, untouched. */
+@media (min-width: 641px) {
+  .registerRowCompact .btnSecondary.compactAction {
+    padding: 0.08rem 0.4rem;
+    font-size: 0.68rem;
+    min-height: 0;
+  }
+}
+
+/* ⚠ STICKY, SCOPED TO THE TRANSACTIONS TAB ONLY — see `.panelToolbarSticky` beside it, and the
+   same note: `top` is set INLINE from measured heights (tab row + toolbar), never guessed here. */
+/* ⚠⚠ OVERFLOW VISIBLE ON DESKTOP — `.tableWrap`'s shared `overflow-x: auto` silently promotes
+   `overflow-y` to `auto` too (CSS spec rule: an axis left at `visible` while the other isn't gets
+   force-computed to `auto`), which makes `.tableWrap` itself — not the page — the "nearest
+   scrolling ancestor" for any `position: sticky` descendant. That is the SECOND real bug behind
+   the sticky column headers, distinct from the wrong-base-offset one: the `<th>`s were sticking
+   correctly, just against this wrapper's own box instead of the document, landing them wherever
+   `.tableWrap` happened to scroll past rather than at the top of the viewport. The register's
+   columns are compact/fixed-width enough to never need horizontal scroll on a real desktop width,
+   so this opts the register out of the scrolling wrapper entirely rather than trying to keep
+   sticky correct inside a nested scrollport. Mobile is untouched — `.tableAsCards` already hides
+   `<thead>` below 640px, so there's no sticky header there to have this problem. */
+@media (min-width: 641px) {
+  .registerTableWrap {
+    overflow: visible;
+  }
+}
+
+/* ⚠ STICKY COLUMN HEADERS — each `<th>` carries its own `position: sticky`, the standard
+   workaround for `<thead>`'s default `display: table-header-group` not reliably honouring
+   sticky positioning in every engine. `top` comes from `--register-thead-top`, set inline by the
+   panel as `registerStickyBase + toolbarH` — the shell's real top-strip + masthead offset, plus
+   the one merged toolbar row above it. Only two sticky layers stack here now (this one and the
+   toolbar); the Money tab row and the register's former second controls row both stopped pinning
+   2026-08-19. ⚠⚠ TWO ROUNDS OF THIS RENDERED WRONG BEFORE IT WORKED — see `.registerTableWrap`
+   just above for the second bug (the sticky ancestor), and `registerStickyBase` in panel.tsx for
+   the first (the offset base). Neither was this rule.
+   Nothing extra needed for phone: `.tableAsCards` already sets `display: none` on `<thead>` at
+   that breakpoint, so there is no sticky header left to conflict with there. */
+.registerTheadSticky th {
+  position: sticky;
+  top: var(--register-thead-top, 160px);
+  z-index: 45;
+}
+
+/* ⚠⚠ ZEBRA STRIPING, SCOPED TO ORDINARY DATA ROWS — `:not(.registerBalanceRow)` keeps the
+   Starting/Ending balance lines on their own distinct tint rather than being swallowed into
+   whichever stripe their position happens to land on. A season's worth of rows at ledger density
+   is exactly the case zebra striping earns its keep for: tracking one row across eight columns
+   without losing it is the whole argument for QuickBooks/Excel-style banding. */
+.registerTable tbody tr.registerRowCompact:not(.registerBalanceRow):nth-child(even) td {
+  background: var(--white-4);
+}
+.registerTable tbody tr.registerRowCompact:not(.registerBalanceRow):nth-child(even):hover td {
+  background: var(--home-olive-soft, rgba(255,255,255,0.06));
+}
+
+/* ⚠ A FIXED COLUMN, NOT A RAGGED EDGE — "Club →", "Player Dues →" and "Fundraising →" are all
+   different lengths, which left the table's right edge jumping around row to row. A real
+   spreadsheet's columns don't reflow with their content; this one doesn't either now. */
+.registerTable td.cardActionCell {
+  width: 130px;
+  text-align: right;
+}
+.registerTable td.cardActionCell > a,
+.registerTable td.cardActionCell > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ⚠ MERGED INTO THE ONE TOOLBAR ROW (reversed 2026-08-19, reading-order ruling follow-up) — this
+   used to be its OWN sticky row, stacked below the toolbar. It's a plain wrapping group now (the
+   budget word, the overlay switch, and the date range), rendered as one more flex item inside
+   `.panelToolbar`, the same way `.moneyFilterBar` already groups Show/Overdue there — not a
+   sticky boundary of its own any more. */
 .registerControls {
-  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.8rem;
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
 }
-.registerSelect {
-  background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-secondary);
-  border-radius: 8px; padding: 0.3rem 0.5rem; font-size: 0.78rem;
+.registerRangeGroup {
+  display: flex; align-items: center; gap: 0.3rem;
+  background: var(--white-8); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 0.2rem 0.5rem;
 }
-/* What the book closes at, said once above it. */
-.registerClose {
-  display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; align-items: baseline;
-  background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
-  border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
+.registerRangeInput {
+  background: none; border: none; color: var(--text-secondary); font-size: 0.76rem;
+  font-family: inherit; padding: 0.12rem 0;
 }
-.registerCloseFig { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--logic-lime); }
-.registerCloseProjected { color: var(--text-tertiary); font-style: italic; }
+.registerRangeSep { color: var(--text-tertiary); }
+/* ⚖ CASH ON HAND, NOW INLINE — replaces the old dedicated banner (reading-order ruling). Flagged
+   for a second look once real: a plain figure here may read as easier to miss than a banner was. */
+.registerInlineCash {
+  margin-left: auto; display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;
+}
+.registerInlineCash b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--logic-lime); }
+.registerInlineCash em { color: var(--text-tertiary); font-style: italic; font-size: 0.76rem; white-space: normal; }
 
 /* ── Player Development 3B — hub grid, session run screen, team board ──
    Hub composes as a section-card GRID on desktop per the 2026-07-09 multi-domain layout

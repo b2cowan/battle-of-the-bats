@@ -73,17 +73,23 @@ async function main() {
   const summary = await sumRes.json();
   await browser.close();
 
-  const settled = book.settled ?? [];
-  const scheduled = book.scheduled ?? [];
+  /* ⚠⚠ ONE CHRONOLOGICAL ARRAY NOW, NOT TWO (reading-order ruling, follow-up to P3) — `book.book`,
+     oldest to newest, with `book.todayIndex` naming where Today sits. "Settled" and "scheduled"
+     are no longer separate blocks; they're every row split by its own `scheduled` flag, and an
+     overdue row can sit ANYWHERE before Today, interleaved at its true date. */
+  const rows = book.book ?? [];
+  const settled = rows.filter(r => !r.scheduled);
+  const scheduled = rows.filter(r => r.scheduled);
+  const overdue = scheduled.filter(r => r.overdueDays != null);
 
   // ── What the fixture actually contains. A pass over a team with none of this proves nothing. ──
-  const kinds = new Set([...settled, ...scheduled].map(r => r.kind));
+  const kinds = new Set(rows.map(r => r.kind));
   const derived = ['dues', 'fundraising', 'club'].filter(k => kinds.has(k));
   const recorded = ['expense', 'income', 'refund'].filter(k => kinds.has(k));
   const nonCash = settled.filter(r => !r.movesCash);
 
   console.log(`\nRegister balance check — ${orgSlug} / ${teamId}`);
-  console.log(`  rows            : ${settled.length} settled, ${scheduled.length} scheduled`);
+  console.log(`  rows            : ${settled.length} settled, ${scheduled.length} scheduled (${overdue.length} overdue)`);
   console.log(`  recorded kinds  : ${recorded.join(', ') || '(none)'}`);
   console.log(`  derived sources : ${derived.join(', ') || '(none)'}`);
   console.log(`  no-cash rows    : ${nonCash.length} (out-of-pocket costs — on the book, not in the balance)`);
@@ -91,9 +97,12 @@ async function main() {
   const problems = [];
 
   // ── 1. The identity ────────────────────────────────────────────────────────────────────────
-  const closing = settled.length > 0 ? settled[0].balance : 0;   // newest first
+  // Oldest to newest now, so the closing balance is the LAST settled row, not the first — and it
+  // has to be found by `!scheduled`, because an overdue row can sit after it in array order while
+  // never being part of the real close.
+  const closing = settled.length > 0 ? settled[settled.length - 1].balance : 0;
   if (cents(closing) !== cents(book.cashOnHand)) {
-    problems.push(`the newest settled row's balance ${fmt(closing)} is not the book's own close ${fmt(book.cashOnHand)}`);
+    problems.push(`the last settled row's balance ${fmt(closing)} is not the book's own close ${fmt(book.cashOnHand)}`);
   }
   if (cents(book.cashOnHand) !== cents(summary.onHand)) {
     problems.push(
@@ -107,13 +116,28 @@ async function main() {
     problems.push(`the settled rows sum to ${fmt(summed / 100)}, which is not the close ${fmt(book.cashOnHand)}`);
   }
 
-  // ── 3. A projection never leaks into the settled close ─────────────────────────────────────
-  if (scheduled.some(r => !r.scheduled) || settled.some(r => r.scheduled)) {
-    problems.push('a row is in the wrong block — a projection has leaked into the settled book, or vice versa');
+  // ── 3. An overdue row never moves the real close, wherever it's interleaved ───────────────
+  const overdueMoved = overdue.some((r, idx, arr) => {
+    // Compare each overdue row's balance to the nearest settled row immediately before it in the
+    // FULL array — it must be carried, never its own accumulation.
+    const posInBook = rows.indexOf(r);
+    const priorSettled = [...rows.slice(0, posInBook)].reverse().find(x => !x.scheduled);
+    const expected = priorSettled ? priorSettled.balance : 0;
+    return cents(r.balance) !== cents(expected);
+  });
+  if (overdueMoved) {
+    problems.push('an overdue row\'s balance does not match the real cash that existed immediately before it — it moved money that never moved');
   }
 
-  // ── 4. Never both columns, never signed ────────────────────────────────────────────────────
-  const bad = [...settled, ...scheduled].filter(r =>
+  // ── 4. A projection never leaks into the settled close ─────────────────────────────────────
+  const beforeToday = rows.slice(0, book.todayIndex ?? rows.length);
+  const afterToday = rows.slice(book.todayIndex ?? rows.length);
+  if (afterToday.some(r => !r.scheduled) || beforeToday.some(r => r.scheduled && r.overdueDays == null)) {
+    problems.push('a row is on the wrong side of Today — a projection has leaked into the past, or an overdue row into the future');
+  }
+
+  // ── 5. Never both columns, never signed ────────────────────────────────────────────────────
+  const bad = rows.filter(r =>
     (r.moneyIn > 0 && r.moneyOut > 0) || r.moneyIn < 0 || r.moneyOut < 0);
   if (bad.length > 0) {
     problems.push(`${bad.length} row(s) carry both directions or a negative amount: ${bad.slice(0, 3).map(r => r.description).join(', ')}`);

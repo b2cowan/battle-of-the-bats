@@ -32,9 +32,10 @@ import {
   REGISTER_COLUMNS, registerExportRows,
 } from '@/lib/coach-money-exports';
 import {
-  REGISTER_FILTERS, REGISTER_KIND_LABEL, balanceIsMeaningful, matchesFilter,
-  type RegisterBookRow, type RegisterFilter,
+  REGISTER_FILTERS, REGISTER_KIND_LABEL, balanceIsMeaningful, applyDateRange,
+  type RegisterBookRow, type RegisterKind,
 } from '@/lib/coach-register';
+import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import styles from '../../../../coaches.module.css';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
@@ -43,7 +44,7 @@ import type {
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { useMoneyRevision, useBumpMoneyRevision, useSharedMoneyRead } from '@/lib/coach-money-refresh';
-import { formatStoredDate, tournamentToday, orgDayKey } from '@/lib/timezone';
+import { formatStoredDate, tournamentToday, orgDayKey, addCalendarDays } from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
 import {
   MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
@@ -248,6 +249,21 @@ const FACE_TABS: Record<MoneyFace, ExpenseTab[]> = {
      second thing you want, not the first. */
   payables: ['schedule', 'commitments'],
 };
+
+/** ⚠⚠ EVERY REGISTER ROW IS EXACTLY ONE OF THESE (owner call, 2026-08-19 — folds the old "Overdue"
+ *  chip and "Include scheduled" toggle into one Status dropdown). Actual = settled (`!scheduled`).
+ *  Overdue = unsettled with a due date in the past (`scheduled && overdueDays != null`). Scheduled
+ *  = unsettled with a due date still ahead, or no due date at all (`scheduled && overdueDays ==
+ *  null`). Derived from a row's own fields, never stored — same discipline `overdueDays` itself
+ *  already follows. */
+type RegisterStatus = 'actual' | 'overdue' | 'scheduled';
+const REGISTER_STATUS_ORDER: RegisterStatus[] = ['actual', 'overdue', 'scheduled'];
+const REGISTER_STATUS_LABEL: Record<RegisterStatus, string> = {
+  actual: 'Actual', overdue: 'Overdue', scheduled: 'Scheduled',
+};
+function registerStatusOf(r: { scheduled: boolean; overdueDays: number | null }): RegisterStatus {
+  return !r.scheduled ? 'actual' : r.overdueDays != null ? 'overdue' : 'scheduled';
+}
 
 type ScheduleFilter = 'unpaid' | 'paid' | 'all';
 
@@ -562,17 +578,67 @@ function MoneyRecordsPanel({
      second arithmetic in the browser is exactly how the two would start disagreeing by a cent on a
      screen whose entire point is that they don't. */
   const [book, setBook] = useState<{
-    scheduled: RegisterBookRow[]; settled: RegisterBookRow[];
+    book: RegisterBookRow[]; todayIndex: number;
     cashOnHand: number; projectedBalance: number | null; orgLinked: boolean;
   } | null>(null);
-  const [registerFilter, setRegisterFilter] = useState<RegisterFilter>('all');
-  /** Narrowing by one budget word. Shares the balance rule with the type filter — any narrowing
-   *  at all takes the Balance column away. */
-  const [registerItemId, setRegisterItemId] = useState('');
-  /* ⚠ ON BY DEFAULT (plan §4.4, recommended and adopted). The book then answers "what happened"
-     and "what's coming" in one read, and the Today rule plus the projected styling keep the two
-     halves unmistakable. Colour never carries that distinction alone. */
-  const [showScheduled, setShowScheduled] = useState(true);
+  /* ⚠ MULTI-SELECT, EMPTY = ALL (owner call — "fit like QuickBooks/Excel" needed the seven pills
+     to fold into one dropdown). `RegisterKind` only — 'all' isn't a kind, it's what an empty set
+     already means, so there's no separate state to fall out of sync with it. */
+  const [selectedKinds, setSelectedKinds] = useState<Set<RegisterKind>>(new Set());
+  /** Narrowing by budget word(s), multi-select, empty = every item. Shares the balance rule with
+   *  the type filter — any narrowing at all takes the Balance column away. */
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  /* ⚠⚠ ONE STATUS DROPDOWN, NOT TWO SEPARATE CONTROLS (owner call, 2026-08-19 — folded "Overdue"
+     and "Include scheduled" together, matching the multi-select shape of Show/Item). Every row is
+     exactly one of the three: Actual (settled), Overdue (unsettled, due date in the past),
+     Scheduled (unsettled, due date still ahead). ⚠⚠ DEFAULTS TO Actual + Overdue, NOT EMPTY —
+     `MultiSelectDropdown`'s own rule is "empty means all," which would silently turn Scheduled
+     back on by default (a call this project already made deliberately, twice now: the date range
+     keeps the everyday view a manageable size, so defaulting every unpaid row into view on top of
+     that read as too much at once). See the JSX for how the dropdown reads with a non-empty
+     default. */
+  const [selectedStatus, setSelectedStatus] = useState<Set<RegisterStatus>>(new Set(['actual', 'overdue']));
+  /* ⚠⚠ THE DEFAULT RANGE IS 30 DAYS BACK / 30 DAYS FORWARD FROM TODAY, computed once on mount —
+     never recomputed on a later render, or the window would silently drift under a coach's feet
+     while they're reading it. Unsettled rows ignore this regardless (`applyDateRange`'s own
+     rule) — the range narrows routine history, never an open obligation. */
+  const [dateFrom, setDateFrom] = useState(() => addCalendarDays(tournamentToday(), -30));
+  const [dateTo, setDateTo] = useState(() => addCalendarDays(tournamentToday(), 30));
+  /* ⚠⚠ THE REAL BASE — found 2026-08-19 after the sticky column headers shipped broken AND the
+     team masthead was reported overlapping this panel's own sticky rows. Every offset here used
+     to start from `var(--coach-top-strip, 48px)`, a variable that belongs to a DIFFERENT shell
+     (CoachPortalShell, the tournament-record route tree) and is never defined on a team page — it
+     was silently falling back to a guessed 48px on every scroll. This shell (CoachesChrome) is
+     `--coach-topstrip-top` (the fixed top bar) stacked under `--coach-header-h` (the team masthead,
+     already measured live by CoachTeamHeader itself and published onto this panel's `<main>`
+     ancestor — no new measurement needed, just the right variable name). Both default to 0px so a
+     page with no masthead (or before it mounts) doesn't lose the offset entirely. */
+  const registerStickyBase = 'calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px))';
+  /* ⚠⚠ ONE STICKY ROW, NOT THREE (reversed 2026-08-19, reading-order ruling follow-up). This used
+     to stack the Money tab row, this toolbar, and a second controls row as three independent
+     sticky layers, each measured and added to the next — three seams, three places for the
+     offset math to drift, which is exactly what kept happening. The tab row no longer pins on
+     any tab (a shared nav bar behaving differently on one tab was a bigger inconsistency than
+     this page earning its own toolbar), and the former second row's filters merged into this one
+     — see the toolbar's own JSX below. What's left is ONE measured height for the column headers
+     to dock under, not three summed together. */
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const [toolbarH, setToolbarH] = useState(96);
+  useEffect(() => {
+    if (tab !== 'register') return;
+    const el = toolbarRef.current;
+    if (!el) return;
+    /* ⚠ THE BREATHING ROOM BELOW THE TOOLBAR IS PADDING, NOT MARGIN, WHEN PINNED — see
+       `.panelToolbar.panelToolbarSticky` in the CSS for why (margin is never painted, so an
+       offset that accounted for it as extra space left a see-through gap a scrolled row showed
+       through). Padding is part of the border box, so a plain measurement already includes it —
+       no manual math needed here. */
+    const measure = () => setToolbarH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [tab]);
 
   // One form, three answers, two modes (add / edit) — see BLANK_RECORD and EntryKind.
   const [formOpen, setFormOpen] = useState(false);
@@ -1165,17 +1231,22 @@ function MoneyRecordsPanel({
    * identity on every render and silently defeat the memo it is an input to.
    */
   const {
-    showBalance, bookSettled, bookScheduled, bookEmpty, registerItemNames,
+    showBalance, bookRows, bookStartingBalance, bookEmpty, registerItemNames, statusCounts,
   } = useMemo(() => {
     /* ⚠⚠ WHEN A FILTER HIDES ROWS, THE BALANCE COLUMN HIDES WITH IT (plan §4.3). A running balance
        over a subset is a number that looks like cash and isn't — a coach reading "Expenses only"
        would see a column of figures descending from zero and have every reason to read it as the
        team's position. The column is REMOVED rather than blanked, so there is no empty space
-       inviting the question. `balanceIsMeaningful` is the one rule, shared with the export. */
-    const balanceShown = balanceIsMeaningful(registerFilter, registerItemId, filterTagId);
-    const matches = (r: RegisterBookRow) => {
-      if (!matchesFilter(r, registerFilter)) return false;
-      if (registerItemId && r.itemName !== registerItemId) return false;
+       inviting the question. `balanceIsMeaningful` is the one rule, shared with the export.
+       ⚠ THE DATE RANGE IS DELIBERATELY NOT ONE OF ITS INPUTS — narrowing by date hides rows from
+       one continuous timeline rather than excluding a category from a sum, so every visible
+       balance stays honest. See `applyDateRange`'s own header for the full argument. */
+    const balanceShown = balanceIsMeaningful(
+      selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '', filterTagId,
+    );
+    const matchesKindItemTag = (r: RegisterBookRow) => {
+      if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
+      if (selectedItems.size > 0 && (!r.itemName || !selectedItems.has(r.itemName))) return false;
       /* Money tags live on expenses, so a tag filter narrows the book to the rows that can carry one
          — every other row simply has no such label, which is a match of zero, not a match of all. */
       if (filterTagId) {
@@ -1184,23 +1255,46 @@ function MoneyRecordsPanel({
       }
       return true;
     };
-    const settled = (book?.settled ?? []).filter(matches);
-    /* The overlay is a coach's switch, so an OFF strip drops the whole block rather than dimming it —
-       "include what's scheduled" has to mean the book is only what happened. */
-    const scheduled = showScheduled ? (book?.scheduled ?? []).filter(matches) : [];
+    const beforeStatus = (book?.book ?? []).filter(matchesKindItemTag);
+    /* Counted BEFORE the Status selection narrows further — otherwise the dropdown's own counts
+       would just report themselves back once picked, the same rule the old Overdue chip's count
+       followed. */
+    const counts: Record<RegisterStatus, number> = { actual: 0, overdue: 0, scheduled: 0 };
+    for (const r of beforeStatus) counts[registerStatusOf(r)]++;
+    const statusFiltered = selectedStatus.size === 0 ? beforeStatus
+      : beforeStatus.filter(r => selectedStatus.has(registerStatusOf(r)));
+    /* ⚠⚠ OVERDUE ALWAYS IGNORES THE DATE RANGE, REGARDLESS OF WHAT ELSE IS SELECTED (owner call,
+       2026-08-19). It must never be the reason a coach doesn't see an open obligation — whether
+       they've narrowed to Overdue alone (an audit) or are browsing Actual + Overdue together (the
+       default). Actual and Scheduled rows are windowed normally. */
+    const overdueRows = statusFiltered.filter(r => r.overdueDays != null);
+    const rangeableRows = statusFiltered.filter(r => r.overdueDays == null);
+    /* An Overdue-only selection (neither Actual nor Scheduled chosen) isn't a slice of the
+       timeline, it's a cross-section of it — same as the old audit toggle. No starting balance to
+       state there; `rangeableRows` is empty by construction whenever this is true. */
+    const auditOnly = selectedStatus.size > 0 && !selectedStatus.has('actual') && !selectedStatus.has('scheduled');
+    const { rows: ranged, startingBalance } = auditOnly
+      ? { rows: rangeableRows, startingBalance: null as number | null }
+      : applyDateRange(rangeableRows, dateFrom, dateTo);
+    /* Recombine in the book's own chronological order rather than concatenating the two groups —
+       `statusFiltered` is already ordered, so filtering IT by membership is simpler than merging
+       two separately-ordered arrays back together. */
+    const visibleIds = new Set([...ranged.map(r => r.id), ...overdueRows.map(r => r.id)]);
+    const finalRows = statusFiltered.filter(r => visibleIds.has(r.id));
     return {
       showBalance: balanceShown,
-      bookSettled: settled,
-      bookScheduled: scheduled,
-      bookEmpty: settled.length === 0 && scheduled.length === 0,
+      bookRows: finalRows,
+      bookStartingBalance: startingBalance,
+      bookEmpty: finalRows.length === 0,
+      statusCounts: counts,
       /* The words actually ON the book, not the whole library: a filter offering a category the
          season never spent against is a control that can only ever empty the screen. */
       registerItemNames: [...new Set(
-        [...(book?.settled ?? []), ...(book?.scheduled ?? [])]
-          .map(r => r.itemName).filter((n): n is string => !!n),
+        (book?.book ?? []).map(r => r.itemName).filter((n): n is string => !!n),
       )].sort((a, b) => a.localeCompare(b)),
     };
-  }, [book, registerFilter, registerItemId, filterTagId, showScheduled, tagsByExpenseId]);
+  }, [book, selectedKinds, selectedItems, filterTagId, selectedStatus, dateFrom, dateTo, tagsByExpenseId]);
+
 
   /** The two id lookups a register row needs to find its record. Same reasoning as the memo above:
    *  rebuilding two Maps over every expense and arrival on each keystroke is work the form's text
@@ -1233,9 +1327,13 @@ function MoneyRecordsPanel({
   useEffect(() => {
     if (face !== 'transactions') return;
     if (wantedFilter && REGISTER_FILTERS.some(f => f.id === wantedFilter)) {
-      setRegisterFilter(wantedFilter as RegisterFilter);
+      // 'all' means "clear the filter" — an empty set, never a set containing the literal string
+      // 'all', which isn't a real kind.
+      setSelectedKinds(wantedFilter === 'all' ? new Set() : new Set([wantedFilter as RegisterKind]));
     }
-    if (wantedScheduled === '1') setShowScheduled(true);
+    /* Adds Scheduled to whatever's already selected rather than replacing it — the deep link means
+       "also show what's coming," not "show only what's coming." */
+    if (wantedScheduled === '1') setSelectedStatus(s => new Set([...s, 'scheduled']));
   }, [wantedFilter, wantedScheduled, face]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
@@ -1965,13 +2063,19 @@ function MoneyRecordsPanel({
   /* What the downloaded file is called, and its filename segment.
      ⚠ `expenses` AND `money-in` STAY AS SEGMENTS where the filter reproduces the retired dataset —
      a coach's downloads folder already holds a season of files under those words, and the export
-     catalog lists them. The register's own file is `register`. */
-  const registerExportLabel = registerFilter === 'all'
-    ? 'Register'
-    : REGISTER_FILTERS.find(f => f.id === registerFilter)!.label;
-  const registerExportDataset = registerFilter === 'expense' ? 'expenses'
-    : registerFilter === 'all' ? 'register'
-    : registerFilter;
+     catalog lists them. The register's own file is `register`.
+     ⚠ MULTI-SELECT ONLY PRESERVES THAT CONTINUITY FOR A SINGLE SELECTED KIND — the old single-kind
+     file names have nothing to fall back to once two kinds are combined, so a combined selection
+     exports as the general `register` file, still narrowed to exactly the rows on screen. */
+  const singleSelectedKind = selectedKinds.size === 1 ? [...selectedKinds][0] : null;
+  /** Nothing narrowing the register at all — the season genuinely has no rows yet, as opposed to
+   *  a filter combination that happens to match none. */
+  const noNarrowing = selectedKinds.size === 0 && selectedItems.size === 0 && !filterTagId;
+  const registerExportLabel = selectedKinds.size === 0 ? 'Register'
+    : singleSelectedKind ? REGISTER_FILTERS.find(f => f.id === singleSelectedKind)!.label
+    : `Register (${selectedKinds.size} kinds)`;
+  const registerExportDataset = singleSelectedKind === 'expense' ? 'expenses'
+    : singleSelectedKind ?? 'register';
 
   /**
    * A schedule row's Mark paid — a named helper, not an inline block in the JSX (/simplify).
@@ -2022,37 +2126,53 @@ function MoneyRecordsPanel({
     /* A settle needs the RECORD, for its item and its half's own amount. A row whose commitment is
        not in this panel's list shows no button rather than opening a form with blanks in it. */
     const settle = r.markPaid && record && canWriteMoney ? r.markPaid : null;
+    const overdue = r.overdueDays != null;
+    /* ⚠ ONE OF THREE, ALWAYS — the same taxonomy the Status dropdown filters by
+       (`registerStatusOf`), reused here rather than re-deriving the same three mutually
+       exclusive states by hand a second time. */
+    const rowStatus = registerStatusOf(r);
     return (
       <tr
         key={r.id}
-        className={`${styles.tr} ${tappable ? styles.rowTappable : ''} ${r.scheduled ? styles.registerRowScheduled : ''}`}
+        className={[
+          styles.tr, styles.registerRowCompact,
+          tappable ? styles.rowTappable : '',
+          r.scheduled ? styles.registerRowScheduled : '',
+          rowStatus === 'actual' ? styles.registerRowActual : '',
+          rowStatus === 'overdue' ? styles.registerRowOverdue : '',
+        ].filter(Boolean).join(' ')}
         onClick={tappable ? () => { if (window.getSelection()?.toString()) return; openRecord!(); } : undefined}
       >
-        <td className={styles.td} data-label="Date">
+        <td className={`${styles.td} ${styles.registerDateCell}`} data-label="Date">
           {/* ⚠ formatStoredDate, never a hand-roll — this column mixes bare dates with paid stamps
               held at org noon, and both hand-rolls have printed the wrong day already. */}
           {r.date ? fmtDate(r.date) : <span className={styles.mutedInline}>No date</span>}
         </td>
         <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
           {r.description}
-          {r.scheduled && <> <span className={styles.registerChip}>Scheduled</span></>}
+          {/* ⚠⚠ OVERDUE IS A FACT, NOT A LOCATION (reading-order ruling, follow-up to P3). This row
+              sits at its own true date rather than being bucketed next to Today, so the chip is what
+              tells a coach how stale it is — never "Scheduled", which reads as merely upcoming. */}
+          {overdue && <> <span className={`${styles.registerChip} ${styles.registerChipOverdue}`}>Overdue · {r.overdueDays}d</span></>}
+          {r.scheduled && !overdue && <> <span className={styles.registerChip}>Scheduled</span></>}
           {/* ⚠⚠ INCOME AND A REFUND SHARE THE MONEY-IN COLUMN AND ARE OPPOSITES, so the two of them
               — and only the two of them — carry their kind on the row. A $325 grant and a $325
               vendor credit are otherwise identical here, and telling them apart is the one thing
               only the coach can do. Every other kind is already named: an expense by the column it
-              sits in, a derived row by the workspace chip beside it.
+              sits in, a derived row by the destination link beside it.
               ⚠ This is a LIST labelling its rows, which the report still may not do — a refund nets
               into the row it repaid there, leaving nothing to tag (owner ruling 2026-08-15). */}
           {(r.kind === 'income' || r.kind === 'refund') && (
             <> <span className={styles.registerChip}>{REGISTER_KIND_LABEL[r.kind]}</span></>
           )}
-          {r.sourceLabel && <> <span className={styles.registerChip}>{r.sourceLabel}</span></>}
           {!r.movesCash && <> <span className={styles.registerChip}>No team cash</span></>}
-          {r.detail && (
-            <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem', fontStyle: 'normal' }}>
-              {r.detail}
-            </span>
-          )}
+          {/* ⚠ THE SOURCE BADGE IS GONE (reading-order ruling) — the destination link in the action
+              cell already names where a derived row is from; repeating it here was the row's second
+              wasted line. `detail` folds inline instead of its own line, for the same reason —
+              "Recorded on this date" cost a whole row of height to say almost nothing, but a few of
+              these ("Awaiting the club — they may still decline it") are real information, so the
+              text survives, just compacted onto the one line the row now has. */}
+          {r.detail && <span className={styles.mutedInline}> · {r.detail}</span>}
           {record && tagChips(record.id)}
         </td>
         <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
@@ -2069,11 +2189,12 @@ function MoneyRecordsPanel({
         </td>
         {showBalance && (
           <td
-            className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.movesCash ? '' : styles.registerBalanceUnmoved}`}
+            className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.movesCash && !overdue ? '' : styles.registerBalanceUnmoved}`}
             data-label="Balance"
             /* The chip in the What column says it in words; this says it to a screen reader
                standing on the figure itself, which is where the question actually occurs. */
-            title={r.movesCash ? undefined : 'A family paid this directly — the team’s cash did not move'}
+            title={overdue ? 'Not yet paid — the balance is carried forward, unchanged'
+              : r.movesCash ? undefined : 'A family paid this directly — the team’s cash did not move'}
           >
             {fmt(r.balance)}
           </td>
@@ -2091,20 +2212,44 @@ function MoneyRecordsPanel({
             <RowEditButton label={`Edit ${r.description}`} onClick={openRecord} />
           )}
           {workspaceHref && (
-            /* ⚠ A DERIVED ROW NAVIGATES, IT DOES NOT EDIT. The chip beside the description names the
-               workspace; this is the way there. */
+            /* ⚠ A DERIVED ROW NAVIGATES, IT DOES NOT EDIT — and now says WHERE (reading-order
+               ruling): the link names its destination instead of a generic "Open", which is also
+               what lets the redundant source badge above come out. */
             /* A real control, not a bare inline link: it sits in the same action cell as Mark paid
                and the row pencil, and a 15px hit target beside two buttons is the row's one
                affordance a finger cannot find. */
             <Link
               href={workspaceHref}
               className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              /* ⚠ NOWRAP, SCOPED TO THIS LINK ONLY. "Fundraising →" is wider than the old plain
+                 "Open" ever was — without this, the arrow wraps onto its own line and drags the
+                 whole (otherwise-compact) row back up to two lines tall, exactly the height this
+                 pass was built to remove. */
+              style={{ whiteSpace: 'nowrap' }}
               onClick={ev => ev.stopPropagation()}
             >
-              Open
+              {r.sourceLabel ?? 'Open'} →
             </Link>
           )}
         </td>
+      </tr>
+    );
+  }
+
+  /** A statement-style "Starting balance" / "Ending balance" line — the true cumulative figure,
+   *  not a row of data. Replaces both the old "N rows not shown" gap message (owner call: read
+   *  the balance directly, don't make a coach do the arithmetic from a count and a net) and the
+   *  Today divider (owner call: unnecessary now that overdue/scheduled rows already carry their
+   *  own status tag — a coach doesn't need a second cue for what day it is). */
+  function registerBalanceRow(key: string, label: string, balance: number) {
+    return (
+      // `.tr .registerRowCompact` too — the same compound selector every data row uses for its
+      // font-size/line-height/padding, so this line sits at the identical row height rather than
+      // reverting to the shared (taller) `.td` default.
+      <tr key={key} className={`${styles.tr} ${styles.registerRowCompact} ${styles.registerBalanceRow}`}>
+        <td colSpan={6} className={styles.registerBalanceLabel}>{label}</td>
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`}>{fmt(balance)}</td>
+        <td className={styles.td}></td>
       </tr>
     );
   }
@@ -2203,7 +2348,14 @@ function MoneyRecordsPanel({
           due-date list across two sources, so a tag filter has nothing to narrow there. */}
       {/* Export lives here on every sub-tab, so the row can no longer disappear with the filter
           or the write gate. */}
-      <div className={styles.panelToolbar}>
+      {/* ⚠ STICKY ON THE REGISTER ONLY (reading-order ruling, follow-up to P3) — the one tab whose
+          list can run to a season's worth of rows. Docks directly under the top strip + team
+          masthead (`registerStickyBase`) — nothing else pins above it any more. */}
+      <div
+        ref={toolbarRef}
+        className={`${styles.panelToolbar} ${tab === 'register' ? styles.panelToolbarSticky : ''}`}
+        style={tab === 'register' ? { top: registerStickyBase } : undefined}
+      >
         {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
             content — see the note on that class. */}
         {/* ⚠ FOUR SUB-TABS BECAME TWO AND ONE (Money split P1 then P3). P1 divided the old strip's
@@ -2231,17 +2383,35 @@ function MoneyRecordsPanel({
              is on it instead of choosing between two lists. That is what lets a running balance
              exist at all — neither of the old lists could carry one, because half the money was
              always on the other. */
-          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }} role="group" aria-label="Show">
-            {registerFilters.map(f => (
-              <button
-                key={f.id}
-                className={`${styles.moneyFilterChip} ${registerFilter === f.id ? styles.moneyFilterChipActive : ''}`}
-                aria-pressed={registerFilter === f.id}
-                onClick={() => setRegisterFilter(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className={styles.moneyFilterBar} style={{ marginBottom: 0, flexWrap: 'nowrap' }}>
+            {/* ⚠ A DROPDOWN, NOT SEVEN PILLS (owner call — "fit like QuickBooks/Excel"; seven type
+                chips plus Overdue plus the item picker plus a date range no longer fit one line as
+                pills). Multi-select: pick more than one kind at once (Expenses + Refunds, say). */}
+            <MultiSelectDropdown
+              label="Show"
+              options={registerFilters.filter(f => f.id !== 'all').map(f => ({ id: f.id, label: f.label }))}
+              selected={selectedKinds}
+              onChange={next => setSelectedKinds(next as Set<RegisterKind>)}
+            />
+            {/* ⚠⚠ A STATUS DROPDOWN, NOT TWO SEPARATE PILLS (owner call, 2026-08-19 — folds the old
+                "Overdue" chip and "Include scheduled" toggle into one control, matching the same
+                multi-select shape as Show and Item: three dropdowns, one date range). Counts are
+                of what's THERE, computed before this selection narrows further — same rule the
+                old Overdue chip's count followed, so the numbers never chase their own tail.
+                ⚠⚠ DEFAULTS TO Actual + Overdue, NOT EMPTY (owner call, reversing plan §4.4's
+                "on by default" for Scheduled a second time). `MultiSelectDropdown`'s own rule is
+                "empty means all," but that would flip Scheduled back on by default — a call this
+                project already made deliberately once. Seeding two of three keeps that default
+                intact; the dropdown reads "2 selected" rather than "All" until a coach changes it,
+                which is an honest description of a real, considered starting narrowing. */}
+            <MultiSelectDropdown
+              label="Status"
+              options={REGISTER_STATUS_ORDER.map(id => ({
+                id, label: `${REGISTER_STATUS_LABEL[id]} (${statusCounts[id]})`,
+              }))}
+              selected={selectedStatus}
+              onChange={next => setSelectedStatus(next as Set<RegisterStatus>)}
+            />
           </div>
         )}
         {tagFilterInToolbar && (
@@ -2259,7 +2429,82 @@ function MoneyRecordsPanel({
             })}
           </div>
         )}
+        {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — this used to be a
+            second sticky row of its own, stacked below this toolbar. Two rows of filters never
+            needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
+            second line on a narrow screen exactly like `.moneyFilterBar` above already does,
+            instead of needing its own measured sticky boundary. */}
+        {tab === 'register' && (
+          <div className={styles.registerControls}>
+            {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
+                one or several budget words at once rather than one at a time. */}
+            {registerItemNames.length > 0 && (
+              <MultiSelectDropdown
+                label="Item"
+                options={registerItemNames.map(n => ({ id: n, label: n }))}
+                selected={selectedItems}
+                onChange={setSelectedItems}
+                allLabel="Every budget item"
+              />
+            )}
+            {/* ⚠⚠ AN UNSETTLED ROW IGNORES THIS RANGE, OVERDUE OR NOT (reading-order ruling).
+                These two dates trim routine settled history only — they can never be the reason a
+                coach doesn't see an open obligation. Defaults to 30 days back / 30 days forward,
+                set once on mount; changing either is a deliberate widen, never silently redone. */}
+            <span className={styles.registerRangeGroup} role="group" aria-label="Date range">
+              <input
+                type="date"
+                className={styles.registerRangeInput}
+                value={dateFrom}
+                max={dateTo}
+                onChange={ev => ev.target.value && setDateFrom(ev.target.value)}
+                aria-label="From date"
+              />
+              <span className={styles.registerRangeSep} aria-hidden>–</span>
+              <input
+                type="date"
+                className={styles.registerRangeInput}
+                value={dateTo}
+                min={dateFrom}
+                onChange={ev => ev.target.value && setDateTo(ev.target.value)}
+                aria-label="To date"
+              />
+            </span>
+            {showTagFilter && !tagFilterInToolbar && (
+              <>
+                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+                {usedTagIds.map(t => {
+                  const isOrg = t.teamId === null;
+                  const active = filterTagId === t.id;
+                  const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
+                  return (
+                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
+                      {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        )}
         <div className={styles.panelToolbarActions}>
+          {/* ⚖ CASH ON HAND, NOW INLINE (reading-order ruling — flagged for a second look once
+              real: a plain figure beside the controls may read as too easy to miss compared to
+              the dedicated banner it replaced). Same disappearing rule as the Balance column —
+              a narrowed TYPE filter takes it away; the date range never does. Placed beside Add,
+              per the original ruling's own words — "next to Add" — rather than earning its own
+              auto-margin lane, now that it's sharing a row with the actions instead of a
+              standalone controls strip.
+              ⚠ THE PROJECTED-BALANCE SENTENCE IS GONE (owner call, 2026-08-19) — it pushed this
+              one-row toolbar onto two lines the moment "Include scheduled" was on, and staying
+              one row mattered more than surfacing that number here. `book.projectedBalance`
+              stays computed and used elsewhere (the Ending balance row still reflects it); only
+              this inline callout was cut. */}
+          {tab === 'register' && showBalance && book && (
+            <span className={styles.registerInlineCash} data-sandbox-tour="register-balance">
+              Cash on hand <b>{fmt(book.cashOnHand)}</b>
+            </span>
+          )}
           {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
@@ -2278,10 +2523,10 @@ function MoneyRecordsPanel({
                   dataset: registerExportDataset,
                   title: registerExportLabel,
                   columns: REGISTER_COLUMNS,
-                  /* Scheduled first, then settled — the order on screen. A file that re-sorted the
-                     rows would put a projection in the middle of the settled book with a balance
-                     that belongs to neither. */
-                  rows: registerExportRows([...bookScheduled, ...bookSettled], showBalance),
+                  /* Oldest to newest, exactly the order on screen — a file that re-sorted the rows
+                     would put a projection in the middle of the settled book with a balance that
+                     belongs to neither. */
+                  rows: registerExportRows(bookRows, showBalance),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
                   emptyMessage: 'Nothing has been recorded on this book yet.',
@@ -2358,90 +2603,22 @@ function MoneyRecordsPanel({
            dues, fundraising and the club. If the two ever disagree, the register is wrong by
            construction — see the header on /api/coaches/.../register. */
         <>
-          <div className={styles.registerControls}>
-            {registerItemNames.length > 0 && (
-              <select
-                className={styles.registerSelect}
-                value={registerItemId}
-                onChange={ev => setRegisterItemId(ev.target.value)}
-                aria-label="Narrow to one budget item"
-              >
-                <option value="">Every budget item</option>
-                {registerItemNames.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            )}
-            {/* ⚠ THE OVERLAY IS ON BY DEFAULT (plan §4.4). Off, the book is only what has already
-                happened; on, it runs past Today into what is scheduled.
-
-                ⚠⚠ THIS COMMENT USED TO END "Nothing pending a DECISION is ever in it — an
-                unapproved club request is money the club may still decline." THAT IS NO LONGER
-                TRUE (owner ruling 2026-08-17, money redesign P4): a club request awaiting an answer
-                DOES appear here, at the foot of the scheduled block, saying *No date* and chipped
-                *Awaiting the club*. The argument that overturned it was that this overlay already
-                carries a sponsor PLEDGE — money that may never arrive either.
-
-                🔒 What survives: nothing undecided may touch a SETTLED figure. Turn this off and the
-                pending row is gone; Cash on hand never saw it either way. The full reasoning lives
-                on the loop that emits the row, in the register route. */}
-            <button
-              type="button"
-              className={`${styles.moneyFilterChip} ${showScheduled ? styles.moneyFilterChipActive : ''}`}
-              aria-pressed={showScheduled}
-              onClick={() => setShowScheduled(s => !s)}
-            >
-              Include what&apos;s scheduled
-            </button>
-            {showTagFilter && !tagFilterInToolbar && (
-              <>
-                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-                {usedTagIds.map(t => {
-                  const isOrg = t.teamId === null;
-                  const active = filterTagId === t.id;
-                  const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
-                  return (
-                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
-                      {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
-                    </button>
-                  );
-                })}
-              </>
-            )}
-          </div>
-
-          {/* What the book closes at, said once above it rather than only at the foot of a long
-              table. ⚠ It disappears with the Balance column, for the same reason: a "cash on hand"
-              figure printed over a filtered book would be the one number a coach would trust. */}
-          {showBalance && book && (
-            /* The coach demo's tour stops here (step 5) — it is the one line in Money that says
-               what the whole book is FOR, so the anchor belongs on the figure, not the table. */
-            <div className={styles.registerClose} data-sandbox-tour="register-balance">
-              <span>
-                Cash on hand <span className={styles.registerCloseFig}>{fmt(book.cashOnHand)}</span>
-              </span>
-              {showScheduled && book.projectedBalance !== null && (
-                <span className={styles.registerCloseProjected}>
-                  {fmt(book.projectedBalance)} once everything scheduled has happened
-                </span>
-              )}
-            </div>
-          )}
-
           {bookEmpty ? (
             <>
               <CoachEmptyState
                 icon={<Receipt size={22} aria-hidden />}
-                headline={registerFilter === 'all' && !registerItemId && !filterTagId
+                headline={noNarrowing
                   ? 'Nothing on the books yet'
                   : 'Nothing matches that'}
-                description={registerFilter === 'all' && !registerItemId && !filterTagId
+                description={noNarrowing
                   ? 'Every dollar this season moves — what you spend, what arrives, dues, fundraising and anything settled with the club — lands here in date order.'
                   : 'Try a wider filter, or turn on what is scheduled.'}
-                primaryAction={canWriteMoney && registerFilter === 'all' && !registerItemId && !filterTagId ? {
+                primaryAction={canWriteMoney && noNarrowing ? {
                   label: 'Add Expense',
                   icon: <Plus size={15} aria-hidden />,
                   onClick: () => openAdd({ kind: 'expense', timing: 'paid' }),
                 } : undefined}
-                secondaryAction={canWriteMoney && registerFilter === 'all' && !registerItemId && !filterTagId ? {
+                secondaryAction={canWriteMoney && noNarrowing ? {
                   label: 'Add Income',
                   icon: <Plus size={15} aria-hidden />,
                   onClick: () => openAdd({ kind: 'income', timing: 'paid' }),
@@ -2451,7 +2628,7 @@ function MoneyRecordsPanel({
                   P2 §5). Both comparisons belong here now that one book holds both directions: which
                   tab a commitment goes on, and the three-way distinction a coach describes with one
                   sentence — income, money back, and a family paying the vendor direct. */}
-              {registerFilter === 'all' && !registerItemId && !filterTagId && (
+              {noNarrowing && (
                 <>
                   <KindCompare
                     otherHref={moneySectionHref(base, 'payables', undefined)}
@@ -2462,9 +2639,18 @@ function MoneyRecordsPanel({
               )}
             </>
           ) : (
-            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-              <table className={styles.table}>
-                <thead>
+            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.registerTableWrap}`}>
+              <table className={`${styles.table} ${styles.registerTable}`}>
+                {/* ⚠ STICKY, DESKTOP ONLY (see the CSS rule's own note on why phone is excluded) —
+                    each `<th>` carries its own `position: sticky`, not the `<thead>`, since a
+                    `<thead>`'s default `display: table-header-group` doesn't reliably honour
+                    sticky in every engine (the standard workaround, not a first guess). Docks
+                    directly under the one merged toolbar above (`registerStickyBase + toolbarH`)
+                    — two sticky layers total now, not the four this stack once stood on. */}
+                <thead
+                  className={styles.registerTheadSticky}
+                  style={{ ['--register-thead-top' as string]: `calc(${registerStickyBase} + ${toolbarH}px)` }}
+                >
                   <tr>
                     <th className={styles.th}>Date</th>
                     <th className={styles.th}>What</th>
@@ -2480,15 +2666,16 @@ function MoneyRecordsPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Scheduled first, soonest at the top, then the Today rule, then the settled
-                      book newest-first. */}
-                  {bookScheduled.map(r => registerRow(r))}
-                  {bookScheduled.length > 0 && (
-                    <tr className={styles.registerToday}>
-                      <td colSpan={showBalance ? 8 : 7}>Today — {fmtDate(tournamentToday())}</td>
-                    </tr>
-                  )}
-                  {bookSettled.map(r => registerRow(r))}
+                  {/* ⚠⚠ ONE CHRONOLOGICAL BOOK, OLDEST AT THE TOP (reading-order ruling, follow-up
+                      to P3). `bookRows` is already in that order. A statement-style opening/closing
+                      balance brackets it when a real date window is in effect (`bookStartingBalance`
+                      is null during the Overdue audit view, which isn't a slice of the timeline).
+                      No Today divider — a scheduled/overdue row already carries its own tag. */}
+                  {showBalance && bookStartingBalance !== null
+                    && registerBalanceRow('starting', 'Starting balance', bookStartingBalance)}
+                  {bookRows.map(r => registerRow(r))}
+                  {showBalance && bookStartingBalance !== null && bookRows.length > 0
+                    && registerBalanceRow('ending', 'Ending balance', bookRows[bookRows.length - 1].balance)}
                 </tbody>
               </table>
             </div>
