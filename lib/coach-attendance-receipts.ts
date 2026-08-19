@@ -36,6 +36,21 @@ import { sameWeekdayAcross } from './coach-practice-misses.ts';
 
 export type AttendanceMarkStatus = 'unknown' | 'attending' | 'absent' | 'late';
 
+/**
+ * The ONE rule for what a mark counts toward — `known` excludes no-reply (nobody was ever marked
+ * either way, so it carries no reliability signal), `attended` treats late as present.
+ *
+ * ⚠ This rule has a twin in `lib/db.ts`'s `getRepTeamAttendanceReliability` (the per-player season
+ * roll-up), written inline there rather than sourced from here — that function predates this module
+ * and isn't touched by callers of this one. If either rule changes, check the other; they must never
+ * quietly disagree about what "known" or "attended" means for the same mark.
+ */
+export function classifyAttendanceMark(status: AttendanceMarkStatus): { known: boolean; attended: boolean } {
+  if (status === 'attending' || status === 'late') return { known: true, attended: true };
+  if (status === 'absent') return { known: true, attended: false };
+  return { known: false, attended: false }; // 'unknown' — no reply, never counted against anyone
+}
+
 /** One recorded attendance mark on one event. */
 export interface AttendanceMarkRecord {
   eventId: string;

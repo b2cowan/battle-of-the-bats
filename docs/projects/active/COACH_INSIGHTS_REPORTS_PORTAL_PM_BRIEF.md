@@ -1,6 +1,6 @@
 # PM Brief — Insights becomes a Reports & Analytics Portal
 
-**Status:** Planned 2026-08-18 · mockups approved · build not started
+**Status:** P1 + P2 + P3 all built on dev · P3 (the charts) shipped 2026-08-19, owner QA §62 owed
 **Plan:** `COACH_INSIGHTS_REPORTS_PORTAL_PLAN.md` · **Mockups (the spec):**
 https://claude.ai/code/artifact/7d02e402-fd59-4b11-8d88-33fe95fffd8c
 
@@ -12,6 +12,13 @@ Insights is a **reports portal**: a permanent row of tabs — Dashboard · Resul
 Playing Time · Development · Awards · Scouting Book — that the coach can flip between without ever
 losing their place, exactly like the Money hub. The Dashboard opens first: the season scoreboard,
 a momentum chart, "What stands out," and a rail listing every report with one live stat each.
+
+Three of those tabs also gain a small chart, sitting above the numbers they summarize: the Dashboard
+shows the season's scoring trend as a line, Results shows the same trend with each game's win/loss
+marked beneath it, and Attendance breaks the season's turnout rate down by month. Nothing is invented
+to draw them — a brand-new season, or a stretch with no score entered yet, shows an honest "not
+enough yet" note instead of a misleading line, and a chart never disagrees with the table sitting next
+to it about which games count.
 
 The question bar is **removed**. In a world where coaches use real AI every day, a search box that
 only accepts six pre-written questions makes the product look less capable than it is. Nothing it
@@ -52,4 +59,6 @@ comes with the actual dated records behind it, which is what a coach needs when 
 Three owner QA walks: **P1** the tabbed shell, renames, and removals (bar, money); **P2** the
 drill-ins and absorbed answers (recency matrix, arm care, attendance receipts, reply rate);
 **P3** the charts. Success: every old link lands on the right tab, no money renders anywhere in
-Insights, all six retired questions are answerable at a glance inside their reports.
+Insights, all six retired questions are answerable at a glance inside their reports, and every
+chart's edge cases — no data, one data point, a game with no score, a failed load — read honestly
+rather than only ever being demoed on a full season.

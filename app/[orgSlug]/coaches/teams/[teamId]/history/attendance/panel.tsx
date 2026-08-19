@@ -11,6 +11,8 @@ import {
 } from '@/lib/coach-tournament-games';
 import { resolveAttendanceView } from '@/lib/coach-attendance-view';
 import { formatStoredDate } from '@/lib/timezone';
+import MonthlyAttendanceChart from '@/components/charts/MonthlyAttendanceChart';
+import type { MonthlyAttendanceBucket } from '@/lib/coach-monthly-attendance';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../../coaches.module.css';
 import att from './attendance.module.css';
@@ -131,6 +133,10 @@ export function AttendancePanel({
   }
 
   const [rows, setRows] = useState<AttendanceRow[]>([]);
+  // Insights P3 (2026-08-19) — schedule-blind, so it fills in for every attendance-access coach
+  // regardless of `hasReceipts` (see the route's own header for why a month bucket is safe either
+  // way, unlike the per-event receipts below).
+  const [monthly, setMonthly] = useState<MonthlyAttendanceBucket[]>([]);
   /** Whether the drill-in is available at all — false for a coach without schedule access, whose
    *  receipts the route withholds. ⚠ Distinct from "nobody missed anything", which it must never
    *  be rendered as. */
@@ -170,12 +176,16 @@ export function AttendancePanel({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`);
+      // ⚠ `?monthly=1` opts into the monthly-chart aggregate — the route has a second caller (the
+      // team Overview attendance tile) that never reads it, and unconditionally computing it there
+      // was a real cost regression the P3 build didn't intend (found in review).
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance?monthly=1`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       if (!isStale()) {
         setRows(data.players ?? []);
         setHasReceipts(data.receipts === true);
+        setMonthly(data.monthly ?? []);
       }
     } catch (e: unknown) {
       if (!isStale()) setError(e instanceof Error ? e.message : 'Failed to load attendance.');
@@ -436,6 +446,11 @@ export function AttendancePanel({
                   </div>
                 );
               })()}
+
+              {/* ── Month by month (Insights P3, 2026-08-19) ── No empty state of its own: when
+                  nothing is recorded yet, `monthly` is simply empty and the note two blocks below
+                  already says so — a second "nothing yet" card here would repeat it. */}
+              {monthly.length > 0 && <MonthlyAttendanceChart buckets={monthly} />}
 
               {/* Replaces the second empty state. It sits ABOVE the table because it is the
                   caption for the dashes underneath — read the other way round, a coach meets a

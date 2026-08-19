@@ -85,6 +85,7 @@ const SCOPES = {
       'app/tryout-score',
       'components/admin',
       'components/coaches',
+      'components/charts',
       'components/accounting',
       'components/billing',
       'components/feedback',

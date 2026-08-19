@@ -1,0 +1,116 @@
+/* Shared chart-card chrome for the Insights P3 charts (season momentum, results trend, monthly
+   attendance) — one card recipe so the three charts can't quietly disagree about what "no data",
+   "one point" or "played but unscored" look like. Same raised-card recipe as `.nowCard` /
+   `.insightsCallouts` elsewhere on this page (`var(--white-8)` over the page ground, not `--card-bg`,
+   which is already the page's own background here).
+
+   ⚠ MARK COLOURS ARE THEMED TOKENS, NEVER FIXED HEX (memory/design_decisions.md, 2026-08-19). Lime
+   uses `var(--logic-lime)` and blue uses `var(--info)` — both remap under the coach warm gate to
+   already-AA-corrected values (`--home-olive` / `--home-blue`). Reaching for `--logic-lime-fixed` or
+   a literal hex here would silently undo that correction; see the token's own header comment in
+   `app/globals.css` for why that is explicitly the wrong move for a component. */
+
+.chartCard {
+  container-type: inline-size;
+  background: var(--white-8);
+  border: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem 0.7rem;
+  margin-bottom: 1.1rem;
+}
+
+.ccHead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.ccTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ccCap {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+
+.legend {
+  display: flex;
+  gap: 0.85rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.legendSwatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+  vertical-align: -1px;
+}
+
+.legendSwatch[data-tone='games'] { background: var(--logic-lime); }
+.legendSwatch[data-tone='practices'] { background: var(--info); }
+
+.svg { display: block; width: 100%; height: auto; }
+
+/* Axis/gridline/date-range text — recessive, muted, hidden below ~420px so a phone-width card
+   isn't crowded with two axis labels a coach can already read from the card title + endpoint. */
+@container (max-width: 420px) {
+  .chartCard .secondary { display: none; }
+}
+
+.chartCard text {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 9px;
+  fill: var(--text-tertiary);
+}
+
+.chartCard .bigLabel {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--logic-lime);
+}
+
+.chartCard line.secondary {
+  stroke: var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  stroke-width: 1;
+}
+
+.chartCard .area { fill: color-mix(in srgb, var(--logic-lime) 12%, transparent); }
+.chartCard .line { fill: none; stroke: var(--logic-lime); stroke-width: 2; stroke-linejoin: round; }
+.chartCard .dot { fill: var(--logic-lime); }
+
+/* A game with a result but no score — a gap in the line, marked rather than dropped
+   (memory/design_decisions.md, decision 3c). Neutral, never a status colour: it names an absence of
+   DATA, not a win/loss/tie. */
+.chartCard .gapDot { fill: none; stroke: var(--text-tertiary); stroke-width: 1.2; }
+.chartCard .gapTick { stroke: var(--text-tertiary); stroke-width: 1; stroke-dasharray: 2, 2; }
+
+/* Result-strip pips beneath the Results trend line — same tones as the Dashboard's `.wltPip`
+   Form tiles, so a coach never learns a second colour-to-outcome mapping on the same page. */
+.chartCard .pipWin { fill: color-mix(in srgb, var(--logic-lime) 55%, transparent); }
+.chartCard .pipLoss { fill: color-mix(in srgb, var(--danger) 55%, transparent); }
+.chartCard .pipTie { fill: color-mix(in srgb, var(--warning) 45%, transparent); }
+.chartCard .pipGap { fill: none; stroke: var(--text-tertiary); stroke-width: 1; stroke-dasharray: 2, 2; }
+
+.foot {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+}
+
+.foot b { color: var(--text-secondary); }
+
+/* ── Monthly attendance grouped bars ── */
+.barGames { fill: var(--logic-lime); }
+.barPractices { fill: var(--info); }
+.barHatch { fill: var(--text-tertiary); opacity: 0.35; }
+.barLabel { font-size: 9px; fill: var(--text-secondary); font-family: var(--font-data, ui-monospace, monospace); }
+.monthLabel { font-size: 9px; fill: var(--text-tertiary); font-family: var(--font-sans, system-ui, sans-serif); }

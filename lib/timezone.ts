@@ -285,6 +285,15 @@ const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'S
 /** For the surfaces a FAMILY reads rather than a coach — the dues reminder email spells it out. */
 const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+/** `"2026-05"` → `"May"` — the one formatter for a `YYYY-MM` bucket key (Insights P3's monthly
+ *  attendance chart). Manual parse, same reason as `parseDateOnlyParts` below: a month key has no
+ *  day component to hand `new Date()` safely. */
+export function formatMonthKey(value: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(value ?? '');
+  if (!m) return value ?? '';
+  return SHORT_MONTHS[Number(m[2]) - 1] ?? value ?? '';
+}
+
 /** Split a `YYYY-MM-DD` (or the date half of a timestamp) into calendar parts.
  *  MANUAL parse on purpose — `new Date('2026-07-16')` is UTC midnight, and rendering that
  *  through `toLocaleDateString` in a behind-UTC zone silently prints the PREVIOUS day. */

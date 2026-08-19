@@ -1,7 +1,25 @@
 # Coach Insights → Reports & Analytics Portal — Implementation Plan
 
 **Status:** **P1 BUILT on dev 2026-08-18** (owner QA §58 PASSED) · **P2 BUILT on dev 2026-08-19**
-(owner QA **§61** owed) · P3 not started · mockups owner-approved
+(owner QA **§61** owed) · **P3 BUILT on dev 2026-08-19** (owner QA **§62** owed) · mockups
+owner-approved · states mockup + three P3 decisions owner-approved 2026-08-19
+
+**P3 build notes — Phase 0 ran first (a PM summary + a states-and-decisions Claude Artifact,
+approved before any chart code), and one of the three decisions changed mid-session once the real
+implementation tokens were checked.** Full walk script in `OWNER_QA_LEDGER.md §62`.
+
+1. The chart palette (lime + blue) was re-validated against the ACTUAL tokens the build reaches for
+   (`--logic-lime` / `--info`), not the mockup's own presentational hex — the mockup's hex would have
+   warned on the warm theme; the real tokens, already AA-corrected across all nine grounds the portal
+   paints, pass cleanly on both themes. Recorded in `memory/design_decisions.md` (2026-08-19), with
+   the lesson stated plainly: validate what ships, not what the mockup drew.
+2. The monthly attendance chart reads **schedule-blind** — a month bucket carries no event date,
+   opponent or id, so it never inherits the receipts' `canViewSchedule` gate and reaches every coach
+   with attendance access.
+3. Thin-data states hold their card's space with teaching copy rather than vanishing (a deliberate,
+   flagged departure from the shared Sparkline's literal "render nothing"); a game with a result but
+   no score leaves a marked gap in the line, never a silent skip; the monthly bar chart does not apply
+   the two-point rule at all, since one month of bars is a complete answer, not a premature trend.
 
 **P2 build notes — THREE OWNER DECISIONS, TWO OF WHICH REVERSE THE APPROVED MOCKUP.** Each was taken
 BEFORE any code, because each was a contradiction between the mockup and a standing rule, and

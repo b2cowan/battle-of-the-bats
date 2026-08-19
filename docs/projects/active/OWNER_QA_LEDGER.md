@@ -8456,3 +8456,175 @@ exists (the other two belong to other features, so unifying them is outside this
 attendance route makes two queries over the same rows — deriving the totals from the marks instead
 would put a **second copy of a rule four other surfaces share** inside one route, which is the worse
 trade at this row count.
+
+---
+
+## §62 · Insights P3 — the charts, and the three calls a mockup could not settle by itself
+
+**What shipped:** the three chart shapes from the portal's original mockup — a season momentum line
+on the Dashboard, a run-differential trend with a result strip on Results, and a month-by-month bar
+chart on Attendance — with every state a chart can be in besides its best day: no data yet, one data
+point, a game with a result but no score, and a failed load. No new screens, no new routes; the three
+existing tabs got wider. Plan: `COACH_INSIGHTS_REPORTS_PORTAL_PLAN.md` / P3 build prompt. Built on
+`dev` 2026-08-19.
+
+### ⚠⚠ PHASE 0 HAPPENED FIRST, AND CHANGED WHAT GOT BUILT
+
+A states mockup (four states × three charts × two widths) plus three open decisions were published as
+a Claude Artifact and approved before any chart code was written — the same discipline P2 used, for
+the same reason: a mockup that shows only the happy path looks decided before it is.
+
+1. **The palette question answered itself differently than it first appeared to.** The plan claimed
+   the lime+blue pairing was "CVD-validated 2026-08-18" with no record of that validation anywhere.
+   Run for real against the MOCKUP's own presentational hex, it warned hard on a white card
+   (1.51:1/2.54:1, under the 3:1 floor) — a real-looking warm-theme risk. It wasn't the real risk: the
+   mockup's hex were never meant to be copied into components, and the actual implementation reaches
+   for `--logic-lime`/`--info`, both already AA-corrected across all nine grounds the portal paints.
+   Re-validated against what actually ships, both dark and warm pass contrast cleanly. Full numbers and
+   the durable lesson ("validate what ships, not what the mockup drew") are in `design_decisions.md`.
+2. **The monthly chart's gate.** The per-event attendance receipts are schedule-gated (P2) because a
+   dated, named list enumerates a season's calendar. A MONTH bucket does not — no date, no opponent,
+   no event id survives into it — so the monthly chart reads schedule-blind and reaches every coach
+   with attendance access, `canViewSchedule` or not. The attendance route's marks read is now
+   unconditional (it used to skip entirely for a schedule-less coach); only the per-event RECORDS built
+   from it stay gated, which is the one line worth re-checking if this route is touched again.
+3. **How thin data reads.** A chart holds its card's space with teaching copy rather than vanishing
+   below two points (a deliberate departure from the shared Sparkline's literal "render nothing" — that
+   rule fits a 52×16 inline mark, not a card the page already reserves height for). A game with a
+   result but no score leaves a MARKED GAP in the line rather than a silent skip — a hollow tick on the
+   momentum chart, a hollow pip on the Results strip — so a chart's game count never quietly disagrees
+   with the log beside it. The monthly bar chart does NOT apply the two-point rule at all: one month of
+   bars is a complete answer to "by month," not a premature trend, so it renders normally.
+
+### The walk
+
+**A · Dashboard → Season momentum.** Below the scoreboard tiles, a lime line plots cumulative
+run/score differential game by game, with a filled area under it and the current total as a direct
+label on the last point. ✅ It only appears once at least one game has a score — with none yet, the
+whole scoreboard-and-chart block is the Dashboard's existing quiet empty state, unchanged. ✅ With
+games recorded but none scored, the chart card itself shows a small "No scored games yet" note instead
+of vanishing.
+
+**B · Results → Run differential trend.** Above the game log, the same line with a result-strip row of
+small win/loss/tie pips beneath it — same colours as the Dashboard's own Form pips, so a coach never
+learns a second colour-to-outcome mapping on one page. ✅ It reads the WHOLE season, not the tag
+filter — tap a tag chip and the chart stays put while the table below it filters. ✅ On the fixture,
+one game is finalized with no score; check that its pip is hollow/dashed rather than colour-filled, and
+that the line's own caption says "N of M games have a score entered" rather than silently agreeing with
+a count the table doesn't show.
+
+**C · Attendance → Month by month.** Above the player table, grouped games/practices bars, one pair per
+month, each bar direct-labeled with its own percentage and a two-item legend. ✅ It reaches an
+attendance-only coach exactly as the season tiles above it do — no chevrons needed. ✅ On the fixture,
+this renders exactly TWO months (April, from the games alone; May, from the one May game plus all five
+practices) — enough to prove the multi-month case but not a rich spread; a denser check belongs on the
+coach demo, whose games re-anchor to now.
+
+**D · Failed load, on all three.** None of the three charts fetch on their own — each rides the same
+coordinated load as the tiles/table beside it, so a failed load already had exactly one answer before
+this change: the panel's existing error line and "Try again," with nothing beneath it. Nothing new was
+built for this state on purpose (decision 3 above) — confirm it stayed that way rather than growing a
+second, chart-specific error box.
+
+**E · Warm theme.** ✅ Every chart still shows its number where the fill goes pale — check this
+specifically on warm, where the CVD analysis above says the risk actually sits (decision 1). No mark
+should ever need to be read by colour alone on either theme.
+
+### Fixture, and what it does and doesn't prove
+
+⚠ Reseed before walking: `node scripts/seed-uat-coach-fixture.mjs`. No new fixture rows were added for
+this phase — every chart draws from records P1/P2 already seed. Two things worth knowing before you
+read a chart as thin:
+- **The monthly chart shows two months, not a season's worth**, for the reason stated in step C. This
+  is the same "games fixed to April/May, deliberately, so a rendered baseline doesn't drift with the
+  calendar" constraint §61 already recorded against the position-recency matrix — check a denser spread
+  on the coach demo instead.
+- **The Results trend's "unscored game" state is real on this fixture** — one of the six seeded games
+  has a result and no score — so step B's hollow-pip check is provable without hand-editing anything.
+
+### Not walked / owed
+
+✅ `check:layout --only=coach-history,coach-history-results,coach-attendance` ran at all four widths.
+One real finding surfaced and was fixed in the same pass: the monthly chart's "100%" axis label was
+4px too close to the card edge at 1440 and got more left margin. **The 8 findings that remain are all
+pre-existing, with evidence:**
+- 6 are the notification-bell chrome spill at 1440 (`div·1` / `button·1 unread notifications`) —
+  reproduced on `coach-roster`, a screen this phase never touched, and already recorded as shared-chrome
+  debt in §58/§61.
+- 2 are `.insightsCo` finding-link rows on the Dashboard falling under the 44px tap floor at 768 —
+  `coaches.module.css` carries a literal `min-height: 40px` on that class, untouched by this change and
+  predating it.
+
+⚠ **`npm run verify:changed`'s schema-parity check is currently RED, and it is not this change's red.**
+Another session's `org_people`/person-identity migrations sit on dev, unapplied to prod — visible before
+this phase started (`git status` already showed the drift snapshot files modified). Every other check in
+the chain (contrast, dictionary, index coverage, observability coverage, demo presentability, CSS module
+purity, token-guardrail coverage) passed clean, including the new chart CSS module, which carries zero
+hardcoded literals.
+
+⚠ **Demo narration checked, not changed.** `npm run check:demos` reports both worlds presentable. The
+one coach-portal tour step that mentions Insights already describes it generically ("results,
+attendance, playing time and more") and stays true with charts added; no dock moment exists that claims
+anything about chart absence. No new tour step was added for the charts themselves — they upgrade
+reports the tour already visits rather than adding a new capability worth its own stop.
+
+**`/simplify` addendum (2026-08-19, 4 lenses in parallel), before any QA walk.** Five fixes applied,
+walk the CURRENT build:
+- The attendance route walked its marks twice (once for the schedule-gated per-event records, once
+  for the schedule-blind monthly aggregate) — now one pass builds both.
+- The "no scored games yet" empty state was copy-pasted at both `SeasonTrendChart` call sites; the
+  chart now owns that state itself (one caller-supplied description line), so a future third caller
+  doesn't copy it a third time.
+- A small classification rule ("known"/"attended" per attendance status) was independently
+  re-written in the new monthly-aggregate module; it now calls the one definition, with a note
+  pointing at its pre-existing twin in the season roll-up so the two can't silently drift apart.
+- Two minor efficiency nits (a per-pip linear scan that should have been a Set lookup; a per-month
+  gap value recomputed from its own parts on every comparison instead of stored once) — fixed.
+- ⚠ **Flagged, not fixed:** the trend chart's SVG line-drawing math is a third hand-rolled copy of a
+  shape that already exists twice elsewhere (the Money hub's budget-vs-actual chart, already cloned
+  once into an observability chart). Left alone — unifying it means editing two unrelated, already-
+  shipped surfaces outside this change's scope, not a call to make inside a chart-states build.
+No behavior changed by any of these; the same unit tests, typecheck, and layout sweep all re-ran
+clean afterward.
+
+**`/code-review` addendum (2026-08-19, high-risk tier, 4 lenses in parallel), before any QA walk.**
+Six real defects found — three independently confirmed by two or three lenses each — all fixed. Walk
+the CURRENT build:
+
+- ⚠⚠ **The monthly chart counted a released/inactive player's history that every other figure on the
+  same screen excludes** (found by two lenses independently). The season tiles and the per-player
+  table have always scoped to the active roster; the new monthly aggregate didn't, so a departed
+  player's marks could quietly inflate a month's total while that player was invisible everywhere
+  else on the page — the exact "figures must never disagree" failure this whole build was careful
+  about elsewhere. Now scoped to active roster, matching the rest of the report.
+- ⚠⚠ **The route change had a second, unrelated caller that never asked for the new work** (found by
+  all three lenses that looked for it). The team Overview page's own attendance tile hits this same
+  endpoint and reads only the player fractions — it never needed the monthly aggregate, but the
+  now-unconditional fetch behind it made that screen pay for a query its own response threw away, on
+  the single highest-traffic coach page. Fixed the same way P2 solved the identical shape of problem
+  for playing-time analytics: an opt-in query flag, so only the caller that wants the chart asks for it.
+- ⚠ **A real 0% attendance month was indistinguishable from "nothing recorded"** (found by all three
+  lenses independently). A month where every session was marked absent produced a real, calculated
+  0% — which a zero-height bar then rendered as nothing at all, the same silhouette as a month with no
+  marks whatsoever. Fixed: a real reading now draws a visible sliver with its number; only a genuine
+  absence of data draws nothing.
+- A season spanning more than about eight recorded months (a normal fall-through-spring span) packed
+  fixed-width bars into a narrowing slot and started overlapping the next month's — the chart had no
+  equivalent of the trend chart's own dynamic scaling. Bars now shrink with the month count instead.
+- A type-level safety gap: the result strip's colour-per-game cast assumed a value could never be
+  null without the type system actually proving it, which would have silently mis-colored an
+  unresulted game as a tie if the upstream filter it depends on ever changed shape. Replaced the cast
+  with a type guard, so that dependency is now enforced by the compiler, not a comment.
+- Help copy said the momentum and trend charts need "a couple" of scored games before they draw;
+  they actually appear after the first, as a single point — only the *line* needs a second one.
+  Corrected.
+
+Two things were surfaced and deliberately left alone, stated rather than silently dropped: the
+per-player table and the monthly chart still run as two independently-executed database reads
+against the same rows rather than one, a pre-existing pattern this phase adds a third reader to but
+did not originate; and the SVG line-drawing math (flagged separately in the `/simplify` pass above)
+stays its own component rather than being unified with the two other copies elsewhere in the product.
+
+All fixes re-verified: typecheck, the same 56 unit tests, CSS module purity, the token-guardrail
+scan, and the three-screen layout sweep all re-ran clean — the sweep's 8 findings are the identical
+pre-existing set named above, unchanged by any of this pass's edits.

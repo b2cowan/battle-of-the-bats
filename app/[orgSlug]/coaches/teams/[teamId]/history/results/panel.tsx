@@ -2,7 +2,10 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import { Trophy, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import SeasonTrendChart, { type ChartResultTone } from '@/components/charts/SeasonTrendChart';
+import { computeSeasonMomentum } from '@/lib/coach-season-momentum';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamTag } from '@/lib/types';
 import { formatRecord } from '@/lib/coach-season-record';
@@ -25,6 +28,14 @@ function tally(list: RepTeamEvent[]) {
     l: list.filter(e => e.result === 'loss').length,
     t: list.filter(e => e.result === 'tie').length,
   };
+}
+
+/** A type predicate, not a plain boolean filter — so `finalized` (and anything derived from it,
+ *  like the trend chart's result strip) carries a non-null `result` in its own TYPE, not just at
+ *  this one call site. A cast further downstream would silently re-open the door this closes if
+ *  `finalized`'s own filter ever changed. */
+function isFinalizedGame(e: RepTeamEvent): e is RepTeamEvent & { result: 'win' | 'loss' | 'tie' } {
+  return GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled' && e.result != null;
 }
 
 // "How are we doing?" — the season's game log + past seasons as a plain ARCHIVE.
@@ -148,7 +159,7 @@ export function ResultsPanel({
 
   // Finalized = a result exists (unscored games never count — a null result is not a loss).
   const finalized = events
-    .filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled' && e.result)
+    .filter(isFinalizedGame)
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   const byType = GAME_EVENT_TYPES
     .map(t => ({ type: t, ...tally(finalized.filter(e => e.eventType === t)) }))
@@ -156,6 +167,14 @@ export function ResultsPanel({
   const scored = finalized.filter(e => e.teamScore != null && e.opponentScore != null);
   const close = tally(scored.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
   const closeGames = close.w + close.l + close.t;
+
+  // ── Trend chart (Insights P3, 2026-08-19) — the WHOLE season, never the tag filter. `finalized`
+  // is sorted newest-first for the table above; the chart needs oldest → newest so the line and
+  // the result strip both read left-to-right chronologically, and the strip's tone array must be
+  // the SAME chronological order the momentum reduction indexes into.
+  const chronological = [...finalized].reverse();
+  const trendSeries = computeSeasonMomentum(chronological);
+  const trendStrip: ChartResultTone[] = chronological.map(e => e.result);
 
   // Coach Tags — "vs tag" filter. Chips are built from finalized games only (this report's own
   // scope), so a chip's count always matches how many rows selecting it will show; a tag with zero
@@ -221,6 +240,22 @@ export function ResultsPanel({
                   {closeGames > 0 && <> · {formatRecord(close)} in one-{scoreUnit} games</>}
                 </p>
               )}
+
+              {/* ── Run differential trend + result strip (Insights P3, 2026-08-19) ── Always the
+                  whole season, never the tag filter above — a chart re-drawing itself under a chip
+                  press would read as a different season, not a lens on this one. The chart owns its
+                  own "no scored games yet" empty state — see SeasonTrendChart. */}
+              <SeasonTrendChart
+                title="Run differential over the season"
+                caption="Each pip is a game result"
+                series={trendSeries}
+                unitWord={scoreUnit}
+                sampleNoun="game"
+                emptyDescription="The trend line appears once a game gets a final score."
+                strip={trendStrip}
+                startLabel={formatStoredDate(orgDayKey(chronological[0].startsAt), { withYear: false })}
+                endLabel={formatStoredDate(orgDayKey(chronological[chronological.length - 1].startsAt), { withYear: false })}
+              />
 
               {tagChips.length > 0 && (
                 <div className={styles.lineupFilterBar} role="group" aria-label="Filter by tag">

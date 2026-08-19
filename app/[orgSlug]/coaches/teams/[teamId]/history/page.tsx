@@ -8,6 +8,8 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachTabBar from '@/components/coaches/CoachTabBar';
+import SeasonTrendChart from '@/components/charts/SeasonTrendChart';
+import { computeSeasonMomentum } from '@/lib/coach-season-momentum';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   computeInsightFindings, ATTENDANCE_MIN_KNOWN,
@@ -407,6 +409,9 @@ export default function CoachesInsightsPage({
     .filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled' && e.result)
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   const scoped = finalized.filter(e => included[e.eventType]);
+  // ⚠ `finalized`/`scoped` are sorted NEWEST first for the tiles above — the momentum chart needs
+  // the reverse (oldest → newest) to plot a differential that actually rises left-to-right.
+  const momentumSeries = computeSeasonMomentum([...scoped].reverse());
   const record = tally(scoped);
   const scopedGames = record.w + record.l + record.t;
   const activeLabels = GAME_EVENT_TYPES.filter(t => included[t]).map(t => WLT_LABEL[t]);
@@ -425,7 +430,10 @@ export default function CoachesInsightsPage({
   const scoredGames = scoped.filter(e => e.teamScore != null && e.opponentScore != null);
   const scoredFor = scoredGames.reduce((s, e) => s + (e.teamScore ?? 0), 0);
   const scoredAgainst = scoredGames.reduce((s, e) => s + (e.opponentScore ?? 0), 0);
-  const diff = scoredFor - scoredAgainst;
+  // Derived from the momentum chart's own last point rather than a second independent subtraction
+  // — the same rule (both scores required, team minus opponent), computed once, so the "Run diff"
+  // tile and the chart's endpoint can never quietly disagree.
+  const diff = momentumSeries.points.at(-1)?.cumulative ?? 0;
 
   const close = tally(scoredGames.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
   const closeTotal = close.w + close.l + close.t;
@@ -611,6 +619,24 @@ export default function CoachesInsightsPage({
                 description="Insights is your season read back to you — record and form, playing time, attendance and development. You never enter anything on this page."
                 payoff={`Every figure is built from what you record elsewhere in the portal. Enter one game result, save one lineup, or take attendance once, and the matching part of this page appears — record, form, ${scoreUnitWord} difference and more.`}
                 blocker="Nothing is invented to fill the space, so a brand-new season is honestly blank here."
+              />
+            )}
+
+            {/* ── Season momentum (Insights P3, 2026-08-19) ── Only inside `hasBand`: when the whole
+                scoreboard is the quiet empty state above, there are certainly no scored games either,
+                and a second quiet card right under the first would just repeat it. The chart owns its
+                own "no scored games yet" empty state — see SeasonTrendChart. */}
+            {hasBand && (
+              <SeasonTrendChart
+                title="Season momentum"
+                caption={`Cumulative ${scoreUnitWord} differential, game by game`}
+                series={momentumSeries}
+                unitWord={scoreUnitWord}
+                sampleNoun="game"
+                emptyDescription="Season momentum builds after your first game gets a final score."
+                fill
+                startLabel="Game 1"
+                endLabel={`Game ${momentumSeries.totalCount}`}
               />
             )}
 
