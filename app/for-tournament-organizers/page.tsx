@@ -24,7 +24,10 @@ const FREE_FEATURES = [
   'Single and double-elimination brackets',
   'Score entry and live standings',
   'Venue management',
-  '3 staff / admin seats',
+  // Officials moved here from the paid list 2026-08-20: they have never counted against a seat
+  // cap on any plan, so claiming them as an upgrade benefit both overstated the paid tier and
+  // wasted a genuine free-tier selling point.
+  '3 staff / admin seats — officials and scorekeepers are free and unlimited',
 ];
 
 const CROSS_SELLS: Array<{

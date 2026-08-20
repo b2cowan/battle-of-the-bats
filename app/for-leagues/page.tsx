@@ -3,12 +3,16 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+// ⚠ 2026-08-20: this was the ONE persona page not reading the live gate, and it is the one whose
+// availability copy drifted furthest ('in final refinement', 'opening soon' — for a parked plan).
+// The other three ask the gate; now so does this one, so the sentence cannot go stale on its own.
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'For House League Administrators — FieldLogicHQ',
   description:
-    'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and automated parent notifications. No spreadsheets, no reply-all emails.',
+    'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and season-wide parent messaging. No spreadsheets, no reply-all emails.',
   alternates: { canonical: '/for-leagues' },
 };
 
@@ -34,7 +38,8 @@ const CROSS_SELLS = [
   },
 ];
 
-export default function ForLeaguesPage() {
+export default async function ForLeaguesPage() {
+  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -48,7 +53,7 @@ export default function ForLeaguesPage() {
             <span className={styles.heroAccent}>The full season arc.</span>
           </h1>
           <p className={styles.heroSub}>
-            Player registration, draft tools, scheduling, standings, and automated parent notifications
+            Player registration, draft tools, scheduling, standings, and season-wide parent messaging
             — everything your house league season needs, in one dashboard. No spreadsheets,
             no reply-all emails.
           </p>
@@ -69,7 +74,10 @@ export default function ForLeaguesPage() {
           </div>
           <p className={styles.heroNote}>
             <span className={styles.heroNoteAccent}>Coming soon</span>
-            {' '}— League Plus is in final refinement. Tournament and Tournament Plus are live today.
+            {' '}— League Plus is not open for sign-up today.{' '}
+            {teamCheckoutOpen
+              ? 'Tournament, Tournament Plus and the Premium Coaches Portal are live now.'
+              : 'Tournament and Tournament Plus are live now.'}
           </p>
           <div className={styles.trustRow}>
             {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
@@ -125,7 +133,7 @@ export default function ForLeaguesPage() {
           <p className={styles.sectionEyebrow}>The plan</p>
           <h2 className={styles.sectionTitle}>League Plus — built for the full season.</h2>
           <p className={styles.sectionSub}>
-            League Plus is opening soon. Express interest to be notified when self-serve checkout opens for your organization.
+            League Plus is built but not currently open for sign-up. Tell us your league is waiting — it is the clearest signal we have for when to open it.
           </p>
           <div className={styles.planGrid}>
 

@@ -226,18 +226,26 @@ export default async function ForCoachesPage() {
             <div className={`${styles.planCard} ${styles.planCardSecondary}`}>
               <p className={styles.planName}>When your org joins</p>
               <div className={styles.bridgeCard}>
+                {/* ⚠ Rewritten 2026-08-20. This card used to say the workspace "carries over
+                    automatically … without any data transfer or setup" and that "the bill just
+                    goes away" — as though the org subscribing to Club were enough on its own.
+                    It is not: the coach or the org opens a link, one side requests an ownership
+                    transfer, the other accepts, and a FieldLogicHQ operator executes the final
+                    move. Everything does travel with it and nothing is re-keyed by hand, so the
+                    substance held — but the friction it hid is a SAFEGUARD, and saying so is a
+                    better sentence than pretending it isn't there. */}
                 <p className={styles.bridgeTitle}>
-                  Your workspace carries over automatically.
+                  Your whole workspace moves with you.
                 </p>
                 <p className={styles.bridgeBody}>
-                  If your organization subscribes to Club, your Coaches Portal account moves
-                  over without any data transfer or setup. Your roster history, documents,
-                  finances, and season records stay in place.
+                  When your organization is on Club, you can hand your team over to them —
+                  roster, documents, finances and season records travel together, with nothing
+                  to re-enter. Both sides approve the move first, so your team never changes
+                  hands without your say-so.
                 </p>
                 <p className={styles.bridgeRateNote}>
-                  When your organization joins Club, your portal is included in their plan —
-                  you stop paying the standalone rate entirely. Nothing changes in your
-                  portal; the bill just goes away.
+                  Once it is done, your portal is included in their plan and you stop paying the
+                  standalone rate.
                 </p>
                 <p className={styles.bridgeBody}>
                   Until then, everything you need is here. The standalone portal is a complete
