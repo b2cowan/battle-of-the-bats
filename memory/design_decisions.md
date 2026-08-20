@@ -4,6 +4,38 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-20 — Pitch slides: ONE fixed picture frame, contain-never-fill — and the picture leads on a phone
+
+**Decision (/design review of the slide format, ahead of the slide library build):** every pitch slide is one layout — a mono kicker, the pain, a second kicker, the answer, and a **single fixed 16:10 picture stage**. The picture is *contained* inside that stage, never stretched to fill it. At phone width the stage moves **above** the words and takes the full column.
+
+**Rationale:**
+- **A fixed stage is what lets three different kinds of picture share a deck.** The library carries raw captures (tall, phone-shaped), cropped-and-marked captures (wide, short) and drawn explainers (arbitrary). Sized to their own content they produce three different rhythms and the deck reads as assembled from parts. Contained in one frame, they read as one system — and the full dues table stays legible precisely *because* it is contained rather than stretched.
+- **The phone rule is not new; it is an existing principle applied to an image.** The 2026-08-08 day-of toolbar ruling already binds: when a layout wraps into a stacked column, elements take the full row rather than keeping their desktop intrinsic width. A picture squeezed into a phone-width column beside text is the same defect as a lone narrow select in a column of full-bleed siblings. Measured on the shipped coach walkthrough at 390px: both captures render at **~16% scale and are illegible**. This rule is the fix.
+- **Body copy is set in the sans face, not the data face.** Mono at paragraph length is a large part of why the first slideshow attempt read as cramped. The mono kickers stay — they are the established single labelling convention (2026-07-14 G4).
+
+**⚠ SYSTEM EXTENSION, FLAGGED AS SUCH.** No fixed aspect-ratio convention exists anywhere else in the platform. This introduces one, scoped to pitch surfaces only. It is not a token change and adds no custom property.
+
+**⚠ RIDER — RAISED, NOT RULED: lime is overspent on the shipped walkthrough panel.** The binding rule (2026-07-06, generalised) is that **lime marks exactly one recommended action**. The shipped panel currently puts lime on five elements: Start free, the demo door, the "With FieldLogicHQ" kicker, "See this screen live", and the printed address. On a **slide** this is defensible — a slide carries no call to action at all, so lime can mean "this is the answer" without competing with anything. On the **scroll page** it competes with the ask. The format is ratified as-is; the page's lime spend is left as an open question for the owner to judge on the real page rather than in the abstract.
+
+**Applies to:** the pitch-slide format (the slide library build, and `components/marketing/WalkthroughPage.tsx` which will render from it). Library + decks: `docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md`.
+
+---
+
+### 2026-08-20 — Pitch artifacts print DARK, one slide per page — the leave-behind is an emailed PDF, not paper
+
+**Decision (/design review, ratifying an undocumented build-time choice):** the print rendering of a pitch surface keeps the dark ground and forces background printing, lays out **one slide per page**, keeps every picture at full size, hides all interactive furniture (buttons, demo doors, the present-mode trigger), and prints the page's own web address at the end so a reader can find their way back.
+
+**Rationale:**
+- **The artifact is a PDF that gets emailed after a meeting, not a sheet someone runs off.** On the realistic artifact the dark ground is correct; the alternative — inverting to a light ground — would mean the pictures (warm product screens on a dark page) sit on a third ground they were never composed against.
+- **Without forced backgrounds the page prints near-white text on white and is simply blank.** That is the failure this rule prevents, not a stylistic preference.
+- **Recorded now because 21 slides are about to inherit it.** This behaviour was decided mid-build for the tournament walkthrough on 2026-08-20 and existed nowhere in this log — there is no print decision on record anywhere in the platform. A convention that only exists as one build's CSS is a convention that the next build re-invents differently.
+
+**Known and accepted:** the site's global navigation prints on the first page and the footer on the last. Hiding them needs a global print rule with shared-chrome blast radius; deferred until the PDF is actually put in front of a buyer (recorded in QA §65 Part B and §66).
+
+**Applies to:** pitch/leave-behind surfaces (the walkthrough pages today, the slide library next). Not a platform-wide print rule — no other surface has one, and this entry deliberately does not create one.
+
+---
+
 ### 2026-08-20 — ONE CONTROL SHAPE ACROSS THE REPORTS, AND A RULE STRUCK THAT WAS NEVER THE OWNER'S
 
 **Supersedes the "two or three fixed options → pills stay" bullet in the 2026-08-19 entry below.
