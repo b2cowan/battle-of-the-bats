@@ -154,6 +154,13 @@ export default async function ForTournamentOrganizersPage() {
               </div>
             ))}
           </div>
+          {/* The pre-sales walkthrough (PRESALES_WALKTHROUGH_PLAN.md): the reader who just
+              recognized themselves in these cards gets the visual version — real screens,
+              90 seconds — before the page moves on to features. Text-weight on purpose;
+              signup stays the ask, this is deeper proof. */}
+          <Link href="/for-tournament-organizers/walkthrough" className={styles.walkthroughLink}>
+            See them fixed on the real screens — the 90-second walkthrough →
+          </Link>
         </div>
       </section>
 

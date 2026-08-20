@@ -9009,8 +9009,10 @@ presentable demo world (`npm run check:demos`).
 - [ ] ⚠ Known weakest visual: the **bracket panel at phone width** — the wide capture shrinks
       until card text is unreadable (the shape still communicates). Rule on whether that's
       acceptable for v1 or wants a tighter crop before this page is advertised anywhere.
-- [ ] Plan tags name features honestly: Rain delay re-timing and the Playoff Wizard say
-      **Tournament Plus**; no prices anywhere on the page.
+- [ ] Plan tags name features honestly: Rain delay re-timing, the Playoff Wizard, AND
+      Registration Health's payment tracking say **Tournament Plus** (the third was a /review
+      catch — the Payments tile shows a badge, not numbers, on the free plan); no prices
+      anywhere on the page.
 - [ ] Copy check against the demo-drift rule: no sentence quotes a score/count the next demo
       re-anchor could change.
 

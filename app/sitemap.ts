@@ -15,6 +15,7 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/scores',                   priority: 0.8, changeFrequency: 'daily'   },
   { path: '/pricing',                  priority: 0.7, changeFrequency: 'monthly' },
   { path: '/for-tournament-organizers', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/for-tournament-organizers/walkthrough', priority: 0.55, changeFrequency: 'monthly' },
   { path: '/for-leagues',              priority: 0.6, changeFrequency: 'monthly' },
   { path: '/for-clubs',                priority: 0.6, changeFrequency: 'monthly' },
   { path: '/for-coaches',              priority: 0.6, changeFrequency: 'monthly' },

@@ -191,6 +191,21 @@
   line-height: 1.65;
 }
 
+/* The walkthrough door out of the pain section (PRESALES_WALKTHROUGH_PLAN.md). */
+.walkthroughLink {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--logic-lime);
+  margin-top: 1.75rem;
+}
+
+.walkthroughLink:hover { opacity: 0.75; }
+.walkthroughLink:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
 /* ── Steps / How it works ────────────────────────────────────────────────── */
 .stepsGrid {
   display: grid;

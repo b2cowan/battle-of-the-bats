@@ -1,0 +1,265 @@
+/* The walkthrough wears the persona page's exact visual system (page.module.css one level up) —
+   it is the same pitch continued, not a new surface. Panel-specific pieces are the only additions:
+   the old-way/with-us eyebrow pair, the screenshot frame, and the per-panel demo link. */
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  padding: calc(var(--marketing-bar-h) + 2rem) 0 4rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 15% 0%, rgba(var(--blueprint-blue-rgb), 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.heroEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5.5vw, 4rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.05;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.heroSub {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  color: var(--data-gray);
+  max-width: 52ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.heroMeta {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2rem;
+}
+
+/* Same spec as the persona page's door link — one row, one voice. */
+.seeItLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.55);
+  padding: 1rem 1.5rem;
+  transition: background 0.15s;
+}
+
+.seeItLive:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
+.seeItLive:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+.seeItLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+  animation: seeItLivePulse 1.9s infinite;
+}
+
+@keyframes seeItLivePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seeItLiveDot { animation: none; }
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.panel {
+  padding: 4.5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.panelIndex {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.panelOld {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  /* The one place the page steps outside lime: the old way is named in the warning register,
+     so the with-FieldLogicHQ eyebrow below it reads as the turn. --warning-light is the
+     text-on-dark tier of the semantic set (globals.css). */
+  color: var(--warning-light);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.panelPain {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  max-width: 30ch;
+  text-wrap: balance;
+  margin-bottom: 2rem;
+}
+
+.panelNew {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 2rem 0 0.75rem;
+}
+
+.planTag {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: var(--data-gray);
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+}
+
+.panelAnswer {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  color: var(--fl-text);
+  max-width: 62ch;
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+
+.panelLive {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--logic-lime);
+}
+
+.panelLive:hover { opacity: 0.75; }
+.panelLive:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+/* ── The pictures ────────────────────────────────────────────────────────── */
+.shotFigure {
+  margin: 0;
+}
+
+.shotFrame {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.03);
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+/* Phone-width captures stay phone-width on desktop: upscaling a 390px capture to the container
+   makes it soft AND lies about the surface it pictures — these screens are the phone experience. */
+.shotFrameNarrow {
+  max-width: 26.25rem;
+}
+
+.shotImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.shotCaption {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  line-height: 1.6;
+  max-width: 72ch;
+  margin-top: 0.6rem;
+}
+
+/* ── Closing ─────────────────────────────────────────────────────────────── */
+.ctaSection {
+  padding: 5rem 0 6rem;
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.1;
+  margin-bottom: 1rem;
+  max-width: 26ch;
+  text-wrap: balance;
+}
+
+.ctaBody {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  color: var(--data-gray);
+  max-width: 56ch;
+  line-height: 1.7;
+  margin-bottom: 2.25rem;
+}
+
+.backLink {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--data-gray);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  padding: 1rem 1.5rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.backLink:hover {
+  color: var(--fl-text);
+  border-color: var(--blueprint-blue, rgba(var(--blueprint-blue-rgb), 0.8));
+}
+
+.backLink:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
