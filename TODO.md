@@ -427,7 +427,7 @@ the portal can say what a player OWES but not what they PAID, when, or how much:
 ## ✅ Completed Projects
 
 ### Coach Money — the Transactions date range becomes the fourth pill (2026-08-19)
-- [x] **📅 Transactions date filter → one "Date" pill (BUILT on dev 2026-08-19 — owner QA §63 owed)** — the two bare
+- [x] **📅 Transactions date filter → one "Date" pill (✅ OWNER QA §63 PASSED 2026-08-19; committed `f02389db`)** — the two bare
   date pickers on Money → Transactions replaced by a fourth pill matching Show/Status/Item: seven presets (Around
   today = the unchanged default window · Last 30/60/90 days · This month · Last month · Whole season), each showing
   the dates it resolves to, with the custom from/to fields at the bottom of the same panel — editing a field IS

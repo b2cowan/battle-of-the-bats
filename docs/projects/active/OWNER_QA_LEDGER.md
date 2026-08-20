@@ -8655,9 +8655,10 @@ pre-existing set named above, unchanged by any of this pass's edits.
 
 ---
 
-## §63 · The date range becomes the fourth pill (Money → Transactions)
+## §63 ✅ The date range becomes the fourth pill (Money → Transactions) — **OWNER QA PASSED 2026-08-19**
 
-**Built on dev 2026-08-19.** No migration, no route moved, nothing gated; premium coach portal
+**Built on dev 2026-08-19; committed `f02389db` the same day; owner QA passed 2026-08-19 — "date
+picker looks good and is working as expected."** No migration, no route moved, nothing gated; premium coach portal
 (club-run and standalone alike). Owner-approved mockup:
 `claude.ai/code/artifact/36a3e5d9-d560-45cb-95ee-fd0c4793296e` — **Variant A**, with the mockup's
 three open calls decided as recommended: default stays the old window under the name "Around
