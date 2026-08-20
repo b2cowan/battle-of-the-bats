@@ -2119,10 +2119,10 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 /* ══ THE TAIL (Chunk I) ════════════════════════════════════════════════════
-   Everything that is not today's work, in ONE quiet list: a tappable row list on a phone, a ruled
-   line on desktop. Replaces four scattered bands — a full-width tournament strip, a fan-view link
-   floating on the page ground with nothing to attach to, the last-season card and the this-week
-   strip — which between them out-weighted the coach's own numbers. */
+   Everything that is not today's work, in ONE quiet list — currently just the live-event row.
+   Replaced four scattered bands — a full-width tournament strip, a fan-view link floating on the
+   page ground with nothing to attach to, the last-season card and the this-week strip — which
+   between them out-weighted the coach's own numbers. */
 .tail {
   display: flex;
   flex-direction: column;
@@ -2130,35 +2130,11 @@ a.oneChip:hover { border-color: currentColor; }
   padding-top: 0.35rem;
   border-top: 1px solid var(--border-2);
 }
-.tailRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  min-height: 44px;
-  padding: 0.45rem 0;
-  border-bottom: 1px solid var(--border-2);
-  font-size: 0.82rem;
-  color: var(--text-tertiary);
-  text-decoration: none;
-}
-.tailRow:last-child { border-bottom: 0; }
-.tailIcon { color: var(--text-tertiary); flex-shrink: 0; }
-.tailLabel { color: var(--text-secondary); font-weight: 650; }
-.tailMeta { color: var(--text-tertiary); }
-.tailArrow { margin-left: auto; color: var(--text-tertiary); flex-shrink: 0; }
-a.tailRow:hover .tailLabel { color: var(--text-primary); }
-a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 
 /* NOTE: the tournament row's chip is deliberately NOT defined here. That row renders through
    `CoachLiveEventCard` (layout="row"), which owns the lifecycle states and their chip language for
    both tiers — a second chip formula in this file is exactly the drift that component exists to
    prevent, and it would have carried its own warm-theme lime restore to keep in sync. */
-
-@media (max-width: 640px) {
-  .tailRow { padding: 0.55rem 0; }
-  .tailMeta { flex-basis: 100%; }
-}
 
 /* ── Phase-adaptive "Right now" anchor (Overview top) ──────────────────────
    Rendered in the elevated coach card language — NOT a hero (no hero headers
@@ -7171,6 +7147,35 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 .multiSelectOption:hover { background: var(--white-8); }
 .multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
 
+/* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
+   Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks the one control
+   in a strip that chooses an arrangement rather than a narrowing (plan §7): it sits first and
+   carries the accent, so it can never be mistaken for another filter. */
+.multiSelectLead > .multiSelectSummary {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+.multiSelectLead > .multiSelectSummary .multiSelectLabel { color: var(--logic-lime); }
+.multiSelectPick {
+  width: 100%; border: 0; background: none; text-align: left; font-family: inherit;
+  padding-left: 1.35rem; position: relative;
+}
+/* ⚠ A REAL TOUCH TARGET (check:layout tap-floor, 44px). The shared `.multiSelectOption` row is
+   0.32rem of padding around 0.8rem text — fine for a checkbox a finger brushes, 25px for a button
+   that IS the whole decision. Scoped to the single-select picks so this fixes the control this
+   change introduced without quietly absorbing the sibling checkbox rows' own floor finding, which
+   belongs to the shared-chrome work and is failing on Transactions too. */
+@media (max-width: 768px) {
+  .multiSelectPick { min-height: 44px; align-items: center; }
+}
+.multiSelectPickOn { color: var(--text-primary); font-weight: 600; }
+/* State as a SHAPE, never colour alone — the same dot the date presets use, and the same reason
+   (deutan memory: olive↔danger ΔE 1.0 on the budget cards). */
+.multiSelectPickOn::before {
+  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+
 /* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
    Extensions of the multiSelect family above: same pill face, but the panel is a single-select
    preset menu (buttons, not checkboxes — two windows at once is not a thing) with the custom
@@ -10589,4 +10594,150 @@ button.gdChip[aria-pressed='true'] {
 .clubDirectionOn .clubDirectionSub { color: inherit; }
 @media (max-width: 520px) {
   .clubDirectionPair { grid-template-columns: 1fr; }
+}
+
+/* ══ THE ONE PAYABLES LIST (Payables Rebuild P3, 2026-08-20) ═══════════════════════════════════
+   `Schedule | Commitments` is gone; one list, arranged by commitment or by due date. Two row
+   shapes share the table: a BILL header (the summary a coach folds) and a dated PIECE beneath it.
+
+   ⚠ THE HEADER LINES UP WITH THE COLUMNS RATHER THAN SPANNING THEM (owner-directed rebuild). Its
+   Due cell carries the next payment's date, its Owing cell what is left — so a FOLDED bill reads
+   like an ordinary row, which is what makes folding lossless. A header that spanned the table
+   would have to hide the date, and hiding the date was the whole objection to headers.
+
+   ⚠ COLOUR IS NEVER THE ONLY SIGNAL (deutan memory: olive↔danger ΔE 1.0). Every state carries its
+   own WORDS — "13 days overdue", "Paid", "In 17 days" — and the dot is decoration beside them. */
+.payTableWrap { --pay-rule: rgba(var(--logic-lime-rgb), 0.28); }
+
+.payBillRow > .td {
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border-bottom: 1px solid var(--border-2);
+  vertical-align: top;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.payBillName { display: block; font-weight: 700; color: var(--text-primary); }
+.payBillMeta {
+  display: block; margin-top: 0.1rem;
+  font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.payBillDue { font-weight: 650; color: var(--text-primary); white-space: nowrap; }
+.payOwingCell { vertical-align: top; }
+.payOwing { font-weight: 700; }
+.payOwingOver { color: var(--badge-warning-ink); }
+.payTotalUnder {
+  display: block; margin-top: 0.1rem;
+  font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A piece belongs to the header above it, and the rule in the gutter says so without a word. */
+.payPieceRow > .payDueCell { border-left: 2px solid var(--pay-rule); padding-left: 1.5rem; }
+.payPieceName { display: block; color: var(--text-primary); font-weight: 550; }
+.payPieceMeta { display: block; margin-top: 0.1rem; font-size: 0.72rem; color: var(--text-tertiary); }
+/* A settled piece steps back — it is history sitting among things still to do, and only appears
+   at all once the coach ticks Paid. */
+.payPieceSettled > .td { opacity: 0.72; }
+
+/* A period band under the due-date arrangement. Not a bill: a month is not a record you can open,
+   so it carries its own total and nothing else. */
+.payBandRow > .payBandCell {
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border-bottom: 1px solid var(--border-2);
+  padding: 0.35rem 0.7rem;
+}
+/* ⚠ The flex is HERE and not on the `<td>` — a cell set to `display: flex` leaves the table box
+   model, and this one spans every column, so the row would lose its only cell. */
+.payBandInner { display: flex; align-items: center; gap: 0.5rem; }
+.payBandLabel {
+  font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase;
+  font-weight: 700; color: var(--text-secondary);
+}
+.payBandOwing {
+  margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700;
+  color: var(--badge-warning-ink);
+}
+.payOwingHot { color: var(--badge-danger-ink); }
+
+/* The fold control. ⚠ 28px here and 40px on a phone — a chevron sharing a cell with a tappable row
+   needs a target a thumb can hit without opening the drawer by accident. */
+.payFoldBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; margin-right: 0.15rem; padding: 0;
+  border: 0; border-radius: 6px; background: none; cursor: pointer;
+  color: var(--text-tertiary); vertical-align: middle;
+}
+.payFoldBtn:hover { background: var(--white-8); color: var(--text-primary); }
+/* ⚠ 44px ON EVERY TOUCH WIDTH, TABLET INCLUDED (check:layout tap-floor). This shares a row with a
+   tappable bill — the row opens the drawer, the chevron folds the payments — so a thumb that misses
+   by 8px does the other thing entirely. The desktop 28px stands: a mouse does not miss, and a 44px
+   chevron would set the height of every header row on the list. */
+@media (max-width: 768px) {
+  .payFoldBtn { width: 44px; height: 44px; }
+}
+
+/* ── What a piece's state is CALLED ─────────────────────────────────────────────────────────── */
+.payState {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.76rem; white-space: nowrap;
+}
+.payStateDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.payStatePaid    { color: var(--badge-success-ink); }
+.payStateOverdue { color: var(--badge-danger-ink); }
+.payStatePartly  { color: var(--badge-warning-ink); }
+.payStateAhead   { color: var(--text-tertiary); }
+
+/* ── The drawer: the whole commitment in one panel ──────────────────────────────────────────── */
+.payDrawer { display: block; }
+.payDrawerLabel {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.payDrawerLabel:first-child { margin-top: 0; }
+.payDrawerLine {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.35rem 0; border-bottom: 1px dashed var(--border-2); font-size: 0.82rem;
+}
+.payDrawerLine:last-child { border-bottom: 0; }
+.payDrawerDate { min-width: 5.25rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.payDrawerWhat { flex: 1; min-width: 8rem; color: var(--text-secondary); }
+.payDrawerAmt { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--text-primary); }
+.payDrawerTotal {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--border-2);
+  font-size: 0.86rem; color: var(--text-secondary);
+}
+.payDrawerTotal strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.payDrawerNote { margin: 0.8rem 0 0; font-size: 0.78rem; color: var(--text-tertiary); }
+
+@media (max-width: 640px) {
+  /* ⚠ THE PHONE PASS (§64 Part C's last step: rows become cards, group headers do not eat the
+     screen, and the page does not scroll sideways). `.tableAsCards` already turns every row into a
+     card; what is added here is the DIFFERENCE between a bill and a piece, which on a desktop is
+     carried by the band background and the gutter rule. */
+  .payTableWrap .payBillRow {
+    border-color: rgba(var(--logic-lime-rgb), 0.28);
+    background: var(--home-card, rgba(255,255,255,0.05));
+  }
+  /* A piece is visibly inside the bill above it: indented, with the same lime rule the desktop
+     gutter draws. The negative top margin closes the gap so the group reads as one stack. */
+  .payTableWrap .payPieceRow {
+    margin-left: 0.75rem;
+    border-left: 2px solid var(--pay-rule);
+    border-radius: 0 10px 10px 0;
+  }
+  /* The header's Due cell holds the fold control, so it must not become a label/value line with a
+     28px button floating in it. */
+  .payTableWrap .payBillRow .payDueCell { justify-content: flex-start; gap: 0.4rem; }
+  /* A period band stays a slim strip rather than becoming a card of its own — it holds two facts
+     and would otherwise take the same height as a bill carrying five. */
+  .payTableWrap .payBandRow {
+    border: 0; background: none; padding: 0; margin: 0.75rem 0 0.4rem;
+  }
+  .payTableWrap .payBandRow > .payBandCell {
+    border-radius: 8px; border-bottom: 0;
+    padding: 0.3rem 0.55rem !important;
+  }
+  .payDrawerDate { min-width: 4.5rem; }
 }

@@ -4,7 +4,51 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-20 — ONE CONTROL SHAPE ACROSS THE REPORTS, AND A RULE STRUCK THAT WAS NEVER THE OWNER'S
+
+**Supersedes the "two or three fixed options → pills stay" bullet in the 2026-08-19 entry below.
+That bullet was never an owner ruling.** It was written into `COACH_PAYABLES_REBUILD_PLAN.md` §7
+underneath the owner's actual instruction, copied into this log as though it carried the same
+authority, and then — on 2026-08-20, during the Payables P3 design pass — **quoted back to the owner
+as his own standing rule.** He did not recognise it: *"I don't remember explicitly saying this…
+you can remove it."*
+
+⚠⚠ **The failure is the one `AGENCY_RULES.md` already names: argue from what the code does, never
+from what a plan claims it does.** A plan quoting itself back as a ruling is that same failure with
+better manners, and this log is exactly where it becomes load-bearing — an invented bullet sitting
+in a file headed "binding in future sessions". **When recording a convention here, record what the
+owner said and mark everything else as the agent's inference.**
+
+**The convention, as the owner actually left it:**
+
+- **One control shape across every reporting surface:** a labelled pill that opens a small list.
+  A narrowing is multi-select with **counts on every option**, computed before the current selection
+  narrows further; its summary reads **"2 selected"** when a real default is in force, never "All".
+  An arrangement is single-select.
+- **An ARRANGEMENT is not a filter.** It says `Group by` (or `View`), sits **first**, and carries the
+  accent, so it can never read as another narrowing.
+- **Short lists are a judgement, not a rule** (owner, verbatim): *"for small lists we can review on a
+  case by case basis but no need for a hard rule. There is value to less clutter too — 5 pills of 2
+  each shows 10 items vs. 5 dropdowns might look cleaner."* **Count what is on screen, not what is
+  behind a click.** Payables' `Group by` has exactly two options and is a dropdown for that reason,
+  not in spite of it.
+- **Never a tab row where a filter would do** — unchanged, and still the defect the whole Payables
+  rebuild came out of.
+
+**Adopted:** Transactions (08-19) · Payables and Budget vs. Actual's `View` / `Showing` (08-20 —
+seven segmented buttons became two pills). **Next:** Player Dues, Fundraising, Club, the Reports
+portal. The family is `MultiSelectDropdown`, `SingleSelectDropdown` and `DateRangeDropdown` — one
+look, three jobs; do not hand-roll a fourth.
+
+---
+
 ### 2026-08-19 — A REPORTING FILTER IS A DROPDOWN AT FOUR OPTIONS, AND `Group by` IS NOT A FILTER
+
+> ⚠ **PARTLY SUPERSEDED 2026-08-20 (entry above).** The `Four or more → dropdown`, counts-before-
+> narrowing, arrangement-first and never-a-tab-row rules all stand. The **"two or three fixed,
+> permanent options → pills stay"** bullet below is **STRUCK** — it was an agent's invention
+> recorded as an owner ruling. Left in place rather than deleted so the next reader can see what
+> was wrong and why.
 
 **Owner instruction**, given while walking QA §27 on the coach Payables screen: *"not a fan of the
 paid/unpaid/all toggle, I like what we did with the dropdown options in the transactions view… I

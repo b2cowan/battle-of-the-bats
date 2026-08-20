@@ -960,38 +960,121 @@ test.describe('Money by month @360x740', () => {
   });
 });
 
-test.describe('The payment schedule (chunk H)', () => {
+/**
+ * ⚠⚠ REWRITTEN FOR THE ONE PAYABLES LIST (Rebuild P3, 2026-08-20). The `Schedule | Commitments`
+ * toggle and its `Unpaid | Paid | All` pills are gone — one list, a `Group by` arrangement, and a
+ * four-option Status dropdown that can finally express "partly paid".
+ *
+ * ⚠ `?tab=schedule` IS STILL ADDRESSED HERE ON PURPOSE. It is a live URL contract (the Money hub's
+ * "See full schedule", Budget vs. Actual's Scheduled drill-in, the legacy-address mapper) and this
+ * spec is what proves it still lands somewhere honest rather than on a blank view.
+ */
+test.describe('The one Payables list (Payables Rebuild P3)', () => {
   test.use({ viewport: PHONE });
 
-  test('every commitment in one list, by due date, with a filter that means what it says', async ({ page }) => {
+  test('a saved "schedule" link lands on the dated arrangement, and Status narrows it', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const main = page.locator('main[class*="coachesMain"]');
 
     await expect(main.getByRole('heading', { name: /^payables$/i })).toBeVisible();
-    // The seeded payable's deposit was due 5 days ago and its balance is 30 days out; the org
-    // allocation adds another overdue instalment. Unpaid is the default view.
-    await expect(main.getByText(/provincials entry — deposit/i)).toBeVisible();
+    // The retired toggle must not have left a stub behind.
+    expect(await main.getByRole('button', { name: 'Commitments', exact: true }).count()).toBe(0);
+    // The URL chose the arrangement — Group by sits first and reads "Due date".
+    await expect(main.getByText('Group by')).toBeVisible();
+    await expect(main.getByText('Due date', { exact: true })).toBeVisible();
+
+    // The seeded bill's first piece was due 5 days ago; its second is 30 days out. The list opens
+    // on Outstanding + Overdue, so both are here and the overdue one says how late it is.
+    await expect(main.getByText(/provincials entry/i).first()).toBeVisible();
     await expect(main.getByText(/days overdue/i).first()).toBeVisible();
 
-    // Paid drops the outstanding rows entirely.
-    await main.getByRole('button', { name: 'Paid', exact: true }).click();
-    await expect(main.getByText(/provincials entry — deposit/i)).toHaveCount(0);
-
-    await main.getByRole('button', { name: 'All', exact: true }).click();
-    await expect(main.getByText(/provincials entry — deposit/i)).toBeVisible();
-
-    // Dues are money IN and belong to the Dues page — the schedule says so rather than
-    // silently mixing the two directions.
+    // Money going out only — the list says so rather than silently mixing in dues.
     await expect(main.getByText(/money going out only/i)).toBeVisible();
-    await expectNoPageScroll(page, 'payment schedule');
+    await expectNoPageScroll(page, 'the payables list');
   });
 
-  test('a read-only money coach reads the month grid and the schedule, and can change neither', async ({ page }) => {
+  test('the same rows under both arrangements — nothing appears, nothing disappears', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting?section=payables&tab=schedule`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await expect(main.getByRole('table')).toBeVisible();
+
+    /* ⚠⚠ THE CLAIM `Group by` MAKES OUT LOUD, and §64 Part C's sharpest step. Count the dated
+       PIECE rows; the group headers differ between arrangements by design — bills one way, periods
+       the other — but the pieces must not. A change here means the arrangement is filtering, which
+       is the one thing it must never do.
+
+       ⚠ OPEN EVERYTHING FIRST, IN BOTH ARRANGEMENTS. The two default differently on purpose (bills
+       shut, periods open — owner ruling 2026-08-20), so counting what happens to be on screen would
+       compare a folded list against an unfolded one and fail for the wrong reason. */
+    const openAll = async () => {
+      const opener = main.getByRole('button', { name: 'Open all', exact: true });
+      if (await opener.count()) await opener.click();
+    };
+    const pieces = () => main.locator('tr[class*="payPieceRow"]').count();
+
+    await openAll();
+    const byDate = await pieces();
+    expect(byDate).toBeGreaterThan(0);
+
+    await main.getByText('Group by').click();
+    await main.getByRole('button', { name: 'Commitment', exact: true }).click();
+    await expect(main.getByText('Commitment', { exact: true }).first()).toBeVisible();
+    await openAll();
+    expect(await pieces()).toBe(byDate);
+  });
+
+  test('the list opens folded — one clean line per bill, each still saying what it owes', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting?section=payables&tab=commitments`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await expect(main.getByRole('table')).toBeVisible();
+
+    /* ⚠ Grouped by commitment, nothing is expanded until a coach asks — and folding hides nothing,
+       because the header carries the next due date, the debt and how late it is. That is what
+       earned the default (the earlier "always open" call was made against the OLD header). */
+    expect(await main.locator('tr[class*="payPieceRow"]').count()).toBe(0);
+    await expect(main.locator('tr[class*="payBillRow"]').first()).toBeVisible();
+    // Folded, the bill itself offers the payment door, aimed at its next unpaid piece.
+    await expect(main.getByRole('button', { name: /record a payment/i }).first()).toBeVisible();
+
+    // …and the dated arrangement opens the other way, because a period band is only a label.
+    await main.getByText('Group by').click();
+    await main.getByRole('button', { name: 'Due date', exact: true }).click();
+    expect(await main.locator('tr[class*="payPieceRow"]').count()).toBeGreaterThan(0);
+  });
+
+  test('⚠ defect 3 — a fully paid bill opens, with Edit live', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting?section=payables&tab=commitments`);
+    const main = page.locator('main[class*="coachesMain"]');
+
+    // Settled bills are hidden by the considered default, so ask for them by name.
+    await main.getByText('Status').click();
+    await main.getByRole('checkbox', { name: /^Paid \(/ }).check();
+    await main.getByRole('checkbox', { name: /^Outstanding \(/ }).uncheck();
+    await main.getByRole('checkbox', { name: /^Overdue \(/ }).uncheck();
+    await page.keyboard.press('Escape');
+
+    const settled = main.locator('tr[class*="payPieceSettled"]').first();
+    await expect(settled).toBeVisible();
+    await settled.click();
+
+    // The drawer — the thing the old Schedule's paid rows could not open at all.
+    const drawer = page.locator('[class*="modal"]').filter({ hasText: /still owing|paid over the total/i }).first();
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText(/scheduled/i).first()).toBeVisible();
+    await expect(drawer.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+  });
+
+  test('a read-only money coach reads the month grid and the list, and can change neither', async ({ page }) => {
     await signIn(page, READ_EMAIL);
 
     await open(page, `${base()}/accounting?section=budget-vs-actual`);
     const main = page.locator('main[class*="coachesMain"]');
+    // ⚠ View is a pill now, not a bank of segmented buttons (2026-08-20).
+    await main.getByText('View').click();
     await main.getByRole('button', { name: 'Months', exact: true }).click();
     await expect(page.getByRole('table')).toBeVisible();
     // Reading is never gated on write — the whole grid and the cash-flow strip are present…
@@ -1001,7 +1084,12 @@ test.describe('The payment schedule (chunk H)', () => {
 
     await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const sched = page.locator('main[class*="coachesMain"]');
-    await expect(sched.getByText(/provincials entry — installment 1 of 2/i)).toBeVisible();
+    /* ⚠ THE PIECE'S WORDS ARE ON TWO LINES NOW — the bill's name, then "Installment 1 of 2" in the
+       row's own meta line — where the old single-column schedule joined them with an em dash. Same
+       words, same rule (`installmentLabel` still joins them on the register and in the exports);
+       only this grouped list has two lines to spend. */
+    await expect(sched.getByText(/provincials entry/i).first()).toBeVisible();
+    await expect(sched.getByText(/installment 1 of 2/i).first()).toBeVisible();
     expect(await sched.getByRole('button', { name: /record a payment/i }).count()).toBe(0);
   });
 });

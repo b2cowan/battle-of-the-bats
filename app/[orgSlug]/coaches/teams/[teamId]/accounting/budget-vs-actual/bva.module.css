@@ -158,20 +158,13 @@
   margin-bottom: 1.1rem;
 }
 
-.viewBarLabel {
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-/* Four lens names don't fit a phone at full length — the abbreviation is a swap, not a
-   truncation, so nothing is ever cut mid-word. */
-.lensShort { display: none; }
+/* ⚖ `.viewBarLabel`, `.lensFull` AND `.lensShort` ARE GONE (2026-08-20). The two banks of segmented
+   buttons this row carried became `SingleSelectDropdown` pills, matching Transactions and Payables
+   — so the standalone uppercase labels moved INSIDE each pill, and the phone abbreviation
+   ("Diff.") went with the buttons that needed it: a pill names one chosen value and has room for
+   the whole word, which also retires the `aria-label` that existed only to un-abbreviate it for a
+   screen reader. */
 @media (max-width: 640px) {
-  .lensFull { display: none; }
-  .lensShort { display: inline; }
   .viewBar { gap: 0.4rem; }
 }
 

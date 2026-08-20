@@ -91,13 +91,18 @@ export const HELP_SHOTS: HelpShot[] = [
     module: 'coaches',
     door: 'coach',
     path: `${MID}/accounting?section=budget-vs-actual`,
-    // The report opens on Categories, which has no table — the month grid this picture
-    // is about only exists after the view toggle moves.
-    ready: 'button:has-text("Months")',
-    prepare: ['button:has-text("Months")'],
+    /* The report opens on Statement, which has no month grid — the picture is of Months, which
+       only exists once the view changes.
+       ⚠ TWO CLICKS SINCE 2026-08-20, NOT ONE. `View` became a dropdown pill (one control shape
+       across the reports), so the old single `button:has-text("Months")` step no longer finds
+       anything until the pill is opened: open it, then pick. `readyAfterPrepare` waits for the
+       grid itself rather than trusting the fixed post-click pause. */
+    ready: 'summary:has-text("View")',
+    prepare: ['summary:has-text("View")', 'button:has-text("Months")'],
+    readyAfterPrepare: 'table',
     width: 1280,
     size: { w: 1280, h: 1000 },
-    alt: 'The Budget vs. Actual report, showing budget lines down the side and the season’s months across the top.',
-    caption: 'Budget vs. Actual in its Months view — your lines down the side, the season across the top, and one toggle changing what every cell shows.',
+    alt: 'The Budget vs. Actual report in its Months view: budget lines down the side, the season’s months across the top, and View and Showing dropdowns above the grid.',
+    caption: 'Budget vs. Actual in its Months view — your lines down the side, the season across the top, and the Showing dropdown changing what every cell holds.',
   },
 ];

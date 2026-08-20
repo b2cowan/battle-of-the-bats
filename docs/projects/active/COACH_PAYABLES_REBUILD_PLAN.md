@@ -193,7 +193,7 @@ Every installment edit, and every installment delete, offers:
 
 Each phase is independently shippable and independently walkable.
 
-### P1 — The model lands, invisibly ✅ BUILT 2026-08-19 (dev; QA §64 Part A owed)
+### P1 — The model lands, invisibly ✅ BUILT 2026-08-19 (dev; QA §64 Part A ✅ PASSED 2026-08-20)
 New installment and payment records. **Every existing commitment migrates**: a deposit/balance split
 becomes a two-installment commitment; an un-split payable becomes one installment; each settled half
 becomes one recorded payment **carrying its existing ledger entry**. Every reader moves to the new
@@ -277,7 +277,7 @@ the seeder helper** — once `Record a payment` writes
 these tables directly they become the source of truth, and a one-way copier pointed the wrong way
 would overwrite real records.
 
-### P2 — Recording a payment, and undoing one ✅ BUILT 2026-08-20 (dev; QA §64 Part B owed)
+### P2 — Recording a payment, and undoing one ✅ BUILT 2026-08-20 (dev; QA §64 Part B ✅ PASSED 2026-08-20)
 The **Record a payment** form (date, amount, method, note, which installment). Partial payment.
 Over-payment (R6). **Undo** on any recorded payment, reversing the books by its own entry.
 ⚠ Closes defects 1 and 2 — the two blocking ones.
@@ -313,9 +313,186 @@ Over-payment (R6). **Undo** on any recorded payment, reversing the books by its 
   double-tapped undo refused without double-reversing, and the family case moved the credit and
   never the cash.
 
-### P3 — The screen rebuild
+### P3 — The screen rebuild ✅ BUILT 2026-08-20 (dev; QA §64 Part C awaiting the walk)
 Option B's single list with `Group by`, Option C's drawer, the Status dropdown, `Item`.
 The `Schedule | Commitments` toggle is deleted. ⚠ Closes defect 3.
+
+#### The four rulings this phase took, and what they changed
+
+Design pass run as an artifact the owner walked twice
+(`claude.ai/code/artifact/407c8427-95b7-4832-bc50-5d7356644b1f`). All four are owner calls.
+
+1. **⚠⚠ "Scheduled" means WHAT IS STILL OWED, everywhere** — resolving the open question this
+   section used to carry. Owner, verbatim: *"budget is the overall plan, actual is what was already
+   paid, scheduled is what we are currently obligated to pay in the future"*, **past due included**.
+   Budget vs. Actual's Months grid was the one surface disagreeing: it quoted the plan at face
+   value, so a settled month never fell and a part-paid piece read its full amount. It now drops
+   settled pieces entirely and quotes remainders. **The recommended option (keep both semantics,
+   rename the lens) was NOT taken** — the owner's argument for one semantics is that plan-vs-actual
+   was never a sound comparison anyway, because most of what lands in Budget and Actual is not a
+   payable. ⚠ The stated cost stands and was accepted: **the Scheduled row now shrinks as a season
+   pays down.**
+1b. **⚠ THE LIST OPENS FOLDED (bills), AND EXPANDED (periods)** — owner, later the same day:
+   *"can we make the dropdowns default to closed so users can see the list easier and open what
+   they want to open?"* This **reverses an earlier call in this same phase**, and the reversal is
+   worth recording because the original argument was sound *and then stopped being true*: the first
+   version defaulted open on the grounds that "a list that opens folded hides the very numbers it
+   exists to show", which was correct of the mockup's original header and **false of the rebuilt
+   one** — it carries the next due date, what is still owing and the urgency, so a folded bill hides
+   nothing. ⚠ **Periods are the exception and stay open:** a band carries only a month name and a
+   total, so folding it hides everything, and it would put *which bills are late* behind the word
+   "Overdue". Stored as a flip against the arrangement's default rather than as a set of shut keys,
+   so a bill arriving after a write takes the default instead of inheriting a stale state.
+
+2. **Every bill is a folding header, including a one-payment bill.** The build first tried the
+   cheaper shape (a one-off bill as a bare row, no chevron) and the owner killed it with the case
+   that breaks it: *"one of them has 1 installment left and so do we make it the same as the single
+   installment one or the multi? its confusing."* Any rule keyed on what is LEFT also changes a
+   bill's shape as it is paid down. **One behaviour, redundancy accepted** — a one-payment bill
+   states itself twice, as a header and as its only row.
+3. **⚠⚠ Partly paid CUTS ACROSS the date axis** (`installmentStatuses`). `installmentStatus`
+   returned one bucket per piece, so a late part-paid piece was `overdue` and nothing else. Two
+   consequences; the second is why it was ruled rather than noted: ticking Partly paid hid every
+   late one, **and the default Outstanding + Overdue view lost a part-paid not-yet-due bill
+   entirely** — money the team owed, absent from the screen's opening view, which is R4 broken in
+   the first place R4 names. Counts on the dropdown now overlap, deliberately.
+4. **One control shape across the reports** — see §7, which also **strikes a rule that was never the
+   owner's**. Budget vs. Actual's `View` and `Showing` became pills in the same unit of work; seven
+   segmented buttons became two.
+
+#### What P3 actually did — read before P4
+
+- **The row source is split by concern.** Team bills are built from `expenses` + `standings` — the
+  same object the drawer reads, so the list and the drawer cannot disagree about what a bill has
+  paid. The `upcoming-payables` feed is still fetched but is read for its **club lane only**; its
+  team lane is parsed and unused (deliberate, and commented as such).
+- **⚠ `?tab=schedule` and `?tab=commitments` survive as ARRANGEMENTS**, not views. `ExpenseTab`
+  collapsed to `'register' | 'payables'`; `TAB_AS_GROUP_BY` maps the retired names onto `Group by`.
+  Every deep link — the Money hub's "See full schedule", the Months grid's Scheduled drill-in,
+  `legacyMoneyAddress`, the UAT spec — still lands honestly. `moneySectionHref(…, { tab: 'schedule' })`
+  callers were left alone on purpose: they still say what they mean.
+- **⚠ THE COMMITMENTS EXPORT NOW FOLLOWS THE FILTERS**, which is a behaviour change to a file
+  coaches keep. It used to carry every bill regardless; the arrangement now picks the dataset
+  (`payables` grouped by commitment, `payment-schedule` grouped by due date) and Status narrows
+  both. Written into §64 Part C so the walk does not read it as a lost record. **Its COLUMNS are
+  untouched** — Deposit/Balance still describe the first two pieces truthfully and coaches' own
+  spreadsheets address columns by position; they retire in P4 with the two-piece cap.
+- **"Add an installment" is offered only on a one-piece bill**, opening the record's own form with
+  the split already on. The two-piece cap (`parseInstallmentPlan`) is untouched — a button that is
+  refused is worse than a button that is not there. **P4 lifts both together.**
+- **A club allocation is a bill on this list but not a record here.** It groups and folds like any
+  other; its door is the Club tab, not the drawer, because it is not the team's record to edit.
+- ⚠ **A piece's words are on two lines now** — the bill's name, then "Installment 1 of 2" in the
+  row's meta line — where the single-column schedule joined them with an em dash. `installmentLabel`
+  still joins them on the register, the drill-ins and the exports; only this grouped list has two
+  lines to spend.
+- `payableStatus()` is deleted: it reduced a whole commitment to one adjective for a list that no
+  longer exists.
+
+#### `/simplify` pass, 2026-08-20 — what it caught
+
+Four cleanup lenses (reuse · simplification · efficiency · altitude). Eight findings applied:
+
+- **⚠⚠ The screen's main memo was being defeated on every keystroke.** `allPayablesRaw` was a bare
+  `.filter()` in the render body and a dependency of the `payBills` memo, so React compared a fresh
+  array reference every render and recomputed the whole list — every commitment, every installment,
+  the org grouping, the two-pass Status narrowing and the sort — on each character typed into the
+  money form that shares this component. That is precisely the cost the memo's own header says it
+  exists to avoid; the memo was there and one line was quietly cancelling it. **The single most
+  valuable finding of the four lenses.**
+- **The club-bill feed now asks for the one lane it reads.** `upcoming-payables` takes a `lanes=`
+  parameter (absent = all, so every existing caller is untouched) and the Payables list passes
+  `lanes=org_payables`. P3 had made this worse before it made it better: the old Schedule sub-tab
+  fetched all three lanes only when opened, and the rebuilt face fetched them on every visit **and
+  after every write** — including a second full `getCommitmentStandings` for an answer the panel
+  already holds, and a dues lane never parsed at all. Fixed at the source rather than at the caller.
+- **The sub-view concept is gone entirely.** `ExpenseTab`, `FACE_TABS`, the `tab` state and
+  `goToTab` survived the rebuild as a union each face mapped to exactly ONE member of — so `tab`
+  could not diverge from `face`, and the file tested the same boolean in two vocabularies. A dead
+  abstraction that *looks* load-bearing is the worst kind; both the altitude and simplification
+  lenses found it independently.
+- Item names come from a Map built once, not a nested scan per bill · club instalments group by
+  `push` rather than an O(n²) spread · `toggleFold` calls the shared `toggleKey` (the module that
+  exists because six copies of that three-line Set flip had already drifted) · the month key uses
+  the shared `monthKeyOf` · a draft type replaces seven placeholder fields that were written twice
+  and always overwritten.
+
+**Skipped, deliberately: extracting a `PayablesList` component.** P3 adds ~500 lines of
+Payables-only code to `MoneyRecordsPanel`, which also serves Transactions — a real altitude problem
+and a real restructure. It is skipped because **P4 lands in this same area**, and a same-behaviour
+extraction across freshly-written, still-settling code would have its boundary redrawn twice.
+⚠ **Do it once P4's shape is known** — not later than that, because P4 adds the n-piece generator to
+the same function.
+
+#### Verification, and the one thing left red
+
+Full unit suite (2282) · `verify:changed` (schema parity flags the dev-only migrations — known
+state; every check behind it run individually and clean) · `check:register`, `check:money-report`,
+`check:demos` green against a restarted dev server · fixture reseeded first.
+
+**⚠⚠ A THIRD SWEEP SCREEN WAS ADDED, because the folded default creates the exact blind spot this
+file has been bitten by twice.** `coach-payables` now opens grouped by commitment and **folded**, so
+it draws the bill headers and **no installment rows at all** — a green check over a collapsed list,
+the same trap as the closed settlement sheet and the collapsed team-settings groups.
+**`coach-payables-schedule`** (`?tab=schedule`, the dated arrangement, which defaults open) is the
+twin that actually measures the rows, the period bands and their totals — and, as a bonus, proves
+the live `?tab=schedule` URL contract still lands on something real. Both entries are needed; drop
+either and half the screen goes unmeasured.
+
+**Baseline edits — four kinds, each deliberate and attributable. The rule applied throughout: fix
+what this change introduced; carry forward an acceptance where a control was REPLACED like for like;
+absorb nothing that fails on a screen this phase does not touch.**
+
+- **FIXED, not accepted** — the `Group by` pick buttons and the fold chevron, both new controls
+  under the 44px touch floor.
+- **PRUNED (15 dead entries)** — the retired `Schedule`/`Commitments` toggle, the
+  `Unpaid`/`Paid`/`All` pills, Budget vs. Actual's nine `Statement`/`By activity`/`Months`
+  segmented-button entries, and one `coach-transactions` entry whose element an earlier release had
+  already renamed.
+- **CARRIED to the new screen id (7)** — `coach-payables-schedule` is the same screen in its dated
+  arrangement; those elements were already accepted under `coach-payables` and were only "new"
+  because the id is.
+- **CARRIED as like-for-like replacements (9)** — the three arrangement pills (`View`, and
+  `Group by` on both payables screens). Each directly replaces a segmented control whose
+  under-floor height was already accepted on the same screen at the same width, and each is
+  **31px against the 27–29px it replaces** — measurably better, not worse. Every one carries a
+  written reason.
+
+**What is left is RED and deliberately NOT baselined:** the **Status / Show / Date filter pills**,
+the **checkbox inside their panel**, three `.compactAction` links and one button, and the
+**notifications-bell overflow**. Every one of them fails identically on `coach-transactions`, a
+screen this phase does not touch — they are the shared-chrome set, not this work's.
+⚠ **The unification did widen their reach**: the same pill now appears on Budget vs. Actual too, so
+the shared-chrome fix is worth more than it was. It is one change (a 44px floor on the shared pill
+at touch widths) and it resizes every reporting strip in the portal at once, which is exactly why it
+belongs to that work rather than being smuggled in here. **All four screens go green together when
+it lands.**
+
+> ✅ **RESOLVED 2026-08-20 — one semantics, "still owed", everywhere.** See P3's ruling 1 above for
+> the decision and its accepted cost. The write-up below is kept because it states the two
+> semantics precisely and a future reader will want to know the grid's face-value reading was
+> reasoned, not accidental. **Option 1 (keep both, rename the lens) was recommended and NOT taken.**
+
+**⚠ ~~OPEN QUESTION~~ for this phase (owner-raised 2026-08-20, during the §64 A+B walk): "Scheduled"
+means two different things, and the owner read one of them as a defect.** On Budget vs. Actual's
+Months grid, a Scheduled cell is **the plan at face value** — every installment in its due month,
+paid or not (a September holding a paid $200 piece and an unpaid $400 piece reads $600, which the
+owner read as "the whole commitment's total"). On the Payment schedule and Next 30 days,
+"scheduled" means **what is still owed** — a part-paid piece shows only its remainder. Both
+semantics are internally reasoned (the grid's row must not erode toward zero as the season pays
+down, or plan-vs-actual per month stops meaning anything; the schedule is a to-do list, so it
+quotes the remainder), and the grid behaves exactly as it did before the rebuild — **but the
+product's own words disagree with themselves**, and even an internal comment in the grid component
+describes its Scheduled cell as "money still owed". Decide in P3's design pass, as one ruling:
+1. **Keep both, and make the grid SAY what it is** (recommended): the plan-at-face semantics stay,
+   and the cell/drill-in treatment makes "includes what you've already paid" legible without a
+   click — e.g. the settled share rendered quietly within the cell, or the lens relabelled
+   (*Planned*?) so it stops sharing a word with the to-do surfaces.
+2. **One semantics everywhere ("still owed")**: cheap to build, but the Months grid's Scheduled row
+   then shrinks as payments land and the month-by-month plan comparison is lost — state that cost
+   out loud before choosing it.
+The drill-in already labels paid pieces today; whatever is ruled, the §64 Part C walk should
+include opening a Scheduled cell that contains a paid piece and reading it without help.
 
 ### P4 — Recurring
 The generator (§4.1), and the linked series with the three scopes and rules S1–S8.
@@ -325,6 +502,31 @@ The generator (§4.1), and the linked series with the three scopes and rules S1�
 In-app help content; **both demo sandboxes** (the coach sandbox's dock copy and tour narration talk
 about money and will go stale — CLAUDE.md's standing warning, and the 2026-08-17 release already
 changed this exact surface once); export columns; the layout and memory baselines.
+
+> ✅ **CLOSED 2026-08-20 — "should a demo moment show a part payment?" NO** (owner: *"the demo
+> doesn't have to show a part payment"*). It had been open since P2 as the most persuasive thing the
+> rebuild added. **P5 no longer owes the sandboxes a new moment.**
+>
+> ⚠ **What P5 still owes them is the STALENESS check, which is a different question.** Checked
+> during P3 and clean at that moment: neither sandbox's dock copy nor its tour narration names the
+> Payables screen, the `Schedule | Commitments` toggle or the retired pills, so the rebuild broke no
+> demo sentence — and `check:demos` passes. ⚠ That is a fact about 2026-08-20, not a standing
+> exemption: CLAUDE.md's warning is precisely that `check:demos` proves breakage and cannot tell us
+> the demo is missing something the product gained. **Re-read them on the next coach-money change.**
+>
+> ✅ **The in-app help is DONE (`/docs`, 2026-08-20)** — it was the live half of this item. The
+> Payables topic was rewritten against the shipped screen (one list, `Group by`, the folded default,
+> the four-status dropdown *with its overlap explained*, the drawer opening on a paid bill,
+> `Add an installment`'s one-piece limit, club bills on the list, and the export's new
+> filter-following behaviour). Budget vs. Actual's **Scheduled** definition and its cash-flow
+> sentence were rewritten to "what you still owe". Two stale cross-references to a "Payment
+> schedule" view were corrected. 59 keywords and a searchText block were added, because the new
+> vocabulary — *group by, fold, partly paid overlap, why did Scheduled drop* — is unfindable
+> otherwise (rendered prose is not searched).
+>
+> ⚠ **The Months screenshot was re-taken in the same unit of work**, per the standing rule: its
+> controls became dropdowns *and* its Scheduled figures changed, so the old picture was wrong twice
+> over. Its capture steps needed updating too — the view is two clicks away now, not one.
 
 ---
 
@@ -352,15 +554,33 @@ none is discovered late:
 Owner instruction 2026-08-19: *"I would like this to be the convention on reporting going forward
 unless there is a good reason for something else."* Logged in `memory/design_decisions.md`.
 
-- **Four or more options, or a list that will grow → a dropdown.** Multi-select, counts on every
-  option, and the summary reads "2 selected" when a real default is in force rather than pretending
-  nothing is filtered.
-- **Two or three fixed, permanent options → pills stay.** A dropdown for two things is a click tax.
-- **A control that chooses an ARRANGEMENT is not a filter** — it says `Group by`, and sits first.
+> ⚠⚠ **CORRECTED 2026-08-20 — one bullet here was never the owner's, and it was quoted back at him
+> as though it were.** This section originally carried *"Two or three fixed, permanent options →
+> pills stay. A dropdown for two things is a click tax."* The owner's instruction was the sentence
+> above it and nothing more; the rule was written by whoever drafted this plan. During the P3 design
+> pass it was cited to him as his own standing rule, he did not recognise it, and it is struck.
+> **The lesson is `AGENCY_RULES.md`'s own: argue from what the code does, never from what a plan
+> claims** — and a plan quoting itself back as an owner ruling is the same failure wearing a
+> politer face. His replacement wording is below.
+
+- **One control shape across the reports:** a labelled pill that opens a small list. A narrowing is
+  multi-select with **counts on every option**, and its summary reads "2 selected" when a real
+  default is in force rather than pretending nothing is filtered. An arrangement is single-select.
+- **A control that chooses an ARRANGEMENT is not a filter** — it says `Group by` (or `View`), sits
+  **first** in the strip, and carries the accent so it can never read as another narrowing.
+- **Short lists are a judgement, not a rule** (owner, 2026-08-20): *"for small lists we can review
+  on a case by case basis but no need for a hard rule. There is value to less clutter too — 5 pills
+  of 2 each shows 10 items vs. 5 dropdowns might look cleaner."* Count what is on screen, not what
+  is behind a click. Payables' `Group by` has exactly **two** options and is a dropdown for that
+  reason, not in spite of it.
 - **Never a tab row where a filter would do.** Two tabs over the same records is the mistake this
   whole project exists to correct.
 
-Screens this sweeps next: Player Dues, Fundraising, Club, and the Reports portal when it is built.
+**Done so far:** Transactions (2026-08-19) · **Payables** and **Budget vs. Actual's `View` /
+`Showing`** (2026-08-20 — seven segmented buttons became two pills).
+**Screens this sweeps next:** Player Dues, Fundraising, Club, and the Reports portal when it is
+built. The shared primitives are `MultiSelectDropdown`, `SingleSelectDropdown` and
+`DateRangeDropdown` — one family, one look; do not hand-roll a fourth.
 
 ---
 
@@ -371,6 +591,6 @@ Screens this sweeps next: Player Dues, Fundraising, Club, and the Reports portal
 | **P1 moves the books by a cent.** The migration re-expresses settled money; an arithmetic slip is a wrong bank balance on a live site. | P1's acceptance test is cash-on-hand and Budget vs. Actual identical before and after, on a team carrying every shape. Existing ledger entries are **carried, never recreated**. |
 | **A settled installment gets locked**, reversing the 2026-08-16 ruling by accident. | S2, stated twice above, and walked explicitly in §64. |
 | **Roll-forward (S6) cascades confusingly** across several installments. | The sentence names every installment it touched, not just the next one. |
-| **Demo copy goes stale.** The coach sandbox narrates money screens that are being rebuilt. | P5, plus `npm run check:demos` — which proves breakage but cannot tell us the demo is missing something the product gained. That judgement is P5's actual work. |
+| **Demo copy goes stale.** The coach sandbox narrates money screens that are being rebuilt. | ✅ **Largely retired 2026-08-20.** The judgement call it existed for — *should a demo moment show a part payment?* — was answered **no** by the owner, and the staleness half came back clean through the P3 rebuild: no dock line or tour step names this screen, so there was nothing to go stale. `check:demos` passes. ⚠ What survives is the standing CLAUDE.md warning, not a P5 task: the check proves breakage and can never tell us the demo is missing something the product gained, so **re-read the sentences on the next coach-money change**. |
 | **The register's running balance** depends on one row per settled half; payments are now their own records. | ⚠ §41 Part D's rule holds — a settle must leave ONE transaction and no second row beside the commitment. Re-assert it in P2. |
 | **Scope rules are cheap to state and expensive to get right** across paid/unpaid combinations. | S1–S8 are individually walkable in §64 Part E, and each gets a unit test rather than only a QA step. |

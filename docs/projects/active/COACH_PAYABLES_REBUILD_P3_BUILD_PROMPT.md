@@ -3,11 +3,9 @@
 **Paste this into a fresh chat.** Everything below is code-verified as of 2026-08-20, after P2
 committed (`c86532f2`). Where it says "today the product does X", that was read out of the code.
 
-⚠⚠ **SEQUENCING — check before building.** Owner QA **§64 Parts A and B are walked against the
-CURRENT screen** (Part A literally asserts "same toggle, same rows, same buttons"). If the owner
-has not walked A and B yet, this phase landing on dev breaks their walk. **Ask whether A + B have
-been walked before changing the screen**; if not, either wait or agree with the owner that the
-ledger's Part A screen-assertions are re-read as historical.
+✅ **Owner QA §64 Parts A and B WALKED AND PASSED 2026-08-20** — the screen is clear to change.
+The walk's one finding became the "Scheduled means two things" open question below; it is this
+phase's to resolve.
 
 ---
 
@@ -74,6 +72,15 @@ if you take it, remember coaches' spreadsheets key on column POSITIONS).
   `instanceof`, never message text.
 - **The family credit restates under a CAS** (`restateReimbursementCreditFromPayments`) — do not
   add a new writer for it; call the existing paths.
+
+## An open owner question this phase must answer
+
+**"Scheduled" carries two meanings, and the owner tripped on it mid-walk (2026-08-20).** The
+Months grid's Scheduled cell is the PLAN at face value (every installment in its due month, paid
+or not); the Payment schedule and Next 30 days quote what is STILL OWED (remainders). The plan's
+§P3 section carries the full write-up and the two options — resolve it with the owner as part of
+this phase's design pass, don't build past it. The behavior is unchanged since before the rebuild;
+the words are what disagree.
 
 ## The traps, in the order they will bite
 

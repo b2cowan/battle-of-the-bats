@@ -774,15 +774,36 @@ export const GET = withObservability(async (req: Request,
     const description = exp.description as string;
     const count = standing.installments.length;
     for (const inst of standing.installments) {
-      gridScheduled.push({ ...cat, date: inst.dueDate, amount: inst.amount });
+      /* ⚠⚠ SCHEDULED IS WHAT IS STILL OWED, NOT THE PLAN AT FACE VALUE (owner ruling 2026-08-20,
+         Payables Rebuild P3). *"Budget is the overall plan, actual is what was already paid,
+         scheduled is what we are currently obligated to pay."*
+
+         Until this ruling the cell carried `inst.amount` — every installment in its due month,
+         paid or not — so a September holding a settled $200 piece and an unpaid $400 piece read
+         $600, and a fully-paid month never fell to zero. The owner read that as the row quoting the
+         whole commitment's total, and the product's own words agreed with him: the payment
+         schedule, the Overview's next 30 days and the Payables list all meant "the remainder" by
+         the same word, and an internal comment in the grid component described this very cell as
+         "money still owed". One semantics now, on all four surfaces.
+
+         ⚠ THE COST WAS STATED AND ACCEPTED: the Scheduled row now SHRINKS as a season pays down,
+         so it can no longer be read as a month-by-month plan to compare Actual against. The owner's
+         reasoning is that the comparison was never sound anyway — most of what lands in Budget and
+         Actual is not a payable at all, so the plan figures were never comparable. Budget is the
+         plan; this row is the obligation.
+
+         ⚠ A PAST-DUE PIECE STAYS IN ITS DUE MONTH and still counts. "Currently obligated to pay"
+         includes what should already have been paid — dropping it would hide the most urgent money
+         on the report. */
+      if (inst.state === 'settled') continue;
+      gridScheduled.push({ ...cat, date: inst.dueDate, amount: inst.remaining });
       pushDetail('scheduled', cat, inst.dueDate, {
         id: inst.id,
         description: installmentLabel(description, inst.installmentNumber, count),
-        amount: inst.amount,
-        /* ⚠ R4 — SETTLED MEANS PAID IN FULL. A piece with $200 against its $450 reads unpaid here,
-           which is the honest answer to "is there still something to do about this?" and the same
-           rule the payment schedule, the filters and the Overview's next-30 panel apply. */
-        paid: inst.state === 'settled',
+        amount: inst.remaining,
+        /* ⚠ R4 — SETTLED MEANS PAID IN FULL, and a part-paid piece is therefore still here, for
+           its REMAINDER. Never `true` now: a settled piece no longer reaches this list at all. */
+        paid: false,
       });
     }
   }

@@ -237,10 +237,48 @@ export function commitmentStanding(
  */
 export type PayableRowStatus = 'paid' | 'partly_paid' | 'overdue' | 'outstanding';
 
+/**
+ * The ONE word a badge shows — the most urgent thing true of this piece.
+ *
+ * ⚠ NOT WHAT THE FILTER MATCHES ON. See `installmentStatuses` below: a late part-paid piece is both
+ * overdue AND partly paid, and this returns only the first because a badge has room for one word.
+ * The screen writes the second half beside it ("13 days overdue · partly paid"), exactly as the
+ * payment schedule already did.
+ */
 export function installmentStatus(inst: AppliedInstallment, today: string): PayableRowStatus {
   if (inst.state === 'settled') return 'paid';
   if (inst.dueDate < today) return 'overdue';
   return inst.state === 'partly_paid' ? 'partly_paid' : 'outstanding';
+}
+
+/**
+ * ⚠⚠ EVERY WORD TRUE OF THIS PIECE — what the Status dropdown filters and counts on
+ * (owner ruling 2026-08-20, Payables Rebuild P3).
+ *
+ * `partly_paid` CUTS ACROSS the date axis; the other three are mutually exclusive. The header on
+ * `PayableRowStatus` said so from the day P1 wrote it, and `installmentStatus` above did not
+ * implement it — one bucket per piece. Two consequences, and the second is the one that forced the
+ * ruling:
+ *
+ *   1. Ticking "Partly paid" alone hid every part-paid piece that was ALSO late — the ones a coach
+ *      most wants to find.
+ *   2. ⚠⚠ THE DEFAULT VIEW LOST MONEY. `PAYABLE_STATUS_DEFAULT` is Outstanding + Overdue. A
+ *      part-paid piece not yet due filed as `partly_paid` and nothing else, so it appeared in
+ *      NEITHER — a bill the team still owed $250 on was absent from the screen's opening view of
+ *      what the team owes. That is R4 ("partly paid counts as unpaid everywhere: filters, bulk
+ *      scopes, the schedule, the Overview's next-30 panel") broken in the one place R4 names first.
+ *
+ * ⚠ COUNTS THEREFORE OVERLAP, deliberately: the four numbers on the dropdown sum to more than the
+ * rows on screen, because one piece can be two things. That is ordinary for a multi-select and is
+ * how the Transactions filters beside it already behave.
+ */
+export function installmentStatuses(
+  inst: AppliedInstallment,
+  today: string,
+): readonly PayableRowStatus[] {
+  if (inst.state === 'settled') return ['paid'];
+  const when: PayableRowStatus = inst.dueDate < today ? 'overdue' : 'outstanding';
+  return inst.state === 'partly_paid' ? [when, 'partly_paid'] : [when];
 }
 
 export const PAYABLE_STATUS_LABEL: Record<PayableRowStatus, string> = {

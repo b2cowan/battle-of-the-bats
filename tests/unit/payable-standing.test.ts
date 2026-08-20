@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  commitmentStanding, installmentStatus, installmentsInScope, scopeChoiceIsMeaningful,
+  commitmentStanding, installmentStatus, installmentStatuses, installmentsInScope, scopeChoiceIsMeaningful,
   PAYABLE_STATUS_DEFAULT,
   installmentLabel, paymentLabel,
   type PayableInstallment, type PayablePayment, type EditScope,
@@ -205,6 +205,43 @@ describe('the status a coach reads and filters by', () => {
 
   test('the Status filter opens on what is owed, not on a season of settled history', () => {
     assert.deepEqual([...PAYABLE_STATUS_DEFAULT], ['outstanding', 'overdue']);
+  });
+});
+
+describe('⚠⚠ what the Status DROPDOWN matches on — partly paid cuts across (owner ruling 2026-08-20)', () => {
+  const today = '2026-11-15';
+  const one = (amount: number, dueDate: string, paid: number) =>
+    commitmentStanding([inst({ amount, dueDate })], paid > 0 ? [pay({ amount: paid })] : []).installments[0];
+
+  test('a settled piece is paid and nothing else', () => {
+    assert.deepEqual([...installmentStatuses(one(100, '2026-10-01', 100), today)], ['paid']);
+  });
+
+  test('an untouched piece carries only its date word', () => {
+    assert.deepEqual([...installmentStatuses(one(100, '2026-10-01', 0), today)], ['overdue']);
+    assert.deepEqual([...installmentStatuses(one(100, '2026-12-01', 0), today)], ['outstanding']);
+  });
+
+  test('a LATE part-paid piece is BOTH — the case the single bucket hid', () => {
+    const s = [...installmentStatuses(one(100, '2026-10-01', 40), today)];
+    assert.deepEqual(s, ['overdue', 'partly_paid']);
+    // The badge still shows one word; only the filter sees both.
+    assert.equal(installmentStatus(one(100, '2026-10-01', 40), today), 'overdue');
+  });
+
+  test('⚠⚠ THE DEFAULT VIEW KEEPS A PART-PAID BILL — the money the old rule lost', () => {
+    // Not yet due, $40 of $100 against it: filed as `partly_paid` alone, it appeared in neither
+    // Outstanding nor Overdue, so $60 the team still owed was absent from the opening view.
+    const piece = one(100, '2026-12-01', 40);
+    const matches = installmentStatuses(piece, today)
+      .some(s => (PAYABLE_STATUS_DEFAULT as readonly string[]).includes(s));
+    assert.equal(matches, true, 'a part-paid bill must survive the default Outstanding + Overdue');
+    assert.equal(piece.remaining, 60);
+  });
+
+  test('counts overlap on purpose — one piece, two words', () => {
+    const late = one(100, '2026-10-01', 40);
+    assert.equal(installmentStatuses(late, today).length, 2);
   });
 });
 

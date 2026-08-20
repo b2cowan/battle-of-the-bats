@@ -144,12 +144,25 @@ export const SCREENS = [
      `coach-expenses` measured a screen holding four sub-tabs; Transactions and Payables are now
      separate tabs with two sub-views each, and each has to be addressed on its own or half of what
      the old entry covered goes unmeasured.
-     ⚠ PAYABLES LANDS ON ITS SCHEDULE, which is the view a coach actually arrives at — measuring
-     `?tab=commitments` instead would prove the list nobody opens first. The commitment list is
-     covered by the sweep the moment a coach switches, and by `coach-expenses`'s successor here
-     only in its default state; that is the same limit every tabbed screen in this file has. */
+
+     ⚠⚠ AND TWO BECAME THREE (Payables Rebuild P3, 2026-08-20) — for the reason the settlement sheet
+     and the collapsed team-settings groups already taught this file: THE SWEEP ONLY MEASURES WHAT
+     IS ACTUALLY DRAWN. Payables is now ONE list with a `Group by` arrangement, and the two
+     arrangements deliberately default differently:
+
+       · `coach-payables` (no param) opens grouped by COMMITMENT and **folded** — so it measures the
+         bill headers, the fold controls and the toolbar, and measures NO installment rows at all.
+         On its own it is a green check over a collapsed list, which is exactly the blind spot that
+         has bitten twice before.
+       · `coach-payables-schedule` addresses `?tab=schedule`, the dated arrangement, which defaults
+         **open** — so the installment rows, the period bands and their totals are drawn and
+         measured. It is also the live URL contract the Money hub and the Scheduled drill-in send,
+         so this entry proves that link lands on something real as well.
+
+     Both are needed. Dropping either leaves half the screen unmeasured. */
   { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=transactions`,    ready: 'h1' },
   { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=payables`,        ready: 'h1' },
+  { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=payables&tab=schedule`, ready: 'h1' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.

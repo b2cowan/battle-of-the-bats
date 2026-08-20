@@ -17,6 +17,7 @@ import { toggleKey } from '@/lib/toggle-key';
 import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import type { ExportColumnDef } from '@/lib/export';
 import type { RepTeamTag } from '@/lib/types';
 import styles from './bva.module.css';
@@ -918,47 +919,42 @@ export function BudgetVsActualPanel({
               "are we going to be short?" By activity answers what a statement structurally cannot,
               because a category appears in both its sections: "did hosting the tournament pay for
               itself?" Months is the treasurer's spreadsheet shape and is money-OUT only. */}
+          {/* ⚠⚠ TWO PILLS WHERE SEVEN SEGMENTED BUTTONS WERE (owner instruction 2026-08-20).
+              Transactions and Payables choose how one set of records is laid out with a labelled
+              pill that opens a small list; this report did the same job with two banks of buttons,
+              so one product asked the same question two ways. `View` here IS Payables' `Group by`:
+              same control, same place in the strip, same accent on the arrangement.
+
+              ⚠ The saving is real, which was the owner's own argument: seven buttons and two labels
+              wrapped onto a second line on anything narrower than a desktop, and a report gains
+              controls over time rather than shedding them.
+
+              ⚠ NO DEFAULT MOVED. The report still opens on Statement, and Months still opens on
+              Budget — only the shape of the control changed. */}
           <div className={styles.viewBar}>
-            <span className={styles.viewBarLabel}>View</span>
-            <div className={shared.segChoice} role="group" aria-label="Report view">
-              {([
-                ['statement', 'Statement'],
-                ['activity', 'By activity'],
-                ['months', 'Months'],
-              ] as const).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`${shared.segBtn} ${view === id ? shared.segBtnActive : ''}`}
-                  aria-pressed={view === id}
-                  onClick={() => setView(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <SingleSelectDropdown
+              label="View"
+              lead
+              value={view}
+              options={[
+                { id: 'statement', label: 'Statement' },
+                { id: 'activity', label: 'By activity' },
+                { id: 'months', label: 'Months' },
+              ]}
+              onChange={next => setView(next as BvaView)}
+            />
 
             {view === 'months' && (
-              <>
-                <span className={styles.viewBarLabel}>Showing</span>
-                <div className={shared.segChoice} role="group" aria-label="What each cell shows">
-                  {MONEY_LENSES.map(l => (
-                    <button
-                      key={l.id}
-                      type="button"
-                      className={`${shared.segBtn} ${lens === l.id ? shared.segBtnActive : ''}`}
-                      aria-pressed={lens === l.id}
-                      /* The visible label abbreviates on a phone ("Diff."); the accessible name
-                         must not — a screen reader should hear the whole word at every width. */
-                      aria-label={l.label}
-                      onClick={() => setLens(l.id)}
-                    >
-                      <span className={styles.lensFull}>{l.label}</span>
-                      <span className={styles.lensShort}>{l.short}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
+              /* ⚠ THE FULL WORD, ALWAYS. The segmented buttons abbreviated to "Diff." to survive a
+                 phone and carried an `aria-label` so a screen reader still heard the whole word.
+                 A pill names one chosen value, so there is room for it — and the abbreviation, and
+                 the accessibility patch it needed, both go away. */
+              <SingleSelectDropdown
+                label="Showing"
+                value={lens}
+                options={MONEY_LENSES.map(l => ({ id: l.id, label: l.label }))}
+                onChange={next => setLens(next as MoneyLens)}
+              />
             )}
 
             {/* On EVERY view, not just the month one — it exports whichever is on screen, so it

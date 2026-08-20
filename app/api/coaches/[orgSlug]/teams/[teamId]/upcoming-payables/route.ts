@@ -61,6 +61,25 @@ export const GET = withObservability(async (req: Request,
   const unbounded = daysParam === 0;
   const days = unbounded ? 0 : Math.min(Math.max(isNaN(daysParam) ? 90 : daysParam, 1), 365);
   const includePaid = url.searchParams.get('includePaid') === '1';
+  /**
+   * ⚠⚠ WHICH LANES THE CALLER ACTUALLY WANTS (`/simplify`, altitude lens, 2026-08-20).
+   *
+   * This route was shaped for ONE caller — the Money Overview's three-lane panel — and every lane
+   * is expensive: lane 1 walks dues schedules, instalments, payments, credits and payouts and then
+   * runs `duesRemainingByInstallment`; lane 2 calls `getCommitmentStandings` for the whole season.
+   *
+   * The rebuilt Payables list needs the CLUB lane and nothing else — it builds the team's own bills
+   * from standings it already holds, so lane 2 is the same computation done twice and lane 1 is
+   * never even read. That was survivable while the old Schedule sub-tab was one of two views; P3
+   * made the Payables face fetch this on every visit AND after every write, so the waste became
+   * recurring. Narrowing at the SOURCE is the fix — a caller discarding two thirds of a response is
+   * a workaround wearing the shape of an API call.
+   *
+   * ⚠ ABSENT MEANS ALL, so the hub panel and every existing caller are untouched.
+   */
+  const lanesParam = url.searchParams.get('lanes');
+  const wanted = lanesParam ? new Set(lanesParam.split(',').map(s => s.trim())) : null;
+  const wants = (lane: string) => !wanted || wanted.has(lane);
 
   const todayStr = tournamentToday();
   // A date string that sorts after every real due date — simpler and safer than branching every
@@ -68,10 +87,14 @@ export const GET = withObservability(async (req: Request,
   const cutoffStr = unbounded ? '9999-12-31' : addCalendarDays(todayStr, days);
 
   // ── Lane 1: player dues installments ────────────────────────────────────
-  const { data: schedules } = await supabaseAdmin
-    .from('rep_player_dues_schedules')
-    .select('id, player_id')
-    .eq('program_year_id', programYear.id);
+  // The heaviest lane in the route — five tables plus per-player coverage arithmetic. Skipped
+  // entirely when the caller did not ask for it.
+  const { data: schedules } = wants('collections_due')
+    ? await supabaseAdmin
+      .from('rep_player_dues_schedules')
+      .select('id, player_id')
+      .eq('program_year_id', programYear.id)
+    : { data: null };
 
   const scheduleIds = (schedules ?? []).map((s: any) => s.id);
   const schedulePlayerMap = new Map<string, string>(
@@ -187,13 +210,18 @@ export const GET = withObservability(async (req: Request,
   //
   // The amount shown is now what is STILL OWED on the piece, not its face value — `commitmentStanding`
   // owns that arithmetic (`memory/coach-money-one-arithmetic.md`: one home per question).
-  const { data: expenses } = await supabaseAdmin
-    .from('rep_team_expenses')
-    .select('id, description, category')
-    .eq('team_id', teamId)
-    .eq('program_year_id', programYear.id);
+  // ⚠ SKIPPED FOR A CALLER THAT DOES NOT WANT IT — `getCommitmentStandings` walks the whole
+  // season's plans and payments, and the rebuilt Payables list already holds that answer.
+  const wantsTeamLane = wants('team_payables');
+  const { data: expenses } = wantsTeamLane
+    ? await supabaseAdmin
+      .from('rep_team_expenses')
+      .select('id, description, category')
+      .eq('team_id', teamId)
+      .eq('program_year_id', programYear.id)
+    : { data: null };
 
-  const standings = await getCommitmentStandings(programYear.id);
+  const standings = wantsTeamLane ? await getCommitmentStandings(programYear.id) : {};
 
   const expenseItems: any[] = [];
   for (const e of expenses ?? []) {
@@ -238,14 +266,18 @@ export const GET = withObservability(async (req: Request,
   expenseItems.sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
 
   // ── Lane 3: org allocation installments ────────────────────────────────
-  const { data: splits } = await supabaseAdmin
-    .from('rep_allocation_splits')
-    .select(`
-      id,
-      rep_cost_allocations ( description )
-    `)
-    .eq('team_id', teamId)
-    .eq('org_id', team.orgId);
+  // The one lane the rebuilt Payables list actually asks for — what the club has billed this team,
+  // which is not a `rep_team_expenses` record and so has no standing to read locally.
+  const { data: splits } = wants('org_payables')
+    ? await supabaseAdmin
+      .from('rep_allocation_splits')
+      .select(`
+        id,
+        rep_cost_allocations ( description )
+      `)
+      .eq('team_id', teamId)
+      .eq('org_id', team.orgId)
+    : { data: null };
 
   const splitIds = (splits ?? []).map((s: any) => s.id);
   const splitDescMap = new Map<string, string>(

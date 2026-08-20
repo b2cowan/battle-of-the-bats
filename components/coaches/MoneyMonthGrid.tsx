@@ -15,6 +15,17 @@ import styles from './MoneyMonthGrid.module.css';
 
 export type { MoneyLens };
 
+/**
+ * ⚠⚠ THE THREE WORDS MEAN THREE DIFFERENT THINGS, AND SINCE 2026-08-20 THEY FINALLY SAY SO
+ * (owner ruling, Payables Rebuild P3): **Budget is the overall plan, Actual is what has already
+ * been paid, Scheduled is what the team is currently obligated to pay** — past due included.
+ *
+ * Before the ruling, a Scheduled cell was the plan at FACE VALUE: every installment in its due
+ * month whether or not it had been paid, so a month never fell as it was paid down. Two surfaces
+ * one tab away meant the remainder by the same word, and the owner read the difference as a defect
+ * in the middle of a QA walk. The arithmetic moved (the route drops settled pieces and quotes
+ * remainders); these labels did not need to, because they are now true.
+ */
 export const MONEY_LENSES: Array<{ id: MoneyLens; label: string; short: string }> = [
   { id: 'budget',     label: 'Budget',     short: 'Budget' },
   { id: 'scheduled',  label: 'Scheduled',  short: 'Sched.' },

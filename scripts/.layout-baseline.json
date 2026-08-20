@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T18:54:29.316Z",
+  "generated": "2026-08-20T21:14:37.686Z",
   "entries": {
     "coach-accounting|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
@@ -105,41 +105,13 @@
       "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
       "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
     },
-    "coach-budget-vs-actual|361|tap-floor|button·By activity": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
     "coach-budget-vs-actual|361|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
     },
-    "coach-budget-vs-actual|361|tap-floor|button·Statement": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·By activity": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
     "coach-budget-vs-actual|390|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·Statement": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·By activity": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
     },
     "coach-budget-vs-actual|768|tap-floor|button·Export": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -153,17 +125,9 @@
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-budget-vs-actual|768|tap-floor|button·Months": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "29px tall (floor 44)"
-    },
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Statement": {
-      "reason": "The report VIEW switcher, renamed by mig 243 (Categories became Statement; By activity joined it). The same shared .segBtn primitive as the Months button beside it, at the same 29px — a rename, not a new geometry. Carried as product-wide segmented-control debt exactly as its siblings are, and NOT padded here alone: three segments in one group must share a height, so lifting these two without Months would leave the control visibly ragged for a fix that belongs to the primitive.",
-      "detail": "29px tall (floor 44)"
     },
     "coach-budget|361|tap-floor|button·Review": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -1961,14 +1925,6 @@
       "reason": null,
       "detail": "31px tall (floor 44)"
     },
-    "coach-payables|768|tap-floor|button·All": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Commitments (1)": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
     "coach-payables|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
@@ -1980,18 +1936,6 @@
     "coach-payables|768|tap-floor|button·Import": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Paid": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Unpaid": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
     },
     "coach-payment-requests|361|tap-floor|a·Open Org Allocations": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -3077,10 +3021,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "coach-transactions|768|tap-floor|a·Open": {
-      "reason": "Money redesign P3, 2026-08-17. The link out to the workspace that owns a derived row (Player Dues, Fundraising, Club). 39px — the same height as every nav link in the portal, which are all baselined at it — and .block640 gives it a full touch target once the table stacks. It replaced a bare 15px inline link.",
-      "detail": "39px tall (floor 44)"
-    },
     "coach-transactions|768|tap-floor|button·Add": {
       "reason": null,
       "detail": "31px tall (floor 44)"
@@ -3192,6 +3132,70 @@
     "coach-team-hub|361|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Export": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Import": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|summary·ViewStatement": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|summary·ViewStatement": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|768|tap-floor|summary·ViewStatement": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|361|tap-floor|summary·Group byCommitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|summary·Group byCommitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|summary·Group byCommitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|summary·Group byDue date": {
+      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|summary·Group byDue date": {
+      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|summary·Group byDue date": {
+      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
+      "detail": "31px tall (floor 44)"
     }
   }
 }

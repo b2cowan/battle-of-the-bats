@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -22,7 +22,11 @@ import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
-import { installmentStatus, type CommitmentStanding, type AppliedPayment } from '@/lib/payable-standing';
+import {
+  installmentStatus, installmentStatuses, installmentLabel, PAYABLE_STATUS_LABEL, PAYABLE_STATUS_ORDER,
+  PAYABLE_STATUS_DEFAULT,
+  type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
+} from '@/lib/payable-standing';
 import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -38,6 +42,7 @@ import {
   type RegisterBookRow, type RegisterKind,
 } from '@/lib/coach-register';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
 import {
   AROUND_WINDOW_DAYS, computeSeasonBounds, isDateRangePresetId, resolveDateRangePreset,
@@ -49,8 +54,12 @@ import type {
   RepTeamMoneyIn,
 } from '@/lib/types';
 import { isFundingKind } from '@/lib/coach-budget-totals';
+import { formatMonthLong, monthKeyOf } from '@/lib/coach-budget-months';
+import { toggleKey } from '@/lib/toggle-key';
 import { useMoneyRevision, useBumpMoneyRevision, useSharedMoneyRead } from '@/lib/coach-money-refresh';
-import { formatStoredDate, tournamentToday, addCalendarDays } from '@/lib/timezone';
+import {
+  formatStoredDate, tournamentToday, addCalendarDays, daysBetweenDateStrings,
+} from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
 import {
   MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
@@ -200,33 +209,12 @@ function readSavedDatePreset(teamId: string): DateRangeSelection {
   return 'around';
 }
 
-/**
- * Where a payable stands, as one word — the summary its row shows now that the deposit/balance
- * pair lives one click in (Money-hub table pass 2026-08-13).
- *
- * ⚠ IT REPORTS ONLY WHAT IS RECORDED. A payable with no deposit and no balance set has nothing
- * scheduled, and says so rather than claiming to be unpaid: the coach recorded a commitment and
- * has not yet said when it is due. "Overdue" is reserved for a due date that has actually passed
- * with nothing marked against it — the same restraint the Dues never-paid banner learned, where
- * flagging everyone before anything was due made the warning worth ignoring.
- */
-function payableStatus(
-  standing: CommitmentStanding | undefined,
-  today: string,
-): { label: string; cls: string } {
-  /* R1 makes a commitment with no plan unrepresentable, so this branch is a fallback for a row
-     whose standing has not arrived yet — honest, and gone on the next load. */
-  if (!standing || standing.installments.length === 0) {
-    return { label: 'Scheduled', cls: styles.badgeDraft };
-  }
-  if (standing.state === 'settled') return { label: 'Paid', cls: styles.badgeActive };
-  const anyOverdue = standing.installments.some(i => i.state !== 'settled' && i.dueDate < today);
-  if (anyOverdue) return { label: 'Overdue', cls: styles.badgeOverdue };
-  /* ⚠ R4 — "Partly paid" is a description, never a settlement: it counts as unpaid in every
-     filter and every schedule, and the badge is what tells the coach money has landed. */
-  if (standing.state === 'partly_paid') return { label: 'Partly paid', cls: styles.badgeCompleted };
-  return { label: 'Scheduled', cls: styles.badgeDraft };
-}
+/* ⛖ `payableStatus()` IS GONE (Payables Rebuild P3). It reduced a whole commitment to ONE word
+   for the Commitments row’s Status cell, and the list it served no longer exists: rows are dated
+   PIECES now, each carrying its own state, and a bill’s header states what is still owed rather
+   than a single adjective for the lot. The four-word vocabulary it approximated is
+   `installmentStatus` / `installmentStatuses` in lib/payable-standing.ts, which is also what the
+   Status dropdown filters on — one rule, not a screen-local second opinion. */
 
 /**
  * WHICH OF THE TWO TABS THIS PANEL IS BEING (Money split P1, 2026-08-16).
@@ -252,19 +240,37 @@ type MoneyFace = 'transactions' | 'payables';
  * that by direction meant neither list could ever carry a running balance, because half the money
  * was on the other one.
  *
- * ⚠ The union keeps `register` as a member rather than the face becoming tab-less, because the
- * `?tab=` reader, the export label and the empty states are all one check across both faces — and a
- * face with no tab at all would have needed every one of them to learn a second shape.
+ * ⚖ AND THE SUB-VIEW CONCEPT IS GONE ENTIRELY (Payables Rebuild P3, /simplify altitude lens).
+ * `ExpenseTab`, `FACE_TABS`, the `tab` state and `goToTab` survived the rebuild for one release
+ * as a union each face mapped to exactly ONE member of — so `tab` could not diverge from `face`,
+ * and the file was testing the same boolean in two vocabularies (`!onPayables` beside
+ * `onPayables`). That is a dead abstraction that LOOKS load-bearing, which is the worst kind. The
+ * face is the screen; `groupBy` is how the one Payables list is arranged; there is no third thing.
  */
-type ExpenseTab = 'register' | 'commitments' | 'schedule';
 
-const FACE_TABS: Record<MoneyFace, ExpenseTab[]> = {
-  transactions: ['register'],
-  /* ⚠ SCHEDULE FIRST, AND IT IS THE DEFAULT (plan §0, recommended and adopted). A coach opening
-     Payables is asking "what do we owe and when" — a dated list answers that; a list of
-     commitments in entry order does not. Commitments is where a record is MANAGED, which is the
-     second thing you want, not the first. */
-  payables: ['schedule', 'commitments'],
+/**
+ * HOW THE ONE LIST IS ARRANGED — not a filter, and the control says so (plan §7).
+ *
+ * ⚠ THE SAME ROWS UNDER BOTH. Nothing is added or hidden between the two arrangements; that is the
+ * whole claim the control makes, and §64 Part C walks exactly it. `Commitment` gathers a bill's
+ * installments under the bill; `Due date` runs them all in one dated sequence under Overdue and
+ * month headings.
+ */
+type PayGroupBy = 'commitment' | 'due';
+
+const PAY_GROUP_BY_LABEL: Record<PayGroupBy, string> = {
+  commitment: 'Commitment',
+  due: 'Due date',
+};
+
+/** The retired sub-view names, as arrangements. ⚠ `?tab=schedule` is a LIVE URL CONTRACT — the
+ *  Money hub's "See full schedule", Budget vs. Actual's Scheduled drill-in, the legacy-address
+ *  mapper and the UAT smoke spec all address it. It must land somewhere honest, and the dated
+ *  arrangement is what it always meant. */
+const TAB_AS_GROUP_BY: Record<string, PayGroupBy> = {
+  schedule: 'due',
+  commitments: 'commitment',
+  payables: 'commitment',
 };
 
 /** ⚠⚠ EVERY REGISTER ROW IS EXACTLY ONE OF THESE (owner call, 2026-08-19 — folds the old "Overdue"
@@ -282,15 +288,85 @@ function registerStatusOf(r: { scheduled: boolean; overdueDays: number | null })
   return !r.scheduled ? 'actual' : r.overdueDays != null ? 'overdue' : 'scheduled';
 }
 
-type ScheduleFilter = 'unpaid' | 'paid' | 'all';
-
 /* ⚖ `MarkPaidAction` IS GONE (Payables Rebuild P2). Money-out turns paid one way now: a payment
    recorded against the commitment, which can say "part of it" and can be undone — the two things
-   the three named actions structurally could not. */
+   the three named actions structurally could not.
 
-/** A commitment on the schedule tab: exactly what the payables API returns, plus which lane it
- *  came from. Reuses `PayableItem` so the hub panel and this tab can't drift apart. */
+   ⚖ AND `ScheduleFilter` (Unpaid | Paid | All) IS GONE WITH P3. Three pills could not express
+   "partly paid" at all — the middle state this whole rebuild exists to make representable — so they
+   are replaced by the four-option Status dropdown that Transactions already teaches. */
+
+/** A commitment on the schedule feed: exactly what the payables API returns, plus which lane it
+ *  came from. Reuses `PayableItem` so the hub panel and this screen can't drift apart. */
 type ScheduleRow = PayableItem & { source: 'team' | 'org' };
+
+/**
+ * ONE ROW OF THE PAYABLES LIST — a dated piece of something the team owes.
+ *
+ * ⚠ `owing` IS WHAT IS STILL OWED, not the piece's face value (owner ruling 2026-08-20: *"budget is
+ * the overall plan, actual is what was already paid, scheduled is what we are currently obligated to
+ * pay"*). A $450 piece with $250 against it reads $200 and says so underneath. A SETTLED piece keeps
+ * its face value, because nothing is owed and the face figure is the only honest one left to show —
+ * the same rule the payment schedule has always applied.
+ */
+interface PayPiece {
+  key: string;
+  dueDate: string;
+  /** "Installment 3 of 6", or "One payment" for a lone piece — never "installment 1 of 1". */
+  label: string;
+  /** 1-based, for the shared  the exports and the register also name pieces by. */
+  installmentNumber: number;
+  owing: number;
+  /** The piece's face amount, and what has landed on it — for the "$250.00 of $450.00 paid" line. */
+  faceAmount: number;
+  applied: number;
+  settled: boolean;
+  partlyPaid: boolean;
+  daysUntilDue: number;
+  /** ⚠ EVERY word true of it — what Status filters and counts on (`installmentStatuses`). */
+  statuses: readonly PayableRowStatus[];
+  /** The ONE word its badge shows; the screen writes "· partly paid" beside it where both apply. */
+  badge: PayableRowStatus;
+  installmentId: string | null;
+}
+
+/**
+ * ONE BILL — a commitment and its dated pieces, or one club allocation and its instalments.
+ *
+ * ⚠⚠ EVERY BILL IS A FOLDING HEADER, INCLUDING A BILL WITH ONE PAYMENT IN IT (owner ruling
+ * 2026-08-20). An earlier pass gave a one-piece bill no chevron on the grounds that it had nothing
+ * to hide. That rule cannot survive a real list: a two-installment bill with one left to pay looks
+ * exactly like the single case, and any rule keyed on what is LEFT changes a bill's shape as it is
+ * paid down — chevrons vanishing from rows a coach has just paid. The cost is knowingly paid: a
+ * one-piece bill states itself twice, once as a header and once as its only row.
+ */
+interface PayBill {
+  key: string;
+  /** A club allocation is not the team's record to edit — its door is the Club tab, not the drawer. */
+  kind: 'team' | 'org';
+  description: string;
+  category: string | null;
+  itemName: string | null;
+  total: number;
+  paid: number;
+  owing: number;
+  over: number;
+  /** Every piece, before Status narrows — for the header's own figures. */
+  pieceCount: number;
+  unpaidCount: number;
+  /** The pieces the filters admit. A bill with none of these drops off the list entirely. */
+  pieces: PayPiece[];
+  /** The earliest unsettled due date — what the header shows and what the list sorts on. */
+  nextDue: string | null;
+  nextBadge: PayableRowStatus | null;
+  nextDays: number | null;
+  nextPartly: boolean;
+  /** Aimed at by the header's Record a payment when the bill is folded. */
+  nextInstallmentId: string | null;
+  nextOwing: number;
+  expense?: RepTeamExpense;
+  standing?: CommitmentStanding;
+}
 
 /**
  * ONE form behind both kinds of record (owner review 2026-08-15, Q8).
@@ -446,13 +522,13 @@ const FORM_COPY: Record<FormKindTag, {
   },
 };
 
-/** The sub-view a coach is standing on decides how the form opens. On either Payables view that is
- *  always a commitment — the tab has exactly one kind of record in it, which is the point of it.
+/** Which record the Add door opens on. Payables holds exactly one kind, which is the point of it.
  *  ⚠ The register opens on a paid EXPENSE, not on income: the book holds both directions, and the
  *  form's two pills are one click apart, so the door opens on the far commoner of the two. */
-function kindForTab(tab: ExpenseTab): { kind: EntryKind; timing: CostTiming } {
-  if (tab === 'commitments' || tab === 'schedule') return { kind: 'expense', timing: 'payable' };
-  return { kind: 'expense', timing: 'paid' };
+function kindForFace(onPayables: boolean): { kind: EntryKind; timing: CostTiming } {
+  return onPayables
+    ? { kind: 'expense', timing: 'payable' }
+    : { kind: 'expense', timing: 'paid' };
 }
 
 /**
@@ -559,21 +635,13 @@ function MoneyRecordsPanel({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  /** ⚠ Which face is this, said ONCE and said EARLY — every branch below reads this rather than
+   *  re-testing, and the sticky-toolbar effect near the top needs it too. */
+  const onPayables = face === 'payables';
 
   const [expenses, setExpenses] = useState<RepTeamExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<ExpenseTab>(FACE_TABS[face][0]);
-
-  /* ⚠ THE WRAPPER SURVIVES ITS ONE JOB, DELIBERATELY. It existed to cancel the inline "when was
-     this paid?" prompt on a view change (/review, 2026-08-16) — an open prompt was anchored to a row
-     id, so leaving and returning reopened it with its old date on a visit started for another
-     reason. That prompt is gone (money redesign P3), but the lesson is about the NEXT piece of
-     per-row state a view picks up, and one wrapper is what makes "clear it on the way out"
-     checkable rather than remembered at each call site. */
-  const goToTab = useCallback((next: ExpenseTab) => {
-    setTab(next);
-  }, []);
 
   // Structured categories (owner decision 2026-07-08: free-text retired). The picker
   // shares the budget taxonomy so Budget vs. Actual's name-match join can't misfire.
@@ -588,9 +656,43 @@ function MoneyRecordsPanel({
     Array<{ categoryId: string | null; itemId: string | null; direction: 'in' | 'out' }>
   >([]);
 
-  /* Which payable has its deposit/balance detail open. One at a time — the pair is tall, and a
-     list with every row expanded is the card list this replaced. */
-  const [expandedPayable, setExpandedPayable] = useState<string | null>(null);
+  /* ── The one Payables list (Rebuild P3) ────────────────────────────────────────────────────
+     ⚠ `expandedPayable` IS GONE. It held ONE open row at a time, because the deposit/balance pair
+     it revealed was tall enough that a list with every row open was the card list it replaced. The
+     detail it showed is the DRAWER now (`drawerFor`), so what folds here is the opposite thing: a
+     bill's own installments, several at a time, as a way of clearing what you have dealt with. */
+  const [groupBy, setGroupBy] = useState<PayGroupBy>('commitment');
+  /* ⚠⚠ SEEDED WITH TWO OF FOUR, NEVER EMPTY — `MultiSelectDropdown`'s own rule is "empty means all",
+     which here would open the screen on a season of settled history rather than on what is owed.
+     `PAYABLE_STATUS_DEFAULT` is the shared call (same reasoning as the register's Status default),
+     and it makes the control read "2 selected" rather than "All" over a list that is not all. */
+  const [payStatus, setPayStatus] = useState<Set<PayableRowStatus>>(
+    () => new Set(PAYABLE_STATUS_DEFAULT));
+  const [payItems, setPayItems] = useState<Set<string>>(new Set());
+  /**
+   * ⚠⚠ WHICH GROUPS ARE FLIPPED OUT OF THEIR ARRANGEMENT'S DEFAULT — not "which are shut".
+   *
+   * **Bills start SHUT; periods start OPEN** (owner ruling 2026-08-20, revising this same day's
+   * earlier call). The first version defaulted everything open, on the argument that "a list that
+   * opens folded hides the very numbers it exists to show". ⚠ That argument died with the header
+   * rebuild and the note is kept so it is not re-made: a bill's header now carries its next due
+   * date, what is still owing and how late it is, so folding it hides NOTHING — the coach sees one
+   * clean line per bill and opens the one they came for. A PERIOD band carries only a month name
+   * and a total, so folding it by default hides everything, and it would hide *which bills are
+   * late* behind an Overdue heading — the most urgent thing on the screen.
+   *
+   * ⚠ STORED AS A FLIP, NOT AS A STATE, so a bill that arrives after a write (or after a filter
+   * change) takes the arrangement's default instead of inheriting whatever the last set happened to
+   * hold. No effect has to reconcile it.
+   *
+   * ⚠ FOR THE VISIT, NOT FOREVER. Nothing writes this to storage — a remembered fold is how a coach
+   * loses a bill and blames the product. Bill keys and period keys cannot collide, so a flip made
+   * in one arrangement is simply inert in the other.
+   */
+  const [flippedFolds, setFlippedFolds] = useState<Set<string>>(new Set());
+  /** Which bill's drawer is open — the whole commitment in one panel. Every row opens it, settled
+   *  or not, which is defect 3 closing. */
+  const [drawerFor, setDrawerFor] = useState<string | null>(null);
 
   /* Money coming IN (mig 243): income and money back, in one list beside the two money-out ones.
      `derivedKeys` are the category+item rows whose actual already comes from a fundraiser or a
@@ -702,7 +804,7 @@ function MoneyRecordsPanel({
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [toolbarH, setToolbarH] = useState(96);
   useEffect(() => {
-    if (tab !== 'register') return;
+    if (onPayables) return;
     const el = toolbarRef.current;
     if (!el) return;
     /* ⚠ THE BREATHING ROOM BELOW THE TOOLBAR IS PADDING, NOT MARGIN, WHEN PINNED — see
@@ -715,7 +817,7 @@ function MoneyRecordsPanel({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [tab]);
+  }, [onPayables]);
 
   // One form, three answers, two modes (add / edit) — see BLANK_RECORD and EntryKind.
   const [formOpen, setFormOpen] = useState(false);
@@ -910,19 +1012,27 @@ function MoneyRecordsPanel({
 
   // Chunk H — the payment schedule: every money-OUT commitment in one list, by due date.
   // Player dues stay on the Dues page, where the reminders that chase them live.
+  /* ⚠ THE FEED IS NOW READ FOR ITS CLUB LANE ALONE (Payables Rebuild P3). The team's own
+     commitments are built here from `expenses` + `standings` — the same records the drawer reads —
+     so the list and the drawer cannot disagree about what a bill has paid. What this endpoint still
+     uniquely knows is what the CLUB has allocated to the team, which is not a `rep_team_expenses`
+     record and has no standing. */
   const [schedule, setSchedule] = useState<ScheduleRow[] | null>(null);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
+  /** ⚠ SURFACED, NOT SWALLOWED. If this feed fails on a club-run team, the club's own bills are
+   *  simply absent from a list that claims to hold everything the team owes — so the list says so
+   *  above itself rather than quietly showing a shorter season. There is no spinner beside it: the
+   *  team's own bills render from data already in hand, and a second skeleton for a lane that is
+   *  empty on most teams would be chrome. */
   const [scheduleError, setScheduleError] = useState('');
-  const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilter>('unpaid');
 
   // Chunk H2 — a season of commitments arrives as a schedule far more often than one at a time.
   const [importOpen, setImportOpen] = useState(false);
   const [importMessage, setImportMessage] = useState('');
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
 
-  // Nav-hide + body-scroll-lock registration for the record modal AND the payment modal
-  // (mobile sheet default) — one registration, either door.
-  useOverlayOpen(formOpen || paying !== null);
+  // Nav-hide + body-scroll-lock registration for the record modal, the payment modal AND the
+  // commitment drawer (mobile sheet default) — one registration, any door.
+  useOverlayOpen(formOpen || paying !== null || drawerFor !== null);
 
   /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
      silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
@@ -976,7 +1086,7 @@ function MoneyRecordsPanel({
   }
 
   /** Open the form to ADD, opening on whatever the current sub-tab is about (Q8). */
-  function openAdd(opening: { kind: EntryKind; timing: CostTiming } = kindForTab(tab)) {
+  function openAdd(opening: { kind: EntryKind; timing: CostTiming } = kindForFace(onPayables)) {
     resetForm();
     setFormKind(opening.kind);
     setFormTiming(opening.timing);
@@ -1026,6 +1136,34 @@ function MoneyRecordsPanel({
    *  is why `formKind` is not set here: `entryKind` derives it from the record itself. */
   function openEdit(e: RepTeamExpense) {
     openSavedRecord(e, formFromExpense(e, standings[e.id]));
+  }
+
+  /**
+   * Add a second dated piece to a bill that has one (Payables Rebuild P3, drawer action).
+   *
+   * ⚠ IT OPENS THE RECORD'S OWN FORM WITH THE SPLIT ALREADY OPEN, rather than inventing a second
+   * editor: the existing piece fills the deposit fields and the balance is left blank for the coach
+   * to type. One door to a commitment's plan, which is the rule the whole screen is built on.
+   *
+   * ⚠⚠ THE TOTAL FIELD IS NOT PRE-RAISED, AND DOES NOT NEED TO BE. `composeTwoPieceInstallments`
+   * ignores the typed total once BOTH halves carry an amount, and the server derives the
+   * commitment's total from the sum of its installments (R2) — so a coach who types the new piece's
+   * amount gets the right plan whatever the Total box still says. The box being briefly out of step
+   * is the two-piece editor's own wart, and it is replaced wholesale by P4's n-piece generator.
+   */
+  function openAddInstallment(e: RepTeamExpense) {
+    const first = standings[e.id]?.installments[0];
+    openSavedRecord(e, {
+      ...formFromExpense(e, standings[e.id]),
+      dueDate: '',
+      depositAmount: first ? String(first.amount) : '',
+      depositDueDate: first?.dueDate ?? '',
+      balanceAmount: '',
+      balanceDueDate: '',
+    });
+    // `openSavedRecord` derives this from the SAVED plan, which is still one piece — the whole
+    // point of this door is to open the editor the record does not yet need.
+    setFormSplit(true);
   }
 
   /**
@@ -1301,23 +1439,29 @@ function MoneyRecordsPanel({
     // Its own sequence, for the reason spelled out over `loadSeq` — this list is reloaded twice per
     // write as well, and it is the one screen whose entire job is to be current.
     const seq = ++scheduleSeq.current;
-    setScheduleLoading(true);
     setScheduleError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables?days=0&includePaid=1`);
+      /* ⚠ `lanes=org_payables` — ASK FOR THE ONE LANE WE READ (/simplify, altitude lens). The dues
+         lane was never parsed here, and the team lane is `getCommitmentStandings` run a second time
+         for an answer this panel already holds. P3 made that waste recurring by fetching on every
+         visit to the face and after every write; narrowing the REQUEST is the honest fix. */
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables?days=0&includePaid=1&lanes=org_payables`);
       const data = await res.json().catch(() => ({}));
       if (seq !== scheduleSeq.current) return;
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       const lanes = (data.lanes ?? []) as Array<{ id: string; items: Omit<ScheduleRow, 'source'>[] }>;
-      const rows: ScheduleRow[] = [
-        ...(lanes.find(l => l.id === 'team_payables')?.items ?? []).map(i => ({ ...i, source: 'team' as const })),
-        ...(lanes.find(l => l.id === 'org_payables')?.items ?? []).map(i => ({ ...i, source: 'org' as const })),
-      ].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
+      /* ⚠ THE CLUB LANE ONLY, and the request now says so. The team's own bills are built from
+         `standings`, so the list and the drawer read ONE object and cannot disagree about what a
+         bill has paid; asking for the team lane as well would be that same answer computed twice.
+         The array keeps its `source` tag because the grouping still distinguishes a club bill from
+         a team one — a club bill's door is the Club tab, not the drawer. */
+      const rows: ScheduleRow[] = (lanes.find(l => l.id === 'org_payables')?.items ?? [])
+        .map(i => ({ ...i, source: 'org' as const }))
+        .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
       setSchedule(rows);
     } catch (e: any) {
-      setScheduleError(e.message ?? 'Failed to load the payment schedule.');
-    } finally {
-      if (seq === scheduleSeq.current) setScheduleLoading(false);
+      setScheduleError(e.message ?? 'Could not load what your club has billed this team.');
     }
   }, [orgSlug, teamId]);
 
@@ -1327,7 +1471,7 @@ function MoneyRecordsPanel({
      tab — brings in a whole season of commitments and bumps the revision. The list beside it
      refreshed; this table did not, until the coach happened to switch sub-views and back. Silent
      stale money on the screen whose entire job is to be current. */
-  useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule, moneyRevision]);
+  useEffect(() => { if (face === 'payables') loadSchedule(); }, [face, loadSchedule, moneyRevision]);
 
   /**
    * WHAT EVERY WRITE ON THIS SCREEN DOES AFTERWARDS. One function, three callers.
@@ -1337,17 +1481,17 @@ function MoneyRecordsPanel({
    * has just made wrong — the screen settles back to exactly what it looked like before the coach
    * pressed Save. The bump clears the cache, so it has to come first.
    *
-   * ⚠ AND IT IS A WRAPPER RATHER THAN A COMMENT AT EACH CALL SITE, because this file has already
-   * learned that lesson once: `goToTab` above says in as many words that the point of failure is
-   * "the call site added next." Three copies of a warning is not a guard — the fourth write path
-   * would simply not read them.
+   * ⚠ AND IT IS A WRAPPER RATHER THAN A COMMENT AT EACH CALL SITE. Three copies of a warning is
+   * not a guard — the fourth write path would simply not read them. (This file used to cite
+   * `goToTab` as the precedent for that; `goToTab` was deleted with the sub-view concept in P3,
+   * and the rule it stood for is the reason this wrapper survives it.)
    */
   const refreshAfterWrite = useCallback(async () => {
     bumpMoneyRevision();
     await load();
-    // The schedule is its own fetch and only the tab showing it needs to pay for the re-read.
-    if (tab === 'schedule') await loadSchedule();
-  }, [bumpMoneyRevision, load, loadSchedule, tab]);
+    // The club-bill feed is its own fetch, and only the face that renders it pays for the re-read.
+    if (face === 'payables') await loadSchedule();
+  }, [bumpMoneyRevision, load, loadSchedule, face]);
 
   /**
    * THE BOOK, AS THE FILTER STRIP IS SHOWING IT — derived once per change of its actual inputs.
@@ -1427,6 +1571,270 @@ function MoneyRecordsPanel({
   }, [book, selectedKinds, selectedItems, filterTagId, selectedStatus, dateRange, tagsByExpenseId]);
 
 
+  /* ⚠ HOISTED ABOVE THE MEMO THAT READS THEM. These used to sit below the access guard with the
+     rest of the render-time derivations — fine for JSX, illegal for a hook's dependency list. */
+  /**
+   * ⚠⚠ MEMOISED, AND THAT IS NOT A MICRO-OPTIMISATION (/simplify, efficiency lens). A bare
+   * `.filter()` in the render body returns a NEW ARRAY EVERY RENDER, and this is a dependency of
+   * the `payBills` memo below — so React compared references, saw a change every time, and
+   * recomputed the entire list on every keystroke in the money form that shares this component.
+   * That is precisely the cost `payBills`'s own header says it exists to avoid: the memo was there,
+   * and this one line was quietly defeating it.
+   */
+  const allPayablesRaw = useMemo(
+    () => expenses.filter(e => e.expenseType === 'tournament_payable'),
+    [expenses],
+  );
+
+  /**
+   * ⚠⚠ THE ONE PAYABLES LIST, DERIVED ONCE (Rebuild P3) — the bills, their pieces, and what the
+   * Status dropdown counts. Memoised for the reason the register's memo already gives: the money
+   * form lives in this component, so every keystroke in it re-renders the whole panel, and this
+   * walks every commitment's plan.
+   *
+   * ⚠ COUNTS ARE TAKEN BEFORE STATUS NARROWS (plan §3.3) — over the rows the OTHER filters admit,
+   * never after Status itself has cut them down. Get it wrong and the numbers chase their own tail:
+   * tick Overdue and every other option reads zero.
+   *
+   * ⚠ THE TWO ARRANGEMENTS SHARE THIS EXACTLY. `payBills` is built once; `Group by` only decides
+   * how it is laid out below. That is what makes "nothing appears, nothing disappears" true by
+   * construction rather than by two code paths agreeing — the check §64 Part C walks.
+   */
+  const { payBills, payStatusCounts, payItemNames } = useMemo(() => {
+    const today = tournamentToday();
+    const counts: Record<PayableRowStatus, number> = {
+      outstanding: 0, overdue: 0, partly_paid: 0, paid: 0,
+    };
+
+    /** What a budget item is CALLED, for the Item filter and the drawer's subtitle.
+     *  ⚠ ONE MAP, NOT A NESTED SCAN PER BILL (/simplify, efficiency lens). Looking the name up by
+     *  walking every category's items for every commitment is O(bills × categories × items) inside
+     *  the heaviest memo on the screen; built once it is O(1) per bill. */
+    const itemNameById = new Map<string, string>();
+    for (const c of categories) for (const i of c.items) itemNameById.set(i.id, i.name);
+    const itemName = (e: RepTeamExpense): string | null =>
+      (e.budgetItemId && itemNameById.get(e.budgetItemId)) || null;
+
+    /* Everything the OTHER controls admit — the tag chip and the Item dropdown. Status is applied
+       after the counts are taken, which is the whole point of doing it in two passes. */
+    /* ⚠ A DRAFT IS NOT A BILL (/simplify). The seven fields below describe a bill's NEXT unpaid
+       payment, and nothing knows them until Status has narrowed the pieces in the second pass — so
+       the draft type omits them rather than seeding placeholders that are always overwritten. It is
+       now structurally impossible to read a bill's `next*` figures before they are real. */
+    type PayBillDraft = Omit<PayBill,
+      'pieces' | 'nextDue' | 'nextBadge' | 'nextDays' | 'nextPartly' | 'nextInstallmentId' | 'nextOwing'>;
+    const admitted: Array<{ bill: PayBillDraft; pieces: PayPiece[] }> = [];
+    const itemNames = new Set<string>();
+
+    for (const e of allPayablesRaw) {
+      const name = itemName(e);
+      if (name) itemNames.add(name);
+      const standing = standings[e.id];
+      if (!standing) continue;
+      /* The tag chip, inlined rather than called through a helper: a predicate rebuilt on every
+         render is a dependency this memo could never satisfy, and its two real inputs
+         (`filterTagId`, `tagsByExpenseId`) are already in the list below. */
+      if (filterTagId && !(tagsByExpenseId[e.id] ?? []).includes(filterTagId)) continue;
+      if (payItems.size > 0 && (!name || !payItems.has(name))) continue;
+
+      const count = standing.installments.length;
+      const pieces: PayPiece[] = standing.installments.map(inst => {
+        const statuses = installmentStatuses(inst, today);
+        for (const s of statuses) counts[s]++;
+        return {
+          key: inst.id,
+          dueDate: inst.dueDate,
+          /* The shared naming rule: a lone piece takes NO number — "installment 1 of 1" is noise,
+             and "One payment" is the word P2's drawer already uses for exactly this. */
+          label: count > 1 ? `Installment ${inst.installmentNumber} of ${count}` : 'One payment',
+          installmentNumber: inst.installmentNumber,
+          owing: inst.state === 'settled' ? inst.amount : inst.remaining,
+          faceAmount: inst.amount,
+          applied: inst.applied,
+          settled: inst.state === 'settled',
+          partlyPaid: inst.state === 'partly_paid',
+          daysUntilDue: daysBetweenDateStrings(today, inst.dueDate),
+          statuses,
+          badge: installmentStatus(inst, today),
+          installmentId: inst.id,
+        };
+      });
+
+      admitted.push({
+        bill: {
+          key: e.id,
+          kind: 'team',
+          description: e.description,
+          category: e.category ?? null,
+          itemName: name,
+          total: standing.total,
+          paid: standing.paid,
+          owing: standing.remaining,
+          over: standing.over,
+          pieceCount: count,
+          unpaidCount: pieces.filter(p => !p.settled).length,
+          expense: e,
+          standing,
+        },
+        pieces,
+      });
+    }
+
+    /* ⚠ THE CLUB'S OWN BILLS STAY ON THIS LIST, in both arrangements, exactly as they appeared on
+       the schedule before the rebuild. They are not the team's records to edit — a club allocation
+       is settled through Club, which owns that conversation — so the bill's door is the Club tab
+       rather than the drawer. Dropping them would silently lose a club-run team's other half. */
+    const orgRows = (schedule ?? []).filter(r => r.source === 'org');
+    const byAllocation = new Map<string, ScheduleRow[]>();
+    for (const r of orgRows) {
+      // Append in place — spreading the bucket into a fresh array per row makes grouping O(n²)
+      // in the instalments sharing one allocation (/simplify, efficiency lens).
+      const bucket = byAllocation.get(r.description);
+      if (bucket) bucket.push(r); else byAllocation.set(r.description, [r]);
+    }
+    for (const [description, rows] of byAllocation) {
+      const pieces: PayPiece[] = rows.map(r => {
+        const settled = !!r.paid;
+        const status: PayableRowStatus = settled ? 'paid'
+          : (r.dueDate ?? '') < today ? 'overdue' : 'outstanding';
+        counts[status]++;
+        return {
+          key: r.id,
+          dueDate: r.dueDate ?? today,
+          label: r.label ?? 'Instalment',
+          installmentNumber: 1,
+          owing: r.amount,
+          faceAmount: r.amount,
+          applied: 0,
+          settled,
+          partlyPaid: false,
+          daysUntilDue: r.daysUntilDue ?? 0,
+          statuses: [status],
+          badge: status,
+          installmentId: null,
+        };
+      });
+      const owing = pieces.filter(p => !p.settled).reduce((s, p) => s + p.owing, 0);
+      const total = pieces.reduce((s, p) => s + p.faceAmount, 0);
+      admitted.push({
+        bill: {
+          key: `org:${description}`,
+          kind: 'org',
+          description,
+          category: 'From your club',
+          itemName: null,
+          total, paid: total - owing, owing, over: 0,
+          pieceCount: pieces.length,
+          unpaidCount: pieces.filter(p => !p.settled).length,
+        },
+        pieces,
+      });
+    }
+
+    /* Pass two — Status narrows, and a bill whose every piece was filtered out drops off the list.
+       The header's OWN figures (paid of total, still owing) are deliberately taken from the whole
+       bill above, never from the visible slice: "$1,550 still owing" must not change because the
+       coach ticked a filter. */
+    const bills: PayBill[] = [];
+    for (const { bill, pieces } of admitted) {
+      const visible = payStatus.size === 0
+        ? pieces
+        : pieces.filter(p => p.statuses.some(s => payStatus.has(s)));
+      if (visible.length === 0) continue;
+      const next = pieces.find(p => !p.settled) ?? null;
+      bills.push({
+        ...bill,
+        pieces: visible,
+        nextDue: next?.dueDate ?? null,
+        nextBadge: next?.badge ?? null,
+        nextDays: next?.daysUntilDue ?? null,
+        nextPartly: next?.partlyPaid ?? false,
+        nextInstallmentId: next?.installmentId ?? null,
+        nextOwing: next?.owing ?? 0,
+      });
+    }
+
+    /* ⚠ SOONEST NEXT PAYMENT FIRST (owner ruling 2026-08-20) — so the longest-overdue bill sits at
+       the top and the furthest-off sinks. A fully settled bill has no next payment and therefore
+       nothing to sort by: it goes to the bottom, most recently due first, and only appears at all
+       once Paid is ticked. */
+    bills.sort((a, b) => {
+      if (a.nextDue && b.nextDue) return a.nextDue < b.nextDue ? -1 : a.nextDue > b.nextDue ? 1 : 0;
+      if (a.nextDue) return -1;
+      if (b.nextDue) return 1;
+      const al = a.pieces[a.pieces.length - 1]?.dueDate ?? '';
+      const bl = b.pieces[b.pieces.length - 1]?.dueDate ?? '';
+      return al < bl ? 1 : al > bl ? -1 : 0;
+    });
+
+    return {
+      payBills: bills,
+      payStatusCounts: counts,
+      /* The words actually on THIS list, not the whole library — a filter offering an item the team
+         has never committed against is a control that can only ever empty the screen. */
+      payItemNames: [...itemNames].sort((a, b) => a.localeCompare(b)),
+    };
+  }, [allPayablesRaw, standings, schedule, payStatus, payItems, categories, tagsByExpenseId, filterTagId]);
+
+  /**
+   * The list as the chosen arrangement lays it out.
+   *
+   * ⚠ ONE INPUT, TWO SHAPES. Both read `payBills` — the arrangement never re-filters, which is what
+   * makes the row count identical between them by construction.
+   */
+  const payPeriods = useMemo(() => {
+    if (groupBy !== 'due') return [];
+    const today = tournamentToday();
+    /** One dated band — Overdue, or a month — and the pieces filed under it. Named rather than
+     *  inlined so the `?? { … rows: [] }` fallback below infers its row type instead of `never[]`. */
+    interface PayBand {
+      key: string;
+      label: string;
+      owing: number;
+      rows: Array<{ bill: PayBill; piece: PayPiece }>;
+    }
+    const bands = new Map<string, PayBand>();
+    for (const bill of payBills) {
+      for (const piece of bill.pieces) {
+        /* ⚠ OVERDUE IS ITS OWN BAND, ahead of every month — an open obligation is not a point on
+           the calendar, it is the thing that needs doing. Settled pieces file by their due month
+           like anything else. */
+        const overdue = !piece.settled && piece.dueDate < today;
+        /* ⚠ `monthKeyOf`, not a hand-rolled `.slice(0, 7)` (/simplify, reuse lens) — the same module
+           this band's label already comes from, and it validates the date the slice would not. A
+           due date is always well-formed here, so the fallback is unreachable rather than lenient. */
+        const month = monthKeyOf(piece.dueDate) ?? piece.dueDate.slice(0, 7);
+        const key = overdue ? '!overdue' : month;
+        const label = overdue ? 'Overdue' : formatMonthLong(month);
+        const band: PayBand = bands.get(key) ?? { key, label, owing: 0, rows: [] };
+        band.rows.push({ bill, piece });
+        if (!piece.settled) band.owing += piece.owing;
+        bands.set(key, band);
+      }
+    }
+    const ordered = [...bands.values()].sort((a, b) =>
+      a.key === '!overdue' ? -1 : b.key === '!overdue' ? 1 : a.key.localeCompare(b.key));
+    for (const band of ordered) {
+      band.rows.sort((x, y) => x.piece.dueDate.localeCompare(y.piece.dueDate));
+    }
+    return ordered;
+  }, [payBills, groupBy]);
+
+  /** The bill whose drawer is open, and its standing. ⚠ Looked up in `payBills` rather than held in
+   *  state: after a payment lands the list rebuilds, and a held copy would go on showing the figures
+   *  from before the write until the coach closed and reopened it. */
+  const drawerBill = drawerFor ? payBills.find(b => b.key === drawerFor) ?? null : null;
+  const drawerStanding = drawerBill?.standing;
+
+  /** Bills open shut, periods open open — see `flippedFolds`. */
+  const foldDefaultShut = groupBy === 'commitment';
+  /** Is this group shut right now? The default, flipped by anything the coach has toggled. */
+  const isShut = (key: string) => foldDefaultShut !== flippedFolds.has(key);
+  const foldKeys = groupBy === 'due' ? payPeriods.map(p => p.key) : payBills.map(b => b.key);
+  /** Is everything shut? Decides whether the one control says "Fold all" or "Open all" — two
+   *  buttons for one toggle would be the click tax this strip is trying to avoid. */
+  const allFolded = foldKeys.length > 0 && foldKeys.every(isShut);
+
   /** The two id lookups a register row needs to find its record. Same reasoning as the memo above:
    *  rebuilding two Maps over every expense and arrival on each keystroke is work the form's text
    *  inputs were making this screen do for nothing. */
@@ -1443,10 +1851,19 @@ function MoneyRecordsPanel({
      have Transactions try to jump to `schedule` — a view it has no button for — leaving it on a
      sub-view the coach cannot see or leave. Gating on the face's own list makes a param meant for
      the other tab a no-op here, which is exactly what it should be. */
+  /* ⚠⚠ `?tab=schedule` AND `?tab=commitments` ARE LIVE URL CONTRACTS, AND THEY SURVIVED THE REBUILD
+     AS ARRANGEMENTS (Payables Rebuild P3). Payables no longer HAS sub-views for them to name — but
+     the Money hub's "See full schedule", Budget vs. Actual's Scheduled drill-in, the legacy-address
+     mapper for the retired `expenses` screen and the UAT smoke spec all still send them, and a
+     bookmark that 404s or lands on a blank tab is the same bug wearing a politer face. Each now
+     chooses how the ONE list is arranged, which is what each always meant: "the schedule" was the
+     dated run, "commitments" was the grouped one. */
   const wantedTab = seasonSearchParams.get('tab');
   useEffect(() => {
-    if (wantedTab && (FACE_TABS[face] as string[]).includes(wantedTab)) goToTab(wantedTab as ExpenseTab);
-  }, [wantedTab, face]);
+    if (!wantedTab || !onPayables) return;
+    const arrangement = TAB_AS_GROUP_BY[wantedTab];
+    if (arrangement) setGroupBy(arrangement);
+  }, [wantedTab, onPayables]);
 
   /* ?filter= and ?scheduled= — where the Overview's next-30-days window lands (plan §4.5).
      ⚠ SAME REACTIVITY RULE AS `?tab=` ABOVE, for the same reason: this panel stays mounted across
@@ -2121,32 +2538,56 @@ function MoneyRecordsPanel({
      pair and the register replaced it — the book does not group by expense TYPE, because a coach
      reading their books in date order does not care which of the two shapes a cost was recorded
      as; they care what left the account and when. */
-  const allPayables = expenses.filter(e => e.expenseType === 'tournament_payable');
-  const tagMatch = (e: RepTeamExpense) => !filterTagId || (tagsByExpenseId[e.id] ?? []).includes(filterTagId);
-  const tournamentPayables = allPayables.filter(tagMatch);
+  const allPayables = allPayablesRaw;
 
   // Filter chip row: tags actually used by the current tab's expenses, with counts (mirrors the
   // game "vs tag" report). Selecting one narrows the list + shows a tag total.
   /* Which records the tag chips are counted over. On the register that is EVERY expense, both
      kinds: the book carries a commitment's settled halves beside an ordinary cost, so counting only
      one type would offer a chip whose number disagreed with the rows it then produced. */
-  const activeAll = tab === 'commitments' ? allPayables : expenses;
-  /** Which face is this, said once — every branch below reads these rather than re-testing. */
-  const onPayables = face === 'payables';
+  const activeAll = onPayables ? allPayables : expenses;
   const tagCounts = new Map<string, number>();
   for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
   const usedTagIds = [...tagCounts.keys()]
     .map(id => tagById.get(id))
     .filter((t): t is RepTeamTag => !!t)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const filteredActive = tournamentPayables;
-  /* ⚠ THE COMMITMENT LIST EXCLUDES NOTHING — a settled commitment stays on Payables, because
-     "what did we owe this season, and did we pay it?" is a question the tab has to answer after
-     the fact as well as before it. The Schedule view's own Unpaid/Paid/All filter is where that
-     narrowing lives, exactly as it did before the split. */
+  /**
+   * ⚠⚠ THE EXPORT IS WHAT THE ARRANGEMENT IS SHOWING (Payables Rebuild P3), which keeps BOTH files
+   * a coach's downloads folder already holds. Grouped by commitment it is the `payables` file;
+   * grouped by due date it is the `payment-schedule` file — exactly the two the retired sub-tabs
+   * each owned, now chosen by the arrangement rather than by a tab.
+   *
+   * ⚠ AND IT FOLLOWS THE FILTERS, which is the rule every other Export on this toolbar obeys and
+   * the reason Export lives down here rather than in a hub-wide menu. The schedule half already
+   * behaved this way (its Unpaid/Paid/All pills narrowed the file). The COMMITMENTS half changes:
+   * it used to carry every bill regardless, and now respects Status — so the default view exports
+   * what is still owed, and a coach wanting the settled history ticks Paid first. Called out in
+   * §64 Part C so the walk does not read it as a lost record.
+   */
+  const filteredActive = payBills
+    .map(b => b.expense)
+    .filter((e): e is RepTeamExpense => !!e);
+  /** The dated pieces, in the order the due-date arrangement shows them, for that file. */
+  const payScheduleExport = payPeriods.flatMap(band => band.rows.map(({ bill, piece }) => ({
+    description: bill.kind === 'org'
+      ? `${bill.description} — ${piece.label}`
+      : installmentLabel(bill.description, piece.installmentNumber, bill.pieceCount),
+    amount: piece.owing,
+    dueDate: piece.dueDate,
+    paid: piece.settled,
+    overdue: !piece.settled && piece.badge === 'overdue',
+    source: bill.kind === 'org' ? ('org' as const) : ('team' as const),
+  })));
 
-  const scheduleRows = (schedule ?? []).filter(r =>
-    scheduleFilter === 'all' ? true : scheduleFilter === 'paid' ? !!r.paid : !r.paid);
+  /** Is the list empty because the SEASON is, or because the FILTERS are? Two different sentences,
+   *  and offering "Add a commitment" to a coach who has merely ticked Paid-only answers a question
+   *  they did not ask. ⚠ The default Status hides settled bills, so a season of fully-paid history
+   *  legitimately lands on the narrowed message — which is right: the money is there, it is just
+   *  one tick away. */
+  const payBillsEmpty = payBills.length === 0;
+  const payNarrowed = payBillsEmpty
+    && (allPayablesRaw.length > 0 || (schedule ?? []).some(r => r.source === 'org'));
 
   /* ⚠ "from Club" COMES OUT ON A STANDALONE TEAM. A filter that can never match anything is a dead
      control, and on a team with no club it would also imply a relationship the team does not have. */
@@ -2168,29 +2609,206 @@ function MoneyRecordsPanel({
   const registerExportDataset = singleSelectedKind === 'expense' ? 'expenses'
     : singleSelectedKind ?? 'register';
 
+  /* ⚠ THE SHARED TOGGLE, not a seventh hand-rolled copy (/simplify, reuse lens). `lib/toggle-key.ts`
+     exists because six call sites had already drifted into two spellings of this same three-line
+     Set flip before anyone noticed — and the sibling money screen imports it in this very diff. */
+  const toggleFold = (key: string) => setFlippedFolds(prev => toggleKey(prev, key));
+
   /**
-   * A schedule row's Record a payment — a named helper, not an inline block in the JSX (/simplify).
+   * How late, or how soon — the same sentence on a header and on a row, so a folded bill and the
+   * piece inside it never word the same fact differently.
    *
-   * ⚠ THE ROW CARRIES ONLY IDS; THE PAYMENT DOOR NEEDS THE RECORD, for its description and its
-   * standing. A row whose commitment has not arrived in this panel's list yet shows no button
-   * rather than opening a modal with blanks in it.
-   *
-   * ⚠ Offered on EVERY unsettled piece, part-paid included — the piece's REMAINDER is the
-   * suggested figure, which the old full-half door could not express. An org allocation is settled
-   * through Club, which owns that conversation.
+   * ⚠ "· partly paid" IS APPENDED, NOT SUBSTITUTED. A late part-paid piece is BOTH things
+   * (`installmentStatuses`), and the badge has room for one word — so the date word wins the badge
+   * and the middle state is said beside it. This is the wording the payment schedule already used
+   * before the rebuild; nothing new is being invented for a coach to learn.
    */
-  const payablesById = new Map(allPayables.map(p => [p.id, p]));
-  function scheduleRecordPaymentButton(row: ScheduleRow) {
-    if (row.paid || !canWriteMoney || row.source !== 'team' || !row.expenseId) return null;
-    const record = payablesById.get(row.expenseId);
-    if (!record) return null;
+  function payStatusText(badge: PayableRowStatus, days: number, partly: boolean): ReactNode {
+    const tone = badge === 'paid' ? styles.payStatePaid
+      : badge === 'overdue' ? styles.payStateOverdue
+      : partly ? styles.payStatePartly : styles.payStateAhead;
+    const words = badge === 'paid' ? 'Paid'
+      : badge === 'overdue' ? `${Math.abs(days)} days overdue`
+      : days === 0 ? 'Due today' : `In ${days} days`;
     return (
-      <button
-        className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-        onClick={() => openRecordPayment(record, { installmentId: row.installmentId ?? null, amount: row.amount })}
+      <span className={`${styles.payState} ${tone}`}>
+        <span className={styles.payStateDot} aria-hidden />
+        {words}{partly && badge !== 'paid' ? ' · partly paid' : ''}
+      </span>
+    );
+  }
+
+  /**
+   * A BILL'S HEADER — the summary line the list is really made of.
+   *
+   * ⚠⚠ IT LINES UP WITH THE COLUMNS BENEATH IT rather than spanning them (owner-directed rebuild,
+   * 2026-08-20). The mockup's original header was a run of text — "$1,150.00 paid of $2,700.00 ·
+   * $1,550.00 still owing" — with three figures where two would do and, critically, NO DUE DATE. It
+   * now puts the next payment's date under Due, the bill under What, what is left under Owing and
+   * its urgency under Status, so a FOLDED bill reads exactly like an ordinary row. That is what
+   * makes folding lossless, which was the whole objection to giving every bill a header.
+   *
+   * ⚠ "$X paid of" CAME OUT (owner call): it is the subtraction of the two figures already present.
+   * The total sits small beneath the owing figure, and ONLY where something has been paid — an
+   * untouched one-off bill would otherwise print $450 twice, one line apart.
+   *
+   * ⚠ EVERY BILL FOLDS, INCLUDING A ONE-PAYMENT BILL. See `PayBill`'s own header for why the "no
+   * chevron when there is nothing to hide" rule was abandoned: a two-piece bill with one left to
+   * pay is indistinguishable from the single case, and any rule keyed on what is LEFT changes a
+   * bill's shape as it is paid down.
+   */
+  function payBillHeader(bill: PayBill) {
+    const shut = isShut(bill.key);
+    const isOrg = bill.kind === 'org';
+    /* ⚠ THE HEADER'S FIGURES ARE THE WHOLE BILL'S, never the filtered slice: "$1,550 still owing"
+       must not change because the coach ticked Overdue. */
+    const owing = bill.over > 0 ? bill.over : bill.owing;
+    /* ⚠ ONE VARIABLE DECIDES BOTH THE CURSOR AND THE HANDLER (/review, 2026-08-20). They were two
+       different conditions — the class said `canWriteMoney || !isOrg`, the handler bailed on
+       `isOrg` — so a coach WITH write access got a pointer cursor and hover styling on a club bill
+       that did nothing at all when clicked. A club bill has no drawer to open (it is not the team's
+       record); its door is the `Club →` button in the action cell. The sibling piece row already
+       derived both from one value, which is why only this row wore the false affordance.
+       ⚠ Reading a bill is never gated on write — the drawer is legible to a read-only money coach,
+       and it is the write CONTROLS inside it that are gated. */
+    const tappable = !isOrg;
+    return (
+      <tr
+        className={`${styles.tr} ${styles.payBillRow} ${tappable ? styles.rowTappable : ''}`}
+        onClick={() => {
+          if (!tappable) return;
+          if (window.getSelection()?.toString()) return;
+          setDrawerFor(bill.key);
+        }}
       >
-        Record a payment
-      </button>
+        <td className={`${styles.td} ${styles.payDueCell}`} data-label="Due">
+          <button
+            type="button"
+            className={styles.payFoldBtn}
+            aria-expanded={!shut}
+            aria-label={`${shut ? 'Show' : 'Hide'} the payments on ${bill.description}`}
+            onClick={ev => { ev.stopPropagation(); toggleFold(bill.key); }}
+          >
+            {shut ? <ChevronRight size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
+          </button>
+          <span className={styles.payBillDue}>
+            {bill.nextDue ? fmtDate(bill.nextDue) : <span className={styles.mutedInline}>—</span>}
+          </span>
+        </td>
+        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+          <span className={styles.payBillName}>{bill.description}</span>
+          <span className={styles.payBillMeta}>
+            {isOrg ? 'From your club' : (bill.itemName ?? bill.category ?? 'Uncategorised')}
+            {/* ⚠ "4 of 6 left" ONLY WHERE THERE IS MORE THAN ONE PAYMENT. "1 of 1 left" is a phrase
+                nobody would write. This is the one place a one-payment bill reads differently, and
+                it is prose rather than behaviour — it still folds, opens and pays identically. */}
+            {bill.pieceCount > 1 && ` · ${bill.unpaidCount} of ${bill.pieceCount} left`}
+          </span>
+          {bill.expense && tagChips(bill.expense.id)}
+        </td>
+        <td className={`${styles.td} ${styles.tdNum} ${styles.payOwingCell}`} data-label="Owing">
+          <span className={`${styles.payOwing} ${bill.over > 0 ? styles.payOwingOver : ''}`}>
+            {fmt(owing)}
+          </span>
+          {bill.over > 0
+            ? <span className={styles.payTotalUnder}>over the total</span>
+            : bill.paid > 0 && <span className={styles.payTotalUnder}>{fmt(bill.total)} total</span>}
+        </td>
+        <td className={styles.td} data-label="Status">
+          {bill.nextBadge
+            ? payStatusText(bill.nextBadge, bill.nextDays ?? 0, bill.nextPartly)
+            : payStatusText('paid', 0, false)}
+        </td>
+        <td className={`${styles.td} ${styles.cardActionCell}`}>
+          {/* ⚠⚠ THE PAYMENT DOOR IS ON THE HEADER ONLY WHILE THE BILL IS FOLDED, aimed at the next
+              unpaid piece. Unfolded, the row directly beneath it IS that piece and carries its own
+              button — two identical buttons one line apart read as a bug, not as generosity. */}
+          {shut && !isOrg && canWriteMoney && bill.expense && bill.nextInstallmentId && (
+            <button
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              onClick={ev => {
+                ev.stopPropagation();
+                openRecordPayment(bill.expense!, {
+                  installmentId: bill.nextInstallmentId, amount: bill.nextOwing,
+                });
+              }}
+            >
+              Record a payment
+            </button>
+          )}
+          {isOrg && (
+            /* ⚠ A CLUB BILL NAVIGATES, IT DOES NOT OPEN A DRAWER. It is not the team's record —
+               it is settled through Club, which owns that conversation — so a drawer here could
+               only show figures the coach cannot change. Same rule the register's derived rows
+               already follow. */
+            <Link
+              href={moneySectionHref(base, 'club', undefined)}
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              style={{ whiteSpace: 'nowrap' }}
+              onClick={ev => ev.stopPropagation()}
+            >
+              Club →
+            </Link>
+          )}
+        </td>
+      </tr>
+    );
+  }
+
+  /**
+   * ONE DATED PIECE.
+   *
+   * ⚠ `withBill` IS THE ARRANGEMENT SPEAKING, not a different row. Grouped by commitment the bill's
+   * name is on the header above, so the row leads with the piece; grouped by due date there is no
+   * such header, so the row carries the bill's name and files the piece underneath it. Same record,
+   * same figures, same count — which is the claim `Group by` makes.
+   */
+  function payPieceRow(bill: PayBill, piece: PayPiece, withBill: boolean) {
+    const isOrg = bill.kind === 'org';
+    const tappable = !isOrg;
+    return (
+      <tr
+        key={piece.key}
+        className={`${styles.tr} ${styles.payPieceRow} ${tappable ? styles.rowTappable : ''} ${piece.settled ? styles.payPieceSettled : ''}`}
+        onClick={() => {
+          if (window.getSelection()?.toString()) return;
+          if (!tappable) return;
+          setDrawerFor(bill.key);
+        }}
+      >
+        <td className={`${styles.td} ${styles.payDueCell}`} data-label="Due">{fmtDate(piece.dueDate)}</td>
+        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+          <span className={styles.payPieceName}>{withBill ? bill.description : piece.label}</span>
+          <span className={styles.payPieceMeta}>
+            {withBill && `${piece.label} · `}
+            {isOrg ? 'From your club' : (bill.itemName ?? bill.category ?? 'Uncategorised')}
+            {/* What has landed on this piece — without it, a $200 row under a $450 plan reads as a
+                typo rather than as progress. */}
+            {piece.applied > 0 && !piece.settled && ` · ${fmt(piece.applied)} of ${fmt(piece.faceAmount)} paid`}
+          </span>
+        </td>
+        <td className={`${styles.td} ${styles.tdNum}`} data-label="Owing">{fmt(piece.owing)}</td>
+        <td className={styles.td} data-label="Status">
+          {payStatusText(piece.badge, piece.daysUntilDue, piece.partlyPaid)}
+        </td>
+        <td className={`${styles.td} ${styles.cardActionCell}`}>
+          {/* ⚠ OFFERED ON EVERY UNSETTLED PIECE, part-paid included, with the piece's REMAINDER as
+              the suggested figure — which the retired full-half door structurally could not do. */}
+          {!piece.settled && !isOrg && canWriteMoney && bill.expense && (
+            <button
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              onClick={ev => {
+                ev.stopPropagation();
+                openRecordPayment(bill.expense!, {
+                  installmentId: piece.installmentId, amount: piece.owing,
+                });
+              }}
+            >
+              Record a payment
+            </button>
+          )}
+        </td>
+      </tr>
     );
   }
 
@@ -2388,8 +3006,13 @@ function MoneyRecordsPanel({
      filter to narrow. On the register the chips move DOWN into the book's own control row — the
      toolbar's left-hand slot is the type strip now, and two filter bars sharing one line is the
      three-bands-of-chrome problem the toolbar merge removed. */
-  const showTagFilter = usedTagIds.length > 0 && tab !== 'schedule';
-  const tagFilterInToolbar = showTagFilter && tab === 'commitments';
+  /* ⚠ MONEY TAGS NARROW THE PAYABLES LIST NOW. They used to be hidden on the Schedule view, because
+     that view mixed two sources by due date and a tag could only ever describe one of them. The one
+     list still mixes them — but a tag chip narrowing it to the team's own tagged bills is a real
+     answer, and a club allocation simply carries no tag, which is a match of zero rather than a
+     match of all (the same rule the register applies to its own derived rows). */
+  const showTagFilter = usedTagIds.length > 0;
+  const tagFilterInToolbar = showTagFilter && onPayables;
 
   const expenseHeaderActions = !embedded && canWriteMoney ? (
     <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
@@ -2445,8 +3068,8 @@ function MoneyRecordsPanel({
           masthead (`registerStickyBase`) — nothing else pins above it any more. */}
       <div
         ref={toolbarRef}
-        className={`${styles.panelToolbar} ${tab === 'register' ? styles.panelToolbarSticky : ''}`}
-        style={tab === 'register' ? { top: registerStickyBase } : undefined}
+        className={`${styles.panelToolbar} ${!onPayables ? styles.panelToolbarSticky : ''}`}
+        style={!onPayables ? { top: registerStickyBase } : undefined}
       >
         {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
             content — see the note on that class. */}
@@ -2461,13 +3084,59 @@ function MoneyRecordsPanel({
             the product contradicts. The register's separate **Income** and **Refunds** filters make
             the word true of the rows beneath it, so the compromise has nothing left to protect. */}
         {onPayables ? (
-          <div className={`${styles.viewToggle} ${styles.panelToolbarTabs}`}>
-            <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('schedule')}>
-              Schedule
-            </button>
-            <button className={`${styles.viewToggleBtn} ${tab === 'commitments' ? styles.viewToggleBtnActive : ''}`} onClick={() => goToTab('commitments')}>
-              Commitments ({allPayables.length})
-            </button>
+          /* ⚠⚠ THE `Schedule | Commitments` TOGGLE IS GONE (Payables Rebuild P3, plan §3.1). It
+             presented a parent and its children as two reports — the framing defect underneath all
+             four of the rebuild's findings — and what replaces it is not a third tab but an
+             ARRANGEMENT of one list.
+
+             ⚠ `Group by` SITS FIRST AND IS LABELLED AS AN ARRANGEMENT (plan §7), so it can never
+             read as another narrowing. Status and Item are the narrowings, and they wear the same
+             pill as their Transactions siblings — one control shape across the reports. */
+          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
+            <SingleSelectDropdown
+              label="Group by"
+              lead
+              value={groupBy}
+              options={(['commitment', 'due'] as const).map(id => ({ id, label: PAY_GROUP_BY_LABEL[id] }))}
+              onChange={next => setGroupBy(next as PayGroupBy)}
+            />
+            {/* ⚠⚠ COUNTS ARE OF WHAT IS THERE, taken BEFORE this selection narrows further — the
+                rule the old Overdue chip followed. Otherwise the numbers report themselves back
+                once picked and every unticked option reads zero.
+                ⚠ THEY OVERLAP, and that is correct: a late part-paid piece is counted under both
+                Overdue and Partly paid (`installmentStatuses`, owner ruling 2026-08-20), so the
+                four numbers sum to more than the rows on screen. */}
+            <MultiSelectDropdown
+              label="Status"
+              options={PAYABLE_STATUS_ORDER.map(id => ({
+                id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
+              }))}
+              selected={payStatus}
+              onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
+            />
+            {payItemNames.length > 0 && (
+              <MultiSelectDropdown
+                label="Item"
+                options={payItemNames.map(n => ({ id: n, label: n }))}
+                selected={payItems}
+                onChange={setPayItems}
+                allLabel="Every budget item"
+              />
+            )}
+            {payBills.length > 0 && (
+              <button
+                type="button"
+                className={styles.moneyFilterChip}
+                /* Wants-shut is the opposite of what we have; flip exactly the keys that need it,
+                   which is "none" or "all" depending on the arrangement's own default. */
+                onClick={() => setFlippedFolds(
+                  (allFolded ? !foldDefaultShut : foldDefaultShut)
+                    ? new Set()
+                    : new Set(foldKeys))}
+              >
+                {allFolded ? 'Open all' : 'Fold all'}
+              </button>
+            )}
           </div>
         ) : (
           /* ⚠⚠ FILTERS, NOT SUB-TABS (plan §4.3, ruled 2026-08-16). Transactions carried Expenses
@@ -2526,7 +3195,7 @@ function MoneyRecordsPanel({
             needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
             second line on a narrow screen exactly like `.moneyFilterBar` above already does,
             instead of needing its own measured sticky boundary. */}
-        {tab === 'register' && (
+        {!onPayables && (
           <div className={styles.registerControls}>
             {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
                 one or several budget words at once rather than one at a time. */}
@@ -2584,7 +3253,7 @@ function MoneyRecordsPanel({
               one row mattered more than surfacing that number here. `book.projectedBalance`
               stays computed and used elsewhere (the Ending balance row still reflects it); only
               this inline callout was cut. */}
-          {tab === 'register' && showBalance && book && (
+          {!onPayables && showBalance && book && (
             <span className={styles.registerInlineCash} data-sandbox-tour="register-balance">
               Cash on hand <b>{fmt(book.cashOnHand)}</b>
             </span>
@@ -2593,11 +3262,11 @@ function MoneyRecordsPanel({
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
           <MoneyExportButton
-            label={tab === 'schedule' ? 'Payment schedule'
-              : tab === 'register' ? registerExportLabel
-              : 'Commitments'}
+            label={onPayables
+              ? (groupBy === 'due' ? 'Payment schedule' : 'Commitments')
+              : registerExportLabel}
             formats={['xlsx', 'csv']}
-            build={() => (tab === 'register'
+            build={() => (!onPayables
               ? {
                   /* ⚠ THE FILE IS WHATEVER THE STRIP IS SHOWING, and that is how the two retired
                      datasets survive: `Expenses` is the register on its Expenses filter, and the old
@@ -2615,38 +3284,40 @@ function MoneyRecordsPanel({
                   teamName: assignment?.teamName ?? '',
                   emptyMessage: 'Nothing has been recorded on this book yet.',
                 }
-              : tab === 'schedule'
+              : groupBy === 'due'
               ? {
                   dataset: 'payment-schedule',
                   title: 'Payment Schedule',
                   columns: SCHEDULE_COLUMNS,
-                  rows: scheduleExportRows(scheduleRows),
+                  rows: scheduleExportRows(payScheduleExport),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
                   emptyMessage: 'There is nothing on the payment schedule yet.',
                 }
               : {
-                  /* ⚠ THE DATASET NAME STAYS `payables` even though the view is now called
-                     Commitments. It is the filename segment a coach's downloads folder already
-                     holds a season of, and the export catalog lists it under that word — renaming
-                     the file would break continuity for a screen label, which is exactly the trade
-                     plan §6 refused when it kept the tab called Payables. */
-                  dataset: tab === 'commitments' ? 'payables' : 'expenses',
-                  title: tab === 'commitments' ? 'Commitments' : 'Expenses',
+                  /* ⚠ THE DATASET NAME STAYS `payables` even though nothing on screen says the
+                     word. It is the filename segment a coach's downloads folder already holds a
+                     season of, and the export catalog lists it under that word — renaming the file
+                     would break continuity for a screen label, which is exactly the trade plan §6
+                     refused when it kept the tab called Payables.
+                     ⚠ ITS COLUMNS ARE UNCHANGED THIS PHASE, Deposit/Balance included. They still
+                     describe the first two installments truthfully, and coaches' own spreadsheets
+                     address our columns by POSITION. They retire in P4, when six-installment bills
+                     make those four headings genuinely wrong — one deliberate break, not two. */
+                  dataset: 'payables',
+                  title: 'Commitments',
                   columns: EXPENSE_COLUMNS,
                   rows: expenseRows(filteredActive, tagsByExpenseId, tagById, standings),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
-                  emptyMessage: tab === 'commitments'
-                    ? 'No commitments have been recorded yet.'
-                    : 'No expenses have been logged yet.',
+                  emptyMessage: 'No commitments have been recorded yet.',
                 })}
             // Matches every sibling tab. Without it, an Export with nothing behind it reads as
             // available right up until you press it — the dialog would still explain itself,
             // but the button should not have invited the click.
-            disabled={tab === 'schedule' ? scheduleRows.length === 0
-              : tab === 'register' ? bookEmpty
-              : filteredActive.length === 0}
+            disabled={onPayables
+              ? (groupBy === 'due' ? payScheduleExport.length === 0 : filteredActive.length === 0)
+              : bookEmpty}
           />
           {expenseToolbarActions}
         </div>
@@ -2676,7 +3347,7 @@ function MoneyRecordsPanel({
         <p className={styles.muted}>Loading…</p>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
-      ) : tab === 'register' ? (
+      ) : !onPayables ? (
         /* ── THE REGISTER (money redesign P3, plan §4) ──────────────────────────────────────
            One dated book of every dollar the season moved, with the balance beside it. The two
            lists this replaces — Expenses and Money in — could never carry a running balance
@@ -2765,328 +3436,114 @@ function MoneyRecordsPanel({
             </div>
           )}
         </>
-      ) : tab === 'commitments' ? (
-        tournamentPayables.length === 0 ? (
-          /* ⚠ THE SECONDARY ACTION HERE IS THE MANDATORY PHONE MITIGATION (ruling 2026-08-13,
-             decision 4). Import left the page header on phones, and the importer's paste-a-block
-             mode exists precisely because phones have no file picker — so an empty state that can
-             accept an import must keep offering one AT EVERY WIDTH. This door had no equivalent
-             before this pass; without it, hiding the header menu would make a shipped feature
-             unreachable at 390px. Do not remove it without reopening the rule. */
+      ) : (
+        /* ══ THE ONE PAYABLES LIST (Payables Rebuild P3, plan §3.1 — mockup Option B) ═══════════
+           `Schedule | Commitments` is gone. One set of rows — every dated piece of everything the
+           team owes — laid out either under the bill it belongs to or in one dated run. Same rows,
+           same filters, both ways: that is the claim `Group by` makes out loud, and §64 Part C
+           walks exactly it by counting rows across the switch.
+
+           ⚠⚠ EVERY ROW OPENS THE DRAWER, SETTLED OR NOT. Defect 3 was that a paid row on the old
+           Schedule did nothing at all while the very same record stayed fully editable one tab over
+           — the screen communicating a lock the server does not enforce. There is no dead end here.
+
+           ⚠ A BILL AND A CLUB ALLOCATION ARE BOTH BILLS, and only one of them is the team's record
+           to edit. A club allocation is settled through Club, so its door is that tab rather than a
+           drawer that could only show figures the coach cannot change. */
+        payBillsEmpty ? (
           <>
+            {scheduleError && <p className={styles.errorText}>{scheduleError}</p>}
+            {/* ⚠ THE SECONDARY ACTION IS THE MANDATORY PHONE MITIGATION (ruling 2026-08-13,
+                decision 4), carried across the rebuild unchanged. Import left the page header on
+                phones, and the importer's paste-a-block mode exists precisely because phones have
+                no file picker — so an empty state that can accept an import must keep offering one
+                AT EVERY WIDTH. Do not remove it without reopening the rule. */}
             <CoachEmptyState
               icon={<Receipt size={22} aria-hidden />}
-              headline="Nothing committed yet"
-              description="Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."
-              primaryAction={canWriteMoney ? {
+              headline={payNarrowed ? 'Nothing matches that' : 'Nothing committed yet'}
+              description={payNarrowed
+                ? 'Try a wider Status — the list opens on what is still owed, so anything already paid is hidden until you ask for it.'
+                : "Record something you've agreed to pay — or bring a whole season's commitments in from a schedule your club already keeps."}
+              primaryAction={canWriteMoney && !payNarrowed ? {
                 label: 'Add a commitment',
                 icon: <Plus size={15} aria-hidden />,
                 onClick: () => openAdd({ kind: 'expense', timing: 'payable' }),
               } : undefined}
-              secondaryAction={canWriteMoney ? {
+              secondaryAction={canWriteMoney && !payNarrowed ? {
                 label: 'Import a schedule',
                 icon: <Upload size={15} aria-hidden />,
                 onClick: () => setImportOpen(true),
               } : undefined}
             />
-            <KindCompare
-              otherHref={moneySectionHref(base, onPayables ? 'transactions' : 'payables', undefined)}
-              onPayables={onPayables}
-            />
+            {!payNarrowed && (
+              <KindCompare
+                otherHref={moneySectionHref(base, 'transactions', undefined)}
+                onPayables
+              />
+            )}
           </>
         ) : (
-          /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency). It
-             carried no shared class at all — every border, size and colour was written at this
-             call site — and it printed "Deposit" and "Balance" as headings on EVERY card. It is
-             now the same list table as the Expenses sub-tab beside it, so the two halves of one
-             screen finally agree on what a row of money looks like.
-
-             ⚠ THE DEPOSIT/BALANCE PAIR IS UNCHANGED, it has just moved one click in. It is the
-             one genuinely NESTED row in the hub — two instalments, two due dates, two buttons —
-             and flattening that into columns would have cost the Mark-paid actions their home.
-             So the row summarises and the chevron opens exactly the pair that was there before.
-             (A coach who wants every half on one screen has the Payment schedule sub-tab, which
-             already lists them by due date.) */
-          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Description</th>
-                  <th className={styles.th}>Category</th>
-                  <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                  <th className={styles.th}>Status</th>
-                  <th className={styles.th}></th>
-                </tr>
-              </thead>
-              <tbody>
-            {tournamentPayables.map(e => {
-              const standing = standings[e.id];
-              const open = expandedPayable === e.id;
-              const status = payableStatus(standing, tournamentToday());
-              return (
-                <Fragment key={e.id}>
-                {/* Same row-edit convention as the Expenses tab beside it: row opens the editor,
-                    pencil is the semantic control. The chevron keeps its own job — it EXPANDS the
-                    deposit/balance pair in place, which is a different intent from editing, and
-                    stops propagation so opening the pair never also opens the form. */}
-                <tr
-                  className={`${styles.tr} ${canWriteMoney ? styles.rowTappable : ''}`}
-                  onClick={canWriteMoney ? () => { if (window.getSelection()?.toString()) return; openEdit(e); } : undefined}
-                >
-                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">
-                    {e.description}
-                    {/* Chips on the ROW now, not only inside the drawer — a payable's tags used to
-                        be invisible until you expanded it, while an expense showed its own. */}
-                    {tagChips(e.id)}
-                  </td>
-                  <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">
-                    {fmt(standing?.total ?? e.amount)}
-                    {/* §64 Part B's row wording: what has landed, and what is still owed — or how
-                        far over it went (R6 states an over-payment, never hides it). */}
-                    {standing && standing.paid > 0 && standing.remaining > 0 && (
-                      <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
-                        {fmt(standing.paid)} of {fmt(standing.total)} paid · {fmt(standing.remaining)} still owing
-                      </span>
-                    )}
-                    {standing && standing.over > 0 && (
-                      <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
-                        {fmt(standing.over)} over
-                      </span>
-                    )}
-                  </td>
-                  <td className={styles.td} data-label="Status">
-                    <span className={`${styles.badge} ${status.cls}`} style={{ fontSize: '0.75rem' }}>{status.label}</span>
-                  </td>
-                  <td className={`${styles.td} ${styles.cardActionCell}`}>
-                    <button
-                      type="button"
-                      className={`${styles.btnGhost} ${styles.compactAction}`}
-                      aria-expanded={open}
-                      /* ⚠ The aria-label is NOT redundant with the span beside it. `.cardActionLabel`
-                         is `display: none` above 640px, so on a desktop the span is out of the
-                         accessibility tree and the icon is aria-hidden — without this the button
-                         would announce with NO NAME AT ALL. Caught in review 2026-08-13; the
-                         identical control on Payment requests had it and this one did not. */
-                      aria-label={open ? `Hide ${e.description}'s payment details` : `Show ${e.description}'s payment details`}
-                      onClick={ev => { ev.stopPropagation(); setExpandedPayable(open ? null : e.id); }}
-                    >
-                      {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
-                      <span className={styles.cardActionLabel}>{open ? 'Hide details' : 'Payment details'}</span>
-                    </button>
-                    {canWriteMoney && <RowEditButton label={`Edit ${e.description}`} onClick={() => openEdit(e)} />}
-                  </td>
-                </tr>
-                {open && (
-                /* The detail row is NOT tappable-to-edit — it holds its own buttons, and a stray
-                   tap between them opening a form would be the accidental-edit complaint the row
-                   convention is otherwise careful to avoid. */
-                <tr className={styles.tr} onClick={ev => ev.stopPropagation()}>
-                  <td className={`${styles.td} ${styles.cardStackCell}`} colSpan={5}>
-
-                  {/* ── The commitment in one panel (Payables Rebuild P2) — the mockup's drawer,
-                      living where the old deposit/balance boxes were until P3 rebuilds the screen:
-                      the PLAN piece by piece, every payment recorded against it with its own Undo,
-                      and the one figure that matters. §64 Part B walks this exact surface. */}
-                  {standing ? (
-                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.75rem 0.9rem' }}>
-                      <p style={{ margin: '0 0 0.35rem', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        Scheduled{standing.installments.length > 1 ? ` — ${standing.installments.length} installments` : ''}
-                      </p>
-                      {standing.installments.map(inst => {
-                        const st = installmentStatus(inst, tournamentToday());
-                        return (
-                          <div key={inst.id} className={styles.stack640} style={{ gap: '0.4rem', alignItems: 'center', padding: '0.25rem 0', borderBottom: '1px dashed rgba(255,255,255,0.06)' }}>
-                            <span style={{ minWidth: 84, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmtDate(inst.dueDate)}</span>
-                            <span style={{ flex: 1, fontSize: '0.82rem' }}>
-                              {standing.installments.length > 1 ? `Installment ${inst.installmentNumber}` : 'One payment'}
-                            </span>
-                            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.82rem' }}>{fmt(inst.amount)}</span>
-                            {st === 'paid' ? (
-                              <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <CheckCircle2 size={11} /> Settled
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: '0.75rem', color: st === 'overdue' ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                {st === 'overdue' && <AlertTriangle size={11} aria-hidden />}
-                                {st === 'partly_paid' ? `Partly paid — ${fmt(inst.remaining)} still owing` : st === 'overdue' ? 'Overdue' : 'Scheduled'}
-                              </span>
-                            )}
-                            {st !== 'paid' && canWriteMoney && (
-                              <button
-                                className={`${styles.btnSecondary} ${styles.compactAction}`}
-                                onClick={ev => { ev.stopPropagation(); openRecordPayment(e, { installmentId: inst.id, amount: inst.remaining }); }}
-                              >
-                                Record a payment
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {standing.payments.length > 0 && (
-                        <>
-                          <p style={{ margin: '0.75rem 0 0.35rem', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Payments recorded
-                          </p>
-                          {standing.payments.map(p => (
-                            <div key={p.id} className={styles.stack640} style={{ gap: '0.4rem', alignItems: 'center', padding: '0.25rem 0', borderBottom: '1px dashed rgba(255,255,255,0.06)' }}>
-                              <span style={{ minWidth: 84, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmtDate(p.paidDate)}</span>
-                              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.65))' }}>
-                                {p.method || 'Payment'}{p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
-                              </span>
-                              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.82rem' }}>{fmt(p.amount)}</span>
-                              {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly
-                                  its amount, read from its own recorded entry. Two taps: the first
-                                  arms with the figure, so a mis-tap cannot reverse real money. */}
-                              {canWriteMoney && (
-                                <button
-                                  className={`${styles.btnSecondary} ${styles.compactAction}`}
-                                  aria-label={undoArm === p.id ? `Confirm undoing the ${fmt(p.amount)} payment` : `Undo the ${fmt(p.amount)} payment`}
-                                  disabled={undoBusy === p.id}
-                                  onClick={ev => { ev.stopPropagation(); undoPayment(e, p); }}
-                                >
-                                  {undoBusy === p.id ? 'Undoing…' : undoArm === p.id ? `Undo ${fmt(p.amount)}?` : 'Undo'}
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </>
-                      )}
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                        <span style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.6))' }}>
-                          {standing.over > 0 ? 'Paid over the total' : 'Still owing'}
-                        </span>
-                        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
-                          {standing.over > 0 ? fmt(standing.over) : fmt(standing.remaining)}
-                        </span>
-                      </div>
-                      {canWriteMoney && standing.remaining > 0 && (
-                        <button
-                          className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-                          style={{ marginTop: '0.5rem' }}
-                          onClick={ev => { ev.stopPropagation(); openRecordPayment(e); }}
-                        >
-                          Record a payment
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>Loading payment details…</p>
-                  )}
-
-                  {/* Notes and tags are shown here but no longer EDITED here — both live in the
-                      record's form, reached by the pencil or the row. */}
-                  {e.notes && <p className={styles.mutedInline} style={{ margin: '0.75rem 0 0', fontSize: '0.78rem' }}>{e.notes}</p>}
-                  </td>
-                </tr>
-                )}
-                </Fragment>
-              );
-            })}
-              </tbody>
-            </table>
-          </div>
-        )
-      ) : (
-        /* ── Payment schedule (chunk H) ────────────────────────────────────────────────
-           Every money-OUT commitment in one place, by due date: this team's payable
-           deposits and balances, plus the org's allocation instalments on a club-run team.
-           Player dues are money IN and stay on the Dues page, where the reminders live.
-           A LIST, one row per commitment — so it stacks into cards at 640 (Chunk A D1). */
-        scheduleLoading ? (
-          <p className={styles.muted}>Loading…</p>
-        ) : scheduleError ? (
-          <p className={styles.errorText}>{scheduleError}</p>
-        ) : (
           <>
-            <div className={styles.viewToggle} style={{ marginBottom: '1rem' }}>
-              {(['unpaid', 'paid', 'all'] as const).map(f => (
-                <button
-                  key={f}
-                  className={`${styles.viewToggleBtn} ${scheduleFilter === f ? styles.viewToggleBtnActive : ''}`}
-                  onClick={() => setScheduleFilter(f)}
-                >
-                  {f === 'unpaid' ? 'Unpaid' : f === 'paid' ? 'Paid' : 'All'}
-                </button>
-              ))}
+            {scheduleError && <p className={styles.errorText}>{scheduleError}</p>}
+            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.payTableWrap}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Due</th>
+                    <th className={styles.th}>What</th>
+                    {/* ⚠ "Owing", NOT "Amount" (owner ruling 2026-08-20). The column carries what is
+                        STILL OWED on a piece, not its face value — a $450 installment with $250
+                        against it reads $200 — so a heading saying "Amount" would be describing a
+                        different number from the one underneath it. A SETTLED piece keeps its face
+                        value, because nothing is owed and that is the only honest figure left. */}
+                    <th className={`${styles.th} ${styles.thNum}`}>Owing</th>
+                    <th className={styles.th}>Status</th>
+                    <th className={styles.th}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupBy === 'commitment'
+                    ? payBills.map(bill => (
+                        <Fragment key={bill.key}>
+                          {payBillHeader(bill)}
+                          {!isShut(bill.key) && bill.pieces.map(piece => payPieceRow(bill, piece, false))}
+                        </Fragment>
+                      ))
+                    : payPeriods.map(band => (
+                        <Fragment key={band.key}>
+                          {/* A period band, not a bill — it carries what that period still owes and
+                              nothing else, because a month is not a record you can open. */}
+                          <tr className={`${styles.tr} ${styles.payBandRow}`}>
+                            {/* ⚠ THE FLEX LIVES ON AN INNER DIV, NOT ON THE `<td>`. `display: flex`
+                                on a table cell takes it out of the table box model, and this one
+                                spans every column — the row would lose its cell and collapse. */}
+                            <td className={styles.payBandCell} colSpan={5}>
+                              <div className={styles.payBandInner}>
+                                <button
+                                  type="button"
+                                  className={styles.payFoldBtn}
+                                  aria-expanded={!isShut(band.key)}
+                                  aria-label={`${isShut(band.key) ? 'Show' : 'Hide'} ${band.label}`}
+                                  onClick={() => toggleFold(band.key)}
+                                >
+                                  {isShut(band.key) ? <ChevronRight size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
+                                </button>
+                                <span className={styles.payBandLabel}>{band.label}</span>
+                                {band.owing > 0 && (
+                                  <span className={`${styles.payBandOwing} ${band.key === '!overdue' ? styles.payOwingHot : ''}`}>
+                                    {fmt(band.owing)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {!isShut(band.key) && band.rows.map(({ bill, piece }) =>
+                            payPieceRow(bill, piece, true))}
+                        </Fragment>
+                      ))}
+                </tbody>
+              </table>
             </div>
-            {scheduleRows.length === 0 ? (
-              <div className={styles.emptyState}>
-                {scheduleFilter === 'paid'
-                  ? 'Nothing has been paid off yet.'
-                  : scheduleFilter === 'unpaid'
-                    ? 'Nothing is outstanding — every commitment with a due date has been paid.'
-                    : 'No commitments with a due date yet. Add a payable to see it here.'}
-              </div>
-            ) : (
-              <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th className={styles.th}>Due</th>
-                      <th className={styles.th}>What</th>
-                      <th className={styles.th}>Category</th>
-                      <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                      <th className={styles.th}>Status</th>
-                      <th className={styles.th}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scheduleRows.map(row => (
-                      <tr key={row.id} className={styles.tr}>
-                        <td className={styles.td} data-label="Due">{fmtDate(row.dueDate)}</td>
-                        <td className={styles.td} data-label="What">
-                          {row.description}
-                          {row.label && <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>{row.label}</span>}
-                        </td>
-                        <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                          {row.source === 'org' ? 'Org allocation' : (row.category ?? '—')}
-                        </td>
-                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">
-                          {fmt(row.amount)}
-                          {/* The amount is what is STILL OWED on the piece (the route's rule);
-                              a part-paid one says so, or the smaller figure reads as a typo. */}
-                          {row.partlyPaid && (row.appliedSoFar ?? 0) > 0 && (
-                            <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
-                              {fmt(row.appliedSoFar!)} already paid
-                            </span>
-                          )}
-                        </td>
-                        <td className={styles.td} data-label="Status">
-                          {row.paid ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
-                              <CheckCircle2 size={12} /> Paid
-                            </span>
-                          ) : row.overdue ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--danger-light)' }}>
-                              <AlertTriangle size={12} /> {Math.abs(row.daysUntilDue ?? 0)} days overdue
-                              {row.partlyPaid ? ' · partly paid' : ''}
-                            </span>
-                          ) : (
-                            <span className={styles.mutedInline} style={{ fontSize: '0.8rem' }}>
-                              {row.daysUntilDue === 0 ? 'Due today' : `In ${row.daysUntilDue} days`}
-                              {row.partlyPaid ? ' · partly paid' : ''}
-                            </span>
-                          )}
-                        </td>
-                        {/* ⚠ ONE DOOR HERE TOO — a schedule piece and the same piece in its
-                            commitment's details are the same act, so they must not offer two
-                            different ways to record it. The gating and the record lookup live in
-                            `scheduleRecordPaymentButton`. */}
-                        <td className={`${styles.td} ${styles.cardActionCell}`}>
-                          {scheduleRecordPaymentButton(row)}
-                          {row.source === 'org' && !row.paid && (
-                            <Link href={moneySectionHref(base, 'club', undefined)} className={styles.linkBtn}>Open Club</Link>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
             <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
               Money going out only — each commitment’s installments{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
@@ -3094,6 +3551,153 @@ function MoneyRecordsPanel({
             </p>
           </>
         )
+      )}
+
+      {/* ══ THE DRAWER — the whole commitment in one panel (Payables Rebuild P3, mockup Option C) ══
+          ⚠⚠ EVERY ROW OPENS IT, SETTLED OR NOT. That is defect 3 closing: on the old Schedule a paid
+          row had no pencil and did not open, so the screen communicated a lock the server does not
+          enforce — the record was fully editable the whole time, just only from the other tab. Edit
+          and Delete are live here on a fully-paid bill, which is the no-read-only ruling of
+          2026-08-16 being honoured rather than quietly re-broken.
+
+          ⚠ ITS CONTENTS ARE P2's, MOVED. The Scheduled pieces, the Payments recorded with their
+          two-tap Undo, and the Still owing figure were built as the Commitments row's "Payment
+          details" expansion; nothing about the money changed in this phase, only where a coach
+          finds it. */}
+      {drawerBill && (
+        <div className={styles.modalOverlay} onClick={() => setDrawerFor(null)}>
+          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
+            <CoachModalHeader
+              title={drawerBill.description}
+              subtitle={[drawerBill.category, drawerBill.itemName].filter(Boolean).join(' · ') || undefined}
+              onClose={() => setDrawerFor(null)}
+            />
+
+            {drawerStanding ? (
+              <div className={styles.payDrawer}>
+                {/* ── The plan, piece by piece ─────────────────────────────────────────────── */}
+                <p className={styles.payDrawerLabel}>
+                  Scheduled{drawerStanding.installments.length > 1 ? ` — ${drawerStanding.installments.length} installments` : ''}
+                </p>
+                {drawerStanding.installments.map(inst => {
+                  const st = installmentStatus(inst, tournamentToday());
+                  return (
+                    <div key={inst.id} className={styles.payDrawerLine}>
+                      <span className={styles.payDrawerDate}>{fmtDate(inst.dueDate)}</span>
+                      <span className={styles.payDrawerWhat}>
+                        {drawerStanding.installments.length > 1
+                          ? `Installment ${inst.installmentNumber}`
+                          : 'One payment'}
+                      </span>
+                      <span className={styles.payDrawerAmt}>{fmt(inst.amount)}</span>
+                      {st === 'paid' ? (
+                        <span className={`${styles.payState} ${styles.payStatePaid}`}>
+                          <CheckCircle2 size={11} aria-hidden /> Settled
+                        </span>
+                      ) : (
+                        <span className={`${styles.payState} ${st === 'overdue' ? styles.payStateOverdue : styles.payStateAhead}`}>
+                          {st === 'overdue' && <AlertTriangle size={11} aria-hidden />}
+                          {inst.state === 'partly_paid'
+                            ? `${fmt(inst.remaining)} still owing`
+                            : st === 'overdue' ? 'Overdue' : 'Scheduled'}
+                        </span>
+                      )}
+                      {st !== 'paid' && canWriteMoney && drawerBill.expense && (
+                        <button
+                          className={`${styles.btnSecondary} ${styles.compactAction}`}
+                          onClick={() => openRecordPayment(drawerBill.expense!, {
+                            installmentId: inst.id, amount: inst.remaining,
+                          })}
+                        >
+                          Record a payment
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* ── What actually happened ───────────────────────────────────────────────── */}
+                {drawerStanding.payments.length > 0 && (
+                  <>
+                    <p className={styles.payDrawerLabel}>Payments recorded</p>
+                    {drawerStanding.payments.map(p => (
+                      <div key={p.id} className={styles.payDrawerLine}>
+                        <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
+                        <span className={styles.payDrawerWhat}>
+                          {p.method || 'Payment'}
+                          {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
+                        </span>
+                        <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
+                        {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly its
+                            amount, read from its own recorded entry. Two taps: the first arms with
+                            the figure, so a mis-tap cannot reverse real money. */}
+                        {canWriteMoney && drawerBill.expense && (
+                          <button
+                            className={`${styles.btnSecondary} ${styles.compactAction}`}
+                            aria-label={undoArm === p.id
+                              ? `Confirm undoing the ${fmt(p.amount)} payment`
+                              : `Undo the ${fmt(p.amount)} payment`}
+                            disabled={undoBusy === p.id}
+                            onClick={() => undoPayment(drawerBill.expense!, p)}
+                          >
+                            {undoBusy === p.id ? 'Undoing…' : undoArm === p.id ? `Undo ${fmt(p.amount)}?` : 'Undo'}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                <div className={styles.payDrawerTotal}>
+                  <span>{drawerStanding.over > 0 ? 'Paid over the total' : 'Still owing'}</span>
+                  <strong>{fmt(drawerStanding.over > 0 ? drawerStanding.over : drawerStanding.remaining)}</strong>
+                </div>
+
+                {drawerBill.expense?.notes && (
+                  <p className={styles.payDrawerNote}>{drawerBill.expense.notes}</p>
+                )}
+              </div>
+            ) : (
+              <p className={styles.mutedInline} style={{ padding: '1rem 0' }}>Loading payment details…</p>
+            )}
+
+            {canWriteMoney && drawerBill.expense && (
+              <div className={styles.modalFooter}>
+                {/* ⚠ EDIT AND DELETE ARE LIVE ON A SETTLED BILL. Deleting one reverses what it
+                    posted and says so in dollars first — the money form's own confirmation, reached
+                    through the same door, so there is one delete path rather than two. */}
+                <button
+                  className={styles.btnGhost}
+                  onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openEdit(e); }}
+                >
+                  Edit
+                </button>
+                {/* ⚠⚠ "Add an installment" IS OFFERED ONLY WHERE A SECOND PIECE CAN ACTUALLY BE
+                    SAVED. Plans are capped at two pieces until the repeating-costs editor lands
+                    (P4) — the edit form is a two-piece editor, and a longer plan would be silently
+                    truncated on the next unrelated save. A button that is refused is worse than a
+                    button that is not there, so a bill that already has two simply does not offer
+                    it. Lift this with the cap, in P4, and not before. */}
+                {(drawerStanding?.installments.length ?? 0) === 1 && (
+                  <button
+                    className={styles.btnGhost}
+                    onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openAddInstallment(e); }}
+                  >
+                    Add an installment
+                  </button>
+                )}
+                {drawerStanding && drawerStanding.remaining > 0 && (
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openRecordPayment(e); }}
+                  >
+                    Record a payment
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── The record form — one modal for both kinds, add and edit (Q4 + Q8) ─────────────────
@@ -3775,7 +4379,7 @@ function MoneyRecordsPanel({
             setImportOpen(false);
             setImportMessage(message);
             void load();
-            if (tab === 'schedule') void loadSchedule();
+            if (face === 'payables') void loadSchedule();
           }}
         />
       )}
