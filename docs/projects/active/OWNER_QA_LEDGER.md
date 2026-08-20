@@ -8717,6 +8717,73 @@ session's person-identity migrations on dev, unapplied to prod) — every other 
 ran clean for this change: lint 0 errors, full typecheck, CSS module purity, token guardrails,
 contrast, date-correctness, dictionary/index/org-context/observability coverage, demos.
 
+**`/simplify` addendum (2026-08-19, 4 lenses in parallel), before any QA walk.** Eight fixes, none
+changing what you see: the pill now shares one outside-click helper with its three siblings instead
+of a copied block; its date labels come from the platform's one range formatter (side effect you
+WILL see: a same-month window compresses — "Aug 1–31", not "Aug 1 – Aug 31" — matching how event
+dates read everywhere else); the "whole season" arithmetic moved beside the preset arithmetic with
+its own tests (11 green); one shared constant now owns the ±30 default everywhere it appears; and
+the per-team memory key follows the platform's naming convention. Skipped, stated: the panel's
+compact date fields deliberately do NOT adopt the accounting forms' bigger date control (the
+approved mockup's compact panel wins), and the three "Last N days" lines stay three lines (clearer
+than clever).
+
+**`/review` addendum (2026-08-19, rendered gate + 4 adversarial lenses, high-risk tier), before any
+QA walk — one real regression caught and fixed, walk the CURRENT build:**
+
+- ⚠⚠ **The Overview's "Next 30 days" links could land on a book that hid the very row they
+  promised** (HIGH; the review's one real catch — a NEW failure this feature created). Once a
+  coach's remembered preset was backward-only ("Last 30 days" ends today), the Overview's "View"
+  link — which exists to show an upcoming scheduled bill — arrived, turned Scheduled on, and the
+  remembered window then cropped the future-dated row out with no sign the date filter was why.
+  Impossible before this feature (the window always reset to ±30 on arrival). Fixed at the link's
+  landing: arriving with "show what's coming" intent now also opens the forward window ("Around
+  today") for that visit — the saved habit is untouched for next time. **Walk it: set the pill to
+  "Last 30 days", go to Money Overview, click any "Next 30 days" row's View — the linked row must
+  be on the book.**
+- ⚠ **A window that crossed midnight could shift a day under a coach's feet** (MEDIUM, two lenses
+  converged). Any save anywhere in Money refreshes this screen; after midnight that refresh
+  re-anchored "today", so a row at the window's edge could vanish with no touch of the Date pill.
+  Now the window anchors once per visit — the exact guarantee the old control's code had in
+  writing, and how the approved mockup described presets ("re-anchors each visit").
+- ⚠ **Backwards custom dates could silently empty the book** (MEDIUM). The native date fields'
+  bounds STYLE the calendar but don't block a typed (or even picked) "to" before "from" — which
+  showed an empty book behind a stray starting-balance figure, with the pill calmly reading
+  "Jul 20 – Jul 10". Now editing one end past the other drags the other end along; an inverted
+  window can no longer exist. (The old two-picker control had the same hole — harder to miss,
+  never guarded.)
+- **Team-switch hygiene hardened** (MEDIUM, architectural): if a future navigation ever changes
+  the team without remounting the money screens (none does today), the pill re-seeds from the new
+  team's memory and can never carry one team's selection — least of all a custom one — onto
+  another.
+- **The saved preset now paints on the FIRST frame** (LOW): these screens never server-render, so
+  the memory is read synchronously — the one-frame "Around today" flash before the restore is gone.
+- Two sentences brought back to the truth (LOW): the register lib's own description of how overdue
+  rows dodge the window now matches the mechanism, and the help guide no longer implies the
+  Starting balance line is conditional (it always opens the book — from zero on Whole season).
+- **Everything else came back clean, stated so it counts:** every standing owner ruling held under
+  adversarial reading (overdue never windowed out under any preset or custom range; default window
+  unchanged to the day; Status defaults intact; Balance-column rules untouched by date narrowing;
+  no year-parameter surface; export always matches the screen); the shared-pill refactor is
+  behavior-identical for all three sibling pills; no dead references to the removed pickers
+  anywhere; demo copy has no sentence this change falsifies.
+
+⚠ **The rendered layout gate also ran** (it caught the phone tap-floor fix recorded above — the
+pill's panel controls now clear 44px at touch widths; the pill FACE deliberately matches its three
+siblings' compact height, which belongs to the tracked touch-target debt plan, argued in source).
+Transactions' remaining sweep findings are the pre-existing tracked set (sibling pills, a sibling
+panel's checkbox, three money-hub links, the portal-wide 4px notification-bell spill).
+
+⚠ **Concurrent-session note, for whoever commits:** the working tree's shared coach stylesheet also
+carries ANOTHER session's unrelated uncommitted hunks (an Overview tail-list style removal), and
+the full-project typecheck currently fails on ONE error inside that session's in-flight payables
+rebuild (their route calls their new data-layer function without its import — their file, their
+symbol, mid-build). This feature's files typecheck clean across three runs; nothing here should be
+blocked on their red, and staging the stylesheet at commit time will need eyes on whose hunks ride.
+
+All fixes re-verified: 11/11 unit tests, focused lint 0 errors, this feature's files type-clean,
+and the Transactions rendered check re-run clean of any new-control findings.
+
 ## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
 
 **Not built yet — approved 2026-08-19, build starting.** Plan:

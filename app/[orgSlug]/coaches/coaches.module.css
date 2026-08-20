@@ -7171,6 +7171,58 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 .multiSelectOption:hover { background: var(--white-8); }
 .multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
 
+/* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
+   Extensions of the multiSelect family above: same pill face, but the panel is a single-select
+   preset menu (buttons, not checkboxes — two windows at once is not a thing) with the custom
+   from/to fields living at the bottom of the SAME panel. Custom is not a mode: editing a field
+   IS choosing it. See `DateRangeDropdown`'s header for the full argument. */
+.dateRangePanel { min-width: 264px; }
+.dateRangeOption {
+  display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.34rem 0.5rem 0.34rem 1.35rem; border: 0; border-radius: 6px; background: none;
+  text-align: left; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;
+  position: relative; font-family: inherit; white-space: nowrap;
+}
+.dateRangeOption:hover { background: var(--white-8); }
+.dateRangeOption[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; }
+/* The active dot sits in the gutter every option's left padding reserves — the same "state as a
+   shape, never colour alone" rule the budget cards follow (deutan memory: olive↔danger ΔE 1.0). */
+.dateRangeOption[aria-pressed="true"]::before {
+  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+/* Each preset row shows the dates it resolves to — the list teaches itself, and "Last 60 days"
+   is never a mystery. Tabular figures so seven stacked ranges read as one column. */
+.dateRangeOptionDates { font-size: 0.68rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.dateRangeCustom { padding: 0.25rem 0.5rem 0.35rem; }
+.dateRangeCustomLabel {
+  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 0.35rem; position: relative;
+}
+.dateRangeCustom[data-active] .dateRangeCustomLabel { color: var(--text-primary); padding-left: 0.85rem; }
+.dateRangeCustom[data-active] .dateRangeCustomLabel::before {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+.dateRangeCustomRow { display: flex; align-items: center; gap: 0.35rem; }
+.dateRangeInput {
+  background: var(--white-8); border: 1px solid var(--border-2); border-radius: 6px;
+  color: var(--text-secondary); font-size: 0.74rem; padding: 0.22rem 0.35rem;
+  font-family: inherit; min-width: 0; flex: 1;
+}
+.dateRangeCustomSep { color: var(--text-tertiary); }
+.dateRangeHint { font-size: 0.68rem; color: var(--text-tertiary); margin-top: 0.4rem; line-height: 1.45; }
+/* ⚠ THE PHONE TAP FLOOR for the panel's own controls — the same rule `.moneyFilterChip` carries
+   below and for the same reason: these are primary controls on the register, and a NEW control
+   does not get to join the touch-target debt (COACH_TOUCH_TARGET_DEBT_PLAN.md counts every
+   unargued entry). The pill FACE deliberately stays at its three siblings' compact height —
+   matching Show/Status/Item is the strip's consistency, and raising all four is that plan's
+   call to make, not this feature's. */
+@media (max-width: 768px) {
+  .dateRangeOption { min-height: var(--tap-min, 44px); }
+  .dateRangeInput { min-height: var(--tap-min, 44px); }
+}
+
 .moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
 .moneyFilterChip {
   background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-tertiary);
@@ -7364,16 +7416,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-light); }
 .registerControls {
   display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
 }
-.registerRangeGroup {
-  display: flex; align-items: center; gap: 0.3rem;
-  background: var(--white-8); border: 1px solid var(--border-2); border-radius: 8px;
-  padding: 0.2rem 0.5rem;
-}
-.registerRangeInput {
-  background: none; border: none; color: var(--text-secondary); font-size: 0.76rem;
-  font-family: inherit; padding: 0.12rem 0;
-}
-.registerRangeSep { color: var(--text-tertiary); }
+/* (The bare two-picker `.registerRange*` group retired 2026-08-19 — the range is the Date pill
+   now, styled with the multiSelect family above.) */
 /* ⚖ CASH ON HAND, NOW INLINE — replaces the old dedicated banner (reading-order ruling). Flagged
    for a second look once real: a plain figure here may read as easier to miss than a banner was. */
 .registerInlineCash {

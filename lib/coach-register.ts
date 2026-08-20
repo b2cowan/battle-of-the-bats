@@ -307,9 +307,11 @@ export function buildBook(rows: readonly RegisterRow[]): {
  * sight of something still owed. In practice that made "2026-07-19–2026-09-17" show rows from
  * March, which reads as the control being broken, not as a safety net. The actual safety net is
  * the Overdue count in the filter strip, computed BEFORE this function ever runs — it is always
- * accurate regardless of the range, and the panel routes a coach who clicks it around this
- * function entirely (an audit of what's overdue has no business being cropped by a browsing
- * convenience window). A date range a coach sets should mean exactly that date range.
+ * accurate regardless of the range, and the panel keeps every overdue row out of this function's
+ * reach: they are split off before it runs and unioned back after, in every Status selection (an
+ * Overdue-only audit skips the function entirely — an audit of what's overdue has no business
+ * being cropped by a browsing convenience window). A date range a coach sets should mean exactly
+ * that date range.
  *
  * ⚠ BALANCE IS NOT RECOMPUTED HERE. Every row already carries the true cumulative figure from
  * `buildBook`; narrowing by date hides rows from a continuous timeline rather than excluding a

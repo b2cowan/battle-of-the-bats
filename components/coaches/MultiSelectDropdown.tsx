@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
+import useDetailsOutsideClick from './useDetailsOutsideClick';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -14,7 +14,8 @@ import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
  *
  * ⚠ `<details>`, NOT A HAND-ROLLED POPOVER (memory: CollapsibleCard primitive) — free keyboard
  * support, no portal/positioning code, and it closes itself on repeat click. The one thing it
- * doesn't do natively is close on an outside click, which this component adds.
+ * doesn't do natively is close on an outside click — `useDetailsOutsideClick`, shared with its
+ * single-select sibling `DateRangeDropdown`.
  */
 export default function MultiSelectDropdown({
   label,
@@ -31,16 +32,7 @@ export default function MultiSelectDropdown({
   onChange: (next: Set<string>) => void;
   allLabel?: string;
 }) {
-  const ref = useRef<HTMLDetailsElement>(null);
-
-  useEffect(() => {
-    function onDocClick(ev: MouseEvent) {
-      const el = ref.current;
-      if (el && el.open && !el.contains(ev.target as Node)) el.open = false;
-    }
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
-  }, []);
+  const ref = useDetailsOutsideClick();
 
   const summary = selected.size === 0 ? allLabel
     : selected.size === 1 ? (options.find(o => selected.has(o.id))?.label ?? allLabel)

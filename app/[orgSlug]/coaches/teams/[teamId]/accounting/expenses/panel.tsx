@@ -22,6 +22,7 @@ import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
+import type { CommitmentStanding } from '@/lib/payable-standing';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -36,6 +37,11 @@ import {
   type RegisterBookRow, type RegisterKind,
 } from '@/lib/coach-register';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
+import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
+import {
+  AROUND_WINDOW_DAYS, computeSeasonBounds, isDateRangePresetId, resolveDateRangePreset,
+  type DateRangePresetId, type DateRangeSelection,
+} from '@/lib/coach-date-range';
 import styles from '../../../../coaches.module.css';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
@@ -175,6 +181,24 @@ function MoneyInCompare() {
  * Keeping the name local so the call sites read the same; the behaviour is now the shared one.
  */
 const fmtDate = (s: string | null) => formatStoredDate(s);
+
+/* ⚠ The Date pill's memory is keyed by TEAM ONLY, no `programYearId` — deliberate, unlike the
+   sibling money panels' per-season prefs: a date-viewing habit is not season-shaped data, and a
+   preset re-resolves against whatever season is live. */
+const datePresetStorageKey = (teamId: string) => `flhq-coach-money-date-preset:${teamId}`;
+
+/** The remembered preset for this team, or the default. Storage can be absent, refused, or hold
+ *  a stale id from a future rename — every failure lands on 'around'. Safe to call from a state
+ *  initializer only because this panel never server-renders; the `window` guard keeps it honest
+ *  if that ever changes. */
+function readSavedDatePreset(teamId: string): DateRangeSelection {
+  if (typeof window === 'undefined') return 'around';
+  try {
+    const saved = window.localStorage.getItem(datePresetStorageKey(teamId));
+    if (saved && isDateRangePresetId(saved)) return saved;
+  } catch { /* private mode / storage off */ }
+  return 'around';
+}
 
 /**
  * Where a payable stands, as one word — the summary its row shows now that the deposit/balance
@@ -598,12 +622,62 @@ function MoneyRecordsPanel({
      that read as too much at once). See the JSX for how the dropdown reads with a non-empty
      default. */
   const [selectedStatus, setSelectedStatus] = useState<Set<RegisterStatus>>(new Set(['actual', 'overdue']));
-  /* ⚠⚠ THE DEFAULT RANGE IS 30 DAYS BACK / 30 DAYS FORWARD FROM TODAY, computed once on mount —
-     never recomputed on a later render, or the window would silently drift under a coach's feet
-     while they're reading it. Unsettled rows ignore this regardless (`applyDateRange`'s own
-     rule) — the range narrows routine history, never an open obligation. */
-  const [dateFrom, setDateFrom] = useState(() => addCalendarDays(tournamentToday(), -30));
-  const [dateTo, setDateTo] = useState(() => addCalendarDays(tournamentToday(), 30));
+  /* ⚠⚠ THE RANGE IS A PRESET FIRST AND DATES SECOND (the Date pill — owner-approved mockup,
+     2026-08-19, replacing the two bare date pickers). `datePreset` names the window; the actual
+     from/to pair is DERIVED from it (`dateRange` below), so "Last 30 days" re-anchors to today
+     the way its name promises and "Whole season" widens itself as rows land — while a CUSTOM
+     range stays exactly the pinned dates a coach typed (`customRange`, touched only by the
+     panel's own fields). The 'around' default keeps the old behaviour to the day: 30 back /
+     30 ahead, the forward half being what shows next month's scheduled commitments when the
+     Scheduled status is on. Overdue rows ignore the window regardless (the memo's own rule) —
+     it narrows routine history, never an open obligation.
+     ⚠ THE PRESET IS REMEMBERED PER TEAM, THE DATES NEVER ARE (open call #2, decided with the
+     mockup approval): a remembered preset re-anchors to today and cannot go stale; a remembered
+     pinned window quietly emptying a later visit would read as "the book is broken". */
+  /* The window's anchor day, FROZEN for the life of the mount — restoring the guarantee the old
+     two-picker comment made ("computed once on mount — never recomputed... or the window would
+     silently drift under a coach's feet"). Without it, the memo below re-sampled the clock every
+     time the book reloaded, and a midnight-adjacent write on ANY money tab (they share one
+     refresh signal) shifted this screen's window a day with no touch of the Date pill (/review).
+     A preset therefore re-anchors per VISIT, exactly as described when the design was approved. */
+  const [rangeToday] = useState(() => tournamentToday());
+  /* ⚠ The saved preset is read in the INITIALIZER, not an effect — this panel never
+     server-renders (`dynamic(..., { ssr: false })` in the hub page), so there is no hydration
+     pass to mismatch, and seeding synchronously kills the one-frame "Around today" flash a saved
+     preset painted before the restore effect could run (/review). */
+  const [datePreset, setDatePreset] = useState<DateRangeSelection>(() => readSavedDatePreset(teamId));
+  const [customRange, setCustomRange] = useState(() => ({
+    from: addCalendarDays(rangeToday, -AROUND_WINDOW_DAYS),
+    to: addCalendarDays(rangeToday, AROUND_WINDOW_DAYS),
+  }));
+  /* Re-seed if `teamId` ever changes WITHOUT a remount. No navigation does that today (the
+     sidebar's team switcher routes through the team root, which remounts this panel) — but these
+     panels carry no `key={teamId}`, the fresh-instance pattern the development pages use, so this
+     effect is the fence: team B must never inherit team A's selection, least of all a 'custom'
+     one that storage never holds (/review). On mount it re-sets the seeded value — a no-op. */
+  useEffect(() => { setDatePreset(readSavedDatePreset(teamId)); }, [teamId]);
+  /* ONE memo owns all the derived range arithmetic — the season's bounds and the effective
+     window — recomputed only when the book, the selection, or the custom dates change (this
+     panel re-renders per keystroke; the big filter memo below exists for the same reason).
+     Bounds come from `computeSeasonBounds` (the book's own extent, so 'Whole season' can never
+     crop a real row and widens itself as rows land). */
+  const dateRange = useMemo(() => {
+    const seasonBounds = computeSeasonBounds(book?.book ?? [], rangeToday);
+    const win = datePreset === 'custom'
+      ? customRange
+      : resolveDateRangePreset(datePreset, rangeToday, seasonBounds);
+    return { ...win, today: rangeToday, seasonBounds };
+  }, [book, datePreset, customRange, rangeToday]);
+  const onDateRangeChange = (
+    next: { selection: DateRangePresetId } | { selection: 'custom'; from: string; to: string },
+  ) => {
+    setDatePreset(next.selection);
+    if (next.selection === 'custom') {
+      setCustomRange({ from: next.from, to: next.to });
+    } else {
+      try { window.localStorage.setItem(datePresetStorageKey(teamId), next.selection); } catch { /* fine */ }
+    }
+  };
   /* ⚠⚠ THE REAL BASE — found 2026-08-19 after the sticky column headers shipped broken AND the
      team masthead was reported overlapping this panel's own sticky rows. Every offset here used
      to start from `var(--coach-top-strip, 48px)`, a variable that belongs to a DIFFERENT shell
@@ -688,6 +762,11 @@ function MoneyRecordsPanel({
   // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
   const [expenseTags, setExpenseTags] = useState<RepTeamTag[]>([]);
   const [tagsByExpenseId, setTagsByExpenseId] = useState<Record<string, string[]>>({});
+  /* Where each commitment stands — its plan, its payments and what that adds up to (Payables
+     Rebuild P1). ⚠ THE EXPORT IS ITS ONLY READER FOR NOW: this screen is rebuilt in P3 and nothing
+     rendered here reads it, but a spreadsheet that disagreed with every other money surface about
+     what a part-paid bill has paid would be the one copy of the figures that leaves the product. */
+  const [standings, setStandings] = useState<Record<string, CommitmentStanding>>({});
   const [formTags, setFormTags] = useState<string[]>([]);
   /** The roster, for the "Paid by" choice. Fetched once — the picker is the only reader, and an
    *  expense form on a team with no players simply offers nothing but "The team". */
@@ -1079,10 +1158,12 @@ function MoneyRecordsPanel({
       const data = res.data as {
         expenses?: RepTeamExpense[]; expenseTags?: RepTeamTag[];
         tagsByExpenseId?: Record<string, string[]>;
+        standings?: Record<string, CommitmentStanding>;
       };
       setExpenses(data.expenses ?? []);
       setExpenseTags(data.expenseTags ?? []);
       setTagsByExpenseId(data.tagsByExpenseId ?? {});
+      setStandings(data.standings ?? {});
       /* Best-effort, like the taxonomy beside it: a money-in read that fails must not blank the
          expenses list a coach came here for. The tab shows its own empty state instead. */
       if (inData) {
@@ -1275,7 +1356,7 @@ function MoneyRecordsPanel({
     const auditOnly = selectedStatus.size > 0 && !selectedStatus.has('actual') && !selectedStatus.has('scheduled');
     const { rows: ranged, startingBalance } = auditOnly
       ? { rows: rangeableRows, startingBalance: null as number | null }
-      : applyDateRange(rangeableRows, dateFrom, dateTo);
+      : applyDateRange(rangeableRows, dateRange.from, dateRange.to);
     /* Recombine in the book's own chronological order rather than concatenating the two groups —
        `statusFiltered` is already ordered, so filtering IT by membership is simpler than merging
        two separately-ordered arrays back together. */
@@ -1293,7 +1374,7 @@ function MoneyRecordsPanel({
         (book?.book ?? []).map(r => r.itemName).filter((n): n is string => !!n),
       )].sort((a, b) => a.localeCompare(b)),
     };
-  }, [book, selectedKinds, selectedItems, filterTagId, selectedStatus, dateFrom, dateTo, tagsByExpenseId]);
+  }, [book, selectedKinds, selectedItems, filterTagId, selectedStatus, dateRange, tagsByExpenseId]);
 
 
   /** The two id lookups a register row needs to find its record. Same reasoning as the memo above:
@@ -1333,7 +1414,15 @@ function MoneyRecordsPanel({
     }
     /* Adds Scheduled to whatever's already selected rather than replacing it — the deep link means
        "also show what's coming," not "show only what's coming." */
-    if (wantedScheduled === '1') setSelectedStatus(s => new Set([...s, 'scheduled']));
+    if (wantedScheduled === '1') {
+      setSelectedStatus(s => new Set([...s, 'scheduled']));
+      /* ⚠ AND the date window must be able to SEE forward (/review). A remembered backward preset
+         ("Last 30 days" ends today) — or a pinned custom range — would window out the exact row
+         this link promised to show, a miss the old always-fresh ±30 default made impossible. The
+         same reasoning as the line above: the link's intent outranks the sitting narrowing.
+         Widens the VIEW only — the coach's saved habit is deliberately not overwritten. */
+      setDatePreset(p => (p === 'around' || p === 'season') ? p : 'around');
+    }
   }, [wantedFilter, wantedScheduled, face]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
@@ -2447,29 +2536,21 @@ function MoneyRecordsPanel({
                 allLabel="Every budget item"
               />
             )}
-            {/* ⚠⚠ AN UNSETTLED ROW IGNORES THIS RANGE, OVERDUE OR NOT (reading-order ruling).
-                These two dates trim routine settled history only — they can never be the reason a
-                coach doesn't see an open obligation. Defaults to 30 days back / 30 days forward,
-                set once on mount; changing either is a deliberate widen, never silently redone. */}
-            <span className={styles.registerRangeGroup} role="group" aria-label="Date range">
-              <input
-                type="date"
-                className={styles.registerRangeInput}
-                value={dateFrom}
-                max={dateTo}
-                onChange={ev => ev.target.value && setDateFrom(ev.target.value)}
-                aria-label="From date"
-              />
-              <span className={styles.registerRangeSep} aria-hidden>–</span>
-              <input
-                type="date"
-                className={styles.registerRangeInput}
-                value={dateTo}
-                min={dateFrom}
-                onChange={ev => ev.target.value && setDateTo(ev.target.value)}
-                aria-label="To date"
-              />
-            </span>
+            {/* ⚠⚠ THE FOURTH PILL (owner-approved mockup, 2026-08-19) — the date range wearing the
+                same pill shape as Show/Status/Item, replacing the two bare date pickers that sat
+                here. Presets and the custom from/to fields share ONE panel; the pill names the
+                window in words. An OVERDUE row ignores the window whatever it is (the memo's own
+                rule — the window trims routine history, never an open obligation); Actual and
+                Scheduled rows are windowed normally. Preset choice is remembered per team, custom
+                dates never are — the state block's comment carries the full argument. */}
+            <DateRangeDropdown
+              selection={datePreset}
+              from={dateRange.from}
+              to={dateRange.to}
+              todayKey={dateRange.today}
+              seasonBounds={dateRange.seasonBounds}
+              onChange={onDateRangeChange}
+            />
             {showTagFilter && !tagFilterInToolbar && (
               <>
                 <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
@@ -2550,7 +2631,7 @@ function MoneyRecordsPanel({
                   dataset: tab === 'commitments' ? 'payables' : 'expenses',
                   title: tab === 'commitments' ? 'Commitments' : 'Expenses',
                   columns: EXPENSE_COLUMNS,
-                  rows: expenseRows(filteredActive, tagsByExpenseId, tagById),
+                  rows: expenseRows(filteredActive, tagsByExpenseId, tagById, standings),
                   scopeLabel: assignment?.programYearName ?? '',
                   teamName: assignment?.teamName ?? '',
                   emptyMessage: tab === 'commitments'
