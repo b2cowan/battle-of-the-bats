@@ -110,8 +110,20 @@ screenshots, never built).
   re-time + one notice · (4) Playoff Picture/bracket from live standings (plan-tagged Tournament
   Plus, free plan's inline editor named) · (5) Registration Health card. Panel set may flex
   ±1 if a screen proves uncapturable in the demo world's seeded states — record any drop here.
-- **P2:** present mode (client rendering of the same content, full-screen, arrow keys) + print
-  stylesheet/PDF leave-behind.
+- **P2: BUILT 2026-08-20 (QA §65 Part B owed).** Present mode: `Present.tsx` client component
+  (+ own module CSS) renders the SAME `walkthrough-content` source as 7 slides (hero, 5 panels,
+  closing) — trigger is text-weight under the hero meta; arrows/space/click advance, Esc/Exit
+  restores scroll + focus; slides carry no buttons by design. Print/PDF: `@media print` in the
+  page module (locally scoped — purity + zero-literal ratchets green) does one-panel-per-page
+  with `print-color-adjust: exact` (dark kept deliberately: the artifact is an EMAILED PDF;
+  paper is ink-heavy — owner rules), hides all interactive furniture, and shows a print-only
+  URL line. Verified: lint/typecheck ✓, Playwright walk (open → arrows through 7 → overshoot
+  clamps → Esc restores) ✓, print-media emulation + real `page.pdf()` render ✓. Known v1 rough
+  edges (named in §65 B): global nav prints on PDF page 1, site footer on the last page —
+  hiding them needs a global print rule (shared-chrome blast radius), deferred to the owner's
+  verdict. ⚠ Playwright print checks must scope image-load waits to `/marketing/` images:
+  a global print stylesheet can hide OTHER images (footer QR) before they lazy-load, and an
+  every-image wait times out on the tooling, not the page.
 - **P3:** coach persona walkthrough (Player Dues, Season Settlement, bench console/one-final-
   score-notification — warm-theme captures) linked from /for-coaches.
 - **P4 (later, separate owner sessions):** president/club walkthrough ending in express

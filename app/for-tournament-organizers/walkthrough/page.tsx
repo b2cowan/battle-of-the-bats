@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { MARKETING_SHOTS } from '@/lib/marketing-shots';
 import { TOURNAMENT_WALKTHROUGH } from '@/lib/walkthrough-content';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
+import Present, { type PresentSlide } from './Present';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -14,6 +15,33 @@ export const metadata: Metadata = {
 
 const W = TOURNAMENT_WALKTHROUGH;
 const SHOTS = new Map(MARKETING_SHOTS.map(s => [s.id, s]));
+
+// Present mode renders the SAME source as the scroll page, one thought per slide:
+// hero → the panels → the closing. Slides carry data only (the client component
+// receives nothing it could not serialize).
+const SLIDES: PresentSlide[] = [
+  { eyebrow: W.eyebrow, title: W.title, body: W.sub },
+  ...W.panels.map((panel, i) => {
+    const shot = SHOTS.get(panel.shotId);
+    return {
+      index: `${i + 1} / ${W.panels.length}`,
+      eyebrow: 'The old way',
+      title: panel.pain,
+      body: panel.answer,
+      planTag: panel.planTag,
+      image: shot?.size
+        ? {
+            src: `/marketing/${shot.persona}/${shot.id}.png`,
+            width: shot.size.w,
+            height: shot.size.h,
+            alt: shot.alt,
+            narrow: shot.width <= 430,
+          }
+        : undefined,
+    };
+  }),
+  { eyebrow: W.closing.eyebrow, title: W.closing.title, body: W.closing.body },
+];
 
 export default function TournamentWalkthroughPage() {
   // Same gate, same posture as the persona pages: the walkthrough is the pitch, the demo is the
@@ -45,6 +73,7 @@ export default function TournamentWalkthroughPage() {
             )}
           </div>
           <p className={styles.heroMeta}>{W.meta}</p>
+          <Present slides={SLIDES} label={`${W.title} — presentation`} />
         </div>
       </section>
 
@@ -123,6 +152,9 @@ export default function TournamentWalkthroughPage() {
               Everything else it does →
             </Link>
           </div>
+          {/* The leave-behind carries its own way back: buttons don't survive a PDF, an
+              address does. Hidden on screen, shown only in print. */}
+          <p className={styles.printUrl}>fieldlogichq.ca/for-tournament-organizers/walkthrough</p>
         </div>
       </section>
 

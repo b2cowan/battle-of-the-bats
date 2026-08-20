@@ -263,3 +263,50 @@
 }
 
 .backLink:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+/* The leave-behind's return address — print-only (see .printUrl in @media print). */
+.printUrl { display: none; }
+
+/* ── The leave-behind (browser print / Save as PDF) ──────────────────────────
+   One problem per page, pictures intact. The dark design is KEPT deliberately:
+   `print-color-adjust: exact` asks the browser to paint backgrounds, because the
+   realistic artifact is a PDF emailed after a pitch, not paper — and without the
+   dark ground this page's near-white text would print invisible. Tradeoff (ink on
+   actual paper) is recorded in the plan and QA §65 Part B. */
+@media print {
+  .hero,
+  .panel,
+  .ctaSection {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background: var(--pitch-black);
+  }
+
+  .hero { padding-top: 3rem; }
+
+  .panel {
+    break-before: page;
+    break-inside: avoid;
+    padding: 3rem 0;
+    border-bottom: none;
+  }
+
+  .ctaSection { break-before: page; }
+
+  /* Interactive furniture doesn't survive a PDF — the address line below does. */
+  .seeItLive,
+  .panelLive,
+  .backLink,
+  .heroActions { display: none; }
+
+  .shotFrame img { max-height: 60vh; width: auto; }
+
+  .printUrl {
+    display: block;
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    color: var(--logic-lime);
+    margin-top: 1.5rem;
+  }
+}

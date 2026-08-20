@@ -1,0 +1,170 @@
+/* Present mode — the walkthrough as full-screen slides. Same visual system as the page;
+   bigger type, one thought per screen. The trigger is a tool, not a CTA: text-weight, muted. */
+
+.trigger {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.9rem;
+  cursor: pointer;
+}
+
+.trigger:hover { color: var(--fl-text); }
+.trigger:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+/* ── The deck ────────────────────────────────────────────────────────────── */
+.deck {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--pitch-black);
+}
+
+.deck:focus { outline: none; }
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vh 6vw;
+  cursor: pointer;
+  overflow: auto;
+}
+
+.slide {
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.slideIndex {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  letter-spacing: 0.08em;
+  margin: 0 0 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.slideEyebrow,
+.slideOld {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 0.8rem;
+}
+
+.slideEyebrow { color: var(--logic-lime); }
+.slideOld { color: var(--warning-light); }
+
+.slideTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4.5vh, 2.8rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0 0 2.5vh;
+  max-width: 26ch;
+  text-wrap: balance;
+}
+
+.slideShot {
+  flex: 0 1 auto;
+  min-height: 0;
+  margin-bottom: 2.5vh;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.03);
+  padding: 0.4rem;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.slideShot img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  /* The image yields to the text around it — a slide must never scroll in a pitch. */
+  max-height: 46vh;
+}
+
+.slideShotNarrow img { max-height: 52vh; }
+
+.slideBody {
+  font-family: var(--font-data);
+  font-size: clamp(0.95rem, 2.2vh, 1.15rem);
+  color: var(--fl-text);
+  max-width: 64ch;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.slideTag {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 999px;
+  padding: 0.18rem 0.7rem;
+  margin-left: 0.75rem;
+  vertical-align: 2px;
+}
+
+/* ── Footer controls ─────────────────────────────────────────────────────── */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+}
+
+.counter { font-variant-numeric: tabular-nums; }
+
+.hint { display: none; }
+@media (min-width: 720px) { .hint { display: inline; } }
+
+.footActions { display: flex; gap: 0.5rem; }
+
+.footBtn {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  background: none;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  /* 44px floor is a coach-portal gate, but fingers are fingers on a phone deck too. */
+  min-height: 2.4rem;
+}
+
+.footBtn:hover { color: var(--fl-text); border-color: rgba(var(--blueprint-blue-rgb), 0.8); }
+.footBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* Present mode is an on-screen tool; it has no business in the leave-behind. */
+@media print {
+  .trigger, .deck { display: none; }
+}
