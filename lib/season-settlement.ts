@@ -517,27 +517,38 @@ export interface SettlementSheet extends Settlement {
  */
 export function expenseTotals(
   expenses: readonly {
-    expenseType: 'expense' | 'tournament_payable';
-    amount: number;
-    expensePaidAt: string | null;
-    depositAmount: number | null;
-    depositPaidAt: string | null;
-    balanceAmount: number | null;
-    balancePaidAt: string | null;
+    id: string;
     paidByPlayerId?: string | null;
   }[],
+  /**
+   * Where each commitment stands, keyed by its id — `getCommitmentStandings` in `lib/db.ts`.
+   *
+   * ⚠⚠ THE FIGURE IS `standing.paid`, WHICH IS WHAT WAS ACTUALLY HANDED OVER, and that is the whole
+   * change (Payables Rebuild P1, mig 255). This used to add up SETTLED HALVES: a half was paid or it
+   * was not, so a $600 bill the club took $200 of counted either $600 or nothing depending on which
+   * way the coach recorded it, and coaches recorded it as paid. A season's spending was overstated by
+   * the difference, silently, on the figure Budget vs. Actual compares against.
+   *
+   * ⚠ IT CAN EXCEED THE COMMITMENT'S TOTAL, and that is correct — R6 accepts over-payment because
+   * the money genuinely left the account. Capping it here would make the books stop matching a bank
+   * statement, which is the failure the acceptance is for.
+   *
+   * ⚠ A COMMITMENT WITH NO STANDING CONTRIBUTES NOTHING rather than falling back to its stored
+   * amount. R1 makes that state unreachable; if it ever happened, counting an unpaid figure as spent
+   * would be the wrong way to be wrong on the one number that sets every family's refund.
+   */
+  standings: Readonly<Record<string, { paid: number }>>,
 ): { paid: number; cashPaid: number } {
   let paidC = 0;
   let cashPaidC = 0;
   for (const e of expenses) {
-    if (e.expenseType === 'tournament_payable') {
-      // A payable is billed to the team by a third party — there is no out-of-pocket leg.
-      if (e.depositPaidAt) { paidC += toCents(e.depositAmount ?? 0); cashPaidC += toCents(e.depositAmount ?? 0); }
-      if (e.balancePaidAt) { paidC += toCents(e.balanceAmount ?? 0); cashPaidC += toCents(e.balanceAmount ?? 0); }
-    } else if (e.expensePaidAt) {
-      paidC += toCents(e.amount);
-      if (!e.paidByPlayerId) cashPaidC += toCents(e.amount);
-    }
+    const paid = toCents(standings[e.id]?.paid ?? 0);
+    if (paid === 0) continue;
+    paidC += paid;
+    // ⚠ The ONLY difference between the two figures: a family paying the vendor direct spends the
+    // season's money without the team's cash moving. A payable is billed to the team by a third
+    // party and so never has an out-of-pocket leg.
+    if (!e.paidByPlayerId) cashPaidC += paid;
   }
   return { paid: toDollars(paidC), cashPaid: toDollars(cashPaidC) };
 }

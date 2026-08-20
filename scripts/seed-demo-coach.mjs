@@ -26,6 +26,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes, createHash } from 'crypto';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
+import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
   DEMO_DUES_SETTINGS,
@@ -396,6 +397,12 @@ async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
     payee_payer: 'Riverdale Ridge Baseball Club',
     created_by: coach.id,
   })));
+  /* ⚠⚠ AND THE RECORDS THE MONEY SCREENS ACTUALLY READ (Payables Rebuild P1, mig 255). Every
+     coach-facing money surface now reads a commitment's installments and payments; the columns
+     above are still written, but nothing renders them. Without this the demo — a public shop
+     window — would show a payment schedule with nothing on it, a register missing every bill and a
+     Budget vs. Actual reporting $0 spent, on a world whose whole point is that the money is there. */
+  await backfillCommitmentRecords(db, { programYearId: pyId });
 }
 
 /**

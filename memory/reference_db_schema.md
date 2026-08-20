@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-08-19 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-08-20 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-08-19
+# DB Schema Reference — 2026-08-20
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -165,11 +165,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 
 ### rep_payable_installments
 id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, source, created_at, updated_at
-- Indexes: rep_payable_installments_expense_idx, rep_payable_installments_number_key, rep_payable_installments_team_due_idx, rep_payable_installments_year_idx
+- Indexes: rep_payable_installments_expense_idx, rep_payable_installments_number_key, rep_payable_installments_org_id_idx, rep_payable_installments_team_due_idx, rep_payable_installments_year_idx
 
 ### rep_payable_payments
 id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, installment_id (uuid) → rep_payable_installments.id, amount (numeric) NOT NULL, paid_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
-- Indexes: rep_payable_payments_entry_idx, rep_payable_payments_expense_idx, rep_payable_payments_installment_idx, rep_payable_payments_team_date_idx, rep_payable_payments_year_idx
+- Indexes: rep_payable_payments_entry_idx, rep_payable_payments_expense_idx, rep_payable_payments_installment_idx, rep_payable_payments_org_id_idx, rep_payable_payments_team_date_idx, rep_payable_payments_year_idx
 
 ### rep_player_awards
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, award_type_id (uuid) → rep_team_award_types.id NOT NULL, event_id (uuid) → rep_team_events.id, tournament_label, awarded_at NOT NULL, note, created_by (uuid), created_at, updated_at

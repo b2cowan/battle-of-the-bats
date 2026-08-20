@@ -193,7 +193,7 @@ Every installment edit, and every installment delete, offers:
 
 Each phase is independently shippable and independently walkable.
 
-### P1 — The model lands, invisibly
+### P1 — The model lands, invisibly ✅ BUILT 2026-08-19 (dev; QA §64 Part A owed)
 New installment and payment records. **Every existing commitment migrates**: a deposit/balance split
 becomes a two-installment commitment; an un-split payable becomes one installment; each settled half
 becomes one recorded payment **carrying its existing ledger entry**. Every reader moves to the new
@@ -203,6 +203,79 @@ and the admin-side upcoming-payables panel.
 
 ⚠ **The screen does not change in this phase, and the books must not move by one cent.** That is the
 phase's entire acceptance test.
+
+#### ⚠⚠ What P1 turned out to need that this plan did not say — read before P2
+
+**The writers had to move too, and leaving them out would have shipped a broken product.** The build
+prompt scoped P1 as "the readers only", excluding the payables form, the mark-paid route and the
+delete path on the grounds that touching them would show write controls the server refuses. That is
+true of the SCREEN and false of the SERVER: once every reader is on the new records, a commitment
+created or settled after P1 that has no installment and no payment is **invisible on every money
+surface** — absent from the payment schedule, $0 in Budget vs. Actual, uncounted in next-30, and
+unable to be marked paid. Marking one paid would post a real ledger entry no screen could see.
+
+The fix keeps the screen untouched: `lib/payable-legacy-plan.ts` re-derives the plan and the payments
+from the deposit/balance columns using **migration 255's own arithmetic**, and every save runs it
+(`reconcileCommitmentRecords`, lib/db.ts). It writes no accounting entry and **carries** the ledger
+entry each settled half already created. Verified against dev: all 50 existing commitments
+re-derive **byte-identical** to what the migration wrote — 54 installments, 49 payments, zero
+corrections.
+
+**⚠ The three fixture seeders needed the same thing**, and none of them can call the app's writer:
+they insert `rep_team_expenses` with their own Supabase client. `scripts/lib/backfill-commitment-records.mjs`
+gives them the same DECISION (the planning functions are shared and unit-tested) with their own I/O.
+Without it the coach demo — public on prod — would render every money screen empty, and
+`check:money-report` would report the UAT fixture as lacking the split-month commitment it requires.
+
+**⚠ Five of the build prompt's thirteen "readers" were false positives** from a grep on the word
+`deposit`: `lib/coach-status-model.ts`, `lib/basic-coach-teams.ts`, `lib/email.ts`,
+`lib/demo-moments.ts` and `components/coaches/CoachTournamentRecord.tsx` are all TOURNAMENT
+REGISTRATION fees (`tournaments.deposit_amount`, `teams.deposit_paid`), as is `lib/mark-paid.ts`,
+which the prompt listed as deliberately deferred. The admin-side upcoming-payables route reads
+allocations and payment requests only and never touches `rep_team_expenses`. **Two readers the prompt
+missed** were found instead: `budget/route.ts` and `lib/coach-season-settlement.ts`, both callers of
+`expenseTotals`.
+
+**⚠ Two defects fixed on the way past:** `upcoming-payables/route.ts` used `getCommitmentStandings`
+without importing it (committed in P1's first half — the build was broken on dev), and migration 255
+indexed everything except its own `org_id` tenancy anchor (migration 256, caught by
+`check:index-coverage`).
+
+#### ⚠⚠ TWO SHAPES TO CHECK ON PROD **BEFORE** MIGRATION 255 IS APPLIED THERE
+
+Both are absent from dev (verified 2026-08-19, 0 rows each), so neither affects the §64 walk. Both
+would make a reported dollar figure **rise** on prod, and in both cases the new figure is the correct
+one — but "identical to the cent" is P1's acceptance test, so they must be known about first, not
+discovered as a surprise.
+
+```sql
+-- 1 · A settled half with NO amount of its own. The OLD arithmetic counted it as $0 spent while the
+--     ledger entry it posted carried the commitment's FULL amount, so a season's spending was
+--     understated by the difference. It now counts what actually went out.
+SELECT id, description, amount FROM rep_team_expenses
+ WHERE expense_type = 'tournament_payable'
+   AND ((deposit_paid_at IS NOT NULL AND deposit_amount IS NULL)
+     OR (balance_paid_at IS NOT NULL AND balance_amount IS NULL));
+
+-- 2 · THE WRONG-DOOR RECORDS — a payable carrying `expense_paid_at`, settled through a hole closed
+--     on 2026-08-16. Its money has been on the books and invisible to every screen ever since.
+SELECT id, description, amount FROM rep_team_expenses
+ WHERE expense_type = 'tournament_payable' AND expense_paid_at IS NOT NULL;
+```
+
+Any row from either query is money the product was already spending and not showing. Reconcile it by
+hand before applying, so the before/after comparison stays falsifiable.
+
+**Two visible changes that are corrections, not regressions,** and are written into §64 Part A so the
+walk does not read them as defects: a fully-settled commitment with **no balance leg** used to count
+as unpaid forever on the Money hub's outstanding count (the old test required *both* halves stamped,
+and an un-split payable has no balance stamp to give); and the payables export's `Paid` column now
+distinguishes **Partly paid**, which the old two-word sentence could not express.
+
+**P2 deletes `lib/payable-legacy-plan.ts` (the rule), `lib/payable-legacy-sync.ts` (the writes) and
+the seeder helper** — once `Record a payment` writes
+these tables directly they become the source of truth, and a one-way copier pointed the wrong way
+would overwrite real records.
 
 ### P2 — Recording a payment, and undoing one
 The **Record a payment** form (date, amount, method, note, which installment). Partial payment.

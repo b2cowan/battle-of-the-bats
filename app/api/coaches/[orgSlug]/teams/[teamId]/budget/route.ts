@@ -8,6 +8,7 @@ import {
   getRepPlayerDuesSchedules,
   getRepDuesPaymentsByProgramYear,
   getRepTeamExpenses,
+  getCommitmentStandings,
 } from '@/lib/db';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { expenseTotals } from '@/lib/season-settlement';
@@ -64,8 +65,11 @@ export const GET = withObservability(async (_req: Request,
   // ONE definition of what a season has spent (lib/season-settlement.ts `expenseTotals`) — this
   // was the third hand-copy of the payable-legs branch, and the copies had already begun to
   // differ: this one had no notion of an out-of-pocket cost at all.
-  const expenses = await getRepTeamExpenses(programYear.id);
-  const totalExpenses = expenseTotals(expenses).paid;
+  const [expenses, standings] = await Promise.all([
+    getRepTeamExpenses(programYear.id),
+    getCommitmentStandings(programYear.id),
+  ]);
+  const totalExpenses = expenseTotals(expenses, standings).paid;
 
   return NextResponse.json({
     budgetAmount: programYear.budgetAmount ?? null,

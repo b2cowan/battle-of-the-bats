@@ -47,6 +47,22 @@ export const toCents = (n: number | string | null | undefined) => Math.round(Num
 export const toDollars = (c: number) => c / 100;
 
 /**
+ * Dollars, written the way this product writes money in a sentence — always two decimals.
+ *
+ * ⚠⚠ EXPORTED BECAUSE IT KEEPS GETTING RE-TYPED (`/simplify`, 2026-08-19). This exact expression
+ * already exists, unexported and character-for-character identical, in `lib/dues-reminder-email.ts`,
+ * the allocation and dues reminder routes, and the installment-preview route. This is the fifth
+ * caller and the first shared home; **migrate the other four here rather than adding a sixth.**
+ *
+ * ⚠ ALWAYS TWO DECIMALS, deliberately — NOT the same function as `money()` in
+ * `lib/insight-findings.ts`, which drops the cents on a whole figure so a narrative sentence reads
+ * naturally. This one sits beside other figures in a ledger, where `$200` above `$450.00` looks like
+ * a different kind of number.
+ */
+export const formatMoney = (n: number) =>
+  `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/**
  * The six kinds a row can be, which are also the six filters (plus All).
  *
  * ⚠ THE FILTER STRIP IS THIS LIST, not a second copy of it. `All · Expenses · Income · Refunds ·

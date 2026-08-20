@@ -23,10 +23,11 @@
  * are required, they are named on every run, and their absence exits non-zero. The UAT fixture's
  * split-month payable exists for this and nothing else (see `seed-uat-coach-fixture.mjs`).
  *
- * ⚠ IT READS THE DRILL-IN's ROW IDS to find a split commitment (`<expenseId>-deposit` /
- * `-balance`). That id shape is part of the payload contract the Months grid's cell panels already
- * depend on, not a private detail — but it is a coupling, and it is stated here rather than
- * discovered later.
+ * ⚠ IT READS THE DRILL-IN's ROW IDS to find a split commitment (`<expenseId>-payment-<paymentId>`
+ * since the Payables Rebuild, `<expenseId>-deposit`/`-balance` before it — both are recognised, so a
+ * run against a database still on the old payload does not read as a fixture problem). That id shape
+ * is part of the payload contract the Months grid's cell panels already depend on, not a private
+ * detail — but it is a coupling, and it is stated here rather than discovered later.
  *
  * ⚠⚠⚠ WHAT THIS SCRIPT DOES **NOT** PROVE, AND WHY THAT MATTERS MORE THAN WHAT IT DOES
  * (`/review`, verification-integrity lens, 2026-08-17 — a **Critical** finding against this file).
@@ -160,7 +161,7 @@ async function main() {
   // months. Grouped by the record BEHIND the halves, so the pair is what is detected, not the words.
   const monthsByRecord = new Map();
   for (const d of actualDetails) {
-    const base = String(d.id).replace(/-(deposit|balance)$/, '');
+    const base = String(d.id).replace(/-(deposit|balance|payment-.+)$/, '');
     if (!monthsByRecord.has(base)) monthsByRecord.set(base, new Set());
     monthsByRecord.get(base).add(d.month);
   }
@@ -282,15 +283,15 @@ async function main() {
     console.error('  three feeds cannot disagree and a pass is not evidence.');
     /* ⚠⚠ TWO CAUSES, AND THE SECOND ONE IS THE DANGEROUS READ (`/review`, 2026-08-17). These
        detectors read the payload the code under test produced, so a REGRESSION can erase its own
-       evidence: if `paidMovements` went back to merging a payable's halves, the `-deposit`/`-balance`
+       evidence: if `paidMovements` went back to merging a commitment's payments, the per-payment
        rows would vanish and this would report "no commitment paid across two months" — which reads
        like a fixture problem. Reseeding would not help, because the same record would be merged
        again. Said here so nobody spends an afternoon on the wrong half. */
     console.error('\n  TWO possible causes, and they need opposite fixes:');
     console.error('   a) the fixture genuinely lacks the shape  → node scripts/seed-uat-coach-fixture.mjs');
     console.error('   b) the CODE stopped producing it, so the evidence disappeared with the behaviour.');
-    console.error('      Check tests/unit/coach-expense-movements.test.ts first: if a payable stopped');
-    console.error('      splitting into two dated movements, (a) can never succeed.\n');
+    console.error('      Check tests/unit/coach-expense-movements.test.ts first: if a commitment');
+    console.error('      stopped splitting into one dated movement per payment, (a) can never succeed.\n');
     process.exit(2);
   }
   console.log('\n✓ All three breaking shapes present — the identity holds where it can actually fail.');

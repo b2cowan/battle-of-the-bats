@@ -57,8 +57,22 @@ import { categoryKey, NO_CATEGORY_LABEL } from '../../lib/coach-budget-rollup.ts
 const ROOT = process.cwd();
 const ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.ts';
 
-/** The three columns that say an expense's money actually left the account. */
-const PAID_STAMPS = ['expense_paid_at', 'deposit_paid_at', 'balance_paid_at'];
+/**
+ * What the route may not turn into money for itself.
+ *
+ * The three legacy paid stamps, which used to be the answer to "what has this paid?" and are still
+ * present on the table — and, since the Payables Rebuild (P1, mig 255), **the two tables that
+ * replaced them**. That second half is the load-bearing addition: the rule "the paid stamps have one
+ * reader" would otherwise have been satisfied trivially the moment the columns stopped being read,
+ * while a fresh private walk of `rep_payable_payments` reintroduced the identical defect under a new
+ * name. What the rule has always meant is **the report does not decide for itself what a commitment
+ * has paid** — `getCommitmentStandings` decides, `paidMovements` dates it, and this route reads the
+ * answer.
+ */
+const PAID_STAMPS = [
+  'expense_paid_at', 'deposit_paid_at', 'balance_paid_at',
+  'rep_payable_payments', 'rep_payable_installments',
+];
 
 /**
  * Comments stripped, because this guard is about CODE. Half the reason the rule is discoverable at
@@ -92,12 +106,17 @@ const ALLOWED_STAMP_USES: Array<{ pattern: RegExp; reason: string }> = [
     reason: 'the query that FETCHES the columns, and nothing else on the line. Naming them in a '
       + 'select produces no arithmetic.',
   },
-  {
-    pattern: /^paid: !!exp\.(deposit|balance)_paid_at,?$/,
-    reason: 'the Scheduled drill-in\'s "settled or still owed" flag, alone on its line. It reads '
-      + 'whether a stamp EXISTS and never its date or its amount, so it cannot place money in a month.',
-  },
 ];
+
+/*
+ * ⚠⚠ THE EXEMPTION THAT RETIRED, RECORDED RATHER THAN QUIETLY DELETED (Payables Rebuild P1).
+ * `paid: !!exp.deposit_paid_at` used to be allowed here — the Scheduled drill-in's "settled or still
+ * owed" flag, which read whether a stamp EXISTED and never its date or amount, so it could not place
+ * money in a month. It is gone because the flag now comes off the standing (`inst.state ===
+ * 'settled'`), which is also a stricter answer: R4 means part-paid reads as unpaid, and the boolean
+ * it replaced could not tell the difference. There is nothing left in the route to exempt, and an
+ * empty list is the strongest form this rule has ever taken.
+ */
 
 describe('one arithmetic — the paid stamps have exactly one reader', () => {
   const src = codeOnly(readFileSync(join(ROOT, ROUTE), 'utf8'));
@@ -106,20 +125,21 @@ describe('one arithmetic — the paid stamps have exactly one reader', () => {
      `paidMovements` lived in the route this had to excise its body by brace balance before scanning —
      machinery that silently read a TYPE as a body once already. The reader is now a module, so the
      claim is flat: **the route turns no paid stamp into money at all.** */
-  it('the route does not turn expense_paid_at / deposit_paid_at / balance_paid_at into money', () => {
+  it('the route decides nothing for itself about what a commitment has paid', () => {
     const offenders = src.split('\n')
       .map((line, i) => ({ line: line.trim(), n: i + 1 }))
       .filter(({ line }) => PAID_STAMPS.some(s => line.includes(s)))
       .filter(({ line }) => !ALLOWED_STAMP_USES.some(a => a.pattern.test(line)));
 
     assert.deepStrictEqual(offenders, [],
-      'A paid stamp is being read in the route:\n'
+      'The report is reading what a commitment has paid for itself:\n'
       + offenders.map(o => `  · line ${o.n}: ${o.line}`).join('\n')
-      + '\n\n  "What has this expense actually paid, and when" is `paidMovements` in'
-      + '\n  lib/coach-expense-movements.ts, which emits ONE MOVEMENT PER PAID HALF and is unit-tested'
-      + '\n  directly. A second walk here is how a $600 balance paid in July got reported in May by two'
-      + '\n  of the three feeds on this screen. If your use genuinely cannot produce a money figure, add'
-      + '\n  it to ALLOWED_STAMP_USES with the reason — that edit IS the decision.');
+      + '\n\n  "Where does this commitment stand" is `getCommitmentStandings` (lib/db.ts), and "what'
+      + '\n  did it pay, and when" is `paidMovements` (lib/coach-expense-movements.ts), which emits ONE'
+      + '\n  MOVEMENT PER PAYMENT and is unit-tested directly. A second walk here is how a $600 balance'
+      + '\n  paid in July got reported in May by two of the three feeds on this screen. If your use'
+      + '\n  genuinely cannot produce a money figure, add it to ALLOWED_STAMP_USES with the reason —'
+      + '\n  that edit IS the decision.');
   });
 
   it('the route reads the movements module rather than re-deriving it', () => {

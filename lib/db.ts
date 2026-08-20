@@ -26,6 +26,8 @@ import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardi
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { commitmentStanding, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
+import type { LegacyCommitmentRow } from './payable-legacy-plan';
+import { syncCommitmentRecords } from './payable-legacy-sync';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -10086,6 +10088,68 @@ export async function getCommitmentStandings(
   return out;
 }
 
+/* ── Keeping the new records true while the OLD columns are still the ones being written ──────
+   ⚠⚠ READ THIS BEFORE DECIDING IT IS SCAFFOLDING THAT CAN GO.
+
+   P1 moves every money READER onto the two tables above. The forms still write
+   deposit/balance/expense_paid_at — that is deliberate (migration 255's own note: dropping the old
+   columns in the same release would make "the books did not move" unfalsifiable, because there
+   would be nothing left to compare against). Those two facts do not compose on their own: a payable
+   created the day after P1 ships would have no installment at all, and would therefore be invisible
+   to the payment schedule, absent from Budget vs. Actual's Scheduled column, missing from the
+   Overview's next-30 panel, and impossible to mark paid. Marking one paid would post a real ledger
+   entry that no money screen could see.
+
+   So every write door runs this: the new rows are made to say exactly what the old columns say,
+   using the same arithmetic the migration used (`lib/payable-legacy-plan.ts`). It is idempotent, it
+   writes no accounting entry, and it CARRIES the ledger entry each settled half already created —
+   so it is a new way to READ money that already left the account, never a second time it left.
+
+   ⚠ IT NEVER DELETES A PAYMENT. Nothing in P1 can un-pay a half, so a payment that no longer has a
+   legacy column behind it means something unexpected happened — and silently deleting the record of
+   money leaving a team's account is the one failure mode not worth the tidiness. Extra installments
+   go only when no payment is standing on them.
+
+   ⚠ DELETE THIS WITH P2. Once `Record a payment` writes these tables directly they become the
+   source of truth, and a one-way copier pointed the wrong way would overwrite real records. */
+
+/**
+ * Make a commitment's installments and payments say what its legacy columns say.
+ *
+ * Called after every create and every update of `rep_team_expenses`, so no write door can forget it.
+ *
+ * ⚠ NEITHER THE DECISION NOR THE WRITES ARE HERE. `lib/payable-legacy-plan.ts` decides and
+ * `lib/payable-legacy-sync.ts` writes, because the three fixture seeders need both and can reach
+ * neither this function nor the service-role singleton it uses (their static imports resolve before
+ * their own `dotenv.config()`, and this file cannot be loaded by a plain `node` script at all). One
+ * of those seeders builds the fixture the owner walks QA §64 against, so a second copy of any of this
+ * would let the acceptance test agree with a bug.
+ *
+ * ⚠ SKIPPED ENTIRELY WHEN NO MONEY FIELD MOVED. A rename, a re-filed budget item or a notes edit
+ * cannot change the plan or the payments, and this route is taken on every save — so without the
+ * guard below every such edit paid for two reads to be told nothing had changed.
+ */
+export async function reconcileCommitmentRecords(expense: RepTeamExpense): Promise<void> {
+  // `RepTeamExpense` already carries every field `SyncableCommitment` needs, so there is no mapping
+  // here for a typo to hide in — the compiler checks the fit.
+  await syncCommitmentRecords(supabaseAdmin, [expense]);
+}
+
+/**
+ * The fields that can change what a commitment's plan or payments should say.
+ *
+ * ⚠ EVERY FIELD THE RULE READS, and it is checked against `LegacyCommitmentRow` by the type below —
+ * so adding a column to the rule without adding it here is a compile error rather than a save that
+ * silently stops keeping the schedule in step.
+ */
+const MONEY_FIELDS = [
+  'amount', 'expensePaidAt',
+  'depositAmount', 'depositDueDate', 'depositPaidAt',
+  'balanceAmount', 'balanceDueDate', 'balancePaidAt',
+  'accountingEntryId', 'depositEntryId', 'balanceEntryId',
+] as const satisfies ReadonlyArray<keyof LegacyCommitmentRow>;
+
+
 export async function getRepTeamExpense(expenseId: string): Promise<RepTeamExpense | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
@@ -10153,7 +10217,29 @@ export async function createRepTeamExpense(fields: {
     .select()
     .single();
   if (error) throw error;
-  return mapRepTeamExpense(data);
+  const expense = mapRepTeamExpense(data);
+  /* ⚠ R1 IS ENFORCED HERE, FOR EVERY DOOR AT ONCE — the payables form, the bulk importer, the
+     already-paid door, the out-of-pocket door and the seeders all arrive through this function. A
+     commitment with no installment is invisible to every schedule surface, so it must not be
+     possible to create one. See `reconcileCommitmentRecords`. */
+  try {
+    await reconcileCommitmentRecords(expense);
+  } catch (e) {
+    /* ⚠⚠ THE ROW UNDOES ITSELF, or R1 becomes a wish (`/review`, 2026-08-19 — raised by three
+       lenses). The insert above has already committed by the time this runs, and there is no
+       transaction available here — so a transient failure would leave a commitment with NO
+       installment: absent from the payment schedule, $0 in Budget vs. Actual, missing from the
+       Overview's next-30 panel, impossible to mark paid, and visible only in the raw expenses list.
+       The coach would see the save fail, enter it again, and never know the first one was still
+       there. Deleting it is what makes "it must not be possible to create one" true rather than
+       merely intended.
+       ⚠ It also restores the guarantees of the two doors ABOVE this one: `createOutOfPocketExpense`
+       and `createPaidExpense` both call this function OUTSIDE their own compensating-delete blocks,
+       so neither of their "one function, both rows" contracts covered a failure here. */
+    await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expense.id);
+    throw e;
+  }
+  return expense;
 }
 
 export async function updateRepTeamExpense(expenseId: string, fields: {
@@ -10198,6 +10284,33 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   if (fields.accountingEntryId !== undefined) patch.accounting_entry_id = fields.accountingEntryId;
   if (fields.depositEntryId !== undefined) patch.deposit_entry_id = fields.depositEntryId;
   if (fields.balanceEntryId !== undefined) patch.balance_entry_id = fields.balanceEntryId;
+
+  /* ⚠⚠ THE SCHEDULE IS WRITTEN FIRST, AND THE ROW LAST — the same order, for the same reason, as
+     `syncExpenseBooksForEdit` two functions down (owner ruling 2026-08-16). Both orders leave a
+     window where the two can disagree; this is the one that RECOVERS.
+     · Reconcile first, row second: if the reconcile fails, the record is UNTOUCHED. The coach sees
+       an error, saves again, and everything converges — every write in the sync is an absolute
+       value, so a retry cannot compound.
+     · Row first, reconcile second (what this used to do): the row commits, the reconcile fails, and
+       the record now says "deposit paid" with no payment behind it. Every rebuilt money screen reads
+       it as still owing while the payables list reads it as paid — and the coach CANNOT fix it,
+       because the mark-paid door refuses with "Deposit already marked paid" and nothing else
+       re-runs the sync. A permanent, silent divergence from one transient error
+       (`/review`, 2026-08-19 — raised as Critical by two independent lenses).
+     ⚠ ONLY WHEN A MONEY FIELD MOVED. This is the single update door for the whole record, so a
+     rename, a re-filed budget item, a payee change or a notes edit all arrive here and none of them
+     can change the plan or the payments. The guard is also what keeps the extra read below off
+     every ordinary save. */
+  if (MONEY_FIELDS.some(f => fields[f] !== undefined)) {
+    const before = await getRepTeamExpense(expenseId);
+    if (before) {
+      const moved = Object.fromEntries(
+        MONEY_FIELDS.filter(f => fields[f] !== undefined).map(f => [f, fields[f]]));
+      // The record as it is ABOUT to read — never as it reads now.
+      await reconcileCommitmentRecords({ ...before, ...moved } as RepTeamExpense);
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .update(patch)
@@ -10205,7 +10318,8 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
     .select()
     .single();
   if (error) throw error;
-  return mapRepTeamExpense(data);
+  const expense = mapRepTeamExpense(data);
+  return expense;
 }
 
 /**

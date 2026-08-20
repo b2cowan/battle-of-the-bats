@@ -26,6 +26,7 @@ import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals'
 import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
+import type { CommitmentStanding } from './payable-standing';
 
 export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -146,6 +147,16 @@ export const EXPENSE_COLUMNS: ExportColumnDef[] = [
   { label: 'Deposit due',  key: 'depositDue',  format: 'date' },
   { label: 'Balance',      key: 'balance',     format: 'currency' },
   { label: 'Balance due',  key: 'balanceDue',  format: 'date' },
+  /* ⚠⚠ THE THREE NEW COLUMNS GO AT THE END, AND THE EIGHT ABOVE DO NOT MOVE (Payables Rebuild P1).
+     A coach's saved spreadsheet, pivot table or accountant's template addresses columns by
+     POSITION, so re-ordering or renaming a heading breaks work that lives outside this product and
+     that nobody here can see. Deposit/Deposit due/Balance/Balance due now read the FIRST TWO pieces
+     of the plan, which is exactly what they have always been — and a commitment with more than two
+     is described honestly by `Payments` and `Still owing` beside them rather than by a heading
+     pretending there are only ever two. Those four headings retire in P3 with the screen. */
+  { label: 'Payments',     key: 'payments',    format: 'text' },
+  { label: 'Paid to date', key: 'paidToDate',  format: 'currency' },
+  { label: 'Still owing',  key: 'stillOwing',  format: 'currency' },
   { label: 'Payee',        key: 'payee',       format: 'text' },
   // ⚠ TAGS BELONG HERE BECAUSE THE FILTER SITS ON THE SAME TOOLBAR AS EXPORT. A coach could
   // narrow the list to one money tag, export it, and open a spreadsheet with no column saying
@@ -154,6 +165,13 @@ export const EXPENSE_COLUMNS: ExportColumnDef[] = [
   // managed library, never free text a coach may have put anything into.
   { label: 'Tags',         key: 'tags',        format: 'text' },
 ];
+
+/** What the Paid column says, per state. A lookup rather than a chain, so the three are one list. */
+const PAID_STATE_LABEL: Record<CommitmentStanding['state'], string> = {
+  settled:     'Paid',
+  partly_paid: 'Partly paid',
+  unpaid:      'Unpaid',
+};
 
 /**
  * @param tagsByExpenseId which money tags each expense carries, as the list panel holds them.
@@ -164,20 +182,43 @@ export function expenseRows(
   expenses: RepTeamExpense[],
   tagsByExpenseId: Record<string, string[]> = {},
   tagById: Map<string, { name: string }> = new Map(),
+  /** Where each commitment stands, keyed by id. Optional: a caller without it still gets every
+   *  column the plan does not decide, with the payment columns blank. */
+  standings: Readonly<Record<string, CommitmentStanding>> = {},
 ): ExportRow[] {
-  return expenses.map(e => ({
+  return expenses.map(e => {
+    const standing = standings[e.id];
+    const pieces = standing?.installments ?? [];
+    const payable = e.expenseType === 'tournament_payable';
+    return {
     description: e.description,
     category: e.category ?? '',
-    amount: e.amount,
-    // A payable is paid in two parts, so "paid" is a sentence rather than a tick; the
-    // deposit/balance columns beside it carry the detail.
-    paid: e.expenseType === 'tournament_payable'
-      ? [e.depositPaidAt ? 'Deposit paid' : '', e.balancePaidAt ? 'Balance paid' : ''].filter(Boolean).join(' · ') || 'Unpaid'
-      : e.expensePaidAt ? 'Paid' : 'Unpaid',
-    deposit: e.depositAmount ?? '',
-    depositDue: e.depositDueDate ?? '',
-    balance: e.balanceAmount ?? '',
-    balanceDue: e.balanceDueDate ?? '',
+    /* ⚠ R2 — the total is the SUM OF THE PIECES, not a separately typed figure. Falls back to the
+       stored amount only when a standing was not supplied, never to reconcile a disagreement. */
+    amount: standing ? standing.total : e.amount,
+    /* ⚠ R4 — SETTLED MEANS PAID IN FULL. "Partly paid" is a state the old two-word sentence
+       ("Deposit paid · Balance paid") could not express at all: a $600 bill with $200 against it
+       read as Unpaid, and a coach filtering a spreadsheet for what was still outstanding got the
+       full $600 back as the figure to chase. */
+    paid: standing ? PAID_STATE_LABEL[standing.state] : PAID_STATE_LABEL.unpaid,
+    /* ⚠ THE FOUR LEGACY COLUMNS STAY BLANK ON A PLAIN COST, exactly as they always were
+       (`/review`, regression lens, 2026-08-19). R1 gives EVERY commitment at least one piece, so
+       reading `pieces[0]` unconditionally started filling "Deposit" with a duplicate of the Amount
+       column and "Deposit due" with a date the product never shows — for an unpaid cost, the day it
+       was TYPED UP. The register is careful never to present that day as a due date; an exported
+       spreadsheet must not either. These four retire in P3 with the screen. */
+    deposit: payable ? pieces[0]?.amount ?? '' : '',
+    depositDue: payable ? pieces[0]?.dueDate ?? '' : '',
+    balance: payable ? pieces[1]?.amount ?? '' : '',
+    balanceDue: payable ? pieces[1]?.dueDate ?? '' : '',
+    // How many pieces the plan has, and how many payments have landed against it — the two facts
+    // the four headings above cannot carry once a commitment can repeat monthly.
+    payments: standing ? `${standing.payments.length} of ${pieces.length}` : '',
+    paidToDate: standing ? standing.paid : '',
+    /* ⚠ R6 — over-payment is stated, not hidden. `remaining` floors at zero, so a commitment paid
+       twice would otherwise export as "fully settled, nothing owing" with the extra dollar
+       invisible; saying it out loud is what lets a coach find it against a bank statement. */
+    stillOwing: standing ? (standing.over > 0 ? -standing.over : standing.remaining) : '',
     payee: e.payeePayer ?? '',
     // Names, not ids, and joined the way the row shows them. A tag the library no longer holds
     // is dropped rather than exported as a bare id.
@@ -185,7 +226,8 @@ export function expenseRows(
       .map(id => tagById.get(id)?.name)
       .filter((n): n is string => !!n)
       .join(', '),
-  }));
+    };
+  });
 }
 
 /* ⚠ THE `MONEY_IN` DATASET IS GONE (money redesign P3, 2026-08-17), and it is not lost — it is

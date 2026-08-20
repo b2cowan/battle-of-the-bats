@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import {
   getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
   getRealisedFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
-  getRepAllocationSplitsForTeam,
+  getRepAllocationSplitsForTeam, getCommitmentStandings,
 } from '@/lib/db';
+import { installmentLabel } from '@/lib/payable-standing';
 import { clubRequestIsReimbursement, type ClubRequestType } from '@/lib/coach-club-money';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -95,12 +96,32 @@ export const GET = withObservability(async (req: Request,
   // expenses carrying that tag (the budget plan stays whole) — a "spend by tag" cut of the report.
   const filterTagId = new URL(req.url).searchParams.get('tagId');
 
-  // ── 1. Load budget lines + periods ──────────────────────────────────────
-  const { data: linesRaw } = await supabaseAdmin
-    .from('rep_budget_lines')
-    .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
-    .eq('program_year_id', programYear.id)
-    .order('sort_order');
+  /* ── 1–2. The plan, the costs, and where every commitment stands ─────────────────────────────
+     ⚠ ONE WAVE. All three depend only on `programYear.id` and on nothing from each other, and this
+     route's own comments elsewhere call out being "a long serial chain of awaits" as a known cost
+     on the portal's heaviest read. Left sequential, the standings read alone was a third full round
+     trip — the register and the Money hub both fold their copy of it into an existing wave, and this
+     one was the odd surface out (`/simplify`, 2026-08-19). */
+  const [{ data: linesRaw }, { data: expensesRaw }, standings] = await Promise.all([
+    supabaseAdmin
+      .from('rep_budget_lines')
+      .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
+      .eq('program_year_id', programYear.id)
+      .order('sort_order'),
+    supabaseAdmin
+      .from('rep_team_expenses')
+      /* ⚠⚠ NO DEPOSIT/BALANCE/PAID COLUMNS ANY MORE (Payables Rebuild P1, mig 255). What a
+         commitment owes, what it has paid and when are all in `standings`; this query is down to
+         what a cost IS and where it files. Naming a paid stamp here again would be caught by
+         `tests/unit/money-one-arithmetic-guard.test.ts`, which is the point. */
+      .select('id, description, category, budget_item_id, budget_category_id, amount, expense_type, created_at, budget_items(name, category_id, budget_categories(name))')
+      .eq('program_year_id', programYear.id)
+      .order('created_at'),
+    /* The plan, the payments, and what that adds up to — feeding both the actuals (what moved, and
+       when) and the Scheduled column (what is owed, and on what day). `lib/payable-standing.ts`
+       owns that arithmetic for every money screen. */
+    getCommitmentStandings(programYear.id),
+  ]);
 
   const allLines = (linesRaw ?? []) as Array<Record<string, unknown>>;
   /* ⚠ MONEY-IN LINES STILL MUST NOT ENTER THE COST MACHINERY — but the mechanism changed in
@@ -115,13 +136,6 @@ export const GET = withObservability(async (req: Request,
      side, where it would inflate the very budget it exists to offset (2026-08-15). */
   const lines = allLines.filter(l => !isFundingKind(l.line_kind as string | null));
   const fundingLines = allLines.filter(l => isFundingKind(l.line_kind as string | null));
-
-  // ── 2. Load expenses (paid and unpaid) ───────────────────────────────────
-  const { data: expensesRaw } = await supabaseAdmin
-    .from('rep_team_expenses')
-    .select('id, description, category, budget_item_id, budget_category_id, amount, expense_paid_at, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at, expense_type, created_at, budget_items(name, category_id, budget_categories(name))')
-    .eq('program_year_id', programYear.id)
-    .order('created_at');
 
   const allExpenses = (expensesRaw ?? []) as Array<Record<string, unknown>>;
 
@@ -299,15 +313,16 @@ export const GET = withObservability(async (req: Request,
   const placedFor = (exp: Record<string, unknown>) =>
     placedByExpense.get(exp.id as string) ?? placeCost(exp);
 
-  /* Only what actually moved, and one record per movement — see `lib/coach-expense-movements.ts`. The
-     rollup's own totals are unchanged by the split (two halves sum to what the merged record carried);
-     what changes is that every dated reading downstream now has the real dates to read.
-     ⚠ The cast is safe by column NAME rather than by mapping: `PaidExpenseRow` names the same
-     snake_case columns the select above asks for, deliberately, so there is no hand-written field
-     translation between the query and the rule for a typo to hide in. */
+  /* Only what actually moved, and one record per movement — see `lib/coach-expense-movements.ts`.
+     A commitment paid in pieces contributes each piece on its own day, so every dated reading
+     downstream (the cumulative chart, the Months grid, the statement's expand-a-row schedule) has
+     the real dates to read. ⚠ A PART-PAID commitment contributes only what was actually paid: the
+     movements are its PAYMENTS, so a $600 bill with $200 handed over counts $200 here and shows
+     $400 still owing in the Scheduled column below. */
   const rollupSpend: RollupSpend[] = expenses.flatMap(exp => {
     const placed = placedFor(exp);
-    return paidMovements(exp as unknown as PaidExpenseRow).map(mv => ({ ...mv, ...placed }));
+    const row: PaidExpenseRow = { id: exp.id as string, description: exp.description as string };
+    return paidMovements(row, standings[exp.id as string]).map(mv => ({ ...mv, ...placed }));
   });
 
   /* ── Money IN, in the same two levels (mig 243) ──────────────────────────────────────────────
@@ -744,33 +759,30 @@ export const GET = withObservability(async (req: Request,
      this feed is `rep_team_expenses` commitments, and the Payment schedule already shows club
      instalments beside them. Adding them to one surface and not the other is how two surfaces start
      disagreeing; adding them to both is its own question, not this one's. */
+  /* ⚠⚠ EVERY PIECE OF THE PLAN, NOT TWO OF THEM (Payables Rebuild P1). This loop used to read the
+     deposit and balance columns, which meant a commitment could contribute at most two dated
+     figures and — because it required BOTH an amount and a due date on each half — a commitment
+     recorded with no due date contributed nothing at all. That is the old "No schedule" record: a
+     real obligation, absent from this column, absent from the payment schedule, with nowhere to
+     mark it paid. R1 means it cannot exist any more, so there is no row to skip. */
   for (const exp of expenses) {
     if (exp.expense_type !== 'tournament_payable') continue;
+    const standing = standings[exp.id as string];
+    if (!standing) continue;
     const placed = placedFor(exp);
     const cat = gridCategory(placed.categoryId, placed.categoryName);
-    const id = exp.id as string;
     const description = exp.description as string;
-    const dep = (exp.deposit_amount as number | null) ?? 0;
-    const bal = (exp.balance_amount as number | null) ?? 0;
-    if (dep > 0 && exp.deposit_due_date) {
-      gridScheduled.push({ ...cat, date: exp.deposit_due_date as string, amount: dep });
-      pushDetail('scheduled', cat, exp.deposit_due_date as string, {
-        id: `${id}-deposit`,
-        description: `${description} — deposit`,
-        amount: dep,
-        // Whether the stamp EXISTS — never its date, never an amount. See ALLOWED_STAMP_USES in
-        // tests/unit/money-one-arithmetic-guard.test.ts, which requires it alone on its line so the
-        // exemption cannot quietly cover arithmetic sharing the line with it.
-        paid: !!exp.deposit_paid_at,
-      });
-    }
-    if (bal > 0 && exp.balance_due_date) {
-      gridScheduled.push({ ...cat, date: exp.balance_due_date as string, amount: bal });
-      pushDetail('scheduled', cat, exp.balance_due_date as string, {
-        id: `${id}-balance`,
-        description: `${description} — balance`,
-        amount: bal,
-        paid: !!exp.balance_paid_at,
+    const count = standing.installments.length;
+    for (const inst of standing.installments) {
+      gridScheduled.push({ ...cat, date: inst.dueDate, amount: inst.amount });
+      pushDetail('scheduled', cat, inst.dueDate, {
+        id: inst.id,
+        description: installmentLabel(description, inst.installmentNumber, count),
+        amount: inst.amount,
+        /* ⚠ R4 — SETTLED MEANS PAID IN FULL. A piece with $200 against its $450 reads unpaid here,
+           which is the honest answer to "is there still something to do about this?" and the same
+           rule the payment schedule, the filters and the Overview's next-30 panel apply. */
+        paid: inst.state === 'settled',
       });
     }
   }

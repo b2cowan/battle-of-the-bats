@@ -15,6 +15,7 @@ import {
   writeRepDuesPayout,
   removeRepDuesPayout,
   getOrCreateRepTeamLedger,
+  getCommitmentStandings,
 } from './db';
 import { amountsTotal, deriveDuesPosition, groupByPlayer } from './dues-credits';
 import {
@@ -80,7 +81,7 @@ export async function loadSeasonSettlement(opts: {
 
   const [
     rosterPlayers, schedules, payments, credits, payouts, expenses,
-    surplusRes, adjustmentsRes, splitsRes, requestsRes, linesRes, moneyInRecords,
+    surplusRes, adjustmentsRes, splitsRes, requestsRes, linesRes, moneyInRecords, standings,
   ] = await Promise.all([
     getRepRosterPlayers(pyId),
     getRepPlayerDuesSchedules(pyId),
@@ -99,6 +100,10 @@ export async function loadSeasonSettlement(opts: {
       .eq('team_id', programYear.teamId).eq('program_year_id', pyId),
     supabaseAdmin.from('rep_budget_lines').select('total_amount, line_kind').eq('program_year_id', pyId),
     getRepTeamMoneyIn(pyId),
+    // Where every commitment stands (Payables Rebuild P1) — what a season actually PAID, which is
+    // the ceiling on every family's refund. Read here rather than derived, so the pot and the
+    // Money hub's cash line cannot disagree about it.
+    getCommitmentStandings(pyId),
   ]);
 
   // The second wave. All three depend only on ids the first wave returned and on NOTHING from
@@ -167,7 +172,7 @@ export async function loadSeasonSettlement(opts: {
   const recordedIn = amountsTotal(moneyInRecords);
 
   // ── Money out (CASH only) ──────────────────────────────────────────────────────────────────
-  const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses);
+  const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses, standings);
   const allocationsPaid = amountsTotal(
     ((allocInstallsRes.data ?? []) as Array<{ amount: number; paid_at: string | null }>)
       .filter(i => i.paid_at).map(i => ({ amount: i.amount ?? 0 })));

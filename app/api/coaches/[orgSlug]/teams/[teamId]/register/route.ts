@@ -6,7 +6,9 @@ import {
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
+  getCommitmentStandings,
 } from '@/lib/db';
+import { installmentLabel, paymentLabel } from '@/lib/payable-standing';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -14,7 +16,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { orgDayKey, tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
-import { buildBook, REGISTER_SOURCE_LABEL, type RegisterRow } from '@/lib/coach-register';
+import { buildBook, REGISTER_SOURCE_LABEL, formatMoney, type RegisterRow } from '@/lib/coach-register';
 
 /**
  * GET /api/coaches/[orgSlug]/teams/[teamId]/register — the season's whole book.
@@ -49,6 +51,35 @@ type DuesInstallmentRow = {
   amount: number; due_date: string | null; paid_at: string | null;
 };
 
+/**
+ * Which settle button a still-owing piece offers, if any.
+ *
+ * ⚠ THE MARK-PAID DOOR STILL SPEAKS THE OLD WORDS, and only until P2 replaces it with `Record a
+ * payment`. On a commitment, piece 1 is `deposit` and piece 2 is `balance` because that is what the
+ * PATCH route's two actions are still called. Anything the old door cannot express offers **no
+ * button** rather than one that would post a full half's entry:
+ *   · a PART-PAID piece — the door settles a half in full, and the coach is handing over less;
+ *   · a commitment with more than two pieces — a monthly series has no "balance".
+ *
+ * Written as early returns rather than the nested ternary it replaced (`/simplify`, 2026-08-19):
+ * four outcomes across three conditions could not be traced without stepping through it by hand.
+ */
+function markPaidAction(
+  expenseId: string,
+  inst: { installmentNumber: number; remaining: number; state: string },
+  count: number,
+  payable: boolean,
+): RegisterRow['markPaid'] {
+  if (inst.state === 'partly_paid') return null;
+  if (!payable) return { expenseId, half: 'expense', amount: inst.remaining };
+  if (count > 2 || inst.installmentNumber > 2) return null;
+  return {
+    expenseId,
+    half: count === 1 || inst.installmentNumber === 1 ? 'deposit' : 'balance',
+    amount: inst.remaining,
+  };
+}
+
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -69,6 +100,7 @@ export const GET = withObservability(async (_req: Request,
     splitsRes,
     requestsRes,
     rosterRes,
+    standings,
   ] = await Promise.all([
     getRepTeamExpenses(programYear.id),
     getRepTeamMoneyIn(programYear.id),
@@ -104,6 +136,11 @@ export const GET = withObservability(async (_req: Request,
       .from('rep_roster_players')
       .select('id, player_first_name, player_last_name')
       .eq('program_year_id', programYear.id),
+    /* Where every commitment stands — its plan, its payments, and what that adds up to. ⚠ ONE read
+       for the whole season, and it rides THIS wave because it depends on nothing but the year: a
+       per-commitment fetch on the heaviest read in the portal is exactly what this route's own
+       comments about serialisation are written about. */
+    getCommitmentStandings(programYear.id),
   ]);
 
   const rows: RegisterRow[] = [];
@@ -194,54 +231,84 @@ export const GET = withObservability(async (_req: Request,
       open: { kind: 'expense' as const, id: e.id },
     };
 
-    if (e.expenseType === 'tournament_payable') {
-      /* A payable's halves are separate commitments with their own dates and their own paid state —
-         they are two rows here exactly as they are two rows on the payment schedule. A blended
-         entry would put money on the book on a day nothing moved. */
-      const halves = [
-        { half: 'deposit' as const, amount: e.depositAmount, due: e.depositDueDate, paidAt: e.depositPaidAt },
-        { half: 'balance' as const, amount: e.balanceAmount, due: e.balanceDueDate, paidAt: e.balancePaidAt },
-      ];
-      for (const h of halves) {
-        const amount = Number(h.amount ?? 0);
-        if (!(amount > 0)) continue;
-        rows.push({
-          ...base,
-          id: `expense-${e.id}-${h.half}`,
-          date: h.paidAt ? orgDayKey(h.paidAt) : h.due,
-          description: `${e.description} — ${h.half}`,
-          moneyOut: amount,
-          scheduled: !h.paidAt,
-          overdueDays: null, // tagged for real below, once every row exists
-          // A payable is billed to the team by a third party — there is no out-of-pocket leg.
-          movesCash: true,
-          markPaid: h.paidAt ? null : { expenseId: e.id, half: h.half, amount },
-          detail: h.paidAt ? null : h.due ? 'Due' : 'No date set',
-        });
-      }
-      continue;
+    /* ⚠⚠ A COMMITMENT IS ITS PAYMENTS AND WHAT IS STILL OWED — never a single blended row
+       (Payables Rebuild P1, mig 255). What each row is has not changed; what has changed is that a
+       commitment is no longer limited to two of them, and that a PART payment finally has somewhere
+       to appear. Two kinds of row come out of one commitment:
+         · RECORDED — one per payment, dated the day the money actually left. §41 Part D holds: a
+           settled piece leaves exactly ONE transaction on the book and no second row beside it,
+           which is what the running balance depends on.
+         · SCHEDULED — one per piece with something still owing, dated when it falls due, carrying
+           the REMAINDER rather than the face value. A $450 piece with $200 against it shows $250
+           still to pay and a $200 movement on the day it moved, which is the pair of facts the old
+           boolean could not express at all. */
+    const standing = standings[e.id];
+    const count = standing?.installments.length ?? 0;
+
+    for (const p of standing?.payments ?? []) {
+      rows.push({
+        ...base,
+        id: `expense-${e.id}-payment-${p.id}`,
+        date: p.paidDate,
+        description: paymentLabel(e.description, p, count),
+        moneyOut: p.amount,
+        scheduled: false,
+        overdueDays: null, // tagged for real below, once every row exists
+        /* ⚠⚠ THE ONE ROW THAT DOES NOT MOVE THE BALANCE. A family paid the vendor direct: the
+           season spent the money, the team's cash did not. `expenseTotals().cashPaid` has always
+           excluded it — the book agrees with that figure rather than arguing with it. A payable is
+           billed to the team by a third party, so it never has an out-of-pocket leg. */
+        movesCash: !e.paidByPlayerId,
+        markPaid: null,
+        detail: e.paidByPlayerId
+          ? `${playerName.get(e.paidByPlayerId) ?? 'A family'} paid direct — no team cash moved`
+          : null,
+      });
     }
 
-    rows.push({
-      ...base,
-      id: `expense-${e.id}`,
-      /* ⚠ AN UNPAID PLAIN EXPENSE HAS NO DATE AT ALL, and that is not an omission to paper over: a
-         cost the coach logged without saying when it was paid is exactly what they came here to
-         find. It sorts to the end of the scheduled block and carries Mark paid. */
-      date: e.expensePaidAt ? orgDayKey(e.expensePaidAt) : null,
-      description: e.description,
-      moneyOut: e.amount,
-      scheduled: !e.expensePaidAt,
-      overdueDays: null, // tagged for real below, once every row exists
-      /* ⚠⚠ THE ONE ROW THAT DOES NOT MOVE THE BALANCE. A family paid the vendor direct: the season
-         spent the money, the team's cash did not. `expenseTotals().cashPaid` has always excluded
-         it — the book agrees with that figure rather than arguing with it. */
-      movesCash: !e.paidByPlayerId,
-      markPaid: e.expensePaidAt ? null : { expenseId: e.id, half: 'expense', amount: e.amount },
-      detail: e.paidByPlayerId
-        ? `${playerName.get(e.paidByPlayerId) ?? 'A family'} paid direct — no team cash moved`
-        : e.expensePaidAt ? null : 'Not marked paid',
-    });
+    for (const inst of standing?.installments ?? []) {
+      if (inst.remaining <= 0.005) continue;
+      const partly = inst.state === 'partly_paid';
+      const payable = e.expenseType === 'tournament_payable';
+      rows.push({
+        ...base,
+        id: `expense-${e.id}-installment-${inst.id}`,
+        /* ⚠ AN UNPAID PLAIN EXPENSE HAS NO DATE ON THIS BOOK, and that is not an omission to paper
+           over: a cost the coach logged without saying when it was paid is exactly what they came
+           here to find, and it sorts to the end of the scheduled block. R1 gives every commitment a
+           due date so that nothing can hide from the payment schedule — but the day a cost was
+           TYPED UP is not a day it is due, and printing it here would invent an obligation. */
+        date: payable ? inst.dueDate : null,
+        description: installmentLabel(e.description, inst.installmentNumber, count),
+        moneyOut: inst.remaining,
+        scheduled: true,
+        overdueDays: null, // tagged for real below, once every row exists
+        movesCash: !e.paidByPlayerId,
+        markPaid: markPaidAction(e.id, inst, count, payable),
+        detail: partly
+          ? `${formatMoney(inst.applied)} of ${formatMoney(inst.amount)} paid`
+          : payable ? 'Due' : 'Not marked paid',
+      });
+    }
+
+    /* ⚠ A COMMITMENT WITH NOTHING AT ALL RECORDED still has to appear — R1 guarantees it has a
+       plan, so the loop above covers it. This is the one case that cannot: a record whose
+       installments were somehow never written. It is emitted rather than silently dropped, because
+       a cost missing from the book is the failure this screen exists to make impossible. */
+    if (!standing) {
+      rows.push({
+        ...base,
+        id: `expense-${e.id}`,
+        date: null,
+        description: e.description,
+        moneyOut: e.amount,
+        scheduled: true,
+        overdueDays: null,
+        movesCash: !e.paidByPlayerId,
+        markPaid: null,
+        detail: 'No payment schedule recorded',
+      });
+    }
   }
 
   // ── Recorded: arrivals (income and money back) ─────────────────────────────

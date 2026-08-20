@@ -11,6 +11,7 @@ import {
   getRepTeamTagLibrary,
   getRepTeamExpenseTagsMap,
   setRepTeamExpenseTags,
+  getCommitmentStandings,
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -55,11 +56,17 @@ export const GET = withObservability(async (_req: Request,
   const expenses = await getRepTeamExpenses(programYear.id);
   // Money-tag library (team + org-shared) for the picker + which tags each expense carries, so the
   // list renders chips and the filter chip-row without a per-expense fetch (mirrors events GET).
-  const [expenseTags, tagsByExpenseId] = await Promise.all([
+  const [expenseTags, tagsByExpenseId, standings] = await Promise.all([
     getRepTeamTagLibrary(teamId, 'expense', ctx.org.id),
     getRepTeamExpenseTagsMap(expenses.map(e => e.id)),
+    /* ⚠ READ-ONLY, AND ONLY THE EXPORT USES IT IN P1 (Payables Rebuild). The payables SCREEN is
+       rebuilt in P3 and is deliberately untouched here; its export, though, is a money reader like
+       any other, and leaving it on the deposit/balance columns would have it disagree with every
+       other surface about what a part-paid commitment has paid. The screen picks this up when it
+       is rebuilt — no control on it reads this today. */
+    getCommitmentStandings(programYear.id),
   ]);
-  return NextResponse.json({ expenses, expenseTags, tagsByExpenseId });
+  return NextResponse.json({ expenses, expenseTags, tagsByExpenseId, standings });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses' });
 
 export const POST = withObservability(async (req: Request,

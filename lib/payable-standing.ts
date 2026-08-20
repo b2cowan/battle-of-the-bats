@@ -55,6 +55,26 @@ export interface PayablePayment {
 /** ⚠ R4 — `partly_paid` counts as UNPAID everywhere a coach filters, schedules or bulk-edits. */
 export type InstallmentState = 'settled' | 'partly_paid' | 'unpaid';
 
+export interface AppliedPayment extends PayablePayment {
+  /**
+   * The number of the FIRST piece this payment actually put money into — what a one-line row naming
+   * it says. Null when it landed nowhere, which callers render as the bare description.
+   *
+   * ⚠⚠ IT IS PER-PAYMENT, AND THAT IS THE WHOLE POINT (`/review`, correctness lens, 2026-08-19).
+   * The first version derived this outside the application rule, by finding the first installment in
+   * the commitment carrying any money at all — which cannot tell two payments apart. Three untargeted
+   * monthly payments correctly applied to pieces 1, 2 and 3 were therefore ALL labelled "installment
+   * 1 of 3", on the register and on Budget vs. Actual, breaking the exact reconcile-against-a-bank-
+   * statement use the label exists for. Dormant in P1 (every payment it writes names its own piece)
+   * and live the moment P2's `Record a payment` lands, which is why it is fixed now.
+   *
+   * ⚠ WHERE THE MONEY WENT, NOT WHERE THE COACH AIMED IT. A payment targeted at a piece that is
+   * already full spills forward, and naming the full piece would be a lie about where the money
+   * landed. The override still decides where the pour STARTS, which is what it is for.
+   */
+  landedOn: number | null;
+}
+
 export interface AppliedInstallment extends PayableInstallment {
   /** Money landed on this installment. Never more than `amount` — the excess spills forward. */
   applied: number;
@@ -74,6 +94,16 @@ export interface CommitmentStanding {
   over: number;
   /** In due-date order, each carrying what landed on it. */
   installments: AppliedInstallment[];
+  /**
+   * Every payment recorded against this commitment, oldest first.
+   *
+   * ⚠ CARRIED RATHER THAN LEFT TO THE CALLER, so a screen that lists what actually moved and a
+   * screen that says what is owed are reading ONE object. The register, Budget vs. Actual's
+   * cumulative chart and its Months grid all need the individual dated payments — a caller fetching
+   * those separately would be a second walk of the same rows, which is the defect
+   * `tests/unit/money-one-arithmetic-guard.test.ts` exists to catch.
+   */
+  payments: AppliedPayment[];
   /** `settled` only when nothing remains. Anything part-way is `partly_paid`. */
   state: InstallmentState;
 }
@@ -128,18 +158,27 @@ export function commitmentStanding(
    * ⚠ It deliberately does NOT report the overflow. What would not fit is exactly
    * `paid - total`, derived once below — and two independent ways of arriving at the over-payment
    * figure is precisely how a screen ends up saying "$50 over" beside a total that disagrees.
+   *
+   * @returns the number of the FIRST piece this pour actually put money into, or null if it fitted
+   *   nowhere. That is what a one-line row is named for — see `landedOn`.
    */
-  function pourFrom(startIndex: number, amountCents: number): void {
+  function pourFrom(startIndex: number, amountCents: number): number | null {
     let left = amountCents;
+    let first: number | null = null;
     for (let i = startIndex; i < ordered.length && left > 0; i++) {
       const inst = ordered[i];
       const room = capacity(inst.id, cents(inst.amount));
       if (room <= 0) continue;
       const take = Math.min(room, left);
       applied.set(inst.id, (applied.get(inst.id) ?? 0) + take);
+      if (first === null) first = inst.installmentNumber;
       left -= take;
     }
+    return first;
   }
+
+  /** Where each payment's money first landed, keyed by payment id. */
+  const landedOn = new Map<string, number | null>();
 
   const sorted = [...payments].sort(inPaidOrder);
 
@@ -150,14 +189,14 @@ export function commitmentStanding(
     // A payment whose target has since been deleted is not lost; it falls through to pass 2's
     // ordinary rule rather than vanishing from the total, which would understate what was paid.
     if (at < 0) continue;
-    pourFrom(at, cents(p.amount));
+    landedOn.set(p.id, pourFrom(at, cents(p.amount)));
   }
 
   // Pass 2 — everything else, and any targeted payment whose installment is gone.
   for (const p of sorted) {
     const targeted = p.installmentId && ordered.some(i => i.id === p.installmentId);
     if (targeted) continue;
-    pourFrom(0, cents(p.amount));
+    landedOn.set(p.id, pourFrom(0, cents(p.amount)));
   }
 
   const totalCents = ordered.reduce((s, i) => s + cents(i.amount), 0);
@@ -181,6 +220,7 @@ export function commitmentStanding(
     remaining: dollars(remainingCents),
     over: dollars(Math.max(0, paidCents - totalCents)),
     installments: withApplied,
+    payments: sorted.map(p => ({ ...p, landedOn: landedOn.get(p.id) ?? null })),
     state: remainingCents === 0
       ? 'settled'
       : paidCents > 0 ? 'partly_paid' : 'unpaid',
@@ -272,4 +312,54 @@ export function scopeChoiceIsMeaningful(standing: CommitmentStanding, targetId: 
   const b = installmentsInScope(standing, targetId, 'this_and_later').map(i => i.id).join();
   const c = installmentsInScope(standing, targetId, 'all_unpaid').map(i => i.id).join();
   return !(a === b && b === c);
+}
+
+/**
+ * What ONE dated piece of a commitment is called on a screen that lists it beside other records.
+ *
+ * ⚠⚠ ONE RULE, FOUR SURFACES, AND THAT IS THE ENTIRE REASON IT IS A FUNCTION. The payment schedule,
+ * the register, Budget vs. Actual's Scheduled drill-in and its Actuals drill-in all name the same
+ * piece of the same commitment, and until P1 they named it three different ways — "— deposit",
+ * "— Deposit" (the ledger's own capitalisation) and "— installment 1 of 2". A coach reconciling a
+ * bank statement against three screens had to work out that those were one payment.
+ *
+ * ⚠ A ONE-PIECE COMMITMENT TAKES NO SUFFIX. "Dome rental — installment 1 of 1" is noise: there is
+ * nothing to tell it apart from, and every plain expense in the product is now a one-installment
+ * commitment (R1), so a suffix here would append six words to most rows on the register.
+ */
+export function installmentLabel(
+  description: string,
+  installmentNumber: number,
+  installmentCount: number,
+): string {
+  return installmentCount > 1
+    ? `${description} — installment ${installmentNumber} of ${installmentCount}`
+    : description;
+}
+
+/**
+ * What one recorded payment is called on a screen that lists it — the commitment's description,
+ * named for the piece the money actually landed on.
+ *
+ * ⚠ NAMING IS NOT THE APPLICATION RULE. `commitmentStanding()` decides what a payment SETTLES, and
+ * a single cheque can settle two pieces; this only decides which piece a one-line description says
+ * it was for, which is the EARLIEST piece that cheque put money into.
+ *
+ * ⚠⚠ IT READS `landedOn`, WHICH IS PER-PAYMENT, and the distinction is the whole reason this is a
+ * one-line function rather than a search (`/review`, correctness lens, 2026-08-19). Deriving the
+ * number by scanning the commitment for a piece carrying money cannot tell two payments apart, and
+ * silently labelled three monthly payments "installment 1 of 3".
+ *
+ * Falls back to the bare description when the payment landed nowhere — an over-payment on an already
+ * settled commitment, or one whose pieces were deleted out from under it — rather than inventing a
+ * number for it.
+ */
+export function paymentLabel(
+  description: string,
+  payment: Pick<AppliedPayment, 'landedOn'>,
+  installmentCount: number,
+): string {
+  return payment.landedOn === null
+    ? description
+    : installmentLabel(description, payment.landedOn, installmentCount);
 }

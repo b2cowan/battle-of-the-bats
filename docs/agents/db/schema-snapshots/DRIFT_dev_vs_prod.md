@@ -1,14 +1,14 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-08-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-08-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 137 divergence(s)** across dev/prod.
+**⚠️ 139 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 6 | 0 | — |
 | Columns | 63 | 0 | 0 |
-| Indexes | 29 | 0 | 0 |
+| Indexes | 31 | 0 | 0 |
 | Constraints | 33 | 0 | — |
 | RLS / CHECK | 6 | 0 | 0 (RLS state) |
 
@@ -97,7 +97,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (29)
+### Only in DEV (31)
 - `family_links_person_id_idx`
 - `league_registrations_org_id_idx`
 - `league_registrations_person_id_idx`
@@ -116,12 +116,14 @@ _none_
 - `org_person_merges_pkey`
 - `rep_payable_installments_expense_idx`
 - `rep_payable_installments_number_key`
+- `rep_payable_installments_org_id_idx`
 - `rep_payable_installments_pkey`
 - `rep_payable_installments_team_due_idx`
 - `rep_payable_installments_year_idx`
 - `rep_payable_payments_entry_idx`
 - `rep_payable_payments_expense_idx`
 - `rep_payable_payments_installment_idx`
+- `rep_payable_payments_org_id_idx`
 - `rep_payable_payments_pkey`
 - `rep_payable_payments_team_date_idx`
 - `rep_payable_payments_year_idx`

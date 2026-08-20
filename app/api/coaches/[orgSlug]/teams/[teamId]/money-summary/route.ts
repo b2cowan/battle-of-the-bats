@@ -8,6 +8,7 @@ import {
   getRepTeamExpenses,
   getRepTeamMoneyIn,
   getSeasonFundraiserEntries,
+  getCommitmentStandings,
 } from '@/lib/db';
 import { isNeverPaidPlayer, outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
@@ -77,6 +78,7 @@ export const GET = withObservability(async (_req: Request,
     splitsRes,
     requestsRes,
     moneyInRecords,
+    standings,
   ] = await Promise.all([
     getRepPlayerDuesSchedules(programYear.id),
     getRepTeamExpenses(programYear.id),
@@ -105,6 +107,10 @@ export const GET = withObservability(async (_req: Request,
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
     getRepTeamMoneyIn(programYear.id),
+    /* Where every commitment stands (Payables Rebuild P1). ⚠ THIS ROUTE AND THE REGISTER ARE A
+       MATCHED PAIR — the book's running balance at Today IS this route's cash on hand — so both
+       read the SAME standing rather than each deciding for itself what a commitment has paid. */
+    getCommitmentStandings(programYear.id),
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
@@ -176,18 +182,23 @@ export const GET = withObservability(async (_req: Request,
   // `expenseTotals`) — the settlement pot reads the same one, so the hub's cash line and the
   // season's pot cannot disagree about what left the team's account. This loop keeps only the
   // COUNTS, which are this screen's own question and nobody else's.
-  const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses);
+  const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses, standings);
   let expensesUnpaidCount = 0;
   let upcomingDueCount = 0;
+  /* ⚠ R4 — SETTLED MEANS PAID IN FULL, so a commitment with $200 against its $600 is counted here
+     as one still to deal with, and its piece still counts as due. Reading it the other way is how a
+     screen understates what a team owes: the old boolean per half could only say "paid" or "not",
+     so a part payment had to be recorded as one or the other and coaches recorded it as PAID. */
   for (const e of expenses) {
-    if (e.expenseType === 'tournament_payable') {
-      if (!e.depositPaidAt || !e.balancePaidAt) expensesUnpaidCount += 1;
-      // "Due soon" = inside the next 30 days only — already-overdue legs are the
+    const standing = standings[e.id];
+    if (!standing) continue;
+    if (standing.state !== 'settled') expensesUnpaidCount += 1;
+    if (e.expenseType !== 'tournament_payable') continue;
+    for (const inst of standing.installments) {
+      // "Due soon" = inside the next 30 days only — anything already overdue is the
       // UpcomingPayablesPanel's overdue lane, not a "soon" count.
-      if (!e.depositPaidAt && e.depositDueDate && e.depositDueDate >= today && e.depositDueDate <= in30) upcomingDueCount += 1;
-      if (!e.balancePaidAt && e.balanceDueDate && e.balanceDueDate >= today && e.balanceDueDate <= in30) upcomingDueCount += 1;
-    } else if (!e.expensePaidAt) {
-      expensesUnpaidCount += 1;
+      if (inst.state === 'settled') continue;
+      if (inst.dueDate >= today && inst.dueDate <= in30) upcomingDueCount += 1;
     }
   }
   // Money handed back to families is real money out (mig 234).

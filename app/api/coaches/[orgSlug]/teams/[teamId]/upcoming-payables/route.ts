@@ -6,12 +6,14 @@ import {
   getActiveRepProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
+  getCommitmentStandings,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
+import { installmentLabel } from '@/lib/payable-standing';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -214,9 +216,11 @@ export const GET = withObservability(async (req: Request,
         half:        only || inst.installmentNumber === 1 ? 'deposit' : 'balance',
         installmentNumber: inst.installmentNumber,
         installmentCount: standing.installments.length,
-        description: only
-          ? e.description
-          : `${e.description} — installment ${inst.installmentNumber} of ${standing.installments.length}`,
+        /* ⚠ THE SHARED RULE, not a fourth spelling of it. The register, Budget vs. Actual's
+           Scheduled drill-in and its Actuals drill-in name the same piece of the same commitment,
+           and until P1 the product had three different words for it — a coach reconciling a bank
+           statement across three screens had to work out they were one payment. */
+        description: installmentLabel(e.description, inst.installmentNumber, standing.installments.length),
         category:    e.category ?? null,
         /* What is STILL OWED, not the face value. A $450 piece with $200 against it is $250 due —
            the old shape could only say "$450, unpaid", which is the figure a coach would have

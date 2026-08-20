@@ -32,6 +32,9 @@ import { recordSandboxArrival } from './demo-sandbox-heartbeat.ts';
 import {
   zonedWallClockToUtc, utcToZonedInputs, addCalendarDays, daysBetweenDateStrings,
 } from './timezone.ts';
+import {
+  legacyInstallmentPlan, legacyPayments, type LegacyCommitmentRow,
+} from './payable-legacy-plan.ts';
 
 /** The slice of a supabase client this module needs (same shape trick as DemoReconcileDb). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -632,6 +635,125 @@ async function restateExpenses(
     const { error: writeError } = await db.from('rep_team_expenses').update(patch).eq('id', row.id);
     if (writeError) throw new Error(`rep_team_expenses: ${writeError.message}`);
     written++;
+  }
+
+  /* ⚠⚠ AND THE SAME DATES ON THE RECORDS THE MONEY SCREENS ACTUALLY READ (Payables Rebuild P1,
+     mig 255). Every coach-facing money surface now reads a commitment's installments and payments,
+     not the columns patched above — so restating only those would leave the demo rendering
+     perfectly with last month's due dates: bills "overdue" that the world says are next week, and a
+     payment schedule that disagrees with the tour narration standing beside it. Exactly the class
+     of silent drift `npm run check:demos` exists for, arriving through a table that check has never
+     had to look at.
+
+     The seed writes these through `createRepTeamExpense`, so they exist and are correct on the day
+     they are made; this keeps them true as the clock moves. Matched by installment NUMBER, which is
+     the same 1-then-2 order the deposit/balance pair has always implied. */
+  written += await restateCommitmentSchedule(db, teamId, expenses);
+
+  return written;
+}
+
+/**
+ * A demo world's expense, in the shape the commitment rule reads.
+ *
+ * ⚠ ONLY THE FIELDS THAT DECIDE THE SHAPE AND THE DATES. The amounts are already correct on the
+ * seeded rows and this job never touches them, so a nominal `1` is enough to satisfy the rule's
+ * arithmetic — what is being asked for here is "how many pieces, on which days, and which of them
+ * were paid when", which is exactly the branch that must not be re-derived by hand.
+ *
+ * ⚠ `createdAt` is only ever a FALLBACK inside the rule, reached when a commitment carries no dates
+ * at all. The demo world always dates its money, so it is never read; passing the paid date keeps it
+ * honest rather than inventing a day the world does not describe.
+ */
+function demoExpenseAsLegacyRow(e: DemoExpense): LegacyCommitmentRow {
+  const stamp = (day: string | null | undefined) => (day ? demoPaidStampIso(day) : null);
+  return {
+    expenseType: e.type,
+    amount: 1,
+    expensePaidAt: e.type === 'tournament_payable' ? null : stamp(e.paidDate),
+    depositAmount: e.deposit ? 1 : null,
+    depositDueDate: e.deposit?.dueDate ?? null,
+    depositPaidAt: stamp(e.deposit?.paidDate),
+    balanceAmount: e.balance ? 1 : null,
+    balanceDueDate: e.balance?.dueDate ?? null,
+    balancePaidAt: stamp(e.balance?.paidDate),
+    accountingEntryId: null, depositEntryId: null, balanceEntryId: null,
+    createdAt: stamp(e.paidDate) ?? stamp(e.deposit?.dueDate) ?? new Date(0).toISOString(),
+  };
+}
+
+/**
+ * Slide a demo team's installments and payments onto the dates the clock now implies.
+ *
+ * Absolute values, diff-only, and silent on anything the world does not describe — the same three
+ * rules `restateExpenses` above follows, and for the same reasons.
+ */
+async function restateCommitmentSchedule(
+  db: CoachDemoDb,
+  teamId: string,
+  expenses: readonly DemoExpense[],
+): Promise<number> {
+  const { data: rows, error } = await db.from('rep_team_expenses')
+    .select('id, description, rep_payable_installments(id, installment_number, due_date), rep_payable_payments(id, installment_id, paid_date)')
+    .eq('team_id', teamId);
+  if (error) throw new Error(error.message);
+
+  type Row = {
+    id: string; description: string;
+    rep_payable_installments: Array<{ id: string; installment_number: number; due_date: string | null }>;
+    rep_payable_payments: Array<{ id: string; installment_id: string | null; paid_date: string | null }>;
+  };
+
+  const desiredByDescription = new Map(expenses.map(e => [e.description, e]));
+  let written = 0;
+
+  for (const row of ((rows ?? []) as Row[])) {
+    const want = desiredByDescription.get(row.description);
+    if (!want) continue;
+
+    /* ⚠⚠ THE SHAPE IS ASKED FOR, NOT RE-DERIVED (`/simplify`, 2026-08-19 — flagged by the altitude
+       lens). The first draft hand-rolled "a split commitment is deposit-then-balance, anything else
+       is one piece", with a comment asserting it matched `legacyInstallmentPlan` because the seed
+       had written these rows through the writer that uses it. That is agreement by narrative — a
+       fourth encoding of the same branch, which would not move if the split rule ever did. Running
+       the seed's own row through the real functions makes the agreement structural instead.
+
+       The dates are all this needs; the amounts are already right and are not touched. */
+    const asLegacyRow = demoExpenseAsLegacyRow(want);
+    const plan = legacyInstallmentPlan(asLegacyRow);
+    const paidByNumber = new Map(
+      legacyPayments(asLegacyRow, plan).map(p => [p.installmentNumber, p.paidDate]));
+
+    /* ⚠ THE DUE DATE AND THE PAID DATE ARE TWO INDEPENDENT FACTS, and each is checked on its own
+       (`/review`, regression lens, 2026-08-19). An earlier draft skipped the payment whenever the
+       installment's own date already agreed — which is invisible today only because every demo
+       deposit/balance pair is generated from one week-anchored offset, so the two always drift
+       together. The moment a world computes a paid date on a different cadence, that coupling would
+       leave a payment stranded in a month the demo's own narration says it was not in. */
+    for (const inst of row.rep_payable_installments) {
+      const piece = plan.find(p => p.installmentNumber === inst.installment_number);
+      if (!piece) continue;
+
+      if (piece.dueDate && inst.due_date !== piece.dueDate) {
+        const { error: e1 } = await db.from('rep_payable_installments')
+          .update({ due_date: piece.dueDate }).eq('id', inst.id);
+        if (e1) throw new Error(`rep_payable_installments: ${e1.message}`);
+        written++;
+      }
+
+      /* ⚠ THE PAYMENT MOVES WITH THE PIECE IT SETTLED. Budget vs. Actual files a cost by the day it
+         was PAID, so leaving a payment behind would put a bill in a month the demo's own moment
+         copy says it was not in — the one thing a shop window must not do. */
+      const paid = paidByNumber.get(piece.installmentNumber) ?? null;
+      if (!paid) continue;
+      for (const p of row.rep_payable_payments.filter(x => x.installment_id === inst.id)) {
+        if (p.paid_date === paid) continue;
+        const { error: e2 } = await db.from('rep_payable_payments')
+          .update({ paid_date: paid }).eq('id', p.id);
+        if (e2) throw new Error(`rep_payable_payments: ${e2.message}`);
+        written++;
+      }
+    }
   }
 
   return written;

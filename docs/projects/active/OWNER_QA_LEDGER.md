@@ -31,6 +31,10 @@
 > **§27 ✅ PASSED CLEAN 2026-08-19** — and surfaced four absences that became **§64** (the Payables
 > rebuild). Struck from the list below; §64 added as owed.
 >
+> **§65 added 2026-08-19** — the pre-sales walkthrough page (marketing surface, built 2026-08-19):
+> five demo-world screenshots on a public pitch page. The walk is short and the blocking check is
+> the pictures themselves.
+>
 > **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
 > §45 §46 §47 §48 §49 §51**, plus **§50's owed re-walk** (§50 PASSED 2026-08-17, then `/review`
 > changed behaviour in three places afterwards). That is the whole Money redesign, all of budget
@@ -8787,7 +8791,7 @@ and the Transactions rendered check re-run clean of any new-control findings.
 
 ## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
 
-**Not built yet — approved 2026-08-19, build starting.** Plan:
+**Part A is BUILT and awaiting the walk (2026-08-19); Parts B–E not built.** Plan:
 `COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
 Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
 **Origin: §27, which PASSED CLEAN on 2026-08-19 and surfaced four absences while passing.**
@@ -8820,10 +8824,33 @@ This is the phase where the books are re-expressed. Its whole test is that nothi
       buttons. (The screen rebuild is Part C, deliberately later.)
 - [ ] Open **Budget vs. Actual → Months**. Every settled payment sits in the same month it did
       before.
-- [ ] **Export** the payables file and the register file. Same rows, same figures.
+- [ ] **Export** the payables file and the register file. Same rows, same figures. ⚠ The payables
+      file has **three new columns at the end** — Payments, Paid to date, Still owing — and the
+      eight before them have not moved. The `Paid` column now reads **Paid / Partly paid / Unpaid**
+      instead of "Deposit paid · Balance paid".
 - [ ] A commitment that had an amount but **no due date** — the old "No schedule" state — now
       appears on the payment schedule with a date. ⚠ If any record vanished from a list it used to
       be on, that is the failure to report.
+- [ ] ⚠ **The words for a piece of a commitment changed, and that IS expected.** A split bill now
+      reads "Fall Showdown — installment 1 of 2" wherever it used to read "— deposit" / "— balance":
+      the payment schedule, the register, and Budget vs. Actual's cell drill-ins. It is one wording
+      across all four surfaces, which is the point — there were three before. A ONE-piece commitment
+      takes no suffix at all.
+- [ ] ⚠⚠ **The half of Part A a checklist could not have asked for** (found while building, 2026-08-19).
+      Make a **NEW** commitment: Money → Payables → Add, $600 split $200 deposit / $400 balance.
+      Expected: it appears on the **payment schedule**, in the **Scheduled** column of Budget vs.
+      Actual, and in the **next 30 days** count if its date falls there. Then **Mark the deposit
+      paid** and check cash on hand moved by **exactly $200**. This is the case the build prompt did
+      not cover — every reader moved to the new records while the forms still wrote the old columns,
+      so a bill created after the change would have been invisible everywhere. Fixed by having every
+      save keep the new records in step; walk it anyway, because it is the one thing Part A's
+      before/after comparison structurally cannot see.
+- [ ] Delete that test commitment. Cash on hand returns to where it was.
+- [ ] ⚠ **One count legitimately changes, and it is a fix.** On the Money hub, a commitment paid in
+      ONE payment (no balance half) used to sit in the outstanding count **forever** — the old test
+      asked for both halves to be stamped, and an un-split bill has no balance to stamp. It now
+      leaves the count when it is settled. If your outstanding count drops on a team with such
+      bills, that is this, not a lost record.
 
 ### B · ⚠⚠ Recording a payment — the two blocking defects close here
 
@@ -8949,3 +8976,43 @@ we know the rebuild kept them right.
 **Blocking parts: A, B, and E's ruling check.** Part A is the books surviving the migration, Part B
 is the two defects that move real money, and E's settled-installment step is a standing owner ruling
 that this feature could reverse by accident.
+
+---
+
+## §65 · The 90-second walkthrough — a pitch page whose pictures are the real product
+
+**BUILT 2026-08-19, awaiting the walk.** Plan: `PRESALES_WALKTHROUGH_PLAN.md`. PM brief:
+`PRESALES_WALKTHROUGH_PM_BRIEF.md`. Mockup (approved spec):
+`claude.ai/code/artifact/6f16bc17-d5f3-45b6-bd03-b6df54231f15`.
+
+**Why this section exists:** the marketing site had no product screenshot anywhere — a prospect
+either read prose or was handed the whole live demo. This page is the missing middle: five
+recognizable organizer problems, each answered by a machine-captured screenshot of the live demo
+tournament, each with a quiet door into the demo. The captures come ONLY from the riverdale demo
+world (enforced in the capture script, same guard as help shots) and re-take in one command
+(`npm run capture:marketing-shots`).
+
+**Fixture:** a logged-out browser (phone and desktop), dev server. No seeding needed beyond a
+presentable demo world (`npm run check:demos`).
+
+- [ ] `/for-tournament-organizers` — the pain section now ends in one text-weight link:
+      *"See them fixed on the real screens — the 90-second walkthrough →"*. It should read as
+      deeper proof, never compete with **Start free**.
+- [ ] The walkthrough page: hero ask first (Start free), door second, then five panels —
+      old-way pain (amber) → real screenshot → "With FieldLogicHQ" (lime) → one sentence →
+      *See this screen live →*. Closing repeats ask + door + a path back to the persona page.
+- [ ] **Every picture is really the product**: live public score, Scorekeeper View, Rain delay,
+      the public bracket, Registration Health. None empty, none showing sandbox banner/dock/tour
+      chrome, none showing a real org's data.
+- [ ] Phone-width pictures (the fan view, Scorekeeper View) stay phone-width on desktop rather
+      than blowing up soft.
+- [ ] ⚠ Known weakest visual: the **bracket panel at phone width** — the wide capture shrinks
+      until card text is unreadable (the shape still communicates). Rule on whether that's
+      acceptable for v1 or wants a tighter crop before this page is advertised anywhere.
+- [ ] Plan tags name features honestly: Rain delay re-timing and the Playoff Wizard say
+      **Tournament Plus**; no prices anywhere on the page.
+- [ ] Copy check against the demo-drift rule: no sentence quotes a score/count the next demo
+      re-anchor could change.
+
+**Blocking parts: the pictures.** A wrong, empty, or chrome-bearing screenshot on a pre-sales
+page is the whole failure mode this build exists to prevent.

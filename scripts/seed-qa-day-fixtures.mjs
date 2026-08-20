@@ -39,6 +39,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import { orgDayAsStoredInstant } from '../lib/timezone.ts';
+import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -1644,6 +1645,22 @@ async function seedMoneyLab() {
         .update({ expense_paid_at: paidStamp(String(r.expense_paid_at).slice(0, 10)) }).eq('id', r.id)).error);
     }
     if (bare.length) ok(`paid stamps reshaped to org-noon instants — ${bare.length} row(s) had been reading a day early`);
+  }
+
+  /* ── The records every money screen actually reads (Payables Rebuild P1, mig 255) ───────────
+     ⚠⚠ LAST IN THE LAB, AFTER EVERY REPAIR ABOVE. This seeder does not only insert — it corrects
+     amounts, re-files items and reshapes paid stamps on rows that already exist, and each of those
+     changes what a commitment's plan should say. Running this at the end means the schedule matches
+     the columns however the lab got into its current state.
+
+     ⚠ THIS IS THE FIXTURE OWNER QA §64 PART A IS WALKED AGAINST — "cash on hand, Budget vs. Actual
+     and the next-30 figure identical to the cent, before and after". Those three figures are now
+     read entirely off these rows, so a lab seeded without them would show an empty book and the
+     acceptance test would have nothing to compare. */
+  for (const [label, t] of [['U13', u13], ['U11', u11], ['U15', u15], ['U14', u14]]) {
+    if (!t?.id) continue;
+    const written = await backfillCommitmentRecords(db, { teamId: t.id });
+    if (written) ok(`commitment schedule (${label}): ${written} row(s) written`);
   }
 
   console.log('');

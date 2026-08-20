@@ -23371,6 +23371,11 @@
       },
       {
         "tablename": "rep_payable_installments",
+        "indexname": "rep_payable_installments_org_id_idx",
+        "indexdef": "CREATE INDEX rep_payable_installments_org_id_idx ON public.rep_payable_installments USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_payable_installments",
         "indexname": "rep_payable_installments_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_pkey ON public.rep_payable_installments USING btree (id)"
       },
@@ -23398,6 +23403,11 @@
         "tablename": "rep_payable_payments",
         "indexname": "rep_payable_payments_installment_idx",
         "indexdef": "CREATE INDEX rep_payable_payments_installment_idx ON public.rep_payable_payments USING btree (installment_id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "rep_payable_payments_org_id_idx",
+        "indexdef": "CREATE INDEX rep_payable_payments_org_id_idx ON public.rep_payable_payments USING btree (org_id)"
       },
       {
         "tablename": "rep_payable_payments",

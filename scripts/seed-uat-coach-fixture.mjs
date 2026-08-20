@@ -45,6 +45,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -1638,6 +1639,18 @@ for (const person of QA_PEOPLE) {
 }
 ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')})`);
 
+
+/* ── The records every money screen actually reads (Payables Rebuild P1, mig 255) ─────────────
+   ⚠⚠ LAST, AND OVER BOTH TEAMS, so nothing seeded above can be missed. This fixture is what
+   `npm run check:money-report` runs against, and that check REFUSES TO PASS unless the report
+   contains a commitment paid across two calendar months — the shape that once had the cumulative
+   chart and the statement both reporting a July balance in May. That shape now lives entirely in
+   `rep_payable_payments`; without this call the check would report the fixture as lacking it, which
+   reads like a seeding problem and is not one. Idempotent, so a repeat run writes nothing. */
+for (const [label, tid] of [['live', team.id], ['finished', pastTeam.id]]) {
+  const written = await backfillCommitmentRecords(db, { teamId: tid });
+  ok(`commitment schedule (${label} team): ${written} row(s) written`);
+}
 
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);

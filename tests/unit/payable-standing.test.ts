@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   commitmentStanding, installmentStatus, installmentsInScope, scopeChoiceIsMeaningful,
   PAYABLE_STATUS_DEFAULT,
+  installmentLabel, paymentLabel,
   type PayableInstallment, type PayablePayment, type EditScope,
 } from '../../lib/payable-standing.ts';
 
@@ -302,5 +303,120 @@ describe('R1 — a commitment always has at least one installment', () => {
     assert.equal(s.total, 0);
     assert.equal(s.state, 'settled');
     assert.deepEqual(s.installments, []);
+  });
+});
+
+/**
+ * ⚠⚠ ONE NAME FOR ONE PIECE, ACROSS FOUR SCREENS. Until P1 the product had three spellings for the
+ * same dated piece of the same commitment — "— deposit" on the register, "— Deposit" on the ledger
+ * entry it posted, "— installment 1 of 2" on the payment schedule — so a coach reconciling a bank
+ * statement across three screens had to work out that those were one payment.
+ */
+describe('installmentLabel — what a piece is called', () => {
+  test('a one-piece commitment takes NO suffix', () => {
+    // Every plain cost in the product is a one-installment commitment now (R1), so a suffix here
+    // would append six words to most rows on the register for no information at all.
+    assert.equal(installmentLabel('Dome rental', 1, 1), 'Dome rental');
+  });
+
+  test('a split commitment names its piece and how many there are', () => {
+    assert.equal(installmentLabel('Regional entry', 1, 2), 'Regional entry — installment 1 of 2');
+    assert.equal(installmentLabel('Regional entry', 2, 2), 'Regional entry — installment 2 of 2');
+  });
+
+  test('a monthly series does not pretend to be a deposit and a balance', () => {
+    assert.equal(installmentLabel('Dome rental', 5, 6), 'Dome rental — installment 5 of 6');
+  });
+});
+
+describe('paymentLabel — which piece a payment is NAMED for', () => {
+  test('the coach’s own override decides where the money starts', () => {
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 300, dueDate: '2026-10-01' }),
+       inst({ id: 'b', installmentNumber: 2, amount: 300, dueDate: '2026-11-01' })],
+      [pay({ id: 'x', amount: 300, installmentId: 'b' })],
+    );
+    assert.equal(paymentLabel('Dome', s.payments[0], 2), 'Dome — installment 2 of 2');
+  });
+
+  test('an untargeted payment is named for the earliest piece the money touched', () => {
+    /* ⚠ NAMING IS NOT THE APPLICATION RULE. One $700 cheque covering a full month and half the next
+       settles two pieces; the row describing it says which piece it started on, because a one-line
+       description cannot say "and half of the next one" without lying about how many payments were
+       made. */
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 400, dueDate: '2026-10-01' }),
+       inst({ id: 'b', installmentNumber: 2, amount: 600, dueDate: '2026-11-01' })],
+      [pay({ id: 'x', amount: 700, installmentId: null })],
+    );
+    assert.equal(paymentLabel('Dome', s.payments[0], 2), 'Dome — installment 1 of 2');
+  });
+
+  test('⚠⚠ SEVERAL UNTARGETED PAYMENTS EACH NAME THEIR OWN PIECE', () => {
+    /* THE DEFECT THIS REPLACED (`/review`, correctness lens, 2026-08-19). The number used to be
+       found by scanning the commitment for the first piece carrying any money — which cannot tell
+       two payments apart, so three monthly payments correctly applied to pieces 1, 2 and 3 were ALL
+       labelled "installment 1 of 3" on the register and on Budget vs. Actual. That is precisely the
+       reconcile-against-a-bank-statement use the label exists for. Dormant while every payment
+       carried an explicit piece; live the moment P2's Record a payment lands. */
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 100, dueDate: '2026-10-01' }),
+       inst({ id: 'b', installmentNumber: 2, amount: 100, dueDate: '2026-11-01' }),
+       inst({ id: 'c', installmentNumber: 3, amount: 100, dueDate: '2026-12-01' })],
+      [pay({ id: 'p1', amount: 100, installmentId: null, paidDate: '2026-10-02' }),
+       pay({ id: 'p2', amount: 100, installmentId: null, paidDate: '2026-11-02' }),
+       pay({ id: 'p3', amount: 100, installmentId: null, paidDate: '2026-12-02' })],
+    );
+    assert.deepEqual(s.payments.map(p => p.landedOn), [1, 2, 3]);
+    assert.deepEqual(s.payments.map(p => paymentLabel('Dome', p, 3)), [
+      'Dome — installment 1 of 3',
+      'Dome — installment 2 of 3',
+      'Dome — installment 3 of 3',
+    ]);
+  });
+
+  test('a payment aimed at a FULL piece is named for where the money actually went', () => {
+    // Naming the full piece would be a lie about where the money landed. The override still decides
+    // where the pour starts, which is what it is for.
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 100, dueDate: '2026-10-01' }),
+       inst({ id: 'b', installmentNumber: 2, amount: 100, dueDate: '2026-11-01' })],
+      [pay({ id: 'first', amount: 100, installmentId: 'a', paidDate: '2026-10-02' }),
+       pay({ id: 'second', amount: 100, installmentId: 'a', paidDate: '2026-10-03' })],
+    );
+    assert.deepEqual(s.payments.map(p => p.landedOn), [1, 2]);
+  });
+
+  test('a payment that fits nowhere takes the bare description', () => {
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 100, dueDate: '2026-10-01' })],
+      [pay({ id: 'p1', amount: 100, paidDate: '2026-10-02' }),
+       pay({ id: 'over', amount: 50, paidDate: '2026-10-03' })],
+    );
+    assert.equal(s.payments[1].landedOn, null);
+    assert.equal(paymentLabel('Dome', s.payments[1], 1), 'Dome');
+  });
+
+  test('a payment whose target was deleted falls back rather than vanishing', () => {
+    const s = commitmentStanding(
+      [inst({ id: 'a', installmentNumber: 1, amount: 300, dueDate: '2026-10-01' })],
+      [pay({ id: 'x', amount: 300, installmentId: 'gone' })],
+    );
+    assert.equal(s.payments[0].landedOn, 1);
+  });
+});
+
+describe('the standing carries its payments, so every screen reads ONE object', () => {
+  test('payments come back oldest first', () => {
+    const s = commitmentStanding(
+      [inst({ id: 'a', amount: 900, dueDate: '2026-10-01' })],
+      [pay({ id: 'late', amount: 600, paidDate: '2026-11-09' }),
+       pay({ id: 'early', amount: 300, paidDate: '2026-10-14' })],
+    );
+    assert.deepEqual(s.payments.map(p => p.id), ['early', 'late']);
+  });
+
+  test('a commitment with nothing recorded carries an empty list, never undefined', () => {
+    assert.deepEqual(commitmentStanding([inst({ amount: 450 })], []).payments, []);
   });
 });
