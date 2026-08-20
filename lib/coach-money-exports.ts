@@ -153,7 +153,14 @@ export const EXPENSE_COLUMNS: ExportColumnDef[] = [
      that nobody here can see. Deposit/Deposit due/Balance/Balance due now read the FIRST TWO pieces
      of the plan, which is exactly what they have always been — and a commitment with more than two
      is described honestly by `Payments` and `Still owing` beside them rather than by a heading
-     pretending there are only ever two. Those four headings retire in P3 with the screen. */
+     pretending there are only ever two.
+
+     ⚠ THEY DID NOT RETIRE IN P3 — CORRECTED 2026-08-20, and the date matters more than the phase
+     number. P3 rebuilt the screen and left these four alone deliberately: while a plan is capped at
+     TWO pieces, `Deposit` / `Deposit due` / `Balance` / `Balance due` still describe it truthfully,
+     and a coach's own spreadsheet addresses our columns by POSITION. **They retire in P4, with the
+     cap** — the release that makes a six-installment bill possible is the release that makes these
+     headings a lie, and that is one deliberate break instead of two. */
   { label: 'Payments',     key: 'payments',    format: 'text' },
   { label: 'Paid to date', key: 'paidToDate',  format: 'currency' },
   { label: 'Still owing',  key: 'stillOwing',  format: 'currency' },
