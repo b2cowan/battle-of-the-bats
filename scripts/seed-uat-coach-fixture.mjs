@@ -45,7 +45,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
+import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -903,28 +903,45 @@ const { data: existingExp } = await db.from('rep_team_expenses')
 if (!existingExp?.length) {
   const soon = new Date(); soon.setDate(soon.getDate() + 20);
   const past = new Date(); past.setDate(past.getDate() - 10);
-  const exp = await db.from('rep_team_expenses').insert([
-    {
-      org_id: org.id, team_id: team.id, program_year_id: py.id,
-      expense_type: 'expense', description: 'Practice balls and tees',
-      category: cats?.[0]?.name ?? null, amount: 240, expense_paid_at: new Date().toISOString(),
-    },
-    {
-      org_id: org.id, team_id: team.id, program_year_id: py.id,
-      expense_type: 'expense', description: 'Scorekeeping tablet',
-      category: cats?.[0]?.name ?? null, amount: 310, expense_paid_at: null,
-    },
-    // The one genuinely NESTED row in the hub: a deposit already paid and a balance still due.
-    {
-      org_id: org.id, team_id: team.id, program_year_id: py.id,
-      expense_type: 'tournament_payable', description: 'Spring classic entry',
-      category: cats?.[1]?.name ?? cats?.[0]?.name ?? null, amount: 1600,
-      deposit_amount: 600, deposit_due_date: past.toISOString().slice(0, 10), deposit_paid_at: new Date().toISOString(),
-      balance_amount: 1000, balance_due_date: soon.toISOString().slice(0, 10), balance_paid_at: null,
-    },
-  ]);
-  if (exp.error) console.log(`  ! expenses skipped (${exp.error.message})`);
-  else { money.expenses = 3; ok('expenses + a two-part payable seeded'); }
+  const todayDay = new Date().toISOString().slice(0, 10);
+  /* ⚠ Payables Rebuild P2: a fixture STATES its plan and its payments — the legacy
+     deposit/balance/paid columns are dead and nothing writes them. Same three shapes as before,
+     now written as the records every money screen reads. */
+  try {
+    await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'expense', description: 'Practice balls and tees',
+        category: cats?.[0]?.name ?? null,
+      },
+      ...paidOnce(240, todayDay),
+    });
+    await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'expense', description: 'Scorekeeping tablet',
+        category: cats?.[0]?.name ?? null,
+      },
+      installments: [{ amount: 310, dueDate: todayDay }],
+    });
+    // The one genuinely NESTED row in the hub: a first piece already paid and a second still due.
+    await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'tournament_payable', description: 'Spring classic entry',
+        category: cats?.[1]?.name ?? cats?.[0]?.name ?? null,
+      },
+      installments: [
+        { amount: 600, dueDate: past.toISOString().slice(0, 10) },
+        { amount: 1000, dueDate: soon.toISOString().slice(0, 10) },
+      ],
+      payments: [{ amount: 600, paidDate: todayDay, installmentNumber: 1 }],
+    });
+    money.expenses = 3;
+    ok('expenses + a two-part payable seeded');
+  } catch (e) {
+    console.log(`  ! expenses skipped (${e.message})`);
+  }
 } else {
   ok('expenses already present');
 }
@@ -993,26 +1010,31 @@ const { data: existingSplit } = await db.from('rep_team_expenses')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
   .eq('description', SPLIT_DESC).limit(1);
 if (!existingSplit?.length) {
-  /** `YYYY-MM-DD` → the UTC instant of ORG NOON that day, DST-correct. Mirrors
-   *  `orgDayAsStoredInstant`, which a `.mjs` script cannot import from the TypeScript source. */
-  const orgNoon = (day) => {
-    const hourThere = Number(new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Toronto', hour: '2-digit', hour12: false,
-    }).formatToParts(new Date(`${day}T12:00:00Z`)).find(p => p.type === 'hour').value);
-    const utcHour = 12 + (12 - hourThere);   // EDT → 16:00Z, EST → 17:00Z
-    return new Date(`${day}T${String(utcHour).padStart(2, '0')}:00:00.000Z`).toISOString();
-  };
+  /* ⚠ `paid_date` is a bare DATE column (P2) — the org-noon stamp trick the legacy timestamps
+     needed has nothing left to apply to. The two payments land in two calendar months, which is
+     the whole point of this row. */
   const depDay = `${py.year}-05-14`;
   const balDay = `${py.year}-07-09`;
-  const sp = await db.from('rep_team_expenses').insert({
-    org_id: org.id, team_id: team.id, program_year_id: py.id,
-    expense_type: 'tournament_payable', description: SPLIT_DESC,
-    category: cats?.[1]?.name ?? cats?.[0]?.name ?? null, amount: 900,
-    deposit_amount: 300, deposit_due_date: depDay, deposit_paid_at: orgNoon(depDay),
-    balance_amount: 600, balance_due_date: balDay, balance_paid_at: orgNoon(balDay),
-  });
-  if (sp.error) console.log(`  ! split-month payable skipped (${sp.error.message})`);
-  else ok(`split-month payable seeded ($300 ${depDay} + $600 ${balDay}) — the case the report's arithmetic check needs`);
+  try {
+    await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'tournament_payable', description: SPLIT_DESC,
+        category: cats?.[1]?.name ?? cats?.[0]?.name ?? null,
+      },
+      installments: [
+        { amount: 300, dueDate: depDay },
+        { amount: 600, dueDate: balDay },
+      ],
+      payments: [
+        { amount: 300, paidDate: depDay, installmentNumber: 1 },
+        { amount: 600, paidDate: balDay, installmentNumber: 2 },
+      ],
+    });
+    ok(`split-month payable seeded ($300 ${depDay} + $600 ${balDay}) — the case the report's arithmetic check needs`);
+  } catch (e) {
+    console.log(`  ! split-month payable skipped (${e.message})`);
+  }
 } else {
   ok('split-month payable already present');
 }
@@ -1033,16 +1055,52 @@ if (!existingSplit?.length) {
 const { data: existingOop } = await db.from('rep_team_expenses')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id).not('paid_by_player_id', 'is', null).limit(1);
 if (!existingOop?.length && players?.length) {
-  const oop = await db.from('rep_team_expenses').insert({
-    org_id: org.id, team_id: team.id, program_year_id: py.id,
-    expense_type: 'expense', description: 'Umpire fees — a parent paid the association direct',
-    category: cats?.[0]?.name ?? null, amount: 180,
-    expense_paid_at: new Date().toISOString(), paid_by_player_id: players[0].id,
-  });
-  if (oop.error) console.log(`  ! out-of-pocket cost skipped (${oop.error.message})`);
-  else ok('out-of-pocket cost seeded — the register row whose balance must NOT move');
+  try {
+    const todayDay = new Date().toISOString().slice(0, 10);
+    const oopId = await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'expense', description: 'Umpire fees — a parent paid the association direct',
+        category: cats?.[0]?.name ?? null, paid_by_player_id: players[0].id,
+      },
+      // ⚠ Its payment carries NO accounting entry, ever — the family's money moved, the team's
+      // did not (mig 234); `paidOnce` leaves the entry null, which is exactly right here.
+      ...paidOnce(180, todayDay),
+    });
+    /* ⚠ THE CREDIT IS THE OTHER HALF OF THE RECORD (mig 234): an out-of-pocket cost with no
+       reimbursement credit is the broken state the app's compensating deletes exist to prevent,
+       and P2's payment/undo doors refuse to touch one. Seed both or neither. */
+    const cc = await db.from('rep_dues_credits').insert({
+      program_year_id: py.id, player_id: players[0].id, expense_id: oopId,
+      amount: 180, description: 'Paid out of pocket — Umpire fees — a parent paid the association direct',
+      credit_type: 'reimbursement', credit_date: todayDay,
+    });
+    if (cc.error) console.log(`  ! out-of-pocket credit skipped (${cc.error.message})`);
+    ok('out-of-pocket cost seeded — the register row whose balance must NOT move');
+  } catch (e) {
+    console.log(`  ! out-of-pocket cost skipped (${e.message})`);
+  }
 } else {
-  ok('out-of-pocket cost already present (or roster empty)');
+  /* ⚠ REPAIR, not just skip (Payables Rebuild P2): a fixture seeded before this rebuild carries the
+     out-of-pocket cost WITHOUT its reimbursement credit — a state the app can no longer create and
+     P2's payment/undo doors refuse to touch. Backfill the missing half so the family case in QA
+     §64 Part B is walkable on this fixture. */
+  const oopRow = existingOop[0];
+  const { data: oopFull } = await db.from('rep_team_expenses')
+    .select('id, amount, paid_by_player_id').eq('id', oopRow.id).single();
+  const { data: oopCredit } = await db.from('rep_dues_credits')
+    .select('id').eq('expense_id', oopRow.id).eq('credit_type', 'reimbursement').limit(1);
+  if (!oopCredit?.length && oopFull?.paid_by_player_id) {
+    const cc = await db.from('rep_dues_credits').insert({
+      program_year_id: py.id, player_id: oopFull.paid_by_player_id, expense_id: oopFull.id,
+      amount: oopFull.amount, description: 'Paid out of pocket — Umpire fees — a parent paid the association direct',
+      credit_type: 'reimbursement', credit_date: new Date().toISOString().slice(0, 10),
+    });
+    if (cc.error) console.log(`  ! out-of-pocket credit repair skipped (${cc.error.message})`);
+    else ok('out-of-pocket credit backfilled — the family case is walkable');
+  } else {
+    ok('out-of-pocket cost already present (or roster empty)');
+  }
 }
 
 /**
@@ -1271,21 +1329,28 @@ if (!priorLines?.length) {
   if (insLines.error) { console.error('✗ prior-season budget insert', insLines.error.message); process.exit(1); }
 
   // One category UNDER, one OVER — the money book has to say which in words, not colour alone.
+  // ⚠ `month` is 0-based (it fed Date.UTC); the day string below spells it 1-based.
   const spent = [
     { under: 'Diamond permits',      description: 'Permits — spring block', amount: 2250, month: 3, day: 8 },
     { under: 'Spring classic entry', description: 'Spring classic entry',   amount: 1950, month: 4, day: 2 },
-  ].map(r => {
-    const tax = taxonomyFor(r.under);
-    return {
-      org_id: org.id, team_id: team.id, program_year_id: priorYear.id,
-      expense_type: 'expense', description: r.description, amount: r.amount,
-      budget_category_id: tax.category_id, budget_item_id: tax.item_id,
-      expense_paid_at: new Date(Date.UTC(priorYear.year, r.month, r.day, 16, 0)).toISOString(),
-    };
-  });
-  const insSpend = await db.from('rep_team_expenses').insert(spent);
-  if (insSpend.error) { console.error('✗ prior-season expenses insert', insSpend.error.message); process.exit(1); }
-  ok('prior-season money seeded (2 planned lines, 2 costs — one under, one over)');
+  ];
+  try {
+    for (const r of spent) {
+      const tax = taxonomyFor(r.under);
+      const day = `${priorYear.year}-${String(r.month + 1).padStart(2, '0')}-${String(r.day).padStart(2, '0')}`;
+      await insertCommitmentWithRecords(db, {
+        row: {
+          org_id: org.id, team_id: team.id, program_year_id: priorYear.id,
+          expense_type: 'expense', description: r.description,
+          budget_category_id: tax.category_id, budget_item_id: tax.item_id,
+        },
+        ...paidOnce(r.amount, day),
+      });
+    }
+    ok('prior-season money seeded (2 planned lines, 2 costs — one under, one over)');
+  } catch (e) {
+    console.error('✗ prior-season expenses insert', e.message); process.exit(1);
+  }
 }
 
 
@@ -1500,22 +1565,28 @@ if (!pastLines?.length) {
     { under: 'Winter dome block',    description: 'Dome hire — pre-season',        amount: 1712, month: 2, day: 28 },
     // Tournaments: planned 3,000 · paid 2,900 → UNDER by 100. One of each reading on one statement.
     { under: 'Spring classic entry', description: 'Spring classic entry',          amount: 2900, month: 4, day: 20 },
-  ].map(r => {
-    const tax = taxonomyFor(r.under);
-    return {
-      org_id: org.id, team_id: pastTeam.id, program_year_id: finishedYear.id,
-      // ⚠ 'expense' — the column carries a CHECK of ('expense','tournament_payable'), not free text.
-      expense_type: 'expense', description: r.description, amount: r.amount,
-      budget_category_id: tax.category_id, budget_item_id: tax.item_id,
+  ];
+  try {
+    for (const r of spent) {
+      const tax = taxonomyFor(r.under);
       /* ⚠ PAID, and dated to the SEASON'S own year rather than to "now" — a rendered baseline keyed
-         on the screen's text must not drift each time the sweep runs. An instant at org NOON, never
-         a bare date: UTC midnight reads as the previous day in every negative offset. */
-      expense_paid_at: new Date(Date.UTC(finishedYear.year, r.month, r.day, 16, 0)).toISOString(),
-    };
-  });
-  const insSpend = await db.from('rep_team_expenses').insert(spent);
-  if (insSpend.error) { console.error('✗ finished-season expenses insert', insSpend.error.message); process.exit(1); }
-  ok('finished-season money seeded (3 planned lines, 4 costs — one category over, one under)');
+         on the screen's text must not drift each time the sweep runs. `month` is 0-based (it once
+         fed Date.UTC); `paid_date` is a bare date column, so no org-noon stamp is needed (P2). */
+      const day = `${finishedYear.year}-${String(r.month + 1).padStart(2, '0')}-${String(r.day).padStart(2, '0')}`;
+      await insertCommitmentWithRecords(db, {
+        row: {
+          org_id: org.id, team_id: pastTeam.id, program_year_id: finishedYear.id,
+          // ⚠ 'expense' — the column carries a CHECK of ('expense','tournament_payable'), not free text.
+          expense_type: 'expense', description: r.description,
+          budget_category_id: tax.category_id, budget_item_id: tax.item_id,
+        },
+        ...paidOnce(r.amount, day),
+      });
+    }
+    ok('finished-season money seeded (3 planned lines, 4 costs — one category over, one under)');
+  } catch (e) {
+    console.error('✗ finished-season expenses insert', e.message); process.exit(1);
+  }
 } else {
   ok('finished-season money already present');
 }
@@ -1640,17 +1711,12 @@ for (const person of QA_PEOPLE) {
 ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')})`);
 
 
-/* ── The records every money screen actually reads (Payables Rebuild P1, mig 255) ─────────────
-   ⚠⚠ LAST, AND OVER BOTH TEAMS, so nothing seeded above can be missed. This fixture is what
-   `npm run check:money-report` runs against, and that check REFUSES TO PASS unless the report
-   contains a commitment paid across two calendar months — the shape that once had the cumulative
-   chart and the statement both reporting a July balance in May. That shape now lives entirely in
-   `rep_payable_payments`; without this call the check would report the fixture as lacking it, which
-   reads like a seeding problem and is not one. Idempotent, so a repeat run writes nothing. */
-for (const [label, tid] of [['live', team.id], ['finished', pastTeam.id]]) {
-  const written = await backfillCommitmentRecords(db, { teamId: tid });
-  ok(`commitment schedule (${label} team): ${written} row(s) written`);
-}
+/* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments
+   from the legacy deposit/balance columns — a direction that became dangerous the moment payments
+   were real records, because a re-derivation would overwrite them with a deposit-shaped fiction.
+   Every commitment above is seeded WITH its records through `insertCommitmentWithRecords`, so
+   there is nothing left to derive; `npm run check:money-report` still proves the split-month shape
+   is present. */
 
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);

@@ -1,154 +1,113 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { paidLedgerLegs, ledgerReversalPreview, paidOnDate, whyPaidDateIsRefused, asMoneyAmount } from '../../lib/expense-ledger.ts';
-import type { RepTeamExpense } from '../../lib/types.ts';
+import { ledgerReversalPreview, whyPaidDateIsRefused, asMoneyAmount, isRealCalendarDate, parseInstallmentPlan } from '../../lib/expense-ledger.ts';
+import { commitmentStanding, type PayableInstallment, type PayablePayment } from '../../lib/payable-standing.ts';
 import { orgDayAsStoredInstant, orgDayKey } from '../../lib/timezone.ts';
 
 /**
- * These three functions decide what a coach is TOLD before deleting something, what the server then
- * gives back, and which figures a paid record still lets them change. Two readers each, on both
- * sides of the wire — so the cases that matter are the disagreements that would be invisible.
+ * What a coach is TOLD before deleting something has to agree with what the server then gives
+ * back — the confirmation and the reversal read the same payments, so the cases that matter are
+ * the disagreements that would be invisible.
+ *
+ * ⚖ The `paidLedgerLegs` / `paidOnDate` suites died with the legacy paid stamps (Payables Rebuild
+ * P2): what posted to the books is the commitment's own payments now, and the preview reads the
+ * standing every screen already holds.
  */
 
-function expense(over: Partial<RepTeamExpense> = {}): RepTeamExpense {
-  return {
-    id: 'e1',
-    programYearId: 'py1',
-    teamId: 't1',
-    orgId: 'o1',
-    expenseType: 'expense',
-    description: 'Team pizza night',
-    category: 'Events',
-    amount: 120,
-    expensePaidAt: null,
-    depositAmount: null,
-    depositDueDate: null,
-    depositPaidAt: null,
-    balanceAmount: null,
-    balanceDueDate: null,
-    balancePaidAt: null,
-    eventId: null,
-    notes: null,
-    paymentMethod: null,
-    payeeId: null,
-    payeePayer: null,
-    paidByPlayerId: null,
-    accountingEntryId: null,
-    depositEntryId: null,
-    balanceEntryId: null,
-    createdBy: null,
-    createdAt: '2026-08-01T00:00:00Z',
-    updatedAt: '2026-08-01T00:00:00Z',
-    ...over,
-  } as RepTeamExpense;
-}
+const inst = (over: Partial<PayableInstallment> = {}): PayableInstallment => ({
+  id: 'i1', expenseId: 'e1', installmentNumber: 1, amount: 120, dueDate: '2026-05-01', ...over,
+});
+const pay = (over: Partial<PayablePayment> = {}): PayablePayment => ({
+  id: 'p1', expenseId: 'e1', installmentId: null, amount: 120, paidDate: '2026-05-14',
+  method: null, note: null, accountingEntryId: 'entry-1', ...over,
+});
 
-const payable = (over: Partial<RepTeamExpense> = {}) =>
-  expense({ expenseType: 'tournament_payable', description: 'Spring tournament entries', amount: 1300, ...over });
-
-describe('what a record has posted to the books', () => {
-  test('an unpaid expense has posted nothing', () => {
-    assert.deepEqual(paidLedgerLegs(expense()), []);
-    assert.equal(ledgerReversalPreview(expense()).amount, 0);
+describe('ledgerReversalPreview — what deleting would put back on the books', () => {
+  test('an unpaid commitment has posted nothing', () => {
+    const standing = commitmentStanding([inst()], []);
+    assert.deepEqual(ledgerReversalPreview(standing, null), { amount: 0, legs: 0, owesFamily: false });
   });
 
-  test('a paid expense posts its full amount, and carries its recorded entry', () => {
-    const e = expense({ expensePaidAt: '2026-08-05T12:00:00Z', accountingEntryId: 'entry-1' });
-    const legs = paidLedgerLegs(e);
-    assert.equal(legs.length, 1);
-    assert.equal(legs[0].amount, 120);
-    assert.equal(legs[0].entryId, 'entry-1');
-    assert.equal(legs[0].entryDescription, 'Team pizza night');
-  });
-
-  test('⚠ AN OUT-OF-POCKET EXPENSE POSTS NOTHING, even though it is marked paid', () => {
-    // A family's money moved, not the team's — no cash entry was ever written. Reversing one would
-    // credit the team for spending it never did.
-    const e = expense({ expensePaidAt: '2026-08-05T12:00:00Z', paidByPlayerId: 'player-1' });
-    assert.deepEqual(paidLedgerLegs(e), []);
-    assert.equal(ledgerReversalPreview(e).amount, 0);
-  });
-
-  test('an out-of-pocket expense still reports the family debt separately from the money', () => {
-    const e = expense({ expensePaidAt: '2026-08-05T12:00:00Z', paidByPlayerId: 'player-1' });
-    const preview = ledgerReversalPreview(e);
-    assert.equal(preview.owesFamily, true, 'the credit disappearing must be sayable on its own');
-    assert.equal(preview.amount, 0, 'and must never be folded into a dollar figure coming back');
-  });
-
-  test('a part-paid payable posts only the half that settled', () => {
-    const p = payable({
-      depositAmount: 300, depositPaidAt: '2026-05-07T12:00:00Z', depositEntryId: 'entry-d',
-      balanceAmount: 1000,
-    });
-    const legs = paidLedgerLegs(p);
-    assert.equal(legs.length, 1);
-    assert.equal(legs[0].half, 'deposit');
-    assert.equal(legs[0].amount, 300);
-    assert.equal(legs[0].entryDescription, 'Spring tournament entries — Deposit');
-    assert.equal(ledgerReversalPreview(p).amount, 300);
-  });
-
-  test('a fully-paid payable posts both halves, and the preview sums them', () => {
-    const p = payable({
-      depositAmount: 300, depositPaidAt: '2026-05-07T12:00:00Z',
-      balanceAmount: 1000, balancePaidAt: '2026-07-01T12:00:00Z',
-    });
-    const preview = ledgerReversalPreview(p);
+  test('a paid record quotes exactly its payments, however many', () => {
+    const standing = commitmentStanding(
+      [inst({ amount: 900 })],
+      [pay({ amount: 300 }), pay({ id: 'p2', amount: 600, paidDate: '2026-07-09' })]);
+    const preview = ledgerReversalPreview(standing, null);
+    assert.equal(preview.amount, 900);
     assert.equal(preview.legs, 2);
-    assert.equal(preview.amount, 1300);
   });
 
-  test('a half with no amount recorded falls back to the total, not to zero', () => {
-    // Marking paid posts `depositAmount ?? amount`, so the reversal has to agree or it gives back
-    // nothing for a payable that was never split.
-    const p = payable({ depositPaidAt: '2026-05-07T12:00:00Z' });
-    assert.equal(paidLedgerLegs(p)[0].amount, 1300);
+  test('⚠ a PART-PAID commitment quotes what was ACTUALLY paid, never the total (§27 Part D)', () => {
+    const standing = commitmentStanding([inst({ amount: 600 })], [pay({ amount: 200 })]);
+    assert.equal(ledgerReversalPreview(standing, null).amount, 200);
   });
 
-  test('a row paid before the link existed reports a null entry id, not an absent leg', () => {
-    const e = expense({ expensePaidAt: '2026-01-01T12:00:00Z', accountingEntryId: null });
-    const legs = paidLedgerLegs(e);
-    assert.equal(legs.length, 1, 'it still posted money and still needs reversing');
-    assert.equal(legs[0].entryId, null, 'the caller must know to fall back to matching');
+  test('⚠ AN OUT-OF-POCKET EXPENSE COMES BACK AS ZERO CASH, and the family debt is said apart', () => {
+    // A family's money moved, not the team's — no cash entry was ever written. Reversing one would
+    // credit the team for spending it never did; the credit disappearing must be sayable on its own.
+    const standing = commitmentStanding([inst()], [pay({ accountingEntryId: null })]);
+    const preview = ledgerReversalPreview(standing, 'player-1');
+    assert.equal(preview.amount, 0, 'must never be folded into a dollar figure coming back');
+    assert.equal(preview.legs, 0);
+    assert.equal(preview.owesFamily, true);
+  });
+
+  test('no standing yet (a row still loading) previews as nothing rather than throwing', () => {
+    assert.deepEqual(ledgerReversalPreview(undefined, null), { amount: 0, legs: 0, owesFamily: false });
   });
 
   test('sums stay exact to the cent', () => {
-    const p = payable({
-      amount: 0.3, depositAmount: 0.1, depositPaidAt: 'x', balanceAmount: 0.2, balancePaidAt: 'y',
-    });
-    assert.equal(ledgerReversalPreview(p).amount, 0.3);
+    const standing = commitmentStanding(
+      [inst({ amount: 0.3 })],
+      [pay({ amount: 0.1 }), pay({ id: 'p2', amount: 0.2 })]);
+    assert.equal(ledgerReversalPreview(standing, null).amount, 0.3);
   });
 });
 
-describe('paidOnDate — when a record last posted money', () => {
-  /**
-   * ⚖ THIS SUITE REPLACED THE FIGURE-LOCK TESTS (owner ruling 2026-08-16). They asserted that a
-   * paid amount could not change; that rule is retired, because the books now follow a correction
-   * instead of forbidding it. What survives is the much smaller question the form still asks —
-   * WHEN did this post — which drives the sentence warning that an edit will move the books.
-   */
-  test('nothing has posted before anything is paid', () => {
-    assert.equal(paidOnDate(expense()), null);
+describe('parseInstallmentPlan — the one validator behind every door that stores a plan', () => {
+  test('a valid plan passes with rounded amounts', () => {
+    assert.deepEqual(parseInstallmentPlan([{ amount: 200, dueDate: '2026-09-01' }, { amount: 400.005, dueDate: '2026-10-01' }]),
+      { plan: [{ amount: 200, dueDate: '2026-09-01' }, { amount: 400.01, dueDate: '2026-10-01' }] });
   });
 
-  test('a paid expense reports its stamp', () => {
-    assert.equal(paidOnDate(expense({ expensePaidAt: '2026-08-05T16:00:00Z' })), '2026-08-05T16:00:00Z');
+  test('an empty, sub-cent, or dateless plan is refused with a coach sentence', () => {
+    for (const bad of [[], [{ amount: 0, dueDate: '2026-09-01' }], [{ amount: 100 }], [{ amount: 100, dueDate: '2026-02-30' }], 'nope']) {
+      const out = parseInstallmentPlan(bad as unknown);
+      assert.ok('error' in out, `${JSON.stringify(bad)} must be refused`);
+    }
   });
 
-  test('it prefers the most decisive stamp a payable carries', () => {
-    const p = payable({ depositPaidAt: '2026-05-07T16:00:00Z', balancePaidAt: '2026-07-01T16:00:00Z' });
-    assert.equal(paidOnDate(p), '2026-07-01T16:00:00Z', 'the later half is the one that finished it');
+  test('⚠ MORE THAN TWO PIECES IS REFUSED FOR NOW — the edit form is a two-piece editor', () => {
+    // A longer plan created through the API would be silently truncated to two the first time a
+    // coach saved an unrelated rename (/review, 2026-08-20). The P4 recurring editor lifts this.
+    const out = parseInstallmentPlan([
+      { amount: 100, dueDate: '2026-09-01' },
+      { amount: 100, dueDate: '2026-10-01' },
+      { amount: 100, dueDate: '2026-11-01' },
+    ]);
+    assert.ok('error' in out && /two installments/.test((out as { error: string }).error));
+  });
+});
+
+describe('isRealCalendarDate — the shape is not the date', () => {
+  test('real days pass', () => {
+    for (const day of ['2026-07-04', '2026-01-01', '2026-12-31', '2028-02-29']) {
+      assert.ok(isRealCalendarDate(day), `${day} is a real day`);
+    }
   });
 
-  test('a part-paid payable still reports the half that did post', () => {
-    assert.equal(paidOnDate(payable({ depositPaidAt: '2026-05-07T16:00:00Z' })), '2026-05-07T16:00:00Z');
+  test('⚠ days the calendar does not have are refused, not rolled into the next month', () => {
+    for (const bad of ['2026-02-30', '2026-00-15', '2026-13-01', '2026-04-31', '2027-02-29']) {
+      assert.ok(!isRealCalendarDate(bad), `${bad} must be refused`);
+    }
   });
 
-  test('no record, no stamp — the add form has nothing to warn about', () => {
-    assert.equal(paidOnDate(null), null);
+  test('anything that is not a bare YYYY-MM-DD is refused', () => {
+    for (const bad of [null, undefined, '', '2026-8-16', '16/08/2026', '2026-08-16T12:00:00Z', 20260816]) {
+      assert.ok(!isRealCalendarDate(bad), `${String(bad)} must be refused`);
+    }
   });
-});;
+});
 
 /**
  * WHEN THE MONEY MOVED (2026-08-16) — the guard behind the date defect.

@@ -1055,6 +1055,39 @@ export interface DemoExpense {
 }
 
 /**
+ * The plan a demo expense DESCRIBES — pieces with amounts, dates, and which were paid when.
+ *
+ * ⚠ ONE STATEMENT, TWO CONSUMERS (`/simplify`, reuse lens, 2026-08-20): the seed writes these
+ * pieces as installments and payments, and the nightly re-anchor slides the same pieces onto the
+ * clock. Each used to hand-roll the split rule, and the two copies already disagreed on a corner
+ * (one asked "deposit OR balance", the other "deposit AND balance") — precisely the
+ * agreement-by-narrative the re-anchor's own comments warn about. The convention, stated once: a
+ * payable with BOTH a deposit and a balance descriptor is two pieces; anything else is one piece
+ * for the full amount, dated when it was (or is to be) paid.
+ */
+export function demoExpensePlan(e: DemoExpense): Array<{
+  installmentNumber: number;
+  amount: number;
+  dueDate: string | null;
+  paidDate: string | null;
+}> {
+  if (e.type === 'tournament_payable' && e.deposit && e.balance) {
+    return [
+      { installmentNumber: 1, amount: e.deposit.amount, dueDate: e.deposit.dueDate ?? null, paidDate: e.deposit.paidDate ?? null },
+      { installmentNumber: 2, amount: e.balance.amount, dueDate: e.balance.dueDate ?? null, paidDate: e.balance.paidDate ?? null },
+    ];
+  }
+  // A lump expense reads its day off `paidDate`; an un-split payable off its deposit descriptor —
+  // the two never co-occur (the type above documents that payables leave `paidDate` null).
+  return [{
+    installmentNumber: 1,
+    amount: e.amount,
+    dueDate: e.deposit?.dueDate ?? e.paidDate ?? null,
+    paidDate: e.paidDate ?? e.deposit?.paidDate ?? null,
+  }];
+}
+
+/**
  * A settled, lump-sum expense — the shape three of the five teams now use.
  *
  * Shared rather than re-declared per team (Phase 3): the off-season resolver had its own local

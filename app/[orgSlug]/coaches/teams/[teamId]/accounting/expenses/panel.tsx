@@ -22,7 +22,8 @@ import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
-import type { CommitmentStanding } from '@/lib/payable-standing';
+import { installmentStatus, type CommitmentStanding, type AppliedPayment } from '@/lib/payable-standing';
+import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -47,10 +48,9 @@ import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
   RepTeamMoneyIn,
 } from '@/lib/types';
-import { isInstallmentOverdue } from '@/lib/dues-status';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { useMoneyRevision, useBumpMoneyRevision, useSharedMoneyRead } from '@/lib/coach-money-refresh';
-import { formatStoredDate, tournamentToday, orgDayKey, addCalendarDays } from '@/lib/timezone';
+import { formatStoredDate, tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
 import {
   MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
@@ -211,27 +211,20 @@ function readSavedDatePreset(teamId: string): DateRangeSelection {
  * flagging everyone before anything was due made the warning worth ignoring.
  */
 function payableStatus(
-  e: { depositAmount: number | null; depositPaidAt: string | null; balanceAmount: number | null; balancePaidAt: string | null },
-  overdue: { deposit: boolean; balance: boolean },
+  standing: CommitmentStanding | undefined,
+  today: string,
 ): { label: string; cls: string } {
-  const halves = [
-    e.depositAmount != null ? !!e.depositPaidAt : null,
-    e.balanceAmount != null ? !!e.balancePaidAt : null,
-  ].filter((v): v is boolean => v !== null);
-
-  /* ⚠ A HALF IS ONLY OVERDUE IF IT EXISTS. `isInstallmentOverdue` reads a due DATE and a paid-at,
-     and knows nothing about whether an amount was ever recorded — while the payable form saves a
-     due date independently of its amount. So a payable with a real, not-yet-due balance and a
-     leftover deposit DATE with the amount cleared was being labelled "Overdue" with nothing
-     actually owed. Caught in review 2026-08-13. Gating here rather than at the call site keeps the
-     rule with the function that owns the definition of a "half". */
-  const anyOverdue = (e.depositAmount != null && overdue.deposit)
-    || (e.balanceAmount != null && overdue.balance);
-
-  if (halves.length === 0) return { label: 'No schedule', cls: styles.badgeArchived };
-  if (halves.every(Boolean)) return { label: 'Paid', cls: styles.badgeActive };
+  /* R1 makes a commitment with no plan unrepresentable, so this branch is a fallback for a row
+     whose standing has not arrived yet — honest, and gone on the next load. */
+  if (!standing || standing.installments.length === 0) {
+    return { label: 'Scheduled', cls: styles.badgeDraft };
+  }
+  if (standing.state === 'settled') return { label: 'Paid', cls: styles.badgeActive };
+  const anyOverdue = standing.installments.some(i => i.state !== 'settled' && i.dueDate < today);
   if (anyOverdue) return { label: 'Overdue', cls: styles.badgeOverdue };
-  if (halves.some(Boolean)) return { label: 'Part paid', cls: styles.badgeCompleted };
+  /* ⚠ R4 — "Partly paid" is a description, never a settlement: it counts as unpaid in every
+     filter and every schedule, and the badge is what tells the coach money has landed. */
+  if (standing.state === 'partly_paid') return { label: 'Partly paid', cls: styles.badgeCompleted };
   return { label: 'Scheduled', cls: styles.badgeDraft };
 }
 
@@ -291,9 +284,9 @@ function registerStatusOf(r: { scheduled: boolean; overdueDays: number | null })
 
 type ScheduleFilter = 'unpaid' | 'paid' | 'all';
 
-/** The three ways money-out turns paid. One union, because the settle door and the inline prompt
- *  both have to name one and a fourth would otherwise be added to only one of them. */
-type MarkPaidAction = 'markExpensePaid' | 'markDepositPaid' | 'markBalancePaid';
+/* ⚖ `MarkPaidAction` IS GONE (Payables Rebuild P2). Money-out turns paid one way now: a payment
+   recorded against the commitment, which can say "part of it" and can be undone — the two things
+   the three named actions structurally could not. */
 
 /** A commitment on the schedule tab: exactly what the payables API returns, plus which lane it
  *  came from. Reuses `PayableItem` so the hub panel and this tab can't drift apart. */
@@ -463,42 +456,52 @@ function kindForTab(tab: ExpenseTab): { kind: EntryKind; timing: CostTiming } {
 }
 
 /**
- * Does this commitment carry a deposit/balance split, or is it one amount on one date?
+ * Does this commitment carry more than one dated piece?
  *
- * ⚠ THE BALANCE HALF IS THE TELL, not "has any half at all". The un-split case is stored as the
- * deposit alone (see `dueDate` on `BLANK_RECORD`), so testing for a deposit would call every
- * simple commitment a split one and hide its due date behind a group the coach never opened.
+ * ⚠ READ OFF THE STANDING, never the legacy columns (Payables Rebuild P2): a record created since
+ * the rebuild has nothing in `balanceAmount` at all, and its plan lives in its installments.
  */
-function hasDepositBalanceSplit(e: Pick<RepTeamExpense, 'balanceAmount' | 'balanceDueDate'>): boolean {
-  return e.balanceAmount != null || !!e.balanceDueDate;
+function planIsSplit(standing: CommitmentStanding | undefined): boolean {
+  return (standing?.installments.length ?? 0) > 1;
 }
 
-/** Turn a saved record back into form strings, for Edit. */
-function formFromExpense(e: RepTeamExpense): typeof BLANK_RECORD {
-  const num = (v: number | null) => (v == null ? '' : String(v));
+/**
+ * Turn a saved record back into form strings, for Edit.
+ *
+ * ⚠ THE SCHEDULE AND THE PAID DATE COME FROM THE STANDING — the installments and payments are the
+ * record now; the deposit/balance columns stopped being written when the bridge died (P2). The
+ * form's two-half vocabulary survives as the ≤2-piece EDITOR only: piece 1 fills the deposit
+ * fields, piece 2 the balance fields, and the save sends them back as installments.
+ */
+function formFromExpense(e: RepTeamExpense, standing: CommitmentStanding | undefined): typeof BLANK_RECORD {
+  /* By NUMBER, not by position: the standing orders pieces by due date, and the deposit fields
+     edit piece 1 whatever the coach did to its date. */
+  const byNumber = [...(standing?.installments ?? [])].sort((a, b) => a.installmentNumber - b.installmentNumber);
+  const pieces = byNumber;
+  const split = pieces.length > 1;
+  /* A single payment's own day, for the plain cost's "Date paid" — already a bare `YYYY-MM-DD`
+     (`paid_date` is a `date` column), so no org-noon conversion is left to get wrong. A record
+     paid in several payments shows no single date; each payment carries its own. */
+  const singlePayment = (standing?.payments.length ?? 0) === 1 ? standing!.payments[0] : null;
   return {
     ...BLANK_RECORD,
     description: e.description,
     category: e.category ?? '',
     budgetCategoryId: e.budgetCategoryId ?? '',
     budgetItemId: e.budgetItemId ?? '',
-    amount: String(e.amount),
+    amount: String(standing?.total ?? e.amount),
     notes: e.notes ?? '',
     paymentMethod: e.paymentMethod ?? '',
     paidByPlayerId: e.paidByPlayerId ?? '',
-    depositAmount: num(e.depositAmount),
-    depositDueDate: e.depositDueDate ?? '',
-    balanceAmount: num(e.balanceAmount),
-    balanceDueDate: e.balanceDueDate ?? '',
-    /* The un-split commitment reads its one due date back off the deposit half it was stored in.
-       A split one leaves this empty — its dates are the two halves' own, and the form hides this
-       field entirely rather than showing a third date with nothing to mean. */
-    dueDate: hasDepositBalanceSplit(e) ? '' : (e.depositDueDate ?? ''),
-    /* ⚠ THE STORED INSTANT BECOMES THE ORG'S DAY for the picker (2026-08-16). `expense_paid_at` is
-       a timestamptz held at org noon; a `<input type="date">` wants `YYYY-MM-DD`, and slicing the
-       raw ISO string would hand it the UTC day — the same off-by-one this release exists to close,
-       arriving through the edit form instead of the write. */
-    paidDate: e.expensePaidAt ? orgDayKey(e.expensePaidAt) : '',
+    depositAmount: split ? String(pieces[0].amount) : '',
+    depositDueDate: split ? pieces[0].dueDate : '',
+    balanceAmount: split ? String(pieces[1].amount) : '',
+    balanceDueDate: split ? pieces[1].dueDate : '',
+    /* The un-split commitment reads its one due date off its one piece. A split one leaves this
+       empty — its dates are the pieces' own, and the form hides this field entirely rather than
+       showing a third date with nothing to mean. */
+    dueDate: !split && e.expenseType === 'tournament_payable' ? (pieces[0]?.dueDate ?? '') : '',
+    paidDate: e.expenseType === 'tournament_payable' ? '' : (singlePayment?.paidDate ?? ''),
   };
 }
 
@@ -736,16 +739,29 @@ function MoneyRecordsPanel({
    */
   const [formSplit, setFormSplit] = useState(false);
   /**
-   * The commitment — or the half — this form is SETTLING, when it was opened by Mark paid.
+   * The Record-a-payment door (Payables Rebuild P2) — its own small modal, standing over a
+   * commitment. It replaced the money form's settle mode: a payment is date + amount + method +
+   * note + (optionally) which installment, and dragging the record's whole form along asked a
+   * coach to re-confirm five fields that are not part of the question.
    *
-   * ⚠⚠ SETTLING IS A PATCH ON THE EXISTING RECORD, NEVER A NEW ONE (plan §8). A transaction and a
-   * commitment both carrying the same $600 is the double-count the whole split exists to prevent,
-   * so this holds the record's own id and the action that settles it; save sends the coach's edits
-   * and the mark-paid action in ONE request, which the route already handles as a pair.
+   * ⚠ A PAYMENT IS ITS OWN RECORD, POSTed to the payments sub-route — never a PATCH stamping the
+   * commitment. The register renders one row per payment, and the commitment's standing re-reads.
    */
-  const [settling, setSettling] = useState<
-    { expenseId: string; action: MarkPaidAction; describes: string; half: 'deposit' | 'balance' | null } | null
-  >(null);
+  const [paying, setPaying] = useState<{
+    expense: RepTeamExpense;
+    /** The coach's override — where the pour STARTS (R3). Null records against the commitment. */
+    installmentId: string | null;
+    amount: string;
+    paidDate: string;
+    method: string;
+    note: string;
+  } | null>(null);
+  const [payingBusy, setPayingBusy] = useState(false);
+  const [payingError, setPayingError] = useState('');
+  /** Which payment's Undo is ARMED — first tap arms ("Undo $400?"), second executes. Undo moves
+   *  real money back onto the books, so it earns one deliberate beat without a whole dialog. */
+  const [undoArm, setUndoArm] = useState<string | null>(null);
+  const [undoBusy, setUndoBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -869,40 +885,26 @@ function MoneyRecordsPanel({
       description: isItemLabel(f) ? '' : f.description,
     }));
   }
-  /** Opened by Mark paid — the money door standing over a commitment, not the commitment's form. */
-  const isSettling = !!settling;
-  /**
-   * WHAT THE FORM IS DOING, resolved once (/simplify, 2026-08-16).
-   *
-   * ⚠ THE PRIORITY IS THE POINT, and it was being re-derived at four call sites — the modal title,
-   * its subtitle, the Delete gate and the save button each spelled out `settling ? … : editing ? …`
-   * for themselves. A settle sets `editing` too (it stands over a saved record), so ANY site that
-   * tested `editing` first silently got the wrong answer; four copies is four chances to write it
-   * in the wrong order, and a fifth mode would need all four found. Same lesson as `FORM_COPY`
-   * above and `resetForm` below.
-   */
-  const formMode: 'settle' | 'edit' | 'add' =
-    settling ? 'settle' : (editing || editingMoneyIn) ? 'edit' : 'add';
-  /**
-   * ⚠ A SETTLE WEARS THE MONEY FORM, NOT THE COMMITMENT FORM (plan §3). `editing` holds a payable
-   * while settling one, so reading the record alone would have drawn due-date fields and a
-   * deposit/balance split over a question that is only ever "how much left, and when?". The
-   * commitment's own fields are one Cancel away, on its row.
-   */
-  const isPayableForm = isSettling
-    ? false
-    : editing
-      ? editing.expenseType === 'tournament_payable'
-      : entryKind === 'expense' && formTiming === 'payable';
+  /* ⚖ THE SETTLE MODE IS GONE (Payables Rebuild P2): recording money against a commitment is the
+     Record-a-payment modal (`paying`, above), which is its own door and never this form. The mode
+     union shrank back to the two things this form actually does. */
+  const formMode: 'edit' | 'add' = (editing || editingMoneyIn) ? 'edit' : 'add';
+  const isPayableForm = editing
+    ? editing.expenseType === 'tournament_payable'
+    : entryKind === 'expense' && formTiming === 'payable';
   /** The one place the four-way fork is resolved; every label below reads from `copy`. */
   const formTag: FormKindTag = entryKind !== 'expense' ? entryKind : isPayableForm ? 'payable' : 'expense';
   const copy = FORM_COPY[formTag];
-  /* What the coach is told before confirming a delete. Reads the same functions the server reverses
-     with (lib/expense-ledger.ts, lib/coach-money-in.ts), so the sentence and the outcome cannot
-     drift apart. ⚠ Money IN reverses the other way — deleting it LOWERS cash on hand — so it gets
-     its own sentence rather than sharing the expense one with a flipped word. */
+  /** The standing behind the record being edited — the plan and the payments the form now reads
+   *  instead of the legacy columns. Undefined until the list load lands, like the list itself. */
+  const editingStanding = editing ? standings[editing.id] : undefined;
+  /* What the coach is told before confirming a delete. Reads the same payments the server reverses
+     (lib/expense-ledger.ts), so the sentence and the outcome cannot drift apart — and on a
+     part-paid commitment it quotes what was ACTUALLY paid, never the total (§27 Part D).
+     ⚠ Money IN reverses the other way — deleting it LOWERS cash on hand — so it gets its own
+     sentence rather than sharing the expense one with a flipped word. */
   const deletePreview = editing
-    ? ledgerReversalPreview(editing)
+    ? ledgerReversalPreview(editingStanding, editing.paidByPlayerId)
     : { amount: 0, legs: 0, owesFamily: false };
   const moneyInDeletePreview = editingMoneyIn ? moneyInReversalPreview(editingMoneyIn) : null;
 
@@ -918,8 +920,9 @@ function MoneyRecordsPanel({
   const [importMessage, setImportMessage] = useState('');
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
 
-  // Nav-hide + body-scroll-lock registration for the record modal (mobile sheet default).
-  useOverlayOpen(formOpen);
+  // Nav-hide + body-scroll-lock registration for the record modal AND the payment modal
+  // (mobile sheet default) — one registration, either door.
+  useOverlayOpen(formOpen || paying !== null);
 
   /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
      silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
@@ -962,10 +965,6 @@ function MoneyRecordsPanel({
     setFormTags([]);
     setFormPayee(null);
     setConfirmDelete(false);
-    /* Both new pieces of form state clear with everything else, for the reason this function
-       exists: a settle left half-finished must not turn the NEXT record a coach opens into a
-       payment against the commitment they walked away from. */
-    setSettling(null);
     setFormSplit(false);
     setFutureDateRefused(false);
     /* ⚠ THE RULE THIS FUNCTION IS FOR, restated because its most recent example has just been
@@ -1016,7 +1015,7 @@ function MoneyRecordsPanel({
     setFormOpenedWith(values);
     // Open the split for a commitment that has one, so nothing already recorded is hidden from
     // the coach who came here to change it — the rule every disclosure on this form follows.
-    setFormSplit(hasDepositBalanceSplit(e));
+    setFormSplit(planIsSplit(standings[e.id]));
     setFormTags(tagsByExpenseId[e.id] ?? []);
     setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
     setSaveError('');
@@ -1026,37 +1025,88 @@ function MoneyRecordsPanel({
   /** Open the form to EDIT a saved record. Type is stated, never switchable (owner ruling) — which
    *  is why `formKind` is not set here: `entryKind` derives it from the record itself. */
   function openEdit(e: RepTeamExpense) {
-    openSavedRecord(e, formFromExpense(e));
+    openSavedRecord(e, formFromExpense(e, standings[e.id]));
   }
 
   /**
-   * Mark paid, THROUGH THE MONEY DOOR (plan §3, ruled 2026-08-16).
+   * Record a payment (Payables Rebuild P2) — the door that replaced Mark paid.
    *
-   * Opens *Add money* already filled in from the commitment — what it is for, how much, what it is
-   * called — and asks the one thing the record cannot know: when the money actually left. Saving
-   * settles the commitment; it does not add a row beside it.
+   * ⚠ THE PIECE DECIDES THE SUGGESTED AMOUNT, and it is the piece's REMAINDER, never its face
+   * value: a $450 piece with $200 already on it opens asking about the $250 — pre-filling more
+   * would invite a coach to confirm a figure larger than the payment they made. Opened from the
+   * commitment itself (no piece), it suggests everything still owing.
    *
-   * ⚠ THE HALF DECIDES THE AMOUNT. A $600 entry paid as a $200 deposit and a $400 balance settles
-   * in two goes, and the form must open showing the $200 — pre-filling the record's total would
-   * invite a coach to confirm a figure four hundred dollars larger than the payment they made.
+   * ⚠ OPENING FROM A PIECE PRE-AIMS THE OVERRIDE (R3): the coach clicked THAT installment, so the
+   * pour starts there. The picker in the modal can still put it back to "wherever it's owed".
    */
-  function openSettle(e: RepTeamExpense, half: 'deposit' | 'balance' | null) {
-    const halfAmount = half === 'deposit' ? e.depositAmount
-      : half === 'balance' ? e.balanceAmount
-      : null;
-    openSavedRecord(e, {
-      ...formFromExpense(e),
-      // Falls back to the record's own total, matching what the server posts when a half carries
-      // no amount of its own — the figure on screen is then the figure that reaches the books.
-      amount: String(halfAmount ?? e.amount),
+  function openRecordPayment(e: RepTeamExpense, target?: { installmentId?: string | null; amount?: number }) {
+    const standing = standings[e.id];
+    const suggested = target?.amount ?? standing?.remaining ?? e.amount;
+    setPayingError('');
+    setUndoArm(null);
+    setPaying({
+      expense: e,
+      installmentId: target?.installmentId ?? null,
+      amount: String(suggested),
       paidDate: tournamentToday(),
+      method: '',
+      note: '',
     });
-    setSettling({
-      expenseId: e.id,
-      action: half === 'deposit' ? 'markDepositPaid' : half === 'balance' ? 'markBalancePaid' : 'markExpensePaid',
-      describes: half ? `${e.description} ${half}` : e.description,
-      half,
-    });
+  }
+
+  /** Submit the Record-a-payment modal. Over-payment saves (R6) — the server does not compare. */
+  async function submitPayment() {
+    if (!paying) return;
+    setPayingBusy(true);
+    setPayingError('');
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${paying.expense.id}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: parseFloat(paying.amount),
+            paidDate: paying.paidDate,
+            method: paying.method.trim() || null,
+            note: paying.note.trim() || null,
+            installmentId: paying.installmentId,
+          }),
+        });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
+      setPaying(null);
+      await refreshAfterWrite();
+    } catch (e: any) {
+      setPayingError(e.message);
+    } finally {
+      setPayingBusy(false);
+    }
+  }
+
+  /**
+   * Undo a recorded payment — the books go back by exactly that payment's amount (R5).
+   * Two taps: the first arms the button with the figure, the second sends the DELETE.
+   */
+  async function undoPayment(e: RepTeamExpense, payment: AppliedPayment) {
+    if (undoArm !== payment.id) {
+      setUndoArm(payment.id);
+      return;
+    }
+    setUndoBusy(payment.id);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${e.id}/payments/${payment.id}`,
+        { method: 'DELETE' });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not undo the payment');
+      setUndoArm(null);
+      await refreshAfterWrite();
+    } catch (err: any) {
+      // Surfaced beside the list rather than a toast nothing owns — same channel as every other
+      // load error on this screen.
+      setError(err.message);
+      setUndoArm(null);
+    } finally {
+      setUndoBusy(null);
+    }
   }
 
   /** The same door for an arrival. Its kind is stated too — income and money back are not two
@@ -1537,21 +1587,16 @@ function MoneyRecordsPanel({
       if (isPayable && formSplit && !form.depositDueDate && !form.balanceDueDate) {
         throw new Error('Give the deposit or the balance a due date — that is what puts them on your payment schedule.');
       }
-      /* ⚠⚠ A SETTLED SPLIT CANNOT GO BACK TO ONE AMOUNT (/review, 2026-08-16, Critical — found in
-         this release, not inherited).
-         Closing the split rewrites the deposit to the TOTAL (see `commitmentSchedule`), which is
-         right on a commitment where nothing has moved and catastrophic on one where the deposit has
-         posted: a $600 entry with a PAID $200 deposit and a $400 balance would have restated that
-         deposit as $600 and `syncExpenseBooksForEdit` would have moved the books by $400 — silently,
-         under a banner still promising "nothing moves". The mirror case was already safe only by
-         luck: clearing a PAID balance is refused server-side because it arrives as null, while
-         CHANGING a paid deposit's figure is an ordinary edit the server has no reason to question.
-         So the guard belongs here, on the shape change, not on the figure.
+      /* ⚠⚠ A SPLIT WITH MONEY ON IT CANNOT GO BACK TO ONE AMOUNT (/review, 2026-08-16, Critical —
+         carried across the rebuild). Collapsing the split drops piece 2, and money recorded
+         against a dropped piece would re-pour onto pieces that cannot hold it, reading as an
+         over-payment nothing on screen explains. The server refuses too (its check is the real
+         one); this is the courtesy that saves the round trip.
          ⚠ It fires ONLY on collapsing a record that IS split. An un-split commitment whose one
          payment has posted stays fully editable — that is the standing no-read-only ruling, and
          restating its amount is a correction the books are meant to follow. */
-      if (isPayable && editing && hasDepositBalanceSplit(editing) && !formSplit
-        && (editing.depositPaidAt || editing.balancePaidAt)) {
+      if (isPayable && editing && planIsSplit(editingStanding) && !formSplit
+        && (editingStanding?.paid ?? 0) > 0) {
         throw new Error(
           'Part of this has already been paid, so it can’t go back to one amount on one date. '
           + 'Reopen the split to change the amounts, or delete this and enter it again.',
@@ -1578,12 +1623,7 @@ function MoneyRecordsPanel({
          the only place that can offer the door as a link. */
       if (!isPayable && form.paidDate && form.paidDate > tournamentToday()) {
         setFutureDateRefused(true);
-        throw new Error(settling
-          ? 'That date is in the future — a payment can only be recorded once the money has left.'
-          : 'That hasn’t happened yet.');
-      }
-      if (settling && !form.paidDate) {
-        throw new Error('When did the money leave? That date is what puts this in the right month.');
+        throw new Error('That hasn’t happened yet.');
       }
 
       const common = {
@@ -1601,7 +1641,6 @@ function MoneyRecordsPanel({
         payeePayer:    formPayee?.displayName ?? null,
         tagIds:        formTags,
       };
-      const num = (v: string) => (v ? parseFloat(v) : null);
 
       /* ⚖ AN EDIT NOW SENDS EVERY FIGURE (owner ruling 2026-08-16). This used to omit anything that
          had posted, because the server refused it — echoing back an unchanged amount would have
@@ -1609,60 +1648,34 @@ function MoneyRecordsPanel({
          server moves the team's books to match whatever it is given, so there is no send-filter
          left to keep in step with a lock rule, which is one fewer copy of a rule that used to live
          in three places and failed silently in this one. */
-      /**
-       * A commitment's schedule, as the record actually stores it.
-       *
-       * ⚠⚠ ONE AMOUNT ON ONE DATE IS THE DEPOSIT HALF WITH NO BALANCE — not a special case this
-       * form invented, but the convention the bulk importer has always written ("No explicit split
-       * → the whole amount is due on the one date, stored as the deposit half"). A hand-typed
-       * commitment and an imported one are therefore the same record, which is what lets the
-       * payment schedule, the exports, Mark paid and every existing sum keep working with nothing
-       * new in the data — the standing "not a new object" constraint, honoured in the one place it
-       * could have been broken.
-       */
-      const commitmentSchedule = formSplit
-        ? {
-            depositAmount:  num(form.depositAmount),
+      /* A commitment's plan, as explicit installments (Payables Rebuild P2). The deposit/balance
+         fields survive as the ≤2-piece EDITOR only; the composition rule — a blank half takes the
+         remainder, dates fall back to each other — is `composeTwoPieceInstallments`, shared with
+         the bulk importer so the form and the sheet cannot drift. The fallback date is never
+         reached here: the split validation above already required one of the two dates. */
+      const commitmentInstallments = formSplit
+        ? composeTwoPieceInstallments({
+            total: amount,
+            depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
             depositDueDate: form.depositDueDate || null,
-            balanceAmount:  num(form.balanceAmount),
+            balanceAmount: form.balanceAmount ? parseFloat(form.balanceAmount) : null,
             balanceDueDate: form.balanceDueDate || null,
-          }
-        : {
-            depositAmount:  amount,
-            depositDueDate: form.dueDate || null,
-            /* Cleared, so closing the split on a commitment that had one really does put it back
-               to one amount on one date. The server refuses this when the balance has already been
-               PAID, which is the right answer — that money left, and a form cannot un-spend it. */
-            balanceAmount:  null,
-            balanceDueDate: null,
-          };
+            fallbackDueDate: tournamentToday(),
+          })
+        : [{ amount, dueDate: form.dueDate }];
 
       const edits: Record<string, unknown> = { ...common };
-      if (settling) {
-        /* ⚠⚠ SETTLING PATCHES THE COMMITMENT — IT NEVER CREATES A ROW BESIDE IT (plan §8). The
-           record transitions to paid and posts to the books exactly as the inline Mark paid does,
-           because it IS that action: the coach's edits and the mark-paid ride in one request, a
-           pairing the route explicitly handles (it posts the figure being STORED, not the one it
-           arrived to find). A POST here would leave a transaction and a commitment each carrying
-           the same $600 — the double count the whole split exists to prevent.
-
-           ⚠ THE HALF DECIDES WHICH FIGURE MOVES. Sending `amount` while settling a deposit would
-           rewrite the commitment's TOTAL with the deposit's figure — a $600 entry silently
-           becoming $200 the moment its deposit was paid. Only the half being settled is sent, and
-           the other half is left out entirely rather than echoed back. */
-        edits.action = settling.action;
-        edits.paidDate = form.paidDate;
-        if (settling.half === 'deposit') edits.depositAmount = amount;
-        else if (settling.half === 'balance') edits.balanceAmount = amount;
-        else edits.amount = amount;
+      if (isPayable) {
+        /* R2 — no `amount` is sent for a commitment: its total IS the sum of its installments,
+           and the server derives it. Sending one would be a second way of typing the same fact. */
+        edits.installments = commitmentInstallments;
       } else {
         edits.amount = amount;
-        if (isPayable) {
-          Object.assign(edits, commitmentSchedule);
-        } else if (editing?.expensePaidAt && form.paidDate) {
-          /* Correcting WHEN it was paid — sent only on a record that HAS posted, because the server
-             refuses a date on something that never moved money. */
-          edits.expensePaidAt = form.paidDate;
+        if ((editingStanding?.payments.length ?? 0) === 1 && form.paidDate) {
+          /* Correcting WHEN it was paid — sent only on a record with exactly ONE payment, because
+             that is the only shape with a single date to correct. A record paid in pieces corrects
+             a date by undoing the wrong payment and recording it again. */
+          edits.paidDate = form.paidDate;
         }
       }
 
@@ -1680,7 +1693,7 @@ function MoneyRecordsPanel({
               ...common,
               amount,
               ...(isPayable
-                ? commitmentSchedule
+                ? { installments: commitmentInstallments }
                 : {
                     paidByPlayerId: form.paidByPlayerId || null,
                     /* ⚠ WHEN IT WAS PAID, and omitted entirely when the coach cleared the field —
@@ -1866,35 +1879,24 @@ function MoneyRecordsPanel({
       <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>{body}</p>
     );
 
-    // ── A settle: the same record turning paid, never a second one beside it ──
-    if (settling) {
-      return line(<>
-        <strong>When you save:</strong> {money} leaves the team’s books on the date above, and{' '}
-        {settling.half
-          ? <>this {settling.half} is settled on your payment schedule. The other half stays as it is.</>
-          : <>this commitment is settled.</>}
-        {' '}Nothing new is added beside it.
-      </>);
-    }
-
     // ── A commitment: the one form in the portal that moves no money ──
     if (isPayableForm) {
       /* ⚠⚠ "NOTHING MOVES" IS ONLY TRUE WHILE NOTHING HAS MOVED (/review, 2026-08-16). The line was
-         rendered for every commitment, including one whose deposit had already posted — where
-         changing a figure DOES move the books. A consequence line that contradicts the screen it
-         sits on is worse than none: it is the sentence a coach trusts instead of checking. */
-      if (editing?.depositPaidAt || editing?.balancePaidAt) {
+         rendered for every commitment, including one money had already landed on — where changing a
+         settled figure DOES move the books. A consequence line that contradicts the screen it sits
+         on is worse than none: it is the sentence a coach trusts instead of checking. */
+      if ((editingStanding?.paid ?? 0) > 0) {
         return line(<>
-          <strong>Part of this has been paid.</strong> The rest of the schedule is still just a plan —
-          but changing a figure that has already been paid updates the team’s books too, and cash on
-          hand follows the new number.
+          <strong>{fmt(editingStanding!.paid)} of this has been paid.</strong> The rest of the
+          schedule is still just a plan — but changing a figure that has already been paid updates
+          the team’s books too, and cash on hand follows the new number.
         </>);
       }
       const due = formSplit ? (form.depositDueDate || form.balanceDueDate) : form.dueDate;
       return line(<>
         <strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no family is
         affected. This joins your payment schedule{due ? <>, due {fmtDate(due)}</> : null}
-        {' '}— mark it paid when the money actually leaves.
+        {' '}— record payments against it as the money actually leaves.
       </>);
     }
 
@@ -1939,7 +1941,7 @@ function MoneyRecordsPanel({
     if (form.paidDate) {
       /* An edit of something that HAS posted is the case the lock used to cover — say that the
          books follow, because that is the change the coach cannot see from this screen. */
-      return line(editing?.expensePaidAt
+      return line((editingStanding?.paid ?? 0) > 0
         ? <><strong>When you save:</strong> this stays paid, dated {fmtDate(form.paidDate)}. Changing
           the figure or the date updates the team’s books too — cash on hand and the month it lands
           in both follow what you enter here.</>
@@ -1947,8 +1949,8 @@ function MoneyRecordsPanel({
           {fmtDate(form.paidDate)}. Cash on hand goes <strong>down</strong> by {money}.</>);
     }
     return line(<>
-      <strong>When you save: nothing moves yet.</strong> This waits as an unpaid cost until you mark
-      it paid, and cash on hand is unchanged until then.
+      <strong>When you save: nothing moves yet.</strong> This waits as an unpaid cost until you
+      record its payment, and cash on hand is unchanged until then.
     </>);
   }
 
@@ -2167,26 +2169,27 @@ function MoneyRecordsPanel({
     : singleSelectedKind ?? 'register';
 
   /**
-   * A schedule row's Mark paid — a named helper, not an inline block in the JSX (/simplify).
+   * A schedule row's Record a payment — a named helper, not an inline block in the JSX (/simplify).
    *
-   * ⚠ THE ROW CARRIES ONLY AN ID; THE SETTLE FORM NEEDS THE RECORD, for its item, its description
-   * and the half's own amount. A row whose commitment has not arrived in this panel's list yet
-   * shows no button rather than opening a form with blanks in it.
+   * ⚠ THE ROW CARRIES ONLY IDS; THE PAYMENT DOOR NEEDS THE RECORD, for its description and its
+   * standing. A row whose commitment has not arrived in this panel's list yet shows no button
+   * rather than opening a modal with blanks in it.
    *
-   * ⚠ Marking paid works on this team's OWN commitments. An org allocation is settled through Org
-   * Allocations, which owns that conversation.
+   * ⚠ Offered on EVERY unsettled piece, part-paid included — the piece's REMAINDER is the
+   * suggested figure, which the old full-half door could not express. An org allocation is settled
+   * through Club, which owns that conversation.
    */
   const payablesById = new Map(allPayables.map(p => [p.id, p]));
-  function scheduleMarkPaidButton(row: ScheduleRow) {
+  function scheduleRecordPaymentButton(row: ScheduleRow) {
     if (row.paid || !canWriteMoney || row.source !== 'team' || !row.expenseId) return null;
     const record = payablesById.get(row.expenseId);
     if (!record) return null;
     return (
       <button
         className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-        onClick={() => openSettle(record, row.half === 'deposit' ? 'deposit' : 'balance')}
+        onClick={() => openRecordPayment(record, { installmentId: row.installmentId ?? null, amount: row.amount })}
       >
-        Mark paid
+        Record a payment
       </button>
     );
   }
@@ -2195,11 +2198,11 @@ function MoneyRecordsPanel({
    * ONE ROW OF THE REGISTER.
    *
    * ⚠ THE ROW DECIDES ITS OWN DOOR, and there are three. A RECORDED row (a cost, a commitment
-   * half, income, money back) opens the money form and is fully editable. A DERIVED row — dues,
+   * piece, income, money back) opens the money form and is fully editable. A DERIVED row — dues,
    * fundraising, the club — is edited where it was MADE, so it navigates to that workspace instead:
    * the register is a view, and "one row, one source" holds precisely because it cannot write. A
-   * SCHEDULED money-out row additionally offers Mark paid, which opens the money form pre-filled
-   * and asks when — the same single door P1 built.
+   * SCHEDULED money-out row additionally offers Record a payment, pre-aimed at its own piece with
+   * the remainder suggested (P2's door — Mark paid retired with the one-boolean model).
    *
    * ⚠ `movesCash` IS NOT COSMETIC. On an out-of-pocket cost the balance stands still, and the row
    * has to say so in words rather than leaving a coach to notice a column that did not add up.
@@ -2212,9 +2215,9 @@ function MoneyRecordsPanel({
     const workspaceHref = r.open?.kind === 'workspace'
       ? moneySectionHref(base, r.open.section, undefined)
       : null;
-    /* A settle needs the RECORD, for its item and its half's own amount. A row whose commitment is
-       not in this panel's list shows no button rather than opening a form with blanks in it. */
-    const settle = r.markPaid && record && canWriteMoney ? r.markPaid : null;
+    /* The payment door needs the RECORD, for its description and standing. A row whose commitment
+       is not in this panel's list shows no button rather than opening a modal with blanks in it. */
+    const settle = r.recordPayment && record && canWriteMoney ? r.recordPayment : null;
     const overdue = r.overdueDays != null;
     /* ⚠ ONE OF THREE, ALWAYS — the same taxonomy the Status dropdown filters by
        (`registerStatusOf`), reused here rather than re-deriving the same three mutually
@@ -2292,9 +2295,9 @@ function MoneyRecordsPanel({
           {settle && (
             <button
               className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              onClick={ev => { ev.stopPropagation(); openSettle(record!, settle.half === 'expense' ? null : settle.half); }}
+              onClick={ev => { ev.stopPropagation(); openRecordPayment(record!, { installmentId: settle.installmentId, amount: settle.amount }); }}
             >
-              Mark paid
+              Record a payment
             </button>
           )}
           {canWriteMoney && openRecord && !settle && (
@@ -2817,10 +2820,9 @@ function MoneyRecordsPanel({
               </thead>
               <tbody>
             {tournamentPayables.map(e => {
-              const depositOverdue = isInstallmentOverdue(e.depositDueDate, e.depositPaidAt);
-              const balanceOverdue = isInstallmentOverdue(e.balanceDueDate, e.balancePaidAt);
+              const standing = standings[e.id];
               const open = expandedPayable === e.id;
-              const status = payableStatus(e, { deposit: depositOverdue, balance: balanceOverdue });
+              const status = payableStatus(standing, tournamentToday());
               return (
                 <Fragment key={e.id}>
                 {/* Same row-edit convention as the Expenses tab beside it: row opens the editor,
@@ -2838,7 +2840,21 @@ function MoneyRecordsPanel({
                     {tagChips(e.id)}
                   </td>
                   <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(e.amount)}</td>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">
+                    {fmt(standing?.total ?? e.amount)}
+                    {/* §64 Part B's row wording: what has landed, and what is still owed — or how
+                        far over it went (R6 states an over-payment, never hides it). */}
+                    {standing && standing.paid > 0 && standing.remaining > 0 && (
+                      <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
+                        {fmt(standing.paid)} of {fmt(standing.total)} paid · {fmt(standing.remaining)} still owing
+                      </span>
+                    )}
+                    {standing && standing.over > 0 && (
+                      <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
+                        {fmt(standing.over)} over
+                      </span>
+                    )}
+                  </td>
                   <td className={styles.td} data-label="Status">
                     <span className={`${styles.badge} ${status.cls}`} style={{ fontSize: '0.75rem' }}>{status.label}</span>
                   </td>
@@ -2868,70 +2884,97 @@ function MoneyRecordsPanel({
                 <tr className={styles.tr} onClick={ev => ev.stopPropagation()}>
                   <td className={`${styles.td} ${styles.cardStackCell}`} colSpan={5}>
 
-                  {/* Deposit + balance share a row on a desktop and stack on a phone. Two
-                      ~150px boxes each holding an amount, a due date, an overdue warning and a
-                      button was the worst-value split in Money (Chunk A D5). */}
-                  <div className={styles.stack640} style={{ gap: '0.75rem' }}>
-                    {/* Deposit */}
-                    <div style={{ flex: 1, minWidth: 0, background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
-                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Deposit</p>
-                      {e.depositAmount != null ? (
-                        <>
-                          <p style={{ margin: 0, fontWeight: 600 }}>{fmt(e.depositAmount)}</p>
-                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: depositOverdue ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                            Due {fmtDate(e.depositDueDate)}
-                            {depositOverdue && <AlertTriangle size={11} style={{ marginLeft: 3, verticalAlign: 'middle' }} />}
-                          </p>
-                          {e.depositPaidAt ? (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
-                              <CheckCircle2 size={11} /> Paid
+                  {/* ── The commitment in one panel (Payables Rebuild P2) — the mockup's drawer,
+                      living where the old deposit/balance boxes were until P3 rebuilds the screen:
+                      the PLAN piece by piece, every payment recorded against it with its own Undo,
+                      and the one figure that matters. §64 Part B walks this exact surface. */}
+                  {standing ? (
+                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.75rem 0.9rem' }}>
+                      <p style={{ margin: '0 0 0.35rem', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Scheduled{standing.installments.length > 1 ? ` — ${standing.installments.length} installments` : ''}
+                      </p>
+                      {standing.installments.map(inst => {
+                        const st = installmentStatus(inst, tournamentToday());
+                        return (
+                          <div key={inst.id} className={styles.stack640} style={{ gap: '0.4rem', alignItems: 'center', padding: '0.25rem 0', borderBottom: '1px dashed rgba(255,255,255,0.06)' }}>
+                            <span style={{ minWidth: 84, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmtDate(inst.dueDate)}</span>
+                            <span style={{ flex: 1, fontSize: '0.82rem' }}>
+                              {standing.installments.length > 1 ? `Installment ${inst.installmentNumber}` : 'One payment'}
                             </span>
-                          ) : canWriteMoney && (
-                            /* ⚠ MARK PAID GOES THROUGH THE MONEY DOOR (plan §3, ruled 2026-08-16).
-                               This was an inline date prompt; it now opens *Add money* pre-filled
-                               from the commitment, because a payment being born anywhere other
-                               than that one form is how the portal ended up with two records
-                               carrying the same dollars. The inline prompt survives on the plain
-                               unpaid EXPENSE one tab over, which is not a commitment. */
-                            <button
-                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-                              style={{ marginTop: '0.4rem' }}
-                              onClick={ev => { ev.stopPropagation(); openSettle(e, 'deposit'); }}
-                            >
-                              Mark deposit paid
-                            </button>
-                          )}
-                        </>
-                      ) : <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
-                    </div>
+                            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.82rem' }}>{fmt(inst.amount)}</span>
+                            {st === 'paid' ? (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <CheckCircle2 size={11} /> Settled
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '0.75rem', color: st === 'overdue' ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {st === 'overdue' && <AlertTriangle size={11} aria-hidden />}
+                                {st === 'partly_paid' ? `Partly paid — ${fmt(inst.remaining)} still owing` : st === 'overdue' ? 'Overdue' : 'Scheduled'}
+                              </span>
+                            )}
+                            {st !== 'paid' && canWriteMoney && (
+                              <button
+                                className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                onClick={ev => { ev.stopPropagation(); openRecordPayment(e, { installmentId: inst.id, amount: inst.remaining }); }}
+                              >
+                                Record a payment
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                    {/* Balance */}
-                    <div style={{ flex: 1, minWidth: 0, background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
-                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Balance</p>
-                      {e.balanceAmount != null ? (
+                      {standing.payments.length > 0 && (
                         <>
-                          <p style={{ margin: 0, fontWeight: 600 }}>{fmt(e.balanceAmount)}</p>
-                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: balanceOverdue ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                            Due {fmtDate(e.balanceDueDate)}
-                            {balanceOverdue && <AlertTriangle size={11} style={{ marginLeft: 3, verticalAlign: 'middle' }} />}
+                          <p style={{ margin: '0.75rem 0 0.35rem', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Payments recorded
                           </p>
-                          {e.balancePaidAt ? (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
-                              <CheckCircle2 size={11} /> Paid
-                            </span>
-                          ) : canWriteMoney && (
-                            <button
-                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-                              style={{ marginTop: '0.4rem' }}
-                              onClick={ev => { ev.stopPropagation(); openSettle(e, 'balance'); }}
-                            >
-                              Mark balance paid
-                            </button>
-                          )}
+                          {standing.payments.map(p => (
+                            <div key={p.id} className={styles.stack640} style={{ gap: '0.4rem', alignItems: 'center', padding: '0.25rem 0', borderBottom: '1px dashed rgba(255,255,255,0.06)' }}>
+                              <span style={{ minWidth: 84, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmtDate(p.paidDate)}</span>
+                              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.65))' }}>
+                                {p.method || 'Payment'}{p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
+                              </span>
+                              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.82rem' }}>{fmt(p.amount)}</span>
+                              {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly
+                                  its amount, read from its own recorded entry. Two taps: the first
+                                  arms with the figure, so a mis-tap cannot reverse real money. */}
+                              {canWriteMoney && (
+                                <button
+                                  className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                  aria-label={undoArm === p.id ? `Confirm undoing the ${fmt(p.amount)} payment` : `Undo the ${fmt(p.amount)} payment`}
+                                  disabled={undoBusy === p.id}
+                                  onClick={ev => { ev.stopPropagation(); undoPayment(e, p); }}
+                                >
+                                  {undoBusy === p.id ? 'Undoing…' : undoArm === p.id ? `Undo ${fmt(p.amount)}?` : 'Undo'}
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </>
-                      ) : <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>—</p>}
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.6))' }}>
+                          {standing.over > 0 ? 'Paid over the total' : 'Still owing'}
+                        </span>
+                        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
+                          {standing.over > 0 ? fmt(standing.over) : fmt(standing.remaining)}
+                        </span>
+                      </div>
+                      {canWriteMoney && standing.remaining > 0 && (
+                        <button
+                          className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+                          style={{ marginTop: '0.5rem' }}
+                          onClick={ev => { ev.stopPropagation(); openRecordPayment(e); }}
+                        >
+                          Record a payment
+                        </button>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <p className={styles.mutedInline} style={{ margin: 0, fontSize: '0.8rem' }}>Loading payment details…</p>
+                  )}
 
                   {/* Notes and tags are shown here but no longer EDITED here — both live in the
                       record's form, reached by the pencil or the row. */}
@@ -3001,7 +3044,16 @@ function MoneyRecordsPanel({
                         <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                           {row.source === 'org' ? 'Org allocation' : (row.category ?? '—')}
                         </td>
-                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(row.amount)}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">
+                          {fmt(row.amount)}
+                          {/* The amount is what is STILL OWED on the piece (the route's rule);
+                              a part-paid one says so, or the smaller figure reads as a typo. */}
+                          {row.partlyPaid && (row.appliedSoFar ?? 0) > 0 && (
+                            <span className={styles.mutedInline} style={{ display: 'block', fontSize: '0.75rem' }}>
+                              {fmt(row.appliedSoFar!)} already paid
+                            </span>
+                          )}
+                        </td>
                         <td className={styles.td} data-label="Status">
                           {row.paid ? (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
@@ -3010,19 +3062,21 @@ function MoneyRecordsPanel({
                           ) : row.overdue ? (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--danger-light)' }}>
                               <AlertTriangle size={12} /> {Math.abs(row.daysUntilDue ?? 0)} days overdue
+                              {row.partlyPaid ? ' · partly paid' : ''}
                             </span>
                           ) : (
                             <span className={styles.mutedInline} style={{ fontSize: '0.8rem' }}>
                               {row.daysUntilDue === 0 ? 'Due today' : `In ${row.daysUntilDue} days`}
+                              {row.partlyPaid ? ' · partly paid' : ''}
                             </span>
                           )}
                         </td>
-                        {/* ⚠ MARK PAID GOES THROUGH THE MONEY DOOR HERE TOO (plan §3) — a schedule
-                            half and the same half on its commitment's drawer are the same act, so
-                            they must not offer two different ways to record it. The gating and the
-                            record lookup live in `scheduleMarkPaidButton`. */}
+                        {/* ⚠ ONE DOOR HERE TOO — a schedule piece and the same piece in its
+                            commitment's details are the same act, so they must not offer two
+                            different ways to record it. The gating and the record lookup live in
+                            `scheduleRecordPaymentButton`. */}
                         <td className={`${styles.td} ${styles.cardActionCell}`}>
-                          {scheduleMarkPaidButton(row)}
+                          {scheduleRecordPaymentButton(row)}
                           {row.source === 'org' && !row.paid && (
                             <Link href={moneySectionHref(base, 'club', undefined)} className={styles.linkBtn}>Open Club</Link>
                           )}
@@ -3034,7 +3088,7 @@ function MoneyRecordsPanel({
               </div>
             )}
             <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
-              Money going out only — payable deposits and balances{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
+              Money going out only — each commitment’s installments{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
               <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.linkBtn}>Player Dues</Link>.
             </p>
@@ -3049,15 +3103,9 @@ function MoneyRecordsPanel({
       {formOpen && (
         <div className={styles.modalOverlay} onClick={closeForm}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            {/* ⚠ A SETTLE NAMES THE COMMITMENT IT IS PAYING. The modal is the money form either
-                way, but a coach who tapped Mark paid needs the header to confirm which of three
-                similarly-named entries they are about to settle — the record is pre-filled, so
-                without this the only difference from an ordinary Add is a figure. */}
             <CoachModalHeader
-              title={{ settle: 'Record the payment', edit: copy.editTitle, add: 'Add' }[formMode]}
-              subtitle={formMode === 'settle' ? `Settling ${settling!.describes}`
-                : formMode === 'add' ? 'Record money the team spent, or money that came in.'
-                : undefined}
+              title={{ edit: copy.editTitle, add: 'Add' }[formMode]}
+              subtitle={formMode === 'add' ? 'Record money the team spent, or money that came in.' : undefined}
               onClose={closeForm}
             />
             <div className={styles.formGrid}>
@@ -3229,17 +3277,20 @@ function MoneyRecordsPanel({
                   NOT posted has no date to correct — Mark Paid is where that one gets its date, so
                   the field is offered on a new cost and on a settled one, and not in between.
 
-                  ⚠ NOT ON A COMMITMENT'S OWN FORM. Its money moves through the deposit and the
-                  balance, each with its own dates — a paid stamp on the commitment itself would
-                  claim the whole thing settled while two halves still think they are owed. The
-                  server refuses it. A SETTLE is the opposite case and always shows it: that is the
-                  one question Mark paid exists to ask. */}
-              {!isMoneyInForm && !isPayableForm && (isSettling || !editing || editing.expensePaidAt) && (
+                  ⚠ NOT ON A COMMITMENT'S OWN FORM. Its money moves payment by payment, each with
+                  its own date — a paid date on the commitment itself would claim the whole thing
+                  settled while pieces still think they are owed. The server refuses it.
+
+                  ⚠ AND NOT ON A COST PAID IN PIECES (P2): several payments have no single date to
+                  correct, so the field shows only on a new cost or one settled by exactly one
+                  payment — the route refuses the rest, and each payment's own date is corrected by
+                  undoing it and recording it again. */}
+              {!isMoneyInForm && !isPayableForm
+                && (!editing || (editingStanding?.payments.length ?? 0) === 1) && (
                 <div className={styles.field}>
                   {/* ⚠ NO ASTERISK when recording a cost (/review, 2026-08-16): clearing it is the
-                      documented way to record something not settled yet. On a SETTLE it is required
-                      — there is no such thing as a payment with no date — so it takes one. */}
-                  <label className={styles.label}>{isSettling ? 'Date paid *' : 'Date paid'}</label>
+                      documented way to record something not settled yet. */}
+                  <label className={styles.label}>Date paid</label>
                   <input
                     className={styles.input}
                     type="date"
@@ -3249,22 +3300,20 @@ function MoneyRecordsPanel({
                   />
                   {/* ⚠ THE HINT DEPENDS ON WHO PAID (/review, 2026-08-16). "Clear this and it waits
                       as unpaid" is FALSE once Paid by names a family: that cost was settled by them,
-                      the server always creates it paid, and no Mark paid button ever appears — so
-                      the field dates their credit rather than deciding whether one is owed. */}
+                      the server always creates it paid — so the field dates their credit rather
+                      than deciding whether one is owed. */}
                   <p className={styles.formHint}>
-                    {isSettling
-                      ? 'The day the money actually left — back-date it and the cost lands in that month, not this one.'
-                      : form.paidByPlayerId
+                    {form.paidByPlayerId
                       ? 'The day the family paid it. The team owes them from that date.'
                       : 'When the money actually left. Not paid yet? Clear this and it waits as an '
-                        + 'unpaid cost until you mark it paid.'}
+                        + 'unpaid cost until you record its payment.'}
                   </p>
                   {/* ⚠⚠ THE REFUSAL CARRIES THE DOOR, which is the whole reason it is a rendered
                       element rather than a thrown sentence. Telling a coach "that hasn't happened
                       yet" and leaving them to find Payables themselves is a dead end wearing a
                       polite face — the link takes the amount and the item they already typed
                       straight into the commitment form. */}
-                  {futureDateRefused && !settling && (
+                  {futureDateRefused && (
                     <p className={`${styles.formHint} ${styles.formHintConsequence}`} role="alert">
                       <strong>That hasn’t happened yet</strong> — money can only be recorded once it
                       has moved. Agreed to pay it later?{' '}
@@ -3300,7 +3349,7 @@ function MoneyRecordsPanel({
                       >
                         Add it as a commitment instead
                       </button>
-                      {' '}— it joins your payment schedule, and nothing moves until you mark it paid.
+                      {' '}— it joins your payment schedule, and nothing moves until you record a payment against it.
                     </p>
                   )}
                 </div>
@@ -3397,17 +3446,18 @@ function MoneyRecordsPanel({
                         tournament entries, dome blocks, uniform orders. Each half is due on its own
                         date and is marked paid on its own.
                       </p>
-                      {/* ⚖ A PAID HALF IS EDITABLE TOO (owner ruling 2026-08-16). Both halves used to
-                          render read-only once settled; now each is an ordinary pair of fields and
-                          the server moves that half's own entry on the books to match. The "Paid"
-                          state is still SAID — it is what tells a coach the edit will reach the
-                          books — it just no longer takes the fields away. */}
+                      {/* ⚖ A SETTLED PIECE IS EDITABLE TOO (owner ruling 2026-08-16). Both halves
+                          used to render read-only once settled; now each is an ordinary pair of
+                          fields and the server moves the payment that settled it — and its entry on
+                          the books — to match. The "Settled" state is still SAID — it is what tells
+                          a coach the edit will reach the books — it just no longer takes the fields
+                          away. Read off the STANDING: the legacy paid stamps are dead columns (P2). */}
                       <div className={styles.formSectionGrid}>
                         <div className={styles.field}>
                           <label className={styles.label}>Deposit Amount</label>
                           <input className={styles.input} type="number" min={0} step="0.01" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
-                          {editing?.depositPaidAt && (
-                            <p className={styles.formHint}>Paid {fmtDate(editing.depositPaidAt)} — a change moves the books.</p>
+                          {editingStanding?.installments.find(i => i.installmentNumber === 1)?.state === 'settled' && (
+                            <p className={styles.formHint}>Settled — a change moves the books.</p>
                           )}
                         </div>
                         <div className={styles.field}>
@@ -3417,8 +3467,8 @@ function MoneyRecordsPanel({
                         <div className={styles.field}>
                           <label className={styles.label}>Balance Amount</label>
                           <input className={styles.input} type="number" min={0} step="0.01" value={form.balanceAmount} onChange={e => setForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
-                          {editing?.balancePaidAt && (
-                            <p className={styles.formHint}>Paid {fmtDate(editing.balancePaidAt)} — a change moves the books.</p>
+                          {editingStanding?.installments.find(i => i.installmentNumber === 2)?.state === 'settled' && (
+                            <p className={styles.formHint}>Settled — a change moves the books.</p>
                           )}
                         </div>
                         <div className={styles.field}>
@@ -3551,7 +3601,7 @@ function MoneyRecordsPanel({
                 {deletePreview.amount > 0 && (
                   <p className={styles.dangerConfirmBody}>
                     This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
-                    books{deletePreview.legs > 1 ? ' across two payments' : ''}. Deleting it will
+                    books{deletePreview.legs > 1 ? ` across ${deletePreview.legs} payments` : ''}. Deleting it will
                     reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
                   </p>
                 )}
@@ -3576,9 +3626,6 @@ function MoneyRecordsPanel({
             <div className={styles.modalFooter}>
               {/* Delete lives in the FORM's footer, not on the row — the pattern Budget Plan set,
                   and the reason a row needs only one control (owner ruling 2026-08-15). */}
-              {/* ⚠ NO DELETE ON A SETTLE. This form is standing over the commitment to record a
-                  payment against it; offering to destroy the record from inside that act is a
-                  different intent entirely, and it is one tap away on the commitment's own row. */}
               {formMode === 'edit' && canWriteMoney && !confirmDelete && (
                 <button
                   className={styles.deleteRecordBtn}
@@ -3594,11 +3641,117 @@ function MoneyRecordsPanel({
                     outcome — "Add Expense", "Add Money Back", "Save changes" — which was right while
                     the button was the only thing that knew what the form had become. The consequence
                     line above it says that now, in dollars, so the button can go back to being a
-                    button.
-                    ⚠ A SETTLE KEEPS "Mark Paid", and the ruling says so explicitly: there the
-                    outcome IS the point, and it is the one state where naming it beats a generic
-                    word. */}
-                {saving ? 'Saving…' : formMode === 'settle' ? 'Mark Paid' : 'Save'}
+                    button. (The settle mode that kept "Mark Paid" is gone — recording money is the
+                    Record-a-payment modal below, whose button names its own outcome.) */}
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Record a payment (Payables Rebuild P2) — the door that replaced Mark paid ─────────
+          Its own small modal: date, amount, method, note, and (optionally) which installment. A
+          part payment is the ordinary case now, an over-payment saves and is stated (R6), and the
+          server applies the money oldest-piece-first unless the picker says otherwise (R3). */}
+      {paying && (
+        <div className={styles.modalOverlay} onClick={() => !payingBusy && setPaying(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <CoachModalHeader
+              title="Record a payment"
+              subtitle={paying.expense.description}
+              onClose={() => !payingBusy && setPaying(null)}
+            />
+            <div className={styles.formGrid}>
+              <div className={styles.field}>
+                <label className={styles.label}>Date paid *</label>
+                <input
+                  className={styles.input}
+                  type="date"
+                  max={tournamentToday()}
+                  value={paying.paidDate}
+                  onChange={e => setPaying(p => p && ({ ...p, paidDate: e.target.value }))}
+                />
+                <p className={styles.formHint}>
+                  The day the money actually left — back-date it and the cost lands in that month.
+                </p>
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Amount *</label>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={paying.amount}
+                  onChange={e => setPaying(p => p && ({ ...p, amount: e.target.value }))}
+                  placeholder="0.00"
+                />
+                {/* ⚠ R6 — MORE THAN WHAT IS OWED SAVES. The sentence states it instead of a
+                    refusal: the money genuinely left, and a book that refuses reality stops
+                    matching the bank statement. */}
+                {(() => {
+                  const standing = standings[paying.expense.id];
+                  const typed = parseFloat(paying.amount);
+                  if (!standing || isNaN(typed)) return null;
+                  const overBy = Math.round((standing.paid + typed - standing.total) * 100) / 100;
+                  return overBy > 0 ? (
+                    <p className={styles.formHint}>
+                      That’s {fmt(overBy)} more than what’s owed. It still saves — the record will read “{fmt(overBy)} over”.
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+              {/* The override (R3): where the pour STARTS. Most payments leave it on the default —
+                  money fills the earliest unpaid piece and spills forward on its own. */}
+              {(standings[paying.expense.id]?.installments.length ?? 0) > 1 && (
+                <div className={styles.field}>
+                  <label className={styles.label}>For installment</label>
+                  <select
+                    className={styles.select}
+                    value={paying.installmentId ?? ''}
+                    onChange={e => setPaying(p => p && ({ ...p, installmentId: e.target.value || null }))}
+                  >
+                    <option value="">Wherever it’s owed (oldest first)</option>
+                    {standings[paying.expense.id]!.installments.map(inst => (
+                      <option key={inst.id} value={inst.id}>
+                        Installment {inst.installmentNumber} — {fmt(inst.amount)} due {fmtDate(inst.dueDate)}
+                        {inst.state === 'settled' ? ' (settled)' : inst.applied > 0 ? ` (${fmt(inst.remaining)} left)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className={styles.field}>
+                <label className={styles.label}>Payment Method</label>
+                <PaymentMethodCombobox
+                  methodsApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payment-methods`}
+                  value={paying.method}
+                  onChange={v => setPaying(p => p && ({ ...p, method: v }))}
+                />
+              </div>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>Note</label>
+                <input
+                  className={styles.input}
+                  value={paying.note}
+                  onChange={e => setPaying(p => p && ({ ...p, note: e.target.value }))}
+                  placeholder="e.g. Cheque no. 114"
+                />
+              </div>
+              {/* One line, above the buttons, saying what saving DOES — the same rule the money
+                  form follows, with the out-of-pocket case telling the truth about whose money. */}
+              <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+                {paying.expense.paidByPlayerId
+                  ? <><strong>When you save:</strong> no team cash moves — a family paid this direct, and what the team owes them grows by this amount on Player Dues.</>
+                  : <><strong>When you save:</strong> {fmt(parseFloat(paying.amount) || 0)} leaves the team’s books on the date above. You can undo it from the commitment’s payment details.</>}
+              </p>
+              {payingError && <p className={`${styles.errorText} ${styles.formGridFull}`} role="alert">{payingError}</p>}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnGhost} disabled={payingBusy} onClick={() => setPaying(null)}>Cancel</button>
+              <button className={styles.btnPrimary} disabled={payingBusy} onClick={submitPayment}>
+                {payingBusy ? 'Recording…' : 'Record payment'}
               </button>
             </div>
           </div>

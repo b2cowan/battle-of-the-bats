@@ -33,7 +33,7 @@ function row(over: Partial<RegisterRow> & { id: string }): RegisterRow {
     overdueDays: null,
     movesCash: true,
     open: null,
-    markPaid: null,
+    recordPayment: null,
     sourceLabel: null,
     detail: null,
     ...over,

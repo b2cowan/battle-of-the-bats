@@ -26,7 +26,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes, createHash } from 'crypto';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
-import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
+import { insertCommitmentWithRecords } from './lib/seed-commitment-records.mjs';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
   DEMO_DUES_SETTINGS,
@@ -44,12 +44,12 @@ import {
   OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_MONEY_IN,
   OFFSEASON_DUES,
   OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_TESTING_ABSENT,
-  OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue, demoPaidStampIso,
+  OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue,
   SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
   SEASON_START_LINEUP_GRID, SEASON_START_LINEUP_SETTINGS, SEASON_START_BATTING_ORDER,
   resolveTryoutDayState, resolveMidSeasonState, resolveSeasonsEndState,
   resolveOffSeasonState, resolveSeasonStartState,
-  demoGuardianEmail, orgDateWithOffset,
+  demoGuardianEmail, orgDateWithOffset, demoExpensePlan,
 } from '../lib/demo-coach.ts';
 
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
@@ -376,33 +376,33 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
  * every row, and the job's whole contract is that it doesn't.
  */
 async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
-  await insertAll('rep_team_expenses', expenses.map(e => ({
-    program_year_id: pyId, team_id: team.id, org_id: org.id,
-    expense_type: e.type, description: e.description, category: e.category,
-    /* ⚠ WHAT THIS COST IS (mig 240) — and it is not a nicety in a demo. Budget vs. Actual groups on
-       category + item, so a world seeded without items reports a dash beside every row on the
-       screen a prospect is most likely to open. With them, the 12U reads line by line, including
-       the deliberate Facilities overspend this world exists to demonstrate — and the 14U's team
-       photo lands as its OWN flagged row ("Events / Photo Day — not budgeted"), which is a better
-       telling of that beat than the loose Unbudgeted list it used to fall into. */
-    ...itemRef(itemIndex, e.category, e.item),
-    amount: e.amount, notes: e.notes ?? null,
-    expense_paid_at: e.paidDate ? demoPaidStampIso(e.paidDate) : null,
-    deposit_amount: e.deposit?.amount ?? null,
-    deposit_due_date: e.deposit?.dueDate ?? null,
-    deposit_paid_at: e.deposit?.paidDate ? demoPaidStampIso(e.deposit.paidDate) : null,
-    balance_amount: e.balance?.amount ?? null,
-    balance_due_date: e.balance?.dueDate ?? null,
-    balance_paid_at: e.balance?.paidDate ? demoPaidStampIso(e.balance.paidDate) : null,
-    payee_payer: 'Riverdale Ridge Baseball Club',
-    created_by: coach.id,
-  })));
-  /* ⚠⚠ AND THE RECORDS THE MONEY SCREENS ACTUALLY READ (Payables Rebuild P1, mig 255). Every
-     coach-facing money surface now reads a commitment's installments and payments; the columns
-     above are still written, but nothing renders them. Without this the demo — a public shop
-     window — would show a payment schedule with nothing on it, a register missing every bill and a
-     Budget vs. Actual reporting $0 spent, on a world whose whole point is that the money is there. */
-  await backfillCommitmentRecords(db, { programYearId: pyId });
+  /* ⚠⚠ SEEDED AS THE RECORDS THE MONEY SCREENS READ (Payables Rebuild P2): installments and
+     payments, written directly — the legacy deposit/balance/paid columns are dead and nothing
+     writes them. `demoExpensePlan` (lib/demo-coach.ts) is the ONE statement of what each
+     descriptor means, shared with the nightly re-anchor — so the seed and the re-anchor cannot
+     drift, by construction rather than by narrative (`/simplify`, 2026-08-20). */
+  const seedDay = new Date().toISOString().slice(0, 10);
+  for (const e of expenses) {
+    const row = {
+      program_year_id: pyId, team_id: team.id, org_id: org.id,
+      expense_type: e.type, description: e.description, category: e.category,
+      /* ⚠ WHAT THIS COST IS (mig 240) — and it is not a nicety in a demo. Budget vs. Actual groups
+         on category + item, so a world seeded without items reports a dash beside every row on the
+         screen a prospect is most likely to open. */
+      ...itemRef(itemIndex, e.category, e.item),
+      notes: e.notes ?? null,
+      payee_payer: 'Riverdale Ridge Baseball Club',
+      created_by: coach.id,
+    };
+    const pieces = demoExpensePlan(e);
+    await insertCommitmentWithRecords(db, {
+      row,
+      installments: pieces.map(p => ({ amount: p.amount, dueDate: p.dueDate ?? seedDay })),
+      payments: pieces
+        .filter(p => p.paidDate)
+        .map(p => ({ amount: p.amount, paidDate: p.paidDate, installmentNumber: p.installmentNumber })),
+    });
+  }
 }
 
 /**

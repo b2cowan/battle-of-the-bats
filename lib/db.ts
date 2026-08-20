@@ -12,7 +12,7 @@ import {
 } from './coach-budget-totals';
 import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
-import { paidLedgerLegs, type ExpenseLedgerLeg } from './expense-ledger';
+import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -26,8 +26,6 @@ import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardi
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { commitmentStanding, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
-import type { LegacyCommitmentRow } from './payable-legacy-plan';
-import { syncCommitmentRecords } from './payable-legacy-sync';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -9509,25 +9507,29 @@ export async function createOutOfPocketExpense(opts: {
   playerId: string;
   creditDate: string;
 }): Promise<{ expense: RepTeamExpense; reimbursementCredit: DuesCredit | null }> {
-  // ⚠ CREATED ALREADY PAID, deliberately: the family has settled it, so the cost is real and
-  // must count in the budget and Budget vs. Actual from this moment (both gate on expense_paid_at).
-  // The alternative — leaving it unpaid for the coach to Mark paid — is the trap: that action
-  // posts a CASH entry, and no team cash ever moves for an out-of-pocket cost.
+  // ⚠ CREATED ALREADY PAID, deliberately: the family has settled it, so the cost is real and must
+  // count in the budget and Budget vs. Actual from this moment. "Paid" is a PAYMENT ROW now — one,
+  // dated the day the family paid, carrying a NULL accounting entry for ever, because no team cash
+  // moved (mig 234, owner Call 5). Posting a cash entry here would invent an outflow the account
+  // never had.
   const expense = await createRepTeamExpense({
     ...opts.expense,
     paidByPlayerId: opts.playerId,
-    // ⚠ AN INSTANT AT ORG NOON, not the bare date — `expense_paid_at` is a timestamptz and a bare
-    // date lands as UTC midnight, which reads as the previous day everywhere west of it. The
-    // credit below keeps the plain date, because `credit_date` is a date column. Latent until
-    // 2026-08-16, when the form started letting a coach back-date a cost a family had paid.
-    expensePaidAt: orgDayAsStoredInstant(opts.creditDate) ?? opts.creditDate,
   });
   try {
+    await insertPayablePayment(expense, {
+      amount: expense.amount,
+      paidDate: opts.creditDate,
+      method: expense.paymentMethod,
+      note: null,
+      installmentId: null,
+      createdBy: opts.expense.createdBy ?? null,
+    }, null);
     const reimbursementCredit = await createReimbursementCreditForExpense({
       programYearId: opts.expense.programYearId,
       playerId: opts.playerId,
       expenseId: expense.id,
-      amount: opts.expense.amount,
+      amount: expense.amount,
       description: `Paid out of pocket — ${opts.expense.description}`,
       creditDate: opts.creditDate,
       createdBy: opts.expense.createdBy ?? null,
@@ -9537,7 +9539,8 @@ export async function createOutOfPocketExpense(opts: {
     // ⚠ WITHOUT THIS the guarantee above is only a wish: an expense marked "a family paid this"
     // with no debt behind it is INVISIBLE — it looks like an ordinary out-of-pocket cost while
     // the family is simply never repaid. There is no transaction available here, so the first
-    // write undoes itself and the coach sees a plain failure they can retry.
+    // write undoes itself (the cascade removes the installment and payment) and the coach sees a
+    // plain failure they can retry.
     await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expense.id);
     throw e;
   }
@@ -9547,10 +9550,10 @@ export async function createOutOfPocketExpense(opts: {
  * THE already-paid door: the cost AND the money leaving the team's books, written together.
  *
  * ⚠⚠ WHY THIS IS A FUNCTION AND NOT THREE LINES IN THE ROUTE. Recording a cost as paid is two
- * facts that must agree — the row's paid stamp, which is what Budget vs. Actual and the month grid
- * read, and a posted ledger entry, which is what cash on hand reads and what a later delete
- * reverses. Written apart, a failure between them leaves a cost that counts in the budget with no
- * money missing from the books, or an entry nothing points at. The same argument as
+ * facts that must agree — the PAYMENT row, which is what Budget vs. Actual and the month grid
+ * read, and the posted ledger entry it carries, which is what cash on hand reads and what a later
+ * undo or delete reverses. Written apart, a failure between them leaves a cost that counts in the
+ * budget with no money missing from the books, or an entry nothing points at. The same argument as
  * `createOutOfPocketExpense` above, and it earns the same shape: one door, both writes, and the
  * first one undoes itself if the second fails.
  *
@@ -9568,17 +9571,7 @@ export async function createPaidExpense(opts: {
   team: { id: string; orgId: string; name: string };
   createdBy: string;
 }): Promise<RepTeamExpense> {
-  /* ⚠ THE STAMP IS AN INSTANT AT ORG NOON, not the bare date. `expense_paid_at` is a timestamptz
-     and every screen turns it back into a day through the org's clock, so the bare string would
-     land as UTC midnight and report the day BEFORE the one the coach picked. The ledger entry
-     below takes the plain date, because `entry_date` really is a date column. */
-  /* ⚠ NO SILENT FALLBACK TO THE BARE DATE. Every caller validates first, so a null here means the
-     validation was skipped or reordered — and quietly writing the unconverted string would put the
-     off-by-one day back with nothing to notice it by. Refusing is the loud version. */
-  const stamp = orgDayAsStoredInstant(opts.paidDate);
-  if (!stamp) throw new Error(`createPaidExpense: "${opts.paidDate}" is not a usable calendar date`);
-
-  const expense = await createRepTeamExpense({ ...opts.expense, expensePaidAt: stamp });
+  const expense = await createRepTeamExpense(opts.expense);
   /* ⚠⚠ BOTH HALVES UNWIND, NOT JUST THE FIRST (/review, 2026-08-16). The original catch deleted
      only the expense — so if the entry posted and the link-back then failed, the money stayed out
      of the books with no record pointing at it and no screen able to find it. An orphaned POSTED
@@ -9601,17 +9594,29 @@ export async function createPaidExpense(opts: {
       opts.createdBy,
     );
     posted = { entryId: entry.id, ledgerId: ledger.id };
-    // ⚠ RECORDING THE LINK IS WHAT LETS A DELETE GIVE THE MONEY BACK (mig 236). Without it the
-    // reversal has to match the entry by description, and descriptions are editable.
-    return await updateRepTeamExpense(expense.id, { accountingEntryId: entry.id });
+    // ⚠ RECORDING THE LINK IS WHAT LETS A DELETE GIVE THE MONEY BACK (mig 236). The link lives on
+    // the PAYMENT row now — the first money-out record that has never had to guess (R5).
+    await insertPayablePayment(expense, {
+      amount: expense.amount,
+      paidDate: opts.paidDate,
+      method: expense.paymentMethod,
+      note: null,
+      installmentId: null,
+      createdBy: opts.createdBy,
+    }, entry.id);
+    return expense;
   } catch (e) {
     // Void before deleting: the entry is the half that would otherwise survive unreachable.
     if (posted) {
       try {
         await voidEntry(posted.entryId, posted.ledgerId);
-      } catch {
-        /* Swallowed on purpose — the original failure is the one worth reporting, and the throw
-           below still stops the coach from believing this saved. */
+      } catch (voidErr) {
+        /* The original failure is still the one reported — but a failed compensation orphans a
+           POSTED entry, so it is logged loudly rather than swallowed silently (`/review`,
+           2026-08-20). */
+        console.error(
+          `createPaidExpense: cleanup failed to void entry ${posted.entryId} on ledger `
+          + `${posted.ledgerId} — a posted entry may be orphaned.`, voidErr);
       }
     }
     /* ⚠ THE COMPENSATION IS CHECKED. A failed cleanup used to be invisible: the coach saw the
@@ -10015,26 +10020,48 @@ export async function getRepTeamExpenses(programYearId: string): Promise<RepTeam
    exports — so a per-row fetch here would be one query per commitment on a screen that already
    loads fifty of them. */
 
+/* The ONE snake_case→camelCase mapping per table, shared by the per-season readers below and the
+   per-commitment read the write paths use — a renamed column changes one mapper, not three copies
+   (`/simplify`, reuse lens, 2026-08-20). */
+function mapPayableInstallmentRow(r: any): PayableInstallment {
+  return {
+    id: r.id,
+    expenseId: r.expense_id,
+    installmentNumber: r.installment_number,
+    amount: Number(r.amount),
+    dueDate: r.due_date,
+  };
+}
+const PAYABLE_INSTALLMENT_COLUMNS = 'id, expense_id, installment_number, amount, due_date';
+
+function mapPayablePaymentRow(r: any): PayablePayment {
+  return {
+    id: r.id,
+    expenseId: r.expense_id,
+    installmentId: r.installment_id ?? null,
+    amount: Number(r.amount),
+    paidDate: r.paid_date,
+    method: r.method ?? null,
+    note: r.note ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+  };
+}
+const PAYABLE_PAYMENT_COLUMNS = 'id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id';
+
 /** Every installment for a season, grouped by commitment, each list already in due-date order. */
 export async function getPayableInstallmentsByExpense(
   programYearId: string,
 ): Promise<Record<string, PayableInstallment[]>> {
   const { data, error } = await supabaseAdmin
     .from('rep_payable_installments')
-    .select('id, expense_id, installment_number, amount, due_date')
+    .select(PAYABLE_INSTALLMENT_COLUMNS)
     .eq('program_year_id', programYearId)
     .order('due_date', { ascending: true })
     .order('installment_number', { ascending: true });
   if (error) throw error;
   const out: Record<string, PayableInstallment[]> = {};
   for (const r of data ?? []) {
-    (out[r.expense_id] ??= []).push({
-      id: r.id,
-      expenseId: r.expense_id,
-      installmentNumber: r.installment_number,
-      amount: Number(r.amount),
-      dueDate: r.due_date,
-    });
+    (out[r.expense_id] ??= []).push(mapPayableInstallmentRow(r));
   }
   return out;
 }
@@ -10045,22 +10072,13 @@ export async function getPayablePaymentsByExpense(
 ): Promise<Record<string, PayablePayment[]>> {
   const { data, error } = await supabaseAdmin
     .from('rep_payable_payments')
-    .select('id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id')
+    .select(PAYABLE_PAYMENT_COLUMNS)
     .eq('program_year_id', programYearId)
     .order('paid_date', { ascending: true });
   if (error) throw error;
   const out: Record<string, PayablePayment[]> = {};
   for (const r of data ?? []) {
-    (out[r.expense_id] ??= []).push({
-      id: r.id,
-      expenseId: r.expense_id,
-      installmentId: r.installment_id ?? null,
-      amount: Number(r.amount),
-      paidDate: r.paid_date,
-      method: r.method ?? null,
-      note: r.note ?? null,
-      accountingEntryId: r.accounting_entry_id ?? null,
-    });
+    (out[r.expense_id] ??= []).push(mapPayablePaymentRow(r));
   }
   return out;
 }
@@ -10088,66 +10106,449 @@ export async function getCommitmentStandings(
   return out;
 }
 
-/* ── Keeping the new records true while the OLD columns are still the ones being written ──────
-   ⚠⚠ READ THIS BEFORE DECIDING IT IS SCAFFOLDING THAT CAN GO.
+/* ── Writing the plan and the payments DIRECTLY (Payables Rebuild P2) ──────────────────────────
+   The transitional bridge that made these tables say whatever the legacy deposit/balance columns
+   said is GONE. `Record a payment` writes `rep_payable_payments` itself, so the two tables are the
+   source of truth — and a one-way copier pointed the other way would have overwritten real payments
+   with a deposit-shaped fiction on the next ordinary save, which is why the bridge had to die in
+   the same change that made payments real.
 
-   P1 moves every money READER onto the two tables above. The forms still write
-   deposit/balance/expense_paid_at — that is deliberate (migration 255's own note: dropping the old
-   columns in the same release would make "the books did not move" unfalsifiable, because there
-   would be nothing left to compare against). Those two facts do not compose on their own: a payable
-   created the day after P1 ships would have no installment at all, and would therefore be invisible
-   to the payment schedule, absent from Budget vs. Actual's Scheduled column, missing from the
-   Overview's next-30 panel, and impossible to mark paid. Marking one paid would post a real ledger
-   entry that no money screen could see.
-
-   So every write door runs this: the new rows are made to say exactly what the old columns say,
-   using the same arithmetic the migration used (`lib/payable-legacy-plan.ts`). It is idempotent, it
-   writes no accounting entry, and it CARRIES the ledger entry each settled half already created —
-   so it is a new way to READ money that already left the account, never a second time it left.
-
-   ⚠ IT NEVER DELETES A PAYMENT. Nothing in P1 can un-pay a half, so a payment that no longer has a
-   legacy column behind it means something unexpected happened — and silently deleting the record of
-   money leaving a team's account is the one failure mode not worth the tidiness. Extra installments
-   go only when no payment is standing on them.
-
-   ⚠ DELETE THIS WITH P2. Once `Record a payment` writes these tables directly they become the
-   source of truth, and a one-way copier pointed the wrong way would overwrite real records. */
+   ⚠ NOTHING WRITES the deposit, balance or expense paid columns OR THE THREE ENTRY-ID COLUMNS ANY
+   MORE. They survive, stale, only so P1's "the books did not move" comparison stays falsifiable on
+   prod; dropping them is a later migration and a separate decision (migration 255's own note). The
+   one legacy column still written is `amount` — kept equal to the SUM of the installments (R2:
+   derived, never separately typed), because the commitment row is what the screens list. */
 
 /**
- * Make a commitment's installments and payments say what its legacy columns say.
- *
- * Called after every create and every update of `rep_team_expenses`, so no write door can forget it.
- *
- * ⚠ NEITHER THE DECISION NOR THE WRITES ARE HERE. `lib/payable-legacy-plan.ts` decides and
- * `lib/payable-legacy-sync.ts` writes, because the three fixture seeders need both and can reach
- * neither this function nor the service-role singleton it uses (their static imports resolve before
- * their own `dotenv.config()`, and this file cannot be loaded by a plain `node` script at all). One
- * of those seeders builds the fixture the owner walks QA §64 against, so a second copy of any of this
- * would let the acceptance test agree with a bug.
- *
- * ⚠ SKIPPED ENTIRELY WHEN NO MONEY FIELD MOVED. A rename, a re-filed budget item or a notes edit
- * cannot change the plan or the payments, and this route is taken on every save — so without the
- * guard below every such edit paid for two reads to be told nothing had changed.
+ * A refusal whose sentence is written FOR THE COACH, with the HTTP status it should travel as.
+ * Routes show `message` as-is; anything else that throws is a real error and stays a 500.
  */
-export async function reconcileCommitmentRecords(expense: RepTeamExpense): Promise<void> {
-  // `RepTeamExpense` already carries every field `SyncableCommitment` needs, so there is no mapping
-  // here for a typo to hide in — the compiler checks the fit.
-  await syncCommitmentRecords(supabaseAdmin, [expense]);
+export class MoneyEditRefusal extends Error {
+  constructor(message: string, readonly status: 400 | 409) {
+    super(message);
+    this.name = 'MoneyEditRefusal';
+  }
+}
+
+/** A commitment's stored records, with the row-level fields only the WRITE paths need. */
+interface StoredPayablePayment extends PayablePayment {
+  /** 'manual' | 'legacy_*' | 'migration_255*' — which door wrote it. Decides which description a
+   *  pre-mig-236 payment's ledger entry was posted under. */
+  source: string | null;
+  /** The number of the piece it is recorded against, resolved from `installmentId`. */
+  installmentNumber: number | null;
+}
+
+async function getCommitmentRecords(expenseId: string): Promise<{
+  installments: PayableInstallment[];
+  payments: StoredPayablePayment[];
+}> {
+  const [instRes, payRes] = await Promise.all([
+    supabaseAdmin.from('rep_payable_installments')
+      .select(PAYABLE_INSTALLMENT_COLUMNS)
+      .eq('expense_id', expenseId)
+      .order('due_date', { ascending: true })
+      .order('installment_number', { ascending: true }),
+    supabaseAdmin.from('rep_payable_payments')
+      .select(`${PAYABLE_PAYMENT_COLUMNS}, source`)
+      .eq('expense_id', expenseId)
+      .order('paid_date', { ascending: true }),
+  ]);
+  if (instRes.error) throw instRes.error;
+  if (payRes.error) throw payRes.error;
+  const installments = (instRes.data ?? []).map(mapPayableInstallmentRow);
+  const numberById = new Map(installments.map(i => [i.id, i.installmentNumber]));
+  const payments: StoredPayablePayment[] = (payRes.data ?? []).map((r: any) => ({
+    ...mapPayablePaymentRow(r),
+    source: r.source ?? null,
+    installmentNumber: r.installment_id ? (numberById.get(r.installment_id) ?? null) : null,
+  }));
+  return { installments, payments };
 }
 
 /**
- * The fields that can change what a commitment's plan or payments should say.
+ * Find the posted ledger entry for a payment recorded BEFORE mig 236 stored the link.
  *
- * ⚠ EVERY FIELD THE RULE READS, and it is checked against `LegacyCommitmentRow` by the type below —
- * so adding a column to the rule without adding it here is a compile error rather than a save that
- * silently stops keeping the schedule in step.
+ * Matches on the descriptions the old doors could have posted with (`legacyEntryDescriptionsForPayment`)
+ * plus the amount. Returns null when nothing matches — already void, or never posted — and THROWS
+ * when more than one matches, because picking arbitrarily between two identical entries leaves the
+ * books wrong by the same amount somewhere else. The sentence is written for the coach.
  */
-const MONEY_FIELDS = [
-  'amount', 'expensePaidAt',
-  'depositAmount', 'depositDueDate', 'depositPaidAt',
-  'balanceAmount', 'balanceDueDate', 'balancePaidAt',
-  'accountingEntryId', 'depositEntryId', 'balanceEntryId',
-] as const satisfies ReadonlyArray<keyof LegacyCommitmentRow>;
+async function matchLegacyEntryForPayment(
+  expense: Pick<RepTeamExpense, 'expenseType' | 'description'>,
+  payment: Pick<StoredPayablePayment, 'amount' | 'source' | 'installmentNumber'>,
+  ledgerId: string,
+): Promise<string | null> {
+  const candidates = legacyEntryDescriptionsForPayment({
+    expenseType: expense.expenseType,
+    description: expense.description,
+    source: payment.source,
+    installmentNumber: payment.installmentNumber,
+  });
+  const { data, error } = await supabaseAdmin
+    .from('accounting_entries')
+    .select('id')
+    .eq('ledger_id', ledgerId)
+    .eq('entry_type', 'expense')
+    .in('description', candidates)
+    .eq('amount', payment.amount)
+    .neq('status', 'void');
+  if (error) throw error;
+  const hits = data ?? [];
+  if (hits.length > 1) {
+    throw new MoneyEditRefusal(
+      'This was paid before we started recording which ledger entry it created, and more than one '
+      + 'entry matches it exactly. Void the right one in the club ledger first, then try again.',
+      409,
+    );
+  }
+  return hits.length === 1 ? (hits[0].id as string) : null;
+}
+
+/**
+ * Patch the reimbursement credit an out-of-pocket cost carries — the ONE writer for that row.
+ *
+ * ⚠ AN ABSOLUTE VALUE, so a retry after any failure converges instead of compounding — the same
+ * rule every money write in this area follows (owner ruling 2026-08-16). Callers pass what should
+ * now be TRUE (`amount` = the payments' new total, a new `credit_date`, a renamed `description`);
+ * this writes it and refuses honestly.
+ * ⚠⚠ A ZERO-ROW UPDATE IS A REFUSAL, NOT A SUCCESS (/review, 2026-08-16, Critical — carried over
+ * from the edit path). Postgres does not error when an UPDATE matches nothing, and a cost that says
+ * a family paid it with no credit behind it means that family is silently owed the wrong amount.
+ * The refusal sentence lives HERE and nowhere else — it had three hand-typed copies before
+ * (`/simplify`, 2026-08-20).
+ */
+async function patchReimbursementCredit(expenseId: string, patch: Record<string, unknown>): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .update(patch)
+    .eq('expense_id', expenseId)
+    .eq('credit_type', 'reimbursement')
+    .select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new MoneyEditRefusal(
+      'This cost says a family paid it, but the credit the team owed them is missing — so changing '
+      + 'it would leave that family owed the wrong amount. Delete this and enter it again.',
+      409,
+    );
+  }
+}
+
+/**
+ * Make the reimbursement credit say what the payments NOW total — compare-and-swap, from live rows.
+ *
+ * ⚠⚠ WHY A CAS AND NOT AN ABSOLUTE WRITE (`/review`, concurrency lens, 2026-08-20 — the one
+ * systemic finding of P2's review). The credit is a stored AGGREGATE with three independent
+ * writers (record, undo, edit), and "read live, write absolute" only protects a writer against
+ * its OWN retry — a second writer completing inside the window is the classic lost update, and it
+ * leaves a family owed the wrong amount until something else touches the record. The compare on
+ * the amount makes a stale write FAIL instead of landing; the loser re-reads and converges. Three
+ * attempts, then an honest "try again" — under real coach traffic a third collision on one
+ * commitment inside a second is not a state to silently write through.
+ */
+async function restateReimbursementCreditFromPayments(expenseId: string): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const [creditRes, payRes] = await Promise.all([
+      supabaseAdmin.from('rep_dues_credits').select('id, amount')
+        .eq('expense_id', expenseId).eq('credit_type', 'reimbursement').maybeSingle(),
+      supabaseAdmin.from('rep_payable_payments').select('amount').eq('expense_id', expenseId),
+    ]);
+    if (creditRes.error) throw creditRes.error;
+    if (payRes.error) throw payRes.error;
+    if (!creditRes.data) {
+      throw new MoneyEditRefusal(
+        'This cost says a family paid it, but the credit the team owed them is missing — so changing '
+        + 'it would leave that family owed the wrong amount. Delete this and enter it again.',
+        409,
+      );
+    }
+    const wantCents = (payRes.data ?? []).reduce((s, p) => s + Math.round(Number(p.amount) * 100), 0);
+    const haveCents = Math.round(Number(creditRes.data.amount) * 100);
+    if (wantCents === haveCents) return;
+    const { data: updated, error } = await supabaseAdmin
+      .from('rep_dues_credits')
+      .update({ amount: wantCents / 100 })
+      .eq('id', creditRes.data.id)
+      .eq('amount', creditRes.data.amount)
+      .select('id');
+    if (error) throw error;
+    if (updated && updated.length > 0) return;
+    // A concurrent writer landed between the read and the write — loop with fresh reads.
+  }
+  throw new MoneyEditRefusal(
+    'Another change landed on this record at the same moment — refresh and try again.',
+    409,
+  );
+}
+
+/** The one INSERT into `rep_payable_payments` — every door that records a payment goes through it. */
+async function insertPayablePayment(
+  expense: Pick<RepTeamExpense, 'id' | 'orgId' | 'teamId' | 'programYearId'>,
+  opts: {
+    amount: number;
+    /** `YYYY-MM-DD`, validated by the caller (`whyPaidDateIsRefused`). A `date` column — no
+     *  org-noon stamp trick needed, which is a real simplification over the legacy `*_paid_at`. */
+    paidDate: string;
+    method: string | null;
+    note: string | null;
+    installmentId: string | null;
+    createdBy: string | null;
+  },
+  accountingEntryId: string | null,
+): Promise<PayablePayment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_payable_payments')
+    .insert({
+      expense_id:          expense.id,
+      org_id:              expense.orgId,
+      team_id:             expense.teamId,
+      program_year_id:     expense.programYearId,
+      installment_id:      opts.installmentId,
+      amount:              opts.amount,
+      paid_date:           opts.paidDate,
+      method:              opts.method,
+      note:                opts.note,
+      accounting_entry_id: accountingEntryId,
+      source:              'manual',
+      created_by:          opts.createdBy,
+    })
+    .select('id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id')
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    expenseId: data.expense_id,
+    installmentId: data.installment_id ?? null,
+    amount: Number(data.amount),
+    paidDate: data.paid_date,
+    method: data.method ?? null,
+    note: data.note ?? null,
+    accountingEntryId: data.accounting_entry_id ?? null,
+  };
+}
+
+/**
+ * Record a payment against a commitment — Payables Rebuild P2's whole point.
+ *
+ * ⚠⚠ ONE TRANSACTION, CARRIED BY THE PAYMENT ROW (§41 Part D). The entry is posted and the payment
+ * records its id; no stamp is written beside the commitment, so the register renders one row per
+ * payment and nothing shows the money twice. Over-payment is ACCEPTED (R6) — no figure here is
+ * compared to the commitment's total, deliberately.
+ *
+ * ⚠ AN OUT-OF-POCKET COST POSTS NOTHING. A family's money moved and the team's did not (mig 234,
+ * owner Call 5) — so the entry stays null and the books that follow are the CREDIT the team owes
+ * that household, restated to the new paid total. Books first, row last, absolute values, so a
+ * failure between the two converges on retry (owner ruling 2026-08-16).
+ */
+export async function recordPayablePayment(opts: {
+  expense: RepTeamExpense;
+  team: { id: string; orgId: string; name: string };
+  amount: number;
+  paidDate: string;
+  method: string | null;
+  note: string | null;
+  /** The coach's override — "this one was for March". Null for the ordinary case (R3). */
+  installmentId: string | null;
+  createdBy: string;
+}): Promise<PayablePayment> {
+  const e = opts.expense;
+
+  /* ⚠ THE OVERRIDE MUST BE ONE OF THIS COMMITMENT'S OWN PIECES — enforced in the WRITER, not left
+     to each door (`/simplify`, altitude lens, 2026-08-20): a stray id from another record would
+     silently aim the pour at a schedule the coach cannot see, and a second caller in P3/P4 must
+     not have to remember to re-copy the check. */
+  if (opts.installmentId) {
+    const { data: inst, error } = await supabaseAdmin
+      .from('rep_payable_installments')
+      .select('id')
+      .eq('id', opts.installmentId)
+      .eq('expense_id', e.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!inst) throw new MoneyEditRefusal('That installment is not part of this commitment.', 400);
+  }
+
+  if (e.paidByPlayerId) {
+    /* Row first, then the credit from LIVE rows under a CAS — the mirror of the cash path below
+       (entry first, compensating void on failure). If the restate fails, the payment row undoes
+       itself so the coach retries clean; if even THAT fails, say so loudly rather than leaving a
+       family's figure quietly wrong. */
+    const payment = await insertPayablePayment(e, { ...opts, createdBy: opts.createdBy }, null);
+    try {
+      await restateReimbursementCreditFromPayments(e.id);
+    } catch (err) {
+      const { error: undoError } = await supabaseAdmin
+        .from('rep_payable_payments').delete().eq('id', payment.id);
+      if (undoError) {
+        console.error(
+          `recordPayablePayment: credit restate failed for expense ${e.id} and the payment `
+          + `${payment.id} could not be removed — the family's credit is stale until the next `
+          + 'money action on this record.', undoError);
+      }
+      throw err;
+    }
+    return payment;
+  }
+
+  const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+  const entry = await createEntry(
+    ledger.id,
+    {
+      entryDate:   opts.paidDate,
+      description: e.description,
+      amount:      opts.amount,
+      entryType:   'expense',
+      status:      'posted',
+      category:    e.category ?? (e.expenseType === 'tournament_payable' ? 'Tournament Payable' : 'Team Expense'),
+    },
+    opts.createdBy,
+  );
+  try {
+    return await insertPayablePayment(e, { ...opts, createdBy: opts.createdBy }, entry.id);
+  } catch (err) {
+    /* The entry is the half that would otherwise survive unreachable — a posted amount no screen
+       can find, holding cash on hand down forever. Void it and let the coach retry clean. */
+    try {
+      await voidEntry(entry.id, ledger.id);
+    } catch (voidErr) {
+      /* The original failure is the one the coach sees — but a failed COMPENSATION leaves a
+         posted, orphaned entry, which is exactly the state worth a loud log (`/review`,
+         concurrency lens, 2026-08-20: two silent failures compounding is how it stays hidden). */
+      console.error(
+        `recordPayablePayment: payment insert failed AND the compensating void of entry `
+        + `${entry.id} failed — a posted entry may be orphaned on ledger ${ledger.id}.`, voidErr);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Undo — deleting a payment, with the books reversing by exactly that payment's amount (R5).
+ *
+ * ⚠⚠ REVERSES BY THE PAYMENT'S OWN RECORDED ENTRY, NEVER A GUESS. A null entry id means two
+ * different things with opposite handling (`payable-standing.ts` says the same at the type):
+ *   · an out-of-pocket cost — no team cash moved, nothing to void, but the family's credit
+ *     shrinks by the same amount;
+ *   · a record settled before mig 236 — the description match is the only way to find the entry,
+ *     and it REFUSES an ambiguous pair rather than voiding a guess.
+ *
+ * Void first, delete second — `removeRepDuesPayment`'s shape: if the delete fails after the void,
+ * the row survives and a retried undo converges (voiding a void entry is a no-op). The opposite
+ * order can leave a posted entry with no record explaining it, which is the strictly worse half.
+ * A concurrent double-tap: both may void (idempotent), one delete returns rows; the loser's
+ * zero-row delete reports "already undone" rather than voiding something else.
+ */
+export async function removePayablePayment(opts: {
+  expense: RepTeamExpense;
+  team: { id: string; orgId: string; name: string };
+  paymentId: string;
+}): Promise<{ removed: boolean; reversedAmount: number } | null> {
+  const e = opts.expense;
+  /* The payment's own tenancy asserted in the READ as well as the write — a stray id from another
+     team's book reads as "not found", never as something to reverse. */
+  const { data: row, error } = await supabaseAdmin
+    .from('rep_payable_payments')
+    .select('id, installment_id, amount, paid_date, accounting_entry_id, source')
+    .eq('id', opts.paymentId)
+    .eq('expense_id', e.id)
+    .eq('org_id', e.orgId)
+    .eq('team_id', e.teamId)
+    .eq('program_year_id', e.programYearId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return null;
+
+  const amount = Number(row.amount);
+  let reversedAmount = 0;
+
+  if (row.accounting_entry_id) {
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    await voidEntry(row.accounting_entry_id as string, ledger.id);
+    reversedAmount = amount;
+  } else if (!e.paidByPlayerId) {
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    let installmentNumber: number | null = null;
+    if (row.installment_id) {
+      const { data: inst } = await supabaseAdmin
+        .from('rep_payable_installments')
+        .select('installment_number')
+        .eq('id', row.installment_id)
+        .maybeSingle();
+      installmentNumber = inst?.installment_number ?? null;
+    }
+    const entryId = await matchLegacyEntryForPayment(
+      e, { amount, source: (row.source as string) ?? null, installmentNumber }, ledger.id);
+    if (entryId) {
+      await voidEntry(entryId, ledger.id);
+      reversedAmount = amount;
+    }
+    // Zero matches: already void, or never posted — nothing to give back, and deleting is safe.
+  }
+
+  const { data: deleted, error: delError } = await supabaseAdmin
+    .from('rep_payable_payments')
+    .delete()
+    .eq('id', opts.paymentId)
+    .eq('expense_id', e.id)
+    .eq('org_id', e.orgId)
+    .eq('team_id', e.teamId)
+    .eq('program_year_id', e.programYearId)
+    .select('id');
+  if (delError) throw delError;
+
+  if (e.paidByPlayerId) {
+    /* AFTER the delete, from live rows, under the CAS — and on BOTH outcomes of the race: the
+       double-tap's loser (zero rows deleted) still restates, so it heals a credit its winner may
+       have failed to write. Two undos of two DIFFERENT payments interleaving was the lost-update
+       the snapshot arithmetic here used to lose (`/review`, 2026-08-20). If the restate fails the
+       coach sees the error, and any later family-money action on this record converges it. */
+    await restateReimbursementCreditFromPayments(e.id);
+  }
+  return { removed: (deleted ?? []).length > 0, reversedAmount };
+}
+
+/** Write a desired plan over what is stored — the I/O half of `planInstallmentWrites`. */
+async function writeInstallmentPlan(
+  expense: Pick<RepTeamExpense, 'id' | 'orgId' | 'teamId' | 'programYearId'>,
+  desired: readonly PlanPiece[],
+  stored: readonly PayableInstallment[],
+  payments: readonly StoredPayablePayment[],
+): Promise<void> {
+  const writes = planInstallmentWrites(
+    desired,
+    stored.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, dueDate: i.dueDate })),
+    id => payments.some(p => p.installmentId === id),
+  );
+  if (writes.insert.length > 0) {
+    /* Upsert on (expense_id, installment_number): two near-simultaneous saves can both observe
+       "piece 2 does not exist yet" and both write the identical row (`/review`, concurrency lens,
+       2026-08-19 — the rule carried over from the bridge this replaced). */
+    const { error } = await supabaseAdmin.from('rep_payable_installments').upsert(
+      writes.insert.map(p => ({
+        expense_id:         expense.id,
+        org_id:             expense.orgId,
+        team_id:            expense.teamId,
+        program_year_id:    expense.programYearId,
+        installment_number: p.installmentNumber,
+        amount:             p.amount,
+        due_date:           p.dueDate,
+        source:             'manual',
+      })), { onConflict: 'expense_id,installment_number' });
+    if (error) throw error;
+  }
+  for (const u of writes.update) {
+    const { error } = await supabaseAdmin.from('rep_payable_installments')
+      .update({ amount: u.amount, due_date: u.dueDate, updated_at: new Date().toISOString() })
+      .eq('id', u.id);
+    if (error) throw error;
+  }
+  if (writes.deleteIds.length > 0) {
+    const { error } = await supabaseAdmin.from('rep_payable_installments')
+      .delete().in('id', writes.deleteIds);
+    if (error) throw error;
+  }
+}
 
 
 export async function getRepTeamExpense(expenseId: string): Promise<RepTeamExpense | null> {
@@ -10171,11 +10572,12 @@ export async function createRepTeamExpense(fields: {
    *  this team can see and derives the text `category` from it; this writes what it is given. */
   budgetItemId?: string | null;
   budgetCategoryId?: string | null;
-  amount: number;
-  depositAmount?: number | null;
-  depositDueDate?: string | null;
-  balanceAmount?: number | null;
-  balanceDueDate?: string | null;
+  /**
+   * ⚠ R1 + R2 — THE PLAN IS THE RECORD: 1..n dated pieces, written with the row, and the row's
+   * `amount` is their SUM, derived here and typed nowhere. A plain cost is a one-piece plan dated
+   * the day it was (or is to be) paid; the old "No schedule" state is not representable.
+   */
+  installments: PlanPiece[];
   eventId?: string | null;
   notes?: string | null;
   paymentMethod?: string | null;
@@ -10184,11 +10586,12 @@ export async function createRepTeamExpense(fields: {
   /** Out-of-pocket (mig 234): a family covered this cost directly. Written only through
    *  `createOutOfPocketExpense`, which pairs it with the debt it creates. */
   paidByPlayerId?: string | null;
-  /** Settled on creation — used by the out-of-pocket door, where the cost is already paid (by
-   *  the family) and must count in the budget immediately without any cash entry. */
-  expensePaidAt?: string | null;
   createdBy?: string | null;
 }): Promise<RepTeamExpense> {
+  if (fields.installments.length === 0) {
+    throw new Error('A commitment needs at least one dated installment.');
+  }
+  const amount = fields.installments.reduce((s, i) => s + Math.round(i.amount * 100), 0) / 100;
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .insert({
@@ -10200,42 +10603,38 @@ export async function createRepTeamExpense(fields: {
       category:         fields.category ?? null,
       budget_item_id:     fields.budgetItemId ?? null,
       budget_category_id: fields.budgetCategoryId ?? null,
-      amount:           fields.amount,
-      deposit_amount:   fields.depositAmount ?? null,
-      deposit_due_date: fields.depositDueDate ?? null,
-      balance_amount:   fields.balanceAmount ?? null,
-      balance_due_date: fields.balanceDueDate ?? null,
+      amount,
       event_id:         fields.eventId ?? null,
       notes:            fields.notes ?? null,
       payment_method:   fields.paymentMethod ?? null,
       payee_id:         fields.payeeId ?? null,
       payee_payer:      fields.payeePayer ?? null,
       paid_by_player_id: fields.paidByPlayerId ?? null,
-      expense_paid_at:  fields.expensePaidAt ?? null,
       created_by:       fields.createdBy ?? null,
     })
     .select()
     .single();
   if (error) throw error;
   const expense = mapRepTeamExpense(data);
-  /* ⚠ R1 IS ENFORCED HERE, FOR EVERY DOOR AT ONCE — the payables form, the bulk importer, the
-     already-paid door, the out-of-pocket door and the seeders all arrive through this function. A
-     commitment with no installment is invisible to every schedule surface, so it must not be
-     possible to create one. See `reconcileCommitmentRecords`. */
   try {
-    await reconcileCommitmentRecords(expense);
+    const { error: instError } = await supabaseAdmin.from('rep_payable_installments').insert(
+      fields.installments.map((p, at) => ({
+        expense_id:         expense.id,
+        org_id:             fields.orgId,
+        team_id:            fields.teamId,
+        program_year_id:    fields.programYearId,
+        installment_number: at + 1,
+        amount:             p.amount,
+        due_date:           p.dueDate,
+        source:             'manual',
+      })));
+    if (instError) throw instError;
   } catch (e) {
     /* ⚠⚠ THE ROW UNDOES ITSELF, or R1 becomes a wish (`/review`, 2026-08-19 — raised by three
-       lenses). The insert above has already committed by the time this runs, and there is no
-       transaction available here — so a transient failure would leave a commitment with NO
-       installment: absent from the payment schedule, $0 in Budget vs. Actual, missing from the
-       Overview's next-30 panel, impossible to mark paid, and visible only in the raw expenses list.
-       The coach would see the save fail, enter it again, and never know the first one was still
-       there. Deleting it is what makes "it must not be possible to create one" true rather than
-       merely intended.
-       ⚠ It also restores the guarantees of the two doors ABOVE this one: `createOutOfPocketExpense`
-       and `createPaidExpense` both call this function OUTSIDE their own compensating-delete blocks,
-       so neither of their "one function, both rows" contracts covered a failure here. */
+       lenses, carried across the P2 rewrite). There is no transaction available here, so a
+       transient failure would otherwise leave a commitment with NO installment: absent from the
+       payment schedule, $0 in Budget vs. Actual, missing from the Overview's next-30 panel, and
+       impossible to record a payment against. The cascade removes any pieces that did land. */
     await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expense.id);
     throw e;
   }
@@ -10249,20 +10648,21 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   budgetItemId?: string | null;
   budgetCategoryId?: string | null;
   notes?: string | null;
-  amount?: number;
   paymentMethod?: string | null;
   payeeId?: string | null;
   payeePayer?: string | null;
-  depositAmount?: number | null;
-  depositDueDate?: string | null;
-  balanceAmount?: number | null;
-  balanceDueDate?: string | null;
-  expensePaidAt?: string | null;
-  depositPaidAt?: string | null;
-  balancePaidAt?: string | null;
-  accountingEntryId?: string | null;
-  depositEntryId?: string | null;
-  balanceEntryId?: string | null;
+  /** The whole plan, as the form states it — every piece, in order (payable edits). R2: the row's
+   *  `amount` becomes their sum. */
+  installments?: PlanPiece[];
+  /** A plain cost's total — shorthand for restating its one piece without knowing its date. */
+  amount?: number;
+  /** Correcting WHEN a single-payment record was paid (owner ruling 2026-08-16). `YYYY-MM-DD`. */
+  paidDate?: string;
+}, opts?: {
+  /** Needed whenever a figure or date can reach the books — every PATCH passes it. */
+  team?: { id: string; orgId: string; name: string };
+  /** The row as the caller already read it, so this door does not read it twice. */
+  before?: RepTeamExpense;
 }): Promise<RepTeamExpense> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.description !== undefined) patch.description = fields.description;
@@ -10270,45 +10670,144 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   if (fields.budgetItemId !== undefined) patch.budget_item_id = fields.budgetItemId;
   if (fields.budgetCategoryId !== undefined) patch.budget_category_id = fields.budgetCategoryId;
   if (fields.notes !== undefined) patch.notes = fields.notes;
-  if (fields.amount !== undefined) patch.amount = fields.amount;
   if (fields.paymentMethod !== undefined) patch.payment_method = fields.paymentMethod;
   if (fields.payeeId !== undefined) patch.payee_id = fields.payeeId;
   if (fields.payeePayer !== undefined) patch.payee_payer = fields.payeePayer;
-  if (fields.depositAmount !== undefined) patch.deposit_amount = fields.depositAmount;
-  if (fields.depositDueDate !== undefined) patch.deposit_due_date = fields.depositDueDate;
-  if (fields.balanceAmount !== undefined) patch.balance_amount = fields.balanceAmount;
-  if (fields.balanceDueDate !== undefined) patch.balance_due_date = fields.balanceDueDate;
-  if (fields.expensePaidAt !== undefined) patch.expense_paid_at = fields.expensePaidAt;
-  if (fields.depositPaidAt !== undefined) patch.deposit_paid_at = fields.depositPaidAt;
-  if (fields.balancePaidAt !== undefined) patch.balance_paid_at = fields.balancePaidAt;
-  if (fields.accountingEntryId !== undefined) patch.accounting_entry_id = fields.accountingEntryId;
-  if (fields.depositEntryId !== undefined) patch.deposit_entry_id = fields.depositEntryId;
-  if (fields.balanceEntryId !== undefined) patch.balance_entry_id = fields.balanceEntryId;
 
-  /* ⚠⚠ THE SCHEDULE IS WRITTEN FIRST, AND THE ROW LAST — the same order, for the same reason, as
-     `syncExpenseBooksForEdit` two functions down (owner ruling 2026-08-16). Both orders leave a
-     window where the two can disagree; this is the one that RECOVERS.
-     · Reconcile first, row second: if the reconcile fails, the record is UNTOUCHED. The coach sees
-       an error, saves again, and everything converges — every write in the sync is an absolute
-       value, so a retry cannot compound.
-     · Row first, reconcile second (what this used to do): the row commits, the reconcile fails, and
-       the record now says "deposit paid" with no payment behind it. Every rebuilt money screen reads
-       it as still owing while the payables list reads it as paid — and the coach CANNOT fix it,
-       because the mark-paid door refuses with "Deposit already marked paid" and nothing else
-       re-runs the sync. A permanent, silent divergence from one transient error
-       (`/review`, 2026-08-19 — raised as Critical by two independent lenses).
-     ⚠ ONLY WHEN A MONEY FIELD MOVED. This is the single update door for the whole record, so a
-     rename, a re-filed budget item, a payee change or a notes edit all arrive here and none of them
-     can change the plan or the payments. The guard is also what keeps the extra read below off
-     every ordinary save. */
-  if (MONEY_FIELDS.some(f => fields[f] !== undefined)) {
-    const before = await getRepTeamExpense(expenseId);
-    if (before) {
-      const moved = Object.fromEntries(
-        MONEY_FIELDS.filter(f => fields[f] !== undefined).map(f => [f, fields[f]]));
-      // The record as it is ABOUT to read — never as it reads now.
-      await reconcileCommitmentRecords({ ...before, ...moved } as RepTeamExpense);
+  const planTouched = fields.installments !== undefined
+    || fields.amount !== undefined
+    || fields.paidDate !== undefined;
+  const needsBefore = planTouched || fields.description !== undefined;
+  const before = needsBefore
+    ? (opts?.before ?? await getRepTeamExpense(expenseId))
+    : null;
+  if (needsBefore && !before) throw new Error('Expense not found');
+
+  /* ⚠⚠ THE BOOKS AND THE SCHEDULE ARE WRITTEN FIRST, AND THE ROW LAST (owner ruling 2026-08-16;
+     `/review` 2026-08-19, Critical). Both orders leave a window where the two can disagree; this is
+     the one that RECOVERS: every write below is an ABSOLUTE value, so a failure leaves the row
+     untouched and the coach's retry recomputes the identical writes and converges. Row-first would
+     have the retry compare the new row against itself, see nothing to do, and strand the books. */
+  if (planTouched && before) {
+    const { installments: stored, payments } = await getCommitmentRecords(expenseId);
+    const standing = commitmentStanding(stored, payments);
+
+    if (fields.paidDate !== undefined && payments.length === 0) {
+      throw new MoneyEditRefusal('This has not been paid yet — record a payment to say when the money moved.', 400);
     }
+    if (fields.paidDate !== undefined && payments.length > 1) {
+      throw new MoneyEditRefusal(
+        'This has been paid in more than one payment, so there is no single date to correct — '
+        + 'undo the payment with the wrong date and record it again.',
+        400,
+      );
+    }
+
+    /* ⚠ The one-piece shorthand assumes ONE stored piece — true of every plain cost the product
+       can create. Enforced here rather than by convention at the call sites, so a future caller
+       that relaxes the route's payable/plain split fails loudly instead of silently collapsing a
+       multi-piece plan (`/review`, 2026-08-20). */
+    if (fields.installments === undefined && stored.length > 1) {
+      throw new Error('updateRepTeamExpense: an amount/paidDate shorthand edit reached a multi-piece plan');
+    }
+    const desired: PlanPiece[] = fields.installments ?? [{
+      amount: fields.amount ?? standing.total,
+      /* A plain cost's one piece is dated by WHEN IT WAS (or is to be) PAID — the same rule the
+         create door uses — so a paid-date correction moves the piece with the payment, and an
+         amount-only edit leaves the date exactly where it stands. */
+      dueDate: fields.paidDate ?? stored[0]?.dueDate ?? tournamentToday(),
+    }];
+    if (desired.length === 0) {
+      throw new MoneyEditRefusal('A commitment needs at least one dated installment.', 400);
+    }
+
+    /* ⚠ A PIECE WITH MONEY ON IT CANNOT BE DROPPED — the successor of "a half that has been paid
+       cannot be emptied" (/review, 2026-08-16, High). Closing the split over a settled balance
+       would leave that money re-pouring onto pieces that cannot hold it, reading as an
+       over-payment nothing on screen explains. Refusing is the honest answer; the schedule stays. */
+    for (const piece of standing.installments) {
+      if (piece.installmentNumber <= desired.length) continue;
+      if (piece.applied > 0) {
+        throw new MoneyEditRefusal(
+          `Money has been recorded against installment ${piece.installmentNumber} — undo its `
+          + 'payments first, or keep it in the schedule.',
+          400,
+        );
+      }
+    }
+
+    /* ⚖ THE 2026-08-16 RULING, CARRIED ACROSS THE REBUILD: editing a settled figure moves the
+       books. The DECISION — which payment tracks which piece, and when to leave the record alone —
+       is `paymentRestatements` in `lib/payable-plan.ts`, pure and unit-tested, so P4's scope rules
+       can reuse it rather than routing every edit back through this writer. */
+    const cents = (n: number) => Math.round(n * 100);
+    const paymentById = new Map(payments.map(p => [p.id, p]));
+    const restatements = paymentRestatements(desired, stored, payments, fields.paidDate)
+      .map(r => ({ payment: paymentById.get(r.paymentId)!, newAmount: r.newAmount, newPaidDate: r.newPaidDate }));
+
+    /* ⚠⚠ RESOLVE EVERY ENTRY BEFORE WRITING ANY OF THEM (/review, 2026-08-16, High — carried
+       across). A payable whose first piece resolves cleanly and whose second is an ambiguous
+       pre-236 match must refuse BEFORE the first entry has been rewritten and committed. */
+    const entryOps: Array<{ entryId: string; amount?: number; entryDate?: string }> = [];
+    let ledgerId: string | null = null;
+    if (!before.paidByPlayerId) {
+      for (const r of restatements) {
+        let entryId = r.payment.accountingEntryId;
+        if (!entryId) {
+          if (!opts?.team) throw new Error('updateRepTeamExpense: a figure edit that reaches the books needs the team');
+          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
+          /* ⚠ MATCHED ON THE *BEFORE* FIGURE — a pre-236 entry is found by description and amount,
+             so the lookup must describe it as it stands, not as it is about to read. */
+          entryId = await matchLegacyEntryForPayment(before, r.payment, ledgerId);
+          if (!entryId) continue; // already void, or never posted — nothing on the books to correct
+        } else if (opts?.team) {
+          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
+        }
+        entryOps.push({
+          entryId,
+          ...(r.newAmount !== undefined ? { amount: r.newAmount } : {}),
+          ...(r.newPaidDate !== undefined ? { entryDate: r.newPaidDate } : {}),
+        });
+      }
+    }
+
+    for (const op of entryOps) {
+      const { entryId, ...entryFields } = op;
+      await updateEntry(entryId, ledgerId!, entryFields);
+    }
+    for (const r of restatements) {
+      const rowPatch: Record<string, unknown> = {};
+      if (r.newAmount !== undefined) rowPatch.amount = r.newAmount;
+      if (r.newPaidDate !== undefined) rowPatch.paid_date = r.newPaidDate;
+      const { error } = await supabaseAdmin
+        .from('rep_payable_payments').update(rowPatch).eq('id', r.payment.id);
+      if (error) throw error;
+    }
+
+    /* Out of pocket: no entry to move, a debt to keep honest. The credit's AMOUNT tracks the
+       payments from LIVE rows under the CAS — the payment patches above have landed, and a
+       snapshot-derived figure here was the widest lost-update window of the three (`/review`,
+       concurrency lens, 2026-08-20: several awaited writes sit between this function's read and
+       this line). The date and the wording are not aggregates, so they patch plainly. */
+    if (before.paidByPlayerId) {
+      const creditPatch: Record<string, unknown> = {};
+      if (fields.paidDate !== undefined) creditPatch.credit_date = fields.paidDate;
+      if (fields.description !== undefined && fields.description !== before.description) {
+        creditPatch.description = `Paid out of pocket — ${fields.description}`;
+      }
+      if (Object.keys(creditPatch).length > 0) {
+        await patchReimbursementCredit(expenseId, creditPatch);
+      }
+      await restateReimbursementCreditFromPayments(expenseId);
+    }
+
+    await writeInstallmentPlan(before, desired, stored, payments);
+    patch.amount = desired.reduce((s, p) => s + cents(p.amount), 0) / 100;
+  } else if (before?.paidByPlayerId
+    && fields.description !== undefined && fields.description !== before.description) {
+    /* A rename alone still reaches the family's ledger: the credit names the cost, and a stale
+       name on real money owed is the wording half of the same rule. */
+    await patchReimbursementCredit(expenseId, { description: `Paid out of pocket — ${fields.description}` });
   }
 
   const { data, error } = await supabaseAdmin
@@ -10318,56 +10817,12 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
     .select()
     .single();
   if (error) throw error;
-  const expense = mapRepTeamExpense(data);
-  return expense;
+  return mapRepTeamExpense(data);
 }
 
-/**
- * Void the ledger entries an expense posted, so deleting it gives the money back.
- *
- * Two ways to find an entry, in strict order of trust:
- *   1. **The recorded id** (mig 236). Exact, and the only path for anything paid from 2026-08-15.
- *   2. **A match** on ledger + description + amount + type, for rows paid before that migration,
- *      where nothing recorded the id. Trustworthy for that set alone: there was no Edit feature
- *      before now, so a historic expense still carries the description its entry was written with.
- *
- * ⚠ AN AMBIGUOUS MATCH IS A REFUSAL, NOT A GUESS. Two identical paid expenses produce two identical
- * entries, and voiding "one of them" would be arbitrary — the team's books would still be wrong by
- * the same amount, just somewhere else. Throws, so the caller can tell the coach what to do rather
- * than silently corrupting a ledger. Same for zero matches, which mean the entry has already been
- * voided or was never posted — in which case there is nothing to give back and deleting is safe, so
- * that case returns quietly instead.
- */
-/**
- * Find the posted ledger entry for one leg of a record paid BEFORE mig 236 recorded the link.
- *
- * Matches on the fields the entry was written from. Returns null when nothing matches — already
- * void, or never posted — and THROWS when more than one matches, because picking arbitrarily
- * between two identical entries leaves the books wrong by the same amount somewhere else.
- */
-async function matchLegacyLedgerEntry(
-  leg: ExpenseLedgerLeg,
-  ledgerId: string,
-): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
-    .from('accounting_entries')
-    .select('id')
-    .eq('ledger_id', ledgerId)
-    .eq('entry_type', 'expense')
-    .eq('description', leg.entryDescription)
-    .eq('amount', leg.amount)
-    .neq('status', 'void');
-  if (error) throw error;
-  const hits = data ?? [];
-  if (hits.length > 1) {
-    throw new Error(
-      `This ${leg.half === 'expense' ? 'expense' : `payable's ${leg.half}`} was paid before we started `
-      + 'recording which ledger entry it created, and more than one entry matches it exactly. '
-      + 'Void the right one in the club ledger first, then delete this.',
-    );
-  }
-  return hits.length === 1 ? (hits[0].id as string) : null;
-}
+/* ⚖ `matchLegacyLedgerEntry` (per-leg, from the paid stamps) is GONE — Payables Rebuild P2. What
+   posted to the books is the commitment's own PAYMENTS now, so the pre-mig-236 fallback match lives
+   in `matchLegacyEntryForPayment` above, keyed by the payment row's own source and piece. */
 
 /**
  * Claim the ledger links for a pre-mig-236 record BEFORE anything makes them unfindable.
@@ -10391,191 +10846,110 @@ async function matchLegacyLedgerEntry(
 export async function adoptLedgerLinksForExpense(
   expense: RepTeamExpense,
   team: { id: string; orgId: string; name: string },
-): Promise<Partial<Pick<RepTeamExpense, 'accountingEntryId' | 'depositEntryId' | 'balanceEntryId'>>> {
-  const unlinked = paidLedgerLegs(expense).filter(l => !l.entryId);
-  if (unlinked.length === 0) return {};
+): Promise<void> {
+  if (expense.paidByPlayerId) return; // a family's money — no cash entry ever existed to claim
+  const { payments } = await getCommitmentRecords(expense.id);
+  const unlinked = payments.filter(p => !p.accountingEntryId);
+  if (unlinked.length === 0) return;
 
   const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
-  const adopted: Record<string, string> = {};
-  for (const leg of unlinked) {
-    const entryId = await matchLegacyLedgerEntry(leg, ledger.id);
-    if (!entryId) continue; // nothing posted to lose track of
-    if (leg.half === 'expense') adopted.accountingEntryId = entryId;
-    if (leg.half === 'deposit') adopted.depositEntryId = entryId;
-    if (leg.half === 'balance') adopted.balanceEntryId = entryId;
-  }
-  return adopted;
-}
-
-async function reverseLedgerEntriesForExpense(
-  expense: RepTeamExpense,
-  team: { id: string; orgId: string; name: string },
-): Promise<{ reversed: number; total: number }> {
-  const legs = paidLedgerLegs(expense);
-  if (legs.length === 0) return { reversed: 0, total: 0 };
-
-  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
-  let reversed = 0;
-  let total = 0;
-
-  for (const leg of legs) {
-    const entryId = leg.entryId ?? await matchLegacyLedgerEntry(leg, ledger.id);
-    if (!entryId) continue; // already void, or never posted — nothing to give back
-
-    await voidEntry(entryId, ledger.id);
-    reversed += 1;
-    total = Math.round((total + leg.amount) * 100) / 100;
-  }
-
-  return { reversed, total };
-}
-
-/**
- * Make the team's books say what a corrected money record now says (owner ruling 2026-08-16).
- *
- * ⚠⚠ THIS IS WHAT REPLACED THE FIGURE LOCK. Until now a paid record's amount could not be edited at
- * all, because nothing carried the correction through to the books and a row saying $225 beside an
- * entry saying $325 is worse than refusing the edit. This is the missing half: change the amount or
- * the date, and the entry that money created moves with it.
- *
- * ⚠ CALL IT BEFORE PERSISTING THE ROW, and pass the state the row is ABOUT to have. Every write in
- * here sets an ABSOLUTE value rather than applying a delta, so a coach who retries after a failure
- * converges on the right answer instead of moving the books twice. Persisting first would break
- * that: the retry would compare the new row against itself, see no change, and leave the books
- * stranded on the old figure with nothing to notice it by.
- *
- * ⚠ AN OUT-OF-POCKET COST HAS NO LEDGER ENTRY BUT DOES HAVE A DEBT. A family settled it directly,
- * so no team cash ever moved — but the team owes them, and that credit has to track the figure or
- * the household is owed the wrong amount. This is the money-in-a-real-family's-ledger case that the
- * money-back work turns on, reached here through the edit door.
- */
-export async function syncExpenseBooksForEdit(opts: {
-  before: RepTeamExpense;
-  /** The record as it will be once saved — not yet persisted. */
-  intended: RepTeamExpense;
-  team: { id: string; orgId: string; name: string };
-}): Promise<void> {
-  const { before, intended, team } = opts;
-
-  /* ── Out of pocket: no entry to move, a debt to keep honest ──
-     A family settled this directly, so no team cash ever moved and there is nothing on the books to
-     correct — but the team OWES them, and that credit has to track the record or a household is
-     owed the wrong amount. */
-  if (before.paidByPlayerId) {
-    const amountMoved = Math.abs(intended.amount - before.amount) > 0.005;
-    const dayMoved = orgDayKey(intended.expensePaidAt ?? '') !== orgDayKey(before.expensePaidAt ?? '');
-    const renamed = intended.description !== before.description;
-    if (!amountMoved && !dayMoved && !renamed) return;
-
-    /* ⚠ THE CREDIT'S DATE MOVES WITH THE COST'S (/review, 2026-08-16). It is not decoration: a
-       family's credits are applied oldest-first, so a stale date can send this one against a
-       different instalment than the coach intended, and it tells them the debt began on a day it
-       did not. ⚠ And its wording follows a rename, or the dues screen names a cost that no longer
-       exists under that description. */
-    const patch: Record<string, unknown> = {};
-    if (amountMoved) patch.amount = Math.round(intended.amount * 100) / 100;
-    if (dayMoved && intended.expensePaidAt) patch.credit_date = orgDayKey(intended.expensePaidAt);
-    if (renamed) patch.description = `Paid out of pocket — ${intended.description}`;
-
-    /* ⚠⚠ A ZERO-ROW UPDATE IS NOT A SUCCESS (/review, 2026-08-16, Critical). Postgres does not
-       error when an UPDATE matches nothing, so without asking what it touched this returned
-       cleanly, the route persisted the new figure, and the coach was told the correction worked —
-       while the family's credit stayed at the old amount, or never existed at all. That is the
-       "real money in a real family's ledger" failure the whole money-back design is built around,
-       reached through the edit door. Refuse rather than guess, exactly as the ledger matcher does. */
-    const { data, error } = await supabaseAdmin
-      .from('rep_dues_credits')
-      .update(patch)
-      .eq('expense_id', before.id)
-      .eq('credit_type', 'reimbursement')
-      .select('id');
+  // Independent SELECTs — resolved in parallel; the ambiguity refusal still fires before any write.
+  const matches = await Promise.all(
+    unlinked.map(async p => ({ p, entryId: await matchLegacyEntryForPayment(expense, p, ledger.id) })));
+  /* ⚠ AN ENTRY BELONGS TO EXACTLY ONE PAYMENT — the first claimant in the batch wins and the rest
+     stay unlinked (`/review`, 2026-08-20): two same-amount payments matching one real entry must
+     not both adopt it, or an undo of either would void money the other still points at. */
+  const claimed = new Set<string>();
+  for (const { p, entryId } of matches) {
+    if (!entryId || claimed.has(entryId)) continue; // nothing posted, or already claimed
+    claimed.add(entryId);
+    /* ⚠ FILLED IN, NEVER OVERWRITTEN — `.is(null)` re-asserts what the read saw, so a concurrent
+       adoption cannot have this write point a payment at a second entry. */
+    const { error } = await supabaseAdmin
+      .from('rep_payable_payments')
+      .update({ accounting_entry_id: entryId })
+      .eq('id', p.id)
+      .is('accounting_entry_id', null);
     if (error) throw error;
-    if (!data || data.length === 0) {
-      throw new Error(
-        'This cost says a family paid it, but the credit the team owed them is missing — so changing '
-        + 'it would leave that family owed the wrong amount. Delete this and enter it again.',
-      );
-    }
-    return;
-  }
-
-  /* Which halves have posted, and what each should now read. `paidLedgerLegs` is the same predicate
-     the delete path reverses with, so "what is on the books" has one definition and not two.
-     ⚠ ONLY LEGS THAT HAD ALREADY POSTED are considered, because `posted` is read from BEFORE. A
-     half being paid in this same request is not in here at all, which is what makes it safe to run
-     this alongside a mark-paid action rather than skipping it (/review, 2026-08-16). */
-  const posted = paidLedgerLegs(before);
-  if (posted.length === 0) return;
-
-  const wants = new Map(paidLedgerLegs(intended).map(l => [l.half, l]));
-  const paidDayFor = (e: RepTeamExpense, half: ExpenseLedgerLeg['half']) => (
-    half === 'expense' ? e.expensePaidAt : half === 'deposit' ? e.depositPaidAt : e.balancePaidAt
-  );
-
-  /* ⚠⚠ RESOLVE EVERY ENTRY BEFORE WRITING ANY OF THEM (/review, 2026-08-16, High).
-     The first version looked up and wrote each leg in turn — so on a payable whose deposit resolved
-     cleanly and whose balance was an ambiguous pre-236 match, the deposit's entry was rewritten and
-     committed, THEN the balance threw, the request returned a refusal, and the row was never
-     persisted. The coach saw a rejected save and no sign that anything had changed, while the books
-     had moved. Looking everything up first means the only failure that can happen after the first
-     write is a transient one, and those converge on retry because every write is absolute. */
-  let ledgerId: string | null = null;
-  const planned: { entryId: string; amount?: number; entryDate?: string }[] = [];
-
-  for (const leg of posted) {
-    const want = wants.get(leg.half);
-    if (!want) continue; // the half stopped being paid — not something an edit does
-
-    const amountMoved = Math.abs(want.amount - leg.amount) > 0.005;
-    const wasOn = paidDayFor(before, leg.half);
-    const nowOn = paidDayFor(intended, leg.half);
-    const dateMoved = orgDayKey(nowOn) !== orgDayKey(wasOn);
-    if (!amountMoved && !dateMoved) continue;
-
-    ledgerId ??= (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
-    /* ⚠ MATCHED ON THE *BEFORE* FIGURES. A pre-236 row is found by description AND amount, so the
-       lookup has to describe the entry as it stands, not as it is about to read. The matcher
-       refuses an ambiguous pair rather than rewriting a guess — the same protection the delete path
-       relies on, and the reason a handful of old records will ask to be re-entered instead. */
-    const entryId = leg.entryId ?? await matchLegacyLedgerEntry(leg, ledgerId);
-    if (!entryId) continue; // already void, or never posted — nothing on the books to correct
-
-    planned.push({
-      entryId,
-      ...(amountMoved ? { amount: want.amount } : {}),
-      ...(dateMoved && nowOn ? { entryDate: orgDayKey(nowOn) } : {}),
-    });
-  }
-
-  for (const { entryId, ...fields } of planned) {
-    await updateEntry(entryId, ledgerId!, fields);
   }
 }
+
+/* ⚖ `syncExpenseBooksForEdit` IS GONE (Payables Rebuild P2). It carried a figure edit through to
+   the books by re-deriving what had posted from the legacy paid stamps — inputs that stopped being
+   written when payments became their own records. The ruling it enforced (2026-08-16: "once it is
+   edited the new value should permeate to the books") lives on INSIDE `updateRepTeamExpense`, which
+   restates the payment that settled a piece — and its ledger entry, and an out-of-pocket cost's
+   family credit — in the same recovering order this function pioneered. */
 
 /**
  * Delete an expense or payable, giving back any money it had posted.
  *
+ * The reversal reads the commitment's own PAYMENTS — each carrying the ledger entry it posted
+ * (R5) — with the pre-mig-236 description match as the only fallback, refusing an ambiguous pair.
+ *
  * Order matters: the ledger is reversed FIRST. If that throws — an ambiguous historic match — the
  * expense row survives and the coach still has something to act on. Deleting first and failing to
  * reverse would leave a posted entry with no record explaining it, which is the strictly worse
- * half to get wrong.
+ * half to get wrong. And every match is resolved BEFORE anything is voided, so an ambiguous second
+ * payment refuses before the first one's void has committed (/review, 2026-08-16, High).
  *
  * ⚠ A REIMBURSEMENT CREDIT GOES WITH IT. An out-of-pocket expense carries a credit owed to that
- * family, and the database removes it by cascade when this row goes. That is correct — the debt
- * existed only because the expense did — but it means deleting one of these silently changes what
- * a family owes, so the caller MUST have said so before confirming.
+ * family, and the database removes it by cascade when this row goes — along with the installments
+ * and payments themselves. That is correct — they exist only because the record does — but it means
+ * deleting one of these changes what a family owes, so the caller MUST have said so first.
+ *
+ * ⚠ ON A PART-PAID COMMITMENT the figure returned is what was ACTUALLY paid, never the total —
+ * §27 Part D's rule: the confirmation and the reversal must agree, and both read the payments.
  */
 export async function deleteRepTeamExpense(
   expense: RepTeamExpense,
   team: { id: string; orgId: string; name: string },
 ): Promise<{ reversedAmount: number }> {
-  const { total } = await reverseLedgerEntriesForExpense(expense, team);
+  const { payments } = await getCommitmentRecords(expense.id);
+  let totalCents = 0;
+  const toVoid: string[] = [];
+  let ledgerId: string | null = null;
+
+  if (!expense.paidByPlayerId) {
+    const unlinked = payments.filter(p => !p.accountingEntryId);
+    if (unlinked.length > 0) {
+      ledgerId = (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
+    }
+    // Independent SELECTs, resolved in parallel — and ALL resolved before anything is voided, so
+    // an ambiguous second payment refuses before the first one's void has committed.
+    const matched = await Promise.all(
+      unlinked.map(async p => ({ p, entryId: await matchLegacyEntryForPayment(expense, p, ledgerId!) })));
+    /* ⚠ AN ENTRY IS COUNTED ONCE, however many payments claim it (`/review`, correctness lens,
+       2026-08-20): two same-amount pre-mig-236 payments can both match the ONE entry that really
+       posted, and double-counting it would have the confirmation promise more money back than the
+       void actually returns. */
+    const claimed = new Set<string>();
+    for (const p of payments) {
+      if (p.accountingEntryId && !claimed.has(p.accountingEntryId)) {
+        claimed.add(p.accountingEntryId);
+        toVoid.push(p.accountingEntryId);
+        totalCents += Math.round(p.amount * 100);
+      }
+    }
+    for (const { p, entryId } of matched) {
+      if (!entryId) continue; // already void, or never posted — nothing to give back
+      if (claimed.has(entryId)) continue;
+      claimed.add(entryId);
+      toVoid.push(entryId);
+      totalCents += Math.round(p.amount * 100);
+    }
+    if (toVoid.length > 0) {
+      ledgerId ??= (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
+      for (const entryId of toVoid) await voidEntry(entryId, ledgerId);
+    }
+  }
+
   const { error } = await supabaseAdmin
     .from('rep_team_expenses')
     .delete()
     .eq('id', expense.id);
   if (error) throw error;
-  return { reversedAmount: total };
+  return { reversedAmount: totalCents / 100 };
 }
 
 // ── Money coming IN: income, and money back on something (mig 243) ────────────

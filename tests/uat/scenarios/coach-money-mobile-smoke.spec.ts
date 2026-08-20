@@ -386,13 +386,13 @@ test.describe('Money on a phone @360x740', () => {
     const main = page.locator('main[class*="coachesMain"]');
     await main.getByRole('button', { name: /^commitments/i }).click();
     await expect(main.getByText('Provincials entry')).toBeVisible();
-    // Both halves of the split are readable, not two ~150px boxes.
-    await expect(main.getByText(/mark deposit paid/i)).toBeVisible();
-    await expect(main.getByText(/mark balance paid/i)).toBeVisible();
-    for (const label of [/mark deposit paid/i, /mark balance paid/i]) {
-      const box = await main.getByRole('button', { name: label }).boundingBox();
-      expect(box!.width, 'a stacked payable action should span the card').toBeGreaterThan(200);
-    }
+    // Payables Rebuild P2: the expanded details list the plan piece by piece, each unsettled one
+    // offering Record a payment as a full-width card action (Mark deposit/balance paid retired).
+    await main.getByRole('button', { name: /show provincials entry's payment details/i }).click();
+    const payButtons = main.getByRole('button', { name: /record a payment/i });
+    await expect(payButtons.first()).toBeVisible();
+    const payBox = await payButtons.first().boundingBox();
+    expect(payBox!.width, 'a stacked payable action should span the card').toBeGreaterThan(200);
     await expectNoPageScroll(page, 'Payables — commitments view');
     await expectNoClippedAmounts(page, 'Payables — commitments view');
   });
@@ -517,9 +517,10 @@ test.describe('Money on a phone @360x740', () => {
       cells.filter(c => (c.textContent ?? '').trim() === '' && getComputedStyle(c).display !== 'none').length);
     expect(emptyCellsShown, 'an empty action cell would render as a blank card line').toBe(0);
 
-    // The action that DOES exist is a real touch target, not a chip.
-    const markPaid = wrap.getByRole('button', { name: /mark paid/i }).first();
-    const box = await markPaid.boundingBox();
+    // The action that DOES exist is a real touch target, not a chip. (Payables Rebuild P2:
+    // the door is Record a payment now — Mark paid retired with the one-boolean model.)
+    const recordPayment = wrap.getByRole('button', { name: /record a payment/i }).first();
+    const box = await recordPayment.boundingBox();
     expect(box!.width, 'the card action should span the card').toBeGreaterThan(200);
   });
 
@@ -548,7 +549,7 @@ test.describe('Money on a phone @360x740', () => {
       const main = page.locator('main[class*="coachesMain"]');
       await expect(
         main.getByRole('button', {
-          name: /mark paid|mark deposit paid|mark balance paid|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
+          name: /record a payment|undo|mark paid|mark deposit paid|mark balance paid|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);
@@ -1000,8 +1001,8 @@ test.describe('The payment schedule (chunk H)', () => {
 
     await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const sched = page.locator('main[class*="coachesMain"]');
-    await expect(sched.getByText(/provincials entry — deposit/i)).toBeVisible();
-    expect(await sched.getByRole('button', { name: /mark paid/i }).count()).toBe(0);
+    await expect(sched.getByText(/provincials entry — installment 1 of 2/i)).toBeVisible();
+    expect(await sched.getByRole('button', { name: /record a payment/i }).count()).toBe(0);
   });
 });
 

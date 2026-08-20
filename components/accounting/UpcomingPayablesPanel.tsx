@@ -14,10 +14,16 @@ export interface PayableItem {
   /** Settled rows only appear when the caller asked for them (`includePaid=1`). */
   paid?: boolean;
   category?: string | null;
-  /** For an expense half: the row it belongs to and which half it is, so a schedule can
-   *  mark it paid through the expense the coach already knows. */
+  /** For a commitment's piece: the record it belongs to and the piece's own id, so a schedule can
+   *  open Record a payment pre-aimed at it (Payables Rebuild P2 — the `half` vocabulary is gone). */
   expenseId?: string;
-  half?: string;
+  installmentId?: string;
+  installmentNumber?: number;
+  installmentCount?: number;
+  /** Money already landed on this piece — what lets a row say "$200 of $450". */
+  appliedSoFar?: number;
+  /** ⚠ R4 — partly paid counts as UNPAID; this flag is how a row says the middle state. */
+  partlyPaid?: boolean;
 }
 
 export interface PayableLane {

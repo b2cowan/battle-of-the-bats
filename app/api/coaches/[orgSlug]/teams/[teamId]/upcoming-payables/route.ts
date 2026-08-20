@@ -204,16 +204,12 @@ export const GET = withObservability(async (req: Request,
       if (settled && !includePaid) continue;
       if (inst.dueDate > cutoffStr) continue;
       const d = daysUntil(inst.dueDate);
-      const only = standing.installments.length === 1;
       expenseItems.push({
         id:          inst.id,
         expenseId:   e.id,
+        /* ⚖ THE `half` FIELD RETIRED WITH THE MARK-PAID DOOR (P2). The Record-a-payment door aims
+           at a PIECE, and this is its id — there is no deposit/balance vocabulary left to keep. */
         installmentId: inst.id,
-        /* ⚠ KEPT so the panel's Mark-paid door and the register's row keys keep working while P2
-           replaces them. A one-installment commitment reports 'deposit', which is exactly the
-           convention the payables form and the bulk importer have always used for a single amount
-           on a single date — so nothing downstream has to learn a new word during P1. */
-        half:        only || inst.installmentNumber === 1 ? 'deposit' : 'balance',
         installmentNumber: inst.installmentNumber,
         installmentCount: standing.installments.length,
         /* ⚠ THE SHARED RULE, not a fourth spelling of it. The register, Budget vs. Actual's

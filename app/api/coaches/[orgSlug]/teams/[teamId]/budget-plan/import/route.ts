@@ -7,6 +7,8 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
+import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { itemVisibleToTeam, type OwnedBudgetItem } from '@/lib/coach-budget-items';
@@ -174,6 +176,22 @@ export const POST = withObservability(async (req: Request,
       }
       const deposit = moneyValue(row.depositAmount);
       const balance = moneyValue(row.balanceAmount);
+      /* The sheet's split, as the PLAN it means (Payables Rebuild P2). The sheet still speaks
+         deposit/balance - coaches' own spreadsheets do - but the record stores installments now.
+         The remainder conventions (a blank half takes the remainder; each half's missing date
+         falls back to the other's) are `composeTwoPieceInstallments`, shared with the payables
+         form so the sheet and the form cannot drift. */
+      const split = (balance != null && balance > 0) || !!row.balanceDueDate;
+      const installments = split
+        ? composeTwoPieceInstallments({
+            total: row.total,
+            depositAmount: deposit,
+            depositDueDate: row.depositDueDate || null,
+            balanceAmount: balance,
+            balanceDueDate: row.balanceDueDate || null,
+            fallbackDueDate: tournamentToday(),
+          })
+        : [{ amount: row.total, dueDate: row.depositDueDate || tournamentToday() }];
       try {
         // The SAME writer the Add Payable form uses â so an imported payable carries its payee
         // and its author in the columns that hold them, rather than a second shape of the row.
@@ -185,11 +203,7 @@ export const POST = withObservability(async (req: Request,
           expenseType: 'tournament_payable',
           description: row.description,
           category: row.categoryName || null,
-          amount: row.total,
-          depositAmount: deposit && deposit > 0 ? deposit : null,
-          depositDueDate: row.depositDueDate || null,
-          balanceAmount: balance && balance > 0 ? balance : null,
-          balanceDueDate: row.balanceDueDate || null,
+          installments,
           payeePayer: row.payee || null,
           createdBy: ctx!.user.id,
         });

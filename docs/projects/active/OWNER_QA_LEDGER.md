@@ -35,6 +35,12 @@
 > five demo-world screenshots on a public pitch page. The walk is short and the blocking check is
 > the pictures themselves.
 >
+> **§66 added 2026-08-20** — the COACH walkthrough (marketing surface, built 2026-08-20). Same
+> page shape, a coach's season. Two things need an owner ruling rather than a pass/fail: the
+> settlement panel's promise was **rewritten** because the mockup's version contradicted the
+> "unsettled money warns, never blocks" ruling, and the mockup's **third panel was not built** —
+> the demo world cannot photograph the bench console. Both are written up in §66.
+>
 > **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
 > §45 §46 §47 §48 §49 §51**, plus **§50's owed re-walk** (§50 PASSED 2026-08-17, then `/review`
 > changed behaviour in three places afterwards). That is the whole Money redesign, all of budget
@@ -8791,10 +8797,13 @@ and the Transactions rendered check re-run clean of any new-control findings.
 
 ## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
 
-**Part A is BUILT and awaiting the walk (2026-08-19); Parts B–E not built.** Plan:
-`COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
+**Parts A and B are BUILT and awaiting the walk (A 2026-08-19, B 2026-08-20); Parts C–E not
+built.** Plan: `COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
 Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
 **Origin: §27, which PASSED CLEAN on 2026-08-19 and surfaced four absences while passing.**
+⚠ For Part B, "the drawer" is the commitment row's **Payment details** expansion on the
+Commitments list — P2 put the drawer's content there; the standalone drawer arrives with the
+screen rebuild in Part C.
 
 **Why this section exists:** money going out had one boolean — unpaid or paid — and the
 deposit/balance pair was the only concession to money arriving in pieces. A commitment now holds
@@ -8863,7 +8872,9 @@ This is the phase where the books are re-expressed. Its whole test is that nothi
 - [ ] ⚠ **Over-pay deliberately.** Record $400 against the remaining $250. It **saves** — it must not
       be refused — and the commitment reads **$150 over**.
 - [ ] ⚠⚠ **Undo.** Delete that over-payment. Cash on hand goes back up by **exactly $400**, and the
-      commitment returns to reading $150 still owing.
+      commitment returns to reading **$250 still owing**. *(Corrected 2026-08-20 — this step
+      originally said $150, which is the over-payment figure, not the remainder: $600 − $200 − $150
+      = $250. If the screen says $250, that is the pass.)*
 - [ ] Undo a payment on a commitment where it was the **only** payment. The commitment returns to
       completely unpaid, and the schedule shows it as due again.
 - [ ] Record **one payment that covers more than one installment** — $700 against a series of $450
@@ -9018,3 +9029,119 @@ presentable demo world (`npm run check:demos`).
 
 **Blocking parts: the pictures.** A wrong, empty, or chrome-bearing screenshot on a pre-sales
 page is the whole failure mode this build exists to prevent.
+
+---
+
+### B · Present mode + the leave-behind (P2, built 2026-08-20)
+
+The same page, two more renderings: full-screen slides for a live pitch, and a printable PDF
+to email afterwards. Walk on desktop; present mode also works on a phone (tap advances).
+
+- [ ] Under the hero's small print sits **"▸ Present this page"** — text-weight, quiet. It must
+      read as a tool, never compete with **Start free**.
+- [ ] Pressing it goes full screen: title slide → the five problems → the closing, **7 slides**.
+      Arrow keys / space / click advance; ← goes back; the counter tracks; overshooting past the
+      last slide stays put; **Esc (or the Exit button) returns exactly where you were**, page
+      scrolling intact.
+- [ ] Each panel slide fits ONE screen — headline, picture, one sentence — nothing scrolls
+      mid-pitch. The gated panels keep their Tournament Plus tags on the slide.
+- [ ] **Ctrl+P / Save as PDF**: one problem per page, pictures intact, dark design kept
+      (deliberate — the artifact is an emailed PDF; paper printing is ink-heavy, ruled
+      acceptable?), no buttons/door links in the PDF, and the last page carries the page's
+      web address in lime.
+- [ ] ⚠ Known v1 rough edges to rule on: the site's top navigation prints on the PDF's first
+      page, and the site footer prints at the end. Acceptable for a leave-behind, or does the
+      PDF need its own chrome-free rendering before it's used in a real pitch?
+
+---
+
+## §66 · The coach walkthrough — the same pitch page, a coach's season
+
+**BUILT 2026-08-20, awaiting the walk.** Plan: `PRESALES_WALKTHROUGH_PLAN.md` (P3). Mockup
+(approved spec): `claude.ai/code/artifact/6f16bc17-d5f3-45b6-bd03-b6df54231f15`, coach tab.
+
+**Why this section exists:** the coach persona page had the same gap the organizer page had —
+prose, no screens. `/for-coaches/walkthrough` is its 90-second answer, and it is the SECOND
+consumer of the walkthrough renderer, so this walk is also the proof that extracting that
+renderer left the organizer page untouched.
+
+**⚠ Two things changed against the approved mockup, both because the code says otherwise.**
+Read these first — they are the two most likely places for the owner to disagree:
+
+1. **The settlement panel does NOT claim the product blocks you from closing the books.** The
+   mockup said "won't let you close the books until every family is made whole." Closing a
+   season **warns and never blocks** (the 2026-08-18 ruling; the close handler does a bare
+   status flip with no money checks). What the sheet genuinely refuses is its bulk *payout*
+   button, until dues are collected, the team holds enough cash, and no club request is still
+   pending. The panel now says that instead.
+2. **The third panel — the bench console — is NOT built.** See the "what is missing" note below.
+
+**Fixture:** a logged-out browser (phone and desktop), dev server. The pictures are already
+captured and committed; nothing needs seeding to read the page.
+
+### The walk
+
+- [ ] `/for-coaches` — the pain section ("If this is how you run your team…") now ends with a
+      quiet lime link to the walkthrough. It must read as *deeper proof*, never as the ask:
+      **Start free** is still the loudest thing on that page.
+- [ ] `/for-coaches/walkthrough` — hero reads "Run the team. Keep your evenings.", the door
+      button says **See a coach's season →**, and the meta line under the CTAs counts the
+      panels honestly.
+- [ ] **Panel 1 — Player Dues.** The picture is a real coach's dues table from the demo club's
+      mid-season team: every family, what they were charged, credits, paid, balance, and a
+      plain status word with two families flagged past due. Check the sentence against the
+      picture — especially "reminders go out on their own ahead of each installment's due
+      date" (the scheduled sweep runs 30 and 7 days *before* a due date; chasing someone who
+      never paid stays a button you press). The plan tag must read **Premium Coaches Portal**
+      in full.
+- [ ] **Panel 2 — Season settlement.** The picture is the settlement sheet on the demo club's
+      **off-season** team, so it shows what the pain describes: a per-family refund column,
+      one family who still owes, and the pay-everyone button greyed out with every blocker
+      named above it. ⚠ **Is "the pay-everyone button stays locked until they are" the promise
+      you want to make here** — or would you rather the panel said the opposite (that we let
+      you close and simply tell you what is open)?
+- [ ] Both panels' **See this screen live →** links land at the coach demo's front door (the
+      mid-season team's overview), NOT deep into the pictured screen. That is the standing
+      ruling; confirm it still feels right now that the pictures are of specific screens.
+- [ ] **Present mode** (the text-weight trigger under the hero meta) — 4 slides, arrows/space/
+      click advance, overshoot stays put, Esc returns you where you were.
+- [ ] **Ctrl+P / Save as PDF** — one problem per page, pictures intact, no buttons or door
+      links, last page carries `fieldlogichq.ca/for-coaches/walkthrough` in lime. (Same known
+      v1 rough edge as §65: the site nav and footer still print.)
+- [ ] **Phone width.** The warm screenshots are wide tables on a dark page — check they are
+      still readable on a phone, and say so if either needs a tighter crop. This is the most
+      likely visual failure on the page.
+- [ ] **The organizer page must be untouched.** `/for-tournament-organizers/walkthrough` was
+      re-rendered through the extracted component; it was proved pixel-identical in the build,
+      but give it a look — five panels, present mode, print.
+
+### ⚠ What is missing, and why — the owner needs to rule
+
+The mockup's **third coach panel** ("Parents text 'score?' while you're coaching third base"
+→ the bench console, families watching the live score, End game sending one final notification)
+**was not built, because the demo world cannot photograph it.** Three independent reasons, all
+verified in code, none fixable in passing:
+
+- The bench console renders its live face only inside a real game window — for the demo team
+  that is **Saturdays 07:00–14:00 Toronto**, roughly seven hours a week. The capture pipeline's
+  whole promise is "re-takeable in one command"; a picture that can only be re-taken on Saturday
+  mornings quietly breaks that.
+- The demo's Saturday game is seeded with **no lineup on purpose** (it is the "one thing" the
+  team Overview asks the coach to do), so the bench board — the part the panel is about —
+  does not render at all.
+- Game rows get a **fresh random id on every reseed**, and there is **no link anywhere in the
+  portal** to a past game's console, so nothing can navigate there by a stable address.
+
+Making it capturable means changing the seeded demo world (giving that game a fixed id and a
+saved lineup), which would undo a deliberate demo design decision and belongs in its own
+session. **The page ships with two panels** — the plan's P1 rule already allows the panel set to
+flex by one — **and the third is the owner's call:**
+
+- **(a) Ship at two.** Both are money, which is the coach portal's strongest and most
+  differentiated story.
+- **(b) Change the demo world** so game day can be photographed, then add the panel as spec'd.
+- **(c) Substitute a different third pain** that the demo world *can* show today. The two
+  strongest candidates found while researching this: the **playing-time report** (the demo's
+  own tour anchors there, and it shows one player's back-to-back bench pattern honestly), or
+  the **family recap preview** — the coach's roster page rendering the family's *own* component,
+  i.e. genuinely "what a parent opens". Either is a new panel, which needs this OK first.

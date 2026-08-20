@@ -30,6 +30,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
+import { commitmentStanding } from '../lib/payable-standing.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
@@ -252,9 +253,15 @@ console.log('\nOff-season — Riverdale Ridge 14U');
 
     // The actual half, matched the way the report matches it: category name, case-insensitive.
     const categoryNames = new Set((lines ?? []).map(l => l.budget_categories?.name?.toLowerCase()).filter(Boolean));
+    /* ⚠ Payables Rebuild P2: what is OWED and what was PAID live on a commitment's installments
+       and payments — the legacy deposit/balance/paid columns are dead, and a check that read them
+       would report a freshly seeded world as having no money at all (which is exactly how this
+       block failed the first reseed after the rebuild). */
     const { data: expenses } = await db.from('rep_team_expenses')
-      .select('description, category, budget_item_id, amount, expense_type, expense_paid_at, balance_amount, balance_due_date, balance_paid_at')
+      .select('id, description, category, budget_item_id, amount, expense_type')
       .eq('program_year_id', py.id);
+    const { data: offseasonPayments } = await db.from('rep_payable_payments')
+      .select('id, expense_id, installment_id, amount, paid_date').eq('program_year_id', py.id);
     check(expenses?.length === state.expenses.length, `${expenses?.length} expenses logged against the plan`);
     const matched = (expenses ?? []).filter(e => categoryNames.has((e.category ?? '').toLowerCase()));
     const unbudgetedCost = (expenses ?? []).find(e => !categoryNames.has((e.category ?? '').toLowerCase()));
@@ -273,10 +280,26 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     check(!!unbudgetedCost && Number(unbudgetedCost.amount) > 0,
       `the unbudgeted one is real money ("${unbudgetedCost?.description}", $${unbudgetedCost?.amount})`);
     const payable = (expenses ?? []).find(e => e.expense_type === 'tournament_payable');
-    check(!!payable && !payable.balance_paid_at && payable.balance_due_date > today,
+    const { data: payablePieces } = await db.from('rep_payable_installments')
+      .select('id, expense_id, installment_number, amount, due_date')
+      .eq('expense_id', payable?.id ?? '00000000-0000-0000-0000-000000000000');
+    /* "Is it still owed?" is `commitmentStanding`'s answer, never a hand-rolled epsilon — the same
+       arithmetic every product screen reads (`/simplify`, reuse lens, 2026-08-20). */
+    const payableStanding = commitmentStanding(
+      (payablePieces ?? []).map(i => ({
+        id: i.id, expenseId: i.expense_id, installmentNumber: i.installment_number,
+        amount: Number(i.amount), dueDate: i.due_date,
+      })),
+      (offseasonPayments ?? []).filter(p => p.expense_id === payable?.id).map(p => ({
+        id: p.id, expenseId: p.expense_id, installmentId: p.installment_id ?? null,
+        amount: Number(p.amount), paidDate: p.paid_date, method: null, note: null,
+        accountingEntryId: null,
+      })));
+    check(!!payable
+      && payableStanding.state !== 'settled'
+      && payableStanding.installments.some(i => i.state !== 'settled' && i.dueDate > today),
       'a tournament balance is still owed, and it falls due AHEAD of today');
-    const spent = (expenses ?? []).reduce((s, e) =>
-      s + (e.expense_paid_at ? Number(e.amount) : 0), 0);
+    const spent = (offseasonPayments ?? []).reduce((s, p) => s + Number(p.amount), 0);
     check(spent > 0 && spent < budgetTotal,
       `money is spent but the budget holds ($${spent.toLocaleString()} of $${budgetTotal.toLocaleString()})`);
 
@@ -407,12 +430,17 @@ console.log('\nSeason start — Riverdale Ridge 10U');
        with the 12U's: a complete plan, barely spent against. Asserted as "some, and less than
        half", because a fixed dollar figure would just restate the world module at it. */
     const { data: spend } = await db.from('rep_team_expenses')
-      .select('amount, expense_paid_at').eq('program_year_id', py.id);
+      .select('id, amount').eq('program_year_id', py.id);
+    const { data: paid10 } = await db.from('rep_payable_payments')
+      .select('expense_id, paid_date').eq('program_year_id', py.id);
     const spent = (spend ?? []).reduce((s, e) => s + Number(e.amount), 0);
     const planned = SEASON_START_BUDGET_LINES.reduce((s, l) => s + l.total, 0);
     check((spend ?? []).length === state.expenses.length && spent > 0 && spent < planned / 2,
       `the 10U has started spending but is well under plan ($${spent} of $${planned})`);
-    check((spend ?? []).every(e => e.expense_paid_at && orgDateWithOffset(new Date(e.expense_paid_at), 0) <= today),
+    /* ⚠ Read off the PAYMENTS (Payables Rebuild P2): `paid_date` is a bare org-day, so the
+       comparison is a plain string one — no timestamptz conversion left to get wrong. */
+    check((spend ?? []).every(e => (paid10 ?? []).some(p => p.expense_id === e.id))
+      && (paid10 ?? []).every(p => p.paid_date <= today),
       'no 10U bill is dated in the future');
 
     const { data: installments } = await db.from('rep_player_dues_installments')
@@ -651,7 +679,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       'every 12U budget line hangs off a real category (or the report files the season as unbudgeted)');
 
     const { data: spend } = await db.from('rep_team_expenses')
-      .select('description, category, budget_item_id, amount, expense_paid_at').eq('program_year_id', py.id);
+      .select('id, description, category, budget_item_id, amount').eq('program_year_id', py.id);
     check((spend ?? []).length === state.expenses.length,
       `${state.expenses.length} expenses logged against the 12U's season`, `found ${(spend ?? []).length}`);
     // Every 12U cost names its item (mig 240) — this is the team whose Budget vs. Actual a
@@ -660,7 +688,11 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     // world exists to demonstrate: six costs, four rows.
     check((spend ?? []).every(e => e.budget_item_id),
       'every 12U cost names its budget item — the report reads item by item');
-    check((spend ?? []).every(e => e.expense_paid_at && orgDateWithOffset(new Date(e.expense_paid_at), 0) <= today),
+    /* ⚠ Read off the PAYMENTS (Payables Rebuild P2) — same rule as the 10U's twin check above. */
+    const { data: paid12 } = await db.from('rep_payable_payments')
+      .select('expense_id, paid_date').eq('program_year_id', py.id);
+    check((spend ?? []).every(e => (paid12 ?? []).some(p => p.expense_id === e.id))
+      && (paid12 ?? []).every(p => p.paid_date <= today),
       'no 12U bill is dated in the future');
 
     // The one deliberate anomaly: Facilities is OVER plan, and it is the only line that is.

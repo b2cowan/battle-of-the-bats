@@ -120,8 +120,8 @@ export type RegisterOpen =
   /** A derived row: it is edited where it was made, never here. */
   | { kind: 'workspace'; section: CoachMoneySection };
 
-/** The half a scheduled money-out row would settle. Matches `MarkPaidAction` on the money panel. */
-export type RegisterHalf = 'expense' | 'deposit' | 'balance';
+/* ⚖ `RegisterHalf` IS GONE (Payables Rebuild P2): a scheduled row settles through `Record a
+   payment` aimed at its own installment, so there is no half vocabulary left to speak. */
 
 export interface RegisterRow {
   /** Unique across the whole book — the row key, and what a filter re-render is stable against. */
@@ -163,8 +163,9 @@ export interface RegisterRow {
    */
   movesCash: boolean;
   open: RegisterOpen | null;
-  /** Present only on a SCHEDULED money-out row. Opens the money form pre-filled, asking when. */
-  markPaid: { expenseId: string; half: RegisterHalf; amount: number } | null;
+  /** Present only on a SCHEDULED money-out row. Opens Record a payment pre-aimed at this piece,
+   *  suggesting its REMAINDER — the coach's override of the application rule (R3), not a lock. */
+  recordPayment: { expenseId: string; installmentId: string | null; amount: number } | null;
   /** The workspace chip on a derived row; null on a recorded one. */
   sourceLabel: string | null;
   /** A second line under the description — a player's name, a due note, why a date is what it is. */

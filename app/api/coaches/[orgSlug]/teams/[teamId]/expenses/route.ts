@@ -15,7 +15,7 @@ import {
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { whyPaidDateIsRefused, asMoneyAmount } from '@/lib/expense-ledger';
+import { whyPaidDateIsRefused, asMoneyAmount, parseInstallmentPlan } from '@/lib/expense-ledger';
 import { tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
@@ -84,10 +84,9 @@ export const POST = withObservability(async (req: Request,
     description,
     category = null,
     amount,
-    depositAmount = null,
-    depositDueDate = null,
-    balanceAmount = null,
-    balanceDueDate = null,
+    /** A COMMITMENT'S PLAN — 1..n dated pieces, in order (Payables Rebuild P2). The deposit/balance
+     *  pair is just the two-piece case now; the route stores whatever plan the form states. */
+    installments = null,
     eventId = null,
     notes = null,
     paymentMethod = null,
@@ -106,13 +105,28 @@ export const POST = withObservability(async (req: Request,
   if (!description?.trim()) {
     return NextResponse.json({ error: 'description is required' }, { status: 400 });
   }
-  /* ⚠ ROUNDED, AND FLOORED AT A CENT — not merely "positive" (/review, 2026-08-16). A sub-cent
-     figure was a valid cost, and the reimbursement credit an out-of-pocket cost creates is skipped
-     below half a cent — so `.04` typed for `$4.00` produced a record saying a family paid it with
-     no debt to that family written anywhere, silently. See `asMoneyAmount`. */
-  const money = asMoneyAmount(amount);
-  if (money === null) {
-    return NextResponse.json({ error: 'Enter an amount of at least $0.01.' }, { status: 400 });
+
+  /* ── The plan (R1 + R2) ───────────────────────────────────────────────────────────────────────
+     A payable arrives as explicit installments; a plain cost is a one-piece plan dated the day it
+     was (or is yet to be) paid. The record's total is the SUM of the pieces — derived, never
+     separately typed (R2) — so `amount` is read only for the plain-cost case.
+     ⚠ ROUNDED, AND FLOORED AT A CENT, per piece — not merely "positive" (/review, 2026-08-16). A
+     sub-cent figure was a valid cost, and the reimbursement credit an out-of-pocket cost creates is
+     skipped below half a cent — so `.04` typed for `$4.00` produced a record saying a family paid
+     it with no debt to that family written anywhere, silently. See `asMoneyAmount`. */
+  let plan: Array<{ amount: number; dueDate: string }>;
+  if (expenseType === 'tournament_payable') {
+    const parsed = parseInstallmentPlan(installments);
+    if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    plan = parsed.plan;
+  } else {
+    const money = asMoneyAmount(amount);
+    if (money === null) {
+      return NextResponse.json({ error: 'Enter an amount of at least $0.01.' }, { status: 400 });
+    }
+    // Dated when the money moved, or the org's today for a cost recorded before it is settled —
+    // the same fallback the old "No schedule" backfill used, stated here as the rule.
+    plan = [{ amount: money, dueDate: typeof expensePaidAt === 'string' && expensePaidAt ? expensePaidAt : tournamentToday() }];
   }
 
   /* WHAT THIS COST IS (mig 240). Validated against the taxonomy THIS TEAM can see — platform,
@@ -136,14 +150,13 @@ export const POST = withObservability(async (req: Request,
   }
 
   /* WHEN THE MONEY MOVED (2026-08-16). Optional — a cost can be recorded before it is settled, and
-     a payable is settled through its own halves — but if it is given it has to be a real, past date.
-     ⚠ REFUSED ON A PAYABLE. A payable's money moves through markDepositPaid / markBalancePaid, each
-     posting its own entry; a paid stamp on the parent would claim the whole commitment settled at
-     once and leave two halves that still think they are owed. */
+     a payable is settled through Record a payment — but if it is given it has to be a real, past
+     date. ⚠ REFUSED ON A PAYABLE: its money moves payment by payment, each dated on its own, and a
+     paid date on the parent would claim the whole commitment settled at once. */
   if (expensePaidAt != null) {
     if (expenseType !== 'expense') {
       return NextResponse.json(
-        { error: 'A payable is settled by paying its deposit and balance, not by dating the whole commitment.' },
+        { error: 'A payable is settled by recording payments against it, not by dating the whole commitment.' },
         { status: 400 },
       );
     }
@@ -199,12 +212,9 @@ export const POST = withObservability(async (req: Request,
     category:       linked.item ? linked.item.categoryName : (category?.trim() || null),
     budgetItemId:     linked.item?.id ?? null,
     budgetCategoryId: linked.item?.categoryId ?? null,
-    // The rounded figure, so the row, the ledger entry and any family credit all hold one number.
-    amount:         money,
-    depositAmount:  depositAmount != null ? Number(depositAmount) : null,
-    depositDueDate: depositDueDate || null,
-    balanceAmount:  balanceAmount != null ? Number(balanceAmount) : null,
-    balanceDueDate: balanceDueDate || null,
+    // Rounded per piece, so the rows, the ledger entries and any family credit all hold one number.
+    // R2: the record's total is the sum of these — derived in the writer, typed nowhere.
+    installments:   plan,
     eventId:        eventId || null,
     notes:          notes?.trim() || null,
     paymentMethod:  paymentMethod?.trim() || null,

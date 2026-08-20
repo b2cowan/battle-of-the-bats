@@ -277,10 +277,41 @@ the seeder helper** — once `Record a payment` writes
 these tables directly they become the source of truth, and a one-way copier pointed the wrong way
 would overwrite real records.
 
-### P2 — Recording a payment, and undoing one
+### P2 — Recording a payment, and undoing one ✅ BUILT 2026-08-20 (dev; QA §64 Part B owed)
 The **Record a payment** form (date, amount, method, note, which installment). Partial payment.
 Over-payment (R6). **Undo** on any recorded payment, reversing the books by its own entry.
 ⚠ Closes defects 1 and 2 — the two blocking ones.
+
+#### What P2 actually did — read before P3
+- **The bridge is gone and the cutover is complete**: `payable-legacy-plan.ts`,
+  `payable-legacy-sync.ts`, `reconcileCommitmentRecords` and the seeder backfill helper are
+  deleted; every writer (create form, edit form, delete, the bulk importer, all three fixture
+  seeders, the demo seed and nightly re-anchor) writes installments and payments directly, and
+  **nothing writes the legacy deposit/balance/paid columns any more**. The one legacy column still
+  written is `amount`, kept equal to the sum of the installments (R2). Dropping the dead columns
+  remains a separate migration and a separate decision (mig 255's note).
+- The three PATCH mark-paid actions are removed; a stale tab's `action` gets a sentence pointing at
+  the new door. The register and payment schedule offer **Record a payment** on every unsettled
+  piece — including part-paid ones, which the old door structurally could not offer.
+- The still-needed pure logic moved to `lib/payable-plan.ts` (plan diffing; pre-mig-236 ledger-entry
+  description candidates). Undo reverses by the payment's own entry (R5); a null entry forks into
+  the out-of-pocket credit case (mig 234) vs. the description match that refuses ambiguity.
+- **The 2026-08-16 "books follow the edit" ruling is carried**: editing a settled figure restates
+  the payment that settled it and its ledger entry — where that is unambiguous (one payment on the
+  record, or one payment targeted at the piece at its old figure). Multi-payment records leave the
+  payments as the honest record and the standing re-reads; P4's scope rules take over from there.
+- P2's UI is deliberately minimal (the screen is P3): the commitment row's **Payment details**
+  expansion is the drawer's content — Scheduled pieces, Payments recorded each with Undo,
+  Still owing — and Record a payment is its own small modal.
+- ⚠ `scripts/check-demo-coach.mjs` was a P1 false negative — a money reader still on the legacy
+  columns that failed only when the first legacy-free reseed ran. Its four money assertions now
+  read installments/payments. If any other script asserts money off `rep_team_expenses` columns,
+  it is wrong the same way.
+- Verified on dev: full unit suite, `check:register`, `check:money-report`, `check:demos` (both
+  worlds reseeded through the new path), and a live API round trip — part payment moved cash by
+  exactly its amount, over-payment saved and read "$50 over", undo returned cash exactly, a
+  double-tapped undo refused without double-reversing, and the family case moved the credit and
+  never the cash.
 
 ### P3 — The screen rebuild
 Option B's single list with `Group by`, Option C's drawer, the Status dropdown, `Item`.

@@ -38,8 +38,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
-import { orgDayAsStoredInstant } from '../lib/timezone.ts';
-import { backfillCommitmentRecords } from './lib/backfill-commitment-records.mjs';
+import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -82,17 +81,9 @@ const isoDate = (d) => {
 };
 const nowIso = new Date().toISOString();
 
-/**
- * A seeded PAID day, as the instant the column actually wants.
- *
- * ⚠⚠ `expense_paid_at` IS A TIMESTAMPTZ, and this script was writing bare `YYYY-MM-DD` into it
- * (/review, 2026-08-16). Postgres reads that as UTC midnight, which every org-zone reader turns
- * back into the PREVIOUS day — so a fixture seeded "paid Jul 12" displayed as Jul 11 to a Toronto
- * tester. It was invisible while the product wrote the same wrong shape; now that a coach's own
- * paid dates are stored correctly, the fixture would have been the only thing off by a day, and a
- * tester comparing the screen against this file would have chased a defect that isn't there.
- */
-const paidStamp = (day) => orgDayAsStoredInstant(day) ?? day;
+/* ⚖ `paidStamp` (org-noon instants for `expense_paid_at`) RETIRED with the legacy paid columns
+   (Payables Rebuild P2): a payment's `paid_date` is a bare `date` column, so the timestamptz
+   off-by-one it corrected has nothing left to apply to. */
 
 /** Mirrors lib/coach-opponents.ts normalizeOpponentName — the book's key. Keep in step. */
 function normalizeOpponentName(name) {
@@ -1132,6 +1123,9 @@ async function seedMoneyLab() {
       return { category: e.cat, budget_category_id: catBy[e.cat] ?? null, budget_item_id: itemId };
     };
 
+    /* ⚠ Payables Rebuild P2: every commitment is seeded WITH its installments and payments — the
+       legacy deposit/balance/paid columns are dead and nothing writes them. The repair path stays
+       taxonomy-only: it never touches money, so it needs no records logic. */
     for (const e of EXPENSES) {
       const tax = taxonomy(e);
       const have = byDesc.get(e.desc);
@@ -1142,10 +1136,13 @@ async function seedMoneyLab() {
         }
         continue;
       }
-      die('expense', (await db.from('rep_team_expenses').insert({
-        program_year_id: cur.id, team_id: u13.id, org_id: org.id,
-        expense_type: 'expense', description: e.desc, amount: e.amount, expense_paid_at: paidStamp(e.paid), ...tax,
-      })).error);
+      await insertCommitmentWithRecords(db, {
+        row: {
+          program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+          expense_type: 'expense', description: e.desc, ...tax,
+        },
+        ...paidOnce(e.amount, e.paid),
+      });
       added++;
     }
 
@@ -1157,13 +1154,17 @@ async function seedMoneyLab() {
         repaired++;
       }
     } else {
-      die('payable', (await db.from('rep_team_expenses').insert({
-        program_year_id: cur.id, team_id: u13.id, org_id: org.id,
-        expense_type: 'tournament_payable', description: PAYABLE.desc,
-        amount: PAYABLE.amount, deposit_amount: PAYABLE.deposit_amount,
-        deposit_due_date: PAYABLE.deposit_due_date, deposit_paid_at: PAYABLE.deposit_paid_at,
-        balance_amount: PAYABLE.balance_amount, balance_due_date: PAYABLE.balance_due_date, ...tax,
-      })).error);
+      await insertCommitmentWithRecords(db, {
+        row: {
+          program_year_id: cur.id, team_id: u13.id, org_id: org.id,
+          expense_type: 'tournament_payable', description: PAYABLE.desc, ...tax,
+        },
+        installments: [
+          { amount: PAYABLE.deposit_amount, dueDate: PAYABLE.deposit_due_date },
+          { amount: PAYABLE.balance_amount, dueDate: PAYABLE.balance_due_date },
+        ],
+        payments: [{ amount: PAYABLE.deposit_amount, paidDate: PAYABLE.deposit_paid_at, installmentNumber: 1 }],
+      });
       added++;
     }
     ok(`expenses — 6 paid (one OVER plan, one UNBUDGETED on Events / Photo Day) + 1 payable; ${added} added, ${repaired} repaired`);
@@ -1290,11 +1291,14 @@ async function seedMoneyLab() {
           repaired++;
         }
       } else {
-        die('prev expense', (await db.from('rep_team_expenses').insert({
-          program_year_id: prev.id, team_id: u13.id, org_id: org.id,
-          expense_type: 'expense', description: l.desc,
-          amount: l.total - 50, expense_paid_at: paidStamp(dayIn(-13 + i, 10)), ...tax,
-        })).error);
+        const paidDay = dayIn(-13 + i, 10);
+        await insertCommitmentWithRecords(db, {
+          row: {
+            program_year_id: prev.id, team_id: u13.id, org_id: org.id,
+            expense_type: 'expense', description: l.desc, ...tax,
+          },
+          ...paidOnce(l.total - 50, paidDay),
+        });
         added++;
       }
     }
@@ -1365,11 +1369,15 @@ async function seedMoneyLab() {
       { desc: 'Umpires — season',          cat: 'Officials',   amount: 500,  paid: dayIn(-2, 12) },
       { desc: 'Winter training block',     cat: 'Training',    amount: 400,  paid: dayIn(-7, 15) },
     ];
-    die('C expenses', (await db.from('rep_team_expenses').insert(SPENT_C.map(e => ({
-      program_year_id: curC.id, team_id: u15.id, org_id: org.id,
-      expense_type: 'expense', description: e.desc, category: e.cat,
-      amount: e.amount, expense_paid_at: paidStamp(e.paid),
-    })))).error);
+    for (const e of SPENT_C) {
+      await insertCommitmentWithRecords(db, {
+        row: {
+          program_year_id: curC.id, team_id: u15.id, org_id: org.id,
+          expense_type: 'expense', description: e.desc, category: e.cat,
+        },
+        ...paidOnce(e.amount, e.paid),
+      });
+    }
 
     // Dues — $600 in three $200 instalments, every due date in the PAST, everyone fully paid,
     // every stamp backed by a payment (mig 232). Umar's family (index 7) sent $250 for the last
@@ -1486,15 +1494,19 @@ async function seedMoneyLab() {
         category_id: catBy[l.cat] ?? null, description: l.desc, total_amount: l.total, sort_order: i,
       })).error);
     }
-    die('D expenses', (await db.from('rep_team_expenses').insert([
+    for (const e of [
       { desc: 'Spring tournament entries', cat: 'Tournaments', amount: 1300, paid: dayIn(-3, 8) },
       { desc: 'Diamond time — spring',     cat: 'Facilities',  amount: 700,  paid: dayIn(-2, 14) },
       { desc: 'Uniforms',                  cat: 'Team Gear',   amount: 950,  paid: dayIn(-4, 20) },
-    ].map(e => ({
-      program_year_id: curD.id, team_id: u14.id, org_id: org.id,
-      expense_type: 'expense', description: e.desc, category: e.cat,
-      amount: e.amount, expense_paid_at: paidStamp(e.paid),
-    })))).error);
+    ]) {
+      await insertCommitmentWithRecords(db, {
+        row: {
+          program_year_id: curD.id, team_id: u14.id, org_id: org.id,
+          expense_type: 'expense', description: e.desc, category: e.cat,
+        },
+        ...paidOnce(e.amount, e.paid),
+      });
+    }
 
     // Dues — $800 in four $200 instalments: #1–#2 past due, #3–#4 still AHEAD, so credits have
     // real future bills to land on. Cash per the cast above; stamps only where cash covers.
@@ -1585,15 +1597,19 @@ async function seedMoneyLab() {
     // ⚠ Created ALREADY PAID and linked to its credit, exactly as the app writes it: the family
     // settled it (so it counts in the budget at once, with no cash entry), and the credit carries
     // expense_id so removing the expense removes the debt it created.
-    const pizza = await db.from('rep_team_expenses').insert({
-      program_year_id: curD.id, team_id: u14.id, org_id: org.id,
-      expense_type: 'expense', description: 'Team pizza night', category: 'Events',
-      budget_category_id: catBy['Events'] ?? null, budget_item_id: itemBy('Events', 'Banquet'),
-      amount: 120, expense_paid_at: paidStamp(dayIn(0, 6)), paid_by_player_id: rosterD[6].id,
-    }).select('id').single();
-    die('D out-of-pocket expense', pizza.error);
+    const pizzaId = await insertCommitmentWithRecords(db, {
+      row: {
+        program_year_id: curD.id, team_id: u14.id, org_id: org.id,
+        expense_type: 'expense', description: 'Team pizza night', category: 'Events',
+        budget_category_id: catBy['Events'] ?? null, budget_item_id: itemBy('Events', 'Banquet'),
+        paid_by_player_id: rosterD[6].id,
+      },
+      // ⚠ Its payment carries NO accounting entry, ever — the family's money moved, the team's
+      // did not (mig 234); `paidOnce` leaves the entry null, which is exactly right here.
+      ...paidOnce(120, dayIn(0, 6)),
+    });
     die('D reimbursement credit', (await db.from('rep_dues_credits').insert({
-      program_year_id: curD.id, player_id: rosterD[6].id, expense_id: pizza.data.id,
+      program_year_id: curD.id, player_id: rosterD[6].id, expense_id: pizzaId,
       amount: 120, description: 'Paid out of pocket — Team pizza night',
       credit_type: 'reimbursement', credit_date: dayIn(0, 6),
     })).error);
@@ -1619,49 +1635,12 @@ async function seedMoneyLab() {
     }
   }
 
-  /* ⚠⚠ ONE SWEEP FOR THE PAID-STAMP SHAPE (/review, 2026-08-16), across every team in this lab.
-     Rows seeded before today hold a bare `YYYY-MM-DD` in a timestamptz column, which reads back as
-     the PREVIOUS day through the org's clock — so a fixture that says "paid Jul 12" showed Jul 11.
-     ⚠ IT REPAIRS THE SHAPE, NEVER THE DAY. The seeded day is whatever `dayIn()` produced when the
-     row was first written, and re-deriving it here would move every date each time the month rolls
-     over — the opposite of the diff-stability this fixture depends on. So: take the day the row
-     already claims and re-express it as the instant that day actually is. Idempotent by
-     construction, because a converted value no longer sits at midnight.
-
-     ⚠ THE SIGNATURE IS UTC MIDNIGHT, not string length — the column is a timestamptz, so Postgres
-     hands back `2026-04-12T00:00:00+00:00` whether it was written from a bare date or not, and a
-     length check (the first attempt at this) matched nothing at all. Exact UTC midnight is what a
-     bare date becomes and what nothing else produces: a real `now()` never lands there, and the
-     corrected value is org noon. */
-  {
-    const { data: rows } = await db.from('rep_team_expenses')
-      .select('id, expense_paid_at').eq('org_id', org.id).not('expense_paid_at', 'is', null);
-    const bare = (rows ?? []).filter(r => {
-      const t = new Date(r.expense_paid_at);
-      return t.getUTCHours() === 0 && t.getUTCMinutes() === 0 && t.getUTCSeconds() === 0;
-    });
-    for (const r of bare) {
-      die('paid stamp reshape', (await db.from('rep_team_expenses')
-        .update({ expense_paid_at: paidStamp(String(r.expense_paid_at).slice(0, 10)) }).eq('id', r.id)).error);
-    }
-    if (bare.length) ok(`paid stamps reshaped to org-noon instants — ${bare.length} row(s) had been reading a day early`);
-  }
-
-  /* ── The records every money screen actually reads (Payables Rebuild P1, mig 255) ───────────
-     ⚠⚠ LAST IN THE LAB, AFTER EVERY REPAIR ABOVE. This seeder does not only insert — it corrects
-     amounts, re-files items and reshapes paid stamps on rows that already exist, and each of those
-     changes what a commitment's plan should say. Running this at the end means the schedule matches
-     the columns however the lab got into its current state.
-
-     ⚠ THIS IS THE FIXTURE OWNER QA §64 PART A IS WALKED AGAINST — "cash on hand, Budget vs. Actual
-     and the next-30 figure identical to the cent, before and after". Those three figures are now
-     read entirely off these rows, so a lab seeded without them would show an empty book and the
-     acceptance test would have nothing to compare. */
-  for (const [label, t] of [['U13', u13], ['U11', u11], ['U15', u15], ['U14', u14]]) {
-    if (!t?.id) continue;
-    const written = await backfillCommitmentRecords(db, { teamId: t.id });
-    if (written) ok(`commitment schedule (${label}): ${written} row(s) written`);
-  }
+  /* ⚖ TWO END-OF-LAB SWEEPS RETIRED (Payables Rebuild P2). The paid-stamp reshape corrected the
+     legacy `expense_paid_at` shape, and the backfill derived installments and payments from the
+     legacy columns — both of which are dead: nothing writes those columns, every commitment above
+     is seeded WITH its records through `insertCommitmentWithRecords`, and a deriver pointed at the
+     stale columns would now overwrite real payments with a fiction. This lab is still the fixture
+     owner QA §64 is walked against; the records the walk reads are seeded directly. */
 
   console.log('');
   console.log(`  Org            /${MONEY.slug}`);

@@ -52,32 +52,18 @@ type DuesInstallmentRow = {
 };
 
 /**
- * Which settle button a still-owing piece offers, if any.
+ * The Record-a-payment door a still-owing piece offers (Payables Rebuild P2).
  *
- * ⚠ THE MARK-PAID DOOR STILL SPEAKS THE OLD WORDS, and only until P2 replaces it with `Record a
- * payment`. On a commitment, piece 1 is `deposit` and piece 2 is `balance` because that is what the
- * PATCH route's two actions are still called. Anything the old door cannot express offers **no
- * button** rather than one that would post a full half's entry:
- *   · a PART-PAID piece — the door settles a half in full, and the coach is handing over less;
- *   · a commitment with more than two pieces — a monthly series has no "balance".
- *
- * Written as early returns rather than the nested ternary it replaced (`/simplify`, 2026-08-19):
- * four outcomes across three conditions could not be traced without stepping through it by hand.
+ * ⚖ EVERY UNSETTLED PIECE OFFERS IT — the old half-based door could not express a part-paid piece
+ * or a commitment with more than two pieces, so those rows offered no button at all. A payment is
+ * its own record now, so the door opens pre-aimed at this piece (the coach's override, R3) with the
+ * piece's REMAINDER as the suggested figure — never its face value on a part-paid one.
  */
-function markPaidAction(
+function recordPaymentAction(
   expenseId: string,
-  inst: { installmentNumber: number; remaining: number; state: string },
-  count: number,
-  payable: boolean,
-): RegisterRow['markPaid'] {
-  if (inst.state === 'partly_paid') return null;
-  if (!payable) return { expenseId, half: 'expense', amount: inst.remaining };
-  if (count > 2 || inst.installmentNumber > 2) return null;
-  return {
-    expenseId,
-    half: count === 1 || inst.installmentNumber === 1 ? 'deposit' : 'balance',
-    amount: inst.remaining,
-  };
+  inst: { id: string; remaining: number },
+): RegisterRow['recordPayment'] {
+  return { expenseId, installmentId: inst.id, amount: inst.remaining };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -259,7 +245,7 @@ export const GET = withObservability(async (_req: Request,
            excluded it — the book agrees with that figure rather than arguing with it. A payable is
            billed to the team by a third party, so it never has an out-of-pocket leg. */
         movesCash: !e.paidByPlayerId,
-        markPaid: null,
+        recordPayment: null,
         detail: e.paidByPlayerId
           ? `${playerName.get(e.paidByPlayerId) ?? 'A family'} paid direct — no team cash moved`
           : null,
@@ -284,7 +270,7 @@ export const GET = withObservability(async (_req: Request,
         scheduled: true,
         overdueDays: null, // tagged for real below, once every row exists
         movesCash: !e.paidByPlayerId,
-        markPaid: markPaidAction(e.id, inst, count, payable),
+        recordPayment: recordPaymentAction(e.id, inst),
         detail: partly
           ? `${formatMoney(inst.applied)} of ${formatMoney(inst.amount)} paid`
           : payable ? 'Due' : 'Not marked paid',
@@ -305,7 +291,7 @@ export const GET = withObservability(async (_req: Request,
         scheduled: true,
         overdueDays: null,
         movesCash: !e.paidByPlayerId,
-        markPaid: null,
+        recordPayment: null,
         detail: 'No payment schedule recorded',
       });
     }
@@ -328,7 +314,7 @@ export const GET = withObservability(async (_req: Request,
       overdueDays: null,
       movesCash: true,
       open: { kind: 'money-in', id: m.id },
-      markPaid: null,
+      recordPayment: null,
       sourceLabel: null,
       detail: null,
     });
@@ -363,7 +349,7 @@ export const GET = withObservability(async (_req: Request,
     /* ⚠ NEVER SETTLED FROM HERE, on any of the three. A dues instalment is marked paid by recording
        the family's PAYMENT on Player Dues — routing it through the money form would write a second,
        unlinked record of money the dues ledger has already accounted for. */
-    markPaid: null,
+    recordPayment: null,
     sourceLabel: REGISTER_SOURCE_LABEL.dues,
     detail: playerName.get(r.playerId) ?? null,
   });
@@ -414,7 +400,7 @@ export const GET = withObservability(async (_req: Request,
       overdueDays: null, // a pledge has no due date to be overdue against
       movesCash: true,
       open: { kind: 'workspace', section: 'fundraisers' },
-      markPaid: null,
+      recordPayment: null,
       sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
       detail: realised ? 'Recorded on this date' : 'Pledged — not arrived yet',
     });
@@ -444,7 +430,7 @@ export const GET = withObservability(async (_req: Request,
         /* ⚠ NO MARK PAID HERE, deliberately. An allocation is settled on the Club's own screen,
            against the club's ledger — routing it through the money form would create a second,
            unlinked record of money the club has already accounted for. */
-        markPaid: null,
+        recordPayment: null,
         sourceLabel: REGISTER_SOURCE_LABEL.club,
         detail: `Installment #${i.installment_number}`,
       });
@@ -497,7 +483,7 @@ export const GET = withObservability(async (_req: Request,
       overdueDays: null, // tagged for real below, once every row exists
       movesCash: true,
       open: { kind: 'workspace', section: 'club' },
-      markPaid: null,
+      recordPayment: null,
       sourceLabel: REGISTER_SOURCE_LABEL.club,
       detail: pending
         ? 'Awaiting the club — they may still decline it'
@@ -576,7 +562,7 @@ export const GET = withObservability(async (_req: Request,
         overdueDays: null, // tagged for real below, once every row exists
         movesCash: true,
         open: { kind: 'workspace', section: 'dues' },
-        markPaid: null,
+        recordPayment: null,
         sourceLabel: REGISTER_SOURCE_LABEL.dues,
         detail: `${g.ids.length} families outstanding`,
       });

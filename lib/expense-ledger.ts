@@ -3,83 +3,45 @@
 // Owner review 2026-08-15 (Q4). Delete had to be able to give money back, which means two places
 // need the same answer to "what did this put on the books?": the CONFIRMATION the coach reads
 // before pressing delete, and the REVERSAL that runs after. Those living apart is the classic way a
-// dialog ends up promising $1,300 while the code gives back $800 — so they share this one function
+// dialog ends up promising $1,300 while the code gives back $800 — so they share this one answer
 // and neither decides for itself what counts as paid.
 //
 // Pure and dependency-free so the browser can import it: lib/db.ts pulls in the service-role
 // client, and a confirmation dialog must never be the reason that reaches a client bundle.
+//
+// ⚖ `paidLedgerLegs` IS GONE (Payables Rebuild P2). It reconstructed what had posted from the
+// deposit/balance/expense paid stamps, which stopped being written when `Record a payment` made
+// `rep_payable_payments` the record of what actually moved. "What did this put on the books?" is
+// now the commitment's own payments — `commitmentStanding().payments`, each carrying the entry it
+// posted — and the delete path reverses those directly.
 
-import type { RepTeamExpense } from './types';
-
-/** One posted money-out entry, and how confidently we know which ledger row it is. */
-export interface ExpenseLedgerLeg {
-  /** 'expense' = a lump payment; the other two are a payable's halves. */
-  half: 'expense' | 'deposit' | 'balance';
-  amount: number;
-  /** The description the ledger entry was written with — the fallback match key for old rows. */
-  entryDescription: string;
-  /** Recorded since mig 236; null for anything paid before it, which matches instead. */
-  entryId: string | null;
-}
-
-/**
- * Every leg of this record that actually moved team money. Unpaid halves are absent, not zero.
- *
- * ⚠ AN OUT-OF-POCKET EXPENSE HAS NO LEG. It is created already-paid, but a family's money moved and
- * the team's did not, so no cash entry was ever posted (mig 234, owner Call 5). Reversing an entry
- * that was never written would credit the team for spending it never did — the same trap that
- * `markExpensePaid` already refuses for the same records.
- */
-export function paidLedgerLegs(e: RepTeamExpense): ExpenseLedgerLeg[] {
-  if (e.expenseType === 'tournament_payable') {
-    const legs: ExpenseLedgerLeg[] = [];
-    if (e.depositPaidAt) {
-      legs.push({
-        half: 'deposit',
-        amount: e.depositAmount ?? e.amount,
-        entryDescription: `${e.description} — Deposit`,
-        entryId: e.depositEntryId,
-      });
-    }
-    if (e.balancePaidAt) {
-      legs.push({
-        half: 'balance',
-        amount: e.balanceAmount ?? e.amount,
-        entryDescription: `${e.description} — Balance`,
-        entryId: e.balanceEntryId,
-      });
-    }
-    return legs;
-  }
-  if (e.expensePaidAt && !e.paidByPlayerId) {
-    return [{
-      half: 'expense',
-      amount: e.amount,
-      entryDescription: e.description,
-      entryId: e.accountingEntryId,
-    }];
-  }
-  return [];
-}
+import type { CommitmentStanding } from './payable-standing';
 
 /**
  * What deleting this record would put back on the books, for the confirmation the coach reads.
  *
+ * Reads the same payments the server voids, so the sentence and the outcome cannot drift apart.
+ * On a part-paid commitment the figure is what was ACTUALLY paid, never the total — §27 Part D's
+ * rule, carried across the rebuild.
+ *
  * `owesFamily` is separate and NOT money coming back: an out-of-pocket expense carries a credit the
  * team owes a family, which the delete removes by cascade. That changes what a household is owed
  * without a dollar moving through the ledger, so it has to be said in its own sentence rather than
- * folded into an amount.
+ * folded into an amount — and none of its payments ever posted team cash, so the amount is zero.
  */
-export function ledgerReversalPreview(e: RepTeamExpense): {
+export function ledgerReversalPreview(
+  standing: Pick<CommitmentStanding, 'paid' | 'payments'> | undefined,
+  paidByPlayerId: string | null,
+): {
   amount: number;
   legs: number;
   owesFamily: boolean;
 } {
-  const legs = paidLedgerLegs(e);
+  const owesFamily = Boolean(paidByPlayerId);
   return {
-    amount: Math.round(legs.reduce((s, l) => s + l.amount, 0) * 100) / 100,
-    legs: legs.length,
-    owesFamily: Boolean(e.paidByPlayerId),
+    amount: owesFamily ? 0 : standing?.paid ?? 0,
+    legs: owesFamily ? 0 : standing?.payments.length ?? 0,
+    owesFamily,
   };
 }
 
@@ -130,10 +92,71 @@ export function asMoneyAmount(v: unknown): number | null {
   return rounded >= 0.01 ? rounded : null;
 }
 
-/** The most decisive paid-at this record carries, for saying WHEN. Null if nothing has posted. */
-export function paidOnDate(e: RepTeamExpense | null): string | null {
-  if (!e) return null;
-  return e.expensePaidAt ?? e.balancePaidAt ?? e.depositPaidAt ?? null;
+/* ⚖ `paidOnDate` IS GONE (Payables Rebuild P2). It read the most decisive of the three legacy paid
+   stamps, which stopped being written when payments became their own records — WHEN something was
+   paid is now `commitmentStanding().payments`, each with its own date. It had no live caller left. */
+
+/**
+ * Is this string a real day on a real calendar — `YYYY-MM-DD`, and one the calendar actually has?
+ *
+ * ⚠ THE SHAPE IS NOT THE DATE (/review, 2026-08-16). `2026-02-30` and `2026-00-15` match the
+ * pattern, sort correctly, and used to sail through — then Postgres rejected them at a `date`
+ * column and the coach got a raw database error after a create-and-unwind round trip. A browser
+ * date picker cannot produce these; a stale tab or a direct caller can. Round-tripping through UTC
+ * is the cheap way to ask the calendar rather than the regex: an overflowed day silently rolls
+ * into the next month, so it comes back as a different string.
+ *
+ * Shared by every door that stores a date — paid dates (below, which additionally refuse the
+ * future) and installment DUE dates, which are legitimately in the future and need only this.
+ */
+export function isRealCalendarDate(date: unknown): date is string {
+  const shape = typeof date === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(date) : null;
+  if (!shape) return false;
+  const [, y, m, d] = shape;
+  const asUtc = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+  const roundTrip = `${String(asUtc.getUTCFullYear()).padStart(4, '0')}`
+    + `-${String(asUtc.getUTCMonth() + 1).padStart(2, '0')}`
+    + `-${String(asUtc.getUTCDate()).padStart(2, '0')}`;
+  return roundTrip === date;
+}
+
+/**
+ * A commitment's plan, as a request body states it — validated once, for every door that stores one.
+ *
+ * ⚠ ONE COPY (`/simplify`, 2026-08-20): the create and edit routes each looped the pieces with the
+ * identical two refusal sentences; a reworded refusal must not depend on which door it came through.
+ * Amounts take `asMoneyAmount`'s cent floor; DUE dates are legitimately in the future, so they take
+ * the calendar check alone, never the paid-date validator beside it.
+ */
+export function parseInstallmentPlan(raw: unknown):
+  | { plan: Array<{ amount: number; dueDate: string }> }
+  | { error: string } {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return { error: 'A commitment needs at least one installment with an amount and a due date.' };
+  }
+  /* ⚠ CAPPED AT TWO PIECES FOR NOW (`/review`, 2026-08-20) — not because the model minds, but
+     because the EDIT form is a two-piece editor: a longer plan created through the API would be
+     silently truncated to two the first time a coach saved an unrelated rename, deleting unpaid
+     pieces with no warning. The cap closes the whole class until the P4 recurring editor can
+     genuinely display and edit 1..n pieces — lift it there, not before. */
+  if (raw.length > 2) {
+    return {
+      error: 'A commitment can hold two installments for now — a deposit and a balance. '
+        + 'Longer schedules arrive with repeating costs.',
+    };
+  }
+  const plan: Array<{ amount: number; dueDate: string }> = [];
+  for (const piece of raw as Array<{ amount?: unknown; dueDate?: unknown }>) {
+    const amount = asMoneyAmount(piece?.amount);
+    if (amount === null) {
+      return { error: 'Every installment needs an amount of at least $0.01.' };
+    }
+    if (!isRealCalendarDate(piece?.dueDate)) {
+      return { error: 'Every installment needs a due date — that is what puts it on your payment schedule.' };
+    }
+    plan.push({ amount, dueDate: piece.dueDate as string });
+  }
+  return { plan };
 }
 
 /**
@@ -159,20 +182,10 @@ export function paidOnDate(e: RepTeamExpense | null): string | null {
  * @returns a sentence written for the coach, or null when the date is usable.
  */
 export function whyPaidDateIsRefused(date: unknown, today: string): string | null {
-  const shape = typeof date === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(date) : null;
-  if (!shape) return 'Enter the date this was paid.';
-  /* ⚠ THE SHAPE IS NOT THE DATE (/review, 2026-08-16). `2026-02-30` and `2026-00-15` match the
-     pattern, sort before today, and used to sail through — then Postgres rejected them at the
-     ledger's own `date` column and the coach got a raw database error after a create-and-unwind
-     round trip. A browser date picker cannot produce these; a stale tab or a direct caller can.
-     Round-tripping through UTC is the cheap way to ask the calendar rather than the regex: an
-     overflowed day silently rolls into the next month, so it comes back as a different string. */
-  const [, y, m, d] = shape;
-  const asUtc = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
-  const roundTrip = `${String(asUtc.getUTCFullYear()).padStart(4, '0')}`
-    + `-${String(asUtc.getUTCMonth() + 1).padStart(2, '0')}`
-    + `-${String(asUtc.getUTCDate()).padStart(2, '0')}`;
-  if (roundTrip !== date) return 'That is not a real date. Enter the date this was paid.';
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return 'Enter the date this was paid.';
+  }
+  if (!isRealCalendarDate(date)) return 'That is not a real date. Enter the date this was paid.';
   // Lexicographic works and is deliberate: both sides are zero-padded ISO calendar dates, so no
   // Date object is constructed and no timezone can be read into either one.
   if (date > today) {
