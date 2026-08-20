@@ -32,6 +32,12 @@
  * 4. CHROME SUPPRESSION — the sandbox banner/dock/tour are one wrapper element
  *    ([data-sandbox-banner]); hiding it and zeroing --sandbox-chrome-h removes all
  *    demo-only furniture without cropping, which would drift with the dock's height.
+ * 5. THE DEV-TOOLS BADGE SHIPS IF YOU LET IT — every capture is taken against `next dev`,
+ *    which paints its own floating indicator over the bottom-left of the page. A CLIPPED
+ *    shot usually misses it, so this stayed invisible until an UNCLIPPED one was examined:
+ *    `public/help/coaches/money-record-payment.png` had shipped with the badge sitting on
+ *    top of the portal's nav, obscuring a label. It lives in a shadow root, so the rule
+ *    below hides its light-DOM host (`nextjs-portal`) — a stylesheet cannot reach inside.
  */
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -159,8 +165,12 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
       };
       assertInDemoWorld('after navigating');
 
-      await page.locator(`${shot.ready} >> visible=true`).first() // incident #2
-        .waitFor({ state: 'visible', timeout: 20_000 });
+      // incident #2 — every readiness wait goes through here, so the `visible=true` rule
+      // cannot be remembered in one place and forgotten in the other.
+      const waitVisible = selector =>
+        page.locator(`${selector} >> visible=true`).first().waitFor({ state: 'visible', timeout: 20_000 });
+
+      await waitVisible(shot.ready);
       for (const step of shot.prepare ?? []) {
         await page.click(step, { timeout: 10_000 });
         await page.waitForTimeout(400);
@@ -168,9 +178,27 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
       // A prepare click can navigate (a breadcrumb, a link a selector accidentally matches) —
       // re-assert before anything gets photographed.
       if (shot.prepare?.length) assertInDemoWorld('after prepare clicks');
+
+      // `ready` proved the SCREEN resolved; this proves what the clicks OPENED did too. A panel
+      // that fetches when it opens (the coach's settlement sheet) renders "Loading…" first, and
+      // the fixed post-click pause is a race against it — photographing a spinner is exactly the
+      // half-loaded screen this system exists to prevent. Same visibility discipline as `ready`.
+      if (shot.readyAfterPrepare) await waitVisible(shot.readyAfterPrepare);
       await page.addStyleTag({ // incident #4
         content: `[data-sandbox-banner] { display: none !important; }
                   :root { --sandbox-chrome-h: 0px !important; }`,
+      });
+
+      // incident #5 — hide the dev-tools BADGE only, from inside the overlay's shadow root,
+      // because an outer stylesheet cannot reach in. Hiding the `nextjs-portal` host instead
+      // would take Next's ERROR overlay down with it (one React tree, one host), and that
+      // overlay is the tripwire that makes a broken capture obvious to whoever reviews the PNG.
+      await page.evaluate(() => {
+        const host = document.querySelector('nextjs-portal');
+        if (!host?.shadowRoot) return;
+        const style = document.createElement('style');
+        style.textContent = '#devtools-indicator, [data-nextjs-toast] { display: none !important; }';
+        host.shadowRoot.appendChild(style);
       });
 
       // Settle: fonts and any entrance animation (reduced-motion is already emulated,
@@ -183,6 +211,11 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
 
       // Same visibility rule as the readiness wait — a clip selector must resolve to
       // the element the reader can actually see, not a hidden twin in a stashed panel.
+      // LAST word before the shutter. `ready`, the prepare clicks and `readyAfterPrepare` can
+      // each sit for up to 20s, and the checks above all happened before them — so the assertion
+      // that matters most is the one taken against the page actually being photographed.
+      assertInDemoWorld('immediately before the screenshot');
+
       const clipTarget = shot.clip ? page.locator(`${shot.clip} >> visible=true`).first() : null;
       await (clipTarget ?? page).screenshot({ path: file, ...(shot.clip ? {} : { fullPage: false }) });
 

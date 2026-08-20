@@ -157,8 +157,10 @@
   border-radius: 6px;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
-  /* 44px floor is a coach-portal gate, but fingers are fingers on a phone deck too. */
-  min-height: 2.4rem;
+  /* 44px floor is a coach-portal gate, but fingers are fingers on a phone deck too.
+     ⚠ This said 2.4rem (38.4px) while claiming 44px — the comment was aspirational and the
+     value was not. Measured and corrected 2026-08-20. */
+  min-height: 2.75rem;
 }
 
 .footBtn:hover { color: var(--fl-text); border-color: rgba(var(--blueprint-blue-rgb), 0.8); }

@@ -14,7 +14,20 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import styles from './Present.module.css';
+import styles from './WalkthroughPresent.module.css';
+
+/**
+ * A slide's picture. Deliberately NOT the scroll page's full figure: the caption stays behind,
+ * because a slide has no room for one and this shape crosses the server/client boundary.
+ */
+export interface PresentImage {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  /** A capture taken at phone width IS the phone experience — it is never blown up to fit. */
+  narrow: boolean;
+}
 
 export interface PresentSlide {
   eyebrow: string;
@@ -23,10 +36,10 @@ export interface PresentSlide {
   /** Panel slides only. */
   index?: string;
   planTag?: string;
-  image?: { src: string; width: number; height: number; alt: string; narrow: boolean };
+  image?: PresentImage;
 }
 
-export default function Present({ slides, label }: { slides: PresentSlide[]; label: string }) {
+export default function WalkthroughPresent({ slides, label }: { slides: PresentSlide[]; label: string }) {
   const [open, setOpen] = useState(false);
   const [at, setAt] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -50,6 +63,24 @@ export default function Present({ slides, label }: { slides: PresentSlide[]; lab
       if (e.key === 'Escape') close();
       else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); move(1); }
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Tab') {
+        // ⚠ THE TRAP IS LOAD-BEARING, and its absence was not theoretical. `aria-modal` is a
+        // HINT — nothing enforces it — so without this, Tab walked straight past the footer
+        // buttons onto the page behind: links that are invisible (an opaque deck covers them)
+        // and unreachable (body scroll is locked), but still live. Pressing Enter there
+        // navigated into the demo and ejected the presenter mid-pitch, silently.
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        );
+        if (!focusables?.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        const inside = active instanceof Node && dialogRef.current?.contains(active);
+        if (!inside) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+        else if (e.shiftKey && (active === first || active === dialogRef.current)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => {

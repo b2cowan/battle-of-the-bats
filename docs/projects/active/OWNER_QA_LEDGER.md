@@ -8797,11 +8797,18 @@ and the Transactions rendered check re-run clean of any new-control findings.
 
 ## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
 
-**Parts A and B are BUILT and awaiting the walk (A 2026-08-19, B 2026-08-20); Parts C–E not
-built.** Plan: `COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
+**Parts A and B ✅ WALKED AND PASSED 2026-08-20** (owner-walked against the artifact walkthrough
+`claude.ai/code/artifact/85d66028-83d4-4595-818e-ad6a60add387`; the walk surfaced ONE finding — the
+Months grid's Scheduled cell reading as "the total" — adjudicated not-a-defect at the time and
+logged as the "Scheduled means two things" open question).
+**✅ THAT QUESTION IS NOW RULED and the behaviour CHANGED: Scheduled means what is still owed,
+everywhere.** It is walked in Part C's last three steps, and the plan's P3 section carries the
+reasoning and the cost the owner accepted.
+**Part C ✅ BUILT 2026-08-20, awaiting this walk. Parts D and E not built.**
+Plan: `COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
 Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
 **Origin: §27, which PASSED CLEAN on 2026-08-19 and surfaced four absences while passing.**
-⚠ For Part B, "the drawer" is the commitment row's **Payment details** expansion on the
+⚠ For Part B, "the drawer" was the commitment row's **Payment details** expansion on the
 Commitments list — P2 put the drawer's content there; the standalone drawer arrives with the
 screen rebuild in Part C.
 
@@ -8888,22 +8895,77 @@ This is the phase where the books are re-expressed. Its whole test is that nothi
 
 ### C · The screen — one list, no toggle
 
-- [ ] The `Schedule | Commitments` toggle is **gone**.
-- [ ] `Group by` sits **first** in the control strip. Set it to **Commitment**: rows group under a
-      header carrying the commitment, its category, paid-of-total and still-owing.
-- [ ] Switch to **Due date**: the **same rows** re-order under Overdue / month headers. ⚠ Nothing
-      appears that was not there before, and nothing disappears — if the row count changes between
-      the two arrangements, report it.
-- [ ] ⚠ **Defect 3.** Click a **fully paid** row. It **opens** — the drawer, with Edit and Delete.
-      (Today it does nothing at all, which is what sent us here.)
+**BUILT 2026-08-20.** Four owner rulings were taken during the design pass and each is walked below;
+the artifact they were made on is
+`claude.ai/code/artifact/407c8427-95b7-4832-bc50-5d7356644b1f`.
+
+- [ ] The `Schedule | Commitments` toggle is **gone**, and so are the `Unpaid | Paid | All` pills.
+- [ ] `Group by` sits **first** in the control strip and is visibly the arrangement (it carries the
+      accent). Set it to **Commitment**.
+- [ ] ⚠⚠ **Every bill is a header, and the header carries its NEXT DUE DATE** — the date on the
+      left, the bill and its category, what is **still owing** with the **total** small beneath it,
+      and how late or soon that next payment is. There is no "$X paid of $Y" — that was dropped as
+      the subtraction of two figures already on the row.
+- [ ] The total line appears **only where something has been paid**. An untouched one-off bill shows
+      one figure, not the same figure twice.
+- [ ] ⚠ **A one-payment bill folds too**, and says "One payment" inside. That redundancy is
+      deliberate (owner ruling): any rule that gave it a different shape would have had to guess
+      what to do with a two-installment bill that has one left to pay.
+- [ ] ⚠⚠ **The list OPENS FOLDED, grouped by commitment** — one clean line per bill, nothing
+      expanded until you ask. Each line still says its next due date, what is owed and how late it
+      is, and offers **Record a payment** aimed at that next payment. **Nothing is hidden by the
+      fold; that is the test.** If you find yourself needing to open a bill just to know where it
+      stands, report it.
+- [ ] **Open a bill.** Its payments appear beneath it, and the header's payment button moves down
+      to the rows — one door per payment, never two a line apart.
+- [ ] ⚠ **Grouped by DUE DATE it opens the other way — expanded.** A period heading is only a month
+      and a total, so folding it by default would hide which bills are late behind the word
+      "Overdue". Confirm that reads right; it is the one place the two arrangements deliberately
+      differ.
+- [ ] **Fold all** / **Open all** beside `Group by`, in both arrangements.
+- [ ] Open a bill, leave the screen, come back: it is still open. **Come back tomorrow and the list
+      is folded again** — a fold is remembered for the visit, never forever.
+- [ ] Switch to **Due date**: the **same rows** re-order under Overdue / month headings, each
+      carrying that period's total. ⚠ Nothing appears that was not there before, and nothing
+      disappears — **if the row count changes between the two arrangements, report it.** (Count the
+      dated rows, not the headings: bills one way, periods the other, by design.)
+- [ ] ⚠ **Defect 3.** Tick **Paid** in Status, then click a **fully paid** row. It **opens** — the
+      drawer, with **Edit** and **Delete** both live. (Before this, it did nothing at all, which is
+      what sent us here.)
 - [ ] The drawer shows **Scheduled** installments, **Payments recorded**, and **Still owing**, and
-      offers **Record a payment** and **Add an installment**.
+      offers **Record a payment**.
+- [ ] ⚠ **Add an installment** appears **only on a bill that currently has one**. On a bill with two
+      it is absent — a longer plan cannot be saved until repeating costs land next phase, and a
+      button that gets refused is worse than one that is not there. Report it if you see it on a
+      two-piece bill.
 - [ ] Every payment in the drawer has its own **Undo**.
 - [ ] **Status** is a dropdown, not pills — Outstanding, Overdue, Partly paid, Paid, each with a
       count. It opens on **Outstanding + Overdue**, reading "2 selected".
-- [ ] Tick **Partly paid** on its own: only genuinely part-paid commitments show.
-- [ ] ⚠ **Phone at 390px.** Rows become cards, group headers do not eat the screen, and **the page
-      does not scroll sideways**.
+- [ ] ⚠⚠ **Tick Partly paid on its own. You must see EVERY part-paid bill, including the late
+      ones.** This is the ruling of 2026-08-20: a bill can be overdue *and* partly paid, so the four
+      counts **overlap on purpose** and will add up to more than the rows on screen. If a late
+      part-paid bill is missing here, that is the defect being re-introduced.
+- [ ] ⚠ And the same rule in its more important place: with the **default** Outstanding + Overdue,
+      a bill that is **part-paid but not yet due must still be on the list**. It is money the team
+      owes; the opening view must not lose it.
+- [ ] **Item** narrows by budget item, and money-tag chips still narrow the list.
+- [ ] ⚠ **The export changed, and it is not a lost record.** Grouped by commitment you get the
+      **Commitments** file; grouped by due date, the **Payment schedule** file. Both now **follow
+      the Status filter**, where the commitments file used to carry everything — so tick **Paid** (or
+      all four) before exporting a full season's history. Its columns are unchanged.
+- [ ] On a **club-run** team: what the club has billed the team is **on this list**, in both
+      arrangements, marked "From your club" — and its door is **Club**, not the drawer.
+- [ ] ⚠ **Phone at 390px.** Rows become cards, a bill's payments sit indented under it, group
+      headers do not eat the screen, and **the page does not scroll sideways**.
+- [ ] ⚠ **Budget vs. Actual, same release.** **View** and **Showing** are now dropdown pills rather
+      than rows of buttons — same options, same defaults (Statement, and Months opens on Budget).
+- [ ] ⚠⚠ **And the figure that changed with them.** On **Months → Scheduled**, a settled month now
+      reads **blank**, and a part-paid month reads only **what is still owed** — where both used to
+      show the plan at face value. That is the 2026-08-20 ruling ("scheduled is what we are
+      currently obligated to pay"). ⚠ The stated cost: **the Scheduled row shrinks as the season
+      pays down**, so it can no longer be compared against Actual month by month. Confirm that reads
+      right in front of you — it is the one change here you might want back.
+- [ ] A **past-due** unpaid piece is still counted, in its own due month. It should not vanish.
 
 ### D · A cost that repeats
 
@@ -9103,17 +9165,66 @@ captured and committed; nothing needs seeding to read the page.
 - [ ] Both panels' **See this screen live →** links land at the coach demo's front door (the
       mid-season team's overview), NOT deep into the pictured screen. That is the standing
       ruling; confirm it still feels right now that the pictures are of specific screens.
+- [ ] **One copy inconsistency, deliberate but worth your eye:** `/for-coaches` labels the demo
+      door **"See it live →"**, while the walkthrough labels the same door **"See a coach's
+      season →"** (the approved mockup's wording). The reasoning: by the walkthrough's closing
+      the reader has been shown particular screens, so the door promises the season they came
+      from. The organizer pair drifts the same way and always has. Fine, or should both pages
+      say one thing?
 - [ ] **Present mode** (the text-weight trigger under the hero meta) — 4 slides, arrows/space/
       click advance, overshoot stays put, Esc returns you where you were.
 - [ ] **Ctrl+P / Save as PDF** — one problem per page, pictures intact, no buttons or door
       links, last page carries `fieldlogichq.ca/for-coaches/walkthrough` in lime. (Same known
       v1 rough edge as §65: the site nav and footer still print.)
-- [ ] **Phone width.** The warm screenshots are wide tables on a dark page — check they are
-      still readable on a phone, and say so if either needs a tighter crop. This is the most
-      likely visual failure on the page.
+- [ ] **⚠ Phone width — this is the page's real weakness, and it is the SAME open question as
+      §65's bracket, now with harder evidence.** Measured at 390px: the page does not scroll
+      sideways (good), but both pictures are desktop screens shrunk to **324px wide from ~1,000
+      — about 16% scale**, and the table text is simply illegible. On the organizer page that
+      affected one panel of five; here it is **two of two**. Deliberately NOT fixed in this
+      build, because the fix changes the organizer page too and you already have the v1 ruling
+      in front of you at §65. **The recommended fix, if you want it:** on narrow viewports let a
+      wide capture keep a readable minimum width and scroll horizontally *inside its own frame*
+      (the frame currently clips), instead of shrinking to fit. Phone-subject captures are
+      already handled — they display at phone size and are unaffected. Alternatives if you'd
+      rather not pan: capture the coach money screens at phone width (the Money hub has a real
+      phone card layout), or crop each shot to the few rows that carry the story.
 - [ ] **The organizer page must be untouched.** `/for-tournament-organizers/walkthrough` was
       re-rendered through the extracted component; it was proved pixel-identical in the build,
       but give it a look — five panels, present mode, print.
+
+### ⚠ Accessibility — one bug fixed, three left for you to rule on
+
+**Fixed in this build (both walkthroughs):** present mode had **no focus trap**. Pressing Tab
+past the last footer button walked focus onto the page *behind* the deck — links that are
+invisible and unscrollable but still live — and pressing Enter there navigated away, ejecting a
+presenter mid-pitch with no warning. Reproduced, fixed, and re-verified (focus now cycles inside
+the deck both directions; arrows, Esc, focus-return and scroll-restore all still work). The
+present-mode footer buttons were also 38px tall while their own code comment claimed a 44px
+floor — corrected to 44.
+
+**NOT fixed — each would change the ORGANIZER walkthrough's appearance, which §65 is still
+waiting to walk, so they are yours to call:**
+
+- [ ] **The per-panel "See this screen live →" link is 15px tall** on every panel of both pages.
+      That is under the **24px WCAG 2.2 AA minimum** (and well under the 44px comfortable
+      standard) — it is a standalone call to action, so the inline-text exemption does not apply.
+      Its sibling "See it live" button is 53px. Pre-existing since the organizer page shipped;
+      this build doubled its reach. Fix is adding padding — small, but it changes both pages.
+- [ ] **The "Present this page" trigger is 28px tall** — clears the legal minimum, misses the
+      comfortable one. It is deliberately understated so it never competes with **Start free**,
+      so leaving it may well be right.
+- [ ] **Both pages nest a second page region inside the site's main one** — invalid markup that
+      duplicates a landmark for screen-reader users. Pre-existing on *every* persona page, not
+      just these; now centralized in one component, which makes this the cheapest moment in the
+      codebase's history to fix it once for all of them rather than five times later.
+
+Everything else measured clean: heading order, all image alt text, no layout shift, all eight
+text/background colour pairs (7.7:1 to 17:1 against a 4.5:1 requirement), the print rules, and
+the reduced-motion gating on the pulsing door dot.
+
+⚠ Worth knowing regardless of how you rule: **the automated rendered check that would have
+caught the tap-target sizes only covers the 28 coach-portal screens — not one marketing page is
+in it.** These pages would ship those defects silently today.
 
 ### ⚠ What is missing, and why — the owner needs to rule
 

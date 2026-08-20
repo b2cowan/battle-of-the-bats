@@ -19,6 +19,7 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/for-leagues',              priority: 0.6, changeFrequency: 'monthly' },
   { path: '/for-clubs',                priority: 0.6, changeFrequency: 'monthly' },
   { path: '/for-coaches',              priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/for-coaches/walkthrough',  priority: 0.55, changeFrequency: 'monthly' },
   { path: '/changelog',                priority: 0.5, changeFrequency: 'weekly'  },
 ];
 

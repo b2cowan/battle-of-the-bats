@@ -51,6 +51,12 @@ export interface HelpShot {
   ready: string;
   /** Optional clicks (by selector) to open the thing being pictured — a form, a tab, a drawer. */
   prepare?: string[];
+  /**
+   * Optional: proof that what `prepare` OPENED has finished loading. `ready` covers the screen;
+   * a panel that fetches its own data when it opens renders "Loading…" first, and without this
+   * the shot is a race against that fetch. Same visibility discipline as `ready`.
+   */
+  readyAfterPrepare?: string;
   /** Optional selector to crop to. Without one the capture is the viewport. */
   clip?: string;
   /** Capture width. 1280 = desktop; use 390 only when the ANSWER is phone-specific. */

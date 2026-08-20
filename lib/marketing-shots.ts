@@ -1,6 +1,7 @@
 // `.ts` extension is deliberate and matches lib/help-shots.ts: this module is imported
 // BOTH by the app (through the bundler) and directly by scripts/capture-marketing-shots.mjs
 // running under Node's type-stripping, which needs the real filename.
+import { DEMO_COACH_TEAM_IDS } from './demo-org.ts';
 
 /**
  * THE MARKETING SCREENSHOT MANIFEST — the one place a walkthrough image is declared.
@@ -46,6 +47,12 @@ export interface MarketingShot {
   ready: string;
   /** Optional clicks (by selector) to open the thing being pictured — a tab, a tool, a drawer. */
   prepare?: string[];
+  /**
+   * Optional: proof that what `prepare` OPENED has finished loading. `ready` covers the screen;
+   * a panel that fetches its own data when it opens renders "Loading…" first, and without this
+   * the shot is a race against that fetch. Same visibility discipline as `ready`.
+   */
+  readyAfterPrepare?: string;
   /** Optional selector to crop to. Without one the capture is the viewport. */
   clip?: string;
   /** Capture width. 1280 = desktop; 390 when the picture's subject is the phone experience. */
@@ -57,6 +64,14 @@ export interface MarketingShot {
   /** Stands alone under the image — a reader who skips the picture must lose nothing. */
   caption: string;
 }
+
+/**
+ * One coach-sandbox team's workspace root. Built from `DEMO_COACH_TEAM_IDS` rather than typed
+ * out, matching lib/help-shots.ts: a bare UUID is exactly the kind of value nobody can
+ * eyeball-check against its source, so the compiler holds it instead of a comment.
+ */
+const COACH_TEAM = (team: keyof typeof DEMO_COACH_TEAM_IDS) =>
+  `/riverdale-ridge/coaches/teams/${DEMO_COACH_TEAM_IDS[team]}`;
 
 export const MARKETING_SHOTS: MarketingShot[] = [
   {
@@ -133,5 +148,68 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     size: { w: 976, h: 227 },
     alt: 'The Registration Health panel: an overall readiness score with tiles for teams, reachability, payments, and registrations needing action, above rows describing each open issue.',
     caption: 'Registration Health — one score for the whole field, weeks out. Every tile opens the exact teams behind its number.',
+  },
+
+  /* ── The coach walkthrough ────────────────────────────────────────────────────
+     The coach sandbox runs FIVE teams, one per season phase (`DEMO_COACH_TEAM_IDS` in
+     lib/demo-org.ts — those ids are hardcoded there on purpose and are stable across reseeds
+     and environments). Each picture is taken on the team whose PHASE makes that screen true,
+     which is why the two money shots below come from two different teams:
+
+       · Player Dues → 12U, MID-SEASON. The only team seeded rich enough to photograph:
+         installments part-paid, two families genuinely past due, and a closed fundraiser
+         crediting five families' dues. Everyone else is thin by design.
+       · Season settlement → 14U, OFF-SEASON ("the books are open, the season isn't"), because
+         squaring up is an END-of-season job. ⚠ Photographed mid-season instead, the same sheet
+         is honest and useless: a team half-way through its spending is legitimately in the red,
+         so every family's refund shows as a debt and the panel's whole point inverts. The
+         phase is the picture. (The season's-end 13U team is NOT an option: its season is
+         closed, and the season gate sends every money route to the closed-season page.)
+
+     ⚠ THEME: these are captured with the SAME context as every other shot. The coach portal
+     is warm-themed, and the capture context's `colorScheme: 'dark'` does not change that —
+     the portal's palette is chosen by a `data-user-theme` attribute that defaults to warm
+     with no stored preference, and nothing in the app reads `prefers-color-scheme`. A fresh
+     capture context therefore photographs exactly what a coach's first visit renders. */
+  {
+    id: 'coach-player-dues',
+    persona: 'coach',
+    door: 'coach',
+    // The Money hub is ONE page with a `?section=` tab; the old /accounting/dues route is now a
+    // permanent redirect, so address the tab directly and skip the extra hop. The tab is open on
+    // the first paint (the hub seeds its visited set from the URL), so no prepare click is needed.
+    path: `${COACH_TEAM('midSeason')}/accounting?section=dues`,
+    // No guided-tour anchor exists on this screen, and the panel's own "Player Dues" heading
+    // renders as null when embedded in the hub — so the lens toggle's ARIA label is the most
+    // stable proof, and it only mounts once at least one player has a dues schedule (i.e. it
+    // cannot resolve on the loading, empty-roster, or no-dues-yet states).
+    ready: '[aria-label="Dues view"]',
+    // ⚠ Two <table> elements are mounted here: the by-installment grid ships hidden on desktop
+    // (it is the phone lens) and sits FIRST in the DOM. `visible=true` in the capture core is
+    // what makes this resolve to the one on screen — incident #2, load-bearing here.
+    clip: 'table',
+    width: 1280,
+    size: { w: 994, h: 689 },
+    alt: 'The Player Dues table in a coach’s Money hub: one row per player with what they were charged, any credits, what they have paid and what is left, each row carrying a plain status word, and a season totals row underneath.',
+    caption: 'Player Dues — every family on one page, with what they owe, what fundraising has already knocked off, and who has fallen behind. The season row underneath is the team’s whole position.',
+  },
+  {
+    id: 'coach-season-settlement',
+    persona: 'coach',
+    door: 'coach',
+    // Season settlement is a door at the FOOT of the dues tab, not a screen of its own.
+    path: `${COACH_TEAM('offSeason')}/accounting?section=dues`,
+    ready: '[aria-label="Dues view"]',
+    // The button's label is stateful: "Review settlement" while the season still has money
+    // outstanding (12U's story), "Close out the season" once everything is in.
+    prepare: ['button:has-text("Review settlement")'],
+    // The sheet FETCHES when it opens — without this wait the shot races a "Loading…" line.
+    // This column header exists only in the loaded, populated sheet.
+    readyAfterPrepare: '[aria-label="Season settlement"] th:has-text("Owed back")',
+    clip: '[aria-label="Season settlement"]',
+    width: 1280,
+    size: { w: 900, h: 900 },
+    alt: 'The Season settlement sheet over the dues screen: a summary of what the team is holding, a checklist of what still stands in the way of closing, and a table giving each family what they are owed back, their even share, anything they still owe, and the resulting refund.',
+    caption: 'Season settlement — the refund each family is owed, worked out from the season’s real ledger rather than a spreadsheet, with the reasons the books are not ready to close named one by one.',
   },
 ];

@@ -90,13 +90,19 @@ screenshots, never built).
   is wanted. ⚠ Alt texts must be CYCLE-PROOF: the demo replays its game day, so a capture can
   show any phase — describe the durable shape, never one phase's specifics (the bracket alt
   was caught describing a champion banner the next capture didn't show).
-- **`app/for-tournament-organizers/walkthrough/page.tsx` + `page.module.css`** — public server
-  component in the persona page's visual system. Panel content typed and colocated per persona in
-  **`lib/walkthrough-content.ts`** so Phase 2 (present mode) and Phase 3 (coach) render the same
-  source. Images render with manifest alt/caption + reserved size (no CLS).
-- **Persona page link** — one link from /for-tournament-organizers' pain section ("See these
-  fixed on real screens → the 90-second walkthrough"). Door CTAs on the walkthrough gate on
-  `sandboxDoorsVisible()` exactly like the persona pages.
+- **`components/marketing/WalkthroughPage.tsx` + `WalkthroughPage.module.css` +
+  `WalkthroughPresent.tsx`** — THE renderer, shared by every persona (extracted at P3, its named
+  trigger). Public server component in the persona pages' visual system; it owns the scroll page,
+  present mode and the print leave-behind. Panel content typed per persona in
+  **`lib/walkthrough-content.ts`**, which also carries everything else a walkthrough differs by:
+  its route (`path` — canonical URL *and* the address printed on the PDF), `seo`, its `door`
+  (each sandbox keeps its own door constant — "which account does this sign in" stays a
+  compile-time constant, so the door is named, never derived from `persona`), and its `back`
+  link. Images render with manifest alt/caption + reserved size (no CLS).
+  **A new persona costs a content entry and a two-line route shell.**
+- **Persona page links** — one link from each persona page's pain section ("See them fixed on the
+  real screens — the 90-second walkthrough →"), same spec on both. Door CTAs on the walkthrough
+  gate on `sandboxDoorsVisible()` exactly like the persona pages.
 - **Drift guard:** wire `capture-marketing-shots.mjs --check` next to wherever help-shots
   `--check` runs (or add to `verify:changed` if help-shots isn't wired — confirm during build).
   Note: DEMO_SANDBOX_DRIFT_GUARDS Measure 3 (unbuilt) wants the same Playwright freshness
@@ -124,8 +130,107 @@ screenshots, never built).
   verdict. ⚠ Playwright print checks must scope image-load waits to `/marketing/` images:
   a global print stylesheet can hide OTHER images (footer QR) before they lazy-load, and an
   every-image wait times out on the tooling, not the page.
-- **P3:** coach persona walkthrough (Player Dues, Season Settlement, bench console/one-final-
-  score-notification — warm-theme captures) linked from /for-coaches.
+- **P3: BUILT 2026-08-20 with TWO of its three panels (QA §66 owed).** `/for-coaches/walkthrough`
+  + the persona-page link + sitemap entry. Panels: **Player Dues** (mid-season 12U) and
+  **Season settlement** (off-season 14U). Present mode and the print leave-behind came free with
+  the renderer extraction and were both verified on the new page.
+  - **The renderer is now shared** — `components/marketing/WalkthroughPage.tsx` (+ its module CSS
+    and `WalkthroughPresent`), which the /simplify altitude ruling deferred "until the second
+    consumer". Everything a walkthrough differs by (story, door, way back, address, SEO) is data
+    on `Walkthrough`; both route files are two-line shells. **The organizer page was proved
+    unchanged three ways:** its server-rendered `<main>` is byte-identical to HEAD's, the moved
+    CSS differs by one comment line, and a full-page render of HEAD's component beside the new
+    one is **pixel-identical** (with the fixed site nav hidden — that chrome overlays the top
+    band and its scroll state settles independently, which is the only thing that ever differed).
+  - **Capture core gained `readyAfterPrepare`** (both callers): a wait for what the prepare
+    clicks OPENED. The settlement sheet fetches when it opens, so the fixed post-click pause was
+    a race against a "Loading…" line.
+  - ⚠ **The PHASE is the picture.** The two money shots come from two different demo teams on
+    purpose. Photographed mid-season, the settlement sheet is honest and useless — a team
+    half-way through its spending is legitimately in the red, so every family's "refund" shows
+    as a debt and the panel's point inverts. Captured on the off-season team it shows what the
+    pain describes. (The season's-end team is not an option: its season is closed, and the
+    season gate sends every money route to the closed-season page.)
+  - ⚠ **THEME was a false alarm worth recording.** The capture core builds every context with
+    `colorScheme: 'dark'` and the coach portal is warm — but nothing in the app reads
+    `prefers-color-scheme` at all. The portal's palette comes from a `data-user-theme` attribute
+    that defaults to **warm** with no stored preference, so a fresh capture context photographs
+    exactly what a coach's first visit renders. No core change was needed.
+  - **⚠⚠ TWO MOCKUP CLAIMS WERE FALSE AGAINST THE CODE AND WERE NOT SHIPPED:**
+    1. *"[Season Settlement] won't let you close the books until every family is made whole."*
+       Closing a season **WARNS, NEVER BLOCKS** (owner ruling 2026-08-18) — the close handler is
+       a bare status flip with zero money checks and the modal's primary button is never disabled
+       by money. What genuinely refuses is the settlement sheet's **bulk payout**, gated on
+       `closeOutBlockers().canClose` (dues collected · enough cash held · no club request still
+       pending). The panel says that instead.
+    2. *"automatic overdue reminders."* The scheduled sweep runs two waves **30 and 7 days BEFORE**
+       an installment is due — ahead of the date, not after it — and the never-paid nudge stays
+       deliberately manual (it has no sent-stamp, so automating it would re-email daily). The
+       panel now separates the two.
+  - **/simplify (4 lenses) + /review (4 lenses), 2026-08-20 — what they caught.** /simplify: an
+    invariant `back.label` re-typed per persona (now renderer-side copy); the caption riding into
+    the client payload on every slide (split into `PresentImage` + caption); `walkthroughMetadata`
+    living in the renderer rather than beside the `seo` data it transforms; raw team UUIDs in the
+    manifest instead of `DEMO_COACH_TEAM_IDS`; a duplicated wait idiom in the capture core. The
+    `.walkthroughLink`/`.seeItLive` CSS duplication was re-confirmed as the already-recorded
+    sitewide deferral and deliberately left alone. /review confirmed and fixed three real ones:
+    1. ⚠ **A COPY OVERCLAIM.** "Money a family raised fundraising comes off their own bill" is
+       only true for two of the three `credit_application` modes — `keep_separate` deliberately
+       does the opposite ("Credits don't reduce bills — settled at season's end"). Unqualified it
+       would be FALSE for any team on that mode. Now reads "…or waits for season's end — your
+       call." (The demo world pins the default, so the PICTURE was never wrong — only the words.)
+    2. **The capture core's demo-world re-assert was left behind by its own new wait.** `ready`,
+       the prepare clicks and `readyAfterPrepare` can each sit 20s, and the last origin+path
+       assert happened before all of them — a window this build had just widened from ~0.6s to
+       ~20s. There is now an assert **immediately before the shutter**. (Not exploitable by the
+       shipped shots — the settlement door is a pure client-state toggle — but it is the shared,
+       safety-critical path.)
+    3. **The dev-badge fix was hiding Next's ERROR overlay too** — same React tree, same
+       `nextjs-portal` host — which would have let a page that broke *after* its ready selector
+       resolved be photographed with its red-flag suppressed. Now a style is injected INTO the
+       shadow root to hide only `#devtools-indicator`, leaving the error overlay to do its job.
+    Refuted by verification: the `.ts`-extension import producing duplicate module instances (the
+    pattern already ships via `help-shots.ts`, and `demo-org`'s map is built from a frozen literal
+    so two instances could not disagree); any PII in the new PNGs (every name traces to hardcoded
+    fictional seed literals; no metadata in the binaries); `readyAfterPrepare` hanging CI (bounded
+    20s, per-shot try/catch, and `--check` never opens a browser). Recorded, not fixed: the door
+    label differs from the persona page's for the same door on BOTH personas (mockup's wording —
+    owner rules, QA §66).
+  - **⚠⚠ THE A11Y LENS FOUND A CRITICAL FUNCTIONAL BUG IN P2'S PRESENT MODE — fixed here.**
+    The deck had **no focus trap**: `aria-modal="true"` is only a hint, nothing enforces it, so
+    Tab walked past the footer buttons onto the page behind — links that are invisible (an opaque
+    deck covers them) and unreachable (body scroll is locked) but still live. Enter on one fired a
+    real navigation into the demo, ejecting a presenter mid-pitch, silently. Now traps both
+    directions (verified: 8×Tab + 5×Shift+Tab all stay inside; arrows, Esc, focus-return and
+    scroll-restore unaffected). `.footBtn` also shipped at 38.4px under a comment claiming a 44px
+    floor — corrected to 44. **Left for the owner (QA §66) because each changes the ORGANIZER
+    page's appearance while §65 is still unwalked:** the per-panel demo link is **15px tall** on
+    every panel of both pages, under the **24px WCAG 2.2 AA floor** (pre-existing since P1; this
+    build doubled its reach); the present trigger is 28px; and both pages nest a `<main>` inside
+    the layout's `<main>` — pre-existing on every persona page, but now centralized in one
+    component, which makes this the cheap moment to fix it once for all of them.
+    Measured clean: heading order, alt text, CLS, all 8 contrast pairs (7.7:1–17:1 vs 4.5:1
+    required), print scoping, reduced-motion gating, and the scroll-lock lifecycle including the
+    unmount-while-open path. ⚠ **`check:layout` covers only the 28 coach-portal screens — not one
+    marketing page is in its registry**, so these tap-target defects would have shipped silently;
+    adding the marketing routes to it is a small, separate, worthwhile change.
+  - **⚠ FOUND IN PASSING, PRE-EXISTING, NOT FIXED HERE:** `public/help/coaches/money-record-payment.png`
+    **ships with the Next.js dev-tools badge painted over the portal's nav**, obscuring a label —
+    it is one of only two unclipped shots, which is why it went unnoticed. The core now prevents
+    the class; the image itself needs one `capture:help-shots --only=…` run. Its sibling
+    `money-budget-vs-actual-months.png` is older (2026-08-14) so a re-take there also picks up
+    six days of demo drift — check what it says before re-shooting it.
+  - **THE THIRD PANEL (bench console) IS NOT BUILT — the demo world cannot photograph it**, for
+    three independently verified reasons: the console's live face exists only inside a real game
+    window (**Saturdays 07:00–14:00 Toronto** for the demo team, ~7h/week, so it is not
+    re-capturable on demand); the demo's Saturday game is seeded with **no lineup on purpose**,
+    so the bench board never renders; and game rows take a **fresh random id every reseed** while
+    **no link anywhere in the portal** reaches a past game's console, so nothing can address it
+    stably. Fixing this means changing the seeded demo world (fixed event id + a saved lineup),
+    which undoes a deliberate demo design decision and needs its own session. The P1 rule already
+    allows the panel set to flex ±1; **the owner's options are recorded in QA §66** — ship at two,
+    change the demo world, or substitute a pain the world can show today (playing-time report, or
+    the family-recap preview, which renders the family's own component).
 - **P4 (later, separate owner sessions):** president/club walkthrough ending in express
   interest; curated demo deep-links (needs an owner ruling on the door design); outreach email
   templates linking the walkthroughs.
