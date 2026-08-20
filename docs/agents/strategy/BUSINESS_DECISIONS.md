@@ -8,6 +8,66 @@
 
 ---
 
+### 2026-08-20 — `/for-leagues` STAYS LIVE, but every word implying an imminent launch comes out
+
+**Status:** Decided (owner, 2026-08-20, during the persona-page claim audit).
+
+**The situation.** A code-verified claim audit of all four persona pages found `/for-leagues` asserting that League Plus was *"in final refinement"* and *"opening soon,"* and inviting visitors to *"express interest to be notified when self-serve checkout opens."* League has been **parked since 2026-07-28** — the free floor's flag is off in production, the League Plus early-access cohort was withdrawn, and no target date exists anywhere in config. The page was promising imminence the business had already decided not to pursue.
+
+**Decision:** the page stays published and keeps collecting express interest. What is removed is the **imminence**, not the page. Availability language now reads "built but not currently open for sign-up," and the page derives *what is* live from the runtime plan gate rather than a hardcoded sentence.
+
+**Rationale:**
+- **The capabilities are real, and that is the distinction that matters.** Registration with waitlist, a working draft board, schedule generation, live standings, exports and league roles are all built and functioning. This is a product parked **commercially**, not vapourware. A page that says "this exists, it is not currently sold, tell us if you want it" is honest and useful.
+- **The interest list is the asset.** It is the clearest available signal for whether and when to unpark League. Taking the page down destroys the one input that would justify reversing 2026-07-28.
+- **Unpublishing would have been the more expensive answer to a copy problem.** The defect was four sentences, not the page's existence.
+
+**⚠ The structural cause, and why it is logged here rather than left in a commit.** `/for-clubs` was the ONLY persona page with zero findings in the audit — and it is the only one that reads its availability from the live plan gate instead of hardcoding it. `/for-leagues` was the only page NOT reading the gate, and its availability copy drifted furthest. **That is not a coincidence, and it generalizes: an availability claim that is computed cannot go stale; one that is typed always eventually does.** All four pages now read the gate.
+
+**Affects:** positioning and funnel posture for a parked plan. **No price, plan name, capacity band, SKU, feature key or gate value moves**, and `lib/plan-config.ts` is untouched — League's `gatingStatus: 'early_access'` is unchanged and correct.
+
+**Handoff:**
+```
+HANDOFF → /strategy (self, next reconcile)
+- ⚠ THE DRIFT CHECK HAS A BLIND SPOT. This audit's findings were copy-vs-product, and the
+  Facts doc was RIGHT where the copy was wrong — it has said "Officials & scorekeepers are
+  exempt" since 2026-06-22, while /for-tournament-organizers sold unlimited officials as a
+  Tournament Plus benefit. The reconciliation checklist compares the Facts doc to
+  lib/plan-config.ts and to this log; nobody has ever compared PERSONA PAGE CLAIMS to either.
+  Add the four persona pages as a fourth surface of the drift check.
+HANDOFF → /marketing — DONE in the same unit of work (2026-08-20)
+- League availability copy, hero, plan-card tagline and search description de-imminenced.
+HANDOFF → none for /billing — no gate is touched; the page now READS the gate it already had.
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-07-28 (League parked pending capability evaluation) — this entry governs how the marketing surface behaves *while* that ruling stands, and does not reopen it.
+
+---
+
+### 2026-08-20 — PROPOSED: should a paying customer be able to remove the "Built on FieldLogicHQ" footer credit entirely?
+
+**Status:** **Proposed** — raised by the same claim audit, **not ratified, nothing built or changed.** The copy defect that surfaced it has been corrected independently; this entry exists so the packaging question underneath it is not lost.
+
+**What surfaced it.** `/for-tournament-organizers` listed *"Full branding control — no FieldLogicHQ badge"* as a Tournament Plus benefit. Verified against code: paying **does** remove the free tier's dismissible "Powered by FieldLogicHQ" pill and its acquisition banner — a real, substantial difference — but every paid public tournament page still carries a permanent, non-dismissible **"Built on FieldLogicHQ"** footer credit. The copy now describes that accurately.
+
+**The question this leaves open:** "full branding control" and "a credit the customer cannot remove" are in tension. Three coherent positions, none of them currently chosen:
+
+1. **Keep the credit on all paid tiers** (status quo). It is deliberately quiet, deliberately untracked, and deliberately non-dismissible — the component's own reasoning is that *"a credit you can dismiss was never a credit."* Free acquisition surface on every event page.
+2. **Drop the credit at a specific tier** (Club, say). Makes "full branding control" literally true at the top, and turns removal into a reason to move up.
+3. **Sell removal as a white-label add-on.** Monetizes the strongest signal a customer sends — that they care enough about their brand to pay for it.
+
+**Recommendation if forced today: option 1, unchanged.** Pre-revenue, the credit on every paid event page is a materially better acquisition asset than the marginal revenue option 3 would raise, and option 2 gives away that asset at exactly the tier whose pages get the most traffic. But the trade is real and worth revisiting **once there is customer data** — specifically, if a prospect ever cites the credit as an objection, that is the input that should reopen this.
+
+**Affects:** packaging (a potential add-on SKU or tier inclusion) and positioning of Tournament Plus. **Nothing moves until ratified.**
+
+**Handoff:**
+```
+HANDOFF → none until ratified. The copy defect is already fixed; this is the open question only.
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-07-11 (tournament branding reframe — `advanced_tournament_branding` keeps theming and loses the installable-app-icon framing); that ruling covers what branding *does*, this one asks what it may *remove*.
+
+---
+
 ### 2026-08-19 — The Sunday "week in review" push KEEPS its money content — the "no money in Insights" ruling governs the PAGE, not everything the engine produces
 
 **Status:** Decided (owner, 2026-08-19 — chose option A from the three-open-calls mockup, `claude.ai/code/artifact/2b289cf9-faa8-4a5c-b27e-3a5b84c98982`). **No code change required**; the decision is recorded in the digest module's header comment alongside the single input that would reverse it.
