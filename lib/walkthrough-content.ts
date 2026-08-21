@@ -289,13 +289,29 @@ export const PITCH_SLIDES = {
     alt: 'Four chat bubbles down one side, two of them reading “score?” and one holding only a question mark. Facing them, a two-box scoreboard with a broadcast symbol, and below a dividing rule a single envelope with one arrow leaving it.',
     caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves, and one message when it is over.',
   },
+  /**
+   * ⚠⚠ THIS WAS THE COACH DECK'S ONLY `proof` SLIDE — the one screen shown WHOLE — and it became a
+   * drawing on 2026-08-21 (owner call). The reasoning is worth keeping, because "put the
+   * screenshot back" will look like an obvious improvement to someone who did not see it:
+   *
+   * Its photograph rendered at 34% of readable size on a phone, and re-capturing at phone width
+   * only trades the problem (it goes small on a laptop instead). What made drawing it acceptable
+   * is that the job `proof` existed for — *"this is genuinely our software"* — moved. It used to be
+   * shared with a closing sentence on the page ("every picture above is the real software, not a
+   * mockup"); that sentence was removed the same day, and what carries the claim now is the LIVE
+   * DEMO: walk the whole year yourself, nothing to sign up for. A demo a prospect can open beats a
+   * screenshot they have to trust.
+   */
   '#09': {
     id: '#09',
-    imageClass: 'proof',
-    shotId: 'coach-season-wrapped',
+    imageClass: 'explainer',
+    drawingId: 'season-page',
     pain: 'The season ends and nobody writes down what happened.',
     claim: 'A closed season becomes one page — the record, the roster, the practices, the money — and it stays that way for years.',
-    // PROOF, never ringed. The class exists for a screen designed to be looked at whole.
+    alt: 'Four small cards drifting apart and fading, the last two drawn as dashed outlines and one holding a question mark. Facing them, a single page: a record across the top, then four labelled shelves — results, roster, practices, money.',
+    // ⚠ One page and exactly FOUR shelves is the binding owner ruling the product is built on, not
+    // a simplification made to fit a picture. Adding a fifth here means adding it to the product.
+    caption: 'Four things the season made, scattering. One page that holds all of them, and reads the same in three years.',
   },
   '#10': {
     id: '#10',
@@ -339,24 +355,38 @@ export const PITCH_SLIDES = {
       { left: 42.1, top: 0.8, width: 14.9, height: 98.4 },
     ],
   },
+  /**
+   * Drawn 2026-08-21 (the §69 phone batch) — its photograph rendered at 34% of readable size on a
+   * phone. ⚠ "opens on the bench while the game is running" is TRUE and has never been what the
+   * picture shows: the demo world's game console exists about seven hours a week, so the book was
+   * photographed where it is WRITTEN. The drawing shows the same thing and gains what no capture
+   * could — the book receding into earlier meetings, which is the "grows every time you meet them"
+   * half of the claim.
+   */
   '#24': {
     id: '#24',
-    imageClass: 'composed',
-    shotId: 'coach-scouting-book',
+    imageClass: 'explainer',
+    drawingId: 'opponent-book',
     pain: 'What you learned about that team last time is in your head — and you play them Saturday.',
-    // ⚠ "opens on the bench while the game is running" is TRUE and is NOT what the picture shows:
-    // the game console exists about seven hours a week in the demo world, so the book is
-    // photographed where it is written instead. The plan carried this as an open question; the
-    // report turned out to be the better picture anyway, because it shows the book AND how it
-    // filled up. Verified against the product, not assumed.
     claim: 'Your book on an opponent — what they do, what worked, what to watch — opens on the bench while the game is running, and grows every time you meet them.',
+    alt: 'Three blank dashed frames stacked on the left, the front one holding only a question mark. Facing them, a book: a heading line at the top, then three meeting entries each with a result chip, a note and a tag, fading as they go down.',
+    caption: 'Nothing was written down, so nothing survives the winter. One book per team, and every meeting adds to it.',
   },
+  /**
+   * ⚠ THE ONE CASE WHERE A DRAWING BEAT THE PHOTOGRAPH ON MERIT, not just on phone size (2026-08-21).
+   * The capture spelled the rotation out in words — three rows of station names — so "everyone does
+   * everything" was something a reader had to READ. Three shapes stepping diagonally make it
+   * something they SEE. The generalisation: when a screen's point is a PATTERN, a drawing of the
+   * pattern can outperform a capture of the screen.
+   */
   '#25': {
     id: '#25',
-    imageClass: 'composed',
-    shotId: 'coach-practice-plan',
+    imageClass: 'explainer',
+    drawingId: 'practice-rotation',
     pain: 'The practice plan is a text you send at 9 PM and re-explain at the field.',
     claim: 'A plan attaches to a real practice on your schedule — stations, timings, who runs what — and it is on your phone at the field.',
+    alt: 'A phone filled with a wall of message text, and beneath it a bubble holding only a question mark. Facing them, a three-by-three grid: three groups across, three rounds down, and three shapes stepping diagonally so each group meets each station once.',
+    caption: 'A wall of text at nine at night, re-explained at the field. Or the rotation itself — three groups, three rounds, everyone does everything.',
   },
 
   /* ── The tournament weekend ────────────────────────────────────────────────── */

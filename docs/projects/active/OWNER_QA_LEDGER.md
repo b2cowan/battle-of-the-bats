@@ -9684,3 +9684,53 @@ Open a walkthrough page and press **▸ Present the full deck**. Arrow through i
   not built — say if you want that batch next.
 - **Lime is still spent six times on the panel** (open since §67). The drawings spend none.
 - **Six Premium plan lines on the coach page** (open since §69).
+
+---
+
+## §71 · The three pictures a phone could not read are now drawings
+
+**BUILT 2026-08-21 (dev).** Closes the last open item from §69. Approved in the mockup round:
+`claude.ai/code/artifact/8d21b533-1e31-4691-81a0-30f226f45df0`.
+
+Three coach slides photographed desktop screens and rendered at **34%, 34% and 52%** of readable
+size at phone width. Re-photographing each at phone width was the only lever we had and it trades
+the defect rather than closing it — the picture goes small on a laptop instead. **Your picture
+ruling made them drawable, and a drawing has no native size.**
+
+### Part A — the three, in present mode (**walk this first**)
+
+Open the coach walkthrough → **▸ Present the full deck** → arrow through. On a phone as well.
+
+- [ ] **Saturday's opponent** (slide 6). The left is three *blank dashed frames*, not scraps —
+      the pain is that nothing was written down. The book on the right fades downward because it
+      keeps growing, which the photograph could not show at all.
+- [ ] **The practice plan** (slide 4). ⚠ **This one is better than the screenshot it replaced, not
+      just bigger.** The photograph spelled the rotation out in words, so "everyone does
+      everything" was something you read; three shapes stepping diagonally make it something you
+      see. Shapes rather than a tee and a cone — the platform is sport-neutral.
+- [ ] **Season Wrapped** (slide 15). Four things the season made, scattering, against one page
+      holding all four. The four shelves are named at full size because on this slide they *are*
+      the claim.
+
+### Part B — the thing you should look at hardest
+
+- [ ] **⚠ Season Wrapped was the coach deck's ONLY untouched photograph** — the one screen shown
+      whole. Drawing it means the coach deck no longer contains a whole-screen capture at all.
+      The argument for doing it: the job that photograph did ("this is genuinely our software")
+      moved to the live demo when we removed the closing sentence that used to share it. **If you
+      disagree, this is reversible** — say so and it goes back to a photograph, unreadable on a
+      phone but the best-looking picture we own.
+- [ ] **Three of the six pictures on the public coach page are now drawings** (the practice plan,
+      the opponent book, Season Wrapped). Read that page top to bottom and say whether it still
+      feels like a product page.
+- [ ] **Ten of the coach deck's fifteen pictures are drawings now.** That is a bigger shift in how
+      the deck *feels* than the count suggests — **walk the whole deck end to end**, not just these
+      three, and say if the balance has tipped too far.
+
+### What changed underneath
+
+- [ ] Three photographs retired from the shot manifest and their files deleted (16 → 13 shots).
+      Nothing is missing; the slides are drawings now.
+- [ ] The phone-legibility defect first raised in §65 is **closed for the coach deck.** The
+      tournament page still carries one desktop screen (registration health, 34%) — say if you want
+      that drawn too.

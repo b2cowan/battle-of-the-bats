@@ -464,90 +464,10 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     alt: 'The playing-time report: one row per player showing innings on the field with a small bar, innings on the bench, how many times they sat back-to-back, every position they have played, and innings pitched where it applies — the player with the least time on the field sitting at the top.',
     caption: 'Playing time counted from the lineups you already saved — innings on the field, innings on the bench, and who has sat back-to-back. Measured, in context.',
   },
-  {
-    id: 'coach-scouting-book',
-    persona: 'coach',
-    door: 'coach',
-    /**
-     * 12U, MID-SEASON, and specifically THIS SATURDAY'S OPPONENT — "you play them Saturday" is
-     * the slide, so the book being photographed has to be the one that matters this week.
-     *
-     * ⚠ The plan carried this as an open question: the game console is Saturday-only, so the book
-     * cannot be shot where a coach actually reads it. The opponents report is the answer, and it
-     * turns out to be the better picture anyway — the console shows the book, this shows the book
-     * AND how it got there.
-     *
-     * The URL key is the opponent's normalized name, and the opponent is `OPPONENTS[0]` in the
-     * world module, so unlike an event or a fundraiser this address survives a reseed.
-     */
-    path: `${COACH_TEAM('midSeason')}/history/opponents/harborview%20falcons`,
-    ready: '[class*="scoutBookLine"]',
-    // COMPOSED (slide #24): the book line, the composer that fills it, and the log itself. ⚠ A
-    // union is a rectangle — the three meetings against this opponent sit between the composer
-    // and the log and are therefore in frame, which is a gain rather than a leak: it is what
-    // "grows every time you meet them" looks like.
-    // ⚠ A comma-separated list is CSS, so every member has to be CSS. The first attempt led with
-    // `text=The book line`, and Playwright's text engine swallows the REST OF THE STRING as its
-    // argument — the whole selector became one search for a sentence nothing contains, and it
-    // failed as "matched nothing visible" rather than as a syntax error.
-    clipAll: '[class*="scoutBookLine"], [class*="scoutObs"]',
-    width: 1280,
-    size: { w: 960, h: 577 },
-    // ⚠ Re-written after the seed defect below was fixed: the notes are GROUPED UNDER THEIR GAME,
-    // not listed in a block beneath the meetings. The first version of this alt described the
-    // broken rendering, which is the quiet way a wrong picture gets an accurate-sounding caption.
-    alt: 'A coach’s book on one opponent: a one-line read on the team at the top, a box for logging another observation with tags for pitching, hitting, defense, baserunning and coaching, then every game played against them — each with its result, score and date, and underneath it the notes logged at that game, tagged and one line each.',
-    caption: 'The book on the team you play next — one line you would tell an assistant, and under each meeting, what you noticed the last time you played them.',
-  },
-  {
-    id: 'coach-practice-plan',
-    persona: 'coach',
-    door: 'coach',
-    // 12U, MID-SEASON — the team whose written-up practices include a real three-station circuit
-    // on a clock, which is the only one of them that shows what a plan is FOR.
-    path: `${COACH_TEAM('midSeason')}/practice`,
-    ready: 'a:has-text("Open the plan")',
-    // Event ids regenerate on every reseed, so the plan is reached through the list; the first
-    // "Open the plan" is the most recent written-up practice, which is the circuit one.
-    prepare: ['a:has-text("Open the plan")'],
-    // ⚠ The plan FETCHES after the page frame renders — without this the shot photographs
-    // "Loading practice…", which is exactly the half-loaded screen the readiness rules exist for.
-    readyAfterPrepare: 'th:has-text("Group A")',
-    // COMPOSED (slide #25): the "where everyone is" grid — every round with its clock time, and
-    // the station each group is at. ⚠ The union that also took in the groups and the rotation
-    // controls above measured 665×946, and the stage would have drawn that about 280px wide. This
-    // one element is 638×261, which fills the stage's whole width. Wide beats complete here.
-    clip: '[class*="ppGridWrap"]',
-    width: 1280,
-    size: { w: 638, h: 261 },
-    alt: 'The rotation inside a practice plan: how many minutes before groups move, three named groups with the players in each, and a grid showing which station every group is at in each round of the circuit.',
-    caption: 'A practice plan attached to a real practice on the schedule — the stations, the clock, and which group is where in every round.',
-  },
-  {
-    id: 'coach-season-wrapped',
-    persona: 'coach',
-    door: 'coach',
-    // 13U, SEASON'S END — a season that is actually closed, which is the only state this page
-    // exists in. ⚠ The season gate sends every other route on this team here, so there is no
-    // navigation to get wrong.
-    path: `${COACH_TEAM('seasonsEnd')}/season-end`,
-    ready: 'text=Season Wrapped',
-    // PROOF, and the one slide in the coach deck deliberately NOT cropped to a point: this page
-    // is designed to be looked at, and the claim beside it names all four shelves, so cropping to
-    // the Wrapped card alone would leave the sentence half-illustrated.
-    // ⚠ NOT `clip: 'main'` — that took the whole 1280×1000 viewport, two thirds of which is the
-    // portal's sidebar and empty page below the content. That is P1's playoff-bracket lesson
-    // exactly: a picture that spends half a slide on gutter reads as the least legible one there.
-    // This union runs from the page's own title down to the last shelf, across both columns.
-    // ⚠ The second member must be the full-width CONTAINER, not a heading inside it. A first
-    // attempt paired the title with `h3:has-text("How the season added up")` and produced a crop
-    // sliced down both sides — a union's x-range is the range of the MATCHED boxes, and that h3 is
-    // a narrow text node in the right-hand column, so the rectangle stopped at the end of its own
-    // words rather than at the edge of the page.
-    clipAll: 'h1, [class*="seasonSpread"]',
-    width: 1280,
-    size: { w: 960, h: 591 },
-    alt: 'A closed season on one page: a dark Season Wrapped card giving the final record, the longest winning streak, the closest game, attendance, the most-decorated player and a fact about the lineup, with a button to share it — beside four collapsed shelves for the results, the roster, the practices that were run and how the season added up, and a note saying how many families have opened their player’s recap.',
-    caption: 'A season that has closed becomes one page — the record, the roster, the practices, the money — and it stays that way for years.',
-  },
+  // ⚠ THREE COACH SHOTS WERE RETIRED HERE ON 2026-08-21 — coach-scouting-book, coach-practice-plan
+  // and coach-season-wrapped. They are not missing; slides #24, #25 and #09 are DRAWINGS now.
+  // Their photographs rendered at 34%, 52% and 34% of readable size on a phone, and re-capturing
+  // at phone width only trades the defect (the picture goes small on a laptop instead). A drawing
+  // has no native size. ⚠ #09 was the coach deck's only `proof` shot — see the long note on that
+  // slide in lib/walkthrough-content.ts before proposing it be photographed again.
 ];

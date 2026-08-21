@@ -1,10 +1,11 @@
 # Pitch Slide Library — Plan
 
 **Status:** APPROVED 2026-08-20. **P1 SHIPPED dev 2026-08-20 — owner QA §67 ✅ PASSED · P2a SHIPPED
-dev 2026-08-20 — QA §69 owed · P2b SHIPPED dev 2026-08-21 — QA §70 owed. BOTH DECKS ARE NOW
-COMPLETE** (coach 15 slides, tournament 8) — only the three club-held slides remain unbuilt in the
-whole library. **P3 is ABSORBED into the Deck Studio** ([plan](PITCH_DECK_STUDIO_PLAN.md)); P4 not
-started.
+dev 2026-08-20 — QA §69 owed · P2b SHIPPED dev 2026-08-21 — QA §70 owed · P2c SHIPPED dev
+2026-08-21 — QA §71 owed. BOTH DECKS ARE COMPLETE** (coach 15 slides, tournament 8) — only the
+three club-held slides remain unbuilt in the whole library — **and the coach deck's
+phone-legibility defect, open since §65, is CLOSED.** **P3 is ABSORBED into the Deck Studio**
+([plan](PITCH_DECK_STUDIO_PLAN.md)); P4 not started.
 ⚠⚠ **The image-class ruling below was REPLACED by the owner on 2026-08-21** — see ruling 1, and
 `memory/design_decisions.md`. The library grew to **23 slides**: P2b added #26 and #27, which the
 approved artifact does not contain.
@@ -266,6 +267,20 @@ only in one build's CSS.
   book, Season Wrapped, the practice plan). Same arithmetic as (1) and the same honest answer: a
   960px screen cannot be read on a 350px column. Re-photographing each at phone width would make
   it small on a laptop instead. Recorded, not decided.
+  - **P2c — the §69 phone batch. ✅ SHIPPED to dev 2026-08-21, owner QA §71 owed.** Three coach
+    slides whose PHOTOGRAPHS were unreadable on a phone (34%, 34%, 52% of true size) became
+    drawings: the opponent book, the practice rotation and Season Wrapped. **This closes the
+    phone-legibility defect first raised in §65 for the coach deck.** Re-photographing at phone
+    width was the only lever before and it only trades the defect; a drawing has no native size.
+    ⚠⚠ **Season Wrapped was the coach deck's only `proof` slide** — the one screen shown whole —
+    and drawing it leaves the deck with none. Accepted because the job that photograph did ("this
+    is genuinely our software") moved to the LIVE DEMO when P2b removed the closing sentence that
+    used to share it. Reversible; the reasoning is on the slide. ⚠ **One drawing beat its
+    photograph on merit rather than on size**: the practice-plan capture spelled the rotation out
+    in words, so "everyone does everything" had to be READ; three shapes stepping diagonally make
+    it SEEN. Generalisation worth keeping — **when a screen's point is a PATTERN, a drawing of the
+    pattern can outperform a capture of the screen.** Ten of the coach deck's fifteen pictures are
+    now drawings, and three of the public coach page's six.
   - **P2b — ✅ SHIPPED to dev 2026-08-21, owner QA §70 owed. SEVEN drawings, not five.**
 
   ### What P2b actually settled — read before planning the Deck Studio

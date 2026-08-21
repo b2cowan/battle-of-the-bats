@@ -55,7 +55,29 @@ Queued, not built.
 
 ---
 
-### 2026-08-21 — ⚠⚠ A DRAWING'S CANVAS IS NOT FREE SPACE: empty margin is paid for in phone legibility
+### 2026-08-21 — ⚠ WHEN A SCREEN’S POINT IS A PATTERN, A DRAWING CAN BEAT A CAPTURE OF IT
+
+**Found while replacing three unreadable coach photographs (§71).** The practice-plan capture was a
+rotation grid — three rounds down, three groups across, station names written into every cell. It is
+a perfectly good screen, and *"everyone does everything"* was still something a reader had to READ
+out of it, cell by cell. Drawn as three shapes stepping diagonally, the same fact is something they
+**see**, in about a second.
+
+**So the choice between a photograph and a drawing is not only about legibility or honesty — it is
+also about what the picture is FOR.** A capture is right when the point is *this exists and looks
+like this*. A drawing can be better when the point is a **pattern, a flow or a relationship**, because
+a drawing can delete everything that is not the pattern and a screenshot cannot.
+
+⚠ **This does not license prettifying.** The obligation from the entry above still binds — the
+drawing must promise functionality we have, and must be unmistakably a drawing. What it licenses is
+choosing to draw a screen we could perfectly well have photographed, when the drawing says the thing
+better.
+
+**Applies to:** pitch and marketing artwork. Same lineage as the two entries below.
+
+---
+
+### 2026-08-21 — ⚠⚠ A DRAWING’S CANVAS IS NOT FREE SPACE: empty margin is paid for in phone legibility
 
 **The same arithmetic P1 and P2a each paid an iteration for, in its third costume — and this time
 it applies to something we AUTHOR, where the waste is entirely ours to remove.**

@@ -540,6 +540,190 @@ function CopiedForward() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+   #24 — in your head → one book
+
+   ⚠ THE LEFT SIDE IS EMPTY FRAMES, NOT SCRAPS OF PAPER, and that is the whole reading of the pain.
+   "It is in your head" does not mean the notes are scattered — it means there are NO notes, so the
+   old way is three blank dashed outlines rather than three written slips. Drawing scraps here would
+   quietly change the problem the slide is about.
+
+   The book fades downward because "it grows every time you meet them" is a stack that keeps going —
+   the half of the claim the photograph this replaces could not show at all.
+   ──────────────────────────────────────────────────────────────────────────── */
+function OpponentBook() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g className={styles.sFaint} strokeWidth="2" strokeDasharray="10 9" opacity="0.5">
+        <rect x="96" y="118" width="150" height="96" rx="6" transform="rotate(-9 171 166)" />
+      </g>
+      <g className={styles.sFaint} strokeWidth="2.2" strokeDasharray="10 9" opacity="0.75">
+        <rect x="66" y="196" width="162" height="100" rx="6" transform="rotate(5 147 246)" />
+      </g>
+      <g className={styles.sAmber} strokeWidth="2.5" strokeDasharray="11 9">
+        <rect x="92" y="278" width="160" height="102" rx="6" transform="rotate(-3 172 329)" />
+      </g>
+      <text className={`${styles.label} ${styles.fAmber}`} x="172" y="342" fontSize="34" textAnchor="middle" stroke="none">?</text>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M282 250C348 250 402 250 448 250" />
+      <circle className={styles.fDim} cx="458" cy="250" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 250)">
+        {/* the book line — the standing summary the whole page hangs off */}
+        <path className={styles.sInk} strokeWidth="3" d="M498 108v66" />
+        <rect className={styles.fInk} stroke="none" x="514" y="118" width="196" height="10" rx="5" />
+        <rect className={styles.fDim} stroke="none" x="514" y="140" width="150" height="8" rx="4" opacity="0.85" />
+        <path className={styles.sFaint} strokeWidth="1.4" d="M498 192h272" />
+
+        {/* every meeting, newest first, receding into the seasons behind it */}
+        {[
+          { dy: 0, op: 1, chip: styles.sInk, bar: styles.fInk, note: 152, tag: styles.sDim },
+          { dy: 62, op: 0.7, chip: styles.sDim, bar: styles.fDim, note: 130, tag: styles.sFaint },
+          { dy: 124, op: 0.42, chip: styles.sDim, bar: styles.fDim, note: 146, tag: styles.sFaint },
+        ].map(m => (
+          <g key={m.dy} opacity={m.op} transform={`translate(0 ${m.dy})`}>
+            <rect className={m.chip} strokeWidth="2.5" x="498" y="212" width="26" height="26" rx="5" />
+            <rect className={m.bar} stroke="none" x="504" y="223" width="14" height="4" rx="2" />
+            <rect className={m.bar} stroke="none" x="538" y="218" width="76" height="9" rx="4.5" />
+            <rect className={styles.fDim} stroke="none" x="538" y="242" width={m.note} height="7" rx="3.5" />
+            <rect className={m.tag} strokeWidth="1.8" x="702" y="240" width="52" height="12" rx="6" />
+          </g>
+        ))}
+      </g>
+
+      <Say x={165} y={444} tone="dim">IN YOUR HEAD</Say>
+      <Say x={634} y={440} tone="ink">ONE BOOK</Say>
+      <Sub x={620} y={470}>it grows every meeting</Sub>
+    </g>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   #09 — nothing kept → one page
+
+   ⚠ THE FOUR SHELVES ARE NAMED AT FULL SIZE, breaking house rule 3's "two words each side, the
+   rest is texture" on purpose: on this slide the four ARE the claim ("the record, the roster, the
+   practices, the money" is the sentence beside the picture). Same deliberate exception the
+   copy-forward drawing already makes with its four nouns.
+
+   ⚠ One page and exactly four shelves is the BINDING owner ruling the product is built on
+   (CLAUDE.md), not a simplification made to fit a drawing. Do not add a fifth here without adding
+   it to the product.
+   ──────────────────────────────────────────────────────────────────────────── */
+function SeasonPage() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      {/* the four things the season made, drifting apart — the last two already only outlines */}
+      <g transform="rotate(-14 118 140)" opacity="0.75">
+        <rect className={styles.sFaint} strokeWidth="2.2" x="66" y="106" width="104" height="68" rx="5" />
+        <path className={styles.sDim} strokeWidth="3" d="M82 130h34M82 146h56" />
+      </g>
+      <g transform="rotate(9 232 176)" opacity="0.6">
+        <rect className={styles.sFaint} strokeWidth="2.2" x="182" y="142" width="100" height="68" rx="5" />
+        <path className={styles.sDim} strokeWidth="3" d="M198 166h30M198 182h48" />
+      </g>
+      <g transform="rotate(-6 116 296)" opacity="0.45">
+        <rect className={styles.sFaint} strokeWidth="2.2" strokeDasharray="9 8" x="64" y="262" width="104" height="68" rx="5" />
+      </g>
+      <g transform="rotate(12 236 322)">
+        <rect className={styles.sAmber} strokeWidth="2.4" strokeDasharray="9 8" x="186" y="288" width="100" height="68" rx="5" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="236" y="333" fontSize="30" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M312 232C360 236 406 242 448 248" />
+      <circle className={styles.fDim} cx="458" cy="249" r="5" stroke="none" />
+
+      <g transform="rotate(-0.5 632 240)">
+        <rect className={styles.sInk} strokeWidth="3" x="496" y="80" width="272" height="312" rx="7" />
+        {/* the record, across the top — a scoreline, not a number we would have to keep true */}
+        <g className={styles.fInk} stroke="none">
+          <rect x="520" y="108" width="52" height="15" rx="7.5" />
+          <rect x="580" y="108" width="34" height="15" rx="7.5" />
+          <rect x="622" y="108" width="26" height="15" rx="7.5" />
+        </g>
+        <path className={styles.sFaint} strokeWidth="1.4" d="M520 142h224" />
+        <g className={`${styles.label} ${styles.fDim}`} fontSize="26" letterSpacing="1.6" stroke="none">
+          <text x="520" y="184">RESULTS</text>
+          <text x="520" y="240">ROSTER</text>
+          <text x="520" y="296">PRACTICES</text>
+          <text x="520" y="352">MONEY</text>
+        </g>
+        <path className={styles.sFaint} strokeWidth="1.4" d="M520 200h224M520 256h224M520 312h224M520 368h224" />
+      </g>
+
+      <Say x={176} y={446} tone="dim">NOTHING KEPT</Say>
+      <Say x={632} y={440} tone="ink">ONE PAGE</Say>
+      <Sub x={620} y={470}>the same in three years</Sub>
+    </g>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   #25 — a 9 PM text → the rotation
+
+   ⚠ THIS DRAWING IS BETTER THAN THE PHOTOGRAPH IT REPLACED, and the reason generalises: the
+   screenshot spelled the rotation out in words (three rows of station names), so "everyone does
+   everything" was something a reader had to READ. Three shapes stepping diagonally make it
+   something they SEE. When a screen's point is a PATTERN, a drawing can outperform a capture of it.
+
+   ⚠ SHAPES, NOT EQUIPMENT — a square, a circle and a triangle rather than a tee and a cone. The
+   platform is sport-neutral (lib/sports.ts Sport Pack) and a baseball glyph on a shared marketing
+   surface is exactly the debt that rule exists to keep out.
+   ──────────────────────────────────────────────────────────────────────────── */
+function PracticeRotation() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-6 148 224)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="93" y="118" width="110" height="212" rx="12" />
+        <path className={styles.sFaint} strokeWidth="1.6" d="M93 136h110" />
+        <path
+          className={styles.sDim} strokeWidth="3"
+          d="M108 158h78M108 174h64M108 190h80M108 206h50M108 222h76M108 238h68M108 254h40M108 270h74M108 286h58M108 302h30"
+        />
+      </g>
+      <g transform="rotate(5 152 372)">
+        <rect className={styles.sAmber} strokeWidth="2.5" x="72" y="346" width="160" height="52" rx="26" />
+        <path className={styles.sAmber} strokeWidth="2.5" d="M80 394l-13 16 26-5" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="152" y="381" fontSize="27" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M258 226C300 226 330 226 358 226" />
+      <circle className={styles.fDim} cx="368" cy="226" r="5" stroke="none" />
+
+      <g transform="rotate(-0.5 610 230)">
+        <g className={`${styles.label} ${styles.fDim}`} fontSize="22" letterSpacing="1.4" textAnchor="middle" stroke="none">
+          <text x="530" y="128">A</text><text x="602" y="128">B</text><text x="674" y="128">C</text>
+        </g>
+        <g className={`${styles.label} ${styles.fFaint}`} fontSize="22" textAnchor="middle" stroke="none">
+          <text x="470" y="180">1</text><text x="470" y="242">2</text><text x="470" y="304">3</text>
+        </g>
+        <g className={styles.sFaint} strokeWidth="1.4">
+          <path d="M494 142h216M494 204h216M494 266h216M494 328h216" />
+          <path d="M494 142v186M566 142v186M638 142v186M710 142v186" />
+        </g>
+        {/* the diagonal step IS the argument — each group meets each station exactly once */}
+        <g className={styles.sInk} strokeWidth="3">
+          <rect className={styles.fInk} stroke="none" x="518" y="160" width="24" height="24" rx="3" />
+          <circle cx="602" cy="172" r="13" />
+          <path d="M674 159l14 25h-28z" />
+
+          <path d="M530 221l14 25h-28z" />
+          <rect className={styles.fInk} stroke="none" x="590" y="222" width="24" height="24" rx="3" />
+          <circle cx="674" cy="234" r="13" />
+
+          <circle cx="530" cy="296" r="13" />
+          <path d="M602 283l14 25h-28z" />
+          <rect className={styles.fInk} stroke="none" x="662" y="284" width="24" height="24" rx="3" />
+        </g>
+      </g>
+
+      <Say x={160} y={452} tone="dim">A 9 PM TEXT</Say>
+      <Say x={602} y={384} tone="ink">THE ROTATION</Say>
+      <Sub x={602} y={414}>everyone does everything</Sub>
+    </g>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
    #26 — the coach's year, and the arc that closes it
 
    ⚠ The five stations are not marketing invention: they are the five phases the coach portal and
@@ -654,6 +838,13 @@ export const SLIDE_DRAWINGS = {
   'one-message':        { Draw: OneMessageNotOnePerRun, ...WIDE },
   'registration-inbox': { Draw: RegistrationsFromEmail, ...WIDE },
   'copied-forward':     { Draw: CopiedForward,          ...WIDE },
+  // The §69 batch — three coach slides whose PHOTOGRAPHS were unreadable on a phone (34%, 34%,
+  // 52% of true size). Drawn rather than re-photographed because a re-capture at phone width only
+  // trades the problem: it makes the picture small on a laptop instead. A drawing has no native
+  // size, so it reads at whatever size we author for.
+  'opponent-book':      { Draw: OpponentBook,           ...WIDE },
+  'season-page':        { Draw: SeasonPage,             ...WIDE },
+  'practice-rotation':  { Draw: PracticeRotation,       ...WIDE },
   'coach-year':         { Draw: CoachYear,              ...WHEEL },
   'tournament-year':    { Draw: TournamentYear,         ...WHEEL },
 } satisfies Record<string, { Draw: () => React.ReactElement; width: number; height: number }>;
