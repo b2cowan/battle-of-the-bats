@@ -24,11 +24,15 @@ gain a data dependency they have never had, and where every invariant the build 
 move into a save path. **A read-only view answers "what do we have?" for a fraction of the cost and
 none of that exposure.** Ship it, let the owner use it, then plan B.
 
-⚠ **SCHEDULING (owner, 2026-08-21): this project starts only AFTER the §69 phone-legibility batch
-lands** — the three coach slides converting from photographs into drawings. That batch edits the
-same slide bank and retires three captures this view reads, so the owner sequenced it first rather
-than running the two in parallel. **Confirm those three slides have landed before you start**; if
-they have not, the library you display is about to change underneath you.
+✅ **SCHEDULING — THE PRECONDITION IS MET.** This project was sequenced behind the §69
+phone-legibility batch, which landed on dev in commit `7c15f718` (2026-08-21): three coach slides
+converted from photographs to drawings, three captures retired. **The library is stable at 23
+slides — 15 coach, 8 tournament; 13 photographed, 10 drawn.** Nothing else is queued against it.
+
+⚠ A separate session is fixing the marketing header defect (§68) in parallel. It touches shared
+site chrome, not the slide library, so there is no collision — but it edits the same SHARED
+DOCUMENTS you will (`TODO.md`, the QA ledger, `memory/MEMORY.md`), so read the commit rule at the
+bottom of this prompt before staging anything.
 
 ## What it is
 
@@ -54,8 +58,8 @@ deck):
 - a captured slide: does its picture file still exist, and does the manifest still carry its alt,
   caption and size? (There is already a check that answers this — reuse it, do not re-implement.)
 - ⚠ **a DRAWN slide has no manifest entry at all**, so the capture-side staleness question is
-  meaningless for it. Say so in the UI rather than showing a false green tick. Roughly a third of
-  the library is drawn.
+  meaningless for it. Say so in the UI rather than showing a false green tick. **10 of the 23 slides
+  are drawn** — this is not an edge case, it is nearly half the screen.
 - a plan line: does the capability it names still match the live plan configuration? **This is the
   highest-value column on the screen** — the 2026-08-20 persona audit found nineteen overclaims,
   including a capability advertised on six surfaces that the product cannot do, and the same copy
