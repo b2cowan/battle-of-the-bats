@@ -86,6 +86,17 @@ export const DEMO_COACH_TEAM_IDS = {
 export const DEMO_COACH_SHOWCASE = {
   /** Riverdale Ridge 12U — the family-recap step's player. */
   midSeasonPlayerId: '5eed0c0a-c112-4d3e-9a01-0000000000f0',
+  /**
+   * Riverdale Ridge 14U — the player the pitch deck's development slide is photographed on
+   * (`lib/marketing-shots.ts`, added 2026-08-20). Same reasoning as the one above: a marketing
+   * capture addresses this player's page by URL, so the id has to survive a reseed.
+   *
+   * ⚠ Not any player. He is the one who carries BOTH halves of what that screen claims — an
+   * active focus area (`OFFSEASON_DEVELOPMENT_GOALS`) and a reading at both testing days
+   * (`OFFSEASON_TESTING_SESSIONS` — he is absent from neither). A player missing either half
+   * photographs as an empty card under a sentence promising a full one.
+   */
+  offSeasonPlayerId: '5eed0c0a-c114-4d3e-9a01-0000000000f1',
 } as const;
 
 export const DEMO_ORGS: readonly DemoOrgDefinition[] = [

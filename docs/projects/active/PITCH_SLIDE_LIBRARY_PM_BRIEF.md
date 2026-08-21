@@ -59,10 +59,27 @@ the live demo — and the demo is one click away on every page we publish.
    a proper phone layout for them — and that is now a P2 job. What P1 did buy on a phone: the
    picture leads at full width, and the highlight rings mean a reader who can't read the numbers
    can still see which two columns the sentence is about.
-2. **The fourteen new slides — now split in two, because photographing a screen and drawing a
-   picture are different jobs with different ways of going wrong.**
-   **P2a** is the nine slides that photograph a real screen, and it carries the phone fix above —
-   so the open defect closes at the start of that phase rather than the end.
+2. **The fourteen new slides — split in two, because photographing a screen and drawing a picture
+   are different jobs with different ways of going wrong.**
+
+   **P2a — DONE (dev, 2026-08-20; owner walk owed as QA §69).** Nine slides that photograph a real
+   screen, and the phone fix. **The phone defect is closed and measured:** the two coach money
+   pictures went from 33% and 39% of readable size on a phone to **92% each**, because they are now
+   photographed on the phone layouts the product already had rather than cropped from a laptop
+   screenshot. The coach walkthrough page also grew from two panels to six on the owner's call, and
+   now walks a coach's year — tryout scoring on a phone, the practice plan, the book on Saturday's
+   opponent, the dues, the season squared up, and a closed season kept on one page.
+
+   ⚠ **P2a turned up something worth more than the slides it was blocked by.** Three of the nine
+   could not be photographed because the screens were EMPTY in the live demo: no awards on any team
+   a coach can open, no contents in the scouting book, and a single testing day where the product
+   promises a trend. Two of those are the features the owner named as headline, and a prospect
+   walking the production demo was finding them blank — every page rendering perfectly, which is
+   why nothing caught it. The demo now seeds all three, so the shop window shows what the product
+   does. **This is the maintenance rule at the bottom of this brief doing its job for the first
+   time, in the opposite direction from the one anyone expected: the demo had drifted behind the
+   product, not the marketing behind the demo.**
+
    **P2b** is the five hand-drawn explainers, including the one that gives the dues slide back the
    half of its headline P1 gave up.
 3. **A private page listing the whole library**, plus the check that flags a slide whose screen or
@@ -75,8 +92,11 @@ assembling from.
 ## Success criteria
 
 - A slide can be written once and appear in two decks with no edit.
-- Both walkthrough pages are legible on a phone. ⚠ Partly met at P1 — see the sequencing note.
-  Fully met when the coach money screens are re-photographed at phone width in P2.
+- Both walkthrough pages are legible on a phone. ✅ **Met for the money screens at P2a** — measured
+  92% of readable size at phone width, up from 33% and 39%. ⚠ Not met in general, and cannot be by
+  page design: three of the six coach pictures are desktop screens and render at about a third on a
+  phone. Fixing each means photographing that screen on a phone too — which makes it small on a
+  laptop instead. Left as an owner call per slide rather than decided quietly.
 - Every claim on every slide is traceable to something the product actually does — checked before
   the slide ships, not after a prospect notices.
 - Producing a deck for a new audience costs a list of slide numbers, not a writing project.

@@ -31,13 +31,16 @@ import { createClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
 import { commitmentStanding } from '../lib/payable-standing.ts';
+import { normalizeOpponentName } from '../lib/opponent-name-key.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
-  OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
+  OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES,
+  OFFSEASON_TESTING_SESSIONS, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
   MIDSEASON_DUES, resolveMidSeasonState,
+  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING,
   SEASON_START_BUDGET_LINES,
 } from '../lib/demo-coach.ts';
 
@@ -365,19 +368,57 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     const { data: goals } = await db.from('rep_player_development_goals').select('id, status').eq('team_id', teamId);
     check((goals ?? []).length >= 4 && (goals ?? []).some(g => g.status === 'achieved'),
       `${goals?.length} focus areas on the go, at least one already achieved`);
+    /* ── TWO testing days, and the gap between them is the assertion ─────────────────────────
+       Widened 2026-08-20. One session was enough to prove that measuring happens and could never
+       show what measuring is FOR: the product only draws a trend "after a second entry", so the
+       sandbox was demonstrating an empty promise on the surface whose whole claim is "put this
+       month's number beside last month's". */
     const { data: sessions } = await db.from('rep_team_evaluation_sessions')
-      .select('id, session_date, event_id').eq('program_year_id', py.id);
-    check(sessions?.length === 1 && !!sessions[0].event_id,
-      'one testing session, hung off the practice it was actually run at');
+      .select('id, session_date, event_id, note').eq('program_year_id', py.id)
+      .order('session_date', { ascending: true });
+    const sessionRows = sessions ?? [];
+    check(sessionRows.length === OFFSEASON_TESTING_SESSIONS.length
+      && OFFSEASON_TESTING_SESSIONS.every(s => sessionRows.some(r => r.note === s.note)),
+      `${OFFSEASON_TESTING_SESSIONS.length} testing days, each named — the re-anchor matches them on their note`,
+      sessionRows.map(r => `${r.note}@${r.session_date}`).join(', '));
+    /* ⚠ Distinct dates is the load-bearing one. The re-anchor used to give EVERY session the one
+       date the world declared; unchanged, it would have collapsed both testing days onto the same
+       morning on the first night the clock moved, and a trend line between two readings taken on
+       the same day says nothing at all. */
+    check(new Set(sessionRows.map(r => r.session_date)).size === sessionRows.length,
+      'they sit on different days, months apart — a trend, not two readings from one morning');
+    check(sessionRows.some(r => !!r.event_id) && sessionRows.some(r => !r.event_id),
+      'one hangs off the practice it was run at and one stands alone — both shapes the product allows');
+
     const { data: roster } = await db.from('rep_roster_players')
       .select('id, guardian_email, player_number').eq('program_year_id', py.id).eq('status', 'active');
     const { data: readings } = await db.from('rep_player_measurables')
-      .select('player_id, measurable_type_id, unit').eq('session_id', sessions?.[0]?.id ?? '');
-    const tested = new Set((readings ?? []).map(r => r.player_id)).size;
-    check(tested === (roster?.length ?? 0) - OFFSEASON_TESTING_ABSENT.length,
-      `${tested} of ${roster?.length} players were tested — the ${OFFSEASON_TESTING_ABSENT.length} who missed have no row, not a zero`);
-    check(new Set((readings ?? []).map(r => r.measurable_type_id)).size === OFFSEASON_MEASURABLE_TYPES.length,
-      `all ${OFFSEASON_MEASURABLE_TYPES.length} tests were run`);
+      .select('player_id, measurable_type_id, unit, session_id, value')
+      .in('session_id', sessionRows.map(r => r.id));
+    for (const declared of OFFSEASON_TESTING_SESSIONS) {
+      const row = sessionRows.find(r => r.note === declared.note);
+      const mine = (readings ?? []).filter(r => r.session_id === row?.id);
+      const tested = new Set(mine.map(r => r.player_id)).size;
+      check(tested === (roster?.length ?? 0) - declared.absent.length,
+        `${declared.note}: ${tested} of ${roster?.length} tested — the ${declared.absent.length} who missed have no row, not a zero`);
+      check(new Set(mine.map(r => r.measurable_type_id)).size === OFFSEASON_MEASURABLE_TYPES.length,
+        `${declared.note}: all ${OFFSEASON_MEASURABLE_TYPES.length} tests were run`);
+    }
+    /* The direction of travel. A demo that showed a roster getting SLOWER over a winter of
+       coaching would be arguing against the product on the product's own screen. */
+    const sprintType = (await db.from('rep_team_measurable_types')
+      .select('id, name').eq('team_id', teamId)).data?.find(t => t.name === OFFSEASON_MEASURABLE_TYPES[0].name);
+    const bySession = (note) => {
+      const row = sessionRows.find(r => r.note === note);
+      const vals = (readings ?? []).filter(r => r.session_id === row?.id && r.measurable_type_id === sprintType?.id)
+        .map(r => Number(r.value));
+      return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    };
+    const before = bySession(OFFSEASON_TESTING_SESSIONS[0].note);
+    const after = bySession(OFFSEASON_TESTING_SESSIONS.at(-1).note);
+    check(before != null && after != null && after < before,
+      `the ${OFFSEASON_MEASURABLE_TYPES[0].name} got FASTER between the two — the winter's work shows`,
+      before != null && after != null ? `${before.toFixed(2)} → ${after.toFixed(2)}` : 'no readings');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 14U guardian address is unreachable example.com');
   }
 }
@@ -659,6 +700,71 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     check(plannedPractices.length === 3 && plannedPractices.filter(d => d < today).length >= 2,
       'three practices are written up, at least two of them behind us');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 12U guardian address is unreachable example.com');
+
+    /* ── Awards and the scouting book: two headline features the shop window was showing EMPTY ──
+       Found 2026-08-20 while photographing the pitch deck. Awards existed only on the 13U, whose
+       season is closed and therefore unreachable behind the season gate, so Insights → Awards
+       opened on "No awards given yet" for every live team; the scouting book's tables were only
+       ever DELETED by the seed, so every opponent card opened on an empty textarea. Both screens
+       rendered perfectly, which is exactly why nothing caught it — and it is the reason these are
+       asserted on CONTENT rather than on the page loading. */
+    const { data: awards12 } = await db.from('rep_player_awards')
+      .select('id, award_type_id, awarded_at, event_id').eq('team_id', teamId);
+    const { data: awardTypes12 } = await db.from('rep_team_award_types').select('id').eq('team_id', teamId);
+    check((awards12 ?? []).length === MIDSEASON_AWARDS.length
+      && (awardTypes12 ?? []).length === MIDSEASON_AWARD_TYPES.length,
+      `${MIDSEASON_AWARDS.length} awards across ${MIDSEASON_AWARD_TYPES.length} coach-invented types — the report is not an empty state`,
+      `${(awards12 ?? []).length} awards, ${(awardTypes12 ?? []).length} types`);
+    /* ⚠ Not decoration. An award dated ahead of today is a trophy handed out at a game that has
+       not been played, and an award with no game behind it loses the "in the moment" beat the
+       slide is built on — both are what a re-anchor that forgot `rep_player_awards` would produce. */
+    check((awards12 ?? []).every(a => a.awarded_at <= today && !!a.event_id),
+      'every award is dated on or before today and hangs off the game it was given at');
+    check(new Set((awards12 ?? []).map(a => a.awarded_at)).size >= 4,
+      'and they are SPREAD across the season — handed out in the moment, not written up in one sitting');
+
+    const { data: book } = await db.from('rep_team_opponents')
+      .select('id, display_name, normalized_name, summary').eq('team_id', teamId);
+    const { data: obs } = await db.from('rep_team_opponent_observations')
+      .select('id, opponent_id, body, tag, event_id, created_at').eq('team_id', teamId);
+    check((book ?? []).length === MIDSEASON_SCOUTING.length,
+      `${MIDSEASON_SCOUTING.length} of the six opponents carry a book — the other two are bare on purpose`,
+      `${(book ?? []).length} book rows`);
+    /* ⚠ THE ONE THAT ACTUALLY MATTERS. The book is an OVERLAY keyed on the normalized opponent
+       name, so a book row whose key does not match a game's opponent is invisible: the card would
+       render, the notes would be in the database, and the coach would see an empty book. Assert
+       the join, never the row count alone. */
+    const gameKeys = new Set(games.map(g => normalizeOpponentName(g.opponent)));
+    check((book ?? []).every(b => gameKeys.has(b.normalized_name)),
+      'every book row keys onto a team this side has actually played (the overlay join holds)',
+      (book ?? []).filter(b => !gameKeys.has(b.normalized_name)).map(b => b.display_name).join(', ') || undefined);
+    /* Saturday's opponent is the book a prospect opens first — "you play them Saturday" is the
+       whole slide, so an empty book on THAT team is the one emptiness that would still bite. */
+    const satOpponentKey = upcoming[0] ? normalizeOpponentName(upcoming[0].opponent) : null;
+    const satBook = (book ?? []).find(b => b.normalized_name === satOpponentKey);
+    check(!!satBook?.summary && (obs ?? []).filter(o => o.opponent_id === satBook.id).length >= 3,
+      "Saturday's opponent has a book line and at least three observations — the one book that must not be empty",
+      satBook ? `${(obs ?? []).filter(o => o.opponent_id === satBook.id).length} observations` : 'no book for Saturday\'s opponent');
+    /* ⚠⚠ THE JOIN THAT MATTERS, AND THE ONE THIS FILE ORIGINALLY MISSED. An observation carries
+       BOTH an `opponent_id` (which book it belongs to) and an `event_id` (which meeting it came
+       out of), and nothing in the database makes those two agree. The drill-in derives a book's
+       meetings by NAME and then matches observations to them by `event_id`; a note whose event is
+       a game against a DIFFERENT team still lists under the right book, so every count and every
+       page looks correct — it just silently falls into the "General" bucket instead of under the
+       game it came from. The first version of MIDSEASON_SCOUTING got all seven wrong and the
+       earlier book-level assertion below passed anyway. Assert the pairing per OBSERVATION. */
+    const eventOpponent = new Map((events ?? []).map(e => [e.id, normalizeOpponentName(e.opponent)]));
+    const bookKeyById = new Map((book ?? []).map(b => [b.id, b.normalized_name]));
+    const strays = (obs ?? []).filter(o =>
+      o.event_id && eventOpponent.get(o.event_id) !== bookKeyById.get(o.opponent_id));
+    check(strays.length === 0,
+      'every observation hangs off a game against ITS OWN opponent — so the book groups them by meeting rather than dumping them in “General”',
+      strays.length ? `${strays.length} of ${(obs ?? []).length} attached to another team's game` : undefined);
+
+    check((obs ?? []).every(o => orgDateWithOffset(new Date(o.created_at), 0) <= today),
+      'no observation is dated in the future (the re-anchor moves the log with the schedule)');
+    check((obs ?? []).some(o => !o.event_id),
+      'and one note stands on its own — the "General" group a book of only game-attached notes never shows');
 
     /* The 12U was the only team with practices and NO attendance-timing assertion — and it is the
        team most exposed to it: its Tuesday/Thursday practices sit in the current week, so one

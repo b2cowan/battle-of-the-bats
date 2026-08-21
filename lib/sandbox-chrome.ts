@@ -478,7 +478,7 @@ export function sandboxTourSteps(
  *     and it sits on a tab the hub does not auto-select for a tryout with scores in it, inside a
  *     `display:none` panel — an anchor there would be a dead step;
  *   · PRACTICE PLANS have no address at all (a schedule event opens a drawer over `/schedule`),
- *     so the off-season step goes to Development, where the testing session's honest blanks are
+ *     so the off-season step goes to Development, where the testing sessions' honest blanks are
  *     addressable.
  * Every remaining destination was opened and confirmed to render the thing its sentence claims.
  */
@@ -502,7 +502,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.offSeason, '/development'),
       exactPath: true,
       anchor: '[data-sandbox-tour="development-sessions"]',
-      said: 'Eleven of thirteen players were tested that day. The other two show a dash, not a zero — nothing here is invented to fill a column. Four things this team is working on, one already reached.',
+      // ⚠ RE-WRITTEN 2026-08-20 when the world gained a second testing day. The old sentence
+      // ("Eleven of thirteen players were tested that day") never became false — both sessions
+      // are eleven of thirteen — but it described a screen showing ONE date while the screen now
+      // shows two, and it left out the thing the second one exists for. This is the demo-drift
+      // case CLAUDE.md reserves for a person: not a broken sentence, a story that stopped keeping
+      // up with the product. Numbers verified against `OFFSEASON_TESTING_SESSIONS`.
+      said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Eleven of thirteen were there each time; the ones who missed show a dash, not a zero, because nothing here is invented to fill a column. Four things this team is working on, one already reached.',
       nextLabel: 'Next: the season starts',
     },
     {

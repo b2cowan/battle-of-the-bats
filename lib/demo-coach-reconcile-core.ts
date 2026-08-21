@@ -298,33 +298,72 @@ export async function reconcileCoachSandbox(
  *     the reseed is the one-command repair (`scripts/seed-demo-coach.mjs`).
  */
 async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, anchorEventId: string): Promise<number> {
-  const { data: events, error: eventsError } = await db.from('rep_team_events')
-    .select('id, starts_at, ends_at').eq('team_id', teamId);
+  /**
+   * ⚠ EVERY READ HERE IS INDEPENDENT, SO THEY GO TOGETHER. Only the credits genuinely depend on
+   * something (the roster ids), and they stay sequential below for that reason. This runs nightly,
+   * per team, against a live database; awaited one at a time these were seven serial round trips
+   * for no reason, and the count grows every time the demo world gains a dated table.
+   *
+   * ⚠ The WRITES further down are a different matter and must NOT be parallelised — the anchor
+   * event moves first, alone, and the long note on this function explains why the retry story
+   * depends on that ordering.
+   *
+   * ⚠⚠ **AND THE REAL WEAKNESS IS NOT THE ROUND TRIPS — IT IS THAT THIS LIST IS HAND-MAINTAINED.**
+   * A new dated table in the demo world only rides the clock if someone remembers to add it here,
+   * and 2026-08-20 is the proof: awards and the scouting log were seeded without it, and the
+   * schedule would have walked forward past its own record (trophies handed out before the season
+   * started; notes from games that had not happened). A declarative `{table, dateColumn, filter}`
+   * list feeding one loop is the deeper answer, and it was considered and NOT taken: the filters
+   * are genuinely heterogeneous — credits reach their rows through the roster, opponents and
+   * fundraisers need `.not(col, 'is', null)` — so a table-driven version needs an escape hatch and
+   * is not yet a clean win. **Trigger for revisiting: a THIRD dated table gets forgotten. Two is a
+   * coincidence; three is the pattern that pays for the abstraction.**
+   */
+  const [
+    { data: events, error: eventsError },
+    { data: installments, error: duesError },
+    // Payment FACTS ride the clock too (mig 232): a paid stamp is only a coverage projection now,
+    // and the dollars behind it live in rep_dues_payments with their own received_date. Shifting
+    // the stamps without the payments would strand the demo's cash a re-anchor behind its books
+    // (the month-grid Actual reads received_date).
+    { data: duesPayments, error: payError },
+    // The Bottle Drive rides the clock too. A rebate is money the team owes a family, dated the day
+    // the drive closed — leave it unshifted and the demo's credits stand still while the bills they
+    // are lowering walk forward, until "closed last month" quietly becomes "closed last year".
+    { data: fundraisers, error: fundError },
+    // Awards and the scouting log ride the clock too (both added to the 12U 2026-08-20). An award
+    // is dated the GAME it was given at and the book's log is grouped by meeting, so leaving either
+    // behind would walk the schedule forward past its own record: awards night would show trophies
+    // handed out before the season started, and the book would show notes from games that had not
+    // happened yet. Both surfaces print their dates, so the drift would be visible, not theoretical.
+    { data: awards, error: awardError },
+    { data: observations, error: obsError },
+    { data: opponents, error: oppError },
+    // Credits are season-scoped (no team_id of their own), so they come via the roster — this
+    // fetches the roster; the credits themselves need its answer and follow after.
+    { data: rosterIds, error: rosterError },
+  ] = await Promise.all([
+    db.from('rep_team_events').select('id, starts_at, ends_at').eq('team_id', teamId),
+    db.from('rep_player_dues_installments').select('id, due_date, paid_at').eq('team_id', teamId),
+    db.from('rep_dues_payments').select('id, received_date').eq('team_id', teamId),
+    db.from('rep_fundraisers').select('id, start_date, end_date').eq('team_id', teamId).not('end_date', 'is', null),
+    db.from('rep_player_awards').select('id, awarded_at').eq('team_id', teamId),
+    db.from('rep_team_opponent_observations').select('id, created_at').eq('team_id', teamId),
+    db.from('rep_team_opponents').select('id, last_note_updated_at')
+      .eq('team_id', teamId).not('last_note_updated_at', 'is', null),
+    db.from('rep_roster_players').select('id').eq('team_id', teamId),
+  ]);
+  // ⚠ Checked one by one rather than with a `.find()` over the results: the message has to name
+  // WHICH read failed, and a supabase client returns its error in the row rather than throwing.
   if (eventsError) throw new Error(eventsError.message);
-
-  const { data: installments, error: duesError } = await db.from('rep_player_dues_installments')
-    .select('id, due_date, paid_at').eq('team_id', teamId);
   if (duesError) throw new Error(duesError.message);
-
-  // Payment FACTS ride the clock too (mig 232): a paid stamp is only a coverage projection now,
-  // and the dollars behind it live in rep_dues_payments with their own received_date. Shifting
-  // the stamps without the payments would strand the demo's cash a re-anchor behind its books
-  // (the month-grid Actual reads received_date).
-  const { data: duesPayments, error: payError } = await db.from('rep_dues_payments')
-    .select('id, received_date').eq('team_id', teamId);
   if (payError) throw new Error(payError.message);
-
-  // The Bottle Drive rides the clock too. A rebate is money the team owes a family, dated the day
-  // the drive closed — leave it unshifted and the demo's credits stand still while the bills they
-  // are lowering walk forward, until "closed last month" quietly becomes "closed last year".
-  const { data: fundraisers, error: fundError } = await db.from('rep_fundraisers')
-    .select('id, start_date, end_date').eq('team_id', teamId).not('end_date', 'is', null);
   if (fundError) throw new Error(fundError.message);
-
-  // Credits are season-scoped (no team_id of their own), so they come via the roster.
-  const { data: rosterIds, error: rosterError } = await db.from('rep_roster_players')
-    .select('id').eq('team_id', teamId);
+  if (awardError) throw new Error(awardError.message);
+  if (obsError) throw new Error(obsError.message);
+  if (oppError) throw new Error(oppError.message);
   if (rosterError) throw new Error(rosterError.message);
+
   const playerIds = (rosterIds ?? []).map((r: { id: string }) => r.id);
   const { data: duesCredits, error: creditError } = playerIds.length
     ? await db.from('rep_dues_credits').select('id, credit_date').in('player_id', playerIds)
@@ -338,6 +377,9 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   type PaymentRow = { id: string; received_date: string };
   type FundraiserRow = { id: string; start_date: string | null; end_date: string | null };
   type CreditRow = { id: string; credit_date: string };
+  type AwardRow = { id: string; awarded_at: string };
+  type ObservationRow = { id: string; created_at: string };
+  type OpponentRow = { id: string; last_note_updated_at: string };
   const allEvents = (events ?? []) as EventRow[];
   const siblings = allEvents.filter(e => e.id !== anchorEventId);
   const anchor = allEvents.filter(e => e.id === anchorEventId);
@@ -368,6 +410,17 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   ) + (
     await shiftRows(db, 'rep_dues_credits', (duesCredits ?? []) as CreditRow[], 'credit_date',
       c => ({ credit_date: addCalendarDays(c.credit_date, days) }))
+  ) + (
+    await shiftRows(db, 'rep_player_awards', (awards ?? []) as AwardRow[], 'awarded_at',
+      a => ({ awarded_at: addCalendarDays(a.awarded_at, days) }))
+  ) + (
+    // `created_at` is an instant, not a date — shifted whole days so the evening an observation
+    // was logged stays an evening across DST, exactly as the events themselves do.
+    await shiftRows(db, 'rep_team_opponent_observations', (observations ?? []) as ObservationRow[], 'created_at',
+      o => ({ created_at: shiftIsoDays(o.created_at, days) }))
+  ) + (
+    await shiftRows(db, 'rep_team_opponents', (opponents ?? []) as OpponentRow[], 'last_note_updated_at',
+      o => ({ last_note_updated_at: shiftIsoDays(o.last_note_updated_at, days) }))
   );
 }
 
@@ -399,24 +452,37 @@ async function restateOffSeasonBooks(
   state: OffSeasonState,
 ): Promise<number> {
   const { data: sessions, error: sessionError } = await db
-    .from('rep_team_evaluation_sessions').select('id, session_date').eq('team_id', teamId);
+    .from('rep_team_evaluation_sessions').select('id, session_date, note').eq('team_id', teamId);
   if (sessionError) throw new Error(sessionError.message);
 
-  type SessionRow = { id: string; session_date: string };
+  type SessionRow = { id: string; session_date: string; note: string | null };
 
   let written = await restateExpenses(db, teamId, state.expenses);
+
+  /**
+   * ⚠⚠ **MATCHED ON `note`, NEVER ON POSITION OR DATE.** This loop used to give EVERY session the
+   * one date the world declared — correct while there was exactly one, and silently destructive
+   * the moment a second arrived (2026-08-20): both testing days would collapse onto the same
+   * day, which is the one thing that would make a trend line meaningless. The note is a session's
+   * only stable identity across a re-anchor — its date is the thing being restated, and its row
+   * id is not something the world module knows.
+   */
+  const wanted = new Map(state.testingSessions.map(s => [s.note, s.date]));
 
   // The session, then its readings — the order the product's own re-stamp uses, so a failure
   // between them leaves the pair consistent on the OLD date rather than half-moved.
   for (const session of (sessions ?? []) as SessionRow[]) {
-    if (session.session_date === state.testingSessionDate) continue;
+    const date = session.note ? wanted.get(session.note) : undefined;
+    // A session the world does not name is left alone rather than guessed at: this job restates
+    // what the seed wrote, and moving a row it cannot identify is how a re-anchor invents data.
+    if (!date || session.session_date === date) continue;
     const { error } = await db.from('rep_team_evaluation_sessions')
-      .update({ session_date: state.testingSessionDate }).eq('id', session.id);
+      .update({ session_date: date }).eq('id', session.id);
     if (error) throw new Error(`rep_team_evaluation_sessions: ${error.message}`);
     written++;
     const { error: readingError, count } = await db.from('rep_player_measurables')
-      .update({ recorded_on: state.testingSessionDate }, { count: 'exact' })
-      .eq('session_id', session.id).neq('recorded_on', state.testingSessionDate);
+      .update({ recorded_on: date }, { count: 'exact' })
+      .eq('session_id', session.id).neq('recorded_on', date);
     if (readingError) throw new Error(`rep_player_measurables: ${readingError.message}`);
     written += count ?? 0;
   }

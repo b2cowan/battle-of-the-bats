@@ -2,7 +2,7 @@
 
 **Status:** APPROVED 2026-08-20 (owner accepted the three image classes, the two deck running
 orders, the slide format and the no-plan-names rule in-session). **P1 SHIPPED to dev 2026-08-20 — owner QA §67 ✅ PASSED.
-P2a (prompt written) → P2b → P3 → P4 not started.**
+P2a SHIPPED to dev 2026-08-20 — owner QA §69 owed. P2b → P3 → P4 not started.**
 **PM brief:** [PITCH_SLIDE_LIBRARY_PM_BRIEF.md](PITCH_SLIDE_LIBRARY_PM_BRIEF.md)
 **The library itself (owner-approved, binding spec):**
 `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e` — 21 slides, two decks, in order.
@@ -187,8 +187,76 @@ only in one build's CSS.
 - **P2 — the fourteen new slides. SPLIT BY KIND OF WORK after the P1 walk**, because captures and
   illustrations are two different jobs with two different review tests:
   - **P2a — the nine slides whose picture is a REAL SCREEN** (eight composed, one proof) **plus the
-    phone re-captures that close the open §65/§66 defect.** One pipeline, one discipline. Build
-    prompt: [PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md](PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md).
+    phone re-captures that close the open §65/§66 defect. ✅ SHIPPED to dev 2026-08-20, owner QA
+    §69 owed.** Build prompt:
+    [PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md](PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md). What it
+    settled is recorded below — read it before P2b.
+
+  ### What P2a actually settled — read before planning P2b
+
+  **1. ⚠⚠ THE PHONE DEFECT IS CLOSED, AND IT COST A DEMO-WORLD CHANGE NOBODY HAD BUDGETED FOR.**
+  Both coach money pictures were re-photographed on the phone layouts the product genuinely has.
+  Measured on the real page at four widths: **Player Dues 33% → 92%, Season settlement 39% → 92%**
+  at 390px, with shape distortion under 0.9% everywhere. The rule underneath it is the same
+  arithmetic P1 found, applied to height instead of rows: **a phone capture has to be SHORT enough
+  to be drawn at full width.** The settlement sheet's first crop was the whole modal — 390×1000, a
+  0.39 ratio, which the fixed stage draws about 165px wide on a laptop. Dropping the team's-money
+  summary from frame (nine lines of small figures, unreadable at that scale anyway) took it to
+  359×395 and bought ~90% at phone width AND ~100% on a laptop. **Do not reach for a taller crop
+  because it contains more.**
+
+  **2. ⚠⚠ THREE OF THE NINE SLIDES COULD NOT BE PHOTOGRAPHED AT ALL, AND THE REASON WAS A LIVE
+  DEMO DEFECT, NOT A SLIDE PROBLEM.** Awards, the scouting book's contents and a second testing
+  session did not exist in the coach sandbox: awards were seeded only on the CLOSED 13U season, so
+  the season gate made the report unreachable and every live team opened on "No awards given yet";
+  the seed only ever DELETED the two scouting tables, so every opponent card opened on an empty
+  textarea; and one testing session cannot draw a trend, on the screen whose whole promise is "put
+  this month's number beside last month's". **Two of the three are features the owner names as
+  headline, and a prospect walking the production demo was finding them blank.** Every page
+  rendered perfectly, which is exactly why nothing caught it — `check:demos` proves the worlds are
+  in a presentable STATE and cannot know the product gained a screen the world has no data for.
+  The owner ruled (2026-08-20) that the seeding belonged in this phase rather than after it.
+
+  **3. What that seeding had to carry with it, and the trap inside it.** New dated rows must ride
+  the nightly re-anchor or they walk backwards past their own schedule — awards and observations
+  are both dated and both print their dates, so `shiftTeamSchedule` now moves them. ⚠ **The
+  expensive one was the second testing session:** `restateOffSeasonBooks` gave EVERY session the
+  one date the world declared, which was correct while there was exactly one and silently
+  destructive the moment a second arrived. It now matches on the session's NOTE — the only stable
+  identity a row has across a re-anchor — and `check-demo-coach` asserts the two dates stay
+  distinct, because the failure would have been a trend line between two readings taken the same
+  morning.
+
+  **4. Two capture-core incidents, and they are the same element twice.** The coach portal pins a
+  navigation bar to the bottom of the viewport at phone width. It (a) swallows a `prepare` click
+  aimed low on a long phone screen — reported as a timeout on an element Playwright has already
+  resolved, with a call log about stability that sends you hunting an animation that does not
+  exist — and (b) **photographs as an opaque band across the MIDDLE of a `clipAll` crop**, because
+  a union is taken `fullPage` in document coordinates while a fixed element paints at its viewport
+  position. (b) shipped once, wiping out a family's card, and was found by LOOKING AT THE PNG —
+  nothing failed. One manifest field (`hide`) answers both; it was briefly two mechanisms, and the
+  prepare-only version is what let (b) through.
+
+  **5. Selector traps that cost a capture run each.** `text=` cannot be a member of a
+  comma-separated CSS list — Playwright's text engine swallows the rest of the string as its
+  argument, and it fails as "matched nothing visible" rather than as a syntax error. A union's
+  x-range is the range of the MATCHED boxes, so pairing a page title with a narrow heading inside
+  a column produced a crop sliced down both sides; pair it with the full-width CONTAINER instead.
+  And `a:has-text()` reads text content, so a link whose label lives on `aria-label` matches
+  nothing and simply waits.
+
+  **6. The scouting book's capture route, answered.** The game console is Saturday-only, so the
+  book is shot from the opponents report — and it turns out to be the better picture: the console
+  shows the book, the report shows the book AND how it filled up.
+
+  **7. A cost the owner should see: the page carries six Premium plan lines where it carried two.**
+  Every one is accurate — the free portal has none of these tools — but six in a row may read as
+  "everything costs extra" rather than as disclosure. Left as built and flagged in QA §69.
+
+  **8. Three page pictures are desktop screens and render at 34–52% on a phone** (the scouting
+  book, Season Wrapped, the practice plan). Same arithmetic as (1) and the same honest answer: a
+  960px screen cannot be read on a 350px column. Re-photographing each at phone width would make
+  it small on a laptop instead. Recorded, not decided.
   - **P2b — the five hand-drawn explainers** (#02 #05 #07 #16 #17). Illustration, no pipeline, and
     the forbidden-fourth-class test rather than a capture guard. ⚠ #02 restores the half of slide
     #01’s headline that P1 gave up, so it carries a live-page improvement, not just a new slide.
@@ -224,6 +292,9 @@ belongs in the release checklist rather than a build gate.
 
 ## Open questions carried in
 
+- **Phone legibility of the coach money screens (QA §65, §66) — ✅ CLOSED IN P2a.** Re-photographed
+  at phone width: 33% → 92% and 39% → 92%, measured. The general case (a wide desktop screen on a
+  phone) is not closed and cannot be by geometry — see the P2a entry, item 8.
 - **Phone legibility of wide captures (QA §65, §66) — ANSWERED BY P1, AND THE ANSWER IS NO.** The
   fixed stage plus the phone reflow fixed the bracket (33% → 68%) and did nothing for the dues
   table (33% → 33%), because a row crop changes height and scale follows width. **The fallback is
@@ -232,8 +303,8 @@ belongs in the release checklist rather than a build gate.
 - **⚠ Lime is spent five times on the shipped walkthrough panel** against a binding one-lime-action
   rule (`design_decisions.md`, 2026-08-20 rider). Defensible on a slide, which carries no call to
   action for it to compete with; open on the scroll page. Owner to judge on the real page.
-- **The scouting book's capture route** — the game console is Saturday-only, so the book must be
-  shot from the opponents report instead. To confirm during P2.
+- ~~**The scouting book's capture route**~~ — ✅ answered in P2a: the opponents report, and it is
+  the better picture. Its book was also EMPTY in the demo world until P2a seeded it.
 - **Game day cannot be photographed at all** (`PRESALES_WALKTHROUGH_PLAN.md` P3 note) — the live
   console exists ~7h/week, the seeded Saturday game deliberately has no lineup, and game rows take
   a fresh random id every reseed. Slide #07 must therefore be an **explainer**, which is exactly

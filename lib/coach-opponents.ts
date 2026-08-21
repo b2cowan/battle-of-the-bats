@@ -22,24 +22,14 @@ export const OPPONENT_SUMMARY_MAX = 500;
 export const OPPONENT_OBSERVATION_MAX = 500;
 
 /**
- * The grouping key. Casefold, strip punctuation, collapse whitespace, drop a leading
- * "the ". Deliberately conservative — spelling drift beyond this is the alias table's job,
- * a coach decision, not a fuzzy matcher's guess.
+ * The grouping key — re-exported from `lib/opponent-name-key.ts`, which holds the rule itself.
+ *
+ * ⚠ It lives in a dependency-free leaf module so the demo seeders (Node type-stripping, which
+ * cannot resolve this file's extensionless imports) can use the SAME function rather than
+ * re-typing it. Every existing caller keeps importing it from here.
  */
-export function normalizeOpponentName(name: string | null | undefined): string {
-  if (!name) return '';
-  let collapsed = name
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  // Strip leading "the " to a FIXED POINT, not once: already-normalized keys round-trip
-  // through this function (URL params, merge payloads), and a single strip made
-  // f(f("the the sharks")) ≠ f("the the sharks") — a re-normalized key could silently
-  // address a DIFFERENT opponent. Idempotence is load-bearing; a bare "the" survives.
-  while (collapsed.startsWith('the ')) collapsed = collapsed.slice(4);
-  return collapsed;
-}
+import { normalizeOpponentName } from './opponent-name-key';
+export { normalizeOpponentName };
 
 /** Decode + normalize a `[opponentKey]` URL param. '' = nothing addressable (route 404s). */
 export function normalizeOpponentKeyParam(raw: string): string {

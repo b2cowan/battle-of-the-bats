@@ -38,6 +38,24 @@
  *    `public/help/coaches/money-record-payment.png` had shipped with the badge sitting on
  *    top of the portal's nav, obscuring a label. It lives in a shadow root, so the rule
  *    below hides its light-DOM host (`nextjs-portal`) — a stylesheet cannot reach inside.
+ * 6. A FIXED BAR BLOCKS A PREPARE CLICK — the coach portal pins a navigation bar to the bottom
+ *    of the viewport at phone width, so a `prepare` step aimed at anything low on a long phone
+ *    screen never becomes actionable. It surfaces as a timeout on an element Playwright has
+ *    ALREADY RESOLVED, with a call log about visibility and stability, which sends you hunting
+ *    an animation that does not exist; `scrollIntoView({block:'center'})` does not help, because
+ *    Playwright re-scrolls the element before every attempt.
+ * 7. ⚠⚠ AND THE SAME BAR PHOTOGRAPHS INTO THE MIDDLE OF A `clipAll` CROP. A union crop is
+ *    measured in DOCUMENT coordinates and taken `fullPage` (incident #5's fix), but a
+ *    `position: fixed` element is painted at its VIEWPORT position — so the phone nav landed
+ *    as an opaque band straight across the centre of the dues capture, wiping out a family's
+ *    card. On a real phone that bar sits at the foot of the screen and never covers the middle
+ *    of a list, so this is a capture artifact rather than the product, and hiding it is the
+ *    honest answer rather than a cosmetic one. Found by looking at the PNG; nothing failed.
+ *
+ *    Both are answered by one manifest field, `hide`, applied before the prepare clicks and left
+ *    in place through the shutter. It was briefly two mechanisms (a prepare-only version that
+ *    lifted before the screenshot) and that version shipped #7 — the narrower rule was not wrong
+ *    so much as answering half the problem.
  */
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -179,6 +197,11 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
         page.locator(`${selector} >> visible=true`).first().waitFor({ state: 'visible', timeout: 20_000 });
 
       await waitVisible(shot.ready);
+
+      // incidents #6 and #7 — both are the SAME element (a viewport-pinned bar) and both are
+      // answered by `hide`. See the header for what each one looks like when it bites.
+      if (shot.hide) await page.addStyleTag({ content: `${shot.hide} { display: none !important; }` });
+
       for (const step of shot.prepare ?? []) {
         await page.click(step, { timeout: 10_000 });
         await page.waitForTimeout(400);

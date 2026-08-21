@@ -9527,3 +9527,103 @@ clears by four pixels.
 - [ ] ⚠ **The bigger question to rule on at the same time:** should the marketing pages join the
       automated rendered check? They are the only public surface with no layout gate at all, and
       this defect is exactly what such a gate exists to catch.
+
+---
+
+## §69 · The coach deck's nine new pictures — and the empty screens a prospect was already finding
+
+**BUILT 2026-08-20 (dev).** Plan: `PITCH_SLIDE_LIBRARY_PLAN.md` (P2a). Approved spec: the library
+artifact `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e`.
+
+**⚠ THE BLOCKING CHECK IS PHONE LEGIBILITY.** That is the defect §65/§66 left open and §67 could
+only half close. Everything else in this section is judgement.
+
+### Part A — the phone defect, closed (**walk this first**)
+
+The two coach money pictures were desktop tables measuring **33% and 39% of true size at 390px**.
+Both are now photographed on the phone layouts the product genuinely has. Measured after, at four
+viewport widths, on the real page:
+
+| picture | before | after (390px) | 768 | 1024 | 1440 |
+|---|---|---|---|---|---|
+| Player Dues | 33% | **92%** | 100% | 64% | 76% |
+| Season settlement | 39% | **92%** | 100% | 89% | 100% |
+
+Shape distortion across every picture, page and width: **under 0.9%** — nothing is squashed.
+
+- [ ] On a real phone, open `/for-coaches/walkthrough`. **Can you read the dues cards and the
+      settlement sheet without pinching?** That is the whole test.
+- [ ] The dues picture shows one card per family with the amber past-due family in frame; the
+      settlement picture shows the three reasons the books cannot close and one family's refund.
+- [ ] ⚠ **The rings on the dues slide are GONE and that was a decision.** They marked the desktop
+      table's Balance and Status *columns*; the phone layout has no columns, and a ring on a card
+      would be a row position that the nightly re-anchor eventually moves onto a family who has
+      paid. Say if you would rather have something marked.
+
+### Part B — what a prospect was finding in the live demo, and no longer is
+
+Photographing three of these slides turned up something bigger than the slides. **On production
+today, a prospect walking the coach demo finds the Awards report empty, the Scouting Book empty,
+and one lone testing session** — two of them features you named as headline. Every page rendered
+perfectly, which is why nothing caught it.
+
+The sandbox now seeds all three. This is a demo change, not only a marketing one:
+
+- [ ] **Insights → Awards** on the mid-season team: seven awards across two award types the coach
+      invented — including one that is *not* the obvious "Player of the Game", because a demo that
+      only shows the obvious award never demonstrates that you can make up your own.
+- [ ] **Insights → Scouting Book → Saturday's opponent**: a book line, four tagged observations,
+      and the banner reminding you that you play them this week. Two of the six opponents carry
+      nothing, deliberately — a book on everybody reads as fixture data.
+- [ ] **Skills & Goals** on the off-season team: **two** testing days, months apart, so a player's
+      card finally shows this reading beside last one's. Ask whether the interval reads right.
+- [ ] The demo tour's off-season step was re-written to say so. It was never false — it just
+      stopped keeping up with the product, which is the drift no check can catch.
+
+### Part C — the six pictures the page now shows
+
+The coach page went from **two panels to six** on your call. In deck order: tryout scoring on a
+phone → the practice plan → Saturday's opponent → the dues → the settlement → the closed season.
+
+- [ ] Each picture is really that screen, and the sentence beside it is true of the product.
+- [ ] The meta line reads "6 problems" and the page's search description names the six.
+- [ ] ⚠ **Six panels now carry a Premium plan line where the page used to carry two.** Every one is
+      accurate — the free portal has none of these — but six in a row may read as "everything costs
+      extra". Your call whether that is disclosure or drumbeat.
+
+### Part D — the pictures that stayed in the deck
+
+Playing time, awards, player development and the fundraising credit are **built and ringed but not
+on the page** — they are in the deck, so present mode and the printed leave-behind show all eleven.
+
+- [ ] Open present mode from the hero and walk it: eleven coach slides, no plan lines.
+- [ ] ⚠ **Playing time is the one to check the wording on.** It never says "fair" (standing ruling);
+      it says *measured, in context*. Two rings mark the On-field and Back-to-back-sits columns.
+
+### ⚠ One defect the review caught, worth knowing about because of HOW it hid
+
+The scouting book's seeded notes were each attached to **a game against a different team**. Every
+note still listed under the right opponent, so nothing errored, no count was wrong, and the health
+check passed — but the book's own grouping (a note sitting under the meeting it came from) silently
+collapsed, and all four notes fell into a "General" pile at the bottom.
+
+**It was already in a published screenshot when a review lens caught it**, and it had passed my own
+eye: I looked at the picture, saw a heading that said "General", and read it as the layout.
+
+- [ ] The book now reads meeting by meeting — each game with its score and date, and underneath it
+      the notes logged at that game. **That is the "grows every time you meet them" story made
+      visible**, so the fix improved the slide rather than only correcting the data.
+- [ ] The health check now asserts the pairing per NOTE rather than per book, and it was proved by
+      deliberately re-breaking one note and watching it fail.
+
+### ⚠ Known and NOT fixed — say if it should be
+
+**Three of the six page pictures are desktop screens, and on a phone they render small:** the
+scouting book and Season Wrapped at **34%**, the practice plan at **52%**. That is the same
+arithmetic as Part A and the same honest answer — a 960px-wide screen cannot be read on a 350px
+column. The fix per slide is to re-photograph *that* screen at phone width, which then makes it
+small on a laptop instead. The tournament page has carried this since it shipped (registration
+health is 34%). **Left for you to rule on rather than decided quietly.**
+
+**Still open from §67, unchanged:** lime is spent six times on the panel against the
+one-lime-action rule.

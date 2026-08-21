@@ -118,14 +118,20 @@ export const PITCH_SLIDES = {
     // beat blander than it used to — recorded in the plan as a known P1 cost.
     pain: 'Team fees are tracked in your head.',
     claim: 'Every family on one page — charged, paid, left to pay, and who has fallen behind.',
-    // Balance and Status — "what is left to pay" and "who has fallen behind", the two halves
-    // of the claim beside it. ⚠ COLUMNS, NOT ROWS: which families are behind moves with the
-    // nightly re-anchor, so a ring on a row would start pointing at a family who has paid.
-    // Each ring contains its own column header, which is why neither needs a label.
-    rings: [
-      { left: 70.5, top: 1.5, width: 8.5, height: 96.5 },
-      { left: 80, top: 1.5, width: 10, height: 96.5 },
-    ],
+    /**
+     * ⚠⚠ **THE RINGS ARE GONE, AND THAT IS A DECISION RATHER THAN AN OVERSIGHT** (2026-08-20,
+     * with the phone re-capture). They marked the desktop table's Balance and Status COLUMNS. The
+     * phone layout has no columns — it is one card per family — so there was nothing structural
+     * left for them to point at, and a ring on a card would have been a row position wearing a
+     * different shape: which families are behind moves with the nightly re-anchor, so it would
+     * eventually have ringed a family who had paid.
+     *
+     * Re-pointing them was the alternative and it was rejected on its own merits too. A ring's
+     * job on this format is to tell a reader who CANNOT resolve the numbers which part of the
+     * picture the sentence is about. That job existed because the old capture rendered at 33% of
+     * true size; the phone capture renders at full size, where the amber past-due line is already
+     * the loudest thing in frame. A ring around it would be marking what is already marked.
+     */
   },
   '#03': {
     id: '#03',
@@ -138,6 +144,96 @@ export const PITCH_SLIDES = {
     pain: 'It’s October and you owe families a refund you can’t calculate.',
     claim:
       'The season’s real ledger works out what each family gets back, and won’t pay out until the money is actually there.',
+  },
+  '#04': {
+    id: '#04',
+    imageClass: 'composed',
+    shotId: 'coach-fundraiser-credit',
+    pain: 'A family fundraised all season, and nobody can say what it took off their bill.',
+    claim: 'Money a family raises lands on their own bill — or waits for season’s end, whichever way you run it.',
+    // ⚠ ONE ring, on the column that IS the claim — what each family's fundraising took off what
+    // they owe. Measured against the crop rather than estimated from the PNG. The "credits issued"
+    // tile above says the same thing at team level and was the second candidate; two rings sitting
+    // almost exactly above one another read as a single broken ring rather than two marks.
+    rings: [{ left: 51, top: 47.9, width: 19, height: 51.3 }],
+  },
+  '#06': {
+    id: '#06',
+    imageClass: 'composed',
+    shotId: 'coach-lineup-board',
+    pain: 'The lineup is in a notes app.',
+    claim: 'Build it once, and the board quietly tracks who has been sitting too long while you coach.',
+    // Unringed on purpose: the thing to look at is the amber warning line, and it is already the
+    // only coloured element in the picture. A ring would be marking what is marked.
+  },
+  '#09': {
+    id: '#09',
+    imageClass: 'proof',
+    shotId: 'coach-season-wrapped',
+    pain: 'The season ends and nobody writes down what happened.',
+    claim: 'A closed season becomes one page — the record, the roster, the practices, the money — and it stays that way for years.',
+    // PROOF, never ringed. The class exists for a screen designed to be looked at whole.
+  },
+  '#10': {
+    id: '#10',
+    imageClass: 'composed',
+    shotId: 'coach-tryout-scorecard',
+    pain: 'Tryout day runs on a clipboard and a group chat.',
+    // ⚠ The picture carries the first half of this sentence — an evaluator's phone. The weighting
+    // is a setup screen and the ranking is a third; the artifact's image note asks for the
+    // scorecard "beside the resulting ranked list", which is two sources in one frame and
+    // therefore new artwork, exactly like slide #12's note. Shot as the phone alone, because that
+    // is the half nothing else in the deck says and the half a clipboard cannot answer.
+    claim: 'Evaluators score on their phones, and the weighting you set decides what the ranking means.',
+  },
+  '#21': {
+    id: '#21',
+    imageClass: 'composed',
+    shotId: 'coach-awards',
+    pain: 'The awards list gets rebuilt from memory the week before the banquet.',
+    claim: 'Invent your own awards, hand them out in the moment all season, and the list is already written when awards night comes — the certificates print themselves.',
+  },
+  '#22': {
+    id: '#22',
+    imageClass: 'composed',
+    shotId: 'coach-development',
+    pain: '“He’s improved” is the only progress report a parent ever gets.',
+    claim: 'Set goals, run the same test again, and put this month’s number beside last month’s — so improvement is measured rather than remembered.',
+  },
+  '#23': {
+    id: '#23',
+    imageClass: 'composed',
+    shotId: 'coach-playing-time',
+    pain: 'Playing time is an argument you can’t settle from memory.',
+    // ⚠ NEVER the word "fair" (standing owner ruling, `decision_playing_time_vocabulary`). The
+    // screen measures; it does not judge, and the claim ends by saying so.
+    claim: 'The season’s own record shows the innings each player has been on the field, who has sat back-to-back, and how attendance has moved — measured, in context.',
+    // On field and Back-to-back sits — the two the claim names. ⚠ COLUMNS, not rows: the report is
+    // ordered fewest-innings-first, so WHICH player leads it changes with the lineups. Geometry
+    // measured against the crop rect in the browser, not read off the PNG.
+    rings: [
+      { left: 21.6, top: 0.8, width: 14, height: 98.4 },
+      { left: 42.1, top: 0.8, width: 14.9, height: 98.4 },
+    ],
+  },
+  '#24': {
+    id: '#24',
+    imageClass: 'composed',
+    shotId: 'coach-scouting-book',
+    pain: 'What you learned about that team last time is in your head — and you play them Saturday.',
+    // ⚠ "opens on the bench while the game is running" is TRUE and is NOT what the picture shows:
+    // the game console exists about seven hours a week in the demo world, so the book is
+    // photographed where it is written instead. The plan carried this as an open question; the
+    // report turned out to be the better picture anyway, because it shows the book AND how it
+    // filled up. Verified against the product, not assumed.
+    claim: 'Your book on an opponent — what they do, what worked, what to watch — opens on the bench while the game is running, and grows every time you meet them.',
+  },
+  '#25': {
+    id: '#25',
+    imageClass: 'composed',
+    shotId: 'coach-practice-plan',
+    pain: 'The practice plan is a text you send at 9 PM and re-explain at the field.',
+    claim: 'A plan attaches to a real practice on your schedule — stations, timings, who runs what — and it is on your phone at the field.',
   },
 
   /* ── The tournament weekend ────────────────────────────────────────────────── */
@@ -206,20 +302,11 @@ export type SlideId = keyof typeof PITCH_SLIDES;
  * orders, and `tests/unit/pitch-slide-library.test.ts` fails on a typo'd or orphaned id.
  */
 export const PLANNED_SLIDES: Record<string, string> = {
-  '#02': 'The e-transfers arrive with no name on them — explainer (P2)',
-  '#04': 'A family fundraised all season and nobody can say what it took off their bill (P2)',
-  '#05': 'The roster lives in a group text — explainer (P2)',
-  '#06': 'The lineup is in a notes app (P2)',
-  '#07': 'Parents text “score?” while you are coaching third base — explainer; the demo world cannot photograph the bench console (P2)',
-  '#09': 'The season ends and nobody writes down what happened — Season Wrapped, proof (P2)',
-  '#10': 'Tryout day runs on a clipboard and a group chat (P2)',
-  '#16': 'Teams register by email — explainer (P2)',
-  '#17': 'Next year, you start from scratch — explainer (P2)',
-  '#21': 'The awards list gets rebuilt from memory the week before the banquet (P2)',
-  '#22': '“He’s improved” is the only progress report a parent ever gets (P2)',
-  '#23': 'Playing time is an argument you can’t settle from memory (P2)',
-  '#24': 'What you learned about that team last time is in your head (P2, headline)',
-  '#25': 'The practice plan is a text you send at 9 PM (P2, headline)',
+  '#02': 'The e-transfers arrive with no name on them — explainer (P2b)',
+  '#05': 'The roster lives in a group text — explainer (P2b)',
+  '#07': 'Parents text “score?” while you are coaching third base — explainer; the demo world cannot photograph the bench console (P2b)',
+  '#16': 'Teams register by email — explainer (P2b)',
+  '#17': 'Next year, you start from scratch — explainer (P2b)',
 };
 
 /**
@@ -374,18 +461,55 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   path: '/for-coaches/walkthrough',
   seo: {
     title: 'The 90-Second Walkthrough for Head Coaches — FieldLogicHQ',
-    // ⚠ Describes the panels that EXIST. The deck's other twelve slides are P2 — this line
-    // must not promise them.
+    // ⚠ Describes the panels that EXIST — the six this page pulls, in the order it shows them.
+    // Widened 2026-08-20 when the pull grew from two to six; the old line promised only the money
+    // and would have under-described the page rather than over-promising it, which is the
+    // likelier direction for a description to rot and the harder one to notice.
     description:
-      'The team money that stops being yours to carry the day your team runs on FieldLogicHQ — every family’s dues on one page, and the season squared up from the real ledger. Real screens, not a brochure.',
+      'Six jobs that stop being yours the day your team runs on FieldLogicHQ — tryout scoring on a phone, practice plans that reach the field, your book on Saturday’s opponent, every family’s dues on one page, the season squared up from the real ledger, and a closed season kept on one page for good. Real screens, not a brochure.',
   },
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
   sub: 'The jobs the Coaches Portal takes off your plate — shown on the real screens a coach uses, not a brochure.',
-  meta: '2 problems · 90 seconds · nothing to install',
+  meta: '6 problems · 90 seconds · nothing to install',
   door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season →' },
   back: { href: '/for-coaches' },
+  /**
+   * ⚠ SIX PANELS SINCE 2026-08-20 (owner call), up from the two money screens this page shipped
+   * with. The pull is still a SUBSET of the coach deck in deck order — it walks the same year the
+   * deck does: tryout day → the practice → Saturday's opponent → the money → the off-season books
+   * → a season already closed.
+   *
+   * What it deliberately leaves in the deck: playing time, awards, player development and the
+   * fundraising credit. All four have their picture taken; none of them is the thing a coach is
+   * buying in the first ninety seconds, and a page with ten panels is a page nobody reaches the
+   * bottom of. The deck is the long form — present mode and the printed leave-behind both render
+   * every built slide already.
+   */
   panels: [
+    {
+      slideId: '#10',
+      // ⚠ "the weighting you set" is real and is worth qualifying here rather than on the slide:
+      // the ranking is a weighted composite of the coach's OWN categories, and blind mode is the
+      // default rather than an option somebody has to find.
+      answer:
+        'Evaluators score on their phones — a link, no login, and one card per player. You choose the categories and how much each is worth, so the ranked list at the end means what you decided it means, not what a spreadsheet averaged. Names stay hidden while scoring, and you reveal them when you are ready to decide. Offer, waitlist or pass, and an accepted player lands on your roster with their fees already set up.',
+      planTag: 'Running tryouts is part of the Premium Coaches Portal',
+    },
+    {
+      slideId: '#25',
+      answer:
+        'A plan belongs to a real practice on your schedule, so it is never a text nobody can find. Blocks with their own minutes, stations with what you are watching for, and a rotation that works out which group is where in every round. At the field it opens on your phone one block at a time with the clock running — and it records nothing, because the one field-time job worth finishing is attendance.',
+      planTag: 'Practice plans are part of the Premium Coaches Portal',
+    },
+    {
+      slideId: '#24',
+      // ⚠ "opens on the bench" is true — the game console shows the book. Said here rather than
+      // left implied, because the picture is the report the book is WRITTEN in, not the bench.
+      answer:
+        'One page per team you play: your record against them, every meeting, and the lines you and your assistants logged — tagged for pitching, hitting, defense, baserunning or coaching. It opens on the bench during the game as well as here, and the week you play them again the portal tells you the book is there. Opposing players are referred to by number and position, never by name.',
+      planTag: 'The opponent book is part of the Premium Coaches Portal',
+    },
     {
       slideId: '#01',
       // ⚠ The mockup said "automatic overdue reminders". The scheduled sweep
@@ -417,6 +541,16 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       answer:
         'Season settlement works it out from the season’s real ledger — what the team is holding, each family’s even share, who is owed money back and who still owes. It names every reason the books are not ready to close, and keeps the pay-everyone button locked until they are.',
       planTag: 'Season settlement is part of the Premium Coaches Portal',
+    },
+    {
+      slideId: '#09',
+      // ⚠ "one page" is the owner's binding ruling (CLAUDE.md), not a simplification for copy:
+      // a closed season is ONE page, the same page whether it closed yesterday or three years ago.
+      // The four shelves named here are the four that exist — do not add a fifth to this sentence
+      // without adding it to the page.
+      answer:
+        'Close the season and the whole team workspace becomes one page: Season Wrapped — the record, the longest run, the closest game, who was on the field most — above four shelves holding the results, the roster, the practices you ran and how the money came out. It reads the same in three years as it does the week you close it, and starting next season does not take it away.',
+      planTag: 'Season history is part of the Premium Coaches Portal',
     },
   ],
   closing: {

@@ -43,6 +43,7 @@ import { shiftedDate, DEMO_CONTACT_DOMAIN } from './demo-tournament.ts';
 import { dayOfWeekFor } from './coach-recurrence.ts';
 import { getRubricStarter } from './tryout-rubric-templates.ts';
 import { addMonths } from './coach-budget-months.ts';
+import { normalizeOpponentName } from './opponent-name-key.ts';
 
 export const DEMO_COACH_ORG_NAME = 'Riverdale Ridge Baseball';
 /** The one demo coach — head coach of all three teams. Display name shows in staff panels. */
@@ -305,10 +306,25 @@ export function tryoutScoreFor(evaluatorIndex: number, bib: number, categoryInde
 
 // ── opponents (one invented world — clubs that read like the tournament sandbox's) ───────────
 
-const OPPONENTS = [
+/** The six sides this club plays. Exported because the scouting book keys off the SAME names
+ *  the game rows carry — a book row that spelled an opponent differently would never find its
+ *  own meetings. */
+export const OPPONENTS = [
   'Harborview Falcons', 'Cedar Hollow Cyclones', 'Port Alma Miners',
   'Maple Landing Loons', 'Birchmount Bears', 'Stonebridge Storm',
 ] as const;
+
+/**
+ * One opponent's display name and its scouting-book key, resolved together from a single index.
+ *
+ * The book is an overlay keyed on the normalized name, so these two values agreeing is the whole
+ * of opponent identity — returning them from one place is what stops a seeded book row from
+ * pointing at a team the game rows spell differently. Uses the product's own normalizer.
+ */
+export function demoOpponent(index: number): { displayName: string; normalizedName: string } {
+  const displayName = OPPONENTS[index % OPPONENTS.length];
+  return { displayName, normalizedName: normalizeOpponentName(displayName) };
+}
 
 export const DEMO_HOME_DIAMOND = 'Riverdale Park — Diamond 2';
 
@@ -790,6 +806,121 @@ export const MIDSEASON_DEVELOPMENT_GOALS = [
   { rosterIndex: 0, focusArea: 'Holding runners', note: 'Slide-step added. Times to the plate trending down.' },
 ] as const;
 
+/**
+ * The 12U's award shelf — coach-INVENTED types, which is the whole point of the feature.
+ *
+ * ⚠ Added 2026-08-20 because the sandbox was showing prospects an empty Awards report on every
+ * live team: awards existed only on the 13U, whose season is closed, so the season gate made them
+ * unreachable. A coach eighteen games in with no awards at all reads as a coach who has not
+ * bothered — the same class of accidental slander as the un-registered practice
+ * (`takeAttendanceForNewlyPastPractices`).
+ *
+ * "Player of the Game" is the obvious one; "Dirt Shirt" is the one that matters — nothing ships
+ * seeded, so a demo that only shows the obvious award never demonstrates that a coach can make up
+ * their own. There is deliberately NO end-of-season award here: this team is mid-season, and the
+ * banquet award belongs to the 13U's closed year. **The phase is the picture.**
+ */
+export const MIDSEASON_AWARD_TYPES = [
+  { name: 'Player of the Game', emoji: '🏅' },
+  { name: 'Dirt Shirt', emoji: '🧢' },
+] as const;
+
+/**
+ * Handed out in the moment, across the season — never in one sitting, because "the list is
+ * already written when awards night comes" is only true if the dates are spread.
+ *
+ * `gameIndex` addresses `MidSeasonState.games`, so every award carries the date of the game it was
+ * given at and rides the nightly re-anchor with it (`shiftTeamSchedule`). ⚠ The showcase player
+ * (index 11) gets one and only one: the guided tour narrates him as the fewest-innings player, and
+ * making him the most-decorated would have the demo arguing with itself.
+ */
+export const MIDSEASON_AWARDS: ReadonlyArray<{
+  rosterIndex: number; typeIndex: 0 | 1; gameIndex: number; note: string | null;
+}> = [
+  { rosterIndex: 0,  typeIndex: 0, gameIndex: 17, note: 'Six innings, one earned run, and he never rushed.' },
+  { rosterIndex: 7,  typeIndex: 1, gameIndex: 17, note: 'Wore the whole infield home.' },
+  { rosterIndex: 9,  typeIndex: 0, gameIndex: 15, note: 'Three hits and the catch at the fence.' },
+  { rosterIndex: 5,  typeIndex: 1, gameIndex: 14, note: null },
+  { rosterIndex: 4,  typeIndex: 0, gameIndex: 12, note: 'Two innings of relief on a night we needed them.' },
+  { rosterIndex: 11, typeIndex: 1, gameIndex: 10, note: 'First one to the fence for every foul ball.' },
+  { rosterIndex: 2,  typeIndex: 0, gameIndex: 8,  note: null },
+];
+
+/**
+ * The 12U's SCOUTING BOOK — book lines and observations on the teams they have played.
+ *
+ * ⚠ Added 2026-08-20 alongside the awards, and for the same reason: `scripts/seed-demo-coach.mjs`
+ * only ever DELETED these two tables. Every opponent card in the sandbox opened on an empty
+ * textarea, so the demo showed the book's furniture and none of its contents — on a feature the
+ * owner names as a headline. The opponent LIST was always real (it is derived from the games);
+ * it is the book itself that was blank.
+ *
+ * Three rules the copy below obeys, all of them the product's own:
+ *   1. **Jersey numbers and positions, never names.** The log's own footnote says so — they are
+ *      someone else's kids, and a demo that breaks its own rule teaches the wrong habit.
+ *   2. **Not every opponent has a book.** Two of the six are deliberately bare. A book on
+ *      everybody reads as fixture data; a book that thins out reads as a coach's actual notes.
+ *   3. **Harborview Falcons is the richest**, because they are who this team plays THIS Saturday
+ *      (`G-SAT` takes `OPPONENTS[0]`). "You play them Saturday" is the slide, so the book a
+ *      prospect opens first has to be the one worth opening.
+ *
+ * ⚠⚠ **`gameIndex` MUST NAME A GAME AGAINST THIS SAME OPPONENT, and the arithmetic is not
+ * obvious.** `resolveMidSeasonState` gives decided game `i` the opponent `OPPONENTS[i % 6]`, so
+ * the games belonging to `opponentIndex` are exactly those where `gameIndex % 6 === opponentIndex`
+ * — Harborview (0) is games 0, 6, 12; Stonebridge (5) is 5, 11, 17; Port Alma (2) is 2, 8, 14.
+ *
+ * The first version of this table got every one of them wrong by one slot, and the failure is
+ * quiet in a way worth remembering: the observations still attach to the right BOOK (that comes
+ * from `opponent_id`), so nothing errors and the counts all look right. What breaks is the
+ * grouping — the drill-in matches an observation's `event_id` against the meetings it derived by
+ * NAME, finds no match, and files every note under "General". The book renders, the notes are all
+ * there, and the "grows every time you meet them" story silently isn't being told. It shipped into
+ * a published marketing screenshot before a review lens caught it.
+ *
+ * `check-demo-coach.mjs` now asserts the join per-observation rather than per-book.
+ */
+export const MIDSEASON_SCOUTING: ReadonlyArray<{
+  /** Index into `OPPONENTS` — the same source the games take their opponent name from. */
+  opponentIndex: number;
+  /** The book line: one sentence, what you would tell an assistant five minutes before. */
+  summary: string | null;
+  observations: ReadonlyArray<{ body: string; tag: string; gameIndex: number | null }>;
+}> = [
+  {
+    opponentIndex: 0, // Harborview Falcons — Saturday's opponent
+    summary: 'Small ball with a lead, and they run on anybody who is slow to the plate. Their #7 is most of the lineup — everything else is singles.',
+    observations: [
+      { body: 'Their starter is all fastballs the first time through, then nothing but change-ups.', tag: 'Pitching', gameIndex: 12 },
+      { body: 'They steal on the first pitch almost every time they get a runner on.', tag: 'Baserunning', gameIndex: 12 },
+      { body: 'Their shortstop cheats up with runners on — the hole behind him is open all game.', tag: 'Defense', gameIndex: 6 },
+      { body: 'They bring the infield in early. Anything over the top is two runs.', tag: 'Coaching', gameIndex: 0 },
+    ],
+  },
+  {
+    opponentIndex: 5, // Stonebridge Storm
+    summary: 'Big swings, no bunts. Play them deep and let the outfield work.',
+    observations: [
+      { body: 'Their 3 and 4 hitters both pull everything. The left side never sees a ball.', tag: 'Hitting', gameIndex: 17 },
+      { body: 'Catcher has a real arm — do not run on him without a jump.', tag: 'Baserunning', gameIndex: 11 },
+    ],
+  },
+  {
+    opponentIndex: 2, // Port Alma Miners — the only team on the card that has beaten them
+    summary: 'The only side that has our number. They are patient and they make us throw strikes.',
+    observations: [
+      { body: 'Took nine walks off us. Nobody swung before strike two.', tag: 'Hitting', gameIndex: 8 },
+      // Unattached on purpose: a note a coach types on a Wednesday, which lands under "General".
+      { body: 'Heard they picked up two players from the Loons for the second half.', tag: 'Coaching', gameIndex: null },
+    ],
+  },
+  {
+    opponentIndex: 4, // Birchmount Bears — a line, no log yet
+    summary: 'Young side, gets rattled. First inning is worth two runs if we score early.',
+    observations: [],
+  },
+  // Cedar Hollow Cyclones (1) and Maple Landing Loons (3) carry NOTHING, deliberately — see rule 2.
+];
+
 export interface MidSeasonState {
   year: number;
   yearName: string;
@@ -1154,16 +1285,76 @@ export const OFFSEASON_MEASURABLE_TYPES = [
   { name: 'Home to first', unit: 'seconds' },
 ] as const;
 
-/** Two of the thirteen missed the testing session — they get an honest blank, never a zero. */
-export const OFFSEASON_TESTING_ABSENT = [5, 12] as const;
+/**
+ * The 14U roster row the pitch deck's development slide is photographed on.
+ *
+ * ⚠ Index 1 is not arbitrary — he is the one player who carries BOTH halves of that screen's
+ * claim: an active focus area above (`OFFSEASON_DEVELOPMENT_GOALS[0]`) and a reading at both
+ * testing days below (absent from neither list in `OFFSEASON_TESTING_SESSIONS`). Changing either
+ * of those without changing this leaves the capture pointing at half a card.
+ */
+export const OFFSEASON_SHOWCASE_ROSTER_INDEX = 1;
 
-/** A deterministic reading for (player, test) — a band per player, a wobble per test. */
-export function offseasonMeasurableValue(rosterIndex: number, typeIndex: number): number {
+/**
+ * The team's testing days — **TWO of them, and the gap between them is the whole point.**
+ *
+ * ⚠ Widened from one session on 2026-08-20. One session is a number; two are a trend, and the
+ * product only draws a trend line "after a second entry" (`PlayerDevelopmentSection`). With a
+ * single winter session the sandbox could show that measuring happens and never once show what
+ * measuring is FOR — on the surface whose promise is "put this month's number beside last
+ * month's". The Skills & Goals card was even saying it out loud: *"a few sessions a season is
+ * what makes the trend lines real."*
+ *
+ * The two are deliberately different SHAPES, because the product allows both and a demo that only
+ * shows one teaches that the other is impossible:
+ *   · **Fall baseline** — a standalone session with no event behind it (a rented cage in
+ *     November, not one of the Sunday block). `practiceKey: null`.
+ *   · **Post-holiday testing** — hung off the Sunday session it was actually run at.
+ *
+ * Ordered OLDEST FIRST, and `restateOffSeasonBooks` matches on `note`, never on position or date:
+ * the note is the only stable identity a session has across a re-anchor, and matching on date
+ * would collapse both onto one day the first time the clock moved.
+ */
+export const OFFSEASON_TESTING_SESSIONS: ReadonlyArray<{
+  /** The session's identity — unique within the team, and what the re-anchor matches on. */
+  note: string;
+  /** Day offset from the org's today, resolved by `resolveOffSeasonState`. */
+  dayOffset: number;
+  /** The practice it was run at, or null for a session that stands on its own. */
+  practiceKey: string | null;
+  /** Who missed it — they get no row at all. An honest blank is the product's rule, never a zero. */
+  absent: readonly number[];
+}> = [
+  // Eight weeks before the winter block opens: far enough back that the second reading is a
+  // season's worth of work later, not a fortnight's.
+  { note: 'Fall baseline', dayOffset: offSeasonSundayOffset(-5) - 56, practiceKey: null, absent: [4, 9] },
+  {
+    note: 'Post-holiday testing',
+    dayOffset: offSeasonSundayOffset(-3),
+    practiceKey: offSeasonSessionKey(offSeasonSundayOffset(-3)),
+    absent: [5, 12],
+  },
+];
+
+/**
+ * A deterministic reading for (player, test, session) — a band per player, a wobble per test, and
+ * a session-over-session IMPROVEMENT that is real but modest.
+ *
+ * ⚠ Improvement is applied per test in the direction that test actually improves: the two timed
+ * tests go DOWN, exit velocity goes UP. A single "add a delta" would have had the sandbox showing
+ * a roster that got slower over the winter, which is precisely the wrong story to publish on a
+ * screen that exists to prove the work paid off.
+ */
+export function offseasonMeasurableValue(
+  rosterIndex: number, typeIndex: number, sessionIndex: number,
+): number {
   const band = (rosterIndex * 3 + 1) % 5;               // 0..4 per player
   const wobble = ((rosterIndex + typeIndex * 2) % 3);   // 0..2
-  if (typeIndex === 0) return Math.round((8.6 - band * 0.22 - wobble * 0.05) * 100) / 100; // seconds
-  if (typeIndex === 1) return 52 + band * 3 + wobble;                                       // mph
-  return Math.round((4.9 - band * 0.13 - wobble * 0.04) * 100) / 100;                       // seconds
+  // How much of the winter's work this session reflects. 0 = the baseline, 1 = after it.
+  const gain = sessionIndex;
+  if (typeIndex === 0) return Math.round((8.6 - band * 0.22 - wobble * 0.05 - gain * 0.19) * 100) / 100; // seconds ↓
+  if (typeIndex === 1) return 52 + band * 3 + wobble + gain * 2;                                          // mph ↑
+  return Math.round((4.9 - band * 0.13 - wobble * 0.04 - gain * 0.11) * 100) / 100;                       // seconds ↓
 }
 
 /**
@@ -1313,9 +1504,17 @@ export interface OffSeasonState {
   moneyIn: DemoMoneyIn[];
   /** Month-first dates for the budget phasing, oldest first. */
   budgetPeriodDates: string[];
-  /** The practice the testing session was run at, and the day it happened. */
-  testingSessionPracticeKey: string;
-  testingSessionDate: string;
+  /**
+   * The team's testing days with their dates resolved, OLDEST FIRST — the shape
+   * `OFFSEASON_TESTING_SESSIONS` declares, plus the day each one lands on. `practiceKey` is null
+   * for a session that was not run at a scheduled practice.
+   */
+  testingSessions: Array<{
+    note: string;
+    date: string;
+    practiceKey: string | null;
+    absent: readonly number[];
+  }>;
 }
 
 /** One arrival in a demo world, with its date already resolved from the clock. */
@@ -1438,8 +1637,11 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
       ...m, receivedDate: dateAt(-7 * m.weeksBack),
     })),
     budgetPeriodDates: OFFSEASON_BUDGET_PERIOD_MONTHS.map(offset => monthStart(now, offset)),
-    testingSessionPracticeKey: offSeasonSessionKey(offSeasonSundayOffset(-3)),
-    testingSessionDate: dateAt(offSeasonSundayOffset(-3)),
+    // Both testing days off the same anchor as everything else here, so the re-anchor moves the
+    // readings with the calendar and the gap between them stays the same length forever.
+    testingSessions: OFFSEASON_TESTING_SESSIONS.map(s => ({
+      note: s.note, date: dateAt(s.dayOffset), practiceKey: s.practiceKey, absent: s.absent,
+    })),
   };
 }
 

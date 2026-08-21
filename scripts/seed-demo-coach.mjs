@@ -37,13 +37,14 @@ import {
   MIDSEASON_CLUB_MONEY,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
-  MIDSEASON_SHOWCASE_ROSTER_INDEX,
+  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING, demoOpponent,
+  MIDSEASON_SHOWCASE_ROSTER_INDEX, OFFSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_PRACTICE_PLANS, SEASONS_END_PRACTICE_RECAPS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
   OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_MONEY_IN,
   OFFSEASON_DUES,
-  OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_TESTING_ABSENT,
+  OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES,
   OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue,
   SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
   SEASON_START_LINEUP_GRID, SEASON_START_LINEUP_SETTINGS, SEASON_START_BATTING_ORDER,
@@ -79,6 +80,24 @@ async function insertAll(table, rows) {
   for (let i = 0; i < rows.length; i += 400) {
     die(`insert ${table}`, (await db.from(table).insert(rows.slice(i, i + 400))).error);
   }
+}
+
+/**
+ * A team's award types, inserted in one call, returning the ids in the SAME ORDER as the input —
+ * which is the contract `MIDSEASON_AWARDS`/`SEASONS_END_AWARDS` rely on when they say `typeIndex`.
+ *
+ * ⚠ Extracted 2026-08-20 when the 12U grew awards of its own and this loop existed twice. The two
+ * copies had already drifted apart in their `die()` label within one session, which is the shape
+ * of the problem: a required column added to `rep_team_award_types` would need finding in two
+ * places, and the second one is 120 lines away.
+ */
+async function insertAwardTypes(team, types) {
+  const ids = types.map(() => randomUUID());
+  await insertAll('rep_team_award_types', types.map((t, i) => ({
+    id: ids[i], org_id: org.id, team_id: team.id,
+    name: t.name, emoji: t.emoji, sort_order: i,
+  })));
+  return ids;
 }
 
 // ── 1. the one demo coach ────────────────────────────────────────────────────────────────────
@@ -487,15 +506,22 @@ function itemRef(index, category, item) {
 }
 
 /**
- * ⚠ ONE roster row in the whole demo world carries a FIXED id: the 12U's playing-time outlier.
- * The guided tour's "read what a parent gets" step addresses that player's page directly, so the
- * id has to survive a reseed exactly as the team ids do (`DEMO_COACH_SHOWCASE`). Everyone else is
- * generated, because nothing points at them.
+ * ⚠ TWO roster rows in the whole demo world carry FIXED ids, and both for the same reason:
+ * something outside the seed addresses that player's page by URL, so the id has to survive a
+ * reseed exactly as the team ids do (`DEMO_COACH_SHOWCASE`). Everyone else is generated, because
+ * nothing points at them.
+ *
+ *   · 12U — the playing-time outlier, addressed by the guided tour's "read what a parent gets" step.
+ *   · 14U — the development player, addressed by the pitch deck's capture manifest (2026-08-20).
  */
 function rosterIdFor(team, index) {
-  const isShowcase = team.id === DEMO_COACH_TEAMS.midSeason.id
-    && index === MIDSEASON_SHOWCASE_ROSTER_INDEX;
-  return isShowcase ? DEMO_COACH_SHOWCASE.midSeasonPlayerId : randomUUID();
+  if (team.id === DEMO_COACH_TEAMS.midSeason.id && index === MIDSEASON_SHOWCASE_ROSTER_INDEX) {
+    return DEMO_COACH_SHOWCASE.midSeasonPlayerId;
+  }
+  if (team.id === DEMO_COACH_TEAMS.offSeason.id && index === OFFSEASON_SHOWCASE_ROSTER_INDEX) {
+    return DEMO_COACH_SHOWCASE.offSeasonPlayerId;
+  }
+  return randomUUID();
 }
 
 async function insertRoster(team, pyId, roster) {
@@ -815,9 +841,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     focus_area: goal.focusArea, note: goal.note, status: goal.status, created_by: coach.id,
   })));
 
-  // The winter's testing session: the coach's own test library, one session hung off the practice
-  // it was run at, and readings for everyone who was there. The two who missed get no row at all —
-  // an honest blank is the product's rule, never a fabricated zero.
+  // The winter's testing: the coach's own test library and TWO sessions — the fall baseline and
+  // the post-holiday re-test — so the same test has a number to sit beside. Readings only for
+  // whoever was there; the ones who missed get no row at all, because an honest blank is the
+  // product's rule and a fabricated zero would be a slower player who never ran.
   const typeIds = [];
   for (let i = 0; i < OFFSEASON_MEASURABLE_TYPES.length; i++) {
     const id = randomUUID();
@@ -828,26 +855,26 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       sort_order: i, is_active: true, created_by: coach.id,
     })).error);
   }
-  const sessionId = randomUUID();
-  die('insert evaluation session', (await db.from('rep_team_evaluation_sessions').insert({
-    id: sessionId, org_id: org.id, team_id: team.id, program_year_id: pyId,
-    session_date: state.testingSessionDate,
-    event_id: eventIdByKey.get(state.testingSessionPracticeKey) ?? null,
-    note: 'Post-holiday testing', created_by: coach.id,
-  })).error);
-  const readings = [];
-  playerIds.forEach((pid, i) => {
-    if (OFFSEASON_TESTING_ABSENT.includes(i)) return;
-    OFFSEASON_MEASURABLE_TYPES.forEach((type, t) => readings.push({
-      org_id: org.id, team_id: team.id, player_id: pid,
-      measurable_type_id: typeIds[t], value: offseasonMeasurableValue(i, t),
-      unit: type.unit, recorded_on: state.testingSessionDate,
-      session_id: sessionId, created_by: coach.id,
-    }));
-  });
+  const sessionIds = state.testingSessions.map(() => randomUUID());
+  await insertAll('rep_team_evaluation_sessions', state.testingSessions.map((testing, i) => ({
+    id: sessionIds[i], org_id: org.id, team_id: team.id, program_year_id: pyId,
+    session_date: testing.date,
+    // Null for the standalone one, on purpose — the product allows a session with no event behind
+    // it, and a world that only ever shows the attached shape teaches that it does not.
+    event_id: testing.practiceKey ? eventIdByKey.get(testing.practiceKey) ?? null : null,
+    note: testing.note, created_by: coach.id,
+  })));
+  const readings = state.testingSessions.flatMap((testing, sessionIndex) =>
+    playerIds.flatMap((pid, i) => testing.absent.includes(i) ? [] :
+      OFFSEASON_MEASURABLE_TYPES.map((type, t) => ({
+        org_id: org.id, team_id: team.id, player_id: pid,
+        measurable_type_id: typeIds[t], value: offseasonMeasurableValue(i, t, sessionIndex),
+        unit: type.unit, recorded_on: testing.date,
+        session_id: sessionIds[sessionIndex], created_by: coach.id,
+      }))));
   await insertAll('rep_player_measurables', readings);
 
-  console.log(`✓ 14U off-season — budget ${OFFSEASON_BUDGET_LINES.length} lines, ${state.expenses.length} expenses logged, dues 2 of 4 in (one overdue), ${state.practices.length} sessions, 2 plans, ${readings.length} test readings`);
+  console.log(`✓ 14U off-season — budget ${OFFSEASON_BUDGET_LINES.length} lines, ${state.expenses.length} expenses logged, dues 2 of 4 in (one overdue), ${state.practices.length} sessions, 2 plans, ${state.testingSessions.length} testing sessions, ${readings.length} test readings`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -1112,6 +1139,53 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     focus_area: goal.focusArea, note: goal.note, status: 'working', created_by: coach.id,
   })));
 
+  // Awards — the coach's own two types, handed out at games through the season. Before 2026-08-20
+  // the sandbox had awards on the 13U alone, whose season is CLOSED, so the season gate made the
+  // report unreachable and every live team opened on "No awards given yet".
+  {
+    const awardTypeIds = await insertAwardTypes(team, MIDSEASON_AWARD_TYPES);
+    await insertAll('rep_player_awards', MIDSEASON_AWARDS.map(a => ({
+      org_id: org.id, team_id: team.id, player_id: playerIds[a.rosterIndex],
+      award_type_id: awardTypeIds[a.typeIndex],
+      // Both the event and the date come from the SAME game, so `shiftTeamSchedule` moving the
+      // schedule moves the award with it. Dated independently they would drift apart within a week.
+      event_id: eventIdByKey.get(state.games[a.gameIndex].key),
+      awarded_at: state.games[a.gameIndex].date,
+      note: a.note, created_by: coach.id,
+    })));
+  }
+
+  // The scouting book — book lines and the observation log. Same 2026-08-20 gap as the awards: the
+  // seed only ever DELETED these two tables, so every opponent card in the sandbox opened on an
+  // empty textarea on a feature the owner names as a headline.
+  {
+    // Ids are minted up front so both tables go in ONE call each rather than a round trip per
+    // opponent — nothing here reads back what the insert wrote.
+    const bookIds = MIDSEASON_SCOUTING.map(() => randomUUID());
+    await insertAll('rep_team_opponents', MIDSEASON_SCOUTING.map((entry, i) => {
+      const { displayName, normalizedName } = demoOpponent(entry.opponentIndex);
+      return {
+        id: bookIds[i], org_id: org.id, team_id: team.id,
+        display_name: displayName, normalized_name: normalizedName,
+        summary: entry.summary, updated_by: coach.id,
+        // The book line's "last touched" stamp — the drill-in reads it, so it rides the clock.
+        last_note_updated_at: `${state.games.at(-2).date}T20:30:00Z`,
+      };
+    }));
+    await insertAll('rep_team_opponent_observations', MIDSEASON_SCOUTING.flatMap((entry, i) =>
+      entry.observations.map(o => ({
+        id: randomUUID(), opponent_id: bookIds[i], org_id: org.id, team_id: team.id,
+        // Null `gameIndex` is a note typed between meetings — the drill-in files it under
+        // "General", which is a shape a book with only game-attached notes never shows.
+        event_id: o.gameIndex == null ? null : eventIdByKey.get(state.games[o.gameIndex].key),
+        body: o.body, tag: o.tag,
+        created_by: coach.id, created_by_name: DEMO_COACH_DISPLAY_NAME,
+        // Dated to the meeting it came out of (the evening of), so the log reads in season order
+        // and the re-anchor can move it — see `shiftTeamSchedule`.
+        created_at: `${state.games[o.gameIndex ?? state.games.length - 3].date}T21:00:00Z`,
+      }))));
+  }
+
   // ⚠ "practice plans", not "past practices" — one of them is on THIS WEEK'S Thursday and is
   // ahead of today for most of the week. See the note on MIDSEASON_PRACTICE_PLANS for why.
   console.log(`✓ 12U mid-season — ${state.games.length - 1} decided games (14-3-1), game Saturday ${state.saturdayDate}, dues + budget + waivers in, ${MIDSEASON_PRACTICE_PLANS.length} practice plans written`);
@@ -1181,15 +1255,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   })));
 
   // Awards — Player of the Game through the year, Most Improved at the banquet.
-  const awardTypeIds = [];
-  for (let i = 0; i < SEASONS_END_AWARD_TYPES.length; i++) {
-    const id = randomUUID();
-    awardTypeIds.push(id);
-    die('insert award type', (await db.from('rep_team_award_types').insert({
-      id, org_id: org.id, team_id: team.id,
-      name: SEASONS_END_AWARD_TYPES[i].name, emoji: SEASONS_END_AWARD_TYPES[i].emoji, sort_order: i,
-    })).error);
-  }
+  const awardTypeIds = await insertAwardTypes(team, SEASONS_END_AWARD_TYPES);
   await insertAll('rep_player_awards', SEASONS_END_AWARDS.map(a => ({
     org_id: org.id, team_id: team.id, player_id: playerIds[a.rosterIndex],
     award_type_id: awardTypeIds[a.typeIndex],
