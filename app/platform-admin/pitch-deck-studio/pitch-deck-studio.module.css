@@ -529,3 +529,166 @@
 }
 
 .btnGhost:hover { color: var(--fl-text); }
+
+/* ── The deck composer (stage C) ─────────────────────────────────────────────── */
+
+.deckFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.deckField { display: block; }
+
+.fieldLabel {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  margin-bottom: 0.25rem;
+}
+
+.textInput,
+.select {
+  width: 100%;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--fl-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  padding: 0.4rem 0.55rem;
+}
+
+.textInput:focus,
+.select:focus {
+  outline: 1px solid var(--logic-lime);
+  outline-offset: 0;
+}
+
+.select option {
+  background: var(--pitch-black);
+  color: var(--fl-text);
+}
+
+.composerRows {
+  list-style: none;
+  margin: 0 0 0.7rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The row itself is the preview trigger — a button, so it is keyboard-reachable. */
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 0.18rem 0.3rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowMain:hover { color: var(--fl-text); }
+
+.rowMainActive {
+  border-left-color: var(--logic-lime);
+  color: var(--fl-text);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.rowBtns {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--data-gray);
+  background: none;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  padding: 0.28rem 0.45rem;
+  cursor: pointer;
+}
+
+.iconBtn:hover:not(:disabled) { color: var(--fl-text); }
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.addRow {
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+/* The live preview: the slide in the page's own frame. The stage is already responsive; the
+   box just keeps it from spanning the whole two-column card at full bleed. */
+.composerPreview {
+  max-width: 560px;
+  margin: 0 0 0.8rem;
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.4);
+  padding: 0.55rem 0.8rem;
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.btnDanger {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  padding: 0.42rem 0.8rem;
+  cursor: pointer;
+}
+
+/* ── Owner-created decks (stages C + D) ──────────────────────────────────────── */
+
+.customDeckCard {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  padding: 1rem 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.customDeckPurpose {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  margin: 0.15rem 0 0.5rem;
+}
+
+.linkLine {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--fl-text);
+  word-break: break-all;
+  margin-bottom: 0.35rem;
+}
+
+.linkLine a { color: var(--logic-lime); text-decoration: none; }
+.linkLine a:hover { text-decoration: underline; }

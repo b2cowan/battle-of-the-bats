@@ -73,6 +73,33 @@ today — only the studio tells you that is happening.
 **Still true: no wording, picture, plan or price can be changed from a browser.** The editor moves
 slide numbers and nothing else.
 
+## Stages C + D are built (dev, 2026-08-21) — the composer, and the prospect deck
+
+**The running order itself is yours now.** Each deck card in the studio ends in a composer: move
+a slide up or down, remove it, add any built slide from the whole library, and press Publish.
+**Reordering a deck reorders the live page by itself** — the page always shows your picks in the
+deck's order, so this is the design working, not a surprise; the composer says so right above
+the button. "Return to the code default" puts the built-in order back. Click any row to see that
+slide in the real frame — exactly as the page or present mode will show it. Owner QA §77.
+
+**Decks you create from scratch.** Name one, say what it's for, compose it from any built slides
+— both audiences together is deliberate (a club pitch wants tournament *and* coach material).
+The club deck's three reserved numbers stay reserved: try to add #18 and the refusal tells you
+whose it is and that its artwork isn't drawn yet.
+
+**A deck for one prospect, handed over in two shapes that cannot disagree.** Every deck you
+create gets an **unlisted link** the moment it exists — unguessable, invisible to search
+engines, no login. The page renders the slides and nothing else: **the deck's name is your
+internal label and never appears on it**, so it can never name the prospect or a real
+organization. Open the link and print — the same dark, one-problem-per-page leave-behind the
+walkthrough pages produce is the PDF. Deleting the deck kills the link. Owner QA §78.
+
+**The safety net splits deliberately in two.** The two standing decks keep the code fallback —
+a broken or unreachable saved deck can never blank a marketing page. Decks you created have no
+fallback: a broken one simply doesn't render (its link answers "not found"), and the studio
+says why. **And still: no wording, picture, plan or price can be changed from a browser** — the
+save refuses a deck whose name or purpose so much as mentions a plan or tier.
+
 ## Why it matters
 
 **We have finished pitch material nobody can see.** ⚠ Counted again on 2026-08-21 when stage A put

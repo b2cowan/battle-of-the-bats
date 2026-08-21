@@ -1,4 +1,4 @@
-import { getWalkthroughPull } from '@/lib/pitch-pull-store';
+import { getWalkthroughRender } from '@/lib/pitch-deck-store';
 import { walkthroughMetadata } from '@/lib/walkthrough-content';
 import WalkthroughPage from '@/components/marketing/WalkthroughPage';
 
@@ -13,11 +13,13 @@ import WalkthroughPage from '@/components/marketing/WalkthroughPage';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
-  const { walkthrough, pull } = await getWalkthroughPull('tournament');
+  const { walkthrough, pull } = await getWalkthroughRender('tournament');
   return walkthroughMetadata(walkthrough, pull);
 }
 
 export default async function TournamentWalkthroughPage() {
-  const { walkthrough, pull } = await getWalkthroughPull('tournament');
-  return <WalkthroughPage walkthrough={walkthrough} pull={pull} />;
+  // The DECK is a saved row too since stage C — present mode renders it, and the pull is
+  // already normalised against it, so reordering the deck re-orders this page by itself.
+  const { walkthrough, deckIds, pull } = await getWalkthroughRender('tournament');
+  return <WalkthroughPage walkthrough={walkthrough} deckIds={deckIds} pull={pull} />;
 }

@@ -1360,6 +1360,21 @@
     "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
   },
   {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_persona_key",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_persona_key ON public.pitch_decks USING btree (persona)"
+  },
+  {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_pkey ON public.pitch_decks USING btree (id)"
+  },
+  {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_share_slug_key",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_share_slug_key ON public.pitch_decks USING btree (share_slug)"
+  },
+  {
     "tablename": "pitch_page_pulls",
     "indexname": "pitch_page_pulls_pkey",
     "indexdef": "CREATE UNIQUE INDEX pitch_page_pulls_pkey ON public.pitch_page_pulls USING btree (persona)"

@@ -10,7 +10,13 @@
  *   THE LIBRARY  every slide, each keyed by a PERMANENT number (#01…#25) so it can be
  *                tracked as the product changes underneath it. Numbers are never reused
  *                and never renumbered — #08 is retired, #18–#20 are held for the club deck.
- *   A DECK       one audience, in a running order. Tournament and coach today.
+ *   A DECK       one audience, in a running order. ⚠ Since stage C a deck's running order is an
+ *                owner-saved row too (pitch_decks, read by lib/pitch-deck-store.ts); `PITCH_DECKS`
+ *                below is what the two standing decks fall back to when no row is usable — the
+ *                known-good composition of record, same discipline as `fallbackPull`. Owner-
+ *                created decks (the club deck, stage D's prospect decks) are rows with NO code
+ *                fallback: broken means "does not render", and the studio says why.
+ *                `deckProblems()` is the save path's whole rulebook for a deck.
  *   THE PAGE     a SHORT PULL from a deck — the 90-second version, a handful of slides, not the
  *                deck. ⚠ Since stage B the LIVE pull is an owner-saved row (pitch_page_pulls,
  *                read by lib/pitch-pull-store.ts); `fallbackPull` below is what the page shows
@@ -742,16 +748,28 @@ export const SLIDE_NUMBERS_SPOKEN_FOR: Record<string, { status: SlideNumberStatu
   // ⚠ NO `planned` ENTRIES SINCE 2026-08-21 (P2b): every id either deck names is now BUILT, so both
   // running orders below are real end to end and `deckSlides()` skips nothing. This is where the
   // next batch is declared — an empty status is the honest state, not a dead one.
+  // ⚠ Still HELD, not planned, even though the club deck itself became creatable in the studio
+  // (stage C). `held` means NO deck may name the number — the composer refuses it and the refusal
+  // says whose it is. The flip to `planned` (nameable before built, so a running order can record
+  // the approved position) is a one-line code change made WHEN the three club slides are actually
+  // commissioned — flipping early would let any deck claim numbers whose artwork nobody has
+  // agreed to draw.
   '#18': {
     status: 'held',
-    note: 'Held for the club deck (P4) — a Club customer gets the tournament product AND every coach’s portal, plus three slides of its own.',
+    note: 'Held for the club deck — a Club customer gets the tournament product AND every coach’s portal, plus three slides of its own. The deck is creatable in the studio; these numbers join it when their artwork is commissioned.',
   },
-  '#19': { status: 'held', note: 'Held for the club deck (P4).' },
-  '#20': { status: 'held', note: 'Held for the club deck (P4).' },
+  '#19': { status: 'held', note: 'Held for the club deck — see #18.' },
+  '#20': { status: 'held', note: 'Held for the club deck — see #18.' },
 };
 
 /**
  * THE DECKS — one audience each, in the approved running order.
+ *
+ * ⚠ Since stage C these are the CODE FALLBACKS: the live running order is the owner's saved row
+ * (pitch_decks, read by lib/pitch-deck-store.ts), and this list renders only when no row is
+ * saved or the store is unreachable — the same discipline as `fallbackPull`, and for the same
+ * reason: it is what makes a marketing page unable to go blank. It is NOT kept in sync with the
+ * owner's saves; it is the known-good composition of record, not a cache.
  *
  * The tournament deck runs as a weekend runs. The coach deck runs as a coach's YEAR runs,
  * along the same five phases the demo world is built around — which is not tidiness: it means
@@ -769,9 +787,9 @@ export const SLIDE_NUMBERS_SPOKEN_FOR: Record<string, { status: SlideNumberStatu
  */
 // ⚠ The persona key set here is THE authority the save route validates against — and migration
 // 257's pitch_page_pulls CHECK constraint carries an independent copy of it ('tournament',
-// 'coach'). Adding a persona (the club deck, P4) without widening that CHECK ships a passing
-// typecheck and then 500s at the database on the first save. Same-unit-of-work rule: new
-// persona ⇒ new migration.
+// 'coach'), as does migration 258's pitch_decks.persona CHECK. Adding a persona without
+// widening BOTH CHECKs ships a passing typecheck and then 500s at the database on the first
+// save. Same-unit-of-work rule: new persona ⇒ new migration.
 export const PITCH_DECKS: Record<'tournament' | 'coach', string[]> = {
   tournament: [
     /* The moment        */ '#11',
@@ -791,10 +809,30 @@ export const PITCH_DECKS: Record<'tournament' | 'coach', string[]> = {
   ],
 };
 
-/** A deck's slides, in order, skipping the ones P2 has not built yet. */
-export function deckSlides(audience: 'tournament' | 'coach'): PitchSlide[] {
+/** What a standing deck is called on screen — one home; the studio, its report and the deck
+ *  save API all render it, and a row's stored copy is written FROM this rather than typed. */
+export const AUDIENCE_LABEL: Record<WalkthroughPersona, string> = {
+  coach: 'Coach deck',
+  tournament: 'Tournament deck',
+};
+
+/** What counts as a valid persona on a write surface — one home (both studio API routes parse
+ *  request input through this rather than each re-deriving membership in PITCH_DECKS). */
+export function asWalkthroughPersona(value: unknown): WalkthroughPersona | null {
+  return typeof value === 'string' && value in PITCH_DECKS ? (value as WalkthroughPersona) : null;
+}
+
+/** The slides a running order actually renders — built ids only, in the order given. */
+export function builtSlides(ids: readonly string[]): PitchSlide[] {
   const bank: Record<string, PitchSlide> = PITCH_SLIDES;
-  return PITCH_DECKS[audience].map(id => bank[id]).filter(Boolean);
+  return ids.map(id => bank[id]).filter(Boolean);
+}
+
+/** The CODE deck's slides, in order, skipping unbuilt ids. ⚠ Since stage C the live running
+ *  order is the owner's saved row — render paths should use `builtSlides` over a RESOLVED deck
+ *  (lib/pitch-deck-store.ts); this stays for the guard test and anything code-deck-specific. */
+export function deckSlides(audience: 'tournament' | 'coach'): PitchSlide[] {
+  return builtSlides(PITCH_DECKS[audience]);
 }
 
 /**
@@ -1030,9 +1068,18 @@ export const PLAN_WORDS =
  * says why; it does not save one and hope a test catches it later). ONE implementation, same
  * pattern as lib/shot-health.ts: the guard test runs it over each `fallbackPull`, and the
  * studio's save API runs it over the owner's submission — they cannot diverge.
+ *
+ * ⚠ `deck` is a PARAMETER since stage C, because "its deck" stopped being a code constant: the
+ * live running order is the owner's saved row. The save API passes the RESOLVED deck (row or
+ * fallback); the guard test passes `PITCH_DECKS[persona]`, which is the deck the fallback pulls
+ * are the composition of record against. It is required rather than defaulted so a caller
+ * cannot silently validate against yesterday's deck.
  */
-export function pullProblems(persona: WalkthroughPersona, ids: readonly string[]): string[] {
-  const deck = PITCH_DECKS[persona];
+export function pullProblems(
+  persona: WalkthroughPersona,
+  ids: readonly string[],
+  deck: readonly string[],
+): string[] {
   const problems: string[] = [];
   if (ids.length === 0) {
     problems.push('the page would show no panels at all — a pull needs at least one slide');
@@ -1068,9 +1115,19 @@ export function pullProblems(persona: WalkthroughPersona, ids: readonly string[]
       break;
     }
   }
-  // ⚠ Defense in depth, not the primary gate: slide copy is code and the build test already
-  // holds it plan-free. But copy and composition can change in the same release, and this is
-  // the last check with a human on the other side of it to read the refusal.
+  problems.push(...slideCopyPlanProblems(ids));
+  return problems;
+}
+
+/**
+ * ⚠ Defense in depth, not the primary gate: slide copy is code and the build test already holds
+ * it plan-free. But copy and composition can change in the same release, and this is the last
+ * check with a human on the other side of it to read the refusal. ONE implementation shared by
+ * `pullProblems` and `deckProblems` — which fields get read is exactly the kind of rule that
+ * would drift as two hand-copies.
+ */
+function slideCopyPlanProblems(ids: readonly string[]): string[] {
+  const problems: string[] = [];
   for (const id of ids) {
     if (!(id in PITCH_SLIDES)) continue;
     const s: PitchSlide = PITCH_SLIDES[id as SlideId];
@@ -1088,14 +1145,26 @@ export function pullProblems(persona: WalkthroughPersona, ids: readonly string[]
  * normalised to deck order, and a row with nothing usable left falls back to the code pull —
  * a missing or broken row can NEVER produce an empty page. `dropped` is returned so the studio
  * can show the rot as a problem: the page hides it, the studio must not.
+ *
+ * ⚠ `deck` is the LIVE running order (resolved row or code fallback) since stage C, and passing
+ * it is what makes plan ruling 4's decision 1 true mechanically: a saved pull is a SET, render
+ * normalises to deck order, so reordering a deck re-orders the public page by itself. The code
+ * fallback pull is normalised against the live deck too — a slide the owner removed from the
+ * deck leaves the fallback rendering of the page as well — EXCEPT when that would empty it,
+ * where the raw code pull wins, because "never blank" outranks "always a subset".
  */
 export function resolvePullIds(
   persona: WalkthroughPersona,
   stored: unknown,
+  deck: readonly string[],
 ): { ids: SlideId[]; source: 'saved' | 'code'; dropped: string[] } {
   const w = WALKTHROUGHS.find(x => x.persona === persona)!;
-  if (!Array.isArray(stored)) return { ids: [...w.fallbackPull], source: 'code', dropped: [] };
-  const deck = PITCH_DECKS[persona];
+  const fallback = (): SlideId[] => {
+    const kept = w.fallbackPull.filter(id => deck.includes(id));
+    if (kept.length === 0) return [...w.fallbackPull];
+    return kept.sort((a, b) => deck.indexOf(a) - deck.indexOf(b));
+  };
+  if (!Array.isArray(stored)) return { ids: fallback(), source: 'code', dropped: [] };
   const kept: SlideId[] = [];
   // A Set, so a rotten id repeated in the row makes ONE problem sentence in the studio (and one
   // React key) rather than two. ⚠ Non-strings land here too — the contract above says the studio
@@ -1112,6 +1181,107 @@ export function resolvePullIds(
     }
   }
   kept.sort((a, b) => deck.indexOf(a) - deck.indexOf(b));
-  if (kept.length === 0) return { ids: [...w.fallbackPull], source: 'code', dropped: [...dropped] };
+  if (kept.length === 0) return { ids: fallback(), source: 'code', dropped: [...dropped] };
+  return { ids: kept, source: 'saved', dropped: [...dropped] };
+}
+
+/* ── The deck as a row: rulebook and lenient read (stage C) ───────────────────── */
+
+/**
+ * ⚠⚠ THE DECK SAVE PATH'S WHOLE RULEBOOK — `pullProblems`' sibling, built the same way and for
+ * the same reason (ONE function, shared by the save API and the guard test — the shot-health
+ * pattern; they cannot diverge). Refusal sentences, written for a human deciding what to fix.
+ *
+ * What a deck may name (plan decision 2): a BUILT number, or a `planned` one — recorded in a
+ * running order before its artwork exists, rendered as nothing until it is. A `held` number is
+ * refused BY NAME (the refusal says whose it is), a `retired` one stays spent forever, and an
+ * unknown number would vanish silently from the order — the F5 hole, closed at the moment of
+ * saving rather than found by a test later.
+ *
+ * ⚠ A deck is deliberately NOT held to one audience. The club deck is the standing counter-
+ * example (a Club customer gets the tournament product AND every coach's portal), and ruling 4
+ * says placement is a dial, not an editorial ruling — so mixing audiences in a running order is
+ * the owner's call, and any order of true slides is true.
+ *
+ * ⚠ NAME AND PURPOSE ARE CHECKED FOR PLAN WORDS even though they are internal-only text (the
+ * public prospect rendering prints neither — owner ruling 2). A deck named "Tournament Plus
+ * pitch" leaking into any future heading is exactly the class of accident the plan warns about,
+ * and the cheap time to refuse it is before the row exists.
+ */
+export function deckProblems(
+  ids: readonly string[],
+  meta: { name: string; purpose: string },
+): string[] {
+  const problems: string[] = [];
+  if (!meta.name.trim()) {
+    problems.push('the deck needs a name — it is how the studio (and the audit log) refer to it');
+  }
+  if (ids.length === 0) {
+    problems.push('the deck would hold no slides at all — a running order needs at least one');
+  }
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id)) {
+      problems.push(`${id} appears twice — a deck never repeats a slide`);
+      continue;
+    }
+    seen.add(id);
+    if (id in PITCH_SLIDES) continue;
+    const spoken = SLIDE_NUMBERS_SPOKEN_FOR[id];
+    if (spoken?.status === 'planned') continue; // recordable before built, renders nothing until then
+    problems.push(
+      spoken
+        ? `${id} holds no slide — it is ${spoken.status} (${spoken.note})`
+        : `${id} holds no slide and is not spoken for — it would vanish silently from the running order`,
+    );
+  }
+  for (const [field, text] of [['name', meta.name], ['purpose', meta.purpose]] as const) {
+    if (PLAN_WORDS.test(text)) {
+      problems.push(`the deck’s ${field} names a plan, tier or price — pitch material never does, even internally`);
+    }
+  }
+  // Same defense-in-depth as pullProblems, via the same single implementation: a deck is
+  // rendered publicly too (present mode, the prospect link).
+  problems.push(...slideCopyPlanProblems(ids));
+  return problems;
+}
+
+/**
+ * How a DECK row is read — lenient where the save is strict, `resolvePullIds`' sibling. Kept ids
+ * are the ones that still mean something (built, or `planned` — a slot with artwork on the way);
+ * everything else is dropped and reported. ⚠ Unlike a pull, a deck's ORDER IS the data, so the
+ * stored order is preserved rather than normalised against anything.
+ *
+ * The fallback split is the stage C stop line: a STANDING deck (persona given) falls back to
+ * `PITCH_DECKS` when no built slide survives, because a public marketing page reads it and can
+ * never blank. An owner-created deck (persona `null`) has no fallback — it resolves to whatever
+ * survived, possibly nothing, and the caller decides what "does not render" looks like (the
+ * prospect route 404s; the studio says why).
+ */
+export function resolveDeckIds(
+  persona: WalkthroughPersona | null,
+  stored: unknown,
+): { ids: string[]; source: 'saved' | 'code'; dropped: string[] } {
+  const code = () =>
+    persona
+      ? { ids: [...PITCH_DECKS[persona]], source: 'code' as const, dropped: [] as string[] }
+      : { ids: [] as string[], source: 'saved' as const, dropped: [] as string[] };
+  if (!Array.isArray(stored)) return code();
+  const kept: string[] = [];
+  const dropped = new Set<string>();
+  for (const id of stored) {
+    if (typeof id !== 'string') {
+      dropped.add(String(id));
+    } else if (id in PITCH_SLIDES || SLIDE_NUMBERS_SPOKEN_FOR[id]?.status === 'planned') {
+      if (!kept.includes(id)) kept.push(id);
+    } else {
+      dropped.add(id);
+    }
+  }
+  // "Usable" for a standing deck means A SLIDE ACTUALLY RENDERS: a row of only planned numbers
+  // would present an empty deck on a public page, which is the blank the fallback exists to stop.
+  if (persona && !kept.some(id => id in PITCH_SLIDES)) {
+    return { ids: [...PITCH_DECKS[persona]], source: 'code', dropped: [...dropped] };
+  }
   return { ids: kept, source: 'saved', dropped: [...dropped] };
 }

@@ -15,13 +15,7 @@
  */
 import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import {
-  WALKTHROUGHS,
-  resolvePullIds,
-  type SlideId,
-  type Walkthrough,
-  type WalkthroughPersona,
-} from '@/lib/walkthrough-content';
+import type { WalkthroughPersona } from '@/lib/walkthrough-content';
 
 export interface StoredPullRow {
   /** `unknown` on purpose: the reader trusts nothing a row says (resolvePullIds decides). */
@@ -64,17 +58,6 @@ export const readStoredPull = cache(
   },
 );
 
-/**
- * Everything a walkthrough route needs, resolved once — React-cached so `generateMetadata` and
- * the page body share one read and can never describe two different pulls.
- */
-export const getWalkthroughPull = cache(
-  async (
-    persona: WalkthroughPersona,
-  ): Promise<{ walkthrough: Walkthrough; pull: SlideId[] }> => {
-    const walkthrough = WALKTHROUGHS.find(w => w.persona === persona)!;
-    const { row } = await readStoredPull(persona);
-    const { ids } = resolvePullIds(persona, row?.slideIds ?? null);
-    return { walkthrough, pull: ids };
-  },
-);
+// ⚠ `getWalkthroughPull` moved to lib/pitch-deck-store.ts as `getWalkthroughRender` (stage C):
+// the pull normalises against the LIVE deck now, so resolving one without the other stopped
+// being a meaningful operation. This module keeps the raw pull read only.

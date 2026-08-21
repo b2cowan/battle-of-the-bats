@@ -17,11 +17,8 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { pullProblems, PITCH_DECKS, type WalkthroughPersona } from '@/lib/walkthrough-content';
-
-function asPersona(value: unknown): WalkthroughPersona | null {
-  return typeof value === 'string' && value in PITCH_DECKS ? (value as WalkthroughPersona) : null;
-}
+import { asWalkthroughPersona as asPersona, pullProblems, resolveDeckIds } from '@/lib/walkthrough-content';
+import { readStoredDeck } from '@/lib/pitch-deck-store';
 
 export const PUT = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformAreaApi('pitch_deck_studio', 'write');
@@ -41,7 +38,11 @@ export const PUT = withObservability(async (req: NextRequest) => {
 
   // The whole rulebook, before anything is written. 422 rather than 400: the request is
   // well-formed — the COMPOSITION is refused, and `problems` is the human-readable why.
-  const problems = pullProblems(persona, slideIds);
+  // ⚠ Validated against the LIVE deck (stage C): "its deck" is the owner's saved running order
+  // where one exists, so a pull is judged by the same deck the page will render it against.
+  const deckRead = await readStoredDeck(persona);
+  const { ids: deckIds } = resolveDeckIds(persona, deckRead.row?.slideIds ?? null);
+  const problems = pullProblems(persona, slideIds, deckIds);
   if (problems.length > 0) {
     return NextResponse.json({ error: 'This pull cannot be published', problems }, { status: 422 });
   }

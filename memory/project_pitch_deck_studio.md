@@ -2,19 +2,50 @@
 
 **Plans:** `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md` + `_PM_BRIEF.md` · parent
 `PITCH_SLIDE_LIBRARY_PLAN.md` · **Stage A shipped dev 2026-08-21 (QA §72 owed) · Stage B shipped
-dev 2026-08-21 (QA §76 owed; mig 257 dev-only).** C/D not started.
+dev 2026-08-21 (QA §76 owed; mig 257 dev-only) · Stages C+D shipped dev 2026-08-21 (QA §77+§78
+owed; mig 258 dev-only).** Project fully built; club slides #18–#20 remain unbuilt artwork.
 
 ## What exists
 
 `/platform-admin/pitch-deck-studio` — the library view (stage A) **plus the pull editor (stage
-B)**: each deck card edits WHICH slides its public walkthrough page shows (checkboxes over the
-deck; order always follows the deck), previews the derived meta line + SEO description, and saves
-through `/api/platform-admin/pitch-deck-studio/pull` into `pitch_page_pulls` (service-role-only,
+B) plus the deck composer (stage C) and owner decks with unlisted links (stage D)**: each deck
+card edits WHICH slides its public walkthrough page shows (checkboxes over the deck; order
+always follows the deck), previews the derived meta line + SEO description, and saves through
+`/api/platform-admin/pitch-deck-studio/pull` into `pitch_page_pulls` (service-role-only,
 audit-logged, `pitch_deck_studio` write roles). Every pitch slide with its
 picture (rendered through the public page's own `SlideStage`, rings and all), its pain and claim,
-which deck names it and at what position, which public page publishes it, and its picture's
-condition. Plus both decks with running orders (public pull lit), a totals strip, and the gaps in
-the number line.
+every running order that names it (a LIST since stage C), which public page publishes it, and its
+picture's condition. Plus both decks with running orders (public pull lit), a totals strip, and
+the gaps in the number line.
+
+## ⚠⚠ Stage C+D — the load-bearing facts
+
+- **Decks are rows** (`pitch_decks`, mig 258): standing decks persona-keyed with the code
+  `PITCH_DECKS` as fallback (fallbackPull discipline); owner-created decks (club, prospect) have
+  **no fallback** — broken = does not render, the studio says why, `/pitch/<slug>` 404s.
+- **Reordering a deck re-orders the live page MECHANICALLY** — `resolvePullIds(persona, stored,
+  deck)` takes the LIVE deck (required param, not defaulted) and normalises saved AND fallback
+  pulls against it; one guard-tested exception: a deck row that would EMPTY the page loses to
+  the raw code pull ("never blank" outranks "always a subset").
+- **`deckProblems()` is the deck rulebook** (one function, save API + guard test): refuses
+  empty/dupes/retired/unknown, refuses `held` BY NAME (whose it is), allows `planned`, checks
+  PLAN_WORDS in the deck's NAME and PURPOSE too (internal text, checked anyway). ⚠ Deliberately
+  does NOT refuse cross-audience mixing — the club deck is the counter-example, ruling 4 makes
+  placement a dial.
+- **#18–#20 stay `held`, NOT flipped to planned** — the club deck being creatable doesn't
+  commission artwork; flip is a one-line code change when the slides are agreed.
+- **The prospect page renders NOTHING per-prospect by construction** — the deck's name (the
+  prospect label) never reaches `ProspectDeckPage` as a prop. Fixed code copy + slides
+  (`pageAnswer` — the prospect is alone) only; closing is the invitation, never "not a mockup"
+  (drawings would falsify it). `noindex`, outside the proxy matcher, `share_slug` = 18 crypto
+  bytes minted at creation; **deleting the deck IS the link revoke**. PDF = the link printed
+  (imports WalkthroughPage.module.css — its `@media print` IS the leave-behind).
+- **`AUDIENCE_LABEL` moved to lib/walkthrough-content.ts** (deck save API writes standing rows'
+  names from it); `getWalkthroughPull` → `getWalkthroughRender` in lib/pitch-deck-store.ts
+  (deck resolved first, pull against it); composer preview = server-rendered `SlideStage` nodes
+  passed as props to the client (client never imports the library).
+- Verified by Playwright driving the real buttons: reorder → publish → the public page's first
+  panel changed; revert restored; create/link/noindex/no-name-leak/delete-404 all walked.
 
 ## ⚠⚠ Stage B — the load-bearing facts
 

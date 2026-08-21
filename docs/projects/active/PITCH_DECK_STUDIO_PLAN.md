@@ -2,7 +2,8 @@
 
 **Status:** APPROVED 2026-08-21 (owner, in session — three rulings recorded below). **STAGE A SHIPPED
 2026-08-21 (dev) — owner QA §72 owed. STAGE B SHIPPED 2026-08-21 (dev) — owner QA §76 owed; mig 257
-dev-only until the next release.** C and D not started.
+dev-only until the next release. STAGES C + D SHIPPED 2026-08-21 (dev) — owner QA §77 (composer) +
+§78 (prospect decks) owed; mig 258 dev-only with 257.**
 **PM brief:** [PITCH_DECK_STUDIO_PM_BRIEF.md](PITCH_DECK_STUDIO_PM_BRIEF.md)
 **Parent project:** [PITCH_SLIDE_LIBRARY_PLAN.md](PITCH_SLIDE_LIBRARY_PLAN.md) — this is the
 "deck assembly in platform-admin" item that plan parked as *"later, and only if it earns it… build
@@ -317,18 +318,58 @@ DB-backed page here is per-request. One keyed single-row read with an abort time
 over inventing a caching layer — and it also means a save is live on the very next request, with
 no build baking a composition in.
 
-### C — The composer.
+### C — ✅ SHIPPED dev 2026-08-21 (owner QA §77). The composer.
 
-Create and name a deck, give it a purpose, drag to reorder, add and remove. Live preview against
-the real slide frame. ⚠ The page-copy prerequisite is already met (stage B closed F4) — C is
-purely the deck instrument, and it must answer for itself what stage B dodged: what reordering a
-DECK does to the pulls that follow it.
+The deck's running order, name and purpose become rows (`pitch_decks`, mig 258 — service-role
+only, mig 251 posture): the two standing decks are persona-keyed rows with the code `PITCH_DECKS`
+as fallback (`fallbackPull`'s exact discipline), owner-created decks (the club deck, prospects)
+have no fallback — broken means "does not render", and the studio says why. Reorder is up/down
+buttons (drag ghosts fight platform-admin's scroll container; buttons are keyboard-free), add is
+a picker over every built slide, and the live preview renders the selected slide through the
+page's own `SlideStage` — server-rendered nodes handed to the client, so the composer cannot
+frame a slide differently from the page.
 
-### D — Prospect decks: the private link and the PDF.
+#### ⚠ What stage C actually settled — read before touching this layer
 
-Compose, name it for the prospect, get an unlisted URL and a PDF. The print layout already exists
-(dark ground, one slide per page, pictures at full size, our address on the last page), so the PDF
-is close to free. The link is `noindex` and names no real organization.
+**1. REORDERING A DECK RE-ORDERS THE LIVE PAGE, MECHANICALLY.** `resolvePullIds` takes the LIVE
+deck as a parameter now; the pull (saved OR code fallback) normalises against it, so decision 1
+is held by code rather than convention. The composer states it above its Publish button and asks
+nothing. One deliberate exception, guard-tested: a deck row so degenerate it would EMPTY the
+page loses to the raw code pull — "never blank" outranks "always a subset".
+
+**2. `pullProblems` AND `resolvePullIds` GAINED A REQUIRED DECK PARAMETER** — required rather
+than defaulted so no caller can silently validate against yesterday's deck. The guard test
+passes `PITCH_DECKS[persona]` (the fallbacks are the composition of record against the CODE
+decks); the save APIs pass the resolved live deck.
+
+**3. A DECK IS NOT HELD TO ONE AUDIENCE, on purpose.** The club deck is the standing
+counter-example (Club = tournament + coach + three of its own), and ruling 4 makes placement a
+dial — `deckProblems` refuses spent/held/unknown numbers, dupes, emptiness and plan words (in
+the deck's NAME and PURPOSE too — internal text, checked anyway), and deliberately not
+cross-audience mixing. The "never reused across decks" guard-test assertion still holds the CODE
+fallbacks disjoint.
+
+**4. #18–#20 STAY `held`, AND THE COMPOSER REFUSES THEM BY NAME.** The club deck being creatable
+did NOT flip them to `planned` — `held` means no deck may name the number, and flipping early
+would let any deck claim artwork nobody has commissioned. The flip is a one-line code change
+made when the three club slides are actually agreed. The register notes say so.
+
+**5. THE STANDING DECKS' DISPLAY NAMES MOVED TO `AUDIENCE_LABEL` in lib/walkthrough-content.ts**
+(one home; the save API writes a standing row's `name` from it rather than accepting one), and a
+slide's studio placement is a LIST now — one slide can sit in several running orders.
+
+### D — ✅ SHIPPED dev 2026-08-21 (owner QA §78). Prospect decks: the private link and the PDF.
+
+Every owner-created deck mints an unguessable `share_slug` at birth (18 crypto bytes →
+base64url); `/pitch/<slug>` renders it through the walkthrough page's own frame — `noindex`,
+`force-dynamic`, outside the proxy matcher (no session work), STRICT 404 on any kind of nothing
+(no fallback for owner decks). The page renders slides (`pageAnswer` — the prospect opens the
+link alone) and FIXED code copy only: the deck's name is the prospect label and never reaches
+the component, so ruling 2 holds by construction. Its closing is the invitation, not the
+"not a mockup" denial — pre-empting the F2 mistake on a page that will usually hold drawings.
+The PDF is the link printed: the component imports WalkthroughPage.module.css, whose
+`@media print` layout IS the leave-behind. Deleting a deck kills its link — that is the revoke.
+No analytics (out of scope by plan).
 
 ## Risks
 

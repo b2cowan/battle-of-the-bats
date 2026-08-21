@@ -60,9 +60,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   early_access:    { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
   email:           { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
   // The pitch slide library + deck composition. Company-owned material aimed at people who are
-  // not customers yet, so it sits with the other Growth rooms. ⚠ Writes since stage B are
-  // COMPOSITION ONLY — which slides each public page pulls (pitch_page_pulls). A slide's words
-  // and picture stay code and are never editable from here (owner ruling 1, 2026-08-21).
+  // not customers yet, so it sits with the other Growth rooms. ⚠ Writes are COMPOSITION ONLY —
+  // which slides each public page pulls (pitch_page_pulls, stage B) and each deck's running
+  // order/name/purpose incl. prospect decks with unlisted links (pitch_decks, stages C+D). A
+  // slide's words and picture stay code and are never editable from here (owner ruling 1,
+  // 2026-08-21).
   pitch_deck_studio: { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
 
   // System

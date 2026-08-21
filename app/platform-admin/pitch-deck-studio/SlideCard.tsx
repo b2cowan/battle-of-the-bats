@@ -18,8 +18,8 @@
  * a row in a table, and the same copy feeds the in-app upgrade panels, so a marketing overclaim
  * reaches paying customers. Do not "finish the form".
  */
-import SlideStage from '@/components/marketing/SlideStage';
-import { AUDIENCE_LABEL, PICTURE_FRESHNESS_IS_UNCHECKED, type SlideReport } from './report';
+import type { ReactNode } from 'react';
+import { PICTURE_FRESHNESS_IS_UNCHECKED, type SlideReport } from './report';
 import styles from './pitch-deck-studio.module.css';
 
 const CLASS_LABEL: Record<string, string> = {
@@ -47,16 +47,24 @@ function describeAge(days: number | null): string {
   return `over a year ago`;
 }
 
-export default function SlideCard({ report: r }: { report: SlideReport }) {
-  const { slide, picture, health, pages, deck } = r;
+export default function SlideCard({
+  report: r,
+  stage,
+}: {
+  report: SlideReport;
+  /** The slide already rendered in the page's own frame — the SAME node the composer previews,
+   *  passed down so the card and the preview are one server render, not two look-alikes. */
+  stage?: ReactNode;
+}) {
+  const { slide, picture, health, pages, decks } = r;
   const stranded = pages.length === 0;
 
   return (
     <article className={styles.slideCard}>
       <div className={styles.slidePicture}>
-        {picture ? (
+        {picture && stage ? (
           <>
-            <SlideStage picture={picture.picture} />
+            {stage}
             <p className={styles.pictureCaption}>{picture.caption}</p>
           </>
         ) : (
@@ -85,9 +93,16 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
         <dl className={styles.facts}>
           <dt className={styles.factLabel}>In deck</dt>
           <dd className={styles.factValue}>
-            {deck
-              ? `${AUDIENCE_LABEL[deck.audience] ?? deck.audience} · position ${deck.position} of ${deck.of}`
-              : /* No deck names it: it is in the bank and in no running order at all. */
+            {decks.length > 0
+              ? /* A LIST since stage C — decks are rows and one slide can sit in several. Keyed
+                   by index: deck NAMES are free text with no uniqueness rule, so two same-named
+                   decks placing this slide identically would collide on any content key. */
+                decks.map((d, i) => (
+                  <span key={i} className={styles.pageRow}>
+                    {d.deck} · position {d.position} of {d.of}
+                  </span>
+                ))
+              : /* No running order names it: it is in the bank and nothing shows it anywhere. */
                 <span className={styles.attention}>In no deck — it is in the library and nothing names it</span>}
           </dd>
 

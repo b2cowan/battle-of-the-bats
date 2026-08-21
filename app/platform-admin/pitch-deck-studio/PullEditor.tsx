@@ -17,12 +17,12 @@
  * human deciding what to fix.
  */
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 // ⚠ Only the data-free derive module — importing lib/walkthrough-content here would ship the
 // ENTIRE slide library (every answer paragraph, every caption) to the browser. The slide data
 // this editor needs arrives as a small props payload from the server page instead.
 import { derivedMeta, derivedSeoDescriptionFrom } from '@/lib/walkthrough-derive';
 import type { WalkthroughPersona } from '@/lib/walkthrough-content';
+import { useStudioSave } from './useStudioSave';
 import styles from './pitch-deck-studio.module.css';
 
 /** The slice of a slide this editor needs — built slides only, already in deck order. */
@@ -55,7 +55,6 @@ export default function PullEditor({
   savedBy: string | null;
   storeUnreachable: boolean;
 }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set(current));
 
   // ⚠ RESYNC WHEN THE SERVER'S TRUTH CHANGES — `router.refresh()` preserves client state, so
@@ -69,9 +68,9 @@ export default function PullEditor({
     setSyncedTo(currentKey);
     setSelected(new Set(current));
   }
-  const [busy, setBusy] = useState(false);
-  const [problems, setProblems] = useState<string[]>([]);
-  const [note, setNote] = useState<string | null>(null);
+  // The save call (busy/refusals/note + router.refresh) is the shared studio hook — one home
+  // for the contract this editor and the deck composer must keep identical.
+  const { busy, problems, note, setNote, run: call } = useStudioSave();
 
   const chosen = useMemo(() => slides.filter(s => selected.has(s.id)), [slides, selected]);
   const dirty = chosen.map(s => s.id).join(' ') !== current.join(' ');
@@ -84,31 +83,6 @@ export default function PullEditor({
       else next.add(id);
       return next;
     });
-  }
-
-  async function call(init: () => Promise<Response>, savedNote: string) {
-    setBusy(true);
-    setProblems([]);
-    setNote(null);
-    try {
-      const res = await init();
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        setProblems(
-          Array.isArray(body?.problems) && body.problems.length > 0
-            ? body.problems
-            : [body?.error ?? 'The save failed — nothing was changed.'],
-        );
-        return;
-      }
-      setNote(savedNote);
-      // Re-render the server page so the chips, placements and totals follow the new pull.
-      router.refresh();
-    } catch {
-      setProblems(['The save could not reach the server — nothing was changed.']);
-    } finally {
-      setBusy(false);
-    }
   }
 
   const save = () =>

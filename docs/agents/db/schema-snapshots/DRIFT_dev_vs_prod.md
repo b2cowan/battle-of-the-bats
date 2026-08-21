@@ -2,22 +2,23 @@
 
 **Generated:** 2026-08-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 148 divergence(s)** across dev/prod.
+**⚠️ 166 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 7 | 0 | — |
-| Columns | 67 | 0 | 0 |
-| Indexes | 32 | 0 | 0 |
-| Constraints | 34 | 0 | — |
-| RLS / CHECK | 8 | 0 | 0 (RLS state) |
+| Tables | 8 | 0 | — |
+| Columns | 76 | 0 | 0 |
+| Indexes | 35 | 0 | 0 |
+| Constraints | 37 | 0 | — |
+| RLS / CHECK | 10 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (7)
+### Only in DEV (8)
 - `org_people`
 - `org_person_emails`
 - `org_person_match_rejections`
 - `org_person_merges`
+- `pitch_decks`
 - `pitch_page_pulls`
 - `rep_payable_installments`
 - `rep_payable_payments`
@@ -26,7 +27,7 @@
 _none_
 
 ## Columns
-### Only in DEV (67)
+### Only in DEV (76)
 - `family_links.person_id`
 - `league_registrations.org_id`
 - `league_registrations.person_id`
@@ -63,6 +64,15 @@ _none_
 - `org_person_merges.merged_person_id`
 - `org_person_merges.merged_snapshot`
 - `org_person_merges.org_id`
+- `pitch_decks.created_at`
+- `pitch_decks.id`
+- `pitch_decks.name`
+- `pitch_decks.persona`
+- `pitch_decks.purpose`
+- `pitch_decks.share_slug`
+- `pitch_decks.slide_ids`
+- `pitch_decks.updated_at`
+- `pitch_decks.updated_by`
 - `pitch_page_pulls.persona`
 - `pitch_page_pulls.slide_ids`
 - `pitch_page_pulls.updated_at`
@@ -102,7 +112,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (32)
+### Only in DEV (35)
 - `family_links_person_id_idx`
 - `league_registrations_org_id_idx`
 - `league_registrations_person_id_idx`
@@ -119,6 +129,9 @@ _none_
 - `org_person_merges_kept_idx`
 - `org_person_merges_org_id_idx`
 - `org_person_merges_pkey`
+- `pitch_decks_persona_key`
+- `pitch_decks_pkey`
+- `pitch_decks_share_slug_key`
 - `pitch_page_pulls_pkey`
 - `rep_payable_installments_expense_idx`
 - `rep_payable_installments_number_key`
@@ -143,7 +156,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (34)
+### Only in DEV (37)
 - `family_links.family_links_person_id_fkey`
 - `league_registrations.league_registrations_org_id_fkey`
 - `league_registrations.league_registrations_person_id_fkey`
@@ -161,6 +174,9 @@ _none_
 - `org_person_merges.org_person_merges_merged_by_fkey`
 - `org_person_merges.org_person_merges_org_id_fkey`
 - `org_person_merges.org_person_merges_pkey`
+- `pitch_decks.pitch_decks_persona_key`
+- `pitch_decks.pitch_decks_pkey`
+- `pitch_decks.pitch_decks_share_slug_key`
 - `pitch_page_pulls.pitch_page_pulls_pkey`
 - `rep_payable_installments.rep_payable_installments_expense_id_fkey`
 - `rep_payable_installments.rep_payable_installments_number_key`
@@ -186,10 +202,12 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (8)
+### CHECK only in DEV (10)
 - `org_people.org_people_email_normalized_check`
 - `org_person_emails.org_person_emails_email_normalized_check`
 - `org_person_match_rejections.org_person_match_rejections_ordered`
+- `pitch_decks.pitch_decks_persona_check`
+- `pitch_decks.pitch_decks_slide_ids_check`
 - `pitch_page_pulls.pitch_page_pulls_persona_check`
 - `pitch_page_pulls.pitch_page_pulls_slide_ids_check`
 - `rep_payable_installments.rep_payable_installments_amount_check`

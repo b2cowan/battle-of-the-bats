@@ -22,12 +22,16 @@
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { canWritePlatformArea } from '@/lib/platform-areas';
 import { readStoredPull } from '@/lib/pitch-pull-store';
+import { readCustomDecks, readStoredDeck } from '@/lib/pitch-deck-store';
 import { PITCH_SLIDES, WALKTHROUGHS, type SlideId } from '@/lib/walkthrough-content';
+import SlideStage from '@/components/marketing/SlideStage';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
+import type { ReactNode } from 'react';
 import { AUDIENCE_LABEL, buildPitchLibraryReport } from './report';
 import SlideCard from './SlideCard';
 import PullEditor from './PullEditor';
+import DeckComposer, { type ComposerSlide } from './DeckComposer';
 import styles from './pitch-deck-studio.module.css';
 
 /**
@@ -83,12 +87,31 @@ function pictureFilePresence(): (publicPath: string) => boolean | null {
 export default async function PitchDeckStudioPage() {
   const auth = await requirePlatformAreaView('pitch_deck_studio');
   const canWrite = canWritePlatformArea(auth.role, 'pitch_deck_studio');
-  const [tournament, coach] = await Promise.all([
+  const [tournament, coach, tournamentDeck, coachDeck, customDecks] = await Promise.all([
     readStoredPull('tournament'),
     readStoredPull('coach'),
+    readStoredDeck('tournament'),
+    readStoredDeck('coach'),
+    readCustomDecks(),
   ]);
-  const report = buildPitchLibraryReport(pictureFilePresence(), { tournament, coach });
+  const report = buildPitchLibraryReport(
+    pictureFilePresence(),
+    { tournament, coach },
+    { tournament: tournamentDeck, coach: coachDeck },
+    customDecks,
+  );
   const { totals } = report;
+
+  // The composer's menu (every built slide, number order) and the ONE render of each slide
+  // through the page's own frame — the SAME node feeds the library card and the composer's
+  // live preview (client gets it as a ready ReactNode), so the two surfaces are literally one
+  // server render and can never frame a slide differently from the public page.
+  const librarySlides: ComposerSlide[] = report.slides.map(r => ({ id: r.slide.id, pain: r.slide.pain }));
+  const stageFor: Record<string, ReactNode> = Object.fromEntries(
+    report.slides
+      .filter(r => r.picture)
+      .map(r => [r.slide.id, <SlideStage key={r.slide.id} picture={r.picture!.picture} />]),
+  );
 
   return (
     <div className={styles.page}>
@@ -159,9 +182,25 @@ export default async function PitchDeckStudioPage() {
               <p key={p} className={styles.deckProblem}>⚠ {p}</p>
             ))}
 
-            {/* Stage B: the room's one write. Composition only — see the header note. The
-                editor gets a SMALL props payload rather than importing the library: it is a
-                client component, and the library is most of a book. */}
+            {/* Stage C: the composer — the deck's RUNNING ORDER becomes the write. Reordering
+                re-orders the live page by design (plan decision 1); the composer says so. */}
+            {deck.page && (
+              <DeckComposer
+                target={{ kind: 'standing', persona: deck.audience, publishedPath: deck.page.path }}
+                library={librarySlides}
+                current={deck.order.map(o => o.id)}
+                source={deck.deckSource}
+                savedAt={deck.deckSavedAt}
+                savedBy={deck.deckSavedBy}
+                storeUnreachable={deck.deckStoreUnreachable}
+                canWrite={canWrite}
+                stages={stageFor}
+              />
+            )}
+
+            {/* Stage B: the pull editor — WHICH of the deck's slides the scrolling page shows.
+                It gets a SMALL props payload rather than importing the library: it is a client
+                component, and the library is most of a book. */}
             {deck.page && (
               <PullEditor
                 audience={deck.audience}
@@ -184,6 +223,78 @@ export default async function PitchDeckStudioPage() {
           </section>
         ))}
       </div>
+
+      {/* ── Owner-created decks (stages C + D) ─────────────────────────────── */}
+      <h2 className={styles.sectionHeading}>Your decks</h2>
+      <p className={styles.sectionNote}>
+        Decks you compose yourself — the club deck, and a deck for one prospect. Each one gets
+        an <strong>unlisted link</strong> the moment it is created: unguessable, invisible to search
+        engines, and it renders the slides and nothing else — <strong>never the deck’s name, a
+        prospect or any real organization</strong>. Open the link and print to get the same PDF
+        leave-behind the walkthrough pages produce. Deleting a deck kills its link. ⚠ These decks
+        have no code safety net: if one breaks, it does not render, and this screen says why.
+      </p>
+
+      {report.customDecksUnreachable && (
+        <p className={styles.deckProblem}>
+          ⚠ The deck store could not be read just now — decks saved earlier are safe, this list
+          just cannot show them until the store is back.
+        </p>
+      )}
+
+      {report.customDecks.map(deck => (
+        <section key={deck.id} className={styles.customDeckCard}>
+          <h3 className={styles.deckName}>{deck.name}</h3>
+          {deck.purpose && <p className={styles.customDeckPurpose}>{deck.purpose}</p>}
+          <p className={styles.deckMeta}>
+            {deck.built} slides render
+            {deck.updatedAt ? ` · last saved ${deck.updatedAt.slice(0, 10)}` : ''}
+            {deck.updatedBy ? ` by ${deck.updatedBy}` : ''}
+          </p>
+          {deck.shareSlug && (
+            <p className={styles.linkLine}>
+              Unlisted link:{' '}
+              <a href={`/pitch/${deck.shareSlug}`} target="_blank" rel="noopener noreferrer">
+                /pitch/{deck.shareSlug}
+              </a>
+              {' '}· anyone holding it can open it · print that page for the PDF
+            </p>
+          )}
+          {deck.problems.map(p => (
+            <p key={p} className={styles.deckProblem}>⚠ {p}</p>
+          ))}
+          <DeckComposer
+            target={{
+              kind: 'custom',
+              id: deck.id,
+              name: deck.name,
+              purpose: deck.purpose,
+              shareSlug: deck.shareSlug,
+            }}
+            library={librarySlides}
+            current={deck.order.map(o => o.id)}
+            canWrite={canWrite}
+            stages={stageFor}
+          />
+        </section>
+      ))}
+
+      {canWrite && (
+        <section className={styles.customDeckCard}>
+          <h3 className={styles.deckName}>New deck</h3>
+          <p className={styles.customDeckPurpose}>
+            Name it for yourself — a prospect deck’s name is your internal label and never
+            appears on the link.
+          </p>
+          <DeckComposer
+            target={{ kind: 'new' }}
+            library={librarySlides}
+            current={[]}
+            canWrite={canWrite}
+            stages={stageFor}
+          />
+        </section>
+      )}
 
       {/* ── The library ───────────────────────────────────────────────────── */}
       <h2 className={styles.sectionHeading}>The library</h2>
@@ -250,7 +361,7 @@ export default async function PitchDeckStudioPage() {
 
       <div className={styles.slides}>
         {report.slides.map(r => (
-          <SlideCard key={r.slide.id} report={r} />
+          <SlideCard key={r.slide.id} report={r} stage={stageFor[r.slide.id]} />
         ))}
       </div>
     </div>

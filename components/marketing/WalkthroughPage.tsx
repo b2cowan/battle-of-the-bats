@@ -21,7 +21,7 @@
 import Link from 'next/link';
 import {
   PITCH_SLIDES,
-  deckSlides,
+  builtSlides,
   derivedMeta,
   type PitchSlide,
   type SlideId,
@@ -29,7 +29,7 @@ import {
 } from '@/lib/walkthrough-content';
 import { sandboxDoorsVisible } from '@/lib/sandbox-door';
 import { pictureFor } from './slide-picture';
-import SlideStage, { SlideLayout } from './SlideStage';
+import SlidePanels from './SlidePanels';
 import WalkthroughPresent, { type PresentSlide } from './WalkthroughPresent';
 import styles from './WalkthroughPage.module.css';
 
@@ -38,9 +38,13 @@ const PRINT_HOST = 'fieldlogichq.ca';
 
 export default function WalkthroughPage({
   walkthrough: w,
+  deckIds,
   pull,
 }: {
   walkthrough: Walkthrough;
+  /** The resolved DECK running order (saved row or code fallback — stage C). Present mode
+   *  renders this; unbuilt ids in it render nothing. */
+  deckIds: string[];
   /** The resolved pull — the route decides saved-vs-fallback; this component just renders it. */
   pull: SlideId[];
 }) {
@@ -50,9 +54,19 @@ export default function WalkthroughPage({
    * resolving it twice is how they would eventually stop. (This was the original code's stated
    * guarantee, and making present mode render the deck rather than the pull briefly broke it —
    * the pull's six slides were being resolved a second time inside the deck map.)
+   *
+   * ⚠ The pull is normalised against the LIVE deck upstream, but "never blank" outranks
+   * "always a subset" (see resolvePullIds), so a degenerate deck row can leave a fallback pull
+   * slide outside `deckIds` — hence the pull map below keeps its own PITCH_SLIDES lookup as
+   * well as this shared picture map.
    */
-  const deck = deckSlides(w.persona);
+  const deck = builtSlides(deckIds);
   const shownFor = new Map(deck.map(slide => [slide.id, pictureFor(slide)]));
+  // The degenerate case named above: a pull slide the live deck no longer holds still gets its
+  // picture resolved ONCE, into the same map, rather than rendering words over an empty stage.
+  for (const id of pull) {
+    if (!shownFor.has(id)) shownFor.set(id, pictureFor(PITCH_SLIDES[id]));
+  }
 
   // The scroll page's short PULL — a subset of the deck, in deck order. The FALLBACK list is
   // guard-tested; an owner-saved one went through the same `pullProblems` rulebook at save time,
@@ -135,43 +149,9 @@ export default function WalkthroughPage({
         </div>
       </section>
 
-      {/* ── The pull ─────────────────────────────────────────────────────── */}
-      {pulled.map(({ slide, shown }, i) => {
-        return (
-          <section key={slide.id} className={styles.panel}>
-            <div className="container">
-              <p className={styles.panelIndex}>{i + 1} / {pulled.length}</p>
-              <SlideLayout
-                say={
-                  <>
-                    <p className={styles.panelOld}>The old way</p>
-                    <h2 className={styles.panelPain}>{slide.pain}</h2>
-                    {/* ⚠ No plan chip, by owner ruling 2026-08-21 — see the long note in
-                        lib/walkthrough-content.ts where WalkthroughPanel used to live. This page
-                        names no plan, tier or price anywhere. */}
-                    <p className={styles.panelNew}>With FieldLogicHQ</p>
-                    <p className={styles.panelAnswer}>{slide.pageAnswer}</p>
-                    {/* ⚠ AND NO PER-PANEL "See this screen live" LINK, by the same session's lime
-                        ruling. It was the page's only real repetition of the accent — six of them,
-                        against a hero and a closing that already offer the identical door. The
-                        rule that survives is by SURFACE: lime marks the one recommended action in
-                        the APP, and is the brand accent on marketing. Dropping these six is the
-                        trim that ruling asked for; do not re-add them panel by panel. */}
-                  </>
-                }
-                show={
-                  shown && (
-                    <figure className={styles.shotFigure}>
-                      <SlideStage picture={shown.picture} />
-                      <figcaption className={styles.shotCaption}>{shown.caption}</figcaption>
-                    </figure>
-                  )
-                }
-              />
-            </div>
-          </section>
-        );
-      })}
+      {/* ── The pull — the shared panel rendering (SlidePanels), which is also the print
+             leave-behind's page structure, shared with the prospect deck page (stage D). */}
+      <SlidePanels panels={pulled} />
 
       {/* ── Closing: the proof, then the ask ─────────────────────────────── */}
       <section className={styles.ctaSection}>

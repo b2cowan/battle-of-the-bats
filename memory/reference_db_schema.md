@@ -684,6 +684,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, person_a_id (uuid) → o
 id (uuid), org_id (uuid) → organizations.id NOT NULL, kept_person_id (uuid) → org_people.id NOT NULL, merged_person_id (uuid) NOT NULL, merged_snapshot (jsonb) NOT NULL, merged_by (uuid), merged_at, created_at
 - Indexes: org_person_merges_kept_idx, org_person_merges_org_id_idx
 
+### pitch_decks
+id (uuid), persona, name NOT NULL, purpose, slide_ids (jsonb) NOT NULL, share_slug, created_at, updated_at, updated_by
+- Indexes: pitch_decks_persona_key, pitch_decks_share_slug_key
+
 ### pitch_page_pulls
 persona NOT NULL, slide_ids (jsonb) NOT NULL, updated_at, updated_by
 
@@ -716,7 +720,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **172 tables** across 10 modules.
+Total: **173 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -727,4 +731,4 @@ Total: **172 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 39 tables
+- Other: 40 tables

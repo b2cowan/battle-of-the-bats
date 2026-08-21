@@ -779,6 +779,68 @@ saved it; shown in the studio's "saved by" line and mirrored to the platform aud
 
 ---
 
+## `pitch_decks`
+<!-- dict:table:pitch_decks -->
+
+**Purpose:** an owner-composed pitch deck — its name, purpose and RUNNING ORDER of permanent
+library slide numbers (Pitch Deck Studio stages C+D, mig 258;
+[docs/projects/active/PITCH_DECK_STUDIO_PLAN.md](../../projects/active/PITCH_DECK_STUDIO_PLAN.md)).
+Two kinds in one table: the **standing decks** (`persona` set — the live running order behind each
+public walkthrough page, with the code `PITCH_DECKS` as fallback) and **owner-created decks**
+(`persona` NULL — the club deck, per-prospect decks — no fallback; broken = does not render).
+Written only by the studio's deck API
+([app/api/platform-admin/pitch-deck-studio/deck/route.ts](../../../app/api/platform-admin/pitch-deck-studio/deck/route.ts))
+after `deckProblems()` validation; read through
+[lib/pitch-deck-store.ts](../../../lib/pitch-deck-store.ts). **Service-role only** (RLS enabled,
+no policies — mig 251 posture).
+
+**Gotchas (read first):**
+
+1. **Slide NUMBERS plus the deck's own name/purpose, never a slide's sentence** — same owner
+   ruling as `pitch_page_pulls` (*decks are data, slides are CODE*). Name and purpose are
+   internal-only text (a prospect deck's name is the prospect label; the public rendering prints
+   neither) and the save path still refuses plan/tier words in them.
+2. **A row is advisory:** readers run `resolveDeckIds()` — built and `planned` numbers survive,
+   everything else is dropped and reported by the studio. A standing deck with no built slide
+   left falls back to the code deck; an owner deck resolves to nothing and its link 404s.
+3. **`persona`'s CHECK is an independent copy of the code's persona list** (like
+   `pitch_page_pulls.persona`) — a new persona is a new migration in the same unit of work.
+4. **Deleting an owner deck kills its unlisted link** — that IS the revoke, not a side effect.
+
+<!-- dict:col:pitch_decks.id -->
+**`id`** (uuid PK) — the deck's identity; the studio's update/delete key for owner decks.
+
+<!-- dict:col:pitch_decks.persona -->
+**`persona`** (text UNIQUE NULL, CHECK ∈ `tournament | coach`) — set only on the two standing
+decks, joining each to its walkthrough page and code fallback; NULL for owner-created decks.
+
+<!-- dict:col:pitch_decks.name -->
+**`name`** (text NOT NULL) — internal display name. Standing rows store `AUDIENCE_LABEL[persona]`
+written by the API (never typed); an owner deck's name is the owner's label (≤120 chars enforced
+in the API).
+
+<!-- dict:col:pitch_decks.purpose -->
+**`purpose`** (text NOT NULL, default `''`) — what the deck is for, internal-only (≤500 chars).
+
+<!-- dict:col:pitch_decks.slide_ids -->
+**`slide_ids`** (jsonb NOT NULL, CHECK array) — the running order: ordered array of permanent
+library numbers. Not foreign-keyed; integrity is the save path's + reader's job (gotcha 2).
+
+<!-- dict:col:pitch_decks.share_slug -->
+**`share_slug`** (text UNIQUE NULL) — the unlisted `/pitch/<slug>` link (stage D). Minted from
+crypto randomness at creation for owner decks; NULL on standing decks. Anyone holding the link
+can open it (owner ruling 2 — noindex, no login, no customer data).
+
+<!-- dict:col:pitch_decks.created_at -->
+**`created_at`** (timestamptz NOT NULL) — when the deck was created.
+
+<!-- dict:col:pitch_decks.updated_at -->
+<!-- dict:col:pitch_decks.updated_by -->
+**`updated_at` / `updated_by`** — last save and the platform-admin email that made it; shown in
+the studio and mirrored to the platform audit log.
+
+---
+
 ## `pools`
 <!-- dict:table:pools -->
 

@@ -10480,3 +10480,52 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
 - [ ] The two walkthrough pages now make one small database read per visit (with a hard timeout
       and the fallback behind it). That is the cost of “save now, live now”; if you ever feel the
       pages are slow, say so and we cache harder.
+
+## §77 · The running order is yours now — and reordering a deck reorders the live page, on purpose
+
+**BUILT 2026-08-21 (dev).** Pitch Deck Studio stage C — the composer. Plan:
+`docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
+
+### The composer (platform-admin → Growth → Pitch Deck Studio, on each deck card)
+
+- [ ] **Move a slide, press Publish, open the page.** The coach card's running order has up/down
+      and remove buttons on every row and a picker to add any built slide from the whole library
+      — including the other audience's. Publish, open `/for-coaches/walkthrough`: the scrolling
+      page, its counters, its search description AND present mode all follow the new order. The
+      composer tells you this will happen right above the button — it never asks.
+- [ ] **Click a row to see the slide in the real frame** — the same stage, rings and all, that
+      the public page uses. What you preview is what a visitor gets.
+- [ ] **The save button refuses a bad deck in sentences.** An empty deck, a duplicate, a retired
+      number, and — try adding **#18** — a held number, refused by name: the refusal says it is
+      the club deck's and its artwork is not drawn yet.
+- [ ] **"Return to the code default"** forgets your saved order entirely; the page is back on
+      the built-in running order on its next visit.
+- [ ] **The pages still cannot go blank.** The saved deck is behind the same safety net as the
+      saved pull: broken, slow or unreachable, the page silently renders the code version, and
+      only the studio says that is happening.
+
+### Your own decks
+
+- [ ] **Create a deck under "Your decks."** Name it (internal only), give it a purpose, compose
+      it from both audiences freely — mixing is by design, the club pitch is the whole reason.
+      It appears as its own card with the same composer, and **Delete** asks twice.
+
+## §78 · A deck for one prospect: an unlisted link and a PDF that cannot disagree
+
+**BUILT 2026-08-21 (dev).** Pitch Deck Studio stage D. Plan:
+`docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
+
+- [ ] **Every deck you create carries an unlisted link from birth** — shown on its card. Open it
+      in a private window: it renders with no login, walks the slides one problem per panel in
+      the deck's order (with the longer unattended answers, because nobody is standing beside
+      it), offers present mode, and closes by pointing at the live demos.
+- [ ] **Nothing per-prospect renders.** The deck's name — your label for the prospect — appears
+      nowhere on the page, in its title, or in its source. Search engines are told to ignore it
+      (`noindex`), and the address is 24 characters of randomness nobody can guess.
+- [ ] **The PDF is the link, printed.** Ctrl+P on the link page → Save as PDF: the dark
+      leave-behind, one problem per page, pictures intact, our address on the last page. Link
+      and PDF render from the same deck, so they can never disagree.
+- [ ] **Deleting the deck kills the link** — that is the revoke. The dead link answers
+      "not found", never an error page.
+- [ ] **A deck with nothing left to render** (every slide removed or rotted) also answers
+      "not found" on its link — and the studio card says why, in words.

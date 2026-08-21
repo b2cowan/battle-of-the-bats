@@ -23,9 +23,11 @@ import {
   PLAN_WORDS,
   SLIDE_NUMBERS_SPOKEN_FOR,
   WALKTHROUGHS,
+  deckProblems,
   derivedMeta,
   derivedSeoDescription,
   pullProblems,
+  resolveDeckIds,
   resolvePullIds,
   type PitchSlide,
 } from '../../lib/walkthrough-content.ts';
@@ -199,7 +201,10 @@ test('every slide’s page copy is actually written', () => {
 test('each code fallback pull passes the save path’s own rulebook', () => {
   for (const w of WALKTHROUGHS) {
     assert.deepEqual(
-      pullProblems(w.persona, w.fallbackPull),
+      // ⚠ The rulebook validates against a DECK PARAMETER since stage C (the live deck is a
+      // saved row); the fallback pulls are the composition of record against the CODE decks,
+      // so that is what they are held to here.
+      pullProblems(w.persona, w.fallbackPull, PITCH_DECKS[w.persona]),
       [],
       `${w.path}'s fallback pull would be refused by its own save path`,
     );
@@ -208,7 +213,7 @@ test('each code fallback pull passes the save path’s own rulebook', () => {
 
 test('the rulebook refuses what the build used to catch — and says why', () => {
   const bad = (persona: 'tournament' | 'coach', ids: string[], want: RegExp) => {
-    const problems = pullProblems(persona, ids);
+    const problems = pullProblems(persona, ids, PITCH_DECKS[persona]);
     assert.ok(
       problems.some(p => want.test(p)),
       `${persona} ${JSON.stringify(ids)} should be refused with ${want} — got ${JSON.stringify(problems)}`,
@@ -224,24 +229,109 @@ test('the rulebook refuses what the build used to catch — and says why', () =>
 });
 
 /**
+ * ⚠ ONE RULEBOOK, TWO CALLERS — the DECK edition (stage C). `deckProblems` is the same function
+ * the deck save API refuses with; running it over the code decks holds both honest at once,
+ * exactly as the pull test above does for `pullProblems`.
+ */
+test('each code deck passes the deck save path’s own rulebook', () => {
+  for (const [audience, ids] of Object.entries(PITCH_DECKS)) {
+    assert.deepEqual(
+      deckProblems(ids, { name: `${audience} deck`, purpose: '' }),
+      [],
+      `the ${audience} code deck would be refused by its own save path`,
+    );
+  }
+});
+
+test('the deck rulebook refuses what F5 warned about — and says whose a held number is', () => {
+  const bad = (ids: string[], meta: { name: string; purpose: string }, want: RegExp) => {
+    const problems = deckProblems(ids, meta);
+    assert.ok(
+      problems.some(p => want.test(p)),
+      `${JSON.stringify(ids)} should be refused with ${want} — got ${JSON.stringify(problems)}`,
+    );
+  };
+  const named = { name: 'A deck', purpose: '' };
+  bad([], named, /no slides at all/);
+  bad(['#11', '#11'], named, /appears twice/);
+  bad(['#11', '#08'], named, /retired/);
+  bad(['#11', '#18'], named, /held.*club deck/i);        // the refusal names WHOSE it is
+  bad(['#11', '#99'], named, /not spoken for/);
+  bad(['#11'], { name: '', purpose: '' }, /needs a name/);
+  bad(['#11'], { name: 'Tournament Plus pitch', purpose: '' }, /name names a plan/);
+  bad(['#11'], { name: 'A deck', purpose: 'sell the free tier hard' }, /purpose names a plan/);
+  // ⚠ NOT refused: mixing audiences. The club deck is the standing counter-example, and
+  // ruling 4 makes placement a dial — any order of true slides is true.
+  assert.deepEqual(deckProblems(['#11', '#10'], named), []);
+});
+
+/**
+ * How a DECK row is read — `resolveDeckIds` is `resolvePullIds`' lenient sibling, with the
+ * stage C stop-line split: a standing deck falls back to the code deck (a marketing page can
+ * never blank), an owner-created deck resolves to whatever survived, possibly nothing.
+ */
+test('a broken or rotten saved deck falls back for a page, and to nothing for an owner deck', () => {
+  // Malformed rows: the code deck for a persona, emptiness for an owner deck.
+  assert.deepEqual(resolveDeckIds('coach', null).ids, PITCH_DECKS.coach);
+  assert.equal(resolveDeckIds('coach', null).source, 'code');
+  assert.deepEqual(resolveDeckIds(null, 'garbage').ids, []);
+  // ⚠ A deck's ORDER IS the data — the stored order is preserved, never normalised.
+  const reordered = resolveDeckIds('coach', ['#09', '#10', '#26']);
+  assert.equal(reordered.source, 'saved');
+  assert.deepEqual(reordered.ids, ['#09', '#10', '#26']);
+  // Rot is dropped and reported; what survives still renders.
+  const rotten = resolveDeckIds('coach', ['#10', '#99', '#08', 7]);
+  assert.deepEqual(rotten.ids, ['#10']);
+  assert.deepEqual(rotten.dropped, ['#99', '#08', '7']);
+  // A standing deck with NO built slide left is unusable for a page: the code deck wins.
+  const nothing = resolveDeckIds('coach', ['#99']);
+  assert.equal(nothing.source, 'code');
+  assert.deepEqual(nothing.ids, PITCH_DECKS.coach);
+  // An owner deck in the same state resolves to nothing — its route 404s, the studio says why.
+  assert.deepEqual(resolveDeckIds(null, ['#99']).ids, []);
+});
+
+/**
+ * ⚠ PLAN DECISION 1, MECHANICALLY: a saved pull is a SET, render normalises to DECK order —
+ * so reordering the deck re-orders the public page by itself, and the code fallback pull
+ * follows a live deck too (dropping what the deck dropped, unless that would empty the page).
+ */
+test('reordering the deck re-orders the page — the pull is a set', () => {
+  // The owner reverses the coach deck: a saved pull re-sorts to the new order untouched.
+  const reversedDeck = [...PITCH_DECKS.coach].reverse();
+  const pull = resolvePullIds('coach', ['#10', '#26', '#09'], reversedDeck);
+  assert.deepEqual(pull.ids, ['#09', '#26', '#10']);
+  // No saved pull: the CODE fallback also follows the live deck's order.
+  const fallback = resolvePullIds('coach', null, reversedDeck);
+  const coach = WALKTHROUGHS.find(w => w.persona === 'coach')!;
+  assert.deepEqual(fallback.ids, [...coach.fallbackPull].reverse());
+  // A slide removed from the deck leaves the fallback rendering of the page too…
+  const without01 = PITCH_DECKS.coach.filter(id => id !== '#01');
+  assert.ok(!resolvePullIds('coach', null, without01).ids.includes('#01'));
+  // …unless the deck would empty the page entirely — "never blank" outranks "always a subset".
+  assert.deepEqual(resolvePullIds('coach', null, ['#99']).ids, coach.fallbackPull);
+});
+
+/**
  * How a page READS a saved row — lenient where the save is strict, because a row can rot after
  * it was validly saved and a marketing page must render through it (never blank — the stage B
  * stop line). The fallback answers everything unusable.
  */
 test('a broken or rotten saved pull falls back rather than blanking the page', () => {
   const coach = WALKTHROUGHS.find(w => w.persona === 'coach')!;
+  const deck = PITCH_DECKS.coach;
   // Not an array at all (a malformed row): the code pull, untouched.
-  assert.deepEqual(resolvePullIds('coach', null).ids, coach.fallbackPull);
-  assert.deepEqual(resolvePullIds('coach', 'garbage').ids, coach.fallbackPull);
-  assert.equal(resolvePullIds('coach', null).source, 'code');
+  assert.deepEqual(resolvePullIds('coach', null, deck).ids, coach.fallbackPull);
+  assert.deepEqual(resolvePullIds('coach', 'garbage', deck).ids, coach.fallbackPull);
+  assert.equal(resolvePullIds('coach', null, deck).source, 'code');
   // Rotten ids are dropped and REPORTED — non-strings included, stringified, because the studio
   // must show ALL the rot a malformed row carries, not just the string-shaped half of it.
-  const partly = resolvePullIds('coach', ['#01', '#10', '#99', 7]);
+  const partly = resolvePullIds('coach', ['#01', '#10', '#99', 7], deck);
   assert.equal(partly.source, 'saved');
   assert.deepEqual(partly.ids, ['#10', '#01']); // deck order, not saved order
   assert.deepEqual(partly.dropped, ['#99', '7']);
   // Nothing usable left: the fallback again, with the rot still reported for the studio.
-  const nothing = resolvePullIds('coach', ['#99', '#08']);
+  const nothing = resolvePullIds('coach', ['#99', '#08'], deck);
   assert.equal(nothing.source, 'code');
   assert.deepEqual(nothing.ids, coach.fallbackPull);
   assert.deepEqual(nothing.dropped, ['#99', '#08']);

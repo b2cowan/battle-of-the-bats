@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-21",
-  "total": 148,
+  "total": 166,
   "counts": {
-    "tables": 7,
-    "columns": 67,
-    "indexes": 32,
-    "constraints": 34,
-    "rls": 8
+    "tables": 8,
+    "columns": 76,
+    "indexes": 35,
+    "constraints": 37,
+    "rls": 10
   },
   "items": [
     {
@@ -19,6 +19,14 @@
     },
     {
       "key": "check:only-dev:org_person_match_rejections.org_person_match_rejections_ordered",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:pitch_decks.pitch_decks_persona_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:pitch_decks.pitch_decks_slide_ids_check",
       "sig": ""
     },
     {
@@ -183,6 +191,42 @@
     },
     {
       "key": "column:only-dev:org_person_merges.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.persona",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.purpose",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.share_slug",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.slide_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_decks.updated_by",
       "sig": ""
     },
     {
@@ -378,6 +422,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:pitch_decks.pitch_decks_persona_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:pitch_decks.pitch_decks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:pitch_decks.pitch_decks_share_slug_key",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:pitch_page_pulls.pitch_page_pulls_pkey",
       "sig": ""
     },
@@ -510,6 +566,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:pitch_decks_persona_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:pitch_decks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:pitch_decks_share_slug_key",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:pitch_page_pulls_pkey",
       "sig": ""
     },
@@ -587,6 +655,10 @@
     },
     {
       "key": "table:only-dev:org_person_merges",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:pitch_decks",
       "sig": ""
     },
     {

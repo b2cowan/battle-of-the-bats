@@ -36,28 +36,30 @@
  *     fails, whereas a column only helps someone who happens to be looking at this screen.
  */
 import {
+  AUDIENCE_LABEL,
   PITCH_DECKS,
   PITCH_SLIDES,
   SLIDE_NUMBERS_SPOKEN_FOR,
   WALKTHROUGHS,
   derivedMeta,
+  resolveDeckIds,
   resolvePullIds,
   type PitchSlide,
   type SlideNumberStatus,
   type SlideImageClass,
 } from '@/lib/walkthrough-content';
 import type { StoredPullRead } from '@/lib/pitch-pull-store';
+import type { StoredDeckRead, StoredDeckRow } from '@/lib/pitch-deck-store';
 import { pictureFor, shotFor, shotPublicPath, type SlidePictureWithCaption } from '@/components/marketing/slide-picture';
 import { shotManifestProblems, type FilePresence } from '@/lib/shot-health';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 
 type Audience = keyof typeof PITCH_DECKS;
 
-/** What a deck is called on screen. One home — both the page and the card render it. */
-export const AUDIENCE_LABEL: Record<Audience, string> = {
-  coach: 'Coach deck',
-  tournament: 'Tournament deck',
-};
+// One home for the standing decks' display names is lib/walkthrough-content.ts since stage C —
+// the deck save API writes a row's stored name FROM it. Re-exported so this screen's imports
+// stay local.
+export { AUDIENCE_LABEL } from '@/lib/walkthrough-content';
 
 /** The sentence every capture card carries, so the tick above it cannot be over-read. */
 export const PICTURE_FRESHNESS_IS_UNCHECKED =
@@ -66,9 +68,14 @@ export const PICTURE_FRESHNESS_IS_UNCHECKED =
 
 /* ── One slide ──────────────────────────────────────────────────────────────── */
 
-/** Where a slide sits in its deck. Every built slide belongs to exactly one deck today. */
+/**
+ * Where a slide sits in a running order. ⚠ A LIST since stage C: decks are owner-editable rows
+ * and deliberately not held to one audience (the club deck mixes both), so "exactly one deck"
+ * stopped being a fact and became yesterday's coincidence.
+ */
 export interface DeckPlacement {
-  audience: Audience;
+  /** What the deck is called on screen — a standing deck's label, or an owner deck's name. */
+  deck: string;
   /** 1-based, as a human counts a running order. */
   position: number;
   of: number;
@@ -130,7 +137,8 @@ export interface SlideReport {
    *  its own. Deliberately not lifted to a sibling field: two copies of one string is how they
    *  eventually disagree. */
   picture: SlidePictureWithCaption | null;
-  deck: DeckPlacement | null;
+  /** Every running order that names this slide — standing decks and owner decks alike. */
+  decks: DeckPlacement[];
   /**
    * Every public page that publishes this slide — resolved from the SAVED pulls where they are
    * usable, so this matches what a visitor sees right now. **Empty is the finding this screen
@@ -165,9 +173,15 @@ export interface DeckSlot {
 
 export interface DeckReport {
   audience: Audience;
-  /** Every id in the running order, with what the bank actually holds for it. */
+  /** Every id in the LIVE running order (saved row or code fallback), with what the bank holds. */
   order: DeckSlot[];
   built: number;
+  /** Whether the running order is the owner's saved row or the code default (stage C). */
+  deckSource: 'saved' | 'code';
+  deckSavedAt: string | null;
+  deckSavedBy: string | null;
+  /** True when the DECK store could not be read — the page is safely on the code deck. */
+  deckStoreUnreachable: boolean;
   /**
    * The page this deck is published on, and how much of the deck it shows — resolved the same
    * way the page itself resolves it (saved row or code fallback), so this screen and the public
@@ -196,9 +210,31 @@ export interface DeckReport {
   problems: string[];
 }
 
+/**
+ * An OWNER-CREATED deck (the club deck, a prospect deck — stage C/D). No code fallback exists
+ * for one, so its problems are its own: rot is dropped from the order AND reported, and a deck
+ * with no built slide simply does not render anywhere — the studio says so, nothing else will.
+ */
+export interface CustomDeckReport {
+  id: string;
+  name: string;
+  purpose: string;
+  /** The unlisted /pitch/<slug> link (stage D) — minted at creation, dies with the deck. */
+  shareSlug: string | null;
+  order: DeckSlot[];
+  built: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  problems: string[];
+}
+
 export interface PitchLibraryReport {
   slides: SlideReport[];
   decks: DeckReport[];
+  customDecks: CustomDeckReport[];
+  /** True when the owner-deck list could not be read at all — an outage sentence, not an empty list. */
+  customDecksUnreachable: boolean;
   /** Gaps in the number line, in order, each with the reason it is spent. */
   reserved: { id: string; why: string }[];
   totals: {
@@ -222,6 +258,19 @@ export interface PitchLibraryReport {
      */
     oldestPictureDays: number | null;
   };
+}
+
+/**
+ * A resolved running order → its slots. One home for "what does the bank hold for this id"
+ * (state derivation would silently diverge as two hand-copies the day a new status is added).
+ * `onPage` defaults to nothing-on-page — owner decks have no page.
+ */
+function toOrder(ids: readonly string[], onPage: ReadonlySet<string> = new Set()): DeckSlot[] {
+  return ids.map(id => ({
+    id,
+    state: id in PITCH_SLIDES ? 'built' : SLIDE_NUMBERS_SPOKEN_FOR[id]?.status ?? 'missing',
+    onPage: onPage.has(id),
+  }));
 }
 
 function healthOf(
@@ -276,27 +325,54 @@ function healthOf(
  * @param storedPulls what pitch_page_pulls holds per persona (stage B). The caller fetches, this
  *   stays a pure pass — and the report resolves each pull with the SAME `resolvePullIds` the
  *   public page uses, so the two surfaces cannot disagree about what is showing.
+ * @param storedDecks what pitch_decks holds per persona (stage C), resolved with the same
+ *   `resolveDeckIds` the pages use — the deck is resolved FIRST because the pull normalises
+ *   against it.
+ * @param customDecks every owner-created deck row (stage C/D), plus whether the list read failed.
  */
 export function buildPitchLibraryReport(
   fileIsPresent: (publicPath: string) => FilePresence,
   storedPulls: Record<Audience, StoredPullRead>,
+  storedDecks: Record<Audience, StoredDeckRead>,
+  customDecks: { rows: StoredDeckRow[]; error: boolean },
 ): PitchLibraryReport {
   const today = tournamentToday();
 
-  // Which deck names a slide, and where in the running order. Built once so the per-slide pass is
-  // a lookup rather than a scan of both decks per slide.
-  const placement = new Map<string, DeckPlacement>();
-  for (const [audience, ids] of Object.entries(PITCH_DECKS) as [Audience, string[]][]) {
-    ids.forEach((id, i) => placement.set(id, { audience, position: i + 1, of: ids.length }));
-  }
+  // Each standing deck's LIVE running order — the saved row where usable, the code deck where
+  // not. Everything downstream (placements, the pull, the slots) reads this one resolution.
+  const resolvedDecks = new Map(
+    (Object.keys(PITCH_DECKS) as Audience[]).map(a => [
+      a,
+      resolveDeckIds(a, storedDecks[a]?.row?.slideIds ?? null),
+    ]),
+  );
+
+  // Each owner deck's usable order, keyed by row id. No fallback — what survived is what it is.
+  const resolvedCustom = new Map(
+    customDecks.rows.map(row => [row.id, resolveDeckIds(null, row.slideIds)]),
+  );
+
+  // Which running orders name a slide, and where. A LIST since stage C — the club deck mixes
+  // audiences, so one slide can legitimately sit in three orders at once.
+  const placement = new Map<string, DeckPlacement[]>();
+  const place = (deck: string, ids: readonly string[]) =>
+    ids.forEach((id, i) => {
+      placement.set(id, [...(placement.get(id) ?? []), { deck, position: i + 1, of: ids.length }]);
+    });
+  for (const [audience, resolved] of resolvedDecks) place(AUDIENCE_LABEL[audience], resolved.ids);
+  for (const row of customDecks.rows) place(row.name, resolvedCustom.get(row.id)!.ids);
 
   // Each page's pull, resolved exactly as the page resolves it: the saved row where one is
-  // usable, the code fallback where it is not. Kept beside the walkthrough so the deck pass
-  // below reads the same resolution the placement map was built from.
+  // usable, the code fallback where it is not — normalised against the LIVE deck, which is what
+  // makes "reorder the deck, the page follows" true here too.
   const resolvedPulls = new Map(
     WALKTHROUGHS.map(w => [
       w.persona,
-      resolvePullIds(w.persona, storedPulls[w.persona]?.row?.slideIds ?? null),
+      resolvePullIds(
+        w.persona,
+        storedPulls[w.persona]?.row?.slideIds ?? null,
+        resolvedDecks.get(w.persona)!.ids,
+      ),
     ]),
   );
 
@@ -323,30 +399,32 @@ export function buildPitchLibraryReport(
         slide,
         imageClass: slide.imageClass,
         picture: shown,
-        deck: placement.get(slide.id) ?? null,
+        decks: placement.get(slide.id) ?? [],
         pages,
         health: healthOf(slide, fileIsPresent, today),
       };
     });
 
   const pageFor = new Map(WALKTHROUGHS.map(w => [w.persona, w]));
-  const decks: DeckReport[] = (Object.entries(PITCH_DECKS) as [Audience, string[]][]).map(([audience, ids]) => {
+  const decks: DeckReport[] = (Object.keys(PITCH_DECKS) as Audience[]).map(audience => {
     const w = pageFor.get(audience);
+    const resolvedDeck = resolvedDecks.get(audience)!;
+    const storedDeck = storedDecks[audience];
     const resolved = resolvedPulls.get(audience);
     const stored = storedPulls[audience];
     // Widened to `string` deliberately: a deck's running order is `string[]` (it may name a number
     // the bank does not hold — that is finding F5), and a SAVED pull is data with no type at all.
     // Asking the narrow set about a wide id is the whole question this screen answers.
     const onPage: Set<string> = new Set(resolved?.ids ?? []);
-    const order: DeckSlot[] = ids.map(id => ({
-      id,
-      state: id in PITCH_SLIDES ? 'built' : SLIDE_NUMBERS_SPOKEN_FOR[id]?.status ?? 'missing',
-      onPage: onPage.has(id),
-    }));
+    const order = toOrder(resolvedDeck.ids, onPage);
     return {
       audience,
       order,
       built: order.filter(o => o.state === 'built').length,
+      deckSource: resolvedDeck.source,
+      deckSavedAt: resolvedDeck.source === 'saved' ? storedDeck?.row?.updatedAt ?? null : null,
+      deckSavedBy: resolvedDeck.source === 'saved' ? storedDeck?.row?.updatedBy ?? null : null,
+      deckStoreUnreachable: storedDeck?.error ?? false,
       page: w && resolved
         ? {
             path: w.path,
@@ -364,6 +442,13 @@ export function buildPitchLibraryReport(
           .map(o => o.state === 'missing'
             ? `names ${o.id}, which holds no slide — it would vanish silently from this running order`
             : `names ${o.id}, which is ${o.state} (${SLIDE_NUMBERS_SPOKEN_FOR[o.id]?.note ?? 'no reason recorded'})`),
+        // Deck-row rot, stage C's new copy of the same F5 sentence: a SAVED deck naming numbers
+        // the bank no longer holds. The render drops them silently; the owner learns it here.
+        ...resolvedDeck.dropped.map(id =>
+          `the saved deck names ${id}, which holds no slide — the running order skips it silently`),
+        ...(storedDeck?.row && resolvedDeck.source === 'code'
+          ? ['a deck is saved but nothing in it renders — the page is showing the code deck instead']
+          : []),
         // The rot only this screen can show: a SAVED pull naming ids the deck or bank no longer
         // holds. The public page drops them silently — that is correct for a prospect and wrong
         // for the owner, so they surface here (F5's write half, seen from the read side).
@@ -374,6 +459,40 @@ export function buildPitchLibraryReport(
         ...(stored?.row && resolved?.source === 'code'
           ? ['a pull is saved but none of it is usable — the page is showing the code default instead']
           : []),
+        // The "never blank outranks always a subset" escape, made visible: when a saved deck
+        // holds none of the fallback pull, the page shows the RAW code pull — slides outside
+        // the live deck, which the chips above cannot light and the pull editor cannot offer.
+        // Without this sentence, that is a blind spot on the one screen whose job is the truth.
+        ...(resolved?.ids ?? [])
+          .filter(id => !resolvedDeck.ids.includes(id))
+          .map(id =>
+            `the page is showing ${id} from the code fallback even though the saved deck no longer holds it — the saved deck fits none of the fallback pull, and a page can never go blank`),
+      ],
+    };
+  });
+
+  // Owner-created decks (stage C/D). No fallback and no page: their whole condition is what
+  // this list says about them.
+  const custom: CustomDeckReport[] = customDecks.rows.map(row => {
+    const resolved = resolvedCustom.get(row.id)!;
+    const order = toOrder(resolved.ids);
+    const built = order.filter(o => o.state === 'built').length;
+    return {
+      id: row.id,
+      name: row.name,
+      purpose: row.purpose,
+      shareSlug: row.shareSlug,
+      order,
+      built,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      updatedBy: row.updatedBy,
+      problems: [
+        ...resolved.dropped.map(id =>
+          `names ${id}, which holds no slide — it is dropped from the running order silently`),
+        ...(built === 0
+          ? ['no slide in this deck renders — its link answers "not found" until it holds at least one built slide']
+          : []),
       ],
     };
   });
@@ -381,6 +500,8 @@ export function buildPitchLibraryReport(
   return {
     slides,
     decks,
+    customDecks: custom,
+    customDecksUnreachable: customDecks.error,
     reserved: Object.entries(SLIDE_NUMBERS_SPOKEN_FOR)
       // A `planned` number is not a gap — it is a slot with artwork on the way, and the deck it
       // belongs to already shows it in its running order with a '…'.
