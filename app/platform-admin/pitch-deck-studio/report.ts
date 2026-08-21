@@ -168,7 +168,12 @@ export interface PitchLibraryReport {
     slides: number;
     photographed: number;
     drawn: number;
-    /** ⚠ The headline number: built, finished, and reachable NOWHERE in the product. */
+    /**
+     * ⚠ The headline number — and read its NAME carefully. These slides are in a deck and reachable
+     * by anyone who presses "Present the full deck" in either page's hero; what they are outside is
+     * the SCROLLING page. An earlier version of this screen called them "reachable nowhere", which
+     * was false — the same class of self-description error this whole project exists to stop.
+     */
     onNoPage: number;
     withProblems: number;
   };

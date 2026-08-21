@@ -26,6 +26,32 @@ company-owned material aimed at people who are not customers yet) where the owne
   walkthrough page shows;
 - **build a deck for one prospect** and hand it over as a private link or a PDF.
 
+## ⚠⚠ RULING 4 — THE GOAL IS A LIBRARY YOU COMPOSE FROM, NOT A SET OF PLACEMENT DECISIONS
+
+**Owner, 2026-08-21, and it re-frames the whole project:** *"the whole point of this exercise is
+when we are done I have a library of slides that I can choose what to do with on the marketing
+pages, pitch decks, etc., and these decisions can change over time. So we don’t need ‘official’
+decisions on what slides go where on the site yet — I would like to see the completed library and
+have it allow me to select these choices and change over time."*
+
+**What this settles, and it is not a small thing:**
+
+- **Stop asking which slides belong where.** Placement is not an editorial ruling to be made once
+  and recorded; it is a dial the owner turns. A session that presents a slide-placement question as
+  a decision needing sign-off is asking the wrong question — the answer is always "make it
+  selectable".
+- **⚠⚠ THIS PROMOTES THE PAGE-COPY PASS FROM STAGE C TO A PREREQUISITE.** Finding F4 says a slide
+  cannot go on a page without the long unattended `answer` a deck does not need. While placement
+  was a rare deliberate act, writing that copy per-slide-as-needed was fine. **The moment the owner
+  expects to shuffle freely, every slide needs its page copy or the composer offers choices that
+  fail** — a picker where two thirds of the options cannot actually be picked is worse than no
+  picker. Write it for the whole library before, or with, the composer.
+- **It raises the priority of B and C and lowers the weight of any one placement.** The two slides
+  added to the pulls on 2026-08-21 (#26, #27) were the owner accepting a tactical recommendation,
+  **not** a standing ruling about what those pages contain. Do not treat either page’s current
+  contents as settled — they are the current setting of a dial.
+
+---
 ## The owner's three rulings (2026-08-21, binding)
 
 ### 1. ⚠⚠ DECKS ARE DATA. SLIDES ARE CODE. THIS IS THE LOAD-BEARING LINE.
@@ -171,8 +197,8 @@ published. **No editing.** This alone answers "what do we have?" and is the chea
 **1. ⚠⚠ IT IS TWELVE STRANDED SLIDES, NOT FIVE — F1's count above is stale and must not be
 re-quoted.** F1 was written when the coach deck held eleven built slides. After P2b and P2c the
 library is 23 (coach 15, tournament 8) and the two public pages pull 6 and 5. **Twelve built,
-checked slides are shown on no public page** — ten coach (#26, #02, #04, #05, #06, #07, #21, #22,
-#23, #27) and two tournament (#16, #17). Present mode reaches them; no visitor does. The number is
+checked slides are shown on no public page** — NINE coach (#26, #02, #04, #05, #06, #07, #21, #22,
+#23) and THREE tournament (#27, #16, #17). Present mode reaches them; no visitor does. The number is
 computed on the screen, so it cannot go stale again.
 
 **2. ⚠⚠ THE PM BRIEF'S SUCCESS CRITERION 4 IS NOT MET, AND THE PLANNED APPROACH COULD NEVER MEET

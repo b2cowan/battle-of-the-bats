@@ -11,8 +11,12 @@
  * declined. Do not add an edit affordance "while you are in there".
  *
  * What it answers, none of which had a surface before: what do we own, which decks name it, where
- * is it published — and, the finding that paid for this screen, **what is finished and reachable
- * nowhere.** Twelve of the twenty-three slides were in that state the day it was built.
+ * is it published — and the number that paid for this screen: **how much of a deck the scrolling
+ * page actually shows.** Twelve of twenty-three sit outside both pulls.
+ *
+ * ⚠ NOT "reachable nowhere" — that claim was made here and was FALSE. Present mode renders the
+ * whole deck (P2b) and its trigger is unconditional in each page's hero, so a visitor is one
+ * click from all of them. The real gap is the reader who never presses it.
  */
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { readdirSync } from 'node:fs';
@@ -167,7 +171,7 @@ export default async function PitchDeckStudioPage() {
           <div className={`${styles.totalNum} ${totals.onNoPage > 0 ? styles.totalNumAlert : ''}`}>
             {totals.onNoPage}
           </div>
-          <div className={styles.totalLabel}>On no public page</div>
+          <div className={styles.totalLabel}>Slideshow only</div>
         </div>
         <div className={styles.total}>
           <div className={`${styles.totalNum} ${totals.withProblems > 0 ? styles.totalNumAlert : ''}`}>
@@ -178,10 +182,12 @@ export default async function PitchDeckStudioPage() {
       </div>
 
       <p className={styles.sectionNote}>
-        In library-number order, so the gaps show. <strong>“On no public page”</strong> is the number
-        worth watching: those slides are finished, checked and in a deck, and no visitor can reach
-        them. ⚠ The picture column proves a picture is <em>declared</em> properly — it cannot prove
-        one still looks like the screen it photographed. Nothing we run can.
+        In library-number order, so the gaps show. <strong>“Slideshow only”</strong> is the number
+        worth watching: those slides are finished and in a deck, and the <em>scrolling</em> page
+        never shows them — they appear only inside <em>Present the full deck</em>, which is public
+        but takes a click most readers never make. ⚠ The picture column proves a picture is{' '}
+        <em>declared</em> properly — it cannot prove one still looks like the screen it
+        photographed. Nothing we run can.
       </p>
 
       {report.reserved.length > 0 && (

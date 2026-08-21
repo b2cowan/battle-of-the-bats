@@ -10146,7 +10146,7 @@ Open the coach walkthrough → **▸ Present the full deck** → arrow through. 
 
 ---
 
-## §72 · The room where you can finally see what we own — and the twelve slides nobody can reach
+## §72 · The room where you can finally see what we own — and the twelve outside both page pulls
 
 **BUILT 2026-08-21 (dev).** Stage A of the Pitch Deck Studio
 ([plan](PITCH_DECK_STUDIO_PLAN.md)) — **the library view, read-only.** No editing, no save button,
@@ -10156,11 +10156,18 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
 
 ### Part A — the number this screen was built to show you (**look at this first**)
 
-- [ ] **Twelve of our twenty-three finished slides are shown on no public page.** Not five, which
-      is what the plan said — that count was written before the last two batches landed. Ten coach
-      slides and two tournament slides are built, photographed or drawn, checked, sitting in a deck
-      — and no visitor can reach any of them. The totals strip says **12 · On no public page** in
-      amber; every one of those cards carries the badge.
+- [ ] **Twelve of our twenty-three finished slides never appear on the SCROLLING pages.** Not five,
+      which is what the plan said — that count was written before the last two batches landed. Nine
+      coach slides and three tournament slides are built, photographed or drawn, checked, sitting in
+      a deck — and the two walkthrough pages between them show only eleven. The totals strip says
+      **12 · Slideshow only** in amber; every one of those cards carries the badge.
+- [ ] ⚠⚠ **Read that badge precisely — an earlier version of this screen, and of this row,
+      overstated it.** These slides are NOT unreachable. Every one of them appears in **▸ Present
+      the full deck**, the button sitting in each walkthrough page’s hero that any visitor can press.
+      What they miss is the reader who only scrolls — which is most readers. That is still a real
+      question worth your answer, but it is a smaller one than “nobody can see them”, and the
+      correction matters because this project exists to stop surfaces making false claims about
+      themselves.
 - [ ] **Read three or four of the stranded cards and say whether they should be on a page.** That
       is the decision this screen exists to put in front of you. Nothing here changes a page — you
       are only deciding what stage B should be able to do.
@@ -10214,3 +10221,31 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
       what the plans grant and nothing can watch a sentence once it is a row in a table.
 - [ ] **"Page copy — not written"** appears on all twelve stranded cards. That copy is a one-time
       editorial pass over the library and belongs to stage C. Nothing was written here.
+
+---
+
+## §74 · The map goes on both pitch pages — and the studio followed it without being told
+
+**BUILT 2026-08-21 (dev).** Your call from the decision brief
+(`claude.ai/code/artifact/719d58d2-c779-43c1-ade6-2b75c426156c`), Decision 1, Option B.
+
+- [ ] **/for-coaches/walkthrough now shows seven panels, not six.** The new one is second: *"Every
+      season starts from a blank page."* It is the drawn wheel — the whole coach year as a loop,
+      with closing a season starting the next one. Read the paragraph under it: it names what
+      actually carries forward (the active roster, the planned budget, the fee setup with paid
+      history stripped) rather than saying "everything", because that is what the rollover really
+      does.
+- [ ] **/for-tournament-organizers/walkthrough now shows six, not five.** Same position, same job:
+      *"Every part of the weekend lives in a different tool."*
+- [ ] **Both pages’ own counters followed** — "7 problems · 90 seconds" and "6 problems · 90
+      seconds" — and both page descriptions were rewritten to name the new panel in order. Nothing
+      hand-typed was left behind advertising the old number.
+- [ ] **Check the pages still feel short enough.** This is the judgement the short pull exists for:
+      seven panels is the most the coach page has ever carried. If it reads long, say so — the
+      point of the studio is that this is a dial, not a decision.
+
+### What it proved about the studio
+
+- [ ] **The Pitch Deck Studio updated itself.** Its "Slideshow only" count went from twelve to ten
+      the moment the pages changed, with nothing to re-run and nothing to re-type. That is the whole
+      argument for computing these numbers rather than writing them down — worth seeing once.

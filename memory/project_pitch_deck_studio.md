@@ -53,9 +53,16 @@ naive scan reports correct copy as an overclaim. **A column that cries wolf once
 
 ## What the screen found
 
-- **TWELVE stranded slides, not the five both plans say** (that count predates P2b/P2c). Library is
-  23 — coach 15, tournament 8; the pages pull 6 and 5. Stranded: #26 #02 #04 #05 #06 #07 #21 #22 #23
-  #27 (coach) + #16 #17 (tournament). The number is computed, so it cannot go stale again.
+- **TWELVE slides sit outside both pages’ pulls**, not the five both plans say (that count predates
+  P2b/P2c). Library 23 — coach 15, tournament 8; the pages pull 6 and 5. Nine coach (#26 #02 #04
+  #05 #06 #07 #21 #22 #23) + three tournament (#27 #16 #17). Computed on screen, so it cannot go
+  stale again.
+- **⚠⚠ The first version of this screen said "reachable nowhere" and that was FALSE.** The
+  "▸ Present the full deck" button is unconditional in each walkthrough page’s hero and renders the
+  whole DECK (since P2b), so any visitor is one click from every slide. The real gap is narrower and
+  still worth a screen: **the reader who only scrolls never meets them.** A surface making a false
+  claim about itself is precisely the failure this project exists to stop — recorded, not quietly
+  fixed. The badge now reads "Slideshow only".
 - Before the plan-line column was removed it caught that **the six coach panels advertised the
   Premium Coaches Portal, whose `gatingStatus` is `early_access`** — not open for self-serve
   checkout. Moot for the walkthrough now; the same wording exists on other surfaces.

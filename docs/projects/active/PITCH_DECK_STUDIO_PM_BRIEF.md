@@ -22,9 +22,11 @@ where it is published and what condition it is in. **Nothing to save, no edit co
 **⚠ Two corrections to this brief, both from the code:**
 
 **It is twelve stranded slides, not five.** The "five" above was counted before the last two
-batches of artwork landed. The library is now 23 slides; the two public pages show 6 and 5. **Twelve
-finished, checked slides can be reached by no visitor** — ten coach, two tournament, including the
-coach deck's overview wheel, which sits second in the running order. The screen computes that number
+batches of artwork landed. The library is now 23 slides; the two public pages show 6 and 5. **Twelve finished,
+checked slides are missing from the SCROLLING pages** — nine coach, three tournament, including the
+coach deck’s overview wheel, which sits second in its running order. ⚠ They are not unreachable:
+every one appears in “Present the full deck”, a button in each page’s hero that any visitor can
+press. What they miss is the reader who only scrolls. The screen computes that number
 itself, so it cannot go stale again.
 
 **Success criterion 4 is NOT met, and could not have been met the planned way.** *"When a slide's
@@ -51,8 +53,8 @@ same wording appears elsewhere, so it is worth confirming.
 ## Why it matters
 
 **We have finished pitch material nobody can see.** ⚠ Counted again on 2026-08-21 when stage A put
-it on a screen: the library holds 23 slides and the two public pages show 6 and 5. **Twelve are
-reachable nowhere** — ten coach, two tournament. All photographed or drawn, all checked, and no
+it on a screen: the library holds 23 slides and the two public pages show 6 and 5. **Twelve sit outside both
+pages’ pulls** — nine coach, three tournament. All photographed or drawn, all checked, and no
 surface in the product shows them. That is not a backlog — it is work already paid for sitting in
 a drawer.
 

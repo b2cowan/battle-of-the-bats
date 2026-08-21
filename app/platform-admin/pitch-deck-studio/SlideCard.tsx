@@ -54,7 +54,7 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
           <span className={styles.slideNum}>{slide.id}</span>
           <span className={styles.badge}>{CLASS_LABEL[r.imageClass] ?? r.imageClass}</span>
           {stranded ? (
-            <span className={`${styles.badge} ${styles.badgeStranded}`}>Shown on no public page</span>
+            <span className={`${styles.badge} ${styles.badgeStranded}`}>Slideshow only</span>
           ) : (
             <span className={`${styles.badge} ${styles.badgeLive}`}>Published</span>
           )}
@@ -76,10 +76,12 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
           <dd className={styles.factValue}>
             {stranded ? (
               <>
-                <span className={styles.attention}>Nowhere.</span>
+                <span className={styles.attention}>Not in either page’s pull.</span>
                 <span className={styles.caveat}>
-                  It is in the deck, so it shows in present mode when someone is standing beside it —
-                  but no public page pulls it, and it has no page copy of its own.
+                  ⚠ Not the same as unreachable: it IS in the deck, so it appears in{' '}
+                  <em>Present the full deck</em> — a button in each page’s hero that any visitor can
+                  press. What it misses is the reader who only scrolls. It also has no page copy of
+                  its own, so it could not be dropped into a pull as it stands.
                 </span>
               </>
             ) : (

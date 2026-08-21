@@ -687,12 +687,12 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
     // the demo instead: an invitation is stronger than a denial, and it stays true whatever the
     // pictures are.
     description:
-      'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — live scores families check themselves, volunteer score entry, one-action rain delays, self-building brackets, and registration health. Walk the live demo yourself — no sign-up.',
+      'Six jobs that stop being yours the day the tournament runs on FieldLogicHQ — live scores families check themselves, one system instead of five, volunteer score entry, one-action rain delays, self-building brackets, and registration health. Walk the live demo yourself — no sign-up.',
   },
   eyebrow: 'For tournament organizers · a 90-second walkthrough',
   title: 'The weekend the phone stayed in your pocket.',
   sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — and a live demo you can walk when you are done.',
-  meta: '5 problems · 90 seconds · nothing to install',
+  meta: '6 problems · 90 seconds · nothing to install',
   door: { path: SEE_IT_LIVE_PATH, label: 'See it live — no sign-up →' },
   back: { href: '/for-tournament-organizers' },
   panels: [
@@ -700,6 +700,12 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
       slideId: '#11',
       answer:
         'Families follow their team on the tournament’s public site — live scores, schedule, and standings, no account, no app store. You never answer that text again.',
+    },
+    {
+      /** ⚠ The map, second — same reasoning as the coach page's #26. Added 2026-08-21 (owner). */
+      slideId: '#27',
+      answer:
+        'Registration, the schedule, live scores, the bracket and the wrap-up are one system rather than five, so a team that registers is already on the schedule and a score entered at the diamond is already on the public site. Nothing is exported from one tool and imported into the next, which is where a weekend usually loses an hour and gains a mistake. When it is over, this year becomes next year’s starting point — divisions, venues, registration setup and your public site copy forward.',
     },
     {
       slideId: '#12',
@@ -757,12 +763,12 @@ export const COACH_WALKTHROUGH: Walkthrough = {
     // and would have under-described the page rather than over-promising it, which is the
     // likelier direction for a description to rot and the harder one to notice.
     description:
-      'Six jobs that stop being yours the day your team runs on FieldLogicHQ — tryout scoring on a phone, practice plans that reach the field, your book on Saturday’s opponent, every family’s dues on one page, the season squared up from the real ledger, and a closed season kept on one page for good. Walk the live demo yourself — no sign-up.',
+      'Seven jobs that stop being yours the day your team runs on FieldLogicHQ — tryout scoring on a phone, the whole season in one place, practice plans that reach the field, your book on Saturday’s opponent, every family’s dues on one page, the season squared up from the real ledger, and a closed season kept on one page for good. Walk the live demo yourself — no sign-up.',
   },
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
   sub: 'The jobs the Coaches Portal takes off your plate — and a whole demo season you can walk when you are done.',
-  meta: '6 problems · 90 seconds · nothing to install',
+  meta: '7 problems · 90 seconds · nothing to install',
   door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season →' },
   back: { href: '/for-coaches' },
   /**
@@ -791,6 +797,18 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // default rather than an option somebody has to find.
       answer:
         'Evaluators score on their phones — a link, no login, and one card per player. You choose the categories and how much each is worth, so the ranked list at the end means what you decided it means, not what a spreadsheet averaged. Names stay hidden while scoring, and you reveal them when you are ready to decide. Offer, waitlist or pass, and an accepted player lands on your roster with their fees already set up.',
+    },
+    {
+      /**
+       * ⚠ THE MAP, AND IT SITS SECOND ON PURPOSE — the same call the deck makes. Open on the
+       * visceral moment (tryout day), then show the shape of the year. Added to this pull
+       * 2026-08-21 (owner): a scrolling reader was getting six problems solved without ever
+       * being told what the product IS, because the only slide that answers that lived behind
+       * the present-mode button.
+       */
+      slideId: '#26',
+      answer:
+        'Tryouts, the roster, the schedule, practices, the money and the record all sit in one place, so nothing has to be re-typed from one into another. The year is a loop rather than a list: closing a season is what starts the next one, and it carries the active roster, your planned budget and the fee setup forward with it — paid history stripped, the schedule empty, each of those a toggle you can turn off. A finished season collapses to a single page you can still read years later.',
     },
     {
       slideId: '#25',
