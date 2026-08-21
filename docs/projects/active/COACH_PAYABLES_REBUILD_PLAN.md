@@ -732,14 +732,66 @@ CLAUDE.md says a check can never make. It is an owner call and it belongs to P5.
 **Almost nothing is left.** The in-app help was brought current in P3 and again in P4; the export
 columns retired in P4 with the cap. What remains:
 
-- The **memory baselines** (`memory/` + the Claude auto-memory).
-- ⚠ **The one open judgement: should the coach sandbox show a repeating cost?** The staleness half
+- ✅ **The memory baselines are DONE** (both stores, 2026-08-20, with P4 and its `/review` lessons).
+- ✅ **The layout baselines owe nothing.** P4 introduced no new findings; the 34 that remain are P3's
+  deliberately-red shared chrome and are not this project's to absorb.
+- ✅ **THE DEMO QUESTION IS ANSWERED: YES** (owner, 2026-08-20). The coach sandbox’s 14U team now
+  carries a **repeating dome bill — five dated payments, two already settled, $930 still owed**. A
+  prospect opening Payables sees a repeat folded into one line with its next due date, opens it to
+  the whole run, and reads a Scheduled figure that is what is still owed. Nothing else in that world
+  could show any of it. ⚠ Four-week steps, not calendar months: the demo is week-anchored and
+  re-anchors nightly, so a payment placed on “the 1st” drifts off it within a week. ⚠ It is filed
+  under a BUDGETED category on purpose — the guard asserts exactly one cost in that world is
+  unbudgeted (the team photo), and a second would both fail the check and spoil the one honest
+  “not budgeted” row the report exists to show.
+- ✅ **THE SHARED TOUCH-TARGET FIX IS DONE** — see its own section below.
+- ~~The one open judgement~~ — closed above. The staleness half
   came back clean through P4 (no dock line or tour step names the money form or the export), but
   `check:demos` proves breakage and can never say the demo is missing something the product gained.
   A monthly gym-time bill is the most persuasive thing this project has added since part payment.
   **Owner call.**
 - The **shared-chrome 44px fix** is not this project's, but all four money screens go green together
   when it lands — worth naming here so nobody re-discovers those 34 findings as new.
+
+### ✅ The shared touch-target fix — DONE 2026-08-20 (owner-approved)
+
+**All four money screens now pass `check:layout`, and that matters more than the millimetres.** The
+filter pills were 31px against a 44px floor on phones and tablets, reported on four screens at three
+widths — which is why those screens sat permanently red. **A gate that is always red is a gate nobody
+reads**, and it was unreadable in exactly the release where the money surfaces changed the most.
+
+What moved: the pill family (Status, Show, Item, Date, Group by, View, Showing) and the option rows
+inside their panels take a 44px floor at touch widths; the small inline actions do too; and the
+notification badge stopped hanging 4px outside its button, which every screen in the portal had been
+reporting. Desktop is untouched.
+
+**⚠⚠ Two things this cost, both found by measuring rather than assuming:**
+
+1. **The obvious fix was wrong twice, and both times by adding WIDTH.** Making the links
+   `inline-flex` so a `min-height` would apply turned a link that could wrap into an ATOMIC box and
+   pushed the register table 11px past its wrapper — three containers spilling with nothing to
+   scroll them. Then moving a media guard from 641 to 769 (so the tap floor's own breakpoint was
+   used) removed the register's compact SIZING across 641–768 and widened the table the same way.
+   The answer was to keep the narrow face and add only height: `min-height` for flex buttons,
+   `padding-block` for inline links, **neither of which adds a pixel of width**.
+2. **⚠⚠ `--init` SILENTLY ACCEPTED THE REGRESSION.** Re-baselining after the first attempt wrote
+   three brand-new content-overflow findings into the baseline as though they were known debt. They
+   were caught only by diffing the baseline against `HEAD` and reading what had been ADDED.
+   **Always audit what `--init` added, never just the count** — the script's own header says an
+   entry without an argued reason is debt, and this is precisely how a fresh regression becomes one.
+
+**One finding is ACCEPTED with a written reason rather than fixed:** the bare checkbox inside a
+filter panel measures 16px. The TARGET is the label row around it, which now carries the 44px floor,
+and a tap anywhere in it toggles the box. Stretching a native checkbox to satisfy a per-element
+measurement would make the control uglier without making it easier to press.
+
+⚠ **Not ours, left red on purpose:** `coach-fundraisers` reports a sponsor link at 24px. Verified
+pre-existing by re-running the sweep with every rule from this change switched off — byte-identical
+output. It wears a class this work never touched.
+
+✅ And the ratchet TIGHTENED rather than loosened: three Budget vs. Actual entries stopped
+reproducing and were pruned.
+
 
 > ✅ **CLOSED 2026-08-20 — "should a demo moment show a part payment?" NO** (owner: *"the demo
 > doesn't have to show a part payment"*). It had been open since P2 as the most persuasive thing the

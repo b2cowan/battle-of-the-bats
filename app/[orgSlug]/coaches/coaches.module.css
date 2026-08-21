@@ -244,6 +244,27 @@
   font-size: 0.72rem;
   padding: 0.2rem 0.5rem;
 }
+/* ⚠ THE SAME 44px FLOOR, for the small inline actions (check:layout tap-floor, 2026-08-20). These
+   are the money hub's cross-links — "Player Dues →", "Club →", "Fundraising →" — and the compact
+   buttons beside a drawer's rows. At 18px they are text a finger has to land on precisely.
+   `inline-flex` so the min-height actually applies to the anchors, which are inline by default. */
+@media (max-width: 768px) {
+  /* ⚠⚠ VERTICAL PADDING, NOT `min-height` + `inline-flex` — and the difference is 11px of table.
+     The obvious version (make it an inline-flex box so a min-height applies) turns a link that
+     could previously break across lines into an ATOMIC box, which widened the register table past
+     its wrapper at 768 and made three containers spill with nothing to scroll them. Padding grows
+     the hit box vertically — which is what `getBoundingClientRect` measures on an inline element,
+     and what a finger actually lands on — and costs no width at all.
+     `calc` so the floor is stated once and the maths is visible: half the gap above, half below. */
+  .compactAction {
+    /* Two mechanisms, because this class lands on both inline anchors and flex buttons and each
+       ignores the other's. Neither adds WIDTH, which is the constraint the register table imposes:
+       `min-height` does nothing to an inline link, `padding-block` does nothing visible to a flex
+       button whose own padding shorthand wins — together they cover the pair. */
+    min-height: 44px;
+    padding-block: calc((44px - 1.25em) / 2);
+  }
+}
 
 /* block640 — a compact inline control that becomes a full-width, full-touch-target
    button once its row has stacked. The companion to .stack640: stacking a row of
@@ -7132,6 +7153,27 @@ a.oneChip:hover { border-color: currentColor; }
   border-radius: 8px; padding: 0.28rem 0.55rem; font-size: 0.78rem; white-space: nowrap;
 }
 .multiSelectSummary::-webkit-details-marker { display: none; }
+/* ⚠⚠ A REAL TOUCH TARGET FOR THE WHOLE REPORTING FAMILY (check:layout tap-floor, 2026-08-20).
+   31px is comfortable under a mouse and under the 44px floor for a finger, and this one pill is
+   Status, Show, Item, Date, Group by, View and Showing across Transactions, Payables, the payment
+   schedule and Budget vs. Actual — so it was the same finding reported on four screens at three
+   widths, and the reason all four sat permanently red.
+
+   ⚠ THE RED WAS THE REAL COST, more than the millimetres. Four screens that always fail are four
+   screens whose check nobody reads, and they were failing hardest in the release where the money
+   surfaces changed the most. A gate that is expected to be red cannot report a new defect.
+
+   ⚠ Touch widths only — the desktop strip keeps its compact face, because a 44px pill row on a
+   1440px reporting toolbar is bulk with nothing to gain. */
+@media (max-width: 768px) {
+  .multiSelectSummary { min-height: 44px; }
+  /* The rows inside the panel are targets too — a checkbox a finger has to find in a 25px band is
+     the same defect one level down. ⚠ The bare `<input>` inside stays its natural size and is
+     ACCEPTED in the baseline with its reason: the label is the target, it wraps the box, and
+     stretching a checkbox to 44px to satisfy a per-element measurement would make the control
+     worse to look at without making it easier to hit. */
+  .multiSelectOption { min-height: 44px; }
+}
 .multiSelectLabel { color: var(--text-tertiary); }
 .multiSelectValue { font-weight: 600; color: var(--text-primary); }
 .multiSelect[open] .multiSelectSummary { border-color: var(--logic-lime); }
@@ -7339,17 +7381,35 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .registerRowCompact .registerChip { padding: 0.02rem 0.32rem; font-size: 0.62rem; }
 /* ⚠ DESKTOP ONLY. The action button/link is a shared class (Mark paid, Edit, elsewhere in the
-   portal too) that ALSO carries `.block640`'s phone rule (44px tap floor) — this selector is
-   more specific than `.block640` alone, so without the media guard it would win at phone widths
-   too and silently shrink a coach's tap target below the accessibility floor. At ≤640px the
-   register already reflows to `.tableAsCards` regardless, where `.block640`'s own rule is the
-   one that should apply, untouched. */
+   portal too) that ALSO carries the 44px tap floor — this selector is more specific, so without
+   the media guard it would win at touch widths too and silently shrink a coach's tap target below
+   the accessibility floor.
+
+   ⚠⚠ THE BOUNDARY MOVED FROM 641 TO 769 (2026-08-20), and the old one left a hole exactly one
+   band wide. It was drawn at 640 on the reasoning that the register reflows to cards below that,
+   so `.block640` would take over — true, and it left **641–768px untouched**: a tablet still gets
+   the table, this rule zeroes the floor, and nothing puts it back. The tap floor applies to
+   **768px and under** (`TAP_FLOOR_MAX_WIDTH`), so the guard has to use the same number the rule
+   does. It reported as three 18px links on Transactions and went unexplained for months.
+
+   ⚠ The lesson for the next one: when a media guard exists to protect a rule, it must share that
+   rule's breakpoint, not a nearby one that happens to be in the file. */
 @media (min-width: 641px) {
   .registerRowCompact .btnSecondary.compactAction {
     padding: 0.08rem 0.4rem;
     font-size: 0.68rem;
     min-height: 0;
   }
+}
+
+/* ⚠⚠ 641–768px: THE NARROW FACE, THE TALL TARGET. The rule above keeps the register’s action
+   buttons compact so the table still fits its wrapper — widening them here pushed the table 11px
+   past it and made three containers spill with nothing to scroll them (measured 2026-08-20, and
+   the reason the obvious “just move the boundary to 769” fix was reverted). A tablet still needs a
+   44px target, so the height comes back on its own, from `min-height` alone: the padding and the
+   font stay exactly as the desktop rule sets them, so not one pixel of WIDTH changes. */
+@media (min-width: 641px) and (max-width: 768px) {
+  .registerRowCompact .btnSecondary.compactAction { min-height: 44px; }
 }
 
 /* ⚠ STICKY, SCOPED TO THE TRANSACTIONS TAB ONLY — see `.panelToolbarSticky` beside it, and the

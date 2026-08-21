@@ -1,6 +1,114 @@
 {
-  "generated": "2026-08-20T21:14:37.686Z",
+  "generated": "2026-08-21T01:11:10.366Z",
   "entries": {
+    "coach-transactions|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|361|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-transactions|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Add a commitment": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Import": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Export": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
     "coach-accounting|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "34px tall (floor 44)"
@@ -1909,34 +2017,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "coach-payables|361|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|390|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Add a commitment": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Export": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
     "coach-payment-requests|361|tap-floor|a·Open Org Allocations": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
@@ -3021,22 +3101,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "coach-transactions|768|tap-floor|button·Add": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Export": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
     "coach-tryouts|361|tap-floor|a·Open day-of check-in": {
       "reason": null,
       "detail": "42px tall (floor 44)"
@@ -3132,70 +3196,6 @@
     "coach-team-hub|361|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Export": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Import": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|summary·ViewStatement": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|summary·ViewStatement": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|summary·ViewStatement": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Statement` / `By activity` / `Months` segmented entries pruned in the same change — same control, same job, and 31px against the 29px they were accepted at. Carried rather than re-argued; the real fix is one change to the shared pill, which resizes every reporting strip at once and belongs with the shared-chrome work.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables|361|tap-floor|summary·Group byCommitment": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables|390|tap-floor|summary·Group byCommitment": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|summary·Group byCommitment": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Replaces the accepted `button·Schedule` / `Commitments` toggle entries pruned in the same change — the arrangement control in its new shape, 31px against the 27px they were accepted at. Same shared-pill fix as above.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables-schedule|361|tap-floor|summary·Group byDue date": {
-      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables-schedule|390|tap-floor|summary·Group byDue date": {
-      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|summary·Group byDue date": {
-      "reason": "Payables Rebuild P3, 2026-08-20. The same arrangement pill on the dated-arrangement twin screen. See the `coach-payables` entry.",
-      "detail": "31px tall (floor 44)"
     }
   }
 }

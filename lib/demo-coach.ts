@@ -1051,6 +1051,17 @@ export interface DemoExpense {
   paidDate: string | null;
   deposit?: { amount: number; dueDate: string; paidDate: string | null };
   balance?: { amount: number; dueDate: string; paidDate: string | null };
+  /**
+   * ⚠ A COST THAT REPEATS — 1..n dated pieces, for the bills the deposit/balance pair cannot
+   * describe (Payables Rebuild P4). When present it WINS over `deposit`/`balance`, which stay for
+   * the two-piece bills that genuinely are one.
+   *
+   * The shop window needs one, and no automated check could ever have told us so: `check:demos`
+   * proves the demo is not BROKEN and can never say it is missing something the product gained.
+   * A monthly facility bill is the most recognisable thing a coach pays, and until this the
+   * sandbox could not show one.
+   */
+  installments?: Array<{ amount: number; dueDate: string; paidDate: string | null }>;
   notes?: string | null;
 }
 
@@ -1071,6 +1082,17 @@ export function demoExpensePlan(e: DemoExpense): Array<{
   dueDate: string | null;
   paidDate: string | null;
 }> {
+  /* An explicit n-piece plan wins — the repeating cost (P4). Checked FIRST so a descriptor can
+     never be read two ways, and numbered here so the seed states amounts and dates and nothing
+     else. */
+  if (e.installments && e.installments.length > 0) {
+    return e.installments.map((piece, at) => ({
+      installmentNumber: at + 1,
+      amount: piece.amount,
+      dueDate: piece.dueDate ?? null,
+      paidDate: piece.paidDate ?? null,
+    }));
+  }
   if (e.type === 'tournament_payable' && e.deposit && e.balance) {
     return [
       { installmentNumber: 1, amount: e.deposit.amount, dueDate: e.deposit.dueDate ?? null, paidDate: e.deposit.paidDate ?? null },
@@ -1366,6 +1388,35 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
       notes: 'Balance due four weeks before the first game.',
     },
     expense('EX-DOME', 'Dome time — January block', 'Facilities', 'Dome Time', 1150, -38),
+    /* ⚠ THE REPEATING COST THE SHOP WINDOW WAS MISSING (owner call 2026-08-20, Payables P4). Five
+       dated payments for one bill, two of them already paid — so a prospect opening Payables sees a
+       repeat folded into ONE line carrying its next due date, opens it to the whole run, and reads a
+       Scheduled figure that is what is still owed rather than the plan at face value. Nothing else
+       in this world could show any of that.
+
+       ⚠ FOUR-WEEK STEPS, NOT CALENDAR MONTHS, and that is the demo's date model rather than a
+       shortcut: this world is week-anchored (`weekAnchoredDates`) and re-anchors nightly, so a
+       payment placed on "the 1st" would drift off it within a week. Four-week spacing re-anchors
+       exactly and reads as monthly to anyone looking at it.
+
+       ⚠ IT MUST MATCH A BUDGET LINE BY CATEGORY. `check-demo-coach.mjs` asserts that exactly ONE
+       cost in this world is unbudgeted (the team photo, on purpose) — a second unmatched category
+       here would fail that check and, worse, would spoil the one honest "not budgeted" row the
+       report exists to show. Facilities/Dome Time is budgeted at $2,800; with the January block
+       this brings it to $2,700 committed, which is a line a coach would recognise as nearly spent. */
+    {
+      key: 'EX-DOMEMONTH', description: 'Dome time — monthly winter block',
+      category: 'Facilities', item: 'Dome Time',
+      amount: 1550, type: 'tournament_payable', paidDate: null,
+      installments: [
+        { amount: 310, dueDate: dateAt(-56), paidDate: dateAt(-57) },
+        { amount: 310, dueDate: dateAt(-28), paidDate: dateAt(-29) },
+        { amount: 310, dueDate: dateAt(0),   paidDate: null },
+        { amount: 310, dueDate: dateAt(28),  paidDate: null },
+        { amount: 310, dueDate: dateAt(56),  paidDate: null },
+      ],
+      notes: 'Billed monthly through the winter. Same amount each time.',
+    },
     expense('EX-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 'Jerseys', 1050, -24),
     expense('EX-CAGE', 'Cage rental — eight weeks', 'Training', 'Batting Cages', 700, -17),
     // Deliberately on a category with NO budget line: the report's "unbudgeted" section has to

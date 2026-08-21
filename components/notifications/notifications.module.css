@@ -10,8 +10,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   background: none;
   border: none;
   border-radius: 4px;
@@ -31,10 +31,17 @@
   color: var(--fl-text);
 }
 
+/* ⚠ THE BADGE SITS INSIDE THE BUTTON, and the button grew to make room (check:layout
+   content-overflow, 2026-08-20). It used to hang 4px past the button's top-right corner, which is
+   the classic notification-badge look and which every screen in the portal reported as content
+   spilling out of a box that owns no scroller. The overhang bought nothing a slightly larger button
+   does not: the bell is 28px of icon in a 34px box now, and the badge tucks into the corner within
+   it. ⚠ Not clipped instead — `overflow: hidden` would have silenced the finding by cutting the
+   badge in half, which is the wrong way to make a check go quiet. */
 .badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: 0;
+  right: 0;
   min-width: 16px;
   height: 16px;
   background: var(--danger);
