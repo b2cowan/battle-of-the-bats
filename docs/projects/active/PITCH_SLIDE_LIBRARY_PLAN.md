@@ -131,7 +131,18 @@ only in one build's CSS.
   **2. What the format DID buy, and it is not nothing.** The pictures now read as one system at one
   size; the picture leads on a phone; a wide crop no longer wastes half a slide on empty gutter;
   and the rings mean a reader who cannot resolve the numbers can still see WHICH TWO COLUMNS the
-  sentence is talking about. On desktop no capture is ever enlarged past the size it was taken.
+  sentence is talking about.
+
+  **⚠ AND ONE RULE THE OWNER CORRECTED MID-WALK, WHICH IS WORTH KEEPING STRAIGHT.** The build first
+  capped EVERY picture at the size it was captured. That conflates two different things. A capture
+  taken at PHONE width *is* the phone experience — enlarged on a laptop it stops looking like a
+  phone and starts claiming to be a desktop app, so it must never grow. A DESKTOP capture with a
+  tight crop (the bracket is 480px of bracket) misrepresents nothing by being bigger; it was simply
+  cropped small, and the blunt rule was leaving it small inside a frame with room to spare. Captures
+  are taken at double density, so the pixels are already there: a desktop crop now grows to fill the
+  stage bounded by its own pixel count, and can never be drawn softer than 1:1. **Only the bracket
+  actually moved — 480→671px, +40%, at 1.4× density.** Everything else is either a phone capture
+  (capped, correctly) or already larger than the stage.
 
   **3. Ring geometry must mark a COLUMN, never a row.** The library artifact asked for the dues
   crop to ring "the two overdue ones". The demo's overdue families sit at rows 7 and 11 of 12 and

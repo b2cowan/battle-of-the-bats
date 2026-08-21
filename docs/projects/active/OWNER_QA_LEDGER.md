@@ -9410,10 +9410,16 @@ seeding — the pictures are captured and committed.
       semifinals feeding the final, at full size. This is the clearest single improvement in the
       build.
 - [ ] **Every picture now sits in the same frame** — one fixed shape, picture centred inside it,
-      never stretched and **never enlarged past the size it was taken**. Small phone-shaped captures
-      therefore sit in a lot of empty frame on a wide screen. **That is the format you ratified
-      (one rhythm across mixed picture shapes) — confirm it still looks right to you on the real
-      page, because it is the most visible change and the easiest to dislike.**
+      never stretched. A picture **grows to fill the frame when it can**, bounded by the pixels it
+      actually holds, so it can never be drawn softer than the screen can show. ⚠ **A capture whose
+      subject is the PHONE experience is the exception and never grows** — enlarged on a laptop it
+      would stop looking like a phone and start claiming to be a desktop app. So the two phone
+      screens (the fan's live score, Scorekeeper View) still sit in visible empty frame, and that
+      is deliberate. **That is the format you ratified (one rhythm across mixed picture shapes) —
+      confirm it looks right on the real page.**
+      *(Owner-directed 2026-08-20, mid-walk: the first build capped EVERY picture at its captured
+      size, which left the playoff bracket small in a frame with room to spare. It now renders 40%
+      larger — 480→671px — at 1.4× density.)*
 - [ ] **Phone, 390px, both pages.** The picture now leads at full column width, above the words. No
       sideways scrolling on either page. ⚠ **One thing to judge:** the picture's caption sits
       between the picture and the headline on a phone, so you read what the screen is before you

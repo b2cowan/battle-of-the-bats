@@ -41,6 +41,30 @@ interface Picture {
  * half-built page carrying its text instead of a broken image; `check:marketing-shots` (wired
  * into verify:changed) is what stops that from becoming a silent permanent state.
  */
+/**
+ * Captures are taken at double density, so a picture holds twice the pixels of its recorded
+ * (CSS) size. That headroom is what lets a small crop grow to fill the stage and stay sharp.
+ * Kept in step with the capture context's `deviceScaleFactor` in scripts/lib/shot-capture.mjs.
+ */
+const CAPTURE_DENSITY = 2;
+
+/** ≤430px covers every capture whose SUBJECT is the phone experience. */
+const PHONE_CAPTURE_WIDTH = 430;
+
+/**
+ * How large a picture may be drawn.
+ *
+ * ⚠ TWO DIFFERENT RULES, AND CONFLATING THEM COSTS LEGIBILITY. A capture taken at phone width
+ * IS the phone experience — enlarged on a desktop it stops looking like a phone and starts
+ * claiming to be a desktop app, so it never grows past the size it was taken. A DESKTOP capture
+ * with a tight crop (the playoff bracket is 480px of bracket) misrepresents nothing by being
+ * bigger; it was simply cropped small. It may grow to fill the stage, bounded by the pixels it
+ * actually has — so it can never be drawn softer than 1:1.
+ */
+function maxRenderWidth(shot: { width: number; size: { w: number } }): number {
+  return shot.width <= PHONE_CAPTURE_WIDTH ? shot.size.w : shot.size.w * CAPTURE_DENSITY;
+}
+
 function pictureFor(slide: PitchSlide): Picture | null {
   const shot = slide.shotId ? SHOTS.get(slide.shotId) : undefined;
   if (!shot?.size) return null;
@@ -49,6 +73,7 @@ function pictureFor(slide: PitchSlide): Picture | null {
       src: `/marketing/${shot.persona}/${shot.id}.png`,
       width: shot.size.w,
       height: shot.size.h,
+      maxWidth: maxRenderWidth({ width: shot.width, size: shot.size }),
       alt: shot.alt,
       rings: slide.rings,
     },

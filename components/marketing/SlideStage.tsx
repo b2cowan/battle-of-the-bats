@@ -52,6 +52,12 @@ export interface SlidePicture {
   /** The capture's real pixel size — it gives the picture box its aspect, so rings land true. */
   width: number;
   height: number;
+  /**
+   * The largest this picture may be drawn. NOT the same as `width`: a phone-subject capture is
+   * capped at the size it was taken, while a desktop capture cropped small may grow to fill the
+   * stage up to the pixels it actually holds. Decided per shot — see `maxRenderWidth`.
+   */
+  maxWidth: number;
   alt: string;
   rings?: CalloutRing[];
 }
@@ -68,14 +74,13 @@ export default function SlideStage({ picture }: { picture: SlidePicture }) {
           rather than contain it.
             · aspectRatio — gives the box the capture's own shape, so it IS the image's box and
               the percentage ring geometry lands on the same pixels at every width.
-            · --shot-w    — never enlarge a capture past the size it was taken. These are phone
-              screens; blown up to fill a desktop stage they go soft AND claim to be desktop.
+            · --shot-w    — the ceiling on how large it may be drawn (see `maxWidth` above).
             · --shot-ratio — the unitless w/h the height limits are converted through. */}
       <div
         className={styles.picture}
         style={{
           aspectRatio: `${picture.width} / ${picture.height}`,
-          '--shot-w': `${picture.width}px`,
+          '--shot-w': `${picture.maxWidth}px`,
           '--shot-ratio': `${picture.width / picture.height}`,
         } as React.CSSProperties}
       >
