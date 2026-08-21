@@ -41,6 +41,13 @@
 > "unsettled money warns, never blocks" ruling, and the mockup's **third panel was not built** —
 > the demo world cannot photograph the bench console. Both are written up in §66.
 >
+> **§67 added 2026-08-20** — the pitch slide LIBRARY (P1). Both walkthroughs now render from one
+> bank of numbered slides and wear the ratified slide format. The pages say the same things they
+> said before; what changed is how the pictures read. ⚠ **It carries the measured answer to the
+> phone-legibility question §65/§66 left open, and the answer is "half".** Two of the four wide
+> captures still cannot be read at 390px, for a reason no format change can fix — §67 has the
+> numbers and the fix.
+>
 > **Unwalked at the 2026-08-17 promote:** **§22 §23 §24 §29 §30 §35 §38 §39 §40 §41 §42 §43 §44
 > §45 §46 §47 §48 §49 §51**, plus **§50's owed re-walk** (§50 PASSED 2026-08-17, then `/review`
 > changed behaviour in three places afterwards). That is the whole Money redesign, all of budget
@@ -9336,3 +9343,123 @@ flex by one — **and the third is the owner's call:**
   own tour anchors there, and it shows one player's back-to-back bench pattern honestly), or
   the **family recap preview** — the coach's roster page rendering the family's *own* component,
   i.e. genuinely "what a parent opens". Either is a new panel, which needs this OK first.
+
+---
+
+## §67 · The pitch slide library — one bank of slides, and the phone answer you asked for
+
+**BUILT 2026-08-20 (dev), awaiting the walk.** Plan:
+`PITCH_SLIDE_LIBRARY_PLAN.md` (P1). Approved spec: the library artifact
+`claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e`, the format
+`claude.ai/code/artifact/b1706db6-8f65-43d1-a5c7-39ffa722300f`, the three image classes
+`claude.ai/code/artifact/d0cf0ea2-35fe-4f3c-a99c-dd68c2afc793`.
+
+**Why this section exists:** the two walkthrough pages each hand-wrote their own panel list. They
+now render from a shared bank of numbered slides composed into per-audience decks — and the slides
+got the format you ratified. **The pull each page shows is exactly the panels it showed before, so
+this walk is mostly about how the pictures look, not what the pages say.** The two exceptions are
+called out below and both need your eye rather than a pass/fail.
+
+**Fixture:** a logged-out browser at phone (390px) and desktop width, dev server. Nothing needs
+seeding — the pictures are captured and committed.
+
+### ⚠ Read these two first — they are the disagreements, not the checklist
+
+1. **The phone defect is HALF closed, and I want you to see the number rather than a claim.** You
+   asked me to build the stage, measure it and report. Measured at 390px:
+
+   | picture | before | now |
+   |---|---|---|
+   | Playoff bracket | 33% | **68%** — reads |
+   | Season settlement | 36% | 39% |
+   | Player Dues table | 33% | **33% — still illegible** |
+   | Registration Health | 34% | 34% — still illegible |
+
+   The reason is arithmetic the plan had not done: **cropping a table to fewer rows makes it
+   shorter, not narrower, and how big a picture looks is set by its width.** The bracket doubled
+   because it was ~520px of drawing sitting in a 984px section — mostly empty gutter. The dues
+   table is genuinely a thousand pixels of table. **No format change can fix that; only
+   re-photographing those screens at phone width can, and the Money hub has a real phone card
+   layout to photograph.** That is a P2 job. ⚠ I deliberately did NOT re-shoot in this phase (your
+   build prompt said measure first) and did NOT let a wide picture pan sideways inside its frame —
+   panning trades the one-rhythm format for a picture that is still a desktop screen.
+
+2. **The dues slide's headline got blander, and it is my doing under instruction.** It read *"Team
+   fees live in your head, and the e-transfers arrive with no name on them."* The approved library
+   splits that: the e-transfer half is now slide **#02**, its own explainer, which is P2. So the
+   headline is now just *"Team fees are tracked in your head."* I took the library verbatim rather
+   than improving it in passing — **but if you would rather the live page keep the fuller sentence
+   until #02 ships, say so and it is a one-line change.**
+
+### The walk
+
+- [ ] **`/for-coaches/walkthrough` on a laptop.** Each panel is now **words on the left, picture on
+      the right** instead of picture-under-headline. Same two panels, same sentences, same plan
+      tags. Does the two-column reading feel like a pitch or like a brochure?
+- [ ] **The dues picture.** Seven families and the header instead of all twelve and the totals row,
+      with **two lime rings** on the Balance and Status columns — "what is left to pay" and "who has
+      fallen behind", the two halves of the sentence beside it. The rings are drawn over the
+      picture, never into it, so the stored image is still exactly what the camera took.
+      ⚠ **The rings mark COLUMNS on purpose.** The artifact asked to ring "the two overdue
+      families"; they sit at rows 7 and 11 and move every night when the demo re-anchors, so a ring
+      on a row would eventually point at someone who has paid.
+- [ ] **The settlement picture** is now the sheet's heading, the team's money, the three blockers
+      and three family rows — the rest of the roster repeated the same shape.
+- [ ] **`/for-tournament-organizers/walkthrough` — the bracket panel is the one to look at.** It was
+      the whole 984px section with the drawing floating in the middle; it is now just the two
+      semifinals feeding the final, at full size. This is the clearest single improvement in the
+      build.
+- [ ] **Every picture now sits in the same frame** — one fixed shape, picture centred inside it,
+      never stretched and **never enlarged past the size it was taken**. Small phone-shaped captures
+      therefore sit in a lot of empty frame on a wide screen. **That is the format you ratified
+      (one rhythm across mixed picture shapes) — confirm it still looks right to you on the real
+      page, because it is the most visible change and the easiest to dislike.**
+- [ ] **Phone, 390px, both pages.** The picture now leads at full column width, above the words. No
+      sideways scrolling on either page. ⚠ **One thing to judge:** the picture's caption sits
+      between the picture and the headline on a phone, so you read what the screen is before you
+      read the problem it solves. Deliberate (the caption belongs to the picture) but inverted —
+      tell me if it reads wrong.
+- [ ] **Present mode** (the text-weight trigger under the hero). It is now the format proper: words
+      left, picture right, and it uses the **short slide sentence** rather than the page's long
+      one. ⚠ **The plan tag is gone from present mode on purpose** — a slide carries no plan or
+      subscription name, because that is what lets one slide serve the coach deck and later the
+      club deck untouched, and because you are in the room to answer "is that included?" The public
+      page still carries its plan line. Confirm you are happy pitching without it on screen.
+- [ ] **Ctrl+P / Save as PDF**, both pages — one problem per page, pictures intact, no buttons, the
+      address in lime on the last page. (Same known v1 rough edge as §65/§66: site nav and footer
+      still print.)
+- [ ] **Nothing else on either page moved** — hero, closing, demo doors, the "See this screen live"
+      links, the meta counts.
+
+### ⚠ One defect the review caught, and it is the one worth knowing about
+
+**We were about to publish distorted screenshots of our own product.** The fixed picture frame was
+built the obvious way — let the picture fill the frame's width, then cap its height — and CSS does
+not shrink the width back when that cap bites. Anything taller than the frame's shape kept its full
+width and lost height: the **Scorekeeper View** picture rendered 350×413 when the real screenshot is
+350×546, and the **Rain delay** dialog was worse. Both are phone-shaped screens, which is exactly
+why it survived a look at the wide dues table.
+
+That matters more here than it would anywhere else: this project's entire premise is *"every picture
+is really our software"*, and a squashed screenshot is not really our software. Two independent
+review lenses found it, it is fixed by choosing the picture's width outright instead of capping its
+height, and it is now **measured rather than asserted** — every picture on both pages, at four screen
+widths plus print, renders within 0.4% of its true proportions. **Worth a glance during the walk
+anyway: the two tournament panels above (Scorekeeper View, Rain delay) are the ones that were wrong.**
+
+Also found and fixed: the composed-crop machinery silently cropped a region taller than the capture
+window instead of failing (no current picture hit it, but a P2 crop would have); the dues crop was
+matching "any table on the page" rather than the dues table specifically; and the settlement
+picture's alt text described three things when the picture actually shows four — it omitted the
+team's-money summary that sits inside the crop.
+
+### What did not change, and the debts still open
+
+- The three accessibility items §66 left you to rule on are **untouched and still open**: the
+  15px-tall "See this screen live" link, the 28px present-mode trigger, and the nested page region.
+  None of them was in this phase's scope.
+- **Lime is still spent five times on the panel** (Start free, the door, the "With FieldLogicHQ"
+  kicker, "See this screen live", the printed address) against the one-lime-action rule — and the
+  rings now make it **six**. The design ruling explicitly left this as yours to judge on the real
+  page; the rings are the newest claimant and the easiest to re-colour if you want the lime back.
+- Slides #02, #04–#07, #09, #10, #16, #17, #21–#25 are named in the decks and **not built** — P2.

@@ -1,11 +1,15 @@
 'use client';
 
 /**
- * PRESENT MODE — the walkthrough as full-screen slides (plan P2, approved mockup's ▶ control).
+ * PRESENT MODE — the walkthrough as full-screen slides (PRESALES_WALKTHROUGH_PLAN.md P2).
  *
- * Same content, second rendering: the owner pitching a board or screen-sharing a call walks
+ * Same slides, second rendering: the owner pitching a board or screen-sharing a call walks
  * the identical story the scroll page tells. This is a TOOL, not a CTA — the trigger sits
  * text-weight under the hero meta and must never compete with "Start free".
+ *
+ * ⚠ THIS IS THE SHAPE THE SLIDE FORMAT WAS DESIGNED FOR (ratified 2026-08-20): words on the
+ * left, the picture on the right in the shared stage, body copy in the sans face. The scroll
+ * panel adapts FROM this, not the other way round.
  *
  * Slides carry NO buttons: in a live pitch an on-slide CTA is noise, and the closing slide's
  * spoken ask is the door. Keyboard: → / space / PageDown advance, ← / PageUp back, Esc exits;
@@ -14,29 +18,23 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import SlideStage, { SlideLayout, type SlidePicture } from './SlideStage';
 import styles from './WalkthroughPresent.module.css';
 
 /**
- * A slide's picture. Deliberately NOT the scroll page's full figure: the caption stays behind,
- * because a slide has no room for one and this shape crosses the server/client boundary.
+ * One slide, as the DECK renders it: the pain, the short claim, the picture in the shared
+ * stage — and deliberately NO plan line and no caption. A slide carries no plan or subscription
+ * name (owner ruling 2026-08-20): that is what makes it portable between audiences, and a deck
+ * has a human in the room to answer "is that included?" The public page, which does not, keeps
+ * its plan line. All fields are plain data — this shape crosses the server/client boundary.
  */
-export interface PresentImage {
-  src: string;
-  width: number;
-  height: number;
-  alt: string;
-  /** A capture taken at phone width IS the phone experience — it is never blown up to fit. */
-  narrow: boolean;
-}
-
 export interface PresentSlide {
   eyebrow: string;
   title: string;
   body: string;
   /** Panel slides only. */
   index?: string;
-  planTag?: string;
-  image?: PresentImage;
+  picture?: SlidePicture;
 }
 
 export default function WalkthroughPresent({ slides, label }: { slides: PresentSlide[]; label: string }) {
@@ -111,23 +109,20 @@ export default function WalkthroughPresent({ slides, label }: { slides: PresentS
           aria-label={label}
           tabIndex={-1}
         >
-          {/* The stage advances on click/tap — the whole surface is the "next" control. */}
-          <div className={styles.stage} onClick={() => move(1)}>
+          {/* The whole surface is the "next" control — click/tap anywhere advances. */}
+          <div className={styles.viewport} onClick={() => move(1)}>
             <div className={styles.slide}>
-              {slide.index && <p className={styles.slideIndex}>{slide.index}</p>}
-              <p className={slide.index ? styles.slideOld : styles.slideEyebrow}>{slide.eyebrow}</p>
-              <h2 className={styles.slideTitle}>{slide.title}</h2>
-              {slide.image && (
-                <div className={`${styles.slideShot}${slide.image.narrow ? ` ${styles.slideShotNarrow}` : ''}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- same manifest asset,
-                      same plain-img precedent as the scroll page */}
-                  <img src={slide.image.src} width={slide.image.width} height={slide.image.height} alt={slide.image.alt} />
-                </div>
-              )}
-              <p className={styles.slideBody}>
-                {slide.body}
-                {slide.planTag && <span className={styles.slideTag}>{slide.planTag}</span>}
-              </p>
+              <SlideLayout
+                say={
+                  <>
+                    {slide.index && <p className={styles.slideIndex}>{slide.index}</p>}
+                    <p className={slide.index ? styles.slideOld : styles.slideEyebrow}>{slide.eyebrow}</p>
+                    <h2 className={styles.slideTitle}>{slide.title}</h2>
+                    <p className={styles.slideBody}>{slide.body}</p>
+                  </>
+                }
+                show={slide.picture && <SlideStage picture={slide.picture} />}
+              />
             </div>
           </div>
           <div className={styles.foot}>

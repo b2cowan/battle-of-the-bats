@@ -19,6 +19,17 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 **Applies to:** the pitch-slide format (the slide library build, and `components/marketing/WalkthroughPage.tsx` which will render from it). Library + decks: `docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md`.
 
+**⚠ BUILT 2026-08-20 (`components/marketing/SlideStage.tsx`). Two rules above collided in the code, and the build resolved them — do not "fix" either back:**
+
+1. **On a phone the aspect lock is RELEASED; 16:10 is a floor, not a cage.** "Fixed 16:10" and "the picture takes the full column" cannot both hold for a TALL picture: at 390px a 16:10 stage is ~350×219, and a phone-shaped capture contained inside it renders ~140px wide — *smaller than before the ruling*, i.e. the exact defect inverted. Below the stacking breakpoint the picture takes the full column at its own shape, capped at 72vh so it cannot eat the screen. The conflict is resolved in favour of the half the ruling names as **the fix**.
+2. **A picture is never shown LARGER than it was taken.** Plain containment scales up as happily as down, and the small captures here are phone screens — enlarged to fill a desktop stage they go soft *and* claim to be desktop screens. The pre-library narrow-capture rule survives as a cap at the capture's own width; it simply stopped needing a special case once the manifest carried the size.
+
+**⚠⚠ AND THE ONE THAT NEARLY SHIPPED: "CONTAIN" IS NOT A HEIGHT CAP.** The obvious implementation — `width: 100%` + the capture's `aspect-ratio` + `max-height: 100%` — **squashes** rather than contains: CSS does not re-solve an already-definite width when a max-height clamp fires, so any picture taller than the stage's shape keeps its full width and loses height. Measured before the fix: a 350×546 capture rendered **350×413**. On the one surface whose founding rule is *"every picture is really our software"*, that meant publishing distorted screenshots of the product. ⚠ `object-fit: contain` is **not** the fix — it letterboxes the image inside a box that is still the wrong shape, and the callout rings are positioned against that box, so they drift off the picture. **Spend every limit on the WIDTH:** `width: min(the column, the capture's own width, the height budget × the capture's ratio)`, so no clamp ever fires. A squash is invisible on a wide crop, so this is now **measured, not asserted** — every picture, four viewport widths, both pages, plus print.
+
+**Also learned in the build, and it is the reason the phone defect is only half closed:** *cropping a picture to fewer rows makes it SHORTER, not NARROWER, and on-screen scale follows width.* Measured at 390px: the playoff bracket went 33% → 68% (it was ~520px of drawing inside a 984px section), the dues table 33% → 33%. **No stage geometry can fix a genuinely 1,000px-wide capture on a phone — only re-photographing that screen at phone width can.**
+
+**⚠ RIDER UPDATE — the lime count is now SIX, not five.** The callout rings are lime, on top of the five elements listed above. Still the owner's call on the real page; the rings are the newest claimant and the cheapest to re-colour.
+
 ---
 
 ### 2026-08-20 — Pitch artifacts print DARK, one slide per page — the leave-behind is an emailed PDF, not paper

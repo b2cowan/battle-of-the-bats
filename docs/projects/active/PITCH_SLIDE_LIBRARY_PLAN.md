@@ -1,7 +1,8 @@
 # Pitch Slide Library — Plan
 
 **Status:** APPROVED 2026-08-20 (owner accepted the three image classes, the two deck running
-orders, the slide format and the no-plan-names rule in-session). **Not started.**
+orders, the slide format and the no-plan-names rule in-session). **P1 BUILT on dev 2026-08-20 —
+owner QA §67. P2–P4 not started.**
 **PM brief:** [PITCH_SLIDE_LIBRARY_PM_BRIEF.md](PITCH_SLIDE_LIBRARY_PM_BRIEF.md)
 **The library itself (owner-approved, binding spec):**
 `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e` — 21 slides, two decks, in order.
@@ -100,11 +101,78 @@ only in one build's CSS.
 
 ## Phases
 
-- **P1 — the model, proved on what already ships.** Slide bank + deck composition + the format
-  changes (fixed stage, phone reflow, rings). Migrate the two live walkthroughs to render from the
-  library, re-cropping the existing seven captures from proof to composed where the story wants it.
-  **No new artwork.** Ship value: both live pages get legible pictures on a phone, which is the
-  open §65/§66 defect.
+- **P1 — the model, proved on what already ships. ✅ BUILT 2026-08-20 (dev), owner QA §67.**
+  Slide bank + deck composition + the format changes (fixed stage, phone reflow, rings). Both live
+  walkthroughs render from the library; three of the seven captures were re-cropped from proof to
+  composed. **No new artwork.**
+
+  ### What P1 actually settled — read before planning P2
+
+  **1. ⚠ THE PHONE DEFECT IS NOT CLOSED, AND THE FORMAT COULD NEVER HAVE CLOSED IT.** The open
+  question was whether a wide capture is still unreadable at 390px once the fixed stage lands. It
+  is, and the reason is arithmetic the plan had not done: **cropping ROWS reduces a picture's
+  height, not its width, and the on-screen scale of a capture is set by its width.** Measured at
+  390px after the build:
+
+  | picture | before | after | why |
+  |---|---|---|---|
+  | Playoff bracket | 33% | **68%** | the drawing was only ~520px inside a 984px section — the rest was empty gutter |
+  | Season settlement | 36% | 39% | crop trimmed height and a little chrome |
+  | Player Dues | 33% | **33%** | seven rows instead of twelve is half the height and the SAME width |
+  | Registration Health | 34% | 34% | untouched |
+
+  So the bracket is fixed, and the dues table is not. **The remaining answer is the fallback the
+  §66 row already named: re-capture the coach money screens at phone width** (the Money hub has a
+  real phone card layout — the desktop table is behind a `duesDesktopOnly` class, so the phone
+  layout is a different, genuinely legible surface). That is a P2 capture job, not a format job.
+  ⚠ Do not "fix" it by widening the stage or letting the picture pan sideways: both were
+  considered and both trade the format's one rhythm for a picture that is still a desktop screen.
+
+  **2. What the format DID buy, and it is not nothing.** The pictures now read as one system at one
+  size; the picture leads on a phone; a wide crop no longer wastes half a slide on empty gutter;
+  and the rings mean a reader who cannot resolve the numbers can still see WHICH TWO COLUMNS the
+  sentence is talking about. On desktop no capture is ever enlarged past the size it was taken.
+
+  **3. Ring geometry must mark a COLUMN, never a row.** The library artifact asked for the dues
+  crop to ring "the two overdue ones". The demo's overdue families sit at rows 7 and 11 of 12 and
+  move with the nightly re-anchor — a ring on a row position would start pointing at a family who
+  has paid. Both rings mark a column (Balance, Status) instead, which is structural and cannot go
+  stale. **This generalises: a callout marks a structural region or it is a bug waiting for a
+  re-anchor.**
+
+  **4. Two library notes the artifact got wrong, and the code won.** Slide #13's image note names
+  "the three send switches" in the rain-delay dialog — that dialog has no such control, so its
+  crop was left alone. Slide #15 asks to ring "the two tiles that are wrong" on Registration
+  Health, but the tournament world re-anchors every two minutes and which tiles are unhealthy
+  moves with it; it ships unringed.
+
+  **5. ⚠⚠ THE CRITICAL THE REVIEW CAUGHT — "CONTAIN" IS NOT A HEIGHT CAP, AND THE OBVIOUS CSS
+  SQUASHES THE PICTURE.** The fixed stage was first built as `width: 100%` + the capture's
+  `aspect-ratio` + `max-height: 100%`. That does **not** contain: a definite width is not re-solved
+  when a max-height clamp fires, so anything taller than 16:10 keeps its full width and loses
+  height. Measured: the 350×546 Scorekeeper capture rendered **350×413**, the 560×684 rain-delay
+  dialog worse — i.e. **the page was publishing distorted screenshots of our own product, on the
+  project whose founding rule is that every picture is really our software.** Wide crops were
+  unaffected, which is why it survived a look at the dues table. `object-fit: contain` is NOT the
+  fix either: it would letterbox the image inside a box that is still the wrong shape, and the
+  rings are positioned against that box, so they would drift off the picture. **The fix is to spend
+  every limit on the WIDTH** — the picture's width is the smallest of the column, the capture's own
+  width, and the height budget converted through its ratio — so no clamp ever fires. Now measured
+  rather than asserted: 7 pictures × 4 viewport widths × 2 pages + print, all within 0.4% of true.
+
+  **6. Three more the review closed.** The composed crop silently **clamped** a union taller than
+  the capture viewport instead of failing (Playwright reads a non-`fullPage` clip in viewport space
+  and trims it) — fixed by measuring in document coordinates and capturing `fullPage`. The dues
+  crop matched a bare `table`, i.e. *any* visible table on a hub that deliberately keeps other
+  sections mounted — now scoped to a header only the dues table has. And the settlement picture's
+  alt text named three things while the crop actually contains four: **a union is a rectangle, so
+  it carries whatever sits between the matches** — here the whole team's-money summary card.
+
+  **7. A cost the owner should see: slide #01's headline got blander.** The library's pain line for
+  the dues slide is "Team fees are tracked in your head." — the visceral half of the sentence the
+  page used to carry ("and the e-transfers arrive with no name on them") is now slide **#02**'s
+  entire subject, and #02 is a P2 explainer. Until it ships, the coach page opens one beat weaker
+  than it did. Taken verbatim per the build prompt rather than quietly improved.
 - **P2 — the fourteen new slides.** New captures for the composed ones, hand-drawn SVG for the
   explainers. This is the bulk of the work and it is mostly editorial, not engineering.
 - **P3 — the contact sheet + the staleness check.** A private route rendering the whole library on
@@ -139,10 +207,11 @@ belongs in the release checklist rather than a build gate.
 
 ## Open questions carried in
 
-- **Phone legibility of wide captures (QA §65, §66)** — P1's fixed stage plus the phone reflow is
-  the proposed answer. If the owner still finds a wide table unreadable at 390px after P1, the
-  fallback is re-shooting the coach money screens at phone width (the Money hub has a real phone
-  card layout) or cropping harder.
+- **Phone legibility of wide captures (QA §65, §66) — ANSWERED BY P1, AND THE ANSWER IS NO.** The
+  fixed stage plus the phone reflow fixed the bracket (33% → 68%) and did nothing for the dues
+  table (33% → 33%), because a row crop changes height and scale follows width. **The fallback is
+  now the plan: re-capture the coach money screens at phone width in P2.** Numbers and reasoning in
+  the P1 entry above.
 - **⚠ Lime is spent five times on the shipped walkthrough panel** against a binding one-lime-action
   rule (`design_decisions.md`, 2026-08-20 rider). Defensible on a slide, which carries no call to
   action for it to compete with; open on the scroll page. Owner to judge on the real page.

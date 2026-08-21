@@ -1,0 +1,120 @@
+/* The picture stage — see components/marketing/SlideStage.tsx for the ruling behind every
+   rule in this file. One frame, contained picture, rings drawn over it. */
+
+/* ── The slide: words beside the picture ─────────────────────────────────────
+   The ratified format (memory/design_decisions.md 2026-08-20). ⚠ On a phone the PICTURE LEADS
+   at full column width. Not an invention: the 2026-08-08 day-of toolbar ruling already binds —
+   when a layout wraps into a stacked column, elements take the full row rather than keeping
+   their desktop intrinsic width. */
+.slide {
+  display: grid;
+  grid-template-columns: minmax(0, 38fr) minmax(0, 62fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.say { min-width: 0; }
+.show { min-width: 0; }
+
+@media (max-width: 780px) {
+  .slide {
+    grid-template-columns: 1fr;
+    gap: 1.3rem;
+  }
+
+  .say { order: 2; }
+  .show { order: 1; }
+}
+
+/* One problem per page reads better stacked than in two thin columns. */
+@media print {
+  .slide {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* ── The picture stage ───────────────────────────────────────────────────────
+   ⚠ `box-sizing: content-box` is load-bearing, against the repo-wide border-box default:
+   it makes `aspect-ratio` govern the CONTENT box, which is the box `.picture` measures its
+   percentages against. With border-box the padding and border come out of the 16:10, the
+   content box is NOT 16:10, and every calculation below is off by the padding. */
+.stage {
+  box-sizing: content-box;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.03);
+  padding: 0.5rem;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ⚠⚠ CONTAINMENT IS SOLVED ON THE WIDTH ALONE, AND IT HAS TO BE.
+   The obvious version — `width: 100%` + the capture's `aspect-ratio` + `max-height: 100%` —
+   DOES NOT CONTAIN, it SQUASHES. CSS does not re-solve an already-definite width when a
+   max-height clamp fires, so a tall capture keeps its full width and loses height: measured,
+   the 350×546 scorekeeper capture rendered 350×413, and the product was being published
+   distorted on a public page. (Nor does `object-fit: contain` fix it — that would letterbox
+   the image inside a box that is still the wrong shape, and the callout rings are positioned
+   against THAT box, so they would drift off the picture.)
+
+   So the width is picked outright as the smallest of three limits, and no clamp ever fires:
+     · `100%`               — the stage is narrower than the picture
+     · `--shot-w`           — never enlarge a capture past the size it was taken
+     · height limit × ratio — the stage is shorter than the picture
+   `100% * 10 / 16` is the stage's own height expressed in width units (its content box is
+   16:10, per the rule above). */
+.picture {
+  position: relative;
+  width: min(100%, var(--shot-w), calc(100% * 10 / 16 * var(--shot-ratio)));
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ⚠ A ring is drawn over a PICTURE, and the pictures are not one ground: the tournament
+   captures are dark, the coach portal's are warm and near-white. Lime alone reads on the first
+   and disappears on the second, so the ring carries a hairline dark edge just outside it —
+   one shape that holds on either. */
+.ring {
+  position: absolute;
+  border: 2px solid var(--logic-lime);
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 5px rgba(var(--logic-lime-rgb), 0.16);
+  pointer-events: none;
+}
+
+/* Phone: the aspect lock is released so the picture takes the FULL column at its own shape.
+   The height limit becomes a viewport fraction rather than the stage's own height, but it is
+   still spent through the WIDTH for the same reason as above — a max-height here would squash
+   exactly the tall captures this breakpoint exists to make bigger. */
+@media (max-width: 780px) {
+  .stage {
+    aspect-ratio: auto;
+    padding: 0.35rem;
+  }
+
+  .picture {
+    width: min(100%, var(--shot-w), calc(72vh * var(--shot-ratio)));
+  }
+}
+
+/* The leave-behind: one problem per page, picture intact — no aspect lock fighting the
+   paper, and no picture tall enough to push its own words onto a second page. */
+@media print {
+  .stage {
+    aspect-ratio: auto;
+    break-inside: avoid;
+  }
+
+  .picture {
+    width: min(100%, var(--shot-w), calc(58vh * var(--shot-ratio)));
+  }
+}

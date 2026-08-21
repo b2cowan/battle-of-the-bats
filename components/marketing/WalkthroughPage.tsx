@@ -1,23 +1,28 @@
 /**
  * THE WALKTHROUGH PAGE — one renderer, every persona's 90-second pitch.
  *
- * Plan: docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md · approved mockup:
- * https://claude.ai/code/artifact/6f16bc17-d5f3-45b6-bd03-b6df54231f15
+ * Plan: docs/projects/active/PITCH_SLIDE_LIBRARY_PLAN.md (the library this now renders from)
+ * · docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md (the page itself)
+ * · the format: https://claude.ai/code/artifact/b1706db6-8f65-43d1-a5c7-39ffa722300f
  *
- * Extracted here when the coach walkthrough arrived (P3) — the /simplify pass that deferred a
- * shared component "until the second consumer" named exactly this moment. Everything a
- * walkthrough differs by (its story, its door, its way back, its address) is DATA in
- * lib/walkthrough-content.ts; each persona's route file is a two-line shell.
+ * Everything a walkthrough differs by (its pull, its door, its way back, its address) is DATA
+ * in lib/walkthrough-content.ts; each persona's route file is a two-line shell.
  *
  * Three renderings, one source: this scroll page, present mode (WalkthroughPresent), and the
- * print leave-behind (@media print in WalkthroughPage.module.css). A fourth persona costs a
- * content entry and a shell — never a second copy of this file.
+ * print leave-behind (@media print). A fourth persona costs a content entry and a shell.
+ *
+ * ⚠ THE PAGE IS NOT THE DECK, and the difference is one line of copy each way. A slide carries
+ * NO plan name (that is what makes it portable between audiences); the page carries one wherever
+ * a feature is gated, because a deck has a human in the room to answer "is that included?" and a
+ * web page does not. Same reason the page gets the long `answer` and a slide gets the short
+ * `claim`.
  */
 import Link from 'next/link';
 import { MARKETING_SHOTS } from '@/lib/marketing-shots';
-import type { Walkthrough, WalkthroughPanel } from '@/lib/walkthrough-content';
+import { PITCH_SLIDES, type PitchSlide, type Walkthrough } from '@/lib/walkthrough-content';
 import { sandboxDoorsVisible } from '@/lib/sandbox-door';
-import WalkthroughPresent, { type PresentImage, type PresentSlide } from './WalkthroughPresent';
+import SlideStage, { SlideLayout, type SlidePicture } from './SlideStage';
+import WalkthroughPresent, { type PresentSlide } from './WalkthroughPresent';
 import styles from './WalkthroughPage.module.css';
 
 const SHOTS = new Map(MARKETING_SHOTS.map(s => [s.id, s]));
@@ -27,47 +32,52 @@ const PRINT_HOST = 'fieldlogichq.ca';
 
 /** The picture two renderings share, plus the caption only the scroll page's figure shows. */
 interface Picture {
-  image: PresentImage;
+  picture: SlidePicture;
   caption: string;
 }
 
 /**
- * A panel's picture, or null while it is declared but not yet captured. The null branch keeps a
+ * A slide's picture, or null while it is declared but not yet captured. The null branch keeps a
  * half-built page carrying its text instead of a broken image; `check:marketing-shots` (wired
  * into verify:changed) is what stops that from becoming a silent permanent state.
  */
-function pictureFor(panel: WalkthroughPanel): Picture | null {
-  const shot = SHOTS.get(panel.shotId);
+function pictureFor(slide: PitchSlide): Picture | null {
+  const shot = slide.shotId ? SHOTS.get(slide.shotId) : undefined;
   if (!shot?.size) return null;
   return {
-    image: {
+    picture: {
       src: `/marketing/${shot.persona}/${shot.id}.png`,
       width: shot.size.w,
       height: shot.size.h,
       alt: shot.alt,
-      narrow: shot.width <= 430, // ≤430px covers every phone capture width
+      rings: slide.rings,
     },
     caption: shot.caption,
   };
 }
 
 export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkthrough }) {
-  // Present mode renders the SAME source as the scroll page, one thought per slide:
-  // hero → the panels → the closing. Slides carry data only (the client component receives
+  // Resolved ONCE per panel and read by both renderings below — the scroll panel and the deck
+  // must picture the same slide, and looking it up twice is how they would eventually stop.
+  // No missing-slide branch: `slideId` is typed to the bank's own key set, so a pull naming a
+  // slide that does not exist cannot compile.
+  const pulled = w.panels.map(panel => {
+    const slide: PitchSlide = PITCH_SLIDES[panel.slideId];
+    return { panel, slide, shown: pictureFor(slide) };
+  });
+
+  // Present mode is the DECK rendering of the same slides: the short claim, and no plan line.
+  // Hero → the slides → the closing. Slides carry data only (the client component receives
   // nothing it could not serialize).
   const slides: PresentSlide[] = [
     { eyebrow: w.eyebrow, title: w.title, body: w.sub },
-    ...w.panels.map((panel, i) => {
-      const picture = pictureFor(panel);
-      return {
-        index: `${i + 1} / ${w.panels.length}`,
-        eyebrow: 'The old way',
-        title: panel.pain,
-        body: panel.answer,
-        planTag: panel.planTag,
-        image: picture?.image,
-      };
-    }),
+    ...pulled.map(({ slide, shown }, i) => ({
+      index: `${i + 1} / ${pulled.length}`,
+      eyebrow: 'The old way',
+      title: slide.pain,
+      body: slide.claim,
+      picture: shown?.picture,
+    })),
     { eyebrow: w.closing.eyebrow, title: w.closing.title, body: w.closing.body },
   ];
 
@@ -111,47 +121,38 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
         </div>
       </section>
 
-      {/* ── The panels ───────────────────────────────────────────────────── */}
-      {w.panels.map((panel, i) => {
-        const picture = pictureFor(panel);
+      {/* ── The pull ─────────────────────────────────────────────────────── */}
+      {pulled.map(({ panel, slide, shown }, i) => {
         return (
-          <section key={panel.shotId} className={styles.panel}>
+          <section key={slide.id} className={styles.panel}>
             <div className="container">
-              <p className={styles.panelIndex}>{i + 1} / {w.panels.length}</p>
-              <p className={styles.panelOld}>The old way</p>
-              <h2 className={styles.panelPain}>{panel.pain}</h2>
-              {picture && (
-                <figure className={styles.shotFigure}>
-                  <div className={`${styles.shotFrame}${picture.image.narrow ? ` ${styles.shotFrameNarrow}` : ''}`}>
-                    {/* Plain <img>, matching HelpScreenshot's documented precedent: a manifest
-                        asset of known size, already lazy. next/image would route every request
-                        through the sharp-backed optimizer — an Amplify code path this repo has
-                        been burned by once (memory/reference_sharp_turbopack_webpack.md) and
-                        that no public page exercises today. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={picture.image.src}
-                      width={picture.image.width}
-                      height={picture.image.height}
-                      alt={picture.image.alt}
-                      className={styles.shotImg}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                  <figcaption className={styles.shotCaption}>{picture.caption}</figcaption>
-                </figure>
-              )}
-              <p className={styles.panelNew}>
-                With FieldLogicHQ
-                {panel.planTag && <span className={styles.planTag}>{panel.planTag}</span>}
-              </p>
-              <p className={styles.panelAnswer}>{panel.answer}</p>
-              {showSandboxDoor && (
-                <Link href={w.door.path} className={styles.panelLive}>
-                  See this screen live →
-                </Link>
-              )}
+              <p className={styles.panelIndex}>{i + 1} / {pulled.length}</p>
+              <SlideLayout
+                say={
+                  <>
+                    <p className={styles.panelOld}>The old way</p>
+                    <h2 className={styles.panelPain}>{slide.pain}</h2>
+                    <p className={styles.panelNew}>
+                      With FieldLogicHQ
+                      {panel.planTag && <span className={styles.planTag}>{panel.planTag}</span>}
+                    </p>
+                    <p className={styles.panelAnswer}>{panel.answer}</p>
+                    {showSandboxDoor && (
+                      <Link href={w.door.path} className={styles.panelLive}>
+                        See this screen live →
+                      </Link>
+                    )}
+                  </>
+                }
+                show={
+                  shown && (
+                    <figure className={styles.shotFigure}>
+                      <SlideStage picture={shown.picture} />
+                      <figcaption className={styles.shotCaption}>{shown.caption}</figcaption>
+                    </figure>
+                  )
+                }
+              />
             </div>
           </section>
         );

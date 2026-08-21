@@ -30,7 +30,10 @@
 
 .deck:focus { outline: none; }
 
-.stage {
+/* The full-screen area the deck fills. Named `viewport`, not `stage`: since 2026-08-20 the
+   STAGE is the picture frame (SlideStage.module.css), and two things called stage in one
+   feature is how a later session edits the wrong one. */
+.viewport {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -42,10 +45,8 @@
 }
 
 .slide {
-  max-width: 900px;
+  max-width: 1100px;
   width: 100%;
-  display: flex;
-  flex-direction: column;
   min-height: 0;
 }
 
@@ -78,54 +79,20 @@
   color: var(--fl-text);
   line-height: 1.12;
   letter-spacing: -0.01em;
-  margin: 0 0 2.5vh;
-  max-width: 26ch;
+  margin: 0 0 1.6vh;
+  max-width: 20ch;
   text-wrap: balance;
 }
 
-.slideShot {
-  flex: 0 1 auto;
-  min-height: 0;
-  margin-bottom: 2.5vh;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.03);
-  padding: 0.4rem;
-  align-self: flex-start;
-  max-width: 100%;
-}
-
-.slideShot img {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  /* The image yields to the text around it — a slide must never scroll in a pitch. */
-  max-height: 46vh;
-}
-
-.slideShotNarrow img { max-height: 52vh; }
-
+/* Sans, not the data face — mono at paragraph length is what made the first attempt read like
+   a terminal (ratified 2026-08-20). The kickers above stay mono. */
 .slideBody {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: clamp(0.95rem, 2.2vh, 1.15rem);
-  color: var(--fl-text);
-  max-width: 64ch;
-  line-height: 1.65;
-  margin: 0;
-}
-
-.slideTag {
-  display: inline-block;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--data-gray);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 999px;
-  padding: 0.18rem 0.7rem;
-  margin-left: 0.75rem;
-  vertical-align: 2px;
+  max-width: 44ch;
+  line-height: 1.6;
+  margin: 0;
 }
 
 /* ── Footer controls ─────────────────────────────────────────────────────── */

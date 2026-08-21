@@ -88,6 +88,14 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
     process.exit(1);
   }
 
+  const doubleClipped = shots.filter(s => s.clip && s.clipAll);
+  if (doubleClipped.length) {
+    console.error('✖ REFUSING TO CAPTURE — these entries set BOTH `clip` and `clipAll`:');
+    for (const s of doubleClipped) console.error(`    ${s.id}`);
+    console.error('  `clip` frames one element; `clipAll` frames the union of several. Pick one.');
+    process.exit(1);
+  }
+
   /* ── --check: no browser, just prove every declared picture actually exists. ── */
   if (args.includes('--check')) {
     const problems = [];
@@ -216,10 +224,45 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
       // that matters most is the one taken against the page actually being photographed.
       assertInDemoWorld('immediately before the screenshot');
 
+      // `clipAll` is the COMPOSED crop: the union of every visible match, so a manifest can
+      // say "the header and the first seven rows" or "the three game cards" and stay
+      // re-derivable — the stored PNG is still exactly what the machine took, just framed
+      // tighter. (Slide-library rule: a composed crop must be re-derivable from its manifest
+      // entry; the callout rings live page-side and never touch the image.)
       const clipTarget = shot.clip ? page.locator(`${shot.clip} >> visible=true`).first() : null;
-      await (clipTarget ?? page).screenshot({ path: file, ...(shot.clip ? {} : { fullPage: false }) });
+      let clipRect = null;
+      if (shot.clipAll) {
+        const parts = page.locator(`${shot.clipAll} >> visible=true`);
+        // ⚠ DOCUMENT coordinates, deliberately — NOT `locator.boundingBox()`, which returns
+        // VIEWPORT-relative ones. Measured 2026-08-20: `page.screenshot({clip})` without
+        // `fullPage` reads the clip in viewport space, refuses a rect that misses the viewport
+        // entirely, and — the dangerous half — SILENTLY CLAMPS one that merely overhangs it.
+        // A union taller than the capture viewport would then be cut off while the manifest
+        // recorded the union's full height, so the page would reserve the wrong aspect and the
+        // callout rings would land on the wrong pixels. `fullPage: true` + document coordinates
+        // has no viewport ceiling at all, which is also what `locator.screenshot()` gives the
+        // single-element `clip` path for free.
+        const boxes = (await parts.all().then(ls => Promise.all(ls.map(l => l.evaluate(el => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x + window.scrollX, y: r.y + window.scrollY, width: r.width, height: r.height };
+        })))))
+          .filter(b => b && b.width > 0 && b.height > 0);
+        if (!boxes.length) throw new Error(`clipAll matched nothing visible: ${shot.clipAll}`);
+        const x = Math.min(...boxes.map(b => b.x));
+        const y = Math.min(...boxes.map(b => b.y));
+        clipRect = {
+          x, y,
+          width: Math.max(...boxes.map(b => b.x + b.width)) - x,
+          height: Math.max(...boxes.map(b => b.y + b.height)) - y,
+        };
+      }
+      await (clipTarget ?? page).screenshot({
+        path: file,
+        ...(clipRect ? { fullPage: true, clip: clipRect } : {}),
+        ...(shot.clip || clipRect ? {} : { fullPage: false }),
+      });
 
-      const box = clipTarget ? await clipTarget.boundingBox() : { width: shot.width, height: 1000 };
+      const box = clipRect ?? (clipTarget ? await clipTarget.boundingBox() : { width: shot.width, height: 1000 });
       sizes.set(shot.id, { w: Math.round(box?.width ?? shot.width), h: Math.round(box?.height ?? 1000) });
 
       results.ok.push(shot.id);
@@ -237,8 +280,24 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
     const manifestFile = path.join(ROOT, manifestPath);
     let src = readFileSync(manifestFile, 'utf8');
     for (const [id, s] of sizes) {
-      const entry = new RegExp(`(id: '${id}',[\\s\\S]*?)(\\n    size: \\{[^}]*\\},)?(\\n    alt:)`);
-      src = src.replace(entry, (_m, head, _old, tail) => `${head}\n    size: { w: ${s.w}, h: ${s.h} },${tail}`);
+      // Strip whatever size the entry already carries and write a fresh one directly above
+      // `alt:`. ⚠ The old form matched the previous size only when it sat IMMEDIATELY before
+      // `alt:` — put a comment between the two and it appended a SECOND `size:` key instead
+      // of replacing the first, which TypeScript rejects as a duplicate property. Found the
+      // first time a manifest entry grew a comment there (2026-08-20).
+      // The head is bounded by this entry's OWN `alt:` — required on every shot, and the reason
+      // it is safe to strip sizes across it. ⚠ If an entry ever lacked one, the head would run
+      // into the NEXT entry and strip its size instead, so a miss is reported rather than
+      // shrugged off. The id is escaped because it is interpolated into a pattern.
+      const safeId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const entry = new RegExp(`(id: '${safeId}',[\\s\\S]*?)(\\n {4}alt:)`);
+      if (!entry.test(src)) {
+        console.error(`  ✖ could not write the size back for ${id} — no \`alt:\` found in its manifest entry`);
+        process.exitCode = 1;
+        continue;
+      }
+      src = src.replace(entry, (_m, head, tail) =>
+        `${head.replace(/\n {4}size: \{[^}]*\},/g, '')}\n    size: { w: ${s.w}, h: ${s.h} },${tail}`);
     }
     writeFileSync(manifestFile, src, 'utf8');
     console.log(`  · wrote ${sizes.size} size(s) back into ${manifestPath}`);

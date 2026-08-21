@@ -47,9 +47,19 @@ the live demo — and the demo is one click away on every page we publish.
 
 ## Sequencing
 
-1. **The model, proved on what already ships** — the slide bank and the format, with the two live
-   walkthroughs migrated onto it and the existing seven pictures re-cropped. No new artwork; the
-   phone-legibility defect closes here.
+1. **The model, proved on what already ships — ✅ DONE 2026-08-20, awaiting the owner's walk (QA
+   §67).** The slide bank and the format are in, both live walkthroughs render from the library,
+   and three pictures were re-cropped. No new artwork.
+
+   ⚠ **One promise in this brief did not survive contact: "both walkthrough pages are legible on a
+   phone" is only half true, and the half that failed was always going to.** Cropping a table to
+   fewer rows makes it shorter, not narrower — and how big a picture looks on a phone depends on
+   its width. So the playoff bracket, which was mostly empty space, doubled in size and now reads;
+   the dues table, which is genuinely 1,000 pixels of table, did not move at all. The fix is to
+   photograph the coach money screens on a phone rather than on a laptop — the product already has
+   a proper phone layout for them — and that is now a P2 job. What P1 did buy on a phone: the
+   picture leads at full width, and the highlight rings mean a reader who can't read the numbers
+   can still see which two columns the sentence is about.
 2. **The fourteen new slides** — captures for the composed ones, drawings for the explainers.
    Mostly editorial work.
 3. **A private page listing the whole library**, plus the check that flags a slide whose screen or
@@ -62,7 +72,8 @@ assembling from.
 ## Success criteria
 
 - A slide can be written once and appear in two decks with no edit.
-- Both walkthrough pages are legible on a phone.
+- Both walkthrough pages are legible on a phone. ⚠ Partly met at P1 — see the sequencing note.
+  Fully met when the coach money screens are re-photographed at phone width in P2.
 - Every claim on every slide is traceable to something the product actually does — checked before
   the slide ships, not after a prospect notices.
 - Producing a deck for a new audience costs a list of slide numbers, not a writing project.

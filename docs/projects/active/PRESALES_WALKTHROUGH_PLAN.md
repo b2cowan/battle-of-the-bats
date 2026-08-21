@@ -169,7 +169,9 @@ screenshots, never built).
        panel now separates the two.
   - **/simplify (4 lenses) + /review (4 lenses), 2026-08-20 — what they caught.** /simplify: an
     invariant `back.label` re-typed per persona (now renderer-side copy); the caption riding into
-    the client payload on every slide (split into `PresentImage` + caption); `walkthroughMetadata`
+    the client payload on every slide (split the picture from its caption — the type was later
+    renamed `SlidePicture` and moved into the shared stage by the slide-library build);
+    `walkthroughMetadata`
     living in the renderer rather than beside the `seo` data it transforms; raw team UUIDs in the
     manifest instead of `DEMO_COACH_TEAM_IDS`; a duplicated wait idiom in the capture core. The
     `.walkthroughLink`/`.seeItLive` CSS duplication was re-confirmed as the already-recorded

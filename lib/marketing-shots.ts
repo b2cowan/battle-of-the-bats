@@ -53,8 +53,20 @@ export interface MarketingShot {
    * the shot is a race against that fetch. Same visibility discipline as `ready`.
    */
   readyAfterPrepare?: string;
-  /** Optional selector to crop to. Without one the capture is the viewport. */
+  /** Optional selector to crop to ONE element. Without either clip the capture is the viewport. */
   clip?: string;
+  /**
+   * The COMPOSED crop: the union bounding box of every VISIBLE match. Lets a manifest say
+   * "the header and the first seven rows" or "the three game cards" and stay re-derivable —
+   * which is the rule that keeps a composed crop honest (cropping to the rows that make the
+   * point is the technique; cropping to the rows that make a DIFFERENT point is falsification).
+   * Mutually exclusive with `clip`; the capture script refuses both.
+   *
+   * ⚠ The callout rings that mark the point are NOT here and never will be — they are drawn
+   * page-side over the picture (lib/walkthrough-content.ts), so the stored PNG stays exactly
+   * what the machine took and can be re-taken and re-verified forever.
+   */
+  clipAll?: string;
   /** Capture width. 1280 = desktop; 390 when the picture's subject is the phone experience. */
   width: number;
   /** Rendered pixel size of the saved file, written back by the capture script. */
@@ -127,11 +139,18 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // The demo tour's own anchor. The bracket sits on Standings, NOT the Playoffs page —
     // that page is the seeding narrative (lib/sandbox-chrome.ts step 2 records the same bug).
     ready: '[data-sandbox-tour="playoff-bracket"]',
-    clip: '[data-sandbox-tour="playoff-bracket"]',
+    // COMPOSED (slide #14, "two semifinals feeding a final — not the whole bracket"). The
+    // section is 984px wide but the bracket drawing inside it is only ~520 — the rest is empty
+    // gutter, and photographing it is what made this the least legible picture on the page.
+    // The union of the game cards and the round labels IS the bracket, at half the width.
+    // ⚠ Deliberately expressed as "every game card", not "the third div": it re-derives
+    // correctly if the demo's bracket ever gains a round.
+    clipAll:
+      '[data-sandbox-tour="playoff-bracket"] a[aria-label^="View game details"], [data-sandbox-tour="playoff-bracket"] svg text',
     width: 1280,
-    size: { w: 984, h: 450 },
     // ⚠ Cycle-proof wording: the demo replays its game day, so this picture can show any
     // phase — a live semifinal, a waiting final, or a crowned champion. Describe the shape.
+    size: { w: 480, h: 266 },
     alt: 'The playoff bracket on the public standings page: semifinal cards feeding the final’s slot, with scores and states filling in as games finish.',
     caption: 'The playoff bracket on the public site — seeded from pool play, filling itself in as games end. Nobody redraws a whiteboard.',
   },
@@ -187,11 +206,24 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // ⚠ Two <table> elements are mounted here: the by-installment grid ships hidden on desktop
     // (it is the phone lens) and sits FIRST in the DOM. `visible=true` in the capture core is
     // what makes this resolve to the one on screen — incident #2, load-bearing here.
-    clip: 'table',
+    //
+    // COMPOSED (slide #01, "the rows that carry the story"). Header plus seven families rather
+    // than all twelve and the totals row: a slide gets about five seconds, and the full table
+    // carries fifty numbers. Seven is the count that reaches the first family in arrears — the
+    // thing the claim beside it promises — without the crop having to name a row position the
+    // nightly re-anchor could move.
+    // ⚠ SCOPED to the dues table by a header only it has, never a bare `table`. `clip` takes
+    // `.first()` visible match; `clipAll` unions EVERY visible match, and the only thing that
+    // throws is zero matches — so a second visible table (a future prepare step that visits
+    // another Money tab first, or a section that ever stops hiding with real `display: none`)
+    // would silently balloon the crop and still pass. Incident #2 is the same hazard one step
+    // back; this is its `clipAll` form.
+    clipAll:
+      'table:has(th:text-is("Balance")) thead, table:has(th:text-is("Balance")) tbody tr:nth-child(-n+7)',
     width: 1280,
-    size: { w: 994, h: 689 },
-    alt: 'The Player Dues table in a coach’s Money hub: one row per player with what they were charged, any credits, what they have paid and what is left, each row carrying a plain status word, and a season totals row underneath.',
-    caption: 'Player Dues — every family on one page, with what they owe, what fundraising has already knocked off, and who has fallen behind. The season row underneath is the team’s whole position.',
+    size: { w: 994, h: 371 },
+    alt: 'The top of the Player Dues table in a coach’s Money hub: one row per player with what they were charged, any credits, what they have paid and what is left, each row ending in a plain status word — most up to date, one already flagged as behind.',
+    caption: 'Player Dues — every family on one page, with what they owe, what fundraising has already knocked off, and who has fallen behind.',
   },
   {
     id: 'coach-season-settlement',
@@ -206,10 +238,20 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // The sheet FETCHES when it opens — without this wait the shot races a "Loading…" line.
     // This column header exists only in the loaded, populated sheet.
     readyAfterPrepare: '[aria-label="Season settlement"] th:has-text("Owed back")',
-    clip: '[aria-label="Season settlement"]',
+    // COMPOSED (slide #03, "the blockers and three family rows"). The sheet's own title, the
+    // reasons the books are not ready, and the first families — the rest of the roster repeats
+    // the same shape and only makes the picture longer.
+    //
+    // ⚠ A UNION IS A RECTANGLE, SO IT CARRIES WHAT SITS BETWEEN THE MATCHES. Here that is the
+    // whole "team's money" summary card, which no selector below names — it sits between the
+    // heading and the table, so it is in the published picture whether or not it is matched.
+    // The alt text says so on purpose: a composed crop has to be re-derivable AND honestly
+    // described, and describing only the matched elements would be the second half failing.
+    clipAll:
+      '[aria-label="Season settlement"] h2, [aria-label="Season settlement"] table thead, [aria-label="Season settlement"] table tbody tr:nth-child(-n+3)',
     width: 1280,
-    size: { w: 900, h: 900 },
-    alt: 'The Season settlement sheet over the dues screen: a summary of what the team is holding, a checklist of what still stands in the way of closing, and a table giving each family what they are owed back, their even share, anything they still owe, and the resulting refund.',
+    size: { w: 849, h: 541 },
+    alt: 'The Season settlement sheet over the dues screen: a heading saying the books are not ready to close, a summary of the team’s money — what came in from dues and fundraising, what has been spent, what cash is left and the surplus to share — a checklist of what still stands in the way, and the first family rows giving what each is owed back, their even share, anything they still owe, and the resulting refund.',
     caption: 'Season settlement — the refund each family is owed, worked out from the season’s real ledger rather than a spreadsheet, with the reasons the books are not ready to close named one by one.',
   },
 ];
