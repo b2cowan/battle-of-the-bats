@@ -260,6 +260,15 @@ only in one build's CSS.
   - **P2b — the five hand-drawn explainers** (#02 #05 #07 #16 #17). Illustration, no pipeline, and
     the forbidden-fourth-class test rather than a capture guard. ⚠ #02 restores the half of slide
     #01’s headline that P1 gave up, so it carries a live-page improvement, not just a new slide.
+    Completes BOTH decks (coach 11 → 14, tournament 5 → 7) — after it, only the three club-held
+    slides are unbuilt. Build prompt:
+    [PITCH_SLIDE_LIBRARY_P2B_BUILD_PROMPT.md](PITCH_SLIDE_LIBRARY_P2B_BUILD_PROMPT.md).
+    ⚠⚠ **It does NOT start with code.** Five drawings are the only pictures in the library we author
+    ourselves, so they decide what the deck looks like when it is not showing software — the first
+    deliverable is an owner mockup round, per the standing build-to-approved-mockups rule. And the
+    real build underneath it is not "five entries": the page renderer resolves a picture ONLY
+    through the screenshot manifest and returns null without one, so no drawn picture can reach the
+    stage at all today.
 - **P3 — the contact sheet + the staleness check.** A private route rendering the whole library on
   one page, behind the same flag the demo doors use — cheap, no new data model, and it answers
   "what do we have?". Plus the check that fails when a slide's pictured screen or gated claim has
