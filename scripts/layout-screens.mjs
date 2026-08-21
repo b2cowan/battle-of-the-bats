@@ -14,6 +14,8 @@
  *   scope    optional CSS selector to confine element rules to this screen's own content;
  *            defaults to the whole document
  *   skip     optional array of rule ids this screen is genuinely exempt from — each needs a reason
+ *   widths   optional names of `optIn` WIDTHS this screen is ALSO swept at, on top of the
+ *            universal ones — never a replacement for them. See WIDTHS at the foot of this file.
  *   note     why anything unusual above is true
  *
  * ⚠ SESSION MATTERS. The coach portal resolves org context before coaching assignments, so opening
@@ -338,10 +340,62 @@ export const SCREENS = [
    */
   { id: 'coach-history-playing-time', session: 'coach', path: (c) => `${team(c)}/history?section=playing-time`, ready: 'h1' },
   { id: 'coach-history-scouting',     session: 'coach', path: (c) => `${team(c)}/history?section=scouting`,     ready: 'h1' },
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE MARKETING SITE — added 2026-08-21, Owner QA §68.
+   *
+   * ⚠ THIS WAS THE ONLY PUBLIC SURFACE WITH NO RENDERED GATE AT ALL, and it cost exactly what
+   * you would expect: the shared top bar clipped "Get Started" off the right edge of every one
+   * of these nine pages, on every phone narrower than 390px, from launch until an owner walk
+   * found it by hand. Nothing below the coach portal's door had ever been rendered by a check.
+   *
+   * ⚠⚠ AND LISTING THEM WOULD NOT HAVE BEEN ENOUGH. Under the six rules that existed on the day
+   * §68 was found, all nine of these entries would have swept GREEN — the bar is `position:
+   * fixed`, so its overflow never reaches the document and the sideways-scroll rule stayed
+   * silent. The rule that catches it (`control-offscreen`) was written in the same unit of work
+   * and is the reason these entries are worth having. Adding a surface to this list is only
+   * coverage if a rule can see the way that surface breaks.
+   *
+   * `session: 'anon'` throughout, deliberately — a marketing page read while signed IN is a
+   * different bar (Account / Open app →), and it is measured by the header's own unit
+   * measurements rather than here, because a signed-in session on a billboard is the rare case.
+   *
+   * These nine are the whole public marketing surface: the homepage, the four persona pages,
+   * pricing, the demos door and both pre-sales walkthroughs.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'mkt-home',              session: 'anon', path: () => '/',                                   ready: 'h1', widths: ['320'] },
+  { id: 'mkt-pricing',           session: 'anon', path: () => '/pricing',                            ready: 'h1', widths: ['320'] },
+  { id: 'mkt-for-coaches',       session: 'anon', path: () => '/for-coaches',                        ready: 'h1', widths: ['320'] },
+  { id: 'mkt-for-clubs',         session: 'anon', path: () => '/for-clubs',                          ready: 'h1', widths: ['320'] },
+  { id: 'mkt-for-leagues',       session: 'anon', path: () => '/for-leagues',                        ready: 'h1', widths: ['320'] },
+  { id: 'mkt-for-tournaments',   session: 'anon', path: () => '/for-tournament-organizers',          ready: 'h1', widths: ['320'] },
+  { id: 'mkt-demos',             session: 'anon', path: () => '/demos',                              ready: 'h1', widths: ['320'] },
+  { id: 'mkt-walkthrough-coach', session: 'anon', path: () => '/for-coaches/walkthrough',            ready: 'h1', widths: ['320'] },
+  { id: 'mkt-walkthrough-tourn', session: 'anon', path: () => '/for-tournament-organizers/walkthrough', ready: 'h1', widths: ['320'] },
 ];
 
-/** Widths under test. 361 is the narrowest phone the portal supports; 900/640 are its breakpoints. */
+/**
+ * Widths under test. 361 is the narrowest phone the portal supports; 900/640 are its breakpoints.
+ *
+ * `optIn: true` marks a width swept ONLY on the screens that name it in their own `widths` field.
+ * The flag lives on the width entry because that is what it is a fact about — a second exported
+ * array would file "is this width universal?" somewhere other than the width.
+ *
+ * ⚠ 320 IS NOT A UNIVERSAL WIDTH, AND THAT IS THE WHOLE POINT (§68, 2026-08-21). The coach portal
+ * declares 361 as the narrowest phone it supports — a coach opens it on their own phone, and that
+ * is a supportable line to draw. The public marketing site is read on every phone ever sold,
+ * including the 320px iPhone SE 1st gen, so it is held to a stricter floor than the portal is.
+ *
+ * Sweeping 320 everywhere would have been the easy edit and the wrong one: it drops every coach
+ * screen into a width nobody has designed them for, and every finding it produced would land in
+ * the baseline as accepted debt on the same day it was invented. That is precisely the "gate that
+ * is red everywhere is a gate nobody runs" failure the runner's own header warns about — except
+ * worse, because it would arrive pre-silenced.
+ */
 export const WIDTHS = [
+  { name: '320', width: 320, height: 780, optIn: true },
   { name: '361', width: 361, height: 780 },
   { name: '390', width: 390, height: 844 },
   { name: '768', width: 768, height: 1024 },

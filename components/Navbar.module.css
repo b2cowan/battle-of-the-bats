@@ -427,11 +427,45 @@
   transition: color 0.2s ease;
 }
 
+/* ⚠ §68 — THE MARKETING BAR IS THE ONE ROW IN THIS PRODUCT WITH NO FLEXIBLE MEMBER, and until
+   2026-08-21 it had no phone behaviour at all. Logo (132px) + "Sign In" (87) + gap (24) +
+   "Get Started" (119) + gutter (24) = 386px of content that cannot shrink, on a screen that may
+   be 320px wide — and because the bar is `position: fixed`, the overflow never reaches the
+   document, so the page does NOT scroll sideways and the lime pill is simply unreachable. It was
+   clipped by 66px at 320, 26px at 360 and 11px at 375; 390px cleared it by four pixels, which is
+   why it survived a launch and ~20 QA walks.
+
+   The geometry below is therefore load-bearing, not styling. Three numbers move together on a
+   phone — the wordmark's size, this row's gap, and the pills' side padding — and ≤375px the quiet
+   pill sheds its label as well. Measured after: the lime pill's right edge clears the viewport
+   with the full 24px gutter intact at 320/360/375/390, and every control still clears 44px.
+   DESKTOP IS UNTOUCHED: every override here is inside a max-width query.
+
+   ⚠ Do not move the gap back onto Tailwind's `gap-3`. That class is NOT Tailwind's 0.75rem — it
+   is redefined as 1.5rem by a hand-written global in `app/globals.css`, so a reader who assumes
+   the utility scale gets a bar 12px narrower than the one that shipped. */
+.marketingActions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem; /* = the global .gap-3 this replaced; see the warning above */
+}
+
+/* The size lives here, not on Tailwind's `text-xl`, because it is the only piece of the wordmark
+   that changes on a phone. 1.25rem IS `text-xl` — desktop renders the identical mark. */
+.marketingWordmark {
+  font-size: 1.25rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* The bar's two right-hand controls share the platform pill silhouette (30px, = the icon-door
-   size) instead of the 32px their hand-written padding happened to produce. */
+   size) instead of the 32px their hand-written padding happened to produce. Side padding moved
+   off Tailwind's `px-4` for the same reason the wordmark's size did — it steps down on a phone,
+   and a utility class in the markup cannot be stepped without a specificity fight. */
 .marketingCta {
   display: inline-flex;
   align-items: center;
+  padding-inline: 1rem; /* = px-4 */
   min-height: var(--nav-pill-h);
   font-family: var(--font-data, monospace);
   font-size: var(--nav-label-size);
@@ -442,13 +476,45 @@
   white-space: nowrap;
 }
 
+/* The person glyph the quiet pill wears once its label goes. Hidden by default, so every width
+   above the phone step renders exactly what it rendered before. Its SIZE is a prop on the icon
+   (the convention the coach and admin strips already use), not a rule here — this class carries
+   only the one thing that is responsive. */
+.marketingCtaIcon {
+  display: none;
+}
+
 /* Unlike the desktop link cluster, these two render at EVERY width — they are the only controls
    in the marketing bar on a phone. The T1 pill silhouette is a desktop density decision, so on
    touch widths they take the platform tap floor instead (they were ~32px before, already under
    it; /review flagged that this pass shaved 2px off rather than fixing it). The 64px bar has the
    room. Deliberately scoped to ≤900px so the ratified 30px pill row is untouched on desktop. */
 @media (max-width: 900px) {
-  .marketingCta { min-height: var(--tap-min, 44px); }
+  .marketingCta { min-height: var(--tap-min, 44px); padding-inline: 0.625rem; }
+  .marketingActions { gap: 0.5rem; }
+  /* The size the product's own consumer top bar already renders this mark at.
+     ⚠ The tap floor comes WITH it. The mark is a link home, it was a 24px target long before this
+     pass, and shrinking the type would have made an already-failing target smaller — review caught
+     that. The 64px bar has the room, so this pays the debt off rather than adding to it. */
+  .marketingWordmark { font-size: 1.05rem; min-height: var(--tap-min, 44px); }
+}
+
+/* ⚠ 375px, NOT the portal's 361. This bar is on the PUBLIC site, which is read on every phone
+   ever sold — the coach portal declares 361 as its narrowest supported width because a coach
+   opens it on their own phone, and that reasoning does not transfer to a billboard. 375 is the
+   iPhone SE 2/3 and 6/7/8 class; below it the three-piece row stops fitting with words on both
+   pills, and the lime one is the piece that must not give way (see Navbar.tsx). */
+@media (max-width: 375px) {
+  .marketingWordmark { font-size: 0.95rem; }
+  .marketingCtaLabel { display: none; }
+  .marketingCtaIcon  { display: block; }
+  /* A square door at the tap floor. `justify-content` earns its place ONLY here: everywhere else
+     the pill shrink-wraps its label and has no free space to distribute. */
+  .marketingQuietCta {
+    width: var(--tap-min, 44px);
+    padding-inline: 0;
+    justify-content: center;
+  }
 }
 
 /* Bottom nav (marketing pages, mobile only) */

@@ -9495,8 +9495,10 @@ team's-money summary that sits inside the crop.
 
 ## §68 · The marketing header cuts off "Get Started" on most phones
 
-**FOUND 2026-08-20 during the §67 walk. NOT BUILT — this is a defect report awaiting a fix.**
-Unrelated to the slide library; it predates it and lives in the site's shared marketing header.
+**FOUND 2026-08-20 during the §67 walk. ✅ BUILT ON `dev` 2026-08-21 — this section is now a walk,
+not a defect report.** Unrelated to the slide library; it predates it and lives in the site's shared
+marketing header. The report below is kept verbatim because the numbers in it are what the fix was
+measured against; **the "as built" section after it is what you are walking.**
 
 **What happens:** the top bar does not respond to width at all. Its "Get Started" button sits at the
 same fixed position on every screen, so below 390px it simply runs off the right edge — and because
@@ -9517,16 +9519,80 @@ unreachable.
 marketing page** — the same gap §66 already recorded — and at 390px, the width everyone tests at, it
 clears by four pixels.
 
-### The walk, once it is fixed
+---
 
-- [ ] At **320, 360 and 375px**, "Get Started" and "Sign In" are both fully visible and tappable on
-      the homepage, `/pricing`, `/for-coaches`, `/for-clubs`, `/demos` and both walkthroughs.
+## §68 (as built) — the header fits, and the gate that was blind to it can now see
+
+**BUILT ON `dev` 2026-08-21. No migration. Two things shipped: the header, and the seventh house
+rule.** Build prompt: `MARKETING_HEADER_PHONE_FIX_BUILD_PROMPT.md`.
+
+### Part A — the header (**walk this on a real phone**)
+
+The row could not shrink at all: logo + "Sign In" + gap + "Get Started" + gutter came to **386px of
+content on every screen**, whatever the screen was. Three numbers now step down on a phone (the
+wordmark's size, the gap, the pills' side padding), and below 375px the **Sign In** button sheds its
+words for a person icon. Measured after, on all nine pages, signed out and signed in:
+
+| Screen | Gutter after the button | Gap after the logo | Sign In | Tap height |
+|---|---|---|---|---|
+| 320px | 24px | 13px | icon | 44px |
+| 360px | 24px | 53px | icon | 44px |
+| 375px | 24px | 68px | icon | 44px |
+| 390px | 24px | 42px | words | 44px |
+| 901 / 1024 / 1440px | **unchanged** | **unchanged** | words | 30px |
+
+81 page-width checks, 0 failures. **Desktop is byte-identical** — same 132px wordmark, same 87×30
+and 119×30 pills, same 24px gutter it had before.
+
+- [ ] At **320, 360 and 375px** on the homepage, `/pricing`, `/for-coaches`, `/for-clubs`, `/demos`
+      and both walkthroughs: is "Get Started" fully visible and tappable, and does the person icon
+      read as the way to sign in?
 - [ ] Nothing scrolls sideways at any of those widths.
-- [ ] The bar still reads correctly on a laptop — this is shared chrome, so the regression risk is
+- [ ] The bar still reads correctly on a laptop. This is shared chrome — the regression risk is
       every marketing page at once, not just phones.
-- [ ] ⚠ **The bigger question to rule on at the same time:** should the marketing pages join the
-      automated rendered check? They are the only public surface with no layout gate at all, and
-      this defect is exactly what such a gate exists to catch.
+- [ ] ⚠ **The words "Sign In" are gone below 375px and that was your call.** Worth confirming on
+      your own phone that the icon reads right, because it is the one thing here that is judgement
+      rather than measurement.
+
+### ⚠ Part B — why "add the marketing pages to the check" was the WRONG fix, and what was done instead
+
+The build prompt (and §68 above) said the marketing pages have no layout gate, so adding them would
+catch this. **That premise was checked against the code and it is false.** The sideways-scroll rule
+asks the *document* whether it scrolls; the marketing bar is `position: fixed`, and a fixed
+element's overflow never reaches the document. Measured on the unfixed homepage at 320/360/361/375:
+the button's right edge sat at 386px every time, and the page's scroll width was **exactly the
+viewport width** every time. Listing the nine pages under the six existing rules would have swept
+them **green**, and the next header defect would have been found the same way — by you, months later.
+
+So a **seventh rule** was written: *a control must sit inside the screen, or inside something that
+scrolls to reveal it.* Run against the pre-fix header it reports `Get Started — 66px past the right
+edge (screen 320px) with no scroller to reveal it`, which is §68's own number. It is product-wide:
+**every fixed bar in the coach portal was in the same blind spot**, and the rule found nothing there
+today, which is the answer you want from a new rule on old code.
+
+- [ ] Nothing to click here — but worth knowing the check now covers the public site, and that the
+      thing which made it worth covering was the new rule, not the new pages.
+
+### Part C — two decisions inside this that you should know were made
+
+- **320px is a marketing-only floor.** The coach portal declares 361px as the narrowest phone it
+  supports; the public site is read on every phone ever sold, so the nine marketing pages are swept
+  at 320 and the portal deliberately is not. Making 320 global would have dropped ~50 coach screens
+  into a width nobody designed them for, and every complaint it produced would have landed in the
+  accepted-debt file the same day it was invented.
+- **The marketing site's pre-existing debt is now visible, and it is not small.** Sweeping these
+  nine pages for the first time recorded **664 distinct findings that have nothing to do with
+  §68** — text links and buttons under the 44px touch minimum (**427**), body text under the
+  contrast minimum (**235**), and the pricing page's Monthly/Annual toggle spilling its box at
+  320px (**2**). They are recorded as debt-not-yet-argued rather than fixed, so the count stays
+  visible instead of comfortable. **This is newly *visible* debt, not new debt** — it has been on
+  the live site all along. Worth a decision of its own; it was out of scope here.
+  - ⚠ **Zero of those 664 are the new rule.** No control on any marketing page sits off the edge
+    any more — which is the one thing this section was opened for.
+  - **36 of them were paid off rather than recorded.** The wordmark is a link home and had been a
+    24px target since launch; shrinking its type for this fix would have made an already-failing
+    target smaller, so it now carries the 44px floor on every phone. Review caught that — it is the
+    one place this pass could have quietly added to the touch debt it was told not to add to.
 
 ---
 

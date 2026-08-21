@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import { User } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary, resolveOperatorDoor } from '@/lib/use-role-summary';
@@ -155,7 +156,10 @@ export default function Navbar() {
           !scrolled && 'bg-transparent'
         )}>
           <div className={`container ${styles.marketingInner}`}>
-            <Link href="/" className="flex items-center font-mono font-bold text-xl tracking-tighter">
+            {/* §68: the type size moved off Tailwind's `text-xl` and into the module, because it is
+                the one piece of this row that has to STEP DOWN on a phone — see .marketingWordmark.
+                Same mark, same three colours, same 1.25rem on every desktop. */}
+            <Link href="/" className={`${styles.marketingWordmark} flex items-center font-mono font-bold tracking-tighter`}>
               <span className="text-fl-text">FIELD</span>
               <span className="text-logic-lime">LOGIC</span>
               <span className="text-data-gray/50">HQ</span>
@@ -188,16 +192,36 @@ export default function Navbar() {
                 hold — by the Zone-1 rule, so no role lookup is needed to name it. */}
             {/* ONE pair of shells, two sets of destinations — so the quiet-link and lime-CTA
                 styling each live in exactly one place and can't drift between the two states. */}
-            <div className="flex items-center gap-3">
+            {/* §68 (owner call 2026-08-21): the QUIET door sheds its words on the narrowest phones,
+                the LIME one never does. The row could not shrink at all before — 386px of
+                unshrinkable content on every screen — so "Get Started" ran off the right edge
+                below 390px with no sideways scroll to reach it. Which of the three pieces gives
+                way was the real decision, and it was made on evidence: six of the nine marketing
+                pages carry no sign-up link above the fold at all (on /for-coaches the first one is
+                ~8 screens down), so on most of this site the lime pill is the ONLY reachable door
+                to signing up. It keeps its full label at every width. Sign In is the second job on
+                a marketing page — the visitor usually isn't a customer yet — so that is the one
+                that becomes an icon ≤375px.
+
+                `aria-label` is unconditional rather than tied to the breakpoint: CSS decides which
+                of the two children is painted, and a name that depended on a media query would be
+                a name that can go missing. The visible label and the accessible name are the same
+                string either way. */}
+            <div className={styles.marketingActions}>
               <Link
                 href={marketingSignedIn ? '/account' : '/auth/login'}
-                className={`${styles.marketingCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 transition-colors`}
+                aria-label={marketingSignedIn ? 'Account' : 'Sign In'}
+                className={`${styles.marketingCta} ${styles.marketingQuietCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue transition-colors`}
               >
-                {marketingSignedIn ? 'Account' : 'Sign In'}
+                {/* Sized by prop, matching how the coach and admin strips render this same glyph. */}
+                <User size={20} strokeWidth={1.8} className={styles.marketingCtaIcon} aria-hidden="true" />
+                <span className={styles.marketingCtaLabel}>
+                  {marketingSignedIn ? 'Account' : 'Sign In'}
+                </span>
               </Link>
               <Link
                 href={marketingSignedIn ? '/discover' : '/start'}
-                className={`${styles.marketingCta} bg-logic-lime text-pitch-black px-4 hover:bg-white transition-colors`}
+                className={`${styles.marketingCta} bg-logic-lime text-pitch-black hover:bg-white transition-colors`}
               >
                 {marketingSignedIn ? 'Open app →' : 'Get Started'}
               </Link>

@@ -26,7 +26,15 @@ Before spawning any agent, run the checks that prove mechanical correctness for 
 - `npm run typecheck` — when the diff touches shared modules (`lib/**`), route/auth/`proxy.ts`/config, or API/data contracts (per AGENCY_RULES resource-aware rule)
 - `npm run lint:focused -- <changed files>` — focused, not full-project
 - `npm run check:migrations` — only if `supabase/migrations/**` or `*.sql` changed
-- `npm run check:layout -- --changed` — **only if the diff touches a coach-portal screen, a shared portal stylesheet, or the palette**, and only when a dev server is already up. See below.
+- `npm run check:layout -- --changed` — **only if the diff touches a coach-portal screen, a MARKETING page, shared site chrome (`components/Navbar.*`, `SiteChrome`), a shared portal stylesheet, or the palette**, and only when a dev server is already up. See below.
+  - ⚠ **The marketing half of that list was added 2026-08-21 (QA §68) and is the whole reason it is
+    spelled out.** The nine public marketing pages joined the sweep in that unit of work, and the
+    trigger above named only coach-portal screens — so a marketing-only diff would have skipped the
+    gate that had just been built for it. New coverage is only coverage if something runs it.
+  - ⚠ **This prose is a HINT, not the registry, and it has gone stale once already.** The list of
+    what is actually swept lives in `scripts/layout-screens.mjs` — ask it (`npm run check:layout --
+    --list`) rather than trusting the sentence above. **When in doubt, run the check**: the cost of
+    a needless 30-second run is nothing against the cost of the skip this rule exists to prevent.
 
 Feed the results forward. **Do not spend a single agent hunting for type errors, lint, hardcoded hex, dictionary drift, migration drift, or colour contrast** — these are already gated. If the gate is red, surface those failures and stop; there is no point reviewing semantics on top of broken types.
 
@@ -41,7 +49,7 @@ something trapped under fixed chrome.
   1440), so cost is proportional — **~3.4s per screen-width on a warm dev server**.
   - **A normal feature diff (1–3 screens): 13–30 seconds.** This is the common case. (Measured:
     1 screen × 2 widths = 13s, 2 screens × 4 widths = 25s, including ~5s of browser start-up.)
-  - **A palette or shared-chrome diff widens to all 28 screens: 3–5 minutes.** That widening is
+  - **A palette or shared-chrome diff widens to the whole list: 3–5 minutes.** That widening is
     deliberate — it is the blast radius that hid a portal-wide contrast defect for months — and it
     is exactly the change you least want to wave through. Budget for it and run it.
   - ⚠ **Cold routes cost far more than the measurement.** On a server that has not served these
@@ -54,8 +62,10 @@ something trapped under fixed chrome.
   server". Never let an unrun rendered check read as a pass. Silent skips reading as green is the
   exact failure that let the contrast defect survive: two earlier probes `test.skip`-ed themselves
   when their fixture was missing, and a skip reports green.
-- Whole-suite (`npm run check:layout`, all 28 screens) is a ~20-minute deliberate run, **not** a
-  review step, and it can exhaust the dev server's heap. Scope it.
+- Whole-suite (`npm run check:layout`) is a ~20-minute deliberate run, **not** a review step, and it
+  can exhaust the dev server's heap. Scope it. ⚠ Ask the script for the screen count
+  (`--list`) rather than quoting one here — this line said "all 28 screens" long after the list had
+  grown past fifty, which is how a doc starts describing a smaller product than the one that exists.
 
 ---
 

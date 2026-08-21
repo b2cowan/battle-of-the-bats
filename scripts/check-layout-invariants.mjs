@@ -193,7 +193,10 @@ if (has('--changed') && !onlyIds) {
 
 if (has('--list')) {
   for (const s of SCREENS) console.log(`${s.id.padEnd(30)} ${s.session}`);
-  console.log(`\n${SCREENS.length} screens × ${WIDTHS.length} widths`);
+  const universal = WIDTHS.filter((w) => !w.optIn).map((w) => w.name);
+  const optIn = WIDTHS.filter((w) => w.optIn).map((w) => w.name);
+  console.log(`\n${SCREENS.length} screens × ${universal.length} widths (${universal.join(', ')})` +
+    (optIn.length ? ` · opt-in: ${optIn.join(', ')}` : ''));
   process.exit(0);
 }
 
@@ -216,9 +219,45 @@ const widths = onlyWidth
   : has('--changed')
     ? WIDTHS.filter((w) => CHANGED_DEFAULT_WIDTHS.includes(w.name))
     : WIDTHS;
+/**
+ * A screen is swept at a universal width always, and at an `optIn` width only if it asked (§68).
+ *
+ * ⚠ An opt-in width stays in `widths` rather than being filtered out up front, because the
+ * baseline's scope maths (`coversPair`, used by `--init` and `--prune`) has to recognise it as a
+ * width this run knows about. Drop it from the list and every 320px entry reads as an orphan —
+ * `--prune` would then delete the marketing baseline on its next run.
+ */
+const runsAt = (screen, w) => !w.optIn || (screen.widths ?? []).includes(w.name);
+
+/** Screen/width pairs this run will actually visit — the honest number for the header line. */
+const pairCount = screens.reduce((n, s) => n + widths.filter((w) => runsAt(s, w)).length, 0);
 
 if (screens.length === 0) { console.error(`✗ No screens matched --only=${onlyIds?.join(',')}`); process.exit(1); }
 if (widths.length === 0) { console.error(`✗ No width matched --width=${onlyWidth}`); process.exit(1); }
+/**
+ * ⚠⚠ ZERO PAIRS IS A FAILURE, NOT A PASS — and before this guard existed it printed
+ * "✓ No new layout findings" and exited 0 (found by review, 2026-08-21, reproduced live).
+ *
+ * The two guards above check LIST MEMBERSHIP, which was sufficient for as long as every screen was
+ * swept at every selected width. The opt-in width broke that invariant: `--only=coach-roster
+ * --width=320` leaves both lists non-empty while `runsAt` rejects the only pair between them, so
+ * the run opened no page, measured nothing, and said so in the one voice everything downstream
+ * reads as success.
+ *
+ * That is this repo's oldest layout-testing failure wearing new clothes — two probes once
+ * `test.skip`-ed themselves on a missing fixture and reported green, and the sweep's own header
+ * records that "an abort is a failure, not a pass". A cross-product can be empty when neither of
+ * its sides is; the guard has to ask the cross product.
+ */
+if (pairCount === 0) {
+  console.error(
+    `✗ Nothing to sweep: ${screens.length} screen(s) × ${widths.length} width(s) share no pair.\n` +
+    `  ${widths.filter((w) => w.optIn).map((w) => w.name).join(', ') || 'A width'} is opt-in — only screens ` +
+    `naming it in their own \`widths\` are swept there (see scripts/layout-screens.mjs).\n` +
+    `  Repair: drop --width, or pick a screen that opts in.`,
+  );
+  process.exit(1);
+}
 
 // ── the in-page probe ─────────────────────────────────────────────────────────
 /**
@@ -253,6 +292,19 @@ function probeInPage(opts) {
     return cs.visibility !== 'hidden' && cs.opacity !== '0';
   };
   const isExempt = (el) => exempt.some((s) => el.closest(s));
+
+  /**
+   * WHAT COUNTS AS A CONTROL — one definition, read by every rule that has an opinion about them
+   * (the tap floor and the off-screen rule today).
+   *
+   * ⚠ It was written out twice for about an hour, which is long enough to make the point: two rules
+   * that each carry their own idea of "a control" drift the moment one of them learns about a new
+   * role, and the drift is invisible because both rules keep passing. This file already records the
+   * same lesson about `openModal` — see the block above it.
+   */
+  const CONTROL_SEL =
+    'button, a[href], summary, select, textarea, input:not([type="hidden"]), ' +
+    '[role="button"], [role="tab"], [role="switch"], [role="checkbox"]';
 
   /**
    * The open modal, if any — computed ONCE for the whole probe.
@@ -371,11 +423,80 @@ function probeInPage(opts) {
   // tapFloor arrives as 0 at pointer widths - the caller decides, so the reasoning lives in one
   // place next to TAP_FLOOR_MAX_WIDTH rather than being re-derived inside the browser.
   if (wanted('tap-floor') && tapFloor > 0) {
-    const sel = 'button, a[href], summary, select, textarea, input:not([type="hidden"]), [role="button"], [role="tab"], [role="switch"], [role="checkbox"]';
-    for (const el of Array.from(root.querySelectorAll(sel))) {
+    for (const el of Array.from(root.querySelectorAll(CONTROL_SEL))) {
       if (!visible(el) || isExempt(el)) continue;
       const r = el.getBoundingClientRect();
       if (r.height < tapFloor - 0.5) add('tap-floor', sigOf(el), `${Math.round(r.height)}px tall (floor ${tapFloor})`);
+    }
+  }
+
+  // ── R2b · a control must be INSIDE the screen it is painted on ─────────────
+  //
+  // ⚠⚠ THIS RULE EXISTS BECAUSE R1 CANNOT SEE THE DEFECT IT LOOKS LIKE IT WOULD CATCH.
+  //
+  // Owner QA §68: the marketing header's "Get Started" button hung 66px past the right edge of a
+  // 320px screen on every public page, and had done since launch. R1 asks the DOCUMENT whether it
+  // scrolls sideways — and the answer was no, at every width, truthfully. The bar is
+  // `position: fixed`, and a fixed element's overflow never reaches `documentElement.scrollWidth`.
+  // So the page did not scroll, which is not the absence of the bug; it IS the bug. The button was
+  // off the screen with no way to bring it back.
+  //
+  // Measured before the fix, homepage, R1's own numbers: 320px → scrollWidth 320, clientWidth 320,
+  // rule silent; button's right edge 386px at every one of 320/360/361/375. Listing the marketing
+  // pages under the existing six rules would have swept them GREEN.
+  //
+  // The rule is deliberately about CONTROLS, not boxes — CONTROL_SEL, the same definition the tap
+  // floor reads. A decorative element off-canvas is a style; a button off-canvas is a dead end. It
+  // also runs at EVERY width, unlike the tap floor: fingers are a phone concern, but a control you
+  // cannot click is nobody's idea of working, and this bar's own defect reached 390px within four
+  // pixels.
+  //
+  // ⚠ WHAT THIS RULE DOES NOT ASK, DELIBERATELY (reviewed and scoped 2026-08-21). It compares a
+  // control against the SCREEN, not against a nearer box that might be clipping it. A button laid
+  // out past the edge of an `overflow: hidden` card is equally unreachable and equally invisible,
+  // and this rule stays silent about it. That is a real gap and it is left open on purpose: the
+  // coach styles alone carry ~98 `overflow: hidden` rules — rounded corners, collapse animations,
+  // carousels — and a rule that flagged every control inside one would be a rule that arrives red
+  // everywhere and gets baselined into silence on day one. "A control clipped by its own
+  // container" is a DIFFERENT rule with a different exemption set, and it deserves to be designed
+  // and measured rather than bolted onto this one. Do not quietly widen the check below; write
+  // that rule.
+  //
+  // ⚠ THE EXEMPTION THAT MATTERS: a control inside something that scrolls sideways is REACHABLE —
+  // the portal's tournament tab strip and its wide tables are built exactly that way, and flagging
+  // them would be flagging a working design. So the walk up the ancestors asks whether any of them
+  // can be scrolled to reveal the control, and stays quiet when one can. Off-canvas drawers are
+  // skipped by `visible()` (they are hidden or transparent when closed); one that is neither is a
+  // control a user can't reach, which is the finding.
+  if (wanted('control-offscreen')) {
+    const vw = document.documentElement.clientWidth;
+    // ⚠ The walk INCLUDES <body>. Stopping before it (the first version did) means a page that
+    // legitimately puts `overflow-x: auto` on the body would have every control inside it reported
+    // as unreachable, when scrolling that body is exactly how you reach them. No page does that
+    // today — this is a trap disarmed before it is stepped in, not a bug being fixed.
+    const inSideScroller = (el) => {
+      for (let n = el.parentElement; n; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (/(auto|scroll)/.test(cs.overflowX) && n.scrollWidth - n.clientWidth > 1) return true;
+        if (n === document.body) break;
+      }
+      return false;
+    };
+    for (const el of Array.from(root.querySelectorAll(CONTROL_SEL))) {
+      if (!visible(el) || isExempt(el)) continue;
+      if (el.closest('[aria-hidden="true"], [inert]')) continue;
+      const r = el.getBoundingClientRect();
+      const past = Math.round(r.right - vw);
+      const before = Math.round(-r.left);
+      if (past <= 1 && before <= 1) continue;
+      if (inSideScroller(el)) continue; // reachable by scrolling its own box
+      add(
+        'control-offscreen',
+        sigOf(el),
+        past > 1
+          ? `${past}px past the right edge (screen ${vw}px) with no scroller to reveal it`
+          : `${before}px past the left edge with no scroller to reveal it`,
+      );
     }
   }
 
@@ -597,6 +718,20 @@ function probeInPage(opts) {
 // ── baseline ──────────────────────────────────────────────────────────────────
 const keyOf = (f) => `${f.screen}|${f.width}|${f.rule}|${f.signature}`;
 
+/**
+ * Was this screen/width pair actually SWEPT by this run? Used by `--init` and `--prune` to decide
+ * which baseline entries are theirs to touch.
+ *
+ * ⚠ It must ask `runsAt`, not just "is the width in the list". 320 is in the width list for the
+ * whole run but is only swept on the screens that opted in (§68), so a plain membership test would
+ * declare every coach screen "covered at 320", find no findings there, and prune is a delete.
+ */
+const coversPair = (screenId, widthName) => {
+  const s = screens.find((x) => x.id === screenId);
+  const w = widths.find((x) => x.name === widthName);
+  return !!s && !!w && runsAt(s, w);
+};
+
 function readBaseline() {
   if (!existsSync(BASELINE)) return { entries: {} };
   try { return JSON.parse(readFileSync(BASELINE, 'utf8')); }
@@ -649,7 +784,7 @@ const memory = createWatchdog('layout sweep');
 let aborted = null;
 
 const browser = await chromium.launch();
-console.log(`Layout sweep · ${screens.length} screen(s) × ${widths.length} width(s) · ${ctx.baseUrl}\n`);
+console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${ctx.baseUrl}\n`);
 
 for (const session of neededSessions) {
   if (aborted) break;
@@ -688,6 +823,7 @@ for (const session of neededSessions) {
     await page.setViewportSize({ width: w.width, height: w.height });
 
     for (const screen of list) {
+      if (!runsAt(screen, w)) continue; // an opt-in width this screen didn't ask for
       const url = ctx.baseUrl + screen.path(ctx);
       const label = `${screen.id} @${w.name}`;
       // Checked before the page is opened, not after: the goal is to not take the next bite.
@@ -816,7 +952,7 @@ if (mode === 'init') {
   const covered = new Set(findings.map(keyOf));
   const inScope = (k) => {
     const [screen, width] = k.split('|');
-    return screens.some((s) => s.id === screen) && widths.some((w) => w.name === width);
+    return coversPair(screen, width);
   };
   for (const [k, v] of Object.entries(baseline.entries ?? {})) {
     if (!inScope(k) && !covered.has(k)) entries[k] = v;
@@ -833,8 +969,7 @@ const seen = new Set(findings.map(keyOf));
 const fresh = findings.filter((f) => !(keyOf(f) in known));
 const stale = Object.keys(known).filter((k) => {
   const [screen, width] = k.split('|');
-  const covered = screens.some((s) => s.id === screen) && widths.some((w) => w.name === width);
-  return covered && !seen.has(k);
+  return coversPair(screen, width) && !seen.has(k);
 });
 
 if (mode === 'prune') {
@@ -851,11 +986,12 @@ if (mode === 'report') {
   for (const f of findings) (byRule[f.rule] ??= []).push(f);
   let md = `# Layout invariants — inventory\n\n`;
   md += `> Auto-generated: \`node scripts/check-layout-invariants.mjs --report\`. Read-only analysis.\n\n`;
-  md += `${screens.length} screens × ${widths.length} widths · **${findings.length}** open finding(s).\n\n`;
+  md += `${screens.length} screens · ${pairCount} screen-width pairs · **${findings.length}** open finding(s).\n\n`;
   md += `## The house rules\n\n`;
   md += `| Rule | What it holds |\n|---|---|\n`;
   md += `| \`page-overflow\` | The page never scrolls sideways. |\n`;
   md += `| \`tap-floor\` | Every control clears ${TAP_FLOOR}px — at touch widths (≤${TAP_FLOOR_MAX_WIDTH}px) only. |\n`;
+  md += `| \`control-offscreen\` | Every control sits inside the screen, or inside something that scrolls to reveal it. |\n`;
   md += `| \`content-overflow\` | Wide content scrolls inside its own box. |\n`;
   md += `| \`sticky-no-travel\` | Anything sticky can actually stick. |\n`;
   md += `| \`contrast\` | Text is readable against what is painted behind it. |\n`;

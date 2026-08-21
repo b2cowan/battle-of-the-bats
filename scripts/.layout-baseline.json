@@ -1,6 +1,2662 @@
 {
-  "generated": "2026-08-21T01:11:10.366Z",
+  "generated": "2026-08-21T17:28:59.789Z",
   "entries": {
+    "mkt-home|361|tap-floor|a·I'm a tournament organizer →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·See it live — no sign-up →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·I'm a coach →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Managing a house league season?I run a h": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Running a club with rep teams?I run a cl": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Start free →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Not sure? See your options →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·This is me →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Start your organization →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Start your coaches portal →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-home|361|contrast|span···rgba(148, 163, 184, 0.4)on10,10,10": {
+      "reason": null,
+      "detail": "2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|361|contrast|p·What's included·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|361|contrast|p·How It Works·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|361|contrast|span·01·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|361|contrast|span·02·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|361|contrast|span·03·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|361|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|361|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|361|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|361|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|361|contrast|p·Platform highlights·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|361|contrast|p·Built for how community sport actually r·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|361|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Tournaments & Scheduling": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Registration Operations": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Data & Exports": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Staff & Access": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Communications": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Public Presence": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·House League": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Accounting": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Rep Teams & Coaches Portal": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Availability": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Start Free — No Credit Card →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Express interest in League Plus →": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|button·Express interest in Club →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-pricing|361|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|361|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|361|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|361|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|361|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.25)on10,10,10": {
+      "reason": null,
+      "detail": "2.14:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-coaches|361|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-coaches|361|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|361|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|361|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|361|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|361|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-clubs|361|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|361|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|361|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|361|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|361|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-leagues|361|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|361|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|361|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|361|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|361|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Compare all features →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-tournaments|361|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|361|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|361|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|361|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|361|contrast|p·Not sure which plan? Start free — you ca·rgba(255, 255, 255, 0.3)on10,10,10": {
+      "reason": null,
+      "detail": "2.59:1 (needs 4.5:1) — rgba(255, 255, 255, 0.3) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|361|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-demos|361|tap-floor|a·Read the tournament pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Read the coaches pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|button·▸ Present the full deck — 15 slides, arr": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|button·▸ Present the full deck — 8 slides, arro": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-home|390|tap-floor|a·I'm a tournament organizer →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·See it live — no sign-up →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·I'm a coach →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Managing a house league season?I run a h": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Running a club with rep teams?I run a cl": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Start free →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Not sure? See your options →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·This is me →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Start your organization →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Start your coaches portal →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-home|390|contrast|span···rgba(148, 163, 184, 0.4)on10,10,10": {
+      "reason": null,
+      "detail": "2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|390|contrast|p·What's included·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|390|contrast|p·How It Works·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|390|contrast|span·01·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|390|contrast|span·02·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|390|contrast|span·03·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|390|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|390|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|390|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|390|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|390|contrast|p·Platform highlights·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|390|contrast|p·Built for how community sport actually r·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|390|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Tournaments & Scheduling": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Registration Operations": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Data & Exports": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Staff & Access": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Communications": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Public Presence": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·House League": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Accounting": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Rep Teams & Coaches Portal": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Availability": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Start Free — No Credit Card →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Express interest in League Plus →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|button·Express interest in Club →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-pricing|390|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|390|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|390|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|390|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|390|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.25)on10,10,10": {
+      "reason": null,
+      "detail": "2.14:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-coaches|390|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-coaches|390|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|390|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|390|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|390|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|390|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-clubs|390|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|390|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|390|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|390|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|390|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-leagues|390|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|390|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|390|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|390|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|390|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Compare all features →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-tournaments|390|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|390|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|390|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|390|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|390|contrast|p·Not sure which plan? Start free — you ca·rgba(255, 255, 255, 0.3)on10,10,10": {
+      "reason": null,
+      "detail": "2.59:1 (needs 4.5:1) — rgba(255, 255, 255, 0.3) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|390|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-demos|390|tap-floor|a·Read the tournament pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Read the coaches pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|button·▸ Present the full deck — 15 slides, arr": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|button·▸ Present the full deck — 8 slides, arro": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|390|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-home|768|tap-floor|a·I'm a tournament organizer →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·See it live — no sign-up →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·I'm a coach →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Managing a house league season?I run a h": {
+      "reason": null,
+      "detail": "18px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Running a club with rep teams?I run a cl": {
+      "reason": null,
+      "detail": "18px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Start free →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Not sure? See your options →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·This is me →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Start your organization →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Start your coaches portal →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-home|768|contrast|span···rgba(148, 163, 184, 0.4)on10,10,10": {
+      "reason": null,
+      "detail": "2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|768|contrast|p·What's included·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|768|contrast|p·How It Works·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|768|contrast|span·01·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|768|contrast|span·02·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|768|contrast|span·03·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|768|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|768|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|768|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|768|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|768|contrast|p·Platform highlights·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|768|contrast|p·Built for how community sport actually r·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|768|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Tournaments & Scheduling": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Registration Operations": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Data & Exports": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Staff & Access": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Communications": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Public Presence": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·House League": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Accounting": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Rep Teams & Coaches Portal": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Availability": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Start Free — No Credit Card →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Express interest in League Plus →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|button·Express interest in Club →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-pricing|768|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|768|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|768|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|768|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|768|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.25)on10,10,10": {
+      "reason": null,
+      "detail": "2.14:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-coaches|768|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-coaches|768|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|768|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|768|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|768|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|768|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-clubs|768|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|768|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|768|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|768|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|768|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-leagues|768|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|768|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|768|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|768|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|768|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Compare all features →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-for-tournaments|768|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|768|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|768|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|768|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|768|contrast|p·Not sure which plan? Start free — you ca·rgba(255, 255, 255, 0.3)on10,10,10": {
+      "reason": null,
+      "detail": "2.59:1 (needs 4.5:1) — rgba(255, 255, 255, 0.3) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|768|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-demos|768|tap-floor|a·Read the tournament pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Read the coaches pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|button·▸ Present the full deck — 15 slides, arr": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|button·▸ Present the full deck — 8 slides, arro": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 17px"
+    },
+    "mkt-home|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-home|1440|contrast|span···rgba(148, 163, 184, 0.4)on10,10,10": {
+      "reason": null,
+      "detail": "2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|1440|contrast|p·What's included·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|1440|contrast|p·How It Works·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|1440|contrast|span·01·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|1440|contrast|span·02·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|1440|contrast|span·03·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|1440|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|1440|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|1440|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|1440|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|1440|contrast|p·Platform highlights·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|1440|contrast|p·Built for how community sport actually r·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-pricing|1440|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|1440|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|1440|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|1440|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|1440|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.25)on10,10,10": {
+      "reason": null,
+      "detail": "2.14:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-coaches|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-for-coaches|1440|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|1440|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|1440|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|1440|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|1440|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-clubs|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-for-clubs|1440|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|1440|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|1440|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|1440|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|1440|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-leagues|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-for-leagues|1440|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|1440|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|1440|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|1440|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|1440|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-for-tournaments|1440|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|1440|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|1440|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|1440|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|1440|contrast|p·Not sure which plan? Start free — you ca·rgba(255, 255, 255, 0.3)on10,10,10": {
+      "reason": null,
+      "detail": "2.59:1 (needs 4.5:1) — rgba(255, 255, 255, 0.3) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|1440|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-demos|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-walkthrough-coach|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-walkthrough-tourn|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px"
+    },
+    "mkt-home|320|tap-floor|a·I'm a tournament organizer →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·See it live — no sign-up →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·I'm a coach →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Managing a house league season?I run a h": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Running a club with rep teams?I run a cl": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Start free →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Not sure? See your options →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·This is me →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Start your organization →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Start your coaches portal →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-home|320|content-overflow|div·MonthlyAnnual2 months free": {
+      "reason": null,
+      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
+    },
+    "mkt-home|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-home|320|contrast|span···rgba(148, 163, 184, 0.4)on10,10,10": {
+      "reason": null,
+      "detail": "2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|320|contrast|p·What's included·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|320|contrast|p·How It Works·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|320|contrast|span·01·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|320|contrast|span·02·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|320|contrast|span·03·rgba(30, 58, 138, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px"
+    },
+    "mkt-home|320|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-home|320|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|320|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|320|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-home|320|contrast|p·Platform highlights·rgb(30, 58, 138)on15,23,42": {
+      "reason": null,
+      "detail": "1.72:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(15, 23, 42) at 12px"
+    },
+    "mkt-home|320|contrast|p·Built for how community sport actually r·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|320|tap-floor|button·Monthly": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Annual2 months free": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Get Started Free": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·See a live tournament first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·See a coach's season first →": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Express interest →": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Tournaments & Scheduling": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Registration Operations": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Data & Exports": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Staff & Access": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Communications": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Public Presence": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·House League": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Accounting": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Rep Teams & Coaches Portal": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Availability": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Start Free — No Credit Card →": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Express interest in League Plus →": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|button·Express interest in Club →": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-pricing|320|content-overflow|div·MonthlyAnnual2 months free": {
+      "reason": null,
+      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
+    },
+    "mkt-pricing|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-pricing|320|contrast|p·Pricing·rgb(30, 58, 138)on10,10,10": {
+      "reason": null,
+      "detail": "1.91:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(10, 10, 10) at 12px"
+    },
+    "mkt-pricing|320|contrast|p·Tournament·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|320|contrast|p·Tournament Plus·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|320|contrast|p·Premium Coaches Portal·rgb(30, 58, 138)on17,24,39": {
+      "reason": null,
+      "detail": "1.71:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(17, 24, 39) at 10px"
+    },
+    "mkt-pricing|320|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.25)on10,10,10": {
+      "reason": null,
+      "detail": "2.14:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-coaches|320|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-coaches|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-coaches|320|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|320|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|320|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|320|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-coaches|320|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-clubs|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-clubs|320|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|320|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|320|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|320|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-clubs|320|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Compare all plans in detail →": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-leagues|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-leagues|320|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|320|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|320|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|320|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-leagues|320|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·See them fixed — the 90-second walkthrou": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Compare all features →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-for-tournaments|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-for-tournaments|320|contrast|span·01·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|320|contrast|span·02·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|320|contrast|span·03·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|320|contrast|span·04·rgba(30, 58, 138, 0.12)on10,10,10": {
+      "reason": null,
+      "detail": "1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px"
+    },
+    "mkt-for-tournaments|320|contrast|p·Not sure which plan? Start free — you ca·rgba(255, 255, 255, 0.3)on10,10,10": {
+      "reason": null,
+      "detail": "2.59:1 (needs 4.5:1) — rgba(255, 255, 255, 0.3) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-for-tournaments|320|contrast|p·All plans are billed in CAD. No contract·rgba(255, 255, 255, 0.2)on10,10,10": {
+      "reason": null,
+      "detail": "1.77:1 (needs 4.5:1) — rgba(255, 255, 255, 0.2) on rgb(10, 10, 10) at 11px"
+    },
+    "mkt-demos|320|tap-floor|a·Read the tournament pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Read the coaches pitch →": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-demos|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|button·▸ Present the full deck — 15 slides, arr": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-coach|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|button·▸ Present the full deck — 8 slides, arro": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Discover": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Pricing": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Live Demos": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Start Free": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Coaches": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|tap-floor|a·Sign In": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "mkt-walkthrough-tourn|320|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
+      "reason": null,
+      "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
+    },
     "coach-transactions|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
