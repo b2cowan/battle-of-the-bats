@@ -1,5 +1,11 @@
 /**
- * THE SLIDE LIBRARY'S OWN INTEGRITY — the four ways this data can go quietly wrong.
+ * THE SLIDE LIBRARY'S OWN INTEGRITY — the ways this data can go quietly wrong that the COMPILER
+ * CANNOT SEE.
+ *
+ * ⚠ Read that qualifier literally. As of 2026-08-21 `PitchSlide` is a discriminated union, so the
+ * capture-vs-drawing pairings it used to assert here are compile errors and were DELETED rather
+ * than kept as a second copy of a rule the type already holds. What is left is the set a type
+ * genuinely cannot express: relationships BETWEEN slides, decks and pages, and emptiness.
  *
  * The library's whole value is that a slide's PERMANENT NUMBER survives the product changing
  * underneath it. That only holds if nothing renumbers, nothing dangles, and a page's short pull
@@ -22,9 +28,9 @@ import {
 
 const SHOT_IDS = new Set(MARKETING_SHOTS.map(s => s.id));
 
-// `PITCH_SLIDES` is declared with `satisfies`, which keeps each entry's EXACT shape so the key
-// set stays literal. Reading it back as the interface is what lets these tests ask about the
-// optional fields (`rings`, `shotId`) that a given entry may not carry.
+// `PITCH_SLIDES` is declared with `satisfies`, which keeps each entry's EXACT shape so the key set
+// stays literal. Reading it back as the union is what lets these tests ask about fields a given
+// arm may not carry (`rings`, `shotId`, `drawingId`).
 const SLIDES: PitchSlide[] = Object.values(PITCH_SLIDES);
 
 test('a slide is keyed by its own permanent number', () => {
@@ -67,7 +73,7 @@ test('a picture a slide names actually exists in the shot manifest', () => {
   }
 });
 
-test('a composed or explainer slide is never silently a bare capture, and rings stay within the picture', () => {
+test('rings stay within the picture, and there are never more than two', () => {
   for (const slide of SLIDES) {
     // Format rule 3: "if a crop needs more than two callout rings, it's two slides".
     assert.ok((slide.rings?.length ?? 0) <= 2, `${slide.id} carries more than two rings — that is two slides`);
@@ -75,10 +81,28 @@ test('a composed or explainer slide is never silently a bare capture, and rings 
       assert.ok(ring.left >= 0 && ring.left + ring.width <= 100, `${slide.id} has a ring off the side of its picture`);
       assert.ok(ring.top >= 0 && ring.top + ring.height <= 100, `${slide.id} has a ring off the top or bottom of its picture`);
     }
-    // A drawn explainer must never claim to be a capture (the forbidden fourth class).
-    if (slide.imageClass === 'explainer') {
-      assert.equal(slide.shotId, undefined, `${slide.id} is an explainer but names a real capture`);
-    }
+  }
+});
+
+/**
+ * ⚠ ONE THING A DRAWING'S ALT CAN STILL GET WRONG THAT THE COMPILER CANNOT SEE: being blank.
+ *
+ * The PAIRINGS moved into the type on 2026-08-21 — `PitchSlide` is a union, so "an explainer names
+ * a drawing and never a capture", "a capture never names a drawing", "a drawing carries alt and
+ * caption", "a capture carries neither" and "a drawing has no rings" are all compile errors now,
+ * and the four assertions that used to live here were deleted rather than left as a second copy
+ * of a rule the type already holds.
+ *
+ * What the type cannot hold is emptiness: `alt: ''` satisfies `alt: string`. And this is the one
+ * place it can be caught, because `check:marketing-shots` walks the SHOT MANIFEST — a drawing has
+ * no manifest entry at all, so an explainer shipped with a blank alt would pass a green build and
+ * reach a public page as a picture no screen reader could describe.
+ */
+test('a drawing’s own alt and caption are not blank', () => {
+  for (const slide of SLIDES) {
+    if (!slide.drawingId) continue;
+    assert.ok(slide.alt.trim(), `${slide.id} is a drawing with empty alt text — check:marketing-shots cannot see it`);
+    assert.ok(slide.caption.trim(), `${slide.id} is a drawing with an empty caption`);
   }
 });
 

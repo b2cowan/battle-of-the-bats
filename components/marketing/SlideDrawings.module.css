@@ -1,0 +1,47 @@
+/* THE EXPLAINER INKS — see components/marketing/SlideDrawings.tsx for the house style these
+   four encode, and memory/design_decisions.md (2026-08-21) for the owner ruling behind it.
+
+   ⚠ EVERY COLOUR HERE IS A TOKEN, never a literal. These drawings sit on the marketing pages'
+   dark ground today, but the tokens are re-pointed under the warm scope — a hard-coded hex would
+   be a drawing that stops matching the page it is on, and would also trip the colour-token
+   guardrail (scripts/check-public-tokens.mjs).
+
+   The grammar in one line: THE MESS IS FAINT, ITS CONTENTS ARE DIM, THE ANSWER IS INK, AND THE
+   ONE THING THAT HURTS IS AMBER. Brightness carries the argument — which is why these read in
+   print, in greyscale, and on a projector with the lamp going. */
+
+.drawing {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Structure of the old way: the boxes, the bubbles, the ring arcs. Deliberately BELOW its own
+   contents in weight — a faint container holding dim marks reads as "somewhere you have to go
+   looking", which is the whole subject of these pictures. */
+.sFaint { stroke: var(--data-gray); opacity: 0.55; }
+.fFaint { fill: var(--data-gray); opacity: 0.55; }
+
+/* What is written in the old way, and the secondary marks on the answer. */
+.sDim { stroke: var(--data-gray); }
+.fDim { fill: var(--data-gray); }
+
+/* THE ANSWER. The only full-strength ink in any drawing. */
+.sInk { stroke: var(--fl-text); }
+.fInk { fill: var(--fl-text); }
+
+/* ⚠ AMBER APPEARS IN THE OLD-WAY HALF ONLY, ONCE, ON THE EXACT THING THAT HURTS — the blank
+   where a name should be, the question nobody answered. Not a new register: it is the one the
+   walkthrough panel already uses for the words "The old way" (WalkthroughPage.module.css
+   .panelOld), so the picture and the label beside it agree. */
+.sAmber { stroke: var(--warning-light); }
+.fAmber { fill: var(--warning-light); }
+
+/* Mono, uppercase, wide — the established single labelling convention (2026-07-14 G4), and the
+   same face the kickers beside the picture are set in.
+
+   ⚠⚠ THE SIZES IN THE MARKUP ARE NOT FREE. A drawing authored 800 units wide is drawn about
+   350px on a phone — a shrink to 44% — so a label that must read at 11px has to be drawn at 26.
+   Every label in these drawings is set at 20-26 units for that reason and no other. Shrinking one
+   to fit more words in is how the phone version becomes a grey smudge. Fewer words instead. */
+.label { font-family: var(--font-data); }

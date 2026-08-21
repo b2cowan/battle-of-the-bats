@@ -1,8 +1,13 @@
 # Pitch Slide Library — Plan
 
-**Status:** APPROVED 2026-08-20 (owner accepted the three image classes, the two deck running
-orders, the slide format and the no-plan-names rule in-session). **P1 SHIPPED to dev 2026-08-20 — owner QA §67 ✅ PASSED.
-P2a SHIPPED to dev 2026-08-20 — owner QA §69 owed. P2b → P3 → P4 not started.**
+**Status:** APPROVED 2026-08-20. **P1 SHIPPED dev 2026-08-20 — owner QA §67 ✅ PASSED · P2a SHIPPED
+dev 2026-08-20 — QA §69 owed · P2b SHIPPED dev 2026-08-21 — QA §70 owed. BOTH DECKS ARE NOW
+COMPLETE** (coach 15 slides, tournament 8) — only the three club-held slides remain unbuilt in the
+whole library. **P3 is ABSORBED into the Deck Studio** ([plan](PITCH_DECK_STUDIO_PLAN.md)); P4 not
+started.
+⚠⚠ **The image-class ruling below was REPLACED by the owner on 2026-08-21** — see ruling 1, and
+`memory/design_decisions.md`. The library grew to **23 slides**: P2b added #26 and #27, which the
+approved artifact does not contain.
 **PM brief:** [PITCH_SLIDE_LIBRARY_PM_BRIEF.md](PITCH_SLIDE_LIBRARY_PM_BRIEF.md)
 **The library itself (owner-approved, binding spec):**
 `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e` — 21 slides, two decks, in order.
@@ -44,12 +49,16 @@ how a fourteen-slide coach deck ends up on a marketing page nobody scrolls to th
      and re-verified forever. This is the workhorse.
    - **Explainer** — an obvious illustration, for the *before* a finished screen can never show
      (the inbox, the spreadsheet and the bank statement converging on one settled line).
-   - ⚠ **THE FORBIDDEN FOURTH CLASS: a drawn picture that LOOKS like our interface but isn't.**
-     Prettified fake screens, invented layouts, numbers we wish the product showed. This is what
-     the 2026-08-19 "no drawn/faked screenshots" ruling was actually protecting against, and it
-     stands. Classes 2 and 3 do not breach it: one *is* the real software, the other never claims
-     to be. **The test: could a reasonable person mistake this for a screenshot? If yes, it must
-     be real.**
+   - ⚠⚠ **THE "FORBIDDEN FOURTH CLASS" RULE WAS REPLACED BY THE OWNER ON 2026-08-21 — read the
+     new one before applying this bullet.** It said: never draw anything that could be mistaken
+     for our interface. That aimed at **subject**, and it would have banned drawing a ledger at
+     all. The obligation that actually exists is **does the picture promise functionality we
+     have?** — pixel fidelity never was the promise. The piece that survives is about CERTAINTY,
+     not subject: **never let the reader be uncertain which they are looking at.** A drawing that
+     is obviously a drawing may depict anything we do; a *photorealistic fake screen* is what
+     breaks, because then a reader cannot tell what is real anywhere. Keep a real capture where
+     "this is really ours" is the point being made — one proof shot per deck does it. Full ruling
+     and what it cost: `memory/design_decisions.md`, 2026-08-21.
 2. **NO PLAN OR SUBSCRIPTION NAME APPEARS ON A SLIDE.** Functionality only. This is what makes a
    slide portable — the same slide serves the coach deck and, later, the club deck untouched.
    ⚠ **The public walkthrough PAGE still carries a plan line where a feature is gated**, because
@@ -257,6 +266,65 @@ only in one build's CSS.
   book, Season Wrapped, the practice plan). Same arithmetic as (1) and the same honest answer: a
   960px screen cannot be read on a 350px column. Re-photographing each at phone width would make
   it small on a laptop instead. Recorded, not decided.
+  - **P2b — ✅ SHIPPED to dev 2026-08-21, owner QA §70 owed. SEVEN drawings, not five.**
+
+  ### What P2b actually settled — read before planning the Deck Studio
+
+  **1. ⚠⚠ THE PICTURE RULE CHANGED MID-PHASE, AND IT IS THE BIGGEST THING HERE.** The owner
+  replaced the "forbidden fourth class" (see ruling 1 above) with *does the picture promise
+  functionality we have?* — after seeing the drawings and judging that they resonate better than
+  the screenshots. Full entry in `memory/design_decisions.md` 2026-08-21. **It cost ten sentences
+  on the live site**, not one: "real screens, not a brochure" / "not a mockup" appeared in both
+  walkthrough closings, both hero lines, both SEO descriptions and a card + link label on each
+  persona page. All ten removed; the replacement points at the demo instead, which is an
+  invitation rather than a denial and stays true whatever the pictures are. ⚠ `/demos`' own "not
+  recordings or screenshots" is untouched — it vouches for the DEMO, and is still true.
+
+  **2. TWO SLIDES THE OWNER ASKED FOR THAT WERE NOT IN THE APPROVED LIBRARY — #26 and #27**, the
+  season/tournament cycle wheels, after seeing a portfolio-software lifecycle diagram. The
+  editorial find: **every company draws this wheel, and in almost all of them the arrow that closes
+  the loop is decoration.** Ours closes with a button — *Start next season*, or copying last year
+  forward — so the four working arcs are faint and **the return arc is the only ink on the ring.**
+  Do not "balance" them. Both sit SECOND in their deck (owner call): open on the visceral moment,
+  then the wheel. ⚠ #27 deliberately does not steal #17's job — its pain is fragmentation, and the
+  loop is a closing clause #17 proves in full at the end of the deck.
+
+  **3. ⚠⚠ NOTHING RENDERED A DECK. `deckSlides()` had exactly ONE caller — the guard test.** Both
+  the scroll page and present mode rendered the page's short PULL, while a comment in
+  `lib/walkthrough-content.ts` claimed the opposite ("present mode and the printed leave-behind
+  both render every built slide already"). **Five finished coach slides — playing time, awards,
+  player development, the fundraising credit, the lineup board, all photographed and checked in
+  P2a — could not be seen anywhere in the product.** Present mode now renders the whole deck; the
+  scroll page keeps its short pull on purpose. The comment is fixed.
+
+  **4. A drawing needed a path into the stage that did not exist**, and the shape of it matters:
+  `SlidePicture` is now a **union** (capture | drawing) rather than one type with optional fields,
+  because the two differ in ways that are load-bearing — a capture has a `maxWidth` (never enlarge
+  a phone-subject capture) and a drawing is resolution-free, so that field would be a lie waiting
+  to be copied; and rings belong only to captures. Inline SVG, not an asset: an external `.svg` in
+  an `<img>` cannot read the page's custom properties, so every ink would be a hard-coded hex.
+
+  **5. ⚠ A DRAWING'S CANVAS IS NOT FREE SPACE.** The wheels were first authored on the 800-wide
+  explainer canvas with ~40% of the frame empty; on a phone the ring came out 156px. Cropping the
+  canvas to 660 — *without moving one coordinate inside it* — took it to 224px, **+44%, at zero
+  cost on a laptop.** And a label's authored size is set by the phone, not the laptop: station
+  labels at 21 units render **8.7px** at 330px. Shorten the word, never the type. Full entry in
+  `design_decisions.md` 2026-08-21.
+
+  **6. ⚠⚠ THREE DEFECTS SURVIVED EVERY STATIC CHECK AND WERE FOUND BY LOOKING AT THE PNG** — text
+  overflowing its own speech bubble, a caption **clipped off the canvas edge** by the viewBox
+  (silently: nothing overlapped anything, so the collision check passed it), and a leader line
+  crossing the arc it pointed at, reading as a strike-through. Same lesson as P2a's opaque nav band.
+  **A drawing is not verified until it has been looked at.**
+
+  **7. Claims verified against the code, not the artifact** — #17's copy-forward (the one the
+  library marked "to confirm") carries divisions/pools/slots, venues, registration fields + fee
+  schedule, and branding/public pages/welcome/rules, and is **Tournament Plus**; #16's
+  self-registration and waitlist are **base plan**, so it needs no plan line; #07's "one message,
+  not one per run" is literally how the bench console's quiet write works; #26's loop carries the
+  active roster, the planned budget and the fee structure (paid history stripped) while the
+  schedule starts fresh.
+
   - **P2b — the five hand-drawn explainers** (#02 #05 #07 #16 #17). Illustration, no pipeline, and
     the forbidden-fourth-class test rather than a capture guard. ⚠ #02 restores the half of slide
     #01’s headline that P1 gave up, so it carries a live-page improvement, not just a new slide.
@@ -269,10 +337,16 @@ only in one build's CSS.
     real build underneath it is not "five entries": the page renderer resolves a picture ONLY
     through the screenshot manifest and returns null without one, so no drawn picture can reach the
     stage at all today.
-- **P3 — the contact sheet + the staleness check.** A private route rendering the whole library on
-  one page, behind the same flag the demo doors use — cheap, no new data model, and it answers
-  "what do we have?". Plus the check that fails when a slide's pictured screen or gated claim has
-  moved.
+- **P3 — the contact sheet + the staleness check. ⚠ ABSORBED 2026-08-21 into its own project —
+  DO NOT BUILD THIS SEPARATELY.** It was scoped as a private route rendering the whole library on
+  one page, plus a check that fails when a slide's pictured screen or gated claim has moved. The
+  owner then asked (2026-08-21) for a place to *compose* — pick which slides a marketing page
+  shows, in his own order, and build targeted decks for a named prospect. That is a superset: the
+  contact sheet **is** its library view and the staleness check **is** a column on it. Building
+  both would produce two screens answering "what do we have?".
+  → [PITCH_DECK_STUDIO_PLAN.md](PITCH_DECK_STUDIO_PLAN.md). It starts after P2b, and P2b owes it
+  two small pieces of groundwork (a drawn picture must be able to reach the stage at all, and
+  present mode must render the DECK rather than the page's pull).
 - **P4 — the club deck.** Inherits from both decks plus its three held slides. Ends in express
   interest rather than sign-up, since Club is not self-serve.
 - **Later, and only if it earns it:** deck assembly in platform-admin — pick slides, name a deck,

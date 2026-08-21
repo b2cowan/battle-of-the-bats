@@ -65,10 +65,18 @@
      · `--shot-w`           — never enlarge a capture past the size it was taken
      · height limit × ratio — the stage is shorter than the picture
    `100% * 10 / 16` is the stage's own height expressed in width units (its content box is
-   16:10, per the rule above). */
+   16:10, per the rule above).
+
+   ⚠ THE `100%` FALLBACK ON `--shot-w` IS FOR DRAWINGS AND IS NOT A TIDY-UP (P2b, 2026-08-21).
+   A hand-drawn explainer is inline SVG — resolution-free — so "never enlarge past the size it
+   was taken" has no meaning for it and SlideStage deliberately does not set the variable. The
+   fallback makes that limit a no-op rather than a missing value, leaving the width decided by
+   the column and the height budget alone. Do NOT "fix" it by giving drawings a nominal pixel
+   cap: that would strand them small inside a frame with room to spare, which is exactly the bug
+   the owner caught on the playoff bracket in P1. */
 .picture {
   position: relative;
-  width: min(100%, var(--shot-w), calc(100% * 10 / 16 * var(--shot-ratio)));
+  width: min(100%, var(--shot-w, 100%), calc(100% * 10 / 16 * var(--shot-ratio)));
 }
 
 .img {
@@ -102,7 +110,7 @@
   }
 
   .picture {
-    width: min(100%, var(--shot-w), calc(72vh * var(--shot-ratio)));
+    width: min(100%, var(--shot-w, 100%), calc(72vh * var(--shot-ratio)));
   }
 }
 
@@ -115,6 +123,6 @@
   }
 
   .picture {
-    width: min(100%, var(--shot-w), calc(58vh * var(--shot-ratio)));
+    width: min(100%, var(--shot-w, 100%), calc(58vh * var(--shot-ratio)));
   }
 }

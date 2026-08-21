@@ -19,8 +19,9 @@
  */
 import Link from 'next/link';
 import { MARKETING_SHOTS } from '@/lib/marketing-shots';
-import { PITCH_SLIDES, type PitchSlide, type Walkthrough } from '@/lib/walkthrough-content';
+import { PITCH_SLIDES, deckSlides, type PitchSlide, type Walkthrough } from '@/lib/walkthrough-content';
 import { sandboxDoorsVisible } from '@/lib/sandbox-door';
+import { drawingSize } from './SlideDrawings';
 import SlideStage, { SlideLayout, type SlidePicture } from './SlideStage';
 import WalkthroughPresent, { type PresentSlide } from './WalkthroughPresent';
 import styles from './WalkthroughPage.module.css';
@@ -66,10 +67,25 @@ function maxRenderWidth(shot: { width: number; size: { w: number } }): number {
 }
 
 function pictureFor(slide: PitchSlide): Picture | null {
+  // A DRAWING first (P2b): it is inline SVG, so there is nothing to look up and nothing that can
+  // be missing at runtime — `drawingId` is typed against the registry's own key set, and its alt
+  // and caption travel with the slide because a drawing has no manifest entry to keep them in.
+  if (slide.drawingId) {
+    return {
+      picture: {
+        kind: 'drawing',
+        drawingId: slide.drawingId,
+        ...drawingSize(slide.drawingId),
+        alt: slide.alt,
+      },
+      caption: slide.caption,
+    };
+  }
   const shot = slide.shotId ? SHOTS.get(slide.shotId) : undefined;
   if (!shot?.size) return null;
   return {
     picture: {
+      kind: 'capture',
       src: `/marketing/${shot.persona}/${shot.id}.png`,
       width: shot.size.w,
       height: shot.size.h,
@@ -82,26 +98,50 @@ function pictureFor(slide: PitchSlide): Picture | null {
 }
 
 export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkthrough }) {
-  // Resolved ONCE per panel and read by both renderings below — the scroll panel and the deck
-  // must picture the same slide, and looking it up twice is how they would eventually stop.
-  // No missing-slide branch: `slideId` is typed to the bank's own key set, so a pull naming a
-  // slide that does not exist cannot compile.
+  /**
+   * ⚠ EVERY SLIDE'S PICTURE IS RESOLVED EXACTLY ONCE, and that is an invariant rather than a
+   * micro-optimisation. The scroll panel and the deck must picture the same slide identically;
+   * resolving it twice is how they would eventually stop. (This was the original code's stated
+   * guarantee, and making present mode render the deck rather than the pull briefly broke it —
+   * the pull's six slides were being resolved a second time inside the deck map.)
+   */
+  const deck = deckSlides(w.persona);
+  const shownFor = new Map(deck.map(slide => [slide.id, pictureFor(slide)]));
+
+  // The scroll page's short PULL — a subset of the deck, in deck order (the guard test enforces
+  // both). No missing-slide branch: `slideId` is typed to the bank's own key set, so a pull
+  // naming a slide the bank does not hold cannot compile.
   const pulled = w.panels.map(panel => {
     const slide: PitchSlide = PITCH_SLIDES[panel.slideId];
-    return { panel, slide, shown: pictureFor(slide) };
+    return { panel, slide, shown: shownFor.get(slide.id) ?? null };
   });
 
-  // Present mode is the DECK rendering of the same slides: the short claim, and no plan line.
-  // Hero → the slides → the closing. Slides carry data only (the client component receives
-  // nothing it could not serialize).
+  /**
+   * ⚠⚠ PRESENT MODE RENDERS THE WHOLE DECK, NOT THE PAGE'S PULL (P2b, 2026-08-21) — and this
+   * two-line change is the reason the library has an audience at all.
+   *
+   * It used to map `pulled`, i.e. the short pull the scroll page shows, while a comment in
+   * lib/walkthrough-content.ts claimed the opposite ("present mode and the printed leave-behind
+   * both render every built slide already"). That comment was FALSE, and `deckSlides()` had
+   * exactly one caller — the guard test. **The consequence was that five finished coach slides —
+   * playing time, awards, player development, the fundraising credit and the lineup board, all
+   * photographed and checked in P2a — could not be seen anywhere in the product.**
+   *
+   * The scroll page is deliberately NOT changed: a web page nobody scrolls to the bottom of is
+   * exactly what the short pull exists to prevent. The deck is the long form, and present mode is
+   * where a human is standing beside it. That division is the whole point of the library.
+   *
+   * Slides still carry data only — the client component receives nothing it could not serialize,
+   * which is why a drawing is passed as an id rather than as rendered markup.
+   */
   const slides: PresentSlide[] = [
     { eyebrow: w.eyebrow, title: w.title, body: w.sub },
-    ...pulled.map(({ slide, shown }, i) => ({
-      index: `${i + 1} / ${pulled.length}`,
+    ...deck.map((slide, i) => ({
+      index: `${i + 1} / ${deck.length}`,
       eyebrow: 'The old way',
       title: slide.pain,
       body: slide.claim,
-      picture: shown?.picture,
+      picture: shownFor.get(slide.id)?.picture,
     })),
     { eyebrow: w.closing.eyebrow, title: w.closing.title, body: w.closing.body },
   ];
@@ -142,7 +182,7 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
           <p className={styles.heroSub}>{w.sub}</p>
           <div className={styles.heroActions}>{askThenDoor}</div>
           <p className={styles.heroMeta}>{w.meta}</p>
-          <WalkthroughPresent slides={slides} label={`${w.title} — presentation`} />
+          <WalkthroughPresent slides={slides} deckCount={deck.length} label={`${w.title} — presentation`} />
         </div>
       </section>
 

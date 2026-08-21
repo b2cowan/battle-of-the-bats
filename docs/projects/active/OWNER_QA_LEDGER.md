@@ -9627,3 +9627,60 @@ health is 34%). **Left for you to rule on rather than decided quietly.**
 
 **Still open from §67, unchanged:** lime is spent six times on the panel against the
 one-lime-action rule.
+
+---
+
+## §70 · Seven drawings, both decks finished — and the sentence that came off ten pages
+
+**BUILT 2026-08-21 (dev).** Plan: `PITCH_SLIDE_LIBRARY_PLAN.md` (P2b). Approved in the mockup
+round: `claude.ai/code/artifact/a4029d16-43ac-41cc-97cb-1d70e36afdcd`.
+
+**Both decks are complete for the first time** — coach 15 slides, tournament 8. Only the three
+club-held slides remain unbuilt in the whole library.
+
+### Part A — the seven drawings (**walk this first**)
+
+Open a walkthrough page and press **▸ Present the full deck**. Arrow through it.
+
+- [ ] **#26 (coach, slide 2) and #27 (tournament, slide 2)** — the cycle wheels. The point is the
+      **bright returning arc**: every company draws this diagram and their closing arrow is
+      decoration; ours is a button. Does that land, or does it just read as a wheel?
+- [ ] **#02** three places → one settled line · **#05** a group text → one roster · **#07** all
+      afternoon → one message · **#16** an inbox → one list · **#17** last year → this year.
+- [ ] **Do they read as one set**, or as seven drawings? That was the whole brief.
+- [ ] **On a phone**, arrow through both decks. Every drawing is drawn at the full column at its
+      own shape; the primary labels are sized for this and the secondary lines are deliberately
+      texture. Say if any of them crosses from "quiet" into "unreadable".
+
+### Part B — the claim that came off the live site
+
+- [ ] **Ten sentences removed** across four pages — both walkthrough closings, both hero lines,
+      both search descriptions, and a card + link label on each persona page. They all said some
+      version of *"real screens, not a brochure" / "not a mockup"*, which your new picture rule
+      makes untrue the moment a drawing appears.
+- [ ] **What replaced them points at the demo instead.** Read the two closings and the two hero
+      lines and say whether the replacement wording is right — this is public marketing copy:
+      - tournament hero: *"Five jobs that stop being yours … — and a live demo you can walk when
+        you are done."*
+      - coach hero: *"The jobs the Coaches Portal takes off your plate — and a whole demo season
+        you can walk when you are done."*
+      - both closings now open directly on *"The demo is running right now…"*
+- [ ] ⚠ **`/demos` is untouched** — its *"not recordings or screenshots"* is about the demo being
+      live and is still true. Confirm you agree it stays.
+
+### Part C — present mode now shows the whole deck
+
+- [ ] The button used to say *"Present this page"* and showed the page's six-slide pull. It now
+      says **"Present the full deck"** and shows all fifteen. **Five coach slides you already paid
+      to photograph in P2a — playing time, awards, player development, the fundraising credit and
+      the lineup board — could not be seen anywhere in the product until this.**
+- [ ] The scroll pages are deliberately **unchanged** — still the short pull. Composing what a page
+      shows is the Deck Studio's job.
+
+### ⚠ Known and NOT changed — still yours to rule on
+
+- **The three desktop-screen pictures that render at 34–52% on a phone** (§69). Your new picture
+  rule makes these **drawable**, which is a real fix rather than the no-win re-photograph. Queued,
+  not built — say if you want that batch next.
+- **Lime is still spent six times on the panel** (open since §67). The drawings spend none.
+- **Six Premium plan lines on the coach page** (open since §69).

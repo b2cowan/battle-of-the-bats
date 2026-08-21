@@ -80,14 +80,36 @@ the live demo — and the demo is one click away on every page we publish.
    time, in the opposite direction from the one anyone expected: the demo had drifted behind the
    product, not the marketing behind the demo.**
 
-   **P2b** is the five hand-drawn explainers, including the one that gives the dues slide back the
-   half of its headline P1 gave up.
-3. **A private page listing the whole library**, plus the check that flags a slide whose screen or
-   claim has changed.
+   **P2b — DONE (dev, 2026-08-21; owner walk owed as QA §70). Seven drawings, not five, and both
+   decks are finished for the first time** — coach 15 slides, tournament 8. Only the three
+   club-held slides remain unbuilt in the whole library.
+
+   ⚠ **Two things changed under it that are bigger than the drawings.**
+
+   **The picture rule was replaced.** It used to say: never draw anything that could be mistaken
+   for our interface. The owner replaced it after seeing the drawings — *"I don't care about real
+   screenshots vs. mockup drawings, as long as what we promise and the functionality in the
+   drawings match our app… if it looks better to mock something up, use the mockup."* The
+   obligation is functionality, not pixels. **That cost ten sentences on the live site**, not one:
+   *"real screens, not a brochure"* appeared on both walkthroughs and both persona pages, in the
+   headlines, the closings and the search descriptions. All ten are gone, and what replaced them
+   points at the demo instead — an invitation rather than a denial, and one that stays true
+   whatever the pictures are.
+
+   **The owner asked for a slide type the library did not have** — a cycle diagram showing the
+   whole season and the whole tournament year. The editorial find is that *every* company draws
+   this wheel and their closing arrow is decoration; ours closes with a button (*Start next
+   season*, or copying last year forward), so the returning arc is the only bright thing on it.
+
+   ⚠ **And a defect worth its own line: five coach slides photographed in P2a could not be seen
+   anywhere in the product.** Every surface showed the six-slide page pull, not the deck. The
+   presentation mode now shows the whole deck.
+3. ~~**A private page listing the whole library**, plus the staleness check.~~ **Absorbed** into
+   the [Pitch Deck Studio](PITCH_DECK_STUDIO_PM_BRIEF.md), where it becomes the library view.
 4. **The club deck**, inheriting from both.
 
-Deck assembly inside the admin tools comes later, and only once there is a library worth
-assembling from.
+Deck assembly inside the admin tools is **approved and next** — see the Deck Studio brief. The
+condition this brief set ("only once there is a library worth assembling from") is now met.
 
 ## Success criteria
 

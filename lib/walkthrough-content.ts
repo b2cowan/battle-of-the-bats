@@ -36,6 +36,7 @@
  */
 
 import type { Metadata } from 'next';
+import type { DrawingId } from '@/components/marketing/SlideDrawings';
 import { SEE_IT_LIVE_COACHES_PATH, SEE_IT_LIVE_PATH } from './sandbox-door';
 
 /**
@@ -83,20 +84,70 @@ export interface CalloutRing {
  * A slide carries the pain and the claim ONLY — no plan name, no call to action, no caption
  * (the caption belongs to the picture and lives in lib/marketing-shots.ts beside it).
  */
-export interface PitchSlide {
+/** What every slide carries, whichever kind of picture it has. */
+interface PitchSlideBase {
   /** The permanent library number, e.g. '#01'. Never renumbered — it is how a slide is tracked. */
   id: string;
-  /** What the picture IS today, not what it is meant to become. */
-  imageClass: SlideImageClass;
-  /** Joins the slide to its picture in lib/marketing-shots.ts. Absent while a slide is text-only. */
-  shotId?: string;
   /** The old-way headline, in the volunteer's own words. Staged, visceral, recognizable. */
   pain: string;
   /** The slide's answer — two sentences at most. Verbatim from the approved library artifact. */
   claim: string;
-  /** Rings drawn over the picture. More than two means it is two slides (format rule 3). */
-  rings?: CalloutRing[];
 }
+
+/**
+ * ONE SLIDE, and it is a UNION because a photographed slide and a drawn one genuinely differ —
+ * they are not one shape with optional fields (tightened 2026-08-21 after P2b).
+ *
+ * ⚠ THE POINT OF THE UNION IS THAT THE COMPILER NOW HOLDS WHAT A UNIT TEST USED TO. Four
+ * pairings have to be true at once, and every one of them was previously a runtime `assert` that
+ * only ran if someone remembered `npm test`: an explainer names a drawing and never a capture, a
+ * capture names a capture and never a drawing, a drawing carries its own alt + caption, and a
+ * capture never does. A slide that gets any of them wrong is now rejected at the `PITCH_SLIDES`
+ * literal itself. It also deletes the `?? ''` fallbacks the renderer needed — a missing alt used
+ * to become `alt=""` on a public page rather than a build failure.
+ *
+ * ⚠ The `?: undefined` exclusions are load-bearing, not noise. TypeScript's excess-property check
+ * against a union permits any property declared on ANY member, so without them an explainer could
+ * quietly carry a `shotId` and still typecheck.
+ */
+export type PitchSlide = PitchSlideBase & (
+  | {
+      /** A real capture — see `SlideImageClass`. Its alt and caption live in the shot manifest. */
+      imageClass: Exclude<SlideImageClass, 'explainer'>;
+      /** Joins the slide to its picture in lib/marketing-shots.ts. */
+      shotId: string;
+      /** Rings drawn over the picture. More than two means it is two slides (format rule 3). */
+      rings?: CalloutRing[];
+      drawingId?: undefined;
+      alt?: undefined;
+      caption?: undefined;
+    }
+  | {
+      imageClass: 'explainer';
+      /**
+       * Joins an explainer to its hand-drawn picture in components/marketing/SlideDrawings.tsx.
+       *
+       * ⚠ The import is `import type`, so it is erased entirely and creates NO runtime edge from
+       * lib to components — this module is loaded by tests/unit under Node's type stripping, which
+       * cannot execute a `.tsx` file's JSX, so a real import would crash the suite. What it buys
+       * is the compile error: naming a drawing the registry does not hold cannot ship as a blank
+       * stage. **Do not drop the `type` keyword.**
+       */
+      drawingId: DrawingId;
+      /**
+       * ⚠ REQUIRED ON A DRAWING, AND FORBIDDEN ON A CAPTURE — the asymmetry is the whole reason
+       * these live here. A capture keeps its alt and caption in lib/marketing-shots.ts beside the
+       * picture, where `check:marketing-shots` fails when either is missing. A drawing has no
+       * manifest entry for that check to look at, so it would sail through a green build with no
+       * description at all; the type is what closes that hole.
+       */
+      alt: string;
+      caption: string;
+      /** A drawing puts its emphasis IN the drawing — a ring would mark what is already marked. */
+      rings?: undefined;
+      shotId?: undefined;
+    }
+);
 
 /**
  * THE BANK — every slide that has its picture and its words today.
@@ -108,6 +159,25 @@ export interface PitchSlide {
  */
 export const PITCH_SLIDES = {
   /* ── The coach's year ──────────────────────────────────────────────────────── */
+  /**
+   * ⚠ THE OVERVIEW SLIDE, AND IT SITS SECOND IN THE DECK RATHER THAN FIRST (owner call
+   * 2026-08-21). Open on the visceral moment the deck already opens on — tryout day — then the
+   * wheel: "here is the whole shape of it". Opening cold on a diagram is opening on abstraction.
+   */
+  '#26': {
+    id: '#26',
+    imageClass: 'explainer',
+    drawingId: 'coach-year',
+    pain: 'Every season starts from a blank page.',
+    claim: 'One place for the whole year — tryouts, the roster, the games, the money and the record — and closing a season is what starts the next one.',
+    alt: 'A ring of five stations — tryouts, the roster, games, books and the wrapped season — joined by four faint arrows. The fifth arc, returning from the wrapped season to tryouts, is drawn bright and labelled “start next season”.',
+    // ⚠ VERIFIED AGAINST THE ROLLOVER ITSELF, not against a plan. Starting the next season copies
+    // the ACTIVE roster (always), the planned budget lines and periods, and the per-player fee
+    // structure with paid history stripped — the last two are opt-out toggles that default on.
+    // The schedule starts fresh, and actual spending and dues payments do not carry.
+    // Naming the three specifically is stronger than "everything carries forward", AND true.
+    caption: 'The year the portal is built around. Closing a season is what starts the next one — and the roster, the planned budget and the fee setup come with it.',
+  },
   '#01': {
     id: '#01',
     imageClass: 'composed',
@@ -133,6 +203,21 @@ export const PITCH_SLIDES = {
      * the loudest thing in frame. A ring around it would be marking what is already marked.
      */
   },
+  /**
+   * ⚠ THE SLIDE THAT GIVES #01 BACK ITS OTHER HALF. #01 reads "Team fees are tracked in your
+   * head." because the visceral half of that sentence is THIS slide's whole subject. The owner
+   * confirmed 2026-08-21 that #01 stays short now that #02 sits immediately before it and says
+   * the missing half louder than a half-sentence ever did. Do not merge them back.
+   */
+  '#02': {
+    id: '#02',
+    imageClass: 'explainer',
+    drawingId: 'money-sources',
+    pain: 'The e-transfers arrive with no name on them.',
+    claim: 'The inbox, the spreadsheet and the bank app stop being three separate jobs.',
+    alt: 'Three tilted paper slips — a spreadsheet grid, a bank statement and an e-transfer email whose name field is an empty dashed line with a question mark. Three lines converge from them onto a single settled row: a circle, a name, an amount and a tick.',
+    caption: 'Three places to look, and none of them says who paid. One line, with a name on it.',
+  },
   '#03': {
     id: '#03',
     imageClass: 'composed',
@@ -157,6 +242,24 @@ export const PITCH_SLIDES = {
     // almost exactly above one another read as a single broken ring rather than two marks.
     rings: [{ left: 51, top: 47.9, width: 19, height: 51.3 }],
   },
+  /**
+   * ⚠ THE RISKIEST DRAWING IN THE SET, named as such in the mockup round and approved knowing it.
+   * A list of rows with badges is the closest any drawing gets to a real screen. It stays on the
+   * right side of the picture rule by having no header, no container and no controls — and a "#"
+   * in the badge rather than a number, i.e. "a number goes here" rather than a datum.
+   */
+  '#05': {
+    id: '#05',
+    imageClass: 'explainer',
+    drawingId: 'roster-group-text',
+    pain: 'The roster lives in a group text.',
+    claim: 'One roster with positions, numbers and contact details — and families who can see their own schedule without asking you for it.',
+    alt: 'Four overlapping chat bubbles, two carrying fragments of team admin and one holding only a question mark. Beside them, three aligned roster rows — a number badge, a name, a position and a contact dot each — with a dotted line running down to a small phone showing a calendar.',
+    // Both halves verified against the product: the roster carries jersey numbers, ranked
+    // positions and contact details, and a connected family reads the team's schedule on their
+    // own page without the coach sending it.
+    caption: 'The roster stops being a thread nobody can search — and the family gets the schedule without asking.',
+  },
   '#06': {
     id: '#06',
     imageClass: 'composed',
@@ -165,6 +268,26 @@ export const PITCH_SLIDES = {
     claim: 'Build it once, and the board quietly tracks who has been sitting too long while you coach.',
     // Unringed on purpose: the thing to look at is the amber warning line, and it is already the
     // only coloured element in the picture. A ring would be marking what is marked.
+  },
+  /**
+   * ⚠⚠ THE ONLY SLIDE IN THE LIBRARY THAT IS A DRAWING BECAUSE IT CANNOT BE PHOTOGRAPHED, rather
+   * than because drawing is the better answer. The demo world's live game console exists about
+   * seven hours a week, the seeded Saturday game deliberately has no lineup, and game rows take a
+   * fresh id every reseed. Do NOT "solve" this by trying to capture it.
+   *
+   * The claim is exact rather than a flattering paraphrase, verified in the code: the bench
+   * console saves the running score with a QUIET write that notifies nobody, so families watching
+   * the team's page see it move on their own; ending the game is the one non-quiet write, and it
+   * sends a single final-score message.
+   */
+  '#07': {
+    id: '#07',
+    imageClass: 'explainer',
+    drawingId: 'one-message',
+    pain: 'Parents text “score?” while you are coaching third base.',
+    claim: 'Families follow the score themselves; ending the game sends them one message, not one per run.',
+    alt: 'Four chat bubbles down one side, two of them reading “score?” and one holding only a question mark. Facing them, a two-box scoreboard with a broadcast symbol, and below a dividing rule a single envelope with one arrow leaving it.',
+    caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves, and one message when it is over.',
   },
   '#09': {
     id: '#09',
@@ -237,6 +360,21 @@ export const PITCH_SLIDES = {
   },
 
   /* ── The tournament weekend ────────────────────────────────────────────────── */
+  /**
+   * ⚠ THE OVERVIEW SLIDE, SECOND IN THE DECK — and it deliberately DOES NOT STEAL #17's JOB.
+   * The deck already ENDS on "next year starts from last year", so if this slide's punchline were
+   * the loop it would be #17 wearing a wheel. Its pain is FRAGMENTATION; the loop is a closing
+   * clause that #17 then proves in full. Overview opens the deck, proof closes it.
+   */
+  '#27': {
+    id: '#27',
+    imageClass: 'explainer',
+    drawingId: 'tournament-year',
+    pain: 'Every part of the weekend lives in a different tool.',
+    claim: 'One system from setup to the final out — registration, the schedule, live scores, the bracket and the wrap-up — and next year starts from this one.',
+    alt: 'A ring of five stations — set up, entries, the weekend, playoffs and the wrap-up — joined by four faint arrows. The fifth arc, returning from the wrap-up to set up, is drawn bright and labelled “copied forward”.',
+    caption: 'The whole event in one place — and copying it forward carries the divisions, the venues, the registration setup and the public site.',
+  },
   '#11': {
     id: '#11',
     imageClass: 'proof',
@@ -276,6 +414,23 @@ export const PITCH_SLIDES = {
     claim:
       'The bracket builds itself from live standings and fills in as games end. A big division splits into Gold and Silver tiers in one click — and nobody redraws a whiteboard.',
   },
+  /**
+   * ⚠ VERIFIED AGAINST THE PRODUCT, and NOT plan-gated. The public registration form shows the
+   * total fee and its due date (and the deposit and its due date) before a team submits; a
+   * submission lands as pending, or is automatically waitlisted when its division is already at
+   * capacity; and the organizer's list acts on them as approve, waitlist or decline. Team
+   * self-registration and waitlist collection are both on the BASE tournament plan, so this slide
+   * needs no plan line on the page either — unlike #17 below, which does.
+   */
+  '#16': {
+    id: '#16',
+    imageClass: 'explainer',
+    drawingId: 'registration-inbox',
+    pain: 'Teams register by email.',
+    claim: 'Teams enter themselves, see their fee and due date, and land in your list already sorted — you approve, waitlist or decline.',
+    alt: 'Four email slips stacked askew, each with a paperclip, one duplicated behind another. Facing them, four aligned rows on hairlines — a team, a fee and a date each — marked at the right with a tick, a tick, a hold and a cross, the last two rows dimmed.',
+    caption: 'Forwarded attachments, one of them sent twice — against a list that arrives sorted and waits on one decision each.',
+  },
   '#15': {
     id: '#15',
     // The panel is already a short wide strip. ⚠ NOT ringed: the artifact asks for "the two
@@ -286,6 +441,26 @@ export const PITCH_SLIDES = {
     pain: 'A team’s payment fell through — and you find out at the gate.',
     claim:
       'One readiness score for the whole field, weeks out, and every tile opens the exact teams behind it.',
+  },
+  /**
+   * ⚠ THE CLAIM THE APPROVED LIBRARY MARKED "TO CONFIRM" — the only one of the five explainers
+   * never checked against the product. Confirmed 2026-08-21 against the clone itself: copying a
+   * tournament forward carries divisions (with their pools and slots), venues, the registration
+   * fields and fee schedule, and the branding, public pages, welcome text and rules/resources.
+   * All four nouns in the sentence are real, and each is an opt-out the organizer can clear.
+   *
+   * ⚠ It IS plan-gated (Tournament Plus) — so the page's pull carries a plan line for it, while
+   * the slide stays plan-free like every other. The gate lives in the plan configuration; do not
+   * restate the tier anywhere but the page panel.
+   */
+  '#17': {
+    id: '#17',
+    imageClass: 'explainer',
+    drawingId: 'copied-forward',
+    pain: 'Next year, you start from scratch.',
+    claim: 'Last year’s tournament is this year’s starting point — divisions, venues, registration setup and your public site, copied forward.',
+    alt: 'Two columns of the same four symbols — stacked bars, a map pin beside a field, a form with a checkbox, and a globe. The left column is faint and labelled “last year”, the right is bright and labelled “this year”, with dotted arrows carrying each across, marked divisions, venues, registration and your site.',
+    caption: 'Four things you set up once, arriving already made — and the dates, which are the part you actually change.',
   },
   // `satisfies` rather than a `Record<string, PitchSlide>` annotation on purpose: it type-checks
   // every entry AND keeps the key set literal, so `SlideId` below is the real list of numbers.
@@ -302,11 +477,13 @@ export type SlideId = keyof typeof PITCH_SLIDES;
  * orders, and `tests/unit/pitch-slide-library.test.ts` fails on a typo'd or orphaned id.
  */
 export const PLANNED_SLIDES: Record<string, string> = {
-  '#02': 'The e-transfers arrive with no name on them — explainer (P2b)',
-  '#05': 'The roster lives in a group text — explainer (P2b)',
-  '#07': 'Parents text “score?” while you are coaching third base — explainer; the demo world cannot photograph the bench console (P2b)',
-  '#16': 'Teams register by email — explainer (P2b)',
-  '#17': 'Next year, you start from scratch — explainer (P2b)',
+  // ✅ EMPTY SINCE 2026-08-21 (P2b) — every id either deck names is now BUILT. Both running
+  // orders below are real for the first time, so `deckSlides()` no longer skips anything.
+  //
+  // Kept rather than deleted because it is the register the next batch is declared in: #18–#20
+  // are held for the club deck (P4) and will appear here the moment that deck names them, and
+  // the guard test fails on an id that is both built and listed here. An empty register is the
+  // honest state, not a dead one.
 };
 
 /**
@@ -318,12 +495,24 @@ export const PLANNED_SLIDES: Record<string, string> = {
  * settlement sheet shot mid-season shows every family in debt and argues the opposite of what
  * it means to. The phase IS the picture.)
  *
- * Ids the bank does not hold yet are skipped by `deckSlides()` — see `PLANNED_SLIDES`.
+ * Ids the bank does not hold yet are skipped by `deckSlides()` — see `PLANNED_SLIDES`, which is
+ * empty as of P2b: both orders below are real end to end.
+ *
+ * ⚠ THE OVERVIEW SLIDE SITS SECOND IN EACH DECK, NOT FIRST (owner call 2026-08-21). Open on the
+ * visceral moment the deck already opened on — Saturday 2:14 PM, or tryout day — and only then
+ * show the wheel: "here is the whole shape of it". Opening cold on a diagram is opening on
+ * abstraction, and the moment a reader recognizes themselves is worth more than the map.
  */
 export const PITCH_DECKS: Record<'tournament' | 'coach', string[]> = {
-  tournament: ['#11', '#12', '#13', '#14', '#16', '#15', '#17'],
+  tournament: [
+    /* The moment        */ '#11',
+    /* The whole shape   */ '#27',
+    /* The weekend       */ '#12', '#13', '#14', '#16', '#15',
+    /* Next year         */ '#17',
+  ],
   coach: [
     /* Tryout day        */ '#10',
+    /* The whole shape   */ '#26',
     /* The team forms    */ '#05',
     /* Mid-season: team  */ '#25', '#06', '#24', '#07',
     /* Mid-season: kids  */ '#22', '#21', '#23',
@@ -405,12 +594,16 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   path: '/for-tournament-organizers/walkthrough',
   seo: {
     title: 'The 90-Second Walkthrough for Tournament Organizers — FieldLogicHQ',
+    // ⚠ NO "REAL SCREENS, NOT A BROCHURE" — see the note on `closing.body` below. Every one of
+    // the ten places that claim appeared came out on 2026-08-21, and what replaces it points at
+    // the demo instead: an invitation is stronger than a denial, and it stays true whatever the
+    // pictures are.
     description:
-      'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — live scores families check themselves, volunteer score entry, one-action rain delays, self-building brackets, and registration health. Real screens, not a brochure.',
+      'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — live scores families check themselves, volunteer score entry, one-action rain delays, self-building brackets, and registration health. Walk the live demo yourself — no sign-up.',
   },
   eyebrow: 'For tournament organizers · a 90-second walkthrough',
   title: 'The weekend the phone stayed in your pocket.',
-  sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — shown on the real screens, not a brochure.',
+  sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — and a live demo you can walk when you are done.',
   meta: '5 problems · 90 seconds · nothing to install',
   door: { path: SEE_IT_LIVE_PATH, label: 'See it live — no sign-up →' },
   back: { href: '/for-tournament-organizers' },
@@ -449,10 +642,23 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   closing: {
     eyebrow: 'That was the pitch. Here’s the proof.',
     title: 'Walk the real thing — it’s running right now.',
-    // "Photographed … not a mockup" + "the demo is the live thing" keeps this page's images
-    // clearly distinct from /demos' own claim ("not recordings or screenshots") — that page
-    // vouches the DEMO is live; this line vouches the PICTURES are real, then hands over.
-    body: 'Every picture above is the real FieldLogicHQ software, photographed on a live demo tournament we operate ourselves — not a mockup. And the demo itself is running right now: walk into the same tournament, nothing to sign up for, nothing you can break.',
+    /**
+     * ⚠⚠ THE "NOT A MOCKUP" SENTENCE IS GONE, AND IT IS NOT COMING BACK (owner ruling
+     * 2026-08-21). It used to open this paragraph: "Every picture above is the real FieldLogicHQ
+     * software, photographed on a live demo tournament we operate ourselves — not a mockup."
+     *
+     * It was true when every picture was a photograph, and the moment a hand-drawn explainer
+     * joins a deck it is false — with nothing in the build able to see it, because no check can
+     * read a sentence. Rather than deriving a version that describes whatever is in frame, the
+     * owner's call was to REMOVE the claim entirely: we owe a prospect functionality that matches
+     * the picture, never a screen that looks identical to it.
+     *
+     * What is left is the stronger half anyway — an invitation rather than a denial, and one that
+     * stays true no matter what the pictures are. ⚠ It is also now the ONLY thing distinguishing
+     * this page from /demos' own claim ("not recordings or screenshots"), which vouches for the
+     * DEMO being live and is untouched because it is still true.
+     */
+    body: 'The demo is running right now: walk into the same tournament, nothing to sign up for, nothing you can break.',
   },
 };
 
@@ -466,11 +672,11 @@ export const COACH_WALKTHROUGH: Walkthrough = {
     // and would have under-described the page rather than over-promising it, which is the
     // likelier direction for a description to rot and the harder one to notice.
     description:
-      'Six jobs that stop being yours the day your team runs on FieldLogicHQ — tryout scoring on a phone, practice plans that reach the field, your book on Saturday’s opponent, every family’s dues on one page, the season squared up from the real ledger, and a closed season kept on one page for good. Real screens, not a brochure.',
+      'Six jobs that stop being yours the day your team runs on FieldLogicHQ — tryout scoring on a phone, practice plans that reach the field, your book on Saturday’s opponent, every family’s dues on one page, the season squared up from the real ledger, and a closed season kept on one page for good. Walk the live demo yourself — no sign-up.',
   },
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
-  sub: 'The jobs the Coaches Portal takes off your plate — shown on the real screens a coach uses, not a brochure.',
+  sub: 'The jobs the Coaches Portal takes off your plate — and a whole demo season you can walk when you are done.',
   meta: '6 problems · 90 seconds · nothing to install',
   door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season →' },
   back: { href: '/for-coaches' },
@@ -480,11 +686,17 @@ export const COACH_WALKTHROUGH: Walkthrough = {
    * deck does: tryout day → the practice → Saturday's opponent → the money → the off-season books
    * → a season already closed.
    *
-   * What it deliberately leaves in the deck: playing time, awards, player development and the
-   * fundraising credit. All four have their picture taken; none of them is the thing a coach is
-   * buying in the first ninety seconds, and a page with ten panels is a page nobody reaches the
-   * bottom of. The deck is the long form — present mode and the printed leave-behind both render
-   * every built slide already.
+   * What it deliberately leaves in the deck: playing time, awards, player development, the
+   * fundraising credit and the lineup board. All five have their picture taken; none of them is
+   * the thing a coach is buying in the first ninety seconds, and a page with fourteen panels is a
+   * page nobody reaches the bottom of.
+   *
+   * ⚠ THIS COMMENT USED TO SAY "present mode and the printed leave-behind both render every built
+   * slide already", AND IT WAS FALSE — both rendered this pull, so those five slides could not be
+   * seen anywhere in the product. **Present mode renders the whole deck as of 2026-08-21** (see
+   * the long note in WalkthroughPage.tsx). The PRINTED leave-behind still follows the scroll page,
+   * because print is the page on paper; composing a deck to print is the Deck Studio's job
+   * (docs/projects/active/PITCH_DECK_STUDIO_PLAN.md), not a fourth hard-coded rendering.
    */
   panels: [
     {
@@ -556,11 +768,11 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   closing: {
     eyebrow: 'That was the pitch. Here’s the proof.',
     title: 'Sit in a coach’s seat — the season is running right now.',
-    // Same division of labour as the tournament closing: this line vouches the PICTURES are
-    // real, then hands over to the demo. "A season" not "a team" — the sandbox runs five teams,
-    // one per phase of the year, and the pictures above are taken on the phase each screen
-    // belongs to.
-    body: 'Every picture above is the real FieldLogicHQ software, photographed on a demo club we run ourselves — not a mockup. The demo is running right now, and it is a whole year you can walk: tryout day, mid-season, the off-season books, and a season already closed.',
+    // ⚠ The "not a mockup" sentence that opened this paragraph is GONE — the full reasoning is on
+    // the tournament closing above, and it applies identically here. "A season" not "a team": the
+    // sandbox runs five teams, one per phase of the year, and each picture is taken on the phase
+    // its screen belongs to.
+    body: 'The demo is running right now, and it is a whole year you can walk: tryout day, mid-season, the off-season books, and a season already closed.',
   },
 };
 

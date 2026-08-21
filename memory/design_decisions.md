@@ -4,6 +4,98 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-21 — ⚠⚠ A PICTURE OWES FUNCTIONALITY, NOT PIXELS — the "forbidden fourth class" rule is REPLACED
+
+**Owner ruling, verbatim in substance:** *"I don't care about real screenshots vs. mockup drawings,
+as long as what we promise in our comments and the functionality in the drawings match our app we
+are good… often times the mockups look much better than screenshots… if we promise a ledger and it
+looks better to mock something up rather than have a screenshot, use the mockup. We don't need to
+promise that the ledger looks the exact same, as long as it functions as promised we are ok."*
+
+**⚠ THIS SUPERSEDES owner ruling 1 of 2026-08-20** (the "forbidden fourth class" — *never draw
+anything that could be mistaken for our interface*), which is recorded in
+`PITCH_SLIDE_LIBRARY_PLAN.md` and quoted in `lib/walkthrough-content.ts`. That rule aimed at
+**subject**, and it would have banned drawing a ledger at all — even though a ledger drawing is the
+clearest way to say what a ledger does. It was solving for the wrong thing.
+
+**The obligation that actually exists:** *does the picture promise functionality we have?* Pixel
+fidelity never was the promise. We do not owe a prospect a screen that looks identical to the
+drawing; we owe them one that **works** the way the drawing says.
+
+**⚠ The one piece kept, and it is about CERTAINTY rather than subject:** not "never draw a screen"
+but **never let the reader be uncertain which they are looking at.** A drawing that is obviously a
+drawing may depict anything we do. What breaks is a *photorealistic fake screen* — because then a
+reader cannot tell what is real anywhere, and the claim worth protecting is *"this is genuinely our
+software, and the demo is running right now, go walk it."* That is a real differentiator against
+competitors using stock mockups, and it survives only while the two are visibly different things.
+
+**Operative test:** draw whatever serves the pitch, as long as it is unmistakably a drawing, and
+keep a real capture where *"this is really ours"* is the point being made. One proof shot per deck
+does that job. ⚠ The residual cost of getting it wrong is **not** a broken promise — it is a
+prospect who expected a prettier screen and meets a plainer working one. Worth not spending, but a
+different and smaller risk than the old rule assumed.
+
+**⚠⚠ WHAT THIS COST IMMEDIATELY, AND IT WAS TEN SENTENCES, NOT ONE.** The claim *"real screens, not
+a brochure"* / *"every picture above is the real FieldLogicHQ software… not a mockup"* appeared in
+**ten places across four pages** — both walkthrough closings, both hero lines, both SEO
+descriptions, and a card plus a link label on each persona page. All ten were removed 2026-08-21.
+An earlier design here was to **derive** the sentence from what was in frame; the owner's call was
+simpler and better — **remove the claim entirely** and point at the demo instead, which is an
+invitation rather than a denial and stays true whatever the pictures are. ⚠ The `/demos` page's own
+*"not recordings or screenshots"* is UNTOUCHED: it vouches for the DEMO being live, and is still
+true.
+
+**What it unlocks:** the open §69 defect — three coach page pictures are desktop screens rendering
+at 34–52% of readable size on a phone, where re-photographing only makes them small on a laptop
+instead — is now solvable by **drawing them**, since we author a drawing at whatever size reads.
+Queued, not built.
+
+**Applies to:** every pitch and marketing surface. Built into `components/marketing/SlideDrawings.tsx`
+(P2b, seven drawings). Plan: `docs/projects/active/PITCH_SLIDE_LIBRARY_PLAN.md`.
+
+---
+
+### 2026-08-21 — ⚠⚠ A DRAWING'S CANVAS IS NOT FREE SPACE: empty margin is paid for in phone legibility
+
+**The same arithmetic P1 and P2a each paid an iteration for, in its third costume — and this time
+it applies to something we AUTHOR, where the waste is entirely ours to remove.**
+
+P1 found that cropping *rows* shortens a capture without narrowing it, and on-screen scale follows
+width. P2a found the height half: a phone capture must be **short enough** to be drawn at full
+width (a 0.39-ratio crop rendered 165px wide on a laptop). The drawn version:
+
+> **A picture is drawn at the column's full width whatever its own numbers say, so a wide canvas
+> with the subject in the middle of it renders that subject SMALLER, at exactly the ratio of the
+> waste.**
+
+Measured: the two cycle wheels were first authored on the 800-wide explainer canvas, where the ring
+occupies units 210–590 and ~40% of the frame is empty. On a phone the ring came out **156px**
+across. Cropping the canvas to 660 — **without moving a single coordinate inside it** — took it to
+**224px, a 44% gain, and cost nothing on a laptop**, because the stage's height budget is what binds
+there and both canvases resolve to the same 0.8 scale.
+
+**Two rules that follow, both now in the code:**
+- **Author a drawing on a canvas that fits its subject tightly.** Before adding one, ask what
+  fraction of the canvas the subject actually fills. `SlideDrawings.tsx` keeps exactly two
+  canvases (`WIDE` 800×500 for left→right explainers, `WHEEL` 660×500 for the rings) rather than
+  letting each drawing invent its own.
+- **⚠ A LABEL'S AUTHORED SIZE IS SET BY THE PHONE, NOT THE LAPTOP.** At 330px a 660-unit drawing is
+  drawn at 0.5 and an 800-unit one at 0.41, so a label that must read at ~11px has to be authored
+  at 22–26 units. Station labels on the wheels were first set at 21 (**8.7px on a phone**) and
+  raised to 26; the return-arc label was broken over two lines rather than shrunk. **Shorten the
+  word, never the type.**
+
+**⚠ And three defects that ONLY a rendered screenshot caught, after every static check was green:**
+text overflowing its own speech bubble; a caption **clipped off the canvas edge** by the viewBox
+(silently — nothing overlapped anything, so a collision check passed it); and a leader line crossing
+the arc it pointed at, reading as a strike-through. **A drawing is not verified until it has been
+looked at.** The measurement harness now also asserts nothing is drawn outside the viewBox, which is
+the one of the three a machine can hold.
+
+**Applies to:** hand-authored pitch artwork. Same lineage as the two 2026-08-20 entries below.
+
+---
+
 ### 2026-08-20 — Pitch slides: ONE fixed picture frame, contain-never-fill — and the picture leads on a phone
 
 **Decision (/design review of the slide format, ahead of the slide library build):** every pitch slide is one layout — a mono kicker, the pain, a second kicker, the answer, and a **single fixed 16:10 picture stage**. The picture is *contained* inside that stage, never stretched to fill it. At phone width the stage moves **above** the words and takes the full column.

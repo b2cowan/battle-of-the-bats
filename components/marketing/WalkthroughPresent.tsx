@@ -37,7 +37,9 @@ export interface PresentSlide {
   picture?: SlidePicture;
 }
 
-export default function WalkthroughPresent({ slides, label }: { slides: PresentSlide[]; label: string }) {
+export default function WalkthroughPresent(
+  { slides, deckCount, label }: { slides: PresentSlide[]; deckCount: number; label: string },
+) {
   const [open, setOpen] = useState(false);
   const [at, setAt] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -97,7 +99,16 @@ export default function WalkthroughPresent({ slides, label }: { slides: PresentS
         className={styles.trigger}
         onClick={() => { setAt(0); setOpen(true); }}
       >
-        ▸ Present this page — full screen, arrow keys
+        {/* ⚠ "the full deck", not "this page" — since 2026-08-21 this presents every slide in the
+            audience's deck rather than the short pull the page shows, so the old label undersold
+            it by about half.
+
+            ⚠ AND THE COUNT IS `deckCount`, NOT `slides.length`: `slides` is the hero, the deck and
+            the closing panel, so using its length advertised two slides that are not slides. It is
+            passed in rather than computed as `slides.length - 2` because that offset is a fact
+            about how the caller assembles the array, and it would go quietly wrong the day a
+            second framing panel is added at either end. */}
+        ▸ Present the full deck — {deckCount} slides, arrow keys
       </button>
 
       {open && (
