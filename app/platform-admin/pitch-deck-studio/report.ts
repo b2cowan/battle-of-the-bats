@@ -46,6 +46,7 @@ import {
 } from '@/lib/walkthrough-content';
 import { pictureFor, shotFor, shotPublicPath, type SlidePictureWithCaption } from '@/components/marketing/slide-picture';
 import { shotManifestProblems, type FilePresence } from '@/lib/shot-health';
+import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 
 type Audience = keyof typeof PITCH_DECKS;
 
@@ -93,6 +94,18 @@ export type PictureHealth =
       captureWidth: number;
       /** Where in the demo world it was taken, so a reader can go and look at the live screen. */
       demoPath: string;
+      /**
+       * The day the capture stamped, and how many days ago that is — `null` for a picture taken
+       * before we started recording it.
+       *
+       * ⚠⚠ AGE IS A PROXY AND THE SCREEN MUST SAY SO. It answers WHEN, never WHETHER the picture
+       * still resembles the screen. A six-month-old picture of a screen nobody has touched is
+       * perfectly good; a one-week-old picture of a screen redesigned on Tuesday is not. It tells a
+       * reader where to LOOK — it is not the freshness check that lib/shot-health.ts explains we do
+       * not have, and it must never be dressed up as one.
+       */
+      takenAt: string | null;
+      ageDays: number | null;
       present: FilePresence;
       problems: string[];
     }
@@ -176,10 +189,22 @@ export interface PitchLibraryReport {
      */
     onNoPage: number;
     withProblems: number;
+    /**
+     * The age of the oldest picture we hold, in days — `null` while no picture carries a date.
+     *
+     * ⚠ A TILE RATHER THAN A THRESHOLD, on purpose. Every picture in the library is days old today,
+     * so a "3 pictures are stale" counter would read 0 for months and teach a reader to ignore it.
+     * The worst case as a real number stays informative from day one and needs no invented cutoff.
+     */
+    oldestPictureDays: number | null;
   };
 }
 
-function healthOf(slide: PitchSlide, fileIsPresent: (publicPath: string) => FilePresence): PictureHealth {
+function healthOf(
+  slide: PitchSlide,
+  fileIsPresent: (publicPath: string) => FilePresence,
+  today: string,
+): PictureHealth {
   if (slide.drawingId) {
     return { kind: 'drawing', drawingId: slide.drawingId, outsideTheCaptureCheck: true };
   }
@@ -193,6 +218,8 @@ function healthOf(slide: PitchSlide, fileIsPresent: (publicPath: string) => File
       publicPath: '—',
       captureWidth: 0,
       demoPath: '—',
+      takenAt: null,
+      ageDays: null,
       present: null,
       problems: [`names shot "${slide.shotId}", which the manifest does not declare`],
     };
@@ -205,6 +232,11 @@ function healthOf(slide: PitchSlide, fileIsPresent: (publicPath: string) => File
     size: shot.size,
     captureWidth: shot.width,
     demoPath: shot.path,
+    takenAt: shot.takenAt ?? null,
+    // `daysBetweenDateStrings` rather than date arithmetic: both sides are already calendar-day
+    // strings in the org's zone, which is the only comparison that means the same thing on a
+    // dev machine and on a UTC server.
+    ageDays: shot.takenAt ? daysBetweenDateStrings(shot.takenAt, today) : null,
     present,
     problems: shotManifestProblems(shot, { present, where: `public${publicPath}` }),
   };
@@ -221,6 +253,8 @@ function healthOf(slide: PitchSlide, fileIsPresent: (publicPath: string) => File
 export function buildPitchLibraryReport(
   fileIsPresent: (publicPath: string) => FilePresence,
 ): PitchLibraryReport {
+  const today = tournamentToday();
+
   // Which deck names a slide, and where in the running order. Built once so the per-slide pass is
   // a lookup rather than a scan of both decks per slide.
   const placement = new Map<string, DeckPlacement>();
@@ -252,7 +286,7 @@ export function buildPitchLibraryReport(
         picture: shown,
         deck: placement.get(slide.id) ?? null,
         pages,
-        health: healthOf(slide, fileIsPresent),
+        health: healthOf(slide, fileIsPresent, today),
       };
     });
 
@@ -308,6 +342,10 @@ export function buildPitchLibraryReport(
       drawn: slides.filter(s => s.health.kind === 'drawing' && s.picture).length,
       onNoPage: slides.filter(s => s.pages.length === 0).length,
       withProblems: slides.filter(s => s.health.kind === 'capture' && s.health.problems.length > 0).length,
+      oldestPictureDays: slides.reduce<number | null>((oldest, s) => {
+        const age = s.health.kind === 'capture' ? s.health.ageDays : null;
+        return age === null ? oldest : oldest === null ? age : Math.max(oldest, age);
+      }, null),
     },
   };
 }

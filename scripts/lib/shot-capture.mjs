@@ -303,6 +303,22 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
 
   /* ── Write the rendered sizes back into the manifest ──────────────────────── */
   if (sizes.size) {
+    /**
+     * The day of this capture, in the ORG'S zone rather than the machine's.
+     *
+     * ⚠ Deliberately not the runtime's own calendar day. Production runs UTC and this repo has
+     * been bitten by day-reasoning in the wrong zone before (the J6-056 class, which once emptied
+     * "Today's Games" on a championship evening) — a capture run at 9pm Toronto would otherwise
+     * stamp tomorrow. `en-CA` formats as YYYY-MM-DD, which is the shape the manifest stores and
+     * the shape lib/timezone.ts's helpers compare.
+     *
+     * ⚠⚠ AND THE POINT OF STAMPING IT IS THAT NOBODY TYPES IT. A hand-written date is a claim
+     * about when a machine did something; this is the machine saying so. The studio reads it to
+     * show a picture's age — see lib/shot-health.ts for what that age does and does NOT prove.
+     */
+    const takenAt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
     const manifestFile = path.join(ROOT, manifestPath);
     let src = readFileSync(manifestFile, 'utf8');
     for (const [id, s] of sizes) {
@@ -322,11 +338,17 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
         process.exitCode = 1;
         continue;
       }
+      // Both machine-known facts are stripped and re-written together, in a fixed order, so a
+      // re-capture replaces them rather than growing a second copy of either.
       src = src.replace(entry, (_m, head, tail) =>
-        `${head.replace(/\n {4}size: \{[^}]*\},/g, '')}\n    size: { w: ${s.w}, h: ${s.h} },${tail}`);
+        `${head
+          .replace(/\n {4}size: \{[^}]*\},/g, '')
+          .replace(/\n {4}takenAt: '[^']*',/g, '')}` +
+        `\n    size: { w: ${s.w}, h: ${s.h} },` +
+        `\n    takenAt: '${takenAt}',${tail}`);
     }
     writeFileSync(manifestFile, src, 'utf8');
-    console.log(`  · wrote ${sizes.size} size(s) back into ${manifestPath}`);
+    console.log(`  · wrote ${sizes.size} size(s) + capture date(s) back into ${manifestPath}`);
   }
 
   console.log(`\n${results.ok.length} captured, ${results.failed.length} failed.`);

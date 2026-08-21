@@ -30,6 +30,16 @@ passes CI. Every capture card renders `PICTURE_FRESHNESS_IS_UNCHECKED` instead o
 brief's success criterion 4 is therefore NOT met and cannot be met this way** — closing it needs a
 re-capture-and-compare. Do not mark it met by adding a tick.
 
+**⚠ 2b. EVERY PICTURE CARRIES ITS CAPTURE DATE, AND IT IS NOT THE FRESHNESS CHECK** (owner
+Decision 2 / Option B, 2026-08-21). The capture stamps the day it ran (org zone, never the
+server’s); the fourteen existing ones were backfilled from git history; the studio shows each
+age plus an "oldest picture" tile. **Age answers WHEN, never WHETHER** — the screen prints it
+directly above the "nothing checks whether this still looks like the screen" sentence, and that
+adjacency is the design. ⚠ **A "re-take" button is IMPOSSIBLE** (it drives a real browser and
+writes to the repo — a dev command, not a deployed page’s); proposed and walked back. ⚠ **No
+threshold and no colour on the age**: everything is days old, so an invented cutoff reads green
+for months and trains the eye past it.
+
 **3. A DRAWING HAS NO MANIFEST ENTRY, so it is neither passed nor failed.** Nearly half the library is
 hand-drawn inline SVG — nearly half the screen. Four vacuous passes wearing a tick would be worse
 than nothing, so the card says it in words.

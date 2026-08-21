@@ -106,6 +106,19 @@ export interface MarketingShot {
   width: number;
   /** Rendered pixel size of the saved file, written back by the capture script. */
   size?: { w: number; h: number };
+  /**
+   * The day this picture was last taken, `YYYY-MM-DD` in the org’s zone.
+   *
+   * ⚠ WRITTEN BY THE CAPTURE, NEVER BY HAND — like `size`. A hand-typed date would be a claim
+   * about when a machine did something, which is exactly the kind of number that goes quietly
+   * wrong. Missing means "taken before we started recording this"; re-capture stamps it.
+   *
+   * ⚠⚠ AND IT IS A PROXY, NOT AN ANSWER. It tells a reader WHEN, never WHETHER the picture still
+   * resembles the screen. A six-month-old picture of a screen nobody has touched is fine; a
+   * one-week-old picture of a screen redesigned on Tuesday is not. The studio says so in words
+   * beside it — do not let a surface present this as a freshness check.
+   */
+  takenAt?: string;
   /** Required. Describes what the picture SHOWS, for a reader who cannot see it. */
   alt: string;
   /** Stands alone under the image — a reader who skips the picture must lose nothing. */
@@ -135,6 +148,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: '#live-now',
     width: 390,
     size: { w: 390, h: 240 },
+    takenAt: '2026-08-20',
     alt: 'A phone-width view of the tournament’s public home page: the Live now section with a game in progress, its score, and where it is being played.',
     caption: 'The public tournament site on a family’s phone — the live game and its score, updating on its own. No account, no app store, nothing for the organizer to send.',
   },
@@ -149,6 +163,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: 'section[aria-label="Games"]',
     width: 390,
     size: { w: 350, h: 546 },
+    takenAt: '2026-08-20',
     alt: 'The Scorekeeper View board at phone width: today’s games as cards, the next one to score highlighted, with simple score entry.',
     caption: 'Scorekeeper View — the score-entry board a volunteer opens from a link or the Staff Kit’s QR card at the table. No admin access, nothing else they can touch.',
   },
@@ -162,6 +177,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: '.modal',
     width: 1280,
     size: { w: 560, h: 684 },
+    takenAt: '2026-08-20',
     alt: 'The Rain delay dialog over the admin schedule: pick the day and how long the delay is, and every remaining game on that day moves together.',
     caption: 'Tools → Rain delay — the whole day re-times in one action, and the notice to families and coaches is drafted for you.',
   },
@@ -186,6 +202,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // ⚠ Cycle-proof wording: the demo replays its game day, so this picture can show any
     // phase — a live semifinal, a waiting final, or a crowned champion. Describe the shape.
     size: { w: 480, h: 266 },
+    takenAt: '2026-08-20',
     alt: 'The playoff bracket on the public standings page: semifinal cards feeding the final’s slot, with scores and states filling in as games finish.',
     caption: 'The playoff bracket on the public site — seeded from pool play, filling itself in as games end. Nobody redraws a whiteboard.',
   },
@@ -200,6 +217,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: '[data-sandbox-tour="registration-health"]',
     width: 1280,
     size: { w: 976, h: 227 },
+    takenAt: '2026-08-20',
     alt: 'The Registration Health panel: an overall readiness score with tiles for teams, reachability, payments, and registrations needing action, above rows describing each open issue.',
     caption: 'Registration Health — one score for the whole field, weeks out. Every tile opens the exact teams behind its number.',
   },
@@ -269,6 +287,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
      */
     clipAll: 'details[class*="duesCard"]:nth-of-type(-n+7)',
     size: { w: 358, h: 550 },
+    takenAt: '2026-08-21',
     alt: 'The Player Dues screen as a coach sees it on a phone: one card per family, each giving the player’s name, what they still owe and when it is next due — most of them a plain amount, one written in amber because part of it is already past due.',
     caption: 'Player Dues on a phone — every family, what is left to pay, and the ones who have fallen behind called out where a coach will actually read them.',
   },
@@ -308,6 +327,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
      */
     clipAll: '[aria-label="Season settlement"] [class*="settlementNotes"], [aria-label="Season settlement"] table tbody tr:nth-child(1)',
     size: { w: 359, h: 395 },
+    takenAt: '2026-08-21',
     alt: 'The Season settlement sheet on a phone: a heading reading “before the season can close”, then each reason it cannot — families who still owe, a shortfall between what paying everyone needs and what the team is holding, and spending the season still plans — followed by the first family’s figures stacked as a card: what they are owed back, their even share, anything they still owe, and the refund that falls out.',
     caption: 'Season settlement on a phone — every reason the books are not ready to close, named one by one, and each family’s refund worked out from the season’s real ledger rather than a spreadsheet.',
   },
@@ -347,6 +367,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clipAll: 'h2, th:has-text("Rebate Earned"), tbody tr:nth-child(-n+5)',
     width: 1280,
     size: { w: 958, h: 546 },
+    takenAt: '2026-08-21',
     alt: 'A closed team fundraiser: a headline row of totals — everything raised, the share the team keeps, the amount issued back to families as dues credit, and how many families took part — above a ranked table naming each family with what they raised, the rebate they earned, and what is left of their own bill to send.',
     caption: 'A fundraiser’s own page — what each family raised, what it took off their bill, and what is left for them to pay. Nobody has to work it out afterwards.',
   },
@@ -368,6 +389,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clipAll: 'p:has-text("bench time"), table:has(th:text-is("Bat")) thead, table:has(th:text-is("Bat")) tbody tr:nth-child(-n+6)',
     width: 1280,
     size: { w: 996, h: 353 },
+    takenAt: '2026-08-21',
     alt: 'A game’s lineup board: a warning line saying bench time is uneven and how many innings players are sitting for, above a grid with one row per player — batting order, name and number, then a position for every inning, several of them reading Bench.',
     caption: 'The lineup board — build it once, and it tells you who has been sitting while you are busy coaching.',
   },
@@ -398,6 +420,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // proportions, which is the shape this stage is known to render at full size.
     clipAll: '[class*="detailBib"], [class*="cats"] > div:nth-child(-n+3)',
     size: { w: 334, h: 453 },
+    takenAt: '2026-08-21',
     alt: 'The tryout scorecard as an evaluator holds it: a dark phone screen showing one candidate by jersey number, then five criteria — hitting, fielding, throwing, speed and attitude — each with a row of large one-to-five buttons, and a Done button at the foot.',
     caption: 'The tryout scorecard on an evaluator’s phone — five taps a player, no clipboard, and the scores land in the ranking as they go.',
   },
@@ -419,6 +442,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clipAll: 'table:has(th:text-is("Award")) thead, table:has(th:text-is("Award")) tbody tr:nth-child(-n+4)',
     width: 1280,
     size: { w: 996, h: 327 },
+    takenAt: '2026-08-21',
     alt: 'A team’s award history: a table listing each award given this season — the player, the award the coach invented and its emoji, the game it was given at, the date, and the coach’s note about why — with a print icon on every row for that player’s certificate.',
     caption: 'Awards a coach makes up themselves, handed out game by game — so the list is already written when awards night comes, and every certificate prints from it.',
   },
@@ -444,6 +468,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: '#development',
     width: 1280,
     size: { w: 960, h: 727 },
+    takenAt: '2026-08-21',
     alt: 'One player’s development card: a focus area the coach set with a note about what they are working on and a “working on it” badge, then a list of the coach’s own tests — a sprint, exit velocity and a run to first — each showing the latest reading, its date and a small line showing the direction of travel, with one test opened out to show both readings and the months between them.',
     caption: 'Goals set, the same tests run again — so “he’s improved” becomes two numbers and the months between them.',
   },
@@ -461,6 +486,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clipAll: 'table:has(th:text-is("Back-to-back sits")) thead, table:has(th:text-is("Back-to-back sits")) tbody tr:nth-child(-n+7)',
     width: 1280,
     size: { w: 996, h: 333 },
+    takenAt: '2026-08-21',
     alt: 'The playing-time report: one row per player showing innings on the field with a small bar, innings on the bench, how many times they sat back-to-back, every position they have played, and innings pitched where it applies — the player with the least time on the field sitting at the top.',
     caption: 'Playing time counted from the lineups you already saved — innings on the field, innings on the bench, and who has sat back-to-back. Measured, in context.',
   },
@@ -479,6 +505,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clip: '[class*="wrappedCard"]',
     width: 1280,
     size: { w: 468, h: 477 },
+    takenAt: '2026-08-21',
     alt: 'The Season Wrapped card for a closed season: the final record over the number of games, then the longest winning streak, the closest game, game-day attendance, the most-decorated player and a fact about the lineup — with a button to share the season.',
     caption: 'The card a coach shares when the season closes — the record, the streak, the closest game, the attendance and the awards, kept for good.',
   },

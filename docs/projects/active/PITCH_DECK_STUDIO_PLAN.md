@@ -242,6 +242,24 @@ for the walkthrough now; the same wording exists on other surfaces.
 scan reports correct copy as an overclaim — and **a column that cries wolf once stops being read.**
 Match longest-label-first.
 
+**⚠4a. EVERY PICTURE NOW CARRIES ITS CAPTURE DATE — and that is NOT the staleness check.**
+Owner Decision 2, Option B (2026-08-21). The capture stamps the day it ran, in the org zone; the
+fourteen existing pictures were backfilled from git history; the studio shows each one’s age and
+the library’s worst case in a tile.
+
+⚠⚠ **SUCCESS CRITERION 4 IS STILL NOT MET AND THIS DOES NOT MEET IT.** Age answers WHEN, never
+WHETHER the picture still resembles the screen. The screen says so directly beneath the date. The
+real answer is still a re-capture-and-compare, still unbuilt, still the owner’s call.
+
+⚠ **A "re-take" BUTTON WAS PROPOSED AND IS IMPOSSIBLE — do not try again.** Re-photographing
+drives a browser through the live demo world and writes files back into the repo: a developer
+command, not something a deployed admin page can do. Re-taking stays a chat request, like a
+wording change.
+
+⚠ **No threshold, no colour on the age.** Every picture is days old, so an invented cutoff would
+read green for months and train the eye past it. The worst case as a real number stays useful
+from day one.
+
 **5. The gaps in the number line are ONE register with a status** (`SLIDE_NUMBERS_SPOKEN_FOR` in
 `lib/walkthrough-content.ts`: `planned` | `held` | `retired`), with a guard test asserting a
 spoken-for number is never also built and that **only a `planned` number may be named by a deck.**

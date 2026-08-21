@@ -179,6 +179,17 @@ export default async function PitchDeckStudioPage() {
           </div>
           <div className={styles.totalLabel}>Picture problems</div>
         </div>
+        {/* ⚠ The worst case as a real number, not a count against an invented cutoff. Every
+            picture is days old today, so a "3 are stale" tile would read 0 for months and teach
+            the eye to skip it. This one stays informative from day one — and it is deliberately
+            not coloured, because age alone does not decide staleness. */}
+        <div className={styles.total}>
+          <div className={styles.totalNum}>
+            {totals.oldestPictureDays === null ? '—' : totals.oldestPictureDays}
+            {totals.oldestPictureDays !== null && <span className={styles.totalUnit}>d</span>}
+          </div>
+          <div className={styles.totalLabel}>Oldest picture</div>
+        </div>
       </div>
 
       <p className={styles.sectionNote}>
@@ -187,7 +198,9 @@ export default async function PitchDeckStudioPage() {
         never shows them — they appear only inside <em>Present the full deck</em>, which is public
         but takes a click most readers never make. ⚠ The picture column proves a picture is{' '}
         <em>declared</em> properly — it cannot prove one still looks like the screen it
-        photographed. Nothing we run can.
+        photographed. Nothing we run can — <strong>age tells you where to look, not what is
+        wrong.</strong> Re-taking a picture is a one-line request in chat; it is a command that
+        drives a real browser through the demo world, so it cannot be a button on this page.
       </p>
 
       {report.reserved.length > 0 && (

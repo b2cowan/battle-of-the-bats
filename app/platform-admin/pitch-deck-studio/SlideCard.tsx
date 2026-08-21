@@ -28,6 +28,25 @@ const CLASS_LABEL: Record<string, string> = {
   explainer: 'Drawing · hand-authored',
 };
 
+/**
+ * How old a picture is, in words a reader parses at a glance.
+ *
+ * ⚠ No colour and no threshold. Every picture in the library is days old today, so a red/amber
+ * cutoff would sit green for months and train the eye to skip it — and any cutoff we picked would
+ * be invented, because age does not decide staleness on its own (a year-old picture of an
+ * untouched screen is fine). The number is stated plainly and the sentence beneath it says what
+ * it does not prove. The totals strip carries the worst case so the whole library is one glance.
+ */
+function describeAge(days: number | null): string {
+  if (days === null) return 'at an unrecorded time';
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.round(days / 30)} months ago`;
+  return `over a year ago`;
+}
+
 export default function SlideCard({ report: r }: { report: SlideReport }) {
   const { slide, picture, health, pages, deck } = r;
   const stranded = pages.length === 0;
@@ -123,6 +142,16 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
                     <span className={styles.mono}>{health.demoPath}</span>.
                   </span>
                 )}
+                {/* ⚠ THE AGE SITS DIRECTLY ABOVE THE SENTENCE THAT LIMITS IT, and that adjacency is
+                    the design. On its own a date reads as a freshness verdict; the reader has to
+                    meet "how old" and "nobody has checked whether it still matches" together, or
+                    the number quietly becomes the reassurance we do not actually have. */}
+                <span className={styles.caveat}>
+                  {health.takenAt
+                    ? <>Taken <strong>{describeAge(health.ageDays)}</strong> — {health.takenAt}.</>
+                    : <>No capture date recorded — it was taken before we started stamping them.
+                        Re-taking this picture will stamp it.</>}
+                </span>
                 <span className={styles.caveat}>{PICTURE_FRESHNESS_IS_UNCHECKED}</span>
               </>
             )}

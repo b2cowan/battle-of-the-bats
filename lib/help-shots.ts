@@ -63,6 +63,19 @@ export interface HelpShot {
   width: number;
   /** Rendered pixel size of the saved file, written back by the capture script. */
   size?: { w: number; h: number };
+  /**
+   * The day this picture was last taken, `YYYY-MM-DD` in the org’s zone.
+   *
+   * ⚠ WRITTEN BY THE CAPTURE, NEVER BY HAND — like `size`. A hand-typed date would be a claim
+   * about when a machine did something, which is exactly the kind of number that goes quietly
+   * wrong. Missing means "taken before we started recording this"; re-capture stamps it.
+   *
+   * ⚠⚠ AND IT IS A PROXY, NOT AN ANSWER. It tells a reader WHEN, never WHETHER the picture still
+   * resembles the screen. A six-month-old picture of a screen nobody has touched is fine; a
+   * one-week-old picture of a screen redesigned on Tuesday is not. The studio says so in words
+   * beside it — do not let a surface present this as a freshness check.
+   */
+  takenAt?: string;
   /** Required. Describes what the picture SHOWS, for a reader who cannot see it. */
   alt: string;
   /** Stands alone under the image — a reader who skips the picture must lose nothing. */

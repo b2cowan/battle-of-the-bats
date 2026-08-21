@@ -30,6 +30,8 @@
 export interface ShotManifestEntry {
   id: string;
   size?: { w: number; h: number };
+  /** The day the picture was last taken, `YYYY-MM-DD`. Stamped by the capture, never typed. */
+  takenAt?: string;
   alt?: string;
   caption?: string;
 }

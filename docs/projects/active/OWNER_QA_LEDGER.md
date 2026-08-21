@@ -10249,3 +10249,40 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
 - [ ] **The Pitch Deck Studio updated itself.** Its "Slideshow only" count went from twelve to ten
       the moment the pages changed, with nothing to re-run and nothing to re-type. That is the whole
       argument for computing these numbers rather than writing them down — worth seeing once.
+
+---
+
+## §75 · Every picture now says how old it is — and what that does not prove
+
+**BUILT 2026-08-21 (dev).** Your Decision 2, Option B, from the brief
+(`claude.ai/code/artifact/719d58d2-c779-43c1-ade6-2b75c426156c`).
+
+### What to look at (platform-admin → Growth → Pitch Deck Studio)
+
+- [ ] **Every photographed slide now carries a line: “Taken today — 2026-08-21.”** Fourteen
+      pictures, all dated. The dates were backfilled from the project’s own history, so they are
+      real rather than invented.
+- [ ] **A new tile in the strip: “Oldest picture · 1d.”** The worst case in the whole library, at a
+      glance. ⚠ It is deliberately **not coloured** and there is no “N are stale” counter — every
+      picture is a day old today, so any cutoff we invented would read green for months and teach
+      you to stop looking at it. A real number stays useful from day one.
+- [ ] **Read where the date sits.** It is directly above *“Nothing checks whether this picture still
+      looks like the screen it photographed.”* That adjacency is the design: on its own a date
+      reads as a freshness verdict, and it is not one.
+
+### ⚠ The part I got wrong in the brief, and had to walk back
+
+- [ ] I proposed a **“re-take this picture” button** in the studio. **It cannot exist.**
+      Re-photographing drives a real browser through the live demo world and writes files back into
+      the codebase — that is a developer command on a machine with the project checked out, not
+      something a deployed admin page can do. The screen now says so in place: re-taking is a
+      one-line request in chat, the same as a wording change.
+
+### What it is honestly worth
+
+- [ ] **Age is a proxy, and the screen says so twice.** A year-old picture of a screen nobody has
+      touched is fine; a one-week-old picture of a screen redesigned on Tuesday is not. This tells
+      you **where to look**, never what is wrong. If you want the real answer, that is the
+      re-photograph-and-compare job — still not built, still your call.
+- [ ] **Going forward the date maintains itself.** The capture stamps the day it ran, in the club’s
+      timezone rather than the server’s, so nobody ever types one.

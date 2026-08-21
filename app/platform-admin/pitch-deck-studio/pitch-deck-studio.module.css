@@ -398,3 +398,11 @@
 .deckMeta strong,
 .sectionNote strong,
 .caveat strong { color: var(--fl-text); }
+
+/* The unit on a measured tile, set smaller than the figure so the number still reads first. */
+.totalUnit {
+  font-size: .55em;
+  font-weight: 700;
+  color: var(--data-gray);
+  margin-left: .1rem;
+}
