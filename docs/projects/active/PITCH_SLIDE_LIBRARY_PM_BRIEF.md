@@ -47,8 +47,7 @@ the live demo — and the demo is one click away on every page we publish.
 
 ## Sequencing
 
-1. **The model, proved on what already ships — ✅ DONE 2026-08-20, awaiting the owner's walk (QA
-   §67).** The slide bank and the format are in, both live walkthroughs render from the library,
+1. **The model, proved on what already ships — ✅ DONE and WALKED 2026-08-20 (QA §67 PASSED).** The slide bank and the format are in, both live walkthroughs render from the library,
    and three pictures were re-cropped. No new artwork.
 
    ⚠ **One promise in this brief did not survive contact: "both walkthrough pages are legible on a
@@ -60,8 +59,12 @@ the live demo — and the demo is one click away on every page we publish.
    a proper phone layout for them — and that is now a P2 job. What P1 did buy on a phone: the
    picture leads at full width, and the highlight rings mean a reader who can't read the numbers
    can still see which two columns the sentence is about.
-2. **The fourteen new slides** — captures for the composed ones, drawings for the explainers.
-   Mostly editorial work.
+2. **The fourteen new slides — now split in two, because photographing a screen and drawing a
+   picture are different jobs with different ways of going wrong.**
+   **P2a** is the nine slides that photograph a real screen, and it carries the phone fix above —
+   so the open defect closes at the start of that phase rather than the end.
+   **P2b** is the five hand-drawn explainers, including the one that gives the dues slide back the
+   half of its headline P1 gave up.
 3. **A private page listing the whole library**, plus the check that flags a slide whose screen or
    claim has changed.
 4. **The club deck**, inheriting from both.

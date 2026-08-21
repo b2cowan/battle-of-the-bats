@@ -41,7 +41,12 @@
 > "unsettled money warns, never blocks" ruling, and the mockup's **third panel was not built** —
 > the demo world cannot photograph the bench console. Both are written up in §66.
 >
-> **§67 added 2026-08-20** — the pitch slide LIBRARY (P1). Both walkthroughs now render from one
+> **§67 ✅ PASSED 2026-08-20** — the pitch slide LIBRARY (P1). Struck from the owed list. One
+> change made mid-walk (a desktop crop may grow to fill the frame). ⚠ The walk surfaced **§68**, a
+> pre-existing defect in the SITE HEADER: "Get Started" is clipped on every marketing page below
+> 390px, with no sideways scroll to reveal it. Added as owed.
+>
+> **§67 (as built) — the pitch slide LIBRARY (P1).** Both walkthroughs now render from one
 > bank of numbered slides and wear the ratified slide format. The pages say the same things they
 > said before; what changed is how the pictures read. ⚠ **It carries the measured answer to the
 > phone-legibility question §65/§66 left open, and the answer is "half".** Two of the four wide
@@ -9346,9 +9351,25 @@ flex by one — **and the third is the owner's call:**
 
 ---
 
-## §67 · The pitch slide library — one bank of slides, and the phone answer you asked for
+## §67 ✅ The pitch slide library — one bank of slides, and the phone answer you asked for — **OWNER QA PASSED 2026-08-20**
 
-**BUILT 2026-08-20 (dev), awaiting the walk.** Plan:
+**PASSED 2026-08-20.** One change was made mid-walk on the owner's call — a desktop capture with a
+tight crop may now GROW to fill the frame (the playoff bracket went 480→671px, +40%); only captures
+whose subject is the phone experience stay capped. Committed `87df2772`.
+
+**The four judgement calls in this section were walked and accepted as built:** the empty frame
+around phone-shaped captures, slide #01's shortened headline, present mode carrying no plan line,
+and the caption sitting above the pain on a phone. ⚠ **#01's headline is accepted as a TEMPORARY
+state, not a preference** — the half it lost ("the e-transfers arrive with no name on them") is
+slide #02's whole subject and returns when P2 builds it.
+
+**⚠ STILL OPEN, NOT RULED:** lime is now spent SIX times on a panel against the one-lime-action rule
+(the callout rings are the newest claimant). Carried forward, unchanged.
+
+**⚠ FOUND DURING THIS WALK, NOT PART OF IT — see §68.** The site's marketing header clips its
+"Get Started" button below 390px, on every marketing page. Pre-existing, unrelated to this project.
+
+**BUILT 2026-08-20 (dev).** Plan:
 `PITCH_SLIDE_LIBRARY_PLAN.md` (P1). Approved spec: the library artifact
 `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e`, the format
 `claude.ai/code/artifact/b1706db6-8f65-43d1-a5c7-39ffa722300f`, the three image classes
@@ -9469,3 +9490,40 @@ team's-money summary that sits inside the crop.
   rings now make it **six**. The design ruling explicitly left this as yours to judge on the real
   page; the rings are the newest claimant and the easiest to re-colour if you want the lime back.
 - Slides #02, #04–#07, #09, #10, #16, #17, #21–#25 are named in the decks and **not built** — P2.
+
+---
+
+## §68 · The marketing header cuts off "Get Started" on most phones
+
+**FOUND 2026-08-20 during the §67 walk. NOT BUILT — this is a defect report awaiting a fix.**
+Unrelated to the slide library; it predates it and lives in the site's shared marketing header.
+
+**What happens:** the top bar does not respond to width at all. Its "Get Started" button sits at the
+same fixed position on every screen, so below 390px it simply runs off the right edge — and because
+the page does not scroll sideways, there is **no way to reveal it.** Measured:
+
+| Screen | "Get Started" |
+|---|---|
+| 390px — iPhone 12–15 | fits, **by 4 pixels** |
+| 375px — iPhone SE 2/3, 6/7/8 | clipped 11px |
+| 360px — most Android | clipped 26px |
+| 320px — iPhone SE 1st gen | clipped 66px |
+
+**Every marketing page** carries it: the homepage, all four persona pages, pricing, the demos page
+and both walkthroughs. On a common Android a fifth of the site's primary call to action is silently
+unreachable.
+
+**Why it survived:** the automated rendered check covers the 28 coach-portal screens and **not one
+marketing page** — the same gap §66 already recorded — and at 390px, the width everyone tests at, it
+clears by four pixels.
+
+### The walk, once it is fixed
+
+- [ ] At **320, 360 and 375px**, "Get Started" and "Sign In" are both fully visible and tappable on
+      the homepage, `/pricing`, `/for-coaches`, `/for-clubs`, `/demos` and both walkthroughs.
+- [ ] Nothing scrolls sideways at any of those widths.
+- [ ] The bar still reads correctly on a laptop — this is shared chrome, so the regression risk is
+      every marketing page at once, not just phones.
+- [ ] ⚠ **The bigger question to rule on at the same time:** should the marketing pages join the
+      automated rendered check? They are the only public surface with no layout gate at all, and
+      this defect is exactly what such a gate exists to catch.

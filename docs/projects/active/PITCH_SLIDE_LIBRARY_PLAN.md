@@ -1,8 +1,8 @@
 # Pitch Slide Library — Plan
 
 **Status:** APPROVED 2026-08-20 (owner accepted the three image classes, the two deck running
-orders, the slide format and the no-plan-names rule in-session). **P1 BUILT on dev 2026-08-20 —
-owner QA §67. P2–P4 not started.**
+orders, the slide format and the no-plan-names rule in-session). **P1 SHIPPED to dev 2026-08-20 — owner QA §67 ✅ PASSED.
+P2a (prompt written) → P2b → P3 → P4 not started.**
 **PM brief:** [PITCH_SLIDE_LIBRARY_PM_BRIEF.md](PITCH_SLIDE_LIBRARY_PM_BRIEF.md)
 **The library itself (owner-approved, binding spec):**
 `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e` — 21 slides, two decks, in order.
@@ -101,7 +101,7 @@ only in one build's CSS.
 
 ## Phases
 
-- **P1 — the model, proved on what already ships. ✅ BUILT 2026-08-20 (dev), owner QA §67.**
+- **P1 — the model, proved on what already ships. ✅ SHIPPED 2026-08-20 (dev), owner QA §67 PASSED.**
   Slide bank + deck composition + the format changes (fixed stage, phone reflow, rings). Both live
   walkthroughs render from the library; three of the seven captures were re-cropped from proof to
   composed. **No new artwork.**
@@ -184,8 +184,14 @@ only in one build's CSS.
   page used to carry ("and the e-transfers arrive with no name on them") is now slide **#02**'s
   entire subject, and #02 is a P2 explainer. Until it ships, the coach page opens one beat weaker
   than it did. Taken verbatim per the build prompt rather than quietly improved.
-- **P2 — the fourteen new slides.** New captures for the composed ones, hand-drawn SVG for the
-  explainers. This is the bulk of the work and it is mostly editorial, not engineering.
+- **P2 — the fourteen new slides. SPLIT BY KIND OF WORK after the P1 walk**, because captures and
+  illustrations are two different jobs with two different review tests:
+  - **P2a — the nine slides whose picture is a REAL SCREEN** (eight composed, one proof) **plus the
+    phone re-captures that close the open §65/§66 defect.** One pipeline, one discipline. Build
+    prompt: [PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md](PITCH_SLIDE_LIBRARY_P2A_BUILD_PROMPT.md).
+  - **P2b — the five hand-drawn explainers** (#02 #05 #07 #16 #17). Illustration, no pipeline, and
+    the forbidden-fourth-class test rather than a capture guard. ⚠ #02 restores the half of slide
+    #01’s headline that P1 gave up, so it carries a live-page improvement, not just a new slide.
 - **P3 — the contact sheet + the staleness check.** A private route rendering the whole library on
   one page, behind the same flag the demo doors use — cheap, no new data model, and it answers
   "what do we have?". Plus the check that fails when a slide's pictured screen or gated claim has
