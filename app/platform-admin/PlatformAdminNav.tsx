@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Eye, AlertTriangle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Eye, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { canViewPlatformArea, isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
@@ -30,6 +30,9 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/platform-admin/early-access', label: 'Early Access', Icon: Mail, area: 'early_access' },
       { href: '/platform-admin/email', label: 'Email Campaigns', Icon: Send, area: 'email' },
+      // Company-owned pitch material aimed at people who are not customers yet — the same
+      // reasoning that puts Early Access and Email Campaigns in this group.
+      { href: '/platform-admin/pitch-deck-studio', label: 'Pitch Deck Studio', Icon: Presentation, area: 'pitch_deck_studio' },
     ],
   },
   {

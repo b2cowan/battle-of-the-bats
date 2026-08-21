@@ -20,12 +20,21 @@
  * name — the villain is "the old way". Never a price on this surface. Pain vocabulary stays
  * consistent with lib/plan-article-content.ts painItems — same voice, no parallel bank.
  *
- * ⚠ NO PLAN OR SUBSCRIPTION NAME EVER APPEARS ON A SLIDE. Functionality only — that is what
- * makes a slide portable between decks (the same slide serves the coach deck and, later, the
- * club deck untouched, where the plan line would be a different sentence and the coach one
- * would actively undersell Club). The PUBLIC PAGE still carries a plan line where a feature
- * is gated, because nobody is standing there to answer "is that included?" — so `planTag`
- * lives on the page's pull, never on the slide.
+ * ⚠⚠ NO PLAN, TIER, PRICE OR SUBSCRIPTION APPEARS ANYWHERE IN THIS FILE — not on a slide, and
+ * NOT on a page panel either (owner ruling 2026-08-21, widening the 2026-08-20 one).
+ *
+ * The original ruling was a split: slides plan-free so they stay portable between decks, but the
+ * unattended PAGE carrying a plan line "because nobody is standing there to answer *is that
+ * included?*". **The owner overturned the page half**, in his words: *"we don't need to mention
+ * any subscriptions here… we don't want to compartmentalize features at this stage, we want to
+ * show people all we have to offer and how we will improve their lives, period."*
+ *
+ * ⚠ THE DIVISION OF LABOUR IS NOW BY SURFACE, and it is worth understanding before "restoring"
+ * anything: **this page creates desire, the pricing page qualifies, and a human answers in the
+ * room.** A gate named beside a feature, on a page whose entire job is "here is what stops being
+ * your problem", argues against the page. Nine plan chips and one "(the free portal keeps…)"
+ * aside were deleted for that reason; `tests/unit/pitch-slide-library.test.ts` now reads the page
+ * panels' own copy, not just the slides, so they cannot creep back.
  *
  * ⚠ CYCLE-PROOF OR IT IS WRONG. The demo worlds re-anchor on a schedule (the tournament every
  * two minutes, the coach club nightly), so any score, count or name in a capture is perishable.
@@ -153,7 +162,7 @@ export type PitchSlide = PitchSlideBase & (
  * THE BANK — every slide that has its picture and its words today.
  *
  * ⚠ Not the whole library: the fourteen slides the approved artifact adds are P2 (new captures
- * and hand-drawn explainers, mostly editorial work). They are named in `PLANNED_SLIDES` below
+ * and hand-drawn explainers, mostly editorial work). They are named in `SLIDE_NUMBERS_SPOKEN_FOR`
  * so the running orders can be recorded now, in full, and P2 is a pure content addition rather
  * than a resequencing.
  */
@@ -290,28 +299,28 @@ export const PITCH_SLIDES = {
     caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves, and one message when it is over.',
   },
   /**
-   * ⚠⚠ THIS WAS THE COACH DECK'S ONLY `proof` SLIDE — the one screen shown WHOLE — and it became a
-   * drawing on 2026-08-21 (owner call). The reasoning is worth keeping, because "put the
-   * screenshot back" will look like an obvious improvement to someone who did not see it:
+   * ⚠ THIS SLIDE WENT CAPTURE → DRAWING → CAPTURE IN ONE DAY (2026-08-21), and the round trip is
+   * the useful part rather than an embarrassment. Its ORIGINAL crop paired the Season Wrapped card
+   * with the four collapsed shelves beside it — 960×591, which renders at 34% of true size in a
+   * phone column and is simply unreadable. That is what made it a drawing.
    *
-   * Its photograph rendered at 34% of readable size on a phone, and re-capturing at phone width
-   * only trades the problem (it goes small on a laptop instead). What made drawing it acceptable
-   * is that the job `proof` existed for — *"this is genuinely our software"* — moved. It used to be
-   * shared with a closing sentence on the page ("every picture above is the real software, not a
-   * mockup"); that sentence was removed the same day, and what carries the claim now is the LIVE
-   * DEMO: walk the whole year yourself, nothing to sign up for. A demo a prospect can open beats a
-   * screenshot they have to trust.
+   * The owner's answer was better than either: **photograph the CARD ALONE.** It is the artifact a
+   * coach actually shares, its type is the largest in the portal, and ONE element is far narrower
+   * than two side by side — which is the only lever that has ever moved phone legibility on this
+   * project. So the deck keeps a real screen shown whole AND the picture reads on a phone.
+   *
+   * ⚠ The claim still names all four shelves ("the record, the roster, the practices, the money")
+   * while the picture now shows only the front of that page. Deliberate — the caption carries what
+   * the card does not — but if the claim is ever reworded, do NOT narrow it to match the crop: one
+   * page with four shelves is the binding product ruling, not a description of a photograph.
    */
   '#09': {
     id: '#09',
-    imageClass: 'explainer',
-    drawingId: 'season-page',
+    imageClass: 'proof',
+    shotId: 'coach-season-wrapped',
     pain: 'The season ends and nobody writes down what happened.',
     claim: 'A closed season becomes one page — the record, the roster, the practices, the money — and it stays that way for years.',
-    alt: 'Four small cards drifting apart and fading, the last two drawn as dashed outlines and one holding a question mark. Facing them, a single page: a record across the top, then four labelled shelves — results, roster, practices, money.',
-    // ⚠ One page and exactly FOUR shelves is the binding owner ruling the product is built on, not
-    // a simplification made to fit a picture. Adding a fifth here means adding it to the product.
-    caption: 'Four things the season made, scattering. One page that holds all of them, and reads the same in three years.',
+    // PROOF, never ringed. The class exists for a screen designed to be looked at whole.
   },
   '#10': {
     id: '#10',
@@ -502,18 +511,55 @@ export const PITCH_SLIDES = {
 export type SlideId = keyof typeof PITCH_SLIDES;
 
 /**
- * The library numbers a deck names but the bank does not hold yet — P2 and beyond. Keeping
- * them here rather than in a comment means the running orders below are the REAL approved
- * orders, and `tests/unit/pitch-slide-library.test.ts` fails on a typo'd or orphaned id.
+ * ⚠ EVERY LIBRARY NUMBER THAT IS SPOKEN FOR BUT HOLDS NO SLIDE — one register, with a STATUS.
+ *
+ * A library number is never reused and never renumbered. That is the whole mechanism: a slide can
+ * be re-shot, re-cropped and re-worded forever and still be the same slide. The cost is that the
+ * number line has gaps, and a future session meeting a missing #08 must not have to take it on
+ * trust that nothing was lost — so every gap says what it is and why.
+ *
+ * ⚠ THIS WAS BRIEFLY TWO REGISTERS AND THAT WAS A MISTAKE (merged 2026-08-21, same day, during the
+ * Deck Studio cleanup pass). `PLANNED_SLIDES` held "named by a deck, not built yet" and a separate
+ * `RESERVED_SLIDE_NUMBERS` held "retired / held for a future deck" — two `Record<string, string>`
+ * maps over the SAME key space, ten lines apart, both describing #18–#20, kept from overlapping
+ * only by a test assertion reading "pick one register". Two same-shaped maps over one key space is
+ * the shape that wants a status field, and the report screen wanted it too: with one register it
+ * can tell a deck naming a HELD number ("that is the club deck's, P4") from one naming a number
+ * that simply is not there, which two maps could only render as the same bare cross.
+ *
+ * Statuses:
+ *  · `planned`  a deck names it and the bank does not hold it YET, so the running orders below can
+ *               record the REAL approved order before the artwork exists.
+ *  · `held`     reserved for a deck that does not exist yet. No deck may name one.
+ *  · `retired`  spent. Never to be reused — reusing it would break the one promise the library
+ *               makes, that a number identifies the same slide forever.
+ *
+ * ⚠⚠ THE RUNTIME DOES NOT KNOW THESE APART — ONLY THE GUARD TEST DOES. `deckSlides()` filters on
+ * bank membership alone, so a `planned` id, a `held` one, a `retired` one and an id nobody has
+ * ever defined are all dropped identically and silently. `PITCH_DECKS` is `string[]`, not
+ * `SlideId[]`, so the compiler will not stop you either. **The only thing standing between a typo
+ * and a slide quietly missing from a running order is tests/unit/pitch-slide-library.test.ts** —
+ * do not delete those assertions believing the code still holds the line.
+ *
+ * `tests/unit/pitch-slide-library.test.ts` holds all of it: an id here is never also built, only a
+ * `planned` id may be named by a deck, and every entry must say something.
  */
-export const PLANNED_SLIDES: Record<string, string> = {
-  // ✅ EMPTY SINCE 2026-08-21 (P2b) — every id either deck names is now BUILT. Both running
-  // orders below are real for the first time, so `deckSlides()` no longer skips anything.
-  //
-  // Kept rather than deleted because it is the register the next batch is declared in: #18–#20
-  // are held for the club deck (P4) and will appear here the moment that deck names them, and
-  // the guard test fails on an id that is both built and listed here. An empty register is the
-  // honest state, not a dead one.
+export type SlideNumberStatus = 'planned' | 'held' | 'retired';
+
+export const SLIDE_NUMBERS_SPOKEN_FOR: Record<string, { status: SlideNumberStatus; note: string }> = {
+  '#08': {
+    status: 'retired',
+    note: 'Retired 2026-08-20, before the library was built — the number stays spent so nothing can reuse it.',
+  },
+  // ⚠ NO `planned` ENTRIES SINCE 2026-08-21 (P2b): every id either deck names is now BUILT, so both
+  // running orders below are real end to end and `deckSlides()` skips nothing. This is where the
+  // next batch is declared — an empty status is the honest state, not a dead one.
+  '#18': {
+    status: 'held',
+    note: 'Held for the club deck (P4) — a Club customer gets the tournament product AND every coach’s portal, plus three slides of its own.',
+  },
+  '#19': { status: 'held', note: 'Held for the club deck (P4).' },
+  '#20': { status: 'held', note: 'Held for the club deck (P4).' },
 };
 
 /**
@@ -525,8 +571,8 @@ export const PLANNED_SLIDES: Record<string, string> = {
  * settlement sheet shot mid-season shows every family in debt and argues the opposite of what
  * it means to. The phase IS the picture.)
  *
- * Ids the bank does not hold yet are skipped by `deckSlides()` — see `PLANNED_SLIDES`, which is
- * empty as of P2b: both orders below are real end to end.
+ * Ids the bank does not hold yet are skipped by `deckSlides()` — see `SLIDE_NUMBERS_SPOKEN_FOR`,
+ * which holds no `planned` entry as of P2b: both orders below are real end to end.
  *
  * ⚠ THE OVERVIEW SLIDE SITS SECOND IN EACH DECK, NOT FIRST (owner call 2026-08-21). Open on the
  * visceral moment the deck already opened on — Saturday 2:14 PM, or tryout day — and only then
@@ -570,8 +616,20 @@ export interface WalkthroughPanel {
   slideId: SlideId;
   /** What stops being their job, at page length. Present tense, specific mechanism. */
   answer: string;
-  /** Set ONLY when the pictured feature is plan-gated — full canonical plan name, always. */
-  planTag?: string;
+  /**
+   * ⚠⚠ `planTag` WAS HERE AND IS GONE (owner ruling 2026-08-21). Do not add it back, and do not
+   * reintroduce a plan, tier, price or "what's included" line by any other name.
+   *
+   * The 2026-08-20 ruling was a SPLIT: a slide is plan-free (that is what makes it portable
+   * between decks) but the unattended PAGE carries a plan line, "because nobody is standing there
+   * to answer *is that included?*". **The owner overturned the page half:** *"we don't need to
+   * mention any subscriptions here… we don't want to compartmentalize features at this stage, we
+   * want to show people all we have to offer and how we will improve their lives, period."*
+   *
+   * The division of labour is now by SURFACE, not by sentence: **the walkthrough creates desire,
+   * the pricing page qualifies, and a human answers in the room.** A gate named next to a feature
+   * on a page whose whole job is "here is what stops being your problem" argues against itself.
+   */
 }
 
 export interface Walkthrough {
@@ -652,13 +710,11 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
       slideId: '#13',
       answer:
         'Rain delay re-times the whole day and hands you one notice — pinned as a banner on the public schedule, pushed to followers’ phones, sent to every coach. One action, not forty calls.',
-      planTag: 'Rain delay re-timing is part of Tournament Plus',
     },
     {
       slideId: '#14',
       answer:
         'The Playoff Wizard builds the bracket from live standings, and it fills itself in as games end. A big division splits into Gold and Silver tiers in one click. Every plan gets the inline bracket editor.',
-      planTag: 'Playoff Wizard is part of Tournament Plus',
     },
     {
       slideId: '#15',
@@ -666,7 +722,6 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
         'Registration Health scores the whole field weeks out — who’s paid, whose email bounces, who still needs a decision — and every tile clicks through to the exact teams.',
       // The Payments tile shows a badge instead of numbers on the free plan
       // (lib/help-content/tournaments.tsx) — same disclosure rule as the other gated panels.
-      planTag: 'Payment tracking is part of Tournament Plus',
     },
   ],
   closing: {
@@ -736,13 +791,11 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // default rather than an option somebody has to find.
       answer:
         'Evaluators score on their phones — a link, no login, and one card per player. You choose the categories and how much each is worth, so the ranked list at the end means what you decided it means, not what a spreadsheet averaged. Names stay hidden while scoring, and you reveal them when you are ready to decide. Offer, waitlist or pass, and an accepted player lands on your roster with their fees already set up.',
-      planTag: 'Running tryouts is part of the Premium Coaches Portal',
     },
     {
       slideId: '#25',
       answer:
         'A plan belongs to a real practice on your schedule, so it is never a text nobody can find. Blocks with their own minutes, stations with what you are watching for, and a rotation that works out which group is where in every round. At the field it opens on your phone one block at a time with the clock running — and it records nothing, because the one field-time job worth finishing is attendance.',
-      planTag: 'Practice plans are part of the Premium Coaches Portal',
     },
     {
       slideId: '#24',
@@ -750,7 +803,6 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // left implied, because the picture is the report the book is WRITTEN in, not the bench.
       answer:
         'One page per team you play: your record against them, every meeting, and the lines you and your assistants logged — tagged for pitching, hitting, defense, baserunning or coaching. It opens on the bench during the game as well as here, and the week you play them again the portal tells you the book is there. Opposing players are referred to by number and position, never by name.',
-      planTag: 'The opponent book is part of the Premium Coaches Portal',
     },
     {
       slideId: '#01',
@@ -768,8 +820,7 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // settled at season's end"). Unqualified, this sentence would be false for any team on
       // that mode. The demo world pins the default, so the PICTURE stays true either way.
       answer:
-        'Player Dues puts every family on one page — what they were charged, what they have paid, what is left, and who has fallen behind. Reminders go out on their own ahead of each installment’s due date, and one button chases whoever is still behind. Money a family raised fundraising comes off their own bill, or waits for season’s end — your call. (The free portal keeps its Fees tool: charge the team, mark who has paid.)',
-      planTag: 'Player Dues is part of the Premium Coaches Portal',
+        'Player Dues puts every family on one page — what they were charged, what they have paid, what is left, and who has fallen behind. Reminders go out on their own ahead of each installment’s due date, and one button chases whoever is still behind. Money a family raised fundraising comes off their own bill, or waits for season’s end — your call.',
     },
     {
       slideId: '#03',
@@ -782,7 +833,6 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // pending with the club. That is the honest, and better, version of the same promise.
       answer:
         'Season settlement works it out from the season’s real ledger — what the team is holding, each family’s even share, who is owed money back and who still owes. It names every reason the books are not ready to close, and keeps the pay-everyone button locked until they are.',
-      planTag: 'Season settlement is part of the Premium Coaches Portal',
     },
     {
       slideId: '#09',
@@ -792,7 +842,6 @@ export const COACH_WALKTHROUGH: Walkthrough = {
       // without adding it to the page.
       answer:
         'Close the season and the whole team workspace becomes one page: Season Wrapped — the record, the longest run, the closest game, who was on the field most — above four shelves holding the results, the roster, the practices you ran and how the money came out. It reads the same in three years as it does the week you close it, and starting next season does not take it away.',
-      planTag: 'Season history is part of the Premium Coaches Portal',
     },
   ],
   closing: {

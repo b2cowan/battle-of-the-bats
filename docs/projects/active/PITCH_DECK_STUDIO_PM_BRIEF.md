@@ -12,12 +12,49 @@ See the whole slide library on one page. See every slideshow we publish, what it
 many slides it shows. Reorder, add and remove slides — including on the two live marketing pages.
 Build a deck aimed at one prospect and hand it over as a private link or a PDF.
 
+## Stage A is built (dev, 2026-08-21) — what you can do today
+
+**Platform-admin → Growth → Pitch Deck Studio.** The library view, read-only. Every slide with its
+picture and its words, both decks with their running orders, and a straight answer per slide on
+where it is published and what condition it is in. **Nothing to save, no edit controls.** Owner QA
+§72.
+
+**⚠ Two corrections to this brief, both from the code:**
+
+**It is twelve stranded slides, not five.** The "five" above was counted before the last two
+batches of artwork landed. The library is now 23 slides; the two public pages show 6 and 5. **Twelve
+finished, checked slides can be reached by no visitor** — ten coach, two tournament, including the
+coach deck's overview wheel, which sits second in the running order. The screen computes that number
+itself, so it cannot go stale again.
+
+**Success criterion 4 is NOT met, and could not have been met the planned way.** *"When a slide's
+pictured screen changes, the library view says so."* The check we planned to reuse proves a picture
+exists with its words recorded — it cannot tell whether the picture still looks like the screen. A
+failed re-photograph leaves the old one in place, so a three-month-stale picture passes everything
+we run. **Rather than a green tick that means less than it looks like, every card says this in plain
+words.** Closing it properly means re-photographing and comparing, which is its own piece of work —
+say if you want it queued.
+
+**A column was built and deleted on the same day, and that was the right outcome.** The screen was
+to carry a "plan line" column, checking each page’s *"…is part of Tournament Plus"* sentence against
+what the plans actually grant. **You then removed every one of those sentences from the walkthrough
+pages** — *"we don’t want to compartmentalize features at this stage"* — so the column had nothing
+left to read. What replaced it is a build check: nothing in the pitch material may name a plan, tier
+or price, and the build fails if one appears. **That is stronger than a column** — a check fails on
+its own, a column only helps someone who happens to be looking at it.
+
+**It did catch one thing before it went:** the six coach panels were advertising the Premium Coaches
+Portal, which our plan configuration says is in early access and not open for self-serve checkout.
+Almost certainly the founding season working as intended — moot for the walkthrough now, but the
+same wording appears elsewhere, so it is worth confirming.
+
 ## Why it matters
 
-**We have finished pitch material nobody can see.** Eleven coach slides are built; six are
-reachable. Playing time, awards, player development, the fundraising credit and the lineup board
-were all photographed, all checked, and there is no surface in the product that shows them. That is
-not a backlog — it is work already paid for sitting in a drawer.
+**We have finished pitch material nobody can see.** ⚠ Counted again on 2026-08-21 when stage A put
+it on a screen: the library holds 23 slides and the two public pages show 6 and 5. **Twelve are
+reachable nowhere** — ten coach, two tournament. All photographed or drawn, all checked, and no
+surface in the product shows them. That is not a backlog — it is work already paid for sitting in
+a drawer.
 
 **Targeted selling is a real workflow, not a nice idea.** A prospect looking at us for one specific
 reason should get the four slides about that reason, not a general page. Today that means asking an
@@ -82,7 +119,9 @@ committed to anyway.
 
 1. The owner reorders the coaches page without help, and the page's own counters and closing
    paragraph follow it correctly.
-2. Every built slide is visible somewhere — the five stranded coach slides included.
+2. Every built slide is visible somewhere — the twelve stranded slides included.
 3. A prospect deck goes from "I know what they care about" to a sent link in under ten minutes.
-4. When a slide's pictured screen changes, the library view says so before a prospect finds out.
+4. ⚠ **NOT MET BY STAGE A, and not achievable the planned way** — see above. When a slide's
+   pictured screen changes, something says so before a prospect finds out. Needs a
+   re-photograph-and-compare, not a column.
 5. No slide's wording can be changed from a browser.

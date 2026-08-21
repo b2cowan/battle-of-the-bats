@@ -23,6 +23,7 @@ export type PlatformArea =
   | 'retention'
   | 'early_access'
   | 'email'
+  | 'pitch_deck_studio'
   | 'change_requests'
   | 'plans_pricing'
   | 'bulk_operations'
@@ -58,6 +59,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   // Growth domain
   early_access:    { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
   email:           { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
+  // The pitch slide library + deck composition. Company-owned material aimed at people who are
+  // not customers yet, so it sits with the other Growth rooms. ⚠ writeRoles is EMPTY because the
+  // room genuinely writes nothing (stage A is read-only by owner ruling) — an empty write set is
+  // what keeps the nav's view-only badge off a screen that has no controls to lock.
+  pitch_deck_studio: { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: [] },
 
   // System
   platform_users:  { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },

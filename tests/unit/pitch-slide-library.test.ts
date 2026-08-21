@@ -20,7 +20,7 @@ import { MARKETING_SHOTS } from '../../lib/marketing-shots.ts';
 import {
   PITCH_DECKS,
   PITCH_SLIDES,
-  PLANNED_SLIDES,
+  SLIDE_NUMBERS_SPOKEN_FOR,
   WALKTHROUGHS,
   deckSlides,
   type PitchSlide,
@@ -40,18 +40,57 @@ test('a slide is keyed by its own permanent number', () => {
   }
 });
 
+/**
+ * ⚠ HALF OF THIS TEST IS CURRENTLY UNEXERCISED, AND THAT IS RECORDED RATHER THAN HIDDEN.
+ *
+ * `SLIDE_NUMBERS_SPOKEN_FOR` holds no `planned` entry today (P2b built everything both decks
+ * name), and no deck names a `held` or `retired` number. So the `|| planned` arm and the
+ * `!spokenFor || planned` guard below never decide anything against the current data — deleting
+ * both would leave all ten tests green. **That is the shape this repo keeps getting burned by**
+ * (memory/reference_green_check_over_empty_fixture.md: a check that reports green over an empty
+ * fixture reports coverage it does not have).
+ *
+ * It is kept, and kept honest by saying so, because it is not dead — it is DORMANT. Verified by
+ * mutation 2026-08-21: naming a retired id (#08), a held id (#18) or an undefined one (#99) in a
+ * deck each fails here with the right message, and the `planned` path is structurally symmetric
+ * to those. The assertions go live the moment the club deck (P4) declares its first planned
+ * number. ⚠ If you are here because the register is still empty, do not "simplify" this away.
+ */
 test('every id a deck names is either built or explicitly planned — and never both', () => {
   for (const [audience, ids] of Object.entries(PITCH_DECKS)) {
     for (const id of ids) {
       const built = id in PITCH_SLIDES;
-      const planned = id in PLANNED_SLIDES;
+      const spokenFor = SLIDE_NUMBERS_SPOKEN_FOR[id];
+      const planned = spokenFor?.status === 'planned';
       assert.ok(built || planned, `${audience} deck names ${id}, which is neither built nor planned`);
-      assert.ok(!(built && planned), `${id} is both built and listed as planned — remove the planned entry`);
-      // A planned slot says what it is FOR. Without this the register decays into a bare id
-      // list and stops telling the next session what it is meant to build there.
-      if (planned) assert.ok(PLANNED_SLIDES[id].trim(), `${id} is planned but says nothing about what it is`);
+      assert.ok(!(built && spokenFor), `${id} is both built and spoken for — remove the register entry`);
+      // ⚠ A deck may name a `planned` number and NOTHING else. Naming a `held` or `retired` one is
+      // the F5 hole: today it is a compile error, but once decks are owner-editable rows it becomes
+      // a slide that silently vanishes from a running order the owner believes is six long.
+      assert.ok(
+        !spokenFor || planned,
+        `${audience} deck names ${id}, which is ${spokenFor?.status} — only a planned number may be named`,
+      );
     }
     assert.equal(new Set(ids).size, ids.length, `${audience} deck names the same slide twice`);
+  }
+});
+
+/**
+ * ⚠ A SPENT NUMBER STAYS SPENT — the read-only half of Deck Studio finding F5.
+ *
+ * `SLIDE_NUMBERS_SPOKEN_FOR` records every gap in the number line and why: #08 retired, #18–#20
+ * held for the club deck. That lived only in a prose comment until 2026-08-21. The half the test
+ * above does not cover is that a spoken-for number never quietly ACQUIRES a slide — reusing #08
+ * would break the one promise the library makes, that a number identifies the same slide forever.
+ */
+test('a number that is spoken for holds no slide, and says why', () => {
+  for (const [id, entry] of Object.entries(SLIDE_NUMBERS_SPOKEN_FOR)) {
+    assert.match(id, /^#\d\d$/, `${id} is not a library number`);
+    // Without this the register decays into a bare id list and stops telling the next session
+    // what it is meant to build there — or why it may never build there again.
+    assert.ok(entry.note.trim(), `${id} is ${entry.status} but does not say why — that is the whole point of the register`);
+    assert.ok(!(id in PITCH_SLIDES), `${id} is spoken for AND built — a spent number must never be reused`);
   }
 });
 
@@ -106,13 +145,34 @@ test('a drawing’s own alt and caption are not blank', () => {
   }
 });
 
-test('NO PLAN OR SUBSCRIPTION NAME APPEARS ON A SLIDE', () => {
-  // The owner ruling that makes a slide portable between audiences. The plan line belongs to
-  // the page's pull, and the club deck will need a different sentence for the same slide.
-  const planWords = /Tournament Plus|Premium Coaches Portal|Coaches Portal|\bClub\b|\bLeague\b plan/i;
+/**
+ * ⚠⚠ NO PLAN, TIER, PRICE OR SUBSCRIPTION APPEARS ANYWHERE IN THE PITCH MATERIAL — and the scope
+ * of that is WIDER than it was (owner ruling 2026-08-21).
+ *
+ * It used to cover slides only, because the 2026-08-20 ruling was a deliberate split: a slide is
+ * plan-free so it can serve two audiences untouched, while the unattended PAGE carries a plan line
+ * "because nobody is standing there to answer *is that included?*". **The owner overturned the page
+ * half:** *"we don't want to compartmentalize features at this stage, we want to show people all we
+ * have to offer and how we will improve their lives, period."*
+ *
+ * So the check now reads the page's own long `answer` copy too, which is where the nine plan chips
+ * and one "(the free portal keeps…)" aside used to live. **The division of labour is by SURFACE:
+ * the walkthrough creates desire, the pricing page qualifies, a human answers in the room.**
+ *
+ * ⚠ The pattern deliberately does NOT ban the bare product name ("the Coaches Portal") — that is
+ * what the thing is called, and the hero says it. What it bans is the tier, the gate and the
+ * comparison: "Premium Coaches Portal", "Tournament Plus", "free portal", "is part of …".
+ */
+test('NO PLAN, TIER OR SUBSCRIPTION APPEARS ANYWHERE ON A SLIDE OR ITS PAGE PANEL', () => {
+  const planWords = /Premium Coaches Portal|Tournament Plus|\bLeague plan\b|\bClub plan\b|free portal|free tier|subscription|is part of the [A-Z]/i;
   for (const slide of SLIDES) {
     assert.doesNotMatch(slide.pain, planWords, `${slide.id}'s pain names a plan`);
     assert.doesNotMatch(slide.claim, planWords, `${slide.id}'s claim names a plan`);
+  }
+  for (const w of WALKTHROUGHS) {
+    for (const panel of w.panels) {
+      assert.doesNotMatch(panel.answer, planWords, `${w.path}'s ${panel.slideId} answer names a plan`);
+    }
   }
 });
 

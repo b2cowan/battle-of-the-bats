@@ -62,6 +62,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDemoOrgSlug } from '../../lib/demo-org.ts';
+import { shotManifestProblems } from '../../lib/shot-health.ts';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from '../../lib/sandbox-door.ts';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -114,15 +115,17 @@ export async function runShotCli({ shots, manifestPath, outputRoot, groupOf, bas
     process.exit(1);
   }
 
-  /* ── --check: no browser, just prove every declared picture actually exists. ── */
+  /* ── --check: no browser, just prove every declared picture actually exists. ──
+     ⚠ The four rules themselves live in lib/shot-health.ts, NOT here, because the Pitch Deck
+     Studio's library view asks the same four of the same manifest and cannot import this file
+     (Playwright is imported at module scope above). Shared rather than copied — and read that
+     module's header for the large thing these four questions do NOT prove. */
   if (args.includes('--check')) {
     const problems = [];
     for (const s of shots) {
-      const file = path.join(ROOT, outputRoot, groupOf(s), `${s.id}.png`);
-      if (!existsSync(file)) problems.push(`${s.id}: no image at ${outputRoot}/${groupOf(s)}/${s.id}.png`);
-      else if (!s.size) problems.push(`${s.id}: manifest has no size — re-run the capture so the page can reserve its space`);
-      if (!s.alt?.trim()) problems.push(`${s.id}: no alt text`);
-      if (!s.caption?.trim()) problems.push(`${s.id}: no caption`);
+      const where = `${outputRoot}/${groupOf(s)}/${s.id}.png`;
+      const present = existsSync(path.join(ROOT, outputRoot, groupOf(s), `${s.id}.png`));
+      for (const p of shotManifestProblems(s, { present, where })) problems.push(`${s.id}: ${p}`);
     }
     if (problems.length) {
       console.error(`✖ ${label}:`);

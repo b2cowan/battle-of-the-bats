@@ -156,16 +156,6 @@
   margin: 1.5rem 0 0.75rem;
 }
 
-.planTag {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 400;
-  color: var(--data-gray);
-  letter-spacing: 0.08em;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 999px;
-  padding: 0.2rem 0.7rem;
-}
 
 /* Body copy is the SANS face, not the data face — mono at paragraph length is a large part of
    why the first slideshow attempt read as cramped (ratified 2026-08-20). The mono kickers stay:
@@ -179,17 +169,6 @@
   margin-bottom: 1.25rem;
 }
 
-.panelLive {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--logic-lime);
-}
-
-.panelLive:hover { opacity: 0.75; }
-.panelLive:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
 
 /* ── The pictures ────────────────────────────────────────────────────────────
    The frame itself is components/marketing/SlideStage.tsx — one stage, shared with present
@@ -282,7 +261,6 @@
 
   /* Interactive furniture doesn't survive a PDF — the address line below does. */
   .seeItLive,
-  .panelLive,
   .backLink,
   .heroActions { display: none; }
 

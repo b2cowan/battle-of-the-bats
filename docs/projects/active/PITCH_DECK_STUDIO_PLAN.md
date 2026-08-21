@@ -1,6 +1,7 @@
 # Pitch Deck Studio — Plan
 
-**Status:** APPROVED 2026-08-21 (owner, in session — three rulings recorded below). **Not started.**
+**Status:** APPROVED 2026-08-21 (owner, in session — three rulings recorded below). **STAGE A SHIPPED
+2026-08-21 (dev) — owner QA §72 owed.** B, C and D not started.
 **PM brief:** [PITCH_DECK_STUDIO_PM_BRIEF.md](PITCH_DECK_STUDIO_PM_BRIEF.md)
 **Parent project:** [PITCH_SLIDE_LIBRARY_PLAN.md](PITCH_SLIDE_LIBRARY_PLAN.md) — this is the
 "deck assembly in platform-admin" item that plan parked as *"later, and only if it earns it… build
@@ -158,12 +159,76 @@ Two things, both small, both needed by this project:
 
 ## Phases
 
-### A — The library view (read-only). Absorbs parent P3's contact sheet.
+### A — ✅ SHIPPED dev 2026-08-21. The library view (read-only). Absorbs parent P3's contact sheet.
 
 Every slide on one page: picture, pain, claim, image class, which decks name it, and **staleness** —
 when its picture was last taken, whether the screen it pictures still exists, and whether its plan
 line still matches the plan configuration. Plus every deck, its purpose, its count and where it is
 published. **No editing.** This alone answers "what do we have?" and is the cheapest useful thing.
+
+#### ⚠ What stage A actually settled — read before planning B
+
+**1. ⚠⚠ IT IS TWELVE STRANDED SLIDES, NOT FIVE — F1's count above is stale and must not be
+re-quoted.** F1 was written when the coach deck held eleven built slides. After P2b and P2c the
+library is 23 (coach 15, tournament 8) and the two public pages pull 6 and 5. **Twelve built,
+checked slides are shown on no public page** — ten coach (#26, #02, #04, #05, #06, #07, #21, #22,
+#23, #27) and two tournament (#16, #17). Present mode reaches them; no visitor does. The number is
+computed on the screen, so it cannot go stale again.
+
+**2. ⚠⚠ THE PM BRIEF'S SUCCESS CRITERION 4 IS NOT MET, AND THE PLANNED APPROACH COULD NEVER MEET
+IT.** *"When a slide's pictured screen changes, the library view says so before a prospect finds
+out."* The plan said to reuse the existing picture check. That check proves a file exists with its
+alt, caption and size recorded — **it says nothing about whether the picture still resembles the
+screen.** `lib/marketing-shots.ts` states the mechanism in its own header: a failed re-capture
+LEAVES THE PREVIOUS PNG IN PLACE, so a three-month-stale photograph passes it and passes CI.
+
+Stage A therefore **renders the gap rather than a tick**: every capture card carries the sentence
+in `PICTURE_FRESHNESS_IS_UNCHECKED`. Closing it for real needs a **re-capture-and-compare** (take
+the shot again, diff it, fail on drift) — a separate piece of work, not a column. **Do not mark
+criterion 4 met by adding a tick.**
+
+**3. The picture check now has ONE implementation** (`lib/shot-health.ts`), read by both
+`scripts/lib/shot-capture.mjs --check` and the studio. The capture core imports Playwright at module
+scope, so the studio could not have called it directly — copying the four rules was the alternative
+and would have diverged.
+
+**4. THE PLAN-LINE COLUMN WAS BUILT, THEN DELETED THE SAME DAY — AND ITS ABSENCE IS NOW THE RULE.
+Do not build it back.** The build prompt called it the highest-value column on the screen, and it
+was: it resolved each page panel’s plan line against `lib/plan-config.ts`. **A concurrent owner
+ruling removed `planTag` from `WalkthroughPanel` entirely** — *"we don’t need to mention any
+subscriptions here… we don’t want to compartmentalize features at this stage, we want to show people
+all we have to offer and how we will improve their lives, period"* — deleting all nine plan lines
+from the two walkthrough pages. With no producer left, the column, `lib/pitch-plan-line.ts` and its
+test were permanently dead code and were removed rather than patched.
+
+The division of labour is now by SURFACE: **the walkthrough creates desire, the pricing page
+qualifies, a human answers in the room.** The invariant that replaced the column — *no plan, tier or
+price appears anywhere in the pitch material* — lives in `tests/unit/pitch-slide-library.test.ts`,
+which is the better home: **a build check fails on its own; a column only helps someone who happens
+to be looking at it.**
+
+⚠ One thing the column surfaced before it went: the six coach panels advertised the **Premium
+Coaches Portal**, whose `gatingStatus` is `early_access` — not open for self-serve checkout. Moot
+for the walkthrough now; the same wording exists on other surfaces.
+
+⚠ And the trap it guarded, recorded in case any future surface resolves a plan name out of prose:
+**"Tournament" is a prefix of "Tournament Plus"** and "Club" of "Club · Association", so a naive
+scan reports correct copy as an overclaim — and **a column that cries wolf once stops being read.**
+Match longest-label-first.
+
+**5. The gaps in the number line are ONE register with a status** (`SLIDE_NUMBERS_SPOKEN_FOR` in
+`lib/walkthrough-content.ts`: `planned` | `held` | `retired`), with a guard test asserting a
+spoken-for number is never also built and that **only a `planned` number may be named by a deck.**
+That is F5’s read-only half. The write half — a save path refusing to create a deck that names a
+missing number — is still stage B’s.
+
+⚠ It was briefly TWO registers (`PLANNED_SLIDES` plus a new `RESERVED_SLIDE_NUMBERS`) and the
+cleanup pass caught it: two same-shaped maps over the same key space, ten lines apart, both
+describing #18–#20, kept from overlapping only by a test assertion reading *"pick one register"*.
+Merging them also bought the report something two maps could not — **a deck naming a HELD number now
+says whose it is, instead of rendering the same bare cross as a number that never existed.**
+**6. F1's false comment is gone** — P2b already fixed present mode to render the whole deck, and
+both files now describe what the code does.
 
 ### B — Decks become data, and the pages stop being able to lie.
 

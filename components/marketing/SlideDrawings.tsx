@@ -598,66 +598,6 @@ function OpponentBook() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   #09 — nothing kept → one page
-
-   ⚠ THE FOUR SHELVES ARE NAMED AT FULL SIZE, breaking house rule 3's "two words each side, the
-   rest is texture" on purpose: on this slide the four ARE the claim ("the record, the roster, the
-   practices, the money" is the sentence beside the picture). Same deliberate exception the
-   copy-forward drawing already makes with its four nouns.
-
-   ⚠ One page and exactly four shelves is the BINDING owner ruling the product is built on
-   (CLAUDE.md), not a simplification made to fit a drawing. Do not add a fifth here without adding
-   it to the product.
-   ──────────────────────────────────────────────────────────────────────────── */
-function SeasonPage() {
-  return (
-    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-      {/* the four things the season made, drifting apart — the last two already only outlines */}
-      <g transform="rotate(-14 118 140)" opacity="0.75">
-        <rect className={styles.sFaint} strokeWidth="2.2" x="66" y="106" width="104" height="68" rx="5" />
-        <path className={styles.sDim} strokeWidth="3" d="M82 130h34M82 146h56" />
-      </g>
-      <g transform="rotate(9 232 176)" opacity="0.6">
-        <rect className={styles.sFaint} strokeWidth="2.2" x="182" y="142" width="100" height="68" rx="5" />
-        <path className={styles.sDim} strokeWidth="3" d="M198 166h30M198 182h48" />
-      </g>
-      <g transform="rotate(-6 116 296)" opacity="0.45">
-        <rect className={styles.sFaint} strokeWidth="2.2" strokeDasharray="9 8" x="64" y="262" width="104" height="68" rx="5" />
-      </g>
-      <g transform="rotate(12 236 322)">
-        <rect className={styles.sAmber} strokeWidth="2.4" strokeDasharray="9 8" x="186" y="288" width="100" height="68" rx="5" />
-        <text className={`${styles.label} ${styles.fAmber}`} x="236" y="333" fontSize="30" textAnchor="middle" stroke="none">?</text>
-      </g>
-
-      <path className={styles.sFaint} strokeWidth="2" d="M312 232C360 236 406 242 448 248" />
-      <circle className={styles.fDim} cx="458" cy="249" r="5" stroke="none" />
-
-      <g transform="rotate(-0.5 632 240)">
-        <rect className={styles.sInk} strokeWidth="3" x="496" y="80" width="272" height="312" rx="7" />
-        {/* the record, across the top — a scoreline, not a number we would have to keep true */}
-        <g className={styles.fInk} stroke="none">
-          <rect x="520" y="108" width="52" height="15" rx="7.5" />
-          <rect x="580" y="108" width="34" height="15" rx="7.5" />
-          <rect x="622" y="108" width="26" height="15" rx="7.5" />
-        </g>
-        <path className={styles.sFaint} strokeWidth="1.4" d="M520 142h224" />
-        <g className={`${styles.label} ${styles.fDim}`} fontSize="26" letterSpacing="1.6" stroke="none">
-          <text x="520" y="184">RESULTS</text>
-          <text x="520" y="240">ROSTER</text>
-          <text x="520" y="296">PRACTICES</text>
-          <text x="520" y="352">MONEY</text>
-        </g>
-        <path className={styles.sFaint} strokeWidth="1.4" d="M520 200h224M520 256h224M520 312h224M520 368h224" />
-      </g>
-
-      <Say x={176} y={446} tone="dim">NOTHING KEPT</Say>
-      <Say x={632} y={440} tone="ink">ONE PAGE</Say>
-      <Sub x={620} y={470}>the same in three years</Sub>
-    </g>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
    #25 — a 9 PM text → the rotation
 
    ⚠ THIS DRAWING IS BETTER THAN THE PHOTOGRAPH IT REPLACED, and the reason generalises: the
@@ -843,7 +783,6 @@ export const SLIDE_DRAWINGS = {
   // trades the problem: it makes the picture small on a laptop instead. A drawing has no native
   // size, so it reads at whatever size we author for.
   'opponent-book':      { Draw: OpponentBook,           ...WIDE },
-  'season-page':        { Draw: SeasonPage,             ...WIDE },
   'practice-rotation':  { Draw: PracticeRotation,       ...WIDE },
   'coach-year':         { Draw: CoachYear,              ...WHEEL },
   'tournament-year':    { Draw: TournamentYear,         ...WHEEL },

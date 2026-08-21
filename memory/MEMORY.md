@@ -9,6 +9,7 @@
 - [Launch pricing positioning](launch-pricing-positioning.md)
 - [Billing plan invariants](billing-plan-invariants.md)
 - [Platform admin information architecture](platform-admin-information-architecture.md)
+- [Pitch Deck Studio](project_pitch_deck_studio.md) — stage A (the READ-ONLY library view) on dev 2026-08-21, QA §72; ⚠⚠ DECKS ARE DATA / SLIDES ARE CODE — never add an edit affordance; the picture column is DECLARATION health not freshness (a failed re-capture leaves the old PNG, so stale passes CI) and success criterion 4 is NOT met; a DRAWING has no manifest entry so it is neither passed nor failed; TWELVE slides are stranded, not the five both plans say; the plan-line column was BUILT AND DELETED the same day (a concurrent owner ruling removed every plan line from the pitch pages) — the rule that replaced it is a BUILD CHECK, which is stronger than a column
 - [Local dev server launch](local-dev-server-launch.md)
 - [Non-billing UAT remediation](non-billing-uat-remediation.md)
 - [Next.js framework conventions](nextjs-framework-conventions.md)

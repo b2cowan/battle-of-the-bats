@@ -18,84 +18,15 @@
  * `claim`.
  */
 import Link from 'next/link';
-import { MARKETING_SHOTS } from '@/lib/marketing-shots';
 import { PITCH_SLIDES, deckSlides, type PitchSlide, type Walkthrough } from '@/lib/walkthrough-content';
 import { sandboxDoorsVisible } from '@/lib/sandbox-door';
-import { drawingSize } from './SlideDrawings';
-import SlideStage, { SlideLayout, type SlidePicture } from './SlideStage';
+import { pictureFor } from './slide-picture';
+import SlideStage, { SlideLayout } from './SlideStage';
 import WalkthroughPresent, { type PresentSlide } from './WalkthroughPresent';
 import styles from './WalkthroughPage.module.css';
 
-const SHOTS = new Map(MARKETING_SHOTS.map(s => [s.id, s]));
-
 /** The address a reader types after the PDF is off the screen — no scheme, no `www.`. */
 const PRINT_HOST = 'fieldlogichq.ca';
-
-/** The picture two renderings share, plus the caption only the scroll page's figure shows. */
-interface Picture {
-  picture: SlidePicture;
-  caption: string;
-}
-
-/**
- * A slide's picture, or null while it is declared but not yet captured. The null branch keeps a
- * half-built page carrying its text instead of a broken image; `check:marketing-shots` (wired
- * into verify:changed) is what stops that from becoming a silent permanent state.
- */
-/**
- * Captures are taken at double density, so a picture holds twice the pixels of its recorded
- * (CSS) size. That headroom is what lets a small crop grow to fill the stage and stay sharp.
- * Kept in step with the capture context's `deviceScaleFactor` in scripts/lib/shot-capture.mjs.
- */
-const CAPTURE_DENSITY = 2;
-
-/** ≤430px covers every capture whose SUBJECT is the phone experience. */
-const PHONE_CAPTURE_WIDTH = 430;
-
-/**
- * How large a picture may be drawn.
- *
- * ⚠ TWO DIFFERENT RULES, AND CONFLATING THEM COSTS LEGIBILITY. A capture taken at phone width
- * IS the phone experience — enlarged on a desktop it stops looking like a phone and starts
- * claiming to be a desktop app, so it never grows past the size it was taken. A DESKTOP capture
- * with a tight crop (the playoff bracket is 480px of bracket) misrepresents nothing by being
- * bigger; it was simply cropped small. It may grow to fill the stage, bounded by the pixels it
- * actually has — so it can never be drawn softer than 1:1.
- */
-function maxRenderWidth(shot: { width: number; size: { w: number } }): number {
-  return shot.width <= PHONE_CAPTURE_WIDTH ? shot.size.w : shot.size.w * CAPTURE_DENSITY;
-}
-
-function pictureFor(slide: PitchSlide): Picture | null {
-  // A DRAWING first (P2b): it is inline SVG, so there is nothing to look up and nothing that can
-  // be missing at runtime — `drawingId` is typed against the registry's own key set, and its alt
-  // and caption travel with the slide because a drawing has no manifest entry to keep them in.
-  if (slide.drawingId) {
-    return {
-      picture: {
-        kind: 'drawing',
-        drawingId: slide.drawingId,
-        ...drawingSize(slide.drawingId),
-        alt: slide.alt,
-      },
-      caption: slide.caption,
-    };
-  }
-  const shot = slide.shotId ? SHOTS.get(slide.shotId) : undefined;
-  if (!shot?.size) return null;
-  return {
-    picture: {
-      kind: 'capture',
-      src: `/marketing/${shot.persona}/${shot.id}.png`,
-      width: shot.size.w,
-      height: shot.size.h,
-      maxWidth: maxRenderWidth({ width: shot.width, size: shot.size }),
-      alt: shot.alt,
-      rings: slide.rings,
-    },
-    caption: shot.caption,
-  };
-}
 
 export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkthrough }) {
   /**
@@ -197,16 +128,16 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
                   <>
                     <p className={styles.panelOld}>The old way</p>
                     <h2 className={styles.panelPain}>{slide.pain}</h2>
-                    <p className={styles.panelNew}>
-                      With FieldLogicHQ
-                      {panel.planTag && <span className={styles.planTag}>{panel.planTag}</span>}
-                    </p>
+                    {/* ⚠ No plan chip, by owner ruling 2026-08-21 — see the long note on
+                        WalkthroughPanel. This page names no plan, tier or price anywhere. */}
+                    <p className={styles.panelNew}>With FieldLogicHQ</p>
                     <p className={styles.panelAnswer}>{panel.answer}</p>
-                    {showSandboxDoor && (
-                      <Link href={w.door.path} className={styles.panelLive}>
-                        See this screen live →
-                      </Link>
-                    )}
+                    {/* ⚠ AND NO PER-PANEL "See this screen live" LINK, by the same session's lime
+                        ruling. It was the page's only real repetition of the accent — six of them,
+                        against a hero and a closing that already offer the identical door. The
+                        rule that survives is by SURFACE: lime marks the one recommended action in
+                        the APP, and is the brand accent on marketing. Dropping these six is the
+                        trim that ruling asked for; do not re-add them panel by panel. */}
                   </>
                 }
                 show={

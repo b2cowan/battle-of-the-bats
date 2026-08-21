@@ -1,0 +1,308 @@
+/**
+ * WHAT THE LIBRARY VIEW KNOWS — every question this screen answers, computed in one pure pass.
+ *
+ * Plan: docs/projects/active/PITCH_DECK_STUDIO_PLAN.md (stage A). This is the READ-ONLY half of
+ * the studio and it writes nothing anywhere; the owner ruling behind that split is binding —
+ * **decks are data, slides are CODE** — and a future session must not "finish the CRUD" here.
+ * The reason is not preciousness: a build check compares a slide's claim against what the plans
+ * actually grant, and nothing watches a sentence once it is a row in a table.
+ *
+ * ── ⚠⚠ WHAT THIS REPORT CAN AND CANNOT SEE. READ BEFORE ADDING A TICK ANYWHERE ────────────────
+ *
+ * The single most dangerous thing this screen could do is draw a green tick that means less than
+ * it looks like. Its picture columns are honest only because they say what they did not check:
+ *
+ *  1. **A capture's health is DECLARATION health, not freshness.** `shotManifestProblems` proves a
+ *     picture exists with its alt, caption and size recorded. It cannot prove the picture still
+ *     resembles the screen it photographed — a failed re-capture leaves the previous PNG in place
+ *     (lib/marketing-shots.ts says so in its own header), so a picture of a screen redesigned three
+ *     months ago passes this and passes CI. `PICTURE_FRESHNESS_IS_UNCHECKED` below is that fact,
+ *     rendered rather than hidden.
+ *  2. **A DRAWING HAS NO MANIFEST ENTRY AT ALL**, so the capture-side question is meaningless for
+ *     one. ⚠ Nearly half the library is drawn — not an edge case, most of a screen — and reporting
+ *     them "healthy" would be four vacuous passes wearing a tick. They report `kind: 'drawing'`
+ *     and the screen says so in words.
+ *  3. **⚠⚠ THERE IS NO PLAN-LINE COLUMN, AND ITS ABSENCE IS THE RULE — do not build one back.**
+ *     This screen originally carried one: it resolved each page panel's plan line against the live
+ *     plan configuration, and the build prompt called it the highest-value column here. **The owner
+ *     deleted every plan line from the pitch surfaces on 2026-08-21** — *"we don't need to mention
+ *     any subscriptions here… we don't want to compartmentalize features at this stage"* — so
+ *     `planTag` is gone from `WalkthroughPanel` and the column had nothing left to read.
+ *
+ *     The division of labour is now by SURFACE: the walkthrough creates desire, the pricing page
+ *     qualifies, a human answers in the room. The invariant that replaced the column — that NO
+ *     plan, tier or price appears anywhere in the pitch material — is held by
+ *     `tests/unit/pitch-slide-library.test.ts`, which is the right place for it: a build check
+ *     fails, whereas a column only helps someone who happens to be looking at this screen.
+ */
+import {
+  PITCH_DECKS,
+  PITCH_SLIDES,
+  SLIDE_NUMBERS_SPOKEN_FOR,
+  WALKTHROUGHS,
+  type PitchSlide,
+  type SlideNumberStatus,
+  type SlideImageClass,
+} from '@/lib/walkthrough-content';
+import { pictureFor, shotFor, shotPublicPath, type SlidePictureWithCaption } from '@/components/marketing/slide-picture';
+import { shotManifestProblems, type FilePresence } from '@/lib/shot-health';
+
+type Audience = keyof typeof PITCH_DECKS;
+
+/** What a deck is called on screen. One home — both the page and the card render it. */
+export const AUDIENCE_LABEL: Record<Audience, string> = {
+  coach: 'Coach deck',
+  tournament: 'Tournament deck',
+};
+
+/** The sentence every capture card carries, so the tick above it cannot be over-read. */
+export const PICTURE_FRESHNESS_IS_UNCHECKED =
+  'Nothing checks whether this picture still looks like the screen it photographed. A failed ' +
+  're-capture leaves the old file in place, so a stale picture passes every check we have.';
+
+/* ── One slide ──────────────────────────────────────────────────────────────── */
+
+/** Where a slide sits in its deck. Every built slide belongs to exactly one deck today. */
+export interface DeckPlacement {
+  audience: Audience;
+  /** 1-based, as a human counts a running order. */
+  position: number;
+  of: number;
+}
+
+/** Where a slide is PUBLISHED — the thing no surface answered before this screen existed. */
+export interface PagePlacement {
+  path: string;
+  /** 1-based position among the panels that page actually shows. */
+  panel: number;
+  of: number;
+}
+
+/**
+ * What can be said about the picture, and it is a union because the two kinds of picture are
+ * answerable by genuinely different questions rather than by one question with a gap in it.
+ */
+export type PictureHealth =
+  | {
+      kind: 'capture';
+      /** The file the page requests. Reported whether or not this process can see the disk. */
+      publicPath: string;
+      /** Recorded pixel size, written back by the capture script. */
+      size?: { w: number; h: number };
+      /** The width the browser was set to — 390 where the picture's SUBJECT is a phone. */
+      captureWidth: number;
+      /** Where in the demo world it was taken, so a reader can go and look at the live screen. */
+      demoPath: string;
+      present: FilePresence;
+      problems: string[];
+    }
+  | {
+      kind: 'drawing';
+      drawingId: string;
+      /**
+       * Always true, and stated rather than implied: a drawing is hand-authored inline SVG with no
+       * manifest entry, so the capture check has nothing to look at. The screen renders this as a
+       * sentence, never as a tick.
+       */
+      outsideTheCaptureCheck: true;
+    };
+
+export interface SlideReport {
+  slide: PitchSlide;
+  imageClass: SlideImageClass;
+  /** ⚠ The caption travels INSIDE this — a capture keeps it in the shot manifest, a drawing carries
+   *  its own. Deliberately not lifted to a sibling field: two copies of one string is how they
+   *  eventually disagree. */
+  picture: SlidePictureWithCaption | null;
+  deck: DeckPlacement | null;
+  /**
+   * Every public page that publishes this slide. **Empty is the finding this screen exists for**,
+   * and it carries plan finding F4 with it: a page panel needs the long unattended `answer` the
+   * slide deliberately does not have (a deck has a human in the room, a web page has nobody), and
+   * that copy is written per PAGE — so a slide on no page has none and cannot simply be dropped
+   * onto one. ⚠ Writing it for all twenty-three is a one-time editorial pass and belongs to stage
+   * C, where the composer needs it. SURFACE the gap here; do not fix it here.
+   */
+  pages: PagePlacement[];
+  health: PictureHealth;
+}
+
+/* ── One deck ───────────────────────────────────────────────────────────────── */
+
+/**
+ * One slot in a deck's running order.
+ *
+ * ⚠ Named rather than inlined on `DeckReport` so `state` keeps its literal union: built inside an
+ * un-contextualised `.map()`, an inline object type lets `state` widen to `string`.
+ */
+export interface DeckSlot {
+  id: string;
+  /**
+   * `built` and `planned` are legitimate; everything else is a HOLE in the running order and is
+   * reported as a problem too. ⚠ `held` and `retired` are distinguishable from `missing` only
+   * because the register carries a status — a deck naming a held number is a different mistake
+   * (someone reached for the club deck early) from one naming a number that never existed.
+   */
+  state: SlideNumberStatus | 'built' | 'missing';
+  /** True where the public page shows this slide, so the pull is visible against the deck. */
+  onPage: boolean;
+}
+
+export interface DeckReport {
+  audience: Audience;
+  /** Every id in the running order, with what the bank actually holds for it. */
+  order: DeckSlot[];
+  built: number;
+  /** The page this deck is published on, and how much of the deck it shows. */
+  page: { path: string; shows: number; meta: string } | null;
+  /** F5: a deck naming a number the bank does not hold. Empty today; a compile error today too. */
+  problems: string[];
+}
+
+export interface PitchLibraryReport {
+  slides: SlideReport[];
+  decks: DeckReport[];
+  /** Gaps in the number line, in order, each with the reason it is spent. */
+  reserved: { id: string; why: string }[];
+  totals: {
+    slides: number;
+    photographed: number;
+    drawn: number;
+    /** ⚠ The headline number: built, finished, and reachable NOWHERE in the product. */
+    onNoPage: number;
+    withProblems: number;
+  };
+}
+
+function healthOf(slide: PitchSlide, fileIsPresent: (publicPath: string) => FilePresence): PictureHealth {
+  if (slide.drawingId) {
+    return { kind: 'drawing', drawingId: slide.drawingId, outsideTheCaptureCheck: true };
+  }
+  const shot = shotFor(slide);
+  // Unreachable while the guard test holds ("a picture a slide names actually exists in the shot
+  // manifest"), and reported rather than thrown: a studio that crashes is a worse way to learn a
+  // manifest entry was renamed than a studio that says so.
+  if (!shot) {
+    return {
+      kind: 'capture',
+      publicPath: '—',
+      captureWidth: 0,
+      demoPath: '—',
+      present: null,
+      problems: [`names shot "${slide.shotId}", which the manifest does not declare`],
+    };
+  }
+  const publicPath = shotPublicPath(shot);
+  const present = fileIsPresent(publicPath);
+  return {
+    kind: 'capture',
+    publicPath,
+    size: shot.size,
+    captureWidth: shot.width,
+    demoPath: shot.path,
+    present,
+    problems: shotManifestProblems(shot, { present, where: `public${publicPath}` }),
+  };
+}
+
+/**
+ * Build the whole report.
+ *
+ * @param fileIsPresent whether a picture file is on disk. Returning `null` means NOT DETERMINED —
+ *   see lib/shot-health.ts. The caller owns this because `public/` is served by the platform's
+ *   static layer and is not guaranteed to sit on a request handler's filesystem; a studio that
+ *   read "cannot see it" as "missing" would paint thirteen false alarms on a healthy deploy.
+ */
+export function buildPitchLibraryReport(
+  fileIsPresent: (publicPath: string) => FilePresence,
+): PitchLibraryReport {
+  // Which deck names a slide, and where in the running order. Built once so the per-slide pass is
+  // a lookup rather than a scan of both decks per slide.
+  const placement = new Map<string, DeckPlacement>();
+  for (const [audience, ids] of Object.entries(PITCH_DECKS) as [Audience, string[]][]) {
+    ids.forEach((id, i) => placement.set(id, { audience, position: i + 1, of: ids.length }));
+  }
+
+  // Where a slide is PUBLISHED. A slide can in principle appear on more than one page — the guard
+  // test forbids a page pulling the same slide twice, not two pages pulling the same slide — so
+  // this is a list, and a slide published in two places would be visible here.
+  const published = new Map<string, PagePlacement[]>();
+  for (const w of WALKTHROUGHS) {
+    w.panels.forEach((panel, i) => {
+      const at: PagePlacement = { path: w.path, panel: i + 1, of: w.panels.length };
+      published.set(panel.slideId, [...(published.get(panel.slideId) ?? []), at]);
+    });
+  }
+
+  const slides: SlideReport[] = (Object.values(PITCH_SLIDES) as PitchSlide[])
+    // Library number order, so the GAPS in it are visible — this is a contact sheet of everything
+    // we own, not a running order. The decks above carry the running orders.
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map(slide => {
+      const pages = published.get(slide.id) ?? [];
+      const shown = pictureFor(slide);
+      return {
+        slide,
+        imageClass: slide.imageClass,
+        picture: shown,
+        deck: placement.get(slide.id) ?? null,
+        pages,
+        health: healthOf(slide, fileIsPresent),
+      };
+    });
+
+  const pageFor = new Map(WALKTHROUGHS.map(w => [w.persona, w]));
+  const decks: DeckReport[] = (Object.entries(PITCH_DECKS) as [Audience, string[]][]).map(([audience, ids]) => {
+    const w = pageFor.get(audience);
+    // Widened to `string` deliberately: a deck's running order is `string[]` (it may name a number
+    // the bank does not hold — that is finding F5), while a page's pull is typed to the bank's own
+    // key set. Asking the narrow set about a wide id is the whole question this screen answers.
+    const onPage: Set<string> = new Set(w?.panels.map(p => p.slideId) ?? []);
+    const order: DeckSlot[] = ids.map(id => ({
+      id,
+      state: id in PITCH_SLIDES ? 'built' : SLIDE_NUMBERS_SPOKEN_FOR[id]?.status ?? 'missing',
+      onPage: onPage.has(id),
+    }));
+    return {
+      audience,
+      order,
+      built: order.filter(o => o.state === 'built').length,
+      page: w ? { path: w.path, shows: w.panels.length, meta: w.meta } : null,
+      problems: order
+        .filter(o => o.state !== 'built' && o.state !== 'planned')
+        .map(o => o.state === 'missing'
+          ? `names ${o.id}, which holds no slide — it would vanish silently from this running order`
+          : `names ${o.id}, which is ${o.state} (${SLIDE_NUMBERS_SPOKEN_FOR[o.id]?.note ?? 'no reason recorded'})`),
+    };
+  });
+
+  return {
+    slides,
+    decks,
+    reserved: Object.entries(SLIDE_NUMBERS_SPOKEN_FOR)
+      // A `planned` number is not a gap — it is a slot with artwork on the way, and the deck it
+      // belongs to already shows it in its running order with a '…'.
+      .filter(([, e]) => e.status !== 'planned')
+      .map(([id, e]) => ({ id, why: e.note }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    totals: {
+      slides: slides.length,
+      /**
+       * ⚠ A TILE COUNTS WHAT IT SAYS, and "photographed" must mean a photograph EXISTS — not
+       * that one was declared. A slide whose manifest entry has alt and caption but no recorded
+       * `size` yet is a normal mid-pipeline state (the manifest's own comments call it "declared
+       * but not yet captured"): `healthOf` still calls it a capture, but `pictureFor` returns null
+       * and its card renders "No picture resolves for this slide" over an empty stage. Counting it
+       * under Photographed would be this screen's own cardinal sin — a number meaning less than it
+       * looks like — on the tile a reader trusts most.
+       *
+       * So these two deliberately need NOT sum to `slides`: the shortfall is exactly the slides
+       * with no picture, and `withProblems` already carries every one of them in amber.
+       */
+      photographed: slides.filter(s => s.health.kind === 'capture' && s.picture).length,
+      drawn: slides.filter(s => s.health.kind === 'drawing' && s.picture).length,
+      onNoPage: slides.filter(s => s.pages.length === 0).length,
+      withProblems: slides.filter(s => s.health.kind === 'capture' && s.health.problems.length > 0).length,
+    },
+  };
+}

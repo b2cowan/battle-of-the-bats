@@ -9800,3 +9800,74 @@ Open the coach walkthrough → **▸ Present the full deck** → arrow through. 
 - [ ] The phone-legibility defect first raised in §65 is **closed for the coach deck.** The
       tournament page still carries one desktop screen (registration health, 34%) — say if you want
       that drawn too.
+
+---
+
+## §72 · The room where you can finally see what we own — and the twelve slides nobody can reach
+
+**BUILT 2026-08-21 (dev).** Stage A of the Pitch Deck Studio
+([plan](PITCH_DECK_STUDIO_PLAN.md)) — **the library view, read-only.** No editing, no save button,
+no composer; those are stage B and C, and stage B is where all the risk lives.
+
+**Where:** platform-admin → **Growth → Pitch Deck Studio.**
+
+### Part A — the number this screen was built to show you (**look at this first**)
+
+- [ ] **Twelve of our twenty-three finished slides are shown on no public page.** Not five, which
+      is what the plan said — that count was written before the last two batches landed. Ten coach
+      slides and two tournament slides are built, photographed or drawn, checked, sitting in a deck
+      — and no visitor can reach any of them. The totals strip says **12 · On no public page** in
+      amber; every one of those cards carries the badge.
+- [ ] **Read three or four of the stranded cards and say whether they should be on a page.** That
+      is the decision this screen exists to put in front of you. Nothing here changes a page — you
+      are only deciding what stage B should be able to do.
+- [ ] The coach deck's **overview wheel (#26) is stranded**, and it sits second in the running
+      order. The whole shape of the product, invisible.
+
+### Part B — the two decks
+
+- [ ] Each deck shows its running order as numbered chips, **lit where the public page pulls it.**
+      Tournament: 8 slides, 5 lit. Coach: 15 slides, 6 lit. Say whether that ratio looks right —
+      the short pull exists so nobody has to scroll fifteen panels, but six of fifteen is the gap
+      Part A is about.
+- [ ] Each deck names the page it is published on and quotes that page's own
+      "*n* problems · 90 seconds" line back to you.
+
+### Part C — ⚠ THE HONESTY OF THE HEALTH COLUMNS, WHICH IS THE PART TO ARGUE WITH
+
+- [ ] **The PM brief promised something this cannot do, and I did not build a version that
+      pretends.** Success criterion 4 was *"when a slide's pictured screen changes, the library
+      view says so before a prospect finds out."* **It does not, and reusing the existing check
+      never could:** that check proves a picture file exists with its words and its size recorded.
+      A failed re-capture leaves the old picture in place, so a photograph of a screen redesigned
+      three months ago passes it and passes the build. **Every capture card says that in plain
+      words** rather than showing a green tick. Closing it for real needs a re-capture-and-compare
+      — a separate piece of work. Say whether you want it queued.
+- [ ] **A drawing says "the capture check has nothing to look at" instead of passing.** Ten of the
+      twenty-three are drawings. A tick there would have meant nothing on nearly half the screen.
+- [ ] **⚠⚠ THE PLAN-LINE COLUMN WAS BUILT AND THEN DELETED IN THE SAME SESSION — because you
+      deleted the plan lines themselves.** The build prompt called it the highest-value column
+      here: it read each page panel’s "…is part of Tournament Plus" sentence and checked it
+      against the live plan configuration. **Your ruling the same day** — *"we don’t need to
+      mention any subscriptions here… we don’t want to compartmentalize features at this
+      stage"* — took every one of those nine sentences off the two walkthrough pages, so the
+      column had nothing left to read and came out with them.
+- [ ] **It did surface one thing before it went**, and it is worth a moment: the six coach
+      panels were advertising the **Premium Coaches Portal**, which our plan configuration says
+      is in **early access — not open for self-serve checkout.** Almost certainly the founding
+      season working as intended. It is moot for the walkthrough now, but the same wording still
+      appears elsewhere in the product, so confirm it is intended.
+- [ ] **The rule that replaced the column is a build check, not a screen** — nothing in the pitch
+      material may name a plan, tier or price, and the build fails if one appears. That is
+      stronger than a column: a check fails on its own, a column only helps someone who happens
+      to be looking at it. The screen now states the rule instead of auditing it.
+### Part D — the gaps, and the thing NOT built
+
+- [ ] **#08, #18, #19, #20 are shown as gaps with a reason.** A slide number is never reused;
+      until now the only record of why lived in a code comment. Check the reasons read true —
+      #08 is spent for good, the other three are held for the club deck.
+- [ ] **There is no edit control anywhere, deliberately.** The screen says so in its own words: what
+      a slide *says* is never editable in a browser, because the build compares every claim against
+      what the plans grant and nothing can watch a sentence once it is a row in a table.
+- [ ] **"Page copy — not written"** appears on all twelve stranded cards. That copy is a one-time
+      editorial pass over the library and belongs to stage C. Nothing was written here.

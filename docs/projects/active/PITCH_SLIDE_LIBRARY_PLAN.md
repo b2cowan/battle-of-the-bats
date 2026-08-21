@@ -4,7 +4,9 @@
 dev 2026-08-20 — QA §69 owed · P2b SHIPPED dev 2026-08-21 — QA §70 owed · P2c SHIPPED dev
 2026-08-21 — QA §71 owed. BOTH DECKS ARE COMPLETE** (coach 15 slides, tournament 8) — only the
 three club-held slides remain unbuilt in the whole library — **and the coach deck's
-phone-legibility defect, open since §65, is CLOSED.** **P3 is ABSORBED into the Deck Studio**
+phone-legibility defect, open since §65, is CLOSED.** **P3 is ABSORBED into the Deck Studio and its contact sheet is now BUILT
+(stage A, dev 2026-08-21 — QA §72); ⚠ the staleness half of P3 is NOT built and the existing
+picture check could never have built it — see that plan's "What stage A actually settled"**
 ([plan](PITCH_DECK_STUDIO_PLAN.md)); P4 not started.
 ⚠⚠ **The image-class ruling below was REPLACED by the owner on 2026-08-21** — see ruling 1, and
 `memory/design_decisions.md`. The library grew to **23 slides**: P2b added #26 and #27, which the

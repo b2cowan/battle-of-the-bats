@@ -464,10 +464,28 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     alt: 'The playing-time report: one row per player showing innings on the field with a small bar, innings on the bench, how many times they sat back-to-back, every position they have played, and innings pitched where it applies — the player with the least time on the field sitting at the top.',
     caption: 'Playing time counted from the lineups you already saved — innings on the field, innings on the bench, and who has sat back-to-back. Measured, in context.',
   },
-  // ⚠ THREE COACH SHOTS WERE RETIRED HERE ON 2026-08-21 — coach-scouting-book, coach-practice-plan
-  // and coach-season-wrapped. They are not missing; slides #24, #25 and #09 are DRAWINGS now.
-  // Their photographs rendered at 34%, 52% and 34% of readable size on a phone, and re-capturing
-  // at phone width only trades the defect (the picture goes small on a laptop instead). A drawing
-  // has no native size. ⚠ #09 was the coach deck's only `proof` shot — see the long note on that
-  // slide in lib/walkthrough-content.ts before proposing it be photographed again.
+  {
+    id: 'coach-season-wrapped',
+    persona: 'coach',
+    door: 'coach',
+    path: `${COACH_TEAM('seasonsEnd')}/season-end`,
+    ready: 'text=Season Wrapped',
+    // ⚠ THE CARD ALONE, NOT THE SPREAD (owner call 2026-08-21). The earlier crop paired the card
+    // with the four collapsed shelves beside it — 960×591, which is 34% of true size at phone
+    // width and unreadable, and is why this slide briefly became a drawing at all. The owner chose
+    // the card on its own instead: it is the artifact a coach actually shares, its type is large
+    // (the record is the biggest number in the portal), and ONE element is far narrower than two
+    // side by side — which is the whole lever on phone legibility.
+    clip: '[class*="wrappedCard"]',
+    width: 1280,
+    size: { w: 468, h: 477 },
+    alt: 'The Season Wrapped card for a closed season: the final record over the number of games, then the longest winning streak, the closest game, game-day attendance, the most-decorated player and a fact about the lineup — with a button to share the season.',
+    caption: 'The card a coach shares when the season closes — the record, the streak, the closest game, the attendance and the awards, kept for good.',
+  },
+  // ⚠ TWO COACH SHOTS WERE RETIRED HERE ON 2026-08-21 — coach-scouting-book, coach-practice-plan
+  // — coach-scouting-book and coach-practice-plan. They are not missing; slides #24 and #25 are
+  // DRAWINGS now. Their photographs rendered at 34% and 52% of readable size on a phone, and
+  // re-capturing at phone width only trades the defect (the picture goes small on a laptop
+  // instead). A drawing has no native size. ⚠ Season Wrapped came BACK as a capture on the same
+  // day — see its entry above for why the card alone succeeds where the spread could not.
 ];
