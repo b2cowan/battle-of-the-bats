@@ -8809,6 +8809,27 @@ and the Transactions rendered check re-run clean of any new-control findings.
 
 ## §64 · A commitment holds many payments — partial payment, undo, one list, and a cost that repeats
 
+**✅ §64 CLOSED BY OWNER 2026-08-21.** ⚠ **Recorded precisely, because "complete" and "walked" are
+not the same fact and this ledger has drifted on exactly that before:**
+- **Parts A, B, C, D and E were WALKED AND PASSED.** Between them they surfaced **eight** findings,
+  and every one was an ABSENCE, a FALSEHOOD or a mis-shaped panel rather than a broken control —
+  the fourth consecutive walk to prove that a checklist of existing behaviour cannot find what is
+  missing. All eight are fixed and each carries its finding block below.
+- **Parts F, G and H were CLOSED WITHOUT BEING WALKED**, on the owner's call. They are not lost —
+  they are the natural **pre-release check** for this work and are restated as such in the plan's
+  release section. What they cover: F the neighbours (Overview's next-30-days, Budget vs. Actual,
+  one row on Transactions, ⚠ **the commitments export losing four columns — which breaks a
+  spreadsheet of the owner's own**, the bulk importer, a club-run team, closing a season with money
+  still owed); G the three §27 re-runs that prove the re-expressed books still move money correctly;
+  H the demo's story and the in-app help wording, neither of which has been re-read since "Mark
+  paid" stopped being how money is recorded.
+- ⚠ **F, G and H matter most at the moment this ships**, not today — none of this work is on
+  production, so nothing a customer or a prospect can reach is affected by their being unwalked.
+  **H in particular is a release-day item**: both demo worlds are fully public on production and
+  their sentences are written by hand, so the money story a prospect reads will go stale the
+  instant this release lands, not before.
+
+
 **Parts A and B ✅ WALKED AND PASSED 2026-08-20** (owner-walked against the artifact walkthrough
 `claude.ai/code/artifact/85d66028-83d4-4595-818e-ad6a60add387`; the walk surfaced ONE finding — the
 Months grid's Scheduled cell reading as "the total" — adjudicated not-a-defect at the time and

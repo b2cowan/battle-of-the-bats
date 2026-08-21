@@ -880,6 +880,34 @@ built. The shared primitives are `MultiSelectDropdown`, `SingleSelectDropdown` a
 
 ---
 
+
+### ⚠ The release check — this is where §64's Parts F, G and H went (2026-08-21)
+
+**§64 closed with A–E walked and F, G, H unwalked, on the owner's call.** Those three were never
+"more of the same walking" — they are the checks that only pay off at the moment this reaches
+production, and they are restated here so closing the QA section does not lose them.
+
+**Run these as part of promoting this work, not before:**
+
+1. **The neighbours still agree.** Overview's next-30-days counts a partly-paid installment for what
+   is STILL OWED, not its full amount. Budget vs. Actual shows what was actually paid, in the month
+   it was paid. A payment is ONE row on Transactions, never a second row beside the commitment.
+2. ⚠⚠ **The commitments export lost four columns — Deposit, Deposit due, Balance, Balance due — and
+   everything after them moved four columns left.** This is deliberate (a column headed *Balance*
+   quoting installment 2 of twelve is a lie a reader cannot detect) and it **breaks a spreadsheet of
+   the owner's own that points at our columns by position** — owner-confirmed 2026-08-20. **Tell
+   them on the day it ships.** The bulk importer's template deliberately still states Deposit /
+   Balance, because an imported sheet genuinely does.
+3. **The three §27 re-runs that move money** — §27 passed clean BEFORE the books were re-expressed,
+   so these are how we know the rebuild kept them right.
+4. ⚠⚠ **THE DEMO'S STORY IS A RELEASE-DAY ITEM AND IT IS THE ONE MOST LIKELY TO BE MISSED.** Both
+   sandboxes are fully public on production. The money vocabulary a coach reads changed — "Mark
+   paid" is no longer how money is recorded, a bill now holds installments and payments, and a cost
+   can repeat. The moments dock's lines, the guided tour's narration and the in-app Money help are
+   hand-written sentences that will stop being true **the instant this lands**, not before.
+   `npm run check:demos` proves both worlds still render; **it cannot tell you a sentence went
+   stale.** Re-read them.
+
 ## 9 · ⚠⚠ WHAT THIS PROJECT EARNED THE RIGHT TO ASK NEXT — one planning session, owner-called
 
 **Logged 2026-08-21, at the owner’s instruction, to be opened once this project closes.** It is a
