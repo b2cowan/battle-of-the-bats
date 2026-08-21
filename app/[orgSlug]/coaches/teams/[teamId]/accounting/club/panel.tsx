@@ -1012,7 +1012,7 @@ export function ClubPanel({
 
       {/* ── Filing a club bill ─────────────────────────────────────────────── */}
       {filingSplit && (
-        <div className={styles.modalOverlay} onClick={filingSaving ? undefined : closeFiling}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (filingSaving ? undefined : closeFiling)?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
               title="What was this bill for?"
@@ -1058,7 +1058,7 @@ export function ClubPanel({
           Opened blank by "Make a request", or on a record by tapping its row. A pending request is
           fully editable here; a reviewed one is the same window read-only. */}
       {showForm && (
-        <div className={styles.modalOverlay} onClick={busy ? undefined : closeForm}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (busy ? undefined : closeForm)?.(); }}>
           {/* ⚠ `modalFlushFooter` IS REQUIRED ON ANY MODAL TALL ENOUGH TO SCROLL, and this one is —
               the direction picker, the item picker, four fields and a notes box clear 90vh on a
               laptop. Without it the footer's bottom bleed sits inside the panel's own bottom padding

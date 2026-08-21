@@ -142,7 +142,7 @@ export default function InstallmentScopeSheet({
   const nothingToDo = mode === 'edit' && outcome.touched.length === 0;
 
   return (
-    <div className={shared.modalOverlay} onClick={onClose}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={shared.modal} style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
         <CoachModalHeader
           title={mode === 'remove' ? 'Remove a payment' : 'Change a payment'}

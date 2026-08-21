@@ -158,7 +158,7 @@ export default function ScheduleImportSheet({
   }
 
   return (
-    <div className={`${shared.modalOverlay} ${shared.sheetOnMobile}`} onClick={requestClose}>
+    <div className={`${shared.modalOverlay} ${shared.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestClose)?.(); }}>
       <div
         className={`${shared.modal} ${shared.modalFlushFooter} ${styles.sheet}`}
         onClick={e => e.stopPropagation()}

@@ -716,7 +716,7 @@ export function FundraiserDetail({
 
       {/* Settings modal */}
       {showSettings && fundraiser && (
-        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) closeSettings(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) closeSettings(); }}>
           {/* Same shape, same fields, same fix as the create modal beside it (2026-08-15). */}
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <CoachModalHeader title={isSponsor ? "Sponsor" : "Fundraiser Settings"} onClose={closeSettings} titleTag="h2" closeIconSize={18} />

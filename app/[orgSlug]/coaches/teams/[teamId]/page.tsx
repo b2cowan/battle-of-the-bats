@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, LayoutDashboard, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import { ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, LayoutDashboard, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
@@ -275,8 +275,6 @@ export default function TeamOverviewPage({
   const [milestones, setMilestones] = useState<Milestones | null>(null);
   // Contextual org-invite banner (only when an org has actually invited this team)
   const [orgInvite, setOrgInvite] = useState<{ orgName: string } | null>(null);
-  // Last-season preview tile (record + dues + expenses) — money-gated, links into Past Seasons.
-  const [lastSeason, setLastSeason] = useState<{ name: string; record: string | null; duesCollected: number; totalExpenses: number } | null>(null);
   // Safety-tier Insights bridge: the ONE finding category that shouldn't wait for a couch
   // session (a pitcher over their arm-care cap) echoes as a single quiet line here.
   const [armCareFlag, setArmCareFlag] = useState<{ name: string; overCapGames: number } | null>(null);
@@ -689,35 +687,6 @@ export default function TeamOverviewPage({
       .catch(() => {});
     return () => { cancelled = true; };
   }, [loading, isClosedTeam, orgSlug, teamId]);
-
-  // Last season at a glance — newest completed/archived season (record + dues + expenses). Money-
-  // gated (mirrors the History/Season Review nav gate) so a no-money assistant never sees dues.
-  useEffect(() => {
-    if (loading || isClosedTeam) return;
-    const a = assignments.find(x => x.teamId === teamId);
-    if (!a || a.capabilities.money === 'off') { setLastSeason(null); return; }
-    let cancelled = false;
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`)
-      .then(res => (res.ok ? res.json() : null))
-      .then(json => {
-        if (cancelled || !json?.history?.length) return;
-        const years = [...json.history].sort((x: { year?: number }, y: { year?: number }) => (y.year ?? 0) - (x.year ?? 0));
-        const y = years[0];
-        // ⚠ THE SHARED FORMATTER, in the file that already imports it. This line hand-rolled the
-        // record with an en dash while the record tile 400 lines below called `formatRecord` - so
-        // ONE screen printed the season two ways. It also always emitted the tie count, showing
-        // `12-4-0` where every other surface shows `12-4`; the shared definition fixes both.
-        const record = (y.wins || y.losses || y.ties) ? formatRecord({ w: y.wins, l: y.losses, t: y.ties }) : null;
-        setLastSeason({
-          name: (y.name ?? String(y.year ?? '')).trim() || 'Last season',
-          record,
-          duesCollected: y.accounting?.duesCollected ?? 0,
-          totalExpenses: y.accounting?.totalExpenses ?? 0,
-        });
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
 
   // ── Has this team started using money AT ALL? ─────────────────────────────
   // Declared HERE, above the effects, because two things need the same answer and must not derive
@@ -2177,27 +2146,12 @@ export default function TeamOverviewPage({
           single ruled line on desktop. Replaces four scattered bands (the full-width tournament
           strip, the fan-view link floating on the page ground, the last-season card and the
           this-week strip) that between them out-weighted the coach's actual numbers. */}
-      {(overviewFanView || lastSeason) && (
+      {overviewFanView && (
         <div className={styles.tail}>
           {/* The SAME component the free portal renders, in its row layout — so the lifecycle
               states, their labels and the ⇄ Fan view door stay in one place. A hand-rolled row here
               would have meant a future state landing on one tier only. */}
-          {overviewFanView && <CoachLiveEventCard event={overviewFanView} layout="row" />}
-
-          {lastSeason && (
-            <Link href={`${base}/history`} className={styles.tailRow} key="last-season">
-              <Archive size={15} className={styles.tailIcon} aria-hidden />
-              <span className={styles.tailLabel}>Last season · {lastSeason.name}</span>
-              <span className={styles.tailMeta}>
-                {[
-                  lastSeason.record ? `${lastSeason.record} record` : null,
-                  `${formatMoney(lastSeason.duesCollected)} collected`,
-                  `${formatMoney(lastSeason.totalExpenses)} spent`,
-                ].filter(Boolean).join(' · ')}
-              </span>
-              <ArrowRight size={14} className={styles.tailArrow} aria-hidden />
-            </Link>
-          )}
+          <CoachLiveEventCard event={overviewFanView} layout="row" />
         </div>
       )}
 

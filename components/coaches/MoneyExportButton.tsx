@@ -199,7 +199,7 @@ function ExportFormatDialog({
   return (
     <div
       className={`${shared.modalOverlay} ${shared.centeredOnMobile}`}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* A hand-rolled title+X row, NOT CoachModalHeader — that component is for SHEET modals and
           its own contract says a centered dialog keeps the simple row instead. */}

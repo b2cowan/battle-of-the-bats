@@ -33,7 +33,7 @@ export default function AwardIconPicker({
   useOverlayOpenIfAvailable(true);
 
   return (
-    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onClick={onClose}>
+    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={styles.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Choose an icon</h3>

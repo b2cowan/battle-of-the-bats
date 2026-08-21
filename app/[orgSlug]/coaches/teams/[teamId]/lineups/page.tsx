@@ -598,7 +598,7 @@ export default function CoachesLineupsPage({
 
       {/* ── Apply-to-game picker ── */}
       {applyTemplate && (
-        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={() => applyBusyGameId ? null : setApplyTemplate(null)}>
+        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => applyBusyGameId ? null : setApplyTemplate(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
             <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>

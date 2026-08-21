@@ -262,7 +262,7 @@ export default function BudgetStarterSheet({
   }
 
   return (
-    <div className={shared.modalOverlay} onClick={close}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
       <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Your starting budget" onClose={close} />
 

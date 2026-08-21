@@ -9179,6 +9179,132 @@ they will read as defects:
       output. There the figure is a computed split; here the rule only suggests it. Anything else
       that has learned different words or a different layout for the same job, report it.
 
+
+> #### 🔴 FOUND MID-WALK 2026-08-21 — the bill panel could not be scrolled, so most of a long bill was unreadable
+>
+> **What the owner saw:** a six-installment bill open, and under **Payments recorded** only the
+> **first** payment visible — the rest below it cut off with no way to reach them. No scrollbar, no
+> wheel, no keyboard.
+>
+> **It was not a fold, a filter or a missing record.** The panel caps itself at 90% of the window
+> height and clips whatever is past that line, and the list inside it had never been given a scroll
+> of its own. Everything below the cut was not merely off-screen — it was **unreachable**.
+> Measured before the fix at a 420px-tall window: **464px of panel inside a 376px window, 88px of
+> it lost, and the body could not scroll by a single pixel.** After the fix, at the same size:
+> nothing lost, the record list scrolls, and the bill's name at the top and its buttons at the
+> bottom both stay put while it does.
+>
+> ⚠⚠ **WHY IT APPEARED ONLY NOW, which is the part worth keeping.** A bill used to be capped at
+> **two** payments, and a two-payment panel fits inside 90% of any ordinary window. P4 lifted that
+> cap. **"A cap and the editor that forces it lift together" — and so does everything else that was
+> quietly sized for what the cap used to allow.** That is the third consequence of the same lift,
+> after the export columns and the positional row key, and it is the one nothing static could see.
+>
+> ⚠ **Nothing automated was ever going to catch it:** `check:layout` cannot open a modal. It was
+> found by a person looking at the screen, which is the whole argument for this ledger.
+>
+> ⚠ **The same panel primitive has now been extended three times** for a body that is not a form —
+> a fundraiser's date row, a settlement sheet, and now a bill's payment history. **If a new panel
+> shows a LIST rather than FIELDS, check it scrolls before shipping it.**
+>
+> **Re-check while walking E:** open the six-installment bill, confirm you can reach the last
+> payment and the **Still owing** line beneath it, and that the bill's name stays visible while you
+> scroll to them.
+
+>
+> #### 🟠 FOUND MID-WALK 2026-08-21 — the Change/Remove panel had a dead band under its buttons
+>
+> **What the owner saw:** *"change payment modal not shaped properly, bottom area too big and
+> covering some of the text behind it."*
+>
+> **Measured, not guessed.** The buttons sat **41px** above the panel's bottom edge, of which
+> **25px was bare panel background with nothing in it** — the button strip floated above the
+> bottom instead of reaching it. After the fix: **17px**, all of it the strip's own padding, and
+> the strip meets the panel's edge as designed.
+>
+> ⚠ **It was not the bleed, and the first guess was wrong.** Zeroing the strip's overhang alone
+> changed nothing (still 25px). The cause is the strip being **pinned** inside a panel that is
+> its own scroll area: it pins to the top of the panel's bottom padding, not to its edge, so it
+> hovers one padding-width up. Proven by switching the pin off in the live page — the gap fell
+> to 1px — and by removing the panel's padding, which did the same.
+>
+> ⚠⚠ **THE FIX ALREADY EXISTED AND THIS PANEL HAD NEVER TAKEN IT.** A shared "flush footer"
+> treatment was written for exactly this, and its own note warns that being opt-in makes it *"a
+> rule an adopter can silently fail to satisfy."* This is that warning coming true. Adopting it
+> fixes **both** Change and Remove, which are one panel wearing two titles.
+>
+> **⚠ IT WAS NEVER JUST THIS PANEL — 9 coach-portal panels had the same shape** and the same dead
+> band (admin and platform-admin are unaffected; only the coach stylesheet pins its button strip).
+> **ALL NINE ARE FIXED.** ⚖ The first attempt fixed only the one the owner had looked at and
+> logged the rest as "an owner call" — the owner's answer was *"why didn't you fix all of them?"*,
+> and it was the right answer. **The treatment also stopped being opt-in**: it now applies itself
+> to any panel that actually has a button strip, so it cannot be forgotten again, and a panel with
+> no strip is left alone (hand-applying it would have meant judging that per panel — the exact
+> mistake a bulk find-and-replace makes in a file holding two panels where only one has a footer).
+>
+> **Re-check while walking E:** press **Change** and **Remove**, and confirm the buttons sit at
+> the panel's bottom edge with no empty band beneath them.
+
+>
+> #### 🔴 FOUND MID-WALK 2026-08-21 — selecting text in a panel and letting go outside CLOSED IT, losing the edit
+>
+> **The owner's report, and the diagnosis was theirs:** *"when I go to that page and highlight the
+> amount that modal immediately closes. perhaps because I kept dragging the mouse before letting
+> go?"* — **exactly right.** Reproduced in a browser: press inside the Amount field, drag left to
+> select, release anywhere outside the panel, and the panel dismisses. Anything typed is gone.
+>
+> **Why:** a backdrop dismissed on CLICK, and a click whose press began inside the panel and ended
+> outside is delivered to the backdrop — it is the first thing the two halves of the gesture have
+> in common. So the product could not tell "you clicked away" from "you selected some text."
+> Dismissing on the PRESS instead removes the ambiguity: a press that lands on the backdrop is
+> always someone clicking away, and a press that lands inside never reaches it.
+>
+> ⚠⚠ **IT WAS NEVER ONE PANEL — 64 backdrops behaved this way**, across coaches, admin and
+> platform-admin. **All 64 are fixed**, plus the nine dead-band panels above. This was the owner's
+> instruction after the first fix went out one-panel-at-a-time: *"why didn't you fix all of them?"*
+>
+> ⚠ **One panel already had the right behaviour** (Start next season) and nobody had written down
+> why, so the convention could not spread. It is the rule now.
+>
+> ⚠⚠ **THE BULK EDIT WAS WRONG TWICE BEFORE IT WAS RIGHT, and that is the lesson to keep.** The
+> first pass mis-detected where a tag ended and converted **four CLOSE BUTTONS** instead of their
+> backdrops — which would have broken the ✕ on four panels, because the guard that makes a backdrop
+> safe makes a button with an icon inside it dead. Caught by auditing every changed line back to
+> its opening tag rather than trusting the line it sat on. **A JSX bulk edit is not verified until
+> each change is checked against the element it landed on.**
+>
+> **Re-check while walking:** in any panel with a text field — select some text, drag past the
+> edge, release. The panel stays. Then press the dark area outside it: it closes.
+
+>
+> #### 🟠 FOUND BY /review 2026-08-21 — the same "unreachable" defect, four more dialogs, five times worse
+>
+> **The adversarial review that followed the two fixes above found a THIRD instance of the same
+> thing, and it was the worst one.** The drill editor, drill import, template rename and template
+> import dialogs clip their content with no way to reach it. **Measured at a 500px-tall window: the
+> drill editor wanted 875px inside a 448px panel — 427px unreachable**, nearly five times the pay
+> drawer's 88px. Fixed and re-measured: it scrolls, and everything is reachable.
+>
+> ⚠ **It was NOT caused by any of this work** — it had been sitting there. It was found because the
+> pay-drawer fix named ONE content shape, and the reviewer asked the obvious next question: *what
+> else is shaped like that?* **Naming shapes one at a time is what let it hide.** If a fifth appears,
+> the rule generalises rather than growing a list.
+>
+> ⚠⚠ **AND THE REVIEW CAUGHT A REAL REGRESSION IN THE FIX ITSELF — this is the one to remember.**
+> The drag-to-close fix dismissed panels on a **mouse** press. **This repo had already hit that exact
+> bug and already fixed it**: iOS Safari does not synthesise mouse events on inert background at all,
+> so a tap on the dark area would have dismissed **nothing** — the shared dismissal helper's own note
+> records four hand-rolled copies hitting it, one leaving a panel *"stuck/unusable"*, and the answer
+> was a **pointer** press. The fix shipped here now uses that, and a real touch tap was verified to
+> dismiss. **The lesson: the answer was already written down in this codebase and the fix was built
+> without looking for it** — search for the existing convention before inventing one.
+>
+> **Still open, deliberately not done here (owner call):** the endpoint behind the removed Team
+> Overview "Last season" line now has no caller. It is dead server code, but a year-reading route is
+> a DECISION under the 2026-08-18 ruling, not a tidy-up — see `PROGRAM_COACH_PORTAL.md`.
+> Separately, **63 of 64 panels have no Escape-to-close**; pre-existing, unchanged by this work, and
+> every one of them does keep a working ✕.
+
 ### E · ⚠⚠ The scope rules — where a linked series can go wrong
 
 **BUILT 2026-08-20.** ⚠ **Where these live:** open the bill (tap it, or its row) and each **scheduled

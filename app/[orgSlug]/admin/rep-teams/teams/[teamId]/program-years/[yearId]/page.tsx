@@ -248,7 +248,7 @@ export default function ProgramYearOverviewPage({
       {/* Completing a season is the one transition that changes COACH access — confirm it,
           and tell the truth about what happens (Batch 3, D2; approved mockups = spec). */}
       {confirmCompleteOpen && (
-        <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setConfirmCompleteOpen(false); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setConfirmCompleteOpen(false); }}>
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Mark ${programYear.name} completed`}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Mark {programYear.name} completed?</h2>

@@ -188,7 +188,7 @@ export default function RosterBulkAddSheet({
   const reviewing = draft !== null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Add players" onClose={onClose} closeAriaLabel="Close add players">
           {reviewing && (

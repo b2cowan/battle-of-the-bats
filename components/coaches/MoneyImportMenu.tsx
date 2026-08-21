@@ -283,7 +283,7 @@ function RecentImportsSheet({
 }) {
   useOverlayOpen(true);
   return (
-    <div className={shared.modalOverlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={shared.modal}>
         <CoachModalHeader title="Recent imports" onClose={onClose} titleTag="h2" closeIconSize={18} closeAriaLabel="Close recent imports" />
         {error ? (

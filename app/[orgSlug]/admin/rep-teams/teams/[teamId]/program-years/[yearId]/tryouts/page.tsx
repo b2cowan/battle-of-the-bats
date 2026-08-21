@@ -872,7 +872,7 @@ export default function TryoutsPage({
 
       {/* Manual add modal */}
       {addOpen && (
-        <div className={styles.modalOverlay} onClick={() => setAddOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Applicant</h3>

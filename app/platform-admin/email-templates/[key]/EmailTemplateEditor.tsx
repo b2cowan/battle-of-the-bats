@@ -366,7 +366,7 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
       </div>
 
       {showResetConfirm && (
-        <div className={styles.modalOverlay} onClick={() => setShowResetConfirm(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setShowResetConfirm(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <span className={styles.modalTitle}>Reset to default?</span>

@@ -416,7 +416,7 @@ export default function GenerateInstallmentsModal({
   }
 
   return (
-    <div className={shared.modalOverlay} onClick={close}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
       {/* The discard guard covers dismissing this modal; this covers walking away from it. It
           rides WITH the modal rather than sitting in each caller — that is the point of one door. */}
       <UnsavedChangesGuard

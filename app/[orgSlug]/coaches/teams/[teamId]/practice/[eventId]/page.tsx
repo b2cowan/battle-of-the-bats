@@ -1042,7 +1042,7 @@ export default function CoachPracticePlanPage({
           (five steps, and a library permanently grown to reuse one night). */}
       {copyOpen && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Start this plan from"
-          onClick={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
+          onPointerDown={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Start this plan from…</h3>
@@ -1140,7 +1140,7 @@ function SaveAsTemplateDialog({
 
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save as template"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Save as template</h3>

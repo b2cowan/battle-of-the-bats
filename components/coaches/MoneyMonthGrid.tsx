@@ -447,7 +447,7 @@ export default function MoneyMonthGrid({
           the grid is a way to REACH the forms, never a second editor. Visible to read-only
           coaches, who can already see every number on this page. */}
       {detail && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setDetail(null)}>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDetail(null))?.(); }}>
           <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>{detail.title}</h3>
@@ -482,7 +482,7 @@ export default function MoneyMonthGrid({
           item never meets it. It also explains the row: somebody who wrote two lines and reads one
           summed figure learns why, at the moment they are wondering. */}
       {chooser && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setChooser(null)}>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setChooser(null))?.(); }}>
           <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>Which line’s dates?</h3>

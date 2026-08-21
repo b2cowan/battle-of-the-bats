@@ -78,7 +78,7 @@ export default function SampleBudgetSheet({
   const [tab, setTab] = useState<SampleTab>(initialTab);
 
   return (
-    <div className={shared.modalOverlay} onClick={onClose}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Sample season budget" onClose={onClose} />
 

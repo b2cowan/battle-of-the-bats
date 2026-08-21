@@ -3863,6 +3863,33 @@ a.oneChip:hover { border-color: currentColor; }
 .modalFlushFooter { padding-bottom: 0; }
 .modalFlushFooter .modalFooter { margin-bottom: 0; }
 
+/* ⚠⚠ AND NOW IT IS AUTOMATIC — the opt-in above stopped being a rule anyone had to remember
+   (2026-08-21, owner-directed: "why didn't you fix all of them?").
+
+   The note above predicted its own failure: *"a rule an adopter can silently fail to satisfy."*
+   It was right. When the owner hit the dead band on the Change-a-payment sheet, EIGHT more coach
+   panels had the identical shape and had never taken the treatment — the sheet was not special,
+   it was just the one someone happened to look at.
+
+   Measured on that sheet before this rule: the buttons sat 41px above the panel's bottom edge,
+   25px of it bare panel background with nothing in it. The cause is not the bleed (zeroing that
+   alone changed nothing) — a STICKY strip inside a scrolling `.modal` pins to the top of the
+   panel's bottom PADDING, not to its edge, so it hovers one padding-width up. Killing the padding
+   is what lands it on the edge; the bleed then has nothing to bleed into and must go with it.
+
+   ⚠ `:has()` rather than a class, because the decision is "does this panel HAVE a button strip?"
+   and only the DOM knows. Hand-applying it meant judging that per panel — and a panel with no
+   strip must NOT lose its bottom padding, which is exactly the mistake a bulk find-and-replace
+   would have made in a file holding two modals where only one has a footer.
+
+   ⚠ Descendant, not child — same reason the opt-in used a descendant: a strip inside a
+   conditional wrapper is still that panel's strip.
+
+   `.modalFlushFooter` is kept above as a no-op for the panels that already declare it; it now
+   asserts what would happen anyway. Do not re-introduce the padding on a modal with a footer. */
+.modal:has(.modalFooter) { padding-bottom: 0; }
+.modal:has(.modalFooter) .modalFooter { margin-bottom: 0; }
+
 /* Event form modal — a touch wider so the date/time pickers have room. Its flush-footer
    handling now comes from `.modalFlushFooter` above (it was the first surface to need it).
    Centered like every other dialog (owner decision 2026-07-13: all pop-up modals open
@@ -3884,6 +3911,30 @@ a.oneChip:hover { border-color: currentColor; }
    though the footer is static and nothing overlaps — and it shaves the focus ring off the last
    input. A scroll container needs a visible end, not just a reachable one. */
 .modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
+/* ⚠⚠ A READING BODY IS A BODY TOO — the third time this primitive has been extended for a shape
+   that is not `.formGrid`, and the first where the casualty was a RECORD rather than a field.
+   The bill drawer's body is `.payDrawer`, so it matched none of the rules above: the modal kept
+   `overflow: hidden` from the modifier, the body got no scroll of its own and no `min-height: 0`
+   to shrink into — so everything past 90vh was not merely below the line, it was UNREACHABLE.
+   No scrollbar, no wheel, no keyboard. Measured before the fix at a 420px viewport: 464px of
+   panel inside a 376px window, 88px of it lost, `bodyCanScroll` false.
+
+   ⚠ IT DID NOT BITE UNTIL P4 LIFTED THE TWO-PAYMENT CAP. A deposit/balance drawer fits inside
+   90vh; a six-installment bill carrying its recorded payments does not. "A cap and the editor
+   that forces it lift together" — and so does everything else that was quietly sized for what
+   the cap used to allow. Found by the owner 2026-08-21 walking §64 Part E, on a bill where only
+   the FIRST recorded payment could be read.
+
+   ⚠ `check:layout` cannot open a modal, so nothing automated was ever going to catch this.
+
+   ⚠⚠ AND .ppDrillWrite IS THE FOURTH SHAPE — found by the review that followed the pay-drawer fix,
+   and MEASURED at a 500px viewport: the drill editor wanted 875px inside a 448px panel, so 427px
+   was unreachable. That is nearly FIVE TIMES the pay drawer's 88px, on four dialogs (drill editor,
+   drill import, template rename, template import), and it had been sitting there the whole time.
+   Naming shapes one at a time is exactly what let it. If a FIFTH appears, generalise this selector
+   instead of adding to the list. */
+.modalScrollBody > .payDrawer,
+.modalScrollBody > .ppDrillWrite { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
 .modalScrollBody > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 /* ⚠ A MODAL MAY KEEP ITS <form>, and until 2026-08-15 this primitive silently did not cover that
    shape. The rules above are direct-child selectors, so a modal whose fields sit inside a

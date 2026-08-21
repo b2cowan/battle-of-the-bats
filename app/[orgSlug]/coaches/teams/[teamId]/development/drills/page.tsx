@@ -533,7 +533,7 @@ export default function CoachDrillsPage({
       {editing && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true"
           aria-label={editing.id ? 'Edit drill' : 'New drill'}
-          onClick={e => { if (e.target === e.currentTarget) setEditing(null); }}>
+          onPointerDown={e => { if (e.target === e.currentTarget) setEditing(null); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>{editing.id ? 'Edit drill' : 'New drill'}</h3>
@@ -559,7 +559,7 @@ export default function CoachDrillsPage({
       {/* ── "Add from a past season" — the owner's archive ruling made concrete ── */}
       {importOpen && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Add from a past season"
-          onClick={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
+          onPointerDown={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add from a past season</h3>

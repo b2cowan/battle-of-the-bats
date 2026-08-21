@@ -3600,7 +3600,7 @@ function MoneyRecordsPanel({
           details" expansion; nothing about the money changed in this phase, only where a coach
           finds it. */}
       {drawerBill && (
-        <div className={styles.modalOverlay} onClick={closeDrawer}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeDrawer)?.(); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
               title={drawerBill.description}
@@ -3833,7 +3833,7 @@ function MoneyRecordsPanel({
           a control at the top when ADDING, and a stated fact when EDITING (owner ruling: type is
           set at creation — see the note beside the switch). */}
       {formOpen && (
-        <div className={styles.modalOverlay} onClick={closeForm}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeForm)?.(); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
               title={{ edit: copy.editTitle, add: 'Add' }[formMode]}
@@ -4336,7 +4336,7 @@ function MoneyRecordsPanel({
           part payment is the ordinary case now, an over-payment saves and is stated (R6), and the
           server applies the money oldest-piece-first unless the picker says otherwise (R3). */}
       {paying && (
-        <div className={styles.modalOverlay} onClick={() => !payingBusy && setPaying(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !payingBusy && setPaying(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
               title="Record a payment"

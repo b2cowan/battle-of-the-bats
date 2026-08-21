@@ -609,7 +609,7 @@ export function FundraisersPanel({
       )}
 
       {showModal && (
-        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) closeModal(); }}>
           {/* modalScrollBody: this form is tall enough to scroll, and without it the sticky
               footer's edge-bleed sat on top of the last field — the owner found the date row
               under the action bar (2026-08-15). */}

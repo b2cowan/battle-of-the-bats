@@ -880,7 +880,7 @@ export default function MembersPage() {
 
       {/* Invite modal */}
       {inviteOpen && (
-        <div className={styles.modalOverlay} onClick={() => setInviteOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setInviteOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <ShieldCheck size={18} />
@@ -946,7 +946,7 @@ export default function MembersPage() {
 
       {/* Manage Member modal */}
       {manageTarget && (
-        <div className={styles.modalOverlay} onClick={closeManage}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeManage)?.(); }}>
           <div className={`${styles.modal} ${styles.modalWide}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <Settings2 size={18} />

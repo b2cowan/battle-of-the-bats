@@ -529,3 +529,24 @@ you already have queued, then strike this section.
 `CONSISTENT_PLAYER_GUARDIAN_NAMES_PLAN.md` · `CONSISTENT_PLAYER_GUARDIAN_NAMES_PM_BRIEF.md` ·
 `FREE_TIER_COACHES_UNIFIED_PLAN.md` · `FREE_TIER_COACHES_UNIFIED_PM_BRIEF.md` ·
 `FREE_TIER_COACHES_PHASE_5_BUILD.md`
+
+### 2026-08-21 — the Team Overview's "Last season" line is GONE (owner ruling)
+
+**What a coach sees:** the team's home screen no longer ends with a *Last season · 2025 Season —
+12-4 record · $X collected · $Y spent* line. Nothing replaces it.
+
+**The ruling is the owner's** — confirmed 2026-08-21 when the change was queried rather than
+committed blind, because it had arrived in the working copy with nothing written down. ⚠ **It is
+NOT a consequence of the Budget vs. Actual prior-season removal made the same day**, though it
+landed beside it. That one had its own two reasons (a bare year reading as a month of this season;
+never following the Showing lens) and **neither applies to a labelled line on a different screen** —
+so do not cite one as the justification for the other.
+
+**The door into history is not lost:** the Record tile on the same screen still opens the team's
+history. This removed a summary, not a route.
+
+⚠ **The endpoint it used now has no caller** (found by review, 2026-08-21). It is dead server code,
+left in place deliberately rather than deleted on the way past: the look-back layer is guarded by
+`tests/unit/coach-history-endpoint-guard.test.ts`, which still lists it, and **a year-reading route
+is a DECISION under the standing 2026-08-18 ruling** — not a tidy-up. Two comments elsewhere still
+claim it is consumed and are now wrong. Retire it deliberately or not at all.

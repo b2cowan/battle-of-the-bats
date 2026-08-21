@@ -296,7 +296,7 @@ function OrgSeedModal({
   if (!open) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={() => !busy && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !busy && onClose())?.(); }}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -577,7 +577,7 @@ function UserListPanel({
       )}
 
       {modalUser && (
-        <div className={styles.modalOverlay} onClick={() => setModalUser(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setModalUser(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <p className={styles.modalTitle}>Delete User</p>

@@ -1751,7 +1751,7 @@ export function PlayerDuesPanel({
           {refundOpen && (
             <div
               className={styles.modalOverlay}
-              onMouseDown={e => { if (e.target === e.currentTarget && !payAllBusy) setRefundOpen(false); }}
+              onPointerDown={e => { if (e.target === e.currentTarget && !payAllBusy) setRefundOpen(false); }}
             >
               <div
                 className={`${styles.modal} ${styles.modalSettlement} ${styles.modalScrollBody} ${styles.modalFlushFooter}`}
@@ -2197,7 +2197,7 @@ export function PlayerDuesPanel({
 
       {/* Player slide-over */}
       {selected && (
-        <div className={styles.modalOverlay} onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); })?.(); }}>
           <div className={`${styles.slideOver} ${styles.slideOverLedger}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
@@ -2999,7 +2999,7 @@ export function PlayerDuesPanel({
         const name = [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ');
         const evenTakers = settlement.rows.filter(r => r.choice === 'even').length;
         return (
-          <div className={styles.modalOverlay} onClick={() => setChoiceFor(null)}>
+          <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setChoiceFor(null))?.(); }}>
             <div className={styles.modal} style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Set refund — {name}</span>
@@ -3098,7 +3098,7 @@ export function PlayerDuesPanel({
       })()}
 
       {confirmRemindersOpen && (
-        <div className={styles.modalOverlay} onClick={() => setConfirmRemindersOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setConfirmRemindersOpen(false))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Send due reminders?</span>

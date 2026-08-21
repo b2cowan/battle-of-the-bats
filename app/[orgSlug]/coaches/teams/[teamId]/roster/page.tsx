@@ -650,7 +650,7 @@ export default function RosterPage({
       <UnsavedChangesGuard active={addDirty} />
 
       {addOpen && (
-        <div className={styles.modalOverlay} onClick={requestCloseAdd}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseAdd)?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title="Add Player" onClose={requestCloseAdd}>
               {addedInRun > 0 && <span className={styles.discToggleMeta}>{addedInRun} added</span>}

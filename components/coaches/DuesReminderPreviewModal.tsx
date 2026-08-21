@@ -36,7 +36,7 @@ export default function DuesReminderPreviewModal({
   });
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={styles.modal} style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Dues reminder emails</span>

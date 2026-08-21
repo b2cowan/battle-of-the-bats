@@ -713,7 +713,7 @@ export default function ChangeRequestsClient({
       </div>
 
       {selectedRequest && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedRequestId(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setSelectedRequestId(null))?.(); }}>
           <div
             className={styles.detailModal}
             role="dialog"

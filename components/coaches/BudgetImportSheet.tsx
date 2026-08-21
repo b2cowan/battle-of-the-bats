@@ -256,7 +256,7 @@ export default function BudgetImportSheet({
   const categoryOptions = categories.map(c => c.name);
 
   return (
-    <div className={shared.modalOverlay} onClick={close}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
       <div className={`${shared.modal} ${shared.modalFlushFooter} ${styles.panel}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Import a spreadsheet" onClose={close} />
 

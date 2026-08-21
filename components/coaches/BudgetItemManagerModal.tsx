@@ -301,7 +301,7 @@ export default function BudgetItemManagerModal({
        they had backed out would have no way to know their words had gone. */
     const close = () => { if (!foldBusy) onClose(); };
     return (
-      <div className={styles.modalOverlay} onClick={close}>
+      <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
         <div className={`${styles.modal} ${styles.modalScrollBody} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
           <CoachModalHeader title={title} subtitle={subtitle} onClose={close} />
           <div className={styles.formBody}>{body}</div>

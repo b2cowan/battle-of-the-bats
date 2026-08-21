@@ -333,7 +333,7 @@ function GameModal({
   const awayTeam = teams.find(t => t.id === form.awayTeamId);
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{isCreate ? 'Add Game' : 'Edit Game'}</h2>
@@ -471,7 +471,7 @@ function GenerateModal({
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={`${styles.modal} ${styles.generateModal}`}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Generate Schedule — {divisionName}</h2>
@@ -606,7 +606,7 @@ function PracticeModal({
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Add Practice — {team.name}</h2>
@@ -709,7 +709,7 @@ function CancelPracticeModal({
   const dt = practice.scheduledAt ? formatDateTime(practice.scheduledAt) : null;
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal} style={{ maxWidth: 420 }}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Cancel Practice</h2>

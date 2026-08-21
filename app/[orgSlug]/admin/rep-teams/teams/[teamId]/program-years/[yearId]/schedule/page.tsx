@@ -314,7 +314,7 @@ export default function AdminSchedulePage({
 
       {/* Detail slide-over */}
       {selectedEvent && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedEvent(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setSelectedEvent(null))?.(); }}>
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

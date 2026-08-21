@@ -250,7 +250,7 @@ function PreviewModal({
   }, [email.emailKey]);
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <div>
@@ -303,7 +303,7 @@ function SendConfirmModal({
   sending: boolean;
 }) {
   return (
-    <div className={styles.modalOverlay} onClick={onCancel}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onCancel)?.(); }}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <div className={styles.modalTitle}>Confirm Send</div>
@@ -791,7 +791,7 @@ export default function EmailDashboardClient({
       )}
 
       {dateEditKey && (
-        <div className={styles.modalOverlay} onClick={() => !savingDate && setDateEditKey(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !savingDate && setDateEditKey(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div className={styles.modalTitle}>Planned send date</div>

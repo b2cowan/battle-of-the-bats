@@ -2196,7 +2196,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Day list (mobile month-cell tap) ──────────────────────────────── */}
       {daySheet && (
-        <div className={`${styles.modalOverlay} ${styles.daySheetOverlay}`} onClick={() => setDaySheet(null)}>
+        <div className={`${styles.modalOverlay} ${styles.daySheetOverlay}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDaySheet(null))?.(); }}>
           <div className={styles.daySheet} onClick={e => e.stopPropagation()}>
             <div className={styles.daySheetHeader}>
               <h2 className={styles.daySheetTitle}>
@@ -2217,7 +2217,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
-        <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onClick={requestCloseSlideOver}>
+        <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
           <div className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
@@ -2876,7 +2876,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
-        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestDiscardForm}>
+        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestDiscardForm)?.(); }}>
           <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
 

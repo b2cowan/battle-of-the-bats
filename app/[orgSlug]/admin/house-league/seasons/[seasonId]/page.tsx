@@ -545,7 +545,7 @@ export default function SeasonDetailPage() {
 
       {/* Edit Season modal */}
       {editOpen && editForm && (
-        <div className={styles.modalOverlay} onClick={() => setEditOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Season</h3>
@@ -712,7 +712,7 @@ export default function SeasonDetailPage() {
 
       {/* Add Division modal */}
       {addDivOpen && (
-        <div className={styles.modalOverlay} onClick={() => setAddDivOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddDivOpen(false))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Division</h3>
@@ -765,7 +765,7 @@ export default function SeasonDetailPage() {
 
       {/* Edit Division modal */}
       {editDivId && (
-        <div className={styles.modalOverlay} onClick={() => setEditDivId(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditDivId(null))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Division</h3>
@@ -816,7 +816,7 @@ export default function SeasonDetailPage() {
 
       {/* Delete Division confirm */}
       {deleteDivId && (
-        <div className={styles.modalOverlay} onClick={() => setDeleteDivId(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDeleteDivId(null))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete Division</h3>

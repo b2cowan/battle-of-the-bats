@@ -132,7 +132,7 @@ function RenameDialog({
   const [tagIds, setTagIds] = useState<string[]>(template.tags.map(t => t.id));
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Rename template"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Rename template</h3>
@@ -455,7 +455,7 @@ export default function CoachPlanTemplatesPage({
       {/* ── "Add from a past season" — the archive ruling made concrete ── */}
       {importOpen && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Add from a past season"
-          onClick={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
+          onPointerDown={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add from a past season</h3>

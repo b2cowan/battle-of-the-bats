@@ -115,7 +115,7 @@ export default function CloseSeasonModal({
   return (
     <div
       className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}
-      onMouseDown={e => { if (e.target === e.currentTarget && !submitting) onClose(); }}
+      onPointerDown={e => { if (e.target === e.currentTarget && !submitting) onClose(); }}
     >
       <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Close ${seasonName}`}>
         <div className={styles.modalHeader}>

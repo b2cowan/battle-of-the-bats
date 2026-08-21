@@ -246,7 +246,7 @@ function CreateTeamsModal({
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Create Teams — {divisionName}</h2>
@@ -344,7 +344,7 @@ function EditTeamModal({
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Edit Team</h2>
@@ -980,7 +980,7 @@ export default function TeamsPage() {
       )}
 
       {deleteTeam && (
-        <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && setDeleteTeam(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setDeleteTeam(null)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Delete Team</h2>
@@ -1001,7 +1001,7 @@ export default function TeamsPage() {
       )}
 
       {showRandomizeConfirm && (
-        <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && setShowRandomizeConfirm(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setShowRandomizeConfirm(false)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Randomize Players?</h2>
@@ -1021,7 +1021,7 @@ export default function TeamsPage() {
       )}
 
       {showClearConfirm && (
-        <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && setShowClearConfirm(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setShowClearConfirm(false)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Clear All Assignments?</h2>

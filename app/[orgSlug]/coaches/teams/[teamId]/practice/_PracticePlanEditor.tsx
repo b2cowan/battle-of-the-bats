@@ -664,7 +664,7 @@ function DrillPickerSheet({
 
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label={title}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>{title}</h3>
@@ -791,7 +791,7 @@ function PromoteDrillDialog({
   const [tagIds, setTagIds] = useState<string[]>([]);
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save to my drills"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Save &ldquo;{stationName}&rdquo; to your drills</h3>
@@ -1544,7 +1544,7 @@ export default function PracticePlanEditor({
       {/* ── The roster picker — roster order, focus areas inline, attendance as context ── */}
       {pickerTarget && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Choose players"
-          onClick={e => { if (e.target === e.currentTarget) setAttach(null); }}>
+          onPointerDown={e => { if (e.target === e.currentTarget) setAttach(null); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Choose players</h3>

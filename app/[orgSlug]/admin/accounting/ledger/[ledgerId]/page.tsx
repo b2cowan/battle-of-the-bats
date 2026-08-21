@@ -551,7 +551,7 @@ export default function LedgerDetailPage() {
 
       {/* Add / Edit entry modal */}
       {entryModal && (
-        <div className={styles.modalOverlay} onClick={() => setEntryModal(null)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEntryModal(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>{entryModal === 'add' ? 'Add Entry' : 'Edit Entry'}</h3>
@@ -628,7 +628,7 @@ export default function LedgerDetailPage() {
 
       {/* Transfer modal */}
       {transferModal && (
-        <div className={styles.modalOverlay} onClick={() => setTransferModal(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setTransferModal(false))?.(); }}>
           <div className={`${styles.modal} ${styles.modalLg}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Transfer</h3>

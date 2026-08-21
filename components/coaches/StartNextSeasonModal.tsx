@@ -134,7 +134,7 @@ export default function StartNextSeasonModal({
   }
 
   return (
-    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onMouseDown={e => { if (e.target === e.currentTarget && !submitting) { if (summary) onDone(); else onClose(); } }}>
+    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget && !submitting) { if (summary) onDone(); else onClose(); } }}>
       <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Start next season">
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{summary ? 'New season started' : 'Start next season'}</h2>

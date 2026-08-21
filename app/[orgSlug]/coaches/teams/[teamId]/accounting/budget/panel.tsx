@@ -1926,7 +1926,7 @@ export function BudgetPlanPanel({
 
       {/* ── Add / Edit Line Modal ───────────────────────────────────────────── */}
       {modalOpen && (
-        <div className={shared.modalOverlay} onClick={closeLineModal}>
+        <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeLineModal)?.(); }}>
           {/* A touch wider than the default dialog (the event form's precedent) so the period row's
               three controls — picker, label, amount — are not crushed side by side. */}
           <div
@@ -2369,7 +2369,7 @@ export function BudgetPlanPanel({
 
       {/* ── Delete Confirm — short dialog, opts out of the mobile sheet default ────── */}
       {deletingId && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={closeDelete}>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (closeDelete)?.(); }}>
           <div className={shared.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>Delete Budget Line?</h3>

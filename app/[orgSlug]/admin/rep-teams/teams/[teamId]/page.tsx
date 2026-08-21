@@ -198,7 +198,7 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
 
       {/* Add Program Year modal */}
       {addYearOpen && (
-        <div className={styles.modalOverlay} onClick={() => setAddYearOpen(false)}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddYearOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Program Year</h3>
