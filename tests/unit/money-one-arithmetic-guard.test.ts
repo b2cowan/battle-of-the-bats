@@ -161,7 +161,7 @@ describe('one arithmetic — the Months grid does not derive category identity p
   const event = (over: Partial<CategoryEvent>): CategoryEvent =>
     ({ categoryName: 'Facilities', date: '2026-05-10', amount: 100, ...over });
   const gridLine = (over: Partial<GridLine>): GridLine =>
-    ({ id: 'l1', description: 'Permits', categoryName: 'Facilities', itemId: null, itemName: null,
+    ({ id: 'l1', description: 'Permits', categoryName: 'Facilities', itemId: null,
       totalAmount: 100, periods: [{ date: '2026-05-01', amount: 100 }], ...over });
 
   /* ⚠⚠ THE SEAM THE FIRST DRAFT OF THIS FILE DID NOT COVER (`/simplify` altitude pass, 2026-08-17).
@@ -195,7 +195,7 @@ describe('one arithmetic — the Months grid does not derive category identity p
       lines: shapes.map((s, i) => gridLine({ id: `l${i}`, ...s })),
       actuals: shapes.map(s => event(s)),
       scheduled: [],
-      priorLines: [],
+     
       todayMonth: '2026-05',
     });
     for (const s of shapes) {
@@ -218,7 +218,7 @@ describe('one arithmetic — the Months grid does not derive category identity p
         event({ categoryId: 'cat-default', categoryName: 'Equipment', amount: 90 }),
         event({ categoryId: 'cat-custom',  categoryName: 'Equipment', amount: 200 }),
       ],
-      scheduled: [], priorLines: [], todayMonth: '2026-05',
+      scheduled: [], todayMonth: '2026-05',
     });
     const equipment = g.categories.filter(c => c.categoryName === 'Equipment');
     assert.strictEqual(equipment.length, 2, 'two ids with one name collapsed into one grid row');
@@ -234,7 +234,7 @@ describe('one arithmetic — the Months grid does not derive category identity p
         event({ categoryId: null, categoryName: NO_CATEGORY_LABEL, amount: 200 }),
         event({ categoryId: null, categoryName: NO_CATEGORY_LABEL, amount: -125 }),
       ],
-      scheduled: [], priorLines: [], todayMonth: '2026-05',
+      scheduled: [], todayMonth: '2026-05',
     });
     const nameless = g.categories.filter(c => c.categoryName === NO_CATEGORY_LABEL);
     assert.strictEqual(nameless.length, 1, 'the nameless bucket split into more than one row');
@@ -254,7 +254,7 @@ describe('one arithmetic — the Months grid does not derive category identity p
         event({ categoryId: null, categoryName: NO_CATEGORY_LABEL, amount: -125 }), // via the rollup
       ],
       scheduled: [event({ categoryId: null, categoryName: null, amount: 40 })],
-      priorLines: [], todayMonth: '2026-05',
+      todayMonth: '2026-05',
     });
     assert.strictEqual(g.categories.length, 1,
       'a raw null-named event split off into its own row — the exact shipped defect');

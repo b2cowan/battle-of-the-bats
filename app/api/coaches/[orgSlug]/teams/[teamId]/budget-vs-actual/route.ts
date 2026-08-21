@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
-  getRepTeamTagLibrary, getRepTeamExpenseTagsMap, getRepDuesPaymentsByProgramYear,
+  getRepDuesPaymentsByProgramYear,
   getRealisedFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
   getRepAllocationSplitsForTeam, getCommitmentStandings,
 } from '@/lib/db';
@@ -12,7 +12,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import {
   buildMonthGrid, monthKeyOf,
-  type CategoryEvent, type GridLine, type PriorLine,
+  type CategoryEvent, type GridLine,
 } from '@/lib/coach-budget-months';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import {
@@ -88,13 +88,9 @@ export const GET = withObservability(async (req: Request,
   // season, which is every existing caller: the live Budget vs Actual panel and its exports.
   const resolved = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { ctx, capabilities, programYear } = resolved;
+  const { capabilities, programYear } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
-
-  // Optional money-tag filter (Phase 3): when ?tagId= is present, the actuals are scoped to
-  // expenses carrying that tag (the budget plan stays whole) — a "spend by tag" cut of the report.
-  const filterTagId = new URL(req.url).searchParams.get('tagId');
 
   /* ── 1–2. The plan, the costs, and where every commitment stands ─────────────────────────────
      ⚠ ONE WAVE. All three depend only on `programYear.id` and on nothing from each other, and this
@@ -159,20 +155,16 @@ export const GET = withObservability(async (req: Request,
      trips on a report screen's critical path, on a route whose own comments already call out being
      "a long serial chain of awaits".
 
-     Both legs depend only on `teamId` / `programYear.id` / `filterTagId`, all known here, so they
-     ride one `Promise.all`. */
+     Both legs depend only on `teamId` / `programYear.id`, both known here, so they ride one
+     `Promise.all`. */
   const [clubSplits, clubReqRes] = await Promise.all([
-    filterTagId
-      ? Promise.resolve([] as Awaited<ReturnType<typeof getRepAllocationSplitsForTeam>>)
-      : getRepAllocationSplitsForTeam(teamId, programYear.id),
-    filterTagId
-      ? Promise.resolve({ data: [] as Array<Record<string, any>> })
-      : supabaseAdmin
-          .from('rep_team_payment_requests')
-          .select('id, request_type, amount, description, reviewed_at, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
-          .eq('team_id', teamId)
-          .eq('program_year_id', programYear.id)
-          .eq('status', 'approved'),
+    getRepAllocationSplitsForTeam(teamId, programYear.id),
+    supabaseAdmin
+      .from('rep_team_payment_requests')
+      .select('id, request_type, amount, description, reviewed_at, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
+      .eq('team_id', teamId)
+      .eq('program_year_id', programYear.id)
+      .eq('status', 'approved'),
   ]);
 
   const clubApprovedRequests = ((clubReqRes.data ?? []) as Array<Record<string, any>>).map(r => ({
@@ -188,15 +180,13 @@ export const GET = withObservability(async (req: Request,
     createdAt: r.created_at as string,
   }));
 
-  // Money-tag library (team + org-shared) for the filter chip row, and which tags each expense
-  // carries. When a tag filter is active, the actuals-side of the report only sees tagged expenses.
-  const [expenseTags, tagsByExpenseId] = await Promise.all([
-    getRepTeamTagLibrary(teamId, 'expense', ctx.org.id),
-    getRepTeamExpenseTagsMap(allExpenses.map(e => e.id as string)),
-  ]);
-  const expenses = filterTagId
-    ? allExpenses.filter(e => (tagsByExpenseId[e.id as string] ?? []).includes(filterTagId))
-    : allExpenses;
+  /* ⚠⚠ THE MONEY-TAG FILTER WAS REMOVED FROM THIS REPORT (owner ruling 2026-08-21) — the two tag
+     reads and the filtered `expenses` list went with it. It worked, and that was not the
+     problem: it narrowed the ACTUAL and SCHEDULED sides while the BUDGET stayed whole (a plan
+     line carries no tag), so a filtered reading compared a slice of spending against the whole
+     plan and Headroom ROSE as you narrowed. Tag filtering belongs on Transactions, which lists
+     rather than compares. Reinstating it here needs tagged plan lines first. */
+  const expenses = allExpenses;
 
   /* ⚠ "WHAT DID THIS EXPENSE ACTUALLY PAY, AND WHEN" IS NOT A ROUTE CONCERN — it lives in
      lib/coach-expense-movements.ts, and that module's header carries the whole rule plus the two
@@ -496,8 +486,8 @@ export const GET = withObservability(async (req: Request,
     refunds: [...refunds, ...clubRefunds],
   });
   /* ⚠ THE MONTH GRID AND EVERY COST FIGURE BELOW READ THE EXPENSES HALF, and only that half. The
-     grid is a money-OUT shape — a prior-season column, an un-itemized buffer row, a payment
-     schedule — and putting revenue rows in it would be a second report wearing the first's
+     grid is a money-OUT shape — an un-itemized buffer row, a payment schedule, dated commitments
+     — and putting revenue rows in it would be a second report wearing the first's
      clothes. Reading it off `report` rather than a second rollup call is what keeps Months and the
      statement grouping one plan one way. */
   const categoryResults = report.expenses.categories;
@@ -603,15 +593,20 @@ export const GET = withObservability(async (req: Request,
     categoryName: displayCategoryName(categoryName),
   });
 
+  /* ⚠⚠ THE ITEM RIDES ALONG (2026-08-21, owner-found). This walks the categories AND their items
+     and used to key every movement by the category alone — dropping the item it was already holding.
+     The grid files money by category+item, so without it every item row showed a dash in its money
+     columns while its category carried the total, and the Statement view of the SAME report
+     itemised the same money correctly. */
   const actualMovements = report.expenses.categories.flatMap(cat => {
     const category = gridCategory(cat.categoryId, cat.categoryName);
     return cat.items.flatMap(item => [
       ...item.costs.map(c => ({
-        category, date: c.paidDate, amount: c.amount,
+        category, itemId: item.itemId, date: c.paidDate, amount: c.amount,
         id: c.id, description: c.description,
       })),
       ...item.refunds.map(b => ({
-        category, date: b.receivedDate, amount: -b.amount,
+        category, itemId: item.itemId, date: b.receivedDate, amount: -b.amount,
         id: b.id, description: `${b.description || item.itemName} — money back`,
       })),
     ]);
@@ -703,7 +698,6 @@ export const GET = withObservability(async (req: Request,
     description:  item.itemName,
     ...gridCategory(cat.categoryId, cat.categoryName),
     itemId:       item.itemId,
-    itemName:     item.itemName,
     totalAmount:  item.budgeted,
     // Carried so the grid can still tell a planned category from one that only has spending —
     // every item now arrives with a row, so the row's presence no longer answers that.
@@ -796,7 +790,9 @@ export const GET = withObservability(async (req: Request,
          includes what should already have been paid — dropping it would hide the most urgent money
          on the report. */
       if (inst.state === 'settled') continue;
-      gridScheduled.push({ ...cat, date: inst.dueDate, amount: inst.remaining });
+      // ⚠ `placed` already knows the item — carry it, or this money lands on the category and the
+      // item row it belongs to shows a dash (owner-found 2026-08-21).
+      gridScheduled.push({ ...cat, itemId: placed.itemId, date: inst.dueDate, amount: inst.remaining });
       pushDetail('scheduled', cat, inst.dueDate, {
         id: inst.id,
         description: installmentLabel(description, inst.installmentNumber, count),
@@ -817,39 +813,18 @@ export const GET = withObservability(async (req: Request,
      readings of it. A movement the statement counts is a movement this grid places, in the month the
      statement dated it, described the way the statement describes it. */
   for (const mv of actualMovements) {
-    gridActuals.push({ ...mv.category, date: mv.date, amount: mv.amount });
+    gridActuals.push({ ...mv.category, itemId: mv.itemId, date: mv.date, amount: mv.amount });
     pushDetail('actual', mv.category, mv.date, {
       id: mv.id, description: mv.description, amount: mv.amount, paid: true,
     });
   }
 
-  // Prior season — the comparison column. Only the most recent earlier year, and only when it
-  // actually has lines; rollover already carries lines + periods forward, so a year-2+ team has
-  // this for free and a first-season team correctly gets nothing.
-  const { data: priorYearRow } = await supabaseAdmin
-    .from('rep_program_years')
-    .select('id, year, name')
-    .eq('team_id', teamId)
-    .lt('year', programYear.year)
-    .order('year', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let priorLines: PriorLine[] = [];
-  if (priorYearRow) {
-    const { data: priorRows } = await supabaseAdmin
-      .from('rep_budget_lines')
-      .select('description, item_id, total_amount, budget_categories(name)')
-      .eq('program_year_id', priorYearRow.id as string);
-    priorLines = (priorRows ?? []).map((r: Record<string, unknown>) => ({
-      description:  r.description as string,
-      itemId:       (r.item_id as string | null) ?? null,
-      itemName:     null,
-      categoryName: ((r.budget_categories as Record<string, unknown> | null)?.name as string) ?? 'Uncategorized',
-      totalAmount:  r.total_amount as number,
-    }));
-  }
-
+  /* ⚠ THE PRIOR-SEASON COMPARISON COLUMN WAS REMOVED HERE (owner ruling 2026-08-21). This report
+     is read daily and evaluates THIS season only; last season's plan sat in the leading column
+     labelled with a bare year, read as one more month bucket, and never followed the Showing
+     lens — so under Scheduled it put last year's BUDGET beside this year's remaining debt.
+     Cross-season comparison is wanted, but as its own view, not as daily furniture here.
+     Do not reinstate it in this grid; the whole query it needed went with it. */
   // The optional ESTIMATED total reconciled against the itemized sum. ⚠ Owner ruling 2026-08-12:
   // the estimate wins whenever it is set, in BOTH directions — it used to be max(itemized,
   // estimate), which kept a lower estimate in the database and then ignored it. One shared module
@@ -874,7 +849,6 @@ export const GET = withObservability(async (req: Request,
     lines: gridLines,
     actuals: gridActuals,
     scheduled: gridScheduled,
-    priorLines,
     todayMonth,
     bufferAmount: buffer,
   });
@@ -995,10 +969,5 @@ export const GET = withObservability(async (req: Request,
     cellDetails,
     moneyIn: { scheduled: duesInScheduled, actual: duesInActual },
     todayMonth,
-    // Short enough to be a column header on a phone; the full season name is not.
-    priorSeasonLabel: priorLines.length > 0 && priorYearRow ? String(priorYearRow.year) : null,
-    // Only tags actually used by this year's expenses head the filter row (not the whole library).
-    expenseTags: expenseTags.filter(t => new Set(Object.values(tagsByExpenseId).flat()).has(t.id)),
-    activeTagId: filterTagId,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual' });

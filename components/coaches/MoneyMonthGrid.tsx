@@ -41,12 +41,23 @@ export interface CellDetailItem {
   paid: boolean;
 }
 
+/**
+ * How many months show at once.
+ *
+ * ⚠ A CAP, NOT A PROMISE OF NO SCROLLING. Measured 2026-08-21 on the live grid: a month column
+ * is 83px at 1440 and the visible area is 1156px, so twelve months plus both pinned ends wants
+ * ~1,296px — about 140px more than exists. Roughly ten show at a desk and the last two take a
+ * nudge. The arrows are for the COARSE movement; the pinned ends are what keep a reader's place.
+ * That measurement is also why nothing else gets pinned: every pinned column costs a visible
+ * month at every width.
+ */
+export const MONTH_WINDOW = 12;
+
 export interface MonthGridPayload {
   monthGrid: MonthGrid;
   cellDetails: Record<string, CellDetailItem[]>;
   moneyIn: { scheduled: Record<string, number>; actual: Record<string, number> };
   todayMonth: MonthKey;
-  priorSeasonLabel: string | null;
 }
 
 function fmt(n: number) {
@@ -86,25 +97,50 @@ export default function MoneyMonthGrid({
   lens,
   base,
   canWrite,
+  monthStart,
 }: {
   data: MonthGridPayload;
   lens: MoneyLens;
   /** `/{orgSlug}/coaches/teams/{teamId}` — drill-ins link back into the pages that own the forms. */
   base: string;
   canWrite: boolean;
+  /** First month of the visible window. The CALLER owns the control — see `MONTH_WINDOW`. */
+  monthStart: number;
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
-  const { monthGrid: grid, cellDetails, moneyIn, todayMonth, priorSeasonLabel } = data;
+  const { monthGrid: grid, cellDetails, moneyIn, todayMonth } = data;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{ title: string; items: CellDetailItem[]; href: string; hrefLabel: string } | null>(null);
   /** "Which line's dates?" — only ever open for a row standing for two or more budget lines. */
   const [chooser, setChooser] = useState<{ item: string; when: string; lines: GridPlanLine[] } | null>(null);
 
-  const showPrior = priorSeasonLabel != null;
-  const showUndated = grid.totals.undatedBudget > 0.005;
+  /* ⚠⚠ THE MONTHS ARE WINDOWED; THE TOTALS ARE NOT (owner ruling 2026-08-21). A repeating cost
+     stretches this grid past any screen — fifteen columns the day it was found — and `Total`,
+     the one figure a treasurer is looking for, slid off the right edge. Twelve months show at a
+     time: the label column stays pinned left, Total stays pinned right (CSS), and neither ever
+     scrolls away.
+
+     ⚠⚠ TOTAL IS THE WHOLE SEASON, NEVER THE VISIBLE WINDOW. The Total column, the statement view
+     and the chart are held equal by `tests/unit/money-one-arithmetic-guard` — re-totalling to a
+     window would let two views of one season disagree. That is why the caller NAMES the visible
+     range beside its arrows: a reader who adds up what they can see must be able to tell why it
+     does not match. An unlabelled window is how a correct number becomes a support ticket.
+
+     ⚠ THE CONTROL LIVES IN THE CALLER (owner call 2026-08-21) — it belongs in the same row as
+     View and Showing, which this component does not own. It is handed a start index. */
+  const maxStart = Math.max(0, grid.months.length - MONTH_WINDOW);
+  /* ⚠ CLAMPED HERE TOO, however careful the caller is: `grid.months` is the only authority on how
+     long the season is, and an out-of-range slice renders an empty grid with no error. */
+  const start = Math.min(Math.max(0, monthStart), maxStart);
+  const view = grid.months.slice(start, start + MONTH_WINDOW);
+
   // Undated budget only means anything under a lens that reads the plan.
   const undatedLive = lensReadsPlan(lens);
+  /* ⚠ THE COLUMN APPEARS ONLY WHERE IT CAN HOLD SOMETHING (owner ruling 2026-08-21). Undated
+     money is PLAN money, so under Actual and Scheduled this could only ever print a full column
+     of dashes — paying full width for nothing on a grid that already does not fit. */
+  const showUndated = undatedLive && grid.totals.undatedBudget > 0.005;
 
   // Cash flow follows the lens on screen — the plan under Budget, the commitments under Scheduled,
   // real spending under Actual — and never blends them, which is what keeps a planned estimate and
@@ -215,9 +251,13 @@ export default function MoneyMonthGrid({
           <thead>
             <tr>
               <th className={styles.lead}>Category / line</th>
-              {showPrior && <th className={`${styles.num} ${styles.prior}`} title="Last season's plan">{priorSeasonLabel}</th>}
+              {/* ⚠ NO PRIOR-SEASON COLUMN HERE, and it is not an oversight (owner ruling
+                  2026-08-21). A bare year at the head of a row of month columns read as a month
+                  of THIS season, and it ignored the Showing lens — so under Scheduled it stood
+                  last year's budget next to this year's remaining debt and invited a comparison
+                  that was not true. Cross-season belongs in its own view. */}
               {showUndated && <th className={`${styles.num} ${styles.undated}`}>No date yet</th>}
-              {grid.months.map(m => (
+              {view.map(m => (
                 <th key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>{formatMonthLabel(m)}</th>
               ))}
               <th className={`${styles.num} ${styles.totalCol}`}>Total</th>
@@ -251,13 +291,15 @@ export default function MoneyMonthGrid({
                           keeping a label the other dropped is the drift this report has been
                           consolidated twice to remove. */}
                     </th>
-                    {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(cat.priorTotal)}</td>}
                     {showUndated && (
                       <td className={`${styles.num} ${styles.undated}`}>
                         {cellNode(undatedLive && cat.undatedBudget > 0.005 ? cat.undatedBudget : null)}
                       </td>
                     )}
-                    {grid.months.map((m, i) => {
+                    {/* ⚠ `k` is the position ON SCREEN, `i` the position in the SEASON. Every cell
+                        lookup uses `i`, or a paged grid reads the wrong month's money. */}
+                    {view.map((m, k) => {
+                      const i = start + k;
                       const v = lensCell(cat.cells[i], lens, m, todayMonth);
                       const drillable = (lens === 'actual' || lens === 'scheduled')
                         && (cellDetails[`${lens}|${cat.categoryKey}|${m}`]?.length ?? 0) > 0;
@@ -279,7 +321,6 @@ export default function MoneyMonthGrid({
                       <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
                         <span className={shared.wrap640}>{line.description}</span>
                       </th>
-                      {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(line.priorTotal)}</td>}
                       {showUndated && (
                         <td className={`${styles.num} ${styles.undated}`}>
                           {cellNode(undatedLive && line.undatedBudget > 0.005 ? line.undatedBudget : null, {
@@ -289,11 +330,17 @@ export default function MoneyMonthGrid({
                           })}
                         </td>
                       )}
-                      {grid.months.map((m, i) => {
-                        // Only the BUDGET is known per line: actuals and commitments are matched to
-                        // a category, not to a line (there is no payable↔line link, by design), so
-                        // a line's actual cell honestly reads as "—" rather than inventing a split.
-                        const v = lens === 'budget' ? line.cells[i].budget : null;
+                      {view.map((m, k) => {
+                        const i = start + k;   // season index — see the category row above
+                        /* ⚠⚠ EVERY LENS, NOT JUST BUDGET (fixed 2026-08-21, owner-found). This read
+                           `lens === 'budget' ? … : null` under a comment saying actuals could only be
+                           matched to a category — true when written, and untrue since every cost
+                           started naming an item. The row now carries its own money, so blanking it
+                           here printed a dash over a figure the grid had already worked out.
+
+                           ⚠ It is the SAME `lensCell` the category row above uses. A second way of
+                           choosing a cell's value is how a parent and its children start disagreeing. */
+                        const v = lensCell(line.cells[i], lens, m, todayMonth);
                         const canEdit = canWrite && lens === 'budget' && line.cells[i].budget > 0.005;
                         return (
                           <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
@@ -302,7 +349,7 @@ export default function MoneyMonthGrid({
                         );
                       })}
                       <td className={`${styles.num} ${styles.totalCol}`}>
-                        {cellNode(lens === 'budget' ? line.total.budget : null)}
+                        {cellNode(lensTotal(line.total, lens))}
                       </td>
                     </tr>
                   ))}
@@ -312,15 +359,14 @@ export default function MoneyMonthGrid({
 
             <tr className={`${shared.moneyGridTotal} ${styles.totalRow}`}>
               <th scope="row" className={styles.lead}>Total</th>
-              {showPrior && <td className={`${styles.num} ${styles.prior}`}>{cellNode(grid.totals.priorTotal)}</td>}
               {showUndated && (
                 <td className={`${styles.num} ${styles.undated}`}>
                   {cellNode(undatedLive ? grid.totals.undatedBudget : null)}
                 </td>
               )}
-              {grid.months.map((m, i) => (
+              {view.map((m, k) => (
                 <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
-                  {cellNode(lensCell(grid.totals.cells[i], lens, m, todayMonth), { emphasis: lens === 'difference' })}
+                  {cellNode(lensCell(grid.totals.cells[start + k], lens, m, todayMonth), { emphasis: lens === 'difference' })}
                 </td>
               ))}
               <td className={`${styles.num} ${styles.totalCol}`}>
@@ -333,9 +379,8 @@ export default function MoneyMonthGrid({
             {cash && CASH_ROWS.map((row, i) => (
               <tr key={row.key} className={`${shared.moneyGridFlow} ${i === 0 ? shared.moneyGridFlowFirst : ''} ${row.emphasis ? styles.runningRow : ''}`}>
                 <th scope="row" className={styles.lead}>{row.label}</th>
-                {showPrior && <td className={`${styles.num} ${styles.prior}`}><span className={styles.nil}>—</span></td>}
                 {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
-                {cash.rows.map(r => (
+                {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
                   <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
                     {cellNode(row.value(r), { emphasis: row.emphasis })}
                   </td>
@@ -367,10 +412,17 @@ export default function MoneyMonthGrid({
             happened. A month still ahead shows “—” — money nobody has spent yet isn’t a saving.
           </p>
         )}
+        {/* ⚠⚠ THIS NOTE USED TO SAY THE OPPOSITE, and it was the THIRD copy of one stale claim
+            (2026-08-21): the same sentence lived in a code comment, in this component’s own cell
+            logic, and here in front of the coach. Spending now lands on the item row it names — so
+            the line telling a coach to expect a dash was the last thing still asserting the old
+            behaviour, and the most expensive, because a reader believes it. */}
         {(lens === 'actual' || lens === 'scheduled') && (
           <p className={styles.note}>
-            {lens === 'actual' ? 'Spending' : 'A commitment'} is matched to a <strong>category</strong>, not to
-            an individual line, so line rows read “—” here. Tap a category’s figure to see what makes it up.
+            {lens === 'actual' ? 'Spending' : 'A commitment'} sits on the <strong>item</strong> it names, so a
+            category is what its rows add up to. Money recorded without an item sits on that
+            category’s <strong>Not itemized</strong> row. Tap a <strong>category’s</strong> figure to see
+            what makes it up.
           </p>
         )}
         {grid.truncated && (
@@ -388,22 +440,6 @@ export default function MoneyMonthGrid({
             <strong>On this plan you go short in {formatMonthLong(cash.shortfall.month)} — about {fmt(cash.shortfall.amount)}.</strong>
             {' '}Move a payment, bring dues forward, or plan the gap.
           </span>
-        </div>
-      )}
-
-      {grid.priorOnly.length > 0 && (
-        <div className={styles.priorOnly}>
-          <p className={styles.priorOnlyTitle}>In last season’s plan, not in this one</p>
-          <ul className={styles.priorOnlyList}>
-            {grid.priorOnly.map(p => (
-              <li key={`${p.categoryName}-${p.description}`}>
-                <span>{p.description}</span>
-                <span className={styles.priorOnlyCat}>{p.categoryName}</span>
-                <span className={styles.priorOnlyAmt}>{fmt(p.amount)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className={styles.note}>Last season’s figures, for reference — not a suggestion for this one.</p>
         </div>
       )}
 

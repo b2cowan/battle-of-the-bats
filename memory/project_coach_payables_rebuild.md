@@ -99,7 +99,34 @@ changes) · **P2** record a payment + undo · **P3** the screen (one list, `Grou
 
 **✅ P5 CLOSED 2026-08-20 by two owner calls.** The coach sandbox now shows a **repeating dome bill** (5 payments, 2 settled) — a judgement no check could make, since `check:demos` proves breakage and never absence. And the **shared touch-target fix** landed: the filter pills cleared the 44px floor, so all four money screens pass and three stale entries were pruned. ⚠⚠ Two lessons: the obvious fix was wrong twice by adding WIDTH to solve a HEIGHT problem (an `inline-flex` link stops wrapping; moving a media guard dropped the register’s compact sizing) — add height only, never width; and `--init` **silently baselined a regression I had just caused**, caught only by diffing the baseline against HEAD. **Audit what `--init` ADDED, not the count.**
 
-**⚠ P1–P4 ARE ALL ON DEV AS OF 2026-08-20.** §64 Parts A+B walked and passed; C, D and E are owed.
+**⚠ P1–P5 ARE ALL ON DEV.** §64 Parts A+B walked 2026-08-20; **C+D walked 2026-08-21**; E, F, G, H owed.
+
+**⚠⚠ THE C+D WALK FOUND FIVE THINGS AND EVERY ONE WAS AN ABSENCE OR A FALSE SENTENCE** — never a
+broken control. Three lessons worth more than the fixes:
+
+1. **A BEHAVIOUR LIVES IN MORE THAN THE CODE THAT COMPUTES IT.** "Spending is matched to a
+   category, so line rows read —" was written down in **FOUR** places: the arithmetic, the grid
+   component, the **export**, and the **note under the grid**. Each was fixed and declared done
+   while three copies were still live, across three separate replies. **After changing what a
+   screen MEANS, sweep the user-facing copy, the export and the help — not just the logic.**
+   The help then turned out to hold a fifth copy ("teams in their second season also get a last
+   season column — often the most useful part"), found only by an adversarial review lens.
+2. **THE REPORTED REASON CAN BE WRONG WHILE THE CONCLUSION IS RIGHT.** The money-tag filter was
+   reported as doing nothing. It worked — measured, four figures moved. It went anyway, because
+   it narrowed SPENDING while the PLAN stayed whole (a budget line carries no tag), so
+   **Headroom ROSE as you filtered** ($8,905 → $10,900 on the fixture). ⚖ **A comparison report
+   cannot half-filter a comparison.** It looked inert because the unfiltered plan holds every
+   category row open, so figures leave rows that stay on screen — and on the Budget lens nothing
+   changes at all. Tag filtering stays on Transactions, which lists rather than compares.
+3. **THE PRIOR-SEASON COLUMN IS GONE** (with its "in last season's plan" list and its query).
+   A bare year at the head of a row of months read as a month of THIS season, and it ignored the
+   Showing lens — so under Scheduled it stood last year's budget beside this year's remaining
+   debt. **Budget vs. Actual evaluates THIS season only.** Cross-season wants its own view; do
+   not reinstate it in that grid.
+
+**⚠ Three fixes landed AFTER the step that prompted them and are walked-but-not-re-walked** (the
+grid note's wording, the undo double-tap guard, the undated-money key). They are listed in §64's
+header for the next sitting.
 P4 lifted the two-piece cap, and **four things had to move in one change**: the cap in
 `parseInstallmentPlan`, the deposit/balance form editor that forced it, `Add an installment`'s
 one-piece restriction, and the export's four Deposit/Balance columns. `/review`'s rule is why —
@@ -116,6 +143,76 @@ standing over the proposed plan and reads off what moved.
 ⚠ ~20 coach-side readers touch the deposit/balance pair — the schedule, Overview's next-30, Budget
 vs. Actual (incl. Months), the register, exports, season close, club allocations, the importer, the
 status model, the admin-side panel, and both demos.
+
+## ⚠⚠ WHAT COMES AFTER THIS PROJECT — one PLANNING session, owner-called 2026-08-21
+
+**Opens when Payables closes. PLANNING ONLY — the owner is reviewing the money screens themselves
+first and will bring the detail. Do NOT pre-empt it with a plan file or a build.** Brief lives in
+**§9 of `COACH_PAYABLES_REBUILD_PLAN.md`**; TODO carries a one-line pointer.
+
+The owner, verbatim: *"we are getting closer to a centralized model and this project in particular
+has helped us make a lot of ground, but I still feel like I have to go to too many places to log
+different transactions, and as a user it feels confusing."*
+
+**⚠⚠ THE ROOT, NAMED WHILE LOGGING IT, AND THE PART WORTH CARRYING FORWARD: THE MODEL CONVERGED
+AND THE DOORS DID NOT.** Money-in and money-out now think identically — a plan of dated
+installments plus payments recorded against it — on the dues side since mig 232 and the payables
+side since this project. **That was the hard half and it is done.** What never converged is how a
+coach REACHES those records: **Transactions, Payables, Player Dues, Fundraising and Club each grew
+their own add-door at a different time**, so one act ("money moved — what, when, who") is five
+different conversations.
+
+**⚠ IT CARRIES §64’s ABSENCE AS ITS CONCRETE INSTANCE, AND THEY ARE ONE QUESTION — do not let the
+session split in two.** A family can front a WHOLE cost but not ONE payment of a multi-payment bill
+(a parent covering the $200 deposit on a $600 tournament entry has nowhere honest to go: record it
+as a team payment and the team’s cash did not move and that family is owed nothing; split it off as
+its own plain cost and the entry loses the schedule it really has). The reason is the same
+mismatch in miniature: **a payer is a field on the COST FORM, and a payment record has no payer at
+all** — built by different phases, for different screens, and nobody has yet asked what a payment
+is supposed to carry.
+
+
+**⚠ A THIRD INPUT (added 2026-08-21, both found by the owner walking the built screen):** the
+money-tag filter **never becomes a dropdown — there is no threshold at all**. Every tag renders as a
+chip, so fifteen tags is fifteen chips wrapping the toolbar. **It is the ONE narrowing on these
+screens that the reporting convention this project set never reached** (§7: a narrowing is a
+labelled pill that opens a list, with counts) — and nobody noticed because the QA fixture had no
+tags until the owner created one. ⚠ The test is the owner’s own §7 wording, not a number: *“count
+what is on screen, not what is behind a click.”* And **“Manage tags” sits on at least three toolbars
+for two libraries** — Transactions AND Payables (the same button twice inside one hub), Budget Plan,
+and the schedule for event tags — each placement locally reasoned as “manage the words where you use
+them”, with Team Settings considered and deliberately refused. ⚠⚠ **The question is not who put it in
+four places; it is whether that rule still produces a good experience once four screens have applied
+it** — the five-add-doors question at a smaller scale, which is exactly why it belongs to the same
+session. ⚠ **Do not fix either before the session**: the chip-to-pill change is small enough to be
+tempting and would pre-empt the conversation about what these controls should be.
+
+
+**⚠ A SIBLING SESSION, deliberately kept SEPARATE (owner-raised 2026-08-21):** on the rebuilt
+Payables at phone width — *“I don’t really like the phone version where it is still a dropdown with
+huge tiles, this will become a ton of scrolling.”* **The cause is shared, not local:** every table in
+the portal reflows to cards through ONE rule (`.tableAsCards`), which gives every column its own
+labelled line because it cannot know which fields matter on which screen. On a money list that is
+mostly noise — an installment card spends ~330px saying DUE / WHAT / OWING / STATUS when the values
+already say what they are. **It reaches 9 files** (Payables + Transactions, Dues ×2, Club,
+Fundraising ×2, development board, two history screens). ⚠ **Kept out of the centralization session
+on purpose**: that one is navigation and vocabulary, this is presentation and touches screens with
+nothing to do with logging — mixing them buries the phone work behind the model discussion. ⚠ **But
+SEQUENCE them**: if centralization retires or merges screens there are fewer card tables to rework.
+Own TODO entry.
+
+**Two standing constraints for that session:**
+- **Do not add a sixth door that unifies the other five.** A hub over five inconsistent forms is
+  six things to learn, not one. The strongest version RETIRES screens.
+- **Do not touch the MODEL to fix the DOORS.** Installments-and-payments is settled, tested and
+  about to ship; the complaint is navigational and vocabulary-level.
+
+**⚠ How the absence was found is itself the lesson**: the owner asked a plain question of the
+screen — *"how do I say a family paid for a payable out of pocket?"* — and the answer was "you
+cannot". Same class as the four defects that started this project: **a passing QA walk cannot find
+an absence.** It also caught a mistake in flight — a walk step had been written asking the owner to
+do that impossible thing, and a branch of the undo confirmation existed for a case that can never
+occur. Both removed.
 
 Related: [[project_coach_expenses_edit_delete]] · [[project_coach_money_table_consistency]] ·
 [[project_owner_qa_ledger]] · [[design_decisions]] · [[reference_coach_money_check_then_act]]

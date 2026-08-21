@@ -328,6 +328,34 @@ accepted for the plan round:* cash-flow projection (dues in vs payables+periods 
 "do we run dry in July?"), a "last season" comparison column for year-2+ teams (rollover already
 carries the data), month-grid export. *Sequencing:* after G (G creates the budget; H displays it).
 
+⚠⚠ **THE PRIOR-SEASON COMPARISON COLUMN WAS REMOVED 2026-08-21 (owner ruling), along with the
+"in last season's plan, not in this one" list and the query behind them.** Both are recorded
+above as shipped, and they did ship — this is what happened to them afterwards.
+**The ruling: Budget vs. Actual evaluates THIS season only.** It is read daily, and a
+cross-season comparison is not daily furniture. Two concrete failures made the case:
+1. **A bare year at the head of a row of month columns reads as a month of this season.** The
+   only thing saying otherwise was a hover tooltip, which does not exist on a phone.
+2. **It never followed the Showing lens.** Once *Scheduled* came to mean *what you still owe*
+   (Payables P1), the column stood last season's BUDGET beside this season's remaining debt,
+   and the Total row read 3,700 against 750 — inviting a conclusion that was not true.
+**Cross-season comparison is still wanted, as its own view**, where it can state which seasons
+it is comparing and on what basis. **Do not reinstate it inside this grid.**
+
+⚠⚠ **THE MONEY-TAG FILTER WAS REMOVED FROM BUDGET VS. ACTUAL the same day (owner ruling
+2026-08-21), and the reason is not the one it was reported under.** It was reported as doing
+nothing. **It worked** — it narrowed the Actual and Scheduled sides to one tag's spending, and
+measured on the fixture it moved four figures. The real defect is that **it could not narrow the
+BUDGET, because a plan line carries no tag.** Every filtered reading therefore set a SLICE of
+spending against the WHOLE plan, and **Headroom went UP as you narrowed** — $8,905 became
+$10,900 on the fixture. A comparison report cannot half-filter a comparison.
+
+It looked inert for a related reason worth remembering: **the unfiltered plan holds every
+category row open**, so the grid keeps its shape and the filter's effect shows only as figures
+quietly leaving rows that stay on screen. On the Budget lens it changes nothing at all.
+**Tag filtering still lives on Transactions**, which narrows a LIST and compares nothing — the
+capability is not lost. **Reinstating it here needs taggable plan lines first.** Help copy
+described this filter in three places and was corrected in the same change.
+
 **Not in any chunk, tracked separately:** the guardian model (§1.4, gated on CP-7), assistant-coach
 first-run and inline roster quick-edit (§1.2 below).
 

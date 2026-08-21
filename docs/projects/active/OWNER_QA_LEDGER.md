@@ -8816,7 +8816,38 @@ logged as the "Scheduled means two things" open question).
 **✅ THAT QUESTION IS NOW RULED and the behaviour CHANGED: Scheduled means what is still owed,
 everywhere.** It is walked in Part C's last three steps, and the plan's P3 section carries the
 reasoning and the cost the owner accepted.
-**Parts C, D, E and F ✅ ALL BUILT 2026-08-20, awaiting this walk.** P4 (a cost that repeats, and the
+**Parts C and D ✅ WALKED AND COMPLETE 2026-08-21** (owner-walked against
+`claude.ai/code/artifact/5699812b-6e3d-49cb-9bf6-787b6083acb6`). **The walk found five things,
+and every one of them was an ABSENCE or a FALSEHOOD rather than a broken control** — which is
+the class §64 exists for, and the third consecutive walk to prove the point:
+1. **Months showed a dash on every item row** while the category above carried the whole figure.
+   Fixed — money now sits on the row it names. ⚠ The first diagnosis of this was WRONG and the
+   correction is the useful part; the finding block below keeps both.
+2. **The same stale claim was written down in FOUR places** — the arithmetic, the grid, the
+   export and the note under the grid. Each was "fixed" and declared done while three copies
+   were still live. **A behaviour lives in more than the code that computes it.**
+3. **The prior-season column** — a bare year at the head of a row of months, ignoring the lens.
+   Removed by owner ruling; see the Part C step.
+4. **The "Filter by tag" chip row.** Reported as doing nothing; it worked. Removed anyway,
+   because it narrowed spending while the plan stayed whole and **Headroom rose as you
+   filtered**. The reported reason was wrong and the conclusion was right.
+5. **Two phone/desktop density complaints** that are design questions, not defects — both
+   logged as owner planning sessions (money tables on a phone; where a coach logs money).
+
+⚠⚠ **THREE FIXES LANDED AFTER THE STEP THAT PROMPTED THEM, so they are walked but not re-walked.**
+They are small and they are all on screens Part C covers. **Re-look at these on the next
+sitting, before E:**
+- **The note under the Months grid** — its wording changed twice on 2026-08-21, the second time
+  because it invited a tap that does nothing on an item row (only a CATEGORY figure opens a
+  breakdown). Read it once and confirm it now describes what the screen actually does.
+- **Undo on a payment** — a double-tap guard was added after an adversarial review found that a
+  fast second tap on a SUCCESSFUL undo blanked the whole Payables list behind an error. Tap it
+  twice quickly and confirm the list survives.
+- **Undated money on an item row** — the row found its undated total by luck rather than by
+  rule. Fixed and pinned with a test. Nothing to see on screen; noted so the change is not
+  invisible.
+
+**Parts E, F, G and H ✅ ALL BUILT 2026-08-20, awaiting their walk.** P4 (a cost that repeats, and the
 linked series) landed the same day; Parts D and E were rewritten against what was actually built and
 each names where it differs from how it was first drafted. ⚠ **Part C's last three steps and Part D
 can be walked in one sitting** — P4's generator does not read the Months grid's Scheduled figure, so
@@ -8899,6 +8930,13 @@ This is the phase where the books are re-expressed. Its whole test is that nothi
       commitment returns to reading **$250 still owing**. *(Corrected 2026-08-20 — this step
       originally said $150, which is the over-payment figure, not the remainder: $600 − $200 − $150
       = $250. If the screen says $250, that is the pass.)*
+      ⚖ **HOW Undo ASKS CHANGED AFTER THIS PART PASSED (owner, 2026-08-20).** It used to take two
+      taps on the same button, the first re-labelling it to *"Undo $200.00?"*. The owner's read, on
+      the built screen: **a button that changes its own text does not tell you it is asking** — it
+      reads as a label, so nothing on screen says your previous click armed anything. It is now the
+      same named-consequence confirmation the Delete flow uses, quoting the figure and what happens
+      to cash on hand, with **Keep it** and **Undo $200.00** as two explicit answers. **Re-walked in
+      Part C**, since this part is already signed off.
 - [ ] Undo a payment on a commitment where it was the **only** payment. The commitment returns to
       completely unpaid, and the schedule shows it as due again.
 - [ ] Record **one payment that covers more than one installment** — $700 against a series of $450
@@ -8910,7 +8948,7 @@ This is the phase where the books are re-expressed. Its whole test is that nothi
 - [ ] Sign in as a **read-only money assistant**: no Record a payment, no Undo, no Edit, and rows
       that do not offer them.
 
-### C · The screen — one list, no toggle
+### C · The screen — one list, no toggle  ✅ WALKED 2026-08-21
 
 **BUILT 2026-08-20.** Four owner rulings were taken during the design pass and each is walked below;
 the artifact they were made on is
@@ -8940,6 +8978,13 @@ the artifact they were made on is
       "Overdue". Confirm that reads right; it is the one place the two arrangements deliberately
       differ.
 - [ ] **Fold all** / **Open all** beside `Group by`, in both arrangements.
+- [ ] ⚠⚠ **Watch the COLUMNS while you fold and unfold (fixed 2026-08-21, owner-spotted).** The five
+      headings — Due, What, Owing, Status and the action — must stay **exactly where they are**
+      whichever bands are open, and in **both** arrangements. ⚠ Until this was fixed a browser sized
+      the table from the rows it could see, so folding one band re-computed every column: measured at
+      1440, the action column nearly halved (304px → 133px) and every heading slid sideways under the
+      reader's eye. This screen folds by design, so it was not an edge case — it was the ordinary act
+      of using it. If a heading moves when you fold, report it.
 - [ ] Open a bill, leave the screen, come back: it is still open. **Come back tomorrow and the list
       is folded again** — a fold is remembered for the visit, never forever.
 - [ ] Switch to **Due date**: the **same rows** re-order under Overdue / month headings, each
@@ -8951,11 +8996,26 @@ the artifact they were made on is
       what sent us here.)
 - [ ] The drawer shows **Scheduled** installments, **Payments recorded**, and **Still owing**, and
       offers **Record a payment**.
-- [ ] ⚠ **Add an installment** appears **only on a bill that currently has one**. On a bill with two
-      it is absent — a longer plan cannot be saved until repeating costs land next phase, and a
-      button that gets refused is worse than one that is not there. Report it if you see it on a
-      two-piece bill.
+- [ ] ⚖ **Add an installment now appears on EVERY bill** — ⚠ this step said the opposite when Part C
+      was written, and P4 changed it four days later. It used to be offered only on a one-payment
+      bill because a longer plan could not be saved; the cap, the editor that forced it and this
+      restriction all lifted together. On a two-payment bill the button is **there** and adds a
+      third. **Report it only if it is MISSING.**
 - [ ] Every payment in the drawer has its own **Undo**.
+- [ ] ⚠⚠ **Press one, and read what it asks (changed 2026-08-20, after Part B passed).** It must be
+      an obvious **question with the figure in it** — *"Undo the $200.00 payment from 19 Aug?"* — and
+      say that **cash on hand goes back up by $200.00** and what the bill returns to owing, with two
+      explicit answers: **Keep it** and **Undo $200.00**. ⚠ It must NOT be the old behaviour, where
+      the button re-labelled itself to *"Undo $200.00?"* and a second tap did it — a control that
+      changes its own text is not a confirmation. Press **Keep it** and confirm nothing moved.
+- [ ] ⚖ **There is deliberately NO out-of-pocket case to check here, and it is worth knowing why.**
+      An earlier draft of this step asked you to undo a payment on a commitment a family had paid —
+      **the product refuses that combination.** `Paid by` is not offered on a commitment's form and
+      the server turns it away ("a payable is billed to the team"), so a bill on this screen is
+      always the team's own money. ⚠ **The open question that fell out of it is in §64's own note
+      below: a family fronting ONE payment of a multi-payment bill has nowhere to go today.**
+- [ ] ⚠ Open the question, then **close the bill panel without answering**. Reopen any bill: the
+      question is **gone**, not still hanging on a row you never touched.
 - [ ] **Status** is a dropdown, not pills — Outstanding, Overdue, Partly paid, Paid, each with a
       count. It opens on **Outstanding + Overdue**, reading "2 selected".
 - [ ] ⚠⚠ **Tick Partly paid on its own. You must see EVERY part-paid bill, including the late
@@ -8965,7 +9025,16 @@ the artifact they were made on is
 - [ ] ⚠ And the same rule in its more important place: with the **default** Outstanding + Overdue,
       a bill that is **part-paid but not yet due must still be on the list**. It is money the team
       owes; the opening view must not lose it.
-- [ ] **Item** narrows by budget item, and money-tag chips still narrow the list.
+- [ ] **Item** narrows by budget item.
+- [ ] ⚠ **Money tags — you have to CREATE one before there is anything to narrow by, and that is
+      why the toolbar may show no chips.** Money tags are your own labels ("Winter dome", "Tournament
+      weekend"), not something the product ships. Open a bill → **Edit** → **Add details (optional)**
+      → **Tags**, add one, and save. **A chip row now appears at the left of the toolbar**; tap the
+      chip and the list narrows to bills carrying it. ⚠ The row is **hidden entirely when nothing on
+      screen is tagged** — deliberate, so the toolbar does not carry a filter with nothing to filter.
+      Report it only if you have tagged a bill and no chip appears.
+- [ ] ⚠ A **club allocation** carries no tag of yours, so a tag chip **excludes** it rather than
+      matching everything. That is the same rule the register applies to its own derived rows.
 - [ ] ⚠ **The export changed, and it is not a lost record.** Grouped by commitment you get the
       **Commitments** file; grouped by due date, the **Payment schedule** file. Both now **follow
       the Status filter**, where the commitments file used to carry everything — so tick **Paid** (or
@@ -8983,8 +9052,91 @@ the artifact they were made on is
       pays down**, so it can no longer be compared against Actual month by month. Confirm that reads
       right in front of you — it is the one change here you might want back.
 - [ ] A **past-due** unpaid piece is still counted, in its own due month. It should not vanish.
+- [ ] ⚠⚠ **The item rows carry their own money now (fixed 2026-08-21, owner-found).** Expand a
+      category on **Months** — Team Gear, say — and read the rows beneath it. **The row the money is
+      actually for shows it**, in the right month, for both Scheduled and Actual. ⚠ Until this was
+      fixed the category showed the total and every row beneath it showed a dash — reading as *"no
+      money here"* on the exact row it belonged to, while the **Statement** view of the same report
+      itemised it correctly. **Check the two views agree**, and that a category still equals the sum
+      of the rows under it.
+- [ ] ⚠ **Read the note under the grid on Actual and on Scheduled.** It should say spending sits on
+      the **item** it names, and that money recorded without one sits on that category's **Not
+      itemized** row. ⚠ It used to say the opposite — *"line rows read —"* — which was the fourth and
+      last place the old behaviour was written down.
+- [ ] ⚠ **Export from Months with Showing set to Actual.** The item rows in the file carry their
+      money too. They used to be blank under every lens but Budget, so the file disagreed with the
+      screen and gave no hint why.
+- [ ] ⚠⚠ **THE PRIOR-SEASON COLUMN IS GONE (owner ruling 2026-08-21, owner-found).** On a team in
+      its second season or later, the Months grid used to open with a column headed by a bare year
+      — "2025" — carrying last season's PLAN. **It should not be there now**, and neither should
+      the *"In last season's plan, not in this one"* list under the grid.
+      - **Why it went:** a bare year at the head of a row of month columns reads as a month of THIS
+        season, and the only thing saying otherwise was a hover tooltip that does not exist on a
+        phone. Worse, it ignored the Showing control — so under **Scheduled** (which now means
+        *what you still owe*) it stood last year's budget beside this year's remaining debt, and
+        the Total row read **3,700 against 750**.
+      - ⚠ **What to actually check: the row of columns still starts in the right place.** Read the
+        Total row on **Budget**, then **Scheduled**, then **Actual**, and confirm each month's
+        figure is under the month it belongs to — a removed leading column is exactly the kind of
+        change that shifts a whole grid by one if it goes wrong.
+      - **Export on each lens too.** The file lost the same column; nothing after it should have
+        slid.
+      - **Cross-season comparison is still wanted** — as its own view, where it can say which
+        seasons it compares and on what basis. It is deliberately not daily furniture here.
+- [ ] ⚠⚠ **THE "FILTER BY TAG" CHIP ROW IS GONE FROM THIS REPORT (owner ruling 2026-08-21,
+      owner-found).** The chip row, its Org/Team colour legend and the *"vs {tag}: $X spent"*
+      banner should all be absent from Budget vs. Actual. **Transactions still filters by tag —
+      check it still does**, because that is where the capability now lives.
+      - ⚠ **It was reported as doing nothing, and that was wrong** — it worked. The reason it
+        went is that it narrowed **spending** while the **plan stayed whole** (a budget line
+        carries no tag), so **Headroom rose as you filtered** — $8,905 became $10,900 on the
+        test fixture. That figure is a decision input, which is what made it worth removing
+        rather than leaving.
+      - **Why it looked inert:** the unfiltered plan holds every category row open, so the grid
+        keeps its shape and figures just quietly leave rows that stay on screen. On the
+        **Budget** lens it changed nothing whatsoever.
+      - **Confirm the report reads the same as before** on all three lenses — removing the
+        filter must not have moved a single figure for an ordinary unfiltered read.
+      - **An old bookmarked link with a tag in it still opens the full report** rather than
+        erroring or showing an empty one.
+      - **Read the money help on tags.** It said Budget vs. Actual filters by tag in three
+        places; it now says it deliberately does not, and why.
+- [ ] ⚠⚠ **THE MONTH GRID IS WINDOWED NOW (owner-approved from mockups 2026-08-21).** On a team
+      with more than twelve months of dated money — a repeating cost will do it — the grid shows
+      **twelve months at a time**. The **← →** arrows sit **in the same row as View and Showing**
+      (owner call — they change what the grid shows, so they belong with the other two controls
+      that do), with **Export still right-most on that row**, and the visible range named between
+      them: *"Feb '26 – Jan '27 · of 15 months"*. **Category / line stays pinned left, Total stays
+      pinned right**, and only the months move.
+      - ⚠ **Each press moves ONE month, not a whole window** (owner call — a twelve-month jump
+        skipped past the month you were aiming for). **Press → then ← and you land exactly where
+        you started**; verified, and it is reversible by construction rather than by luck.
+      - ⚠⚠ **The single most important check: page forward, then read a category's Total.**
+        **It must not change.** Total is the WHOLE SEASON, never the twelve months on screen —
+        the statement view and the chart are held equal to it by a build check. Verified on the
+        fixture (a category read 8,400 before and after paging), but read it on real data.
+      - **It opens on the window containing today**, not the season start.
+      - ⚠ **Twelve months does not actually fit** — measured at 1440, twelve wants ~140px more
+        than exists, so about ten show and the last two take a nudge. That is deliberate: the
+        arrows do the coarse movement, the pinned ends keep your place. **Confirm the pinned
+        Total never scrolls away and never goes see-through** as the months slide under it.
+      - ✅ **The round-trip problem is gone.** The first build stepped a whole window and
+        clamped at the ends, so → then ← landed a month early and the today-centred opening view
+        became unreachable without a reload. Stepping by one removed it — the owner called the
+        step change for a different reason and it closed this as well.
+      - **"No date yet" is gone from Actual and Scheduled** (and from the export on those
+        lenses) — it can only ever hold plan money, so it was a full column of dashes. It should
+        still be there on **Budget** and **Difference**.
+      - ⚠⚠ **Export on Actual and on Budget. The file must carry EVERY month**, not the twelve
+        on screen. A spreadsheet holding a silent slice of the season is the worst outcome here.
+      - **On a phone**, Total is now permanently visible instead of eight swipes away. The
+        deeper phone answer (a month stepper) was mocked up and deliberately held for the
+        phone-density session.
+      - ⚠ **The rendered sweep cannot see the arrows at all** — they only exist past twelve
+        months and the swept fixture has nine, the same blind spot as a modal. Their touch size
+        was measured by hand instead (44px at 390px wide, no sideways scroll).
 
-### D · A cost that repeats
+### D · A cost that repeats  ✅ WALKED 2026-08-21
 
 **BUILT 2026-08-20.** ⚠ **Four things differ from how this section was written**, each a decision
 taken before a line was written and each recorded in the plan's P4 section — read them first or
@@ -9129,6 +9281,94 @@ we know the rebuild kept them right.
 - [ ] **Double-click Save** on a new commitment, and **Save the change** on a scoped edit. One record,
       one change — not two.
 
+
+---
+
+> ### ✅ FIXED 2026-08-21 — Months now puts spending on the item row it belongs to
+>
+> **Owner-found, owner-called, and fixed the same day once it turned out to be small.** The account
+> below is kept in full because the FIRST diagnosis was wrong and the correction is the useful part.
+> **Walked in Part C.**
+>
+> **Owner, walking Budget vs. Actual → Months:** *"the high level amounts are updating for actual
+> and scheduled (650, 150, etc.) but the line items (Bags) shows nothing."* Then, on the first
+> explanation: *"do we not have to select category and item for each actual payment? how can a
+> payment be in a category but not on an item? I can't see why we would allow this kind of
+> behavior."*
+>
+> **⚠⚠ THE OWNER WAS RIGHT AND THE FIRST DIAGNOSIS WAS WRONG. It is corrected here, because the
+> wrong version made this look like a design limitation when it is a plain attribution gap.**
+>
+> **What is actually true, read off the code and the live fixture:**
+> - **Every cost names a category AND an item.** It is required on the form and re-enforced by the
+>   server ("Pick a category and item — they line this cost up with your budget"). There is no way
+>   to create a cost that sits in a category with no item.
+> - **The grid's sub-rows ARE items, not budget lines.** "Bags" is an item row — no team has a
+>   budget line called Bags. Every such row is built one-per-item and **already carries its item
+>   id**, and the code notes that every item arrives with a row whether or not it was budgeted.
+> - **The spending is placed by CATEGORY only.** Where the movements are assembled, the code walks
+>   the categories AND their items — and then keys each movement by the category alone. **The item
+>   is in hand at that moment and is dropped.**
+>
+> **So both halves of the join already exist.** The item row knows its item; the movement knows
+> its item; nothing connects them. That is the whole defect.
+>
+> **⚠ What the FIRST version of this note claimed, and why it was wrong** (worth keeping, because
+> it is the same failure this section keeps catching — reasoning from a stale comment instead of
+> from the screen):
+> - *"Several budget lines can share one item, so an item does not resolve to one row."* Wrong for
+>   this grid: the rows ARE items, one per item, so it resolves exactly.
+> - *"A cost's item may match no line, so rows would stop summing to their category."* Overstated:
+>   every item with spending already gets a row, and a cost with no item at all (only possible on
+>   rows predating the item requirement) already has its own bucket in the key.
+> - The grid's own comment — *"there is no payable↔line link and, by owner ruling, there is not
+>   going to be one in v1"* — was **true when written and is now stale**: the migration that made
+>   every cost name an item gave both sides the key the comment says is missing.
+>
+> **⚠ The two halves of ONE report disagree, and that is the defect regardless of the ruling.** The
+> **Statement** view groups spending by category **and item**. **Months** shows the same money on
+> the category and a dash on the item it belongs to. A coach comparing the two views of one report
+> sees $600 of Bags spending on one and an empty Bags row on the other — and a dash in a money
+> column reads as *"no money here"*, which is false.
+>
+> **✅ WHAT WAS DONE.** The item now rides along with every movement, and each lands on its own row.
+> **A category is the sum of its rows** — which is what a reader always assumed it was.
+>
+> ⚠ **Three things were made safe on the way, each a real edge rather than a hypothetical:**
+> - **Money with no item still lands** — at the category, never dropped. Only reachable for costs
+>   predating the item requirement, but the grand total must not move because of one.
+> - **Two rows sharing an item claim the money once**, not twice. Now that a category is the sum of
+>   its rows, a double claim would double the category.
+> - **A row's money key is built from what the row IS**, never from the id its caller happened to
+>   give it — otherwise a caller numbering rows differently would get money that lands nowhere, with
+>   no error to show for it.
+>
+> **⚠⚠ THE SAME STALE CLAIM WAS WRITTEN DOWN IN FOUR PLACES, and fixing one at a time is how three
+> of them survived a "fix".** Found in this order, each only because the owner looked again:
+> 1. **The report's own arithmetic** — spending filed under a category. Fixed first, and reported as
+>    done. It was not.
+> 2. **The grid component** — it blanked every line row unless the lens was Budget, so the corrected
+>    figures were computed and then thrown away on the way to the screen.
+> 3. **The EXPORT** — the same blanking, so a coach exporting Actual got a file whose category rows
+>    carried figures and whose item rows were empty, with nothing to say that was a display rule
+>    rather than the truth.
+> 4. **The note under the grid**, telling the coach in plain words to expect a dash. The most
+>    expensive of the four, because a reader believes it.
+>
+> ⚠ **The lesson, and it is the session's recurring one: a behaviour lives in more than the code that
+> computes it.** After changing what a screen means, grep the user-facing COPY and the EXPORT for the
+> old promise — not just the logic.
+>
+> **Proof, and it is the proof this change needed:** the report's own arithmetic guard still holds —
+> **statement = Months grid = chart**, equal in every month and every category. **The figures did not
+> move; only where they are shown did.** Four new unit tests pin the behaviour and the three edges,
+> and the fix was confirmed by creating a real itemised bill and **reading what the page printed**
+> (its item row showed its money; the category equalled the sum of its rows), not by trusting the
+> data layer a second time.
+>
+> ⚠ **P1's acceptance test was that this report's figures did not move, and it still passes** — which
+> is exactly what made this safe to do inside the project rather than after it.
+
 ### H · The demo, and the words
 
 - [ ] The **coach sandbox** (`riverdale-ridge`) still tells a true story about money — the moments
@@ -9141,6 +9381,37 @@ we know the rebuild kept them right.
 **Blocking parts: A, B, and E's ruling check.** Part A is the books surviving the migration, Part B
 is the two defects that move real money, and E's settled-installment step is a standing owner ruling
 that this feature could reverse by accident.
+
+---
+
+> ### ⚠ OPEN QUESTION, surfaced 2026-08-21 while walking — a family cannot front a commitment
+>
+> **Asked by the owner: *"how do I say a family paid for a payable out of pocket?"* The answer today
+> is that you cannot, and the product refuses it on purpose** — `Paid by` is not offered on a
+> commitment's form and the create route turns it away with *"a payable is billed to the team."*
+> A family-paid cost is recorded as a **plain cost** with `Paid by`, which creates the credit the
+> team owes that household.
+>
+> **That is a reasonable line for a WHOLE bill and it leaves one real case with nowhere to go: a
+> family fronting ONE payment of a multi-payment bill.** A parent covering the $200 deposit on a
+> $600 tournament entry is an ordinary thing to happen, and today it can only be recorded either as
+> a team payment (wrong — the team's cash did not move, and that family is owed nothing) or by
+> splitting the bill out into a separate plain cost (which loses the schedule the entry actually
+> has). A payment carries an amount, a date, a method and a note — **it does not carry a payer.**
+>
+> ⚠ **This is an ABSENCE, which is the class of defect §64 exists because a passing walk cannot
+> find.** It is not a regression and nothing here is broken; it is a question about whether the
+> product should be able to say it.
+>
+> ✅ **ROUTED 2026-08-21 — it is not a loose end, and it is NOT its own project.** The owner folded
+> it into a **planning session on where a coach logs money at all**, opening when this project
+> closes: *"we are getting closer to a centralized model… but I still feel like I have to go to too
+> many places to log different transactions, and as a user it feels confusing."* ⚠⚠ The two are one
+> question — **the model converged and the doors did not**, and this absence is that mismatch in
+> miniature (a payer is a field on the COST form; a payment record has no payer at all, because the
+> two were built by different phases for different screens). **Brief: §9 of
+> `COACH_PAYABLES_REBUILD_PLAN.md`.** ⚠ Planning only, and the owner brings the detail — do not
+> pre-empt it with a plan file or a build.
 
 ---
 

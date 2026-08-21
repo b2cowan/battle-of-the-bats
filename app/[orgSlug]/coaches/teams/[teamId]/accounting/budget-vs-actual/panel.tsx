@@ -1,13 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, use, Fragment } from 'react';
 import Link from 'next/link';
-import { TrendingUp, ChevronDown, ChevronRight, ArrowLeft, Tag } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import MoneyMonthGrid, { MONEY_LENSES, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
+import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coach-budget-months';
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
@@ -19,7 +19,6 @@ import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import type { ExportColumnDef } from '@/lib/export';
-import type { RepTeamTag } from '@/lib/types';
 import styles from './bva.module.css';
 import shared from '../../../../coaches.module.css';
 
@@ -152,8 +151,6 @@ interface BvaData extends MonthGridPayload {
   monthlyChart: MonthlyPoint[];
   /** Plan money with no date on it — named so the chart can say what it isn't plotting. */
   undatedBudget: number;
-  expenseTags: RepTeamTag[];
-  activeTagId: string | null;
 }
 
 /**
@@ -566,10 +563,13 @@ export function BudgetVsActualPanel({
   // who lives in the month view should land there, and it is nobody else's business.
   const [view, setView] = useState<BvaView>('statement');
   const [lens, setLens] = useState<MoneyLens>('budget');
+  /* ⚠ NULL MEANS "wherever today is" — see `monthStart` below. Holding the DEFAULT as null rather
+     than a number is what lets the window follow a data reload without an effect, and without a
+     frame of the wrong months while one settles. */
+  const [monthStartRaw, setMonthStartRaw] = useState<number | null>(null);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   // Money-tag filter (Phase 3): scope the actuals to expenses carrying a tag (server-side).
-  const [filterTagId, setFilterTagId] = useState<string | null>(null);
 
   /* ⚠ THE RECATEGORIZE FIX-IT IS GONE (mig 240), and its absence is deliberate. It existed to
      move an expense onto a real CATEGORY so it stopped sitting in a separate Unbudgeted list at the
@@ -587,9 +587,6 @@ export function BudgetVsActualPanel({
   // flag, and a closed season no longer renders this screen at all, so a capability check is
   // just a capability check.
   const page = useCoachSeasonPage(orgSlug, teamId);
-  // The tag filter is the only thing this page puts on the wire now — the season went with the
-  // dial (P2, 2026-08-16), so this is a plain one-param query rather than a merge.
-  const bvaQuery = filterTagId ? `?tagId=${encodeURIComponent(filterTagId)}` : '';
   const assignment = assignments.find(a => a.teamId === teamId);
   const moneyCanWrite = (page.capabilities?.money === 'write');
 
@@ -600,7 +597,7 @@ export function BudgetVsActualPanel({
       // ⚠ ONE REQUEST NOW. The item taxonomy was fetched alongside the report purely to fill the
       // Recategorize picker, which mig 240 retired — the report names every category and item
       // itself, so a second call would load a list nothing reads.
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${bvaQuery}`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setData(await res.json());
     } catch (e: unknown) {
@@ -608,7 +605,7 @@ export function BudgetVsActualPanel({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, filterTagId, bvaQuery]);
+  }, [orgSlug, teamId]);
 
   // Budget lines imported from the hub's Import menu change what this report compares against,
   // so it re-reads on the same signal — without remounting anything.
@@ -645,8 +642,14 @@ export function BudgetVsActualPanel({
   function monthExportColumns(): ExportColumnDef[] {
     const g = data!.monthGrid;
     const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
-    if (data!.priorSeasonLabel) cols.push({ label: data!.priorSeasonLabel, key: 'prior', format: 'currency' });
-    if (g.totals.undatedBudget > 0.005) cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
+    /* ⚠ SAME RULE AS THE SCREEN: undated money is PLAN money, so under Actual and Scheduled this
+       column could only ever be blank. A column of blanks in a spreadsheet is worse than on a
+       screen — the file outlives the session and nothing explains it. */
+    if (lensReadsPlan(lens) && g.totals.undatedBudget > 0.005) cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
+    /* ⚠⚠ EVERY MONTH, NEVER THE WINDOW. The grid shows twelve at a time (owner ruling
+       2026-08-21); the FILE is the whole season and must stay that way. A spreadsheet that
+       silently contained only what happened to be on screen is the worst outcome available
+       here — it leaves the product, and nothing in it says a slice was taken. */
     for (const m of g.months) cols.push({ label: formatMonthLabel(m), key: `m_${m}`, format: 'currency' });
     cols.push({ label: 'Total', key: 'total', format: 'currency' });
     return cols;
@@ -656,7 +659,7 @@ export function BudgetVsActualPanel({
   // downloaded file can never disagree with the screen it was downloaded from.
   function buildMonthExportRows(): Array<Record<string, string | number>> {
     const g = data!.monthGrid;
-    const { todayMonth, priorSeasonLabel } = data!;
+    const { todayMonth } = data!;
     const undatedLive = lensReadsPlan(lens);
     const rows: Array<Record<string, string | number>> = [];
 
@@ -666,10 +669,8 @@ export function BudgetVsActualPanel({
       cells: typeof g.totals.cells,
       total: typeof g.totals.total,
       undatedBudget: number,
-      priorTotal: number | null,
     ): Record<string, string | number> {
       const row: Record<string, string | number> = { item };
-      if (priorSeasonLabel) row.prior = priorTotal ?? '';
       row.undated = undatedLive ? undatedBudget : '';
       g.months.forEach((m, i) => { row[`m_${m}`] = lensCell(cells[i], lens, m, todayMonth) ?? ''; });
       row.total = lensTotal(total, lens);
@@ -677,21 +678,23 @@ export function BudgetVsActualPanel({
     }
 
     for (const cat of g.categories) {
-      rows.push(aggregateRow(cat.categoryName, cat.cells, cat.total, cat.undatedBudget, cat.priorTotal));
+      rows.push(aggregateRow(cat.categoryName, cat.cells, cat.total, cat.undatedBudget));
 
-      // Only the BUDGET is known per line — actuals and commitments are matched to a category,
-      // not a line — so a line row is blank under every other lens, exactly as on screen.
+      /* ⚠⚠ THE FILE CARRIES LINE-LEVEL MONEY TOO (fixed 2026-08-21). This blanked every line row
+         under any lens but Budget, on the same stale reasoning the screen used — so a coach who
+         exported Actual got a spreadsheet whose category rows had figures and whose item rows were
+         empty, and no way to tell that was a display rule rather than the truth. It reads the same
+         lens helpers the grid does, so the file and the screen cannot drift apart. */
       for (const line of cat.lines) {
         const lr: Record<string, string | number> = { item: `  — ${line.description}` };
-        if (priorSeasonLabel) lr.prior = line.priorTotal ?? '';
         lr.undated = undatedLive ? line.undatedBudget : '';
-        g.months.forEach((m, i) => { lr[`m_${m}`] = lens === 'budget' ? line.cells[i].budget : ''; });
-        lr.total = lens === 'budget' ? line.total.budget : '';
+        g.months.forEach((m, i) => { lr[`m_${m}`] = lensCell(line.cells[i], lens, m, todayMonth) ?? ''; });
+        lr.total = lensTotal(line.total, lens);
         rows.push(lr);
       }
     }
 
-    rows.push(aggregateRow('Total', g.totals.cells, g.totals.total, g.totals.undatedBudget, g.totals.priorTotal));
+    rows.push(aggregateRow('Total', g.totals.cells, g.totals.total, g.totals.undatedBudget));
     return rows;
   }
 
@@ -763,6 +766,26 @@ export function BudgetVsActualPanel({
   // one here exporting the month grid at the chosen reading — both labelled "Export", neither
   // saying which. There is now one, and it sits beside the switches that decide what it contains,
   // so it can only mean "what I am looking at".
+  /* ── The month window ────────────────────────────────────────────────────────────────────
+     The control sits in the view bar beside View and Showing (owner call 2026-08-21) rather than
+     on a line of its own, so the two things that change what the grid shows are together.
+
+     ⚠ IT MOVES ONE MONTH PER PRESS, not a whole window (owner call 2026-08-21). A twelve-month
+     jump skipped past the month a coach was aiming for and made ← after → land somewhere new;
+     stepping by one is reversible by construction — press → then ←, and you are back. */
+  const gridMonths = data?.monthGrid.months ?? [];
+  const maxMonthStart = Math.max(0, gridMonths.length - MONTH_WINDOW);
+  const defaultMonthStart = (() => {
+    if (!data || gridMonths.length <= MONTH_WINDOW) return 0;
+    // Open on the window CONTAINING TODAY — a coach lands on the month they are standing in.
+    const here = gridMonths.indexOf(data.todayMonth);
+    const centred = (here < 0 ? 0 : here) - Math.floor(MONTH_WINDOW / 2);
+    return Math.max(0, Math.min(centred, maxMonthStart));
+  })();
+  const monthStart = Math.min(Math.max(0, monthStartRaw ?? defaultMonthStart), maxMonthStart);
+  const monthWindow = gridMonths.slice(monthStart, monthStart + MONTH_WINDOW);
+  const monthsPaged = gridMonths.length > MONTH_WINDOW;
+
   const bvaExport = (
     <MoneyExportButton
       label={inMonthView ? 'Budget by month' : 'Budget vs. actual'}
@@ -808,38 +831,13 @@ export function BudgetVsActualPanel({
         </>
       ) : (
         <>
-          {/* Money-tag filter chip row — scopes the actuals to one tag's spending (self-hides at
-              zero tagged expenses). Blue = org-shared, lime = team's own. */}
-          {data.expenseTags.length > 0 && (
-            <>
-              <div className={shared.moneyFilterBar}>
-                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-                <span style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginRight: '0.1rem' }}>Filter by tag:</span>
-                {data.expenseTags.map(t => {
-                  const isOrg = t.teamId === null;
-                  const active = filterTagId === t.id;
-                  const cls = `${shared.moneyFilterChip} ${active ? shared.moneyFilterChipActive : ''} ${isOrg ? (active ? shared.moneyFilterChipOrgActive : shared.moneyFilterChipOrg) : ''}`;
-                  return (
-                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>{t.name}</button>
-                  );
-                })}
-              </div>
-              <div className={shared.tagComboLegend} style={{ margin: '-0.2rem 0 0.7rem' }}>
-                <span className={shared.tagComboLegendItem}>
-                  <span className={shared.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
-                </span>
-                <span className={shared.tagComboLegendItem}>
-                  <span className={shared.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
-                </span>
-              </div>
-            </>
-          )}
-          {filterTagId && (
-            <div className={shared.moneyTagSummary}>
-              vs <strong>{data.expenseTags.find(t => t.id === filterTagId)?.name ?? 'tag'}</strong>: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(data.totalActual)}</span> spent (budget plan shown in full)
-            </div>
-          )}
-
+          {/* ⚠⚠ THE MONEY-TAG FILTER WAS REMOVED HERE (owner ruling 2026-08-21). It worked — it
+              narrowed Actual and Scheduled to one tag's spending — but it could not narrow the
+              BUDGET, because a plan line carries no tag. So every filtered reading compared a
+              SLICE of spending against the WHOLE plan, and Headroom went UP when you filtered:
+              on the fixture, $8,905 became $10,900. A report cannot half-filter a comparison.
+              Tag filtering still lives on Transactions, where it narrows a LIST and nothing is
+              being compared. Do not reinstate it here without a way to tag the plan. */}
           {/* Headroom summary */}
           <div className={`${styles.summaryBanner} ${shared.stack640}`}>
             <div className={styles.summaryItem}>
@@ -957,6 +955,38 @@ export function BudgetVsActualPanel({
               />
             )}
 
+            {/* ⚠ ONLY WHEN THERE IS SOMETHING TO MOVE. Twelve months or fewer is the whole season
+                already, and a control that can never do anything is worse than no control. */}
+            {view === 'months' && monthsPaged && (
+              <div className={styles.monthPager}>
+                <button
+                  type="button"
+                  className={styles.monthPagerBtn}
+                  onClick={() => setMonthStartRaw(Math.max(0, monthStart - 1))}
+                  disabled={monthStart === 0}
+                  aria-label="Show the previous month"
+                >
+                  <ChevronLeft size={15} aria-hidden />
+                </button>
+                {/* ⚠ THE RANGE IS NAMED, and it is not decoration: `Total` is the WHOLE SEASON,
+                    never these twelve months, so a reader adding up what they can see has to be
+                    able to tell why it does not match. */}
+                <span className={styles.monthPagerRange}>
+                  <strong>{formatMonthLabel(monthWindow[0])} – {formatMonthLabel(monthWindow[monthWindow.length - 1])}</strong>
+                  {` · of ${gridMonths.length} months`}
+                </span>
+                <button
+                  type="button"
+                  className={styles.monthPagerBtn}
+                  onClick={() => setMonthStartRaw(Math.min(maxMonthStart, monthStart + 1))}
+                  disabled={monthStart >= maxMonthStart}
+                  aria-label="Show the next month"
+                >
+                  <ChevronRight size={15} aria-hidden />
+                </button>
+              </div>
+            )}
+
             {/* On EVERY view, not just the month one — it exports whichever is on screen, so it
                 has no reason to appear and disappear. Standalone route included: this row is on
                 both, which is what stops the two shapes drifting apart. */}
@@ -969,6 +999,7 @@ export function BudgetVsActualPanel({
               lens={lens}
               base={base}
               canWrite={moneyCanWrite}
+              monthStart={monthStart}
             />
           ) : (
           <>

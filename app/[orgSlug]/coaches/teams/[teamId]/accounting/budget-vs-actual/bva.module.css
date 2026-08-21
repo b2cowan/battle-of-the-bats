@@ -158,6 +158,45 @@
   margin-bottom: 1.1rem;
 }
 
+/* ── the month window control ─────────────────────────────────────────────
+   It sits IN `.viewBar`, beside View and Showing, because it changes what the grid shows and
+   belongs with the other two controls that do (owner call 2026-08-21). It wraps to its own line
+   on a narrow screen like everything else in that row — the bar has always been `flex-wrap`. */
+.monthPager {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.monthPagerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 0.4rem;
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.monthPagerBtn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.monthPagerBtn:disabled { color: var(--text-tertiary); cursor: default; opacity: 0.55; }
+.monthPagerRange {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 0 0.4rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.monthPagerRange strong { color: var(--text-primary); font-weight: 600; }
+
+/* The tap floor is a touch rule — HEIGHT only, never width. These sit either side of a label in
+   a wrapping row; widening them pushes the range onto its own line on a phone. */
+@media (max-width: 768px) {
+  .monthPagerBtn { min-height: 44px; }
+}
+
 /* ⚖ `.viewBarLabel`, `.lensFull` AND `.lensShort` ARE GONE (2026-08-20). The two banks of segmented
    buttons this row carried became `SingleSelectDropdown` pills, matching Transactions and Payables
    — so the standalone uppercase labels moved INSIDE each pill, and the phone abbreviation

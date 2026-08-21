@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   monthKeyOf, addMonths, monthSpan, deriveMonthRange, buildMonthGrid, buildCashFlow,
   isElapsed, formatMonthLabel, formatMonthLong,
-  type GridLine, type CategoryEvent, type PriorLine,
+  type GridLine, type CategoryEvent,
 } from '../../lib/coach-budget-months.ts';
 
 describe('month key helpers', () => {
@@ -71,7 +71,7 @@ describe('deriveMonthRange', () => {
 const TODAY = '2026-06';
 
 function line(over: Partial<GridLine> & { id: string; description: string; categoryName: string; totalAmount: number }): GridLine {
-  return { itemId: null, itemName: null, periods: [], ...over };
+  return { itemId: null, periods: [], ...over };
 }
 
 describe('buildMonthGrid', () => {
@@ -97,7 +97,7 @@ describe('buildMonthGrid', () => {
   ];
 
   it('places dated budget in its own month and never spreads undated budget', () => {
-    const g = buildMonthGrid({ lines, actuals, scheduled, priorLines: [], todayMonth: TODAY });
+    const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY });
     const mar = g.months.indexOf('2026-03');
     const apr = g.months.indexOf('2026-04');
 
@@ -113,7 +113,7 @@ describe('buildMonthGrid', () => {
   });
 
   it('keeps scheduled and actual on their own tracks — they never merge into budget', () => {
-    const g = buildMonthGrid({ lines, actuals, scheduled, priorLines: [], todayMonth: TODAY });
+    const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY });
     const cat = g.categories[0];
     const mar = g.months.indexOf('2026-03');
     const jun = g.months.indexOf('2026-06');
@@ -130,7 +130,7 @@ describe('buildMonthGrid', () => {
   });
 
   it('totals across the bottom and down the side agree', () => {
-    const g = buildMonthGrid({ lines, actuals, scheduled, priorLines: [], todayMonth: TODAY });
+    const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY });
     const monthBudget = g.totals.cells.reduce((s, c) => s + c.budget, 0);
     assert.equal(monthBudget + g.totals.undatedBudget, g.totals.total.budget);
     assert.equal(g.totals.total.budget, 4500);
@@ -141,7 +141,7 @@ describe('buildMonthGrid', () => {
       lines,
       actuals: [...actuals, { categoryName: 'Officials', date: '2026-05-10', amount: 400 }],
       scheduled: [],
-      priorLines: [],
+     
       todayMonth: TODAY,
     });
     const officials = g.categories.find(c => c.categoryName === 'Officials')!;
@@ -155,7 +155,7 @@ describe('buildMonthGrid', () => {
       lines,
       actuals: [{ categoryName: 'Tournaments', date: '2031-01-05', amount: 500 }],
       scheduled: [],
-      priorLines: [],
+     
       todayMonth: TODAY,
       maxMonths: 6,
     });
@@ -166,43 +166,9 @@ describe('buildMonthGrid', () => {
     assert.equal(g.categories[0].cells.reduce((s, c) => s + c.actual, 0), 0);
   });
 
-  it('matches the prior season by item link first, then by name', () => {
-    const priorLines: PriorLine[] = [
-      { description: 'Entry Fees', itemId: 'item-entry', itemName: 'Entry Fees', categoryName: 'Tournaments', totalAmount: 3300 },
-      { description: 'uniforms', itemId: null, itemName: null, categoryName: 'Tournaments', totalAmount: 850 },
-      { description: 'Banquet', itemId: null, itemName: null, categoryName: 'Events', totalAmount: 400 },
-    ];
-    const g = buildMonthGrid({ lines, actuals: [], scheduled: [], priorLines, todayMonth: TODAY });
-
-    const entry = g.categories[0].lines.find(l => l.description === 'Entry Fees')!;
-    assert.equal(entry.priorTotal, 3300);
-    const uniforms = g.categories[0].lines.find(l => l.description === 'Uniforms')!;
-    assert.equal(uniforms.priorTotal, 850, 'name match is case-insensitive');
-
-    assert.equal(g.hasPriorSeason, true);
-    assert.deepEqual(g.priorOnly.map(p => p.description), ['Banquet']);
-  });
-
-  it('never counts one prior line twice, however many current lines match it', () => {
-    // Two current lines share a name with ONE prior line. Naively summing the per-line prior
-    // figures would report $1,800 of last-season spend that never existed.
-    const dupes: GridLine[] = [
-      line({ id: 'a', description: 'Umpire fees', categoryName: 'Officials', totalAmount: 500 }),
-      line({ id: 'b', description: 'umpire fees', categoryName: 'Officials', totalAmount: 300 }),
-    ];
-    const priorLines: PriorLine[] = [
-      { description: 'Umpire fees', itemId: null, itemName: null, categoryName: 'Officials', totalAmount: 900 },
-    ];
-    const g = buildMonthGrid({ lines: dupes, actuals: [], scheduled: [], priorLines, todayMonth: TODAY });
-    assert.equal(g.categories[0].priorTotal, 900);
-    assert.equal(g.totals.priorTotal, 900);
-    // …and it is not ALSO reported as missing from this season.
-    assert.deepEqual(g.priorOnly, []);
-  });
-
   it('carries the not-itemized-yet estimate so both views report the same budget total', () => {
     const g = buildMonthGrid({
-      lines, actuals: [], scheduled: [], priorLines: [], todayMonth: TODAY, bufferAmount: 700,
+      lines, actuals: [], scheduled: [], todayMonth: TODAY, bufferAmount: 700,
     });
     const bufferRow = g.categories.find(c => c.categoryName === 'Not itemized yet')!;
     assert.equal(bufferRow.total.budget, 700);
@@ -212,19 +178,12 @@ describe('buildMonthGrid', () => {
     assert.equal(g.totals.total.budget, 4500 + 700);
   });
 
-  it('reports no prior season when the team has none', () => {
-    const g = buildMonthGrid({ lines, actuals: [], scheduled: [], priorLines: [], todayMonth: TODAY });
-    assert.equal(g.hasPriorSeason, false);
-    assert.deepEqual(g.priorOnly, []);
-    assert.equal(g.totals.priorTotal, null);
-  });
-
   it('treats a line whose periods no longer cover its total as partly undated, never as lost money', () => {
     const drifted = [line({
       id: 'l9', description: 'Dome Time', categoryName: 'Facilities', totalAmount: 1000,
       periods: [{ date: '2026-03-01', amount: 400 }],
     })];
-    const g = buildMonthGrid({ lines: drifted, actuals: [], scheduled: [], priorLines: [], todayMonth: TODAY });
+    const g = buildMonthGrid({ lines: drifted, actuals: [], scheduled: [], todayMonth: TODAY });
     const l = g.categories[0].lines[0];
     assert.equal(l.cells[g.months.indexOf('2026-03')].budget, 400);
     assert.equal(l.undatedBudget, 600);
@@ -274,5 +233,110 @@ describe('month labels', () => {
   it('formats short for a column header and long for prose', () => {
     assert.equal(formatMonthLabel('2026-03'), "Mar '26");
     assert.equal(formatMonthLong('2026-03'), 'March 2026');
+  });
+});
+
+/**
+ * ⚠⚠ SPENDING BELONGS ON THE ITEM ROW, NOT JUST ITS CATEGORY (owner-found 2026-08-21).
+ *
+ * The grid used to file every movement under a CATEGORY, so a coach saw the right total on
+ * "Team Gear" and a dash on "Bags" — the row the money was actually for — while the Statement view
+ * of the same report itemised it correctly. Both halves of the join already existed: every cost
+ * names an item, and every grid row IS an item and knows its id. The item was simply dropped on the
+ * way through. These cases pin the fix, and the last one pins the invariant that makes it safe.
+ */
+describe('buildMonthGrid — money lands on the item row it belongs to', () => {
+  const TODAY_M = '2026-04' as const;
+  const mk = (over: Partial<GridLine> & { id: string; description: string; itemId: string | null }): GridLine =>
+    ({ categoryName: 'Team Gear', totalAmount: 0, periods: [], ...over });
+
+  const rows: GridLine[] = [
+    mk({ id: 'r-jerseys', description: 'Jerseys', itemId: 'item-jerseys', totalAmount: 1800 }),
+    mk({ id: 'r-bags', description: 'Bags', itemId: 'item-bags' }),
+  ];
+
+  it('puts a paid amount on its own item row, not only on the category', () => {
+    const g = buildMonthGrid({
+      lines: rows,
+      actuals: [{ categoryName: 'Team Gear', itemId: 'item-bags', date: '2026-04-10', amount: 150 }],
+      scheduled: [{ categoryName: 'Team Gear', itemId: 'item-bags', date: '2026-09-04', amount: 450 }],
+      todayMonth: TODAY_M,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Team Gear')!;
+    const bags = cat.lines.find(l => l.description === 'Bags')!;
+    const jerseys = cat.lines.find(l => l.description === 'Jerseys')!;
+
+    assert.equal(bags.total.actual, 150, 'the Bags row carries the money that is for Bags');
+    assert.equal(bags.total.scheduled, 450);
+    assert.equal(jerseys.total.actual, 0, 'and a sibling row is untouched');
+  });
+
+  it('⚠ the category is the SUM of its rows — which is what a reader assumes it is', () => {
+    const g = buildMonthGrid({
+      lines: rows,
+      actuals: [
+        { categoryName: 'Team Gear', itemId: 'item-bags', date: '2026-04-10', amount: 150 },
+        { categoryName: 'Team Gear', itemId: 'item-jerseys', date: '2026-04-12', amount: 900 },
+      ],
+      scheduled: [], todayMonth: TODAY_M,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Team Gear')!;
+    const rowSum = cat.lines.reduce((s, l) => s + l.total.actual, 0);
+    assert.equal(cat.total.actual, 1050);
+    assert.equal(rowSum, 1050, 'nothing is held at the category level that a row could hold');
+  });
+
+  it('⚠ money with NO item still lands, at the category, rather than being dropped', () => {
+    // Only reachable for costs predating the item requirement — but it must never vanish.
+    const g = buildMonthGrid({
+      lines: rows,
+      actuals: [{ categoryName: 'Team Gear', date: '2026-04-10', amount: 75 }],
+      scheduled: [], todayMonth: TODAY_M,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Team Gear')!;
+    assert.equal(cat.total.actual, 75, 'the category still reports it');
+    assert.equal(cat.lines.reduce((s, l) => s + l.total.actual, 0), 0, 'and no row claims it');
+  });
+
+  it('⚠⚠ two rows sharing an item do NOT each claim the same money', () => {
+    // The category is the sum of its rows, so a double claim would double the category.
+    const dupes: GridLine[] = [
+      mk({ id: 'a', description: 'Bags', itemId: 'item-bags' }),
+      mk({ id: 'b', description: 'Bags again', itemId: 'item-bags' }),
+    ];
+    const g = buildMonthGrid({
+      lines: dupes,
+      actuals: [{ categoryName: 'Team Gear', itemId: 'item-bags', date: '2026-04-10', amount: 200 }],
+      scheduled: [], todayMonth: TODAY_M,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Team Gear')!;
+    assert.equal(cat.total.actual, 200, 'counted once, not twice');
+    assert.equal(cat.lines.reduce((s, l) => s + l.total.actual, 0), 200);
+  });
+
+  it('⚠⚠ UNDATED money reaches the row too, even when the caller ids its rows its own way', () => {
+    /* The regression this pins (`/review`, correctness lens, 2026-08-21): the row total looked
+       its undated money up by `line.id`, while the money was filed under `category|item`. It
+       agreed only because the live caller happens to build ids in that same shape — and every
+       test here uses short ids like `a`/`b`, so nothing would have caught the day that changed.
+       These rows are deliberately id'd NOTHING like the money key. A commitment whose due date
+       falls outside the grid's month window is undated as far as the columns are concerned, so
+       this is the ordinary case, not an exotic one. */
+    const oddlyIded: GridLine[] = [
+      mk({ id: 'row-0001', description: 'Bags', itemId: 'item-bags', totalAmount: 400 }),
+    ];
+    const g = buildMonthGrid({
+      lines: oddlyIded,
+      actuals:   [{ categoryName: 'Team Gear', itemId: 'item-bags', date: null, amount: 120 }],
+      scheduled: [{ categoryName: 'Team Gear', itemId: 'item-bags', date: null, amount: 260 }],
+      todayMonth: TODAY_M,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Team Gear')!;
+    const bags = cat.lines.find(l => l.description === 'Bags')!;
+    assert.equal(bags.total.actual, 120, 'the ROW carries its own undated spending');
+    assert.equal(bags.total.scheduled, 260, 'and its own undated commitment');
+    // The invariant the whole change exists to hold.
+    assert.equal(cat.total.actual, 120, 'category still equals the sum of its rows');
+    assert.equal(cat.total.scheduled, 260);
   });
 });

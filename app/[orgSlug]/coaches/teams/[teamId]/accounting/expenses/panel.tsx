@@ -857,14 +857,30 @@ function MoneyRecordsPanel({
   } | null>(null);
   const [payingBusy, setPayingBusy] = useState(false);
   const [payingError, setPayingError] = useState('');
-  /** Which payment's Undo is ARMED — first tap arms ("Undo $400?"), second executes. Undo moves
-   *  real money back onto the books, so it earns one deliberate beat without a whole dialog. */
-  const [undoArm, setUndoArm] = useState<string | null>(null);
+  /**
+   * Which payment is waiting on a confirmation before it is undone.
+   *
+   * ⚖ WAS A TWO-TAP ARM, AND THE ARM WAS THE PROBLEM (owner, 2026-08-20). The first tap used to
+   * re-label the button to "Undo $200.00?" and the second executed — which reads as a LABEL, not as
+   * a question, so nothing on screen told a coach that their previous click had armed anything.
+   * A control that changes its own text is not a confirmation; it is a control that has silently
+   * changed meaning. Undo reverses real money, so it gets the same named-consequence confirmation
+   * the Delete flow already uses, and for the same reason: the coach reads the figure before the
+   * money moves, not after.
+   */
+  const [undoAsk, setUndoAsk] = useState<string | null>(null);
   const [undoBusy, setUndoBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  /* ⚠⚠ THE SAME BELT `savingRef` WEARS, for the same reason (`/review`, concurrency lens,
+     2026-08-21). `undoBusy` is STATE: a second click lands before React commits the disabled
+     attribute, and both DELETEs go. The server correctly refuses the second (409), but that
+     error is raised on this screen's PAGE-WIDE channel — which replaces the whole list — so a
+     double-tap on a SUCCESSFUL undo blanked the payables list behind "already been undone".
+     A latch, not a nicer message, is the fix: the second call must never leave the browser. */
+  const undoRef = useRef(false);
   const [saveError, setSaveError] = useState('');
   /** Was the last save refused for a future date? Its own flag rather than a longer sentence,
    *  because the answer needs a LINK to the commitment door and a thrown message cannot carry one. */
@@ -1179,7 +1195,7 @@ function MoneyRecordsPanel({
     const standing = standings[e.id];
     const suggested = target?.amount ?? standing?.remaining ?? e.amount;
     setPayingError('');
-    setUndoArm(null);
+    setUndoAsk(null);
     setPaying({
       expense: e,
       installmentId: target?.installmentId ?? null,
@@ -1222,25 +1238,38 @@ function MoneyRecordsPanel({
    * Undo a recorded payment — the books go back by exactly that payment's amount (R5).
    * Two taps: the first arms the button with the figure, the second sends the DELETE.
    */
+  /**
+   * Shut the bill panel, and take the unanswered Undo question with it.
+   *
+   * ⚠ THE SECOND HALF IS THE POINT. A coach who opens "Undo the $200 payment?" and then closes the
+   * panel has answered nothing — leaving the flag set means the question is still hanging there the
+   * next time any bill is opened, on a row they never touched. Same rule the form's reset carries:
+   * state raised for one action clears when that action's surface goes away.
+   */
+  function closeDrawer() {
+    setDrawerFor(null);
+    setUndoAsk(null);
+  }
+
+  /** Confirmed — actually reverse it. The question is asked in the panel; this only does the work. */
   async function undoPayment(e: RepTeamExpense, payment: AppliedPayment) {
-    if (undoArm !== payment.id) {
-      setUndoArm(payment.id);
-      return;
-    }
+    if (undoRef.current) return;          // see `undoRef` — a second tap must not reach the server
+    undoRef.current = true;
     setUndoBusy(payment.id);
     try {
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${e.id}/payments/${payment.id}`,
         { method: 'DELETE' });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not undo the payment');
-      setUndoArm(null);
+      setUndoAsk(null);
       await refreshAfterWrite();
     } catch (err: any) {
       // Surfaced beside the list rather than a toast nothing owns — same channel as every other
       // load error on this screen.
       setError(err.message);
-      setUndoArm(null);
+      setUndoAsk(null);
     } finally {
+      undoRef.current = false;
       setUndoBusy(null);
     }
   }
@@ -3571,12 +3600,12 @@ function MoneyRecordsPanel({
           details" expansion; nothing about the money changed in this phase, only where a coach
           finds it. */}
       {drawerBill && (
-        <div className={styles.modalOverlay} onClick={() => setDrawerFor(null)}>
+        <div className={styles.modalOverlay} onClick={closeDrawer}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
               title={drawerBill.description}
               subtitle={[drawerBill.category, drawerBill.itemName].filter(Boolean).join(' · ') || undefined}
-              onClose={() => setDrawerFor(null)}
+              onClose={closeDrawer}
             />
 
             {drawerStanding ? (
@@ -3661,29 +3690,66 @@ function MoneyRecordsPanel({
                   <>
                     <p className={styles.payDrawerLabel}>Payments recorded</p>
                     {drawerStanding.payments.map(p => (
-                      <div key={p.id} className={styles.payDrawerLine}>
-                        <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
-                        <span className={styles.payDrawerWhat}>
-                          {p.method || 'Payment'}
-                          {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
-                        </span>
-                        <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
-                        {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly its
-                            amount, read from its own recorded entry. Two taps: the first arms with
-                            the figure, so a mis-tap cannot reverse real money. */}
-                        {canWriteMoney && drawerBill.expense && (
-                          <button
-                            className={`${styles.btnSecondary} ${styles.compactAction}`}
-                            aria-label={undoArm === p.id
-                              ? `Confirm undoing the ${fmt(p.amount)} payment`
-                              : `Undo the ${fmt(p.amount)} payment`}
-                            disabled={undoBusy === p.id}
-                            onClick={() => undoPayment(drawerBill.expense!, p)}
-                          >
-                            {undoBusy === p.id ? 'Undoing…' : undoArm === p.id ? `Undo ${fmt(p.amount)}?` : 'Undo'}
-                          </button>
+                      <Fragment key={p.id}>
+                        <div className={styles.payDrawerLine}>
+                          <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
+                          <span className={styles.payDrawerWhat}>
+                            {p.method || 'Payment'}
+                            {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
+                          </span>
+                          <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
+                          {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly its
+                              amount, read from its own recorded entry. It ASKS first (below), in the
+                              same named-consequence shape the Delete flow uses. */}
+                          {canWriteMoney && drawerBill.expense && undoAsk !== p.id && (
+                            <button
+                              className={`${styles.btnSecondary} ${styles.compactAction}`}
+                              aria-label={`Undo the ${fmt(p.amount)} payment`}
+                              disabled={undoBusy === p.id}
+                              onClick={() => setUndoAsk(p.id)}
+                            >
+                              {undoBusy === p.id ? 'Undoing…' : 'Undo'}
+                            </button>
+                          )}
+                        </div>
+                        {/* ⚠⚠ THE QUESTION, WITH THE FIGURE IN IT (owner, 2026-08-20). This replaced a
+                            two-tap arm that re-labelled the button to "Undo $200.00?" — which reads
+                            as a label rather than a question, so nothing told a coach their previous
+                            click had armed anything. Same block, same wording shape and the same two
+                            explicit answers as Delete, so there is ONE confirmation pattern on this
+                            screen rather than two. Inline rather than a second modal: the bill panel
+                            IS a modal, and stacking one on another hides the row being undone. */}
+                        {undoAsk === p.id && (
+                          <div className={styles.dangerConfirm} role="alertdialog"
+                            aria-label={`Undo the ${fmt(p.amount)} payment?`}>
+                            <p className={styles.dangerConfirmTitle}>
+                              Undo the {fmt(p.amount)} payment from {fmtDate(p.paidDate)}?
+                            </p>
+                            {/* ⚠ NO "a family paid this" BRANCH, and its absence is a fact about the
+                                product rather than an omission. This panel only ever opens a
+                                COMMITMENT, and a commitment can never be paid out of pocket — the
+                                form does not offer `Paid by` on one and the create route refuses it
+                                ("a payable is billed to the team"). A branch here would be dead
+                                code that quietly told the next reader the opposite. ⚠ If a family
+                                is ever allowed to front a commitment, this sentence is one of the
+                                places that has to learn about it. */}
+                            <p className={styles.dangerConfirmBody}>
+                              Cash on hand goes back <strong>up by {fmt(p.amount)}</strong>, and this
+                              bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing.
+                            </p>
+                            <div className={styles.dangerConfirmActions}>
+                              <button className={styles.btnGhost} disabled={undoBusy === p.id}
+                                onClick={() => setUndoAsk(null)}>
+                                Keep it
+                              </button>
+                              <button className={styles.btnDanger} disabled={undoBusy === p.id}
+                                onClick={() => undoPayment(drawerBill.expense!, p)}>
+                                {undoBusy === p.id ? 'Undoing…' : `Undo ${fmt(p.amount)}`}
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      </div>
+                      </Fragment>
                     ))}
                   </>
                 )}
@@ -3708,7 +3774,7 @@ function MoneyRecordsPanel({
                     through the same door, so there is one delete path rather than two. */}
                 <button
                   className={styles.btnGhost}
-                  onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openEdit(e); }}
+                  onClick={() => { const e = drawerBill.expense!; closeDrawer(); openEdit(e); }}
                 >
                   Edit
                 </button>
@@ -3720,14 +3786,14 @@ function MoneyRecordsPanel({
                     truncation the cap was added to prevent. */}
                 <button
                   className={styles.btnGhost}
-                  onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openAddInstallment(e); }}
+                  onClick={() => { const e = drawerBill.expense!; closeDrawer(); openAddInstallment(e); }}
                 >
                   Add an installment
                 </button>
                 {drawerStanding && drawerStanding.remaining > 0 && (
                   <button
                     className={styles.btnPrimary}
-                    onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openRecordPayment(e); }}
+                    onClick={() => { const e = drawerBill.expense!; closeDrawer(); openRecordPayment(e); }}
                   >
                     Record a payment
                   </button>

@@ -10669,6 +10669,31 @@ button.gdChip[aria-pressed='true'] {
    own WORDS — "13 days overdue", "Paid", "In 17 days" — and the dot is decoration beside them. */
 .payTableWrap { --pay-rule: rgba(var(--logic-lime-rgb), 0.28); }
 
+/* ⚠⚠ THE COLUMNS MUST NOT MOVE WHEN A GROUP FOLDS (owner, 2026-08-21).
+   A browser sizes an ordinary table from the content of the rows it can SEE. Folding a band
+   removes its rows from the document, so the widths are recomputed from whatever is left — and
+   every column jumps. Measured on the payment schedule at 1440: open, the five columns sat at
+   209 / 300 / 177 / 163 / 304px; with one band folded they became 213 / 251 / 270 / 287 / 133.
+   The action column nearly halved and the headings slid sideways under the reader's eye.
+
+   ⚠ This screen folds by DESIGN — the list opens folded, and `Fold all` / `Open all` are one tap
+   away — so it is the one table in the portal where that reflow is not a rare edge case but the
+   ordinary act of using the screen.
+
+   `table-layout: fixed` sizes from the header row alone and ignores the body entirely, which is
+   exactly the guarantee wanted: the same columns whichever bands are open, and the same columns in
+   both arrangements. ⚠ PERCENTAGES, NOT `rem` — a fixed rem sum stops fitting at the narrow end and
+   crushes the description column to nothing around 640px; percentages simply scale. ⚠ Inert below
+   the card breakpoint, where the table stops being a table at all, so nothing here fights that. */
+.payTableWrap .table { table-layout: fixed; }
+.payTableWrap thead th:nth-child(1) { width: 14%; }  /* Due — one date */
+.payTableWrap thead th:nth-child(2) { width: 32%; }  /* What — the bill and its meta line */
+.payTableWrap thead th:nth-child(3) { width: 15%; }  /* Owing — the figure AND the small
+                                                             total beneath it; 12% clipped
+                                                             "$1,600.00 total" at 768 */
+.payTableWrap thead th:nth-child(4) { width: 17%; }  /* Status — "36 days overdue · partly paid" */
+.payTableWrap thead th:nth-child(5) { width: 22%; }  /* the action */
+
 .payBillRow > .td {
   background: var(--home-card, rgba(255,255,255,0.05));
   border-bottom: 1px solid var(--border-2);

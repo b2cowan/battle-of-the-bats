@@ -21,6 +21,11 @@
   --consumer-bottom-h: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   /* Height of the global consumer top bar the desktop rail and header band sit beneath. */
   --coach-top-strip: var(--consumer-top-h);
+  /* ⚠ NO --coach-tabbar-h / --coach-toolbar-h HERE (reading-order ruling, follow-up to P3, and
+     the fix for a real defect a hand-picked pair of these once caused: rows showed through a gap
+     between two sticky layers whose offsets didn't match their real rendered height). The register
+     panel measures both live via ResizeObserver and applies them as inline styles instead — see
+     `panel.tsx`. Do not reintroduce guessed height constants for this stack. */
   /* Paint an OPAQUE themed ground on the shell itself. The warm token remap
      (globals.css) is scoped to [data-coach-warm-enabled] = this element, so `--bg`
      resolves to warm paper here (and pitch-black under an explicit dark pref). Without

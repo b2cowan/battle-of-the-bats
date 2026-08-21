@@ -79,9 +79,9 @@ export interface GridLine {
   categoryId?: string | null;
   /** The budget lines this row stands for — see `GridPlanLine`. Absent on a spend-only row. */
   planLines?: GridPlanLine[];
-  /** Taxonomy item link, when the line has one — the strong key for prior-season matching. */
+  /** Taxonomy item link, when the line has one. THE KEY MONEY IS FILED UNDER: spending carries
+   *  the same item, which is how a row gets its own figures rather than a dash. */
   itemId: string | null;
-  itemName: string | null;
   totalAmount: number;
   /**
    * Is this row actually IN the plan? (mig 240.)
@@ -102,16 +102,22 @@ export interface CategoryEvent {
   categoryName: string | null;
   /** As on `GridLine` — the identity the statement grouped this money by, when it has one. */
   categoryId?: string | null;
+  /**
+   * ⚠⚠ WHICH ITEM THIS MONEY IS FOR (2026-08-21, owner-found). Without it the grid could only ever
+   * put spending on a CATEGORY, so every item row showed a dash in its money columns — reading as
+   * "no money here" on the very row the money belonged to, while the Statement view of the same
+   * report itemised it correctly.
+   *
+   * ⚠ The join was always available and simply was not carried: every cost names an item (required
+   * on the form and re-enforced by the server), and every grid row IS an item and already knows its
+   * id. A stale comment claiming there was no such link outlived the migration that created it.
+   *
+   * Absent/null means genuinely unattributed — only reachable on rows predating the item
+   * requirement — and lands in the category’s own bucket rather than being dropped.
+   */
+  itemId?: string | null;
   date: string | null;
   amount: number;
-}
-
-export interface PriorLine {
-  description: string;
-  itemId: string | null;
-  itemName: string | null;
-  categoryName: string;
-  totalAmount: number;
 }
 
 export interface MonthCell {
@@ -131,7 +137,6 @@ export interface GridLineResult {
   undatedBudget: number;
   /** Row totals, for the trailing Total column. */
   total: MonthCell;
-  priorTotal: number | null;
 }
 
 export interface GridCategoryResult {
@@ -143,7 +148,6 @@ export interface GridCategoryResult {
   cells: MonthCell[];
   undatedBudget: number;
   total: MonthCell;
-  priorTotal: number | null;
   lines: GridLineResult[];
   /** True when this category exists only because something is scheduled or paid against it —
    *  the coach has no budget line for it at all. Worth seeing, never worth hiding. */
@@ -159,12 +163,7 @@ export interface MonthGrid {
     cells: MonthCell[];
     undatedBudget: number;
     total: MonthCell;
-    priorTotal: number | null;
   };
-  /** Prior-season lines with nothing matching them this season — the "what am I forgetting?"
-   *  half of the comparison column. */
-  priorOnly: Array<{ description: string; categoryName: string; amount: number }>;
-  hasPriorSeason: boolean;
 }
 
 // ── month key helpers ────────────────────────────────────────────────────────
@@ -262,25 +261,12 @@ function addCell(target: MonthCell, source: MonthCell): void {
   target.actual = round2(target.actual + source.actual);
 }
 
-/**
- * Match a line to its prior-season equivalent: taxonomy item link first (exact and stable), then
- * a case-insensitive name match on description or item name. Names are all a free-text line has.
- */
-function priorKeyCandidates(l: { itemId: string | null; itemName: string | null; description: string }): string[] {
-  const out: string[] = [];
-  if (l.itemId) out.push(`item:${l.itemId}`);
-  if (l.itemName) out.push(`name:${l.itemName.trim().toLowerCase()}`);
-  out.push(`name:${l.description.trim().toLowerCase()}`);
-  return out;
-}
-
 export function buildMonthGrid(input: {
   lines: GridLine[];
   /** Paid amounts, by the date they were paid. */
   actuals: CategoryEvent[];
   /** Commitments, by the date they fall due (paid or not — a commitment is scheduled either way). */
   scheduled: CategoryEvent[];
-  priorLines: PriorLine[];
   todayMonth: MonthKey;
   maxMonths?: number;
   /**
@@ -292,7 +278,7 @@ export function buildMonthGrid(input: {
    */
   bufferAmount?: number;
 }): MonthGrid {
-  const { lines, actuals, scheduled, priorLines, todayMonth } = input;
+  const { lines, actuals, scheduled, todayMonth } = input;
   const bufferAmount = round2(input.bufferAmount ?? 0);
 
   const { months, truncated } = deriveMonthRange(
@@ -305,18 +291,6 @@ export function buildMonthGrid(input: {
     { max: input.maxMonths ?? MAX_MONTH_COLUMNS },
   );
   const monthIndex = new Map(months.map((m, i) => [m, i]));
-
-  // Prior-season lines, indexed every way a current line might match them. The index holds the
-  // LINES, not a running sum: a category total is the sum of the DISTINCT prior lines its lines
-  // matched, so two same-named current lines can't count one prior line's dollars twice.
-  const priorByKey = new Map<string, PriorLine[]>();
-  const priorUsed = new Set<PriorLine>();
-  for (const p of priorLines) {
-    for (const key of priorKeyCandidates(p)) {
-      const bucket = priorByKey.get(key);
-      if (bucket) bucket.push(p); else priorByKey.set(key, [p]);
-    }
-  }
 
   // ── categories from the budget plan ──────────────────────────────────────
   const catOrder: string[] = [];
@@ -343,10 +317,27 @@ export function buildMonthGrid(input: {
     return c;
   }
 
+  /* ⚠⚠ MONEY IS KEYED BY CATEGORY *AND* ITEM, and the shape matches `GridLine.id` exactly so a
+     movement lands on the row it belongs to. Keyed by category alone, every item row showed a dash
+     while its category carried the total (owner-found 2026-08-21). `no-item` is the same fallback
+     the row ids use, so unattributed money still has somewhere honest to sit. */
+  const eventKey = (e: CategoryEvent) => `${categoryKey(e)}|${e.itemId ?? 'no-item'}`;
+
+  /* ⚠ SPLIT FROM THE RIGHT. A category key can be `name:<the name>` and a category name may
+     legitimately contain a pipe; the item suffix never can (a uuid, or the literal `no-item`),
+     so the LAST separator is the only safe one to cut on. */
+  const catOf = (rowKey: string) => rowKey.slice(0, rowKey.lastIndexOf('|'));
+
+  /* ⚠ THE ROW’S MONEY KEY IS BUILT FROM WHAT THE ROW *IS*, never from `line.id`. The caller’s id
+     happens to be the same shape today, and depending on that would be a silent coupling: a caller
+     numbering its rows differently would get money that lands nowhere, with no error. */
+  const lineKey = (l: { categoryId?: string | null; categoryName: string | null; itemId: string | null }) =>
+    `${categoryKey(l)}|${l.itemId ?? 'no-item'}`;
+
   function place(events: CategoryEvent[], field: 'actual' | 'scheduled', undated: Map<string, number>) {
     for (const e of events) {
       if (!e.amount) continue;
-      const key = categoryKey(e);
+      const key = eventKey(e);
       const m = monthKeyOf(e.date);
       const i = m != null ? monthIndex.get(m) : undefined;
       if (i === undefined) {
@@ -364,7 +355,10 @@ export function buildMonthGrid(input: {
 
   // A category the team spends or owes on but has never budgeted still gets a row.
   const unplannedKeys: string[] = [];
-  for (const key of [...eventCells.keys(), ...undatedActual.keys(), ...undatedScheduled.keys()]) {
+  // ⚠ The maps are keyed by row (category|item) now, so the CATEGORY has to be read back out —
+  // comparing a row key against `catLines` would never match and every category would look new.
+  for (const rowKey of [...eventCells.keys(), ...undatedActual.keys(), ...undatedScheduled.keys()]) {
+    const key = catOf(rowKey);
     if (catLines.has(key) || unplannedKeys.includes(key)) continue;
     unplannedKeys.push(key);
   }
@@ -382,9 +376,10 @@ export function buildMonthGrid(input: {
     // A category is unplanned when NOTHING in it is in the plan — not merely when it has no rows,
     // which stopped being the same question once spend-only rows started arriving (see GridLine).
     const unplanned = ownLines.length === 0 || ownLines.every(l => l.inPlan === false);
-    // The DISTINCT prior lines this category's lines matched — see `priorByKey`.
-    const catPriorMatches = new Set<PriorLine>();
 
+    /* ⚠ ONE ROW CLAIMS A KEY. Two rows in one category sharing an item (or both item-less) would
+       otherwise each add the same money, and the category — the sum of its rows — would double it. */
+    const claimed = new Set<string>();
     const lineResults: GridLineResult[] = ownLines.map(line => {
       const cells = blankCells(months.length);
       let undatedBudget = 0;
@@ -406,18 +401,25 @@ export function buildMonthGrid(input: {
         if (remainder > 0.005) undatedBudget = round2(undatedBudget + remainder);
       }
 
-      // Match on the strongest key available: the taxonomy item link, then the item name, then
-      // the description. First hit wins — a weaker key must not add a second match on top.
-      let priorTotal: number | null = null;
-      for (const k of priorKeyCandidates(line)) {
-        const hits = priorByKey.get(k);
-        if (!hits) continue;
-        priorTotal = round2(hits.reduce((s, p) => s + p.totalAmount, 0));
-        for (const p of hits) { priorUsed.add(p); catPriorMatches.add(p); }
-        break;
+      /* ⚠⚠ THE ROW'S OWN MONEY, which it never used to get (owner-found 2026-08-21). Spending was
+         placed on the CATEGORY, so every item row showed a dash in its money columns — reading as
+         "no money here" on the exact row the money belonged to, while the Statement view of the
+         same report itemised it correctly. ⚠ Keyed by `lineKey(line)` — what the row IS —
+         never by `line.id`; see the rule above `eventKey`. */
+      const own = claimed.has(lineKey(line)) ? undefined : eventCells.get(lineKey(line));
+      claimed.add(lineKey(line));
+      if (own) {
+        for (let i = 0; i < months.length; i++) {
+          cells[i].scheduled = round2(cells[i].scheduled + own[i].scheduled);
+          cells[i].actual = round2(cells[i].actual + own[i].actual);
+        }
       }
-
-      const total: MonthCell = { budget: round2(line.totalAmount), scheduled: 0, actual: 0 };
+      const total: MonthCell = {
+        budget: round2(line.totalAmount),
+        // Undated money is in the total but in no column — the same shape the category uses.
+        scheduled: round2(cells.reduce((t, c) => t + c.scheduled, 0) + (undatedScheduled.get(lineKey(line)) ?? 0)),
+        actual: round2(cells.reduce((t, c) => t + c.actual, 0) + (undatedActual.get(lineKey(line)) ?? 0)),
+      };
       return {
         id: line.id,
         description: line.description,
@@ -425,39 +427,40 @@ export function buildMonthGrid(input: {
         cells,
         undatedBudget,
         total,
-        priorTotal,
       };
     });
 
-    // Category cells = the plan's budget per month + the category's own scheduled/actual money.
-    // Actuals and commitments are matched to a CATEGORY, not to a line (there is no payable↔line
-    // link and, by owner ruling, there is not going to be one in v1), so they live at this level.
+    /* ⚠⚠ THE CATEGORY IS NOW THE SUM OF ITS ROWS — which is what a reader always assumed it was.
+       It used to carry the money itself while its rows showed dashes; the old comment here said
+       there was no link from a cost to a row, and that was true when written and stopped being
+       true when every cost started naming an item. Both sides have carried the key ever since.
+
+       ⚠ ORPHANS STILL LAND SOMEWHERE. Money whose item has no row in this category (only
+       reachable for costs predating the item requirement, which key as `no-item`) is added at
+       the category level rather than dropped — so the grand total is unchanged either way. */
     const cells = blankCells(months.length);
     for (const lr of lineResults) {
-      for (let i = 0; i < months.length; i++) cells[i].budget = round2(cells[i].budget + lr.cells[i].budget);
+      for (let i = 0; i < months.length; i++) addCell(cells[i], lr.cells[i]);
     }
-    const ev = eventCells.get(key);
-    if (ev) {
+    const rowKeys = new Set(ownLines.map(lineKey));
+    for (const [rowKey, ev] of eventCells) {
+      if (catOf(rowKey) !== key || rowKeys.has(rowKey)) continue;
       for (let i = 0; i < months.length; i++) {
         cells[i].scheduled = round2(cells[i].scheduled + ev[i].scheduled);
         cells[i].actual = round2(cells[i].actual + ev[i].actual);
       }
     }
+    /* Every undated entry belonging to this category, whether or not it found a row. The cells
+       above already hold all of its DATED money, so these two are the whole remainder. */
+    const undatedIn = (m: Map<string, number>) => round2(
+      [...m].reduce((t, [rowKey, v]) => (catOf(rowKey) === key ? t + v : t), 0));
 
     const undatedBudget = round2(lineResults.reduce((s, l) => s + l.undatedBudget, 0));
     const total: MonthCell = {
       budget: round2(lineResults.reduce((s, l) => s + l.total.budget, 0)),
-      scheduled: round2(
-        cells.reduce((s, c) => s + c.scheduled, 0) + (undatedScheduled.get(key) ?? 0),
-      ),
-      actual: round2(
-        cells.reduce((s, c) => s + c.actual, 0) + (undatedActual.get(key) ?? 0),
-      ),
+      scheduled: round2(cells.reduce((s, c) => s + c.scheduled, 0) + undatedIn(undatedScheduled)),
+      actual: round2(cells.reduce((s, c) => s + c.actual, 0) + undatedIn(undatedActual)),
     };
-
-    const priorTotal = catPriorMatches.size > 0
-      ? round2([...catPriorMatches].reduce((s, p) => s + p.totalAmount, 0))
-      : null;
 
     if (
       unplanned
@@ -473,7 +476,6 @@ export function buildMonthGrid(input: {
       cells,
       undatedBudget,
       total,
-      priorTotal,
       lines: lineResults,
       unplanned,
     });
@@ -486,7 +488,6 @@ export function buildMonthGrid(input: {
       cells: blankCells(months.length),
       undatedBudget: bufferAmount,
       total: { budget: bufferAmount, scheduled: 0, actual: 0 },
-      priorTotal: null,
       lines: [],
       unplanned: false,
     });
@@ -499,17 +500,6 @@ export function buildMonthGrid(input: {
   for (const c of categories) addCell(grandTotal, c.total);
   const undatedBudgetTotal = round2(categories.reduce((s, c) => s + c.undatedBudget, 0));
 
-  // Grand total from the DISTINCT prior lines matched anywhere — not the sum of category totals.
-  // One prior line can answer to lines in two different categories (same name, different home),
-  // and summing the categories would count its dollars twice.
-  const priorGrandTotal = priorUsed.size > 0
-    ? round2([...priorUsed].reduce((s, p) => s + p.totalAmount, 0))
-    : null;
-
-  const priorOnly = priorLines
-    .filter(p => !priorUsed.has(p))
-    .map(p => ({ description: p.description, categoryName: p.categoryName, amount: round2(p.totalAmount) }));
-
   return {
     months,
     truncated,
@@ -518,10 +508,7 @@ export function buildMonthGrid(input: {
       cells: totalCells,
       undatedBudget: undatedBudgetTotal,
       total: grandTotal,
-      priorTotal: priorGrandTotal,
     },
-    priorOnly,
-    hasPriorSeason: priorLines.length > 0,
   };
 }
 

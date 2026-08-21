@@ -745,13 +745,6 @@ columns retired in P4 with the cap. What remains:
   unbudgeted (the team photo), and a second would both fail the check and spoil the one honest
   “not budgeted” row the report exists to show.
 - ✅ **THE SHARED TOUCH-TARGET FIX IS DONE** — see its own section below.
-- ~~The one open judgement~~ — closed above. The staleness half
-  came back clean through P4 (no dock line or tour step names the money form or the export), but
-  `check:demos` proves breakage and can never say the demo is missing something the product gained.
-  A monthly gym-time bill is the most persuasive thing this project has added since part payment.
-  **Owner call.**
-- The **shared-chrome 44px fix** is not this project's, but all four money screens go green together
-  when it lands — worth naming here so nobody re-discovers those 34 findings as new.
 
 ### ✅ The shared touch-target fix — DONE 2026-08-20 (owner-approved)
 
@@ -884,3 +877,111 @@ built. The shared primitives are `MultiSelectDropdown`, `SingleSelectDropdown` a
 | **Demo copy goes stale.** The coach sandbox narrates money screens that are being rebuilt. | ✅ **Largely retired 2026-08-20.** The judgement call it existed for — *should a demo moment show a part payment?* — was answered **no** by the owner, and the staleness half came back clean through the P3 rebuild: no dock line or tour step names this screen, so there was nothing to go stale. `check:demos` passes. ⚠ What survives is the standing CLAUDE.md warning, not a P5 task: the check proves breakage and can never tell us the demo is missing something the product gained, so **re-read the sentences on the next coach-money change**. |
 | **The register's running balance** depends on one row per settled half; payments are now their own records. | ⚠ §41 Part D's rule holds — a settle must leave ONE transaction and no second row beside the commitment. Re-assert it in P2. |
 | **Scope rules are cheap to state and expensive to get right** across paid/unpaid combinations. | S1–S8 are individually walkable in §64 Part E, and each gets a unit test rather than only a QA step. |
+
+---
+
+## 9 · ⚠⚠ WHAT THIS PROJECT EARNED THE RIGHT TO ASK NEXT — one planning session, owner-called
+
+**Logged 2026-08-21, at the owner’s instruction, to be opened once this project closes.** It is a
+PLANNING session, not a build: the owner is doing their own review of the money screens first and
+will bring the detail. **Do not pre-empt it with a plan file** — this section is the brief for the
+session, not the answer.
+
+### The owner’s words
+
+> *"We are getting closer to a centralized model and this project in particular has helped us make
+> a lot of ground, but I still feel like I have to go to too many places to log different
+> transactions, and as a user it feels confusing."*
+
+### ⚠ Why these are ONE question and not two
+
+The session has two inputs and they share a root. **Do not let it split into two sessions.**
+
+**1. The absence found on 2026-08-21 (§64’s own open question):** a family can front a WHOLE cost
+but not **one payment of a multi-payment bill**. A parent covering the $200 deposit on a $600
+tournament entry has nowhere honest to go — record it as a team payment and the team’s cash did not
+actually move and that family is owed nothing; split it off as its own plain cost and the entry
+loses the schedule it really has.
+
+**2. The general complaint:** too many doors. A coach logging money today opens **Transactions**
+(a cost, income, or money back), **Payables** (a commitment and its payments), **Player Dues** (a
+schedule, payments, credits, payouts), **Fundraising** (amounts raised, sponsors) and **Club**
+(allocations, payment requests). Five screens, each with its own add-door and its own words.
+
+**⚠⚠ THE ROOT IS THE SAME, AND NAMING IT IS THIS SECTION’S REAL CONTRIBUTION: THE MODEL CONVERGED
+AND THE DOORS DID NOT.** Money-in and money-out now think identically — a plan of dated
+installments, and payments recorded against it — on both the dues side (since mig 232) and the
+payables side (since this project). That is the hard half, and it is done. What did not converge is
+how a coach REACHES those records: each screen grew its own form at a different time, so the same
+act ("some money moved, here is what and when and who") is five different conversations.
+
+The absence is that mismatch in miniature: **a payer is a field on the COST form, but a payment
+record has no payer at all** — because the cost form and the payment record were built by different
+phases, for different screens, and nobody has yet asked what a payment is supposed to carry.
+
+### Questions the session should actually answer
+
+- **What is the smallest set of doors a coach needs?** One "money moved" door that asks what kind,
+  the way the Add form already does for cost / income / money back? Or fewer screens rather than
+  fewer forms?
+- **What does a PAYMENT carry?** Today: amount, date, method, note, and which installment. Not a
+  payer. If it carried one, the absence closes — but it reaches a family’s dues credit, which is
+  real money owed to a household, so it is not a field to add casually.
+- **Which of the five screens are genuinely different JOBS**, and which are only different because
+they were built in a different month? Club money and dues have real reasons to be their own
+  places; the question is whether logging into them needs to be.
+- **What can be retired?** The strongest version of this work removes screens rather than adding a
+  hub in front of them.
+
+
+### ⚠ A third input, added 2026-08-21 — the tag controls, and there are more of them than anyone meant
+
+Two findings from the owner walking the built screen. Both belong to this session because both are
+doors-not-model problems, which is the pattern the session is named for.
+
+**1. The money-tag filter never becomes a dropdown — there is no threshold at all.** Every tag on
+screen renders as its own chip, always. Three tags is three chips; fifteen tags is fifteen chips
+wrapping across the toolbar. ⚠⚠ **This is the one narrowing on these screens that the convention
+this very project set never reached** (§7 above): *a narrowing is a labelled pill that opens a
+small list, multi-select, with counts on every option.* Status, Show, Item and Date all became
+that. The tag filter stayed a chip row, and nobody noticed because the fixture had no tags — the
+owner only found it after creating one. ⚠ The owner’s own §7 wording is the test to apply, not a
+hard number: *"count what is on screen, not what is behind a click"* — five chips may genuinely
+beat a dropdown; fifteen certainly do not, and today fifteen is what you get.
+
+**2. "Manage tags" is on at least three toolbars, for two different libraries.** It sits on
+**Transactions** and on **Payables** (same component, two faces, so a coach sees the same button
+twice inside one hub), on **Budget Plan** for the budget’s own words, and again on the **schedule**
+for event tags. Each placement has a written reason and each reason is locally sound — the pattern
+is "manage the words where you use them", and Team Settings was considered and deliberately refused
+because these are content a coach writes while working, not configuration.
+
+⚠ **So the question is NOT "who put this button in four places" — it is whether the rule that put
+it there still produces a good experience once four screens have applied it.** That is the same
+question as the five add-doors, at a smaller scale, and it is why it belongs in this session rather
+than in a tidy-up: the answer might be "leave them, they are correct", and that is a legitimate
+outcome.
+
+⚠ **Do not fix either one before the session.** The chip-to-pill change is small enough to be
+tempting and would pre-empt the very conversation about what these controls should be.
+### ⚠ Its sibling, deliberately kept OUT of this session
+
+The owner raised a second thing the same day, on the rebuilt Payables at phone width: *"I don’t
+really like the phone version where it is still a dropdown with huge tiles, this will become a ton
+of scrolling."* **That is a real problem and it is NOT this session** — this one is navigation and
+vocabulary; that one is presentation, caused by the single portal-wide table-to-cards rule, and it
+reaches nine screens including several that have nothing to do with logging money. It has its own
+TODO entry.
+
+⚠ **They are sequenced, though:** if this session retires or merges screens, there are fewer card
+tables left to rework — so the deep version of the phone work should follow this one rather than
+race it.
+### ⚠ What the session must NOT do
+
+- **Do not add a sixth door that unifies the other five.** A hub over five inconsistent forms is
+  six things to learn, not one.
+- **Do not touch the MODEL to fix the DOORS.** Installments-and-payments is settled, tested and
+  about to ship; the complaint is navigational and vocabulary-level.
+- **Argue from the screens, not from this section.** Read what each door actually asks for today.
+  This repo’s plans have been wrong about the product repeatedly, and this one was written from
+  one session’s memory of five screens.
