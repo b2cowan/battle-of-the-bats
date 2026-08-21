@@ -739,6 +739,46 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 
 ---
 
+## `pitch_page_pulls`
+<!-- dict:table:pitch_page_pulls -->
+
+**Purpose:** the owner-saved composition of each public walkthrough page — WHICH pitch slides the
+scrolling page shows (Pitch Deck Studio stage B, mig 257;
+[docs/projects/active/PITCH_DECK_STUDIO_PLAN.md](../../projects/active/PITCH_DECK_STUDIO_PLAN.md)).
+One row per persona, written only by the studio's pull API
+([app/api/platform-admin/pitch-deck-studio/pull/route.ts](../../../app/api/platform-admin/pitch-deck-studio/pull/route.ts))
+after `pullProblems()` validation, read by the walkthrough pages and the studio through
+[lib/pitch-pull-store.ts](../../../lib/pitch-pull-store.ts). **Service-role only** (RLS enabled,
+no policies — mig 251 posture).
+
+**Gotchas (read first):**
+
+1. **This table stores slide NUMBERS and never a sentence** — the owner ruling behind the whole
+   studio is *decks are data, slides are CODE*: a slide's words and picture live in
+   [lib/walkthrough-content.ts](../../../lib/walkthrough-content.ts) where the build checks them,
+   and no copy field may ever be added here.
+2. **A row is advisory, not authoritative:** readers run `resolvePullIds()` over it — ids the
+   slide bank or deck no longer holds are dropped, order is normalised to the deck's running
+   order, and a row with nothing usable falls back to the code pull. A missing/broken row can
+   never blank a marketing page.
+3. `slide_ids` is deliberately **not** foreign-keyed to anything — the slide bank is a code
+   literal, so referential integrity is the save path's job (and the reader's, per gotcha 2).
+
+<!-- dict:col:pitch_page_pulls.persona -->
+**`persona`** (text PK, CHECK ∈ `tournament | coach`) — which public walkthrough page this row
+composes; matches `Walkthrough.persona`.
+
+<!-- dict:col:pitch_page_pulls.slide_ids -->
+**`slide_ids`** (jsonb NOT NULL, CHECK array) — ordered array of permanent library numbers, e.g.
+`["#11","#27","#12"]`.
+
+<!-- dict:col:pitch_page_pulls.updated_at -->
+<!-- dict:col:pitch_page_pulls.updated_by -->
+**`updated_at` / `updated_by`** — when the pull was last saved and the platform-admin email that
+saved it; shown in the studio's "saved by" line and mirrored to the platform audit log.
+
+---
+
 ## `pools`
 <!-- dict:table:pools -->
 

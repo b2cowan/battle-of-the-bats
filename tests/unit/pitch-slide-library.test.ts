@@ -20,9 +20,13 @@ import { MARKETING_SHOTS } from '../../lib/marketing-shots.ts';
 import {
   PITCH_DECKS,
   PITCH_SLIDES,
+  PLAN_WORDS,
   SLIDE_NUMBERS_SPOKEN_FOR,
   WALKTHROUGHS,
-  deckSlides,
+  derivedMeta,
+  derivedSeoDescription,
+  pullProblems,
+  resolvePullIds,
   type PitchSlide,
 } from '../../lib/walkthrough-content.ts';
 
@@ -46,7 +50,7 @@ test('a slide is keyed by its own permanent number', () => {
  * `SLIDE_NUMBERS_SPOKEN_FOR` holds no `planned` entry today (P2b built everything both decks
  * name), and no deck names a `held` or `retired` number. So the `|| planned` arm and the
  * `!spokenFor || planned` guard below never decide anything against the current data — deleting
- * both would leave all ten tests green. **That is the shape this repo keeps getting burned by**
+ * both would leave the whole suite green. **That is the shape this repo keeps getting burned by**
  * (memory/reference_green_check_over_empty_fixture.md: a check that reports green over an empty
  * fixture reports coverage it does not have).
  *
@@ -163,41 +167,109 @@ test('a drawing’s own alt and caption are not blank', () => {
  * what the thing is called, and the hero says it. What it bans is the tier, the gate and the
  * comparison: "Premium Coaches Portal", "Tournament Plus", "free portal", "is part of …".
  */
-test('NO PLAN, TIER OR SUBSCRIPTION APPEARS ANYWHERE ON A SLIDE OR ITS PAGE PANEL', () => {
-  const planWords = /Premium Coaches Portal|Tournament Plus|\bLeague plan\b|\bClub plan\b|free portal|free tier|subscription|is part of the [A-Z]/i;
+test('NO PLAN, TIER OR SUBSCRIPTION APPEARS ANYWHERE IN A SLIDE’S COPY', () => {
+  // ⚠ The pattern lives in lib/walkthrough-content.ts since stage B — the save path re-checks an
+  // assembled page with the SAME regex, and two copies of a rule is how they diverge. The page's
+  // long answer moved onto the slide (`pageAnswer`), so reading every slide reads every surface.
   for (const slide of SLIDES) {
-    assert.doesNotMatch(slide.pain, planWords, `${slide.id}'s pain names a plan`);
-    assert.doesNotMatch(slide.claim, planWords, `${slide.id}'s claim names a plan`);
-  }
-  for (const w of WALKTHROUGHS) {
-    for (const panel of w.panels) {
-      assert.doesNotMatch(panel.answer, planWords, `${w.path}'s ${panel.slideId} answer names a plan`);
-    }
+    assert.doesNotMatch(slide.pain, PLAN_WORDS, `${slide.id}'s pain names a plan`);
+    assert.doesNotMatch(slide.claim, PLAN_WORDS, `${slide.id}'s claim names a plan`);
+    assert.doesNotMatch(slide.pageAnswer, PLAN_WORDS, `${slide.id}'s page answer names a plan`);
+    assert.doesNotMatch(slide.seoPhrase, PLAN_WORDS, `${slide.id}'s SEO phrase names a plan`);
   }
 });
 
-test('each public page pulls FROM its own deck, in deck order', () => {
+/**
+ * ⚠ Emptiness again, same reason as the drawing test above: `pageAnswer: ''` satisfies the type,
+ * and a blank answer would render a panel with a heading and no body on a public page.
+ */
+test('every slide’s page copy is actually written', () => {
+  for (const slide of SLIDES) {
+    assert.ok(slide.pageAnswer.trim(), `${slide.id} has an empty page answer`);
+    assert.ok(slide.seoPhrase.trim(), `${slide.id} has an empty SEO phrase`);
+  }
+});
+
+/**
+ * ⚠ ONE RULEBOOK, TWO CALLERS (stage B). `pullProblems` is the same function the studio's save
+ * API refuses with, so this test holds BOTH the code fallbacks and the save path honest at once
+ * — the shot-health pattern. If a fallback ever fails here, the owner's saves were being judged
+ * by a broken rulebook too.
+ */
+test('each code fallback pull passes the save path’s own rulebook', () => {
   for (const w of WALKTHROUGHS) {
-    const order = deckSlides(w.persona).map(s => s.id);
-    const pulled: string[] = w.panels.map(p => p.slideId);
-    // "the bank holds it" is not asserted here — `slideId` is typed to the bank's own key set,
-    // so that one is a compile error. What only data can get wrong is the DECK relationship.
-    for (const id of pulled) {
-      assert.ok(order.includes(id), `${w.path} pulls ${id}, which is not in the ${w.persona} deck`);
-    }
-    const positions = pulled.map(id => order.indexOf(id));
     assert.deepEqual(
-      positions,
-      [...positions].sort((a, b) => a - b),
-      `${w.path} shows its slides out of the deck's running order`,
+      pullProblems(w.persona, w.fallbackPull),
+      [],
+      `${w.path}'s fallback pull would be refused by its own save path`,
     );
-    assert.equal(new Set(pulled).size, pulled.length, `${w.path} pulls the same slide twice`);
   }
 });
 
-test('the meta line counts the panels the page actually shows', () => {
+test('the rulebook refuses what the build used to catch — and says why', () => {
+  const bad = (persona: 'tournament' | 'coach', ids: string[], want: RegExp) => {
+    const problems = pullProblems(persona, ids);
+    assert.ok(
+      problems.some(p => want.test(p)),
+      `${persona} ${JSON.stringify(ids)} should be refused with ${want} — got ${JSON.stringify(problems)}`,
+    );
+  };
+  bad('tournament', [], /no panels at all/);
+  bad('tournament', ['#11', '#11'], /appears twice/);
+  bad('tournament', ['#27', '#11'], /out of the deck’s running order/);
+  bad('tournament', ['#11', '#08'], /retired/);          // a spent number, refused by name
+  bad('tournament', ['#11', '#18'], /held/);             // the club deck's, refused by name
+  bad('tournament', ['#11', '#99'], /not spoken for/);   // never existed
+  bad('tournament', ['#11', '#10'], /not in the tournament deck/); // a coach slide
+});
+
+/**
+ * How a page READS a saved row — lenient where the save is strict, because a row can rot after
+ * it was validly saved and a marketing page must render through it (never blank — the stage B
+ * stop line). The fallback answers everything unusable.
+ */
+test('a broken or rotten saved pull falls back rather than blanking the page', () => {
+  const coach = WALKTHROUGHS.find(w => w.persona === 'coach')!;
+  // Not an array at all (a malformed row): the code pull, untouched.
+  assert.deepEqual(resolvePullIds('coach', null).ids, coach.fallbackPull);
+  assert.deepEqual(resolvePullIds('coach', 'garbage').ids, coach.fallbackPull);
+  assert.equal(resolvePullIds('coach', null).source, 'code');
+  // Rotten ids are dropped and REPORTED — non-strings included, stringified, because the studio
+  // must show ALL the rot a malformed row carries, not just the string-shaped half of it.
+  const partly = resolvePullIds('coach', ['#01', '#10', '#99', 7]);
+  assert.equal(partly.source, 'saved');
+  assert.deepEqual(partly.ids, ['#10', '#01']); // deck order, not saved order
+  assert.deepEqual(partly.dropped, ['#99', '7']);
+  // Nothing usable left: the fallback again, with the rot still reported for the studio.
+  const nothing = resolvePullIds('coach', ['#99', '#08']);
+  assert.equal(nothing.source, 'code');
+  assert.deepEqual(nothing.ids, coach.fallbackPull);
+  assert.deepEqual(nothing.dropped, ['#99', '#08']);
+});
+
+/**
+ * The page's furniture computes itself (finding F3) — the hand-typed meta line and SEO
+ * description are gone, so what is asserted now is the DERIVATION: the count is the pull's
+ * length by construction, and the description names each shown slide's phrase in page order,
+ * in the exact sentence shape the hand-written ones had.
+ */
+test('the derived furniture counts and names what the page actually shows', () => {
+  assert.equal(derivedMeta(6), '6 problems · 90 seconds · nothing to install');
+  assert.equal(derivedMeta(1), '1 problem · 90 seconds · nothing to install');
   for (const w of WALKTHROUGHS) {
-    const claimed = Number(w.meta.match(/^(\d+) problems?/)?.[1]);
-    assert.equal(claimed, w.panels.length, `${w.path} promises ${claimed} problems and shows ${w.panels.length}`);
+    const description = derivedSeoDescription(w, w.fallbackPull);
+    assert.match(description, /^[A-Z][a-z]+ jobs that stop being yours the day /);
+    assert.ok(description.includes(w.seo.subject), `${w.path}'s description lost its subject`);
+    assert.ok(
+      description.endsWith('Walk the live demo yourself — no sign-up.'),
+      `${w.path}'s description lost its closing invitation`,
+    );
+    let at = -1;
+    for (const id of w.fallbackPull) {
+      const phrase = PITCH_SLIDES[id].seoPhrase;
+      const next = description.indexOf(phrase);
+      assert.ok(next > at, `${w.path}'s description misplaces ${id}'s phrase ("${phrase}")`);
+      at = next;
+    }
   }
 });

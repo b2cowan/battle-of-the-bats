@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-20",
-  "total": 139,
+  "generated": "2026-08-21",
+  "total": 148,
   "counts": {
-    "tables": 6,
-    "columns": 63,
-    "indexes": 31,
-    "constraints": 33,
-    "rls": 6
+    "tables": 7,
+    "columns": 67,
+    "indexes": 32,
+    "constraints": 34,
+    "rls": 8
   },
   "items": [
     {
@@ -19,6 +19,14 @@
     },
     {
       "key": "check:only-dev:org_person_match_rejections.org_person_match_rejections_ordered",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:pitch_page_pulls.pitch_page_pulls_persona_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:pitch_page_pulls.pitch_page_pulls_slide_ids_check",
       "sig": ""
     },
     {
@@ -175,6 +183,22 @@
     },
     {
       "key": "column:only-dev:org_person_merges.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_page_pulls.persona",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_page_pulls.slide_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_page_pulls.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:pitch_page_pulls.updated_by",
       "sig": ""
     },
     {
@@ -354,6 +378,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:pitch_page_pulls.pitch_page_pulls_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_payable_installments.rep_payable_installments_expense_id_fkey",
       "sig": ""
     },
@@ -482,6 +510,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:pitch_page_pulls_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_payable_installments_expense_idx",
       "sig": ""
     },
@@ -555,6 +587,10 @@
     },
     {
       "key": "table:only-dev:org_person_merges",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:pitch_page_pulls",
       "sig": ""
     },
     {

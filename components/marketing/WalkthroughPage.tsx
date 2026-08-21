@@ -5,20 +5,28 @@
  * · docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md (the page itself)
  * · the format: https://claude.ai/code/artifact/b1706db6-8f65-43d1-a5c7-39ffa722300f
  *
- * Everything a walkthrough differs by (its pull, its door, its way back, its address) is DATA
- * in lib/walkthrough-content.ts; each persona's route file is a two-line shell.
+ * Everything a walkthrough differs by (its door, its way back, its address, its fallback pull)
+ * is DATA in lib/walkthrough-content.ts; each persona's route file is a shell that also resolves
+ * WHICH slides to show — the owner's saved pull, or the code fallback (stage B) — and hands it
+ * in as `pull`.
  *
  * Three renderings, one source: this scroll page, present mode (WalkthroughPresent), and the
  * print leave-behind (@media print). A fourth persona costs a content entry and a shell.
  *
- * ⚠ THE PAGE IS NOT THE DECK, and the difference is one line of copy each way. A slide carries
- * NO plan name (that is what makes it portable between audiences); the page carries one wherever
- * a feature is gated, because a deck has a human in the room to answer "is that included?" and a
- * web page does not. Same reason the page gets the long `answer` and a slide gets the short
- * `claim`.
+ * ⚠ THE PAGE IS NOT THE DECK, and the difference is one line of copy each way. A slide's short
+ * `claim` speaks with a human in the room; its `pageAnswer` is the unattended version this page
+ * shows, with the qualifications a deck doesn't need. Neither names a plan, tier or price
+ * anywhere (owner ruling 2026-08-21).
  */
 import Link from 'next/link';
-import { PITCH_SLIDES, deckSlides, type PitchSlide, type Walkthrough } from '@/lib/walkthrough-content';
+import {
+  PITCH_SLIDES,
+  deckSlides,
+  derivedMeta,
+  type PitchSlide,
+  type SlideId,
+  type Walkthrough,
+} from '@/lib/walkthrough-content';
 import { sandboxDoorsVisible } from '@/lib/sandbox-door';
 import { pictureFor } from './slide-picture';
 import SlideStage, { SlideLayout } from './SlideStage';
@@ -28,7 +36,14 @@ import styles from './WalkthroughPage.module.css';
 /** The address a reader types after the PDF is off the screen — no scheme, no `www.`. */
 const PRINT_HOST = 'fieldlogichq.ca';
 
-export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkthrough }) {
+export default function WalkthroughPage({
+  walkthrough: w,
+  pull,
+}: {
+  walkthrough: Walkthrough;
+  /** The resolved pull — the route decides saved-vs-fallback; this component just renders it. */
+  pull: SlideId[];
+}) {
   /**
    * ⚠ EVERY SLIDE'S PICTURE IS RESOLVED EXACTLY ONCE, and that is an invariant rather than a
    * micro-optimisation. The scroll panel and the deck must picture the same slide identically;
@@ -39,12 +54,13 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
   const deck = deckSlides(w.persona);
   const shownFor = new Map(deck.map(slide => [slide.id, pictureFor(slide)]));
 
-  // The scroll page's short PULL — a subset of the deck, in deck order (the guard test enforces
-  // both). No missing-slide branch: `slideId` is typed to the bank's own key set, so a pull
-  // naming a slide the bank does not hold cannot compile.
-  const pulled = w.panels.map(panel => {
-    const slide: PitchSlide = PITCH_SLIDES[panel.slideId];
-    return { panel, slide, shown: shownFor.get(slide.id) ?? null };
+  // The scroll page's short PULL — a subset of the deck, in deck order. The FALLBACK list is
+  // guard-tested; an owner-saved one went through the same `pullProblems` rulebook at save time,
+  // and `resolvePullIds` has already dropped anything that rotted since — so by here every id
+  // resolves, and the page shows each slide's own unattended `pageAnswer`.
+  const pulled = pull.map(id => {
+    const slide: PitchSlide = PITCH_SLIDES[id];
+    return { slide, shown: shownFor.get(slide.id) ?? null };
   });
 
   /**
@@ -112,13 +128,15 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
           <h1 className={styles.heroTitle}>{w.title}</h1>
           <p className={styles.heroSub}>{w.sub}</p>
           <div className={styles.heroActions}>{askThenDoor}</div>
-          <p className={styles.heroMeta}>{w.meta}</p>
+          {/* Computed from the pull it describes (finding F3) — a hand-typed count cannot see
+              the owner recomposing the page. */}
+          <p className={styles.heroMeta}>{derivedMeta(pulled.length)}</p>
           <WalkthroughPresent slides={slides} deckCount={deck.length} label={`${w.title} — presentation`} />
         </div>
       </section>
 
       {/* ── The pull ─────────────────────────────────────────────────────── */}
-      {pulled.map(({ panel, slide, shown }, i) => {
+      {pulled.map(({ slide, shown }, i) => {
         return (
           <section key={slide.id} className={styles.panel}>
             <div className="container">
@@ -128,10 +146,11 @@ export default function WalkthroughPage({ walkthrough: w }: { walkthrough: Walkt
                   <>
                     <p className={styles.panelOld}>The old way</p>
                     <h2 className={styles.panelPain}>{slide.pain}</h2>
-                    {/* ⚠ No plan chip, by owner ruling 2026-08-21 — see the long note on
-                        WalkthroughPanel. This page names no plan, tier or price anywhere. */}
+                    {/* ⚠ No plan chip, by owner ruling 2026-08-21 — see the long note in
+                        lib/walkthrough-content.ts where WalkthroughPanel used to live. This page
+                        names no plan, tier or price anywhere. */}
                     <p className={styles.panelNew}>With FieldLogicHQ</p>
-                    <p className={styles.panelAnswer}>{panel.answer}</p>
+                    <p className={styles.panelAnswer}>{slide.pageAnswer}</p>
                     {/* ⚠ AND NO PER-PANEL "See this screen live" LINK, by the same session's lime
                         ruling. It was the page's only real repetition of the accent — six of them,
                         against a hero and a closing that already offer the identical door. The

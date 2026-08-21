@@ -1,7 +1,8 @@
 # Pitch Deck Studio — Plan
 
 **Status:** APPROVED 2026-08-21 (owner, in session — three rulings recorded below). **STAGE A SHIPPED
-2026-08-21 (dev) — owner QA §72 owed.** B, C and D not started.
+2026-08-21 (dev) — owner QA §72 owed. STAGE B SHIPPED 2026-08-21 (dev) — owner QA §76 owed; mig 257
+dev-only until the next release.** C and D not started.
 **PM brief:** [PITCH_DECK_STUDIO_PM_BRIEF.md](PITCH_DECK_STUDIO_PM_BRIEF.md)
 **Parent project:** [PITCH_SLIDE_LIBRARY_PLAN.md](PITCH_SLIDE_LIBRARY_PLAN.md) — this is the
 "deck assembly in platform-admin" item that plan parked as *"later, and only if it earns it… build
@@ -274,19 +275,54 @@ says whose it is, instead of rendering the same bare cross as a number that neve
 **6. F1's false comment is gone** — P2b already fixed present mode to render the whole deck, and
 both files now describe what the code does.
 
-### B — Decks become data, and the pages stop being able to lie.
+### B — ✅ SHIPPED dev 2026-08-21 (owner QA §76). The pulls become rows, and the pages stop being able to lie.
 
-The two public pulls move out of code into owner-editable records; the pages read them with the
-code deck as a **fallback**, so a missing row can never render an empty marketing page. The meta
-line computes itself, the closing paragraph is derived per F2, the SEO description is answered per
-F3, and every invariant listed in F3 moves into the save path. **This is the phase that carries all
-the risk** — it is where a public marketing page gains a data dependency it has never had.
+The two public pulls live in `pitch_page_pulls` (mig 257, service-role only); the pages read them
+per request (`lib/pitch-pull-store.ts`, `force-dynamic`, 1.5s timeout) with the code
+`fallbackPull` as the safety net, so a missing, malformed, slow or rotten row can never render an
+empty marketing page. The meta line and SEO description derive themselves; every invariant moved
+into the save path. The studio's deck cards gained the pull editor (checkboxes + derived preview +
+refusal sentences), gated by `pitch_deck_studio` write roles and audit-logged.
+
+#### ⚠ What stage B actually settled — read before planning C
+
+**1. ⚠⚠ THE PAGE-COPY PASS IS DONE, AND IT LIVES ON THE SLIDE.** Ruling 4's fork ("write the
+missing copy, or ship an honestly limited picker") was decided for writing the copy: every slide
+now carries a REQUIRED `pageAnswer` (the long unattended answer) and `seoPhrase` (what the derived
+description calls it) — the ten missing answers were written this session, each verified against
+the feature's code first (the verification notes sit beside each one in
+`lib/walkthrough-content.ts`). **F4 is CLOSED**; `WalkthroughPanel` is gone; stage C's composer
+inherits a library where every slide is page-ready. Two truth traps met on the way, recorded so C
+does not re-trip them: the lineup board's "sitting too long" flag is PER-GAME (never a season
+judgment), and the family connection is the FOLLOWER tier only — the guardian tier is env-gated
+off, so no sentence may promise a parent portal.
+
+**2. THE PULL HAS NO ORDER CONTROL, ON PURPOSE.** A pull renders in deck order (the standing
+invariant), so the editor is checkboxes over the deck — the invariant an owner could most easily
+break is one the UI cannot express breaking. Reordering the DECK is C's composer, which will need
+its own answer to this.
+
+**3. ONE RULEBOOK, TWO CALLERS.** `pullProblems()` in `lib/walkthrough-content.ts` is the whole
+save-path law (subset, deck order, no dupes, no spent numbers, plan-words re-check), and the guard
+test runs THE SAME FUNCTION over the code fallbacks — the shot-health pattern. The lenient
+read-side twin is `resolvePullIds()` (drop rot, normalise order, fall back when nothing usable
+remains); the studio shows what it dropped, the page never does.
+
+**4. THE DERIVED DESCRIPTION IS BYTE-IDENTICAL to the hand-written ones it replaced** for today's
+fallback pulls (verified in-session, character for character) — the phrases ARE the old words,
+extracted per-slide. SEO continuity paid nothing for the derivation.
+
+**5. `force-dynamic`, not ISR.** The repo has no ISR/cache-tag convention (checked); every
+DB-backed page here is per-request. One keyed single-row read with an abort timeout was chosen
+over inventing a caching layer — and it also means a save is live on the very next request, with
+no build baking a composition in.
 
 ### C — The composer.
 
 Create and name a deck, give it a purpose, drag to reorder, add and remove. Live preview against
-the real slide frame. Every slide's page copy written per F4, so any slide can be dropped onto any
-page and simply work.
+the real slide frame. ⚠ The page-copy prerequisite is already met (stage B closed F4) — C is
+purely the deck instrument, and it must answer for itself what stage B dodged: what reordering a
+DECK does to the pulls that follow it.
 
 ### D — Prospect decks: the private link and the PDF.
 

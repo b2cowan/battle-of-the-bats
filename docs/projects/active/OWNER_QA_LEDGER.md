@@ -10286,3 +10286,50 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
       re-photograph-and-compare job — still not built, still your call.
 - [ ] **Going forward the date maintains itself.** The capture stamps the day it ran, in the club’s
       timezone rather than the server’s, so nobody ever types one.
+
+---
+
+## §76 · Which slides go on which page is now yours — and the pages can no longer lie about themselves
+
+**BUILT 2026-08-21 (dev).** Pitch Deck Studio stage B — the phase that carried the risk: the two
+public walkthrough pages now read their composition from a saved record, with the code version as
+a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
+
+### The new control (platform-admin → Growth → Pitch Deck Studio)
+
+- [ ] **Each deck card now ends in an editor.** Tick the slides you want the public page to show,
+      press **Publish this pull**, open the page — it is already showing your choice. No ticket,
+      no deploy. Order is not something you can get wrong: the page always shows your picks in
+      the deck’s running order, and the editor says so instead of offering a drag handle.
+- [ ] **Every slide is genuinely pickable.** The ten slides that had no page-length copy now have
+      it — written this session and checked against what the product actually does (the lineup
+      warning is per-game and the sentence says per-game; the family link promises following the
+      team, not the parent portal that is still switched off). Try adding “playing time” or
+      “awards” to the coach page — they simply work.
+- [ ] **The save button refuses a bad page and says why.** It will not publish an empty page, a
+      duplicate, a slide from the other deck, or a retired/held number — and the refusal is a
+      sentence, not an error code. These are the same rules the build used to enforce; they now
+      run at the moment they matter.
+- [ ] **The page’s own furniture follows you.** The “7 problems · 90 seconds” line counts itself,
+      and the search-engine description rewrites itself from the slides shown, in the same voice
+      as before — the editor previews both before you save. For today’s default pulls the derived
+      description is character-for-character identical to the hand-written one it replaced.
+- [ ] **“Return to the code default”** forgets your saved choice entirely — different from saving
+      a matching list, because future code changes to the default then show up again on their own.
+
+### The safety net, which is the point of this phase
+
+- [ ] **A prospect can never meet an empty page.** If the saved record is missing, malformed, or
+      the database is unreachable or slow, the page renders the code-built version — the same
+      pages you have today. The studio (and only the studio) tells you when that is happening and
+      why, including the case where a saved slide has since been retired and the page is quietly
+      skipping it.
+- [ ] **What a slide says is still untouchable in a browser.** The editor moves slide numbers
+      around and nothing else; no wording, picture, plan or price passes through the save.
+      View-only roles see the current state and a locked note, not controls.
+
+### Worth knowing
+
+- [ ] The two walkthrough pages now make one small database read per visit (with a hard timeout
+      and the fallback behind it). That is the cost of “save now, live now”; if you ever feel the
+      pages are slow, say so and we cache harder.

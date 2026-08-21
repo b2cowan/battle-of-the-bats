@@ -50,6 +50,29 @@ Portal, which our plan configuration says is in early access and not open for se
 Almost certainly the founding season working as intended — moot for the walkthrough now, but the
 same wording appears elsewhere, so it is worth confirming.
 
+## Stage B is built (dev, 2026-08-21) — composition is yours now
+
+**Each deck card in the studio ends in an editor.** Tick the slides the public page should show,
+press Publish, and the live page follows on its next visit — no ticket, no deploy. Order is not a
+choice you can get wrong: the page always shows your picks in the deck's running order. "Return to
+the code default" forgets your saved choice entirely. Owner QA §76.
+
+**Every slide is genuinely pickable.** The ten slides that had no page-length copy got it in the
+same session — each sentence checked against what the product actually does before it was written.
+So the picker has no dead options, which was the condition you set for making placement a dial.
+
+**The save button refuses a bad page and says why** — an empty page, a duplicate, a slide from the
+other deck, a retired number — in plain sentences, at the moment you press it.
+
+**The pages cannot go blank and cannot lie about themselves.** The "7 problems · 90 seconds" line
+counts itself and the search description rewrites itself from the slides shown (today's derived
+text is character-for-character what the hand-written text said). If the saved record is ever
+missing or the database unreachable, the page silently renders the code-built version you have
+today — only the studio tells you that is happening.
+
+**Still true: no wording, picture, plan or price can be changed from a browser.** The editor moves
+slide numbers and nothing else.
+
 ## Why it matters
 
 **We have finished pitch material nobody can see.** ⚠ Counted again on 2026-08-21 when stage A put

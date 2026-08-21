@@ -1,28 +1,33 @@
 /**
- * THE PITCH DECK STUDIO — the library view. READ-ONLY (stage A).
+ * THE PITCH DECK STUDIO — the library view (stage A) + the pull editor (stage B).
  *
  * Plan: docs/projects/active/PITCH_DECK_STUDIO_PLAN.md · PM brief: …_PM_BRIEF.md
  * Parent (the library this reads): docs/projects/active/PITCH_SLIDE_LIBRARY_PLAN.md
  *
- * ⚠⚠ THIS ROOM WRITES NOTHING, AND THAT IS A RULING RATHER THAN AN UNFINISHED STATE. Composition
- * — which slides, in what order, for what audience — becomes owner-editable data in stage B. A
- * slide's headline, claim and picture stay in CODE and are never editable in a browser
- * (owner ruling 1, 2026-08-21). An editable-with-review-queue middle option was offered and
- * declined. Do not add an edit affordance "while you are in there".
+ * ⚠⚠ THE ROOM'S ONE WRITE IS COMPOSITION — which slides each public page pulls
+ * (pitch_page_pulls, via PullEditor + the pull API route). A slide's headline, claim, answer
+ * and picture stay in CODE and are never editable in a browser (owner ruling 1, 2026-08-21).
+ * An editable-with-review-queue middle option was offered and declined. Do not add an edit
+ * affordance for slide COPY "while you are in there" — the reason is not preciousness: a build
+ * check reads every sentence, and nothing watches a sentence once it is a row in a table.
  *
- * What it answers, none of which had a surface before: what do we own, which decks name it, where
- * is it published — and the number that paid for this screen: **how much of a deck the scrolling
- * page actually shows.** Twelve of twenty-three sit outside both pulls.
+ * What it answers, none of which had a surface before: what do we own, which decks name it,
+ * where is it published — resolved from the SAME saved-or-fallback read the public pages use —
+ * and how much of a deck the scrolling page actually shows.
  *
  * ⚠ NOT "reachable nowhere" — that claim was made here and was FALSE. Present mode renders the
  * whole deck (P2b) and its trigger is unconditional in each page's hero, so a visitor is one
  * click from all of them. The real gap is the reader who never presses it.
  */
 import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { canWritePlatformArea } from '@/lib/platform-areas';
+import { readStoredPull } from '@/lib/pitch-pull-store';
+import { PITCH_SLIDES, WALKTHROUGHS, type SlideId } from '@/lib/walkthrough-content';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { AUDIENCE_LABEL, buildPitchLibraryReport } from './report';
 import SlideCard from './SlideCard';
+import PullEditor from './PullEditor';
 import styles from './pitch-deck-studio.module.css';
 
 /**
@@ -76,8 +81,13 @@ function pictureFilePresence(): (publicPath: string) => boolean | null {
 }
 
 export default async function PitchDeckStudioPage() {
-  await requirePlatformAreaView('pitch_deck_studio');
-  const report = buildPitchLibraryReport(pictureFilePresence());
+  const auth = await requirePlatformAreaView('pitch_deck_studio');
+  const canWrite = canWritePlatformArea(auth.role, 'pitch_deck_studio');
+  const [tournament, coach] = await Promise.all([
+    readStoredPull('tournament'),
+    readStoredPull('coach'),
+  ]);
+  const report = buildPitchLibraryReport(pictureFilePresence(), { tournament, coach });
   const { totals } = report;
 
   return (
@@ -94,10 +104,11 @@ export default async function PitchDeckStudioPage() {
       </p>
 
       <p className={styles.readOnly}>
-        <strong>This room is read-only.</strong> Which slides go where becomes editable in a later
-        phase. What a slide <em>says</em> never will — the build checks this copy, and nothing can
-        watch a sentence once it is a row in a table. A wording change stays a one-line request in
-        chat, and it goes through the check on the way.
+        <strong>Composition is yours; the words are not.</strong> Each deck card below edits what
+        its public page shows — pick the slides, and the page’s own counters and search
+        description follow by themselves. What a slide <em>says</em> stays in code — the build
+        checks every sentence, and nothing can watch a sentence once it is a row in a table. A
+        wording change stays a one-line request in chat, and it goes through the check on the way.
         {' '}<strong>No plan, tier or price appears anywhere in this material</strong> (owner
         ruling 2026-08-21): the walkthrough creates desire, the pricing page qualifies, and a
         human answers in the room.
@@ -147,6 +158,29 @@ export default async function PitchDeckStudioPage() {
             {deck.problems.map(p => (
               <p key={p} className={styles.deckProblem}>⚠ {p}</p>
             ))}
+
+            {/* Stage B: the room's one write. Composition only — see the header note. The
+                editor gets a SMALL props payload rather than importing the library: it is a
+                client component, and the library is most of a book. */}
+            {deck.page && (
+              <PullEditor
+                audience={deck.audience}
+                subject={WALKTHROUGHS.find(w => w.persona === deck.audience)!.seo.subject}
+                slides={deck.order
+                  .filter(o => o.state === 'built')
+                  .map(o => ({
+                    id: o.id,
+                    pain: PITCH_SLIDES[o.id as SlideId].pain,
+                    seoPhrase: PITCH_SLIDES[o.id as SlideId].seoPhrase,
+                  }))}
+                canWrite={canWrite}
+                current={deck.order.filter(o => o.onPage).map(o => o.id)}
+                source={deck.page.source}
+                savedAt={deck.page.savedAt}
+                savedBy={deck.page.savedBy}
+                storeUnreachable={deck.page.storeUnreachable}
+              />
+            )}
           </section>
         ))}
       </div>

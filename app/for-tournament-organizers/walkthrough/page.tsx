@@ -1,10 +1,23 @@
-import { TOURNAMENT_WALKTHROUGH, walkthroughMetadata } from '@/lib/walkthrough-content';
+import { getWalkthroughPull } from '@/lib/pitch-pull-store';
+import { walkthroughMetadata } from '@/lib/walkthrough-content';
 import WalkthroughPage from '@/components/marketing/WalkthroughPage';
 
 // The story lives in lib/walkthrough-content.ts; the rendering (scroll page, present mode,
 // print leave-behind) lives in components/marketing/WalkthroughPage.tsx. This file is the route.
-export const metadata = walkthroughMetadata(TOURNAMENT_WALKTHROUGH);
+//
+// ⚠ Dynamic since stage B: WHICH slides this page shows is the owner's saved pull
+// (pitch_page_pulls), read per request through lib/pitch-pull-store.ts — one tiny keyed read
+// with a hard timeout, and the code pull as the fallback, so the page renders correctly even
+// with the store unreachable. `force-dynamic` also keeps the build from baking one composition
+// in at deploy time, which would hold a save hostage to the next release.
+export const dynamic = 'force-dynamic';
 
-export default function TournamentWalkthroughPage() {
-  return <WalkthroughPage walkthrough={TOURNAMENT_WALKTHROUGH} />;
+export async function generateMetadata() {
+  const { walkthrough, pull } = await getWalkthroughPull('tournament');
+  return walkthroughMetadata(walkthrough, pull);
+}
+
+export default async function TournamentWalkthroughPage() {
+  const { walkthrough, pull } = await getWalkthroughPull('tournament');
+  return <WalkthroughPage walkthrough={walkthrough} pull={pull} />;
 }

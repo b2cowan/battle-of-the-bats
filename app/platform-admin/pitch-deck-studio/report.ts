@@ -40,10 +40,13 @@ import {
   PITCH_SLIDES,
   SLIDE_NUMBERS_SPOKEN_FOR,
   WALKTHROUGHS,
+  derivedMeta,
+  resolvePullIds,
   type PitchSlide,
   type SlideNumberStatus,
   type SlideImageClass,
 } from '@/lib/walkthrough-content';
+import type { StoredPullRead } from '@/lib/pitch-pull-store';
 import { pictureFor, shotFor, shotPublicPath, type SlidePictureWithCaption } from '@/components/marketing/slide-picture';
 import { shotManifestProblems, type FilePresence } from '@/lib/shot-health';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
@@ -129,12 +132,11 @@ export interface SlideReport {
   picture: SlidePictureWithCaption | null;
   deck: DeckPlacement | null;
   /**
-   * Every public page that publishes this slide. **Empty is the finding this screen exists for**,
-   * and it carries plan finding F4 with it: a page panel needs the long unattended `answer` the
-   * slide deliberately does not have (a deck has a human in the room, a web page has nobody), and
-   * that copy is written per PAGE — so a slide on no page has none and cannot simply be dropped
-   * onto one. ⚠ Writing it for all twenty-three is a one-time editorial pass and belongs to stage
-   * C, where the composer needs it. SURFACE the gap here; do not fix it here.
+   * Every public page that publishes this slide — resolved from the SAVED pulls where they are
+   * usable, so this matches what a visitor sees right now. **Empty is the finding this screen
+   * exists for.** ⚠ Finding F4 is CLOSED (stage B): every slide carries its own `pageAnswer` and
+   * `seoPhrase` in code, so "on no page" now means exactly one thing — the owner has not picked
+   * it — and any deck slide can be added to its page's pull and simply work.
    */
   pages: PagePlacement[];
   health: PictureHealth;
@@ -166,9 +168,31 @@ export interface DeckReport {
   /** Every id in the running order, with what the bank actually holds for it. */
   order: DeckSlot[];
   built: number;
-  /** The page this deck is published on, and how much of the deck it shows. */
-  page: { path: string; shows: number; meta: string } | null;
-  /** F5: a deck naming a number the bank does not hold. Empty today; a compile error today too. */
+  /**
+   * The page this deck is published on, and how much of the deck it shows — resolved the same
+   * way the page itself resolves it (saved row or code fallback), so this screen and the public
+   * page can never describe two different pulls. `meta` is derived, because the page's is.
+   */
+  page: {
+    path: string;
+    shows: number;
+    meta: string;
+    /** Whether the page is currently rendering the owner's saved pull or the code default. */
+    source: 'saved' | 'code';
+    savedAt: string | null;
+    savedBy: string | null;
+    /**
+     * ⚠ True when the STORE could not be read at all — a different sentence from "no row
+     * saved", because the page falls back identically for both and only this screen can tell
+     * the owner which one is happening.
+     */
+    storeUnreachable: boolean;
+  } | null;
+  /**
+   * F5 made real: a deck naming a spent number, and — since the pull is a row — a SAVED pull
+   * naming ids the deck or bank no longer holds. The page silently drops those; this screen
+   * says so out loud.
+   */
   problems: string[];
 }
 
@@ -249,9 +273,13 @@ function healthOf(
  *   see lib/shot-health.ts. The caller owns this because `public/` is served by the platform's
  *   static layer and is not guaranteed to sit on a request handler's filesystem; a studio that
  *   read "cannot see it" as "missing" would paint thirteen false alarms on a healthy deploy.
+ * @param storedPulls what pitch_page_pulls holds per persona (stage B). The caller fetches, this
+ *   stays a pure pass — and the report resolves each pull with the SAME `resolvePullIds` the
+ *   public page uses, so the two surfaces cannot disagree about what is showing.
  */
 export function buildPitchLibraryReport(
   fileIsPresent: (publicPath: string) => FilePresence,
+  storedPulls: Record<Audience, StoredPullRead>,
 ): PitchLibraryReport {
   const today = tournamentToday();
 
@@ -262,14 +290,25 @@ export function buildPitchLibraryReport(
     ids.forEach((id, i) => placement.set(id, { audience, position: i + 1, of: ids.length }));
   }
 
-  // Where a slide is PUBLISHED. A slide can in principle appear on more than one page — the guard
-  // test forbids a page pulling the same slide twice, not two pages pulling the same slide — so
+  // Each page's pull, resolved exactly as the page resolves it: the saved row where one is
+  // usable, the code fallback where it is not. Kept beside the walkthrough so the deck pass
+  // below reads the same resolution the placement map was built from.
+  const resolvedPulls = new Map(
+    WALKTHROUGHS.map(w => [
+      w.persona,
+      resolvePullIds(w.persona, storedPulls[w.persona]?.row?.slideIds ?? null),
+    ]),
+  );
+
+  // Where a slide is PUBLISHED. A slide can in principle appear on more than one page — the save
+  // path forbids a page pulling the same slide twice, not two pages pulling the same slide — so
   // this is a list, and a slide published in two places would be visible here.
   const published = new Map<string, PagePlacement[]>();
   for (const w of WALKTHROUGHS) {
-    w.panels.forEach((panel, i) => {
-      const at: PagePlacement = { path: w.path, panel: i + 1, of: w.panels.length };
-      published.set(panel.slideId, [...(published.get(panel.slideId) ?? []), at]);
+    const pull = resolvedPulls.get(w.persona)!.ids;
+    pull.forEach((slideId, i) => {
+      const at: PagePlacement = { path: w.path, panel: i + 1, of: pull.length };
+      published.set(slideId, [...(published.get(slideId) ?? []), at]);
     });
   }
 
@@ -293,10 +332,12 @@ export function buildPitchLibraryReport(
   const pageFor = new Map(WALKTHROUGHS.map(w => [w.persona, w]));
   const decks: DeckReport[] = (Object.entries(PITCH_DECKS) as [Audience, string[]][]).map(([audience, ids]) => {
     const w = pageFor.get(audience);
+    const resolved = resolvedPulls.get(audience);
+    const stored = storedPulls[audience];
     // Widened to `string` deliberately: a deck's running order is `string[]` (it may name a number
-    // the bank does not hold — that is finding F5), while a page's pull is typed to the bank's own
-    // key set. Asking the narrow set about a wide id is the whole question this screen answers.
-    const onPage: Set<string> = new Set(w?.panels.map(p => p.slideId) ?? []);
+    // the bank does not hold — that is finding F5), and a SAVED pull is data with no type at all.
+    // Asking the narrow set about a wide id is the whole question this screen answers.
+    const onPage: Set<string> = new Set(resolved?.ids ?? []);
     const order: DeckSlot[] = ids.map(id => ({
       id,
       state: id in PITCH_SLIDES ? 'built' : SLIDE_NUMBERS_SPOKEN_FOR[id]?.status ?? 'missing',
@@ -306,12 +347,34 @@ export function buildPitchLibraryReport(
       audience,
       order,
       built: order.filter(o => o.state === 'built').length,
-      page: w ? { path: w.path, shows: w.panels.length, meta: w.meta } : null,
-      problems: order
-        .filter(o => o.state !== 'built' && o.state !== 'planned')
-        .map(o => o.state === 'missing'
-          ? `names ${o.id}, which holds no slide — it would vanish silently from this running order`
-          : `names ${o.id}, which is ${o.state} (${SLIDE_NUMBERS_SPOKEN_FOR[o.id]?.note ?? 'no reason recorded'})`),
+      page: w && resolved
+        ? {
+            path: w.path,
+            shows: resolved.ids.length,
+            meta: derivedMeta(resolved.ids.length),
+            source: resolved.source,
+            savedAt: resolved.source === 'saved' ? stored?.row?.updatedAt ?? null : null,
+            savedBy: resolved.source === 'saved' ? stored?.row?.updatedBy ?? null : null,
+            storeUnreachable: stored?.error ?? false,
+          }
+        : null,
+      problems: [
+        ...order
+          .filter(o => o.state !== 'built' && o.state !== 'planned')
+          .map(o => o.state === 'missing'
+            ? `names ${o.id}, which holds no slide — it would vanish silently from this running order`
+            : `names ${o.id}, which is ${o.state} (${SLIDE_NUMBERS_SPOKEN_FOR[o.id]?.note ?? 'no reason recorded'})`),
+        // The rot only this screen can show: a SAVED pull naming ids the deck or bank no longer
+        // holds. The public page drops them silently — that is correct for a prospect and wrong
+        // for the owner, so they surface here (F5's write half, seen from the read side).
+        ...(resolved?.dropped ?? []).map(id =>
+          `the saved pull names ${id}, which the ${audience} deck no longer offers — the page skips it silently`),
+        // A saved row that resolved to NOTHING usable is a louder version of the same problem:
+        // the owner believes a composition is live and the page is on the code default.
+        ...(stored?.row && resolved?.source === 'code'
+          ? ['a pull is saved but none of it is usable — the page is showing the code default instead']
+          : []),
+      ],
     };
   });
 

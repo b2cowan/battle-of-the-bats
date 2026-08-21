@@ -99,8 +99,8 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
                 <span className={styles.caveat}>
                   ⚠ Not the same as unreachable: it IS in the deck, so it appears in{' '}
                   <em>Present the full deck</em> — a button in each page’s hero that any visitor can
-                  press. What it misses is the reader who only scrolls. It also has no page copy of
-                  its own, so it could not be dropped into a pull as it stands.
+                  press. What it misses is the reader who only scrolls. Its page copy travels with
+                  it (stage B), so the deck card above can put it on the page.
                 </span>
               </>
             ) : (
@@ -157,23 +157,9 @@ export default function SlideCard({ report: r }: { report: SlideReport }) {
             )}
           </dd>
 
-          <dt className={styles.factLabel}>Page copy</dt>
-          <dd className={styles.factValue}>
-            {!stranded ? (
-              <span className={styles.factQuiet}>
-                Written — the long unattended answer exists on the page that shows it.
-              </span>
-            ) : (
-              <>
-                <span className={styles.attention}>Not written.</span>
-                <span className={styles.caveat}>
-                  A public page panel needs a longer answer than a deck does, because nobody is
-                  standing there to add the qualifications. Until this slide has one it cannot be
-                  dropped onto a page as it is.
-                </span>
-              </>
-            )}
-          </dd>
+          {/* ⚠ The "Page copy" row is GONE because the gap it surfaced is closed (stage B /
+              finding F4): `pageAnswer` and `seoPhrase` are required fields on every slide, so
+              "not written" is a compile error now, not a condition a screen needs to report. */}
         </dl>
       </div>
     </article>

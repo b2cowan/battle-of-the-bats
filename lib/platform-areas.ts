@@ -60,10 +60,10 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   early_access:    { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
   email:           { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
   // The pitch slide library + deck composition. Company-owned material aimed at people who are
-  // not customers yet, so it sits with the other Growth rooms. ⚠ writeRoles is EMPTY because the
-  // room genuinely writes nothing (stage A is read-only by owner ruling) — an empty write set is
-  // what keeps the nav's view-only badge off a screen that has no controls to lock.
-  pitch_deck_studio: { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: [] },
+  // not customers yet, so it sits with the other Growth rooms. ⚠ Writes since stage B are
+  // COMPOSITION ONLY — which slides each public page pulls (pitch_page_pulls). A slide's words
+  // and picture stay code and are never editable from here (owner ruling 1, 2026-08-21).
+  pitch_deck_studio: { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },
 
   // System
   platform_users:  { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },

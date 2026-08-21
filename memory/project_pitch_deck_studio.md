@@ -1,16 +1,42 @@
 # Pitch Deck Studio (platform-admin → Growth)
 
 **Plans:** `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md` + `_PM_BRIEF.md` · parent
-`PITCH_SLIDE_LIBRARY_PLAN.md` · **Stage A shipped dev 2026-08-21, owner QA §72 owed.** B/C/D not
-started.
+`PITCH_SLIDE_LIBRARY_PLAN.md` · **Stage A shipped dev 2026-08-21 (QA §72 owed) · Stage B shipped
+dev 2026-08-21 (QA §76 owed; mig 257 dev-only).** C/D not started.
 
 ## What exists
 
-`/platform-admin/pitch-deck-studio` — **the library view, READ-ONLY.** Every pitch slide with its
+`/platform-admin/pitch-deck-studio` — the library view (stage A) **plus the pull editor (stage
+B)**: each deck card edits WHICH slides its public walkthrough page shows (checkboxes over the
+deck; order always follows the deck), previews the derived meta line + SEO description, and saves
+through `/api/platform-admin/pitch-deck-studio/pull` into `pitch_page_pulls` (service-role-only,
+audit-logged, `pitch_deck_studio` write roles). Every pitch slide with its
 picture (rendered through the public page's own `SlideStage`, rings and all), its pain and claim,
-which deck names it and at what position, which public page publishes it, its picture's condition,
-its plan line checked against the live plan configuration, and whether it has page copy. Plus both
-decks with running orders (public pull lit), a totals strip, and the gaps in the number line.
+which deck names it and at what position, which public page publishes it, and its picture's
+condition. Plus both decks with running orders (public pull lit), a totals strip, and the gaps in
+the number line.
+
+## ⚠⚠ Stage B — the load-bearing facts
+
+- **The pages can never go blank.** The walkthrough routes are `force-dynamic` and read the saved
+  row via `lib/pitch-pull-store.ts` (1.5s abort timeout); `resolvePullIds()` is the LENIENT
+  read-side — drops rot, normalises to deck order, falls back to the code `fallbackPull` when
+  nothing usable remains. The studio shows what was dropped; the page never does.
+- **One rulebook, two callers:** `pullProblems()` (lib/walkthrough-content.ts) is the save path's
+  whole law AND what the guard test runs over the code fallbacks — subset, deck order, no dupes,
+  no spent numbers (status-aware refusals: held says whose), plan-words re-check. Shot-health
+  pattern; do not fork it.
+- **F4 CLOSED — page copy lives ON the slide.** `pageAnswer` + `seoPhrase` are REQUIRED fields on
+  every slide (compile-enforced); `WalkthroughPanel` is deleted. The ten missing answers were
+  written 08-21, each verified against feature code first — ⚠ two truth traps for future copy:
+  the lineup "sitting too long" flag is PER-GAME only, and family connection is the FOLLOWER tier
+  (guardian tier env-gated OFF — never promise a parent portal).
+- **The furniture derives itself** (`derivedMeta`, `derivedSeoDescription`) and the derived
+  description is **byte-identical** to the hand-written ones it replaced (verified in-session).
+- **The pull editor has NO order control on purpose** — deck order is the invariant, so the UI
+  cannot express breaking it. Reordering the DECK is stage C's problem.
+- **DELETE = "return to the code default"** — forgets the row, so future `fallbackPull` code
+  changes reach the page again; different from saving a matching list.
 
 ## ⚠⚠ THE THREE THINGS A FUTURE SESSION WILL GET WRONG
 

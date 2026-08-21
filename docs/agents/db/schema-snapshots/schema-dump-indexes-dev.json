@@ -1360,6 +1360,11 @@
     "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
   },
   {
+    "tablename": "pitch_page_pulls",
+    "indexname": "pitch_page_pulls_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pitch_page_pulls_pkey ON public.pitch_page_pulls USING btree (persona)"
+  },
+  {
     "tablename": "plan_config_overrides",
     "indexname": "plan_config_overrides_pkey",
     "indexdef": "CREATE UNIQUE INDEX plan_config_overrides_pkey ON public.plan_config_overrides USING btree (id)"

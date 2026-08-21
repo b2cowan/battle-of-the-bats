@@ -7425,6 +7425,42 @@
     "ordinal_position": 37
   },
   {
+    "table_name": "pitch_page_pulls",
+    "column_name": "persona",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "pitch_page_pulls",
+    "column_name": "slide_ids",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "pitch_page_pulls",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "pitch_page_pulls",
+    "column_name": "updated_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
     "table_name": "plan_config_overrides",
     "column_name": "id",
     "data_type": "uuid",
