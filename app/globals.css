@@ -1908,6 +1908,27 @@ tbody tr:hover { background: var(--white-10); }
 .grid-3        { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .grid-4        { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 
+/* `.tap-target` — a text link or borderless button that a FINGER is meant to hit.
+ *
+ * ⚠ WHY A UTILITY AND NOT TEN COPIES. The marketing site's calls to action are Tailwind-styled
+ * inline links written straight into the page files — "I'm a coach →", "Start free →", "Get
+ * Started Free", "This is me →" and their siblings. The first rendered sweep of those pages
+ * (2026-08-21, QA §68 follow-up) found them at 14–16px tall: the taps that turn a visitor into a
+ * signup, at a third of the finger minimum. The alternative was the same three arbitrary variants
+ * repeated at every call site, which is how the intent goes missing the next time someone adds a
+ * CTA.
+ *
+ * It grows the box around its own words (inline-flex), so it never claims a row's full width, and
+ * it costs nothing above the touch widths — the 44px floor answers a question about fingers that a
+ * mouse never posed, which is the same line `scripts/check-layout-invariants.mjs` draws. */
+@media (max-width: 900px) {
+  .tap-target {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }

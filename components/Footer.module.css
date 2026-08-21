@@ -126,6 +126,8 @@
 .colHead { margin-bottom: 1rem; }
 .links { display: flex; flex-direction: column; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
 .link {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-data, monospace);
   font-size: 0.75rem;
   color: var(--data-gray);
@@ -133,6 +135,20 @@
   transition: color 0.15s ease;
 }
 .link:hover { color: var(--logic-lime); }
+
+/* ⚠ THE SEVEN LINKS IN THIS FOOTER WERE 15px TALL ON EVERY PUBLIC PAGE — the single largest
+   touch-target failure on the marketing site, and by a distance: seven controls × nine pages is
+   most of the count the first sweep of this site produced (2026-08-21, QA §68 follow-up).
+   Discover, Pricing, Live Demos, What's New, Start Free, Coaches and Sign In are all real
+   destinations a visitor is meant to tap, and a 15px row is a coin toss on a phone.
+
+   The gap goes to zero as the height arrives: the padding IS the separation once each row is
+   44px, and keeping both would have spaced them like paragraphs. Measured cost on a phone: the
+   footer grows ~92px on a ~10,000px page. That is the whole price. */
+@media (max-width: 900px) {
+  .links { gap: 0; }
+  .link { min-height: var(--tap-min, 44px); }
+}
 
 /* ── "Also on your phone" (WI-11) ──────────────────────────────────────────── */
 

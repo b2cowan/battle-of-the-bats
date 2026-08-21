@@ -137,6 +137,14 @@
   text-decoration: none;
 }
 
+/* Touch floor — 38px before this (2026-08-21, QA §68 follow-up). These are the two "not a
+   tournament organizer?" doors in the hero, so they are among the first controls a phone visitor
+   meets. `align-items` stays `baseline` above the floor: the row wraps to two lines on a narrow
+   screen and centring it would pull the question off its own text baseline. */
+@media (max-width: 900px) {
+  .heroRoadmapItem { min-height: var(--tap-min, 44px); }
+}
+
 .heroRoadmapQ {
   font-family: var(--font-data);
   font-size: 0.72rem;
@@ -204,7 +212,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   margin-bottom: 0.75rem;
 }
 

@@ -242,7 +242,7 @@ const GATED_STRIP_LINES: Partial<Record<OrgPlan, string>> = {
  */
 export const RENDERED_PLAN_KEYS: readonly OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
 
-const CTA_CLASS = 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 hover:bg-white transition-colors w-full border-0 cursor-pointer';
+const CTA_CLASS = 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 max-[900px]:py-3.5 hover:bg-white transition-colors w-full border-0 cursor-pointer';
 
 interface PricingSectionProps {
   gatingMap: Record<OrgPlan, boolean>;

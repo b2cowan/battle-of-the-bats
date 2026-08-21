@@ -258,7 +258,7 @@ export default async function ForTournamentOrganizersPage() {
           </div>
           <p className={styles.planNote2}>
             Not sure which plan? Start free — you can upgrade at any time.{' '}
-            <Link href="/pricing#compare" className="text-logic-lime hover:opacity-75 transition-opacity">
+            <Link href="/pricing#compare" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
               Compare all features →
             </Link>
           </p>
@@ -343,7 +343,7 @@ export default async function ForTournamentOrganizersPage() {
           <div className={styles.ctaActions}>
             <Link
               href="/auth/signup"
-              className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+              className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Get Started Free
             </Link>

@@ -359,7 +359,7 @@ export default async function HomePage({
                     <p className="font-mono text-xs text-data-gray leading-relaxed flex-1">{p.body}</p>
                   </>
                 );
-                const ctaClass = `font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`;
+                const ctaClass = `tap-target font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`;
 
                 // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
                 // a public demo carries a second, quieter link into it — proof one step after the
@@ -419,13 +419,13 @@ export default async function HomePage({
             </span>
             <Link
               href="/start"
-              className="font-mono text-xs uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+              className="tap-target font-mono text-xs uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
             >
               Start free →
             </Link>
             <Link
               href="/start"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
+              className="tap-target font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
             >
               Not sure? See your options →
             </Link>
@@ -471,7 +471,7 @@ export default async function HomePage({
                     </ul>
                     <Link
                       href={mod.href}
-                      className="font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
+                      className="tap-target font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
                     >
                       This is me →
                     </Link>
@@ -571,14 +571,14 @@ export default async function HomePage({
               <div className="flex items-center gap-6 flex-wrap">
                 <Link
                   href="/start"
-                  className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+                  className="tap-target font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
                 >
                   Start your organization →
                 </Link>
                 {teamOpen && (
                   <Link
                     href="/coaches/start?source=home"
-                    className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+                    className="tap-target font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
                   >
                     Start your coaches portal →
                   </Link>
@@ -592,7 +592,7 @@ export default async function HomePage({
           <div className="flex justify-center mt-6">
             <Link
               href="/pricing"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/30 px-6 py-2.5 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+              className="tap-target font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/30 px-6 py-2.5 hover:border-blueprint-blue hover:text-fl-text transition-colors"
             >
               Compare all plans in detail →
             </Link>

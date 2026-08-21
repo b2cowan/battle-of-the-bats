@@ -196,7 +196,7 @@ export default async function ForLeaguesPage() {
 
           </div>
           <p className={styles.planNote2}>
-            <Link href="/pricing#compare" className="text-logic-lime hover:opacity-75 transition-opacity">
+            <Link href="/pricing#compare" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
               Compare all plans in detail →
             </Link>
           </p>

@@ -9580,19 +9580,91 @@ today, which is the answer you want from a new rule on old code.
   at 320 and the portal deliberately is not. Making 320 global would have dropped ~50 coach screens
   into a width nobody designed them for, and every complaint it produced would have landed in the
   accepted-debt file the same day it was invented.
-- **The marketing site's pre-existing debt is now visible, and it is not small.** Sweeping these
-  nine pages for the first time recorded **664 distinct findings that have nothing to do with
-  §68** — text links and buttons under the 44px touch minimum (**427**), body text under the
-  contrast minimum (**235**), and the pricing page's Monthly/Annual toggle spilling its box at
-  320px (**2**). They are recorded as debt-not-yet-argued rather than fixed, so the count stays
-  visible instead of comfortable. **This is newly *visible* debt, not new debt** — it has been on
-  the live site all along. Worth a decision of its own; it was out of scope here.
-  - ⚠ **Zero of those 664 are the new rule.** No control on any marketing page sits off the edge
-    any more — which is the one thing this section was opened for.
-  - **36 of them were paid off rather than recorded.** The wordmark is a link home and had been a
-    24px target since launch; shrinking its type for this fix would have made an already-failing
-    target smaller, so it now carries the 44px floor on every phone. Review caught that — it is the
-    one place this pass could have quietly added to the touch debt it was told not to add to.
+- ⚠ **Zero of the site's pre-existing findings are the new rule.** No control on any marketing page
+  sits off the edge any more — which is the one thing this section was opened for.
+- **The marketing site's pre-existing debt was made visible by this sweep, and then mostly paid
+  off** — see §68b below. It was never new debt; it had been on the live site since launch.
+
+---
+
+## §68b · The 664, triaged — the phone taps that turn a visitor into a signup
+
+**BUILT ON `dev` 2026-08-21. No migration.** Owner-directed follow-up to §68: the first rendered
+sweep of the marketing site surfaced 664 findings with nothing to do with the header, and the call
+was to triage them rather than open a project.
+
+**⚠ 664 was instances, not problems.** The same element counts once per page and once per width.
+The real figure was **64 distinct elements**, and eight of them — the site footer — accounted for
+most of the total.
+
+| | before | after |
+|---|---|---|
+| Findings recorded | 664 | **153** |
+| Distinct elements | 64 | **11** |
+| Controls under the 44px touch minimum | 43 | **2** |
+| Body text under the contrast minimum | 20 | **9** |
+| Content spilling its own box | 1 | **0** |
+
+**Everything still recorded is now either a deliberate decision with a written reason, or belongs
+to a project still in flight.** Nothing is sitting there unargued except the two below.
+
+### Part A — what a phone visitor can now actually hit (**walk this**)
+
+The undersized controls were not incidental furniture. They were the buying path:
+
+| Control | was | now |
+|---|---|---|
+| The seven site-footer links, on every page | 15px | 44px |
+| "I'm a coach →" / "I'm a tournament organizer →" (home) | 16px | 44px |
+| "Start your organization →" / "Start your coaches portal →" | 16px | 44px |
+| "See it live — no sign-up →" · "Read the pitch →" | 16px | 44px |
+| "This is me →" (module cards) | 16px | 44px |
+| Monthly / Annual billing switch | 32px | 44px |
+| The ten plan-category accordions on pricing | 29px | 44px |
+| "Get Started Free" (plan cards and page CTAs) | 40px | 44px |
+| "Express interest" (League Plus, Club) | 14–40px | 44px |
+| The two walkthrough doors | 38px | 44px |
+
+- [ ] On a phone, tap your way through: homepage persona cards → a persona page → pricing → the
+      billing switch → a plan CTA. **Does anything still feel like it needs a second try?**
+- [ ] The **billing switch at 320px** was also spilling out of its own pill by 15px — the control
+      that reveals the annual discount. Its labels now wrap instead. Check it reads right.
+- [ ] The site footer is **~92px taller on a phone** (on a ~10,000px page). That is the whole
+      visible cost of the seven links becoming tappable. Say if it reads as too airy.
+
+### Part B — two colour fixes that were already decided, just never applied
+
+Both used a token the product had **already created for exactly this** and had documented as the
+answer — the labels simply never moved onto it. Neither is a new design decision.
+
+- **Small uppercase labels on dark** — section eyebrows ("What's included", "How It Works",
+  "Pricing", "Platform highlights") and the **plan names on the pricing cards** ("Tournament",
+  "Tournament Plus", "Premium Coaches Portal") were rendering at **1.7–1.9:1**, roughly a third of
+  the readable minimum. They now use the lighter blueprint tone the palette already defines for
+  small labels on a dark ground (6.4–7.2:1).
+- **Marketing body footnotes** — "All plans are billed in CAD…" and "Not sure which plan? Start
+  free…" were white at 20–30% opacity. They now use the product's own tertiary text token (6.9:1).
+
+- [ ] ⚠ **Look at the pricing cards.** The plan name above each price changed colour. It should now
+      be legible where it previously read as a smudge — but it is a visible change on your main
+      commercial page, so it wants your eye.
+- [ ] The shared pricing component also renders on the **onboarding plan-select screen**, so that
+      screen's plan names changed with it. Confirm it still looks right there.
+
+### Part C — what was deliberately NOT fixed, and why
+
+- **The giant faint step numerals (01 / 02 / 03 / 04)** measure 1.04:1 and are **decoration** — a
+  watermark behind each card, repeating an order the page already carries. Forcing them to pass
+  would turn a watermark into a headline. Recorded as an accepted decision with the reasoning
+  written into the baseline. ⚠ One genuine nit came out of it: they are **not** hidden from screen
+  readers, so a blind visitor hears "zero one" before each step. Worth marking, but that is a
+  separate change from the colour question and was not made here.
+- **The "HQ" of the wordmark** is part of a logotype, which the accessibility standard explicitly
+  exempts, and is deliberately the quietest of the three segments. Accepted with a reason.
+- **The two "Present the full deck" buttons (28px)** belong to the pitch-deck work still in flight
+  in another session. Left alone rather than edited underneath it — they are the only two findings
+  on this site still carrying no reason, and that is deliberate: writing one would dress a
+  deferral as a decision. **They should be picked up by whoever finishes §70/§72.**
 
 ---
 

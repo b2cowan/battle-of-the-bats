@@ -16,6 +16,21 @@
   gap: 2px;
 }
 
+/* ⚠ The billing switch overflowed its own box by 15px at 320px — "Annual · 2 months free" is a
+   long label to sit beside "Monthly" inside a fixed pill (2026-08-21, QA §68 follow-up). It is
+   the control that reveals the annual discount, so a visitor on the smallest phone was being
+   asked to choose a price on a switch that did not fit. The labels wrap onto their own lines
+   instead of the pill spilling; nothing about the desktop pill changes. */
+@media (max-width: 400px) {
+  .togglePill { max-width: 100%; }
+  .toggleBtn {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.15rem 0.4rem;
+    padding-inline: 0.75rem;
+  }
+}
+
 .toggleBtn {
   display: flex;
   align-items: center;
@@ -130,7 +145,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
   margin-bottom: 0;
 }
 
@@ -422,5 +437,25 @@
     grid-template-rows: repeat(20, auto);
     max-width: 420px;
     margin: 0 auto;
+  }
+}
+
+/* ⚠ TOUCH FLOOR ON THE PRICING PAGE'S OWN CONTROLS (2026-08-21, QA §68 follow-up).
+   These three are on the buying path and every one of them was under the 44px finger minimum on a
+   phone: the billing period toggle at 32px, the "see the demo first" link under each plan at 14px,
+   and the coming-soon interest button at 34px. A pricing page whose period switch is hard to hit
+   is a pricing page that under-reports its own annual discount.
+
+   Scoped to touch widths only — the desktop density of this section is a deliberate design and is
+   untouched above 900px. */
+@media (max-width: 900px) {
+  .toggleBtn { min-height: var(--tap-min, 44px); }
+  .comingSoonStripCta { min-height: var(--tap-min, 44px); }
+  /* An inline link inside the plan card: it needs the height without becoming a full-width block,
+     so it grows around its own text rather than claiming the card's width. */
+  .planDemoLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
   }
 }

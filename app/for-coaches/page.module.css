@@ -416,7 +416,7 @@
 .planNote2 {
   font-family: var(--font-data);
   font-size: 0.7rem;
-  color: var(--white-30);
+  color: var(--text-tertiary);
   text-align: center;
   margin-top: 0.5rem;
 }
@@ -544,7 +544,7 @@
 .ctaFootnote {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: var(--white-20);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   position: relative;
@@ -623,4 +623,14 @@
   font-size: 0.72rem;
   color: var(--data-gray);
   margin: -1.5rem 0 2rem;
+}
+
+/* Touch floor — the walkthrough door was 38px (2026-08-21, QA §68 follow-up). It is the link
+   into the pre-sales walk, i.e. the main thing this page asks a phone visitor to do next. */
+@media (max-width: 900px) {
+  .walkthroughLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
 }

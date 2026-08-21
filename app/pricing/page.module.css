@@ -636,7 +636,7 @@ details[open] .faqQuestion::after {
 .ctaFootnote {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.25);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   position: relative;
@@ -665,5 +665,22 @@ details[open] .faqQuestion::after {
 
   .trustRow {
     gap: 0.75rem 1.5rem;
+  }
+}
+
+/* ⚠ TOUCH FLOOR — the pricing page's own controls (2026-08-21, QA §68 follow-up).
+   Ten category accordions at 29px and the two bridge links at 14px. The accordions are how a
+   visitor opens the feature list they came to read; the bridge links are how they leave for the
+   free tier or register interest in a gated plan. Both are taps, both were under the finger
+   minimum, and both sit on the buying path.
+
+   The bridge link is a borderless text button, so it takes its height as an inline-flex box around
+   its own words rather than becoming a full-width bar. Touch widths only — desktop is untouched. */
+@media (max-width: 900px) {
+  .catToggle { min-height: var(--tap-min, 44px); }
+  .bridgeCta {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
   }
 }

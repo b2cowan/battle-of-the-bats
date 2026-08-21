@@ -209,7 +209,7 @@ export default async function PricingPage() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <div className="container">
-          <p className="font-mono text-xs uppercase tracking-widest text-blueprint-blue mb-4">Pricing</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-blueprint-light mb-4">Pricing</p>
           <h1 className={styles.heroTitle}>
             Plans built around how<br />
             you actually operate.
@@ -394,7 +394,7 @@ export default async function PricingPage() {
                 That keeps the launch honest while giving interested clubs a path into the roadmap.
               </p>
               <EarlyAccessModalTrigger
-                className="inline-flex font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors border-0 cursor-pointer"
+                className="tap-target inline-flex font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors border-0 cursor-pointer"
                 initialPlanInterest={['league', 'club']}
                 initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
               >
@@ -472,7 +472,7 @@ export default async function PricingPage() {
           <div className={styles.ctaActions}>
             <Link
               href="/auth/signup"
-              className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+              className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Get Started Free
             </Link>

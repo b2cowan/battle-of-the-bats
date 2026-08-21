@@ -147,7 +147,7 @@ export default function DemosPage() {
                   </Link>
                   <Link
                     href={demo.learnMore.href}
-                    className="font-mono text-[10px] uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
+                    className="tap-target font-mono text-[10px] uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
                   >
                     {demo.learnMore.label} →
                   </Link>
