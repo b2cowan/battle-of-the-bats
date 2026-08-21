@@ -1,6 +1,6 @@
 # PDF Export Quality — plan
 
-**Status:** proposed, not started · **Raised:** owner, 2026-08-21, on seeing the Budget vs. Actual PDF
+**Status:** PARKED 2026-08-21 by the owner, pending a lengthy planning session — scope WIDENED, see the bottom of this file before reading anything above it · **Raised:** owner, 2026-08-21, on seeing the Budget vs. Actual PDF
 **PM brief:** `PDF_EXPORT_QUALITY_PM_BRIEF.md`
 
 ---
@@ -79,3 +79,39 @@ handout) — but it should be a decision, not an accident.
 
 - Fixing Budget vs. Actual alone. The other eight share its renderer and its defects.
 - A per-report formatting fork, which is how nine exports become nine formats to maintain.
+
+---
+
+## ⚠⚠ SCOPE WIDENED BY THE OWNER 2026-08-21 — and it partly contradicts the section above. Read both.
+
+**The owner, parking this project until it can be done properly:** *"I want to do a deep dive of
+these reports and their formats so we can evaluate anything missing, whether we have logos, color
+schemes, how the data fits, portrait vs landscape, etc., so it will need a pretty lengthy planning
+session and also needs to be relative to each pdf, or at least grouped to similar types of pdf
+outputs."*
+
+**Reconciling that with "the project got SMALLER" above — they are about two different axes, and
+whoever picks this up must not let one cancel the other:**
+
+| | What it is | Shared or per-document? |
+|---|---|---|
+| **The two confirmed defects** (D1 title twice, D2 orientation) | Broken plumbing | **Shared** — fix once, nine improve |
+| **The owner's deep dive** | Is each document any GOOD? | **Per document, or per group** |
+
+The section above is right that hunting D1 and D2 fifteen times would be waste. **It is wrong if it
+is read as "there is nothing per-document to do."** Whether a roster PDF carries the club's logo,
+whether a month grid fits the page, whether the colour scheme survives printing, whether the
+document is even *missing* something a reader needs — none of that is answerable from the renderer.
+It is answerable only by looking at each output.
+
+**So the shape is three phases, not two:**
+1. **Fix the shared plumbing** (D1, D2) so the deep dive is not distracted by faults every document
+   has.
+2. **The deep dive — the owner's lengthy planning session.** Group the fifteen by what they are for
+   (a register, a roster, a schedule, a poster, a board) rather than by which renderer built them,
+   and evaluate each group: content completeness, branding, colour, data fit, orientation.
+3. **The six bespoke documents**, one at a time, as originally described.
+
+⚠ **Do not start phase 2 as an engineering task.** The owner has asked for a planning session with
+their involvement, in the same shape as the money-centralization one. Grouping the fifteen is itself
+the first question to put to them.
