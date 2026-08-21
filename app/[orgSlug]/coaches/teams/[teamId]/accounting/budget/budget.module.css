@@ -1157,6 +1157,65 @@
   color: var(--text-secondary);
 }
 
+/* ── A cost that repeats: the rule that builds the list (Payables Rebuild P4) ────────────────
+   ⚠ THE RULE IS SCAFFOLDING AND IS DRAWN AS SUCH — a quiet inset panel above the list, not a
+   headline. What a coach keeps is the numbered rows below it; this is the shortcut that fills
+   them. Nothing here is stored (S8: the series IS the installments), so giving it the weight of
+   a saved setting would be a lie about what the bill holds. */
+.repeatBox {
+  background: var(--home-card, rgba(255,255,255,0.02));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.07));
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+/* Auto-fitting so the six small fields settle into whatever width the sheet has, rather than
+   needing a breakpoint of their own. `minmax(0, …)` because a select with long option text
+   otherwise refuses to shrink and pushes the row wider than the modal. */
+.repeatRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+.repeatField { display: flex; flex-direction: column; gap: 0.28rem; min-width: 0; }
+.repeatField > select, .repeatField > input { width: 100%; }
+
+.repeatActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.repeatActions > span { margin: 0; }
+
+/* ── The Auto badge on an EDITABLE amount ────────────────────────────────────────────────────
+   ⚠ NOT `.amountAuto`, AND THE DIFFERENCE IS THE WHOLE POINT. That one dresses an `<output>` in a
+   dashed rule so nobody tries to type into it, which is right on the dues sheet where the figure
+   is a computed consequence. Here the rule only SUGGESTS the amount and typing over it is an
+   expected act (the December rate rise), so the field stays an ordinary input and the badge sits
+   inside it as a note about where the number came from. It leaves that row the moment it is typed
+   over — which is what tells a coach the override landed. */
+.amountAutoField { position: relative; display: block; width: 100%; min-width: 0; }
+.amountAutoField > input { width: 100%; padding-right: 3.1rem; }
+.autoChipFloat {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  padding: 0.08rem 0.32rem;
+  border-radius: 3px;
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
    query: the page had no phone handling, and because its form uses .formRow rather

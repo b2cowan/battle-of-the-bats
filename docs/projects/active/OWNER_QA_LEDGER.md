@@ -8804,7 +8804,12 @@ logged as the "Scheduled means two things" open question).
 **✅ THAT QUESTION IS NOW RULED and the behaviour CHANGED: Scheduled means what is still owed,
 everywhere.** It is walked in Part C's last three steps, and the plan's P3 section carries the
 reasoning and the cost the owner accepted.
-**Part C ✅ BUILT 2026-08-20, awaiting this walk. Parts D and E not built.**
+**Parts C, D, E and F ✅ ALL BUILT 2026-08-20, awaiting this walk.** P4 (a cost that repeats, and the
+linked series) landed the same day; Parts D and E were rewritten against what was actually built and
+each names where it differs from how it was first drafted. ⚠ **Part C's last three steps and Part D
+can be walked in one sitting** — P4's generator does not read the Months grid's Scheduled figure, so
+the "Scheduled means what is still owed" ruling can still be taken back without rebuilding anything
+in P4 (it is two lines in the Budget vs. Actual route).
 Plan: `COACH_PAYABLES_REBUILD_PLAN.md`. PM brief: `COACH_PAYABLES_REBUILD_PM_BRIEF.md`.
 Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
 **Origin: §27, which PASSED CLEAN on 2026-08-19 and surfaced four absences while passing.**
@@ -8969,44 +8974,85 @@ the artifact they were made on is
 
 ### D · A cost that repeats
 
-- [ ] **Add a commitment** → **Split into installments**. Set **Monthly**, on the **1st**, until a
-      date six months out, **$450 each**.
+**BUILT 2026-08-20.** ⚠ **Four things differ from how this section was written**, each a decision
+taken before a line was written and each recorded in the plan's P4 section — read them first or
+they will read as defects:
+
+1. **There is no cadence control, and no "Split into installments" toggle.** Every commitment form
+   now shows a **Payment schedule** section with a numbered list — one row for a bill paid in one
+   go — and a **Repeat monthly** link above it. **Monthly is the only cadence** (owner ruling
+   2026-08-20): the proven engine is monthly, the weekly one in this codebase disagrees with it on
+   how a run ends and on what an over-long run does, and a control that gets refused is worse than
+   one that is not there. Weekly and Every 2 weeks are **not built and not shown**.
+2. **A commitment has no Total Amount box any more.** R2 — its total is what its payments add up to,
+   and the line under the list says so. A typed total was a second way of stating the same fact.
+3. **The deposit/balance pair is gone**, and so is the lone `Due date`. A two-part bill is two rows.
+4. **The scoped Change / Remove live in the drawer**, on each scheduled payment — not on this form.
+   Part E walks them.
+
+- [ ] **Add a commitment.** Under **Payment schedule**, press **Repeat monthly**. Set **On: the 1st**,
+      **Ends: on a date** six months out, **Amounts: the same each time**, **$450 each**. Press
+      **Build the schedule**.
 - [ ] A numbered list of **six** dated rows appears, amounts badged **Auto**.
 - [ ] **Remove** row 5. The list renumbers and the total drops by $450.
-- [ ] **+ Add** a row back, with your own date and amount.
+- [ ] **+ Add** a row back, with your own date and amount. ⚠ It must accept a date the rule would
+      never have produced — the rule builds the list and then gets out of the way.
 - [ ] **Type over** row 3's amount — $525 for a December rate rise. The Auto badge leaves that row
       only; the others keep theirs.
-- [ ] The reconcile line states the **count and total** and is a **sentence, not a barrier** — it
+- [ ] The line underneath states the **count and total** and is a **sentence, not a barrier** — it
       never blocks Save.
 - [ ] Save. **Nothing moves** — cash on hand unchanged — and six payments join the schedule.
-- [ ] ⚠ This sheet should feel like the **dues installment sheet**. If it has learned different
-      words or a different layout for the same job, report it — the consistency is the point.
+- [ ] ⚠ Try **Ends: after a number of payments**, **30**. It is refused before you can build it, and
+      the sentence says **24 — two full seasons**. Send the same thing past the form (or just trust
+      this one): the server refuses in **the same words**.
+- [ ] ⚠ Set **On: the 31st** and build six months. February and the thirty-day months come back on
+      **their last day**, and each of those rows says why. A coach must never be handed a date they
+      did not type without being told.
+- [ ] ⚠ **Try "A total, split evenly"** — $1,000 over three. It comes out **333.33 / 333.33 / 333.34**,
+      adding up to the figure you typed rather than to three rounded thirds.
+- [ ] ⚠ This sheet should feel like the **dues installment sheet**. One thing differs on purpose: an
+      **Auto** amount here is a live box you can type into, where on the dues sheet it is a locked
+      output. There the figure is a computed split; here the rule only suggests it. Anything else
+      that has learned different words or a different layout for the same job, report it.
 
 ### E · ⚠⚠ The scope rules — where a linked series can go wrong
 
+**BUILT 2026-08-20.** ⚠ **Where these live:** open the bill (tap it, or its row) and each **scheduled
+payment** carries its own **Change** and **Remove** beside *Record a payment*. The three-way question
+belongs there and not on the record's form — the form states the whole schedule, every row visible,
+so it has nothing to ask. Editing rows on the form is still an ordinary edit and takes no scope.
+
 Use the six-installment series with **two already settled**.
 
-- [ ] Edit installment 4's amount. You are offered **This payment only** / **This and later payments**
-      / **All unpaid payments**.
+- [ ] Open the bill and press **Change** on installment 4. You are offered **This payment only** /
+      **This and later payments** / **All unpaid payments**, each showing **how many payments it
+      would touch**.
 - [ ] Choose **This and later payments**. Installments 4, 5 and 6 change. ⚠⚠ **Installments 1 and 2 —
       the settled ones — must be untouched, and cash on hand must not move by one cent.**
 - [ ] Choose **All unpaid payments** on another edit. Every unsettled installment changes, **including
       installment 3 which is earlier than the one you edited**. The settled two still do not move.
 - [ ] ⚠ Make installment 3 **partly paid** (record a small payment against it), then run **All unpaid
       payments** again. It **must be included** — partly paid counts as unpaid.
-- [ ] ⚠⚠ **The ruling check.** Open a **settled** installment and choose **This payment only**. Its
-      amount **must be editable**, and saving must move the books to match. If it is greyed out,
-      stop — that is the 2026-08-16 ruling being reversed, and §27 Part C being un-done.
-- [ ] Edit a commitment where only **one** installment is unpaid. ⚠ The three-way scope question
-      **must not appear** — it has one possible answer.
+- [ ] ⚠⚠ **The ruling check.** Press **Change** on a **settled** installment and choose **This payment
+      only**. The button must be **there** on a paid row, its amount **must be editable**, and saving
+      must move the books to match. If it is greyed out or absent, stop — that is the 2026-08-16
+      ruling being reversed, and §27 Part C being un-done.
+- [ ] Press Change on a commitment where only **one** installment is unpaid. ⚠ The three-way scope
+      question **must not appear** — it has one possible answer.
 - [ ] **Dates shift, they do not set.** Move installment 3 from the 1st to the 8th under **This and
       later**. Installments 4, 5 and 6 each move by **seven days** — they do not all land on the 8th
       of the same month.
 - [ ] **Lower an amount below what has been paid on it.** With a later unpaid installment present:
       the excess **rolls forward**, and a sentence names **every installment it touched**.
-- [ ] Do the same on the **last** installment, where there is nowhere to roll to: it is **blocked**,
-      and the message names the figure and the reason.
-- [ ] **Delete** installment 5 under **This and later**. 5 and 6 go; **the settled ones are skipped**.
+- [ ] Do the same on the **last** installment, where there is nowhere to roll to: it is **blocked**
+      before you can save, and the message names the figure and the reason.
+- [ ] **Remove** installment 5 under **This and later**. 5 and 6 go; **the settled ones are skipped**.
+- [ ] ⚠ **Remove is not offered on a bill with one payment left.** A bill always has a schedule (R1);
+      getting rid of it entirely is **Delete**, which gives back anything already paid.
+- [ ] ⚠ **Every sheet tells you what it is about to do before you press the button** — which payments
+      it touches, how many, and where money already recorded ends up. If a sentence and the outcome
+      ever disagree, that is the finding to report: they are supposed to be the same decision, run
+      once in the browser and again on the server.
 
 ### F · The neighbours
 
@@ -9016,8 +9062,17 @@ Use the six-installment series with **two already settled**.
       **Months** view puts each payment in the month it was made.
 - [ ] **Transactions**: a payment appears as **one** row. ⚠⚠ There must be **no second row** beside
       the commitment (§41 Part D's rule).
-- [ ] **Export** the payables file: it carries the installment and payment columns, and the figures
-      match the screen.
+- [ ] ⚠⚠ **Export the commitments file — FOUR COLUMNS ARE GONE, and that is deliberate.**
+      **Deposit**, **Deposit due**, **Balance** and **Balance due** have retired, and everything
+      after them has moved **four columns left**. They could only ever describe the first two
+      payments, and a column headed *Balance* quoting installment 2 of twelve is a lie a reader
+      cannot detect. ⚠ **This breaks a spreadsheet of your own that points at our columns by
+      position** — it was taken once, in the release that made the headings wrong (owner-confirmed
+      2026-08-20). Check nothing else moved: **Payments** ("2 of 6"), **Paid to date** and **Still
+      owing** are there, and the **payment schedule** file still has one row per dated payment.
+- [ ] The **bulk importer's template still has Deposit / Deposit Due / Balance / Balance Due**, and
+      that is not an oversight — an imported sheet genuinely states two. Import one and confirm it
+      still lands as a two-payment bill.
 - [ ] On a **club-run** team, org allocations still appear and still settle through Club.
 - [ ] The **bulk importer** still loads a payables file, and what it creates now has installments.
 - [ ] **Close the season** on a team with a partly-paid commitment. ⚠ Unsettled money **warns, never
@@ -9036,6 +9091,31 @@ we know the rebuild kept them right.
 - [ ] **§27 Part E** — rename a commitment paid **before** this release, then delete it. The
       reversal still happens and cash on hand still moves. ⚠ The failure to watch for is unchanged:
       it deletes quietly, says money came back, and the balance does not change.
+- [ ] ⚠⚠ **§27 C2's flow no longer exists, and its rule now lives somewhere else.** That step pressed
+      **Use one date instead** on a part-paid split and expected a refusal. There is no such button:
+      a schedule is a list of rows, and collapsing one means removing a row. Walk the successor
+      instead — on a bill with a **settled first payment**, remove the second row and change the
+      first row's amount. Expected: it **saves**, the books follow, and the row said **"Settled — a
+      change moves the books"** before you touched it. That is the 2026-08-16 ruling working, not
+      C2's defect returning: C2 was a figure moving under a banner promising *"nothing moves"*, and
+      that banner is gone — the line above the buttons now says how much has been paid and that
+      changing it updates the books.
+- [ ] ⚠⚠ **THE MONEY CHECK `/review` FOUND, AND THE MOST IMPORTANT STEP IN THIS SECTION.** Take a
+      bill split **$200 (paid) / $400 (still owed)**, where the $200 was recorded from the deposit's
+      own row. Note **cash on hand**. Now **remove the paid $200 row** and save.
+      Expected: the bill is left with **one $400 payment**, the **$200 payment is still $200** and
+      still listed, **cash on hand has not moved by a cent**, and the $200 now counts towards the
+      $400 (so it reads *$200 of $400 paid*). ⚠ The failure this guards against: the $200 payment
+      being silently rewritten to **$400** and the books moving by $200 — which is what happened
+      before the fix, because the row that carried the payment was being re-used to hold the balance
+      instead of being deleted. If cash on hand moves here, stop and report it.
+- [ ] ⚠⚠ **The date-only bulk edit.** On a series of **different** amounts — say $200 / $300 / $250 —
+      open payment 1, choose **This and later payments**, change **only the due date**, and save.
+      Expected: all three dates shift by the same number of days and **every amount is untouched**
+      ($200 / $300 / $250, total unchanged). ⚠ Before the fix all three were silently set to $200 and
+      the bill's total dropped. Check the total, not just the dates.
+- [ ] **Double-click Save** on a new commitment, and **Save the change** on a scoped edit. One record,
+      one change — not two.
 
 ### H · The demo, and the words
 

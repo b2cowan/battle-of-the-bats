@@ -17,7 +17,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
+import { useDiscardGuard, touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
@@ -27,7 +27,10 @@ import {
   PAYABLE_STATUS_DEFAULT,
   type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
 } from '@/lib/payable-standing';
-import { composeTwoPieceInstallments } from '@/lib/payable-plan';
+import { whyPlanStrandsPaidMoney } from '@/lib/payable-scope-edit';
+import { parseInstallmentPlan } from '@/lib/expense-ledger';
+import InstallmentPlanEditor, { BLANK_PLAN_ROW, type PlanRow } from '../InstallmentPlanEditor';
+import InstallmentScopeSheet from '../InstallmentScopeSheet';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
@@ -410,27 +413,12 @@ const BLANK_RECORD = {
   paymentMethod: '',
   /** Out-of-pocket (owner Call 5, mig 234) — '' = the team paid, the usual case. Expense-only. */
   paidByPlayerId: '',
-  /**
-   * A commitment's ONE due date — the un-split case (Money split P1, 2026-08-16).
-   *
-   * ⚠⚠ THE FORM PROMISED THIS FIELD AND DID NOT HAVE IT. The split group's note read "Leave this
-   * closed to record one amount due on one date", but with it closed there was NO date input at
-   * all: the commitment saved with no due date, showed "No schedule", never reached the payment
-   * schedule and had no Mark paid button anywhere. A coach could record what the team owed and
-   * then never be reminded of it.
-   *
-   * ⚠ IT IS STORED AS THE DEPOSIT HALF, which is not a workaround — it is the convention the bulk
-   * importer has always used for exactly this row ("No explicit split → the whole amount is due on
-   * the one date, stored as the deposit half"). Reusing it means a hand-typed commitment and an
-   * imported one are the same record, so the schedule, the exports and every sum keep working with
-   * nothing new in the data.
-   */
-  dueDate: '',
-  /** Commitment-only, all four — the deposit/balance split when the coach opens it. */
-  depositAmount: '',
-  depositDueDate: '',
-  balanceAmount: '',
-  balanceDueDate: '',
+  /* ⚖ `dueDate` AND THE FOUR DEPOSIT/BALANCE FIELDS ARE GONE (Payables Rebuild P4). A commitment's
+     schedule is 1..n dated pieces now and lives in `formPlan`, edited by `InstallmentPlanEditor` —
+     the same numbered list Player Dues has used since 2026-08-13. The two-piece vocabulary was
+     never a data shape; it was the shape of the editor, which is why the plan was capped at two
+     until this phase could replace it. A one-payment commitment is simply a one-row plan, so the
+     "one due date" field it used to need has nothing left to do. */
   /** Money-in only (mig 243): the day it ARRIVED, and — on a refund — who paid it back. */
   receivedDate: '',
   receivedFrom: '',
@@ -532,13 +520,25 @@ function kindForFace(onPayables: boolean): { kind: EntryKind; timing: CostTiming
 }
 
 /**
- * Does this commitment carry more than one dated piece?
+ * The commitment's pieces in INSTALLMENT-NUMBER order — the order the plan is written in.
  *
- * ⚠ READ OFF THE STANDING, never the legacy columns (Payables Rebuild P2): a record created since
- * the rebuild has nothing in `balanceAmount` at all, and its plan lives in its installments.
+ * ⚠ NOT the standing's own order, which is by DUE DATE because that is the order money applies in.
+ * A coach who moves piece 3 to a date before piece 2 has re-ordered the schedule, not renumbered
+ * it, and the positional writer would renumber the whole series if handed the date order.
  */
-function planIsSplit(standing: CommitmentStanding | undefined): boolean {
-  return (standing?.installments.length ?? 0) > 1;
+function piecesByNumber(standing: CommitmentStanding | undefined) {
+  return [...(standing?.installments ?? [])].sort((a, b) => a.installmentNumber - b.installmentNumber);
+}
+
+/** A saved commitment's schedule, as the plan editor's rows. */
+function planFromStanding(standing: CommitmentStanding | undefined): PlanRow[] {
+  const pieces = piecesByNumber(standing);
+  if (pieces.length === 0) return [{ ...BLANK_PLAN_ROW }];
+  // ⚠ `auto: false` on every saved row — the badge says "this came from the repeat rule just now",
+  // and a figure that has been stored is a figure somebody accepted, whatever produced it.
+  // ⚠ EACH ROW NAMES THE STORED PIECE IT IS. Without that the save matches rows by position
+  // and removing a non-trailing one re-points a recorded payment at the wrong piece — see PlanRow.id.
+  return pieces.map(p => ({ id: p.id, date: p.dueDate, amount: String(p.amount), auto: false }));
 }
 
 /**
@@ -546,15 +546,10 @@ function planIsSplit(standing: CommitmentStanding | undefined): boolean {
  *
  * ⚠ THE SCHEDULE AND THE PAID DATE COME FROM THE STANDING — the installments and payments are the
  * record now; the deposit/balance columns stopped being written when the bridge died (P2). The
- * form's two-half vocabulary survives as the ≤2-piece EDITOR only: piece 1 fills the deposit
- * fields, piece 2 the balance fields, and the save sends them back as installments.
+ * schedule itself is no longer part of this object: it is 1..n rows and lives in `formPlan`, built
+ * by `planFromStanding` beside this.
  */
 function formFromExpense(e: RepTeamExpense, standing: CommitmentStanding | undefined): typeof BLANK_RECORD {
-  /* By NUMBER, not by position: the standing orders pieces by due date, and the deposit fields
-     edit piece 1 whatever the coach did to its date. */
-  const byNumber = [...(standing?.installments ?? [])].sort((a, b) => a.installmentNumber - b.installmentNumber);
-  const pieces = byNumber;
-  const split = pieces.length > 1;
   /* A single payment's own day, for the plain cost's "Date paid" — already a bare `YYYY-MM-DD`
      (`paid_date` is a `date` column), so no org-noon conversion is left to get wrong. A record
      paid in several payments shows no single date; each payment carries its own. */
@@ -569,14 +564,6 @@ function formFromExpense(e: RepTeamExpense, standing: CommitmentStanding | undef
     notes: e.notes ?? '',
     paymentMethod: e.paymentMethod ?? '',
     paidByPlayerId: e.paidByPlayerId ?? '',
-    depositAmount: split ? String(pieces[0].amount) : '',
-    depositDueDate: split ? pieces[0].dueDate : '',
-    balanceAmount: split ? String(pieces[1].amount) : '',
-    balanceDueDate: split ? pieces[1].dueDate : '',
-    /* The un-split commitment reads its one due date off its one piece. A split one leaves this
-       empty — its dates are the pieces' own, and the form hides this field entirely rather than
-       showing a third date with nothing to mean. */
-    dueDate: !split && e.expenseType === 'tournament_payable' ? (pieces[0]?.dueDate ?? '') : '',
     paidDate: e.expenseType === 'tournament_payable' ? '' : (singlePayment?.paidDate ?? ''),
   };
 }
@@ -832,14 +819,24 @@ function MoneyRecordsPanel({
   const [form, setForm] = useState(BLANK_RECORD);
   const [formPayee, setFormPayee] = useState<PayeeSelection | null>(null);
   /**
-   * Is the deposit/balance split open on the commitment form?
+   * A COMMITMENT'S SCHEDULE, 1..n dated rows (Payables Rebuild P4) — what the two-piece
+   * deposit/balance editor became.
    *
-   * ⚠ CONTROLLED HERE RATHER THAN INSIDE A `CoachFormDisclosure`, which is what it used to be. The
-   * plain "Due date" field has to DISAPPEAR when the split opens — two halves carry their own
-   * dates, and a third date beside them would mean nothing — and a disclosure that owns its own
-   * open state cannot tell the field outside it to go away.
+   * ⚠ ITS OWN STATE, NOT A FIELD ON `form`, because it is an array and `touched()` compares flat.
+   * The baseline beside it is what the discard guard measures against, through `snapshotEqual` —
+   * the shared idiom for exactly this, so a structured form guards the same way as every other.
    */
-  const [formSplit, setFormSplit] = useState(false);
+  const [formPlan, setFormPlan] = useState<PlanRow[]>([{ ...BLANK_PLAN_ROW }]);
+  const [formPlanOpenedWith, setFormPlanOpenedWith] = useState<PlanRow[]>([{ ...BLANK_PLAN_ROW }]);
+  /**
+   * Which scheduled piece the coach is changing or removing, and which of the two they asked for.
+   *
+   * ⚠ THE SCOPED DOOR IS THE DRAWER'S, NOT THE FORM'S, and the split is deliberate. The form states
+   * the WHOLE plan — every row visible — so there is no question about reach and no scope to ask
+   * for. This one changes ONE row and therefore has to ask how far that goes (S1–S7).
+   */
+  const [scopeEdit, setScopeEdit] = useState<
+    { expense: RepTeamExpense; installmentId: string; mode: 'edit' | 'remove' } | null>(null);
   /**
    * The Record-a-payment door (Payables Rebuild P2) — its own small modal, standing over a
    * commitment. It replaced the money form's settle mode: a payment is date + amount + method +
@@ -867,6 +864,7 @@ function MoneyRecordsPanel({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [saveError, setSaveError] = useState('');
   /** Was the last save refused for a future date? Its own flag rather than a longer sentence,
    *  because the answer needs a LINK to the commitment door and a thrown message cannot carry one. */
@@ -894,8 +892,8 @@ function MoneyRecordsPanel({
 
   // Drives the form's Details disclosure (Batch 2, P0 #8). Read on mount, so a form pre-filled
   // with a bookkeeping detail — an EDIT, most often — opens it by itself rather than hiding what
-  // the coach came to change. (The deposit/balance split used to be one of these and is now
-  // controlled by `formSplit` — see the note there.)
+  // the coach came to change. (The deposit/balance split used to be one of these; a commitment's
+  // schedule is `InstallmentPlanEditor` now and is never folded away — see the note beside it.)
   /* ⚠ `paidByPlayerId` COUNTS NOW (Money form P2). It moved inside this fold, so a saved
      out-of-pocket cost opened for editing would otherwise hide the very fact that makes it
      unusual — behind a toggle labelled as optional. It is the strongest reason a form has to open
@@ -1032,7 +1030,7 @@ function MoneyRecordsPanel({
 
   // Nav-hide + body-scroll-lock registration for the record modal, the payment modal AND the
   // commitment drawer (mobile sheet default) — one registration, any door.
-  useOverlayOpen(formOpen || paying !== null || drawerFor !== null);
+  useOverlayOpen(formOpen || paying !== null || drawerFor !== null || scopeEdit !== null);
 
   /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
      silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
@@ -1053,6 +1051,8 @@ function MoneyRecordsPanel({
   const formBaseline = formOpenedWith;
   const baselineTags = editing ? (tagsByExpenseId[editing.id] ?? []) : [];
   const formDirty = touched(form, formBaseline)
+    // The schedule is an array, which `touched`'s flat compare cannot reach — see `snapshotEqual`.
+    || !snapshotEqual(formPlan, formPlanOpenedWith)
     || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
     || formTags.length !== baselineTags.length
     || formTags.some(id => !baselineTags.includes(id));
@@ -1072,10 +1072,11 @@ function MoneyRecordsPanel({
     // The guard's reference point resets with the form it describes — an opener that pre-fills
     // overwrites it a line later; anything that does not is genuinely comparing against blank.
     setFormOpenedWith(BLANK_RECORD);
+    setFormPlan([{ ...BLANK_PLAN_ROW }]);
+    setFormPlanOpenedWith([{ ...BLANK_PLAN_ROW }]);
     setFormTags([]);
     setFormPayee(null);
     setConfirmDelete(false);
-    setFormSplit(false);
     setFutureDateRefused(false);
     /* ⚠ THE RULE THIS FUNCTION IS FOR, restated because its most recent example has just been
        deleted: state added for one row must clear here, or it persists into the NEXT record. The
@@ -1115,7 +1116,7 @@ function MoneyRecordsPanel({
    * remembered in one of them and quietly persists stale state in the other. The caller supplies
    * only what actually differs: the form values, and (on a settle) what is being settled.
    */
-  function openSavedRecord(e: RepTeamExpense, values: typeof BLANK_RECORD) {
+  function openSavedRecord(e: RepTeamExpense, values: typeof BLANK_RECORD, plan?: PlanRow[]) {
     resetForm();
     setEditing(e);
     /* ⚠ THE VALUES COME IN so the form and the guard's baseline are set from ONE object. Letting
@@ -1123,9 +1124,14 @@ function MoneyRecordsPanel({
        unsaved change: two writes, one of them forgotten. */
     setForm(values);
     setFormOpenedWith(values);
-    // Open the split for a commitment that has one, so nothing already recorded is hidden from
-    // the coach who came here to change it — the rule every disclosure on this form follows.
-    setFormSplit(planIsSplit(standings[e.id]));
+    /* ⚠ THE SCHEDULE GOES IN THROUGH THE SAME DOOR, AND ITS BASELINE WITH IT. Setting the form and
+       its guard baseline from one object is the rule this function exists for; the plan is a second
+       object only because it is an array. A caller that pre-fills a row (Add an installment) passes
+       it here rather than calling `setFormPlan` afterwards — two writes, one of them forgotten, is
+       exactly how a pre-filled amount once counted as an unsaved change. */
+    const opening = plan ?? planFromStanding(standings[e.id]);
+    setFormPlan(opening);
+    setFormPlanOpenedWith(opening);
     setFormTags(tagsByExpenseId[e.id] ?? []);
     setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
     setSaveError('');
@@ -1139,31 +1145,23 @@ function MoneyRecordsPanel({
   }
 
   /**
-   * Add a second dated piece to a bill that has one (Payables Rebuild P3, drawer action).
+   * Add another dated piece to a bill (drawer action).
    *
-   * ⚠ IT OPENS THE RECORD'S OWN FORM WITH THE SPLIT ALREADY OPEN, rather than inventing a second
-   * editor: the existing piece fills the deposit fields and the balance is left blank for the coach
-   * to type. One door to a commitment's plan, which is the rule the whole screen is built on.
+   * ⚠ IT OPENS THE RECORD'S OWN FORM WITH A BLANK ROW APPENDED, rather than inventing a second
+   * editor: one door to a commitment's plan, which is the rule the whole screen is built on.
    *
-   * ⚠⚠ THE TOTAL FIELD IS NOT PRE-RAISED, AND DOES NOT NEED TO BE. `composeTwoPieceInstallments`
-   * ignores the typed total once BOTH halves carry an amount, and the server derives the
-   * commitment's total from the sum of its installments (R2) — so a coach who types the new piece's
-   * amount gets the right plan whatever the Total box still says. The box being briefly out of step
-   * is the two-piece editor's own wart, and it is replaced wholesale by P4's n-piece generator.
+   * ⚖ OFFERED ON ANY BILL NOW, not only a one-piece one (P4). It was restricted because the editor
+   * behind it could only hold two pieces, and a button that gets refused is worse than one that is
+   * not there — the cap and the restriction lift together, in the same change, because a raised cap
+   * with the old editor still in place would silently truncate a longer plan on the next save.
+   *
+   * ⚠ NO TOTAL IS PRE-RAISED, AND THERE IS NOTHING LEFT TO RAISE. R2 — a commitment's total IS the
+   * sum of its pieces, derived by the server and typed nowhere — so the form no longer shows one.
+   * That was the two-piece editor's own wart and it went with it.
    */
   function openAddInstallment(e: RepTeamExpense) {
-    const first = standings[e.id]?.installments[0];
-    openSavedRecord(e, {
-      ...formFromExpense(e, standings[e.id]),
-      dueDate: '',
-      depositAmount: first ? String(first.amount) : '',
-      depositDueDate: first?.dueDate ?? '',
-      balanceAmount: '',
-      balanceDueDate: '',
-    });
-    // `openSavedRecord` derives this from the SAVED plan, which is still one piece — the whole
-    // point of this door is to open the editor the record does not yet need.
-    setFormSplit(true);
+    openSavedRecord(e, formFromExpense(e, standings[e.id]),
+      [...planFromStanding(standings[e.id]), { ...BLANK_PLAN_ROW }]);
   }
 
   /**
@@ -1967,6 +1965,12 @@ function MoneyRecordsPanel({
   }
 
   async function saveRecord() {
+    /* ⚠⚠ BELT TO `saving`'s BRACES (`/review`, concurrency lens, 2026-08-20). A second click can
+       land before React commits the disabled attribute, and on the ADD path there is no server-side
+       idempotency to catch it — two clicks make two costs. `GenerateInstallmentsModal` carries this
+       same ref for the same reason; this form did not. */
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaveError('');
     setFutureDateRefused(false);
     setSaving(true);
@@ -1989,35 +1993,34 @@ function MoneyRecordsPanel({
       const isPayable = isPayableForm;
       const amount = parseFloat(form.amount);
       if (!form.description.trim()) throw new Error('Description is required');
-      /* ⚠⚠ A COMMITMENT NEEDS A DUE DATE, and this is the promise the form used to break. The old
-         split group said "leave this closed to record one amount due on one date" while offering
-         no such date — so a commitment saved that way reached the schedule, the Overview's next-30
-         panel and every reminder as nothing at all. An unscheduled commitment is a note to self,
-         not a payable. */
-      if (isPayable && !formSplit && !form.dueDate) {
-        throw new Error(editing
-          // A record that never had a date is the very state this field exists to end — say that,
-          // rather than repeating the generic prompt at someone who did not create the gap.
-          ? 'This commitment has never had a due date, so it has never reached your payment schedule. Add one to save it.'
-          : 'When is this due? A commitment without a date never reaches your payment schedule.');
-      }
-      if (isPayable && formSplit && !form.depositDueDate && !form.balanceDueDate) {
-        throw new Error('Give the deposit or the balance a due date — that is what puts them on your payment schedule.');
-      }
-      /* ⚠⚠ A SPLIT WITH MONEY ON IT CANNOT GO BACK TO ONE AMOUNT (/review, 2026-08-16, Critical —
-         carried across the rebuild). Collapsing the split drops piece 2, and money recorded
-         against a dropped piece would re-pour onto pieces that cannot hold it, reading as an
-         over-payment nothing on screen explains. The server refuses too (its check is the real
-         one); this is the courtesy that saves the round trip.
-         ⚠ It fires ONLY on collapsing a record that IS split. An un-split commitment whose one
-         payment has posted stays fully editable — that is the standing no-read-only ruling, and
-         restating its amount is a correction the books are meant to follow. */
-      if (isPayable && editing && planIsSplit(editingStanding) && !formSplit
-        && (editingStanding?.paid ?? 0) > 0) {
-        throw new Error(
-          'Part of this has already been paid, so it can’t go back to one amount on one date. '
-          + 'Reopen the split to change the amounts, or delete this and enter it again.',
-        );
+
+      /* ── The commitment's plan, as the editor states it (Payables Rebuild P4) ──────────────
+         ⚠⚠ VALIDATED BY THE SERVER'S OWN VALIDATOR, NOT BY A COPY OF ITS RULES (`/simplify`,
+         altitude lens, 2026-08-20). `parseInstallmentPlan` is the one door every writer of a plan
+         goes through — the cent floor, the real-calendar-date check, the row-naming refusals and
+         the series ceiling all live there. This screen had hand-copied the first two so it could
+         name the offending row, and the two copies had already drifted apart in wording; the row
+         naming moved INTO the shared function instead, so a stale tab that reaches the route is
+         told exactly what the form would have told it. */
+      let commitmentInstallments: Array<{ amount: number; dueDate: string }> = [];
+      if (isPayable) {
+        const parsed = parseInstallmentPlan(formPlan.map(r => ({
+          amount: parseFloat(r.amount),
+          dueDate: r.date,
+          // Carried so the server can match this row to the piece it already is (PlanRow.id).
+          ...(r.id ? { id: r.id } : {}),
+        })));
+        if ('error' in parsed) throw new Error(parsed.error);
+        commitmentInstallments = parsed.plan;
+        /* ⚠⚠ MONEY ALREADY PAID MUST NOT BE STRANDED (S6) — the successor of "a settled split
+           cannot go back to one amount". Removing rows makes the payments re-apply, and if there is
+           no longer room for them the bill silently starts reading as over-paid. The SERVER's check
+           is the real one; this is the same decision, run on the same module, so the refusal a
+           coach reads here and the one that would come back are one sentence. */
+        if (editingStanding) {
+          const strands = whyPlanStrandsPaidMoney(editingStanding, commitmentInstallments);
+          if (strands) throw new Error(strands);
+        }
       }
       /* ⚠ THE ASTERISK ON "What is this?" HAS TO MEAN SOMETHING. It was drawn as required and the
          comment above the field asserted it was, but nothing checked — so a coach could save a cost
@@ -2027,8 +2030,10 @@ function MoneyRecordsPanel({
       if (categories.length > 0 && !form.budgetItemId) {
         throw new Error('Pick a category and item — they line this cost up with your budget.');
       }
-      if (isNaN(amount) || amount <= 0) {
-        throw new Error(isPayable ? 'Enter a valid total amount' : 'Enter a valid amount');
+      /* ⚠ R2 — A COMMITMENT HAS NO TYPED TOTAL to validate: its total is the sum of its pieces,
+         checked row by row above and derived by the server. The form does not show the field. */
+      if (!isPayable && (isNaN(amount) || amount <= 0)) {
+        throw new Error('Enter a valid amount');
       }
 
       /* ⚠⚠ A DATE IN THE FUTURE IS NOT A PAYMENT (plan §3, ruled 2026-08-16). *Add money* records
@@ -2065,22 +2070,6 @@ function MoneyRecordsPanel({
          server moves the team's books to match whatever it is given, so there is no send-filter
          left to keep in step with a lock rule, which is one fewer copy of a rule that used to live
          in three places and failed silently in this one. */
-      /* A commitment's plan, as explicit installments (Payables Rebuild P2). The deposit/balance
-         fields survive as the ≤2-piece EDITOR only; the composition rule — a blank half takes the
-         remainder, dates fall back to each other — is `composeTwoPieceInstallments`, shared with
-         the bulk importer so the form and the sheet cannot drift. The fallback date is never
-         reached here: the split validation above already required one of the two dates. */
-      const commitmentInstallments = formSplit
-        ? composeTwoPieceInstallments({
-            total: amount,
-            depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
-            depositDueDate: form.depositDueDate || null,
-            balanceAmount: form.balanceAmount ? parseFloat(form.balanceAmount) : null,
-            balanceDueDate: form.balanceDueDate || null,
-            fallbackDueDate: tournamentToday(),
-          })
-        : [{ amount, dueDate: form.dueDate }];
-
       const edits: Record<string, unknown> = { ...common };
       if (isPayable) {
         /* R2 — no `amount` is sent for a commitment: its total IS the sum of its installments,
@@ -2108,7 +2097,12 @@ function MoneyRecordsPanel({
             body: JSON.stringify({
               expenseType: isPayable ? 'tournament_payable' : 'expense',
               ...common,
-              amount,
+              /* ⚠ R2 — NO `amount` ON A COMMITMENT. Its total is the sum of its installments,
+                 derived by the server, and the form no longer has a box for one. Sending the
+                 unparsed field would put a `null` on the wire for a key the route reads only on
+                 the other branch — harmless today, and exactly the kind of dead field a later
+                 reader mistakes for a fact. */
+              ...(isPayable ? {} : { amount }),
               ...(isPayable
                 ? { installments: commitmentInstallments }
                 : {
@@ -2132,6 +2126,12 @@ function MoneyRecordsPanel({
     } catch (e: any) {
       setSaveError(e.message);
     } finally {
+      /* ⚠ RELEASED WHEN THE REQUEST ENDS, which is the whole window that matters: the defect is a
+         second click landing while the first save is IN FLIGHT, before React has committed the
+         disabled attribute. Once it has returned, the form has either closed or is showing a
+         refusal the coach must act on. ⚠ Released here rather than in `resetForm` — writing a ref
+         from a function the render path can reach trips the compiler's ref rule. */
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -2309,11 +2309,17 @@ function MoneyRecordsPanel({
           the team’s books too, and cash on hand follows the new number.
         </>);
       }
-      const due = formSplit ? (form.depositDueDate || form.balanceDueDate) : form.dueDate;
+      /* ⚠ THE FIRST DATE ON THE SCHEDULE, not "the due date" — a repeating cost has six of them,
+         and naming the earliest is what a coach is actually going to be reminded about next. */
+      const due = formPlan.map(r => r.date).filter(Boolean).sort()[0] ?? '';
+      const many = formPlan.length > 1;
       return line(<>
         <strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no family is
-        affected. This joins your payment schedule{due ? <>, due {fmtDate(due)}</> : null}
-        {' '}— record payments against it as the money actually leaves.
+        affected. {many
+          ? <>All {formPlan.length} payments join your payment schedule</>
+          : <>This joins your payment schedule</>}
+        {due ? <>, {many ? 'the first' : 'due'} {fmtDate(due)}</> : null}
+        {' '}— record payments against {many ? 'them' : 'it'} as the money actually leaves.
       </>);
     }
 
@@ -3612,6 +3618,40 @@ function MoneyRecordsPanel({
                           Record a payment
                         </button>
                       )}
+                      {/* ⚠⚠ THE SCOPED DOOR (P4, S1–S7). Changing or removing ONE payment in a
+                          series is where the three-way question belongs — the form states the whole
+                          plan and has nothing to ask.
+
+                          ⚠⚠ OFFERED ON A SETTLED PIECE TOO, and nothing here is greyed out. "This
+                          payment only" still edits one and the books follow — the standing owner
+                          ruling of 2026-08-16, tested by QA §27 Part C. A disabled control on a
+                          paid row would reverse it silently. */}
+                      {canWriteMoney && drawerBill.expense && (
+                        <>
+                          <button
+                            className={`${styles.btnGhost} ${styles.compactAction}`}
+                            aria-label={`Change installment ${inst.installmentNumber}`}
+                            onClick={() => setScopeEdit({
+                              expense: drawerBill.expense!, installmentId: inst.id, mode: 'edit',
+                            })}
+                          >
+                            Change
+                          </button>
+                          {/* R1 — a bill always has a schedule, so the last row cannot be removed.
+                              Deleting the whole bill is the other action, and it gives money back. */}
+                          {drawerStanding.installments.length > 1 && (
+                            <button
+                              className={`${styles.btnGhost} ${styles.compactAction}`}
+                              aria-label={`Remove installment ${inst.installmentNumber}`}
+                              onClick={() => setScopeEdit({
+                                expense: drawerBill.expense!, installmentId: inst.id, mode: 'remove',
+                              })}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   );
                 })}
@@ -3672,20 +3712,18 @@ function MoneyRecordsPanel({
                 >
                   Edit
                 </button>
-                {/* ⚠⚠ "Add an installment" IS OFFERED ONLY WHERE A SECOND PIECE CAN ACTUALLY BE
-                    SAVED. Plans are capped at two pieces until the repeating-costs editor lands
-                    (P4) — the edit form is a two-piece editor, and a longer plan would be silently
-                    truncated on the next unrelated save. A button that is refused is worse than a
-                    button that is not there, so a bill that already has two simply does not offer
-                    it. Lift this with the cap, in P4, and not before. */}
-                {(drawerStanding?.installments.length ?? 0) === 1 && (
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openAddInstallment(e); }}
-                  >
-                    Add an installment
-                  </button>
-                )}
+                {/* ⚖ OFFERED ON ANY BILL NOW (P4). It used to appear only on a one-piece one,
+                    because the plan was capped at two and the editor behind it could hold no more —
+                    a button that gets refused is worse than one that is not there. The cap, the
+                    two-field editor and this restriction lifted in the SAME change, deliberately:
+                    a raised cap with the old editor still in place would have re-created the silent
+                    truncation the cap was added to prevent. */}
+                <button
+                  className={styles.btnGhost}
+                  onClick={() => { const e = drawerBill.expense!; setDrawerFor(null); openAddInstallment(e); }}
+                >
+                  Add an installment
+                </button>
                 {drawerStanding && drawerStanding.remaining > 0 && (
                   <button
                     className={styles.btnPrimary}
@@ -3699,6 +3737,30 @@ function MoneyRecordsPanel({
           </div>
         </div>
       )}
+
+      {/* ── Changing or removing ONE scheduled payment, with a scope (P4, S1–S7) ──────────────
+          ⚠ It stands OVER the drawer rather than replacing it: the coach came from a specific row
+          and goes back to the same bill, with the drawer's own figures re-read behind it. The
+          standing is looked up live so the sheet cannot reason about a plan a write has moved on
+          from — the same rule the drawer itself follows. */}
+      {scopeEdit && (() => {
+        const standing = standings[scopeEdit.expense.id];
+        const inst = standing?.installments.find(i => i.id === scopeEdit.installmentId);
+        if (!standing || !inst) return null;
+        return (
+          <InstallmentScopeSheet
+            orgSlug={orgSlug}
+            teamId={teamId}
+            expenseId={scopeEdit.expense.id}
+            description={scopeEdit.expense.description}
+            standing={standing}
+            installment={inst}
+            mode={scopeEdit.mode}
+            onClose={() => setScopeEdit(null)}
+            onSaved={refreshAfterWrite}
+          />
+        );
+      })()}
 
       {/* ── The record form — one modal for both kinds, add and edit (Q4 + Q8) ─────────────────
           Replaces the two "Add Expense" / "Add Payable" modals that used to sit here. The type is
@@ -3851,8 +3913,14 @@ function MoneyRecordsPanel({
                   simply a field — and a coach who mistyped an amount fixes it the obvious way
                   instead of reversing real money to correct a typo. What replaced the lock is the
                   sentence below the figure, which says what saving will DO. */}
+              {/* ⚠⚠ A COMMITMENT HAS NO TOTAL FIELD (R2, Payables Rebuild P4). Its total IS the sum
+                  of its scheduled pieces — derived by the server, typed nowhere — and while the plan
+                  could only be two pieces this box was a second way of stating the same fact that
+                  the two halves already stated, drifting out of step with them the moment either
+                  was typed. The schedule editor's reconcile line says what the bill comes to. */}
+              {!isPayableForm && (
               <div className={styles.field}>
-                <label className={styles.label}>{isPayableForm ? 'Total Amount *' : 'Amount *'}</label>
+                <label className={styles.label}>Amount *</label>
                 <input
                   className={styles.input}
                   type="number"
@@ -3867,6 +3935,7 @@ function MoneyRecordsPanel({
                     fourth copy of the same idea, worded differently from the other three — which is
                     how one of them ended up contradicting the screen it was on. */}
               </div>
+              )}
 
               {/* ── A cost's own date, the money-OUT twin of "Date received" (2026-08-16) ─────
                   ⚠⚠ THE DEFECT THIS CLOSES. "Already paid" used to record no date at all, so the
@@ -3997,91 +4066,33 @@ function MoneyRecordsPanel({
                 </div>
               )}
 
-              {/* ── Commitment-only: when it is due ─────────────────────────────────────────
-                  ⚠⚠ THIS FIELD DID NOT EXIST, AND THE FORM CLAIMED IT DID. The split group used to
-                  say "leave this closed to record one amount due on one date" while offering no
-                  such date — so the simple case, which is most of them, saved with no due date at
-                  all: status "No schedule", absent from the payment schedule and the Overview's
-                  next-30 panel, and no Mark paid button anywhere. The coach had recorded what the
-                  team owed and would never be reminded of it again.
+              {/* ── A commitment's schedule — 1..n dated pieces (Payables Rebuild P4) ─────────
+                  ⚠⚠ THIS REPLACED THE DEPOSIT/BALANCE PAIR AND THE LONE "Due date" BESIDE IT, and
+                  the three had to go together. The two-field editor was the ONLY reason a plan was
+                  capped at two pieces — a longer one created through the API would be silently
+                  truncated the first time a coach saved an unrelated rename — so lifting the cap
+                  while leaving this editor in place would have re-created exactly the defect the cap
+                  was added to prevent.
 
-                  ⚠ It is stored as the deposit half — see `commitmentSchedule` in the save, and
-                  the bulk importer, which has always written this row that way. */}
-              {isPayableForm && !formSplit && (
-                <div className={styles.field}>
-                  <label className={styles.label}>Due date *</label>
-                  <input
-                    className={styles.input}
-                    type="date"
-                    value={form.dueDate}
-                    onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                  />
-                  <p className={styles.formHint}>
-                    This is what puts it on your payment schedule and the Overview’s next 30 days.
-                  </p>
-                </div>
-              )}
+                  ⚠ NO 'Split into a deposit and a balance' TOGGLE, and none is needed: a one-payment
+                  bill is a one-row schedule and "+ Add" makes it a two-row one. The disclosure
+                  existed to hide four fields a simple bill did not want; a single row hides nothing.
 
-              {/* ── Commitment-only: the deposit / balance split ────────────────────────────
-                  ⚠ CONTROLLED, NOT A `CoachFormDisclosure` (Money split P1, 2026-08-16). It used
-                  to be one, and could not be: opening the split has to REMOVE the single due date
-                  above, and a disclosure owning its own state cannot reach a field outside it. The
-                  toggle keeps the disclosure's own look and copy so nothing reads as a new control. */}
+                  ⚠ THE TOTAL FIELD IS GONE FOR A COMMITMENT (R2) — its total is the sum of its
+                  pieces, derived by the server and typed nowhere. The reconcile line inside the
+                  editor states it. */}
               {isPayableForm && (
                 <div className={styles.formGridFull}>
-                  {!formSplit ? (
-                    <button type="button" className={styles.discToggle} onClick={() => setFormSplit(true)}>
-                      <span className={styles.discToggleIcon}><Plus size={14} aria-hidden /></span>
-                      Split into a deposit and a balance
-                    </button>
-                  ) : (
-                    <section className={styles.formSection}>
-                      <div className={styles.discHead}>
-                        <h4 className={styles.formSectionTitle}>Payment schedule</h4>
-                        {/* ⚠ CLOSING IT CLEARS THE BALANCE on save, so the button says so rather
-                            than reading as a cosmetic collapse. A half that has already been PAID
-                            is refused by the server — that money left, and no form un-spends it. */}
-                        <button type="button" className={styles.discHide} onClick={() => setFormSplit(false)}>
-                          Use one date instead
-                        </button>
-                      </div>
-                      <p className={styles.discNote}>
-                        Big-ticket costs are often billed as a deposit now and a balance later —
-                        tournament entries, dome blocks, uniform orders. Each half is due on its own
-                        date and is marked paid on its own.
-                      </p>
-                      {/* ⚖ A SETTLED PIECE IS EDITABLE TOO (owner ruling 2026-08-16). Both halves
-                          used to render read-only once settled; now each is an ordinary pair of
-                          fields and the server moves the payment that settled it — and its entry on
-                          the books — to match. The "Settled" state is still SAID — it is what tells
-                          a coach the edit will reach the books — it just no longer takes the fields
-                          away. Read off the STANDING: the legacy paid stamps are dead columns (P2). */}
-                      <div className={styles.formSectionGrid}>
-                        <div className={styles.field}>
-                          <label className={styles.label}>Deposit Amount</label>
-                          <input className={styles.input} type="number" min={0} step="0.01" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
-                          {editingStanding?.installments.find(i => i.installmentNumber === 1)?.state === 'settled' && (
-                            <p className={styles.formHint}>Settled — a change moves the books.</p>
-                          )}
-                        </div>
-                        <div className={styles.field}>
-                          <label className={styles.label}>Deposit Due Date</label>
-                          <input className={styles.input} type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-                        </div>
-                        <div className={styles.field}>
-                          <label className={styles.label}>Balance Amount</label>
-                          <input className={styles.input} type="number" min={0} step="0.01" value={form.balanceAmount} onChange={e => setForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
-                          {editingStanding?.installments.find(i => i.installmentNumber === 2)?.state === 'settled' && (
-                            <p className={styles.formHint}>Settled — a change moves the books.</p>
-                          )}
-                        </div>
-                        <div className={styles.field}>
-                          <label className={styles.label}>Balance Due Date</label>
-                          <input className={styles.input} type="date" value={form.balanceDueDate} onChange={e => setForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
-                        </div>
-                      </div>
-                    </section>
-                  )}
+                  <InstallmentPlanEditor
+                    rows={formPlan}
+                    onChange={setFormPlan}
+                    /* ⚠ BY POSITION, from the record's own pieces in installment-number order — the
+                       order the plan is WRITTEN in. Row 1 of this list becomes the piece currently
+                       numbered 1, so 'position 1 is settled' is a true statement about what saving
+                       will do, where 'this row is the settled one' stops being true the moment a
+                       row above it is removed. */
+                    positionStates={piecesByNumber(editingStanding).map(p => p.state)}
+                  />
                 </div>
               )}
 

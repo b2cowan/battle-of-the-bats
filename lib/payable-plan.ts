@@ -14,11 +14,32 @@
  * unit-tested once and every caller supplies only its own reads and writes.
  */
 
-/** One piece of the plan a form or an importer wants stored, in order. Numbering is positional. */
+/** One piece of the plan a form or an importer wants stored, in order. */
 export interface PlanPiece {
   amount: number;
   /** `YYYY-MM-DD`, the org's day. R1 — a dateless piece is not representable. */
   dueDate: string;
+  /**
+   * ⚠⚠ WHICH STORED ROW THIS *IS* — supply it whenever the caller is editing an EXISTING plan.
+   *
+   * Without it the plan is matched POSITIONALLY (desired[n] overwrites whatever row currently holds
+   * `installment_number = n+1`), and that is only safe while nothing shifts. Remove a non-trailing
+   * piece and the rows below slide up: the row that held a settled $200 deposit is rewritten to
+   * hold the $400 balance, while the payment recorded against it still points at that same row.
+   * The bill then says the balance is paid and the deposit is not — and `paymentRestatements` sees
+   * a payment whose amount matches the row's OLD figure and dutifully restates it to the new one,
+   * moving the team's books by the difference. Found by three independent review lenses,
+   * 2026-08-20, on the phase that first made a non-trailing removal reachable.
+   *
+   * With it, a removed row is really removed. Its payment's override is released by the FK
+   * (`ON DELETE SET NULL`, never CASCADE — the record of money that left the account survives) and
+   * the payment re-pours from the earliest unfilled piece, which is exactly what S7 promises and
+   * exactly what the confirmation sentence says.
+   *
+   * Omit it when CREATING, or when a caller genuinely has no stored rows to name (the importer).
+   * An id that does not belong to this commitment is ignored and the piece is treated as new.
+   */
+  id?: string;
 }
 
 /**
@@ -65,8 +86,11 @@ export interface StoredInstallment {
 
 export interface InstallmentWrites {
   insert: Array<{ installmentNumber: number; amount: number; dueDate: string }>;
-  update: Array<{ id: string; amount: number; dueDate: string }>;
-  /** ⚠ Only pieces nothing has been paid against — see below. */
+  /** ⚠ `installmentNumber` is present only when the row MOVES (identity mode) — a positional edit
+   *  never renumbers, because the row already is the number it is being written to. */
+  update: Array<{ id: string; installmentNumber?: number; amount: number; dueDate: string }>;
+  /** ⚠ In identity mode: every stored row the desired plan does not name. In positional mode: only
+   *  trailing rows nothing has been paid against — see the note in `planInstallmentWrites`. */
   deleteIds: string[];
 }
 
@@ -84,9 +108,43 @@ export function planInstallmentWrites(
   stored: readonly StoredInstallment[],
   hasPaymentOn: (installmentId: string) => boolean,
 ): InstallmentWrites {
-  const byNumber = new Map(stored.map(i => [i.installmentNumber, i]));
+  const storedById = new Map(stored.map(i => [i.id, i]));
+  /* ⚠⚠ TWO MODES, AND THE CALLER CHOOSES BY SAYING WHAT IT KNOWS. A caller editing an existing plan
+     names each surviving row (`PlanPiece.id` — read its note, it is the money defect this closes);
+     a caller creating one has no rows to name and falls back to the positional rule, unchanged.
+     "Any id at all" decides, because the two producers that edit a plan name every surviving row —
+     a partly-named plan would mean a caller half-migrated, and treating it as positional is the
+     conservative reading. */
+  const byIdentity = desired.some(p => p.id && storedById.has(p.id));
   const writes: InstallmentWrites = { insert: [], update: [], deleteIds: [] };
 
+  if (byIdentity) {
+    const claimed = new Set<string>();
+    desired.forEach((want, at) => {
+      const installmentNumber = at + 1;
+      const have = want.id ? storedById.get(want.id) : undefined;
+      if (!have || claimed.has(have.id)) {
+        // A new row, or an id this commitment does not own — never trusted, simply inserted.
+        writes.insert.push({ installmentNumber, amount: want.amount, dueDate: want.dueDate });
+        return;
+      }
+      claimed.add(have.id);
+      if (have.installmentNumber !== installmentNumber
+        || Math.abs(have.amount - want.amount) > 0.005 || have.dueDate !== want.dueDate) {
+        writes.update.push({
+          id: have.id, installmentNumber, amount: want.amount, dueDate: want.dueDate,
+        });
+      }
+    });
+    /* ⚠ THE ROW THE COACH REMOVED IS THE ROW THAT GOES. A payment aimed at it is NOT a reason to
+       keep it: the FK releases the override (`ON DELETE SET NULL`) and the payment re-pours from
+       the earliest unfilled piece — S7's roll-forward, arrived at by the ordinary rule. Keeping it
+       instead is what let a bill's stored total disagree with its own schedule. */
+    for (const have of stored) if (!claimed.has(have.id)) writes.deleteIds.push(have.id);
+    return writes;
+  }
+
+  const byNumber = new Map(stored.map(i => [i.installmentNumber, i]));
   desired.forEach((want, at) => {
     const installmentNumber = at + 1;
     const have = byNumber.get(installmentNumber);
@@ -100,6 +158,9 @@ export function planInstallmentWrites(
   });
   for (const have of stored) {
     if (have.installmentNumber <= desired.length) continue;
+    /* ⚠ POSITIONAL MODE ONLY. Here the writer cannot tell which row the caller meant, so a row with
+       money aimed at it is left alone rather than guessed at. Callers that edit a plan name their
+       rows and never reach this branch. */
     if (hasPaymentOn(have.id)) continue;
     writes.deleteIds.push(have.id);
   }
@@ -159,10 +220,28 @@ export function paymentRestatements(
     return out;
   }
 
+  /* ⚠⚠ THE PIECE IS FOUND BY IDENTITY WHEN THE CALLER NAMED IT, AND THIS IS A MONEY DEFECT'S FIX,
+     not a tidy-up. Matching by POSITION asks "what is at slot n?" — and after a non-trailing removal
+     the answer is a different piece. A settled $200 deposit removed from a $200/$400 bill left slot
+     1 holding the $400 balance; this function then saw a payment of $200 against a slot whose old
+     figure was $200, called it "the payment that settled this piece", and restated it to $400 —
+     moving the team's books by $200 under a sentence that said a row was being removed. With ids,
+     the surviving row is matched to itself, its amount has not changed, and nothing is restated.
+     Callers that create a plan name nothing and keep the positional rule, which is correct for
+     them: nothing has shifted. */
+  const storedById = new Map(stored.map(i => [i.id, i]));
+  const byIdentity = desired.some(p => p.id && storedById.has(p.id));
+
   desired.forEach((want, at) => {
-    const have = stored.find(i => i.installmentNumber === at + 1);
+    const have = byIdentity
+      ? (want.id ? storedById.get(want.id) : undefined)
+      : stored.find(i => i.installmentNumber === at + 1);
     if (!have || cents(want.amount) === cents(have.amount)) return;
-    const targeted = payments.filter(p => p.installmentNumber === at + 1);
+    // The payment recorded AGAINST this very piece — by its id in identity mode, by the slot's
+    // number otherwise (where the slot and the piece are the same thing).
+    const targeted = byIdentity
+      ? payments.filter(p => p.installmentNumber === have.installmentNumber)
+      : payments.filter(p => p.installmentNumber === at + 1);
     if (targeted.length !== 1 || cents(targeted[0].amount) !== cents(have.amount)) return;
     out.push({ paymentId: targeted[0].id, newAmount: want.amount });
   });

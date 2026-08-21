@@ -318,6 +318,26 @@ export const PAYABLE_STATUS_DEFAULT: readonly PayableRowStatus[] = ['outstanding
  */
 export type EditScope = 'this' | 'this_and_later' | 'all_unpaid';
 
+/**
+ * The three answers a coach is offered, in the order they are offered — the words are the plan's
+ * (§4.2) and the descriptions say what each option DOES rather than restating its name.
+ *
+ * ⚠⚠ A `Record`, NOT AN ARRAY, AND THAT IS THE WHOLE POINT (`/simplify`, 2026-08-20). The scope
+ * sheet and the route each hand-typed their own `['this', 'this_and_later', 'all_unpaid']`, and
+ * nothing tied either list to `EditScope` — a fourth scope would have compiled cleanly while the
+ * screen offered three and the server accepted three DIFFERENT ones. A `Record` keyed by the union
+ * **fails the build** when a member is added and not described here, which an array cannot do.
+ * Same shape and same reasoning as `PAYABLE_STATUS_LABEL` above.
+ */
+export const EDIT_SCOPE_COPY: Record<EditScope, { label: string; detail: string }> = {
+  this:           { label: 'This payment only',       detail: 'Nothing else on this bill changes.' },
+  this_and_later: { label: 'This and later payments', detail: 'Every unpaid payment from this one onwards.' },
+  all_unpaid:     { label: 'All unpaid payments',     detail: 'Every payment still owing, earlier ones included.' },
+};
+
+/** The offer order. Derived from the copy above, so the two can never list different scopes. */
+export const ALL_EDIT_SCOPES = Object.keys(EDIT_SCOPE_COPY) as EditScope[];
+
 export function installmentsInScope(
   standing: CommitmentStanding,
   targetId: string,

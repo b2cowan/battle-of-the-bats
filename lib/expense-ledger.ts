@@ -16,6 +16,21 @@
 // posted — and the delete path reverses those directly.
 
 import type { CommitmentStanding } from './payable-standing';
+import { MAX_MONTHLY_OCCURRENCES } from './coach-monthly-recurrence';
+
+/**
+ * The refusal a plan longer than the ceiling gets — ONE sentence, said by the generator before the
+ * coach commits and by the route if one arrives anyway.
+ *
+ * ⚠ The build prompt's rule, and it is worth stating why: the generator refuses in the browser so
+ * the coach can fix it, and the route refuses because a stale tab, a replay or a direct caller all
+ * reach it too. Two hand-typed copies of a refusal is how a reworded message ends up depending on
+ * which door you came through.
+ */
+export function tooManyInstallments(count: number): string {
+  return `That is ${count} payments. A repeating cost can hold ${MAX_MONTHLY_OCCURRENCES} — two `
+    + 'full seasons of monthly payments. Shorten the run, or split it into two bills.';
+}
 
 /**
  * What deleting this record would put back on the books, for the confirmation the coach reads.
@@ -134,27 +149,58 @@ export function parseInstallmentPlan(raw: unknown):
   if (!Array.isArray(raw) || raw.length === 0) {
     return { error: 'A commitment needs at least one installment with an amount and a due date.' };
   }
-  /* ⚠ CAPPED AT TWO PIECES FOR NOW (`/review`, 2026-08-20) — not because the model minds, but
-     because the EDIT form is a two-piece editor: a longer plan created through the API would be
-     silently truncated to two the first time a coach saved an unrelated rename, deleting unpaid
-     pieces with no warning. The cap closes the whole class until the P4 recurring editor can
-     genuinely display and edit 1..n pieces — lift it there, not before. */
-  if (raw.length > 2) {
-    return {
-      error: 'A commitment can hold two installments for now — a deposit and a balance. '
-        + 'Longer schedules arrive with repeating costs.',
-    };
+  /* ⚠⚠ THE TWO-PIECE CAP IS LIFTED (P4), AND IT LIFTED WITH THE EDITOR, NOT BEFORE IT. The cap
+     existed because the edit form was a literal deposit/balance two-field editor: a longer plan
+     created through the API would be silently truncated to two the first time a coach saved an
+     unrelated rename, deleting unpaid pieces with no warning. That form is now a 1..n list, so the
+     reason has gone.
+
+     ⚠ WHAT REPLACES IT IS THE SERIES CEILING, and it is the same number the generator refuses at,
+     stated in the same sentence — `MAX_MONTHLY_OCCURRENCES`, two full seasons of monthly payments.
+     S8: the series IS the commitment's installments, so the whole plan arriving here is the whole
+     series, and capping the request caps the series. A run longer than this is a mistyped end date,
+     not a commitment. */
+  if (raw.length > MAX_MONTHLY_OCCURRENCES) {
+    return { error: tooManyInstallments(raw.length) };
   }
-  const plan: Array<{ amount: number; dueDate: string }> = [];
-  for (const piece of raw as Array<{ amount?: unknown; dueDate?: unknown }>) {
+  /* ⚠⚠ THE REFUSAL NAMES THE ROW ONCE THERE IS MORE THAN ONE (`/simplify`, altitude lens,
+     2026-08-20). "Every installment needs a due date" was survivable while a plan held two pieces
+     and is not once it can hold twelve — it leaves a coach checking all twelve. A ONE-row plan
+     keeps the plain sentence, because there is no row to name and "payment 1" would be noise.
+
+     ⚠ THIS IS WHY THE FORM CALLS THIS FUNCTION INSTEAD OF RE-DERIVING IT. The schedule editor had
+     hand-copied both checks so it could say which row was wrong, and the two copies had ALREADY
+     drifted apart in wording — a stale tab reaching the server was told something different from
+     what the form would have said. One function, both doors, one sentence. */
+  const pieces = raw as Array<{ amount?: unknown; dueDate?: unknown; id?: unknown }>;
+  const many = pieces.length > 1;
+  const plan: Array<{ amount: number; dueDate: string; id?: string }> = [];
+  for (const [at, piece] of pieces.entries()) {
     const amount = asMoneyAmount(piece?.amount);
     if (amount === null) {
-      return { error: 'Every installment needs an amount of at least $0.01.' };
+      return {
+        error: many
+          ? `Payment ${at + 1} needs an amount of at least $0.01.`
+          : 'Enter an amount of at least $0.01.',
+      };
     }
     if (!isRealCalendarDate(piece?.dueDate)) {
-      return { error: 'Every installment needs a due date — that is what puts it on your payment schedule.' };
+      return {
+        error: many
+          ? `Payment ${at + 1} has no due date — that is what puts it on your payment schedule.`
+          : 'When is this due? A commitment without a date never reaches your payment schedule.',
+      };
     }
-    plan.push({ amount, dueDate: piece.dueDate as string });
+    /* ⚠ THE ROW'S IDENTITY IS CARRIED THROUGH, NOT VALIDATED HERE — see `PlanPiece.id`. This
+       function does not know which commitment it is validating for, so it cannot tell a real id
+       from a stolen one; `planInstallmentWrites` matches it against the record's OWN stored rows
+       and treats anything it does not recognise as a brand-new piece. That is the safe reading: an
+       id from another bill buys nothing, and a missing id simply means "this row is new". */
+    plan.push({
+      amount,
+      dueDate: piece.dueDate as string,
+      ...(typeof piece.id === 'string' && piece.id ? { id: piece.id } : {}),
+    });
   }
   return { plan };
 }

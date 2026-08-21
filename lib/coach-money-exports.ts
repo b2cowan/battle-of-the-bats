@@ -143,24 +143,26 @@ export const EXPENSE_COLUMNS: ExportColumnDef[] = [
   { label: 'Category',     key: 'category',    format: 'text' },
   { label: 'Amount',       key: 'amount',      format: 'currency' },
   { label: 'Paid',         key: 'paid',        format: 'text' },
-  { label: 'Deposit',      key: 'deposit',     format: 'currency' },
-  { label: 'Deposit due',  key: 'depositDue',  format: 'date' },
-  { label: 'Balance',      key: 'balance',     format: 'currency' },
-  { label: 'Balance due',  key: 'balanceDue',  format: 'date' },
-  /* ⚠⚠ THE THREE NEW COLUMNS GO AT THE END, AND THE EIGHT ABOVE DO NOT MOVE (Payables Rebuild P1).
-     A coach's saved spreadsheet, pivot table or accountant's template addresses columns by
-     POSITION, so re-ordering or renaming a heading breaks work that lives outside this product and
-     that nobody here can see. Deposit/Deposit due/Balance/Balance due now read the FIRST TWO pieces
-     of the plan, which is exactly what they have always been — and a commitment with more than two
-     is described honestly by `Payments` and `Still owing` beside them rather than by a heading
-     pretending there are only ever two.
+  /* ⚖ `Deposit` / `Deposit due` / `Balance` / `Balance due` ARE RETIRED (Payables Rebuild P4,
+     owner-confirmed 2026-08-20), and everything after them has shifted four columns left.
+     THIS IS AN OUTWARD-FACING BREAK AND IT WAS TAKEN DELIBERATELY, ONCE.
 
-     ⚠ THEY DID NOT RETIRE IN P3 — CORRECTED 2026-08-20, and the date matters more than the phase
-     number. P3 rebuilt the screen and left these four alone deliberately: while a plan is capped at
-     TWO pieces, `Deposit` / `Deposit due` / `Balance` / `Balance due` still describe it truthfully,
-     and a coach's own spreadsheet addresses our columns by POSITION. **They retire in P4, with the
-     cap** — the release that makes a six-installment bill possible is the release that makes these
-     headings a lie, and that is one deliberate break instead of two. */
+     A coach's saved spreadsheet, pivot table or accountant's template addresses our columns by
+     POSITION, so this reaches work that lives outside the product and that nobody here can see —
+     which is exactly why it happens in the release that makes those headings wrong rather than a
+     release later. Until now a plan could hold at most two pieces, so the four described it
+     truthfully; a bill can now repeat monthly for two seasons, and a column headed `Balance`
+     quoting installment 2 of twelve is a lie a reader has no way to detect.
+
+     ⚠ NOTHING IS LOST. `Payments` says how many pieces the plan has and how many payments have
+     landed, `Paid to date` and `Still owing` say what they say, and the dated pieces themselves are
+     the PAYMENT SCHEDULE export — one row per piece, which is the file that could always answer
+     "when is each one due?" for a plan of any length.
+
+     ⚠ THE IMPORT TEMPLATE STILL HAS THEM (`PAYABLES_TEMPLATE_HEADERS`), and that is not drift: an
+     imported sheet genuinely states a deposit and a balance, and `composeTwoPieceInstallments` is
+     still the rule for what those two columns MEAN. Reading a two-piece sheet in and describing an
+     n-piece bill out are different jobs. */
   { label: 'Payments',     key: 'payments',    format: 'text' },
   { label: 'Paid to date', key: 'paidToDate',  format: 'currency' },
   { label: 'Still owing',  key: 'stillOwing',  format: 'currency' },
@@ -196,7 +198,6 @@ export function expenseRows(
   return expenses.map(e => {
     const standing = standings[e.id];
     const pieces = standing?.installments ?? [];
-    const payable = e.expenseType === 'tournament_payable';
     return {
     description: e.description,
     category: e.category ?? '',
@@ -208,18 +209,8 @@ export function expenseRows(
        read as Unpaid, and a coach filtering a spreadsheet for what was still outstanding got the
        full $600 back as the figure to chase. */
     paid: standing ? PAID_STATE_LABEL[standing.state] : PAID_STATE_LABEL.unpaid,
-    /* ⚠ THE FOUR LEGACY COLUMNS STAY BLANK ON A PLAIN COST, exactly as they always were
-       (`/review`, regression lens, 2026-08-19). R1 gives EVERY commitment at least one piece, so
-       reading `pieces[0]` unconditionally started filling "Deposit" with a duplicate of the Amount
-       column and "Deposit due" with a date the product never shows — for an unpaid cost, the day it
-       was TYPED UP. The register is careful never to present that day as a due date; an exported
-       spreadsheet must not either. These four retire in P3 with the screen. */
-    deposit: payable ? pieces[0]?.amount ?? '' : '',
-    depositDue: payable ? pieces[0]?.dueDate ?? '' : '',
-    balance: payable ? pieces[1]?.amount ?? '' : '',
-    balanceDue: payable ? pieces[1]?.dueDate ?? '' : '',
     // How many pieces the plan has, and how many payments have landed against it — the two facts
-    // the four headings above cannot carry once a commitment can repeat monthly.
+    // the retired deposit/balance headings could not carry once a commitment can repeat monthly.
     payments: standing ? `${standing.payments.length} of ${pieces.length}` : '',
     paidToDate: standing ? standing.paid : '',
     /* ⚠ R6 — over-payment is stated, not hidden. `remaining` floors at zero, so a commitment paid

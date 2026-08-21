@@ -127,11 +127,16 @@ here:
 - ✅ **The month engine is already built and is reused as-is** — `lib/coach-monthly-recurrence.ts`
   plus 43 unit tests, committed `c404bd4b` 2026-08-15 with no callers, deliberately, so the form
   could be built against a proven generator. **P4 calls it. Do not re-invent month arithmetic.**
-  With it come three rules that carry forward unchanged: the **ceiling counts the series, not the
-  request** (24 monthly occurrences, refused by generator *and* route with the same message); the
-  **server regenerates from the rule** and refuses any date the rule cannot produce; and the
-  importer's **duplicate-description reviewer must NOT be reused** (every occurrence of a repeat
-  shares one description by design).
+  Two rules carry forward unchanged: the **ceiling counts the series, not the request** (24 monthly
+  occurrences, refused by generator *and* route with the same sentence), and the importer's
+  **duplicate-description reviewer must NOT be reused** (every occurrence of a repeat shares one
+  description by design).
+  ⚠⚠ **A THIRD ONE WAS WRONG AND IS STRUCK (P4, 2026-08-20):** *"the server regenerates from the rule
+  and refuses any date the rule cannot produce."* It **contradicts QA §64 Part D**, which requires the
+  coach to `+ Add` a row with a date of their own, and it contradicts **S8**, which stores no rule at
+  all. It was right for the schedule generator it came from, whose dates are not editable, and wrong
+  for a sheet whose whole point is that they are. The rule **fills the list and gets out of the way**;
+  the LIST is what is validated and saved. See P4's section for what that cost.
 - ⚠ **Its §5.1 explicitly rejected the three-way scope** this plan adopts. The objection was that a
   bulk edit could reach money that already moved — which is precisely what **S1** now forbids. The
   concern is honoured, not overruled.
@@ -424,6 +429,19 @@ extraction across freshly-written, still-settling code would have its boundary r
 ⚠ **Do it once P4's shape is known** — not later than that, because P4 adds the n-piece generator to
 the same function.
 
+#### `/docs` pass, 2026-08-20
+
+The Payables help was rewritten for the schedule builder, the three-way scope question and the export
+break. ⚠ **It was measured, not eyeballed** (`npm run measure:help`): the additions pushed that
+answer to **998 words**, well past the 350-word standard, so the new material became **its own
+answer** — *“A cost that repeats, and changing one payment”*. Payables came out at **679 words,
+shorter than before this phase started**, and the new answer sits under the limit. A feature’s worth
+of documentation was added and every answer got easier to read.
+
+⚠ The two declared help screenshots are of **Player Dues** and **Budget vs. Actual → Months** —
+neither is a screen P4 changed, so neither needed re-taking. The money FORM changed substantially and
+has no picture: the prose names its controls, and the standard says screenshots are opt-in and rare.
+
 #### Verification, and the one thing left red
 
 Full unit suite (2282) · `verify:changed` (schema parity flags the dev-only migrations — known
@@ -494,14 +512,234 @@ describes its Scheduled cell as "money still owed". Decide in P3's design pass, 
 The drill-in already labels paid pieces today; whatever is ruled, the §64 Part C walk should
 include opening a Scheduled cell that contains a paid piece and reading it without help.
 
-### P4 — Recurring
+### P4 — Recurring ✅ BUILT 2026-08-20 (dev; QA §64 Parts D and E awaiting the walk)
 The generator (§4.1), and the linked series with the three scopes and rules S1–S8.
-⚠ Closes defect 4.
+⚠ Closes defect 4. **The two-piece cap, the two-field editor, the export columns and the help
+sentences all moved in this one change** — see below for why they could not be separated.
+
+#### Two owner rulings taken before a line was written
+
+1. **⚠ MONTHLY ONLY. Weekly and Every 2 weeks are NOT built, and the control does not offer them**
+   (owner, 2026-08-20). §4.1 above lists three cadences; that was written before anyone checked what
+   the engines actually do. `lib/coach-monthly-recurrence.ts` is monthly. The weekly sibling
+   (`lib/coach-recurrence.ts`, the practice schedule's) **disagrees with it on the two things that
+   matter here**: it ends on a date only — no "six payments", which is how an invoice term is
+   actually worded — and it **truncates** an over-long run where the monthly one **refuses**, which
+   is the opposite failure mode. It also has no concept of the series-wide ceiling. Reusing it meant
+   reconciling three rules; not reusing it meant a second generator, a second review function and a
+   second test suite. Money going out to a vendor is billed monthly. **Every 2 weeks has no engine
+   anywhere.** Per P3's standing call — a control that is refused is worse than one that is not
+   there — there is no cadence dropdown at all: the button says `Repeat monthly` and does that.
+2. **⚠ THE FOUR EXPORT COLUMNS RETIRE NOW** (owner-confirmed 2026-08-20). `Deposit` / `Deposit due` /
+   `Balance` / `Balance due` are gone from the commitments file and everything after them has
+   shifted four columns left. This is an **outward-facing break** — coaches' own spreadsheets address
+   our columns by position — taken **once**, in the release that makes the headings wrong. Nothing is
+   lost: `Payments`, `Paid to date` and `Still owing` describe an n-piece bill, and the payment
+   schedule file has always had one row per dated piece. ⚠ The **import template keeps them**, and
+   that is not drift: an imported sheet genuinely states a deposit and a balance, and
+   `composeTwoPieceInstallments` is still what those two columns mean.
+
+#### ⚠⚠ The rule is scaffolding — `reviewMonthlyOccurrences` is deliberately NOT called
+
+The archived 2026-08-15 plan's carry-forward said the commit route "regenerates from the rule and
+refuses any date the rule cannot produce". **That contradicts §64 Part D, which requires the coach to
+`+ Add` a row with a date of their own**, and it contradicts S8, which says nothing stores the rule.
+
+Resolved in favour of the QA walk and S8: the rule **fills the list and gets out of the way**, and
+the **LIST is what is validated and saved** — exactly the dues sheet's shape, which is what "verbatim"
+was asking for. So P4 uses `generateMonthlyOccurrences` (the arithmetic, including the clamp and the
+`'last'` day) and `MAX_MONTHLY_OCCURRENCES` (the ceiling), and not `reviewMonthlyOccurrences`, whose
+job is reconciling a submission against a server-re-derived rule — right for a generator whose dates
+are fixed, wrong for a sheet whose whole point is that they are not. **A reviewer will ask why the
+43-test module is half-used; this paragraph is the answer.** The ceiling is enforced on both sides in
+ONE sentence (`tooManyInstallments`), which is the carry-forward rule that did survive.
+
+#### Why the cap, the editor, the drawer button and the export moved together
+
+`/review` (2026-08-20) had already written the rule down: **a raised cap with the two-field editor
+still in place re-creates the silent-truncation defect the cap was added to prevent.** So:
+
+- `parseInstallmentPlan`'s `raw.length > 2` refusal became the series ceiling (24).
+- The money form's deposit/balance pair, its `Split into a deposit and a balance` toggle and the
+  lone `Due date` beside it were replaced by `InstallmentPlanEditor` — the numbered 1..n list.
+- **The commitment's `Total Amount` field is GONE** (R2). Its total is the sum of its pieces; a typed
+  total was a second way of stating the same fact and drifted out of step with the halves the moment
+  either was typed. The editor's reconcile line states what the bill comes to.
+- `Add an installment` in the drawer is offered on **any** bill.
+- The export columns retired, and the help guide's three now-false sentences with them.
+
+#### The scoped door is the DRAWER's, not the form's
+
+The form states the **whole** plan — every row visible — so there is no ambiguity about reach and no
+scope to ask for. Changing or removing **one** payment happens on its row in the drawer (`Change` /
+`Remove`), which is where the three-way question belongs and where §64 Part E walks it.
+⚠ **Nothing is greyed out on a settled row.** `Change` is offered on one, and `This payment only`
+still edits it with the books following — S2, the standing ruling of 2026-08-16.
+
+#### What the code decides, and the one server rule that changed
+
+- New pure module `lib/payable-scope-edit.ts` (24 unit tests) — S1–S7 turned into a whole desired
+  plan, plus the sentence and the refusal. **The client shows its answer and the route re-runs it**,
+  so the warning a coach reads and the write that follows cannot disagree.
+- ⚠⚠ **S6's roll-forward is NOT implemented.** `commitmentStanding()` already re-applies payments
+  earliest-piece-first on every read, so the money moves by itself; the module re-runs the standing
+  over the proposed plan and **reads off** which pieces gained. A second roll-forward arithmetic is
+  exactly what `money-one-arithmetic-guard` exists to stop.
+- New route `…/expenses/[expenseId]/installments/[installmentId]` (PATCH + DELETE with `scope`).
+  It writes through **`updateRepTeamExpense`** — one writer, so the books cannot drift.
+- ⚠ **`updateRepTeamExpense`'s "a piece with money on it cannot be dropped" guard was REPLACED**, not
+  extended, by `whyPlanStrandsPaidMoney`. The old test was **positional** — it refused whenever a
+  DROPPED piece carried money — which is a proxy that fails in both directions once a plan can hold
+  six: deleting payment 1 of six shrinks the plan by one and the money re-applies perfectly, yet the
+  proxy refused it because the *last* row happened to carry a payment. The real question is the
+  outcome: would this make the bill read as over-paid with nothing on screen explaining it?
+
+#### ✅ The deferred `PayablesList` extraction — DECIDED: still owed, but NOT urgent, and not P4's
+
+P3 deferred it with a tripwire: *"Do it once P4's shape is known — not later than that, because P4
+adds the n-piece generator to the same function."* **The tripwire's premise did not happen.**
+`panel.tsx` grew by **7 net lines** across this whole phase, because the two heavy new surfaces were
+built as their own files (the schedule editor and the scope sheet, ~590 lines between them) rather
+than folded into `MoneyRecordsPanel`. So the forcing function P3 named turned out to be false, and
+there is no fresh urgency P4 created.
+
+**The debt is real and unchanged:** ~500–650 Payables-only lines still sit in a 4,400-line function
+that also serves Transactions — the drawer, the `payBills` grouping and fold state, and the scope-edit
+wiring. **What P4 did add is the proof that the extraction works here**: the scope sheet takes a
+standing, an installment and two callbacks and reaches for no parent state at all, which is the
+template a `PayablesList` would follow. The shared money form genuinely serves both faces and stays.
+
+⚠ **Do it as its own cleanup pass, not inside a feature phase** — the boundary is now known and
+stable, and folding a same-behaviour restructure into the next feature is how it gets redrawn twice.
+
+#### `/simplify` pass, 2026-08-20 — what four lenses caught
+
+- **⚠⚠ THE AUTH CHAIN WAS A 54TH HAND-COPY.** The new route re-declared the
+  auth → org → team → assignment → season chain that `lib/coach-route-context.ts` exists to own —
+  a module whose own header says *"it is the shared home the next one should use"*, written because
+  the third copy had already silently dropped a step the other two had. Now calls
+  `resolveLiveCoachTeamContext` (the LIVE-season resolver, not the read-only one — this route writes).
+- **⚠⚠ THE CLIENT HAD HAND-COPIED THE SERVER'S PLAN VALIDATION, AND THE TWO HAD ALREADY DRIFTED.**
+  The form re-derived "every row needs a date" and "every row needs an amount" so it could name the
+  offending row; `parseInstallmentPlan` — the one door every plan-writer goes through — said
+  something different. **The row naming moved INTO the shared validator** and the form now calls it,
+  so a stale tab reaching the route is told exactly what the form would have said. Two unit tests
+  pin the wording.
+- **The three-way scope was a hand-typed array in two files, tied to nothing.** A fourth scope would
+  have compiled cleanly while the screen offered three and the server accepted three *different*
+  ones. Now `EDIT_SCOPE_COPY` — a `Record` keyed by the union, which **fails the build** when a
+  member is added and not described — with the offer order derived from it. Same shape and reason as
+  `PAYABLE_STATUS_LABEL` beside it.
+- **The scope sheet re-walked the installments nine times per keystroke** (a reach helper called
+  twice per option, plus `scopeChoiceIsMeaningful`'s own three) — now one memoised map · the delete
+  path sorted the same array twice · the route's two independent reads now run together.
+- **A stale comment pointed at a deleted variable**, and in a codebase that leans on comments as its
+  documentation that costs more than usual.
+- **Skipped, deliberately:** the review proposed passing pre-fetched records into
+  `updateRepTeamExpense` to save its second read. **Refused** — that writer re-reads from live rows
+  on purpose ("the books are written first, from live rows"), and trading a documented safety
+  property for latency on a once-in-a-while action is the wrong side of that bargain. Also skipped:
+  hoisting the auth chain out of the other ~53 routes (a repo-wide refactor, not this diff's), and
+  unifying the `$`-formatter across the ~15 pre-existing copies portal-wide (this phase's three came
+  down to two — a lib copy and a UI copy — because a dependency-free module must not import from a
+  React component to do arithmetic).
+
+#### ⚠⚠ `/review` pass, 2026-08-20 — one MONEY defect, found by three lenses independently
+
+**A coach removing a paid installment could have their payment silently rewritten to a different
+figure, moving the team's books.** Correctness, data-contract and regression lenses each arrived at
+it from a different direction, which is the strongest signal this funnel produces.
+
+**The mechanism.** `planInstallmentWrites` matched a desired plan to stored rows **by position**.
+Remove a non-trailing piece and every row below slides up: the physical row carrying a settled $200
+deposit is rewritten to hold the $400 balance, while the payment recorded against it still points at
+that row. The bill then reads *balance paid, deposit unpaid* — and `paymentRestatements` sees a
+payment whose amount matches the row's OLD figure, concludes it is "the payment that settled this
+piece", and restates it to $400 **along with its posted ledger entry**. Real cash movement, under a
+sentence that only promised to remove a row.
+
+⚠ **This was reachable two ways** — the schedule editor's per-row `Remove` and the drawer's scoped
+`Remove` — and **P4 is what made it reachable at all**: the old two-piece editor had no way to drop
+the earlier piece while keeping the later one.
+
+**The fix: a plan being EDITED names its rows** (`PlanPiece.id`). A row is matched to itself, so the
+row the coach removed is the row that goes; the survivors keep their identity, their content and
+their payments, and are renumbered contiguously. The removed row's payment has its override released
+by the FK — **`ON DELETE SET NULL`, never CASCADE** — and re-pours from the earliest unfilled piece,
+which is exactly what S7 promises and what the confirmation sentence says. Creating a plan names
+nothing and keeps the positional rule, so the create path and the importer are untouched.
+
+⚠ **The three SQL statements are now ordered DELETE → renumbering UPDATEs (ascending) → INSERT**, and
+that order is load-bearing: `(expense_id, installment_number)` is UNIQUE, and an append into a slot
+an existing row had not vacated would have hit the upsert's conflict target and **overwritten** that
+row — turning "add a payment" into "replace a payment".
+
+**Verified against the live dev database, not only in unit tests** — a throwaway three-piece bill
+with a targeted payment on the first piece: the right row was deleted, survivors kept their ids and
+amounts, the numbering stayed contiguous, **the $200 payment was still $200**, its override was
+released, the stored total matched the sum of the pieces, the freed money rolled forward, and a
+grow-after-shrink appended without overwriting.
+
+**Two more real findings, both fixed:**
+- **⚠ A date-only bulk edit rewrote every amount in scope.** The scope sheet opens with both fields
+  pre-filled and sent them unconditionally; amounts are SET across a scope (dates SHIFT), so pushing
+  a $200 / $300 / $250 series two weeks later under *this and later* silently flattened all three to
+  $200 — total $750 → $600, no over-payment to trip the guard, and the confirmation sentence never
+  mentioned amounts. **Only fields the coach actually changed are sent now**, and the request body is
+  the same object the preview was computed from.
+- **Missing double-submit latches** on the scope sheet and the money form. The repo's own pattern
+  (`GenerateInstallmentsModal`) uses a ref beside the state flag because a second click lands before
+  React commits `disabled`; the ADD path has no server-side idempotency, so two clicks made two
+  costs. ⚠ The latch is released in `finally`, **not** in `resetForm` — writing a ref from a function
+  the render path can reach trips the compiler's ref rule.
+
+**Not fixed, deliberately:** a bulk scope is decided from the route's snapshot and the writer does
+not re-derive S1 against fresh rows, so a payment settling an installment in the milliseconds between
+read and write could see that installment edited by a bulk scope. **The same property already ships
+on the money form's whole-plan edit** (client computes a plan from a cached standing, server writes
+it), so P4 adds a door with an existing shape rather than a new risk; the writer's own guards still
+run against fresh rows. Advisory, recorded rather than restructured. Also skipped: an unbounded
+upper limit on a money amount (pre-existing, every money route behaves this way).
+
+#### Verification
+
+Typecheck clean · full unit suite **2328** green (44 new) · `verify:changed` (schema parity flags the
+dev-only migrations — known state; every check behind it run individually and clean) ·
+`check:register`, `check:money-report`, `check:demos`, `check:help-shots` green against a restarted
+dev server, fixture reseeded first.
+
+**`check:layout` on the three money screens: 34 findings, ZERO of them P4's.** Every one is the
+shared-chrome set P3 left deliberately red — the Status/Show/Date filter pills, the checkbox in their
+panel, three `.compactAction` links and one button, and the notifications-bell overflow — and every
+family also fails on `coach-transactions`, which this phase does not touch. Not absorbed, not
+baselined. ⚠ **The full 50-screen sweep ABORTED on the memory floor and proves nothing**; the
+three-screen run is what was measured.
+
+⚠⚠ **AND THE HONEST LIMIT: the sweep cannot see any of this phase's new controls.** The schedule
+editor, the repeat rule and the scope sheet all live inside modals, and the sweep renders pages. Its
+green is a statement about the three list screens, not about what P4 added — the same blind spot P3
+named when it added `coach-payables-schedule`. The drawer's new `Change` / `Remove` use
+`.compactAction`, which is already in the red set at 33px, so they will land there when the shared
+44px fix goes in.
+
+⚠ **The demo staleness half is CLEAN but not CLOSED.** No dock line or tour step names the money
+form, the deposit/balance fields or the export columns — every `deposit`/`balance` string in the demo
+data is the tournament-registration domain — and `check:demos` passes. **What is NOT answered is
+whether the coach sandbox should now SHOW a repeating cost**, which is precisely the judgement
+CLAUDE.md says a check can never make. It is an owner call and it belongs to P5.
 
 ### P5 — The tail
-In-app help content; **both demo sandboxes** (the coach sandbox's dock copy and tour narration talk
-about money and will go stale — CLAUDE.md's standing warning, and the 2026-08-17 release already
-changed this exact surface once); export columns; the layout and memory baselines.
+**Almost nothing is left.** The in-app help was brought current in P3 and again in P4; the export
+columns retired in P4 with the cap. What remains:
+
+- The **memory baselines** (`memory/` + the Claude auto-memory).
+- ⚠ **The one open judgement: should the coach sandbox show a repeating cost?** The staleness half
+  came back clean through P4 (no dock line or tour step names the money form or the export), but
+  `check:demos` proves breakage and can never say the demo is missing something the product gained.
+  A monthly gym-time bill is the most persuasive thing this project has added since part payment.
+  **Owner call.**
+- The **shared-chrome 44px fix** is not this project's, but all four money screens go green together
+  when it lands — worth naming here so nobody re-discovers those 34 findings as new.
 
 > ✅ **CLOSED 2026-08-20 — "should a demo moment show a part payment?" NO** (owner: *"the demo
 > doesn't have to show a part payment"*). It had been open since P2 as the most persuasive thing the

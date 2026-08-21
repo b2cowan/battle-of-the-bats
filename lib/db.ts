@@ -13,6 +13,7 @@ import {
 import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
+import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -10167,6 +10168,19 @@ async function getCommitmentRecords(expenseId: string): Promise<{
 }
 
 /**
+ * Where ONE commitment stands — the single-record twin of `getCommitmentStandings`.
+ *
+ * ⚠ It reads the same rows the WRITE paths read (`getCommitmentRecords`), not the program-year
+ * rollup, because a caller that is about to write needs this commitment as it is right now rather
+ * than as a season-wide snapshot said it was. Added for P4's scoped installment edits, which have
+ * to answer "which pieces does this reach?" from live records before proposing a plan.
+ */
+export async function getCommitmentStandingFor(expenseId: string): Promise<CommitmentStanding> {
+  const { installments, payments } = await getCommitmentRecords(expenseId);
+  return commitmentStanding(installments, payments);
+}
+
+/**
  * Find the posted ledger entry for a payment recorded BEFORE mig 236 stored the link.
  *
  * Matches on the descriptions the old doors could have posted with (`legacyEntryDescriptionsForPayment`)
@@ -10520,6 +10534,40 @@ async function writeInstallmentPlan(
     stored.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, dueDate: i.dueDate })),
     id => payments.some(p => p.installmentId === id),
   );
+  /* ⚠⚠ THE ORDER OF THESE THREE STATEMENTS IS LOAD-BEARING: DELETE → renumbering UPDATEs (ascending
+     new number) → INSERT. `(expense_id, installment_number)` is UNIQUE, so a row written into a
+     slot its neighbour has not vacated yet fails the constraint — loud rather than wrong, but still
+     a save the coach loses.
+
+     · Deletes first, so the slots the survivors are moving into are free.
+     · Updates ascending, because removing a row only ever COMPRESSES the numbering (every
+       survivor's new number is ≤ its old one) — so by the time a row moves into slot n, the row
+       that held slot n has already moved down out of it.
+     · Inserts LAST, and this is the one that bites: a new row appended at number n while an
+       existing row still occupies n would hit the upsert's conflict target and OVERWRITE that row
+       instead of adding one — silently turning "add a payment" into "replace a payment".
+
+     ⚠ This scheme is sufficient for compression only. A future caller that genuinely REORDERS rows
+     needs a two-phase move through spare numbers; the identity matching would allow it, this
+     ordering would not. */
+  if (writes.deleteIds.length > 0) {
+    const { error } = await supabaseAdmin.from('rep_payable_installments')
+      .delete().in('id', writes.deleteIds);
+    if (error) throw error;
+  }
+  const updates = [...writes.update].sort(
+    (a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0));
+  for (const u of updates) {
+    const { error } = await supabaseAdmin.from('rep_payable_installments')
+      .update({
+        amount: u.amount,
+        due_date: u.dueDate,
+        ...(u.installmentNumber !== undefined ? { installment_number: u.installmentNumber } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', u.id);
+    if (error) throw error;
+  }
   if (writes.insert.length > 0) {
     /* Upsert on (expense_id, installment_number): two near-simultaneous saves can both observe
        "piece 2 does not exist yet" and both write the identical row (`/review`, concurrency lens,
@@ -10535,17 +10583,6 @@ async function writeInstallmentPlan(
         due_date:           p.dueDate,
         source:             'manual',
       })), { onConflict: 'expense_id,installment_number' });
-    if (error) throw error;
-  }
-  for (const u of writes.update) {
-    const { error } = await supabaseAdmin.from('rep_payable_installments')
-      .update({ amount: u.amount, due_date: u.dueDate, updated_at: new Date().toISOString() })
-      .eq('id', u.id);
-    if (error) throw error;
-  }
-  if (writes.deleteIds.length > 0) {
-    const { error } = await supabaseAdmin.from('rep_payable_installments')
-      .delete().in('id', writes.deleteIds);
     if (error) throw error;
   }
 }
@@ -10721,20 +10758,18 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
       throw new MoneyEditRefusal('A commitment needs at least one dated installment.', 400);
     }
 
-    /* ⚠ A PIECE WITH MONEY ON IT CANNOT BE DROPPED — the successor of "a half that has been paid
-       cannot be emptied" (/review, 2026-08-16, High). Closing the split over a settled balance
-       would leave that money re-pouring onto pieces that cannot hold it, reading as an
-       over-payment nothing on screen explains. Refusing is the honest answer; the schedule stays. */
-    for (const piece of standing.installments) {
-      if (piece.installmentNumber <= desired.length) continue;
-      if (piece.applied > 0) {
-        throw new MoneyEditRefusal(
-          `Money has been recorded against installment ${piece.installmentNumber} — undo its `
-          + 'payments first, or keep it in the schedule.',
-          400,
-        );
-      }
-    }
+    /* ⚠ PAID MONEY MUST NOT BE STRANDED — the successor of "a half that has been paid cannot be
+       emptied" (/review, 2026-08-16, High). Shrinking a plan makes its payments re-apply, and if
+       there is no longer room for them the commitment starts reading as over-paid with nothing on
+       screen explaining why. Refusing is the honest answer; the schedule stays.
+
+       ⚠⚠ THE TEST IS THE OUTCOME, NOT THE POSITION (P4). This used to refuse whenever a DROPPED
+       piece carried money, which is a proxy that fails in both directions once a plan can hold six
+       pieces — see `whyPlanStrandsPaidMoney`, which is now the one rule, shared with the scope
+       paths so the sentence a coach reads before a bulk edit and the refusal that follows are the
+       same decision. */
+    const strands = whyPlanStrandsPaidMoney(standing, desired);
+    if (strands) throw new MoneyEditRefusal(strands, 400);
 
     /* ⚖ THE 2026-08-16 RULING, CARRIED ACROSS THE REBUILD: editing a settled figure moves the
        books. The DECISION — which payment tracks which piece, and when to leave the record alone —

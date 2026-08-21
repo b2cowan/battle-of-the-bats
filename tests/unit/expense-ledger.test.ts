@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { ledgerReversalPreview, whyPaidDateIsRefused, asMoneyAmount, isRealCalendarDate, parseInstallmentPlan } from '../../lib/expense-ledger.ts';
+import { ledgerReversalPreview, whyPaidDateIsRefused, asMoneyAmount, isRealCalendarDate, parseInstallmentPlan, tooManyInstallments } from '../../lib/expense-ledger.ts';
 import { commitmentStanding, type PayableInstallment, type PayablePayment } from '../../lib/payable-standing.ts';
 import { orgDayAsStoredInstant, orgDayKey } from '../../lib/timezone.ts';
 
@@ -77,15 +77,48 @@ describe('parseInstallmentPlan — the one validator behind every door that stor
     }
   });
 
-  test('⚠ MORE THAN TWO PIECES IS REFUSED FOR NOW — the edit form is a two-piece editor', () => {
-    // A longer plan created through the API would be silently truncated to two the first time a
-    // coach saved an unrelated rename (/review, 2026-08-20). The P4 recurring editor lifts this.
-    const out = parseInstallmentPlan([
-      { amount: 100, dueDate: '2026-09-01' },
-      { amount: 100, dueDate: '2026-10-01' },
-      { amount: 100, dueDate: '2026-11-01' },
-    ]);
-    assert.ok('error' in out && /two installments/.test((out as { error: string }).error));
+  test('⚖ A LONGER PLAN IS ACCEPTED — the two-piece cap lifted with the editor (P4)', () => {
+    // The cap existed only because the edit form was a deposit/balance two-field editor: a longer
+    // plan created through the API would be silently truncated the first time a coach saved an
+    // unrelated rename. That form is a 1..n list now, so the reason has gone.
+    const out = parseInstallmentPlan(
+      Array.from({ length: 6 }, (_, at) => ({ amount: 450, dueDate: `2026-0${at + 1}-01` })));
+    assert.ok('plan' in out);
+    assert.equal((out as { plan: unknown[] }).plan.length, 6);
+  });
+
+  test('⚠ THE SERIES CEILING REPLACES IT, and refuses in the generator\'s own sentence', () => {
+    const out = parseInstallmentPlan(
+      Array.from({ length: 25 }, () => ({ amount: 10, dueDate: '2026-09-01' })));
+    assert.ok('error' in out);
+    // The same sentence the schedule builder shows before the coach ever commits — one wording,
+    // whichever door the over-long run came through.
+    assert.equal((out as { error: string }).error, tooManyInstallments(25));
+    assert.match((out as { error: string }).error, /two full seasons/);
+  });
+
+  test('⚠ a MULTI-row plan names the row at fault — "check all twelve" is not an answer', () => {
+    const dated = (n: number) => Array.from({ length: n }, (_, at) => ({ amount: 450, dueDate: `2026-0${at + 1}-01` }));
+    const noDate = dated(3); (noDate[2] as { dueDate?: unknown }).dueDate = '';
+    assert.match((parseInstallmentPlan(noDate) as { error: string }).error, /Payment 3 has no due date/);
+    const noAmount = dated(3); noAmount[1].amount = 0;
+    assert.match((parseInstallmentPlan(noAmount) as { error: string }).error, /Payment 2 needs an amount/);
+  });
+
+  test('⚠ a ONE-row plan keeps the plain sentence — "payment 1" would be noise', () => {
+    // ⚠ These two sentences are what the SCHEDULE EDITOR shows as well: it calls this validator
+    // rather than re-deriving the rules, after the two hand-written copies drifted apart in wording
+    // (`/simplify`, 2026-08-20). A stale tab reaching the route must be told what the form says.
+    assert.match((parseInstallmentPlan([{ amount: 450 }]) as { error: string }).error,
+      /never reaches your payment schedule/);
+    assert.match((parseInstallmentPlan([{ amount: 0, dueDate: '2026-09-01' }]) as { error: string }).error,
+      /at least \$0\.01/);
+  });
+
+  test('exactly the ceiling is fine — it is a limit, not a warning', () => {
+    const out = parseInstallmentPlan(
+      Array.from({ length: 24 }, () => ({ amount: 10, dueDate: '2026-09-01' })));
+    assert.ok('plan' in out);
   });
 });
 
