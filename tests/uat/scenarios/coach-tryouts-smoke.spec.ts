@@ -198,6 +198,16 @@ test.afterAll(async () => {
 });
 
 async function signIn(page: Page, email: string) {
+  // The Next DEV overlay's <nextjs-portal> host (dev chrome only — it does not exist in prod)
+  // can intercept taps at phone size even while visibly empty, which timed out a Cancel click
+  // on the scorecard builder's bottom sheet (2026-08-23). display:none, not pointer-events —
+  // the overlay's shadow content re-enables its own pointer-events, and hiding the host is the
+  // only thing that removes the whole subtree from hit-testing.
+  await page.addInitScript(() => {
+    const s = document.createElement('style');
+    s.textContent = 'nextjs-portal{display:none!important}';
+    document.documentElement.appendChild(s);
+  });
   await page.context().clearCookies();
   await page.goto('/auth/login');
   await page.getByLabel(/email/i).fill(email);
@@ -220,19 +230,20 @@ const main = (page: Page) => page.locator('main[class*="coachesMain"]');
 
 // ─── 1 · The scoring door ────────────────────────────────────────────────────────
 
-test('Tryout Day tab offers "Score players"; the signed-in scorer works; the scoreboard grows a "(you)" chip; the self identity is stable', async ({ page }) => {
+test('Tryout Day offers the Score face; the signed-in scorer works; the scoreboard grows a "(you)" chip; the self identity is stable', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/tryouts`);
 
-  // The tab that promises "score them" finally has the door.
-  await main(page).getByRole('tab', { name: /tryout day/i }).click();
-  const door = main(page).getByRole('link', { name: /score players/i });
-  await expect(door).toBeVisible();
+  // One-Room build (2026-08-23): stage tabs are LINKS, and the scorer is the Tryout day tab's
+  // Score FACE — the "Score players" door and its sub-page are gone.
+  await main(page).getByRole('link', { name: /tryout day/i }).click();
+  const face = main(page).getByRole('navigation', { name: /tryout day views/i }).getByRole('link', { name: 'Score' });
+  await expect(face).toBeVisible();
 
-  await door.click();
-  // The scorer is the shared fixed-dark surface (no coaches chrome): identity line + candidates.
-  await expect(page.getByText(/scoring as .*\(you\) — signed in/i)).toBeVisible({ timeout: 45_000 });
+  await face.click();
+  // Embedded, the hub's face hint carries the identity; the scorer card carries the candidates.
+  await expect(main(page).getByText(/scoring as you — signed in/i)).toBeVisible({ timeout: 45_000 });
   // WI-10: checked-in first, absentees under a muted divider.
   await expect(page.getByText(/not checked in \(1\)/i)).toBeVisible();
 
@@ -244,20 +255,22 @@ test('Tryout Day tab offers "Score players"; the signed-in scorer works; the sco
   await page.getByRole('button', { name: /^done$/i }).click();
   await expect(page.getByText(/1 of 3 scored/i)).toBeVisible();
 
-  // Exactly ONE self session exists, keyed `self:` — and a second visit reuses it.
+  // Exactly ONE self session exists, keyed `self:` — and a second visit reuses it. The OLD
+  // standalone address must still deliver a coach here (redirect, never a 404).
   const { data: selfRows1 } = await admin.from('rep_tryout_evaluator_sessions')
     .select('id, token_hash').eq('tryout_id', tryoutId).like('token_hash', 'self:%');
   expect(selfRows1 ?? []).toHaveLength(1);
   await page.goto(`${base()}/tryouts/score`);
-  await expect(page.getByText(/scoring as .*\(you\)/i)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByText(/scoring as you — signed in/i)).toBeVisible({ timeout: 45_000 });
+  await expect(page).toHaveURL(/stage=tryout-day&view=score/);
   const { data: selfRows2 } = await admin.from('rep_tryout_evaluator_sessions')
     .select('id').eq('tryout_id', tryoutId).like('token_hash', 'self:%');
   expect(selfRows2 ?? []).toHaveLength(1);
 
-  // Back on the hub, the live scoreboard names the coach as "(you)" — and the self identity is
-  // NOT in the Evaluators links card (it isn't a link).
+  // Back on the hub, the live scoreboard (the Live board face) names the coach as "(you)" — and
+  // the self identity is NOT in the Evaluators links card (it isn't a link).
   await open(page, `${base()}/tryouts`);
-  await main(page).getByRole('tab', { name: /tryout day/i }).click();
+  await main(page).getByRole('link', { name: /tryout day/i }).click();
   await expect(main(page).getByText(/\(you\)/)).toBeVisible({ timeout: 20_000 });
   // The no-show marker reaches the scoreboard row too (WI-3).
   await expect(main(page).getByText(/didn’t check in/).first()).toBeVisible();
@@ -271,9 +284,10 @@ test('an assistant without the tryouts grant gets the honest empty state on the 
 
   await open(page, `${base()}/tryouts`);
   await expect(main(page).getByText(/tryouts aren't turned on for you/i)).toBeVisible();
-  await expect(main(page).getByRole('link', { name: /score players/i })).toHaveCount(0);
+  // The gated hub renders NO faces at all — not a Score view waiting to 403.
+  await expect(main(page).getByRole('navigation', { name: /tryout day views/i })).toHaveCount(0);
 
-  // WI-11: the check-in sub-page was the ONLY tryout surface with no client gate.
+  // The old check-in address redirects into the hub (One-Room build), whose gate answers for it.
   await open(page, `${base()}/tryouts/check-in`);
   await expect(main(page).getByText(/tryouts aren't turned on for you/i)).toBeVisible();
   await expect(main(page).getByRole('button', { name: /add walk-up/i })).toHaveCount(0);
@@ -300,8 +314,10 @@ test('a dirty scorecard builder asks before discarding (naming the stake), a cle
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/tryouts`);
 
-  // The checklist ROW's title is also "Evaluation scorecard" — assert on the MODAL's own heading class.
-  const builderTitle = main(page).locator('h3[class*="modalTitle"]', { hasText: /evaluation scorecard/i });
+  // The checklist ROW's title is also "Evaluation scorecard" — assert on the MODAL's own
+  // heading, by its stable id (the 08-17 scorecard-weights rebuild renamed its class; the id
+  // is the contract).
+  const builderTitle = main(page).locator('h3#rubric-builder-title');
 
   // 2026-08-17: Set up is ONE checklist card — a done row collapses to a receipt, so expand the
   // scorecard row to reach its manager (the row toggle's name includes the title).
@@ -319,13 +335,18 @@ test('a dirty scorecard builder asks before discarding (naming the stake), a cle
   await main(page).getByPlaceholder(/e\.g\. .*scorecard/i).fill('AAA tryout card');
   await main(page).getByRole('button', { name: /^cancel$/i }).click();
   await expect(page.getByText(/discard this scorecard\?/i)).toBeVisible();
-  await expect(page.getByText(/categor(y|ies) and their weights/i)).toBeVisible();
+  // "…and how they count", not "their weights" — the §50 ruling scrubbed weight-language from
+  // coach-facing copy (show the SHARE, not the weight).
+  await expect(page.getByText(/categor(y|ies) and how they count/i)).toBeVisible();
   await page.getByRole('button', { name: /keep editing/i }).click();
   await expect(main(page).getByPlaceholder(/e\.g\. .*scorecard/i)).toHaveValue('AAA tryout card');
 
   // A typed weight/note on an UNNAMED row blocks save with a named error — never a silent drop.
   await main(page).getByRole('button', { name: /add category/i }).click();
-  const noteInputs = main(page).getByPlaceholder(/note for evaluators/i);
+  // The 08-17 rebuild made the note field per-row and collapsed by default — open the new
+  // row's note first, then fill (placeholder reworded in the same rebuild).
+  await main(page).getByRole('button', { name: /add a note for evaluators/i }).last().click();
+  const noteInputs = main(page).getByPlaceholder(/what should evaluators look for/i);
   await noteInputs.last().fill('typed work that must not vanish');
   await main(page).getByRole('button', { name: /save scorecard/i }).click();
   await expect(main(page).getByText(/category 3 needs a name/i)).toBeVisible();
@@ -391,10 +412,10 @@ test('the email switch renders OFF; a record-only offer mints NO response link; 
   await page.setViewportSize(PHONE);
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/tryouts`);
-  await main(page).getByRole('tab', { name: /decide/i }).click();
+  await main(page).getByRole('link', { name: /decide/i }).click();
   // Every stage panel stays mounted (hidden via CSS) — scope row assertions to the VISIBLE one,
   // or the scoreboard's copies of the same markers match first.
-  const panel = main(page).locator('[role="tabpanel"]:visible');
+  const panel = main(page).locator('[data-tryout-stage]:visible');
 
   const emailSwitch = main(page).locator('button[role="switch"]');
   await expect(emailSwitch.first()).toBeVisible();
@@ -443,11 +464,13 @@ test('the email switch renders OFF; a record-only offer mints NO response link; 
 test('roster ?view=depth takes the wide column + CoachScrollX; the list view keeps the reading column; phones get the swipe hint', async ({ page }) => {
   await signIn(page, HEAD_EMAIL);
 
-  // Desktop: list = 960, depth = 1200 (the shipped .pageWide opt-in), scroller present.
+  // Desktop: the roster takes the wide column UNCONDITIONALLY now (data-dense surfaces take
+  // .pageWide on every view — the per-view 960/1200 split this spec was written against is
+  // superseded by the committed ruling in the roster page).
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, `${base()}/roster`);
   const pageCol = main(page).locator('div[class*="page"]').first();
-  expect(parseFloat(await pageCol.evaluate(el => getComputedStyle(el).maxWidth))).toBe(960);
+  expect(parseFloat(await pageCol.evaluate(el => getComputedStyle(el).maxWidth))).toBe(1200);
 
   await open(page, `${base()}/roster?view=depth`);
   expect(parseFloat(await pageCol.evaluate(el => getComputedStyle(el).maxWidth))).toBe(1200);

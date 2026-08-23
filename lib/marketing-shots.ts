@@ -398,14 +398,15 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     persona: 'coach',
     door: 'coach',
     // 11U, TRYOUT DAY — the only team with a tryout in flight. Its sessions are re-anchored to
-    // today by the nightly job, so the scoring screen is always live.
-    path: `${COACH_TEAM('tryoutDay')}/tryouts/score`,
+    // today by the nightly job, so the scoring screen is always live. The hub's Score FACE since
+    // the One-Room build (2026-08-23) — the standalone /tryouts/score page is a redirect.
+    path: `${COACH_TEAM('tryoutDay')}/tryouts?stage=tryout-day&view=score`,
     // ⚠ PHONE WIDTH because the phone IS the subject: "evaluators score on their phones" is the
     // claim, and this screen is built dark with 44px targets for exactly that. Never enlarge it.
     width: 390,
-    // The scorer's LIST view — "Back to Tryouts" is its header link. ⚠ NOT "All players": that is
-    // the back link on the DETAIL view, i.e. the state this shot has not reached yet.
-    ready: 'a:has-text("Back to Tryouts")',
+    // The scorer's LIST view — its progress line ("N of M scored") only renders on the list,
+    // never the open-player state, so it pins the state as the retired back link used to.
+    ready: 'text=/\\d+ of \\d+ scored/',
     // Incidents #6/#7 — the same pinned phone bar as the money screens.
     hide: 'nav[aria-label="Coaches mobile navigation"]',
     // ⚠ The evaluator list is in BLIND mode — candidates show as a jersey number and a placeholder,

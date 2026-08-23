@@ -167,7 +167,11 @@ export default function TryoutScoreboardCard({ apiBase, settingsBase, canWrite =
               </div>
               <div className={styles.compositeWrap}>
                 <div className={styles.composite}>{c.composite != null ? c.composite.toFixed(1) : '–'}</div>
-                <div className={styles.compositeUnit}>/{board.scaleMax} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</div>
+                {/* No "/5" beside every row (owner 2026-08-23): one tryout has one scale, so the
+                    denominator was noise — the raw score + how many scored it carry the row. The
+                    scale still reads once from the Set up rubric card ("Scale 1–5"), and the
+                    cross-season memory strip deliberately KEEPS its /N, where scales can differ. */}
+                <div className={styles.compositeUnit}>{c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</div>
               </div>
             </div>
           ))}

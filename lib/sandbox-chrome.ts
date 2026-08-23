@@ -146,7 +146,10 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       label: 'Tryout day',
       sub: 'today, mid-scoring',
       teamId: DEMO_COACH_TEAM_IDS.tryoutDay,
-      path: teamPath(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts/score'),
+      // The hub's Score FACE (One-Room build, 2026-08-23) — the standalone /tryouts/score page is
+      // a redirect now. Query-addressed like the Money `?section=` destinations; the chrome's
+      // arrival matcher already understands those.
+      path: teamPath(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=tryout-day&view=score'),
       saidPublic: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
       saidOperator: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
       bannerNote: 'Evaluations are mid-flight',
@@ -488,9 +491,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
     {
       n: 1,
       label: 'See how 28 kids got ranked',
-      // The HUB, not `/tryouts/score` — the dock's chip lands on the scorer one level below, so
-      // this step must match its path exactly or a dock arrival would make it a no-op.
-      href: team(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts'),
+      // The DECIDE stage by name (One-Room build, 2026-08-23) — the sentence and the anchor both
+      // describe the decision board, which lives on `?stage=decide`; a bare `/tryouts` would land
+      // on whatever stage auto-selects. Naming the stage is also what keeps this press honest:
+      // the dock's chip lands on the hub's Score face at the SAME pathname now, and only the
+      // query (matcher checks every param the destination names) separates "already here" from
+      // "take me there".
+      href: team(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=decide'),
       exactPath: true,
       anchor: '[data-sandbox-tour="tryout-decisions"]',
       said: 'Twenty-eight kids tried out this morning. They are already ranked — a weighted average of what each evaluator scored, updating as the scores come in. The names are still hidden: you are deciding on bib numbers, and you reveal them when you are ready.',

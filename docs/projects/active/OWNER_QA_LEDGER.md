@@ -10777,3 +10777,58 @@ owed — a printable register is not a story beat for a three-minute walk.
 working sheets including the practice run-sheet, schedules, posters/cards/brackets). Each gets its
 own rendered sign-off session.
 
+
+## §81 · Tryout day is one room — and the scorer learned what a desktop is
+
+**BUILT 2026-08-23 (dev) · ✅ QA COMPLETE 2026-08-23 (owner-directed).** The owner walked the desktop scorer, the faces and the density/button rulings live during the build session (three screenshot-driven rulings landed in §81 itself) and directed the walk closed the same day. The post-QA /review pass then found and FIXED five behavioural defects on these same surfaces (face memory on stage round-trips, background-refresh races on Score and Check-in, quiet-refresh error kick-out, stray-URL hidden mounts) — those fixes landed AFTER the walk, so the next casual open of the Tryout day faces doubles as their smoke test. Tryouts One-Room build, from the approved mockups
+(`docs/projects/active/COACH_TRYOUTS_ONE_ROOM_PLAN.md`; mockup artifact is the spec). No
+migration. ⚠ The layout sweep renders the HUB only (and can't click a face) — the two-pane
+scorer, the face flips and both redirects are owner-QA-only coverage.
+
+- [x] **The card is gone; the guide is a link.** Tryouts opens title → stage tabs → content.
+      "How tryouts work" sits at the quiet end of the tab row; pressing it drops the same
+      four-step map with the "you are here" ring and the Do-this-next jump. On a team that has
+      never touched tryouts (no dates, no scorecard) the guide is OPEN on arrival, once; any
+      toggle you make wins, and nothing is stored.
+- [x] **Stage tabs are addresses.** Click Decide: the URL reads `?stage=decide`; refresh stays
+      there; browser Back returns; a pasted link lands a colleague on the same stage. No
+      `?stage` in the address still lands you on the tryout's own stage (auto-select), and the
+      checkmarks/current-dot still track progress.
+- [x] **Tryout day is three faces.** Live board · Check-in · Score toggle in place — no
+      "Score players" / "Open check-in" buttons, no back links anywhere. The hint beside the
+      toggle reads "N of M checked in · N scored" and follows check-ins without a refresh.
+      Fresh open before anyone's checked in lands on Check-in; after that, Live board.
+- [x] **Face flips lose nothing.** Open Score, pick a player, flip to Check-in, check someone
+      in, flip back: the same player is still open with their scores. (Faces stay mounted,
+      the Money-hub pattern.)
+- [x] **Check-in on a desktop is two columns** at a sane width; on the phone it is exactly
+      yesterday's screen (big rows, Undo, walk-up sheet, print sheet, blind chip).
+- [x] **The scorer on a desktop is two panes.** Player list stays left (checkmarks appear as
+      players complete; absentees dimmed under the divider), scorecard right at a readable
+      width. Each category is ONE ruled row — label left, rating buttons right — so a
+      five-category scorecard fits a single screen *(owner follow-up 2026-08-23, replacing the
+      phone's padded cards at this width)*; 1–10 scorecards keep the 5+5 grid. The pane has
+      NO footer: no "All players", no "Back to list", and no "Next player" either *(both cut
+      by owner rulings 2026-08-23 — a tryout runs as STATIONS, not a queue: kids hit at one
+      time and field at another, so picking a player from the list IS the workflow and any
+      "next" would be fiction)*. The scorecard simply ends after its last category row.
+- [x] **The scorer on a phone is untouched.** Full-width list → tap a player → big sunlight
+      buttons → sticky Done. Blind mode still shows bibs only.
+- [x] **The volunteer link got the desktop for free.** Open an evaluator link on a laptop:
+      same two panes under the link's own header (identity, expiry, blind chip). On their
+      phone: unchanged.
+- [x] **Old addresses forward.** `/tryouts/score` and `/tryouts/check-in` land on the matching
+      face (URL shows `?stage=tryout-day&view=…`). An assistant WITHOUT the tryouts grant
+      following either lands on the hub's honest empty state — with no face row rendered.
+- [x] **The coach demo still tells its story.** The dock's "Tryout day" chip lands on the
+      Score face mid-scoring; tour step 1 ("See how 28 kids got ranked") lands on the DECIDE
+      stage and rings the decision board — and pressing it after arriving by the dock still
+      navigates (the two now share a pathname; only the query separates them, which is exactly
+      the trap the old exact-match rule was built for).
+- [x] **Locked scoring still shouts.** Lock scoring on the board face, flip to Score: the
+      banner shows, every rating button is disabled, and the volunteer door says the same.
+
+**Deviation raised, not ruled:** the embedded scorer stays FIXED-DARK inside the warm portal
+(a deliberate instrument-card look — same surface as the volunteer door, sunlight posture and
+all). If it reads as a hole in the warm theme rather than an instrument, that's a theming
+session, not a bug fix.

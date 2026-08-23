@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { Check, ArrowRight, Route, ChevronDown, ChevronUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { Check, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import styles from './TryoutFlowHeader.module.css';
 
 type Step = 'done' | 'current' | 'todo';
@@ -28,6 +29,9 @@ interface Props {
   rosterHref: string;
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
+  /** Shareable address for a stage tab — the caller owns its own query state (the CoachTabBar
+   *  rule: tabs are LINKS, so middle-click, copy-link and browser Back all work). */
+  hrefFor: (tab: TabKey) => string;
 }
 
 const TABS: { tab: TabKey; step: keyof TryoutOverview['steps']; n: number; label: string }[] = [
@@ -39,12 +43,29 @@ const TABS: { tab: TabKey; step: keyof TryoutOverview['steps']; n: number; label
 
 const PHASE_STEP_N: Record<TryoutOverview['phase'], number> = { setup: 1, tryout_day: 2, decide: 3, build: 4 };
 
-export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTabChange }: Props) {
+/**
+ * The stage tab row + the "How tryouts work" guide (One-Room build, 2026-08-23).
+ *
+ * The "Run your tryout" CARD is gone: collapsed it carried no information — a full-width row
+ * whose only job was holding this toggle, on the most valuable strip of the screen, one line
+ * under the help "?" that opens the same subject. The toggle now rests at the quiet end of the
+ * tab row (zero vertical cost) and the guide panel drops below the tabs, content unchanged.
+ */
+export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTabChange, hrefFor }: Props) {
   const [howOpen, setHowOpen] = useState(false);
+  // The guide opens ITSELF exactly once, for the team that has never touched tryouts — the coach
+  // who needs the map is exactly the coach who doesn't know to ask for it. A user toggle always
+  // wins, and nothing is stored: the resting state is the link, so next August it's still here.
+  const userToggled = useRef(false);
+  const autoOpenDecided = useRef(false);
+  useEffect(() => {
+    if (!overview || autoOpenDecided.current) return;
+    autoOpenDecided.current = true;
+    if (!userToggled.current && overview.stats.sessionCount === 0 && !overview.stats.hasScorecard) {
+      setHowOpen(true);
+    }
+  }, [overview]);
 
-  // The shell (title + tabs) renders IMMEDIATELY, before the overview arrives — returning null
-  // here made the whole strip pop in late and shoved the page down (the incremental-load
-  // complaint, 2026-08-17). Progress marks and the guide's prompt fill in when the data lands.
   const next = overview?.next ?? null;
   const hereN = overview ? PHASE_STEP_N[overview.phase] : 0;
   const num = (n: number) => (
@@ -53,67 +74,66 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
 
   return (
     <>
-      <div className={styles.wrap}>
-        <div className={styles.topRow}>
-          <h2 className={styles.title}><Route size={16} /> Run your tryout</h2>
-          <button type="button" className={styles.howBtn} onClick={() => setHowOpen(o => !o)} aria-expanded={howOpen}>
-            {howOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />} How tryouts work
-          </button>
-        </div>
-
-        {/* Re-openable "How tryouts work" overview — for the once-a-year coach. The guide ends with
-            the single next action ("whole journey → your next move on it"), and the ring on the
-            current step's number ties that prompt back to the map. Collapsed, the header is one
-            quiet line — the tab bar's checks/current-dot carry progress on their own (2026-08-17). */}
-        {howOpen && (
-          <div className={styles.how}>
-            <div className={styles.howStep}>{num(1)}<span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
-            <div className={styles.howStep}>{num(2)}<span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
-            <div className={styles.howStep}>{num(3)}<span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Reach families yourself — or turn on family emails and offers land with a secure reply link.</span></div>
-            <div className={styles.howStep}>{num(4)}<span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
-
-            {next ? (
-              <div className={styles.next}>
-                <div className={styles.nextMain}>
-                  <div className={styles.nextLabel}>Do this next</div>
-                  <p className={styles.nextText}>{next.label}</p>
-                  <p className={styles.nextHint}>{next.hint}</p>
-                </div>
-                {next.anchor === 'roster' ? (
-                  <a className={styles.nextBtn} href={rosterHref}>{next.label} <ArrowRight size={15} /></a>
-                ) : (
-                  <button type="button" className={styles.nextBtn} onClick={() => onTabChange(next.anchor as TabKey)}>
-                    Take me there <ArrowRight size={15} />
-                  </button>
-                )}
-              </div>
-            ) : overview && (
-              <p className={styles.doneNote}>
-                You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Stage tabs — one stage on screen at a time; the checks/current-dot double as progress. */}
-      <div className={styles.tabBar} role="tablist" aria-label="Tryout stages">
+      <nav className={styles.tabBar} aria-label="Tryout stages">
         {TABS.map(t => {
           const st = overview?.steps[t.step] ?? 'todo';
           const active = activeTab === t.tab;
           return (
-            <button
-              key={t.tab} type="button" role="tab" aria-selected={active}
+            <Link
+              key={t.tab}
+              href={hrefFor(t.tab)}
+              aria-current={active ? 'page' : undefined}
               className={`${styles.tab} ${active ? styles.tabActive : ''} ${st === 'done' ? styles.tabDone : ''}`}
-              onClick={() => onTabChange(t.tab)}
             >
               <span className={styles.tabNum}>{st === 'done' ? <Check size={13} /> : t.n}</span>
               {t.label}
               {st === 'current' && !active && <span className={styles.tabCurrentDot} aria-hidden />}
-            </button>
+            </Link>
           );
         })}
-      </div>
+        <button
+          type="button"
+          className={styles.howBtn}
+          onClick={() => { userToggled.current = true; setHowOpen(o => !o); }}
+          aria-expanded={howOpen}
+        >
+          {howOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />} How tryouts work
+        </button>
+      </nav>
+
+      {/* Re-openable "How tryouts work" overview — for the once-a-year coach. The guide ends with
+          the single next action ("whole journey → your next move on it"), and the ring on the
+          current step's number ties that prompt back to the map. */}
+      {howOpen && (
+        <div className={styles.how}>
+          <div className={styles.howStep}>{num(1)}<span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
+          <div className={styles.howStep}>{num(2)}<span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
+          <div className={styles.howStep}>{num(3)}<span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Reach families yourself — or turn on family emails and offers land with a secure reply link.</span></div>
+          <div className={styles.howStep}>{num(4)}<span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
+
+          {next ? (
+            <div className={styles.next}>
+              <div className={styles.nextMain}>
+                <div className={styles.nextLabel}>Do this next</div>
+                <p className={styles.nextText}>{next.label}</p>
+                <p className={styles.nextHint}>{next.hint}</p>
+              </div>
+              {next.anchor === 'roster' ? (
+                <a className={styles.nextBtn} href={rosterHref}>{next.label} <ArrowRight size={15} /></a>
+              ) : (
+                <button type="button" className={styles.nextBtn} onClick={() => onTabChange(next.anchor as TabKey)}>
+                  Take me there <ArrowRight size={15} />
+                </button>
+              )}
+            </div>
+          ) : overview && (
+            <p className={styles.doneNote}>
+              You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
+            </p>
+          )}
+        </div>
+      )}
     </>
   );
 }

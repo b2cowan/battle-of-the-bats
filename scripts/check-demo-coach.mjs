@@ -893,7 +893,7 @@ function report() {
     process.exit(1);
   }
   console.log('\n✅ The coach sandbox is presentable.');
-  console.log(`   Tryout day:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
+  console.log(`   Tryout day:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts?stage=tryout-day&view=score`);
   console.log(`   Off-season:   ${moneySectionHref(`/${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}`, 'budget-vs-actual')}`);
   console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
   console.log(`   Mid-season:   ${demoOrg.landingPath}`);

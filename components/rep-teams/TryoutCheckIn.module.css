@@ -3,12 +3,17 @@
 
 .wrap { max-width: 640px; }
 
-.backLink {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  font-size: 0.82rem; color: rgba(255,255,255,0.5);
-  text-decoration: none; margin-bottom: 1rem;
+/* Check-in face of the tryouts hub (One-Room build, 2026-08-23): the phone shape is untouched —
+   on a desk the roster stops being one very long column. The back link retired with the
+   standalone sub-page. */
+@media (min-width: 1100px) {
+  .wrapEmbedded { max-width: 920px; }
+  .wrapEmbedded .list {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-items: start;
+  }
 }
-.backLink:hover { color: rgba(255,255,255,0.8); }
 
 /* Sticky header: progress + blind chip + search */
 .header {
@@ -157,11 +162,9 @@
   color: var(--home-ink);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .backLink:hover {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label {
   color: var(--home-ink-soft);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .backLink,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .progressText .total,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .meta,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bibOnly,

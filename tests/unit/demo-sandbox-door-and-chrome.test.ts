@@ -209,6 +209,31 @@ describe('the chrome (S4)', () => {
       }
     }
 
+    /**
+     * ⚠ The SAME-PATH trap, pinned (One-Room build, 2026-08-23). Two destinations can now share
+     * one pathname and differ only in query — tour step 1 (`/tryouts?stage=decide`) and the
+     * dock's tryout-day moment (`/tryouts?stage=tryout-day&view=score`). `exactPath` cannot save
+     * a step here: the matcher ignores params the step's OWN href does not name, so a step whose
+     * query fails to contradict its sibling's counts a visitor standing on that sibling as
+     * "already here" — the press does nothing. The step's href must name at least one param
+     * whose value differs. (The ancestry guard above is startsWith(path + '/') and is blind to
+     * this case by construction.)
+     */
+    const queryOf = (href: string) => new URLSearchParams(href.split('?')[1] ?? '');
+    const coachLandings = sandboxMoments('coach', coachOrg).map(m => m.fanPath);
+    for (const step of steps) {
+      const siblings = [...steps.filter(o => o !== step).map(o => o.href), ...coachLandings]
+        .filter(h => h !== step.href && pathOf(h) === pathOf(step.href));
+      for (const sibling of siblings) {
+        const sq = queryOf(step.href);
+        const oq = queryOf(sibling);
+        const distinguished = [...sq.entries()].some(([k, v]) => oq.get(k) !== v);
+        assert.ok(distinguished,
+          `step ${step.n} (${step.href}) shares a pathname with ${sibling} but names no query `
+          + 'param that separates them — arriving at the sibling first makes this step a silent no-op');
+      }
+    }
+
     // The one row the tour addresses by name. If the seed stops minting it at this id the step
     // lands on a 404, which is the one failure a narration sentence cannot paper over.
     const recapStep = steps.find(s => s.anchor?.includes('family-recap'));

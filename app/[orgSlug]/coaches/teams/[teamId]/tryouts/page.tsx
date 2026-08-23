@@ -1,6 +1,8 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { ClipboardList, UserCheck, Play } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ClipboardList } from 'lucide-react';
 import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
 import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -11,6 +13,8 @@ import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
 import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
 import TryoutReportCard from '@/components/rep-teams/TryoutReportCard';
 import TryoutBaselineCard from '@/components/rep-teams/TryoutBaselineCard';
+import TryoutCheckIn from '@/components/rep-teams/TryoutCheckIn';
+import TryoutScorerSurface from '@/components/rep-teams/TryoutScorerSurface';
 import TryoutFlowHeader, { TryoutPrereqPrompt, phaseToTab, type TryoutOverview, type TabKey } from '@/components/rep-teams/TryoutFlowHeader';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
@@ -24,6 +28,20 @@ function PanelIntro({ text, action }: { text: string; action?: ReactNode }) {
   );
 }
 
+/* ── One-Room addresses (2026-08-23) ────────────────────────────────────────────
+   Stages and tryout-day faces are URL-backed (`?stage=` + `?view=`) so every screen of the
+   tryout is shareable, refresh-safe and Back-safe — the Money hub's `?section=` pattern.
+   `view` is tryout-day-scoped: every OTHER stage's href drops it (the one-shot-keys lesson —
+   a param that means nothing off its own tab must not ride other tabs' addresses). */
+const STAGE_KEYS: readonly TabKey[] = ['setup', 'tryout-day', 'decide', 'build'];
+type FaceKey = 'board' | 'check-in' | 'score';
+const FACE_KEYS: readonly FaceKey[] = ['board', 'check-in', 'score'];
+const FACES: { id: FaceKey; label: string }[] = [
+  { id: 'board', label: 'Live board' },
+  { id: 'check-in', label: 'Check-in' },
+  { id: 'score', label: 'Score' },
+];
+
 export default function CoachTryoutsPage({
   params,
 }: {
@@ -31,17 +49,46 @@ export default function CoachTryoutsPage({
 }) {
   const { orgSlug, teamId } = use(params);
   const base = `/api/coaches/${orgSlug}/teams/${teamId}`;
-  const checkInHref = `/${orgSlug}/coaches/teams/${teamId}/tryouts/check-in`;
-  const scoreHref = `/${orgSlug}/coaches/teams/${teamId}/tryouts/score`;
+  const pagePath = `/${orgSlug}/coaches/teams/${teamId}/tryouts`;
   const rosterHref = `/${orgSlug}/coaches/teams/${teamId}/roster`;
-  // ONE shared gate for all three tryout pages (WI-11) — semantics documented in the hook.
+  // ONE shared gate for all three tryout surfaces (WI-11) — semantics documented in the hook.
+  // The check-in and score faces render only behind it, exactly as their sub-pages did.
   const { ctxLoading, canTryouts, assignment } = useTryoutAccess(teamId);
   // No `label` — HelpButton falls back to its own `label` prop, so the string lives in one place.
   const helpRequest = { module: 'coaches' as const, sectionIds: ['recipe-run-tryouts'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-run-tryouts` };
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawStage = searchParams.get('stage');
+  const urlStage: TabKey | null = STAGE_KEYS.includes(rawStage as TabKey) ? (rawStage as TabKey) : null;
+  const rawView = searchParams.get('view');
+  const urlFace: FaceKey | null = FACE_KEYS.includes(rawView as FaceKey) ? (rawView as FaceKey) : null;
+
   const [overview, setOverview] = useState<TryoutOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('setup');
-  const didAutoSelect = useRef(false);
+  // With no `?stage` in the address, the page lands the coach on the stage the tryout is AT
+  // (first successful overview load, exactly the old behaviour). An explicit `?stage` is a
+  // choice — the coach's own, or a shared link's — and retires the auto-select for good.
+  const [autoStage, setAutoStage] = useState<TabKey>('setup');
+  const didAutoStage = useRef(false);
+  const activeTab: TabKey = urlStage ?? autoStage;
+
+  // Same one-shot for the face: no `?view` → Check-in until the day's first check-in exists
+  // (the actual order of a tryout morning), then the Live board. Never yanks a picked face.
+  const [autoFace, setAutoFace] = useState<FaceKey>('board');
+  const didAutoFace = useRef(false);
+  const activeFace: FaceKey = urlFace ?? autoFace;
+
+  // An address that names a stage/face IS a choice (the coach's own, or a shared link's) — it
+  // retires the auto-select before any overview response can land one (effects run at commit;
+  // the fetch resolves later). The face choice is also REMEMBERED as the fallback: stage hrefs
+  // deliberately drop `view`, so without this a coach who opened Score, peeked at Decide and
+  // came back would land on the stale auto default — the yank the one-shot exists to prevent
+  // (/review 2026-08-23).
+  useEffect(() => { if (urlStage) didAutoStage.current = true; }, [urlStage]);
+  useEffect(() => {
+    if (urlFace) { didAutoFace.current = true; setAutoFace(urlFace); }
+  }, [urlFace]);
+
   // Bumped when names are revealed from the Decide tab — remounts the decision board so it
   // refetches with names instead of bibs.
   const [revealBump, setRevealBump] = useState(0);
@@ -52,11 +99,10 @@ export default function CoachTryoutsPage({
   // every window focus (the visible refetch flash).
   const fail = useCallback((m: string) => { setFeedbackMsg(m); setFeedbackOpen(true); }, []);
 
-  // Best-effort orientation: fetch on load + on tab focus (e.g. returning from the check-in sub-page).
-  // On the FIRST successful load, land the coach on the stage they should be working — but never yank
-  // them off a tab they've since chosen.
-  // Sequence token (/review 2026-08-17): this fires from mount, window focus, AND child change
-  // callbacks — overlapping responses resolving out of order must not apply a stale overview.
+  // Best-effort orientation: fetch on load + on tab focus + on face flips (a check-in recorded on
+  // the Check-in face must reach the hint and the guide without a window blur).
+  // Sequence token (/review 2026-08-17): overlapping responses resolving out of order must not
+  // apply a stale overview.
   const overviewSeq = useRef(0);
   const loadOverview = useCallback(async () => {
     if (!canTryouts) return;
@@ -67,7 +113,11 @@ export default function CoachTryoutsPage({
       const data: TryoutOverview = await res.json();
       if (seq !== overviewSeq.current) return; // superseded by a newer request
       setOverview(data);
-      if (!didAutoSelect.current) { setActiveTab(phaseToTab(data.phase)); didAutoSelect.current = true; }
+      if (!didAutoStage.current) { setAutoStage(phaseToTab(data.phase)); didAutoStage.current = true; }
+      if (!didAutoFace.current) {
+        setAutoFace(data.stats.checkedInCount === 0 && data.stats.scoredCount === 0 ? 'check-in' : 'board');
+        didAutoFace.current = true;
+      }
     } catch { /* non-blocking */ }
   }, [base, canTryouts]);
   useEffect(() => {
@@ -77,10 +127,37 @@ export default function CoachTryoutsPage({
     return () => window.removeEventListener('focus', onFocus);
   }, [loadOverview]);
 
-  // A tab the coach picked themself retires the auto-select for good (/review 2026-08-17): if the
-  // FIRST overview fetch failed, a later successful one (focus, onChanged) would otherwise still
-  // "land" them on the phase tab — yanking them off the tab they had since chosen.
-  const selectTab = useCallback((tab: TabKey) => { didAutoSelect.current = true; setActiveTab(tab); }, []);
+  // Shareable stage/face addresses. Every stage href except Tryout day drops `view`.
+  const stageHref = useCallback((tab: TabKey) => {
+    const qp = new URLSearchParams(searchParams.toString());
+    qp.set('stage', tab);
+    if (tab !== 'tryout-day') qp.delete('view');
+    return `${pagePath}?${qp.toString()}`;
+  }, [searchParams, pagePath]);
+  const faceHref = useCallback((face: FaceKey) => {
+    const qp = new URLSearchParams(searchParams.toString());
+    qp.set('stage', 'tryout-day');
+    qp.set('view', face);
+    return `${pagePath}?${qp.toString()}`;
+  }, [searchParams, pagePath]);
+  // For the guide's "Take me there" and the prereq prompts — same addresses, pushed.
+  const selectTab = useCallback((tab: TabKey) => { router.push(stageHref(tab)); }, [router, stageHref]);
+
+  // Faces mount on first visit, then stay mounted display:none (the Money hub pattern) — a face
+  // flip must never lose the scorer's open player or refetch the check-in list.
+  // ⚠ A face is only "visited" while Tryout day is the ACTIVE stage (/review 2026-08-23): a
+  // stray `?view=score` on any other stage used to mount the scorer invisibly — fetching, and
+  // even minting the coach's self-session — under a panel the coach wasn't looking at.
+  // (Render-time adjust, sanctioned same-component pattern: the guard is false after the set.)
+  const [visitedFaces, setVisitedFaces] = useState<Set<FaceKey>>(() => new Set());
+  if (activeTab === 'tryout-day' && !visitedFaces.has(activeFace)) {
+    setVisitedFaces(v => new Set(v).add(activeFace));
+  }
+  // Coming back to the board (or the hint above it) re-reads the overview quietly.
+  const prevFace = useRef(activeFace);
+  useEffect(() => {
+    if (prevFace.current !== activeFace) { prevFace.current = activeFace; loadOverview(); }
+  }, [activeFace, loadOverview]);
 
   const hidden = (tab: TabKey) => (activeTab === tab ? '' : flow.panelHidden);
 
@@ -118,35 +195,76 @@ export default function CoachTryoutsPage({
     <div className={styles.page}>
       {header}
 
-      <TryoutFlowHeader overview={overview} rosterHref={rosterHref} activeTab={activeTab} onTabChange={selectTab} />
+      <TryoutFlowHeader overview={overview} rosterHref={rosterHref} activeTab={activeTab} onTabChange={selectTab} hrefFor={stageHref} />
 
       {/* Stage 1 — Set up: ONE checklist card (owner-approved mockup 2026-08-17) — the three
           managers are its row bodies now. Status changes refresh the flow overview so the guide,
           tab checks, and peek-ahead prompts stay honest. */}
-      <div className={hidden('setup')} role="tabpanel">
+      <div className={hidden('setup')} data-tryout-stage="setup">
         <PanelIntro text="Before tryout day: set your dates, build a scorecard of what you'll rate, and (optionally) invite helpers to score." />
         <TryoutSetupChecklist apiBase={base} canWrite sport={assignment?.teamSport} onError={fail} onChanged={loadOverview} blind={overview?.stats.blind} />
       </div>
 
-      {/* Stage 2 — Tryout day */}
-      <div className={hidden('tryout-day')} role="tabpanel">
+      {/* Stage 2 — Tryout day: ONE room, three faces (One-Room build, 2026-08-23). The board,
+          check-in and the coach's own scorer toggle in place — the "Score players" /
+          "Open check-in" doors and both sub-pages' back links are gone with the sub-pages. */}
+      <div className={hidden('tryout-day')} data-tryout-stage="tryout-day">
         <TryoutPrereqPrompt overview={overview} tab="tryout-day" onTabChange={selectTab} />
-        <PanelIntro
-          text="Check players in (names stay hidden for fairness), then score them — the board ranks everyone live."
-          action={
-            <>
-              {/* WI-1: the tab finally delivers what this intro promises — the coach's own door
-                  into the shared scorer, signed in, no evaluator link required. */}
-              <a className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }} href={scoreHref}><Play size={14} /> Score players</a>
-              <a className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }} href={checkInHref}><UserCheck size={14} /> Open check-in</a>
-            </>
-          }
-        />
-        <TryoutScoreboardCard apiBase={`${base}/tryout-scoreboard`} settingsBase={`${base}/tryout-sessions`} canWrite onError={fail} />
+        <div className={flow.faceRow}>
+          <nav className={flow.faces} aria-label="Tryout day views">
+            {FACES.map(f => (
+              <Link
+                key={f.id}
+                href={faceHref(f.id)}
+                className={`${flow.face} ${activeFace === f.id ? flow.faceOn : ''}`}
+                aria-current={activeFace === f.id ? 'page' : undefined}
+              >
+                {f.label}
+              </Link>
+            ))}
+          </nav>
+          {/* The other two faces' vitals, kept honest while you watch any one of them. On the
+              score face it names the session instead — the scorer's own header stays with the
+              public token door, where the hub isn't above it to say this. */}
+          <span className={flow.faceHint}>
+            {activeFace === 'score'
+              ? <>Scoring as you — signed in{overview?.stats.blind ? ' · Blind' : ''}</>
+              : overview
+                ? `${overview.stats.checkedInCount} of ${overview.stats.candidateCount} checked in · ${overview.stats.scoredCount} scored`
+                : null}
+          </span>
+        </div>
+
+        {visitedFaces.has('board') && (
+          <div style={{ display: activeFace === 'board' ? 'block' : 'none' }}>
+            <TryoutScoreboardCard apiBase={`${base}/tryout-scoreboard`} settingsBase={`${base}/tryout-sessions`} canWrite onError={fail} />
+          </div>
+        )}
+        {visitedFaces.has('check-in') && (
+          <div style={{ display: activeFace === 'check-in' ? 'block' : 'none' }}>
+            <TryoutCheckIn
+              apiBase={`${base}/tryout-candidates`}
+              embedded
+              active={activeTab === 'tryout-day' && activeFace === 'check-in'}
+              onError={fail}
+              onChanged={loadOverview}
+            />
+          </div>
+        )}
+        {visitedFaces.has('score') && (
+          <div style={{ display: activeFace === 'score' ? 'block' : 'none' }}>
+            <TryoutScorerSurface
+              apiBase={`${base}/tryout-self-score`}
+              selfMode
+              embedded
+              active={activeTab === 'tryout-day' && activeFace === 'score'}
+            />
+          </div>
+        )}
       </div>
 
       {/* Stage 3 — Decide */}
-      <div className={hidden('decide')} role="tabpanel">
+      <div className={hidden('decide')} data-tryout-stage="decide">
         <TryoutPrereqPrompt overview={overview} tab="decide" onTabChange={selectTab} />
         {/* Reveal names lives HERE now (2026-08-17) — the stage where the guide says it happens. */}
         <PanelIntro
@@ -171,7 +289,7 @@ export default function CoachTryoutsPage({
       {/* Stage 4 — Build your team: the Tryout Report (Tryout Insights Phase 1, mockups v1
           frames 01–02 — replaces the bare four-stat row; the empty-state payoff paragraph
           moved inside the card so this stage has one owner). */}
-      <div className={hidden('build')} role="tabpanel">
+      <div className={hidden('build')} data-tryout-stage="build">
         <TryoutPrereqPrompt overview={overview} tab="build" onTabChange={selectTab} />
         <PanelIntro text="Accept players onto your roster with their fees (optional). They're then ready for your lineups." />
         <TryoutReportCard

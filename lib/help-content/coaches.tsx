@@ -298,7 +298,7 @@ const coachesHelp: HelpPageContent = {
           title: 'On the day: check-in and walk-ups',
           content: (
             <>
-              <p><strong>Open day-of check-in.</strong> Every candidate gets an <strong>auto-assigned bib number</strong>. Tap a player to check them in — a live &quot;X of Y checked in&quot; count keeps you oriented, and an <strong>Undo</strong> appears if you tap the wrong one. You can also <strong>print a paper backup sheet</strong> for spotty cell service (bib numbers only when blind).</p>
+              <p><strong>Open the Check-in view.</strong> On the <strong>Tryout day</strong> tab, switch to <strong>Check-in</strong> — it sits right beside the Live board and Score views, one tap apart. Every candidate gets an <strong>auto-assigned bib number</strong>. Tap a player to check them in — a live &quot;X of Y checked in&quot; count keeps you oriented, and an <strong>Undo</strong> appears if you tap the wrong one. You can also <strong>print a paper backup sheet</strong> for spotty cell service (bib numbers only when blind).</p>
               <p><strong>Add walk-ups.</strong> If a player shows up without registering, add them with just their name (guardian details can wait) — they&apos;re checked in on the spot.</p>
             </>
           ),
@@ -308,7 +308,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Scoring: you, your helpers, and the live board',
           content: (
             <>
-              <p><strong>Score players yourself.</strong> On the <strong>Tryout day</strong> tab, tap <strong>Score players</strong> — you&apos;re straight into the field scorecard, signed in as you, with checked-in players listed first. Your scores count like anyone&apos;s and show on the scoreboard marked <strong>(you)</strong>.</p>
+              <p><strong>Score players yourself.</strong> On the <strong>Tryout day</strong> tab, switch to the <strong>Score</strong> view — the field scorecard, signed in as you, with checked-in players listed first. Your scores count like anyone&apos;s and show on the scoreboard marked <strong>(you)</strong>. On a bigger screen the player list stays beside the scorecard, so you pick whoever is in front of you — score categories in any order, at any station.</p>
               <p><strong>Invite helpers to score too (optional).</strong> On the <strong>Helpers who score</strong> row of the Set up checklist, add a helper by name to get them a private scoring link — <strong>no login, no app</strong>. It works for 48 hours (the link says until when) and you can turn it off any time — you&apos;ll be asked first. Lost or expired link? <strong>New link</strong> on their row issues a fresh one and <strong>keeps all their scores</strong>.</p>
               <p><strong>Watch the live scoreboard.</strong> The <strong>Live scoreboard</strong> ranks players by their weighted average across everyone scoring, and updates on its own as scores come in. A player who never checked in is marked, so a no-show never reads as a low scorer. If an evaluator&apos;s scores drift from the group, they&apos;re gently flagged &quot;runs hot/cold&quot; so you can weigh their input.</p>
               <p><strong>Lock scoring when you&apos;re done.</strong> Use <strong>Lock scoring</strong> on the scoreboard to freeze all evaluator input — their links stop accepting scores. You can reopen it any time if you need another look.</p>
@@ -489,10 +489,10 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tryout-score-yourself',
           question: 'How do I score players myself?',
-          answerText: 'Tap Score players on the Tryout day tab. You get the same field scorecard evaluators use — big tap targets, works one-handed — signed in as you, so there is no link to lose and nothing expires. Checked-in players are listed first. Your scores count like anyone else’s and show on the scoreboard marked (you).',
+          answerText: 'Switch to the Score view on the Tryout day tab. You get the same field scorecard evaluators use — big tap targets, works one-handed — signed in as you, so there is no link to lose and nothing expires. Checked-in players are listed first. Your scores count like anyone else’s and show on the scoreboard marked (you).',
           keywords: ['score', 'score players', 'score myself', 'score yourself', 'rate players', 'head coach scoring', 'signed in'],
           answer: (
-            <p>Tap <strong>Score players</strong> on the <strong>Tryout day</strong> tab. You get the same field scorecard evaluators use — big tap targets, works one-handed — <strong>signed in as you</strong>, so there&apos;s no link to lose and nothing expires. Checked-in players are listed first. Your scores count like anyone else&apos;s and show on the scoreboard marked <strong>(you)</strong>.</p>
+            <p>Switch to the <strong>Score</strong> view on the <strong>Tryout day</strong> tab (it sits beside Live board and Check-in). You get the same field scorecard evaluators use — big tap targets, works one-handed — <strong>signed in as you</strong>, so there&apos;s no link to lose and nothing expires. Checked-in players are listed first. Your scores count like anyone else&apos;s and show on the scoreboard marked <strong>(you)</strong>.</p>
           ),
         },
         {

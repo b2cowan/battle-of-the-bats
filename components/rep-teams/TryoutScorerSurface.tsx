@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { EyeOff, ChevronLeft, Check, Lock } from 'lucide-react';
 import styles from './TryoutScorerSurface.module.css';
 
@@ -23,8 +23,14 @@ type ErrorKind = 'invalid' | 'revoked' | 'expired' | 'load' | null;
 /**
  * The field scoring surface — ONE implementation behind two doors (Chunk E, WI-1):
  * the public /tryout-score/{token} page (volunteer evaluators, bearer-token URL) and the
- * coach's authenticated tryouts/score sub-page (`selfMode`). Fixed-dark by design — see
- * the module header.
+ * coach's Score face on the tryouts hub (`selfMode` + `embedded`, One-Room build 2026-08-23).
+ * Fixed-dark by design — see the module header.
+ *
+ * Two widths, one surface (both doors): narrow keeps the phone field flow byte-for-byte
+ * (list ⇄ full-screen player, sticky Done, big sunlight targets); ≥1024px is a master–detail —
+ * the player list stays put beside the scorecard, and both back levels stop existing because
+ * there is nothing to go back from. No "next" walker either: a tryout runs as stations, so
+ * list-pick is the whole navigation (owner 2026-08-23).
  *
  * `apiBase` must answer GET (Context) and POST ({registrationId, categoryKey, score}) with
  * the shared shapes from lib/tryout-score-session.ts.
@@ -32,13 +38,19 @@ type ErrorKind = 'invalid' | 'revoked' | 'expired' | 'load' | null;
 export default function TryoutScorerSurface({
   apiBase,
   selfMode = false,
-  backHref,
+  embedded = false,
+  active = true,
 }: {
   apiBase: string;
   /** Signed-in coach door: "(you) — signed in" identity line, no link-lifetime line. */
   selfMode?: boolean;
-  /** Where the header's back link points (self mode only). */
-  backHref?: string;
+  /** Score face of the tryouts hub: no own header/back link (the hub's face row carries
+   *  identity + blind), contained card instead of a 100dvh page. */
+  embedded?: boolean;
+  /** Is this surface the one on screen? The hub keeps faces mounted display:none, so becoming
+   *  active again is the moment to quietly re-sync (a lock or late walk-up from another face
+   *  must not wait for a window refocus). Standalone doors are always active. */
+  active?: boolean;
 }) {
   const [ctx, setCtx] = useState<Context | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,39 +60,63 @@ export default function TryoutScorerSurface({
   // Per-category in-flight keys, so tapping a second category doesn't wait on the first (field speed).
   const [savingKeys, setSavingKeys] = useState<Set<string>>(new Set());
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Sequence token for loads (/review 2026-08-23): quiet refreshes replace the WHOLE score map,
+  // and a tap is saved optimistically — so a refresh that was already in flight when the tap
+  // landed must be discarded, or it repaints the pre-tap server snapshot over a cell the POST
+  // has (or is about to have) saved. `setScore` bumps the token to invalidate anything airborne;
+  // overlapping refreshes resolve last-token-wins instead of last-to-arrive-wins.
+  const loadSeq = useRef(0);
+
+  // `quiet` refreshes in place: no loading blank, and a transient failure never takes a working
+  // scorer down — on a quiet refresh only a REAL session verdict (revoked/expired) may surface;
+  // a 5xx/parse miss maps to 'invalid' and is ignored until a loud action meets it (/review
+  // 2026-08-23 — a background refresh used to full-screen the scorer on a server blip).
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) { setLoading(true); setError(null); }
     try {
       const res = await fetch(apiBase);
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setError(d.error === 'revoked' || d.error === 'expired' ? d.error : 'invalid');
+        const kind: ErrorKind = d.error === 'revoked' || d.error === 'expired' ? d.error : 'invalid';
+        if (!quiet) setError(kind);
+        else if (kind !== 'invalid' && seq === loadSeq.current) { setError(kind); setSelected(null); }
         return;
       }
       const data: Context = await res.json();
+      if (seq !== loadSeq.current) return; // superseded by a newer load or a tap
       setCtx(data);
       setScores(data.scores ?? {});
     } catch {
-      setError('load');
+      if (!quiet) setError('load');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [apiBase]);
 
   useEffect(() => { load(); }, [load]);
 
+  // Coming back onto screen (face flip in the hub) re-syncs quietly — a lock toggled from the
+  // Live board, or a walk-up checked in on the Check-in face, must show without a refocus.
+  const wasActive = useRef(active);
+  useEffect(() => {
+    if (active && !wasActive.current && savingKeys.size === 0 && !error) load(true);
+    wasActive.current = active;
+  }, [active, savingKeys, error, load]);
+
   // Check-in keeps happening while scoring starts — refresh the list when the scorer comes back
   // into focus so a late arrival doesn't sit under "Not checked in" all session (review finding).
-  // Guarded: never while a candidate is open or a save is in flight (a reload mid-entry would
-  // yank the scorer's state out from under them).
+  // Guarded on in-flight saves only (2026-08-23): the old "never while a candidate is open" guard
+  // starved the DESKTOP two-pane, where a candidate is open all session. Safe now because the
+  // refresh is quiet (no loading blank) and every tap is already saved optimistically — the
+  // server's score map IS the local one by the time a refresh lands.
   useEffect(() => {
     const onFocus = () => {
-      if (selected == null && savingKeys.size === 0 && !error) load();
+      if (savingKeys.size === 0 && !error) load(true);
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, [load, selected, savingKeys, error]);
+  }, [load, savingKeys, error]);
 
   const setScore = useCallback(async (registrationId: string, category: CategoryDef, value: number) => {
     if (!ctx || ctx.locked) return;
@@ -94,6 +130,8 @@ export default function TryoutScorerSurface({
       return { ...s, [registrationId]: reg };
     });
 
+    // Invalidate any refresh already in flight — its snapshot predates this tap (see loadSeq).
+    loadSeq.current++;
     setSavingKeys(s => new Set(s).add(key));
     // Optimistic (functional update — safe against concurrent taps).
     setScores(s => ({ ...s, [registrationId]: { ...(s[registrationId] ?? {}), [category.key]: { score: value, note: s[registrationId]?.[category.key]?.note ?? null } } }));
@@ -121,7 +159,8 @@ export default function TryoutScorerSurface({
     }
   }, [apiBase, ctx, scores]);
 
-  if (loading) return <div className={styles.center}>Loading…</div>;
+  const centerClass = embedded ? `${styles.center} ${styles.centerEmbedded}` : styles.center;
+  if (loading) return <div className={centerClass}>Loading…</div>;
 
   if (error) {
     // The default copy differs by DOOR: "ask the coach" is written for the volunteer-token page;
@@ -133,14 +172,11 @@ export default function TryoutScorerSurface({
       : selfMode ? 'Couldn’t open your scoring session. Head back to Tryouts and try again.'
       : 'This link isn’t valid. Ask the coach to send a new one.';
     return (
-      <div className={styles.center}>
+      <div className={centerClass}>
         <div className={styles.stateCard}>
           {msg}
           {(error === 'load' || (selfMode && error === 'invalid')) && (
-            <div><button type="button" className={styles.stateBtn} onClick={load}>Try again</button></div>
-          )}
-          {selfMode && backHref && error !== 'load' && (
-            <div><a className={styles.stateBtn} style={{ display: 'inline-block', lineHeight: '46px', textDecoration: 'none' }} href={backHref}>Back to Tryouts</a></div>
+            <div><button type="button" className={styles.stateBtn} onClick={() => load()}>Try again</button></div>
           )}
         </div>
       </div>
@@ -153,10 +189,10 @@ export default function TryoutScorerSurface({
 
   // No scorecard configured yet.
   if (ctx.categories.length === 0) {
-    return <div className={styles.center}><div className={styles.stateCard}>The coach hasn’t set up the scorecard yet. Check back shortly.</div></div>;
+    return <div className={centerClass}><div className={styles.stateCard}>The coach hasn’t set up the scorecard yet. Check back shortly.</div></div>;
   }
 
-  const active = selected ? ctx.candidates.find(c => c.registrationId === selected) : null;
+  const openCand = selected ? ctx.candidates.find(c => c.registrationId === selected) : null;
 
   // Checked-in players first — an evaluator in sunlight shouldn't scroll past no-shows (WI-10).
   // (Pre-check-in, everyone is "absent": the list renders undimmed with no divider.)
@@ -164,8 +200,18 @@ export default function TryoutScorerSurface({
   const absent = ctx.candidates.filter(c => !c.isCheckedIn);
   const dimAbsent = present.length > 0;
 
+  // No "Next player" walker (owner 2026-08-23): a tryout runs as STATIONS, not a queue — kids
+  // are hit-evaluated at one time and field-evaluated at another, in whatever order the line
+  // forms. Picking a player from the list IS the workflow; any "next" would be fiction.
+  const catsScored = openCand ? ctx.categories.filter(c => scores[openCand.registrationId]?.[c.key]?.score != null).length : 0;
+
   const candidateRow = (c: Candidate, dim: boolean) => (
-    <button key={c.registrationId} type="button" className={`${styles.row} ${dim ? styles.rowDim : ''}`} onClick={() => setSelected(c.registrationId)}>
+    <button
+      key={c.registrationId}
+      type="button"
+      className={`${styles.row} ${dim ? styles.rowDim : ''} ${openCand?.registrationId === c.registrationId ? styles.rowOn : ''}`}
+      onClick={() => setSelected(c.registrationId)}
+    >
       <span className={styles.bib}>#{c.bib ?? '—'}</span>
       <span className={styles.rowMain}>
         {c.name ? <span className={styles.name}>{c.name}</span> : <span className={styles.nameMuted}>Player {c.bib ?? ''}</span>}
@@ -175,33 +221,38 @@ export default function TryoutScorerSurface({
   );
 
   return (
-    <div className={styles.page}>
-      {!active ? (
-        <>
-          <header className={styles.header}>
-            {selfMode && backHref && (
-              <a className={styles.backLink} href={backHref}><ChevronLeft size={15} /> Back to Tryouts</a>
-            )}
-            <div className={styles.headerRow}>
-              <div>
-                <div className={styles.team}>{ctx.teamName ?? 'Tryout'}</div>
-                <div className={styles.who}>
-                  Scoring as {ctx.evaluatorName ?? 'evaluator'}{selfMode && ' (you) — signed in'}
-                </div>
+    <div className={`${styles.page} ${embedded ? styles.pageEmbedded : ''} ${openCand ? styles.hasActive : ''}`}>
+      {/* The standalone doors keep their header (identity, blind, lifetime). Embedded, the hub's
+          face row already says all of it — only a lock still has to shout here. */}
+      {!embedded && (
+        <header className={`${styles.header} ${styles.topHeader}`}>
+          <div className={styles.headerRow}>
+            <div>
+              <div className={styles.team}>{ctx.teamName ?? 'Tryout'}</div>
+              <div className={styles.who}>
+                Scoring as {ctx.evaluatorName ?? 'evaluator'}{selfMode && ' (you) — signed in'}
               </div>
-              {ctx.blind && <span className={styles.blindChip}><EyeOff size={13} /> Blind</span>}
             </div>
-            <div className={styles.progress}>{scoredCount} of {ctx.candidates.length} scored</div>
-            {/* The link's own lifetime, said up front — a volunteer scoring across a multi-day
-                tryout shouldn't be blindsided by a silent lockout (WI-8). Token door only. */}
-            {!selfMode && ctx.expiresAt && !ctx.locked && (
-              <div className={styles.expiry}>
-                Link active until {new Date(ctx.expiresAt).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-              </div>
-            )}
-            {ctx.locked && <div className={styles.lockedBanner}><Lock size={13} /> Scoring is closed.</div>}
-          </header>
+            {ctx.blind && <span className={styles.blindChip}><EyeOff size={13} /> Blind</span>}
+          </div>
+          <div className={styles.progress}>{scoredCount} of {ctx.candidates.length} scored</div>
+          {/* The link's own lifetime, said up front — a volunteer scoring across a multi-day
+              tryout shouldn't be blindsided by a silent lockout (WI-8). Token door only. */}
+          {!selfMode && ctx.expiresAt && !ctx.locked && (
+            <div className={styles.expiry}>
+              Link active until {new Date(ctx.expiresAt).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+            </div>
+          )}
+          {ctx.locked && <div className={styles.lockedBanner}><Lock size={13} /> Scoring is closed.</div>}
+        </header>
+      )}
+      {embedded && ctx.locked && (
+        <div className={`${styles.lockedBanner} ${styles.lockedBannerEmbedded}`}><Lock size={13} /> Scoring is closed.</div>
+      )}
 
+      <div className={styles.panes}>
+        <div className={styles.listPane}>
+          <div className={styles.listHead}>{scoredCount} of {ctx.candidates.length} scored</div>
           <div className={styles.list}>
             {present.map(c => candidateRow(c, false))}
             {absent.length > 0 && (
@@ -211,50 +262,57 @@ export default function TryoutScorerSurface({
               </>
             )}
           </div>
-        </>
-      ) : (
-        <>
-          <header className={styles.header}>
-            <button type="button" className={styles.back} onClick={() => setSelected(null)}><ChevronLeft size={18} /> All players</button>
-            <div className={styles.detailBib}>
-              <span className={styles.bib}>#{active.bib ?? '—'}</span>
-              {active.name ? <span className={styles.name}>{active.name}</span> : <span className={styles.nameMuted}>Player {active.bib ?? ''}</span>}
-            </div>
-            {ctx.locked && <div className={styles.lockedBanner}><Lock size={13} /> Scoring is closed.</div>}
-          </header>
+        </div>
 
-          <div className={styles.cats}>
-            {ctx.categories.map(cat => {
-              const current = scores[active.registrationId]?.[cat.key]?.score ?? null;
-              const key = `${active.registrationId}:${cat.key}`;
-              return (
-                <div key={cat.key} className={styles.cat}>
-                  <div className={styles.catLabel}>{cat.label}</div>
-                  {cat.instructions && <div className={styles.catHint}>{cat.instructions}</div>}
-                  <div className={styles.scale}>
-                    {Array.from({ length: ctx.scaleMax }, (_, i) => i + 1).map(n => (
-                      <button
-                        key={n}
-                        type="button"
-                        className={`${styles.scaleBtn} ${current === n ? styles.scaleBtnOn : ''}`}
-                        onClick={() => setScore(active.registrationId, cat, n)}
-                        disabled={ctx.locked || savingKeys.has(key)}
-                        aria-pressed={current === n}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
+        <div className={styles.detailPane}>
+          {openCand ? (
+            <>
+              <header className={`${styles.header} ${styles.detailHead}`}>
+                <button type="button" className={styles.back} onClick={() => setSelected(null)}><ChevronLeft size={18} /> All players</button>
+                <div className={styles.detailBib}>
+                  <span className={styles.bib}>#{openCand.bib ?? '—'}</span>
+                  {openCand.name ? <span className={styles.name}>{openCand.name}</span> : <span className={styles.nameMuted}>Player {openCand.bib ?? ''}</span>}
+                  <span className={styles.catCount}>{catsScored} of {ctx.categories.length} categories</span>
                 </div>
-              );
-            })}
-          </div>
+                {ctx.locked && <div className={`${styles.lockedBanner} ${styles.detailLock}`}><Lock size={13} /> Scoring is closed.</div>}
+              </header>
 
-          <div className={styles.detailFooter}>
-            <button type="button" className={styles.doneBtn} onClick={() => setSelected(null)}>Done</button>
-          </div>
-        </>
-      )}
+              <div className={styles.cats}>
+                {ctx.categories.map(cat => {
+                  const current = scores[openCand.registrationId]?.[cat.key]?.score ?? null;
+                  const key = `${openCand.registrationId}:${cat.key}`;
+                  return (
+                    <div key={cat.key} className={styles.cat}>
+                      <div className={styles.catLabel}>{cat.label}</div>
+                      {cat.instructions && <div className={styles.catHint}>{cat.instructions}</div>}
+                      <div className={styles.scale}>
+                        {Array.from({ length: ctx.scaleMax }, (_, i) => i + 1).map(n => (
+                          <button
+                            key={n}
+                            type="button"
+                            className={`${styles.scaleBtn} ${current === n ? styles.scaleBtnOn : ''}`}
+                            onClick={() => setScore(openCand.registrationId, cat, n)}
+                            disabled={ctx.locked || savingKeys.has(key)}
+                            aria-pressed={current === n}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.detailFooter}>
+                <button type="button" className={styles.doneBtn} onClick={() => setSelected(null)}>Done</button>
+              </div>
+            </>
+          ) : (
+            <div className={styles.detailEmpty}>Select a player to score</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

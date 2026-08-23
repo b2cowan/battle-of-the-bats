@@ -420,7 +420,8 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                   {/* A no-show must never read as merely "not scored yet" — a kid with a family
                       emergency is not a kid who scored low (WI-3). */}
                   {c.isCheckedIn === false && <span style={{ fontWeight: 700 }}>didn’t check in · </span>}
-                  {c.composite != null ? <>score {c.composite.toFixed(1)}/{board.scaleMax} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</> : 'not scored yet'}
+                  {/* Same ruling as the live scoreboard (owner 2026-08-23): no per-row "/5". */}
+                  {c.composite != null ? <>score {c.composite.toFixed(1)} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</> : 'not scored yet'}
                   {hasFamilyNote && (
                     <button type="button" className={styles.noteToggle}
                       onClick={() => setNotesOpenId(id => id === c.registrationId ? null : c.registrationId)}

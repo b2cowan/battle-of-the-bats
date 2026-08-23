@@ -1290,7 +1290,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
 console.log(`\n✅ Seeded the Coach Sandbox — ${DEMO_COACH_ORG_NAME}`);
 console.log(`   Org: ${demoOrg.slug} · plan club · role coach · not public, not discoverable`);
 console.log(`   Coach: ${demoOrg.organizerEmail} (${DEMO_COACH_DISPLAY_NAME})`);
-console.log(`   Tryout day:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
+console.log(`   Tryout day:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts?stage=tryout-day&view=score`);
 console.log(`   Off-season:  ${moneySectionHref(`/${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}`, 'budget-vs-actual')}`);
 console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
 console.log(`   Mid-season:  ${demoOrg.landingPath}`);

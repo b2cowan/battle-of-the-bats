@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
-import { ChevronLeft, Check, Plus, EyeOff, Printer } from 'lucide-react';
+import { Check, Plus, EyeOff, Printer } from 'lucide-react';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { downloadPDF, buildFilename } from '@/lib/export';
@@ -13,8 +12,16 @@ const BLANK_WALKUP = { first: '', last: '', email: '' };
 interface Props {
   /** The candidate API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-candidates`. */
   apiBase: string;
-  backHref: string;
+  /** Check-in face of the tryouts hub (One-Room build, 2026-08-23): no back link — the hub's
+   *  face row owns navigation — and the desktop layout caps its width and goes two-column. */
+  embedded?: boolean;
+  /** Is this face the one on screen? The hub keeps faces mounted display:none, so coming back
+   *  on screen quietly re-syncs the list — check-ins land from other devices and evaluators. */
+  active?: boolean;
   onError?: (msg: string) => void;
+  /** Fired after any successful check-in change or walk-up add, so the hub's overview (face
+   *  hint, guide, tab checks) follows without waiting for a window refocus. */
+  onChanged?: () => void;
 }
 
 const fullName = (c: RepTryoutRegistration) => `${c.playerFirstName} ${c.playerLastName ?? ''}`.trim();
@@ -30,7 +37,7 @@ function ageFromDob(dob: string | null): string {
   return age >= 0 && age < 100 ? String(age) : '';
 }
 
-export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
+export default function TryoutCheckIn({ apiBase, embedded, active = true, onError, onChanged }: Props) {
   const [candidates, setCandidates] = useState<RepTryoutRegistration[]>([]);
   /** Chunk F: which candidates were here before, keyed by registration id (server-matched). */
   const [returning, setReturning] = useState<Record<string, { priorProgramYearName: string; kind: string }> | null>(null);
@@ -53,24 +60,47 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
 
   const fail = useCallback((m: string) => { onError ? onError(m) : console.error(m); }, [onError]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  // Sequence token (/review 2026-08-23): quiet refreshes replace the whole list, and a check-in
+  // tap is optimistic — a refresh airborne when the tap lands must be discarded, or it repaints
+  // the pre-tap state over the row. `setCheckin` bumps the token to invalidate anything in flight.
+  const loadSeq = useRef(0);
+  // `quiet` refreshes in place: no loading blank, and a failed background refresh is not the
+  // coach's problem — the list on screen is still the truth as of a moment ago.
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) setLoading(true);
     try {
       const res = await fetch(apiBase);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load candidates');
+      if (seq !== loadSeq.current) return; // superseded by a newer load or a toggle
       setIsAnonymous(data.isAnonymous ?? true);
       setCandidates(data.candidates ?? []);
       setReturning(data.returning ?? null);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to load candidates.');
+      if (!quiet) fail(e.message ?? 'Failed to load candidates.');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [apiBase, fail]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => () => { if (recentTimer.current) clearTimeout(recentTimer.current); }, []);
+
+  // Check-ins keep landing from other devices and evaluators — re-sync quietly on window
+  // refocus and when this face comes back on screen (/review 2026-08-23: once mounted inside
+  // the hub, this list never refetched for the life of the page). Guarded off in-flight writes;
+  // the sequence token discards stale responses.
+  const wasActive = useRef(active);
+  useEffect(() => {
+    if (active && !wasActive.current && !togglingId && !savingWalkup) load(true);
+    wasActive.current = active;
+  }, [active, togglingId, savingWalkup, load]);
+  useEffect(() => {
+    const onFocus = () => { if (!togglingId && !savingWalkup) load(true); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [togglingId, savingWalkup, load]);
 
   const checkedCount = candidates.filter(c => c.isCheckedIn).length;
   const total = candidates.length;
@@ -85,6 +115,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
 
   async function setCheckin(c: RepTryoutRegistration, value: boolean) {
     if (togglingId) return;
+    loadSeq.current++; // invalidate any refresh already in flight — its snapshot predates this tap
     setTogglingId(c.id);
     setCandidates(prev => prev.map(p => (p.id === c.id ? { ...p, isCheckedIn: value } : p)));  // optimistic
     try {
@@ -96,6 +127,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? 'Failed'); }
       const data = await res.json();
       setCandidates(prev => prev.map(p => (p.id === c.id ? data.registration : p)));
+      onChanged?.();
       if (value) {
         setRecentId(c.id);
         if (recentTimer.current) clearTimeout(recentTimer.current);
@@ -124,6 +156,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
       setWalkupOpen(false);
       setWalkup(BLANK_WALKUP);
       await load();
+      onChanged?.();
     } catch (e: any) {
       fail(e.message ?? 'Failed to add walk-up.');
     } finally {
@@ -151,9 +184,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
   if (loading) return <p style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>Loading…</p>;
 
   return (
-    <div className={styles.wrap}>
-      <Link href={backHref} className={styles.backLink}><ChevronLeft size={15} /> Back to Tryouts</Link>
-
+    <div className={`${styles.wrap} ${embedded ? styles.wrapEmbedded : ''}`}>
       <div className={styles.header}>
         <div className={styles.progressRow}>
           <span className={styles.progressText}>{checkedCount} <span className={styles.total}>/ {total} checked in</span></span>
